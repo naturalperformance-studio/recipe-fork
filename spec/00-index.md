@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 6 questions must be answered before MVP.**
-> Sections: 2 closed · 0 blocked · 20 open · 1 n/a.
+> Sections: 3 closed · 0 blocked · 19 open · 1 n/a.
 > Blocking: OQ-002, OQ-003, OQ-004, OQ-005, OQ-007, OQ-008. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -19,7 +19,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [10-glossary.md](10-glossary.md) | GLOSS | open | Terms that mean something specific here: fork, parent, publication, private link, unit type. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
-| 40-actors.md | ACT | open | Who acts on the system and what each one may do, including whoever is not signed in. |
+| [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in. |
 | 50-domain-model.md | DOM | open | Entities, their fields and invariants: recipe, ingredient, unit type, step, media, account, moderation record. |
 | 60-entity-states.md | ST | open | State machines with transition tables and, for each state, the transitions that must not happen. |
 | 70-flows.md | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |

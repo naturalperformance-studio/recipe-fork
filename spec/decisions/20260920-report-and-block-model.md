@@ -17,6 +17,10 @@ content.
 - Blocking an author removes that author's recipes from the blocker's catalogue
   browsing and search results only. The recipes remain reachable for the blocker
   by direct link and as the named parent of a fork.
+- The owner of a hidden recipe is told in the application that it is hidden and
+  awaiting review, and is told nothing else: not the number of reports, not the
+  categories reported. There is no contact channel outside the application
+  (CON-001), so this notice is the only one the owner ever receives.
 
 **Consequences:**
 - Three colluding accounts can hide any recipe for up to a week. Accepted: the
@@ -29,6 +33,9 @@ content.
   limit of the chosen semantics.
 - The moderator queue gains a second input besides first publication, so its
   load is no longer bounded by the rate of new recipes.
+- Withholding the report count and categories removes the feedback an attacker
+  would use to find the threshold, and equally removes the information an honest
+  author would use to fix a genuine problem. Accepted on the first ground.
 
 **Alternatives considered:**
 - *Hide on the first report.* Rejected: a single hostile account could hide any
@@ -41,3 +48,6 @@ content.
 - *Blocking hides the author's recipes everywhere, including by direct link and
   as a fork parent.* Rejected: it breaks provenance chains and favourites for
   reasons invisible to the user.
+- *Showing the owner the report categories.* Rejected: with a small audience,
+  the categories narrow down who reported, and the product has no mechanism to
+  absorb the resulting conflict.
