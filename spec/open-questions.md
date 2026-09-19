@@ -3,7 +3,7 @@ slug: OQ
 status: open
 updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009]
-open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-005, OQ-007, OQ-008]
+open_before_mvp: [OQ-002, OQ-003, OQ-004]
 ---
 
 # Open questions
@@ -53,12 +53,11 @@ first launch (ACT-001) and permanently consumes one nickname (DOM-001), so
 installs that are opened once and deleted accumulate as empty accounts.
 Blocks: sections `retention`, `legal`.
 
-### OQ-005 — Deleted parent recipe (define before MVP)
-Unresolved: what a fork shows when its direct parent is no longer available.
-Proposal (not a decision): the parent reference is retained and rendered as an
-unavailable parent with the reason class (removed by moderation / deleted by
-author), and the chain stops there.
-Blocks: sections `provenance`, `entity-states`.
+### OQ-005 — Deleted parent recipe — RESOLVED 2026-09-20
+Resolved: the parent reference is kept and shown as unavailable, with no reason
+given, and the chain stops there (ST-007). The only way a parent becomes
+unavailable is removal by a moderator, because publication is permanent
+([ADR — publication is permanent](decisions/20260920-publication-is-permanent.md)).
 
 ### OQ-006 — Reporting published recipes — RESOLVED 2026-09-20
 Reporting is in the MVP, not after it: Google Play requires in-app reporting of
@@ -69,20 +68,16 @@ recipes from the blocker's catalogue and search only. See
 [ADR 20260920 — report and block model](decisions/20260920-report-and-block-model.md).
 Requirements to be written in section `abuse`.
 
-### OQ-007 — Deleting a recipe that has forks (define before MVP)
-Unresolved: whether a published recipe can be deleted at all, and what happens
-to recipes that descend from it.
-Proposal (not a decision): descendants are never touched; deletion of an
-ancestor never cascades. Related to OQ-005.
-Blocks: sections `entity-states`, `provenance`.
+### OQ-007 — Deleting a recipe that has forks — RESOLVED 2026-09-20
+Resolved: an owner can never remove a published recipe (ST-001); only a
+moderator can (ST-002). Removal never cascades to descendants — a fork survives
+its parent's removal and shows the parent as unavailable (ST-007).
 
-### OQ-008 — Text auto-filter and false positives (define before MVP)
-Unresolved: which automatic text filter is used, and what happens to a recipe it
-flags incorrectly.
-Proposal (not a decision): a flag routes the recipe to the human moderator
-instead of rejecting it, so a false positive costs latency rather than a lost
-recipe.
-Blocks: section `moderation`.
+### OQ-008 — Text auto-filter and false positives — RESOLVED 2026-09-20
+Resolved: a flag never rejects anything by itself; it routes the submission to
+the human moderator (MOD-002). Which filter implementation is used is an
+engineering choice constrained by CON-002 and by section `localization`, not a
+product decision.
 
 ### OQ-009 — Nickname space exhaustion (define after MVP)
 Unresolved: what happens when no unused three-word combination remains, given

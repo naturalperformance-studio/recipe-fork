@@ -1,8 +1,8 @@
 # Recipe Fork — specification index
 
-> **NOT READY — 6 questions must be answered before MVP.**
-> Sections: 4 closed · 0 blocked · 18 open · 1 n/a.
-> Blocking: OQ-002, OQ-003, OQ-004, OQ-005, OQ-007, OQ-008. Last updated 2026-09-20.
+> **NOT READY — 3 questions must be answered before MVP.**
+> Sections: 5 closed · 0 blocked · 17 open · 1 n/a.
+> Blocking: OQ-002, OQ-003, OQ-004. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -21,7 +21,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
 | [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in. |
 | [50-domain-model.md](50-domain-model.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, unit type, step, media, account, moderation record. |
-| 60-entity-states.md | ST | open | State machines with transition tables and, for each state, the transitions that must not happen. |
+| [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | 70-flows.md | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
 | 80-scaling-rules.md | SCALE | open | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
 | 90-media.md | MEDIA | open | Media capture, client-side conversion, upload before publication, privacy of unpublished media. |
@@ -49,6 +49,9 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-cooking-over-lineage.md](decisions/20260920-cooking-over-lineage.md) | accepted | Cooking outranks lineage when the two conflict. |
 | [20260920-native-android-mvp.md](decisions/20260920-native-android-mvp.md) | accepted | Native Android is the only client of the MVP; private links are Android-only. |
 | [20260920-report-and-block-model.md](decisions/20260920-report-and-block-model.md) | accepted | Three reports hide a recipe; blocking hides an author from catalogue and search only. |
+| [20260920-publication-is-permanent.md](decisions/20260920-publication-is-permanent.md) | accepted | Once published, a recipe can never be withdrawn by its owner. |
+| [20260920-immutability-trigger.md](decisions/20260920-immutability-trigger.md) | accepted | A recipe freezes at external visibility; withdrawn and rejected recipes stay editable. |
+| [20260920-forking-published-only.md](decisions/20260920-forking-published-only.md) | accepted | Only published recipes are forkable by others; owners may fork their own in any state. |
 
 ## C4 context
 

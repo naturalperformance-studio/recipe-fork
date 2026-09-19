@@ -46,8 +46,10 @@ was not measurable and was replaced by this figure).
 
 ### CON-003 — Immutability after first external visibility
 
-While a recipe is accessible to any principal other than its owner, the system
-shall reject every change to that recipe's content.
+While a recipe is accessible to any user other than its owner, the system shall
+reject every change to that recipe's content. A moderator acting in role is not
+such a user — see
+[ADR — immutability trigger](decisions/20260920-immutability-trigger.md).
 
 **Acceptance criteria**
 - Given a recipe that has become accessible to anyone but its owner, when any
@@ -59,7 +61,8 @@ shall reject every change to that recipe's content.
 **Verification:** attempted edit on a published recipe and on a recipe shared by
 private link, through the application and directly against the service.
 **Source:** draft sections 1, 4.2; see [NGOAL-004](20-goals.md).
-**Detailed rules:** section `entity-states`.
+**Detailed rules:** section [`entity-states`](60-entity-states.md); ST-003 states
+when a recipe freezes and when it becomes editable again.
 
 ### CON-004 — Derived values are always marked as derived
 
