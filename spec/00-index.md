@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 3 questions must be answered before MVP.**
-> Sections: 5 closed · 0 blocked · 17 open · 1 n/a.
+> Sections: 6 closed · 0 blocked · 16 open · 1 n/a.
 > Blocking: OQ-002, OQ-003, OQ-004. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -25,7 +25,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | 70-flows.md | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
 | 80-scaling-rules.md | SCALE | open | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
 | 90-media.md | MEDIA | open | Media capture, client-side conversion, upload before publication, privacy of unpublished media. |
-| 100-moderation.md | MOD | open | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |
+| [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |
 | 110-catalogue.md | CAT | open | Public catalogue, search, filters, favourites and the search inside favourites. |
 | 120-ratings.md | RATE | open | Binary like and dislike, and favourites as a separate action. |
 | 130-external-interfaces.md | EXT | open | Interfaces crossing the product boundary: the key file as a portable artefact, object storage, anything the client depends on. |
