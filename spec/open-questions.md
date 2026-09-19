@@ -3,6 +3,7 @@ slug: OQ
 status: open
 updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008]
+open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-005, OQ-007, OQ-008]
 ---
 
 # Open questions
@@ -15,13 +16,10 @@ The entries below were carried over from section 11 of the source draft, where
 the product owner marked them open. Classification and proposals are the spec
 author's; the product owner may reclassify any of them.
 
-### OQ-001 — Target platform (define before MVP)
-Unresolved: whether the product is a web application, a native mobile
-application, a PWA, or a combination.
-Proposal (not a decision): PWA, because timers and offline recipe viewing while
-cooking need a resident surface, while store review would otherwise gate every
-release of a non-commercial project.
-Blocks: sections `flows`, `quality`, `accessibility`, `observability`.
+### OQ-001 — Target platform — RESOLVED 2026-09-20
+Resolved by the product owner: native Android application, no other client
+surface in the MVP. See CON-005 and
+[ADR 20260920 — native Android MVP](decisions/20260920-native-android-mvp.md).
 
 ### OQ-002 — Key file format and cryptography (define before MVP)
 Unresolved: the format of the account key file, the cryptography behind it, and
@@ -38,15 +36,18 @@ media items per recipe, total storage per account.
 Proposal (not a decision): images re-encoded client-side and rejected above
 2 MB after re-encoding; video limited to 30 seconds and 15 MB; at most 1 cover
 image plus 1 media item per step.
+Bounded by: CON-002 (USD 20 per month). Any limit proposed here is only
+acceptable if its storage and egress cost at the expected load fits that ceiling.
 Blocks: section `media`.
 
 ### OQ-004 — Retention of inactive accounts and unpublished media (define before MVP)
 Unresolved: whether unpublished media and dormant accounts are deleted to
 contain storage cost, and after how long.
 Proposal (not a decision): unpublished media belonging to an account with no
-authenticated session for 12 months is deleted after an in-product warning is
-impossible to deliver (there is no contact channel), so deletion is announced
-only in the published terms.
+authenticated session for 12 months is deleted. There is no contact channel, so
+no warning can be delivered to the account holder and the rule can only be
+announced in the published terms.
+Bounded by: CON-002.
 Blocks: sections `retention`, `legal`.
 
 ### OQ-005 — Deleted parent recipe (define before MVP)
@@ -56,13 +57,14 @@ unavailable parent with the reason class (removed by moderation / deleted by
 author), and the chain stops there.
 Blocks: sections `provenance`, `entity-states`.
 
-### OQ-006 — Reporting published recipes (define after MVP)
-Unresolved: whether a reader can report a published recipe, and what happens to
-it while a report is open.
-Proposal (not a decision): no reporting in the MVP; the single moderator
-approves everything before it becomes visible, so post-moderation has no queue
-to feed it.
-Blocks: section `abuse`.
+### OQ-006 — Reporting published recipes — RESOLVED 2026-09-20
+Reporting is in the MVP, not after it: Google Play requires in-app reporting of
+content and of authors and in-app blocking of authors for apps with publicly
+accessible user-generated content (CON-006). A published recipe is hidden once
+three distinct accounts report it; blocking an author hides that author's
+recipes from the blocker's catalogue and search only. See
+[ADR 20260920 — report and block model](decisions/20260920-report-and-block-model.md).
+Requirements to be written in section `abuse`.
 
 ### OQ-007 — Deleting a recipe that has forks (define before MVP)
 Unresolved: whether a published recipe can be deleted at all, and what happens
