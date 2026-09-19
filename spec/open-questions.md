@@ -2,7 +2,7 @@
 slug: OQ
 status: open
 updated: 2026-09-20
-ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008]
+ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009]
 open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-005, OQ-007, OQ-008]
 ---
 
@@ -48,6 +48,9 @@ authenticated session for 12 months is deleted. There is no contact channel, so
 no warning can be delivered to the account holder and the rule can only be
 announced in the published terms.
 Bounded by: CON-002.
+Also covers accounts that never produced anything: an account is created on every
+first launch (ACT-001) and permanently consumes one nickname (DOM-001), so
+installs that are opened once and deleted accumulate as empty accounts.
 Blocks: sections `retention`, `legal`.
 
 ### OQ-005 — Deleted parent recipe (define before MVP)
@@ -80,3 +83,13 @@ Proposal (not a decision): a flag routes the recipe to the human moderator
 instead of rejecting it, so a false positive costs latency rather than a lost
 recipe.
 Blocks: section `moderation`.
+
+### OQ-009 — Nickname space exhaustion (define after MVP)
+Unresolved: what happens when no unused three-word combination remains, given
+that nicknames are globally unique, permanent, and consumed by every first
+launch (ACT-001, DOM-001).
+Proposal (not a decision): size the word lists so the combination count exceeds
+any plausible account count by a wide margin, and watch the consumed fraction as
+an operational signal (section `observability`) so the lists can be extended
+long before they run out.
+Blocks: nothing while the fraction consumed stays low.
