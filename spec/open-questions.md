@@ -2,8 +2,8 @@
 slug: OQ
 status: open
 updated: 2026-09-20
-ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009]
-open_before_mvp: [OQ-002, OQ-003, OQ-004]
+ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011]
+open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-010, OQ-011]
 ---
 
 # Open questions
@@ -88,3 +88,19 @@ any plausible account count by a wide margin, and watch the consumed fraction as
 an operational signal (section `observability`) so the lists can be extended
 long before they run out.
 Blocks: nothing while the fraction consumed stays low.
+
+### OQ-010 — Serving count below one (define before MVP)
+Unresolved: what the serving field shows when the computed count rounds to less
+than one — for example 50 g fixed against an authored 500 g in a 4-serving
+recipe, which is 0.4 servings.
+Proposal (not a decision): show "less than one serving" instead of a number, and
+keep the exact factor for every quantity as SCALE-002 requires.
+Blocks: SCALE-002.
+
+### OQ-011 — Bounds on requested servings and scale factor (define before MVP)
+Unresolved: the largest and smallest serving count a reader may request, and
+whether the scale factor is bounded.
+Proposal (not a decision): accept 1 to 100 servings; derive the factor freely
+from a fixed ingredient without bounding it, since SCALE-005 already prevents a
+quantity from vanishing.
+Blocks: section `scaling-rules`, section `flows`.
