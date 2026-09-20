@@ -2,7 +2,7 @@
 slug: FORK
 status: closed
 updated: 2026-09-20
-ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005]
+ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005, FORK-006, FORK-007]
 ---
 
 # Forking
@@ -29,31 +29,49 @@ reference to the parent.
   parent's in dictionary entry, qualifier or free-text name, unit type, unit,
   quantity, piece weight and divisibility,
   and in order.
-- Given a forked recipe, when its steps are opened, then their text, timers and
+- Given a forked recipe, when its steps are opened, then their text, timer and
   ingredient references match the parent's and resolve within the fork
   (DOM-007).
+- Given a parent whose step carries a timer, when the recipe is forked by
+  anyone, then the fork's timer holds the parent's duration.
+- Given a parent whose timer its author named by hand, when the recipe is forked
+  by anyone, then the fork's timer holds that same name, and the name stays as it
+  is however the fork's author rewrites the step (FLOW-016).
+- Given a parent whose timer its author never named, when the recipe is forked,
+  then the fork's timer has no name of its own either, so its name derives from
+  the fork's own step text — identical at creation, and following that text
+  wherever the fork's author takes it (FLOW-016).
+- Given a fork by an account other than the owner, when its timers are opened,
+  then their names travelled with them, because a timer's name says what the
+  wait is for and is part of the method the fork exists to carry, not of the
+  author's expression that FORK-002 withholds.
 - Given a forked recipe, when it is created, then its state is `private`, its
   owner is the forking account, and its parent is the forked recipe.
 
-**Verification:** fork a recipe covering all five unit types and compare field by
-field.
+**Verification:** fork a recipe covering all five unit types, one step with a
+named timer and one with an unnamed timer; compare field by field, then rewrite
+both steps in the fork and compare the two timers' names again.
 **Source:** draft section 4.1; user decision, 2026-09-20.
 
-### FORK-002 — What a fork never inherits
+### FORK-002 — A fork by another account carries no media and no description
 
-The system shall create a fork with no media and an empty description, and shall
-not copy the parent's ratings, favourites, reports or moderation history.
+When an account other than the owner forks a recipe, the system shall create the
+fork with no media and with an empty description.
 
 **Acceptance criteria**
-- Given a parent with a cover photo and photos on its steps, when it is forked,
-  then the fork has no media at all, in its draft and afterwards.
-- Given a parent with a description, when it is forked, then the fork's
-  description is empty.
-- Given a parent with likes, favourites and a moderation history, when it is
-  forked, then the fork has none of them and has never been submitted.
+- Given a parent with a cover photo and photos on its steps, when another
+  account forks it, then the fork has no media at all, in its draft and
+  afterwards.
+- Given a parent with a description, when another account forks it, then the
+  fork's description is empty.
+- Given such a fork, when its author wants a photograph, then they supply their
+  own or publish without one, because media is not part of the minimum
+  (DOM-006).
+- Given the owner forking their own recipe, when the fork is created, then this
+  requirement does not apply and FORK-007 governs.
 
-**Verification:** fork a recipe that has media, a description, ratings and a
-moderation history, and inspect the result.
+**Verification:** fork a recipe that has media and a description from a second
+account, and inspect the result.
 **Source:** user decision, 2026-09-20. See
 [ADR — a fork carries the method, not the expression](decisions/20260920-fork-carries-method-not-expression.md).
 
@@ -117,3 +135,66 @@ reader nothing and discloses that the author holds an unpublished recipe. The
 recipe's stored parent is unchanged, so immutability is untouched: what depends
 on the parent's state is the display, exactly as it already does in ST-007. See
 [ADR — provenance follows the parent's publication](decisions/20260920-provenance-follows-publication.md).
+
+### FORK-006 — No fork carries what readers gave the parent
+
+The system shall create every fork with none of the parent's ratings,
+favourites, reports or moderation history, whoever made the fork.
+
+**Acceptance criteria**
+- Given a parent with likes, dislikes, favourites and a moderation history, when
+  any account forks it, then the fork has none of them and has never been
+  submitted.
+- Given the owner forking their own recipe, when the fork is created, then it
+  too carries none of them, although it carries the parent's media and
+  description (FORK-007).
+- Given a parent that reports have hidden, when its owner forks it, then the
+  fork carries no report and is not hidden.
+
+**Verification:** fork a rated, favourited, reported and moderated recipe both as
+its owner and from a second account, and inspect both results.
+**Source:** user decision, 2026-09-20. These are readers' own acts and a
+moderator's record about one particular recipe; they are not content, so they
+are not what a fork copies, and the owner's own fork is no exception.
+
+### FORK-007 — A fork of one's own recipe carries everything else
+
+When the owner of a recipe forks that recipe, the system shall create the fork
+holding the parent's media and description as well as everything FORK-001
+requires.
+
+**Acceptance criteria**
+- Given the owner forks their own recipe that has a cover image and photos on
+  its steps, when the fork opens, then the same media is present and attached at
+  the same places — the cover with the title, each step's photo at its own step
+  (FLOW-026).
+- Given the owner forks their own recipe that has a video on a step, when the
+  fork opens, then the video is on that step.
+- Given the owner forks their own recipe with a description, when the fork
+  opens, then the description is present and identical.
+- Given that fork, when the owner deletes or replaces its media, then the
+  parent's media is untouched, because the parent is frozen (CON-003) and the two
+  are separate recipes.
+- Given a recipe the owner themselves forked from another account, when the owner
+  forks it again, then the fork carries the media and description the owner added
+  to it, which are the only ones it holds (FORK-002).
+- Given any state ST-004 allows the owner to fork from, when they fork, then this
+  requirement applies in that state too.
+- Given an account that is not the owner, when it forks the same recipe, then
+  FORK-002 governs and neither media nor description travels.
+
+**Verification:** fork an own published recipe carrying a cover, two step photos,
+a step video and a description; fork the same recipe from a second account;
+compare the two results field by field.
+**Source:** user decision, 2026-09-20. Publication is permanent (ST-001), so
+forking their own recipe is the only way an author can ever correct it — and
+under FORK-002 alone that correction cost them every photograph they had taken
+and every word they had written about the dish. What FORK-002 protects is one
+author's expression from another author; in an own fork there is no other author.
+See
+[ADR — an own fork carries everything](decisions/20260920-own-fork-carries-everything.md).
+**Note:** the fork holds Media entities of its own, owned by the same account
+(DOM-005), so the parent's media and the fork's are separable and each follows
+its own recipe's visibility. Whether the bytes behind them are stored once or
+twice is an engineering choice bounded by CON-002, and no requirement depends on
+the answer.

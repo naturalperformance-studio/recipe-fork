@@ -146,26 +146,49 @@ recipe with neither.
 **Source:** user decision, 2026-09-20: media is attached where the thing it belongs
 to is written, so a step's photo is never separated from its step.
 
-### FLOW-027 — A timer is attached inside the step it belongs to
+### FLOW-027 — A step carries one timer, attached inside it
 
-The system shall let the author attach a timer to a step and enter its duration
-there, and shall hold the timer as part of that step.
+The system shall let the author attach one timer to a step and enter its duration
+there, shall hold the timer as part of that step, and shall not offer a second
+timer on a step that already carries one.
 
 **Acceptance criteria**
-- Given a step reading `в духовку на 190 °C на 30 минут`, when the author attaches a
-  timer and enters 30 minutes, then the timer belongs to that step.
-- Given a step with a timer, when the author adds a second timer to the same step,
-  then both belong to it (FLOW-016).
-- Given a timer, when the author enters its label or leaves it empty, then FLOW-016
-  governs what the reader sees.
-- Given a step with a timer, when the step is deleted, then its timers are deleted
+- Given a step reading `в духовку на 190 °C на 30 минут`, when the author attaches
+  a timer and enters 30 minutes, then the timer belongs to that step.
+- Given a step that already carries a timer, when the author looks at it, then
+  attaching another is not offered at all (DOM-013).
+- Given two waits in sequence, when the author writes them, then they are two
+  steps with one timer each.
+- Given a timer being attached, when the author is asked for anything, then a
+  duration is the only thing required of them.
+- Given a timer with no name of its own, when the author looks at it, then the
+  name it will announce itself by is shown, derived from the step (FLOW-016), and
+  correcting it by hand is offered there.
+- Given the author corrects that name, when they leave it, then the timer holds
+  what they wrote and stops following the step's text.
+- Given a name the author corrected, when they clear it, then the timer's name
+  follows the step's text again and nothing of what they had typed is kept.
+- Given a name the author is typing, when it passes 60 characters, then FLOW-028
+  governs — it is marked on leaving the field and refused at submission
+  (DOM-012), never refused while typing.
+- Given a step with a timer, when the step is deleted, then its timer is deleted
   with it.
+- Given a step with a timer, when the step is moved, then the timer moves with it
+  (FLOW-025).
 - Given a duration the author has not entered, when the recipe is saved, then the
   timer is not stored, because a timer without a duration is not a timer.
 
-**Verification:** attach one timer and two timers to a step, delete the step, and
-save a recipe with an unfinished timer.
-**Source:** user decision, 2026-09-20.
+**Verification:** attach a timer, try to attach a second through every path the
+editor offers, delete the step, move the step, and save a recipe with an
+unfinished timer.
+**Source:** user decision, 2026-09-20. One timer per step, because FLOW-016 names
+a timer by its step and two timers on one step would carry one name between them;
+and two waits in sequence are already two steps in the kitchen. The name is shown
+rather than asked for, and corrected rather than filled in, so that the author who
+is satisfied with the derived name does nothing at all.
+**Note:** what the author is told about the first 60 characters of the step
+mattering is in `author-guidance`, not here — this requirement is what the editor
+accepts, that one is what the editor teaches.
 
 ### FLOW-028 — The minimum and the maximum are shown on leaving a field, as a warning
 
@@ -228,8 +251,12 @@ which remain the author's own, following FORK-001 and FORK-002.
   the ingredients and the steps, then these are shown as the parts a fork inherits
   (FORK-001).
 - Given the editor, when the author looks at the description and the media, then
-  these are shown as staying with the author and not travelling to a fork
+  these are shown as staying with the author when anyone else forks the recipe
   (FORK-002).
+- Given the same marking, when the author reads it, then it also states that a
+  fork the author makes of their own recipe carries the description and the media
+  too (FORK-007), so the author is not left believing a correction of their own
+  recipe would cost them their photographs.
 - Given that marking, when the author reads it, then it states what a fork does, not
   whether forking can be prevented — it cannot (FORK-002).
 - Given a recipe opened for editing after a fork was made of it, when the author

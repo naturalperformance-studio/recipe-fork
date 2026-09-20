@@ -105,32 +105,63 @@ point of the product, so a second fork is never forbidden; an untouched fork,
 however, is the signature of a misplaced tap and collects as rubbish in the
 author's own list.
 
-### FLOW-016 — Several timers run at once, each named by what it is for
+### FLOW-016 — Several timers run at once, each named by its step unless the author says otherwise
 
 The system shall allow the timers of several steps to run at the same time, and
-shall identify each one by what it is for wherever it is shown or announced.
+shall identify each one wherever it is shown or announced by the name its author
+gave it, or, where the author gave none, by the first 60 characters of its own
+step's text.
 
 **Acceptance criteria**
 - Given two steps that carry timers, when the reader starts both, then both run
   and each is shown running on its own step.
 - Given two running timers, when one ends, then it announces itself and the
   other keeps running.
-- Given a timer whose author gave it a label, when it ends, then the
-  announcement uses that label, so the reader knows whether the sauce is done or
-  the chicken is to come out.
-- Given a timer with no label, when it ends, then the announcement names the
-  recipe and the step's position.
+- Given a timer whose author gave it no name, when it ends, then the
+  announcement carries the recipe's title and the first 60 characters of its
+  step's text, cut at a word boundary, with an ellipsis where the text was
+  longer.
+- Given a timer on a step of 60 characters or fewer and with no name of its own,
+  when it ends, then the step's whole text is in the announcement and nothing
+  marks it as cut.
+- Given a timer whose author named it, when it ends, then the announcement
+  carries the recipe's title and that name, and no part of the step's text.
+- Given a timer whose author named it, when its step's text is later changed,
+  then the name is unchanged, because it was overridden and no longer follows the
+  step.
+- Given a timer whose author gave it no name, when its step's text is changed,
+  then what the announcement will say changes with it, because the name is
+  derived and not stored.
+- Given a step whose first 60 characters hold an ingredient reference, when a
+  derived name is built from it, then the reference reads there exactly as it
+  reads on the card, at the scale the reader is using (FLOW-032).
 - Given several running timers, when the reader opens the recipe, then each
-  shows its own remaining time on its own step.
+  shows its own remaining time on its own step, under the same name the
+  announcement would use.
 - Given several running timers, when the reader leaves the application and
   returns, then all of them still run by the clock (FLOW-012).
+- Given two timers of one recipe that end up with the same name, whether derived
+  or given, when both end, then the two announcements read alike and the product
+  does nothing to tell them apart.
 
-**Verification:** start three timers on one recipe, leave the application, and
-confirm each announcement identifies itself and does not disturb the others.
+**Verification:** start four timers in one recipe — one on a short step, one on a
+step longer than 60 characters, one on a step carrying an ingredient reference,
+and one the author named by hand — leave the application, and compare every
+announcement against the step text and the given name.
 **Source:** user decision, 2026-09-20. A timer that fires without saying what it
 is for makes the cook guess between the oven and the pan, which is the moment
-the timer existed to prevent. The label is the `Timer.label` already in the
-domain model.
+the timer existed to prevent. The default name is the step's own text: the author
+has already written `курица в духовку на 30 минут`, and asking them to type it
+again would be asking twice for one fact. The name is overridable because the
+opening of a step is not always the point of the wait, and an author who can see
+that is the one who should fix it. The step's position is never used, because a
+number tells the cook nothing about which pan. See
+[ADR — a timer is named by its step](../decisions/20260920-timer-named-by-its-step.md).
+**Note:** 60 characters is the product owner's number, set so that the line
+survives a notification without the operating system deciding where to cut it. It
+bounds a name the author types as well (DOM-012). That the first 60 characters
+carry the weight, and that the name can be corrected, is taught in
+`author-guidance` rather than left to be discovered.
 
 ### FLOW-017 — The reader's usual serving count opens every recipe
 

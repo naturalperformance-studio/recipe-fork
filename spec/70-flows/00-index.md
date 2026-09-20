@@ -33,12 +33,10 @@ identifiers did not change on the split and never will.
 
 ## Open
 
-- For the editor flow: whether a recipe carrying more than one timer must label
-  them, since FLOW-016 falls back to a step's position when a label is missing.
-- For the editor flow: the form the divisibility override takes, given FLOW-023
-  admits only three fields — a secondary control on the row, or somewhere else.
 - The exact trigger character of FLOW-031, which is a presentation choice and is
   settled with the editor's visual design, not here.
 - Whether a step may link to another recipe is OQ-024.
-- The rest of the screens: catalogue, favourites, the moderator's queue, the key
-  file.
+- The rest of the screens: catalogue, favourites, the moderator's queue.
+
+The key file and first launch belong to `auth`, not here. What the editor teaches
+its author belongs to `author-guidance`, not here.

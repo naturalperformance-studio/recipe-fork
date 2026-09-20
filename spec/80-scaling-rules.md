@@ -45,10 +45,18 @@ as a whole number (SCALE-002, SCALE-008).
 
 Divisibility of a `piece` ingredient comes from its entry in the ingredient
 dictionary (DOM: IngredientEntry — egg, garlic clove, bay leaf and so on are
-indivisible), which the author may override per ingredient. An ingredient the
-author typed as free text has no entry (DOM-009), so its author sets
-divisibility. The dictionary holds divisibility only. It holds no weights:
-DOM-003 stands.
+indivisible), and the author does not override it: the entry decides for every
+ingredient that names it. An ingredient the author typed as free text has no
+entry (DOM-009), so there its author sets divisibility, which is the one place a
+person supplies the flag. The dictionary holds divisibility only. It holds no
+weights: DOM-003 stands.
+
+A recipe that needs half of something the dictionary calls indivisible has no way
+to say so, and that cost is accepted: divisibility is a property of the
+ingredient rather than of the recipe, a per-recipe override is a fourth control
+on a row that has three fields (FLOW-023), and an entry whose flag is wrong is
+one the product owner corrects once for everybody instead of every author
+correcting it again.
 
 ### SCALE-001 — Scaling by serving count
 

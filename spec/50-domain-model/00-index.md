@@ -83,7 +83,7 @@ The account carries no field that identifies the person behind it (CON-001).
 | `unit` | unit | The concrete unit within the type, e.g. `g` within `exact`. Absent for `taste_unmeasured`. |
 | `quantity` | number or none | Absent exactly when `unit_type` is `taste_unmeasured`. |
 | `piece_weight` | number or none | Optional, `piece` only: the mass of one piece, used to keep scaling smooth. |
-| `divisible` | boolean or none | `piece` only. Taken from the entry where there is one, set by the author where there is not, and overridable by the author in both cases (`scaling-rules`). |
+| `divisible` | boolean or none | `piece` only. Taken from the entry where there is one, and set by the author exactly where there is none, because a free-text ingredient has no entry to take it from (DOM-009). The author never overrides an entry's value (`scaling-rules`). |
 
 What is displayed for an ingredient is its entry's label together with its
 qualifier, or its `free_text_name`. Which of the two parts comes first is a
@@ -96,7 +96,7 @@ presentation choice and is not specified here.
 | `entry_id` | identifier | |
 | `label` | text | Localised; see `localization`. |
 | `parent` | IngredientEntry or none | The broader entry this one belongs to, e.g. `крылышки` under `курица`. An entry that is itself a parent has none: the dictionary is two levels deep at most (DOM-010). |
-| `divisible` | boolean | `piece` divisibility for ingredients of this entry, which the author may override per ingredient (`scaling-rules`). |
+| `divisible` | boolean | `piece` divisibility for every ingredient of this entry. The author does not override it (`scaling-rules`). |
 | `comparison_factors` | unit → positive number | What one of that unit counts for on this entry's own comparison scale. Absent for a unit the product owner has not filled in. Used for ordering only, never displayed, never scaled with (DOM-011). |
 
 The ingredient dictionary is maintained by the product owner, exactly as the tag
@@ -124,16 +124,26 @@ DOM-011 is what keeps it from ever becoming anything else.
 | Field | Type | Notes |
 |---|---|---|
 | `position` | integer | Order within the recipe. |
-| `text` | text | May contain ingredient references. |
+| `text` | text | May contain ingredient references. It is also what names the step's timer (FLOW-016). |
 | `ingredient_references` | list | Each points at an Ingredient of the same recipe and at a position in `text`. |
-| `timers` | list of Timer | |
+| `timer` | Timer or none | At most one (DOM-013). |
+
+A step has no title. What identifies it to a reader is its own text, and that is
+also what a timer on it is announced by, which is why no separate name exists in
+either entity.
 
 ### Timer
 
 | Field | Type | Notes |
 |---|---|---|
 | `duration` | duration | |
-| `label` | text or none | |
+| `label` | text or none | The author's own name for the timer, overriding the name derived from the step. Absent unless the author set one; at most 60 characters (DOM-012). |
+
+A timer's name is derived from the text of the step it belongs to and is not
+stored, unless the author overrode it, in which case `label` holds what they
+wrote (FLOW-016). A step holds at most one timer (DOM-013), so a derived name is
+never ambiguous. `label` absent is not "no name": it means the name follows the
+step.
 
 ### Media
 
@@ -198,4 +208,4 @@ split and never will.
 
 | Part | What is in it | Requirements |
 |---|---|---|
-| [10-invariants.md](10-invariants.md) | Invariants over the entities | DOM-001–DOM-012 |
+| [10-invariants.md](10-invariants.md) | Invariants over the entities | DOM-001–DOM-013 |

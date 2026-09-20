@@ -17,6 +17,14 @@ names its parent. It never inherits media or the description, in its draft or
 afterwards. There is no per-recipe flag that forbids forking or forbids
 publishing forks.
 
+**Narrowed 2026-09-20** by
+[ADR — an own fork carries everything](20260920-own-fork-carries-everything.md):
+the rule above governs a fork made by an account other than the owner. An owner
+forking their own recipe carries the media and the description too, because the
+reasoning below is about protecting one author's expression from another and
+there is no other author in that case. Ratings, favourites, reports and
+moderation history are withheld from every fork without exception (FORK-006).
+
 **Consequences:**
 - A published fork never redistributes a photograph or a description its author
   did not write, so the protected material is not multiplied by the fork

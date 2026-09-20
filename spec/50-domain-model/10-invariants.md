@@ -3,7 +3,7 @@ slug: DOM
 status: closed
 updated: 2026-09-20
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007,
-  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012]
+  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012, DOM-013]
 ---
 
 # Invariants over the entities
@@ -233,9 +233,9 @@ key expresses nothing to anybody. See
 ### DOM-012 — Submission maximum
 
 If a recipe holds more than 50 ingredients, more than 50 steps, a step of more than
-2 000 characters, a title of more than 120 characters or a description of more than
-2 000 characters, then the system shall refuse to accept it for moderation and shall
-name the part that is over its limit.
+2 000 characters, a title of more than 120 characters, a description of more than
+2 000 characters or a timer name of more than 60 characters, then the system shall
+refuse to accept it for moderation and shall name the part that is over its limit.
 
 **Acceptance criteria**
 - Given a recipe with 50 ingredients and 50 steps, when it is submitted, then it is
@@ -246,6 +246,11 @@ name the part that is over its limit.
   refused and that step is named.
 - Given a recipe over two limits at once, when it is submitted, then both are named,
   so the author does not discover them one at a time.
+- Given a timer name of 61 characters, when the recipe is submitted, then submission
+  is refused and that timer is named.
+- Given a timer whose name the author never set, when the recipe is submitted, then
+  no timer-name limit applies to it, because its name is derived from a step that has
+  its own limit (FLOW-016).
 - Given a recipe within every limit, when it is submitted, then no limit is mentioned
   anywhere.
 - Given a recipe over a limit, when the author keeps editing it, then editing is not
@@ -253,9 +258,38 @@ name the part that is over its limit.
 
 **Verification:** submit a recipe at each limit exactly, one over each limit, and one
 over two at once.
-**Source:** user decision, 2026-09-20. The counts are set where no real recipe reaches
+**Source:** user decision, 2026-09-20; the timer-name limit added the same day with
+the manual override. 60 characters is the same number FLOW-016 cuts a derived name
+at, because both occupy one line of one notification and a longer name would be cut
+in the same place. The counts are set where no real recipe reaches
 them — a demanding one runs to about 20 steps and 30 ingredients — while a step and a
 description get 2 000 characters each, because that is where an author actually writes.
 Without any cap, a single submission could be a recipe of thousands of steps, which
 the one moderator has to read (`abuse`) and every device has to render. These are the
 functional limits; `quality` holds the measurable thresholds that refer to them.
+
+### DOM-013 — A step carries at most one timer
+
+If a step already carries a timer, then the system shall refuse to attach a
+second one to it.
+
+**Acceptance criteria**
+- Given a step with no timer, when a timer is attached to it, then it is
+  accepted.
+- Given a step that already carries a timer, when another is attached, then the
+  attachment is refused and the step still carries exactly one.
+- Given two waits in sequence — thirty minutes covered, then fifteen uncovered —
+  when the author writes them, then they are two steps with one timer each, and
+  nothing in the product joins them back together.
+- Given a step whose timer the author deleted, when a new timer is attached,
+  then it is accepted.
+- Given a recipe whose steps each carry a timer, when the reader starts several
+  of them, then all of them run at once (FLOW-016).
+
+**Verification:** attach a second timer to a step through every path the editor
+offers, and confirm each is refused.
+**Source:** user decision, 2026-09-20. A timer is identified by the text of the
+step it belongs to and by nothing else (FLOW-016), so two timers on one step
+would be two things carrying one name. Two waits in sequence are already two
+steps in a kitchen, which is how a cook says them aloud. See
+[ADR — a timer is named by its step](../decisions/20260920-timer-named-by-its-step.md).
