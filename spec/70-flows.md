@@ -4,7 +4,7 @@ status: open
 updated: 2026-09-20
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007,
   FLOW-008, FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-013, FLOW-014,
-  FLOW-015]
+  FLOW-015, FLOW-016, FLOW-017]
 ---
 
 # Flows and screens
@@ -430,7 +430,65 @@ point of the product, so a second fork is never forbidden; an untouched fork,
 however, is the signature of a misplaced tap and collects as rubbish in the
 author's own list.
 
+### FLOW-016 — Several timers run at once, each named by what it is for
+
+The system shall allow the timers of several steps to run at the same time, and
+shall identify each one by what it is for wherever it is shown or announced.
+
+**Acceptance criteria**
+- Given two steps that carry timers, when the reader starts both, then both run
+  and each is shown running on its own step.
+- Given two running timers, when one ends, then it announces itself and the
+  other keeps running.
+- Given a timer whose author gave it a label, when it ends, then the
+  announcement uses that label, so the reader knows whether the sauce is done or
+  the chicken is to come out.
+- Given a timer with no label, when it ends, then the announcement names the
+  recipe and the step's position.
+- Given several running timers, when the reader opens the recipe, then each
+  shows its own remaining time on its own step.
+- Given several running timers, when the reader leaves the application and
+  returns, then all of them still run by the clock (FLOW-012).
+
+**Verification:** start three timers on one recipe, leave the application, and
+confirm each announcement identifies itself and does not disturb the others.
+**Source:** user decision, 2026-09-20. A timer that fires without saying what it
+is for makes the cook guess between the oven and the pan, which is the moment
+the timer existed to prevent. The label is the `Timer.label` already in the
+domain model.
+
+### FLOW-017 — The reader's usual serving count opens every recipe
+
+Where the reader has set the serving count they usually cook for, the system
+shall open every recipe at that count.
+
+**Acceptance criteria**
+- Given the setting holds 2, when the reader opens a recipe authored for 4, then
+  it opens showing 2 servings and every changed quantity carries its derived
+  marking (SCALE-004).
+- Given the setting has never been set, when the reader opens a recipe, then it
+  opens at the count its author wrote and nothing is marked as derived.
+- Given the setting holds a value, when the reader changes the count while
+  reading one recipe, then the setting itself is unchanged.
+- Given the setting is being chosen, when the reader picks a value, then the
+  values available are the ones SCALE-010 and SCALE-011 allow for a requested
+  count.
+- Given a recipe opened at the reader's count, when the reader returns it to the
+  authored count, then nothing is marked as derived (SCALE-001).
+
+**Verification:** set the count to 2 and to 12, open recipes authored for 1, 4
+and 20, and compare against the authored values and the derived markings.
+**Source:** user decision, 2026-09-20. A person's household does not change from
+one evening to the next, so recomputing the same recipe for the same number of
+people every time is work the product can do once. The cost is deliberate: with
+the setting in use almost every recipe opens in a derived state, and the numbers
+the author wrote are not the numbers the reader meets first — which is why the
+derived markings of SCALE-004 carry the weight they do.
+
 ## Open
 
-Nothing in the offline and synchronisation block. The screens themselves are
-still to be written.
+- Whether a serving count the reader last used on one recipe outranks their
+  usual count when that recipe is opened again, or the usual count always wins.
+- For the editor flow: whether a recipe carrying more than one timer must label
+  them, since FLOW-016 falls back to a step's position when a label is missing.
+- The rest of the screens.
