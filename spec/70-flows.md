@@ -480,15 +480,28 @@ shall open every recipe at that count.
   count.
 - Given a recipe opened at the reader's count, when the reader returns it to the
   authored count, then nothing is marked as derived (SCALE-001).
+- Given a reader who scaled one recipe to a different count and left it, when
+  they open that recipe again in a later session, then it opens at their usual
+  count and not at the count they used last time.
+- Given a reader who scaled a recipe and stays in the application, when they
+  leave the card and come back to it, then the count they set is still there.
 
 **Verification:** set the count to 2 and to 12, open recipes authored for 1, 4
 and 20, and compare against the authored values and the derived markings.
 **Source:** user decision, 2026-09-20. A person's household does not change from
 one evening to the next, so recomputing the same recipe for the same number of
-people every time is work the product can do once. The cost is deliberate: with
-the setting in use almost every recipe opens in a derived state, and the numbers
-the author wrote are not the numbers the reader meets first — which is why the
-derived markings of SCALE-004 carry the weight they do.
+people every time is work the product can do once. The usual count outranks the
+count last used on a particular recipe: a reader who scaled a recipe for twelve
+guests one evening is unlikely to have twelve guests the next time they open it,
+and the household is the durable fact. The cost is deliberate: with the setting
+in use almost every recipe opens in a derived state, and the numbers the author
+wrote are not the numbers the reader meets first — which is why the derived
+markings of SCALE-004 carry the weight they do.
+**Note:** a count the reader set survives for as long as the application keeps
+running, including leaving the card and returning to it; a fresh start of the
+application opens every recipe at the usual count again. This boundary follows
+the reason for the decision — a week later the guests are gone, ten minutes
+later the reader is still cooking the same meal.
 
 ### FLOW-018 — A flagged recipe says what it descends from
 
@@ -564,10 +577,30 @@ watch the quantities through the whole opening.
 then replaced is a number a reader can act on before it changes, which in this
 product is a wrong amount of an ingredient.
 
+### FLOW-021 — Starting a timer that is already running asks first
+
+If the reader starts a timer on a step whose timer is already running, then the
+system shall state that it is already running and ask whether to restart it, and
+shall restart it from its full duration only on confirmation.
+
+**Acceptance criteria**
+- Given a running timer, when the reader starts it again, then they are told it
+  is running and are asked whether to restart it.
+- Given that question, when the reader confirms, then the timer restarts from
+  its full duration and the time it had already counted is gone.
+- Given that question, when the reader declines, then the timer keeps running
+  with the time it had.
+- Given two steps with running timers, when one is restarted, then the other is
+  untouched (FLOW-016).
+- Given a timer that has already ended, when the reader starts it again, then it
+  starts with no question.
+
+**Verification:** start a timer, wait, start it again and take both branches.
+**Source:** user decision, 2026-09-20. Restarting is what the reader almost
+always means, and losing the count silently is what they never mean.
+
 ## Open
 
-- Whether a serving count the reader last used on one recipe outranks their
-  usual count when that recipe is opened again, or the usual count always wins.
 - For the editor flow: whether a recipe carrying more than one timer must label
   them, since FLOW-016 falls back to a step's position when a label is missing.
 - The rest of the screens.
