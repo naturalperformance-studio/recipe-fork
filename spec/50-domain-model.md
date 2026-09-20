@@ -132,7 +132,7 @@ create one.
 | `report_id` | identifier | |
 | `target` | Recipe or Account | |
 | `reporter` | Account | |
-| `category` | category value | The value set is specified in section `abuse`. |
+| `category` | `foreign_content` or `health_risk` | ABUSE-002. |
 | `created_at` | timestamp | |
 
 ### Rating, Favourite, Block
@@ -276,7 +276,6 @@ surface for the single moderator to check, and would fragment search.
 
 These are named so their absence is visible, not an oversight.
 
-- Report categories — the value set is decided in section `abuse`.
 - Whether a rating can be changed or withdrawn — section `ratings`.
 - Media size, duration and count limits — OQ-003.
 - What a fork shows when its parent is gone — OQ-005, OQ-007.

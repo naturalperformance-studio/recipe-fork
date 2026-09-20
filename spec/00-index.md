@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 3 questions must be answered before MVP.**
-> Sections: 6 closed · 0 blocked · 16 open · 1 n/a.
+> Sections: 7 closed · 0 blocked · 15 open · 1 n/a.
 > Blocking: OQ-002, OQ-003, OQ-004. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -32,7 +32,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | 140-quality.md | QUAL | open | Quality attributes with a metric, a measurement method and a threshold each. |
 | 150-retention.md | RET | open | What is kept, for how long, what deletion means, and what account deletion does to published content. |
 | 160-localization.md | L10N | open | String externalisation, Russian-only first release, language-dependent search and filtering. |
-| 170-abuse.md | ABUSE | open | Flooding, mass publication, and what a single moderator can absorb. |
+| [170-abuse.md](170-abuse.md) | ABUSE | closed | Flooding, mass publication, and what a single moderator can absorb. |
 | 180-analytics.md | ANL | open | What the product owner wants to learn about usage, and what may be measured without personal data. |
 | 190-legal.md | LEG | open | Licence of recipe content, attribution on fork, terms of use, responsibility for user-generated content. |
 | 200-accessibility.md | A11Y | open | Accessibility commitments and their verification. |

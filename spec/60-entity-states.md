@@ -40,8 +40,8 @@ it is a property of that link (`active`), not of the recipe.
 | `link_shared` | owner publishes | owner not publishing-banned | `published` | Enters the catalogue immediately, with no new moderation: the content is frozen and is byte-for-byte what was approved. |
 | `link_shared` | owner revokes the link | — | `link_shared` | Every issued link becomes inactive; the recipe stops opening for its holders. |
 | `link_shared` | owner issues a new link | — | `link_shared` | A new active link; previously revoked links stay inactive; no new moderation. |
-| `link_shared` | third distinct account reports it | 3 distinct reporters | `reported_hidden` | Hidden from link holders; moderator queue entry; owner told it is hidden, with no further detail. |
-| `published` | third distinct account reports it | 3 distinct reporters | `reported_hidden` | Hidden from the catalogue, search and direct access; moderator queue entry; owner told it is hidden, with no further detail. |
+| `link_shared` | third counted report is recorded | 3 distinct reporters, each with at least one published recipe (ABUSE-003) | `reported_hidden` | Hidden from link holders; moderator queue entry; owner told it is hidden, with no further detail. |
+| `published` | third counted report is recorded | 3 distinct reporters, each with at least one published recipe (ABUSE-003) | `reported_hidden` | Hidden from the catalogue, search and direct access; moderator queue entry; owner told it is hidden, with no further detail. |
 | `reported_hidden` | moderator dismisses the reports | actor is a moderator | previous state (`published` or `link_shared`) | Reports closed; visibility restored. |
 | `reported_hidden` | moderator upholds the reports | actor is a moderator | `removed` | |
 | `published`, `link_shared` | moderator removes it | actor is a moderator | `removed` | Recipe leaves the catalogue, search and every direct path; forks show their parent as unavailable. |
@@ -156,17 +156,19 @@ serving that recipe to every holder of a previously issued link.
 **Verification:** two-account functional test across revoke and re-issue.
 **Source:** user decision, 2026-09-20.
 
-### ST-006 — Three distinct reports hide a recipe
+### ST-006 — Three counted reports hide a recipe
 
-When three distinct accounts have reported the same recipe, the system shall
-hide it from every account except its owner and moderators, and shall place it
-in the moderation queue.
+When three distinct accounts that each have at least one published recipe have
+reported the same recipe, the system shall hide it from every account except its
+owner and moderators, and shall place it in the moderation queue.
 
 **Acceptance criteria**
-- Given a published recipe with two reports from two accounts, when the catalogue
-  is searched, then it is still returned.
-- Given a third report from a third account, when the catalogue is searched,
-  then it is not returned, and it cannot be opened directly.
+- Given a published recipe with two counted reports, when the catalogue is
+  searched, then it is still returned.
+- Given a third counted report, when the catalogue is searched, then it is not
+  returned, and it cannot be opened directly.
+- Given three reports from accounts with no published recipe, when the threshold
+  is evaluated, then the recipe is not hidden (ABUSE-003).
 - Given the same account reporting the same recipe repeatedly, when the reports
   are counted, then they count once.
 - Given the recipe is hidden, when its owner opens it, then the owner is told it

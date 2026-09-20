@@ -11,9 +11,13 @@ product has no messaging or comments, so blocking can only act on visibility of
 content.
 
 **Decision:**
-- A published recipe is hidden from everyone except its owner once three
-  distinct accounts have reported it, and stays hidden until the moderator
-  decides. One account counts once per recipe.
+- Any account may report a recipe or an author, in one of two categories: use of
+  someone else's content, or danger to health. These are the two classes a
+  moderator cannot detect before publication.
+- A published recipe is hidden from everyone except its owner once three distinct
+  accounts **that each have at least one published recipe** have reported it, and
+  stays hidden until the moderator decides. One account counts once per recipe.
+  Reports from other accounts reach the moderator but hide nothing.
 - Blocking an author removes that author's recipes from the blocker's catalogue
   browsing and search results only. The recipes remain reachable for the blocker
   by direct link and as the named parent of a fork.
@@ -45,6 +49,11 @@ content.
   the single moderator.
 - *No auto-hiding at all.* Rejected: it leaves reported content visible for up to
   a week, against the policy expectation of timely action.
+- *Only accounts with a published recipe may report at all.* Rejected: the owner
+  of a photograph used without permission is almost never a user of this product,
+  so that rule would close the channel to the very population that detects the
+  category it exists for, and would leave Google Play's reporting obligation
+  unmet for ordinary readers.
 - *Blocking hides the author's recipes everywhere, including by direct link and
   as a fork parent.* Rejected: it breaks provenance chains and favourites for
   reasons invisible to the user.
