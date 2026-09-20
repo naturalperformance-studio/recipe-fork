@@ -1,9 +1,9 @@
 ---
 slug: EXT
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [EXT-001, EXT-002, EXT-003, EXT-004, EXT-005, EXT-006, EXT-007, EXT-008,
-  EXT-009, EXT-010]
+  EXT-009, EXT-010, EXT-011, EXT-012]
 ---
 
 # External interfaces
@@ -15,10 +15,13 @@ dependency may degrade the product, and none may stop it from opening.
 Four services are outside and are depended upon — a device attestation service,
 an object storage service, the distribution channel, and one outbound alerting
 channel that carries operational numbers to the product's operator
-([`observability`](210-observability.md)). Two artefacts cross the
-boundary in the user's own hands — the account key and a private link. One surface
-exists outside the application because the distribution channel requires it — the
-account deletion page.
+([`observability`](210-observability.md)). One observer is outside and is
+depended upon by nothing: an availability probe that calls the product and is
+never called by it (EXT-012). Two artefacts cross the boundary in the user's own
+hands — the account key and a private link. One surface exists outside the
+application because the distribution channel requires it — the account deletion
+page — and one endpoint exists for the probe to call (EXT-011), which no user
+ever reaches.
 
 Prices and limits that were checked on 2026-09-20 and that the decisions rest on:
 object storage without egress charges at USD 0.015 per GB-month
@@ -33,8 +36,9 @@ six months old.
 
 The system shall depend on no external network service other than a device
 attestation service, an object storage service, the distribution channel and one
-outbound alerting channel, and shall treat the addition of another as a product
-decision recorded as an ADR.
+outbound alerting channel, shall be observed from outside by one availability
+probe it never calls (EXT-012), and shall treat the addition of another as a
+product decision recorded as an ADR.
 
 **Acceptance criteria**
 - Given the released application, when its network destinations are enumerated,
@@ -45,13 +49,18 @@ decision recorded as an ADR.
   product (OBS-005).
 - Given any screen, when it is used, then no content is fetched from a service
   not on that list.
+- Given the availability probe, when the product's outbound destinations are
+  enumerated, then the probe is not among them, because the probe calls the
+  product and the product never calls the probe.
 - Given a proposed dependency not on the list, when it is considered, then it
   reaches the product only through a recorded decision.
 
 **Verification:** traffic capture of a full session — first launch, authoring,
 publication, cooking — checked against the list.
 **Source:** user decision, 2026-09-20; widened to four on 2026-09-21 by
-[ADR — one outbound alerting channel](decisions/20260921-alerting-channel.md).
+[ADR — one outbound alerting channel](decisions/20260921-alerting-channel.md),
+and given an inbound observer the same day by
+[ADR — availability is measured from outside](decisions/20260921-availability-is-measured-from-outside.md).
 The list is closed rather than open because every addition is a place where
 content or an identifier can leave, and CON-001 is only as strong as the shortest
 list.
@@ -166,7 +175,7 @@ as proof, and shall delete the account immediately once the key matches.
 - Given a deletion key that matches nothing, when it is submitted, then the page
   says so and deletes nothing.
 - Given repeated submissions from one source, when they continue, then the page
-  limits the rate at which keys may be tried (AUTH-017).
+  limits the rate at which keys may be tried to the figure of QUAL-007.
 - Given the page, when it is read by someone holding no deletion key, then it
   discloses nothing about any account, any nickname or any recipe.
 
@@ -262,3 +271,61 @@ uses for that recipe's media.
 **Source:** CON-001, NGOAL-006, and the decision of 2026-09-20 to gate accounts
 by a device rather than by an identity precisely so that nothing personal exists
 to send.
+
+### EXT-011 — The health endpoint answers liveness and nothing else
+
+The system shall expose one endpoint whose only answer is whether the server can
+serve requests, shall require no account to reach it, and shall disclose nothing
+else through it.
+
+**Acceptance criteria**
+- Given the endpoint, when it is requested by anyone at all, then the answer
+  carries no count, no version, no identifier, no configuration value and no
+  detail of any error.
+- Given the server is running but cannot reach the store that holds recipes, when
+  the endpoint is requested, then it does not answer as healthy, so that an
+  answer cannot be hollow.
+- Given the endpoint, when it is requested at any rate, then the work of
+  answering it does not grow with the number of stored recipes, accounts or
+  media objects.
+- Given the application, when its screens are enumerated, then none of them
+  reaches or names the endpoint; it exists for EXT-012 and for nothing else.
+
+**Verification:** request the endpoint as an anonymous client and check the
+answer against the list of what it may not carry; block the product's own store
+and confirm the endpoint stops answering as healthy.
+**Source:** user decision, 2026-09-21. See
+[ADR — availability is measured from outside](decisions/20260921-availability-is-measured-from-outside.md).
+
+### EXT-012 — Availability is observed from outside the product
+
+The availability of the system shall be measured by a probe outside it, which
+requests the endpoint of EXT-011 at a fixed interval no longer than five
+minutes, records every result, and notifies the product's operator by its own
+channel when the endpoint stops answering and again when it resumes.
+
+**Acceptance criteria**
+- Given the product is stopped entirely, when the probe next requests the
+  endpoint, then the operator is notified by the probe's channel and not by the
+  alerting channel of OBS-004, which sends nothing because there is nothing
+  running to send it.
+- Given a calendar month, when availability is computed for QUAL-006, then it is
+  computed from the probe's own records and from nothing the product reported
+  about itself.
+- Given the probe is unreachable, misconfigured or stopped, when the product is
+  used, then no behaviour of the product changes and no function a user reaches
+  depends on it.
+- Given the probe's notification, when what it carries is inspected, then it
+  carries only that the endpoint stopped or resumed answering, and nothing about
+  any recipe, any account or any nickname.
+- Given the probe reports the product down while the product is answering other
+  clients, when the month is computed, then that period counts as unavailable,
+  because the probe's record is the definition and not an estimate of it.
+
+**Verification:** stop the product and confirm the probe notifies within its
+interval; block the probe and confirm a full session — reading, authoring,
+publication — is unaffected.
+**Source:** user decision, 2026-09-21. The interval is bounded rather than fixed
+because five minutes is already finer than the 36 hours a month that QUAL-006
+allows; a tighter interval buys resolution nobody needs and more chances for the
+probe to be wrong about its own network path.

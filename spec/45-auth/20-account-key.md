@@ -1,7 +1,7 @@
 ---
 slug: AUTH
 status: blocked
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [AUTH-007, AUTH-008, AUTH-009, AUTH-010, AUTH-017, AUTH-019]
 ---
 
@@ -140,7 +140,8 @@ accept it as the sole proof of ownership at the deletion page (EXT-006).
 - Given two accounts, when their deletion keys are compared, then they differ,
   and no key is ever issued twice.
 - Given a deletion key, when its length and randomness are examined, then trying
-  keys at the page's permitted rate cannot find a live one in any practical time.
+  keys at the page's permitted rate (QUAL-007) cannot find a live one in any
+  practical time.
 - Given an account deleted by its deletion key, when that key is submitted again,
   then it matches nothing.
 - Given an account key entered on another device, when the account opens there,

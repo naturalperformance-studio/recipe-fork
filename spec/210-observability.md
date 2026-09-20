@@ -39,6 +39,7 @@ The system shall measure and report the following signals:
 | Rejected attempts at the deletion page, per day | EXT-006 | whether deletion keys are being guessed |
 | Share of accounts created muted | AUTH-004 | whether the attestation service is failing quietly |
 | Verdict requests against the service's free quota | EXT-002 | whether the gate is about to start costing money |
+| Time since the last completed copy of the store | QUAL-008 | whether the safety net is still there |
 
 **Acceptance criteria**
 - Given the running product, when the signals are enumerated, then each row above
@@ -52,9 +53,12 @@ The system shall measure and report the following signals:
 
 **Verification:** compare the reported set against this table after a seeded run.
 **Source:** assembled 2026-09-21 from the decisions of 2026-09-20 and 2026-09-21,
-each of which named the signal it needed. The last two rows are the spec author's
+each of which named the signal it needed. Two rows are the spec author's
 additions and are flagged as such: a muted account is invisible to its holder as
 a fault, and the free quota is the point where a free dependency becomes a bill.
+The last row was added on 2026-09-21 by QUAL-008, which is the rule this
+requirement states: a decision whose cost is accepted rather than prevented
+brings a signal with it.
 
 ### OBS-002 — The signals are shown to the moderator inside the application
 
@@ -90,6 +94,7 @@ threshold below, and shall leave every other signal unmarked.
 | Share of the nickname space consumed | 50 per cent |
 | Share of ingredients entered as free text | 20 per cent in a week |
 | Failed media uploads | 5 per cent of attempts in a day |
+| Time since the last completed copy of the store | longer than three hours |
 
 **Acceptance criteria**
 - Given a signal below its threshold, when the screen is shown, then it is

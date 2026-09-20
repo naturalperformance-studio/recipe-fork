@@ -1,10 +1,11 @@
 ---
 slug: OQ
 status: open
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
-  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030]
+  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
+  OQ-031]
 open_before_mvp: [OQ-002, OQ-016, OQ-029, OQ-030]
 ---
 
@@ -400,3 +401,23 @@ Proposal (not a decision): confirm the reading before the store listing is
 created, rather than discovering it in a rejected release, and record the answer
 here either way.
 Blocks: nothing that is written; a negative answer only removes work.
+
+### OQ-031 — Raising the Android floor after the MVP (define after MVP)
+Unresolved: whether the lowest supported Android version rises from 10 (QUAL-005)
+to 12 once the first release has an installed base to read figures from.
+Raised by the product owner 2026-09-21 as the intended direction rather than an
+open doubt: Android 10 is the MVP floor precisely so that the decision can be
+taken on the product's own distribution figures from the channel instead of on
+the worldwide ones, and the trigger is the share of the product's own installs
+below Android 12 becoming small enough to drop.
+What it would buy: the media conversion of MEDIA-002 and MEDIA-005 and the
+attestation request of AUTH-001 are the two places where the older API costs code,
+so raising the floor removes a fallback path in each rather than adding a feature.
+What it costs: every installed device below the new floor stops receiving updates
+through the channel, and the people holding them keep whatever version they have,
+including its faults. Nothing they hold is destroyed — RET-006 applies to their
+accounts and recipes like anyone else's.
+Proposal (not a decision): read the channel's distribution figures for the
+product's own installs after the first release has been out long enough for them
+to mean anything, and decide then rather than on a date.
+Blocks: nothing.

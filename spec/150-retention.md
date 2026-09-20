@@ -121,10 +121,19 @@ suspension, no grace period and no restoration.
   there is no path that restores it.
 - Given the deletion page and the in-application path, when both are used, then
   they destroy exactly the same things (RET-001).
+- Given the product restored from a copy taken before a deletion (QUAL-008), when
+  that restore completes, then the account exists again — the single circumstance
+  in which a deletion is undone, and one the product offers to nobody.
 
 **Verification:** delete by both routes and compare the result.
 **Source:** user decision, 2026-09-20; the distribution channel requires that
 deletion be deletion rather than deactivation (EXT-005).
+**Qualified 2026-09-21:** recovery from a catastrophe returns the whole store to
+the moment its last copy began, so up to one hour of deletions is undone with
+everything else. The alternative — a journal of deleted identifiers that survives
+the restore — was rejected because it would leave a permanent record of every
+account that ever deleted itself, which is what RET-001 exists to prevent. See
+[ADR — an hourly snapshot is the whole safety net](decisions/20260921-an-hourly-snapshot-is-the-whole-safety-net.md).
 
 ### RET-005 — What the account is told before it is deleted
 

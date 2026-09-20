@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: []
 ---
 
@@ -343,6 +343,32 @@ control in the editor, read-only, recording nothing and blocking nothing
 **Hint** — a short statement shown only at a moment the author's own action
 creates. Hints hold no state, need no dismissal, and are never triggered by
 reading what the author wrote (GUIDE-005).
+
+## Quality and operations
+
+**`modest` and `typical`** — the two reference configurations, each a device
+together with a network, that every timing in the spec is measured on. A
+threshold names the profile it binds on, and a result from the other profile does
+not satisfy it (QUAL-001).
+
+**Release measurement report** — the record produced before a release holding
+every timing taken on both profiles, including the ones that bind nothing and are
+kept only so that releases can be compared (QUAL-002, QUAL-003, QUAL-004).
+
+**Health endpoint** — the one address that answers whether the server can serve
+requests and discloses nothing else. No user reaches it; it exists for the
+availability probe (EXT-011).
+
+**Availability probe** — the observer outside the product that calls the health
+endpoint on a schedule and tells the operator when it stops answering. It is not
+a dependency: it calls the product, the product never calls it, and the product
+behaves identically without it (EXT-012). Its records are what the 95 per cent of
+QUAL-006 is computed from.
+
+**Copy of the store** — the hourly copy of everything the product holds except
+media, kept so that a total failure costs at most an hour of work. Restoring one
+returns the whole state to the moment it began, including up to an hour of
+deletions and moderator decisions (QUAL-008, RET-004).
 
 ## Names
 
