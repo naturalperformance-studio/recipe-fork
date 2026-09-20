@@ -12,7 +12,7 @@ about. Searching works over the catalogue and, by the same rules, over the
 reader's own favourites (draft section 7).
 
 The screens themselves — their empty, loading, error and offline states — are in
-[`flows`](70-flows.md); what is here is the ordering, the filters and what a
+[`flows`](70-flows/00-index.md); what is here is the ordering, the filters and what a
 listed recipe shows. Two of these requirements reach beyond the catalogue by
 design: the fork marker and the fork number are shown both where a recipe is
 listed and on its card, because they are one number with one meaning

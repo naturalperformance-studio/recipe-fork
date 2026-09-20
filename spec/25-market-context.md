@@ -47,7 +47,7 @@ plus scaling by servings), and ReciMe, CookBook and Useful Units (scaling).
 Owner's confidence: high for the first two, medium for the rest.
 
 Bearing on this spec: sections [`scaling-rules`](80-scaling-rules.md) and
-[`flows`](70-flows.md) deliver a baseline the market already has. What has no
+[`flows`](70-flows/00-index.md) deliver a baseline the market already has. What has no
 counterpart is the combination of forking, the chain of provenance, the absence
 of personal data, and moderation.
 

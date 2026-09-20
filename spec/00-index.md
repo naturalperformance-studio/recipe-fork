@@ -22,10 +22,10 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
 | [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in. |
 | 45-auth.md | AUTH | open | The key file over its life: first launch, signing in on a second device, losing the key, and what the server accepts as proof of ownership. |
-| [50-domain-model.md](50-domain-model.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record. |
+| [50-domain-model/](50-domain-model/00-index.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, and how provenance is shown. |
-| [70-flows.md](70-flows.md) | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
+| [70-flows/](70-flows/00-index.md) | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
 | [80-scaling-rules.md](80-scaling-rules.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
 | 90-media.md | MEDIA | open | Media capture, client-side conversion, upload before publication, privacy of unpublished media. |
 | [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |

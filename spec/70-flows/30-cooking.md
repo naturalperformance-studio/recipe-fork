@@ -1,0 +1,270 @@
+---
+slug: FLOW
+status: open
+updated: 2026-09-20
+ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
+  FLOW-020, FLOW-021]
+---
+
+# Cooking from a recipe
+
+The card is the screen the product exists for. Timers, the screen that will not
+sleep, the serving count the reader always uses, and what the card does when parts
+of a recipe are absent or will not load.
+
+## The recipe card
+
+The card is the screen the product exists for: it is where a person cooks. What
+it holds is settled elsewhere and referenced here — quantities and their
+markings by `scaling-rules`, provenance by FORK-004 and FORK-005, rating and
+favourites by `ratings`, reporting and blocking by `abuse`. What follows is what
+the card itself must do.
+
+### FLOW-013 — A timer announces itself even if the application is closed
+
+When a step's timer ends, the system shall announce it whether the application
+is in the foreground, in the background, or closed.
+
+**Acceptance criteria**
+- Given a timer started on a step, when the reader closes the application and
+  the timer ends, then it announces itself.
+- Given the screen is locked when the timer ends, then it announces itself.
+- Given the announcement, when it is displayed, then it names the recipe and the
+  step, so that timers from two recipes are told apart.
+- Given the announcement, when the reader acts on it, then the application opens
+  at the step the timer belongs to.
+- Given the reader refused permission to show notifications, when a timer ends,
+  then it is still finished and is shown as finished inside the application, and
+  the permission is asked for again only when the reader next starts a timer.
+- Given a running timer, when the reader opens the recipe, then the time
+  remaining is shown on its step.
+- Given a running timer, when the reader cancels it, then nothing announces
+  itself afterwards.
+
+**Verification:** start a timer, close the application from the task switcher,
+lock the device and wait for the end; repeat with notifications refused.
+**Source:** user decision, 2026-09-20: a person may start a timer on the last
+step and close the application entirely — something goes in the oven and is
+taken out in thirty minutes — so the timer cannot depend on the application
+staying alive.
+**Note:** this states what the reader observes. Whether it is implemented by a
+system alarm or otherwise is an engineering choice, provided a closed
+application still announces the timer.
+
+### FLOW-014 — The screen does not sleep while a recipe is being read
+
+While a recipe card is in the foreground, the system shall keep the screen
+awake, and shall stop keeping it awake after 15 minutes without a touch.
+
+**Acceptance criteria**
+- Given a recipe card open and untouched for a minute, when the device's own
+  screen timeout is shorter than that, then the screen is still on.
+- Given a recipe card open and untouched for 15 minutes, when that time passes,
+  then the screen is left to the device's own setting.
+- Given the screen was left to sleep that way, when the reader touches the card,
+  then it is kept awake again for another 15 minutes without a touch.
+- Given a card that is keeping the screen awake, when the reader leaves the
+  card, then the screen is left to the device's own setting at once.
+- Given a running timer and no touch for 15 minutes, when the screen sleeps,
+  then the timer still announces itself (FLOW-013).
+
+**Verification:** open a card on a device with a 30-second screen timeout, do not
+touch it, and observe at one minute, at fifteen minutes and after a touch.
+**Source:** user decision, 2026-09-20. Hands are dirty while cooking and waking
+the screen costs a knuckle; fifteen minutes is the product owner's number, set
+so that a card left open on a counter does not drain the battery all evening.
+
+### FLOW-015 — Forking twice is offered as the fork already held
+
+If the reader forks a recipe of which they already hold a fork that has not
+been changed since it was created, then the system shall tell them that fork
+exists and offer to open it, and shall create another fork only if they ask for
+one.
+
+**Acceptance criteria**
+- Given the reader holds an unchanged fork of a recipe, when they fork it again,
+  then they are told the fork exists and can open it, and no second fork is
+  created unless they ask.
+- Given the reader asks for another fork anyway, when they confirm, then a
+  second fork is created.
+- Given the reader holds a fork they have changed in any way — title, tags,
+  serving count, ingredients, steps, description or media — when they fork the
+  same recipe again, then a new fork is created and nothing is said.
+- Given the reader holds several forks of one recipe and at least one is
+  unchanged, when they fork it again, then the unchanged one is the one offered.
+- Given the reader holds no fork of that recipe, when they fork it, then a fork
+  is created and nothing is said.
+- Given an unchanged fork that has not yet reached the server, when the reader
+  forks the same recipe again, then it counts exactly as one the server holds
+  (FLOW-007).
+
+**Verification:** fork a recipe twice without touching the first fork; change the
+first fork and repeat; confirm both outcomes and the explicit second fork.
+**Source:** user decision, 2026-09-20. Two branches from one original are the
+point of the product, so a second fork is never forbidden; an untouched fork,
+however, is the signature of a misplaced tap and collects as rubbish in the
+author's own list.
+
+### FLOW-016 — Several timers run at once, each named by what it is for
+
+The system shall allow the timers of several steps to run at the same time, and
+shall identify each one by what it is for wherever it is shown or announced.
+
+**Acceptance criteria**
+- Given two steps that carry timers, when the reader starts both, then both run
+  and each is shown running on its own step.
+- Given two running timers, when one ends, then it announces itself and the
+  other keeps running.
+- Given a timer whose author gave it a label, when it ends, then the
+  announcement uses that label, so the reader knows whether the sauce is done or
+  the chicken is to come out.
+- Given a timer with no label, when it ends, then the announcement names the
+  recipe and the step's position.
+- Given several running timers, when the reader opens the recipe, then each
+  shows its own remaining time on its own step.
+- Given several running timers, when the reader leaves the application and
+  returns, then all of them still run by the clock (FLOW-012).
+
+**Verification:** start three timers on one recipe, leave the application, and
+confirm each announcement identifies itself and does not disturb the others.
+**Source:** user decision, 2026-09-20. A timer that fires without saying what it
+is for makes the cook guess between the oven and the pan, which is the moment
+the timer existed to prevent. The label is the `Timer.label` already in the
+domain model.
+
+### FLOW-017 — The reader's usual serving count opens every recipe
+
+Where the reader has set the serving count they usually cook for, the system
+shall open every recipe at that count.
+
+**Acceptance criteria**
+- Given the setting holds 2, when the reader opens a recipe authored for 4, then
+  it opens showing 2 servings and every changed quantity carries its derived
+  marking (SCALE-004).
+- Given the setting has never been set, when the reader opens a recipe, then it
+  opens at the count its author wrote and nothing is marked as derived.
+- Given the setting holds a value, when the reader changes the count while
+  reading one recipe, then the setting itself is unchanged.
+- Given the setting is being chosen, when the reader picks a value, then the
+  values available are the ones SCALE-010 and SCALE-011 allow for a requested
+  count.
+- Given a recipe opened at the reader's count, when the reader returns it to the
+  authored count, then nothing is marked as derived (SCALE-001).
+- Given a reader who scaled one recipe to a different count and left it, when
+  they open that recipe again in a later session, then it opens at their usual
+  count and not at the count they used last time.
+- Given a reader who scaled a recipe and stays in the application, when they
+  leave the card and come back to it, then the count they set is still there.
+
+**Verification:** set the count to 2 and to 12, open recipes authored for 1, 4
+and 20, and compare against the authored values and the derived markings.
+**Source:** user decision, 2026-09-20. A person's household does not change from
+one evening to the next, so recomputing the same recipe for the same number of
+people every time is work the product can do once. The usual count outranks the
+count last used on a particular recipe: a reader who scaled a recipe for twelve
+guests one evening is unlikely to have twelve guests the next time they open it,
+and the household is the durable fact. The cost is deliberate: with the setting
+in use almost every recipe opens in a derived state, and the numbers the author
+wrote are not the numbers the reader meets first — which is why the derived
+markings of SCALE-004 carry the weight they do.
+**Note:** a count the reader set survives for as long as the application keeps
+running, including leaving the card and returning to it; a fresh start of the
+application opens every recipe at the usual count again. This boundary follows
+the reason for the decision — a week later the guests are gone, ten minutes
+later the reader is still cooking the same meal.
+
+### FLOW-018 — A flagged recipe says what it descends from
+
+While a recipe carries the safety flag, the system shall state on its card that
+it descends from a recipe removed as dangerous to health, and shall not name
+that recipe.
+
+**Acceptance criteria**
+- Given a flagged recipe, when anyone opens it, then the statement is shown.
+- Given a flagged recipe, when the statement is shown, then it neither names nor
+  links the removed recipe, and the chain above it is not walked to reach it.
+- Given a flagged recipe in state `private`, when its owner opens it, then the
+  statement is shown to them too.
+- Given a flagged recipe, when it is shown in the catalogue, in search results
+  and in favourites, then the statement is present there as well and not only
+  inside the card.
+- Given a recipe whose flag a moderator cleared, when its card is opened, then
+  the statement is gone and nothing records that it was ever there.
+
+**Verification:** flag a chain, open each member as its owner, as another
+account and as a moderator, then clear one and look again.
+**Source:** user decision, 2026-09-20. The statement is a fact about descent,
+not an accusation against this recipe's author, which is why it names nothing:
+naming the removed recipe would both point at another author and rebuild the
+lineage that FORK-005 deliberately stops showing.
+
+### FLOW-019 — What the card shows when parts of a recipe are absent
+
+Where a recipe has no description, no media or no parent to show, the system
+shall omit those parts of the card entirely and shall not display a placeholder
+in their place.
+
+**Acceptance criteria**
+- Given a recipe with no media at all, when its card is opened, then no image
+  frame, no placeholder image and no empty media area is shown.
+- Given a recipe with an empty description, when its card is opened, then no
+  description heading and no empty block is shown.
+- Given a recipe whose parent is not shown by FORK-005, when its card is opened,
+  then no provenance area is shown at all.
+- Given a recipe nobody has rated, when its card is opened, then the rating
+  controls are offered and no count reads as a judgement of the recipe.
+- Given a recipe reduced to the minimum DOM-006 accepts, when its card is
+  opened, then it reads as a complete recipe and not as a broken one.
+
+**Verification:** publish a recipe with no media, no description and no shown
+parent, and compare its card against one that has all three.
+**Source:** the parts are optional in the domain model; an empty frame states
+that something is missing, which is a claim the recipe does not make.
+
+### FLOW-020 — The card while it loads and when it cannot be loaded
+
+While a recipe is being loaded, the system shall show no quantity until the
+scale that applies to the reader is known; and if the recipe cannot be loaded,
+the system shall say so and offer to try again.
+
+**Acceptance criteria**
+- Given a reader whose usual serving count differs from the authored one
+  (FLOW-017), when the card is opening, then no quantity is shown at the
+  authored scale first and then replaced.
+- Given a card that is loading, when it is displayed, then the reader can leave
+  it without waiting for it to finish.
+- Given a recipe that fails to load, when the failure is shown, then it states
+  that the recipe could not be loaded and offers to try again, and does not
+  state that the recipe does not exist.
+- Given a recipe that is unavailable rather than unreachable, when it is opened,
+  then FLOW-010 governs what is shown, not this requirement.
+- Given a failed load, when the reader retries and it succeeds, then the card
+  opens at the scale FLOW-017 requires.
+
+**Verification:** open a card with the network throttled and with it cut, and
+watch the quantities through the whole opening.
+**Source:** derived from FLOW-017: a quantity shown at the authored scale and
+then replaced is a number a reader can act on before it changes, which in this
+product is a wrong amount of an ingredient.
+
+### FLOW-021 — Starting a timer that is already running asks first
+
+If the reader starts a timer on a step whose timer is already running, then the
+system shall state that it is already running and ask whether to restart it, and
+shall restart it from its full duration only on confirmation.
+
+**Acceptance criteria**
+- Given a running timer, when the reader starts it again, then they are told it
+  is running and are asked whether to restart it.
+- Given that question, when the reader confirms, then the timer restarts from
+  its full duration and the time it had already counted is gone.
+- Given that question, when the reader declines, then the timer keeps running
+  with the time it had.
+- Given two steps with running timers, when one is restarted, then the other is
+  untouched (FLOW-016).
+- Given a timer that has already ended, when the reader starts it again, then it
+  starts with no question.
+
+**Verification:** start a timer, wait, start it again and take both branches.
+**Source:** user decision, 2026-09-20. Restarting is what the reader almost
+always means, and losing the count silently is what they never mean.
