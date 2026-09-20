@@ -2,7 +2,7 @@
 slug: FORK
 status: closed
 updated: 2026-09-20
-ids: [FORK-001, FORK-002, FORK-003, FORK-004]
+ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005]
 ---
 
 # Forking
@@ -74,16 +74,45 @@ into the fork.
 
 ### FORK-004 — Only the direct parent is shown
 
-The system shall show a recipe's direct parent on its card, and shall not show,
-compute or load its full fork tree.
+Where a recipe's parent is or has been `published`, the system shall show that
+direct parent on its card, and shall not show, compute or load its full fork
+tree.
 
 **Acceptance criteria**
-- Given a recipe that is a fork of a fork, when its card is opened, then exactly
-  one parent is named.
+- Given a recipe that is a fork of a published fork, when its card is opened,
+  then exactly one parent is named.
 - Given that parent, when it is opened, then its own parent is named in turn,
   with no limit on the depth reachable this way.
 - Given any recipe, when its card is opened, then it lists no descendants and no
   count of them.
 
 **Verification:** build a chain three deep and walk it in both directions.
-**Source:** draft section 4.3; GOAL-003; DOM-004.
+**Source:** draft section 4.3; GOAL-003; DOM-004. The condition on the parent is
+FORK-005.
+
+### FORK-005 — A parent that was never published is not mentioned at all
+
+While a recipe's parent has never been `published`, the system shall show the
+recipe with no parent and shall give no indication that a parent exists.
+
+**Acceptance criteria**
+- Given a published recipe forked from the author's own `private` recipe, when
+  its card is opened by anyone, then no parent is named, no placeholder is
+  shown, and the card is indistinguishable from that of a recipe with no parent.
+- Given a published recipe whose parent is `link_shared` and has never been
+  published, when its card is opened, then no parent is named.
+- Given such a recipe, when its parent is published later, then the parent
+  becomes named on the card from that moment, by FORK-004.
+- Given such a recipe, when the chain is walked upwards from one of its own
+  forks, then the chain stops at it and does not reveal its parent.
+- Given the owner of both recipes, when they open either one, then the parent is
+  not named to them either — the card is the same for everyone.
+
+**Verification:** publish a fork of an own private recipe and inspect the card
+as owner, as another account and as a moderator; then publish the parent and
+inspect again.
+**Source:** user decision, 2026-09-20. A parent nobody could ever open tells a
+reader nothing and discloses that the author holds an unpublished recipe. The
+recipe's stored parent is unchanged, so immutability is untouched: what depends
+on the parent's state is the display, exactly as it already does in ST-007. See
+[ADR — provenance follows the parent's publication](decisions/20260920-provenance-follows-publication.md).

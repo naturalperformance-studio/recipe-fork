@@ -24,7 +24,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [50-domain-model.md](50-domain-model.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, unit type, step, media, account, moderation record. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, and how provenance is shown. |
-| 70-flows.md | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
+| [70-flows.md](70-flows.md) | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
 | [80-scaling-rules.md](80-scaling-rules.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
 | 90-media.md | MEDIA | open | Media capture, client-side conversion, upload before publication, privacy of unpublished media. |
 | [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |
@@ -57,6 +57,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-fork-carries-method-not-expression.md](decisions/20260920-fork-carries-method-not-expression.md) | accepted | A fork inherits ingredients and steps, never media or description; no anti-fork flag. |
 | [20260920-scaling-extremes.md](decisions/20260920-scaling-extremes.md) | accepted | Serving count floors at ¼ with no ceiling; a warning replaces a downward bound. |
 | [20260920-large-quantity-display.md](decisions/20260920-large-quantity-display.md) | accepted | Tonnes and cubic metres extend `exact` only; every unit type stays legible at any magnitude. |
+| [20260920-provenance-follows-publication.md](decisions/20260920-provenance-follows-publication.md) | accepted | A parent is named only if it is or has been published; a never-published parent is not mentioned. |
 
 ## C4 context
 

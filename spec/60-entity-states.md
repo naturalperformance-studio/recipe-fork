@@ -181,12 +181,17 @@ owner and moderators, and shall place it in the moderation queue.
 
 ### ST-007 — An unavailable parent is shown without a reason
 
-Where a recipe's parent is `removed`, the system shall show the parent as
-unavailable and shall not state why.
+Where a recipe's parent has been `published` and is now `removed` or
+`reported_hidden`, the system shall show the parent as unavailable and shall not
+state why.
 
 **Acceptance criteria**
-- Given a fork whose parent was removed, when its card is opened, then the
-  parent is named as unavailable, cannot be opened, and no reason is given.
+- Given a fork whose published parent was removed, when its card is opened, then
+  the parent is named as unavailable, cannot be opened, and no reason is given.
+- Given a fork whose published parent is hidden by reports, when its card is
+  opened, then it is shown the same way and the two cases are indistinguishable.
+- Given a fork whose parent was never published, when its card is opened, then
+  no parent is shown at all and this requirement does not apply (FORK-005).
 - Given that fork, when the chain is walked upwards, then it stops at the
   unavailable parent.
 

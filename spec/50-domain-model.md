@@ -67,6 +67,7 @@ The account carries no field that identifies the person behind it (CON-001).
 | `steps` | ordered list of Step | |
 | `media` | list of Media | |
 | `state` | state value | See `entity-states`. |
+| `was_published` | boolean | False at creation; set once when the recipe first enters `published` and never cleared. What FORK-004 and FORK-005 depend on. |
 
 ### Ingredient
 
