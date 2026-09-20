@@ -3,7 +3,8 @@ slug: FLOW
 status: open
 updated: 2026-09-20
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007,
-  FLOW-008, FLOW-009, FLOW-010, FLOW-011, FLOW-012]
+  FLOW-008, FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-013, FLOW-014,
+  FLOW-015]
 ---
 
 # Flows and screens
@@ -335,6 +336,99 @@ interruption is not a reason to lose the page: leaving the application and
 closing it are different events and only the second can cost the recipe.
 **Note:** whether a running timer announces itself while the application is not
 in the foreground is decided with the recipe card flow, not here.
+
+## The recipe card
+
+The card is the screen the product exists for: it is where a person cooks. What
+it holds is settled elsewhere and referenced here — quantities and their
+markings by `scaling-rules`, provenance by FORK-004 and FORK-005, rating and
+favourites by `ratings`, reporting and blocking by `abuse`. What follows is what
+the card itself must do.
+
+### FLOW-013 — A timer announces itself even if the application is closed
+
+When a step's timer ends, the system shall announce it whether the application
+is in the foreground, in the background, or closed.
+
+**Acceptance criteria**
+- Given a timer started on a step, when the reader closes the application and
+  the timer ends, then it announces itself.
+- Given the screen is locked when the timer ends, then it announces itself.
+- Given the announcement, when it is displayed, then it names the recipe and the
+  step, so that timers from two recipes are told apart.
+- Given the announcement, when the reader acts on it, then the application opens
+  at the step the timer belongs to.
+- Given the reader refused permission to show notifications, when a timer ends,
+  then it is still finished and is shown as finished inside the application, and
+  the permission is asked for again only when the reader next starts a timer.
+- Given a running timer, when the reader opens the recipe, then the time
+  remaining is shown on its step.
+- Given a running timer, when the reader cancels it, then nothing announces
+  itself afterwards.
+
+**Verification:** start a timer, close the application from the task switcher,
+lock the device and wait for the end; repeat with notifications refused.
+**Source:** user decision, 2026-09-20: a person may start a timer on the last
+step and close the application entirely — something goes in the oven and is
+taken out in thirty minutes — so the timer cannot depend on the application
+staying alive.
+**Note:** this states what the reader observes. Whether it is implemented by a
+system alarm or otherwise is an engineering choice, provided a closed
+application still announces the timer.
+
+### FLOW-014 — The screen does not sleep while a recipe is being read
+
+While a recipe card is in the foreground, the system shall keep the screen
+awake, and shall stop keeping it awake after 15 minutes without a touch.
+
+**Acceptance criteria**
+- Given a recipe card open and untouched for a minute, when the device's own
+  screen timeout is shorter than that, then the screen is still on.
+- Given a recipe card open and untouched for 15 minutes, when that time passes,
+  then the screen is left to the device's own setting.
+- Given the screen was left to sleep that way, when the reader touches the card,
+  then it is kept awake again for another 15 minutes without a touch.
+- Given a card that is keeping the screen awake, when the reader leaves the
+  card, then the screen is left to the device's own setting at once.
+- Given a running timer and no touch for 15 minutes, when the screen sleeps,
+  then the timer still announces itself (FLOW-013).
+
+**Verification:** open a card on a device with a 30-second screen timeout, do not
+touch it, and observe at one minute, at fifteen minutes and after a touch.
+**Source:** user decision, 2026-09-20. Hands are dirty while cooking and waking
+the screen costs a knuckle; fifteen minutes is the product owner's number, set
+so that a card left open on a counter does not drain the battery all evening.
+
+### FLOW-015 — Forking twice is offered as the fork already held
+
+If the reader forks a recipe of which they already hold a fork that has not
+been changed since it was created, then the system shall tell them that fork
+exists and offer to open it, and shall create another fork only if they ask for
+one.
+
+**Acceptance criteria**
+- Given the reader holds an unchanged fork of a recipe, when they fork it again,
+  then they are told the fork exists and can open it, and no second fork is
+  created unless they ask.
+- Given the reader asks for another fork anyway, when they confirm, then a
+  second fork is created.
+- Given the reader holds a fork they have changed in any way — title, tags,
+  serving count, ingredients, steps, description or media — when they fork the
+  same recipe again, then a new fork is created and nothing is said.
+- Given the reader holds several forks of one recipe and at least one is
+  unchanged, when they fork it again, then the unchanged one is the one offered.
+- Given the reader holds no fork of that recipe, when they fork it, then a fork
+  is created and nothing is said.
+- Given an unchanged fork that has not yet reached the server, when the reader
+  forks the same recipe again, then it counts exactly as one the server holds
+  (FLOW-007).
+
+**Verification:** fork a recipe twice without touching the first fork; change the
+first fork and repeat; confirm both outcomes and the explicit second fork.
+**Source:** user decision, 2026-09-20. Two branches from one original are the
+point of the product, so a second fork is never forbidden; an untouched fork,
+however, is the signature of a misplaced tap and collects as rubbish in the
+author's own list.
 
 ## Open
 
