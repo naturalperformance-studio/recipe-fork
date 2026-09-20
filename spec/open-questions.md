@@ -4,8 +4,8 @@ status: open
 updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
-  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029]
-open_before_mvp: [OQ-002, OQ-004, OQ-016, OQ-029]
+  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030]
+open_before_mvp: [OQ-002, OQ-004, OQ-016, OQ-029, OQ-030]
 ---
 
 # Open questions
@@ -32,6 +32,8 @@ challenge signed by the client, so the server never stores anything that can
 recreate the key.
 Blocks: AUTH-010 and AUTH-014, and with them section `auth`. Everything else in
 that section is written and does not depend on the answer.
+Constrained 2026-09-20 by AUTH-017: whatever format is chosen, the key file
+carries the account's deletion key as copyable text.
 
 ### OQ-003 — Media limits — RESOLVED 2026-09-20
 Resolved by the product owner against the arithmetic of CON-002: one cover
@@ -371,3 +373,26 @@ jurisdiction before the store listing is created, covering the verdict, the logs
 and the published terms; nothing in the spec changes until that review reports.
 Blocks: section `legal`; a negative answer would also reopen
 [ADR — account creation is gated by the device](decisions/20260920-account-creation-gated-by-the-device.md).
+
+### OQ-030 — Whether the account deletion obligation reaches this product (define before MVP)
+Unresolved: whether an account the user never asks to create falls under the
+distribution channel's account deletion requirement, and whether a page that
+accepts a deletion key satisfies the web resource part of it.
+What is established, checked 2026-09-20: the requirement reads *"If your app
+enables account creation, you must: provide users with an in-app path to delete
+their app accounts and associated data; and provide a web link resource"*, and
+the only exemptions named are permanently private and enterprise device
+management applications
+([Google Play — app account deletion requirements](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)).
+Nothing exempts an anonymous account or an application that collects no personal
+data. The one opening is that the scope is written around a user who *completes*
+creating an account, and here the account appears without the user doing
+anything (ACT-001).
+What is decided regardless, because it costs little and settles the matter if the
+obligation does apply: deletion exists, in the application and on a page, and it
+is specified in EXT-006, AUTH-017 and `retention`. Published recipes survive it
+(ST-001); what goes is the account record and everything unpublished.
+Proposal (not a decision): confirm the reading before the store listing is
+created, rather than discovering it in a rejected release, and record the answer
+here either way.
+Blocks: nothing that is written; a negative answer only removes work.

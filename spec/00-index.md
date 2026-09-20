@@ -1,8 +1,8 @@
 # Recipe Fork — specification index
 
-> **NOT READY — 4 questions must be answered before MVP.**
-> Sections: 16 closed · 1 blocked · 9 open · 1 n/a.
-> Blocking: OQ-002, OQ-004, OQ-016, OQ-029. Last updated 2026-09-20.
+> **NOT READY — 5 questions must be answered before MVP.**
+> Sections: 17 closed · 1 blocked · 8 open · 1 n/a.
+> Blocking: OQ-002, OQ-004, OQ-016, OQ-029, OQ-030. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -21,7 +21,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
 | [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in. |
-| [45-auth.md](45-auth.md) | AUTH | blocked | The key file and the device gate over their life: what first launch creates, the three device slots and the six months that free one, the muted account created when a device cannot be attested, what importing a key file replaces and wipes, and what losing the key leaves behind. What the server accepts as proof of ownership is OQ-002 and is why this section is blocked. |
+| [45-auth/](45-auth/00-index.md) | AUTH | blocked | The key file and the device gate over their life: what first launch creates, the three device slots and the six months that free one, the muted account created when a device cannot be attested, what importing a key file replaces and wipes, and what losing the key leaves behind. What the server accepts as proof of ownership is OQ-002 and is why this section is blocked. |
 | [50-domain-model/](50-domain-model/00-index.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, and how provenance is shown. |
@@ -32,7 +32,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |
 | [110-catalogue.md](110-catalogue.md) | CAT | closed | Public catalogue, search, filters, favourites and the search inside favourites; what a catalogue entry shows, including the fork marker and fork count. |
 | [120-ratings.md](120-ratings.md) | RATE | closed | The binary like and dislike over its life: who may give one and on what, the two counts a reader sees, what `highest rated` and `most rated` compute, and why favouriting is not approval. |
-| 130-external-interfaces.md | EXT | open | Interfaces crossing the product boundary: the key file as a portable artefact, object storage, anything the client depends on. |
+| [130-external-interfaces.md](130-external-interfaces.md) | EXT | closed | The closed list of what the product depends on — a device attestation service, object storage and the distribution channel — what each does when it is absent, and the two artefacts that cross the boundary in the user's own hands: the key file and a private link. Also the one surface outside the application, the account deletion page. |
 | 140-quality.md | QUAL | open | Quality attributes with a metric, a measurement method and a threshold each. |
 | 150-retention.md | RET | open | What is kept, for how long, what deletion means, and what account deletion does to published content. |
 | 160-localization.md | L10N | open | String externalisation, Russian-only first release, language-dependent search and filtering. |
@@ -74,10 +74,34 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-account-creation-gated-by-the-device.md](decisions/20260920-account-creation-gated-by-the-device.md) | accepted, narrows ACT-001 | Creating an account costs one of three device slots that free after six months; without a verdict the account is muted, and no verdict is ever stored. |
 | [20260920-replacing-the-account-wipes-the-device.md](decisions/20260920-replacing-the-account-wipes-the-device.md) | accepted | One active account per device; importing a key file wipes what the previous account held, after a statement naming every unsent recipe. |
 | [20260920-media-limits-are-set-by-the-budget.md](decisions/20260920-media-limits-are-set-by-the-budget.md) | accepted | Every media limit is derived from what USD 20 a month buys; video stays on every step by being short, small and silent. |
+| [20260920-deletion-key.md](decisions/20260920-deletion-key.md) | accepted | Deleting an account from outside the application takes a separate deletion key pasted as text; the key file is never uploaded anywhere. |
 
 ## C4 context
 
-Written once actors and external systems are settled (sections ACT and EXT).
+Actors are settled in [`actors`](40-actors.md), the external systems in
+[`external-interfaces`](130-external-interfaces.md). Nothing else crosses the
+boundary: no advertising network, no identity provider, no analytics service and
+no message delivery service (EXT-009, EXT-010).
+
+```mermaid
+flowchart TB
+    holder["Account holder<br/>a person holding a key file"]
+    moderator["Moderator<br/>the product owner"]
+    system["Recipe Fork<br/>Android application and its server"]
+    deletion["Account deletion page<br/>the only surface outside the application"]
+    attest["Device attestation service<br/>three bits of state per device"]
+    storage["Object storage<br/>media, no charge for reads"]
+    channel["Distribution channel<br/>the store the application ships through"]
+
+    holder -->|"writes, forks, cooks, favourites, rates, reports"| system
+    moderator -->|"approves, rejects, removes, bans"| system
+    holder -->|"pastes a deletion key (EXT-006)"| deletion
+    deletion -->|"deletes the account at once"| system
+    system -->|"asks for a verdict, occupies a slot (AUTH-001)"| attest
+    system -->|"stores, serves and deletes objects (EXT-003)"| storage
+    system -->|"is distributed by and obliged by (CON-006, EXT-005)"| channel
+    holder -.->|"keeps the key file wherever they choose (EXT-008)"| holder
+```
 
 ## Retired IDs
 
