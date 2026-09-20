@@ -56,22 +56,25 @@ forking by anyone other than the owner; rating; favouriting; being reported by
 anyone other than the moderator's own action.
 
 **Disallowed from `rejected`:** publication without a new submission; visibility
-to anyone but the owner and a moderator; forking by another account.
+to anyone but the owner and a moderator; forking by another account; rating
+(RATE-003).
 
 **Disallowed from `link_shared`:** any edit; re-moderation on publication or on
 issuing a further link; appearing in the catalogue or in search; forking by any
-account other than the owner.
+account other than the owner; rating, by a link holder or by anyone else
+(RATE-003).
 
 **Disallowed from `published`:** any edit; unpublishing, hiding or deleting by
 the owner or by any user; return to an editable state; transfer of ownership;
 re-moderation when restored from `reported_hidden`.
 
 **Disallowed from `reported_hidden`:** any edit; restoration by the owner;
-un-hiding by the withdrawal of reports; forking by another account.
+un-hiding by the withdrawal of reports; forking by another account; rating,
+although the ratings it already carries survive (RATE-003, RATE-015).
 
 **Disallowed from `removed`:** any edit; restoration by the owner; forking by
-anyone, including the owner; every transition out of the state — `removed` is
-terminal.
+anyone, including the owner; rating (RATE-003); every transition out of the
+state — `removed` is terminal.
 
 ### ST-001 — Publication is permanent
 

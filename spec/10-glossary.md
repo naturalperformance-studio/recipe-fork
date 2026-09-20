@@ -232,6 +232,20 @@ recipe. Three of them hide a recipe automatically (ABUSE-003, ST-006).
 catalogue and search. It does not hide them from anybody else and is not a
 report (ABUSE-005).
 
+## Ratings
+
+**Rating** — one account's like or dislike of one published recipe. An account
+holds at most one rating per recipe, may change it and may withdraw it by
+repeating it (RATE-001, RATE-002). An author never rates their own recipe
+(RATE-004).
+
+**Withdrawn rating** — a rating the account took back. It counts for nothing:
+not in the two counts, not in either ordering, and the recipe may end up rated
+by nobody again (RATE-002, RATE-011).
+
+**Net score** — likes minus dislikes. It is what `highest rated` orders by, and
+it is never displayed: the reader is shown the two counts (RATE-007, RATE-010).
+
 ## The device
 
 **Held on the device** — content stored locally so it opens without a

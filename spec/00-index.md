@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 4 questions must be answered before MVP.**
-> Sections: 14 closed · 0 blocked · 12 open · 1 n/a.
+> Sections: 15 closed · 0 blocked · 11 open · 1 n/a.
 > Blocking: OQ-002, OQ-003, OQ-004, OQ-016. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -16,7 +16,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 
 | File | Slug | Status | What it is for |
 |---|---|---|---|
-| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report and 52 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
+| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score and 54 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
@@ -31,7 +31,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | 90-media.md | MEDIA | open | Media capture, client-side conversion, upload before publication, privacy of unpublished media. |
 | [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |
 | [110-catalogue.md](110-catalogue.md) | CAT | closed | Public catalogue, search, filters, favourites and the search inside favourites; what a catalogue entry shows, including the fork marker and fork count. |
-| 120-ratings.md | RATE | open | Binary like and dislike, and favourites as a separate action. |
+| [120-ratings.md](120-ratings.md) | RATE | closed | The binary like and dislike over its life: who may give one and on what, the two counts a reader sees, what `highest rated` and `most rated` compute, and why favouriting is not approval. |
 | 130-external-interfaces.md | EXT | open | Interfaces crossing the product boundary: the key file as a portable artefact, object storage, anything the client depends on. |
 | 140-quality.md | QUAL | open | Quality attributes with a metric, a measurement method and a threshold each. |
 | 150-retention.md | RET | open | What is kept, for how long, what deletion means, and what account deletion does to published content. |
@@ -69,6 +69,8 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-divisibility-belongs-to-the-ingredient.md](decisions/20260920-divisibility-belongs-to-the-ingredient.md) | accepted | The dictionary entry decides `piece` divisibility; the author never overrides it, and only free text asks. |
 | [20260920-timer-named-by-its-step.md](decisions/20260920-timer-named-by-its-step.md) | accepted, amended | A timer's name derives from its step's text and the author may override it; a step carries one timer. |
 | [20260920-the-editor-teaches-without-inspecting.md](decisions/20260920-the-editor-teaches-without-inspecting.md) | accepted | An unsuppressible statement before submission, a read-only checklist, and hints triggered by the author's action — never by reading the recipe. |
+| [20260920-two-counts-ordered-by-net-score.md](decisions/20260920-two-counts-ordered-by-net-score.md) | accepted | The reader sees two counts; `highest rated` orders by likes minus dislikes, with a tie chain that makes the order total. |
+| [20260920-rating-is-not-queued.md](decisions/20260920-rating-is-not-queued.md) | accepted | Offline the rating controls stay visible and refuse; nothing is queued, and the counts shown are the last synchronised ones. |
 
 ## C4 context
 
