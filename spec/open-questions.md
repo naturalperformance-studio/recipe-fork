@@ -98,8 +98,8 @@ that nicknames are globally unique, permanent, and consumed by every first
 launch (ACT-001, DOM-001).
 Proposal (not a decision): size the word lists so the combination count exceeds
 any plausible account count by a wide margin, and watch the consumed fraction as
-an operational signal (section `observability`) so the lists can be extended
-long before they run out.
+an operational signal (OBS-001) so the lists can be extended long before they
+run out.
 Narrowed twice on 2026-09-20. First by the device gate: a nickname can no longer
 be consumed at an unbounded rate, because creating an account costs one of three
 slots per device and a slot frees only after six months (AUTH-002). Then by
@@ -215,8 +215,8 @@ Decided for the MVP by the product owner 2026-09-20 by not adopting it: free tex
 with a warning is the only escape (FLOW-022).
 Consequence to watch: every recipe that takes the free-text escape is invisible to
 ingredient filters forever once published, so the fraction of ingredients added as
-free text is an operational signal worth watching (section `observability`) — it
-measures how far behind the dictionary is.
+free text is an operational signal worth watching (OBS-001, with a threshold in
+OBS-003) — it measures how far behind the dictionary is.
 Proposal for later (not a decision): a request carries only the name the author
 typed, and lands in the same queue the moderator already works.
 Blocks: nothing.
@@ -247,7 +247,7 @@ which is less than the single cover photo OQ-003 proposes to cap at 2 MB, while
 partial holding would have made an author offline able to pick only ingredients they
 had used before.
 Revisit trigger, not a decision: the dictionary's transfer size belongs among the
-operational signals of section `observability`, because tens of thousands of entries,
+operational signals of OBS-001, because tens of thousands of entries,
 or several locales held at once, are where partial holding becomes the right answer.
 No threshold is set today and nothing depends on one while the dictionary is small.
 

@@ -12,8 +12,10 @@ What crosses the product's boundary, what the product may depend on, and what
 each dependency does when it is not there. The rule behind all of it: a
 dependency may degrade the product, and none may stop it from opening.
 
-Three services are outside and are depended upon — a device attestation service,
-an object storage service and the distribution channel. Two artefacts cross the
+Four services are outside and are depended upon — a device attestation service,
+an object storage service, the distribution channel, and one outbound alerting
+channel that carries operational numbers to the product's operator
+([`observability`](210-observability.md)). Two artefacts cross the
 boundary in the user's own hands — the account key and a private link. One surface
 exists outside the application because the distribution channel requires it — the
 account deletion page.
@@ -30,13 +32,17 @@ six months old.
 ### EXT-001 — The list of external dependencies is closed
 
 The system shall depend on no external network service other than a device
-attestation service, an object storage service and the distribution channel, and
-shall treat the addition of another as a product decision recorded as an ADR.
+attestation service, an object storage service, the distribution channel and one
+outbound alerting channel, and shall treat the addition of another as a product
+decision recorded as an ADR.
 
 **Acceptance criteria**
 - Given the released application, when its network destinations are enumerated,
-  then each one belongs to the product's own server or to one of the three named
+  then each one belongs to the product's own server or to one of the four named
   services.
+- Given the alerting channel, when what reaches it is inspected, then it is
+  numbers and nothing else (OBS-004), and nothing it sends back acts on the
+  product (OBS-005).
 - Given any screen, when it is used, then no content is fetched from a service
   not on that list.
 - Given a proposed dependency not on the list, when it is considered, then it
@@ -44,9 +50,11 @@ shall treat the addition of another as a product decision recorded as an ADR.
 
 **Verification:** traffic capture of a full session — first launch, authoring,
 publication, cooking — checked against the list.
-**Source:** user decision, 2026-09-20. The list is closed rather than open
-because every addition is a place where content or an identifier can leave, and
-CON-001 is only as strong as the shortest list.
+**Source:** user decision, 2026-09-20; widened to four on 2026-09-21 by
+[ADR — one outbound alerting channel](decisions/20260921-alerting-channel.md).
+The list is closed rather than open because every addition is a place where
+content or an identifier can leave, and CON-001 is only as strong as the shortest
+list.
 
 ### EXT-002 — The attestation service may be absent
 
@@ -243,6 +251,8 @@ uses for that recipe's media.
   receives anything (NGOAL-006).
 - Given a crash or a diagnostic report of any kind, when it leaves the device,
   then it carries no recipe content and no account identifier.
+- Given the alerting channel, when a message is sent to it, then it carries a
+  signal's name and value and nothing else (OBS-004).
 - Given the attestation service, when it is called, then it receives what the
   service itself requires and no recipe content.
 - Given `analytics`, when its measurements are defined, then they obey this

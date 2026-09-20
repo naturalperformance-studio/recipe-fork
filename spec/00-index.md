@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 4 questions must be answered before MVP.**
-> Sections: 18 closed · 1 blocked · 7 open · 1 n/a.
+> Sections: 19 closed · 1 blocked · 6 open · 1 n/a.
 > Blocking: OQ-002, OQ-016, OQ-029, OQ-030. Last updated 2026-09-21.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -17,7 +17,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 
 | File | Slug | Status | What it is for |
 |---|---|---|---|
-| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key and 59 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
+| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key, operational signal and 61 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
@@ -41,7 +41,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | 180-analytics.md | ANL | open | What the product owner wants to learn about usage, and what may be measured without personal data. |
 | 190-legal.md | LEG | open | Licence of recipe content, attribution on fork, terms of use, responsibility for user-generated content. |
 | 200-accessibility.md | A11Y | open | Accessibility commitments and their verification. |
-| 210-observability.md | OBS | open | Operational signals: moderation queue, upload failures, recalculation errors. |
+| [210-observability.md](210-observability.md) | OBS | closed | The twelve signals the product watches, each naming the decision that asked for it, the thresholds at which one becomes a decision, the moderator's screen they live on, and the one outbound channel that carries an alert — numbers only, one way. |
 | 220-mvp-boundary.md | MVP | open | What is in the first release and what explicitly waits. |
 | — | MIG | n/a | Migration: the product launches from scratch — no existing data, users or predecessor system to migrate from. Moving a user between devices by its key is an authentication requirement, not a migration. |
 
@@ -78,13 +78,16 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-deletion-key.md](decisions/20260920-deletion-key.md) | accepted | Deleting an account from outside the application takes a separate deletion key pasted as text; the account key is never uploaded anywhere. |
 | [20260920-account-on-demand.md](decisions/20260920-account-on-demand.md) | accepted, supersedes part of ACT-001 | Nothing is created until an action needs it: readers hold no account, authors do, and the key is a string shown once in full and masked thereafter. |
 | [20260921-nothing-expires.md](decisions/20260921-nothing-expires.md) | accepted | No account, recipe or media item is deleted for being old; the abandoned total is measured instead, and only logs have a period. |
+| [20260921-alerting-channel.md](decisions/20260921-alerting-channel.md) | accepted, widens EXT-001 | The dependency list becomes four: one outbound alerting channel, carrying a signal's name and value and nothing else, accepting no command back. |
 
 ## C4 context
 
 Actors are settled in [`actors`](40-actors.md), the external systems in
 [`external-interfaces`](130-external-interfaces.md). Nothing else crosses the
 boundary: no advertising network, no identity provider, no analytics service and
-no message delivery service (EXT-009, EXT-010).
+no message delivery service reaching a user's device (EXT-009, EXT-010). The
+alerting channel reaches the product's operator and carries numbers only
+(OBS-004).
 
 ```mermaid
 flowchart TB
@@ -95,6 +98,7 @@ flowchart TB
     attest["Device attestation service<br/>three bits of state per device"]
     storage["Object storage<br/>media, no charge for reads"]
     channel["Distribution channel<br/>the store the application ships through"]
+    alerts["Alerting channel<br/>one way, numbers only"]
 
     holder -->|"cooks and reports with no account; writes, forks and rates with one"| system
     moderator -->|"approves, rejects, removes, bans"| system
@@ -103,6 +107,8 @@ flowchart TB
     system -->|"asks for a verdict, occupies a slot (AUTH-001)"| attest
     system -->|"stores, serves and deletes objects (EXT-003)"| storage
     system -->|"is distributed by and obliged by (CON-006, EXT-005)"| channel
+    system -->|"sends a crossed threshold (OBS-004)"| alerts
+    alerts -->|"read by the moderator; nothing comes back (OBS-005)"| moderator
     holder -.->|"keeps the account key wherever they choose (EXT-008)"| holder
 ```
 

@@ -290,6 +290,20 @@ by nobody again (RATE-002, RATE-011).
 **Net score** — likes minus dislikes. It is what `highest rated` orders by, and
 it is never displayed: the reader is shown the two counts (RATE-007, RATE-010).
 
+## Running the product
+
+**Operational signal** — a total or a share the product measures so that a slow
+problem is visible before it becomes an urgent one. Every signal names the
+decision that asked for it, and none is about a person (OBS-001, OBS-007).
+
+**Threshold** — the value at which a signal stops being information and becomes
+something to decide. Crossing one marks the signal and sends one alert
+(OBS-003, OBS-004).
+
+**Alerting channel** — the one outbound channel that carries a crossed threshold
+to the product's operator. It carries a signal's name and value and nothing
+else, and it accepts nothing back (OBS-004, OBS-005).
+
 ## The device
 
 **Held on the device** — content stored locally so it opens without a
