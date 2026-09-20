@@ -21,7 +21,7 @@ filters in `catalogue`, rating and favourites in `ratings`, reporting and
 blocking in `abuse`, what a moderator checks in `moderation`, recalculation in
 `scaling-rules`. Nothing decided elsewhere is restated here.
 
-The entry point of the application — first launch, the key file, signing in on a
+The entry point of the application — the first account, its key, signing in on a
 second device — belongs to `auth` and is not described here.
 
 This section outgrew one file and is split into the parts below. Requirement
@@ -30,7 +30,7 @@ identifiers did not change on the split and never will.
 | Part | What is in it | Requirements |
 |---|---|---|
 | [10-offline-and-sync.md](10-offline-and-sync.md) | Offline work and synchronisation | FLOW-001–FLOW-008 |
-| [20-device-storage.md](20-device-storage.md) | Favourites and what the device keeps | FLOW-009–FLOW-012 |
+| [20-device-storage.md](20-device-storage.md) | Favourites and what the device keeps, with and without an account | FLOW-009–FLOW-012, FLOW-051, FLOW-052 |
 | [30-cooking.md](30-cooking.md) | Cooking from a recipe | FLOW-013–FLOW-021 |
 | [40-editor.md](40-editor.md) | Writing a recipe | FLOW-022–FLOW-032 |
 | [50-browsing.md](50-browsing.md) | The catalogue and the favourites section | FLOW-033–FLOW-043 |
@@ -44,5 +44,5 @@ identifiers did not change on the split and never will.
 - Where the single media setting of FLOW-011 sits in the interface, which is a
   presentation choice and not a behaviour.
 
-The key file and first launch belong to `auth`, not here. What the editor teaches
+The account key and the first account belong to `auth`, not here. What the editor teaches
 its author belongs to `author-guidance`, not here.

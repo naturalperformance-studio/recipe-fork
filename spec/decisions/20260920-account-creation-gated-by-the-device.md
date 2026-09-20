@@ -9,7 +9,7 @@ with unlimited accounts the real cap on submissions into a queue that one
 moderator works is unlimited. RATE-005 counts a rating from every account, so
 the same applies to score.
 
-The product owner raised this on 2026-09-20, having taken the key file model from
+The product owner raised this on 2026-09-20, having taken the key model from
 a browser game whose save file holds the whole state. That analogy does not carry:
 there the server stores nothing, so an extra player costs the operator nothing,
 while here the server stores recipes, media and the attention of one moderator.
@@ -21,7 +21,7 @@ published something. What was open was the submission queue and score.
 **Decision:** creating an account requires a verdict from a device attestation
 service, and consumes one of three slots the service keeps per device. A slot is
 free again six calendar months after the month it was occupied (AUTH-001,
-AUTH-002). Importing a key file consumes no slot (AUTH-009). Where no verdict can
+AUTH-002). Signing in with a key consumes no slot (AUTH-009). Where no verdict can
 be obtained, an account is still created but is muted: it may read, cook and keep
 favourites, and may not create, fork, edit, submit or rate, while reporting stays
 available (AUTH-004). A muted account becomes full the moment a verdict and a
@@ -48,7 +48,7 @@ Checked 2026-09-20:
 - A sideloaded build, an emulator and a device without the store's services get
   muted accounts. For the MVP this is acceptable: CON-005 makes the store the only
   distribution channel.
-- A person who loses their key file can start again on their own phone, but at
+- A person who loses their key can start again on their own phone, but at
   most three times in six months.
 - A second-hand device may arrive with slots occupied by its previous owner. The
   six-month rule is what eventually clears them.
@@ -68,7 +68,7 @@ Checked 2026-09-20:
   whole economy of CON-002 rests on there being nothing to localise and nothing
   to leak. Checked 2026-09-20.
 - *One account per device, forever.* Rejected: draft section 2.3 promises that a
-  person who loses their key file can fork their own published recipe from a new
+  person who loses their key can fork their own published recipe from a new
   account, and on their own phone they never could again.
 - *Seven accounts per device for its lifetime, never freed.* Rejected for the same
   reason, deferred by a factor of seven, and it leaves a resold device permanently

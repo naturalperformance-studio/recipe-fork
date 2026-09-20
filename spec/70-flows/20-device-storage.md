@@ -2,7 +2,7 @@
 slug: FLOW
 status: closed
 updated: 2026-09-20
-ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-012]
+ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-051, FLOW-052]
 ---
 
 # Favourites and what the device keeps
@@ -137,3 +137,52 @@ interruption is not a reason to lose the page: leaving the application and
 closing it are different events and only the second can cost the recipe.
 **Note:** whether a running timer announces itself while the application is not
 in the foreground is decided with the recipe card flow, not here.
+
+### FLOW-051 — Favourites without an account live on the device and nowhere else
+
+The system shall allow a person holding no account to add recipes to favourites,
+shall keep those favourites on the device under the same rules as any other
+favourite, and shall send them nowhere.
+
+**Acceptance criteria**
+- Given no account, when a recipe is favourited, then it is held on the device
+  and opens without a connection exactly as FLOW-009 requires.
+- Given no account, when favourites are kept, then nothing about them reaches the
+  server, so nothing identifies the device or the person (CON-001).
+- Given no account, when the application is reinstalled or the device is
+  replaced, then those favourites are gone and nothing restores them.
+- Given no account, when the favourites screen is opened, then it states that
+  these favourites live on this device and offers to create an account to carry
+  them, without requiring it.
+
+**Verification:** favourite recipes with no account, reinstall, and confirm the
+loss; capture traffic to confirm nothing was sent.
+**Source:** user decision, 2026-09-20. Accounts are for the people who publish;
+a reader who only cooks should not have to hold one, and the price of that is
+stated plainly rather than discovered after a lost phone.
+
+### FLOW-052 — An account carries favourites beyond the device
+
+The system shall carry the favourites of an account to every device that account
+is signed in to, and shall take into the account the favourites the device was
+already holding when it was created.
+
+**Acceptance criteria**
+- Given an account signed in on two devices, when a recipe is favourited on one,
+  then it is in the favourites of the other once it reaches the server.
+- Given favourites kept with no account, when an account is created on that
+  device, then those favourites become the account's and none is lost.
+- Given favourites kept with no account, when an existing account signs in on
+  that device instead, then AUTH-012 governs the device and those favourites do
+  not merge into it.
+- Given a muted account (AUTH-004), when it favourites a recipe, then it is
+  carried like any other account's, because this is the one thing a muted
+  account is for.
+- Given a removed favourite, when the removal reaches the server, then it is gone
+  on the other device too.
+
+**Verification:** favourite on two devices under one account; create an account
+on a device that already held favourites; sign in to an existing account on
+another such device and compare.
+**Source:** user decision, 2026-09-20: the reason a reader would want an account
+at all is that favourites survive the phone.

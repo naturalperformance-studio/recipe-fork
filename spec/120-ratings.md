@@ -23,10 +23,11 @@ FORK-006 gives every fork none of them, whoever made it. This section does not
 repeat that rule and does not qualify it.
 
 Two costs below are accepted rather than solved, and both are worth an
-operational signal in [`observability`](210-observability.md): score can be
-moved by creating accounts, because an account costs one reinstall (RATE-005);
-and `highest rated` rewards accumulation, so its top ages into a hall of fame,
-which is why `newest` is the default ordering (CAT-001).
+operational signal in [`observability`](210-observability.md): score can still
+be moved by creating accounts, though an account now costs one of three device
+slots that free only after six months (RATE-005, AUTH-002); and `highest rated`
+rewards accumulation, so its top ages into a hall of fame, which is why `newest`
+is the default ordering (CAT-001).
 
 ## What a rating is
 
@@ -124,9 +125,8 @@ control and shall record no rating from that account.
 
 **Verification:** open an own recipe and a forked parent from the same account
 and compare the two cards.
-**Source:** user decision, 2026-09-20. An account costs one first launch, so a
-self-rating is both a claim about one's own work and a free unit of score on
-every fork of it.
+**Source:** user decision, 2026-09-20. A self-rating is both a claim about one's
+own work and, on every fork of it, a free unit of score for the same hand.
 
 ### RATE-005 — Every account's rating counts
 
@@ -141,14 +141,20 @@ has ever published a recipe.
   requirement.
 - Given a muted account (AUTH-004), when it opens a published recipe, then no
   rating control is offered at all, so this requirement never reaches it.
+- Given a person holding no account, when they use the rating control, then
+  account creation is offered (AUTH-001) and the rating is recorded once the
+  account exists; rating anonymously is impossible, because one rating per
+  account (RATE-001) has nothing to hold on to and AUTH-015 forbids holding a
+  device identifier instead.
 
 **Verification:** rate from a freshly created account and confirm both the count
 and the ordering position change.
 **Source:** user decision, 2026-09-20. The gate ABUSE-003 puts on reports was
 weighed for ratings and rejected: a report acts on someone else's recipe while a
 rating only sorts, and readers who cook without ever publishing are most of the
-people the ordering is meant to carry. Farming is accepted and watched, not
-prevented.
+people the ordering is meant to carry. Farming is accepted and watched rather
+than prevented here, because the device slots of AUTH-002 already bound the rate
+at which accounts can be made at all.
 
 ### RATE-006 — Blocking an author does not affect rating
 

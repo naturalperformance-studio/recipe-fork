@@ -85,7 +85,7 @@ application, restore the connection and confirm the recipe reaches the server.
 
 If the device has no network connection, then the system shall refuse the
 catalogue, search over the catalogue, opening a recipe the device does not hold,
-submission for moderation, importing a key file (AUTH-010), and every moderator
+submission for moderation, signing in with a key (AUTH-010), and every moderator
 action, and shall state in each case that the action needs a connection.
 
 **Acceptance criteria**
@@ -99,7 +99,7 @@ action, and shall state in each case that the action needs a connection.
   is needed and the recipe stays in `private`.
 - Given no network connection, when a moderator opens the queue, then it shows
   that a connection is needed and no queue entry is shown from a held copy.
-- Given no network connection, when the user imports a key file, then it states
+- Given no network connection, when a person signs in with a key, then it states
   that a connection is needed and the active account is unchanged (AUTH-010).
 
 **Verification:** walk each refused path in aeroplane mode and confirm the
@@ -127,7 +127,7 @@ not accepted by the server, and upload the media when a connection returns.
 **Verification:** add media in aeroplane mode, restore the connection and
 confirm the upload; repeat with the upload forced to fail.
 **Source:** user decision, 2026-09-20. Media reach the server before publication
-so that a second device picks them up by key file (draft section 5.2); offline
+so that a second device picks them up by its key (draft section 5.2); offline
 that is impossible, and refusing the addition would make the editor useless in
 the kitchen.
 
@@ -213,7 +213,7 @@ and shall tell the owner that it did so.
 - Given no divergence — device B's version is the one the server already holds —
   when device B reconnects, then no fork is created.
 
-**Verification:** copy the key file to a second device, edit one recipe on both
+**Verification:** enter the same account key on a second device, edit one recipe on both
 with one offline, reconnect and inspect both recipes.
 **Source:** user decision, 2026-09-20. The product's own answer to a changed
 recipe is a fork (GOAL-002), and the server's version keeps its identity because

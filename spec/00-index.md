@@ -6,8 +6,9 @@
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
-is a structured, recalculable object, not prose. Accounts carry no personal
-data and are held by a key file the user stores themselves.
+is a structured, recalculable object, not prose. Reading and cooking need no
+account at all; an account is what an author holds, it carries no personal data,
+and it is held by a key its holder keeps.
 
 Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 (read 2026-09-20; the draft is input, not a spec, and is not maintained here).
@@ -16,12 +17,12 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 
 | File | Slug | Status | What it is for |
 |---|---|---|---|
-| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance and 57 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
+| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key and 58 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
 | [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in. |
-| [45-auth/](45-auth/00-index.md) | AUTH | blocked | The key file and the device gate over their life: what first launch creates, the three device slots and the six months that free one, the muted account created when a device cannot be attested, what importing a key file replaces and wipes, and what losing the key leaves behind. What the server accepts as proof of ownership is OQ-002 and is why this section is blocked. |
+| [45-auth/](45-auth/00-index.md) | AUTH | blocked | Who needs an account at all and when one appears, the three device slots and the six months that free one, the nickname and its reroll, the muted account created when a device cannot be attested, the account key and the deletion key beside it, what signing in with another key wipes, and what losing the key leaves behind. What the server accepts as proof of ownership is OQ-002 and is why this section is blocked. |
 | [50-domain-model/](50-domain-model/00-index.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, and how provenance is shown. |
@@ -32,7 +33,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |
 | [110-catalogue.md](110-catalogue.md) | CAT | closed | Public catalogue, search, filters, favourites and the search inside favourites; what a catalogue entry shows, including the fork marker and fork count. |
 | [120-ratings.md](120-ratings.md) | RATE | closed | The binary like and dislike over its life: who may give one and on what, the two counts a reader sees, what `highest rated` and `most rated` compute, and why favouriting is not approval. |
-| [130-external-interfaces.md](130-external-interfaces.md) | EXT | closed | The closed list of what the product depends on — a device attestation service, object storage and the distribution channel — what each does when it is absent, and the two artefacts that cross the boundary in the user's own hands: the key file and a private link. Also the one surface outside the application, the account deletion page. |
+| [130-external-interfaces.md](130-external-interfaces.md) | EXT | closed | The closed list of what the product depends on — a device attestation service, object storage and the distribution channel — what each does when it is absent, and the two artefacts that cross the boundary in the user's own hands: the account key and a private link. Also the one surface outside the application, the account deletion page. |
 | 140-quality.md | QUAL | open | Quality attributes with a metric, a measurement method and a threshold each. |
 | 150-retention.md | RET | open | What is kept, for how long, what deletion means, and what account deletion does to published content. |
 | 160-localization.md | L10N | open | String externalisation, Russian-only first release, language-dependent search and filtering. |
@@ -42,7 +43,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | 200-accessibility.md | A11Y | open | Accessibility commitments and their verification. |
 | 210-observability.md | OBS | open | Operational signals: moderation queue, upload failures, recalculation errors. |
 | 220-mvp-boundary.md | MVP | open | What is in the first release and what explicitly waits. |
-| — | MIG | n/a | Migration: the product launches from scratch — no existing data, users or predecessor system to migrate from. Moving a user between devices by key file is an authentication requirement, not a migration. |
+| — | MIG | n/a | Migration: the product launches from scratch — no existing data, users or predecessor system to migrate from. Moving a user between devices by its key is an authentication requirement, not a migration. |
 
 [Open questions ledger](open-questions.md) · [Decisions](decisions/)
 
@@ -72,9 +73,10 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-two-counts-ordered-by-net-score.md](decisions/20260920-two-counts-ordered-by-net-score.md) | accepted | The reader sees two counts; `highest rated` orders by likes minus dislikes, with a tie chain that makes the order total. |
 | [20260920-rating-is-not-queued.md](decisions/20260920-rating-is-not-queued.md) | accepted | Offline the rating controls stay visible and refuse; nothing is queued, and the counts shown are the last synchronised ones. |
 | [20260920-account-creation-gated-by-the-device.md](decisions/20260920-account-creation-gated-by-the-device.md) | accepted, narrows ACT-001 | Creating an account costs one of three device slots that free after six months; without a verdict the account is muted, and no verdict is ever stored. |
-| [20260920-replacing-the-account-wipes-the-device.md](decisions/20260920-replacing-the-account-wipes-the-device.md) | accepted | One active account per device; importing a key file wipes what the previous account held, after a statement naming every unsent recipe. |
+| [20260920-replacing-the-account-wipes-the-device.md](decisions/20260920-replacing-the-account-wipes-the-device.md) | accepted | One active account per device; signing in with a key wipes what the previous account held, after a statement naming every unsent recipe. |
 | [20260920-media-limits-are-set-by-the-budget.md](decisions/20260920-media-limits-are-set-by-the-budget.md) | accepted | Every media limit is derived from what USD 20 a month buys; video stays on every step by being short, small and silent. |
-| [20260920-deletion-key.md](decisions/20260920-deletion-key.md) | accepted | Deleting an account from outside the application takes a separate deletion key pasted as text; the key file is never uploaded anywhere. |
+| [20260920-deletion-key.md](decisions/20260920-deletion-key.md) | accepted | Deleting an account from outside the application takes a separate deletion key pasted as text; the account key is never uploaded anywhere. |
+| [20260920-account-on-demand.md](decisions/20260920-account-on-demand.md) | accepted, supersedes part of ACT-001 | Nothing is created until an action needs it: readers hold no account, authors do, and the key is a string shown once in full and masked thereafter. |
 
 ## C4 context
 
@@ -85,7 +87,7 @@ no message delivery service (EXT-009, EXT-010).
 
 ```mermaid
 flowchart TB
-    holder["Account holder<br/>a person holding a key file"]
+    holder["Person using the product<br/>with an account key, or without one"]
     moderator["Moderator<br/>the product owner"]
     system["Recipe Fork<br/>Android application and its server"]
     deletion["Account deletion page<br/>the only surface outside the application"]
@@ -93,14 +95,14 @@ flowchart TB
     storage["Object storage<br/>media, no charge for reads"]
     channel["Distribution channel<br/>the store the application ships through"]
 
-    holder -->|"writes, forks, cooks, favourites, rates, reports"| system
+    holder -->|"cooks and reports with no account; writes, forks and rates with one"| system
     moderator -->|"approves, rejects, removes, bans"| system
     holder -->|"pastes a deletion key (EXT-006)"| deletion
     deletion -->|"deletes the account at once"| system
     system -->|"asks for a verdict, occupies a slot (AUTH-001)"| attest
     system -->|"stores, serves and deletes objects (EXT-003)"| storage
     system -->|"is distributed by and obliged by (CON-006, EXT-005)"| channel
-    holder -.->|"keeps the key file wherever they choose (EXT-008)"| holder
+    holder -.->|"keeps the account key wherever they choose (EXT-008)"| holder
 ```
 
 ## Retired IDs

@@ -63,7 +63,7 @@ published (MEDIA-010).
 - *Uploading media only at submission instead of when it is added.* Raised by the
   product owner and withdrawn the same day once the cost was laid out: DOM-005
   and draft section 5.2 upload early precisely so that a draft's photographs
-  follow the key file to a second device, and FLOW-004, FLOW-005 and FLOW-006 all
+  follow the account to a second device, and FLOW-004, FLOW-005 and FLOW-006 all
   rest on the server holding content before moderation. The allowance of
   MEDIA-010 solves the same cost problem without taking drafts off the second
   device.

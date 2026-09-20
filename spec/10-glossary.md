@@ -192,18 +192,30 @@ SCALE-004).
 
 ## People and accounts
 
-**Account** — created automatically at first launch, carrying no personal data
-of any kind (ACT-001, CON-001). Not an identity: a person on two devices holds
-one account by holding one key file.
+**Account** — created only when an action requires one — writing, forking,
+rating, or carrying favourites beyond the device — and carrying no personal data
+of any kind (ACT-001, AUTH-001, CON-001). Not an identity: a person on two
+devices holds one account by holding one key.
 
-**Key file** — the file that holds an account. Whoever holds it holds the
-account; losing it loses the account, and there is no recovery (NGOAL-003).
-Importing one signs in and replaces whatever account was active, wiping what the
-device held for it (AUTH-009, AUTH-012). Its format and cryptography are OQ-002.
+**Person with no account** — an actor, not an absence: they browse, search,
+cook, keep favourites on the device, report and block, and the product creates
+nothing for them (ACT-001, FLOW-051).
+
+**Account key** — the string that holds an account, offered both to copy and to
+save as a file. Whoever holds it holds the account; losing it, with no device
+still signed in, loses the account and there is no recovery (NGOAL-003). It is
+shown in full exactly once, at creation, and afterwards only masked with a
+control that copies it whole (AUTH-007, AUTH-019). Entering it signs in and
+replaces whatever account was active, wiping what the device held for it
+(AUTH-009, AUTH-012). Its form and cryptography are OQ-002.
+
+**Deletion key** — a second, smaller secret issued beside the account key,
+unique and unguessable. It is the only thing the deletion page accepts, and it
+can destroy an account but never take it over (AUTH-017, EXT-006).
 
 **Device slot** — one of three places a device has for creating an account. A
 slot is occupied by creating an account and is free again six calendar months
-later; importing a key file consumes none (AUTH-002, AUTH-009). The slots are
+later; signing in with a key consumes none (AUTH-002, AUTH-009). The slots are
 held by the attestation service, not by the product, and yield no device
 identifier (AUTH-015).
 
@@ -212,13 +224,14 @@ the application is running on, including which slots are free. Nothing from it
 is stored (AUTH-015).
 
 **Muted account** — an account created where no verdict could be obtained. It
-browses, cooks, keeps favourites, reports and blocks; it does not create, fork,
-edit, submit or rate. It becomes full when a verdict and a free slot allow
-(AUTH-004, AUTH-005).
+carries favourites beyond the device and does nothing else an account is for: it
+does not create, fork, edit, submit or rate. It becomes full when a verdict and
+a free slot allow (AUTH-004, AUTH-005).
 
-**Nickname** — a random three-word name generated with the account. Globally
-unique, permanent, and the only thing about an account that is ever shown
-(DOM-001, ACT-001).
+**Nickname** — a random three-word name generated at the creation screen, where
+it may be replaced by another generated one any number of times. Once the account
+exists it is globally unique, permanent, and the only thing about an account that
+is ever shown (DOM-001, AUTH-018).
 
 **Owner** — the account that created a recipe, for that recipe's whole life.
 Ownership is never transferred (ACT-002). Not an actor: a role an account holds
@@ -283,7 +296,9 @@ media, has reached the server. Nothing is submitted for moderation before it is
 
 **Favourite** — a recipe the reader marked to take with them. Its text is always
 held on the device; whether its media comes too is one setting covering all
-favourites (FLOW-009, FLOW-011).
+favourites (FLOW-009, FLOW-011). Without an account a favourite lives on that
+device and nowhere else, and is lost with it; an account carries its favourites
+to every device it signs in to (FLOW-051, FLOW-052).
 
 ## What the editor tells the author
 

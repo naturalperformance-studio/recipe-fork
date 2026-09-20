@@ -7,10 +7,11 @@ ids: [ABUSE-001, ABUSE-002, ABUSE-003, ABUSE-004, ABUSE-005, ABUSE-006, ABUSE-00
 
 # Abuse, reporting and blocking
 
-The product has one moderator, free anonymous accounts created automatically at
-first launch (ACT-001), and a rule that hides a recipe once enough accounts
-report it (ST-006). Everything in this section exists to keep those three facts
-from being turned against the product or against an author.
+The product has one moderator, anonymous accounts that cost their holder
+nothing but a device slot (AUTH-001, AUTH-002), and a rule that hides a recipe
+once enough accounts report it (ST-006). Everything in this section exists to
+keep those three facts from being turned against the product or against an
+author.
 
 Reporting and blocking are also obligations of the Google Play UGC policy
 (CON-006), not optional features.
@@ -45,22 +46,28 @@ already spent on it.
 is not written here, because it contradicts NGOAL-006. Adopting it would be a
 separate decision and a superseding ADR.
 
-### ABUSE-002 — Any account may report, in one of two categories
+### ABUSE-002 — Anyone may report, in one of two categories
 
-The system shall allow any account to report a recipe that is `published` or
-`link_shared`, choosing exactly one of two categories: use of someone else's
-content, or danger to health.
+The system shall allow anyone using the application, with an account or without
+one, to report a recipe that is `published` or `link_shared`, choosing exactly
+one of two categories: use of someone else's content, or danger to health.
 
 **Acceptance criteria**
-- Given a published recipe, when any signed-in account opens it, then a report
-  action is reachable from the recipe itself.
+- Given a published recipe, when anyone opens it, then a report action is
+  reachable from the recipe itself, whether or not they hold an account.
+- Given a report from a person with no account, when it is recorded, then it
+  reaches the moderator's queue and counts toward no automatic hiding, exactly as
+  ABUSE-003 already requires of an account that has published nothing.
 - Given the report action, when it is opened, then exactly the two categories
   are offered and one must be chosen before the report is recorded.
 - Given an account that already reported that recipe, when it reports it again,
   then no second report is recorded.
 
 **Verification:** manual UI check; repeat-report test.
-**Source:** user decision, 2026-09-20. The two categories are the two classes of
+**Source:** user decision, 2026-09-20; widened the same day from accounts to
+anyone, because CON-006 obliges the product to offer reporting and because the
+person best placed to recognise a stolen photograph holds no account here
+(ABUSE-007). The two categories are the two classes of
 violation a moderator cannot detect before publication: the provenance of a
 photograph is invisible at review, and an unsafe preserving time or a wrong
 mushroom reads as an ordinary recipe. Every other class is expected to be caught
@@ -151,8 +158,18 @@ content that does not require holding an account.
 - Given a claim received through that channel, when it is handled, then the
   moderator can act on the recipe named in it.
 
+- Given a person who deleted their account, when they claim rights over recipes
+  that account published, then the claim is handled through this channel like any
+  other, because deletion leaves them holding no proof of authorship.
+
 **Verification:** review of the store listing and the published terms.
 **Source:** derived from ABUSE-002: the owner of a photograph used without
 permission is normally not a user of this product and cannot be required to
-become one. The exact channel and its legal wording are specified in section
+become one. The product owner added on 2026-09-20 that this is also the route by
+which a former author reaches their own published recipes: an account's deletion
+does not remove them (ST-001), and this channel is the only way they can be taken
+out of the catalogue. What it costs is stated in
+[ADR — an account is created on demand](decisions/20260920-account-on-demand.md):
+a deleted account leaves nothing that proves who wrote what, so such a claim
+arrives with no more standing than a stranger's. The exact channel and its legal wording are specified in section
 [`legal`](190-legal.md).

@@ -204,7 +204,7 @@ the author is doing.
 - Given a hint, when it is shown, then no record is kept of its having been seen:
   whether it is shown is recomputed from the recipe and the author's action every
   time, and there is nothing to dismiss.
-- Given a second device holding the same key file, when the author writes a
+- Given a second device signed in to the same account, when the author writes a
   recipe there, then hints behave identically, because nothing about them is held
   per account or per device.
 - Given a hint and a warning of FLOW-028 that apply at the same moment, when both

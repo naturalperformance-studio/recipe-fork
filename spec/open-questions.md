@@ -24,15 +24,15 @@ surface in the MVP. See CON-005 and
 [ADR 20260920 — native Android MVP](decisions/20260920-native-android-mvp.md).
 
 ### OQ-002 — Key file format and cryptography (define before MVP)
-Unresolved: the format of the account key file, the cryptography behind it, and
+Unresolved: the format of the account key, the cryptography behind it, and
 how the server distinguishes a genuine key from a forged one.
-Proposal (not a decision): the key file carries a private key; the account
+Proposal (not a decision): the key carries a private key; the account
 identifier is derived from the matching public key; authentication is a
 challenge signed by the client, so the server never stores anything that can
 recreate the key.
 Blocks: AUTH-010 and AUTH-014, and with them section `auth`. Everything else in
 that section is written and does not depend on the answer.
-Constrained 2026-09-20 by AUTH-017: whatever format is chosen, the key file
+Constrained 2026-09-20 by AUTH-017: whatever form is chosen, the account key
 carries the account's deletion key as copyable text.
 
 ### OQ-003 — Media limits — RESOLVED 2026-09-20
@@ -63,9 +63,10 @@ authenticated session for 12 months is deleted. There is no contact channel, so
 no warning can be delivered to the account holder and the rule can only be
 announced in the published terms.
 Bounded by: CON-002.
-Also covers accounts that never produced anything: an account is created on every
-first launch (ACT-001) and permanently consumes one nickname (DOM-001), so
-installs that are opened once and deleted accumulate as empty accounts.
+Narrowed again 2026-09-20 by account creation on demand: an installation no
+longer mints an account, so the empty accounts this entry once had to cover —
+one per install that was opened once and deleted — do not exist. What remains is
+an account someone deliberately created and then abandoned.
 Blocks: sections `retention`, `legal`.
 
 ### OQ-005 — Deleted parent recipe — RESOLVED 2026-09-20
@@ -102,10 +103,13 @@ Proposal (not a decision): size the word lists so the combination count exceeds
 any plausible account count by a wide margin, and watch the consumed fraction as
 an operational signal (section `observability`) so the lists can be extended
 long before they run out.
-Narrowed 2026-09-20 by the device gate: a nickname can no longer be consumed at
-an unbounded rate, because creating an account costs one of three slots per
-device and a slot frees only after six months (AUTH-002). The question survives
-as an arithmetic one about the word lists, not as an abuse vector.
+Narrowed twice on 2026-09-20. First by the device gate: a nickname can no longer
+be consumed at an unbounded rate, because creating an account costs one of three
+slots per device and a slot frees only after six months (AUTH-002). Then by
+account creation on demand: an installation no longer mints an account at all,
+so only a person who writes, forks, rates or wants favourites carried beyond the
+device consumes a nickname (AUTH-001). The question survives as an arithmetic one
+about the word lists, not as an abuse vector.
 Blocks: nothing while the fraction consumed stays low.
 
 ### OQ-010 — Serving count below one — RESOLVED 2026-09-20
@@ -341,14 +345,14 @@ Written as FLOW-049 and FLOW-050; FLOW-046 is no longer blocked.
 Unresolved: whether a device may hold more than one account at a time, with a
 switch between them, instead of the single active account of AUTH-011.
 Decided for the MVP by the product owner 2026-09-20 by not adopting it: one
-active account, and importing a key file replaces it and wipes what the previous
+active account, and signing in with a key replaces it and wipes what the previous
 account held (AUTH-012).
 The reason is the product owner's own: the first release is the fork mechanic
 done well, not account management, and multi-account use multiplies favourites,
 held media and the single storage setting of FLOW-011 by the number of accounts,
 with the limit of FLOW-011 then having to be divided between them.
 Consequence to watch, stated and accepted: a household sharing one tablet cannot
-use two accounts without re-importing a key file each time, and each re-import
+use two accounts without re-signing in with a key each time, and each such sign-in
 destroys the other person's unsent drafts (AUTH-013 names them before it
 happens).
 Blocks: nothing.
@@ -385,9 +389,12 @@ the only exemptions named are permanently private and enterprise device
 management applications
 ([Google Play — app account deletion requirements](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)).
 Nothing exempts an anonymous account or an application that collects no personal
-data. The one opening is that the scope is written around a user who *completes*
-creating an account, and here the account appears without the user doing
-anything (ACT-001).
+data. The one opening was that the scope is written around a user who *completes*
+creating an account, while the account then appeared without the user doing
+anything. That opening closed on 2026-09-20: an account is now created
+deliberately, on a screen the person passes through (AUTH-001, AUTH-007). The
+product is in scope by the plain reading, and what remains to confirm is only
+whether a page that accepts a deletion key satisfies the web resource part.
 What is decided regardless, because it costs little and settles the matter if the
 obligation does apply: deletion exists, in the application and on a page, and it
 is specified in EXT-006, AUTH-017 and `retention`. Published recipes survive it

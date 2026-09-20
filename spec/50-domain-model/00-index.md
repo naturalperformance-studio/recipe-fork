@@ -44,7 +44,7 @@ stays smooth, while being displayed in pieces.
 | Field | Type | Notes |
 |---|---|---|
 | `account_id` | identifier | Internal. Never shown to any user. |
-| `nickname` | three-word string | The only public representation of a user. Globally unique, assigned at creation, never changes. |
+| `nickname` | three-word string | The only public representation of a user. Globally unique, chosen at the creation screen from generated candidates (AUTH-018), never changes afterwards. |
 | `created_at` | timestamp | |
 | `publishing_banned` | boolean | Set and cleared by a moderator (ACT-005). |
 | `roles` | set | Empty, or contains the moderator role (ACT-003). |
@@ -52,6 +52,9 @@ stays smooth, while being displayed in pieces.
 An account holds, as separate collections: favourites (recipes), ratings (one
 value per rated recipe), blocked authors (accounts), and the recipes it owns.
 The account carries no field that identifies the person behind it (CON-001).
+An account exists only where one was asked for (AUTH-001); favourites and
+blocked authors also exist on a device that holds no account, and live only
+there (FLOW-051).
 
 ### Recipe
 

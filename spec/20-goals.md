@@ -57,7 +57,8 @@ No name, email address, phone number or avatar is collected at any point.
 No comments, no feed, no subscriptions, no messaging, no follower graph.
 
 ### NGOAL-003 — No account recovery
-An account that loses its key file is unrecoverable by design.
+An account whose key is lost, with no device still signed in to it, is
+unrecoverable by design.
 
 ### NGOAL-004 — No editing of published content
 Once a recipe is visible to anyone other than its owner it is immutable forever.

@@ -19,7 +19,10 @@ shall provide no means of changing it.
 **Acceptance criteria**
 - Given any two accounts, when their nicknames are compared, then they differ.
 - Given any interface of the application, when it is enumerated, then it offers
-  no action that changes a nickname.
+  no action that changes a nickname once the account exists.
+- Given the account creation screen, when a nickname is rerolled before the
+  account is created, then no nickname is assigned yet and none is consumed
+  (AUTH-018).
 
 **Verification:** uniqueness check over the account store; interface review.
 **Source:** draft section 2.1; user decision, 2026-09-20.
@@ -78,11 +81,11 @@ the user's account at upload time, before the recipe becomes externally visible.
 
 **Acceptance criteria**
 - Given an unpublished recipe with media, when the same account signs in on
-  another device with its key file, then that media is available there.
+  another device signed in to it, then that media is available there.
 - Given a media item belonging to an unpublished recipe, when any other account
   requests it, then it is not served.
 
-**Verification:** two-device test with a key file; access test from a second
+**Verification:** two-device test with one account key; access test from a second
 account.
 **Source:** draft section 5.2.
 

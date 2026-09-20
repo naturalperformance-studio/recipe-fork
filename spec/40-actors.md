@@ -7,55 +7,60 @@ ids: [ACT-001, ACT-002, ACT-003, ACT-004, ACT-005, ACT-006, ACT-007]
 
 # Actors and permissions
 
-Two actors exist. There is no unauthenticated actor: an account is created
-automatically at first launch (ACT-001), so every person using the application
-holds one from their first screen onwards. "Owner" and "reader" are roles an
-account holds with respect to a particular recipe, not separate actors.
+Three actors exist. A person with no account is one of them: most of what the
+product is for — finding a recipe, cooking from it, keeping it on the device —
+needs no account at all, and one appears only when an action requires it
+(ACT-001, AUTH-001). "Owner" and "reader" are roles an account holds with
+respect to a particular recipe, not separate actors.
 
 An account is full or muted. A muted account is what the product creates when the
-device cannot be attested (AUTH-004); it is not a third actor but the same actor
+device cannot be attested (AUTH-004); it is not a fourth actor but an account
 with a smaller set of permitted actions, and it becomes full as soon as a verdict
-and a free slot allow (AUTH-005). The column below states what it may do.
+and a free slot allow (AUTH-005). The columns below state what each may do.
 
-| | Account holder | Owner of the recipe | Moderator | Muted account |
-|---|---|---|---|---|
-| Browse and search the public catalogue | yes | yes | yes | yes |
-| Open a published recipe | yes | yes | yes | yes |
-| Open a private draft or fork | no | yes | no | no |
-| Open a recipe awaiting moderation | no | yes | yes | no |
-| Create and fork a recipe | yes | yes | yes | no (AUTH-004) |
-| Edit a recipe before it becomes externally visible | no | yes | no | no (AUTH-004) |
-| Edit a recipe after it becomes externally visible | no | no | no | no |
-| Submit a recipe for moderation | yes, unless banned | yes, unless banned | yes, unless banned | no (AUTH-004) |
-| Approve or reject a submission | no | no | yes | no |
-| Remove a published recipe from the catalogue | no | no (ST-001) | yes | no |
-| Rate a published recipe | yes | no (RATE-004) | yes | no (AUTH-004) |
-| Add a recipe to favourites | yes | no (FLOW-040) | yes | yes |
-| Report a recipe or an author | yes | yes | yes | yes (CON-006) |
-| Block an author's recipes from own catalogue and search | yes | yes | yes | yes |
-| Ban an account from publishing | no | no | yes | no |
+| | No account | Account holder | Owner of the recipe | Moderator | Muted account |
+|---|---|---|---|---|---|
+| Browse and search the public catalogue | yes | yes | yes | yes | yes |
+| Open a published recipe | yes | yes | yes | yes | yes |
+| Open a private draft or fork | no | no | yes | no | no |
+| Open a recipe awaiting moderation | no | no | yes | yes | no |
+| Create and fork a recipe | no (AUTH-001) | yes | yes | yes | no (AUTH-004) |
+| Edit a recipe before it becomes externally visible | no | no | yes | no | no (AUTH-004) |
+| Edit a recipe after it becomes externally visible | no | no | no | no | no |
+| Submit a recipe for moderation | no | yes, unless banned | yes, unless banned | yes, unless banned | no (AUTH-004) |
+| Approve or reject a submission | no | no | no | yes | no |
+| Remove a published recipe from the catalogue | no | no | no (ST-001) | yes | no |
+| Rate a published recipe | no (AUTH-001) | yes | no (RATE-004) | yes | no (AUTH-004) |
+| Add a recipe to favourites | yes, on this device only (FLOW-051) | yes | no (FLOW-040) | yes | yes |
+| Carry favourites beyond this device | no (FLOW-051) | yes (FLOW-052) | yes | yes | yes |
+| Report a recipe or an author | yes (ABUSE-002) | yes | yes | yes | yes |
+| Block an author's recipes from own catalogue and search | yes, on this device only | yes | yes | yes | yes |
+| Ban an account from publishing | no | no | no | yes | no |
 
-### ACT-001 — An account exists from first launch
+### ACT-001 — Most of the product needs no account
 
-When the application is launched on a device for the first time and no key file
-has been imported, the system shall create an account as `auth` allows, generate
-its identifier and a random three-word nickname, and sign the user in to that
-account.
+The system shall allow a person holding no account to browse and search the
+catalogue, open and cook from any published recipe, keep favourites on the
+device, report content and block an author, and shall create an account only
+when an action requires one (AUTH-001).
 
 **Acceptance criteria**
-- Given a device with a free slot, when the application is opened for the first
-  time, then the user is signed in to a newly created account without entering
-  anything.
-- Given that account, when its public representation is displayed, then it shows
+- Given a clean installation, when the application is opened, then it is usable
+  at once and nothing is created, asked for or generated.
+- Given a person with no account, when they favourite a recipe, then it is kept
+  on the device and is not carried anywhere else (FLOW-051).
+- Given a person with no account, when they use a control that needs one, then
+  account creation is offered and the action proceeds once the account exists.
+- Given an account, when its public representation is displayed, then it shows
   the generated three-word nickname and no other identifying value.
-- Given a device whose slots are all occupied, when the application is opened,
-  then no account is created and AUTH-003 states when one can be.
-- Given a device whose verdict cannot be obtained, when the application is
-  opened, then the account created is muted (AUTH-004).
+- Given a person who never creates an account, when everything they can reach is
+  enumerated, then it matches the first column of the table above.
 
-**Verification:** manual check on a clean device; inspection of the created
-record for absence of the fields forbidden by CON-001.
-**Source:** draft section 2.1; user decision, 2026-09-20.
+**Verification:** walk the whole account-less surface on a clean install, then
+trigger creation from each action that requires it.
+**Source:** draft section 2.1; user decision, 2026-09-20, replacing the earlier
+decision that an account is created at first launch. See
+[ADR — an account is created on demand](decisions/20260920-account-on-demand.md).
 
 ### ACT-002 — Ownership is fixed at creation
 

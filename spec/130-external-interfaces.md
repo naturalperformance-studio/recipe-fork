@@ -14,7 +14,7 @@ dependency may degrade the product, and none may stop it from opening.
 
 Three services are outside and are depended upon — a device attestation service,
 an object storage service and the distribution channel. Two artefacts cross the
-boundary in the user's own hands — the key file and a private link. One surface
+boundary in the user's own hands — the account key and a private link. One surface
 exists outside the application because the distribution channel requires it — the
 account deletion page.
 
@@ -55,18 +55,21 @@ system shall continue to operate as AUTH-004 requires and shall not prevent the
 application from opening.
 
 **Acceptance criteria**
-- Given the service is unreachable, when the application is launched for the
-  first time, then a muted account is created and the application opens.
+- Given the service is unreachable, when the application is opened and used
+  without an account, then everything that needs no account works (ACT-001).
+- Given the service is unreachable, when an account is asked for, then a muted
+  account is created (AUTH-004) and the application keeps working.
 - Given the service is unreachable, when a muted account attempts an action that
   needs a verdict, then AUTH-006 states why it cannot proceed.
 - Given the service is reached, when a verdict is obtained, then nothing from it
   is stored (AUTH-015).
 - Given a day's usage at the expected load, when verdict requests are counted,
   then they stay within the service's free quota, because a verdict is requested
-  only when an account is created or unmuted (AUTH-005) and never on launch.
+  only when an account is created or unmuted (AUTH-001, AUTH-005) and never on
+  launch.
 
-**Verification:** run first launch and unmuting with the service blocked, then
-reachable; count requests over a simulated day.
+**Verification:** run account creation and unmuting with the service blocked,
+then reachable; count requests over a simulated day.
 **Source:** user decision, 2026-09-20. See
 [ADR — account creation is gated by the device](decisions/20260920-account-creation-gated-by-the-device.md).
 
@@ -138,7 +141,7 @@ implemented.
 Whether that obligation reaches an account the user never asked to create is
 OQ-030.
 
-### EXT-006 — The account deletion page takes a deletion key, never the key file
+### EXT-006 — The account deletion page takes a deletion key, never the account key
 
 Where an account is deleted from outside the application, the system shall
 accept the account's deletion key (AUTH-017) as text, shall accept nothing else
@@ -188,21 +191,21 @@ application and compare what is disclosed.
 author has not published, so a page that described it would hand that content's
 existence to anyone who received or intercepted the link.
 
-### EXT-008 — The key file is handed over and never managed
+### EXT-008 — The account key is handed over and never managed
 
-The system shall treat the key file as an artefact the user keeps by whatever
+The system shall treat the account key as an artefact the user keeps by whatever
 means they choose, shall depend on no storage provider for it, and shall accept
 it from any source the device can read.
 
 **Acceptance criteria**
-- Given the key file, when it is issued, then the product offers no place to keep
+- Given the account key, when it is issued, then the product offers no place to keep
   it and names none (AUTH-008).
-- Given a key file kept in any file storage the device can read, when it is
+- Given a key saved in any file storage the device can read, when it is
   imported, then it is accepted.
 - Given any external storage provider, when the product's dependencies are
   enumerated, then none is among them.
 
-**Verification:** import a key file from local storage and from a mounted cloud
+**Verification:** enter a key copied as text, and one taken from a file and from a mounted cloud
 folder.
 **Source:** draft section 2.2; the product's promise is that the account depends
 on nobody, which a recommended storage provider would quietly break.
