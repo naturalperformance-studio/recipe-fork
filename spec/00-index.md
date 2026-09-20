@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 4 questions must be answered before MVP.**
-> Sections: 12 closed · 0 blocked · 14 open · 1 n/a.
+> Sections: 13 closed · 0 blocked · 13 open · 1 n/a.
 > Blocking: OQ-002, OQ-003, OQ-004, OQ-016. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -16,7 +16,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 
 | File | Slug | Status | What it is for |
 |---|---|---|---|
-| [10-glossary.md](10-glossary.md) | GLOSS | open | Terms that mean something specific here: fork, parent, publication, private link, unit type. |
+| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report and 52 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
