@@ -141,7 +141,7 @@ surface for the single moderator to check, and would fragment search.
 These are named so their absence is visible, not an oversight.
 
 - Whether a rating can be changed or withdrawn — section `ratings`.
-- Media size, duration and count limits — OQ-003.
+- Media size, duration and count limits — settled in [`media`](../90-media.md).
 - What a fork shows when its parent is gone — OQ-005, OQ-007.
 - Account deletion — section `retention`.
 

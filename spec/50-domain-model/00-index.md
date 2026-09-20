@@ -155,7 +155,8 @@ step.
 | `attachment` | recipe cover, or a Step | |
 | `visibility` | `private` or `published` | Follows the visibility of the recipe it belongs to. |
 
-Limits on size, duration and count per recipe are open — OQ-003.
+Limits on size, duration, count per recipe and total unpublished size per
+account are in [`media`](../90-media.md), MEDIA-001 to MEDIA-010.
 
 ### Tag
 

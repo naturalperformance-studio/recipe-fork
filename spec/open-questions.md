@@ -5,7 +5,7 @@ updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029]
-open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-016, OQ-029]
+open_before_mvp: [OQ-002, OQ-004, OQ-016, OQ-029]
 ---
 
 # Open questions
@@ -33,24 +33,29 @@ recreate the key.
 Blocks: AUTH-010 and AUTH-014, and with them section `auth`. Everything else in
 that section is written and does not depend on the answer.
 
-### OQ-003 — Media limits (define before MVP)
-Unresolved: maximum image size, maximum video duration and file size, number of
-media items per recipe, total storage per account.
-Proposal (not a decision): images re-encoded client-side and rejected above
-2 MB after re-encoding; video limited to 30 seconds and 15 MB; at most 1 cover
-image plus 1 media item per step.
+### OQ-003 — Media limits — RESOLVED 2026-09-20
+Resolved by the product owner against the arithmetic of CON-002: one cover
+photograph and at most one item per step, video allowed on any step; photographs
+re-encoded on the device to 1 MB and 1600 pixels; video at most 15 seconds,
+converted to at most 6 MB with its audio track removed; duration refused before
+conversion and everything else settled by the conversion itself; the author told
+what was done and told when it could not be done; every metadata field but
+orientation discarded; and 150 MB of media per account across recipes that have
+never been published.
 What video is for, stated by the product owner 2026-09-20: a short clip showing
 a technique — how something is cut, how one ingredient goes into another — never
-a lesson. The limits chosen here must be tight enough that a clip weighs close
-to a photo, because FLOW-011 holds photo and video under one setting on that
-assumption.
-Bounded by: CON-002 (USD 20 per month). Any limit proposed here is only
-acceptable if its storage and egress cost at the expected load fits that ceiling.
-Blocks: section `media`.
+a lesson. The limits chosen keep a clip close to a photograph's weight, which is
+what FLOW-011 assumed when it put both under one setting.
+Written as MEDIA-001 to MEDIA-013. See
+[ADR — media limits are set by the storage budget](decisions/20260920-media-limits-are-set-by-the-budget.md).
 
 ### OQ-004 — Retention of inactive accounts and unpublished media (define before MVP)
 Unresolved: whether unpublished media and dormant accounts are deleted to
 contain storage cost, and after how long.
+Narrowed 2026-09-20 by MEDIA-010: an account can now hold at most 150 MB of
+media across recipes that have never been published, so a dormant account's
+unpublished media is bounded rather than unbounded. What stays open is whether
+it is deleted at all, and what becomes of dormant accounts themselves.
 Proposal (not a decision): unpublished media belonging to an account with no
 authenticated session for 12 months is deleted. There is no contact channel, so
 no warning can be delivered to the account holder and the rule can only be

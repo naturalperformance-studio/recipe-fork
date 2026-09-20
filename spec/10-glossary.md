@@ -102,7 +102,16 @@ characters of its step's text unless the author set a name of their own, in
 which case theirs is used and stops following the step (FLOW-016).
 
 **Cover** — the recipe's own image, attached where the title is written. Optional
-(FLOW-026, DOM-006).
+(FLOW-026, DOM-006). Always a photograph, never a video (MEDIA-001).
+
+**Conversion** — what the device does to every media file before uploading it:
+re-encoding it to its limit, discarding every metadata field but orientation,
+and removing a video's audio track. The author is always told it happened
+(MEDIA-002, MEDIA-003, MEDIA-004, MEDIA-005).
+
+**Unpublished allowance** — the 150 MB of media one account may hold across
+recipes that have never been published. Publishing a recipe frees what it holds
+(MEDIA-010).
 
 **Tag** — a label from a fixed dictionary the product owner maintains, in one of
 two facets, `cuisine` or `dish_type`. A user cannot create one (DOM-008).
