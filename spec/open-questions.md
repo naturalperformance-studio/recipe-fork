@@ -3,7 +3,7 @@ slug: OQ
 status: open
 updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011]
-open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-010, OQ-011]
+open_before_mvp: [OQ-002, OQ-003, OQ-004]
 ---
 
 # Open questions
@@ -89,18 +89,20 @@ an operational signal (section `observability`) so the lists can be extended
 long before they run out.
 Blocks: nothing while the fraction consumed stays low.
 
-### OQ-010 — Serving count below one (define before MVP)
-Unresolved: what the serving field shows when the computed count rounds to less
-than one — for example 50 g fixed against an authored 500 g in a 4-serving
-recipe, which is 0.4 servings.
-Proposal (not a decision): show "less than one serving" instead of a number, and
-keep the exact factor for every quantity as SCALE-002 requires.
-Blocks: SCALE-002.
+### OQ-010 — Serving count below one — RESOLVED 2026-09-20
+Resolved by the product owner: below one serving the count is displayed as the
+nearest of the fractions ¼, ⅓, ½, ⅔, ¾ — the same set the `household` unit type
+uses — with a floor of ¼ serving. The rejected alternatives were a wordless
+"less than one serving" and a decimal count; see
+[ADR — scaling extremes](decisions/20260920-scaling-extremes.md). Written as
+SCALE-008; SCALE-002 is no longer blocked.
 
-### OQ-011 — Bounds on requested servings and scale factor (define before MVP)
-Unresolved: the largest and smallest serving count a reader may request, and
-whether the scale factor is bounded.
-Proposal (not a decision): accept 1 to 100 servings; derive the factor freely
-from a fixed ingredient without bounding it, since SCALE-005 already prevents a
-quantity from vanishing.
-Blocks: section `scaling-rules`, section `flows`.
+### OQ-011 — Bounds on requested servings and scale factor — RESOLVED 2026-09-20
+Resolved by the product owner: a requested serving count has a floor of ¼
+serving and no ceiling; the factor derived from a fixed ingredient is unbounded
+too, so both entry points obey one rule. Below one serving the count is both
+requested and displayed as one of ¼, ⅓, ½, ⅔, ¾; at one serving and above it is
+a whole number. Instead of an upward bound, a warning appears once two or more
+ingredients are held at the floor of their unit type. Written as SCALE-009,
+SCALE-010 and SCALE-011; see
+[ADR — scaling extremes](decisions/20260920-scaling-extremes.md).

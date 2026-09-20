@@ -1,8 +1,8 @@
 # Recipe Fork — specification index
 
-> **NOT READY — 5 questions must be answered before MVP.**
-> Sections: 8 closed · 1 blocked · 14 open · 1 n/a.
-> Blocking: OQ-002, OQ-003, OQ-004, OQ-010, OQ-011. Last updated 2026-09-20.
+> **NOT READY — 3 questions must be answered before MVP.**
+> Sections: 9 closed · 0 blocked · 15 open · 1 n/a.
+> Blocking: OQ-002, OQ-003, OQ-004. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -20,11 +20,12 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
 | [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in. |
+| 45-auth.md | AUTH | open | The key file over its life: first launch, signing in on a second device, losing the key, and what the server accepts as proof of ownership. |
 | [50-domain-model.md](50-domain-model.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, unit type, step, media, account, moderation record. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, and how provenance is shown. |
 | 70-flows.md | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
-| [80-scaling-rules.md](80-scaling-rules.md) | SCALE | blocked | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
+| [80-scaling-rules.md](80-scaling-rules.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
 | 90-media.md | MEDIA | open | Media capture, client-side conversion, upload before publication, privacy of unpublished media. |
 | [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |
 | 110-catalogue.md | CAT | open | Public catalogue, search, filters, favourites and the search inside favourites. |
@@ -54,6 +55,8 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-immutability-trigger.md](decisions/20260920-immutability-trigger.md) | accepted | A recipe freezes at external visibility; withdrawn and rejected recipes stay editable. |
 | [20260920-forking-published-only.md](decisions/20260920-forking-published-only.md) | accepted | Only published recipes are forkable by others; owners may fork their own in any state. |
 | [20260920-fork-carries-method-not-expression.md](decisions/20260920-fork-carries-method-not-expression.md) | accepted | A fork inherits ingredients and steps, never media or description; no anti-fork flag. |
+| [20260920-scaling-extremes.md](decisions/20260920-scaling-extremes.md) | accepted | Serving count floors at ¼ with no ceiling; a warning replaces a downward bound. |
+| [20260920-large-quantity-display.md](decisions/20260920-large-quantity-display.md) | accepted | Tonnes and cubic metres extend `exact` only; every unit type stays legible at any magnitude. |
 
 ## C4 context
 

@@ -20,11 +20,16 @@ in section `scaling-rules`.
 
 | Type | Examples | Carries a quantity | Scales |
 |---|---|---|---|
-| `exact` | g, kg, ml, l | yes | linearly, no rounding loss |
+| `exact` | g, kg, t, ml, l, m³ | yes | linearly, no rounding loss |
 | `piece` | egg, garlic clove, onion | yes | linearly, then rounded to a countable value |
 | `household` | teaspoon, tablespoon, cup | yes | linearly, then rounded to a convenient fraction |
 | `taste_measured` | a pinch of salt | yes | linearly, then rounded to a convenient fraction |
 | `taste_unmeasured` | pepper to taste | no | never — the ingredient has no quantity to scale |
+
+An `exact` ingredient may be authored in any unit of its type, including tonnes
+and cubic metres, so that a production card can be written in the units it is
+already kept in. What is displayed is governed by the rounding grid in section
+`scaling-rules`, not by the unit the author chose.
 
 `household` quantities are never converted to mass: a tablespoon of flour and a
 tablespoon of honey do not weigh the same, and the product holds no ingredient
