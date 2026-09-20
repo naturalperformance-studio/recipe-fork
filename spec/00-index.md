@@ -1,8 +1,8 @@
 # Recipe Fork — specification index
 
-> **NOT READY — 5 questions must be answered before MVP.**
-> Sections: 9 closed · 1 blocked · 14 open · 1 n/a.
-> Blocking: OQ-002, OQ-003, OQ-004, OQ-014, OQ-015. Last updated 2026-09-20.
+> **NOT READY — 4 questions must be answered before MVP.**
+> Sections: 11 closed · 0 blocked · 14 open · 1 n/a.
+> Blocking: OQ-002, OQ-003, OQ-004, OQ-016. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -18,17 +18,18 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 |---|---|---|---|
 | [10-glossary.md](10-glossary.md) | GLOSS | open | Terms that mean something specific here: fork, parent, publication, private link, unit type. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
+| [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
 | [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in. |
 | 45-auth.md | AUTH | open | The key file over its life: first launch, signing in on a second device, losing the key, and what the server accepts as proof of ownership. |
-| [50-domain-model.md](50-domain-model.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, unit type, step, media, account, moderation record. |
+| [50-domain-model.md](50-domain-model.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, and how provenance is shown. |
 | [70-flows.md](70-flows.md) | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
 | [80-scaling-rules.md](80-scaling-rules.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
 | 90-media.md | MEDIA | open | Media capture, client-side conversion, upload before publication, privacy of unpublished media. |
 | [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, and what a rejection produces. |
-| [110-catalogue.md](110-catalogue.md) | CAT | blocked | Public catalogue, search, filters, favourites and the search inside favourites. |
+| [110-catalogue.md](110-catalogue.md) | CAT | closed | Public catalogue, search, filters, favourites and the search inside favourites; what a catalogue entry shows, including the fork marker and fork count. |
 | 120-ratings.md | RATE | open | Binary like and dislike, and favourites as a separate action. |
 | 130-external-interfaces.md | EXT | open | Interfaces crossing the product boundary: the key file as a portable artefact, object storage, anything the client depends on. |
 | 140-quality.md | QUAL | open | Quality attributes with a metric, a measurement method and a threshold each. |
@@ -59,6 +60,10 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-large-quantity-display.md](decisions/20260920-large-quantity-display.md) | accepted | Tonnes and cubic metres extend `exact` only; every unit type stays legible at any magnitude. |
 | [20260920-provenance-follows-publication.md](decisions/20260920-provenance-follows-publication.md) | accepted | A parent is named only if it is or has been published; a never-published parent is not mentioned. |
 | [20260920-danger-travels-down-the-chain.md](decisions/20260920-danger-travels-down-the-chain.md) | accepted | A health-danger removal flags every descendant for review; a rights removal gives no reason and touches no fork. |
+| [20260920-lineage-visible-in-discovery.md](decisions/20260920-lineage-visible-in-discovery.md) | accepted | The catalogue marks a fork and states its direct fork count; this narrows GOAL-003. |
+| [20260920-ingredient-dictionary.md](decisions/20260920-ingredient-dictionary.md) | accepted | An ingredient names a dictionary entry with an optional qualifier; free text is accepted with a warning and is never filterable. |
+| [20260920-comparison-factors.md](decisions/20260920-comparison-factors.md) | accepted | The dictionary gains one level and every entry carries invisible comparison factors; ordering is total. |
+| [20260920-quality-sorted-by-readers.md](decisions/20260920-quality-sorted-by-readers.md) | accepted | The product checks nothing about a recipe's craft; readers' ratings sort quality and a moderator never rejects for it. |
 
 ## C4 context
 

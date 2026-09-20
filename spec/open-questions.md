@@ -3,8 +3,9 @@ slug: OQ
 status: open
 updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
-  OQ-012, OQ-013, OQ-014, OQ-015]
-open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-014, OQ-015]
+  OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
+  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025]
+open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-016]
 ---
 
 # Open questions
@@ -139,27 +140,163 @@ Proposal (not a decision): hold exactly one recipe — the last one opened — u
 the next one replaces it. One slot, no accounting, no management screen.
 Blocks: nothing.
 
-### OQ-014 — The orderings offered in the catalogue (define before MVP)
-Decided by the product owner 2026-09-20: the reader chooses the ordering, and
-the same choice governs the catalogue and the results of a query (CAT-001).
-Unresolved: the exact set of fields — newest, highest rated and most rated were
-named, followed by "and so on" — and which ordering is in force before the
-reader has chosen one.
-The default matters more than the list: it is what nearly every reader will
-see. Ordering by rating by default returns the concern that ordering by rating
-was meant to avoid, because a recipe that is never shown is never rated.
-Proposal (not a decision): offer newest, highest rated and most rated; make
-newest the default.
-Blocks: CAT-001.
+### OQ-014 — The orderings offered in the catalogue — RESOLVED 2026-09-20
+Resolved by the product owner: the reader orders by `newest`, `highest rated`,
+`most rated` or `most forked`, and `newest` is in force until they choose
+(CAT-001). `newest` is the default because an ordering by rating goes nearly
+static as the catalogue grows. `most forked` was kept although a high count is
+ambiguous between "people keep correcting this" and "this adapts to any taste".
+Written as CAT-001; see
+[ADR — lineage is visible in discovery](decisions/20260920-lineage-visible-in-discovery.md).
 
-### OQ-015 — Comparing an ingredient's quantity across unit types (define before MVP)
-Unresolved: how CAT-002 orders recipes when the same ingredient is expressed in
-unit types that cannot be compared. Chicken may be 500 g in one recipe, 2 pieces
-with no `piece_weight` in another, and a household measure in a third. DOM-003
-forbids converting a household quantity to mass, the product holds no ingredient
-weight table, and `piece_weight` is optional.
-Proposal (not a decision): order the recipes whose quantities are comparable —
-mass against mass, volume against volume, pieces that carry a weight converted
-to mass — and place the rest after them, ordered by the reader's chosen field
-(CAT-001), so that nothing is hidden and nothing is compared falsely.
-Blocks: CAT-002.
+### OQ-015 — Comparing an ingredient's quantity across unit types — RESOLVED 2026-09-20
+Resolved by the product owner: the ingredient dictionary gains one level, so
+`крылышки`, `филе бедра` and `тушка` are children of `курица`, and every entry
+carries a comparison factor per unit on a scale shared by the family. The author
+picks one entry — the leaf — and the dictionary supplies the parent, so the
+hierarchy costs the author nothing. A line's comparable quantity is its quantity
+per serving times the factor for its unit; a unit with no factor drops the line out
+of the comparison, and a recipe with nothing left is ordered last.
+Band-ordering was rejected with the case that killed it: 5 g of chicken per serving
+would have outranked two whole carcasses. A flat dictionary with one factor per
+entry was rejected because one piece of `курица` is a wing in one recipe and a bird
+in another. A flag plus a required `piece_weight` was rejected as two actions for
+the author and a place to mistype.
+Written as DOM-010, DOM-011, CAT-006, CAT-007 and CAT-009. See
+[ADR — comparison factors](decisions/20260920-comparison-factors.md).
+
+### OQ-016 — Product name and its clearance (define before MVP)
+Unresolved: the name the application is published under, and whether that name
+is free in the only channel the MVP uses. `Recipe Fork` is a working title used
+in this repository, not a decided product name. The product owner's market work
+found `Forked` already taken in the Apple App Store (MKT-F5) and explicitly did
+not check Google Play, trademarks or name registrations
+([`market-context`](25-market-context.md), "Not checked").
+Proposal (not a decision): keep `Recipe Fork` as the working title inside the
+spec, and treat the published name as a release prerequisite to be cleared
+against Google Play and trademark registers in the product owner's own
+jurisdiction before the store listing is created.
+Blocks: section `legal`.
+
+### OQ-017 — What makes two recipes use "the same" ingredient — RESOLVED 2026-09-20
+Resolved by the product owner: an ingredient dictionary maintained by the product
+owner, with an optional free-text qualifier for the cut, and free text still
+accepted for anything the dictionary lacks — with a warning, not a refusal. A
+filter matches the entry only. Written as DOM-009, FLOW-022 and CAT-006; the
+`IngredientEntry` entity and the Ingredient fields are in `domain-model`, and the
+dictionary of indivisible ingredients was absorbed into it (`scaling-rules`,
+FLOW-001). See
+[ADR — the ingredient dictionary](decisions/20260920-ingredient-dictionary.md).
+
+### OQ-018 — What the fork number counts — RESOLVED 2026-09-20
+Resolved by the product owner: two numbers where they differ — the total fork count
+and how many of those are open — with the ordering `most forked` and the list of
+CAT-008 both working on the published count alone. Written as CAT-001, CAT-005 and
+CAT-008; the abuse vector this closes is noted in `abuse`. See
+[ADR — lineage is visible in discovery](decisions/20260920-lineage-visible-in-discovery.md).
+
+### OQ-019 — Requests to add a dictionary entry (define after MVP)
+Unresolved: whether an author who finds no matching ingredient entry can ask for
+one to be added, and what that queue looks like.
+Decided for the MVP by the product owner 2026-09-20 by not adopting it: free text
+with a warning is the only escape (FLOW-022).
+Consequence to watch: every recipe that takes the free-text escape is invisible to
+ingredient filters forever once published, so the fraction of ingredients added as
+free text is an operational signal worth watching (section `observability`) — it
+measures how far behind the dictionary is.
+Proposal for later (not a decision): a request carries only the name the author
+typed, and lands in the same queue the moderator already works.
+Blocks: nothing.
+
+### OQ-020 — Whether the qualifier survives the two-level dictionary — RESOLVED 2026-09-20
+Resolved by the product owner: the qualifier stays. It is not a fourth field — it is
+the tail of the first one, so the author picks `филе`, keeps typing `без кожи`, and
+the row reads `филе без кожи` while the ingredient holds the entry plus the
+qualifier. The editor offers leaves before parents, so a qualifier is the last resort
+and not a way around picking the right leaf. A filter still matches the entry only
+(CAT-006).
+The reason it stays is the product owner's: the dictionary will never be complete, so
+an author whose leaf is missing would otherwise have to choose between a recipe that
+can be found and a row that says what they mean. Written into FLOW-023; DOM-009 and
+CAT-006 needed no change.
+
+### OQ-021 — How much of the ingredient dictionary is held on the device — RESOLVED 2026-09-20
+Resolved by the product owner: the device holds the whole ingredient dictionary, as
+FLOW-001 already requires. Partial holding is not built, and with it none of a
+per-account set of entries to keep in step, no unsynchronised state for an
+ingredient, and no reconciliation screen at synchronisation; offline authoring keeps
+the full dictionary to search.
+The product owner's own proposal — hold only the entries the account's favourites and
+recipes use, keep an unknown ingredient as an unsynchronised plain string, and offer
+matching entries when a connection returns — was set aside on the arithmetic: 3 000
+entries of a label, a parent and a few factors are a few hundred kilobytes of text,
+which is less than the single cover photo OQ-003 proposes to cap at 2 MB, while
+partial holding would have made an author offline able to pick only ingredients they
+had used before.
+Revisit trigger, not a decision: the dictionary's transfer size belongs among the
+operational signals of section `observability`, because tens of thousands of entries,
+or several locales held at once, are where partial holding becomes the right answer.
+No threshold is set today and nothing depends on one while the dictionary is small.
+
+### OQ-022 — What the recipe editor is — RESOLVED 2026-09-20
+Resolved by the product owner: one scrolling screen in the order title with cover,
+tags, servings, ingredients, steps, description (FLOW-024); steps and ingredients
+inserted anywhere and reordered by dragging (FLOW-025); the cover attached with the
+title and step media at the step (FLOW-026); a timer attached inside its step with
+its duration entered there (FLOW-027); the minimum of DOM-006 shown as a warning when
+the author leaves a part, never as an error while typing (FLOW-028); no preview,
+because saving already shows the reader's own view and the recipe stays editable until
+it is visible to anyone else (FLOW-029); and the editor states which parts a fork
+carries away and which stay the author's (FLOW-030).
+Two pieces of the editor were separated out rather than answered: OQ-023, how an
+ingredient reference is inserted and what it renders as, and OQ-024, whether a step
+may name another recipe as an ingredient.
+
+### OQ-023 — How an ingredient reference is written and what it renders as — RESOLVED 2026-09-20
+Resolved by the product owner, adopting the spec author's proposal: a trigger
+character in a step's text offers the recipe's own ingredients, a visible control on
+the step does the same for an author who would not guess a trigger character, and a
+reference renders as the quantity and unit alone so that the ingredient's word stays
+the author's text in whatever case the sentence needs. Written as FLOW-031 and
+FLOW-032. The trigger character itself is a presentation choice and is left to the
+editor's visual design.
+Why references exist, recorded because the product owner asked and the answer belongs
+with the decision: the ingredient list scales and step text does not, so without
+references a reader at 8 servings would read `200 г` in a step while the list said
+`400 г`, and it is the steps people cook from.
+
+### OQ-024 — A recipe as an ingredient of another recipe (define after MVP)
+Unresolved: whether a step or an ingredient may name another recipe, so that the
+chocolate topping a brownie needs is the topping's own recipe rather than a list of its
+ingredients copied out.
+Raised by the product owner 2026-09-20 as the case where a link in a step is clearly
+worth having.
+What it would drag with it, none of which is decided:
+- scaling across the boundary: doubling the brownie has to double the topping, which
+  means SCALE applies to a recipe the reader never asked about;
+- a second relation between recipes, distinct from `parent`, with its own rules — what
+  a fork of the brownie does with the link, and what the fork chain shows;
+- the same publication test as FORK-005: linking to a recipe that was never published
+  would reveal that it exists;
+- a removed target, which needs the treatment ST-007 gives a removed parent;
+- offline: FLOW-009 holds a favourite for reading without a connection, so a favourite
+  that links to another recipe has to bring it along;
+- the ingredient filter: CAT-006 matches dictionary entries, and a linked recipe is not
+  one, so either its ingredients count for the parent recipe or the filter quietly
+  misses them.
+Deferring costs little: a published recipe is immutable, nothing is migrated, and a
+recipe written before the feature exists simply does not use it.
+Proposal (not a decision): keep it out of the MVP and revisit it once the catalogue
+holds enough recipes for one to be worth reusing, which is also when it stops being a
+feature with nothing to point at.
+Blocks: nothing.
+
+### OQ-025 — Caps on the size of one recipe — RESOLVED 2026-09-20
+Resolved by the product owner: 50 ingredients and 50 steps per recipe, 2 000
+characters per step, 120 characters of title, 2 000 characters of description. The
+counts were taken from the tighter of the two proposed sets and the text lengths from
+the more generous, on the product owner's reasoning that an author writes inside a step
+and inside the description and needs room there, while fifty steps and fifty
+ingredients are already more than any real recipe. Refused at submission, never while
+typing. Written as DOM-012 and FLOW-028; `quality` will carry the measurable thresholds
+that refer to them.

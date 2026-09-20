@@ -2,7 +2,8 @@
 slug: GOAL
 status: closed
 updated: 2026-09-20
-ids: [GOAL-001, GOAL-002, GOAL-003, NGOAL-001, NGOAL-002, NGOAL-003, NGOAL-004, NGOAL-005, NGOAL-006]
+ids: [GOAL-001, GOAL-002, GOAL-003, NGOAL-001, NGOAL-002, NGOAL-003, NGOAL-004,
+  NGOAL-005, NGOAL-006, NGOAL-007]
 ---
 
 # Goals and non-goals
@@ -35,10 +36,14 @@ anyone other than its owner.
 When GOAL-001 and GOAL-002 demand different behaviour, or when scope must be
 cut, the behaviour that serves cooking is kept and the behaviour that serves
 lineage visibility is cut. Lineage in the MVP is limited to naming the direct
-parent and navigating to it; grouping, comparing or aggregating a fork tree is
-out of scope. See [ADR 20260920 — cooking over lineage](decisions/20260920-cooking-over-lineage.md).
+parent, navigating to it, marking a listed recipe as a fork, and stating how many
+direct published forks it has (CAT-004, CAT-005); grouping, comparing or
+aggregating a fork tree beyond that single count is out of scope. See
+[ADR 20260920 — cooking over lineage](decisions/20260920-cooking-over-lineage.md)
+and [ADR 20260920 — lineage is visible in discovery](decisions/20260920-lineage-visible-in-discovery.md),
+which narrowed this sentence.
 
-**Source:** user decision, 2026-09-20.
+**Source:** user decision, 2026-09-20; narrowed by user decision, 2026-09-20.
 
 ## Non-goals
 
@@ -63,4 +68,13 @@ Automatic classification of images and video is not purchased or built.
 ### NGOAL-006 — No monetisation
 No advertising, no paid tiers, no revenue of any kind.
 
+### NGOAL-007 — No protection of the author from their own mistakes
+The product does not check a recipe for spelling, plausibility or craft, does not
+correct an author, and does not keep a badly written recipe out of the catalogue. A
+rejection under MOD-004 is never for the quality of the writing. Readers decide what
+rises: a recipe written carelessly is rated as such, and the orderings of CAT-001 are
+what sorts the catalogue.
+
 **Source for NGOAL-001..006:** draft section 10.
+**Source for NGOAL-007:** user decision, 2026-09-20. See
+[ADR — quality is sorted by readers](decisions/20260920-quality-sorted-by-readers.md).

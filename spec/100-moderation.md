@@ -76,6 +76,9 @@ approval or a rejection, and shall require a reason for a rejection.
 **Acceptance criteria**
 - Given a queue entry, when the moderator rejects it, then a reason must be
   entered before the rejection is recorded.
+- Given a submission whose text is misspelled, clumsy or simply bad cooking, when
+  the moderator reviews it and it breaks no rule, then poor quality is not a ground
+  for rejection (NGOAL-007).
 - Given a rejected submission, when its owner opens the recipe, then the reason
   and the date of the decision are shown.
 - Given a recipe with several past submissions, when its owner opens it, then

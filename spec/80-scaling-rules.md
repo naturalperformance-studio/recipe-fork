@@ -43,10 +43,12 @@ is rounded to the nearest value the set can express. Fractions of a serving are
 displayed below one serving only; at or above one serving the count is displayed
 as a whole number (SCALE-002, SCALE-008).
 
-Divisibility of a `piece` ingredient comes from a dictionary of indivisible
-ingredients (egg, garlic clove, bay leaf and so on), which the author may
-override per ingredient with a divisibility flag. The dictionary holds
-divisibility only. It holds no weights: DOM-003 stands.
+Divisibility of a `piece` ingredient comes from its entry in the ingredient
+dictionary (DOM: IngredientEntry — egg, garlic clove, bay leaf and so on are
+indivisible), which the author may override per ingredient. An ingredient the
+author typed as free text has no entry (DOM-009), so its author sets
+divisibility. The dictionary holds divisibility only. It holds no weights:
+DOM-003 stands.
 
 ### SCALE-001 — Scaling by serving count
 

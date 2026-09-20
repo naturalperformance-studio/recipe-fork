@@ -41,3 +41,7 @@ the MVP is the direct parent reference and click-through navigation only.
   reversal of draft section 4.3, since variant grouping needs the chain root.
 - *No ranking; treat both as equal.* Rejected: it leaves no arbiter, so every
   scope dispute returns to the product owner individually.
+
+**Narrowed by:** [lineage is visible in discovery](20260920-lineage-visible-in-discovery.md)
+— the fork marker and the count of direct published forks are in scope; the
+tiebreak rule stated here is unchanged.

@@ -15,6 +15,11 @@ from being turned against the product or against an author.
 Reporting and blocking are also obligations of the Google Play UGC policy
 (CON-006), not optional features.
 
+One vector is closed outside this section rather than inside it: the `most forked`
+ordering ranks on a recipe's published fork count alone (CAT-001, CAT-005), so
+forking one's own recipe privately any number of times moves nothing. Every route
+to visibility still runs through the moderator.
+
 ### ABUSE-001 — At most three submissions per account per day
 
 If an account has submitted three recipes for moderation within the preceding 24

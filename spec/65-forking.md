@@ -26,7 +26,8 @@ reference to the parent.
 
 **Acceptance criteria**
 - Given a forked recipe, when it is opened, then its ingredients match the
-  parent's in name, unit type, unit, quantity, piece weight and divisibility,
+  parent's in dictionary entry, qualifier or free-text name, unit type, unit,
+  quantity, piece weight and divisibility,
   and in order.
 - Given a forked recipe, when its steps are opened, then their text, timers and
   ingredient references match the parent's and resolve within the fork
