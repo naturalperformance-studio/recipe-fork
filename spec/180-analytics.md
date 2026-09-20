@@ -108,8 +108,8 @@ without beginning to tell its users apart.
 ### ANL-005 — A published recipe counts its opens and its favourites
 
 The system shall count, for each published recipe, the number of times it has
-been opened by an account other than its owner or by a person holding no
-account, and the number of accounts that currently hold it in favourites.
+been opened and the number of times it has been added to favourites, in both
+cases by an account other than its owner or by a person holding no account.
 
 **Acceptance criteria**
 - Given a published recipe opened by its owner, when the count is read, then it
@@ -121,9 +121,13 @@ account, and the number of accounts that currently hold it in favourites.
   was kept (ANL-001).
 - Given the same reader opening one recipe ten times, when the count is read,
   then it has risen by ten, because the product cannot tell it was one reader.
-- Given a reader holding no account who favourites a recipe, when the favourites
-  count is read, then it has not risen, because that favourite exists only on
-  their device (FLOW-051).
+- Given a reader holding no account who favourites a recipe, when the server is
+  reached, then the count has risen by one, although which recipes that device
+  holds is still never sent (FLOW-051).
+- Given a reader who removes a recipe from favourites, when the count is read,
+  then it has not fallen: the figure counts additions, not holders.
+- Given one reader who adds, removes and adds the same recipe again, when the
+  count is read, then it has risen by two.
 - Given a recipe hidden by reports and then restored, when its counts are read,
   then they are as they were.
 
@@ -131,7 +135,12 @@ account, and the number of accounts that currently hold it in favourites.
 it to favourites with and without an account; compare each count.
 **Source:** user decision, 2026-09-21. Owner opens are excluded because an author
 cooks from their own recipe, and a number an author can raise by using their own
-work is not a measurement.
+work is not a measurement. Favourites are counted as additions rather than as
+current holders because a reader with no account cannot report a removal — their
+favourites vanish with the application — so a stock figure would drift upward and
+mean two different things at once. Additions are also the figure the author
+actually wants: openings say how well the cover and the description catch
+somebody, additions say how well the content does.
 
 ### ANL-006 — Those two numbers belong to the recipe's owner alone
 
@@ -162,10 +171,10 @@ shall state where a figure is known to undercount.
 **Acceptance criteria**
 - Given the opens count, when it is shown to the owner, then it is named as
   openings and not as readers, and it states that openings without a connection
-  are not counted.
-- Given the favourites count, when it is shown, then it states that it counts
-  accounts, and that a reader keeping the recipe on their device without an
-  account is not among them.
+  are not counted; the same holds for an addition made without a connection.
+- Given the favourites count, when it is shown, then it is named as additions to
+  favourites, and it states that it never falls when a reader removes the recipe
+  again.
 - Given the starts counter of ANL-004, when it is reported, then it is named as
   starts and not as users.
 - Given any figure of ANL-002, when it is quoted outside the product, then its

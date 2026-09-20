@@ -301,6 +301,11 @@ than its owner and the server heard about it. Not readers: the product cannot
 tell one reader from another, and an opening without a connection is never
 counted. Shown to the recipe's owner alone (ANL-005, ANL-006, ANL-007).
 
+**Additions to favourites** — how many times a published recipe was put into
+somebody's favourites, with an account or without one. It counts additions and
+never falls when a recipe is removed again, because a reader with no account
+cannot report a removal. Shown to the recipe's owner alone (ANL-005, ANL-006).
+
 **Threshold** — the value at which a signal stops being information and becomes
 something to decide. Crossing one marks the signal and sends one alert
 (OBS-003, OBS-004).

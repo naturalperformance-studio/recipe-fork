@@ -147,8 +147,11 @@ favourite, and shall send them nowhere.
 **Acceptance criteria**
 - Given no account, when a recipe is favourited, then it is held on the device
   and opens without a connection exactly as FLOW-009 requires.
-- Given no account, when favourites are kept, then nothing about them reaches the
-  server, so nothing identifies the device or the person (CON-001).
+- Given no account, when favourites are kept, then which recipes this device
+  holds is never sent, so nothing identifies the device or the person (CON-001).
+- Given no account, when a recipe is added to favourites, then the only thing
+  that reaches the server is an increment against that recipe, carrying no
+  identifier (ANL-005), and a later removal sends nothing at all.
 - Given no account, when the application is reinstalled or the device is
   replaced, then those favourites are gone and nothing restores them.
 - Given no account, when the favourites screen is opened, then it states that
@@ -157,7 +160,9 @@ favourite, and shall send them nowhere.
 
 **Verification:** favourite recipes with no account, reinstall, and confirm the
 loss; capture traffic to confirm nothing was sent.
-**Source:** user decision, 2026-09-20. Accounts are for the people who publish;
+**Source:** user decision, 2026-09-20; amended 2026-09-21 so that an addition
+counts toward the author's own figure (ANL-005) without the list itself leaving
+the device. Accounts are for the people who publish;
 a reader who only cooks should not have to hold one, and the price of that is
 stated plainly rather than discovered after a lost phone.
 
