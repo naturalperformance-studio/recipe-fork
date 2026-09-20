@@ -68,6 +68,7 @@ The account carries no field that identifies the person behind it (CON-001).
 | `media` | list of Media | |
 | `state` | state value | See `entity-states`. |
 | `was_published` | boolean | False at creation; set once when the recipe first enters `published` and never cleared. What FORK-004 and FORK-005 depend on. |
+| `safety_flag` | boolean | True while an ancestor has been removed as dangerous to health and no moderator has cleared it for this recipe. Set by MOD-008, cleared by MOD-010, inherited by a fork of a flagged recipe. |
 
 ### Ingredient
 

@@ -2,7 +2,8 @@
 slug: MOD
 status: closed
 updated: 2026-09-20
-ids: [MOD-001, MOD-002, MOD-003, MOD-004, MOD-005, MOD-006, MOD-007]
+ids: [MOD-001, MOD-002, MOD-003, MOD-004, MOD-005, MOD-006, MOD-007,
+  MOD-008, MOD-009, MOD-010]
 ---
 
 # Moderation
@@ -131,3 +132,88 @@ then the system shall reject the attempt.
 **Source:** CON-003 and draft section 4.2: the content cannot have changed since
 the decision, so there is nothing to re-decide; acting on published content is
 removal, which is a different decision with a different record.
+
+## When a removal reaches the forks
+
+A recipe removed for using someone else's content takes nothing with it: what a
+fork inherits is the method and the ingredients, which are not the protected
+work (see `forking`). Danger to health is the opposite case — an unsafe
+preserving time or the wrong mushroom lives in the very text every fork carries
+down. The three requirements below exist for that one category.
+
+### MOD-008 — Removing a recipe as dangerous flags every descendant
+
+When a moderator removes a recipe in the category danger to health, the system
+shall set the safety flag on every descendant of that recipe, to any depth.
+
+**Acceptance criteria**
+- Given a removed recipe with a chain of forks three deep, when the removal is
+  recorded, then all three carry the safety flag.
+- Given a removal in the category use of someone else's content, when it is
+  recorded, then no descendant is flagged and nothing about them changes.
+- Given a flagged descendant that is `published`, when the flag is set, then it
+  stays published: the flag alone never withdraws a recipe.
+- Given a flagged recipe, when anyone forks it, then the fork carries the flag
+  as well.
+- Given a descendant in state `private`, when the flag is set, then it carries
+  the flag and its owner sees it.
+
+**Verification:** build a chain four deep from one recipe, remove the root in
+each category in turn, and inspect every descendant.
+**Source:** user decision, 2026-09-20. The danger is in the text, and the text is
+what a fork inherits; a direct fork is no more suspect than a fork of a fork, so
+the flag follows the whole chain.
+**Note:** this is the one place where the product walks the fork tree downwards.
+FORK-004 refuses to build a tree for a card; a moderator's removal is not a card.
+
+### MOD-009 — Flagged recipes are reviewed from the youngest upwards
+
+The system shall present flagged recipes to the moderator as a list separate
+from the submission queue, ordered from the deepest descendant upwards.
+
+**Acceptance criteria**
+- Given a flagged chain, when the moderator opens the list, then the deepest
+  descendant appears first, so the chain can be walked towards its origin until
+  the danger stops being present.
+- Given the submission queue, when it is ordered, then MOD-006 governs it and
+  this list changes nothing about it.
+- Given a flagged recipe in state `private`, when the list is built, then it is
+  absent, because a moderator cannot see a private recipe; its flag is weighed
+  when the recipe is submitted for moderation (MOD-001).
+- Given a flagged recipe the moderator opens, when they decide it, then the
+  actions available are clearing the flag and removing the recipe.
+- Given a flagged recipe that has never been published, when its owner submits
+  it, then the moderator sees the flag on the queue entry.
+
+**Verification:** flag a chain of five, confirm the order, and confirm a private
+member is absent until it is submitted.
+**Source:** user decision, 2026-09-20. Walking upwards from the youngest is how
+the moderator finds the point at which the unsafe instruction stopped being
+copied forward.
+**Note:** a single removal can add an unbounded number of entries to this list,
+which is the cost of not withdrawing the descendants automatically. They stay
+readable while they wait.
+
+### MOD-010 — Clearing a flag clears one recipe and no other
+
+When a moderator clears the safety flag of a recipe, the system shall clear it
+on that recipe alone and shall leave every other flagged recipe as it is.
+
+**Acceptance criteria**
+- Given a flagged chain of three, when the moderator clears the middle one, then
+  the deepest stays flagged and stays in the list.
+- Given a flagged recipe the moderator finds dangerous, when they remove it,
+  then it is removed by ST-002 and its own descendants are flagged afresh by
+  MOD-008.
+- Given a recipe whose flag was cleared, when anyone forks it, then the fork
+  carries no flag.
+- Given a recipe whose flag was cleared, when a further ancestor is later
+  removed as dangerous, then it is flagged again.
+- Given a cleared recipe, when its card is opened, then nothing states that it
+  ever carried a flag.
+
+**Verification:** clear the middle of a flagged chain and inspect the whole
+chain; then remove a flagged member and inspect its descendants.
+**Source:** user decision, 2026-09-20. A fork that a moderator has read is safe
+on its own evidence; its descendants have not been read, and a rewrite anywhere
+down the chain can reintroduce what was cleared above it.

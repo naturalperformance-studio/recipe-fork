@@ -58,6 +58,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-scaling-extremes.md](decisions/20260920-scaling-extremes.md) | accepted | Serving count floors at ¼ with no ceiling; a warning replaces a downward bound. |
 | [20260920-large-quantity-display.md](decisions/20260920-large-quantity-display.md) | accepted | Tonnes and cubic metres extend `exact` only; every unit type stays legible at any magnitude. |
 | [20260920-provenance-follows-publication.md](decisions/20260920-provenance-follows-publication.md) | accepted | A parent is named only if it is or has been published; a never-published parent is not mentioned. |
+| [20260920-danger-travels-down-the-chain.md](decisions/20260920-danger-travels-down-the-chain.md) | accepted | A health-danger removal flags every descendant for review; a rights removal gives no reason and touches no fork. |
 
 ## C4 context
 

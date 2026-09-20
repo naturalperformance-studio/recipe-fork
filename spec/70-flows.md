@@ -4,7 +4,7 @@ status: open
 updated: 2026-09-20
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007,
   FLOW-008, FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-013, FLOW-014,
-  FLOW-015, FLOW-016, FLOW-017]
+  FLOW-015, FLOW-016, FLOW-017, FLOW-018]
 ---
 
 # Flows and screens
@@ -249,8 +249,8 @@ is a few kilobytes and the bound that matters is the reader's own choice.
 
 If a recipe in an account's favourites stops being accessible to that account,
 then the system shall keep it in the favourites list marked as unavailable,
-shall delete its held content from the device, shall not state why, and shall
-not notify the reader.
+shall delete its held content from the device, shall state why only where it was
+removed as dangerous to health, and shall not notify the reader.
 
 **Acceptance criteria**
 - Given a favourite that reports have hidden, when the device next reaches the
@@ -261,8 +261,13 @@ not notify the reader.
   device without the reader doing anything.
 - Given a favourite a moderator has removed, when the device next reaches the
   server, then it is marked unavailable and never becomes openable again.
-- Given an unavailable favourite, when the reader looks at it, then no reason is
-  given and no notification was delivered for it.
+- Given a favourite removed as dangerous to health, when the reader looks at it,
+  then that reason is stated, because the reader has cooked from it and may cook
+  from it again.
+- Given a favourite removed for using someone else's content, or one hidden by
+  reports, when the reader looks at it, then no reason is given and the two
+  cases are indistinguishable.
+- Given any of these, when they happen, then no notification was delivered.
 - Given an unavailable favourite, when the reader removes it from favourites,
   then it leaves the list like any other.
 - Given no network connection, when the reader opens a favourite that has been
@@ -484,6 +489,31 @@ people every time is work the product can do once. The cost is deliberate: with
 the setting in use almost every recipe opens in a derived state, and the numbers
 the author wrote are not the numbers the reader meets first — which is why the
 derived markings of SCALE-004 carry the weight they do.
+
+### FLOW-018 — A flagged recipe says what it descends from
+
+While a recipe carries the safety flag, the system shall state on its card that
+it descends from a recipe removed as dangerous to health, and shall not name
+that recipe.
+
+**Acceptance criteria**
+- Given a flagged recipe, when anyone opens it, then the statement is shown.
+- Given a flagged recipe, when the statement is shown, then it neither names nor
+  links the removed recipe, and the chain above it is not walked to reach it.
+- Given a flagged recipe in state `private`, when its owner opens it, then the
+  statement is shown to them too.
+- Given a flagged recipe, when it is shown in the catalogue, in search results
+  and in favourites, then the statement is present there as well and not only
+  inside the card.
+- Given a recipe whose flag a moderator cleared, when its card is opened, then
+  the statement is gone and nothing records that it was ever there.
+
+**Verification:** flag a chain, open each member as its owner, as another
+account and as a moderator, then clear one and look again.
+**Source:** user decision, 2026-09-20. The statement is a fact about descent,
+not an accusation against this recipe's author, which is why it names nothing:
+naming the removed recipe would both point at another author and rebuild the
+lineage that FORK-005 deliberately stops showing.
 
 ## Open
 
