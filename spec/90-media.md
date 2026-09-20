@@ -103,8 +103,8 @@ it.
 ### MEDIA-004 — A video is short, small and silent
 
 When a video is added, the system shall accept it only if it is at most 15
-seconds long, and shall convert it on the device to at most 6 MB with its audio
-track removed.
+seconds long, and shall convert it on the device to at most 6 MB and at most
+1280 pixels on its longer edge, with its audio track removed.
 
 **Acceptance criteria**
 - Given a video of 15 seconds or less, when it is added, then it is converted and
@@ -113,6 +113,10 @@ track removed.
   it before any conversion is attempted.
 - Given a converted video, when it is played anywhere in the product, then it
   plays without sound and no control offers sound.
+- Given a video recorded at 4K, when it is added, then what is uploaded is at
+  most 1280 pixels on its longer edge, in whichever orientation it was shot.
+- Given a video already smaller than 1280 pixels on its longer edge, when it is
+  converted, then it is not enlarged.
 - Given an animated image, when it is added, then it is converted to a video and
   is subject to this requirement like any other.
 
@@ -124,6 +128,11 @@ something is cut, how one ingredient goes into another — and never a lesson
 at every media item by hand (NGOAL-005) and sound would make them listen as well
 as watch, which doubles the cost of the one resource the product cannot buy more
 of; and background speech is exactly the personal data CON-001 keeps out.
+The resolution is 1280 rather than 1920 because the 6 MB ceiling over 15 seconds
+allows about 3.2 Mbit/s, which serves 720p well and 1080p poorly — at the same
+weight the taller picture would look worse, not better — and because the
+conversion runs on the author's own phone, where the smaller target finishes
+sooner.
 
 ### MEDIA-005 — The product says what it did to the file
 
@@ -232,9 +241,12 @@ reaches 150 MB.
 - Given media added without a connection, when the queued upload reaches the
   server and the cap is exceeded, then the upload is refused, the media stays on
   the device and the recipe stays marked as not accepted (FLOW-004, FLOW-005).
-- Given a recipe of fifty steps each carrying a video, when it is being built,
-  then it cannot be completed under this cap, because fifty videos exceed
-  150 MB long before the recipe is finished.
+- Given a recipe of fifty steps each carrying a video at or near the 6 MB
+  ceiling of MEDIA-004, when it is being built, then it cannot be completed
+  under this cap.
+- Given the same recipe built from five-second clips, which weigh about 2 MB at
+  the same quality, when it is being built, then it fits, because the cap counts
+  bytes and not items.
 
 **Verification:** fill an account to the cap with drafts, publish one, delete
 one, and attempt an upload from a device that was offline while the cap was
@@ -244,9 +256,9 @@ nothing limits the creation of private recipes, so without this an account could
 fill the storage of CON-002 without ever showing anything to anyone. 150 MB is
 roughly sixteen photographic recipes in progress at once; the product owner's
 reasoning for a figure this tight is that a recipe its author does not intend to
-publish can do without photographs. The last criterion above is a consequence
-accepted rather than solved: a recipe of more than about two dozen videos cannot
-be assembled at all.
+publish can do without photographs. What the cap binds is total weight, not the
+number of items: a recipe of many short clips fits where the same recipe built
+from full-length ones does not.
 
 ### MEDIA-011 — What the account is told at the cap
 

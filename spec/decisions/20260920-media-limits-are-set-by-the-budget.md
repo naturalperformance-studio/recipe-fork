@@ -19,8 +19,8 @@ may hold.
 
 **Decision:** one cover photograph and at most one item per step (MEDIA-001); a
 photograph re-encoded on the device to 1 MB and 1600 pixels (MEDIA-002); a video
-of at most 15 seconds converted to at most 6 MB with its audio track removed
-(MEDIA-004); duration refused at the door and everything else settled by
+of at most 15 seconds converted to at most 6 MB and 1280 pixels on its longer
+edge, with its audio track removed (MEDIA-004); duration refused at the door and everything else settled by
 conversion (MEDIA-007); the author told what was done (MEDIA-005) and told when
 it could not be done (MEDIA-006); every metadata field but orientation discarded
 (MEDIA-003); and 150 MB of media per account across recipes that have never been
@@ -30,9 +30,11 @@ published (MEDIA-010).
 - Video stays allowed on every step, and the shorter, silent, smaller clip pays
   for it: the same eight-step recipe now costs 49 MB rather than 122 MB, so the
   budget holds about 12 000 of the heaviest recipes instead of 4 900.
-- A recipe of more than roughly two dozen videos cannot be assembled at all,
-  because it would exceed the 150 MB allowance before it could be published. This
-  is accepted, not solved.
+- The allowance binds on weight rather than on count. A recipe whose every step
+  carries a clip at the 6 MB ceiling cannot be assembled before publication; the
+  same recipe built from five-second clips, at roughly 2 MB each, fits. Nothing
+  is done to make the first case work, and nothing needs to be done for the
+  second.
 - Photographs lose their EXIF, which closes a personal-data leak nobody had
   named: a dish photographed at home carries the author's coordinates.
 - Video loses its sound, which halves what the single moderator must attend to
@@ -52,6 +54,9 @@ published (MEDIA-010).
   against had already shrunk.
 - *30-second video with sound, at 15 MB.* Rejected: it costs two and a half times
   the storage and makes the moderator listen.
+- *1080p instead of 720p.* Rejected: the weight ceiling fixes the bitrate at about
+  3.2 Mbit/s, which serves 720p well and 1080p poorly, so the larger frame would
+  buy a worse picture at the same cost.
 - *2 MB photographs at 2048 pixels.* Rejected: it halves the catalogue the budget
   holds and buys nothing visible on a phone.
 - *Silent compression with no message.* Rejected against CON-004.
