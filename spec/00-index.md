@@ -1,8 +1,8 @@
 # Recipe Fork — specification index
 
-> **NOT READY — 4 questions must be answered before MVP.**
-> Sections: 15 closed · 0 blocked · 11 open · 1 n/a.
-> Blocking: OQ-002, OQ-003, OQ-004, OQ-016. Last updated 2026-09-20.
+> **NOT READY — 5 questions must be answered before MVP.**
+> Sections: 15 closed · 1 blocked · 10 open · 1 n/a.
+> Blocking: OQ-002, OQ-003, OQ-004, OQ-016, OQ-029. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -16,12 +16,12 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 
 | File | Slug | Status | What it is for |
 |---|---|---|---|
-| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score and 54 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
+| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot and 57 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
 | [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in. |
-| 45-auth.md | AUTH | open | The key file over its life: first launch, signing in on a second device, losing the key, and what the server accepts as proof of ownership. |
+| [45-auth.md](45-auth.md) | AUTH | blocked | The key file and the device gate over their life: what first launch creates, the three device slots and the six months that free one, the muted account created when a device cannot be attested, what importing a key file replaces and wipes, and what losing the key leaves behind. What the server accepts as proof of ownership is OQ-002 and is why this section is blocked. |
 | [50-domain-model/](50-domain-model/00-index.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, and how provenance is shown. |
@@ -71,6 +71,8 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-the-editor-teaches-without-inspecting.md](decisions/20260920-the-editor-teaches-without-inspecting.md) | accepted | An unsuppressible statement before submission, a read-only checklist, and hints triggered by the author's action — never by reading the recipe. |
 | [20260920-two-counts-ordered-by-net-score.md](decisions/20260920-two-counts-ordered-by-net-score.md) | accepted | The reader sees two counts; `highest rated` orders by likes minus dislikes, with a tie chain that makes the order total. |
 | [20260920-rating-is-not-queued.md](decisions/20260920-rating-is-not-queued.md) | accepted | Offline the rating controls stay visible and refuse; nothing is queued, and the counts shown are the last synchronised ones. |
+| [20260920-account-creation-gated-by-the-device.md](decisions/20260920-account-creation-gated-by-the-device.md) | accepted, narrows ACT-001 | Creating an account costs one of three device slots that free after six months; without a verdict the account is muted, and no verdict is ever stored. |
+| [20260920-replacing-the-account-wipes-the-device.md](decisions/20260920-replacing-the-account-wipes-the-device.md) | accepted | One active account per device; importing a key file wipes what the previous account held, after a statement naming every unsent recipe. |
 
 ## C4 context
 

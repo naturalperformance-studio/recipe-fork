@@ -4,8 +4,8 @@ status: open
 updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
-  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027]
-open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-016]
+  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029]
+open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-016, OQ-029]
 ---
 
 # Open questions
@@ -30,7 +30,8 @@ Proposal (not a decision): the key file carries a private key; the account
 identifier is derived from the matching public key; authentication is a
 challenge signed by the client, so the server never stores anything that can
 recreate the key.
-Blocks: section `auth`.
+Blocks: AUTH-010 and AUTH-014, and with them section `auth`. Everything else in
+that section is written and does not depend on the answer.
 
 ### OQ-003 — Media limits (define before MVP)
 Unresolved: maximum image size, maximum video duration and file size, number of
@@ -94,6 +95,10 @@ Proposal (not a decision): size the word lists so the combination count exceeds
 any plausible account count by a wide margin, and watch the consumed fraction as
 an operational signal (section `observability`) so the lists can be extended
 long before they run out.
+Narrowed 2026-09-20 by the device gate: a nickname can no longer be consumed at
+an unbounded rate, because creating an account costs one of three slots per
+device and a slot frees only after six months (AUTH-002). The question survives
+as an arithmetic one about the word lists, not as an abuse vector.
 Blocks: nothing while the fraction consumed stays low.
 
 ### OQ-010 — Serving count below one — RESOLVED 2026-09-20
@@ -324,3 +329,40 @@ ends when the list is exhausted (FLOW-050). Every decision taken by gesture is
 confirmed in both directions — restricting and releasing — because undoing
 either means finding that one recipe again with no way to search for it.
 Written as FLOW-049 and FLOW-050; FLOW-046 is no longer blocked.
+
+### OQ-028 — Several accounts on one device (define after MVP)
+Unresolved: whether a device may hold more than one account at a time, with a
+switch between them, instead of the single active account of AUTH-011.
+Decided for the MVP by the product owner 2026-09-20 by not adopting it: one
+active account, and importing a key file replaces it and wipes what the previous
+account held (AUTH-012).
+The reason is the product owner's own: the first release is the fork mechanic
+done well, not account management, and multi-account use multiplies favourites,
+held media and the single storage setting of FLOW-011 by the number of accounts,
+with the limit of FLOW-011 then having to be divided between them.
+Consequence to watch, stated and accepted: a household sharing one tablet cannot
+use two accounts without re-importing a key file each time, and each re-import
+destroys the other person's unsent drafts (AUTH-013 names them before it
+happens).
+Blocks: nothing.
+
+### OQ-029 — Legal status of the device verdict (define before MVP)
+Unresolved: whether obtaining and checking a device attestation verdict makes the
+product an operator of personal data in the product owner's own jurisdiction, and
+what that obliges before release.
+What is established, checked 2026-09-20: the product stores no part of a verdict
+and no device identifier (AUTH-015), which is why this route was taken instead of
+an identity provider. Under GDPR Recital 26 a pseudonymous identifier is still
+personal data; under 152-ФЗ the definition covers information relating to an
+indirectly identifiable person, and the duties that follow — notification of
+Roskomnadzor before processing, localisation of Russian citizens' data under
+242-ФЗ, and leak liability raised sharply on 30 May 2025 by 420-ФЗ — are what
+make the answer expensive rather than academic.
+Also open on the same ground: how long server logs holding IP addresses are kept,
+which belongs to `retention`. Whether an IP address alone is personal data is
+unsettled in Russian practice and turns on what it is held together with.
+Proposal (not a decision): a review by a qualified lawyer in the product owner's
+jurisdiction before the store listing is created, covering the verdict, the logs
+and the published terms; nothing in the spec changes until that review reports.
+Blocks: section `legal`; a negative answer would also reopen
+[ADR — account creation is gated by the device](decisions/20260920-account-creation-gated-by-the-device.md).

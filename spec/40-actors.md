@@ -12,34 +12,46 @@ automatically at first launch (ACT-001), so every person using the application
 holds one from their first screen onwards. "Owner" and "reader" are roles an
 account holds with respect to a particular recipe, not separate actors.
 
-| | Account holder | Owner of the recipe | Moderator |
-|---|---|---|---|
-| Browse and search the public catalogue | yes | yes | yes |
-| Open a published recipe | yes | yes | yes |
-| Open a private draft or fork | no | yes | no |
-| Open a recipe awaiting moderation | no | yes | yes |
-| Create and fork a recipe | yes | yes | yes |
-| Edit a recipe before it becomes externally visible | no | yes | no |
-| Edit a recipe after it becomes externally visible | no | no | no |
-| Submit a recipe for moderation | yes, unless banned | yes, unless banned | yes, unless banned |
-| Approve or reject a submission | no | no | yes |
-| Remove a published recipe from the catalogue | no | see OQ-007 | yes |
-| Report a recipe or an author | yes | yes | yes |
-| Block an author's recipes from own catalogue and search | yes | yes | yes |
-| Ban an account from publishing | no | no | yes |
+An account is full or muted. A muted account is what the product creates when the
+device cannot be attested (AUTH-004); it is not a third actor but the same actor
+with a smaller set of permitted actions, and it becomes full as soon as a verdict
+and a free slot allow (AUTH-005). The column below states what it may do.
+
+| | Account holder | Owner of the recipe | Moderator | Muted account |
+|---|---|---|---|---|
+| Browse and search the public catalogue | yes | yes | yes | yes |
+| Open a published recipe | yes | yes | yes | yes |
+| Open a private draft or fork | no | yes | no | no |
+| Open a recipe awaiting moderation | no | yes | yes | no |
+| Create and fork a recipe | yes | yes | yes | no (AUTH-004) |
+| Edit a recipe before it becomes externally visible | no | yes | no | no (AUTH-004) |
+| Edit a recipe after it becomes externally visible | no | no | no | no |
+| Submit a recipe for moderation | yes, unless banned | yes, unless banned | yes, unless banned | no (AUTH-004) |
+| Approve or reject a submission | no | no | yes | no |
+| Remove a published recipe from the catalogue | no | no (ST-001) | yes | no |
+| Rate a published recipe | yes | no (RATE-004) | yes | no (AUTH-004) |
+| Add a recipe to favourites | yes | no (FLOW-040) | yes | yes |
+| Report a recipe or an author | yes | yes | yes | yes (CON-006) |
+| Block an author's recipes from own catalogue and search | yes | yes | yes | yes |
+| Ban an account from publishing | no | no | yes | no |
 
 ### ACT-001 — An account exists from first launch
 
 When the application is launched on a device for the first time and no key file
-has been imported, the system shall create an account, generate its identifier
-and a random three-word nickname, and sign the user in to that account.
+has been imported, the system shall create an account as `auth` allows, generate
+its identifier and a random three-word nickname, and sign the user in to that
+account.
 
 **Acceptance criteria**
-- Given a device with no prior installation, when the application is opened,
-  then the user is signed in to a newly created account without entering
+- Given a device with a free slot, when the application is opened for the first
+  time, then the user is signed in to a newly created account without entering
   anything.
 - Given that account, when its public representation is displayed, then it shows
   the generated three-word nickname and no other identifying value.
+- Given a device whose slots are all occupied, when the application is opened,
+  then no account is created and AUTH-003 states when one can be.
+- Given a device whose verdict cannot be obtained, when the application is
+  opened, then the account created is muted (AUTH-004).
 
 **Verification:** manual check on a clean device; inspection of the created
 record for absence of the fields forbidden by CON-001.

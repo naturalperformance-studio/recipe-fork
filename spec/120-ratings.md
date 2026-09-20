@@ -139,6 +139,8 @@ has ever published a recipe.
 - Given that account, when it reports a recipe, then ABUSE-003 still governs
   whether that report counts toward automatic hiding, unchanged by this
   requirement.
+- Given a muted account (AUTH-004), when it opens a published recipe, then no
+  rating control is offered at all, so this requirement never reaches it.
 
 **Verification:** rate from a freshly created account and confirm both the count
 and the ordering position change.

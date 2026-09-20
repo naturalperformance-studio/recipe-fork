@@ -189,7 +189,23 @@ one account by holding one key file.
 
 **Key file** — the file that holds an account. Whoever holds it holds the
 account; losing it loses the account, and there is no recovery (NGOAL-003).
-Its format and cryptography are OQ-002.
+Importing one signs in and replaces whatever account was active, wiping what the
+device held for it (AUTH-009, AUTH-012). Its format and cryptography are OQ-002.
+
+**Device slot** — one of three places a device has for creating an account. A
+slot is occupied by creating an account and is free again six calendar months
+later; importing a key file consumes none (AUTH-002, AUTH-009). The slots are
+held by the attestation service, not by the product, and yield no device
+identifier (AUTH-015).
+
+**Device verdict** — the answer the attestation service gives about the device
+the application is running on, including which slots are free. Nothing from it
+is stored (AUTH-015).
+
+**Muted account** — an account created where no verdict could be obtained. It
+browses, cooks, keeps favourites, reports and blocks; it does not create, fork,
+edit, submit or rate. It becomes full when a verdict and a free slot allow
+(AUTH-004, AUTH-005).
 
 **Nickname** — a random three-word name generated with the account. Globally
 unique, permanent, and the only thing about an account that is ever shown

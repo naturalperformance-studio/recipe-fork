@@ -85,8 +85,8 @@ application, restore the connection and confirm the recipe reaches the server.
 
 If the device has no network connection, then the system shall refuse the
 catalogue, search over the catalogue, opening a recipe the device does not hold,
-submission for moderation, and every moderator action, and shall state in each
-case that the action needs a connection.
+submission for moderation, importing a key file (AUTH-010), and every moderator
+action, and shall state in each case that the action needs a connection.
 
 **Acceptance criteria**
 - Given no network connection, when the reader opens the catalogue, then it
@@ -99,6 +99,8 @@ case that the action needs a connection.
   is needed and the recipe stays in `private`.
 - Given no network connection, when a moderator opens the queue, then it shows
   that a connection is needed and no queue entry is shown from a held copy.
+- Given no network connection, when the user imports a key file, then it states
+  that a connection is needed and the active account is unchanged (AUTH-010).
 
 **Verification:** walk each refused path in aeroplane mode and confirm the
 message and that no stale data is displayed.
