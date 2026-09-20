@@ -4,7 +4,7 @@ status: open
 updated: 2026-09-20
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007,
   FLOW-008, FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-013, FLOW-014,
-  FLOW-015, FLOW-016, FLOW-017, FLOW-018]
+  FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019, FLOW-020]
 ---
 
 # Flows and screens
@@ -514,6 +514,55 @@ account and as a moderator, then clear one and look again.
 not an accusation against this recipe's author, which is why it names nothing:
 naming the removed recipe would both point at another author and rebuild the
 lineage that FORK-005 deliberately stops showing.
+
+### FLOW-019 — What the card shows when parts of a recipe are absent
+
+Where a recipe has no description, no media or no parent to show, the system
+shall omit those parts of the card entirely and shall not display a placeholder
+in their place.
+
+**Acceptance criteria**
+- Given a recipe with no media at all, when its card is opened, then no image
+  frame, no placeholder image and no empty media area is shown.
+- Given a recipe with an empty description, when its card is opened, then no
+  description heading and no empty block is shown.
+- Given a recipe whose parent is not shown by FORK-005, when its card is opened,
+  then no provenance area is shown at all.
+- Given a recipe nobody has rated, when its card is opened, then the rating
+  controls are offered and no count reads as a judgement of the recipe.
+- Given a recipe reduced to the minimum DOM-006 accepts, when its card is
+  opened, then it reads as a complete recipe and not as a broken one.
+
+**Verification:** publish a recipe with no media, no description and no shown
+parent, and compare its card against one that has all three.
+**Source:** the parts are optional in the domain model; an empty frame states
+that something is missing, which is a claim the recipe does not make.
+
+### FLOW-020 — The card while it loads and when it cannot be loaded
+
+While a recipe is being loaded, the system shall show no quantity until the
+scale that applies to the reader is known; and if the recipe cannot be loaded,
+the system shall say so and offer to try again.
+
+**Acceptance criteria**
+- Given a reader whose usual serving count differs from the authored one
+  (FLOW-017), when the card is opening, then no quantity is shown at the
+  authored scale first and then replaced.
+- Given a card that is loading, when it is displayed, then the reader can leave
+  it without waiting for it to finish.
+- Given a recipe that fails to load, when the failure is shown, then it states
+  that the recipe could not be loaded and offers to try again, and does not
+  state that the recipe does not exist.
+- Given a recipe that is unavailable rather than unreachable, when it is opened,
+  then FLOW-010 governs what is shown, not this requirement.
+- Given a failed load, when the reader retries and it succeeds, then the card
+  opens at the scale FLOW-017 requires.
+
+**Verification:** open a card with the network throttled and with it cut, and
+watch the quantities through the whole opening.
+**Source:** derived from FLOW-017: a quantity shown at the authored scale and
+then replaced is a number a reader can act on before it changes, which in this
+product is a wrong amount of an ingredient.
 
 ## Open
 
