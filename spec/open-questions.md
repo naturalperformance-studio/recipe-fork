@@ -3,8 +3,8 @@ slug: OQ
 status: open
 updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
-  OQ-012, OQ-013]
-open_before_mvp: [OQ-002, OQ-003, OQ-004]
+  OQ-012, OQ-013, OQ-014, OQ-015]
+open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-014, OQ-015]
 ---
 
 # Open questions
@@ -138,3 +138,28 @@ the reader to come back to the recipe they were reading.
 Proposal (not a decision): hold exactly one recipe — the last one opened — until
 the next one replaces it. One slot, no accounting, no management screen.
 Blocks: nothing.
+
+### OQ-014 — The orderings offered in the catalogue (define before MVP)
+Decided by the product owner 2026-09-20: the reader chooses the ordering, and
+the same choice governs the catalogue and the results of a query (CAT-001).
+Unresolved: the exact set of fields — newest, highest rated and most rated were
+named, followed by "and so on" — and which ordering is in force before the
+reader has chosen one.
+The default matters more than the list: it is what nearly every reader will
+see. Ordering by rating by default returns the concern that ordering by rating
+was meant to avoid, because a recipe that is never shown is never rated.
+Proposal (not a decision): offer newest, highest rated and most rated; make
+newest the default.
+Blocks: CAT-001.
+
+### OQ-015 — Comparing an ingredient's quantity across unit types (define before MVP)
+Unresolved: how CAT-002 orders recipes when the same ingredient is expressed in
+unit types that cannot be compared. Chicken may be 500 g in one recipe, 2 pieces
+with no `piece_weight` in another, and a household measure in a third. DOM-003
+forbids converting a household quantity to mass, the product holds no ingredient
+weight table, and `piece_weight` is optional.
+Proposal (not a decision): order the recipes whose quantities are comparable —
+mass against mass, volume against volume, pieces that carry a weight converted
+to mass — and place the rest after them, ordered by the reader's chosen field
+(CAT-001), so that nothing is hidden and nothing is compared falsely.
+Blocks: CAT-002.
