@@ -130,9 +130,11 @@ Unresolved: whether the last recipe opened is held on the device even when it is
 not in favourites.
 Decided for the MVP by the product owner 2026-09-20 by not adopting it: only
 favourites are held.
-Consequence to watch: a recipe opened from the catalogue and not favourited
-lives only on the screen, so backgrounding the application or losing the network
-mid-cooking sends the reader back to the catalogue, which needs a connection.
+Consequence to watch: a recipe opened from the catalogue and not favourited is
+held nowhere, so it is lost once the application is closed, or once the
+operating system ends it while it is away, and returning to it then needs a
+connection. Merely leaving the application does not lose it: FLOW-012 requires
+the reader to come back to the recipe they were reading.
 Proposal (not a decision): hold exactly one recipe — the last one opened — until
 the next one replaces it. One slot, no accounting, no management screen.
 Blocks: nothing.

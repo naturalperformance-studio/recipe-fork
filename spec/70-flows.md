@@ -3,7 +3,7 @@ slug: FLOW
 status: open
 updated: 2026-09-20
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007,
-  FLOW-008, FLOW-009, FLOW-010, FLOW-011]
+  FLOW-008, FLOW-009, FLOW-010, FLOW-011, FLOW-012]
 ---
 
 # Flows and screens
@@ -304,6 +304,37 @@ so its weight is close to a photo's. The split into two settings is a change
 that can be made later without changing anything else.
 **Note:** the setting is on by default. What video is for is recorded in OQ-003,
 which sets the limits that make this true.
+
+### FLOW-012 — Leaving the application does not lose the recipe being read
+
+When the reader returns to the application after leaving it, the system shall
+show the recipe that was open, at the scale it was showing, at the step the
+reader had reached.
+
+**Acceptance criteria**
+- Given a recipe open at a changed serving count with a fixed ingredient set,
+  when the reader leaves the application and returns to it, then the same recipe
+  is shown at the same scale with the same fixed ingredient, whether or not it
+  is in favourites and whether or not there is a connection.
+- Given a running timer, when the reader leaves the application and returns,
+  then the timer shows the time remaining by the clock, not the time it held
+  when the application was left.
+- Given the operating system ended the application while it was away, when the
+  reader opens it again, then the same recipe is shown if its content is
+  available — held on the device, or fetchable over the network.
+- Given the operating system ended the application, the recipe is not in
+  favourites, and there is no connection, when the reader opens the application
+  again, then it states that the recipe needs a connection and offers to retry,
+  and does not silently drop the reader into the catalogue.
+
+**Verification:** scale a recipe, fix an ingredient, start a timer, leave the
+application for several minutes and return; repeat with the process ended by the
+operating system, in both the favourited and the non-favourited case.
+**Source:** user decision, 2026-09-20. Cooking is interrupted constantly, and an
+interruption is not a reason to lose the page: leaving the application and
+closing it are different events and only the second can cost the recipe.
+**Note:** whether a running timer announces itself while the application is not
+in the foreground is decided with the recipe card flow, not here.
 
 ## Open
 
