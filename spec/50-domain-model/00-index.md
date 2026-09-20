@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007,
   DOM-008, DOM-009, DOM-010, DOM-011, DOM-012]
 ---
@@ -66,6 +66,7 @@ there (FLOW-051).
 | `title` | text | |
 | `description` | text | |
 | `tags` | set of Tag | Chosen from the fixed dictionary. |
+| `language` | one of the languages of L10N-001 | Declared by the author, never detected. Selects the catalogue filter of L10N-005 and the search analysis of L10N-007. Frozen with the rest of the content (L10N-004). |
 | `servings` | number | The serving count the author wrote the quantities for. |
 | `ingredients` | ordered list of Ingredient | |
 | `steps` | ordered list of Step | |

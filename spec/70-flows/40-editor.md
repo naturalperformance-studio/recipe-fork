@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [FLOW-022, FLOW-023, FLOW-024, FLOW-025, FLOW-026, FLOW-027, FLOW-028,
   FLOW-029, FLOW-030, FLOW-031, FLOW-032]
 ---
@@ -84,9 +84,9 @@ a row that says what they mean (OQ-020).
 ### FLOW-024 — The editor is one screen in a fixed order
 
 The system shall present the editor as one scrolling screen holding, in this order,
-the title with the cover, the tags, the serving count, the ingredients, the steps
-and the description, and shall not require the author to complete one part before
-reaching another.
+the title with the cover, the declared language, the tags, the serving count, the
+ingredients, the steps and the description, and shall not require the author to
+complete one part before reaching another.
 
 **Acceptance criteria**
 - Given a new recipe, when the editor opens, then every part is present and
@@ -95,6 +95,9 @@ reaching another.
   entered a serving count, then the steps accept input.
 - Given a recipe created by forking, when the editor opens, then the inherited parts
   arrive already filled in this same screen (FORK-001).
+- Given a new recipe, when the editor opens, then the declared language is already
+  set to the author's interface language and sits beside the title, where changing
+  it is one action and missing it is not possible (L10N-004).
 - Given the author leaves the editor at any point, when they return, then they
   return to a screen in the same order with everything they had entered.
 
@@ -102,6 +105,9 @@ reaching another.
 out of order.
 **Source:** user decision, 2026-09-20: an author needs to see the whole recipe at
 once, and a walk-through would send them back and forth for a change of one line.
+The declared language was added to the order on 2026-09-21 with L10N-004; it sits
+second because it is answered once, in a moment, and because an author who scrolls
+past it has still answered it.
 
 ### FLOW-025 — Steps and ingredients are inserted anywhere and reordered by dragging
 

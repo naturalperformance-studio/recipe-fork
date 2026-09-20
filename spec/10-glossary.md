@@ -344,6 +344,19 @@ control in the editor, read-only, recording nothing and blocking nothing
 creates. Hints hold no state, need no dismissal, and are never triggered by
 reading what the author wrote (GUIDE-005).
 
+## Language
+
+**Declared language** — the language an author states a recipe is written in,
+chosen in the editor, frozen at publication and never detected by the product
+(L10N-004). It selects which listings the recipe appears in when a reader filters
+(L10N-005) and which analysis a search query is matched under (L10N-007). It says
+nothing about whether the text is actually in that language.
+
+**Interface language** — the language the application shows its own words in.
+Starts from the device setting, changed by the reader at any time, held on the
+device and not on any account (L10N-002). Unrelated to the declared language of
+any recipe.
+
 ## Quality and operations
 
 **`modest` and `typical`** — the two reference configurations, each a device

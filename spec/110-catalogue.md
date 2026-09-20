@@ -1,7 +1,7 @@
 ---
 slug: CAT
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [CAT-001, CAT-002, CAT-003, CAT-004, CAT-005, CAT-006, CAT-007, CAT-008, CAT-009]
 ---
 
@@ -16,7 +16,9 @@ The screens themselves — their empty, loading, error and offline states — ar
 listed recipe shows. Two of these requirements reach beyond the catalogue by
 design: the fork marker and the fork number are shown both where a recipe is
 listed and on its card, because they are one number with one meaning
-(CAT-004, CAT-005).
+(CAT-004, CAT-005). One filter is specified elsewhere because it exists for a
+reason outside this section: the filter on a recipe's declared language is
+L10N-005, and every listing here holds both languages until a reader sets it.
 
 ### CAT-001 — The reader chooses how results are ordered
 
