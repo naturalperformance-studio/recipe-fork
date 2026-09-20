@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 4 questions must be answered before MVP.**
-> Sections: 13 closed · 0 blocked · 13 open · 1 n/a.
+> Sections: 14 closed · 0 blocked · 12 open · 1 n/a.
 > Blocking: OQ-002, OQ-003, OQ-004, OQ-016. Last updated 2026-09-20.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -25,7 +25,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [50-domain-model/](50-domain-model/00-index.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, and how provenance is shown. |
-| [70-flows/](70-flows/00-index.md) | FLOW | open | User flows and screens, each with its empty, loading, error and offline behaviour. |
+| [70-flows/](70-flows/00-index.md) | FLOW | closed | User flows and screens, each with its empty, loading, error and offline behaviour: offline and synchronisation, favourites and the device, cooking, the editor, the catalogue and the favourites section, the moderator's queue. |
 | [75-author-guidance.md](75-author-guidance.md) | GUIDE | closed | What the editor tells its author before they can find out the hard way: the statement before an irreversible submission, the checklist of good practice, and the hints that fire on the author's own action. The product teaches here because it inspects nowhere. |
 | [80-scaling-rules.md](80-scaling-rules.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
 | 90-media.md | MEDIA | open | Media capture, client-side conversion, upload before publication, privacy of unpublished media. |

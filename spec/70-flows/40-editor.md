@@ -1,6 +1,6 @@
 ---
 slug: FLOW
-status: open
+status: closed
 updated: 2026-09-20
 ids: [FLOW-022, FLOW-023, FLOW-024, FLOW-025, FLOW-026, FLOW-027, FLOW-028,
   FLOW-029, FLOW-030, FLOW-031, FLOW-032]

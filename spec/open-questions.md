@@ -4,7 +4,7 @@ status: open
 updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
-  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025]
+  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027]
 open_before_mvp: [OQ-002, OQ-003, OQ-004, OQ-016]
 ---
 
@@ -300,3 +300,27 @@ and inside the description and needs room there, while fifty steps and fifty
 ingredients are already more than any real recipe. Refused at submission, never while
 typing. Written as DOM-012 and FLOW-028; `quality` will carry the measurable thresholds
 that refer to them.
+
+### OQ-026 — Rejection reasons as categories (define after MVP)
+Unresolved: whether the reason a moderator gives for rejecting a submission
+(MOD-004, FLOW-046) becomes a fixed list of categories, alone or with a comment
+beside it.
+Decided for the MVP by the product owner 2026-09-20: free text, "for now".
+Consequence to watch, stated and accepted: nothing can be counted across
+rejections, so the product owner cannot learn what submissions most often fail
+on, and two authors rejected for the same fault may read two different
+sentences. Removal already carries a category, because MOD-008 makes it
+consequential; rejection does not, because nothing downstream depends on it.
+Proposal for later (not a decision): the categories are derived from the
+rejections actually written in the first months, rather than guessed now.
+Blocks: nothing.
+
+### OQ-027 — What the moderator sees after deciding an entry — RESOLVED 2026-09-20
+Resolved by the product owner: both modes, and they are not alternatives. A
+decision can be taken on an entry straight from the list, for the case that
+cannot wait, and the moderator stays in the list afterwards (FLOW-049). A run
+started on a list opens the next entry as soon as the current one is decided and
+ends when the list is exhausted (FLOW-050). Every decision taken by gesture is
+confirmed in both directions — restricting and releasing — because undoing
+either means finding that one recipe again with no way to search for it.
+Written as FLOW-049 and FLOW-050; FLOW-046 is no longer blocked.

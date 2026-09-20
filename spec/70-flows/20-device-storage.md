@@ -1,6 +1,6 @@
 ---
 slug: FLOW
-status: open
+status: closed
 updated: 2026-09-20
 ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-012]
 ---
@@ -81,8 +81,8 @@ rather than rearranging itself.
 ### FLOW-011 — One setting governs whether media is held
 
 The system shall offer a single setting that governs whether the media of
-favourited recipes is held on the device, and shall hold the text of every
-favourite regardless of that setting.
+favourited recipes and of the recipes the account owns (FLOW-038) is held on the
+device, and shall hold the text of every one of them regardless of that setting.
 
 **Acceptance criteria**
 - Given the setting is on, when a recipe is added to favourites, then its cover,

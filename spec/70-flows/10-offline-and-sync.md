@@ -1,6 +1,6 @@
 ---
 slug: FLOW
-status: open
+status: closed
 updated: 2026-09-20
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007, FLOW-008]
 ---
@@ -17,9 +17,10 @@ written for. The decisions below apply to every screen in this section and are
 the reason most of them have a meaningful offline state at all.
 
 The device therefore holds: the account's favourites, both fixed dictionaries,
-and every recipe the account owns that has not been accepted by the server. The
-catalogue itself is not held, and neither is a recipe the reader merely opened:
-what goes on the device is what the reader marked.
+and every recipe the account owns, in every state (FLOW-038) — not only those
+the server has not yet accepted. The catalogue itself is not held, and neither
+is a recipe the reader merely opened: what goes on the device is what the reader
+marked and what they wrote themselves.
 
 ### FLOW-001 — Both dictionaries are held on the device
 
