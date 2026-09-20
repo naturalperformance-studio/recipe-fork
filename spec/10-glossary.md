@@ -296,6 +296,11 @@ it is never displayed: the reader is shown the two counts (RATE-007, RATE-010).
 problem is visible before it becomes an urgent one. Every signal names the
 decision that asked for it, and none is about a person (OBS-001, OBS-007).
 
+**Openings** — how many times a published recipe was opened by somebody other
+than its owner and the server heard about it. Not readers: the product cannot
+tell one reader from another, and an opening without a connection is never
+counted. Shown to the recipe's owner alone (ANL-005, ANL-006, ANL-007).
+
 **Threshold** — the value at which a signal stops being information and becomes
 something to decide. Crossing one marks the signal and sends one alert
 (OBS-003, OBS-004).
