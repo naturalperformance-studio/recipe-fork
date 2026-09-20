@@ -3,7 +3,7 @@ slug: FLOW
 status: open
 updated: 2026-09-20
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007,
-  FLOW-008]
+  FLOW-008, FLOW-009, FLOW-010, FLOW-011]
 ---
 
 # Flows and screens
@@ -26,9 +26,10 @@ application that needs a connection to show a recipe fails at the moment it was
 written for. The decisions below apply to every screen in this section and are
 the reason most of them have a meaningful offline state at all.
 
-The device therefore holds: the account's favourites, recipes opened recently,
-both fixed dictionaries, and every recipe the account owns that has not been
-accepted by the server. The catalogue itself is not held.
+The device therefore holds: the account's favourites, both fixed dictionaries,
+and every recipe the account owns that has not been accepted by the server. The
+catalogue itself is not held, and neither is a recipe the reader merely opened:
+what goes on the device is what the reader marked.
 
 ### FLOW-001 — Both dictionaries are held on the device
 
@@ -212,7 +213,99 @@ with one offline, reconnect and inspect both recipes.
 recipe is a fork (GOAL-002), and the server's version keeps its identity because
 other recipes may already name it as their parent. No edit is discarded.
 
+### FLOW-009 — Every favourite is readable without a network connection
+
+The system shall hold on the device the full text of every recipe in the
+account's favourites — its title, tags, serving count, ingredients, steps,
+timers and provenance — and shall keep it there for as long as the recipe stays
+in favourites.
+
+**Acceptance criteria**
+- Given no network connection, when the reader opens any recipe in their
+  favourites, then it opens in full, can be scaled by `scaling-rules`, and its
+  timers run.
+- Given a recipe is added to favourites while a connection is available, when
+  the addition completes, then its text is on the device without the reader
+  asking for it.
+- Given an account with several hundred favourites, when they are held, then no
+  favourite's text is dropped to make room for another: text is never evicted.
+- Given a recipe is removed from favourites, when the removal completes, then
+  its held text and media are removed from the device.
+- Given a favourite that stops being accessible, when the device next reaches
+  the server, then its held content is deleted from the device and the favourite
+  itself stays in the list (FLOW-010).
+- Given a recipe the reader opened but never added to favourites, when the
+  reader opens it with no connection, then it is not available (FLOW-003).
+
+**Verification:** favourite a recipe, go offline, cook from it end to end
+including timers; then have a moderator remove it and confirm the held copy
+disappears on the next connection.
+**Source:** user decision, 2026-09-20. Favouriting is the act of taking a recipe
+with you; nothing is held that the reader did not mark, because a recipe's text
+is a few kilobytes and the bound that matters is the reader's own choice.
+
+### FLOW-010 — A favourite that becomes unavailable stays in the list
+
+If a recipe in an account's favourites stops being accessible to that account,
+then the system shall keep it in the favourites list marked as unavailable,
+shall delete its held content from the device, shall not state why, and shall
+not notify the reader.
+
+**Acceptance criteria**
+- Given a favourite that reports have hidden, when the device next reaches the
+  server, then the recipe stays in the favourites list, is marked unavailable,
+  cannot be opened, and its held text and media are gone from the device.
+- Given that recipe, when a moderator dismisses the reports and it returns to
+  `published`, then it becomes openable again and its content returns to the
+  device without the reader doing anything.
+- Given a favourite a moderator has removed, when the device next reaches the
+  server, then it is marked unavailable and never becomes openable again.
+- Given an unavailable favourite, when the reader looks at it, then no reason is
+  given and no notification was delivered for it.
+- Given an unavailable favourite, when the reader removes it from favourites,
+  then it leaves the list like any other.
+- Given no network connection, when the reader opens a favourite that has been
+  hidden or removed since the device last reached the server, then it still
+  opens, because the device cannot know.
+
+**Verification:** hide a favourite by reports and reconnect; dismiss the reports
+and reconnect; remove another favourite as a moderator and reconnect; inspect
+the list and the device's held content at each step.
+**Source:** user decision, 2026-09-20. The reader marked the recipe and the
+reader unmarks it; the product does not tidy the list on their behalf and does
+not spend a notification on it. A shelf in a shop shows that an item ran out
+rather than rearranging itself.
+
+### FLOW-011 — One setting governs whether media is held
+
+The system shall offer a single setting that governs whether the media of
+favourited recipes is held on the device, and shall hold the text of every
+favourite regardless of that setting.
+
+**Acceptance criteria**
+- Given the setting is on, when a recipe is added to favourites, then its cover,
+  its step photos and its step video are held on the device.
+- Given the setting is off, when a recipe is added to favourites, then only its
+  text is held and its media requires a connection.
+- Given held media, when the reader turns the setting off, then the held media
+  is deleted from the device and every favourite keeps its text.
+- Given the setting is on and the device has no space left, when media is being
+  held, then the download fails, the recipe stays readable, its media requires a
+  connection, and no other favourite's media is deleted to make room.
+- Given any number of favourites, when media is held, then nothing is capped or
+  evicted by count or by size: the setting is the only control.
+
+**Verification:** switch the setting both ways with favourites already held, and
+fill the device to confirm the failure is contained to the recipe being held.
+**Source:** user decision, 2026-09-20. One setting rather than separate controls
+for photo and video, because video here is a short clip showing a technique —
+how something is cut, how one ingredient goes into another — and not a lesson,
+so its weight is close to a photo's. The split into two settings is a change
+that can be made later without changing anything else.
+**Note:** the setting is on by default. What video is for is recorded in OQ-003,
+which sets the limits that make this true.
+
 ## Open
 
-- What exactly the device holds for reading: whether media is held with the
-  recipe, and what bounds "recipes opened recently".
+Nothing in the offline and synchronisation block. The screens themselves are
+still to be written.

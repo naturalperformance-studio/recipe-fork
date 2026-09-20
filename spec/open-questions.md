@@ -2,7 +2,8 @@
 slug: OQ
 status: open
 updated: 2026-09-20
-ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011]
+ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
+  OQ-012, OQ-013]
 open_before_mvp: [OQ-002, OQ-003, OQ-004]
 ---
 
@@ -36,6 +37,11 @@ media items per recipe, total storage per account.
 Proposal (not a decision): images re-encoded client-side and rejected above
 2 MB after re-encoding; video limited to 30 seconds and 15 MB; at most 1 cover
 image plus 1 media item per step.
+What video is for, stated by the product owner 2026-09-20: a short clip showing
+a technique — how something is cut, how one ingredient goes into another — never
+a lesson. The limits chosen here must be tight enough that a clip weighs close
+to a photo, because FLOW-011 holds photo and video under one setting on that
+assumption.
 Bounded by: CON-002 (USD 20 per month). Any limit proposed here is only
 acceptable if its storage and egress cost at the expected load fits that ceiling.
 Blocks: section `media`.
@@ -106,3 +112,27 @@ a whole number. Instead of an upward bound, a warning appears once two or more
 ingredients are held at the floor of their unit type. Written as SCALE-009,
 SCALE-010 and SCALE-011; see
 [ADR — scaling extremes](decisions/20260920-scaling-extremes.md).
+
+### OQ-012 — Managing favourites by weight (define after MVP)
+Unresolved: whether a recipe's card states how much adding it to favourites will
+download, and whether favourites gain a management mode that lists them by the
+space they occupy.
+Decided for the MVP by the product owner 2026-09-20: neither is built. Device
+space is governed by a setting that covers all favourites at once, not
+per recipe, and no size is shown on a card.
+Proposal for later (not a decision): if it returns, the number on a card means
+exactly what adding to favourites will download, not the recipe's total media
+weight, since what is downloaded depends on that setting.
+Blocks: nothing.
+
+### OQ-013 — Holding the recipe currently being read (define after MVP)
+Unresolved: whether the last recipe opened is held on the device even when it is
+not in favourites.
+Decided for the MVP by the product owner 2026-09-20 by not adopting it: only
+favourites are held.
+Consequence to watch: a recipe opened from the catalogue and not favourited
+lives only on the screen, so backgrounding the application or losing the network
+mid-cooking sends the reader back to the catalogue, which needs a connection.
+Proposal (not a decision): hold exactly one recipe — the last one opened — until
+the next one replaces it. One slot, no accounting, no management screen.
+Blocks: nothing.
