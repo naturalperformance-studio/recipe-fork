@@ -233,6 +233,12 @@ it may be replaced by another generated one any number of times. Once the accoun
 exists it is globally unique, permanent, and the only thing about an account that
 is ever shown (DOM-001, AUTH-018).
 
+**Deleted account** — an account its holder destroyed. Its published recipes,
+the ratings it gave and the reports it filed stay; everything unpublished, its
+favourites and its keys are gone, its nickname is never reissued, and its
+recipes show that the author is deleted instead of a nickname (RET-001, RET-002,
+RET-003).
+
 **Owner** — the account that created a recipe, for that recipe's whole life.
 Ownership is never transferred (ACT-002). Not an actor: a role an account holds
 with respect to one recipe.

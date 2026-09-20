@@ -5,7 +5,7 @@ updated: 2026-09-20
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030]
-open_before_mvp: [OQ-002, OQ-004, OQ-016, OQ-029, OQ-030]
+open_before_mvp: [OQ-002, OQ-016, OQ-029, OQ-030]
 ---
 
 # Open questions
@@ -51,23 +51,20 @@ what FLOW-011 assumed when it put both under one setting.
 Written as MEDIA-001 to MEDIA-013. See
 [ADR — media limits are set by the storage budget](decisions/20260920-media-limits-are-set-by-the-budget.md).
 
-### OQ-004 — Retention of inactive accounts and unpublished media (define before MVP)
-Unresolved: whether unpublished media and dormant accounts are deleted to
-contain storage cost, and after how long.
-Narrowed 2026-09-20 by MEDIA-010: an account can now hold at most 150 MB of
-media across recipes that have never been published, so a dormant account's
-unpublished media is bounded rather than unbounded. What stays open is whether
-it is deleted at all, and what becomes of dormant accounts themselves.
-Proposal (not a decision): unpublished media belonging to an account with no
-authenticated session for 12 months is deleted. There is no contact channel, so
-no warning can be delivered to the account holder and the rule can only be
-announced in the published terms.
-Bounded by: CON-002.
-Narrowed again 2026-09-20 by account creation on demand: an installation no
-longer mints an account, so the empty accounts this entry once had to cover —
-one per install that was opened once and deleted — do not exist. What remains is
-an account someone deliberately created and then abandoned.
-Blocks: sections `retention`, `legal`.
+### OQ-004 — Retention of inactive accounts and unpublished media — RESOLVED 2026-09-21
+Resolved by the product owner: nothing is deleted because time has passed
+(RET-006). The premises this question was written on had both changed: an account
+is no longer minted at every first launch and costs a device slot (AUTH-001,
+AUTH-002), and an account holds at most 150 MB of unpublished media (MEDIA-010),
+so the cost this entry was meant to contain is bounded without deleting anyone's
+work. What replaces the sweep is a measurement: the total unpublished media held
+by accounts dormant for twelve months, reported as an operational signal
+(RET-007).
+Server logs are the one thing with a period: fourteen days (RET-008), chosen
+short because whether an IP address is personal data in the product owner's
+jurisdiction is unsettled (OQ-029).
+Written as RET-006, RET-007 and RET-008. See
+[ADR — nothing is deleted for being old](decisions/20260921-nothing-expires.md).
 
 ### OQ-005 — Deleted parent recipe — RESOLVED 2026-09-20
 Resolved: the parent reference is kept and shown as unavailable, with no reason
@@ -369,9 +366,9 @@ indirectly identifiable person, and the duties that follow — notification of
 Roskomnadzor before processing, localisation of Russian citizens' data under
 242-ФЗ, and leak liability raised sharply on 30 May 2025 by 420-ФЗ — are what
 make the answer expensive rather than academic.
-Also open on the same ground: how long server logs holding IP addresses are kept,
-which belongs to `retention`. Whether an IP address alone is personal data is
-unsettled in Russian practice and turns on what it is held together with.
+Whether an IP address alone is personal data is unsettled in Russian practice and
+turns on what it is held together with. How long the logs holding them live is no
+longer open: fourteen days (RET-008), chosen short for exactly this reason.
 Proposal (not a decision): a review by a qualified lawyer in the product owner's
 jurisdiction before the store listing is created, covering the verdict, the logs
 and the published terms; nothing in the spec changes until that review reports.

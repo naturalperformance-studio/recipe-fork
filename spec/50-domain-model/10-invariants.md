@@ -146,7 +146,7 @@ These are named so their absence is visible, not an oversight.
 - Whether a rating can be changed or withdrawn — section `ratings`.
 - Media size, duration and count limits — settled in [`media`](../90-media.md).
 - What a fork shows when its parent is gone — OQ-005, OQ-007.
-- Account deletion — section `retention`.
+- Account deletion — settled in [`retention`](../150-retention.md), RET-001 to RET-005.
 
 ### DOM-009 — An ingredient is a dictionary entry or the author's own words, never both
 

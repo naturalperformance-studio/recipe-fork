@@ -224,7 +224,8 @@ name the reason for one category only, see
 for a private link; loss of access to one's own private recipes, favourites,
 ratings or scaling.
 
-Account deletion is not modelled: it is decided in section `retention`.
+Account deletion is not a state of the account: it destroys it outright and at
+once, and what goes with it is RET-001.
 
 ## Media
 

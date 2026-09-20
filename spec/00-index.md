@@ -1,8 +1,8 @@
 # Recipe Fork — specification index
 
-> **NOT READY — 5 questions must be answered before MVP.**
-> Sections: 17 closed · 1 blocked · 8 open · 1 n/a.
-> Blocking: OQ-002, OQ-004, OQ-016, OQ-029, OQ-030. Last updated 2026-09-20.
+> **NOT READY — 4 questions must be answered before MVP.**
+> Sections: 18 closed · 1 blocked · 7 open · 1 n/a.
+> Blocking: OQ-002, OQ-016, OQ-029, OQ-030. Last updated 2026-09-21.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -17,7 +17,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 
 | File | Slug | Status | What it is for |
 |---|---|---|---|
-| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key and 58 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
+| [10-glossary.md](10-glossary.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key and 59 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
@@ -35,7 +35,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [120-ratings.md](120-ratings.md) | RATE | closed | The binary like and dislike over its life: who may give one and on what, the two counts a reader sees, what `highest rated` and `most rated` compute, and why favouriting is not approval. |
 | [130-external-interfaces.md](130-external-interfaces.md) | EXT | closed | The closed list of what the product depends on — a device attestation service, object storage and the distribution channel — what each does when it is absent, and the two artefacts that cross the boundary in the user's own hands: the account key and a private link. Also the one surface outside the application, the account deletion page. |
 | 140-quality.md | QUAL | open | Quality attributes with a metric, a measurement method and a threshold each. |
-| 150-retention.md | RET | open | What is kept, for how long, what deletion means, and what account deletion does to published content. |
+| [150-retention.md](150-retention.md) | RET | closed | What deleting an account destroys and what survives it, what a deleted author's recipes say instead of a nickname, why nothing is ever deleted for being old, how long server logs live, and what the product deliberately never records about a reader. |
 | 160-localization.md | L10N | open | String externalisation, Russian-only first release, language-dependent search and filtering. |
 | [170-abuse.md](170-abuse.md) | ABUSE | closed | Flooding, mass publication, and what a single moderator can absorb. |
 | 180-analytics.md | ANL | open | What the product owner wants to learn about usage, and what may be measured without personal data. |
@@ -77,6 +77,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-media-limits-are-set-by-the-budget.md](decisions/20260920-media-limits-are-set-by-the-budget.md) | accepted | Every media limit is derived from what USD 20 a month buys; video stays on every step by being short, small and silent. |
 | [20260920-deletion-key.md](decisions/20260920-deletion-key.md) | accepted | Deleting an account from outside the application takes a separate deletion key pasted as text; the account key is never uploaded anywhere. |
 | [20260920-account-on-demand.md](decisions/20260920-account-on-demand.md) | accepted, supersedes part of ACT-001 | Nothing is created until an action needs it: readers hold no account, authors do, and the key is a string shown once in full and masked thereafter. |
+| [20260921-nothing-expires.md](decisions/20260921-nothing-expires.md) | accepted | No account, recipe or media item is deleted for being old; the abandoned total is measured instead, and only logs have a period. |
 
 ## C4 context
 
