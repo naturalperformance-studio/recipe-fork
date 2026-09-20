@@ -1,8 +1,8 @@
 ---
 slug: ST
 status: closed
-updated: 2026-09-20
-ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007]
+updated: 2026-09-21
+ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007, ST-008]
 ---
 
 # Entity states
@@ -51,7 +51,8 @@ it is a property of that link (`active`), not of the recipe.
 **Disallowed from `private`:** being seen, rated, favourited, reported or forked
 by any account other than the owner; appearing in the catalogue or in search.
 
-**Disallowed from `pending`:** any edit; withdrawal after a decision is recorded;
+**Disallowed from `pending`:** any edit; withdrawal after a decision is recorded
+(ST-008 settles which of the two came first and what the other one is told);
 forking by anyone other than the owner; rating; favouriting; being reported by
 anyone other than the moderator's own action.
 
@@ -233,3 +234,39 @@ A media item has no independent lifecycle. Its visibility follows the recipe it
 belongs to (DOM-005), and it is owned by the account that uploaded it from the
 moment of upload. Retention of media belonging to recipes that were never
 published is OQ-004.
+
+### ST-008 — A withdrawal and a decision are settled by whichever reached the server first
+
+When the owner withdraws a submission and a moderator records a decision on the
+same submission, the system shall accept whichever reached the server first,
+shall refuse the other, and shall tell whoever was refused what has actually
+become of the recipe.
+
+**Acceptance criteria**
+- Given one submission, when a withdrawal and a decision both reach the server,
+  then exactly one of them is recorded and the other changes no state at all.
+- Given the decision was recorded first, when the owner's withdrawal arrives,
+  then it is refused and the owner is told what the recipe now is — published, or
+  reachable by a private link, or rejected — and never told merely that the
+  withdrawal failed.
+- Given the withdrawal was recorded first, when the moderator's decision arrives,
+  then it is refused and MOD-011 states why.
+- Given the owner lost the race to an approval for publication, when they open
+  the recipe, then it is published and permanent (ST-001), and correcting it is a
+  fork like any other correction (GOAL-002).
+- Given the owner has no connection, when they attempt to withdraw, then FLOW-003
+  refuses the attempt and queues nothing, because whether the submission is still
+  undecided is something only the server knows.
+- Given a moderator holding the entry open from before the withdrawal, when the
+  withdrawal is recorded, then nothing reaches their device to say so (EXT-009);
+  they learn it when they record their decision and it is refused.
+
+**Verification:** send a withdrawal and a decision against one submission from
+two clients in each order and confirm exactly one takes effect and the loser is
+told what happened; attempt a withdrawal in aeroplane mode.
+**Source:** user question, 2026-09-21. The transition table already forbade
+withdrawal after a decision is recorded, which fixes who wins; it never said what
+the loser sees, and a refusal that says only "that did not work" leaves an author
+guessing whether their recipe is public. The server is the single point that
+orders the two events, which is why neither client may decide the outcome
+locally.

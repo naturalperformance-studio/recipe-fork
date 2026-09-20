@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [FLOW-044, FLOW-045, FLOW-046, FLOW-047, FLOW-048, FLOW-049, FLOW-050]
 ---
 
@@ -242,6 +242,9 @@ exhausted or the moderator leaves it.
   list.
 - Given an entry another moderator decided while the run was in progress, when
   the run reaches it, then it is not offered for a decision (MOD-007).
+- Given an entry whose owner withdrew it while the run was in progress, when the
+  run reaches it, then it is not offered either, and if the moderator had already
+  opened it the refusal of MOD-011 is what they see.
 
 **Verification:** run a queue of several entries to exhaustion, pass some and
 decide others, leave a run halfway and inspect the list, and have a second

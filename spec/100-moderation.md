@@ -1,9 +1,9 @@
 ---
 slug: MOD
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [MOD-001, MOD-002, MOD-003, MOD-004, MOD-005, MOD-006, MOD-007,
-  MOD-008, MOD-009, MOD-010]
+  MOD-008, MOD-009, MOD-010, MOD-011]
 ---
 
 # Moderation
@@ -135,6 +135,35 @@ then the system shall reject the attempt.
 **Source:** CON-003 and draft section 4.2: the content cannot have changed since
 the decision, so there is nothing to re-decide; acting on published content is
 removal, which is a different decision with a different record.
+
+### MOD-011 — A decision on a submission the owner withdrew is refused and says so
+
+If a moderator records a decision on a submission its owner has already
+withdrawn, then the system shall refuse the decision, shall take the entry out of
+the queue, and shall state that the owner withdrew it.
+
+**Acceptance criteria**
+- Given a withdrawn submission, when a decision on it is recorded, then nothing
+  is stored — no approval, no rejection and no rejection reason — and the recipe
+  stays where the withdrawal put it, editable by its owner.
+- Given that refusal, when the moderator reads it, then it says the owner
+  withdrew the submission, so that the moderator does not retry.
+- Given the entry, when the queue is next shown, then it is absent and does not
+  return; if the owner submits again it arrives as a new entry, ordered by its
+  own submission time (MOD-006).
+- Given a run in progress (FLOW-050), when a decision is refused for this reason,
+  then the run continues to the next entry exactly as it does after a decision
+  that was recorded.
+- Given the moderator had read the recipe before it was withdrawn, when the
+  refusal is shown, then nothing they read is retained as a decision or as a
+  reason, because a withdrawn submission was never decided.
+
+**Verification:** withdraw a submission from the owner's device, then decide it
+from the moderator's, in the list and inside a run.
+**Source:** user question, 2026-09-21; the ordering rule is ST-008. This is the
+same shape as MOD-007 — an attempt to decide something that is no longer open —
+and it is separate from it because the cause is different and so is what the
+moderator must be told.
 
 ## When a removal reaches the forks
 
