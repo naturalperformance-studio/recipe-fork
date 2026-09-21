@@ -1,7 +1,7 @@
 ---
 slug: ABUSE
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [ABUSE-001, ABUSE-002, ABUSE-003, ABUSE-004, ABUSE-005, ABUSE-006, ABUSE-007]
 ---
 
@@ -23,9 +23,9 @@ to visibility still runs through the moderator.
 
 ### ABUSE-001 — At most three submissions per account per day
 
-If an account has submitted three recipes for moderation within the preceding 24
-hours, then the system shall reject its further submissions until that window
-has passed.
+If an account that does not hold the moderator role has submitted three recipes
+for moderation within the preceding 24 hours, then the system shall reject its
+further submissions until that window has passed.
 
 **Acceptance criteria**
 - Given an account that has submitted three recipes in the last 24 hours, when
@@ -35,6 +35,10 @@ has passed.
   computed, then that submission still counts.
 - Given the account's other actions, when the limit is in force, then creating,
   editing, forking, scaling, searching and favouriting are unaffected.
+- Given an account holding the moderator role, when it submits a fourth recipe in
+  a day, then it is accepted, because the queue it would fill is its own.
+- Given that account, when the moderator role is revoked from it (ACT-003), then
+  the limit applies to it again from that moment.
 
 **Verification:** functional test submitting four recipes in one day, including
 a withdrawn one.
@@ -42,6 +46,13 @@ a withdrawn one.
 promised in MOD-005: a single account cannot fill the queue of a single
 moderator. A withdrawn submission counts because the moderator's attention was
 already spent on it.
+**Narrowed 2026-09-21** by user decision: an account holding the moderator role
+is exempt, because the reason for the limit — one account filling one moderator's
+queue — does not apply when that account is the moderator. It follows from what
+the limit is for rather than from a wish to publish faster, and it needs no
+revisiting if a second moderator appears. The occasion was practical: the first
+release opens with an empty catalogue that the product owner fills themselves
+(`mvp-boundary`), and three a day would have made that take weeks.
 **Not recorded:** the idea of lifting this limit as a paid feature was raised and
 is not written here, because it contradicts NGOAL-006. Adopting it would be a
 separate decision and a superseding ADR.
