@@ -40,6 +40,7 @@ The system shall measure and report the following signals:
 | Share of accounts created muted, over a period | AUTH-004 | whether the attestation service is failing quietly |
 | Verdict requests against the service's free quota | EXT-002 | whether the gate is about to start costing money |
 | Time since the last completed copy of the store | QUAL-008 | whether the safety net is still there |
+| Share of submissions decided within seven days, over the last complete calendar month | QUAL-010 | whether the product is keeping the one promise it makes to a person |
 
 **Acceptance criteria**
 - Given the running product, when the signals are enumerated, then each row above
@@ -100,6 +101,7 @@ threshold below, and shall leave every other signal unmarked.
 | Share of ingredients entered as free text | 20 per cent in a week |
 | Failed media uploads | 5 per cent of attempts in a day |
 | Time since the last completed copy of the store | longer than three hours |
+| Share of submissions decided within seven days | below 95 per cent in the last complete month |
 
 **Acceptance criteria**
 - Given a signal below its threshold, when the screen is shown, then it is

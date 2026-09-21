@@ -140,13 +140,17 @@ the expected waiting time for review before the submission is confirmed.
 **Acceptance criteria**
 - Given the submission action, when it is opened, then the stated expectation is
   visible without scrolling and before the confirming control.
+- Given that expectation, when it is read, then it is seven days — the period
+  QUAL-010 binds and measures, and the same period a rights holder's claim is
+  answered in (ABUSE-007) — and no other number appears anywhere.
 - Given a submitted recipe, when its owner opens it, then it shows that it is
   awaiting review.
 
 **Verification:** manual UI check.
 **Source:** draft section 6.3 ("publication may take up to a week"). The figure
-itself is a service commitment with a measurement method, specified in section
-`quality`.
+itself is a service commitment with a measurement method, and since 2026-09-21 it
+is written: QUAL-010 binds seven days at 95 per cent of a calendar month. Until
+that date this sentence pointed at a section that carried no such requirement.
 
 ### MOD-006 — Queue entries are ordered by submission time
 
