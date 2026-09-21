@@ -1,7 +1,7 @@
 ---
 slug: MEDIA
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [MEDIA-001, MEDIA-002, MEDIA-003, MEDIA-004, MEDIA-005, MEDIA-006,
   MEDIA-007, MEDIA-008, MEDIA-009, MEDIA-010, MEDIA-011, MEDIA-012, MEDIA-013]
 ---
@@ -236,8 +236,8 @@ reaches 150 MB.
   added, then it is refused and MEDIA-011 states why.
 - Given an account at the cap, when one of its recipes is published, then that
   recipe's media stops counting against the cap and further media is accepted.
-- Given an account at the cap, when it deletes an unpublished recipe, then the
-  freed space is available once MEDIA-012 has deleted the files.
+- Given an account at the cap, when it deletes an unpublished recipe (ST-010),
+  then the freed space is available once MEDIA-012 has deleted the files.
 - Given media added without a connection, when the queued upload reaches the
   server and the cap is exceeded, then the upload is refused, the media stays on
   the device and the recipe stays marked as not accepted (FLOW-004, FLOW-005).
@@ -284,8 +284,8 @@ holds it, and may perform that deletion in batches rather than at the moment the
 last holder disappears.
 
 **Acceptance criteria**
-- Given a photograph held by one draft, when that draft is deleted, then the file
-  is deleted.
+- Given a photograph held by one draft, when that draft is deleted (ST-010), then
+  the file is deleted.
 - Given a photograph held by a draft and by the owner's own fork of it
   (FORK-007), when the draft is deleted, then the file stays, because the fork
   still holds it.

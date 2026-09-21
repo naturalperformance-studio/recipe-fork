@@ -74,7 +74,15 @@ decision (ST-003).
 
 **Removal** — a moderator taking a recipe out of the catalogue, search and every
 direct path. It is terminal, available to a moderator alone, and never cascades
-to forks (ST-002, ST-007).
+to forks (ST-002, ST-007). A moderator's own recipe is removed on the same terms
+as anyone else's (MOD-014).
+
+**Deletion of a recipe** — the owner destroying a recipe that was never
+externally visible, so that it and its submission records cease to exist
+(ST-010). It reaches `private` and `rejected` and nothing else, and it is a
+different act from removal, which a moderator performs on what everyone can see,
+and from deletion of an account, which destroys every unpublished recipe at once
+(RET-001).
 
 **Unavailable** — what a fork's card says about a parent that cannot be opened,
 with no reason given and no further chain shown (ST-007). A favourite that stops
@@ -224,10 +232,11 @@ identifier (AUTH-015).
 the application is running on, including which slots are free. Nothing from it
 is stored (AUTH-015).
 
-**Muted account** — an account created where no verdict could be obtained. It
-carries favourites beyond the device and does nothing else an account is for: it
-does not create, fork, edit, submit or rate. It becomes full when a verdict and
-a free slot allow (AUTH-004, AUTH-005).
+**Muted account** — an account created where the server answered and no device
+verdict could be obtained. It carries favourites beyond the device and does
+nothing else an account is for: it does not create, fork, edit, submit or rate.
+It becomes full when a verdict and a free slot allow (AUTH-004, AUTH-005). With
+no connection at all no account is created, muted or otherwise (FLOW-003).
 
 **Nickname** — a random three-word name generated at the creation screen, where
 it may be replaced by another generated one any number of times. Once the account

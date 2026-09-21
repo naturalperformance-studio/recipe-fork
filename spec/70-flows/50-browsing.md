@@ -1,9 +1,9 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [FLOW-033, FLOW-034, FLOW-035, FLOW-036, FLOW-037, FLOW-038, FLOW-039,
-  FLOW-040, FLOW-041, FLOW-042, FLOW-043]
+  FLOW-040, FLOW-041, FLOW-042, FLOW-043, FLOW-053]
 ---
 
 # Browsing: the catalogue and the favourites section
@@ -134,6 +134,9 @@ for any state.
   state marker.
 - Given any state, when the reader looks for its recipes, then the way to see
   only them is the filter of FLOW-037 and not a separate screen.
+- Given an entry in `private` or `rejected`, when it is shown, then deletion is
+  offered on it and FLOW-053 governs what the author is told; given an entry in
+  any other state, then it is not offered.
 
 **Verification:** hold one account with a recipe in each of the seven states and
 inspect every entry in the view.
@@ -346,3 +349,45 @@ unreachable and confirm neither waits nor fails.
 for the catalogue: a listing that cannot be loaded says so instead of showing
 something stale, and the two views built from the device do not depend on the
 network at all.
+
+### FLOW-053 — Deleting a recipe is offered in one place and confirmed against what it costs
+
+Where a recipe the account owns is in `private` or `rejected`, the system shall
+offer to delete it from that recipe's entry in the own-recipes view, shall state
+before anything is destroyed that the deletion is immediate and cannot be undone
+and how much media it frees, and shall delete it only after an explicit
+confirmation.
+
+**Acceptance criteria**
+- Given a recipe in `private` or `rejected`, when its entry in the own-recipes
+  view is opened, then deletion is offered there; given a recipe in any other
+  state, then no deletion control is present and no space is reserved for one
+  (ST-010).
+- Given the statement, when it is shown, then it says the recipe and its
+  photographs and video go at once and cannot be brought back, and it names the
+  amount of the unpublished allowance the deletion frees (MEDIA-010, MEDIA-011).
+- Given a recipe holding changes the server has not accepted (FLOW-005), when the
+  statement is shown, then it names them, exactly as AUTH-013 names them before
+  an account is replaced.
+- Given any setting, when it is searched for, then none switches this statement
+  off (GUIDE-001 governs the same pattern).
+- Given the confirmation, when the owner declines it, then nothing is deleted and
+  the recipe keeps its state and everything it holds.
+- Given the confirmation, when the owner gives it, then the entry leaves the view
+  and, if the view is now empty, FLOW-042 states so and offers to write a recipe.
+- Given the recipe card of an own recipe, when it is looked at, then it carries
+  no deletion control, because the card is read and the list is where a recipe is
+  managed (FLOW-029).
+- Given no network connection, when deletion is asked for, then FLOW-003 refuses
+  it before the statement is shown.
+
+**Verification:** delete a draft carrying media and unsent changes and read the
+statement; decline once and confirm once; look for the control on a card, on a
+`pending` entry and on a `published` one; attempt it in aeroplane mode.
+**Source:** user decision, 2026-09-21, which created the act ST-010 specifies.
+Where the control sits follows FLOW-036: a state is not worth a screen, so
+neither is deleting one recipe. The statement follows the pattern the product
+already uses for every irreversible act it offers — GUIDE-001 before submission,
+AUTH-013 before an account is replaced, RET-005 before an account is deleted —
+and it names the freed allowance because MEDIA-011 has just told the author that
+deleting a draft is one of the two ways to get it back.

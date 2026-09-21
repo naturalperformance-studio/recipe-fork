@@ -74,8 +74,10 @@ application from opening.
 **Acceptance criteria**
 - Given the service is unreachable, when the application is opened and used
   without an account, then everything that needs no account works (ACT-001).
-- Given the service is unreachable, when an account is asked for, then a muted
-  account is created (AUTH-004) and the application keeps working.
+- Given the service is unreachable while the product's own server is not, when an
+  account is asked for, then a muted account is created (AUTH-004) and the
+  application keeps working; given neither can be reached, then nothing is
+  created (FLOW-003).
 - Given the service is unreachable, when a muted account attempts an action that
   needs a verdict, then AUTH-006 states why it cannot proceed.
 - Given the service is reached, when a verdict is obtained, then nothing from it

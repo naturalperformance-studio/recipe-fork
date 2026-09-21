@@ -3,7 +3,7 @@ slug: MOD
 status: closed
 updated: 2026-09-21
 ids: [MOD-001, MOD-002, MOD-003, MOD-004, MOD-005, MOD-006, MOD-007,
-  MOD-008, MOD-009, MOD-010, MOD-011, MOD-012, MOD-013]
+  MOD-008, MOD-009, MOD-010, MOD-011, MOD-012, MOD-013, MOD-014]
 ---
 
 # Moderation
@@ -217,6 +217,45 @@ the only author and the only moderator, so a prohibition would mean nothing coul
 be published at all. The alternative — a second account on a second device,
 because AUTH-011 allows one active account per device — was rejected as pure cost
 at a launch with one person.
+
+### MOD-014 — A moderator's own content is moderated like anyone else's
+
+Where an account holds the moderator role, the system shall offer it every
+moderator action on the recipes it owns that it offers on any other account's
+recipes, and shall make no action conditional on who owns the recipe.
+
+**Acceptance criteria**
+- Given the moderator's own published recipe, when they open its card, then
+  removal is offered with its category exactly as on another account's recipe
+  (FLOW-047, ST-002).
+- Given the moderator's own recipe hidden by counted reports, when it reaches the
+  queue, then they may dismiss the reports or uphold them, and it leaves
+  `reported_hidden` by one of the two transitions the table already allows
+  (ST-006).
+- Given the moderator's own recipe carrying the safety flag, when it is in the
+  flagged list, then they may clear the flag or remove the recipe (MOD-009,
+  MOD-010).
+- Given the moderator's own recipe removed by their own action, when its owner —
+  the same person — opens it, then ST-001 and RET-009 govern it like any other
+  removed recipe, and forking it is theirs alone (ST-004).
+- Given the moderator role revoked from that account (ACT-003), when it opens its
+  own recipes afterwards, then no moderator action is offered on any of them.
+
+**Verification:** from one account holding the role, remove one of its own
+published recipes, have three established accounts report another and resolve it
+in both directions, and clear a flag on a third; then revoke the role and repeat
+each attempt.
+**Source:** user decision, 2026-09-21. The alternative — the moderator may decide
+their own submissions but may not act on their own published recipes — was
+rejected because it leaves states with no exit: only a moderator takes a recipe
+out of `reported_hidden`, and only a moderator removes a published one, so with a
+single person in the role their own hidden recipe would stay hidden for ever and
+their own published one could never be removed by anybody. The cost is stated
+rather than hidden: nothing in the product checks a moderator acting on their own
+work, and nothing did before — MOD-013 already accepted exactly that, and the
+answer to it is a second moderator, not a rule one person enforces against
+themselves. See
+[ADR — the moderator is not exempt from their own content](decisions/20260921-the-moderator-is-not-exempt-from-their-own-content.md).
 
 ## When a removal reaches the forks
 

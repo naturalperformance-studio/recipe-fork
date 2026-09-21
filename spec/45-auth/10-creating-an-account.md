@@ -28,8 +28,10 @@ create it only where the device verdict reports a free slot.
   occupied with the month it was occupied in.
 - Given a device with no free slot, when creation is attempted, then no account
   is created and AUTH-003 governs what the person is told.
-- Given a verdict that cannot be obtained, when creation is attempted, then
-  AUTH-004 governs what is created.
+- Given a verdict that cannot be obtained while the server can be reached, when
+  creation is attempted, then AUTH-004 governs what is created.
+- Given no network connection at all, when creation is attempted, then nothing is
+  created and FLOW-003 states that a connection is needed.
 - Given a person who declines the offer, when they return to what they were
   doing, then everything that works without an account still works.
 
@@ -115,13 +117,18 @@ as a defect.
 
 ### AUTH-004 — Without a verdict the account is created muted
 
-If a device verdict cannot be obtained, then the system shall create a muted
-account: one that carries favourites beyond the device and does nothing else that
-an account is for. A muted account shall not write, fork, edit, submit or rate.
+If the server can be reached but a device verdict cannot be obtained, then the
+system shall create a muted account: one that carries favourites beyond the
+device and does nothing else that an account is for. A muted account shall not
+write, fork, edit, submit or rate.
 
 **Acceptance criteria**
 - Given no verdict, when an account is created, then favourites carried by that
   account work exactly as they do for a full account.
+- Given no network connection at all, when an account is asked for, then nothing
+  is created, not even a muted account, and FLOW-003 states that a connection is
+  needed: a muted account is still an account, with a unique nickname (DOM-001)
+  and three keys the server issues (AUTH-014).
 - Given a muted account, when the recipe card of a published recipe is opened,
   then the fork control and the rating controls are absent.
 - Given a muted account, when the editor would be reached, then it is not
@@ -149,9 +156,10 @@ obtain a device verdict, and shall make the account full and occupy a slot if th
 verdict reports one free.
 
 **Acceptance criteria**
-- Given a muted account created while offline, when a connection returns and the
-  person taps the fork control, then a verdict is obtained, a slot is occupied,
-  the account becomes full and the fork proceeds.
+- Given a muted account created while the attestation service was unreachable,
+  when the service can be reached again and the person taps the fork control,
+  then a verdict is obtained, a slot is occupied, the account becomes full and
+  the fork proceeds.
 - Given a muted account on a device with no free slot, when it attempts such an
   action, then it stays muted and AUTH-003 states the month a slot frees.
 - Given a muted account whose verdict still cannot be obtained, when it attempts

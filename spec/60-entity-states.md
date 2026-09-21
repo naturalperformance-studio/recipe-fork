@@ -3,7 +3,7 @@ slug: ST
 status: closed
 updated: 2026-09-21
 ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007, ST-008,
-  ST-009]
+  ST-009, ST-010]
 ---
 
 # Entity states
@@ -38,6 +38,8 @@ it is a property of that link (`active`), not of the recipe.
 | `pending` | moderator approves, trigger `publication` | actor is a moderator | `published` | Recipe enters the catalogue and search; content frozen permanently. |
 | `rejected` | owner edits | — | `rejected` | Content changes; the recorded rejection stays attached to the closed submission. |
 | `rejected` | owner resubmits | DOM-006 met; owner not publishing-banned | `pending` | New submission. |
+| `private` | owner deletes it | actor is the owner | — (the recipe ceases to exist) | Recipe destroyed with every submission record attached to it; its media left to MEDIA-012 (ST-010). |
+| `rejected` | owner deletes it | actor is the owner | — (the recipe ceases to exist) | As above; the recorded rejection goes with the submission it was attached to. |
 | `link_shared` | owner publishes | owner not publishing-banned | `published` | Enters the catalogue immediately, with no new moderation: the content is frozen and is byte-for-byte what was approved. |
 | `link_shared` | owner revokes the link | — | `link_shared` | Every issued link becomes inactive; the recipe stops opening for its holders. |
 | `link_shared` | owner issues a new link | — | `link_shared` | A new active link; previously revoked links stay inactive; no new moderation. |
@@ -55,7 +57,8 @@ by any account other than the owner; appearing in the catalogue or in search.
 **Disallowed from `pending`:** any edit; withdrawal after a decision is recorded
 (ST-008 settles which of the two came first and what the other one is told);
 forking by anyone other than the owner; rating; favouriting; being reported by
-anyone other than the moderator's own action.
+anyone other than the moderator's own action; deletion by the owner, who
+withdraws first and deletes from `private` (ST-010).
 
 **Disallowed from `rejected`:** publication without a new submission; visibility
 to anyone but the owner and a moderator; forking by another account; rating
@@ -64,7 +67,7 @@ to anyone but the owner and a moderator; forking by another account; rating
 **Disallowed from `link_shared`:** any edit; re-moderation on publication or on
 issuing a further link; appearing in the catalogue or in search; forking by any
 account other than the owner; rating, by a link holder or by anyone else
-(RATE-003).
+(RATE-003); deletion by the owner (ST-010).
 
 **Disallowed from `published`:** any edit; unpublishing, hiding or deleting by
 the owner or by any user; return to an editable state; transfer of ownership;
@@ -72,11 +75,13 @@ re-moderation when restored from `reported_hidden`.
 
 **Disallowed from `reported_hidden`:** any edit; restoration by the owner;
 un-hiding by the withdrawal of reports; forking by another account; rating,
-although the ratings it already carries survive (RATE-003, RATE-015).
+although the ratings it already carries survive (RATE-003, RATE-015); deletion
+by the owner (ST-010).
 
 **Disallowed from `removed`:** any edit; restoration by the owner; forking by
-anyone, including the owner; rating (RATE-003); every transition out of the
-state — `removed` is terminal.
+any account other than the owner (ST-004); rating (RATE-003); deletion by the
+owner (ST-010, RET-009); every transition out of the state — `removed` is
+terminal.
 
 ### ST-001 — Publication is permanent
 
@@ -138,12 +143,19 @@ owner to fork their own recipe in any state, and shall reject every other fork.
   the fork is rejected.
 - Given a `link_shared` or `private` recipe, when its owner forks it, then a new
   private recipe is created.
-- Given a `removed` recipe, when anyone including its owner forks it, then the
-  fork is rejected.
+- Given a `removed` recipe, when its owner forks it, then a new private recipe
+  is created; when any other account forks it, then the fork is rejected.
+- Given such a fork of a recipe a moderator removed, when its media is resolved,
+  then it carries only the media that still exists, because MEDIA-013 deletes
+  what nothing else holds and FORK-007 can carry no file that is gone.
 
-**Verification:** functional test over each state and both actor kinds.
-**Source:** user decision, 2026-09-20. See
-[ADR — forking from published only](decisions/20260920-forking-published-only.md).
+**Verification:** functional test over each state and both actor kinds,
+including a fork of an own removed recipe whose media has already been deleted.
+**Source:** user decision, 2026-09-20; the `removed` case decided 2026-09-21,
+replacing the criterion that had refused an owner's fork against the requirement
+it belonged to. See
+[ADR — forking from published only](decisions/20260920-forking-published-only.md)
+and [ADR — a removed recipe is still its author's work](decisions/20260921-a-removed-recipe-is-still-its-authors-work.md).
 
 ### ST-005 — A revoked link stops opening the recipe
 
@@ -209,6 +221,47 @@ state why only where the parent was removed as dangerous to health.
 **Source:** user decision, 2026-09-20, resolving OQ-005; amended the same day to
 name the reason for one category only, see
 [ADR — danger to health travels down the fork chain](decisions/20260920-danger-travels-down-the-chain.md).
+
+### ST-010 — An owner deletes a recipe that was never externally visible
+
+Where a recipe is in `private` or `rejected`, the system shall allow its owner to
+delete it, and shall destroy the recipe together with every submission record
+attached to it.
+
+**Acceptance criteria**
+- Given a recipe in `private` or in `rejected`, when its owner deletes it, then
+  it is gone from the server and from every device the account holds, and no
+  screen reaches it.
+- Given a recipe in `pending`, `link_shared`, `published`, `reported_hidden` or
+  `removed`, when its owner attempts to delete it, then the attempt is refused;
+  a `pending` recipe is withdrawn first and deleted from `private`, and the
+  other four can never be deleted by anyone (ST-001, RET-009).
+- Given a deleted recipe's media, when the next deletion run happens, then
+  MEDIA-012 deletes each file nothing else holds, and the account's unpublished
+  allowance is freed by exactly that much (MEDIA-010).
+- Given a deleted `rejected` recipe, when the moderation record of its closed
+  submissions is looked for, then it is gone with the recipe, because a decision
+  is recorded against a submission and the submission had nothing else to point
+  at (MOD-004).
+- Given a published fork of the deleted recipe, when it is opened by anyone,
+  then nothing about it changes, because FORK-005 already shows no parent for a
+  parent that was never published.
+- Given a deleted recipe, when the moderator's queue and the operational signals
+  are read, then it is counted in neither (MOD-012 does the same for a deleted
+  account's submissions, OBS-001).
+- Given no network connection, when deletion is attempted, then FLOW-003 refuses
+  it and nothing is deleted locally either, because the server orders every
+  transition (ST-009).
+
+**Verification:** delete a recipe in each of the two states, with media, with a
+closed rejection and with a published own fork naming it; attempt deletion in
+each of the other five states and in aeroplane mode.
+**Source:** user decision, 2026-09-21. MEDIA-010 and MEDIA-012 already assumed
+this act existed — the allowance is freed by publishing or by deleting — and
+without it an author who fills 150 MB with drafts has no way out but publication.
+It stops at external visibility for the same reason everything else does: a
+recipe another person can see is one other recipes may name (ST-001, CON-003).
+**Note:** what the owner is told before the deletion is FLOW-053.
 
 ## Account
 

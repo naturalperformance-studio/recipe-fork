@@ -1,7 +1,7 @@
 ---
 slug: ACT
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [ACT-001, ACT-002, ACT-003, ACT-004, ACT-005, ACT-006, ACT-007]
 ---
 
@@ -29,13 +29,20 @@ and a free slot allow (AUTH-005). The columns below state what each may do.
 | Edit a recipe after it becomes externally visible | no | no | no | no | no |
 | Submit a recipe for moderation | no | yes, unless banned | yes, unless banned | yes, unless banned | no (AUTH-004) |
 | Approve or reject a submission | no | no | no | yes | no |
-| Remove a published recipe from the catalogue | no | no | no (ST-001) | yes | no |
+| Delete a recipe that was never externally visible | no | no | yes, in `private` and `rejected` (ST-010) | no | no (owns none) |
+| Remove a published recipe from the catalogue | no | no | no (ST-001) | yes, including their own (MOD-014) | no |
 | Rate a published recipe | no (AUTH-001) | yes | no (RATE-004) | yes | no (AUTH-004) |
 | Add a recipe to favourites | yes, on this device only (FLOW-051) | yes | no (FLOW-040) | yes | yes |
 | Carry favourites beyond this device | no (FLOW-051) | yes (FLOW-052) | yes | yes | yes |
 | Report a recipe or an author | yes (ABUSE-002) | yes | yes | yes | yes |
 | Block an author's recipes from own catalogue and search | yes, on this device only | yes | yes | yes | yes |
 | Ban an account from publishing | no | no | no | yes | no |
+
+The moderator column applies to the moderator's own recipes too: the role is not
+suspended by ownership, it decides its holder's own submissions (MOD-013) and
+acts on their own published recipes (MOD-014). Where the owner column and the
+moderator column disagree, an account holding both roles has what the moderator
+column gives it.
 
 ### ACT-001 — Most of the product needs no account
 

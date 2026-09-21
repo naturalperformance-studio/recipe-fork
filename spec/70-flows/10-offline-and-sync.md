@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007, FLOW-008]
 ---
 
@@ -85,8 +85,9 @@ application, restore the connection and confirm the recipe reaches the server.
 
 If the device has no network connection, then the system shall refuse the
 catalogue, search over the catalogue, opening a recipe the device does not hold,
-submission for moderation, signing in with a key (AUTH-010), and every moderator
-action, and shall state in each case that the action needs a connection.
+submission for moderation, creating an account, signing in with a key
+(AUTH-010), deleting a recipe (ST-010), and every moderator action, and shall
+state in each case that the action needs a connection.
 
 **Acceptance criteria**
 - Given no network connection, when the reader opens the catalogue, then it
@@ -101,11 +102,21 @@ action, and shall state in each case that the action needs a connection.
   that a connection is needed and no queue entry is shown from a held copy.
 - Given no network connection, when a person signs in with a key, then it states
   that a connection is needed and the active account is unchanged (AUTH-010).
+- Given no network connection, when a person uses a control that needs an account
+  and has none, then account creation is offered and states that a connection is
+  needed, and nothing is created — neither a full account nor a muted one
+  (AUTH-001, AUTH-004).
+- Given no network connection, when the owner deletes a recipe, then it is
+  refused and the recipe is untouched on the device (ST-010, FLOW-053).
 
 **Verification:** walk each refused path in aeroplane mode and confirm the
 message and that no stale data is displayed.
-**Source:** user decision, 2026-09-20. The catalogue is a live surface — a held
-copy would show recipes that moderation has since removed or hidden.
+**Source:** user decision, 2026-09-20; account creation and deletion added
+2026-09-21. The catalogue is a live surface — a held copy would show recipes that
+moderation has since removed or hidden. An account cannot be minted on the device
+alone: its nickname is unique across all accounts (DOM-001) and its three keys
+are tested by the server and by nothing else (AUTH-014), so neither can be issued
+where the server cannot be reached.
 
 ### FLOW-004 — Media added offline is queued, not lost
 

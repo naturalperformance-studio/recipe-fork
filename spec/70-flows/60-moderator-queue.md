@@ -140,13 +140,15 @@ else's content — before the removal is recorded.
 - Given the removal is recorded, when the card is opened again by anyone, then
   ST-007 governs what a fork of it shows and no reason is given to any reader
   except as FLOW-010 requires.
-- Given a moderator's own recipe, when they open it, then no moderator action is
-  offered on it.
+- Given a moderator's own published recipe, when they open it, then removal is
+  offered on it exactly as on anyone else's, and the category is chosen the same
+  way (MOD-014).
 
 **Verification:** remove a published recipe from its card in each category and
 inspect the descendants; attempt the same as a non-moderator and on a private
-recipe.
-**Source:** user decision, 2026-09-20. The queue only holds what someone else
+recipe; remove one of the moderator's own recipes.
+**Source:** user decision, 2026-09-20; the exemption for the moderator's own
+recipe was removed 2026-09-21 (MOD-014). The queue only holds what someone else
 put there, so without an action on the card a recipe nobody reported could never
 be removed, however plainly it breaks a rule. The category is the moderator's
 own choice because MOD-008 makes it consequential — it decides whether an
