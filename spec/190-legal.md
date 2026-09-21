@@ -236,10 +236,14 @@ a rights holder makes a claim.
 - Given the store listing, when its links are followed, then the terms and the
   privacy statement open without the application installed.
 - Given the published terms, when they are read, then they name the claims
-  channel of ABUSE-007 and it needs no account to use.
+  address of ABUSE-007, and using it needs no account and no installed
+  application.
 - Given the privacy statement, when it is read, then it describes what the
   product does not collect (CON-001), what the logs hold and for how long
-  (RET-008), and the deletion routes (EXT-006, RET-001).
+  (RET-008), the deletion routes (EXT-006, RET-001), and what reaches the claims
+  address and what becomes of it — the one place where anybody's personal data
+  arrives at the product owner, and the reason the address is part of the review
+  OQ-029 waits for.
 - Given those pages, when they are read by anyone, then they disclose nothing
   about any account, nickname or recipe, as EXT-006 requires of the deletion
   page.

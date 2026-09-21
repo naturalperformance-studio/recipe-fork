@@ -227,22 +227,46 @@ not of people, so one person pressing ten times reads the same as ten people
 pressing once, and the moderator cannot tell those apart. See
 [ADR — the author has a screen, and reports about them collapse onto it](decisions/20260921-the-author-has-a-screen.md).
 
-### ABUSE-007 — A rights holder outside the product needs a way in
+### ABUSE-007 — A rights holder outside the product reaches it by a published address
 
-The system shall publish a contact channel for claims about someone else's
-content that does not require holding an account.
+The system's terms of use, its privacy statement and its store listing shall name
+one electronic mail address for claims about someone else's content, that address
+shall require no account and no installed application to use, and a claim reaching
+it shall be answered within the period the product states for review (MOD-005).
 
 **Acceptance criteria**
-- Given the store listing and the terms of use, when they are read, then each
-  names a channel for such claims.
-- Given a claim received through that channel, when it is handled, then the
-  moderator can act on the recipe named in it.
-
+- Given the store listing, the terms of use and the privacy statement, when each
+  is read, then all three name the same address, and none of them requires the
+  claimant to hold an account, to install the application, or to identify
+  themselves to the product in any other way.
+- Given a claim naming a published recipe, when the moderator has read it and
+  judges it founded, then they act on that recipe from its card (FLOW-047), where
+  removal carries the category `foreign_content` like any other, and nothing had
+  to be built inside the product for the claim itself.
+- Given a claim the moderator judges unfounded, when it is closed, then nothing
+  about it is recorded in the product and no recipe changes.
+- Given the stated period, when it is published, then it is the one MOD-005
+  states for a submission, and it is kept by whoever answers the address: the
+  product cannot see the mailbox, no operational signal watches it (OBS-001), and
+  nothing in the application knows that a claim exists.
+- Given the address, when what the product depends on is enumerated, then it is
+  not among them and EXT-001's list stays closed at four: nothing in the product
+  sends to that address or reads from it, exactly as the availability probe
+  observes the product without being a dependency of it (EXT-012).
+- Given what arrives at the address, when it is enumerated, then it holds
+  whatever the claimant chose to write, their own name and contact included. It
+  is the one place anybody's personal data reaches the product owner, and it does
+  not breach CON-001, which binds what the product collects from its users: a
+  rights holder is not one, and nothing from a claim is stored against any
+  account or any recipe. The privacy statement says so (LEG-008) and the review
+  of OQ-029 covers it.
 - Given a person who deleted their account, when they claim rights over recipes
-  that account published, then the claim is handled through this channel like any
-  other, because deletion leaves them holding no proof of authorship.
+  that account published, then the claim is handled here like any other, because
+  deletion leaves them holding no proof of authorship.
 
-**Verification:** review of the store listing and the published terms.
+**Verification:** read the three published texts and confirm they name one
+address; send a claim from a device with no account and no application installed,
+and act on the named recipe as a moderator.
 **Source:** derived from ABUSE-002: the owner of a photograph used without
 permission is normally not a user of this product and cannot be required to
 become one. The product owner added on 2026-09-20 that this is also the route by
@@ -251,5 +275,15 @@ does not remove them (ST-001), and this channel is the only way they can be take
 out of the catalogue. What it costs is stated in
 [ADR — an account is created on demand](decisions/20260920-account-on-demand.md):
 a deleted account leaves nothing that proves who wrote what, so such a claim
-arrives with no more standing than a stranger's. The exact channel and its legal wording are specified in section
-[`legal`](190-legal.md).
+arrives with no more standing than a stranger's.
+**Written 2026-09-21** by user decision. Until then this requirement said a
+channel must be published and sent the reader to `legal` for what it is, while
+LEG-008 said the terms must name the channel of ABUSE-007 and sent them back — so
+no requirement anywhere said what the channel was, although RET-005 promises a
+deleting author that it exists and MVP-003 holds the release for it. An address
+was chosen over a form on the web: a rights holder already knows how to write a
+letter, and a form would have needed a page, a screen for the moderator and a
+retention rule of its own. **Cost, stated:** nothing in the product watches the
+mailbox, so the stated period is kept by a person and by nothing else, and an
+unread mailbox looks exactly like an empty one. See
+[ADR — the claims channel is an address](decisions/20260921-the-claims-channel-is-an-address.md).

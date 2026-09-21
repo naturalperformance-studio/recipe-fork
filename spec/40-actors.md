@@ -203,8 +203,9 @@ only by direct operation on the product's own store by whoever operates it.
 - Given the first account to hold the role, when the product is first deployed,
   then it is granted the same way as every later one: there is no bootstrap
   screen and no first-run special case.
-- Given the three surfaces outside the application (EXT-006, LEG-008), when they
-  are enumerated, then none of them is an administration surface either.
+- Given the three surfaces outside the application (EXT-006, LEG-008) and the
+  claims address (ABUSE-007), when they are enumerated, then none of them is an
+  administration surface either.
 - Given this requirement, when it is read against CON-005, then it adds no client
   surface: operating one's own store is not a client of the product.
 

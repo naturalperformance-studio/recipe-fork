@@ -21,7 +21,10 @@ never called by it (EXT-012). Two artefacts cross the boundary in the user's own
 hands — the account key and a private link. Three surfaces exist outside the
 application because the distribution channel requires them — the account deletion
 page, the terms of use and the privacy statement (EXT-006, LEG-008) — and one
-endpoint exists for the probe to call (EXT-011), which no user ever reaches.
+endpoint exists for the probe to call (EXT-011), which no user ever reaches. One
+further thing sits outside and is not a surface at all: the address a rights
+holder writes to (ABUSE-007). The product never sends to it and never reads from
+it, so it is no more a dependency than the probe is.
 
 Prices and limits that were checked on 2026-09-20 and that the decisions rest on:
 object storage without egress charges at USD 0.015 per GB-month

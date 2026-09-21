@@ -378,10 +378,15 @@ why this route was taken instead of an identity provider, and it collects no
 personal data at all (CON-001). What remains is the server logs, and under the
 European and United Kingdom regimes an IP address is personal data without
 argument — which is what RET-008's fourteen days were already chosen for.
+Widened 2026-09-21 with ABUSE-007: the claims address is now written down, and
+what arrives at it is correspondence carrying a claimant's own name and contact.
+It is the one place personal data reaches the product owner at all, so how long
+it is kept and what the privacy statement must say about it belong to the same
+review and not to a number guessed here.
 Proposal (not a decision): a review by a lawyer qualified in the regime the
 listed countries fall under, before the store listing is created, covering the
-logs, the published terms and the privacy statement; nothing in the spec changes
-until that review reports.
+logs, the published terms, the privacy statement and the claims address; nothing
+in the spec changes until that review reports.
 Blocks: nothing that is written — LEG-001 to LEG-010 stand — but the release
 waits for it (MVP-003).
 

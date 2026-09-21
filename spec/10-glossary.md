@@ -296,6 +296,12 @@ one of two categories: use of someone else's content, or danger to health
 **Counted report** — a report from an established account, one per account per
 recipe. Three of them hide a recipe automatically (ABUSE-003, ST-006).
 
+**Claims address** — the one electronic mail address the terms, the privacy
+statement and the store listing name, by which someone who is not a user of the
+product claims rights over content in it. It needs no account and no installed
+application, it is answered within the period MOD-005 states, and it is the only
+place anybody's personal data reaches the product owner (ABUSE-007).
+
 **Blocking** — one account hiding another author's recipes from its own
 catalogue and search. It does not hide them from anybody else and is not a
 report (ABUSE-005).
