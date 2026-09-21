@@ -51,6 +51,7 @@ against for the MVP rather than left undone.
 | Rejection reasons as fixed categories | 2026-09-20 | OQ-026 |
 | More than one account on a device, with a switch between them | 2026-09-20 | OQ-028 |
 | A third interface language | 2026-09-21 | L10N-001 |
+| Distribution in the Russian Federation | 2026-09-21 | LEG-010 |
 | An imperial or any other non-metric unit system | 2026-09-21 | L10N-008 |
 | Voice control of the cooking steps | 2026-09-21 | A11Y-007 |
 | A withdrawal window on a published recipe | 2026-09-21 | [ADR — replaced, never withdrawn](decisions/20260921-a-published-recipe-is-replaced-never-withdrawn.md) |
@@ -80,9 +81,9 @@ recorded, none of which is behaviour of the product.
 | Prerequisite | Promised by |
 |---|---|
 | The published name cleared against the distribution channel and the trademark registers | LEG-009, OQ-016 |
-| A qualified lawyer's review of the device verdict, the logs, the published terms and the age mark | OQ-029 |
+| A lawyer's review of the logs, the published terms and the privacy statement, under the law of the countries actually distributed in | OQ-029 |
+| The distribution countries set, with the Russian Federation excluded | LEG-010 |
 | The account deletion obligation confirmed against the channel's own reading | OQ-030 |
-| The account key's format and the proof the server accepts settled | OQ-002 |
 | The terms of use and the privacy statement published and linked from the listing | LEG-008 |
 | The target audience and content settings completed in the channel | LEG-007 |
 | One restore from a copy of the store, performed into an empty environment and checked | QUAL-008 |
@@ -99,7 +100,7 @@ recorded, none of which is behaviour of the product.
   into the ledger as resolved, with what was decided.
 
 **Verification:** the recorded results, read together before the release is made.
-**Source:** assembled 2026-09-21. Four of these are the questions that keep this
+**Source:** assembled 2026-09-21. Three of these are the questions that keep this
 specification from being ready; the rest are checks that produce a record rather
 than a requirement.
 

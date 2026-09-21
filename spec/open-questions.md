@@ -6,7 +6,7 @@ ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
   OQ-031]
-open_before_mvp: [OQ-002, OQ-016, OQ-029, OQ-030]
+open_before_mvp: [OQ-016, OQ-029, OQ-030]
 ---
 
 # Open questions
@@ -24,17 +24,20 @@ Resolved by the product owner: native Android application, no other client
 surface in the MVP. See CON-005 and
 [ADR 20260920 — native Android MVP](decisions/20260920-native-android-mvp.md).
 
-### OQ-002 — Key file format and cryptography (define before MVP)
-Unresolved: the format of the account key, the cryptography behind it, and
-how the server distinguishes a genuine key from a forged one.
-Proposal (not a decision): the key carries a private key; the account
-identifier is derived from the matching public key; authentication is a
-challenge signed by the client, so the server never stores anything that can
-recreate the key.
-Blocks: AUTH-010 and AUTH-014, and with them section `auth`. Everything else in
-that section is written and does not depend on the answer.
-Constrained 2026-09-20 by AUTH-017: whatever form is chosen, the account key
-carries the account's deletion key as copyable text.
+### OQ-002 — Key format and cryptography — RESOLVED 2026-09-21
+Resolved by the product owner by separating the two halves of the question: the
+specification fixes the properties the keys must have — uniqueness,
+unguessability at the rate QUAL-009 permits, and a server that stores nothing
+from which any key could be reconstructed — and the format, the cryptography and
+the protocol are an engineering choice constrained by those properties and by
+nothing else. Written as AUTH-014.
+The same day the question grew a third key. A leaked account key could not be
+retired by anyone, and a symmetric replacement would have been worse than nothing
+because a thief wins that race every time. An account now carries an account key,
+a deletion key and a recovery key, the last issued apart, shown once and never
+displayed again (AUTH-020, AUTH-021). NGOAL-003 is narrowed accordingly. See
+[ADR — the recovery key](decisions/20260921-the-recovery-key.md).
+Section `auth` is no longer blocked.
 
 ### OQ-003 — Media limits — RESOLVED 2026-09-20
 Resolved by the product owner against the arithmetic of CON-002: one cover
@@ -355,38 +358,28 @@ destroys the other person's unsent drafts (AUTH-013 names them before it
 happens).
 Blocks: nothing.
 
-### OQ-029 — Legal status of the device verdict (define before MVP)
-Unresolved: whether obtaining and checking a device attestation verdict makes the
-product an operator of personal data in the product owner's own jurisdiction, and
-what that obliges before release.
-What is established, checked 2026-09-20: the product stores no part of a verdict
-and no device identifier (AUTH-015), which is why this route was taken instead of
-an identity provider. Under GDPR Recital 26 a pseudonymous identifier is still
-personal data; under 152-ФЗ the definition covers information relating to an
-indirectly identifiable person, and the duties that follow — notification of
-Roskomnadzor before processing, localisation of Russian citizens' data under
-242-ФЗ, and leak liability raised sharply on 30 May 2025 by 420-ФЗ — are what
-make the answer expensive rather than academic.
-Whether an IP address alone is personal data is unsettled in Russian practice and
-turns on what it is held together with. How long the logs holding them live is no
-longer open: fourteen days (RET-008), chosen short for exactly this reason.
-Proposal (not a decision): a review by a qualified lawyer in the product owner's
-jurisdiction before the store listing is created, covering the verdict, the logs
-and the published terms; nothing in the spec changes until that review reports.
-Widened 2026-09-21 to carry one more item into the same review, rather than open
-a second question for the same lawyer: which age mark 436-ФЗ requires of a
-platform that hosts other people's recipes and classifies none of them in
-advance. What is established: the marks are 0+, 6+, 12+, 16+ and 18+; a mark is
-required where the content may harm a child's health or development; and the duty
-falls on whoever hosts the content rather than merely advertises it
-([ст. 12, 436-ФЗ](https://www.consultant.ru/document/cons_doc_LAW_108808/553f0edac652ab327b379960f12fa3f0cbdd65d6/),
-checked 2026-09-21). LEG-006 already states 16 as the age a holder of an account
-must be, which is the product owner's decision and stands whatever the mark turns
-out to be.
-Blocks: section `legal` — LEG-006 and LEG-007 are written and stand, but the age
-mark and the personal-data status are not settled; a negative answer would also
-reopen
-[ADR — account creation is gated by the device](decisions/20260920-account-creation-gated-by-the-device.md).
+### OQ-029 — The law the first release answers to (define before MVP)
+Rewritten 2026-09-21 after the product owner decided the market. The first
+release is not offered in the Russian Federation (LEG-010), so the duties that
+made this question expensive there — notification before processing,
+localisation of citizens' data, the leak liability of 2025, and the age mark a
+platform owes for content it does not classify in advance — do not reach it. They
+return in full with any decision to distribute there, and that decision is one of
+the things this entry now exists to inform.
+Unresolved: what the data protection law of the countries the product *is*
+distributed in obliges before release, given an audience of Russian-speaking
+people living outside the Russian Federation and English speakers. The product
+stores no part of a device verdict and no device identifier (AUTH-015), which is
+why this route was taken instead of an identity provider, and it collects no
+personal data at all (CON-001). What remains is the server logs, and under the
+European and United Kingdom regimes an IP address is personal data without
+argument — which is what RET-008's fourteen days were already chosen for.
+Proposal (not a decision): a review by a lawyer qualified in the regime the
+listed countries fall under, before the store listing is created, covering the
+logs, the published terms and the privacy statement; nothing in the spec changes
+until that review reports.
+Blocks: nothing that is written — LEG-001 to LEG-010 stand — but the release
+waits for it (MVP-003).
 
 ### OQ-030 — Whether the account deletion obligation reaches this product (define before MVP)
 Unresolved: whether an account the user never asks to create falls under the

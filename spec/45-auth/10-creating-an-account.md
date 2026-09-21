@@ -1,7 +1,7 @@
 ---
 slug: AUTH
-status: blocked
-updated: 2026-09-20
+status: closed
+updated: 2026-09-21
 ids: [AUTH-001, AUTH-002, AUTH-003, AUTH-004, AUTH-005, AUTH-006, AUTH-018]
 ---
 

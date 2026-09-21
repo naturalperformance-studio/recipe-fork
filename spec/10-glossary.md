@@ -207,7 +207,8 @@ still signed in, loses the account and there is no recovery (NGOAL-003). It is
 shown in full exactly once, at creation, and afterwards only masked with a
 control that copies it whole (AUTH-007, AUTH-019). Entering it signs in and
 replaces whatever account was active, wiping what the device held for it
-(AUTH-009, AUTH-012). Its form and cryptography are OQ-002.
+(AUTH-009, AUTH-012). Its form and cryptography are an engineering choice; the
+properties it must have are AUTH-014.
 
 **Deletion key** — a second, smaller secret issued beside the account key,
 unique and unguessable. It is the only thing the deletion page accepts, and it
@@ -348,6 +349,13 @@ reading what the author wrote (GUIDE-005).
 as replacing it (FORK-008). Once the replacement is published, the recipe it
 replaces says so and leads to it (FORK-009). It removes nothing: the replaced
 recipe stays in the catalogue with every rating, favourite and fork it had.
+
+**Recovery key** — the third of an account's keys, issued at creation as its own
+artefact, shown once and never displayed by the application again. It is the only
+thing that can retire a lost or stolen account key; presenting it retires all
+three keys, signs out every device and issues a new set (AUTH-020, AUTH-021). It
+is useless if kept beside the account key, which is the one thing the product
+asks of its holder and cannot enforce.
 
 ## Language
 

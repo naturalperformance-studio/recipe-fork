@@ -1,7 +1,7 @@
 ---
 slug: GOAL
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [GOAL-001, GOAL-002, GOAL-003, NGOAL-001, NGOAL-002, NGOAL-003, NGOAL-004,
   NGOAL-005, NGOAL-006, NGOAL-007]
 ---
@@ -56,9 +56,15 @@ No name, email address, phone number or avatar is collected at any point.
 ### NGOAL-002 — No social layer
 No comments, no feed, no subscriptions, no messaging, no follower graph.
 
-### NGOAL-003 — No account recovery
-An account whose key is lost, with no device still signed in to it, is
-unrecoverable by design.
+### NGOAL-003 — No account recovery by the product
+An account whose account key and recovery key are both lost, with no device still
+signed in to it, is unrecoverable by design. Nobody can restore it — there is no
+support channel that could, because the product holds nothing that would let it
+(AUTH-008, AUTH-014). Narrowed 2026-09-21: the holder of the recovery key can
+retire a lost or stolen account key and be issued a new one (AUTH-021). That is
+recovery by the holder, not by the product, and it needs no identity, no personal
+data and nobody's help. See
+[ADR — the recovery key](decisions/20260921-the-recovery-key.md).
 
 ### NGOAL-004 — No editing of published content
 Once a recipe is visible to anyone other than its owner it is immutable forever.

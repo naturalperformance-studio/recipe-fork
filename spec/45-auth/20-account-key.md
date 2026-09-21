@@ -1,6 +1,6 @@
 ---
 slug: AUTH
-status: blocked
+status: closed
 updated: 2026-09-21
 ids: [AUTH-007, AUTH-008, AUTH-009, AUTH-010, AUTH-017, AUTH-019]
 ---
@@ -24,14 +24,19 @@ until the person confirms they have saved it.
   and can be copied in one action.
 - Given the same screen, when the person prefers a file, then the key can be
   saved as one, and the product does not choose where.
-- Given the warning, when it is read, then it states that losing the key loses
-  the account, that there is no recovery, and that nobody can restore it.
+- Given the warning, when it is read, then it states that losing the account key
+  loses the account unless the recovery key is held (AUTH-021), and that nobody
+  at all can restore an account whose keys are both gone.
 - Given the confirmation control, when it is not chosen, then creation does not
   complete and the screen cannot be left by an ordinary back action.
 - Given the warning, when any setting is searched for, then none switches it off
   (GUIDE-001 governs the same pattern for submission).
 - Given a completed creation, when the screen is left, then the key is never
   shown in full again and AUTH-019 governs how it is reached.
+- Given the same creation, when it completes, then the recovery key has been
+  issued as its own artefact with its own confirmation (AUTH-020), and the
+  warning above no longer says there is no recovery at all: it says what
+  NGOAL-003 now says.
 
 **Verification:** create an account, attempt to leave without confirming, then
 take the key both ways and compare them.
@@ -54,6 +59,9 @@ deletion key on the same terms.
   and copied whole in the same way (AUTH-017).
 - Given a person with no account, when they look for these, then there is nothing
   to show.
+- Given the recovery key, when this screen is opened, then it is absent: this
+  requirement reaches the account key and the deletion key and no other
+  (AUTH-020).
 
 **Verification:** compare what is displayed against what is copied, for both
 keys.
@@ -65,22 +73,28 @@ copy is theirs.
 
 ### AUTH-008 — The product neither stores the key nor recovers an account
 
-The system shall offer no storage of the account key, no backup of it and no path
-that restores access to an account whose key is lost and which no device still
-holds signed in.
+The system shall offer no storage of any of the account's three keys, no backup
+of them, and no path that restores access to an account whose account key is
+lost, whose recovery key is lost too, and which no device still holds signed in.
 
 **Acceptance criteria**
 - Given any screen, when it is enumerated, then none offers to keep, back up or
   send the key anywhere.
-- Given a lost key and no signed-in device, when the person looks for recovery,
-  then the product states there is none and names what NGOAL-003 costs them.
+- Given a lost account key while the recovery key is held, when the person looks
+  for a way back, then AUTH-021 is that way and it is reachable without an
+  account.
+- Given both keys lost and no signed-in device, when the person looks for
+  recovery, then the product states there is none and names what NGOAL-003 costs
+  them.
 - Given a support channel of any kind, when it is enumerated, then it can restore
   no account, because the product holds nothing that could.
 
 **Verification:** interface review against this list.
-**Source:** draft section 2.2; NGOAL-003. AUTH-019 narrows what "lost" means: a
-key is recoverable from any device that still holds the account signed in, and
-only from there.
+**Source:** draft section 2.2; NGOAL-003, as narrowed on 2026-09-21. AUTH-019
+narrows what "lost" means from one side: an account key is recoverable from any
+device that still holds the account signed in. AUTH-021 narrows it from the
+other: an account key can be retired and replaced by whoever holds the recovery
+key. What remains irrecoverable is an account whose holder has neither.
 
 ### AUTH-009 — Signing in with a key costs no slot
 
@@ -120,10 +134,9 @@ with a key and shall state that a connection is needed.
 - Given the connection returns, when the key is entered again, then it proceeds.
 
 **Verification:** sign in in aeroplane mode, then with a connection.
-**Source:** the server decides whether a key holds a real account, and that test
-is OQ-002; until it can run, the client has accepted nothing. Consistent with
+**Source:** the server decides whether a key holds a real account (AUTH-014);
+until that test can run, the client has accepted nothing. Consistent with
 FLOW-003, which refuses every action whose answer only the server holds.
-**Blocked by:** OQ-002.
 
 ### AUTH-017 — Every account carries a deletion key
 
@@ -155,5 +168,6 @@ key is never uploaded anywhere" free of exceptions, and it bounds what a
 counterfeit page can achieve: a stolen deletion key destroys an account but never
 takes it over. See
 [ADR — deletion from outside the application uses its own key](../decisions/20260920-deletion-key.md).
-**Constrains OQ-002:** whatever form the account key takes, the deletion key is
-issued and carried alongside it as copyable text.
+**Constrains AUTH-014:** whatever form the account key takes, the deletion key is
+issued and carried alongside it as copyable text, and both are replaced together
+(AUTH-020).

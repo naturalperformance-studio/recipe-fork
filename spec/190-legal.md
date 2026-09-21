@@ -3,7 +3,7 @@ slug: LEG
 status: blocked
 updated: 2026-09-21
 ids: [LEG-001, LEG-002, LEG-003, LEG-004, LEG-005, LEG-006, LEG-007, LEG-008,
-  LEG-009]
+  LEG-009, LEG-010]
 ---
 
 # Legal
@@ -264,3 +264,37 @@ created.
 work found `Forked` already taken in one store and did not check Google Play,
 trademarks or name registrations (`market-context`).
 **Blocked by:** OQ-016.
+
+### LEG-010 — Distribution is limited; access is not
+
+The first release shall not be offered through the distribution channel in the
+Russian Federation, and the system shall not restrict, degrade or refuse any
+function on the basis of a user's location or network address.
+
+**Acceptance criteria**
+- Given the store listing, when its countries are set for the first release, then
+  the Russian Federation is not among them.
+- Given a request reaching the product from any network address, by any route,
+  when it is served, then it is served exactly as any other: nothing is blocked,
+  nothing is withheld and no function is reduced on account of where it came
+  from.
+- Given the product, when what it derives from a network address is enumerated,
+  then it is nothing: no country, no region and no location is computed, stored
+  or acted upon, and the address appears only in the server logs RET-008 keeps
+  for fourteen days.
+- Given a person who installs the application by any means the channel does not
+  control, when they use it, then they are an ordinary user of the product in
+  every respect.
+- Given a decision to distribute in a country not on the list, when it is taken,
+  then it is recorded as an ADR, because it changes which law the product is
+  answerable to (OQ-029).
+
+**Verification:** review of the listing's country set; reach the product from an
+address in an excluded country and confirm every function behaves identically.
+**Source:** user decision, 2026-09-21. Two different things were separated
+deliberately. Where the product is *offered* is a choice the product owner makes
+in the channel and can revisit. Where it is *reachable from* is not something
+this product will police: blocking by address would mean deriving a location from
+one, which is the sort of thing CON-001 and RET-010 exist to keep out, and it
+would be aimed at people who have done nothing but install an application. See
+[ADR — distribution is postponed, access is not withheld](decisions/20260921-distribution-is-postponed-access-is-not-withheld.md).

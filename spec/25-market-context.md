@@ -1,7 +1,7 @@
 ---
 slug: MKT
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: []
 ---
 
@@ -74,8 +74,12 @@ The product owner states these were not covered, and they are the gaps to close
 before any claim of a free niche is used outside this repository:
 
 - Russian-language market and locally distributed applications — the search ran
-  in English only. This matters more than the rest, because the first release is
-  Russian-only (section `localization`).
+  in English only. What this gap means changed on 2026-09-21, twice: the first
+  release carries Russian *and* English (L10N-001), and it is not offered in the
+  Russian Federation at all (LEG-010). The audience is Russian-speaking people
+  living elsewhere and English speakers, so the market this section describes is
+  no longer the market the product launches into — which makes the gap smaller
+  and this whole section older than it looks.
 - Google Play. Only the Apple App Store was examined, and Google Play is the
   MVP's only distribution channel.
 - Startups with this mechanic that have already shut down.
