@@ -286,8 +286,9 @@ once, and what goes with it is RET-001.
 
 A media item has no independent lifecycle. Its visibility follows the recipe it
 belongs to (DOM-005), and it is owned by the account that uploaded it from the
-moment of upload. Retention of media belonging to recipes that were never
-published is OQ-004.
+moment of upload. A stored file is deleted once no surviving recipe holds it
+(MEDIA-012, MEDIA-013); nothing is deleted for being old (RET-006), and what
+bounds unpublished media is the 150 MB allowance of MEDIA-010.
 
 ### ST-008 — A withdrawal and a decision are settled by whichever reached the server first
 

@@ -150,8 +150,9 @@ media for a step at that step.
   not part of the minimum (DOM-006).
 - Given media attached with no connection, when it is attached, then FLOW-004
   governs and the recipe is marked as not accepted by the server (FLOW-005).
-- Given the limits of OQ-003, when they are set, then how many items a step may
-  carry follows from them and not from this requirement.
+- Given a step, when the number of items it may carry is asked, then MEDIA-001
+  answers it — one — and not this requirement, which places the control and says
+  nothing about the limit.
 
 **Verification:** attach a cover and step media online and offline, and save a
 recipe with neither.

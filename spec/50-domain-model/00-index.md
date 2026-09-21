@@ -2,8 +2,7 @@
 slug: DOM
 status: closed
 updated: 2026-09-21
-ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007,
-  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012]
+ids: []
 ---
 
 # Domain model
@@ -75,7 +74,7 @@ there (FLOW-051).
 | `state` | state value | See `entity-states`. |
 | `replaces_parent` | boolean | Set only on a fork of the owner's own frozen recipe, before it is submitted (FORK-008). What FORK-009 shows on the parent. False where there is no parent. |
 | `was_published` | boolean | False at creation; set once when the recipe first enters `published` and never cleared. What FORK-004 and FORK-005 depend on. |
-| `safety_flag` | boolean | True while an ancestor has been removed as dangerous to health and no moderator has cleared it for this recipe. Set by MOD-008, cleared by MOD-010, inherited by a fork of a flagged recipe. |
+| `safety_flag` | boolean | True while an ancestor has been removed as dangerous to health and no moderator has cleared it for this recipe. Set by MOD-008, cleared by MOD-010, inherited by a fork of a flagged recipe and by an owner's fork of a recipe that was itself removed in that category (ST-004, MOD-008). |
 
 ### Ingredient
 

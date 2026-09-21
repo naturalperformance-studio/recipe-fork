@@ -29,9 +29,11 @@ deletes what nothing else holds at the moment of removal.
 - A removal for using someone else's content does not prevent the same author
   republishing the method without the photograph. That is the intended outcome:
   the method was never the thing removed.
-- A recipe removed as dangerous to health is the case that needed a further
-  decision, because MOD-008 flags descendants at the moment of removal and a
-  fork made afterwards is not among them.
+- A recipe removed as dangerous to health needed a further decision, because
+  MOD-008 flags descendants at the moment of removal and a fork made afterwards
+  is not among them. Decided the same day: such a fork carries the safety flag,
+  and MOD-008 gained the criterion that says so. The author may carry the work
+  forward; they cannot carry it forward unmarked.
 - The `removed` state stays terminal for the recipe itself. Forking creates a
   new recipe and changes nothing about the old one, which is true of every fork
   in the product.

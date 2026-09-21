@@ -1,7 +1,7 @@
 ---
 slug: GUIDE
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [GUIDE-001, GUIDE-002, GUIDE-003, GUIDE-004, GUIDE-005, GUIDE-006,
   GUIDE-007, GUIDE-008]
 ---
@@ -185,8 +185,11 @@ is a consequence of a decision recorded elsewhere, so the checklist states no
 rule that is not already true of the product.
 **Note:** item 3 says "the best quality the camera gives" rather than naming a
 resolution, because what survives upload is decided by the client-side
-re-encoding that OQ-003 has not yet settled. When OQ-003 closes, this item is
-re-read against it.
+re-encoding, not by the author. Re-read against OQ-003 when it closed on
+2026-09-20 and kept unchanged: MEDIA-002 re-encodes every photograph to 1 MB and
+1600 pixels on the longer edge and MEDIA-005 tells the author it happened, so a
+number in the checklist would state a limit the author cannot act on, while
+starting from the best original is still what makes the re-encoded file good.
 
 ## Hints
 

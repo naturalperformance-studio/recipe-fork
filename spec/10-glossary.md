@@ -90,7 +90,9 @@ being accessible is marked the same way (FLOW-010).
 
 **Safety flag** — the mark a recipe carries while an ancestor was removed as
 dangerous to health and no moderator has cleared it for this recipe. Its card
-states the descent and names nothing (MOD-008, FLOW-018).
+states the descent and names nothing (MOD-008, FLOW-018). An owner's fork of a
+recipe that was itself removed in that category carries it too, although the
+removal happened before the fork existed (ST-004, MOD-008).
 
 ## What a recipe is made of
 
@@ -124,8 +126,9 @@ recipes that have never been published. Publishing a recipe frees what it holds
 **Tag** — a label from a fixed dictionary the product owner maintains, in one of
 two facets, `cuisine` or `dish_type`. A user cannot create one (DOM-008).
 
-**Submission minimum** — title, at least one ingredient, at least one step and a
-serving count. Below it a recipe cannot be submitted (DOM-006).
+**Submission minimum** — title, at least one ingredient, at least one step, a
+serving count and a declared language. Below it a recipe cannot be submitted
+(DOM-006, L10N-004).
 
 **Submission maximum** — 50 ingredients, 50 steps, 2 000 characters per step,
 120 per title, 2 000 per description, 60 per timer name. Above any of them a

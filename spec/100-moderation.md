@@ -279,6 +279,9 @@ shall set the safety flag on every descendant of that recipe, to any depth.
   stays published: the flag alone never withdraws a recipe.
 - Given a flagged recipe, when anyone forks it, then the fork carries the flag
   as well.
+- Given the removed recipe itself, when its owner forks it afterwards (ST-004),
+  then that fork carries the safety flag too, although it did not exist when the
+  removal was recorded and MOD-008 could not reach it.
 - Given a descendant in state `private`, when the flag is set, then it carries
   the flag and its owner sees it.
 
@@ -289,6 +292,12 @@ what a fork inherits; a direct fork is no more suspect than a fork of a fork, so
 the flag follows the whole chain.
 **Note:** this is the one place where the product walks the fork tree downwards.
 FORK-004 refuses to build a tree for a card; a moderator's removal is not a card.
+**Note, 2026-09-21:** the third criterion covers the hole ST-004 opened when it
+let an owner fork their own removed recipe. MOD-008 fires once, at the removal,
+so a fork made a week later is reached by nothing; without that criterion the
+unsafe instruction would return to the queue as an ordinary submission, which is
+the case MOD-009 exists because a moderator cannot reliably spot. The flag is
+what puts it on the entry (FLOW-045), and only a moderator clears it (MOD-010).
 
 ### MOD-009 — Flagged recipes are reviewed from the youngest upwards
 

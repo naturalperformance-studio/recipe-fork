@@ -100,8 +100,9 @@ the recipe, and shall freeze it with the rest of the content (CON-003).
 - Given a new recipe, when the editor opens it, then the declared language is set
   to the author's current interface language and the author may change it.
 - Given a recipe with no declared language, when submission is attempted, then it
-  is refused as FLOW-028 refuses a missing part, and never while the author is
-  typing.
+  is refused because the declaration is part of the submission minimum (DOM-006),
+  marked on leaving the part as FLOW-028 marks any missing part, and never
+  refused while the author is typing.
 - Given a published recipe, when its declared language is read, then it cannot be
   changed, and correcting a wrong one is a fork like any other correction
   (GOAL-002).

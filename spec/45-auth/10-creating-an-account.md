@@ -97,11 +97,20 @@ one device can mint accounts, not about how many accounts a person may have.
 
 If no slot on the device is free, then the system shall state that this device
 has created its accounts recently, shall state the month in which the next slot
-frees, and shall offer to sign in with an existing account key.
+frees, shall state that favourites kept on this device work without an account
+and are lost with it, and shall offer to sign in with an existing account key.
 
 **Acceptance criteria**
 - Given all three slots occupied, when creation is attempted, then the message
   names the month the earliest slot frees and offers to sign in instead.
+- Given that message, when the person asked for an account in order to carry
+  favourites beyond the device, then it also says that favourites on this device
+  keep working and that they go with the device (FLOW-051), so the one thing they
+  wanted is neither silently withheld nor silently promised.
+- Given that message, when it is read, then no account is created, muted or
+  otherwise: a slot bounds the rate at which one device mints accounts, and an
+  account that consumed no slot would consume a nickname instead (DOM-001,
+  OQ-009).
 - Given that screen, when the person signs in with a key they hold, then they are
   signed in and no slot is consumed.
 - Given that screen, when the person does nothing, then everything that works
@@ -111,9 +120,13 @@ frees, and shall offer to sign in with an existing account key.
 
 **Verification:** fill the slots, attempt creation, read the message, then sign
 in from that screen.
-**Source:** user decision, 2026-09-20. The month is stated rather than withheld
-because CON-004 requires automation to explain itself; a wall with no date reads
-as a defect.
+**Source:** user decision, 2026-09-20; the sentence about favourites added
+2026-09-21. The month is stated rather than withheld because CON-004 requires
+automation to explain itself; a wall with no date reads as a defect. Creating a
+muted account here was weighed and rejected: it would give the reader what they
+asked for, and it would let one device mint nicknames without any bound, which is
+exactly the narrowing the slot gate bought for OQ-009. The reader is told the
+truth instead — their favourites already work, and they are tied to this phone.
 
 ### AUTH-004 — Without a verdict the account is created muted
 

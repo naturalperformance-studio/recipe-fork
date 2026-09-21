@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007,
   DOM-008, DOM-009, DOM-010, DOM-011, DOM-012, DOM-013]
 ---
@@ -91,20 +91,28 @@ account.
 
 ### DOM-006 — Submission minimum
 
-If a recipe lacks a title, at least one ingredient, at least one step, or a
-serving count, then the system shall reject its submission for moderation.
+If a recipe lacks a title, at least one ingredient, at least one step, a serving
+count, or a declared language, then the system shall reject its submission for
+moderation.
 
 **Acceptance criteria**
-- Given a recipe missing any one of those four, when the user submits it for
+- Given a recipe missing any one of those five, when the user submits it for
   publication or requests a private link, then the submission is rejected and
   the interface names what is missing.
-- Given a recipe that has all four and no media, when it is submitted, then the
+- Given a recipe that has all five and no media, when it is submitted, then the
   submission is accepted.
+- Given the declared language, when a new recipe is opened in the editor, then it
+  is already set from the author's interface language (L10N-004, FLOW-024), so
+  this part of the minimum is the one an author cannot reach by omission and can
+  only reach by clearing it.
 
-**Verification:** validation test over each of the four omissions.
-**Source:** user decision, 2026-09-20. Media is deliberately not required: a
-mandatory photo would add a manual media review and storage cost (CON-002) to
-every publication.
+**Verification:** validation test over each of the five omissions.
+**Source:** user decision, 2026-09-20; the declared language added 2026-09-21
+with L10N-004, which made it a condition of submission and pointed at FLOW-028
+for the warning, while this requirement — the one that defines the minimum and
+the one FLOW-028 and GUIDE-001 both defer to — still listed four parts. Media is
+deliberately not required: a mandatory photo would add a manual media review and
+storage cost (CON-002) to every publication.
 
 ### DOM-007 — Step ingredient references resolve within the recipe
 
@@ -141,11 +149,18 @@ surface for the single moderator to check, and would fragment search.
 
 ## Deliberately not modelled yet
 
-These are named so their absence is visible, not an oversight.
+These were named so their absence would be visible rather than taken for an
+oversight. All four have since been settled, and each is kept here with the
+requirement that settled it so that a reader arriving from an older draft is led
+to the answer instead of to the gap.
 
-- Whether a rating can be changed or withdrawn — section `ratings`.
-- Media size, duration and count limits — settled in [`media`](../90-media.md).
-- What a fork shows when its parent is gone — OQ-005, OQ-007.
+- Whether a rating can be changed or withdrawn — settled in
+  [`ratings`](../120-ratings.md), RATE-001 and RATE-002.
+- Media size, duration and count limits — settled in [`media`](../90-media.md),
+  MEDIA-001 to MEDIA-010.
+- What a fork shows when its parent is gone — settled in
+  [`entity-states`](../60-entity-states.md), ST-007, which closed OQ-005 and
+  OQ-007 on 2026-09-20.
 - Account deletion — settled in [`retention`](../150-retention.md), RET-001 to RET-005.
 
 ### DOM-009 — An ingredient is a dictionary entry or the author's own words, never both

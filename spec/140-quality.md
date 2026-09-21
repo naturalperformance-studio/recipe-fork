@@ -326,5 +326,5 @@ visible.
 | Reliability | QUAL-006 for availability, QUAL-008 for recoverability. Fault tolerance is not committed to: there is one server and no redundancy, which is what the 95 per cent of QUAL-006 accounts for. |
 | Security | QUAL-007 and QUAL-009, the two places a key is presented; the rest is structural rather than measurable — no personal data exists to lose (CON-001), the account key is never uploaded (EXT-008), and a stolen deletion key destroys an account but never takes it over (AUTH-017). |
 | Maintainability | Not committed to as a measured attribute. The one maintainability property the product does buy is the replaceability of the storage provider (EXT-003). |
-| Flexibility | Not committed to. The product has one client surface (CON-005) and one locale at first release (`localization`). |
+| Flexibility | Not committed to. The product has one client surface (CON-005) and two languages at first release, with a third a product decision of its own (L10N-001, MVP-002). |
 | Safety | `n/a`. The product controls no physical process; the one place where harm is possible — a recipe that is dangerous to cook — is handled by moderation and by MOD-008, not by a quality threshold. |

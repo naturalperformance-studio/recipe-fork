@@ -139,14 +139,18 @@ of first contact (MKT-F3). See
 
 The system shall state, wherever a recipe is listed in the catalogue or in search
 results and on its card, how many recipes name it as their direct parent, and
-shall state separately how many of those are or have been published whenever the
-two numbers differ.
+shall state separately how many of those are published at that moment whenever
+the two numbers differ.
 
 **Acceptance criteria**
 - Given a recipe with five forks of which two are published, when it is listed or
   opened, then both numbers are stated — five forks, two of them open.
 - Given a recipe with two forks, both published, when it is listed or opened, then
   one number is stated, because the two counts do not differ.
+- Given a published fork that a moderator then removes, when the parent is listed
+  again, then the open count has fallen by one and the total is unchanged,
+  because the removed fork still names it as parent (ST-007) and is no longer
+  open to anybody.
 - Given a recipe that nobody has forked, when it is listed, then its entry states
   no number at all rather than a zero.
 - Given a recipe whose fork has a fork of its own, when the first recipe is
@@ -160,10 +164,17 @@ two numbers differ.
 **Verification:** build a recipe with two published forks and three unpublished
 ones, plus a recipe whose forks are all published, and compare both entries and
 both cards against the rule.
-**Source:** user decision, 2026-09-20. The count is derived from the parent
-references DOM-004 already holds; whether it is stored as a counter or computed
-is an engineering choice, and DOM-004's ban on holding a descendant list stands
-either way. See
+**Source:** user decision, 2026-09-20; the open count narrowed 2026-09-21 from
+"are or have been published" to "are published", so that it always equals the
+length of the list CAT-008 opens. The alternative — keeping a count that includes
+removed forks and letting the list be shorter than the number beside it — was
+rejected because FLOW-033 was deliberately built so that the one thing which ever
+makes a count disagree with a list is the reader's own filter, which they can see
+and undo. The cost accepted in exchange: the open count can fall, so a reader who
+saw five yesterday may see four today, exactly as RATE-002 already accepts for
+the rating counts. The count is derived from the parent references DOM-004
+already holds; whether it is stored as a counter or computed is an engineering
+choice, and DOM-004's ban on holding a descendant list stands either way. See
 [ADR — lineage is visible in discovery](decisions/20260920-lineage-visible-in-discovery.md).
 The two numbers exist because one of them answers two different questions badly:
 the reader wants to know how often the recipe was adapted, while the ordering and
@@ -252,6 +263,9 @@ recipe, ordered by the field the reader has chosen (CAT-001).
   looks at it, then there is nothing to activate.
 - Given a fork that has a fork of its own, when the reader activates the root's
   number, then the grandchild is not listed (CAT-005).
+- Given one of the listed forks removed by a moderator, when the number is read
+  and the list opened again, then both have fallen by one and they still agree
+  (CAT-005).
 - Given no network connection, when the reader activates the number, then it
   behaves as every other catalogue view does without one (FLOW-003).
 
