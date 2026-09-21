@@ -3,7 +3,7 @@ slug: MOD
 status: closed
 updated: 2026-09-21
 ids: [MOD-001, MOD-002, MOD-003, MOD-004, MOD-005, MOD-006, MOD-007,
-  MOD-008, MOD-009, MOD-010, MOD-011]
+  MOD-008, MOD-009, MOD-010, MOD-011, MOD-012]
 ---
 
 # Moderation
@@ -164,6 +164,32 @@ from the moderator's, in the list and inside a run.
 same shape as MOD-007 — an attempt to decide something that is no longer open —
 and it is separate from it because the cause is different and so is what the
 moderator must be told.
+
+### MOD-012 — A submission whose owner deleted their account leaves the queue
+
+When an account is deleted, the system shall take every submission it owned out
+of the moderator's queue and shall make no decision on them possible.
+
+**Acceptance criteria**
+- Given an account with a submission awaiting a decision, when the account is
+  deleted, then the recipe is destroyed with it (RET-001) and its queue entry is
+  gone at the same moment.
+- Given a moderator holding such an entry open from before the deletion, when
+  they record a decision, then it is refused as MOD-011 refuses a withdrawn one,
+  and the refusal states that the submission no longer exists.
+- Given a run in progress (FLOW-050), when it reaches such an entry, then the
+  entry is not offered and the run continues.
+- Given the deletion, when it is performed, then it is not delayed, queued behind
+  or blocked by a submission awaiting a decision: RET-004 makes deletion
+  immediate and this is no exception to it.
+- Given the queue afterwards, when its count is read, then the entry is not
+  counted in the signals of OBS-001.
+
+**Verification:** submit a recipe, delete the owning account, then attempt a
+decision on the entry from the list and inside a run.
+**Source:** user decision, 2026-09-21. RET-001 already destroyed the recipe; what
+was missing was the queue entry that pointed at it, which would otherwise have
+been an item a moderator could open and could not decide.
 
 ## When a removal reaches the forks
 

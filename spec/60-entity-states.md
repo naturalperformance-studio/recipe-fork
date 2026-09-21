@@ -2,7 +2,8 @@
 slug: ST
 status: closed
 updated: 2026-09-21
-ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007, ST-008]
+ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007, ST-008,
+  ST-009]
 ---
 
 # Entity states
@@ -270,3 +271,33 @@ the loser sees, and a refusal that says only "that did not work" leaves an autho
 guessing whether their recipe is public. The server is the single point that
 orders the two events, which is why neither client may decide the outcome
 locally.
+
+### ST-009 — Every transition is ordered by the server
+
+The system shall order every transition of a recipe at the server, shall refuse a
+transition whose guard no longer holds at the moment it is recorded, and shall
+state to the actor what state the recipe is actually in, as far as that actor is
+already entitled to see it.
+
+**Acceptance criteria**
+- Given the owner publishing a recipe from `link_shared` and a third counted
+  report arriving together, when both reach the server, then whichever is
+  recorded first takes effect; if the report did, the publication is refused and
+  the owner is told the recipe is hidden and nothing further (ST-006).
+- Given a moderator dismissing the reports on a hidden recipe and a further
+  report arriving together, when both reach the server, then one is recorded and
+  the other changes nothing.
+- Given any refused transition, when its effect is inspected, then no part of it
+  happened: there is no state half-changed and no side effect recorded.
+- Given an actor not entitled to see the recipe's state, when their transition is
+  refused, then they are told the action is no longer possible and are told no
+  state.
+- Given no connection, when any transition is attempted, then FLOW-003 refuses it
+  and queues nothing, because the ordering exists only at the server.
+
+**Verification:** drive each pair above from two clients in both orders and
+inspect the stored state and what each actor was told.
+**Source:** user decision, 2026-09-21, generalising the rule ST-008 settled for
+one pair. Written once rather than per pair so that a pair nobody has thought of
+yet is already answered; ST-008 stays separate because what its loser is told is
+specific enough to be worth spelling out.

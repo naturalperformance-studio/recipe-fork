@@ -1,8 +1,9 @@
 ---
 slug: FORK
 status: closed
-updated: 2026-09-20
-ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005, FORK-006, FORK-007]
+updated: 2026-09-21
+ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005, FORK-006, FORK-007,
+  FORK-008, FORK-009]
 ---
 
 # Forking
@@ -198,3 +199,80 @@ See
 its own recipe's visibility. Whether the bytes behind them are stored once or
 twice is an engineering choice bounded by CON-002, and no requirement depends on
 the answer.
+
+## Replacing one's own recipe
+
+A published recipe is never withdrawn (ST-001), so an author who wants to correct
+one forks it. The two requirements below let that fork say what it is, so that a
+reader who lands on the superseded recipe learns there is a newer version instead
+of finding out by chance. Nothing here removes, hides, reorders or unrates
+anything: the replaced recipe stays exactly where it was, with everything readers
+gave it.
+
+### FORK-008 — An owner may mark a fork of their own recipe as replacing it
+
+Where an account forks a recipe it owns and that recipe is frozen (ST-003), the
+system shall offer to mark the fork as replacing its parent, shall store the mark
+on the fork, and shall freeze it with the rest of the fork's content.
+
+**Acceptance criteria**
+- Given an owner forking their own frozen recipe, when the editor opens, then the
+  mark is offered and is off until the author sets it.
+- Given an owner forking their own recipe while it is still `private`, when the
+  editor opens, then the mark is not offered, because a `private` recipe is still
+  editable and there is nothing to replace.
+- Given an account forking a recipe it does not own, when the editor opens, then
+  the mark is not offered at all: only an author may declare their own work
+  superseded.
+- Given a marked fork before submission, when the author changes their mind, then
+  the mark can be cleared or set again.
+- Given a marked fork that has been published, when any change to the mark is
+  attempted, then it is refused like any other change to frozen content
+  (CON-003).
+- Given the mark, when what it affects is enumerated, then it is FORK-009 and
+  nothing else: no rating, favourite or fork count moves anywhere (FORK-006), and
+  the fork is an ordinary recipe in every other respect.
+
+**Verification:** fork one's own published recipe, one's own private recipe and
+another account's recipe, and compare what the editor offers; publish a marked
+fork and attempt to clear the mark.
+**Source:** user decision, 2026-09-21. See
+[ADR — a published recipe is replaced, never withdrawn](decisions/20260921-a-published-recipe-is-replaced-never-withdrawn.md).
+
+### FORK-009 — A replaced recipe says so and leads to the replacement
+
+Where a recipe has a published fork marked as replacing it, the system shall
+state on that recipe, wherever it is shown, that its author has published a newer
+version, and shall lead from that statement to the most recently published such
+fork.
+
+**Acceptance criteria**
+- Given a marked fork that is not published, when the parent is shown, then it
+  says nothing, exactly as FORK-005 refuses to mention a parent that was never
+  published: a statement would disclose that an unpublished recipe exists.
+- Given a marked fork that is published, when the parent is shown on its own card
+  or as an entry in any listing, then the statement is present in both places.
+- Given two marked forks both published, when the parent is shown, then the
+  statement is one statement and leads to the one published most recently.
+- Given the statement, when the reader follows it, then the replacement opens and
+  names the replaced recipe as its parent in the ordinary way (FORK-004).
+- Given a replacement that has itself been replaced, when the first recipe is
+  shown, then it leads to its own direct replacement and no further: a reader
+  walks the chain one step at a time, as GOAL-003 limits lineage everywhere else.
+- Given the replacement removed by a moderator (ST-002), when the parent is
+  shown, then the statement is gone, and if another marked fork is published
+  later the statement returns naming that one.
+- Given the replaced recipe, when its ordering position, ratings, favourites and
+  fork count are read, then none has changed: it keeps what readers gave it and
+  competes in the catalogue on it (CAT-001, FORK-006).
+- Given the statement, when it is read, then it reports what the author declared
+  and asserts nothing about which recipe is better, because the product judges no
+  recipe's craft (NGOAL-007).
+
+**Verification:** publish two marked forks of one recipe and confirm the
+statement names the newer; remove that one and confirm it names the other; mark a
+fork and leave it unpublished and confirm the parent says nothing.
+**Source:** user decision, 2026-09-21. It serves cooking rather than lineage — a
+reader on the superseded version is one step from the version its author stands
+behind — which is why it survives GOAL-003 while a fork tree does not. See
+[ADR — a published recipe is replaced, never withdrawn](decisions/20260921-a-published-recipe-is-replaced-never-withdrawn.md).

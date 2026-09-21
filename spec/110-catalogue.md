@@ -18,7 +18,10 @@ design: the fork marker and the fork number are shown both where a recipe is
 listed and on its card, because they are one number with one meaning
 (CAT-004, CAT-005). One filter is specified elsewhere because it exists for a
 reason outside this section: the filter on a recipe's declared language is
-L10N-005, and every listing here holds both languages until a reader sets it.
+L10N-005, and every listing here holds both languages until a reader sets it. One
+statement on a listed recipe is specified elsewhere for the same reason: a recipe
+whose author has published a replacement says so wherever it is shown, and that
+is FORK-009.
 
 ### CAT-001 — The reader chooses how results are ordered
 

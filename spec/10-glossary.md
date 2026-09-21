@@ -344,6 +344,11 @@ control in the editor, read-only, recording nothing and blocking nothing
 creates. Hints hold no state, need no dismissal, and are never triggered by
 reading what the author wrote (GUIDE-005).
 
+**Replacement** — a fork of an author's own frozen recipe that the author marked
+as replacing it (FORK-008). Once the replacement is published, the recipe it
+replaces says so and leads to it (FORK-009). It removes nothing: the replaced
+recipe stays in the catalogue with every rating, favourite and fork it had.
+
 ## Language
 
 **Declared language** — the language an author states a recipe is written in,

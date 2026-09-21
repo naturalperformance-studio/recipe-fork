@@ -98,6 +98,10 @@ complete one part before reaching another.
 - Given a new recipe, when the editor opens, then the declared language is already
   set to the author's interface language and sits beside the title, where changing
   it is one action and missing it is not possible (L10N-004).
+- Given a fork of the author's own frozen recipe, when the editor opens, then the
+  mark that declares it a replacement (FORK-008) sits at the top beside the
+  parent's name, off until the author sets it, and no such control appears on any
+  other recipe.
 - Given the author leaves the editor at any point, when they return, then they
   return to a screen in the same order with everything they had entered.
 
