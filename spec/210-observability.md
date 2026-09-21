@@ -37,7 +37,7 @@ The system shall measure and report the following signals:
 | Recalculation errors | `scaling-rules` | whether a recipe scales to something impossible |
 | Stored bytes against the ceiling of CON-002 | CON-002 | whether the product still fits its budget |
 | Rejected attempts at the deletion page, per day | EXT-006 | whether deletion keys are being guessed |
-| Share of accounts created muted | AUTH-004 | whether the attestation service is failing quietly |
+| Share of accounts created muted, over a period | AUTH-004 | whether the attestation service is failing quietly |
 | Verdict requests against the service's free quota | EXT-002 | whether the gate is about to start costing money |
 | Time since the last completed copy of the store | QUAL-008 | whether the safety net is still there |
 
@@ -50,6 +50,11 @@ The system shall measure and report the following signals:
   can be dropped because the row names what asked for it.
 - Given a new decision taken with a cost accepted rather than prevented, when it
   is recorded, then a row is added here.
+- Given the share of accounts created muted, when it is computed, then it is two
+  counters over a period — accounts created, and accounts created muted — and
+  nothing on any account records how it was created; an account that later
+  becomes full (AUTH-005) changes neither number, because both describe a period
+  that has already passed.
 
 **Verification:** compare the reported set against this table after a seeded run.
 **Source:** assembled 2026-09-21 from the decisions of 2026-09-20 and 2026-09-21,

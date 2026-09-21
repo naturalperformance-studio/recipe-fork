@@ -1,6 +1,6 @@
 ---
 slug: LEG
-status: blocked
+status: closed
 updated: 2026-09-21
 ids: [LEG-001, LEG-002, LEG-003, LEG-004, LEG-005, LEG-006, LEG-007, LEG-008,
   LEG-009, LEG-010]
@@ -11,11 +11,15 @@ ids: [LEG-001, LEG-002, LEG-003, LEG-004, LEG-005, LEG-006, LEG-007, LEG-008,
 What an author grants by publishing, what they keep, when the terms are accepted
 and what the product declares about who it is for.
 
-Two things this section needs are not settled and are why it is `blocked`: the
-published name has been cleared against nothing (OQ-016), and whether obtaining a
-device attestation verdict makes the product an operator of personal data in the
-product owner's own jurisdiction needs a qualified lawyer (OQ-029). Everything
-that does not depend on those two is written below.
+Two things this section names are not settled, and neither of them is a missing
+requirement: the published name has been cleared against nothing (OQ-016), and
+what the data protection law of the countries actually distributed in obliges
+before release needs a qualified lawyer (OQ-029). Both are release prerequisites
+and both sit in MVP-003; what they hold up is the store listing, not the
+specification. The section was `blocked` on them until 2026-09-21, when the
+product owner decided that a question whose answer changes no requirement here
+should not read as work left undone. The readiness banner still names both, for
+as long as they are open, because they are classified **define before MVP**.
 
 One requirement underpins the rest and is a consequence rather than a choice:
 ST-001 makes publication permanent, so the licence it rests on has to be
@@ -263,7 +267,9 @@ created.
 **Source:** OQ-016. `Recipe Fork` is a working title; the product owner's market
 work found `Forked` already taken in one store and did not check Google Play,
 trademarks or name registrations (`market-context`).
-**Blocked by:** OQ-016.
+**Note:** this requirement is complete as written. What OQ-016 holds up is the
+store listing, which MVP-003 already makes a release prerequisite; the answer
+will fill in a name, not change a sentence here.
 
 ### LEG-010 — Distribution is limited; access is not
 

@@ -3,7 +3,7 @@ slug: MOD
 status: closed
 updated: 2026-09-21
 ids: [MOD-001, MOD-002, MOD-003, MOD-004, MOD-005, MOD-006, MOD-007,
-  MOD-008, MOD-009, MOD-010, MOD-011, MOD-012, MOD-013, MOD-014]
+  MOD-008, MOD-009, MOD-010, MOD-011, MOD-012, MOD-013, MOD-014, MOD-015]
 ---
 
 # Moderation
@@ -88,6 +88,49 @@ approval or a rejection, and shall require a reason for a rejection.
 **Source:** draft section 6.4; ADR — immutability trigger (a decision is
 recorded against a submission, not against the recipe, because the recipe may be
 edited after a rejection).
+
+### MOD-015 — A decision reaches its owner inside the application
+
+When a moderator records a decision on a submission, the system shall state to
+the recipe's owner, inside the application, what was decided, and shall deliver
+that statement by no other means.
+
+**Acceptance criteria**
+- Given an approval with the trigger `publication`, when the owner next opens the
+  application, then it states that the recipe is published and leads to it in the
+  catalogue.
+- Given an approval with the trigger `private_link`, when the owner next opens
+  the application, then it states that the link is ready and leads to the entry
+  FLOW-054 shows it on.
+- Given a rejection, when the owner next opens the application, then it states
+  that the recipe was rejected and leads to the reason and the date MOD-004
+  records.
+- Given a decision recorded while the application was closed, when it is opened
+  afterwards, then the statement is there: the owner is not required to have been
+  looking.
+- Given the statement, when the owner has opened the recipe it is about, then it
+  does not appear again; the state marker on the entry (FLOW-036) is what remains,
+  and it is the durable record.
+- Given any decision, when it is delivered, then nothing is sent to the device
+  from outside it (EXT-009), so an owner who never opens the application is never
+  told and nothing is waiting anywhere but in the product.
+- Given no network connection, when the application is opened, then it states
+  what it last heard from the server and no more (FLOW-003), because a decision
+  it has not been told about is one it cannot know.
+- Given several decisions recorded since the owner last opened the application,
+  when they open it, then each is stated and none replaces another.
+
+**Verification:** submit three recipes from one account, decide them from a
+moderator account while the first is closed — one approved for publication, one
+approved for a link, one rejected — and open the application once.
+**Source:** user decision, 2026-09-21. The transition table said the owner is
+notified of a rejection and said nothing about an approval; EXT-009 spoke of "a
+moderator's decision" in general. An author waits up to the time MOD-005 states,
+and FLOW-036's state marker asks them to keep checking a list to find out whether
+the wait is over. **Cost, stated:** an author who stops opening the application
+is never told anything, which is the direct price of EXT-009 — there is no
+channel to a device, because a delivery token is a per-device identifier held by
+a third party and CON-001 keeps it out.
 
 ### MOD-005 — The expected wait is stated before submission
 

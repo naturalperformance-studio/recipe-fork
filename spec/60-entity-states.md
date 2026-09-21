@@ -33,9 +33,9 @@ it is a property of that link (`active`), not of the recipe.
 | `private` | owner submits for a private link | DOM-006 met; owner not publishing-banned | `pending` | Submission created with trigger `private_link`; recipe frozen; text auto-filter runs. |
 | `private` | owner submits for publication | DOM-006 met; owner not publishing-banned | `pending` | Submission created with trigger `publication`; recipe frozen; text auto-filter runs. |
 | `pending` | owner withdraws | — | `private` | Submission closed as withdrawn; recipe editable again. |
-| `pending` | moderator rejects | actor is a moderator | `rejected` | Reason recorded; owner notified in the application. |
-| `pending` | moderator approves, trigger `private_link` | actor is a moderator | `link_shared` | An active private link is issued; content frozen permanently. |
-| `pending` | moderator approves, trigger `publication` | actor is a moderator | `published` | Recipe enters the catalogue and search; content frozen permanently. |
+| `pending` | moderator rejects | actor is a moderator | `rejected` | Reason recorded; owner told in the application (MOD-015). |
+| `pending` | moderator approves, trigger `private_link` | actor is a moderator | `link_shared` | An active private link is issued (FLOW-054); content frozen permanently; owner told in the application (MOD-015). |
+| `pending` | moderator approves, trigger `publication` | actor is a moderator | `published` | Recipe enters the catalogue and search; content frozen permanently; owner told in the application (MOD-015). |
 | `rejected` | owner edits | — | `rejected` | Content changes; the recorded rejection stays attached to the closed submission. |
 | `rejected` | owner resubmits | DOM-006 met; owner not publishing-banned | `pending` | New submission. |
 | `private` | owner deletes it | actor is the owner | — (the recipe ceases to exist) | Recipe destroyed with every submission record attached to it; its media left to MEDIA-012 (ST-010). |

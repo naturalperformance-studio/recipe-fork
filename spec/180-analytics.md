@@ -96,14 +96,25 @@ and shall record nothing that distinguishes one start from another.
 - Given the same device starting the application five times in a day, when the
   count is read, then it has risen by five, because the product cannot tell it
   was one device.
+- Given a start with no network connection, when the connection later returns,
+  then the count has not risen for it and nothing was held on the device to be
+  sent later, exactly as ANL-005 leaves an opening without a connection
+  uncounted.
 - Given the counter, when it is presented anywhere, then it is named as starts
-  and never as people (ANL-007).
+  and never as people, and it states that starts without a connection are not
+  counted (ANL-007).
 
 **Verification:** start the application repeatedly from one device and read the
 counter; inspect its stored form.
-**Source:** user decision, 2026-09-21. It is the coarsest possible measure of
-whether the product is in use at all, and it is the most the product can offer
-without beginning to tell its users apart.
+**Source:** user decision, 2026-09-21; the offline case decided the same day.
+It is the coarsest possible measure of whether the product is in use at all, and
+it is the most the product can offer without beginning to tell its users apart.
+Holding unsent starts on the device and sending them later was weighed and
+rejected: a running tally of what this device did, kept so that the product can
+collect it, is a record of one device's behaviour, and ANL-001 and RET-010 were
+both written on the premise that no such record exists. The undercount is
+systematic and lands hardest where the product is most used — the kitchen, where
+the network is worst (GOAL-001) — which is why ANL-007 makes the figure carry it.
 
 ### ANL-005 — A published recipe counts its opens and its favourites
 

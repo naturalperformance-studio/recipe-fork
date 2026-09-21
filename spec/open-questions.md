@@ -193,7 +193,11 @@ Proposal (not a decision): keep `Recipe Fork` as the working title inside the
 spec, and treat the published name as a release prerequisite to be cleared
 against Google Play and trademark registers in the product owner's own
 jurisdiction before the store listing is created.
-Blocks: section `legal`.
+Blocks: nothing that is written — LEG-009 stands as a requirement and says what
+must have happened before the listing exists. It held section `legal` in
+`blocked` until 2026-09-21, when the product owner decided that a question which
+changes no sentence in a section should not hold that section open; the release
+still waits for it (MVP-003), and the readiness banner still names it.
 
 ### OQ-017 — What makes two recipes use "the same" ingredient — RESOLVED 2026-09-20
 Resolved by the product owner: an ingredient dictionary maintained by the product
