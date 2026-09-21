@@ -373,7 +373,19 @@ longer open: fourteen days (RET-008), chosen short for exactly this reason.
 Proposal (not a decision): a review by a qualified lawyer in the product owner's
 jurisdiction before the store listing is created, covering the verdict, the logs
 and the published terms; nothing in the spec changes until that review reports.
-Blocks: section `legal`; a negative answer would also reopen
+Widened 2026-09-21 to carry one more item into the same review, rather than open
+a second question for the same lawyer: which age mark 436-ФЗ requires of a
+platform that hosts other people's recipes and classifies none of them in
+advance. What is established: the marks are 0+, 6+, 12+, 16+ and 18+; a mark is
+required where the content may harm a child's health or development; and the duty
+falls on whoever hosts the content rather than merely advertises it
+([ст. 12, 436-ФЗ](https://www.consultant.ru/document/cons_doc_LAW_108808/553f0edac652ab327b379960f12fa3f0cbdd65d6/),
+checked 2026-09-21). LEG-006 already states 16 as the age a holder of an account
+must be, which is the product owner's decision and stands whatever the mark turns
+out to be.
+Blocks: section `legal` — LEG-006 and LEG-007 are written and stand, but the age
+mark and the personal-data status are not settled; a negative answer would also
+reopen
 [ADR — account creation is gated by the device](decisions/20260920-account-creation-gated-by-the-device.md).
 
 ### OQ-030 — Whether the account deletion obligation reaches this product (define before MVP)

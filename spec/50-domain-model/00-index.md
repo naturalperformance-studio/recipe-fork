@@ -48,6 +48,7 @@ stays smooth, while being displayed in pieces.
 | `created_at` | timestamp | |
 | `publishing_banned` | boolean | Set and cleared by a moderator (ACT-005). |
 | `roles` | set | Empty, or contains the moderator role (ACT-003). |
+| `terms_version` | version identifier and date | The version of the terms of use this account accepted and when. Set at creation, replaced on re-acceptance (LEG-004, LEG-005). Carries nothing about the person. |
 
 An account holds, as separate collections: favourites (recipes), ratings (one
 value per rated recipe), blocked authors (accounts), and the recipes it owns.

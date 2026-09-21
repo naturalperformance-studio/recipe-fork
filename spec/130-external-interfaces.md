@@ -18,10 +18,10 @@ channel that carries operational numbers to the product's operator
 ([`observability`](210-observability.md)). One observer is outside and is
 depended upon by nothing: an availability probe that calls the product and is
 never called by it (EXT-012). Two artefacts cross the boundary in the user's own
-hands — the account key and a private link. One surface exists outside the
-application because the distribution channel requires it — the account deletion
-page — and one endpoint exists for the probe to call (EXT-011), which no user
-ever reaches.
+hands — the account key and a private link. Three surfaces exist outside the
+application because the distribution channel requires them — the account deletion
+page, the terms of use and the privacy statement (EXT-006, LEG-008) — and one
+endpoint exists for the probe to call (EXT-011), which no user ever reaches.
 
 Prices and limits that were checked on 2026-09-20 and that the decisions rest on:
 object storage without egress charges at USD 0.015 per GB-month
