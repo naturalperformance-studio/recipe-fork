@@ -3,7 +3,7 @@ slug: FLOW
 status: closed
 updated: 2026-09-21
 ids: [FLOW-033, FLOW-034, FLOW-035, FLOW-036, FLOW-037, FLOW-038, FLOW-039,
-  FLOW-040, FLOW-041, FLOW-042, FLOW-043, FLOW-053, FLOW-054]
+  FLOW-040, FLOW-041, FLOW-042, FLOW-043, FLOW-053, FLOW-054, FLOW-055]
 ---
 
 # Browsing: the catalogue and the favourites section
@@ -435,3 +435,51 @@ reissued by ST-005 — with no screen anywhere that showed it to the person who
 asked for it. It lives on the entry for the same reason deletion does (FLOW-053):
 the own-recipes view is where a recipe of one's own is managed, and a state is
 not worth a screen (FLOW-036).
+
+### FLOW-055 — An author's screen is reached from their nickname
+
+Where a nickname is shown, the system shall lead from it to that author's own
+screen, and that screen shall list the author's published recipes and carry the
+actions that belong to an author rather than to one recipe.
+
+**Acceptance criteria**
+- Given a nickname on a recipe card or on an entry in any listing (CAT-003),
+  when the reader activates it, then the author's screen opens.
+- Given that screen, when what it shows is enumerated, then it is the nickname
+  and the author's `published` recipes, entry by entry as CAT-003 requires,
+  ordered by the field the reader has chosen (CAT-001) — and nothing else about
+  the person: no date, no totals, no description, and nothing to follow or
+  subscribe to (CON-001, NGOAL-002).
+- Given that screen, when the actions on it are enumerated, then they are
+  reporting the author (ABUSE-006), blocking and unblocking them (ABUSE-005),
+  and, for an account holding the moderator role alone, banning and lifting a
+  ban (FLOW-056).
+- Given the catalogue filter of FLOW-033, when the reader opens their own
+  screen, then it lists their published recipes whatever position that filter is
+  in, because this screen is not the catalogue; everything else they own stays in
+  the own-recipes view (FLOW-034).
+- Given a reader who has blocked that author, when they reach the screen, then it
+  opens and lists the recipes, because blocking hides an author from catalogue
+  and search and not from a screen the reader deliberately opened (ABUSE-005).
+- Given the reader's own screen, when it is shown, then it offers neither
+  reporting nor blocking of themselves, because both acts are aimed at somebody
+  else's work; what a moderator is offered on their own screen is FLOW-056.
+- Given an author whose account was deleted, when the reader activates what
+  stands in place of the nickname (RET-003), then no screen opens and nothing
+  about that account is disclosed.
+- Given no network connection, when the screen is reached, then FLOW-003 governs
+  it, because its listing is a catalogue view and no part of it is held on the
+  device.
+
+**Verification:** open the screen from a card, from a listing entry and from a
+fork's named parent; open it as the author themselves, as someone who has
+blocked them, as a moderator and for a deleted author; then cut the connection.
+**Source:** user decision, 2026-09-21. Three requirements gave an act against an
+author and none of them had a surface: ABUSE-005 lets anyone block one,
+ABUSE-006 lets anyone report one and speaks of "an author's public
+representation", and ACT-005 gives a moderator the ban. RET-003 had already
+required the author to be shown through a layer that can say something other
+than a nickname; this is that layer. It is not a profile — NGOAL-002 refuses the
+social layer, and CON-001 leaves nothing to put on the screen but the nickname
+and the work. See
+[ADR — the author has a screen, and reports about them collapse onto it](../decisions/20260921-the-author-has-a-screen.md).

@@ -2,7 +2,8 @@
 slug: FLOW
 status: closed
 updated: 2026-09-21
-ids: [FLOW-044, FLOW-045, FLOW-046, FLOW-047, FLOW-048, FLOW-049, FLOW-050]
+ids: [FLOW-044, FLOW-045, FLOW-046, FLOW-047, FLOW-048, FLOW-049, FLOW-050,
+  FLOW-056]
 ---
 
 # The moderator's queue
@@ -29,8 +30,9 @@ account without the role.
 - Given the role is revoked, when the account next uses the application, then the
   section is gone and every moderator action is refused.
 - Given the submission queue, when it is shown, then it holds submissions
-  awaiting a decision (MOD-001), recipes hidden by counted reports (ST-006) and
-  reports that did not count (ABUSE-004), all ordered oldest first (MOD-006).
+  awaiting a decision (MOD-001), recipes hidden by counted reports (ST-006),
+  reports that did not count (ABUSE-004) and reports about an author — one entry
+  per reported author (ABUSE-006) — all ordered oldest first (MOD-006).
 - Given the flagged-descendant list, when it is shown, then it holds what MOD-009
   puts there, ordered deepest descendant first, and a flagged recipe in `private`
   is absent from it.
@@ -49,10 +51,12 @@ one list.
 
 ### FLOW-045 — What a queue entry says before it is opened
 
-The system shall show on every entry of the submission queue the recipe's title,
-its author's nickname, the time the entry entered the queue, what put it there,
-the mark the text filter left (MOD-002), and the safety flag where the recipe
-carries one.
+The system shall show on every entry of the submission queue that concerns a
+recipe its title, its author's nickname, the time the entry entered the queue,
+what put it there, the mark the text filter left (MOD-002), and the safety flag
+where the recipe carries one; and on an entry that concerns an author, that
+author's nickname, the number of reports it holds and the categories they
+carried.
 
 **Acceptance criteria**
 - Given a submission for publication and a submission for a private link, when
@@ -72,6 +76,11 @@ carries one.
   that the age MOD-006 orders by is readable.
 - Given an entry whose recipe holds media, when it is listed, then the media is
   not shown on the entry and is reviewed on opening it (MOD-003).
+- Given an entry about an author, when it is listed, then it is distinguishable
+  from every entry about a recipe without being opened, states how many reports
+  it holds and under which categories, names no reporter (ABUSE-006), and opening
+  it leads to that author's screen (FLOW-055), which is where the author's
+  recipes and the ban are.
 
 **Verification:** build one entry of each kind — publication, private link,
 counted reports, uncounted report, filter-flagged, safety-flagged — and read the
@@ -93,6 +102,14 @@ and shall remove the entry from the queue once the decision is recorded.
 - Given an approval, when it is recorded, then no reason is asked for and the
   recipe moves as the state table requires — to `published` or to `link_shared`
   by its trigger.
+- Given an entry about an author (ABUSE-006), when the moderator decides it, then
+  the two decisions it admits are dismissing it and banning that author
+  (FLOW-056), neither asks for a reason, and either takes the entry out of the
+  queue; no approval or rejection is offered on it, because an author is not a
+  submission.
+- Given an author already banned, when a further report about them arrives, then
+  a new entry is created as ABUSE-006 requires, because a ban stops publication
+  and stops nobody reporting.
 - Given an entry whose recipe carries the safety flag (FLOW-045), when the
   moderator works on it, then clearing the flag is offered there beside the
   decision, and it is recorded independently of whether the submission is
@@ -196,9 +213,13 @@ before recording any of them.
   decision that gesture stands for is named and a confirmation is asked for
   before anything is recorded.
 - Given one gesture direction and the other, when they are offered, then one
-  records the restricting decision — reject, uphold the reports, remove — and the
-  other the releasing one — approve, dismiss the reports, clear the flag — and the
-  mapping is the same in both lists.
+  records the restricting decision — reject, uphold the reports, remove, ban the
+  author — and the other the releasing one — approve, dismiss the reports, clear
+  the flag, dismiss the reports about an author — and the mapping is the same in
+  both lists.
+- Given a gesture that bans an author, when the confirmation is shown, then it
+  names what the ban stops and what it leaves alone (ACT-005, ACT-006) and the
+  ban is not recorded without it.
 - Given a gesture that rejects a submission, when the confirmation is shown, then
   the free-text reason of FLOW-046 is entered there and the rejection is not
   recorded without it.
@@ -262,3 +283,49 @@ one moderator; the list is what makes an urgent single case reachable without
 starting one.
 **Note:** the run is read as available on both lists, because the product owner
 named the mode for "the list" and both lists are worked by the same person.
+
+### FLOW-056 — A ban is applied and lifted on the author's screen
+
+Where an account holds the moderator role, the system shall offer on an author's
+screen (FLOW-055) to ban that author from publishing and to lift an existing
+ban, shall require an explicit confirmation for each, and shall offer the ban
+nowhere else except as the restricting decision FLOW-049 admits on a queue entry
+about that author.
+
+**Acceptance criteria**
+- Given a moderator opening the screen of an author who is not banned, when it
+  is shown, then banning is offered there; given an author who is banned, then
+  the screen states that they are and offers to lift it.
+- Given the confirmation, when it is shown, then it names what the ban stops
+  (ACT-005) and what it leaves alone — the account keeps writing, forking,
+  editing, scaling, searching and favouriting, and its published recipes stay in
+  the catalogue (ACT-006) — and nothing is recorded until it is given.
+- Given the ban recorded, when the banned account next attempts an act ACT-005
+  rejects, then it is told inside the application (ACT-007), because there is no
+  channel to a device from outside it (EXT-009).
+- Given the ban lifted, when the account submits again, then the submission is
+  accepted and nothing of what it held changed while the ban stood.
+- Given an account without the moderator role, when it opens the same screen,
+  then neither control is present and no space is reserved for one; what it has
+  there is reporting and blocking (FLOW-055).
+- Given a moderator opening their own screen, when it is shown, then the same two
+  controls are offered on the same terms, because ownership suspends nothing
+  (MOD-014) and a ban touches publication and not the role — the account that
+  banned itself can lift it.
+- Given the ban or its lifting, when what else changes is enumerated, then it is
+  nothing: no recipe moves state, no rating, favourite or fork count changes, and
+  no descendant is touched.
+- Given no network connection, when either control is used, then FLOW-003
+  refuses it, because only the server records the state of an account.
+
+**Verification:** ban an author from their screen and from a queue entry about
+them, decline one confirmation and give the other; attempt a submission and a
+publication from `link_shared` as the banned account; lift the ban and repeat;
+open the same screen without the role and in aeroplane mode.
+**Source:** user decision, 2026-09-21. ACT-005, ACT-006 and ACT-007 described a
+ban in full — what it stops, what it leaves and what the banned account is told —
+and no screen anywhere in `flows` offered it, so the one action a moderator has
+against a person rather than against a recipe could not be performed at all. It
+lives on the author's screen for the reason deletion lives on the recipe's entry
+(FLOW-053): the act belongs to the thing it acts on. See
+[ADR — the author has a screen, and reports about them collapse onto it](../decisions/20260921-the-author-has-a-screen.md).

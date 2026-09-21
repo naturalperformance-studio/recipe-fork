@@ -16,8 +16,9 @@ saved as a file. Beside it is a second, smaller secret that can only destroy
 
 When an account is created, the system shall display its key in full, shall
 offer both to copy it and to save it as a file, shall display a warning that
-losing it loses the account with no recovery, and shall not complete creation
-until the person confirms they have saved it.
+losing it loses the account unless its holder still has the recovery key
+(AUTH-021), and shall not complete creation until the person confirms they have
+saved it.
 
 **Acceptance criteria**
 - Given the creation screen, when it is shown, then the key is displayed in full
@@ -43,6 +44,11 @@ take the key both ways and compare them.
 **Source:** draft section 2.2; user decision, 2026-09-20. Both forms are offered
 because the two ways people keep a secret are a password manager and a file, and
 the product has no opinion about which is right.
+**Corrected 2026-09-21:** the requirement still said the warning states there is
+no recovery, which the recovery key of the same day had already made false — its
+own third and seventh criteria said so, and NGOAL-003 was narrowed for it. The
+sentence a developer writes on the screen is this one, so it is the sentence that
+had to change.
 
 ### AUTH-019 — Afterwards the key is shown masked and copied whole
 

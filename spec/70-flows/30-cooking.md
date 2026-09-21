@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -19,6 +19,13 @@ it holds is settled elsewhere and referenced here — quantities and their
 markings by `scaling-rules`, provenance by FORK-004 and FORK-005, rating and
 favourites by `ratings`, reporting and blocking by `abuse`. What follows is what
 the card itself must do.
+
+The card is one scrolling screen, decided 2026-09-21. There is no current step,
+nothing advances from one step to the next, and nothing records which steps are
+done: the reader scrolls, and what the product restores is the place they had
+scrolled to (FLOW-012). A timer that ends leads to its own step (FLOW-013), which
+is the only place the product moves a reader within a recipe. See
+[ADR — the cooking card is one scrolling screen](../decisions/20260921-the-cooking-card-is-one-scrolling-screen.md).
 
 ### FLOW-013 — A timer announces itself even if the application is closed
 

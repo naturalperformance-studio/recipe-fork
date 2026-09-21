@@ -54,6 +54,7 @@ against for the MVP rather than left undone.
 | Distribution in the Russian Federation | 2026-09-21 | LEG-010 |
 | An imperial or any other non-metric unit system | 2026-09-21 | L10N-008 |
 | Voice control of the cooking steps | 2026-09-21 | A11Y-007 |
+| A cooking mode with a current step, an advance between steps and a record of what is done | 2026-09-21 | [ADR — the cooking card is one scrolling screen](decisions/20260921-the-cooking-card-is-one-scrolling-screen.md) |
 | A withdrawal window on a published recipe | 2026-09-21 | [ADR — replaced, never withdrawn](decisions/20260921-a-published-recipe-is-replaced-never-withdrawn.md) |
 | Any monetisation, advertising or paid tier | 2026-09-20 | NGOAL-006 |
 | Automated classification of images or video | 2026-09-20 | NGOAL-005 |

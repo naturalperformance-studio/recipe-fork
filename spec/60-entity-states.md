@@ -244,8 +244,14 @@ attached to it.
   screen reaches it.
 - Given a recipe in `pending`, `link_shared`, `published`, `reported_hidden` or
   `removed`, when its owner attempts to delete it, then the attempt is refused;
-  a `pending` recipe is withdrawn first and deleted from `private`, and the
-  other four can never be deleted by anyone (ST-001, RET-009).
+  a `pending` recipe is withdrawn first and deleted from `private`.
+- Given those four other states, when everything that can still destroy such a
+  recipe is enumerated, then it is the deletion of the owner's account and
+  nothing else: RET-001 destroys every recipe the account owns that was never
+  published, which reaches `link_shared`, and reaches `reported_hidden` and
+  `removed` where the recipe passed through `link_shared` and never through
+  `published`. A recipe that was once published is destroyed by nothing at all,
+  and survives its author's account (ST-001, RET-002, RET-009).
 - Given a deleted recipe's media, when the next deletion run happens, then
   MEDIA-012 deletes each file nothing else holds, and the account's unpublished
   allowance is freed by exactly that much (MEDIA-010).
@@ -272,6 +278,12 @@ without it an author who fills 150 MB with drafts has no way out but publication
 It stops at external visibility for the same reason everything else does: a
 recipe another person can see is one other recipes may name (ST-001, CON-003).
 **Note:** what the owner is told before the deletion is FLOW-053.
+**Corrected 2026-09-21:** the second criterion said that the four states past
+`rejected` "can never be deleted by anyone". RET-001 says otherwise and gives its
+reason: deleting an account destroys every recipe it owns that was never
+published, which includes a `link_shared` recipe and one that reached `removed`
+or `reported_hidden` without ever being published. What is permanent is
+publication, not every state beyond the owner's reach.
 
 ## Account
 

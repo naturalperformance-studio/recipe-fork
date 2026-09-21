@@ -40,9 +40,21 @@ and a free slot allow (AUTH-005). The columns below state what each may do.
 
 The moderator column applies to the moderator's own recipes too: the role is not
 suspended by ownership, it decides its holder's own submissions (MOD-013) and
-acts on their own published recipes (MOD-014). Where the owner column and the
-moderator column disagree, an account holding both roles has what the moderator
-column gives it.
+acts on their own published recipes (MOD-014). What that reaches is the
+moderator's own actions and nothing else — approving, rejecting, removing,
+dismissing or upholding reports, clearing a safety flag, banning an account and
+lifting a ban. In every other row an account holding both roles has what the
+owner column gives it: it opens, edits and deletes its own unpublished recipes
+(ST-003, ST-010, FLOW-034), and it neither rates nor favourites a recipe it owns
+(RATE-004, FLOW-040).
+
+**Corrected 2026-09-21:** this paragraph read that the moderator column wins
+wherever the two disagree. Taken literally it let a moderator rate and favourite
+their own recipe, against RATE-004 and FLOW-040, and it took their own drafts
+away from them — no opening, no editing, no deleting — against ST-003, ST-010
+and FLOW-034. The rule it was written for is
+[ADR — the moderator is not exempt from their own content](decisions/20260921-the-moderator-is-not-exempt-from-their-own-content.md),
+which is about moderator actions and says nothing about the rest of the matrix.
 
 ### ACT-001 — Most of the product needs no account
 
@@ -113,19 +125,35 @@ shall reject the modification.
 application and directly against the service.
 **Source:** CON-003; draft sections 4.2, 6.2.
 
-### ACT-005 — A publishing ban stops submissions, not the account
+### ACT-005 — A publishing ban stops what would make a recipe public, not the account
 
 When a moderator bans an account from publishing, the system shall reject every
-subsequent moderation submission from that account.
+subsequent moderation submission from that account, and shall reject every other
+act of that account that would put one of its recipes into the catalogue.
 
 **Acceptance criteria**
 - Given a banned account, when it submits a recipe for publication or requests a
   private link, then the submission is rejected and the recipe stays private.
+- Given a banned account holding a recipe in `link_shared`, when it publishes
+  that recipe, then the publication is rejected and the recipe stays
+  `link_shared`, although that act creates no submission and passes no
+  moderation (MOD-001) — it is the guard the transition table already carries.
+- Given a banned account holding a recipe in `link_shared`, when it revokes its
+  link or issues a new one, then both succeed, because the recipe is already
+  externally visible to whoever the author chose and neither act reaches the
+  catalogue (ST-005).
 - Given a banned account, when it creates, forks, edits a private recipe, scales
   a recipe, searches or uses favourites, then those actions succeed unchanged.
 
-**Verification:** functional test on a banned account covering both lists above.
-**Source:** user decision, 2026-09-20; obligation origin CON-006.
+**Verification:** functional test on a banned account covering every line above,
+including a recipe already in `link_shared`.
+**Source:** user decision, 2026-09-20; obligation origin CON-006. Widened
+2026-09-21: the requirement said "moderation submission" while the transition
+table forbade a banned owner publishing from `link_shared`, which is the one
+route into the catalogue that creates no submission. Left as it was, a ban could
+be walked around by anyone holding an already approved recipe. See
+[ADR — a ban stops the catalogue, not the queue](decisions/20260921-a-ban-stops-the-catalogue-not-the-queue.md).
+**Note:** where the ban is applied and lifted is FLOW-056.
 
 ### ACT-006 — A publishing ban leaves published content in place
 
@@ -145,12 +173,14 @@ never broken by banning.
 
 ### ACT-007 — A banned account is told it is banned
 
-When a banned account attempts to submit a recipe for moderation, the system
-shall state that the account may not publish.
+When a banned account attempts an act that ACT-005 rejects, the system shall
+state that the account may not publish.
 
 **Acceptance criteria**
 - Given a banned account, when a submission is rejected, then the interface says
   the account cannot publish, rather than reporting a generic failure.
+- Given a banned account, when its publication from `link_shared` is rejected,
+  then it is told the same thing and in the same terms.
 
 **Verification:** manual UI check on a banned account.
 **Source:** user decision, 2026-09-20 (there is no contact channel outside the

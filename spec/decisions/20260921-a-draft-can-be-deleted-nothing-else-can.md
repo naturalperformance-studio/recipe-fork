@@ -14,10 +14,18 @@ names an action the product does not offer.
 
 **Decision:** The owner may delete a recipe in `private` or in `rejected`. The
 recipe and every submission record attached to it are destroyed; its media is
-left to MEDIA-012, which deletes each file nothing else holds. No recipe in any
-other state can be deleted by anyone: `pending` is withdrawn first, and
-`link_shared`, `published`, `reported_hidden` and `removed` were seen by someone
-other than the owner and are permanent.
+left to MEDIA-012, which deletes each file nothing else holds. The owner deletes
+a recipe in no other state: `pending` is withdrawn first, and `link_shared`,
+`published`, `reported_hidden` and `removed` were seen by someone other than the
+owner and are out of their hands.
+
+*Corrected 2026-09-21:* this paragraph, and ST-010's second criterion with it,
+said that no recipe in any other state "can be deleted by anyone". RET-001 says
+otherwise and has said so since 2026-09-20: deleting an account destroys every
+recipe it owns that was never published, which reaches a `link_shared` recipe and
+one that reached `removed` or `reported_hidden` without ever being published. The
+rule this decision draws is about what the *owner* may delete recipe by recipe.
+What nothing at all destroys is a recipe that was published (ST-001, RET-002).
 
 **Consequences:**
 - The unpublished allowance has the two exits MEDIA-011 already promises.

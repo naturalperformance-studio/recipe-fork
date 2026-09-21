@@ -72,8 +72,9 @@ The system shall give every interactive element a touch target of at least 48 by
 **Acceptance criteria**
 - Given any screen, when each interactive element is measured, then its touch
   target is at least 48 by 48 dp, whatever the element looks like.
-- Given the cooking card, when its controls are measured — the timer controls,
-  the step advance, the serving control — then each is at least 56 by 56 dp.
+- Given the cooking card, when its controls are measured — the timer controls and
+  the serving control — then each is at least 56 by 56 dp. There is no step
+  advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 - Given two adjacent targets, when they are measured, then they do not overlap
   and neither is smaller than its rule because of the other.
 - Given a control smaller than its target by design, when it is touched near its

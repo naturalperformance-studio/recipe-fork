@@ -26,8 +26,8 @@ identifiers did not change on the split and never will.
 | [20-device-storage.md](20-device-storage.md) | Favourites and what the device keeps, with and without an account | FLOW-009–FLOW-012, FLOW-051, FLOW-052 |
 | [30-cooking.md](30-cooking.md) | Cooking from a recipe | FLOW-013–FLOW-021 |
 | [40-editor.md](40-editor.md) | Writing a recipe | FLOW-022–FLOW-032 |
-| [50-browsing.md](50-browsing.md) | The catalogue and the favourites section, and deleting a recipe of one's own | FLOW-033–FLOW-043, FLOW-053 |
-| [60-moderator-queue.md](60-moderator-queue.md) | The moderator's queue | FLOW-044–FLOW-050 |
+| [50-browsing.md](50-browsing.md) | The catalogue and the favourites section, deleting a recipe of one's own, the private link, and the author's screen | FLOW-033–FLOW-043, FLOW-053–FLOW-055 |
+| [60-moderator-queue.md](60-moderator-queue.md) | The moderator's queue, and where a publishing ban is applied | FLOW-044–FLOW-050, FLOW-056 |
 
 ## Open
 

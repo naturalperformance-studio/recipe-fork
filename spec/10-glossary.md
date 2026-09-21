@@ -260,14 +260,25 @@ with respect to one recipe.
 actor (`actors`).
 
 **Moderator** — an account holding an assignable role: it approves, rejects and
-removes, and it can never alter content (ACT-003, ACT-004).
+removes, and it can never alter content (ACT-003, ACT-004). The role reaches its
+holder's own work through the moderator's own actions and through nothing else:
+they still keep their drafts and still rate no recipe of their own (`actors`,
+MOD-013, MOD-014).
+
+**Author's screen** — the screen a nickname leads to, holding that author's
+published recipes and the acts aimed at an author rather than at one recipe:
+reporting them, blocking them, and, for a moderator, banning them (FLOW-055,
+FLOW-056). Not a profile — it carries the nickname and the work and nothing else
+(CON-001, NGOAL-002).
 
 **Established account** — an account with at least one published recipe. Only
 their reports count towards automatic hiding (ABUSE-003).
 
-**Publishing ban** — a moderator stopping an account's submissions. It touches
-nothing else the account does and leaves its published recipes in place
-(ACT-005, ACT-006).
+**Publishing ban** — a moderator stopping an account from putting anything into
+the catalogue: its submissions, and the publication of a recipe it already shares
+by a private link. It touches nothing else the account does — revoking and
+reissuing that link included — and leaves its published recipes in place
+(ACT-005, ACT-006). It is applied and lifted on the author's screen (FLOW-056).
 
 ## Moderation and abuse
 

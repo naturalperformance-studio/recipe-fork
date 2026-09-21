@@ -110,8 +110,8 @@ which sets the limits that make this true.
 ### FLOW-012 — Leaving the application does not lose the recipe being read
 
 When the reader returns to the application after leaving it, the system shall
-show the recipe that was open, at the scale it was showing, at the step the
-reader had reached.
+show the recipe that was open, at the scale it was showing, at the place in it
+the reader had scrolled to.
 
 **Acceptance criteria**
 - Given a recipe open at a changed serving count with a fixed ingredient set,
@@ -137,6 +137,10 @@ interruption is not a reason to lose the page: leaving the application and
 closing it are different events and only the second can cost the recipe.
 **Note:** whether a running timer announces itself while the application is not
 in the foreground is decided with the recipe card flow, not here.
+**Corrected 2026-09-21:** this requirement said "at the step the reader had
+reached", which promised a current step the card does not have — the card is one
+scrolling screen (`30-cooking`) and nothing in the product advances through
+steps. What is restored is the scroll position.
 
 ### FLOW-051 — Favourites without an account live on the device and nowhere else
 

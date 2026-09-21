@@ -33,7 +33,13 @@ clearing a safety flag. Ownership suspends nothing.
   makes the role assignable, and forbidding self-moderation becomes worth writing
   on the day there is somebody to hand the work to.
 - The permission matrix in `actors` now says which column wins where the owner
-  column and the moderator column disagree.
+  column and the moderator column disagree. *Corrected 2026-09-21:* it first
+  said the moderator column always wins, which reached rows this decision never
+  touched — it would have let a moderator rate and favourite their own recipe
+  (against RATE-004 and FLOW-040) and taken their own drafts away from them
+  (against ST-003, ST-010 and FLOW-034). What ownership does not suspend is a
+  moderator's own actions; the rest of the matrix is read from the owner column
+  as it always was.
 
 **Alternatives considered:**
 - *The moderator decides their own submissions but may not act on their own

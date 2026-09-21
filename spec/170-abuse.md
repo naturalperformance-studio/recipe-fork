@@ -156,6 +156,9 @@ catalogue browsing and search results.
   then AUTH-012 governs the device and they do not merge into it (FLOW-052).
 - Given a blocker holding an account, when they sign in on a second device, then
   their blocks are there too, because the account holds them (DOM: Block).
+- Given the author's screen (FLOW-055), when anyone opens it, then blocking that
+  author and unblocking them are reachable there, which is where the act lives:
+  the matrix in `actors` gave everyone this action and no screen carried it.
 
 **Verification:** two-account functional test across block and unblock; block
 from a device holding no account, capture traffic to confirm nothing was sent,
@@ -172,27 +175,40 @@ read. See
 ### ABUSE-006 — An author can be reported, and that never acts automatically
 
 The system shall allow anyone using the application, with an account or without
-one, to report an author in the same two categories, and shall never apply an
-automatic consequence to a reported account.
+one, to report an author in the same two categories, shall hold at most one
+moderation queue entry per reported author, and shall never apply an automatic
+consequence to a reported account.
 
 **Acceptance criteria**
-- Given an author's public representation, when anyone opens it, then a report
-  action is reachable, whether or not they hold an account.
+- Given an author's screen (FLOW-055), when anyone opens it, then a report
+  action is reachable there, whether or not they hold an account.
 - Given any number of reports against one account, when they are recorded, then
   that account keeps publishing, and its recipes stay visible, until a moderator
   acts.
-- Given reports against an account, when the moderator opens the queue, then
-  they are listed with their categories.
-- Given a report against an author from a person with no account, when it is
-  recorded, then it reaches the queue like any other and counts toward nothing,
-  because nothing here counts at all: ABUSE-003's threshold governs recipes and
-  this requirement has no threshold to reach.
-- Given the same person reporting the same author repeatedly, when the reports
-  are recorded, then the moderator sees that the author was reported and the
-  queue does not fill with one person's repetitions.
+- Given an author nobody has reported, when the first report arrives, then one
+  queue entry is created for that author, ordered by the time it was created
+  (MOD-006).
+- Given an author who already has an open entry, when a further report arrives,
+  then that entry's count rises by one and the report's category is recorded on
+  it, and no second entry appears — whoever sent it, and whether or not they hold
+  an account.
+- Given that entry, when the moderator reads it, then it states how many reports
+  it holds and which categories they carried, and names no reporter, because the
+  product holds nothing that identifies a person without an account (CON-001,
+  AUTH-015, FLOW-051) and deliberately does not record who reported.
+- Given the same person reporting the same author ten times, when the entry is
+  read, then the queue holds one entry whose count is ten, so repetition costs
+  the moderator one number rather than ten items to open.
+- Given a moderator who closes that entry (FLOW-046), when a further report
+  arrives afterwards, then a new entry is created with a count of one, ordered by
+  its own arrival.
+- Given a report against an author, when it is recorded, then it counts toward
+  no threshold at all: ABUSE-003's threshold governs recipes, and nothing here
+  acts without a moderator.
 
 **Verification:** functional test recording several reports against one account,
-from an account and from a device holding none, including repeats.
+from an account and from a device holding none, including repeats before and
+after the moderator closes the entry.
 **Source:** CON-006 requires reporting of users as well as content; the absence
 of an automatic consequence is the user's decision of 2026-09-20 that banning is
 a moderator action (ACT-005). Widened 2026-09-21 from accounts to anyone, for
@@ -201,6 +217,15 @@ assumed: the owner of a stolen photograph holds no account here, and letting the
 report the one recipe they found but not the author who posted ten of them is a
 half-open door. Nothing counts automatically, so the friction an account would
 have bought is friction against nothing.
+**Rewritten 2026-09-21:** the last criterion required the queue not to fill with
+one person's repetitions, which no implementation could satisfy — ABUSE-002
+deduplicates by account, and a person with no account is exactly the case this
+requirement was widened for, while AUTH-015 and CON-001 leave nothing to tell two
+of them apart. Collapsing by the reported author rather than by the reporter
+needs no identity at all. **Cost, stated:** the count is a count of reports and
+not of people, so one person pressing ten times reads the same as ten people
+pressing once, and the moderator cannot tell those apart. See
+[ADR — the author has a screen, and reports about them collapse onto it](decisions/20260921-the-author-has-a-screen.md).
 
 ### ABUSE-007 — A rights holder outside the product needs a way in
 
