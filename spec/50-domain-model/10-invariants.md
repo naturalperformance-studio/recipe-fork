@@ -3,7 +3,7 @@ slug: DOM
 status: closed
 updated: 2026-09-21
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007,
-  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012, DOM-013]
+  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014]
 ---
 
 # Invariants over the entities
@@ -311,3 +311,43 @@ step it belongs to and by nothing else (FLOW-016), so two timers on one step
 would be two things carrying one name. Two waits in sequence are already two
 steps in a kitchen, which is how a cook says them aloud. See
 [ADR — a timer is named by its step](../decisions/20260920-timer-named-by-its-step.md).
+
+### DOM-014 — Both dictionaries are maintained outside the application
+
+The system shall offer no control, on any screen or at any address a user can
+reach, that creates, changes, moves or removes an entry of the ingredient
+dictionary or of the tag dictionary, and both shall be maintained only by direct
+operation on the product's own store by whoever operates it.
+
+**Acceptance criteria**
+- Given every screen of the application, including those the moderator role
+  opens, when they are enumerated, then none edits either dictionary and none
+  shows a comparison factor (DOM-011).
+- Given a dictionary changed in the store, when a device next reaches the server,
+  then its held copy is replaced as FLOW-001 already requires, and an entry
+  removed upstream stays resolvable in the recipes that already name it
+  (DOM-009, DOM-010).
+- Given the rule that an entry carries a label in both languages (L10N-003), when
+  a half-translated entry is written, then what refuses it is the store's own
+  constraint, because there is no screen at which the refusal could be shown.
+- Given an author who finds no matching entry, when they look for a way to ask
+  for one, then there is none and FLOW-022's free text is the whole escape; a
+  queue of such requests is deferred as OQ-019 and has nowhere to land while this
+  requirement stands.
+- Given this requirement, when it is read against CON-005 and EXT-001, then it
+  adds neither a client surface nor an external dependency.
+
+**Verification:** enumerate every screen as an author and as a moderator;
+change an entry in the store and confirm a device picks it up.
+**Source:** user decision, 2026-09-21. DOM-008, DOM-009, DOM-010, DOM-011,
+CAT-009 and L10N-003 all require a maintained dictionary — two levels, two
+languages, a divisibility flag and comparison factors — and every one of them
+said only that a user cannot edit it, never where the product owner does. An
+editor for it is a real screen in an MVP whose whole scope is the fork mechanic,
+and it would sit behind the moderator role, which ACT-008 has just placed
+outside the application as well.
+**Cost, stated:** a factor typed wrong changes the order of filtered results and
+nothing in the product notices. DOM-011 already accepted that shape of error by
+keeping the factor on the entry, where it is correctable for ever, rather than in
+the recipe, where it would not be; and the share of ingredients entered as free
+text (OBS-001) is the signal that says the dictionary is falling behind.

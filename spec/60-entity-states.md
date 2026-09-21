@@ -41,8 +41,8 @@ it is a property of that link (`active`), not of the recipe.
 | `private` | owner deletes it | actor is the owner | — (the recipe ceases to exist) | Recipe destroyed with every submission record attached to it; its media left to MEDIA-012 (ST-010). |
 | `rejected` | owner deletes it | actor is the owner | — (the recipe ceases to exist) | As above; the recorded rejection goes with the submission it was attached to. |
 | `link_shared` | owner publishes | owner not publishing-banned | `published` | Enters the catalogue immediately, with no new moderation: the content is frozen and is byte-for-byte what was approved. |
-| `link_shared` | owner revokes the link | — | `link_shared` | Every issued link becomes inactive; the recipe stops opening for its holders. |
-| `link_shared` | owner issues a new link | — | `link_shared` | A new active link; previously revoked links stay inactive; no new moderation. |
+| `link_shared` | owner revokes the link | — | `link_shared` | The active link becomes inactive; the recipe stops opening for its holders and no link is active. |
+| `link_shared` | owner issues a new link | — | `link_shared` | A new active link; the previous one becomes inactive in the same act; at most one link is ever active; no new moderation. |
 | `link_shared` | third counted report is recorded | 3 distinct reporters, each with at least one published recipe (ABUSE-003) | `reported_hidden` | Hidden from link holders; moderator queue entry; owner told it is hidden, with no further detail. |
 | `published` | third counted report is recorded | 3 distinct reporters, each with at least one published recipe (ABUSE-003) | `reported_hidden` | Hidden from the catalogue, search and direct access; moderator queue entry; owner told it is hidden, with no further detail. |
 | `reported_hidden` | moderator dismisses the reports | actor is a moderator | previous state (`published` or `link_shared`) | Reports closed; visibility restored. |
@@ -166,12 +166,22 @@ serving that recipe to every holder of a previously issued link.
 - Given a link holder who could open the recipe, when the owner revokes the
   link, then opening it fails for that holder.
 - Given the same recipe, when the owner issues a new link, then the new link
-  opens it and the revoked one still does not.
+  opens it and every link issued before it does not.
+- Given a recipe in `link_shared`, when its links are counted, then at most one
+  is active: issuing a new link retires the current one in the same act, so the
+  owner never holds two strings that both work.
 - Given the revocation, when the recipe is inspected, then its content is
   unchanged and it is still not editable.
 
-**Verification:** two-account functional test across revoke and re-issue.
-**Source:** user decision, 2026-09-20.
+**Verification:** two-account functional test across revoke and re-issue;
+confirm the previous link stops opening the recipe the moment a new one exists.
+**Source:** user decision, 2026-09-20; the one-active-link rule decided
+2026-09-21. Several live links were weighed and buy nothing: the product records
+nothing about who holds which link, so it cannot tell two recipients apart, and
+revocation was always collective — the author would be keeping several strings
+they cannot distinguish and cannot act on separately. One link is one thing to
+copy, send and retire.
+**Note:** where the owner finds, copies, revokes and reissues it is FLOW-054.
 
 ### ST-006 — Three counted reports hide a recipe
 

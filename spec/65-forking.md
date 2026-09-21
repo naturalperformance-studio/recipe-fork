@@ -196,9 +196,13 @@ See
 [ADR — an own fork carries everything](decisions/20260920-own-fork-carries-everything.md).
 **Note:** the fork holds Media entities of its own, owned by the same account
 (DOM-005), so the parent's media and the fork's are separable and each follows
-its own recipe's visibility. Whether the bytes behind them are stored once or
-twice is an engineering choice bounded by CON-002, and no requirement depends on
-the answer.
+its own recipe's visibility. The bytes behind them are stored once: MEDIA-012
+deletes a file when no surviving recipe holds it, and MEDIA-010 counts distinct
+stored files against the unpublished allowance, so an author forking their own
+draft to correct it pays for the same photographs once and not twice. Corrected
+2026-09-21 — this note previously said the question was an engineering choice
+no requirement depended on, while two criteria of MEDIA-012 and one of MEDIA-013
+were already written for a shared file.
 
 ## Replacing one's own recipe
 

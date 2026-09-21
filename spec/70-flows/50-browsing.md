@@ -3,7 +3,7 @@ slug: FLOW
 status: closed
 updated: 2026-09-21
 ids: [FLOW-033, FLOW-034, FLOW-035, FLOW-036, FLOW-037, FLOW-038, FLOW-039,
-  FLOW-040, FLOW-041, FLOW-042, FLOW-043, FLOW-053]
+  FLOW-040, FLOW-041, FLOW-042, FLOW-043, FLOW-053, FLOW-054]
 ---
 
 # Browsing: the catalogue and the favourites section
@@ -391,3 +391,47 @@ already uses for every irreversible act it offers — GUIDE-001 before submissio
 AUTH-013 before an account is replaced, RET-005 before an account is deleted —
 and it names the freed allowance because MEDIA-011 has just told the author that
 deleting a draft is one of the two ways to get it back.
+
+### FLOW-054 — The private link is shown, copied, revoked and reissued in one place
+
+Where a recipe the account owns is in `link_shared`, the system shall show its
+active private link on that recipe's entry in the own-recipes view, shall copy
+it in full on request, and shall offer there to revoke it and to issue a new one.
+
+**Acceptance criteria**
+- Given a recipe that has just been approved with the trigger `private_link`,
+  when its entry is opened, then the link is present and can be copied in one
+  action, and nothing else in the application is the place to find it.
+- Given the copy control, when it is used, then what reaches the clipboard is the
+  link a recipient can open, and the product neither sends it anywhere nor offers
+  to (EXT-010).
+- Given the revoke control, when it is used, then the author is told that every
+  person holding the link stops being able to open the recipe and that the recipe
+  itself stays frozen (ST-005), and it is carried out only after an explicit
+  confirmation.
+- Given a revoked link, when the entry is opened, then it states that no link is
+  active and offers to issue a new one.
+- Given the control that issues a new link, when it is used, then the author is
+  told first that the link they have already sent stops working, because at most
+  one link is ever active (ST-005).
+- Given a link the author never revoked, when a new one is issued, then the entry
+  shows the new link alone and never both.
+- Given the entry, when it is read, then it says nothing about who opened the
+  recipe or how often, because the product records neither (RET-010, ANL-006).
+- Given the recipe published afterwards from `link_shared`, when the entry is
+  opened, then the link is gone from it: a published recipe is reached from the
+  catalogue and the private link has nothing left to do (MOD-001).
+- Given no network connection, when the link is copied, then it is copied from
+  what the device holds (FLOW-038); when it is revoked or reissued, then
+  FLOW-003 refuses it, because only the server can retire a link.
+
+**Verification:** approve a recipe for a private link, copy the link and open it
+from a second device, revoke it and confirm the copy stops working, issue a new
+one and confirm the first stays dead; then publish the recipe and look at the
+entry again.
+**Source:** user decision, 2026-09-21. The link existed only as a side effect in
+the transition table of `entity-states` — issued on approval, revoked and
+reissued by ST-005 — with no screen anywhere that showed it to the person who
+asked for it. It lives on the entry for the same reason deletion does (FLOW-053):
+the own-recipes view is where a recipe of one's own is managed, and a state is
+not worth a screen (FLOW-036).

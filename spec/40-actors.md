@@ -2,7 +2,7 @@
 slug: ACT
 status: closed
 updated: 2026-09-21
-ids: [ACT-001, ACT-002, ACT-003, ACT-004, ACT-005, ACT-006, ACT-007]
+ids: [ACT-001, ACT-002, ACT-003, ACT-004, ACT-005, ACT-006, ACT-007, ACT-008]
 ---
 
 # Actors and permissions
@@ -156,3 +156,37 @@ shall state that the account may not publish.
 **Source:** user decision, 2026-09-20 (there is no contact channel outside the
 application — CON-001 — so the application is the only place a ban can be
 communicated).
+
+### ACT-008 — The moderator role is granted outside the application
+
+The system shall offer no control, on any screen or at any address a user can
+reach, that grants or revokes the moderator role, and the role shall be changed
+only by direct operation on the product's own store by whoever operates it.
+
+**Acceptance criteria**
+- Given every screen of the application, including those the moderator role
+  itself opens, when they are enumerated, then none grants the role, revokes it,
+  lists the accounts that hold it, or asks for it.
+- Given the role granted or revoked in the store, when the affected account next
+  uses the application, then FLOW-044 governs what appears and disappears, with
+  nothing reinstalled and nothing else changed about the account (ACT-003).
+- Given the first account to hold the role, when the product is first deployed,
+  then it is granted the same way as every later one: there is no bootstrap
+  screen and no first-run special case.
+- Given the three surfaces outside the application (EXT-006, LEG-008), when they
+  are enumerated, then none of them is an administration surface either.
+- Given this requirement, when it is read against CON-005, then it adds no client
+  surface: operating one's own store is not a client of the product.
+
+**Verification:** enumerate every screen as a moderator and as an ordinary
+account; grant and revoke the role in the store and confirm the application
+follows without being reinstalled.
+**Source:** user decision, 2026-09-21. ACT-003 required the role to be
+assignable and FLOW-044 described what changes when it is, but nothing said who
+assigns it or through what, which left a developer to invent an administration
+screen — and an administration screen is a second thing to secure for an
+audience of one, sitting outside everything `auth` was built to protect (the
+reasoning OBS-002 already used against a separate console).
+**Cost, stated:** nothing in the product records who granted the role or when.
+With one operator that record would say only what the operator already knows,
+and the day a second moderator exists is the day it is worth writing.

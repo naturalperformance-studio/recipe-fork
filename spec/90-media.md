@@ -228,8 +228,8 @@ addition can only mean a replacement.
 ### MEDIA-010 — An account's unpublished media is capped at 150 MB
 
 The system shall refuse to accept further media for an account once the total
-size of that account's media belonging to recipes that have never been published
-reaches 150 MB.
+size of the distinct stored files the account holds for recipes that have never
+been published reaches 150 MB.
 
 **Acceptance criteria**
 - Given an account whose unpublished media totals 149 MB, when a 2 MB item is
@@ -247,6 +247,10 @@ reaches 150 MB.
 - Given the same recipe built from five-second clips, which weigh about 2 MB at
   the same quality, when it is being built, then it fits, because the cap counts
   bytes and not items.
+- Given an unpublished recipe and the owner's own fork of it holding the same
+  photographs (FORK-007), when the allowance is computed, then those photographs
+  are counted once: what is counted is the distinct file, not the number of
+  recipes holding it.
 
 **Verification:** fill an account to the cap with drafts, publish one, delete
 one, and attempt an upload from a device that was offline while the cap was

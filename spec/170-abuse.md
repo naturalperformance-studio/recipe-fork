@@ -140,23 +140,36 @@ recipes in the blocking account's catalogue browsing and search results.
 
 ### ABUSE-006 — An author can be reported, and that never acts automatically
 
-The system shall allow any account to report an author in the same two
-categories, and shall never apply an automatic consequence to a reported
-account.
+The system shall allow anyone using the application, with an account or without
+one, to report an author in the same two categories, and shall never apply an
+automatic consequence to a reported account.
 
 **Acceptance criteria**
-- Given an author's public representation, when any signed-in account opens it,
-  then a report action is reachable.
+- Given an author's public representation, when anyone opens it, then a report
+  action is reachable, whether or not they hold an account.
 - Given any number of reports against one account, when they are recorded, then
   that account keeps publishing, and its recipes stay visible, until a moderator
   acts.
 - Given reports against an account, when the moderator opens the queue, then
   they are listed with their categories.
+- Given a report against an author from a person with no account, when it is
+  recorded, then it reaches the queue like any other and counts toward nothing,
+  because nothing here counts at all: ABUSE-003's threshold governs recipes and
+  this requirement has no threshold to reach.
+- Given the same person reporting the same author repeatedly, when the reports
+  are recorded, then the moderator sees that the author was reported and the
+  queue does not fill with one person's repetitions.
 
-**Verification:** functional test recording several reports against one account.
+**Verification:** functional test recording several reports against one account,
+from an account and from a device holding none, including repeats.
 **Source:** CON-006 requires reporting of users as well as content; the absence
 of an automatic consequence is the user's decision of 2026-09-20 that banning is
-a moderator action (ACT-005).
+a moderator action (ACT-005). Widened 2026-09-21 from accounts to anyone, for
+the reason ABUSE-002 was widened the day before and the permission matrix already
+assumed: the owner of a stolen photograph holds no account here, and letting them
+report the one recipe they found but not the author who posted ten of them is a
+half-open door. Nothing counts automatically, so the friction an account would
+have bought is friction against nothing.
 
 ### ABUSE-007 — A rights holder outside the product needs a way in
 
