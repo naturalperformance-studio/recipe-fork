@@ -159,9 +159,10 @@ other favourite or block, and shall send neither anywhere.
 - Given no account, when an author is blocked, then the block is kept on the
   device, is sent nowhere, and hides that author's recipes from this device's
   catalogue and search exactly as ABUSE-005 requires of an account's block.
-- Given no account, when the application is reinstalled or the device is
-  replaced, then those favourites and those blocks are gone and nothing restores
-  them.
+- Given no account, when the application is reinstalled, the device is replaced,
+  or an existing account signs in on it (AUTH-012), then those favourites and
+  those blocks are gone and nothing restores them; creating an account on that
+  device is the one act that keeps them (FLOW-052).
 - Given no account, when the favourites screen is opened, then it states that
   these favourites live on this device and offers to create an account to carry
   them, without requiring it.

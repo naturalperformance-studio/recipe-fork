@@ -81,13 +81,14 @@ accepts it.
 application, restore the connection and confirm the recipe reaches the server.
 **Source:** user decision, 2026-09-20.
 
-### FLOW-003 — What is refused without a network connection
+### FLOW-003 — What is refused while the server has not answered
 
-If the device has no network connection, then the system shall refuse the
-catalogue, search over the catalogue, opening a recipe the device does not hold,
-submission for moderation, creating an account, signing in with a key
-(AUTH-010), deleting a recipe (ST-010), and every moderator action, and shall
-state in each case that the action needs a connection.
+If the device has no network connection, or if the product's own server cannot
+be reached or does not answer, then the system shall refuse the catalogue,
+search over the catalogue, opening a recipe the device does not hold, submission
+for moderation, creating an account, signing in with a key (AUTH-010), deleting
+a recipe (ST-010), and every moderator action; shall state which of the two
+happened; and shall queue nothing in either case.
 
 **Acceptance criteria**
 - Given no network connection, when the reader opens the catalogue, then it
@@ -108,11 +109,30 @@ state in each case that the action needs a connection.
   (AUTH-001, AUTH-004).
 - Given no network connection, when the owner deletes a recipe, then it is
   refused and the recipe is untouched on the device (ST-010, FLOW-053).
+- Given a working connection and a server that does not answer or answers with a
+  failure, when any act in the list above is attempted, then it is refused,
+  nothing is queued, nothing changes on the device, and the statement says the
+  product could not be reached and offers to try again — it does not say a
+  connection is needed, because there is one.
+- Given the two statements, when they are read, then they tell the person two
+  different things to do: restore a connection, or try again later. That is why
+  there are two and not one.
+- Given either refusal, when the server is inspected afterwards, then no part of
+  the act happened there either, because the server orders every transition and
+  records none it did not complete (ST-009).
+- Given a listing (FLOW-043) or a rating (RATE-014), when the server fails, then
+  those two requirements already say this for their own surfaces and this one
+  adds nothing to them.
 
-**Verification:** walk each refused path in aeroplane mode and confirm the
-message and that no stale data is displayed.
+**Verification:** walk each refused path in aeroplane mode, then with the
+connection up and the server refusing every request, and compare the two
+statements; confirm nothing was queued and nothing reached the server.
 **Source:** user decision, 2026-09-20; account creation and deletion added
-2026-09-21. The catalogue is a live surface — a held copy would show recipes that
+2026-09-21, and the unanswering server the same day — every criterion here began
+with "no network connection", so the commonest failure of a one-server product
+(QUAL-006 allows it about 36 hours a month) was specified nowhere but in
+FLOW-043 and RATE-014. See
+[ADR — a connection is not an answer](../decisions/20260921-a-connection-is-not-an-answer.md). The catalogue is a live surface — a held copy would show recipes that
 moderation has since removed or hidden. An account cannot be minted on the device
 alone: its nickname is unique across all accounts (DOM-001) and its three keys
 are tested by the server and by nothing else (AUTH-014), so neither can be issued

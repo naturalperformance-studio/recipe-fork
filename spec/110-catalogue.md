@@ -44,9 +44,35 @@ has not chosen a field.
   are offered there.
 - Given a chosen ordering, when the reader leaves the catalogue and returns
   within the same session, then the choice is still in force.
+- Given the ordering `newest`, when two recipes are ordered, then the one that
+  entered the catalogue later comes first: the instant a moderator's approval
+  published it, and not the instant it was created or last changed.
+- Given a recipe approved for a private link in March and published in
+  September, when it is ordered by `newest`, then the instant used is the one it
+  entered the catalogue, so it is new to the catalogue on the day it arrives
+  there and not on the day its author wrote it.
+- Given the own-recipes view, when it is ordered by `newest`, then FLOW-039
+  governs instead and orders by the time each recipe was last changed, because
+  nothing there need ever have been published.
+- Given two recipes equal under any of the four orderings, when they are
+  ordered, then the equality is broken by the chain RATE-010 already defines —
+  the more recent creation instant, then the title in ascending alphabetical
+  order, then the recipe's identifier — so the order of any two recipes is
+  decided under every ordering and not only under the two about rating.
+- Given an unchanged catalogue, when the reader pages through any ordering to
+  the end (FLOW-041), then every recipe appears exactly once and none is
+  skipped.
 
 **Verification:** compare the catalogue and a query's results under each of the
-four orderings, and open the catalogue on a fresh install to confirm the default.
+four orderings, and open the catalogue on a fresh install to confirm the default;
+build two recipes published in one millisecond with one title and page through
+all four orderings twice.
+**Written 2026-09-21:** what `newest` orders by, and the tie-breaking chain for
+`newest` and `most forked`. Both were missing: FLOW-039 defined `newest` for the
+own-recipes view and said in passing that a published recipe has a publication
+date, RATE-010 and RATE-011 gave a total order to the two rating orderings, and
+the default ordering of the catalogue was left to whoever implemented it. See
+[ADR — newest is the moment a recipe reached the catalogue](decisions/20260921-newest-is-when-the-catalogue-got-it.md).
 **Source:** user decision, 2026-09-20: the reader picks the ordering rather than
 the product picking one for them, which is also why rating may take part in it
 without becoming the only way a recipe is ever found. `newest` is the default

@@ -188,8 +188,9 @@ EXT-011 answered as healthy.
   (FLOW-009, FLOW-013, EXT-009), because none of that reaches the server.
 - Given the product is unavailable, when a reader uses the application, then the
   catalogue, search, publication, moderation, rating, account creation and
-  signing in with a key state that a connection is needed (FLOW-003) and none of
-  them fails silently.
+  signing in with a key are all refused, each of them stating that the product
+  could not be reached rather than that a connection is needed (FLOW-003), and
+  none of them fails silently.
 - Given the figure, when it is quoted anywhere the user can read it, then it is
   not, because the product makes no availability promise to a user and this
   threshold is an operating target.

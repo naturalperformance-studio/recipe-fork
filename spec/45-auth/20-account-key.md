@@ -34,6 +34,15 @@ saved it.
   (GUIDE-001 governs the same pattern for submission).
 - Given a completed creation, when the screen is left, then the key is never
   shown in full again and AUTH-019 governs how it is reached.
+- Given the creation screen, when the person leaves it without giving every
+  confirmation it requires — this key, the recovery key (AUTH-020) and the terms
+  of use (LEG-004) — then no account exists at all: the nickname is not consumed
+  (AUTH-018, DOM-001), no slot on the device is occupied (AUTH-001, AUTH-002),
+  and nothing of the attempt is kept anywhere.
+- Given a person who copied the key and left before confirming, when they
+  present it afterwards, then it matches no account and they are told so
+  (AUTH-014) — the price of creating nothing until the person has said they kept
+  what they were given.
 - Given the same creation, when it completes, then the recovery key has been
   issued as its own artefact with its own confirmation (AUTH-020), and the
   warning above no longer says there is no recovery at all: it says what
@@ -44,6 +53,8 @@ take the key both ways and compare them.
 **Source:** draft section 2.2; user decision, 2026-09-20. Both forms are offered
 because the two ways people keep a secret are a password manager and a file, and
 the product has no opinion about which is right.
+**Completed 2026-09-21:** what an abandoned creation leaves behind — nothing. See
+[ADR — nothing exists until it is confirmed](../decisions/20260921-nothing-exists-until-it-is-confirmed.md).
 **Corrected 2026-09-21:** the requirement still said the warning states there is
 no recovery, which the recovery key of the same day had already made false — its
 own third and seventh criteria said so, and NGOAL-003 was narrowed for it. The
@@ -138,8 +149,12 @@ with a key and shall state that a connection is needed.
 - Given no connection, when a key is entered, then signing in is refused, the
   reason is stated, and whatever was active is unchanged.
 - Given the connection returns, when the key is entered again, then it proceeds.
+- Given a working connection and a server that does not answer, when a key is
+  entered, then signing in is refused as well, and FLOW-003 governs what is
+  said — which is not that a connection is needed, because there is one.
 
-**Verification:** sign in in aeroplane mode, then with a connection.
+**Verification:** sign in in aeroplane mode, with the server refusing requests,
+and then with both working.
 **Source:** the server decides whether a key holds a real account (AUTH-014);
 until that test can run, the client has accepted nothing. Consistent with
 FLOW-003, which refuses every action whose answer only the server holds.

@@ -38,7 +38,9 @@ setting of FLOW-011 by the number of accounts. Deferred as OQ-028.
 ### AUTH-012 — Replacing the account wipes what the device held
 
 When the active account is replaced, the system shall delete from the device
-every recipe, draft, media item and favourite the previous account held.
+every recipe, draft, media item and favourite the previous account held, and
+every favourite and blocked author the device was holding with no account at
+all.
 
 **Acceptance criteria**
 - Given the previous account's drafts, when the account is replaced, then they
@@ -55,6 +57,11 @@ every recipe, draft, media item and favourite the previous account held.
   signs in, then nothing of the previous account's content is present on it.
 - Given favourites kept on a device that had no account, when an account is then
   created, then they are carried into it rather than deleted (FLOW-051).
+- Given favourites and blocked authors kept on a device with no account, when an
+  existing account signs in there instead, then they are deleted with everything
+  else and merge into nothing (FLOW-052). A device handed on must carry nothing
+  of whoever held it before, and that promise is false if the previous holder's
+  favourites survive precisely because they never made an account.
 - Given the interface language (L10N-002), the reader's usual serving count
   (FLOW-017) and the recipe that was open (FLOW-012), when the account is
   replaced, then none of them is touched: they belong to the device and to
@@ -75,6 +82,10 @@ reason). **Cost, stated:** a device handed on carries the previous person's usua
 serving count into the next person's recipes, marked as derived (SCALE-004) but
 unexplained, until they change it. See
 [ADR — replacing the account wipes the device](../decisions/20260920-replacing-the-account-wipes-the-device.md).
+**Widened 2026-09-21** to what the device held with no account at all: FLOW-052
+sent the reader here for that case, and this requirement spoke only of a previous
+account, of which there is none. See
+[ADR — a sign-in empties the device](../decisions/20260921-a-sign-in-empties-the-device.md).
 
 ### AUTH-013 — The warning before replacing names what will be lost
 
@@ -85,6 +96,10 @@ accepted, and shall require an explicit confirmation before anything is deleted.
 **Acceptance criteria**
 - Given three recipes with unsent changes, when the replacement is confirmed,
   then all three were named on the screen that asked for confirmation.
+- Given a device holding favourites or blocked authors kept with no account,
+  when the replacement is asked for, then the statement says those go too, in
+  numbers rather than in general terms; nothing else in the product would ever
+  tell that person they are about to lose them.
 - Given an account whose every change the server holds, when the replacement is
   asked for, then the statement says nothing will be lost and still asks for
   confirmation.
