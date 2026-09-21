@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 4 questions must be answered before MVP.**
-> Sections: 23 closed · 2 blocked · 1 open · 1 n/a.
+> Sections: 24 closed · 2 blocked · 0 open · 1 n/a.
 > Blocking: OQ-002, OQ-016, OQ-029, OQ-030. Last updated 2026-09-21.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -30,7 +30,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [75-author-guidance.md](75-author-guidance.md) | GUIDE | closed | What the editor tells its author before they can find out the hard way: the statement before an irreversible submission, the checklist of good practice, and the hints that fire on the author's own action. The product teaches here because it inspects nowhere. |
 | [80-scaling-rules.md](80-scaling-rules.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
 | [90-media.md](90-media.md) | MEDIA | closed | What a recipe may carry, what the device does to a file before it leaves — re-encoding, stripping every metadata field but orientation, silencing and shortening a video — what the author is told about it, the 150 MB an account may hold unpublished, and when a stored file is finally deleted. |
-| [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, what a rejection produces, and what a moderator is told when the submission they just decided had already been withdrawn or its owner had deleted their account. |
+| [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, what a rejection produces, and what a moderator is told when the submission they just decided had already been withdrawn or its owner had deleted their account, and that a moderator may decide their own submission. |
 | [110-catalogue.md](110-catalogue.md) | CAT | closed | Public catalogue, search, filters, favourites and the search inside favourites; what a catalogue entry shows, including the fork marker and fork count. |
 | [120-ratings.md](120-ratings.md) | RATE | closed | The binary like and dislike over its life: who may give one and on what, the two counts a reader sees, what `highest rated` and `most rated` compute, and why favouriting is not approval. |
 | [130-external-interfaces.md](130-external-interfaces.md) | EXT | closed | The closed list of what the product depends on — a device attestation service, object storage, the distribution channel and an outbound alerting channel — what each does when it is absent; the one observer that calls the product and is never called by it, and the silent endpoint it calls; and the two artefacts that cross the boundary in the user's own hands: the account key and a private link. Also the one surface outside the application, the account deletion page. |
@@ -42,7 +42,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [190-legal.md](190-legal.md) | LEG | blocked | What publishing grants and what it does not: an irrevocable licence to the product, because permanence cannot rest on a permission that can be withdrawn; a licence to every user over the steps alone, so forking rests on a grant and not only on what copyright excludes; media and description that stay the author's. Terms accepted at account creation and again when they change, where refusing costs authorship and never costs reading. Sixteen years declared and nothing verified. The name is OQ-016 and the age mark is inside OQ-029, which is why this section is blocked. |
 | [200-accessibility.md](200-accessibility.md) | A11Y | closed | A fixed list of commitments with thresholds instead of a conformance claim: contrast, 48 dp targets and 56 on the cooking card, the device font scale to 200 per cent, the screen reader working on every screen including the editor so that authorship is not closed to anyone, an alternative to every drag, the cooking card built for busy hands, and nothing carried by colour alone. |
 | [210-observability.md](210-observability.md) | OBS | closed | The thirteen signals the product watches, each naming the decision that asked for it, the thresholds at which one becomes a decision, the moderator's screen they live on, and the one outbound channel that carries an alert — numbers only, one way. |
-| 220-mvp-boundary.md | MVP | open | What is in the first release and what explicitly waits. |
+| [220-mvp-boundary.md](220-mvp-boundary.md) | MVP | closed | The boundary, taking no decision of its own: the first release is every closed section less the thirteen things decided against, the nine prerequisites that produce a record rather than a requirement, and what the launch actually looks like — an empty catalogue, one author, and that same person holding the moderator role, with the four requirements that shape changes the reading of. |
 | — | MIG | n/a | Migration: the product launches from scratch — no existing data, users or predecessor system to migrate from. Moving a user between devices by its key is an authentication requirement, not a migration. |
 
 [Open questions ledger](open-questions.md) · [Decisions](decisions/)

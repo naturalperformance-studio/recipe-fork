@@ -3,7 +3,7 @@ slug: MOD
 status: closed
 updated: 2026-09-21
 ids: [MOD-001, MOD-002, MOD-003, MOD-004, MOD-005, MOD-006, MOD-007,
-  MOD-008, MOD-009, MOD-010, MOD-011, MOD-012]
+  MOD-008, MOD-009, MOD-010, MOD-011, MOD-012, MOD-013]
 ---
 
 # Moderation
@@ -190,6 +190,33 @@ decision on the entry from the list and inside a run.
 **Source:** user decision, 2026-09-21. RET-001 already destroyed the recipe; what
 was missing was the queue entry that pointed at it, which would otherwise have
 been an item a moderator could open and could not decide.
+
+### MOD-013 — A moderator may decide a submission they made themselves
+
+Where an account holds the moderator role, the system shall allow it to decide a
+submission it owns, and shall route that submission through the queue exactly as
+it routes any other.
+
+**Acceptance criteria**
+- Given a moderator submitting their own recipe, when it is submitted, then it
+  enters the queue as an ordinary entry, ordered by its submission time
+  (MOD-006), and the text filter runs on it (MOD-002).
+- Given that entry, when its owner decides it as moderator, then the decision is
+  recorded like any other and MOD-007 governs it afterwards.
+- Given a rejection of one's own submission, when it is recorded, then the recipe
+  becomes editable again exactly as ST-003 requires of any rejection.
+- Given the moderator role granted to a second account later, when this
+  requirement is read, then it still permits deciding one's own submission, and
+  forbidding it is a separate decision to be taken when there is somebody to hand
+  the work to (ACT-003).
+
+**Verification:** submit and approve one recipe from a single account holding the
+moderator role; reject another and confirm it returns to an editable state.
+**Source:** user decision, 2026-09-21. At the first release the product owner is
+the only author and the only moderator, so a prohibition would mean nothing could
+be published at all. The alternative — a second account on a second device,
+because AUTH-011 allows one active account per device — was rejected as pure cost
+at a launch with one person.
 
 ## When a removal reaches the forks
 
