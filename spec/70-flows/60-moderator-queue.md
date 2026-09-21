@@ -93,6 +93,10 @@ and shall remove the entry from the queue once the decision is recorded.
 - Given an approval, when it is recorded, then no reason is asked for and the
   recipe moves as the state table requires — to `published` or to `link_shared`
   by its trigger.
+- Given an entry whose recipe carries the safety flag (FLOW-045), when the
+  moderator works on it, then clearing the flag is offered there beside the
+  decision, and it is recorded independently of whether the submission is
+  approved or rejected (MOD-009, MOD-010).
 - Given a decision has been recorded, when the queue is shown again, then the
   entry is no longer in it.
 - Given two moderators open the same entry and one decides it, when the second

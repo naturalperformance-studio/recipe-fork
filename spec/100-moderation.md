@@ -317,12 +317,24 @@ from the submission queue, ordered from the deepest descendant upwards.
   actions available are clearing the flag and removing the recipe.
 - Given a flagged recipe that has never been published, when its owner submits
   it, then the moderator sees the flag on the queue entry.
+- Given that entry, when the moderator decides it, then clearing the flag is
+  available there alongside approval and rejection (FLOW-046), and the three are
+  independent: a submission can be approved with its flag left on, cleared and
+  approved, or rejected either way.
+- Given a submission approved with its flag left on, when the recipe enters the
+  catalogue, then it carries the flag and the statement of FLOW-018, and it
+  appears in this list from that moment, because it is no longer `private`.
 
 **Verification:** flag a chain of five, confirm the order, and confirm a private
 member is absent until it is submitted.
-**Source:** user decision, 2026-09-20. Walking upwards from the youngest is how
-the moderator finds the point at which the unsafe instruction stopped being
-copied forward.
+**Source:** user decision, 2026-09-20; the flag action on a queue entry added
+2026-09-21. Walking upwards from the youngest is how the moderator finds the
+point at which the unsafe instruction stopped being copied forward. The flag is
+clearable from the submission queue because the moderator is reading the whole
+text there anyway (MOD-003), which is the moment the judgement is actually made;
+leaving it to the flagged list would mean finding and reading the same recipe a
+second time while its card told readers in between that it descends from
+something dangerous.
 **Note:** a single removal can add an unbounded number of entries to this list,
 which is the cost of not withdrawing the descendants automatically. They stay
 readable while they wait.

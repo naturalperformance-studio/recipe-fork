@@ -55,10 +55,25 @@ every recipe, draft, media item and favourite the previous account held.
   signs in, then nothing of the previous account's content is present on it.
 - Given favourites kept on a device that had no account, when an account is then
   created, then they are carried into it rather than deleted (FLOW-051).
+- Given the interface language (L10N-002), the reader's usual serving count
+  (FLOW-017) and the recipe that was open (FLOW-012), when the account is
+  replaced, then none of them is touched: they belong to the device and to
+  nobody's account, and this requirement reaches only what the previous account
+  held.
+- Given the setting that governs whether media is held (FLOW-011), when the
+  account is replaced, then it is unchanged too, and it applies to whatever the
+  new account brings.
 
 **Verification:** author unsent drafts, replace the account, enter the original
 key again, and compare what returns against what was accepted.
-**Source:** user decision, 2026-09-20. See
+**Source:** user decision, 2026-09-20; the three device settings named
+2026-09-21, because the list above is closed and a reader could not tell whether
+their omission was deliberate. It is: a phone's language and the number of people
+its owner cooks for are facts about the phone, not about whoever holds the key
+today (L10N-002 already keeps the language off the account for exactly this
+reason). **Cost, stated:** a device handed on carries the previous person's usual
+serving count into the next person's recipes, marked as derived (SCALE-004) but
+unexplained, until they change it. See
 [ADR — replacing the account wipes the device](../decisions/20260920-replacing-the-account-wipes-the-device.md).
 
 ### AUTH-013 — The warning before replacing names what will be lost

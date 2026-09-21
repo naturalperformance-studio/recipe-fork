@@ -87,21 +87,34 @@ at review (MOD-003, MOD-004).
 ### ABUSE-003 — Only established accounts count toward automatic hiding
 
 While counting reports against the automatic hiding threshold, the system shall
-count only reports made by accounts that have at least one published recipe, and
+count only reports made by accounts that have published at least one recipe, and
 shall count each such account once per recipe.
 
 **Acceptance criteria**
-- Given three reports from three accounts with no published recipe, when the
+- Given three reports from three accounts that have published nothing, when the
   threshold is evaluated, then the recipe is not hidden.
-- Given three reports from three accounts each with at least one published
-  recipe, when the third is recorded, then the recipe is hidden (ST-006).
+- Given three reports from three accounts each of which has published at least
+  one recipe, when the third is recorded, then the recipe is hidden (ST-006).
 - Given an account that publishes a recipe after having reported, when the
   threshold is evaluated, then its earlier report counts from that moment.
+- Given an account whose only published recipe a moderator has since removed,
+  when the threshold is evaluated, then its reports still count, because what is
+  weighed is that the account once passed human review — the `was_published` the
+  domain model already holds and never clears — and not what it owns today.
 
-**Verification:** functional test with both kinds of reporting account.
-**Source:** user decision, 2026-09-20. An account that has published has passed
-human review and has waited for it, which is the friction the threshold relies
-on; an account created minutes ago has passed nothing.
+**Verification:** functional test with both kinds of reporting account, and with
+an account whose published recipe was removed after it reported.
+**Source:** user decision, 2026-09-20; the removed-recipe case decided
+2026-09-21. An account that has published has passed human review and has waited
+for it, which is the friction the threshold relies on; an account created minutes
+ago has passed nothing. Counting only live publications was rejected: it would
+let a moderator's removal of one recipe silently change the weight of reports
+that account had already filed against unrelated recipes, which is an effect
+nobody performing the removal is thinking about.
+**Cost, stated:** an account whose recipe was removed as dangerous to health
+keeps its full weight in this threshold. Nothing about the removal is a judgement
+on how that account reports, and a moderator who believes otherwise has ACT-005
+and ABUSE-006 to act with instead.
 
 ### ABUSE-004 — A report that does not count is still delivered
 
@@ -121,8 +134,9 @@ it, so closing the channel to them would close it to the category's main source.
 
 ### ABUSE-005 — Blocking hides an author from catalogue and search
 
-When an account blocks an author, the system shall stop returning that author's
-recipes in the blocking account's catalogue browsing and search results.
+When anyone using the application blocks an author, with an account or without
+one, the system shall stop returning that author's recipes in the blocker's
+catalogue browsing and search results.
 
 **Acceptance criteria**
 - Given a blocked author, when the blocker searches the catalogue, then none of
@@ -133,9 +147,26 @@ recipes in the blocking account's catalogue browsing and search results.
   recipes are returned normally.
 - Given a blocked author, when the blocker unblocks them, then their recipes are
   returned again.
+- Given a blocker holding no account, when they block an author, then the block
+  is kept on the device under the rules FLOW-051 sets for favourites: it is sent
+  nowhere, so which authors this device hides is never known to the product, and
+  it is lost with the device or with a reinstallation.
+- Given blocks kept with no account, when an account is created on that device,
+  then they are carried into it, and when an existing account signs in instead,
+  then AUTH-012 governs the device and they do not merge into it (FLOW-052).
+- Given a blocker holding an account, when they sign in on a second device, then
+  their blocks are there too, because the account holds them (DOM: Block).
 
-**Verification:** two-account functional test across block and unblock.
-**Source:** user decision, 2026-09-20; obligation origin CON-006. See
+**Verification:** two-account functional test across block and unblock; block
+from a device holding no account, capture traffic to confirm nothing was sent,
+reinstall and confirm the loss; then create an account on such a device and
+confirm the blocks are carried in.
+**Source:** user decision, 2026-09-20; obligation origin CON-006; widened
+2026-09-21 from accounts to anyone. The permission matrix and the domain model
+had both said all along that a device with no account holds blocked authors,
+citing FLOW-051 — which covers favourites and had never mentioned them. Since
+reading needs no account (ACT-001), so does hiding what one does not want to
+read. See
 [ADR — report and block model](decisions/20260920-report-and-block-model.md).
 
 ### ABUSE-006 — An author can be reported, and that never acts automatically

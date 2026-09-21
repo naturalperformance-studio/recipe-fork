@@ -1,14 +1,14 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-20
+updated: 2026-09-21
 ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-051, FLOW-052]
 ---
 
 # Favourites and what the device keeps
 
-Favourites are the only thing the reader keeps, and one setting governs whether
-their media comes along.
+Favourites are the main thing the reader keeps — a list of blocked authors is
+the other — and one setting governs whether the favourites' media comes along.
 
 ### FLOW-009 — Every favourite is readable without a network connection
 
@@ -140,9 +140,9 @@ in the foreground is decided with the recipe card flow, not here.
 
 ### FLOW-051 — Favourites without an account live on the device and nowhere else
 
-The system shall allow a person holding no account to add recipes to favourites,
-shall keep those favourites on the device under the same rules as any other
-favourite, and shall send them nowhere.
+The system shall allow a person holding no account to add recipes to favourites
+and to block authors, shall keep both on the device under the same rules as any
+other favourite or block, and shall send neither anywhere.
 
 **Acceptance criteria**
 - Given no account, when a recipe is favourited, then it is held on the device
@@ -152,8 +152,12 @@ favourite, and shall send them nowhere.
 - Given no account, when a recipe is added to favourites, then the only thing
   that reaches the server is an increment against that recipe, carrying no
   identifier (ANL-005), and a later removal sends nothing at all.
+- Given no account, when an author is blocked, then the block is kept on the
+  device, is sent nowhere, and hides that author's recipes from this device's
+  catalogue and search exactly as ABUSE-005 requires of an account's block.
 - Given no account, when the application is reinstalled or the device is
-  replaced, then those favourites are gone and nothing restores them.
+  replaced, then those favourites and those blocks are gone and nothing restores
+  them.
 - Given no account, when the favourites screen is opened, then it states that
   these favourites live on this device and offers to create an account to carry
   them, without requiring it.
@@ -175,11 +179,11 @@ already holding when it was created.
 **Acceptance criteria**
 - Given an account signed in on two devices, when a recipe is favourited on one,
   then it is in the favourites of the other once it reaches the server.
-- Given favourites kept with no account, when an account is created on that
-  device, then those favourites become the account's and none is lost.
-- Given favourites kept with no account, when an existing account signs in on
-  that device instead, then AUTH-012 governs the device and those favourites do
-  not merge into it.
+- Given favourites and blocked authors kept with no account, when an account is
+  created on that device, then both become the account's and none is lost.
+- Given favourites and blocked authors kept with no account, when an existing
+  account signs in on that device instead, then AUTH-012 governs the device and
+  neither merges into it.
 - Given a muted account (AUTH-004), when it favourites a recipe, then it is
   carried like any other account's, because this is the one thing a muted
   account is for.
