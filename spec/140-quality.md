@@ -290,7 +290,7 @@ visible.
 | Functional suitability | The functional sections; the exact rounding of [`scaling-rules`](80-scaling-rules.md) is where correctness is measurable rather than asserted. |
 | Performance efficiency | QUAL-001 to QUAL-004 for time behaviour; resource use is bounded by CON-002 and watched as a signal (OBS-001, OBS-003). |
 | Compatibility | QUAL-005; the product interoperates with four services and one observer, and the list is closed (EXT-001). |
-| Interaction capability | Section `accessibility`, not yet written. |
+| Interaction capability | Section [`accessibility`](200-accessibility.md): a fixed list of thresholds — contrast, touch targets, text scale, the screen reader on every screen including the editor, no action that needs a drag, and the cooking card's own figures — with no conformance claim made. |
 | Reliability | QUAL-006 for availability, QUAL-008 for recoverability. Fault tolerance is not committed to: there is one server and no redundancy, which is what the 95 per cent of QUAL-006 accounts for. |
 | Security | QUAL-007; the rest is structural rather than measurable — no personal data exists to lose (CON-001), the account key is never uploaded (EXT-008), and a stolen deletion key destroys an account but never takes it over (AUTH-017). |
 | Maintainability | Not committed to as a measured attribute. The one maintainability property the product does buy is the replaceability of the storage provider (EXT-003). |

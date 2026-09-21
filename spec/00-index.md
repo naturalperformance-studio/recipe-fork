@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 4 questions must be answered before MVP.**
-> Sections: 22 closed · 2 blocked · 2 open · 1 n/a.
+> Sections: 23 closed · 2 blocked · 1 open · 1 n/a.
 > Blocking: OQ-002, OQ-016, OQ-029, OQ-030. Last updated 2026-09-21.
 
 The product is a recipe platform built on a fork model: any accessible recipe
@@ -40,7 +40,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [170-abuse.md](170-abuse.md) | ABUSE | closed | Flooding, mass publication, and what a single moderator can absorb. |
 | [180-analytics.md](180-analytics.md) | ANL | closed | What can be known about the product without tracking anyone: the figures countable from stored state, reach taken from the distribution channel, an anonymous count of starts, and the two numbers a published recipe keeps for its own author — openings and additions to favourites — labelled with what they actually count and where they undercount. |
 | [190-legal.md](190-legal.md) | LEG | blocked | What publishing grants and what it does not: an irrevocable licence to the product, because permanence cannot rest on a permission that can be withdrawn; a licence to every user over the steps alone, so forking rests on a grant and not only on what copyright excludes; media and description that stay the author's. Terms accepted at account creation and again when they change, where refusing costs authorship and never costs reading. Sixteen years declared and nothing verified. The name is OQ-016 and the age mark is inside OQ-029, which is why this section is blocked. |
-| 200-accessibility.md | A11Y | open | Accessibility commitments and their verification. |
+| [200-accessibility.md](200-accessibility.md) | A11Y | closed | A fixed list of commitments with thresholds instead of a conformance claim: contrast, 48 dp targets and 56 on the cooking card, the device font scale to 200 per cent, the screen reader working on every screen including the editor so that authorship is not closed to anyone, an alternative to every drag, the cooking card built for busy hands, and nothing carried by colour alone. |
 | [210-observability.md](210-observability.md) | OBS | closed | The thirteen signals the product watches, each naming the decision that asked for it, the thresholds at which one becomes a decision, the moderator's screen they live on, and the one outbound channel that carries an alert — numbers only, one way. |
 | 220-mvp-boundary.md | MVP | open | What is in the first release and what explicitly waits. |
 | — | MIG | n/a | Migration: the product launches from scratch — no existing data, users or predecessor system to migrate from. Moving a user between devices by its key is an authentication requirement, not a migration. |

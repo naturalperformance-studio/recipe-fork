@@ -129,6 +129,8 @@ including between two existing ones, and reorder either by dragging it up or dow
   (FLOW-027).
 - Given an ingredient that a step references, when the author deletes that
   ingredient, then the reference is dropped as DOM-007 already requires.
+- Given a user who cannot drag, when they reorder a step or an ingredient, then
+  a discrete action does the same thing (A11Y-006).
 
 **Verification:** insert and drag steps and ingredients in a recipe that has
 references and timers, and confirm positions and references afterwards.
