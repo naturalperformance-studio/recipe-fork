@@ -53,13 +53,13 @@ in this wave, and no media is attached.
 | T-015 | A quantity goes into a step as a reference | T-014, T-019 | gated |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | gated |
-| T-034 | A long step with an unnamed timer is shown what its notification will say | T-017 | planned |
 | T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | planned |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | planned |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | planned |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | planned |
 | T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
 | T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
+| T-034 | A long step with an unnamed timer is shown what its notification will say | T-017, T-023 | planned |
 | T-033 | A timer asks for notifications when first started, and a refusal is explained at once | T-023 | planned |
 | T-024 | Several timers run at once, and restarting one asks first | T-033 | planned |
 | T-025 | The card keeps the screen awake and is where the reader left it | T-024 | planned |
@@ -949,50 +949,6 @@ in this wave, and no media is attached.
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
-### T-034 — A long step with an unnamed timer is shown what its notification will say
-
-**Requirements:** GUIDE-006, GUIDE-005, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
-**Depends on:** T-017
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
-**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Note:** The cut FLOW-016 makes — the first 60 characters at a word boundary, with an ellipsis — is built here in `:core` `timer`, because this display must show the notification's text exactly; T-023 builds the notification from the same function.
-**Criteria of these requirements carried elsewhere:** GUIDE-005 (1, 6) → wave 2; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
-
-**Acceptance criteria** (verbatim)
-
-*GUIDE-006 — spec/75-author-guidance.md*
-- Given such a step, when the author leaves it, then what is shown is the text the notification will carry at the authored serving count, cut exactly as FLOW-016 cuts it, with the ellipsis.
-- Given the step holds a reference within the text shown, when the display is read, then it states that the quantities in it follow the reader's serving count, so the reader's notification may read and be cut differently.
-- Given that display, when the author reads it, then it states that this is what the notification will say and offers to name the timer differently, and it does not tell the author to rewrite the step.
-- Given that display, when the author names the timer from it, then the timer holds that name and the display does not appear for this step again while the name is set (FLOW-016).
-- Given a step of 60 characters or fewer at the authored serving count, holding no reference, carrying a timer, when the author leaves it, then nothing is shown, because nothing will be cut.
-- Given a step of 55 characters at the authored serving count whose opening holds a reference, carrying an unnamed timer, when the author leaves it, then the display is shown, because a reader's larger count can lengthen it past the cut.
-- Given a step of more than 60 characters carrying no timer, when the author leaves it, then nothing is shown, because no notification will be built from it.
-- Given a timer the author already named, when they leave its step however long, then nothing is shown, because the step's length no longer decides anything.
-- Given an unnamed timer whose step the author rewrites so the decisive words come first, when they leave it again, then the new opening is shown, because this reports a fact and not an error that was corrected.
-- Given the display, when it is shown, then nothing is refused and the step is stored exactly as typed: submission does not depend on it (FLOW-027, DOM-012).
-
-*GUIDE-005 — spec/75-author-guidance.md*
-- Given a hint, when it is shown, then it blocks nothing, refuses nothing and delays nothing the author was doing.
-- Given a hint, when it is shown, then no record is kept of its having been seen: whether it is shown is recomputed from the recipe and the author's action every time, and there is nothing to dismiss.
-- Given a hint and a warning of FLOW-028 that apply at the same moment, when both apply, then both are shown and neither replaces the other.
-
-*L10N-001 — spec/160-localization.md*
-- Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
-- Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
-
-*A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
-
-*A11Y-005 — spec/200-accessibility.md*
-- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
-
-**Gate 1:** —
-**Review:** —
-**Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
-
 ### T-018 — A saved recipe opens as the card a reader sees, at the serving count chosen
 
 **Requirements:** FLOW-029, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005, L10N-009, DOM-015
@@ -1249,8 +1205,9 @@ in this wave, and no media is attached.
 **Requirements:** FLOW-013, FLOW-016, EXT-009, L10N-001, A11Y-003, A11Y-005
 **Status:** planned
 **Depends on:** T-022, T-026
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
+**Expected files:** `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Note:** The cut of FLOW-016 (3–8) is built here as a function in `:core` `timer`, so that T-034's editor display shows exactly the text this notification carries.
 **Criteria of these requirements carried elsewhere:** FLOW-013 (5, 8–13) → T-033; (6) → T-022 · FLOW-016 (1–2, 9–11) → T-024 · EXT-009 (2) → wave 8; (3) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
@@ -1287,6 +1244,50 @@ in this wave, and no media is attached.
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-034 — A long step with an unnamed timer is shown what its notification will say
+
+**Requirements:** GUIDE-006, GUIDE-005, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
+**Depends on:** T-017, T-023
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
+**Note:** GUIDE-006 (1) shows the text "cut exactly as FLOW-016 cuts it". That cut — FLOW-016 (3–8), including a step of 60 characters or fewer announced whole (4) and a reference rendered as the card reads it before the cut (8), which rests on FLOW-032 (1–4) in T-021 — is built and tested in T-023, in `:core` `timer`. This task follows T-023 and uses that function unchanged; it builds no cut of its own.
+**Criteria of these requirements carried elsewhere:** GUIDE-005 (1, 6) → wave 2; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+
+**Acceptance criteria** (verbatim)
+
+*GUIDE-006 — spec/75-author-guidance.md*
+- Given such a step, when the author leaves it, then what is shown is the text the notification will carry at the authored serving count, cut exactly as FLOW-016 cuts it, with the ellipsis.
+- Given the step holds a reference within the text shown, when the display is read, then it states that the quantities in it follow the reader's serving count, so the reader's notification may read and be cut differently.
+- Given that display, when the author reads it, then it states that this is what the notification will say and offers to name the timer differently, and it does not tell the author to rewrite the step.
+- Given that display, when the author names the timer from it, then the timer holds that name and the display does not appear for this step again while the name is set (FLOW-016).
+- Given a step of 60 characters or fewer at the authored serving count, holding no reference, carrying a timer, when the author leaves it, then nothing is shown, because nothing will be cut.
+- Given a step of 55 characters at the authored serving count whose opening holds a reference, carrying an unnamed timer, when the author leaves it, then the display is shown, because a reader's larger count can lengthen it past the cut.
+- Given a step of more than 60 characters carrying no timer, when the author leaves it, then nothing is shown, because no notification will be built from it.
+- Given a timer the author already named, when they leave its step however long, then nothing is shown, because the step's length no longer decides anything.
+- Given an unnamed timer whose step the author rewrites so the decisive words come first, when they leave it again, then the new opening is shown, because this reports a fact and not an error that was corrected.
+- Given the display, when it is shown, then nothing is refused and the step is stored exactly as typed: submission does not depend on it (FLOW-027, DOM-012).
+
+*GUIDE-005 — spec/75-author-guidance.md*
+- Given a hint, when it is shown, then it blocks nothing, refuses nothing and delays nothing the author was doing.
+- Given a hint, when it is shown, then no record is kept of its having been seen: whether it is shown is recomputed from the recipe and the author's action every time, and there is nothing to dismiss.
+- Given a hint and a warning of FLOW-028 that apply at the same moment, when both apply, then both are shown and neither replaces the other.
+
+*L10N-001 — spec/160-localization.md*
+- Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
+- Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+
+*A11Y-005 — spec/200-accessibility.md*
+- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
+
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-034-gate1.md (FLOW-016's cut not named and not yet built); now follows T-023, which builds it, re-gate due
+**Review:** —
+**Gate 2:** —
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-033 — A timer asks for notifications when first started, and a refusal is explained at once
 
