@@ -2,7 +2,8 @@
 slug: DOM
 status: closed
 updated: 2026-09-27
-ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014, DOM-016]
+ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014, DOM-016, DOM-017,
+  DOM-018]
 ---
 
 # Invariants over ingredients, the dictionaries, units and limits
@@ -230,3 +231,80 @@ is counted in pieces, and what a piece is comes from the entry. Whether to add
 them is OQ-037.
 **Cost, stated:** an author writes a bunch of dill as `укроп · 1 · шт`, and a
 reader reads "1 шт" of dill.
+
+### DOM-017 — An authored quantity is a value of its unit type's grid
+
+The system shall hold as an ingredient's quantity only a value above zero that
+the rounding grid of its unit type displays (`scaling-rules`), and shall set no
+upper bound on it.
+
+The values held are, by unit type:
+
+| Unit type | Values the quantity field holds |
+|---|---|
+| `exact` | below 1000 kg or 1000 l, a whole number of grams or millilitres, entered in any unit of the same dimension (g, kg, t or ml, l, m³); at 1000 kg or 1000 l and above, a whole number of kilograms or litres |
+| `piece`, indivisible | a whole number of one or more |
+| `piece`, divisible | ½, a whole number, or a whole number followed by ½ |
+| `household`, `taste_measured` | ¼, ⅓, ½, ⅔, ¾, a whole number, or a whole number followed by one of those fractions |
+
+**Acceptance criteria**
+- Given the quantity field, when the author enters `500 г`, `1,5 кг`, `⅓ ч. л.`,
+  `1½ шт` of a divisible ingredient or `3 шт` of an indivisible one, then the field
+  holds that value.
+- Given the quantity field, when the author enters 0, a negative number, `7,5 г`,
+  `1,2345 кг`, `0,3 ч. л.`, `2,5 шт` or `½ шт` of an indivisible ingredient, then
+  the field does not hold it.
+- Given the quantity field, when the author enters `1 г`, `¼ ч. л.`, `½ шт` of a
+  divisible ingredient or `1 шт` of an indivisible one, then the field holds it:
+  each is the floor of its grid.
+- Given the quantity field, when the author enters a number however large that lies
+  on the grid, then the field holds it.
+- Given a row whose field holds a value, when the author changes its unit or, for
+  a free-text ingredient, its divisibility, so that the value no longer lies on the
+  new grid — `½ ст. л.` changed to `г`, `1½ шт` made indivisible — then the value
+  stays in the field, the row is marked as an error naming the values the field
+  accepts, and the recipe cannot be submitted until the row holds an accepted value.
+- Given a submission carrying a quantity that does not lie on the grid of its unit
+  type, when it is validated, then it is rejected, exactly as DOM-016 rejects a
+  unit outside its table.
+- Given a recipe at its authored serving count, when an ingredient is displayed,
+  then it shows the authored value, which is a grid value and so is the same under
+  SCALE-001 (4) and under the grid; DOM-018 is the one exception.
+- Given a fork of a recipe holding a value that no longer lies on its grid
+  (DOM-018), when the fork is edited, then that row is marked as an error in the
+  same way and the fork cannot be submitted until it is corrected.
+
+**Verification:** enter every example above in the editor, in both directions;
+change the unit and the divisibility of a row holding an off-grid value for its
+new grid and try to submit; submit an off-grid quantity to the server directly.
+**Source:** user decision, 2026-09-27 (SD-034, and SD-034's follow-up on changing a
+unit). The field works on the device, so it behaves the same with no connection.
+See [ADR — a quantity anyone states lies on the grid](../decisions/20260927-stated-quantities-lie-on-the-grid.md).
+**Cost, stated:** an author cannot write 2,5 g of yeast or 0,3 teaspoon; they write
+3 g and ⅓. Half of an indivisible piece cannot be written at all, which the section
+`scaling-rules` had already accepted.
+
+### DOM-018 — A quantity published before a divisibility correction stays as written
+
+Where a dictionary entry's divisibility is changed after a recipe holding a
+quantity of that entry was published, the system shall display that quantity at
+the recipe's authored serving count as it was written, even where the new grid
+does not hold it.
+
+**Acceptance criteria**
+- Given a published recipe with `1½ шт` of an entry, when the product owner marks
+  the entry indivisible, then the recipe at its authored serving count still shows
+  `1½ шт`, and nothing in it is marked as derived or rounded (CON-004 (3)).
+- Given the same recipe at any other serving count, when the ingredient is
+  displayed, then its value is computed from the written 1½ and rounded by the new
+  grid, as for any computed value (SCALE-001, SCALE-015).
+- Given a draft or a withdrawn or rejected recipe holding such a quantity, when it
+  is edited, then DOM-017 marks the row as an error and it cannot be submitted
+  until corrected.
+
+**Verification:** publish a recipe with a half piece of a divisible entry, mark the
+entry indivisible, and open the recipe at its authored and at another count; open
+a draft holding the same quantity.
+**Source:** user decision, 2026-09-27. A recipe was valid when it was published,
+and CON-003 forbids correcting it afterwards; the correction of the entry is the
+product owner's, not the author's.

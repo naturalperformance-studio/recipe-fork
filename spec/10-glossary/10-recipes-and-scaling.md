@@ -179,11 +179,14 @@ the reader last used on that particular recipe (FLOW-017).
 
 **Fixed ingredient** — an ingredient whose available amount the reader states, so
 the whole recipe is scaled by the factor that implies. The most recently fixed
-one sets the scale (SCALE-002, SCALE-006).
+one sets the scale (SCALE-002, SCALE-006). The amounts that may be fixed, and
+the units they may be stated in, are SCALE-018.
 
 **Rounding grid** — the set of values each unit type may display, and the floor
 below which it does not go (`scaling-rules`). Rounding applies to what is shown,
-never to the stored recipe and never to the chain of computation (SCALE-003).
+never to the stored recipe and never to the chain of computation (SCALE-003). It
+also bounds what is stated: an author's quantity and a reader's fixed amount are
+values of the grid of their unit type (DOM-017, SCALE-018).
 
 **Floor** — the smallest quantity a unit type displays: 1 piece indivisible, ½
 piece divisible, ¼ for `household` and `taste_measured`, ¼ serving for the

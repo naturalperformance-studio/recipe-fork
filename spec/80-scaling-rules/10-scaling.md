@@ -2,7 +2,8 @@
 slug: SCALE
 status: closed
 updated: 2026-09-27
-ids: [SCALE-001, SCALE-002, SCALE-003, SCALE-006, SCALE-008, SCALE-010, SCALE-011, SCALE-016, SCALE-017]
+ids: [SCALE-001, SCALE-002, SCALE-003, SCALE-006, SCALE-008, SCALE-010, SCALE-011, SCALE-016, SCALE-017,
+  SCALE-018]
 ---
 
 # Scaling
@@ -34,6 +35,10 @@ compare against hand computation.
 neither the grid nor SCALE-015 produces; 6 pieces is the value at 8 servings
 (SD-027, the criterion on pieces). The behaviour was already decided by the grid
 and SCALE-015; only the example was wrong.
+**Note, 2026-09-27:** criterion 4 and the statement agree for every quantity,
+because an authored quantity lies on its grid (DOM-017), so at a ratio of 1 the
+grid value is the authored value. The one exception, a quantity published before
+its entry's divisibility was corrected, is shown as written (DOM-018) (SD-034).
 
 ### SCALE-002 — Scaling from a fixed ingredient
 
@@ -121,9 +126,9 @@ fraction — one of ¼, ⅓, ½, ⅔, ¾ — instead of as a whole number, and s
 - Given a recipe authored for 4 servings with 500 g of chicken, when the reader
   fixes 115 g of it (a computed 0.92 servings), then the serving count shows an
   approximate 1 serving and not ¾.
-- Given the same recipe, when the reader fixes 109.375 g of chicken (a computed
-  0.875 servings, exactly between ¾ and 1), then the serving count shows an
-  approximate 1 serving.
+- Given a recipe authored for 4 servings with 400 g of chicken, when the reader
+  fixes 350 g of it (a computed 0.875 servings, exactly between ¾ and 1), then the
+  serving count shows an approximate 1 serving.
 - Given the same recipe, when the reader fixes 100 g of chicken (a computed 0.8
   servings), then the serving count shows an approximate ¾ serving.
 
@@ -138,6 +143,9 @@ left a requested count unmarked (SD-032). By user decisions of that date the cou
 is rounded over one set that holds 1, so fractions are shown only where that
 rounding stays below one; and only a computed count is approximate. See
 [ADR — the serving count has one set, and what the reader asked for is exact](../decisions/20260927-the-serving-count-has-one-set.md).
+**Correction, 2026-09-27:** criterion 7 fixed 109.375 g, an amount SCALE-018 does
+not accept (SD-033). It now reaches the same 0.875 servings with amounts on the
+grid; the behaviour is unchanged.
 
 ### SCALE-010 — The requested serving count has a floor and no ceiling
 
@@ -232,3 +240,45 @@ count and from a usual count, with one and with two fixings.
 **Source:** user decision, 2026-09-27 (SD-003 item 2). Releasing a fixing undoes
 it; the approximate count shown during the fixing is not a count the reader asked
 for, and taking it as one would compute from a rounded value (SCALE-003).
+
+### SCALE-018 — The amounts a reader may fix
+
+The system shall accept as the fixed amount of an ingredient only a value that the
+quantity field of its unit type holds by DOM-017, stated in a unit the author's
+unit can be read in without conversion, and shall accept nothing else.
+
+A unit the author's unit can be read in without conversion is, by unit type:
+for `exact`, any unit of the same dimension — g, kg, t for a mass and ml, l, m³ for
+a volume; for `household`, the author's own unit and no other; for `piece` and
+`taste_measured`, their one unit.
+
+**Acceptance criteria**
+- Given 500 g of chicken, when the reader fixes `300 г` or `0,3 кг`, then either is
+  accepted and the chicken line shows 300 g (SCALE-002).
+- Given 5 g of an ingredient, when the reader fixes `10 кг`, then it is accepted
+  (SCALE-010).
+- Given the fixing control, when the reader enters 0, a negative number or
+  `109,375 г`, then the control does not hold it and the scale in force does not
+  change.
+- Given an indivisible piece ingredient, when the reader enters `2,5 шт` or `½ шт`,
+  then the control does not hold it; given a divisible one, `2½ шт` is held.
+- Given an ingredient authored in grams, when the reader looks for a unit to fix it
+  in, then ml, l and m³ are not offered: nothing converts a mass to a volume.
+- Given an ingredient authored in `ст. л.`, when the reader fixes it, then the
+  control accepts tablespoons only, on the `household` grid, and offers neither
+  `ч. л.` nor `стакан` (DOM-003).
+- Given a `taste_unmeasured` ingredient, when the ingredient list is displayed, then
+  it offers no fixing, because it has no authored amount to divide by (DOM-002,
+  SCALE-002).
+- Given the fixing control holding an amount, when the reader clears it, then the
+  scale in force does not change until the reader enters an accepted amount or
+  releases the fixing (SCALE-017); clearing the control is not a release.
+
+**Verification:** fix an ingredient of each unit type at every example above, and
+clear the control of a fixed ingredient.
+**Source:** user decision, 2026-09-27 (SD-033, and its follow-up on a cleared
+control). Scaling runs on the device, so the control behaves the same with no
+connection. See [ADR — a quantity anyone states lies on the grid](../decisions/20260927-stated-quantities-lie-on-the-grid.md).
+**Cost, stated:** a reader holding 2 teaspoons of an ingredient written in
+tablespoons converts in their head; the product holds no ratio between household
+units, and a cup has no single volume to hold one for.

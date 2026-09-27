@@ -25,12 +25,17 @@ numbers.
 | `piece`, divisible | below one, ½; at one and above, a whole number alone or followed by ½ (SCALE-014) | ½ piece |
 | `household` | below one, the fractions ¼, ⅓, ½, ⅔, ¾; at one and above, a whole number alone or followed by one of them (SCALE-014) | ¼ |
 | `taste_measured` | below one, the fractions ¼, ⅓, ½, ⅔, ¾; at one and above, a whole number alone or followed by one of them (SCALE-014) | ¼ |
+| `taste_unmeasured` | not applicable — the ingredient carries no quantity | — |
 
 A computed value is displayed as the grid value of its unit type nearest to it,
 and a value exactly between two grid values is displayed as the larger of the two
 (SCALE-015). The floor of SCALE-005 overrides this where the nearest value would be
 below it.
-| `taste_unmeasured` | not applicable — the ingredient carries no quantity | — |
+
+The grid bounds what is stated as well as what is shown: an author's quantity
+(DOM-017) and a reader's fixed amount (SCALE-018) are both values of the grid of
+their unit type, so the authored value and the grid value differ only where DOM-018 keeps a
+quantity written before its entry's divisibility was corrected.
 
 The displayed unit of an `exact` ingredient follows the magnitude of the result,
 not what the author typed: below 1000 g the value is shown in grams, at or above
@@ -60,7 +65,8 @@ person supplies the flag. The dictionary holds divisibility only. It holds no
 weights: DOM-003 stands.
 
 A recipe that needs half of something the dictionary calls indivisible has no way
-to say so, and that cost is accepted: divisibility is a property of the
+to say so — the quantity field does not hold it (DOM-017) — and that cost is
+accepted: divisibility is a property of the
 ingredient rather than of the recipe, a per-recipe override is a fourth control
 on a row that has three fields (FLOW-023), and an entry whose flag is wrong is
 one the product owner corrects once for everybody instead of every author
@@ -71,7 +77,7 @@ change on the split and never will.
 
 | Part | What is in it | Requirements |
 |---|---|---|
-| [10-scaling.md](10-scaling.md) | The two entry points — a requested serving count and a fixed ingredient — how they combine, and the bounds on the requested count. | SCALE-001, SCALE-002, SCALE-003, SCALE-006, SCALE-008, SCALE-010, SCALE-011, SCALE-016, SCALE-017 |
+| [10-scaling.md](10-scaling.md) | The two entry points — a requested serving count and a fixed ingredient — how they combine, the bounds on the requested count, and the amounts a reader may fix. | SCALE-001, SCALE-002, SCALE-003, SCALE-006, SCALE-008, SCALE-010, SCALE-011, SCALE-016, SCALE-017, SCALE-018 |
 | [20-display.md](20-display.md) | What a scaled quantity looks like: the values of every grid, how a computed value reaches one, the floors, the derived marker and its direction, and legibility at any magnitude. | SCALE-004, SCALE-005, SCALE-007, SCALE-009, SCALE-012, SCALE-013, SCALE-014, SCALE-015 |
 
 ## Open

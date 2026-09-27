@@ -3,7 +3,7 @@ slug: AUTH
 status: closed
 updated: 2026-09-27
 ids: [AUTH-011, AUTH-012, AUTH-013, AUTH-014, AUTH-015, AUTH-016, AUTH-020,
-  AUTH-021]
+  AUTH-021, AUTH-025]
 ---
 
 # One account at a time, and losing it
@@ -175,11 +175,26 @@ produced, and shall store no device identifier of any kind.
 - Given the attestation service, when the slot state is needed, then it is read
   from the service and not from a copy the product keeps.
 
+- Given a sign-in record (AUTH-025), when the stored data is enumerated, then it
+  is not a device identifier under this requirement: it is a random secret the
+  server minted, derived from nothing the device is, runs or announces.
+
+A device identifier, in this requirement and wherever the specification uses the
+term, is anything derived from a device, its hardware or its operating system,
+anything taken from a device verdict, and any identifier a third party issues to
+a device, such as a delivery token (the section `moderation`, on EXT-009). A secret the server
+mints at random at a sign-in is not one.
+
 **Verification:** data model review against a live account created through the
 gate.
 **Source:** user decision, 2026-09-20: the gate was chosen over an identity
 provider precisely because it leaves the product with nothing personal to hold,
 and a stored verdict would give that back. See OQ-029.
+**Correction, 2026-09-27:** the term "identifies a device" was defined nowhere, and
+a per-sign-in secret held by one device was read both as one and as not one
+(SD-035). By user decision of that date it is not, and the definition above and
+criterion 4 are new. See
+[ADR — a sign-in is a server secret, not a device identifier](../decisions/20260927-a-sign-in-is-not-a-device-identifier.md).
 
 ### AUTH-016 — Losing the key keeps the published work in the world
 
@@ -302,3 +317,51 @@ key travels in the account key's own file and EXT-006 is deliberately easy to
 use; it does not help anyone who kept both keys in one place; and it makes the
 recovery key exactly as valuable as the account key, so an account is now two
 artefacts to keep safe rather than one.
+
+### AUTH-025 — A sign-in leaves a record that lapses after six months unused
+
+When a device signs in with an account key, the system shall issue that device a
+sign-in secret and keep a record of it that holds nothing from which the secret
+can be reconstructed, shall accept that secret in place of the account key on
+every later request from that device, and shall delete the record once the secret
+has not been presented for six calendar months.
+
+**Acceptance criteria**
+- Given a device that has signed in, when it makes any later request for the
+  account, then it presents the sign-in secret and not the account key, and the
+  request does not count toward the ten of QUAL-009.
+- Given everything the server stores, when it is examined by someone holding all
+  of it, then no sign-in secret can be reconstructed from it and no request can be
+  made as the account with it (AUTH-014).
+- Given a sign-in record, when it is examined, then it holds the account it
+  belongs to and nothing from which the device could be identified (AUTH-015).
+- Given a record whose secret was last presented six calendar months ago, when
+  that period ends, then the record is deleted.
+- Given a device whose record was deleted, when it next reaches the server, then
+  it signs in again with the account key it holds (AUTH-019), without asking the
+  holder anything; that sign-in counts toward QUAL-009 like any other.
+- Given that silent sign-in is refused because the source has used its ten
+  attempts, when the device is used, then it stays signed in on the device, behaves
+  as with no connection (FLOW-003), and tries again once the QUAL-009 period has
+  passed; it is not signed out.
+- Given a recovery key presented under AUTH-021, when the keys are replaced, then
+  every sign-in record of the account is deleted, and a device presenting its old
+  secret or its old account key is signed out as AUTH-021 (3) requires.
+- Given a deleted account, when the stored data is enumerated, then no sign-in
+  record of it remains.
+- Given one device that signs in twice, when the records are counted, then there
+  are two, and the one no longer presented is deleted by the six-month rule.
+
+**Verification:** sign in on two devices; age one record past six months and
+confirm the device signs in again unnoticed; exhaust the ten attempts from the
+device's source first and confirm it stays signed in and offline-like; present a
+recovery key and confirm both devices are signed out; delete the account and
+enumerate what remains.
+**Source:** user decision, 2026-09-27 (SD-035, and its follow-up on a silent sign-in
+refused by the limit). QUAL-009 counts every presentation of an account key,
+successful ones included, so a device presenting the key on every request would
+exhaust it within a day; the secret is what lets that decision stand. The six
+months are the figure AUTH-002 already uses for a device slot. See
+[ADR — a sign-in is a server secret, not a device identifier](../decisions/20260927-a-sign-in-is-not-a-device-identifier.md).
+**Cost, stated:** one scheduled deletion on the server; and a device unused for six
+months spends one of its source's ten daily attempts when it returns.

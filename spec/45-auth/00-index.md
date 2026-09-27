@@ -36,7 +36,9 @@ and
 The gate is an attestation service: the client obtains a verdict, the server
 checks it, and the service holds a few bits of state per device that survive
 reinstalling the application and resetting the device. The product never learns
-a device identifier and stores no part of the verdict (AUTH-015). The interface
+a device identifier and stores no part of the verdict (AUTH-015). What a signed-in
+device presents instead of its key is a secret the server minted, which is not a
+device identifier and lapses after six months unused (AUTH-025). The interface
 itself belongs to [`external-interfaces`](../130-external-interfaces.md).
 
 What the law of the countries the product is distributed in obliges of that
@@ -54,4 +56,4 @@ change on the split and never will.
 |---|---|---|
 | [10-creating-an-account.md](10-creating-an-account.md) | When an account appears, the device slots, the nickname — its form and the words it is drawn from — and the muted account | AUTH-001–AUTH-006, AUTH-018, AUTH-022, AUTH-023 |
 | [20-account-key.md](20-account-key.md) | The three steps of creation, and the account key and the deletion key: issuing, keeping, showing, importing | AUTH-007–AUTH-010, AUTH-017, AUTH-019, AUTH-024 |
-| [30-account-life.md](30-account-life.md) | One active account, what replacing it destroys, what the server accepts as proof, losing the key, and the recovery key | AUTH-011–AUTH-016, AUTH-020, AUTH-021 |
+| [30-account-life.md](30-account-life.md) | One active account, what replacing it destroys, what the server accepts as proof, what counts as a device identifier, losing the key, the recovery key, and the record a sign-in leaves | AUTH-011–AUTH-016, AUTH-020, AUTH-021, AUTH-025 |

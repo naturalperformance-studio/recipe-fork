@@ -41,6 +41,18 @@ later; signing in with a key consumes none (AUTH-002, AUTH-009). The slots are
 held by the attestation service, not by the product, and yield no device
 identifier (AUTH-015).
 
+**Device identifier** — anything derived from a device, its hardware or its
+operating system, anything taken from a device verdict, and any identifier a third
+party issues to a device, such as a delivery token. The product stores none
+(AUTH-015, CON-001).
+
+**Sign-in secret** — what a device presents on every request after signing in,
+instead of the account key: a random secret the server mints at a sign-in. It is
+not a device identifier. The server keeps a record of it from which the secret
+cannot be rebuilt, and deletes that record after six calendar months unused, when
+the device signs in again with the key it holds (AUTH-025). Not to be confused
+with a session, the span of use FLOW-058 defines.
+
 **Device verdict** — the answer the attestation service gives about the device
 the application is running on, including which slots are free. Nothing from it
 is stored (AUTH-015).

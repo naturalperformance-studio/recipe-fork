@@ -89,7 +89,7 @@ there (FLOW-051).
 | `free_text_name` | text or none | The author's own name for an ingredient that matched no entry. Present exactly when `dictionary_entry` is absent (DOM-009). |
 | `unit_type` | unit type | One of the five above. |
 | `unit` | unit | The concrete unit within the type, e.g. `g` within `exact`. Absent for `taste_unmeasured`. |
-| `quantity` | number or none | Absent exactly when `unit_type` is `taste_unmeasured`. |
+| `quantity` | number or none | Absent exactly when `unit_type` is `taste_unmeasured`. Otherwise a value above zero that the rounding grid of its unit type displays (DOM-017), except where DOM-018 keeps one written before a divisibility correction. |
 | `piece_weight` | number or none | Optional, `piece` only: the mass of one piece, used to keep scaling smooth. |
 | `divisible` | boolean or none | `piece` only. Taken from the entry where there is one, and set by the author exactly where there is none, because a free-text ingredient has no entry to take it from (DOM-009). The author never overrides an entry's value (`scaling-rules`). |
 
@@ -218,4 +218,4 @@ split and never will.
 | Part | What is in it | Requirements |
 |---|---|---|
 | [10-invariants.md](10-invariants.md) | Invariants over the entities: nickname, quantity, household measure, parent, media ownership, the submission minimum, step references, tags, the authored serving count; and what is deliberately not modelled yet | DOM-001–DOM-008, DOM-015 |
-| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, and the twelve units | DOM-009–DOM-014, DOM-016 |
+| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, the twelve units, and the values a quantity may hold | DOM-009–DOM-014, DOM-016–DOM-018 |
