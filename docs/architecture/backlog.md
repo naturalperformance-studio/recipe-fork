@@ -45,9 +45,9 @@ in this wave, and no media is attached.
 | T-009 | The first step of creation shows the nickname and the terms | T-006, T-008 | gated |
 | T-032 | The second step of creation issues the account key and the deletion key | T-009 | blocked |
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
-| T-011 | An ingredient is picked from the dictionary in three fields | T-008 | planned |
-| T-031 | What the ingredient field offers for what the author types | T-011 | planned |
-| T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-031 | planned |
+| T-031 | What the ingredient field offers for what the author types | T-008 | planned |
+| T-011 | An ingredient is picked from the dictionary in three fields | T-031 | planned |
+| T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | planned |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | planned |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | planned |
 | T-015 | A quantity goes into a step as a reference | T-014 | planned |
@@ -244,7 +244,7 @@ in this wave, and no media is attached.
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** One criterion, but it is the first path from the server to the device: it carries the application container, the local database, the network client and connectivity observation. Indivisible because the criterion needs both ends. Expected at 500–700 changed lines.
 **Note:** checked against spec/ @ ead1a44; criteria and their spec paths unchanged word for word, so the gate-1 verdict stands.
-**Criteria of these requirements carried elsewhere:** FLOW-001 (1) → T-008; (2, 4, 7) → T-011; (3) → T-012; (5) → wave 3
+**Criteria of these requirements carried elsewhere:** FLOW-001 (1) → T-008; (2, 7) → T-011; (3) → T-012; (4) → T-031; (5) → wave 3
 
 **Acceptance criteria** (verbatim)
 
@@ -409,7 +409,7 @@ in this wave, and no media is attached.
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** checked against spec/ @ ead1a44; criteria and their spec paths unchanged word for word, so the gate-1 verdict stands.
-**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (4) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 4, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (4) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 7) → T-011; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -583,78 +583,15 @@ in this wave, and no media is attached.
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
-### T-011 — An ingredient is picked from the dictionary in three fields
-
-**Requirements:** FLOW-023, DOM-002, DOM-009, DOM-010, FLOW-001, L10N-003, DOM-014, L10N-001, A11Y-003, A11Y-005, DOM-016
-**Status:** planned
-**Depends on:** T-008
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
-**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-023 (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · DOM-016 (3) → wave 2; (4) → wave 8
-
-**Acceptance criteria** (verbatim)
-
-*FLOW-023 — spec/70-flows/40-editor.md*
-- Given the editor, when the author adds an ingredient, then exactly three fields are offered: `крылышки` · `500` · `г`, or `тушка` · `2` · `шт`.
-- Given the ingredient field, when the author types, then dictionary entries are offered whether they are leaves or parents (DOM-010), so `курица · 500 · г` is an ordinary row.
-- Given the ingredient field, when what the author typed matches a parent, then its leaves are offered before it (FLOW-057), so that a qualifier is a last resort and not a substitute for picking the right entry.
-- Given the author picks the entry `филе` and keeps typing `без кожи`, when the row is read, then it reads `филе без кожи`, the ingredient holds that entry and that qualifier, and no fourth field has appeared.
-- Given the unit field, when the author picks `шт`, then the ingredient's unit type is `piece` and the author is never shown a unit type at all.
-- Given the unit field, when the author picks the unit that means "to taste", then the quantity field is withdrawn, the unit field stays and shows "to taste", and the ingredient is stored with no quantity (DOM-002).
-- Given an ingredient set to "to taste", when the author picks another unit in its unit field, then the quantity field returns, empty.
-- Given the unit field, when it is opened, then it offers exactly the units of DOM-016.
-- Given a `piece` ingredient whose dictionary entry supplies its divisibility, when the row is shown, then divisibility is not one of the three fields (FLOW-001).
-
-*DOM-002 — spec/50-domain-model/10-invariants.md*
-- Given an ingredient of type `taste_unmeasured`, when it is stored, then it has no quantity and no unit, the editor offers no quantity field for it, and its unit field shows "to taste" (FLOW-023).
-
-*DOM-009 — spec/50-domain-model/20-ingredients-and-limits.md*
-- Given an ingredient the author picked from the dictionary, when it is stored, then it holds that entry, holds no `free_text_name`, and holds a `qualifier` only if the author wrote one.
-- Given a dictionary entry that the product owner removes upstream, when a recipe already refers to it, then the recipe keeps the reference, exactly as FLOW-001 requires of a removed tag.
-
-*DOM-010 — spec/50-domain-model/20-ingredients-and-limits.md*
-- Given a recipe naming `крылышки`, when it is stored, then it holds that entry and nothing about `курица` is copied into the recipe.
-- Given a recipe whose author had only generic chicken to state, when they pick `курица` itself, then it is accepted as the ingredient's entry.
-
-*FLOW-001 — spec/70-flows/10-offline-and-sync.md*
-- Given no network connection, when the author adds a `piece` ingredient whose dictionary entry is marked indivisible, then its divisibility is set from the entry and the author is not asked to set it by hand.
-- Given no network connection, when the author looks for an ingredient, then the dictionary is searched on the device and offers the same entries it offers with a connection.
-- Given a dictionary entry was removed upstream, when a held recipe already uses it, then the recipe keeps it and the editor stops offering it for new use.
-
-*L10N-003 — spec/160-localization.md*
-- Given any entry the author can pick, when the interface language changes, then its label changes with it and the ingredient the author chose does not.
-
-*DOM-014 — spec/50-domain-model/20-ingredients-and-limits.md*
-- Given a dictionary changed in the store, when a device next reaches the server, then its held copy is replaced as FLOW-001 already requires, and an entry removed upstream stays resolvable in the recipes that already name it (DOM-009, DOM-010).
-
-*L10N-001 — spec/160-localization.md*
-- Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
-- Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
-
-*A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
-
-*A11Y-005 — spec/200-accessibility.md*
-- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
-
-*DOM-016 — spec/50-domain-model/20-ingredients-and-limits.md*
-- Given the unit field of the editor, when it is opened, then it offers these twelve units, named in the interface language, and no other.
-- Given the author picks `стакан`, when the ingredient is stored, then its unit type is `household`; given `щепотка`, `taste_measured`; given `шт`, `piece`.
-
-**Gate 1:** blocked-by-spec (SD-008, SD-006) — docs/product/verdicts/20260927-T-011-gate1.md; re-sliced against spec/ @ ead1a44 after SD-008, SD-006 resolved, re-gate due
-**Review:** —
-**Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
-
 ### T-031 — What the ingredient field offers for what the author types
 
-**Requirements:** FLOW-057, L10N-001, A11Y-003, A11Y-005
+**Requirements:** FLOW-057, L10N-001, A11Y-003, A11Y-005, FLOW-023, FLOW-001
 **Status:** planned
-**Depends on:** T-011
+**Depends on:** T-008
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/text/**` · `core/src/test/kotlin/app/recipefork/core/text/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-one-text-analyser.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Note:** The folding FLOW-057 names — letter case ignored, `ё` and `е` one letter — is the first stage of the analyser the one-text-analyser ADR places in `:core` `text`; this task builds that stage. The offer matches the beginnings of words, not the stemmed tokens of L10N-007 (spec ADR `20260927-the-ingredient-field.md`), so no stemmer is added here.
-**Criteria of these requirements carried elsewhere:** FLOW-057 (2, 6–7) → T-012 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-057 (2, 6–7) → T-012 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-023 (1, 4, 7–11) → T-011; (5) → wave 2; (6) → T-012 · FLOW-001 (1) → T-008; (2, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004
 
 **Acceptance criteria** (verbatim)
 
@@ -677,19 +614,86 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
+*FLOW-023 — spec/70-flows/40-editor.md*
+- Given the ingredient field, when the author types, then dictionary entries are offered whether they are leaves or parents (DOM-010), so `курица · 500 · г` is an ordinary row.
+- Given the ingredient field, when what the author typed matches a parent, then its leaves are offered before it (FLOW-057), so that a qualifier is a last resort and not a substitute for picking the right entry.
+
+*FLOW-001 — spec/70-flows/10-offline-and-sync.md*
+- Given no network connection, when the author looks for an ingredient, then the dictionary is searched on the device and offers the same entries it offers with a connection.
+
 **Gate 1:** —
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
-### T-012 — An ingredient outside the dictionary is kept as free text with a warning
+### T-011 — An ingredient is picked from the dictionary in three fields
 
-**Requirements:** FLOW-022, FLOW-023, DOM-009, FLOW-001, L10N-001, A11Y-003, A11Y-005, FLOW-057
+**Requirements:** FLOW-023, DOM-002, DOM-009, DOM-010, FLOW-001, L10N-003, DOM-014, L10N-001, A11Y-003, A11Y-005, DOM-016
 **Status:** planned
 **Depends on:** T-031
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1–4, 7–11) → T-011; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 4, 7) → T-011; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-057 (1, 3–5, 8–10) → T-031
+**Criteria of these requirements carried elsewhere:** FLOW-023 (2–3) → T-031; (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · DOM-016 (3) → wave 2; (4) → wave 8
+
+**Acceptance criteria** (verbatim)
+
+*FLOW-023 — spec/70-flows/40-editor.md*
+- Given the editor, when the author adds an ingredient, then exactly three fields are offered: `крылышки` · `500` · `г`, or `тушка` · `2` · `шт`.
+- Given the author picks the entry `филе` and keeps typing `без кожи`, when the row is read, then it reads `филе без кожи`, the ingredient holds that entry and that qualifier, and no fourth field has appeared.
+- Given the unit field, when the author picks `шт`, then the ingredient's unit type is `piece` and the author is never shown a unit type at all.
+- Given the unit field, when the author picks the unit that means "to taste", then the quantity field is withdrawn, the unit field stays and shows "to taste", and the ingredient is stored with no quantity (DOM-002).
+- Given an ingredient set to "to taste", when the author picks another unit in its unit field, then the quantity field returns, empty.
+- Given the unit field, when it is opened, then it offers exactly the units of DOM-016.
+- Given a `piece` ingredient whose dictionary entry supplies its divisibility, when the row is shown, then divisibility is not one of the three fields (FLOW-001).
+
+*DOM-002 — spec/50-domain-model/10-invariants.md*
+- Given an ingredient of type `taste_unmeasured`, when it is stored, then it has no quantity and no unit, the editor offers no quantity field for it, and its unit field shows "to taste" (FLOW-023).
+
+*DOM-009 — spec/50-domain-model/20-ingredients-and-limits.md*
+- Given an ingredient the author picked from the dictionary, when it is stored, then it holds that entry, holds no `free_text_name`, and holds a `qualifier` only if the author wrote one.
+- Given a dictionary entry that the product owner removes upstream, when a recipe already refers to it, then the recipe keeps the reference, exactly as FLOW-001 requires of a removed tag.
+
+*DOM-010 — spec/50-domain-model/20-ingredients-and-limits.md*
+- Given a recipe naming `крылышки`, when it is stored, then it holds that entry and nothing about `курица` is copied into the recipe.
+- Given a recipe whose author had only generic chicken to state, when they pick `курица` itself, then it is accepted as the ingredient's entry.
+
+*FLOW-001 — spec/70-flows/10-offline-and-sync.md*
+- Given no network connection, when the author adds a `piece` ingredient whose dictionary entry is marked indivisible, then its divisibility is set from the entry and the author is not asked to set it by hand.
+- Given a dictionary entry was removed upstream, when a held recipe already uses it, then the recipe keeps it and the editor stops offering it for new use.
+
+*L10N-003 — spec/160-localization.md*
+- Given any entry the author can pick, when the interface language changes, then its label changes with it and the ingredient the author chose does not.
+
+*DOM-014 — spec/50-domain-model/20-ingredients-and-limits.md*
+- Given a dictionary changed in the store, when a device next reaches the server, then its held copy is replaced as FLOW-001 already requires, and an entry removed upstream stays resolvable in the recipes that already name it (DOM-009, DOM-010).
+
+*L10N-001 — spec/160-localization.md*
+- Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
+- Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+
+*A11Y-005 — spec/200-accessibility.md*
+- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
+
+*DOM-016 — spec/50-domain-model/20-ingredients-and-limits.md*
+- Given the unit field of the editor, when it is opened, then it offers these twelve units, named in the interface language, and no other.
+- Given the author picks `стакан`, when the ingredient is stored, then its unit type is `household`; given `щепотка`, `taste_measured`; given `шт`, `piece`.
+
+**Gate 1:** blocked-by-spec (SD-008, SD-006) — docs/product/verdicts/20260927-T-011-gate1.md; re-sliced against spec/ @ ead1a44 after SD-008, SD-006 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-011-gate1-2.md (the offer rule of FLOW-057 came after the task that offers); FLOW-023 (2, 3) and FLOW-001 (4) moved to T-031, which now precedes this task, re-gate due
+**Review:** —
+**Gate 2:** —
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-012 — An ingredient outside the dictionary is kept as free text with a warning
+
+**Requirements:** FLOW-022, FLOW-023, DOM-009, FLOW-001, L10N-001, A11Y-003, A11Y-005, FLOW-057
+**Status:** planned
+**Depends on:** T-011
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1, 4, 7–11) → T-011; (2–3) → T-031; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 7) → T-011; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-057 (1, 3–5, 8–10) → T-031
 
 **Acceptance criteria** (verbatim)
 
