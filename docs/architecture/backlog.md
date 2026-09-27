@@ -39,7 +39,7 @@ in this wave, and no media is attached.
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
 | T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | on-develop |
-| T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | gated |
+| T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | gated |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | gated |
 | T-009 | The first step of creation shows the nickname and the terms | T-006, T-008 | gated |
@@ -314,11 +314,12 @@ in this wave, and no media is attached.
 ### T-006 — Creating an account costs a device slot, and no verdict makes it muted
 
 **Requirements:** AUTH-001, AUTH-002, AUTH-004, AUTH-015
-**Status:** gated
+**Status:** on-develop
 **Depends on:** T-005
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/kotlin/app/recipefork/server/attestation/**` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `server/src/test/kotlin/app/recipefork/server/account/**` · `server/src/test/kotlin/app/recipefork/server/attestation/**` · `deploy/local/compose.yml`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
 **Note:** The attestation service sits behind an interface (test-strategy ADR). Tests and the local deployment use a fake that models the service's three per-device bits and their write months; the Play Integrity adapter is a later task.
+**Note:** Left open at merge, for the tasks named: the server returns whether an account is muted but does not store it — the column (a new migration) goes to whichever task first makes the server act on it, T-028's re-slice at the latest; two creations racing on one device can occupy one slot, since the attestation service has no compare-and-set — named for the Play Integrity adapter task.
 **Criteria of these requirements carried elsewhere:** AUTH-001 (1) → wave 3; (2, 6–7) → T-026; (4) → wave 7 · AUTH-004 (1) → wave 3; (2) → T-026; (3, 5) → wave 4; (4, 7) → wave 6 · AUTH-015 (3) → wave 7
 
 **Acceptance criteria** (verbatim)
@@ -342,9 +343,9 @@ in this wave, and no media is attached.
 - Given the stored data of any account, when it is enumerated, then it holds nothing that identifies a device (CON-001).
 
 **Gate 1:** accepted — docs/product/verdicts/20260927-T-006-gate1.md; AUTH-001 (3) rewritten in spec/ @ ead1a44 and replaced here, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-006-gate1-2.md
-**Review:** —
-**Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Review:** defects — a missing or blank `ATTESTATION` silently started a server that creates only muted accounts (AUTH-001 statement), and a test locked the fallback in; returned to the developer; re-review: pass — 10 of 10 criteria and the missing, blank and unknown `ATTESTATION` cases checked by mutation, worktree as it was
+**Gate 2:** accepted — docs/product/verdicts/20260927-T-006-gate2.md
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-007 — The own-recipes view lists every recipe the account owns
 
