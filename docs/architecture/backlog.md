@@ -48,7 +48,7 @@ in this wave, and no media is attached.
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
-| T-013 | Steps are written in the editor and survive a restart offline | T-012 | planned |
+| T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | planned |
 | T-015 | A quantity goes into a step as a reference | T-014 | planned |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
@@ -738,7 +738,7 @@ in this wave, and no media is attached.
 ### T-013 — Steps are written in the editor and survive a restart offline
 
 **Requirements:** FLOW-024, FLOW-002, L10N-001, A11Y-003, A11Y-005, DOM-015
-**Status:** planned
+**Status:** gated
 **Depends on:** T-012
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -766,7 +766,7 @@ in this wave, and no media is attached.
 - Given the serving count field of the editor, when the author tries to enter 0, a negative number, or a number with a fractional part such as 2.5 or ½, then the field does not hold it.
 - Given that field, when the author enters 1, 4 or 1000, then it holds that value.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; re-sliced; blocked-by-spec (SD-013) — docs/product/verdicts/20260927-T-013-gate1-2.md; re-sliced against spec/ @ ead1a44 after SD-013 resolved, re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; re-sliced; blocked-by-spec (SD-013) — docs/product/verdicts/20260927-T-013-gate1-2.md; re-sliced against spec/ @ ead1a44 after SD-013 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-013-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
