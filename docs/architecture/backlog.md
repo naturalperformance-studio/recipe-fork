@@ -1206,13 +1206,13 @@ in this wave, and no media is attached.
 
 ### T-023 — A timer announces itself when the application is closed
 
-**Requirements:** FLOW-013, FLOW-016, EXT-009, L10N-001, A11Y-003, A11Y-005
+**Requirements:** FLOW-013, FLOW-016, EXT-009, L10N-001, A11Y-003, A11Y-005, A11Y-007
 **Status:** planned
 **Depends on:** T-022, T-026
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** The cut of FLOW-016 (3–8) is built here as a function in `:core` `timer`, so that T-034's editor display shows exactly the text this notification carries.
-**Criteria of these requirements carried elsewhere:** FLOW-013 (5, 8–13) → T-033; (6) → T-022 · FLOW-016 (1–2, 9–11) → T-024 · EXT-009 (2) → wave 8; (3) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-013 (5, 8–13) → T-033; (6) → T-022 · FLOW-016 (1–2, 9–11) → T-024 · EXT-009 (2) → wave 8; (3) → wave 2 · L10N-001 (3) → release record · A11Y-003 (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1240,14 +1240,18 @@ in this wave, and no media is attached.
 
 *A11Y-003 — spec/200-accessibility.md*
 - Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-021) — docs/product/verdicts/20260927-T-023-gate1.md; FLOW-013 (7) added from T-022 after this verdict, re-gate due with the spec fix; FLOW-013 (5) and the permission criteria moved to T-033; re-sliced against spec/ @ ead1a44 after SD-021 resolved, re-gate due
+*A11Y-007 — spec/200-accessibility.md*
+- Given the cooking card, when its controls are measured, then A11Y-003's larger figure holds.
+
+**Gate 1:** blocked-by-spec (SD-021) — docs/product/verdicts/20260927-T-023-gate1.md; FLOW-013 (7) added from T-022 after this verdict, re-gate due with the spec fix; FLOW-013 (5) and the permission criteria moved to T-033; re-sliced against spec/ @ ead1a44 after SD-021 resolved, re-gate due; re-gated: rejected — docs/product/verdicts/20260927-T-023-gate1-2.md (the card's cancel control not held to 56 dp); A11Y-003 (2) and A11Y-007 (2) added, re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-034 — A long step with an unnamed timer is shown what its notification will say
 
