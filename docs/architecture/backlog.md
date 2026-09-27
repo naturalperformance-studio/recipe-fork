@@ -46,7 +46,7 @@ in this wave, and no media is attached.
 | T-032 | The second step of creation issues the account key and the deletion key | T-009 | blocked |
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
-| T-011 | An ingredient is picked from the dictionary in three fields | T-031 | planned |
+| T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | planned |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | planned |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | planned |
@@ -628,7 +628,7 @@ in this wave, and no media is attached.
 ### T-011 — An ingredient is picked from the dictionary in three fields
 
 **Requirements:** FLOW-023, DOM-002, DOM-009, DOM-010, FLOW-001, L10N-003, DOM-014, L10N-001, A11Y-003, A11Y-005, DOM-016
-**Status:** planned
+**Status:** gated
 **Depends on:** T-031
 **Expected files:** `server/src/main/resources/db/migration/V1_1__dictionary_divisibility.sql` · `server/src/main/kotlin/app/recipefork/server/dictionary/**` · `server/src/test/kotlin/app/recipefork/server/dictionary/**` · `core/src/main/kotlin/app/recipefork/core/api/DictionaryContract.kt` · `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -683,7 +683,7 @@ in this wave, and no media is attached.
 - Given the unit field of the editor, when it is opened, then it offers these twelve units, named in the interface language, and no other.
 - Given the author picks `стакан`, when the ingredient is stored, then its unit type is `household`; given `щепотка`, `taste_measured`; given `шт`, `piece`.
 
-**Gate 1:** blocked-by-spec (SD-008, SD-006) — docs/product/verdicts/20260927-T-011-gate1.md; re-sliced against spec/ @ ead1a44 after SD-008, SD-006 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-011-gate1-2.md (the offer rule of FLOW-057 came after the task that offers); FLOW-023 (2, 3) and FLOW-001 (4) moved to T-031, which now precedes this task, re-gate due
+**Gate 1:** blocked-by-spec (SD-008, SD-006) — docs/product/verdicts/20260927-T-011-gate1.md; re-sliced against spec/ @ ead1a44 after SD-008, SD-006 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-011-gate1-2.md (the offer rule of FLOW-057 came after the task that offers); FLOW-023 (2, 3) and FLOW-001 (4) moved to T-031, which now precedes this task; re-gated: accepted — docs/product/verdicts/20260927-T-011-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -693,7 +693,7 @@ in this wave, and no media is attached.
 **Requirements:** FLOW-022, FLOW-023, DOM-009, FLOW-001, L10N-001, A11Y-003, A11Y-005, FLOW-057
 **Status:** planned
 **Depends on:** T-011
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
+**Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1–2, 4, 7–11) → T-011; (3) → T-031; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 7) → T-011; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-057 (1, 3–5, 9–10) → T-031
 
