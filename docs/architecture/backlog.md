@@ -53,7 +53,7 @@ in this wave, and no media is attached.
 | T-015 | A quantity goes into a step as a reference | T-014, T-019 | gated |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | gated |
-| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | planned |
+| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | blocked |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | planned |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | planned |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | planned |
@@ -951,13 +951,13 @@ in this wave, and no media is attached.
 
 ### T-018 — A saved recipe opens as the card a reader sees, at the serving count chosen
 
-**Requirements:** FLOW-029, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005, L10N-009, DOM-015
-**Status:** planned
+**Requirements:** FLOW-029, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005, L10N-009, DOM-015, FLOW-017
+**Status:** blocked
 **Depends on:** T-008, T-029
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** The card is the screen the product exists for and its first version carries the layout every later card task builds on. Expected at 450–550 changed lines.
-**Criteria of these requirements carried elsewhere:** FLOW-019 (4) → wave 3 · FLOW-038 (3–4) → wave 5; (5) → T-007; (7) → wave 3 · SCALE-011 (4) → T-020 · DOM-011 (2–3) → wave 2; (4) → wave 8 · L10N-003 (1) → T-003; (2) → T-011 · A11Y-007 (3) → T-033; (4) → T-025; (5) → wave 8 · A11Y-003 (3–4) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8 · L10N-009 (1–4, 6) → T-029 · DOM-015 (1–2) → T-013; (3) → wave 2
+**Criteria of these requirements carried elsewhere:** FLOW-019 (4) → wave 3 · FLOW-038 (3–4) → wave 5; (5) → T-007; (7) → wave 3 · SCALE-011 (4) → T-020 · DOM-011 (2–3) → wave 2; (4) → wave 8 · L10N-003 (1) → T-003; (2) → T-011 · A11Y-007 (3) → T-033; (4) → T-025; (5) → wave 8 · A11Y-003 (3–4) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8 · L10N-009 (1–4, 6) → T-029 · DOM-015 (1–2) → T-013; (3) → wave 2 · FLOW-017 (1, 3–7) → wave 3
 
 **Acceptance criteria** (verbatim)
 
@@ -1021,7 +1021,10 @@ in this wave, and no media is attached.
 *DOM-015 — spec/50-domain-model/10-invariants.md*
 - Given any authored serving count, when a reader later returns the recipe to it (SCALE-001, FLOW-017), then it is a count the serving count control can hold (SCALE-011), because every whole number of one or more is one.
 
-**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-016, SD-002, SD-013 resolved, re-gate due
+*FLOW-017 — spec/70-flows/30-cooking.md*
+- Given the setting has never been set, when the reader opens a recipe, then it opens at the count its author wrote and nothing is marked as derived.
+
+**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-016, SD-002, SD-013 resolved; re-gated: blocked-by-spec (SD-031, where a saved recipe's edit is chosen) — docs/product/verdicts/20260927-T-018-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1631,7 +1634,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | FLOW-010 — A favourite that becomes unavailable stays in the list | all |
 | FLOW-011 — One setting governs whether media is held | all |
 | FLOW-012 — Leaving the application does not lose the recipe being read | 4 |
-| FLOW-017 — The reader's usual serving count opens every recipe | all |
+| FLOW-017 — The reader's usual serving count opens every recipe | 1, 3–7 |
 | FLOW-019 — What the card shows when parts of a recipe are absent | 4 |
 | FLOW-020 — The card while it loads and when it cannot be loaded | all |
 | FLOW-034 — The favourites section holds two views | 2, 4 |
