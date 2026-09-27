@@ -175,6 +175,12 @@ somebody's favourites, with an account or without one. It counts additions and
 never falls when a recipe is removed again, because a reader with no account
 cannot report a removal. Shown to the recipe's owner alone (ANL-005, ANL-006).
 
+**Forks made** — how many times people other than its owner forked a published
+recipe while the server could be reached, whether or not the fork was ever sent.
+Never falls. Shown to the recipe's owner alone; the product owner sees the totals
+and how many recipes were forked at least once (ANL-008). Not the fork count of a
+catalogue entry, which counts published forks (CAT-005).
+
 **Threshold** — the value at which a signal stops being information and becomes
 something to decide. Crossing one marks the signal and sends one alert
 (OBS-003, OBS-004).

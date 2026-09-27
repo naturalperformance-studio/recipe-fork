@@ -1,8 +1,8 @@
 ---
 slug: ANL
 status: closed
-updated: 2026-09-21
-ids: [ANL-001, ANL-002, ANL-003, ANL-004, ANL-005, ANL-006, ANL-007]
+updated: 2026-09-28
+ids: [ANL-001, ANL-002, ANL-003, ANL-004, ANL-005, ANL-006, ANL-007, ANL-008]
 ---
 
 # What the product learns about its own use
@@ -10,7 +10,7 @@ ids: [ANL-001, ANL-002, ANL-003, ANL-004, ANL-005, ANL-006, ANL-007]
 The product measures itself, never its users. Everything a product owner — or a
 buyer — normally asks for is available from three places that require tracking
 nobody: what is already stored, the distribution channel's own statistics, and
-two counters kept against a recipe rather than against a person.
+three counters kept against a recipe rather than against a person.
 
 What is deliberately unavailable: funnels, session length, cohort retention by
 action, and any account of what a particular person cooked. Those need a record
@@ -27,7 +27,7 @@ record of an individual's behaviour for the purpose of measuring anything.
 **Acceptance criteria**
 - Given every measurement named in this section, when its inputs are
   enumerated, then none is a history of what one account or one device did.
-- Given the counters of ANL-004 and ANL-005, when their stored form is
+- Given the counters of ANL-004, ANL-005 and ANL-008, when their stored form is
   inspected, then they are numbers against the product or against a recipe, and
   carry no account identifier and no device identifier (CON-001).
 - Given a proposed measurement that would need such a record, when it is
@@ -155,14 +155,15 @@ somebody, additions say how well the content does.
 
 ### ANL-006 — Those two numbers belong to the recipe's owner alone
 
-The system shall show the counts of ANL-005 to the recipe's owner and to nobody
-else, and shall let them take part in no ordering, no ranking and no catalogue
+The system shall show the counts of ANL-005 and the fork count of ANL-008 to the
+recipe's owner and to nobody else, and shall let them take part in no ordering, no ranking and no catalogue
 entry.
 
 **Acceptance criteria**
 - Given a published recipe, when a reader opens it, then neither count is shown
   anywhere on the card or in any listing.
-- Given the same recipe, when its owner opens it, then both counts are shown.
+- Given the same recipe, when its owner opens it, then the openings, the
+  additions to favourites and the forks made (ANL-008) are shown.
 - Given the orderings of CAT-001, when they are computed, then neither count
   takes part in any of them.
 - Given a moderator, when they open a recipe, then they see what a reader sees
@@ -188,6 +189,9 @@ shall state where a figure is known to undercount.
   again.
 - Given the starts counter of ANL-004, when it is reported, then it is named as
   starts and not as users.
+- Given the fork count of ANL-008, when it is shown, then it is named as forks
+  made by others, and it states that forks made without a connection are not
+  counted and that a fork deleted afterwards is still counted.
 - Given any figure of ANL-002, when it is quoted outside the product, then its
   definition is the one written in that requirement.
 
@@ -197,3 +201,52 @@ is.
 defect to be hidden: cooking happens where the network is worst (GOAL-001), so
 the product systematically fails to count exactly the use it was built for, and
 an author told otherwise would draw the wrong conclusion about their own recipe.
+
+### ANL-008 — A published recipe counts the forks others make of it
+
+When anyone other than a published recipe's owner creates a fork of it while the
+server can be reached — with an account or without one, whether or not the fork
+is ever sent — the system shall add one to that recipe's count of forks made, and
+shall send nothing with that increment but the recipe it counts against; and the
+system shall report to the product owner the forks made across the product, in
+total and per day, and the number of published recipes forked at least once.
+
+**Acceptance criteria**
+- Given a published recipe, when a person with no account forks it on their
+  device with a connection, then its count of forks made has risen by one, and
+  the fork itself stays in the pool, unsent (FLOW-002).
+- Given the increment, when what reached the server is inspected, then it names
+  the recipe and nothing else: no account, no device, no fork (CON-001, ANL-001).
+- Given the owner forking their own published recipe, when the count is read,
+  then it has not risen.
+- Given a fork created with no connection or while the server does not answer,
+  when the device next reaches the server, then it has not been counted and
+  nothing was held on the device to be sent later (ANL-004 (4)).
+- Given a reader who declines the offer of FLOW-015 and creates a second fork of
+  the same recipe, when the count is read, then it has risen by two in all,
+  because the product cannot tell it was one reader.
+- Given a fork of a published fork, when it is created, then only its direct
+  parent's count rises; nothing further up the chain is counted (GOAL-003).
+- Given a fork later deleted, or never sent, when the count is read, then it has
+  not fallen: the figure counts forks made, not forks kept.
+- Given a recipe hidden by reports and restored, or removed by a moderator, when
+  its count is read, then it is as it was.
+- Given a published recipe no one else has forked, when its owner opens it, then
+  the count is shown as zero.
+- Given the product owner's report, when it is read, then it gives the forks made
+  in total, the forks made on each day, and how many published recipes have a
+  count of one or more, each computed from these counts alone.
+- Given serverless mode (FLOW-061), when a recipe is forked, then nothing is
+  counted, because there is no server to count against.
+
+**Verification:** fork a published recipe as another account, with no account,
+offline, as its owner, twice after declining FLOW-015, and as a fork of a fork;
+capture what each increment sends; read the recipe's count and the product
+owner's report after each.
+**Source:** user decision, 2026-09-28. The product owner's measure of having
+finished includes recipes forked by others, and after
+[ADR — the device first](decisions/20260928-the-device-first.md) a fork that is
+never sent is invisible to the server; this counter is what makes the measure
+readable without tracking anyone. It follows ANL-005 in every choice: no offline
+holding, the owner excluded, additions rather than holders, shown to the owner
+alone (ANL-006), and labelled with what it misses (ANL-007).
