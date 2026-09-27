@@ -591,7 +591,7 @@ in this wave, and no media is attached.
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/text/**` · `core/src/test/kotlin/app/recipefork/core/text/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-one-text-analyser.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Note:** The folding FLOW-057 names — letter case ignored, `ё` and `е` one letter — is the first stage of the analyser the one-text-analyser ADR places in `:core` `text`; this task builds that stage. The offer matches the beginnings of words, not the stemmed tokens of L10N-007 (spec ADR `20260927-the-ingredient-field.md`), so no stemmer is added here.
-**Criteria of these requirements carried elsewhere:** FLOW-057 (2, 6–7) → T-012 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-023 (1, 4, 7–11) → T-011; (5) → wave 2; (6) → T-012 · FLOW-001 (1) → T-008; (2, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004
+**Criteria of these requirements carried elsewhere:** FLOW-057 (2, 6–8) → T-012 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-023 (1–2, 4, 7–11) → T-011; (5) → wave 2; (6) → T-012 · FLOW-001 (1) → T-008; (2, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004
 
 **Acceptance criteria** (verbatim)
 
@@ -600,7 +600,6 @@ in this wave, and no media is attached.
 - Given the author types `МОЛ` or `Мол`, when entries are offered, then they are those offered for `мол`; and `еж` offers what `ёж` offers.
 - Given a parent `курица` with leaves `крылышки` and `филе`, when the author types `кур`, then `крылышки` and `филе` are offered before `курица`.
 - Given the interface in Russian and an entry whose English label is `chicken`, when the author types `chick`, then the entry is offered, shown by its Russian label (L10N-003).
-- Given the interface in Russian and an entry `молоко` whose English label is `milk`, when the author types `Молоко`, ` молоко ` or `milk`, then the entry is offered and free text is not.
 - Given a dictionary holding `молоко` and `кокосовое молоко`, when the author types `мол`, then `молоко` is offered before `кокосовое молоко`, because its label begins with the typed text and the other's does not.
 - Given a parent `курица` with leaves `филе` and `крылышки`, and an entry `куркума`, when the author types `кур`, then the offer reads `крылышки`, `филе`, `курица`, `куркума`, and no entry appears twice.
 
@@ -615,16 +614,15 @@ in this wave, and no media is attached.
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
 *FLOW-023 — spec/70-flows/40-editor.md*
-- Given the ingredient field, when the author types, then dictionary entries are offered whether they are leaves or parents (DOM-010), so `курица · 500 · г` is an ordinary row.
 - Given the ingredient field, when what the author typed matches a parent, then its leaves are offered before it (FLOW-057), so that a qualifier is a last resort and not a substitute for picking the right entry.
 
 *FLOW-001 — spec/70-flows/10-offline-and-sync.md*
 - Given no network connection, when the author looks for an ingredient, then the dictionary is searched on the device and offers the same entries it offers with a connection.
 
-**Gate 1:** —
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-031-gate1.md (FLOW-057 (8) and FLOW-023 (2) not observable here); moved to T-012 and T-011, re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-011 — An ingredient is picked from the dictionary in three fields
 
@@ -633,12 +631,13 @@ in this wave, and no media is attached.
 **Depends on:** T-031
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-023 (2–3) → T-031; (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · DOM-016 (3) → wave 2; (4) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-023 (3) → T-031; (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · DOM-016 (3) → wave 2; (4) → wave 8
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-023 — spec/70-flows/40-editor.md*
 - Given the editor, when the author adds an ingredient, then exactly three fields are offered: `крылышки` · `500` · `г`, or `тушка` · `2` · `шт`.
+- Given the ingredient field, when the author types, then dictionary entries are offered whether they are leaves or parents (DOM-010), so `курица · 500 · г` is an ordinary row.
 - Given the author picks the entry `филе` and keeps typing `без кожи`, when the row is read, then it reads `филе без кожи`, the ingredient holds that entry and that qualifier, and no fourth field has appeared.
 - Given the unit field, when the author picks `шт`, then the ingredient's unit type is `piece` and the author is never shown a unit type at all.
 - Given the unit field, when the author picks the unit that means "to taste", then the quantity field is withdrawn, the unit field stays and shows "to taste", and the ingredient is stored with no quantity (DOM-002).
@@ -693,7 +692,7 @@ in this wave, and no media is attached.
 **Depends on:** T-011
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1, 4, 7–11) → T-011; (2–3) → T-031; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 7) → T-011; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-057 (1, 3–5, 8–10) → T-031
+**Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1–2, 4, 7–11) → T-011; (3) → T-031; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 7) → T-011; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-057 (1, 3–5, 9–10) → T-031
 
 **Acceptance criteria** (verbatim)
 
@@ -726,6 +725,7 @@ in this wave, and no media is attached.
 - Given the same dictionary and no entry for coconut milk, when the author types `кокосовое молоко`, then `молоко` is not offered, because `кокосовое` begins no word of its label, and adding `кокосовое молоко` as free text is offered.
 - Given entries are offered, when the typed text is not exactly the label of one of them, then adding it as free text is offered beside them, with the warning of FLOW-022, and the author chooses.
 - Given the author has typed exactly the label of an offered entry, when the offer is shown, then free text is not offered, because the entry is that ingredient.
+- Given the interface in Russian and an entry `молоко` whose English label is `milk`, when the author types `Молоко`, ` молоко ` or `milk`, then the entry is offered and free text is not.
 
 **Gate 1:** blocked-by-spec (SD-006) — docs/product/verdicts/20260927-T-012-gate1.md; re-sliced against spec/ @ ead1a44 after SD-006 resolved, re-gate due
 **Review:** —
