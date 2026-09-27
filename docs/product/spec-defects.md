@@ -947,3 +947,39 @@ backlog's dependencies, T-022 and T-026 behind T-010, and T-023, T-033, T-024, T
 and T-028 behind those.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-030 — A timer's duration has no stated admissible values, and GUIDE-007's "next action" is not said to include a scroll or a screen-reader move (2026-09-27)
+**Requirement IDs:** FLOW-027 (1, 4, 11), GUIDE-007 (4); read against the `Timer` entity's `duration` field (`spec/50-domain-model/00-index.md`), the glossary's "Timer" (`spec/10-glossary/10-recipes-and-scaling.md`), DOM-012, GUIDE-005, A11Y-005 and the ADR `spec/decisions/20260927-steps-timers-and-references.md`
+**Class:** omission (item 1); ambiguity (item 2)
+**What the gate hit:** T-014 builds attaching a timer inside a step and carries
+FLOW-027 (1–7, 9, 11), DOM-013 (1–4) and all four criteria of GUIDE-007.
+1. **What the duration field accepts is stated nowhere.** FLOW-027 (1) has the author
+   "enter 30 minutes", (4) makes "a duration … the only thing required of them", and
+   (11) drops a timer whose "duration the author has not entered". The domain model
+   types `duration` as "duration" with no note; the glossary defines a timer as "a
+   duration attached inside one step"; DOM-012 bounds the timer's name, not its
+   duration; no ADR and no open question addresses it. Three things are open:
+   - the unit or granularity the author enters — minutes only, or hours, minutes and
+     seconds;
+   - whether zero is a duration "entered", and so stored, or the absence FLOW-027 (11)
+     drops;
+   - whether a duration has a ceiling.
+   Each is visible on the editor, and whoever writes the field would decide it; gate 2
+   could not tell a right field from a wrong one (TEAM-008). This is the gap SD-013
+   recorded for the authored serving count.
+2. **Which interaction is "the author's next action".** GUIDE-007 (4): "Given the
+   statement, when the author takes their next action in the editor, then the statement
+   is gone …; the statement has no control that closes it (GUIDE-005)." Neither
+   GUIDE-005, nor the glossary's "Hint", nor the ADR of 2026-09-27 ("lasts until the
+   author's next action") says what counts. A build that keeps the statement through a
+   scroll and one that removes it on a scroll are each right under one reading. The
+   reading also decides whether a person using the screen reader (A11Y-005) can hear the
+   statement: if moving the reader's focus onto it is an action, it is gone when reached.
+Found at T-014's second gate 1 (docs/product/verdicts/20260927-T-014-gate1-2.md), after
+SD-005 was resolved.
+**Stopped:** T-014 (FLOW-027 (1, 4, 11), GUIDE-007 (4)). T-015, T-016, T-017, T-034,
+T-021 and T-022 wait behind T-014 through the backlog's dependencies, and T-023, T-033,
+T-024, T-025 and T-028 behind those. T-022 and T-024 run and restart a timer "from its
+full duration"; their own gates decide whether item 1 stops them directly.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
