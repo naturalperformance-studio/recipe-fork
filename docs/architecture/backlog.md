@@ -55,7 +55,7 @@ in this wave, and no media is attached.
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | gated |
 | T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | blocked |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | gated |
-| T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | planned |
+| T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | blocked |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | planned |
 | T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
 | T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
@@ -1083,10 +1083,11 @@ in this wave, and no media is attached.
 ### T-020 — The reader fixes an ingredient on the card
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, A11Y-003, A11Y-007, L10N-001, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-019, T-030, T-015
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
+**Note:** Open for the team lead at the re-slice after SD-032: no criterion here observes on the card the "fixed" marking of a line or the release of a fixing, which SCALE-016 and SCALE-017 assume and T-030 carries in `:core` only (gate-1 verdict -2, unknown 3).
 **Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–5) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
@@ -1123,7 +1124,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved; re-gated: blocked-by-spec (SD-032, whether a requested fractional count is marked approximate) — docs/product/verdicts/20260927-T-020-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
