@@ -50,7 +50,7 @@ in this wave, and no media is attached.
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | blocked |
-| T-015 | A quantity goes into a step as a reference | T-014, T-019 | planned |
+| T-015 | A quantity goes into a step as a reference | T-014, T-019 | gated |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | planned |
 | T-034 | A long step with an unnamed timer is shown what its notification will say | T-017 | planned |
@@ -823,7 +823,7 @@ in this wave, and no media is attached.
 ### T-015 — A quantity goes into a step as a reference
 
 **Requirements:** FLOW-031, FLOW-032, DOM-007, GUIDE-008, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-014, T-019
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -864,7 +864,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-014) — docs/product/verdicts/20260927-T-015-gate1.md; GUIDE-008 (5) moved to wave 2, where submission exists; re-sliced against spec/ @ ead1a44 after SD-014 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-015-gate1-2.md (FLOW-032 (6, 7) came after the references they render); moved here from T-021, re-gate due
+**Gate 1:** blocked-by-spec (SD-014) — docs/product/verdicts/20260927-T-015-gate1.md; GUIDE-008 (5) moved to wave 2, where submission exists; re-sliced against spec/ @ ead1a44 after SD-014 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-015-gate1-2.md (FLOW-032 (6, 7) came after the references they render); moved here from T-021; re-gated: accepted — docs/product/verdicts/20260927-T-015-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
