@@ -64,7 +64,7 @@ in this wave, and no media is attached.
 | T-024 | Several timers run at once, and restarting one asks first | T-033 | gated |
 | T-025 | The card keeps the screen awake and is where the reader left it | T-024 | gated |
 | T-026 | Writing a recipe asks for an account first | T-010, T-018 | returned |
-| T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | gated |
+| T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | blocked |
 | T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-034, T-026, T-025 | returned |
 
 ### T-001 — Quantities follow the serving count
@@ -1497,11 +1497,12 @@ in this wave, and no media is attached.
 ### T-027 — The server keeps an account's drafts and turns a stale edit into a fork
 
 **Requirements:** FLOW-008, CON-003, ACT-002, DOM-004
-**Status:** gated
+**Status:** blocked
 **Depends on:** T-006
-**Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/kotlin/app/recipefork/server/auth/**` · `server/src/main/resources/db/migration/V3__recipes.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/auth/**`
+**Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/kotlin/app/recipefork/server/auth/**` · `server/src/main/resources/db/migration/V3__recipes.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/auth/**` · `server/src/test/kotlin/app/recipefork/server/account/VerdictNotKeptTest.kt` (added at the re-run: the session digest the keys ADR requires is a second `bytea` column that T-006's AUTH-015 (2) test did not admit)
 **Binding ADRs:** decisions/20260927-server-authoritative-sync-with-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
 **Note:** The server-stack ADR leaves one choice to this task: whether a recipe's content is kept as `jsonb` beside relational columns. The task makes the choice and states it in its report; the team lead records it as an ADR when the task merges.
+**Note:** ADR due at merge: a recipe's content is one `jsonb` document beside relational `recipe_id`, `owner_id`, `parent_id`, `state`, `revision`, with a store trigger holding owner, parent and frozen content fixed (developer's choice under the server-stack ADR). Open, not decided: an edit for a recipe the server does not hold is answered 404 and kept nowhere; the spec says nothing until deletion arrives.
 **Criteria of these requirements carried elsewhere:** FLOW-008 (2, 5) → T-028 · CON-003 (2) → wave 4 · ACT-002 (2) → wave 8
 
 **Acceptance criteria** (verbatim)
@@ -1522,8 +1523,8 @@ in this wave, and no media is attached.
 - Given any recipe, when its stored fields are enumerated, then none of them lists descendants or names a chain root.
 
 **Gate 1:** blocked-by-spec (SD-018) — docs/product/verdicts/20260927-T-027-gate1.md; re-sliced against spec/ @ ead1a44 after SD-018 resolved, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-027-gate1-2.md; FLOW-008 (5) then moved to T-028 (its notice is on the device), re-gated: accepted — docs/product/verdicts/20260927-T-027-gate1-3.md
-**Review:** —
-**Gate 2:** —
+**Review:** first run unfinished (T-006's AUTH-015 (2) test outside the expected files), re-run once; pass — 7 of 7 criteria, the adjusted AUTH-015 (2) test and the session token checked by mutation, worktree as it was
+**Gate 2:** blocked-by-spec (SD-035, whether a per-device session token "identifies a device" under AUTH-015 (2)) — docs/product/verdicts/20260927-T-027-gate2.md; the verdict also finds FLOW-008 (3) unobserved for a state-only change to a frozen state (no test checks the fork), to be fixed before the re-gate; worktree and branch kept
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-028 — Drafts written offline reach the server by themselves, and each says whether they have
