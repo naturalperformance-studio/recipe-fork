@@ -47,7 +47,7 @@ in this wave, and no media is attached.
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
-| T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | planned |
+| T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | planned |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | planned |
 | T-015 | A quantity goes into a step as a reference | T-014 | planned |
@@ -691,7 +691,7 @@ in this wave, and no media is attached.
 ### T-012 — An ingredient outside the dictionary is kept as free text with a warning
 
 **Requirements:** FLOW-022, FLOW-023, DOM-009, FLOW-001, L10N-001, A11Y-003, A11Y-005, FLOW-057
-**Status:** planned
+**Status:** gated
 **Depends on:** T-011
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -730,7 +730,7 @@ in this wave, and no media is attached.
 - Given the author has typed exactly the label of an offered entry, when the offer is shown, then free text is not offered, because the entry is that ingredient.
 - Given the interface in Russian and an entry `молоко` whose English label is `milk`, when the author types `Молоко`, ` молоко ` or `milk`, then the entry is offered and free text is not.
 
-**Gate 1:** blocked-by-spec (SD-006) — docs/product/verdicts/20260927-T-012-gate1.md; re-sliced against spec/ @ ead1a44 after SD-006 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-006) — docs/product/verdicts/20260927-T-012-gate1.md; re-sliced against spec/ @ ead1a44 after SD-006 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-012-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
