@@ -49,7 +49,7 @@ in this wave, and no media is attached.
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
-| T-014 | A step carries one timer, named by its step unless the author names it | T-013 | planned |
+| T-014 | A step carries one timer, named by its step unless the author names it | T-013 | blocked |
 | T-015 | A quantity goes into a step as a reference | T-014 | planned |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | planned |
@@ -774,7 +774,7 @@ in this wave, and no media is attached.
 ### T-014 — A step carries one timer, named by its step unless the author names it
 
 **Requirements:** FLOW-027, DOM-013, GUIDE-007, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-013
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -815,7 +815,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-005) — docs/product/verdicts/20260927-T-014-gate1.md; re-sliced against spec/ @ ead1a44 after SD-005 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-005) — docs/product/verdicts/20260927-T-014-gate1.md; re-sliced against spec/ @ ead1a44 after SD-005 resolved; re-gated: blocked-by-spec (SD-030, the timer's duration field and GUIDE-007's next action) — docs/product/verdicts/20260927-T-014-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
