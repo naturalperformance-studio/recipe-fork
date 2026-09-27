@@ -359,3 +359,217 @@ the readings.
 **Stopped:** T-009 (AUTH-018 (2)).
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-011 — SCALE-006 calls the scale factor "displayed", and no requirement says the reader is shown one (2026-09-27)
+**Requirement IDs:** SCALE-006 (1); read against SCALE-002 (statement), SCALE-006 (statement, 3), SCALE-008 (5) and the glossary's "Fixed ingredient" (`spec/10-glossary.md`)
+**Class:** ambiguity
+**What the gate hit:** T-020 builds what the card shows while an ingredient is fixed
+(the approximate serving count, the shortfall, the floor warning). SCALE-006 (1):
+"… then the displayed factor is 1.0 and the chicken line shows a requirement of 500 g
+against 300 g available." It is the only sentence in `spec/` that calls the scale
+factor displayed. SCALE-002's statement displays "the resulting serving count as an
+approximation while keeping the exact factor for computation"; SCALE-006's statement
+"adopt[s] the factor"; SCALE-006 (3) has the factor "return"; none shows a factor to
+the reader. Read one way, "the displayed factor" is the factor the view is displayed
+at — an internal value, observable only through the quantities — and the card shows
+no factor. Read the other way, the card shows the reader the factor in force (1.0,
+0.6), which no statement, no other criterion and no task carries. The two are
+different cards: a factor readout on the card is behaviour gate 2 must either
+require or reject as an addition, and the text does not say which (TEAM-008). Noted
+first at T-002's gate (docs/product/verdicts/20260927-T-002-gate1.md) and left for the
+card's gate; T-002 carries the criterion, T-020 the card it would appear on.
+**Stopped:** T-020 (also stopped by SD-003). T-002 carries SCALE-006 (1) and is already
+stopped by SD-003.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-012 — SCALE-004's second criterion states the wrong direction, and a scaled quantity displayed at its authored value is not said to be derived or not (2026-09-27)
+**Requirement IDs:** SCALE-004 (statement, 1, 2), CON-004 (statement, 1, 2); read against SCALE-004 (3), SCALE-005 (statement, 1), SCALE-001 (4), FLOW-017 (1) and the glossary's "Derived" (`spec/10-glossary.md`)
+**Class:** incorrect fact (item 1); inconsistency (item 2)
+**What the gate hit:** T-019 builds the derived marker and the rounding direction on
+the card and copies these criteria verbatim (C5), so it cannot be corrected at the task.
+1. **SCALE-004 (2) names the opposite direction.** "Given 3 indivisible pieces at a
+   factor of 0.6, when the line is displayed, then it shows 2 pieces and states that
+   the exact value was higher." The exact computed value is 3 × 0.6 = 1.8, which is
+   lower than the 2 shown. CON-004 (2) requires the interface to state "whether the
+   displayed value is above or below the exact computed value", and SCALE-004 (3)
+   (1 teaspoon × 0.2 = 0.2, ¼ shown, "the exact value was lower") uses the same
+   convention correctly. An implementation that states the true direction fails
+   SCALE-004 (2) as written; one that meets SCALE-004 (2) tells the cook the opposite
+   of what CON-004 (2) requires. Gate 2 can mark this criterion met under neither.
+   Noted first at T-001's gate (docs/product/verdicts/20260927-T-001-gate1.md) and
+   left for this one.
+2. **A quantity computed at another scale that lands on its authored value.** Two
+   families of wording decide marking differently. By provenance: CON-004's
+   statement marks "a quantity it derived rather than the quantity its author
+   entered", and CON-004 (2) states the direction of "a derived quantity that was
+   rounded". By value: SCALE-004's statement marks "where a displayed quantity differs
+   from the authored quantity", SCALE-004 (1) marks "every changed quantity", CON-004 (1)
+   marks "every quantity that differs from the authored quantity", and the glossary
+   defines derived as "any quantity a reader sees that is not the authored one". They
+   part where scaling and rounding return the authored number. Reachable in T-019 with
+   no grid question involved: a recipe authored for 4 with 1 indivisible egg, read at
+   2 servings (by the control, or on opening under FLOW-017 (1)) — the computed 0.5 is
+   held at the floor, and SCALE-005 fixes the line at 1 egg and marks it "rounded up".
+   By value the line is unchanged and carries no derived marker (and it is not said
+   whether SCALE-005's rounded-up marking then appears without one); by provenance it
+   is derived and states that the exact value was lower. The same split applies to
+   any value the grid rounds back onto its authored number. SCALE-001 (4) and
+   CON-004 (3) settle only the authored count itself, where both readings agree.
+   Neither case is exercised by a criterion, so whoever writes the card would decide
+   it and gate 2 could not tell (TEAM-008).
+**Stopped:** T-019 (CON-004, SCALE-004). T-020, T-021 (whose reference carries "the
+same derived marker the list carries"), T-022–T-025 and T-028 wait behind T-019
+through the backlog's dependencies.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-013 — The authored serving count's admissible values are stated nowhere: whole or fractional, its floor, zero, and its ceiling (2026-09-27)
+**Requirement IDs:** FLOW-002 (1), DOM-006 (statement); read against the `servings` field of the domain model (`spec/50-domain-model/00-index.md`: "number"), the glossary's "Authored serving count" and "Requested serving count" (`spec/10-glossary.md`), SCALE-001 (statement), SCALE-011 (statement, 1, 2), the serving-count paragraph of the rounding grid (`spec/80-scaling-rules.md`), FLOW-017 ("when the reader returns it to the authored count"), CON-004 (3) and DOM-012
+**Class:** omission
+**What the gate hit:** T-013 is the one wave-1 task that obliges the editor to take
+an authored serving count: FLOW-002 (1) — "when the owner creates a recipe and fills
+its title, servings, ingredients and steps, then every change is kept" — and no other
+wave-1 criterion names the field (FLOW-024 (1), which lists the serving-count part,
+is now in wave 5). What that field accepts is decided nowhere. The domain model types
+`servings` as "number"; the glossary defines it only as "the number of servings the
+author wrote the quantities for"; DOM-006 requires one to be present at submission
+and DOM-012 sets no limit on it. For the *requested* count the product owner decided
+the form explicitly — SCALE-010 and SCALE-011: a floor of ¼, below one only ¼, ⅓, ½,
+⅔, ¾, at one and above whole numbers only (OQ-010, OQ-011). No such decision exists
+for the authored count, and four things about it are open:
+1. whether it may be fractional (1½, 2.5) or only whole;
+2. whether it may be below one, and if so in which forms;
+3. whether zero is accepted — SCALE-001 divides by it ("the ratio of the requested
+   count to the authored count"), so an authored 0 makes every scaled quantity
+   undefined;
+4. whether it has a ceiling (SCALE-010 gives the requested count none).
+The choice is visible on the editor and on the card. An authored count outside the
+set SCALE-011 lets a reader request (2.5, 0.3) cannot be requested back: the
+serving-count paragraph displays the count "at or above one serving … as a whole
+number", and the control of SCALE-011 (2) "can hold whole numbers only", while
+FLOW-017 has the reader "return it to the authored count" and CON-004 (3) and
+SCALE-001 speak of the recipe displayed at its authored count. Read as "any number",
+the field admits 0 and values the card cannot show as themselves; read as the
+requested count's set, the text nowhere says so. Whoever writes the field would
+decide it, and gate 2 could not tell a right field from a wrong one (TEAM-008).
+**Stopped:** T-013 (FLOW-002 (1)). T-014–T-017, T-021–T-025 and T-028 wait behind T-013 through the
+backlog's dependencies. The authored count is also the divisor of T-001 (SCALE-001,
+already stopped by SD-002) and the count T-018's card opens at; their own gates decide
+whether they stop here.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-014 — A reference may point at an ingredient that holds no quantity, and nothing says what it shows or whether it survives (2026-09-27)
+**Requirement IDs:** FLOW-031 (1, 3, 4), FLOW-032 (statement, 5); read against DOM-002 (1, 2), DOM-007 (statement), FLOW-023 (8) and the glossary's "Ingredient reference" (`spec/10-glossary.md`)
+**Class:** omission
+**What the gate hit:** T-015 builds inserting a reference into a step and what the
+editor shows in its place. FLOW-031 (3) keeps out of the offered list only an
+ingredient "whose unit type is `taste_unmeasured`, because such an ingredient carries
+no quantity to show (DOM-002)". Two other ingredients carry no quantity to show, and
+no requirement says what happens with either:
+1. **An ingredient of a measured type whose quantity is not entered yet.** A draft
+   may hold one — DOM-002 (2) refuses it only when the recipe is submitted — and
+   FLOW-031 (1), (3) offer it. FLOW-032 (5) has the editor show "the authored
+   quantity" in place of the reference, and FLOW-032's statement renders a reference
+   as "quantity and unit"; there is neither.
+2. **An ingredient already referenced whose unit the author changes to "to taste"**
+   (FLOW-023 (8)). It then holds "no quantity and no unit" (DOM-002 (1)) — the very
+   ingredient FLOW-031 (3) would never have offered — while the reference to it still
+   resolves within the recipe (DOM-007). Only deletion of the ingredient is said to
+   drop a reference (FLOW-031 (5), DOM-007 (2)).
+In both cases a reference that shows nothing occupies no character range, so FLOW-031
+(4)'s way of removing it — deleting "the character range it occupies" — has nothing
+to act on. Whether such an ingredient is offered, whether the reference is kept,
+dropped or shown some other way, and whether the unit change is allowed while a
+reference exists, are observable choices; each reading of the requirements is
+consistent on its own, and whoever writes the editor would pick one where gate 2
+could not tell a right build from a wrong one (TEAM-008). The same reference is what
+the card renders at the reader's scale (FLOW-032 (1–4), DOM-007 (1)), so a draft
+opened as the card meets the same gap.
+**Stopped:** T-015 (FLOW-031, FLOW-032 (5)). T-021 carries FLOW-032 (1–4) for the same
+reference and waits behind T-015 through the backlog's dependencies; its own gate decides
+whether it stops here. T-015 is also behind T-014 (SD-005) and T-011–T-013 (SD-006,
+SD-008).
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-015 — What a long step's notification "will say" is not one text when its opening holds a reference, and GUIDE-006 does not say at which serving count it is shown or counted (2026-09-27)
+**Requirement IDs:** GUIDE-006 (statement, 1, 2, 4); read against FLOW-016 (3, 4, 8), FLOW-032 (1, 3, 5), FLOW-031 (1), GUIDE-004 (item 4) and GUIDE-008
+**Class:** ambiguity (item 1); inconsistency (item 2)
+**What the gate hit:** T-017 builds GUIDE-006's display in the editor, after T-015 has
+put references into steps (FLOW-031, FLOW-032 (5)), and copies GUIDE-006's criteria
+verbatim (C5), so it cannot be corrected at the task. GUIDE-004 (item 4) and GUIDE-008
+direct the author to write a quantity in a step as a reference, so an unnamed timer on
+a step that opens with one — `всыпьте [50 г] сахара …` — is the case the product
+itself encourages, not an edge.
+1. **Which text is shown.** FLOW-016 (8) renders a reference inside a derived name
+   "exactly as it reads on the card, at the scale the reader is using"; FLOW-032 (1)
+   makes that differ from the authored quantity whenever the reader changes the
+   serving count, and FLOW-032 (3) adds the derived marker where the grid rounded it.
+   FLOW-032 (5) has the editor show the authored quantity. For such a step the
+   notification's text is therefore one text per serving count, not one text.
+   GUIDE-006 (1) shows "the text the notification will carry" and GUIDE-006 (2)
+   "states that this is what the notification will say"; neither says at which
+   serving count the reference inside the display is rendered, nor whether the
+   display says that the text changes with the reader's serving count. Rendering at
+   the authored count shows the author a text that a reader at another count does not
+   get while the display states that it is what the notification will say; showing
+   anything else is a display no criterion describes.
+2. **Whether anything is shown.** GUIDE-006's statement fires on a step "whose text
+   holds more than 60 characters", and GUIDE-006 (4) shows nothing for a step of 60 or
+   fewer "because nothing will be cut". A reference's rendered length changes with the
+   serving count (`50 г` authored for 4 reads `100 г` at 8, and carries the derived
+   marker where rounded), and FLOW-016 (3)'s word-boundary cut moves with it. A step
+   of 59 characters at the authored count is cut in the notification of a reader at
+   8 servings (FLOW-016 (3), (8)), so GUIDE-006 (4)'s reason is false for it, and the
+   step gets no display although its announcement will be cut. Nothing says on which
+   text — rendered at which serving count — the 60 characters of GUIDE-006's trigger
+   and of criterion (4) are measured.
+Whoever writes the display would choose both, and gate 2 could not tell a right choice
+from a wrong one (TEAM-008). FLOW-016 itself is not questioned here: at a reader's
+given serving count it reads determinately (render the reference, then cut); the gap is
+only in what the editor shows the author, before any reader has chosen a count.
+**Stopped:** T-017 (GUIDE-006). T-017 also waits behind T-016 → T-015 → T-014 and the
+tasks before it, which SD-004, SD-005, SD-006, SD-008, SD-013 and SD-014 stop; those
+are not this entry's ground.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-016 — "The narrowest supported screen width" is a figure stated nowhere, and the digit grouping SCALE-012 hands to `localization` is not there (2026-09-27)
+**Requirement IDs:** SCALE-012 (1, 2, verification, note); read against QUAL-005, the device classes of `spec/140-quality.md`, section `localization` (L10N-001–L10N-008, `spec/160-localization.md`) and A11Y-004
+**Class:** omission (items 1 and 2)
+**What the gate hit:** T-018 builds the card's ingredient lines and carries SCALE-012
+whole. Two things the lines depend on are referred to by the specification and stated
+nowhere in it:
+1. **The width SCALE-012 (1) is measured at.** "Given an ingredient displayed as
+   10 000 000 pieces, when its line is shown on the narrowest supported screen width,
+   then every digit is visible and no ellipsis replaces part of the number"; SCALE-012
+   (2) is "that same line", and the verification renders "on the narrowest supported
+   width". No requirement, constraint, glossary entry or ADR states a supported screen
+   width. QUAL-005 fixes the lowest Android version and says nothing about screens;
+   the `modest` and `typical` classes of `spec/140-quality.md` name phones by
+   version, memory and age, not by width. Readings the text leaves open include the
+   smallest screen a device running Android 10 may have (a platform figure, not in
+   `spec/`), the narrowest window the application may be given when the screen is
+   shared with another application (whether that is supported is itself not stated),
+   and a figure the product chooses. They differ on the one condition the criterion is
+   about — whether an eight-digit quantity and a name fit on one line or the name must
+   wrap — and A11Y-004's 200 per cent font scale, which holds on the card too, narrows
+   the line further at every one of them. Whatever width a test uses, gate 2 cannot
+   tell whether it is the narrowest supported, so the criterion would be met by the
+   choice of width rather than by the card.
+2. **How a large number's digits are grouped.** SCALE-012's note: "how the digits of
+   a large number are grouped is a localization matter and belongs to section
+   `localization`." That section holds L10N-001 to L10N-008 and none of them says how
+   digits are grouped in either language, nor which mark separates a whole number from
+   its fraction; L10N-008 governs units only and states that it "adds no decision".
+   The form in which 10 000 000 reaches a Russian and an English reader — a space, a
+   comma, a narrow space, no grouping — is therefore decided by whoever writes the
+   line, on the screen the product exists for, and gate 2 has nothing to hold it
+   against (TEAM-008). Whether a quantity above 1000 g carries a fractional part at
+   all is SD-002 item 1 and is cited, not restated.
+**Stopped:** T-018 (SCALE-012). T-018 is also stopped by SD-002 and SD-013. T-019–T-026
+and T-028 wait behind T-018 through the backlog's dependencies.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
