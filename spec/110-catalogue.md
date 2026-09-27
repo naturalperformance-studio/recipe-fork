@@ -43,7 +43,7 @@ has not chosen a field.
 - Given the reader's favourites, when they are searched, then the same orderings
   are offered there.
 - Given a chosen ordering, when the reader leaves the catalogue and returns
-  within the same session, then the choice is still in force.
+  within the same session (FLOW-058), then the choice is still in force.
 - Given the ordering `newest`, when two recipes are ordered, then the one that
   entered the catalogue later comes first: the instant a moderator's approval
   published it, and not the instant it was created or last changed.

@@ -95,8 +95,8 @@ text (`domain-model`).
 ingredient of the same recipe. It renders as the quantity and unit at the
 reader's current scale and never as the ingredient's name (DOM-007, FLOW-032).
 
-**Timer** — a duration attached inside one step. A step carries at most one
-(DOM-013).
+**Timer** — a duration of hours and minutes, at most 99:59, attached inside one
+step (FLOW-027). A step carries at most one (DOM-013).
 
 **Timer name** — what a timer announces itself by. Derived from the first 60
 characters of its step's text unless the author set a name of their own, in

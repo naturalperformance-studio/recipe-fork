@@ -295,6 +295,13 @@ are written as two steps.
   then the statement is gone, the step is unchanged, and the timer it already had
   still holds its duration; the statement has no control that closes it
   (GUIDE-005).
+- Given the statement, when the author touches any field or control of the
+  editor or types a character, then that is their next action and the statement
+  is gone.
+- Given the statement, when the author scrolls the editor, or moves the screen
+  reader's focus (A11Y-005) — including onto the statement itself — then that is
+  not an action in the sense of criterion 4, and the statement stays, so a person
+  using the screen reader can reach it and hear it.
 
 **Verification:** choose the timer control on a step that has a timer, confirm
 the statement and that the step is untouched, then act elsewhere and confirm the
@@ -304,6 +311,10 @@ statement is gone.
 to, and criterion 4 closed a statement GUIDE-005 says there is nothing to dismiss
 (SD-005). By user decision of that date the attempt is the timer control kept on a
 step that has a timer, and the statement lasts until the author's next action.
+**Completed 2026-09-27:** which interaction is the author's next action was not
+said (SD-030, item 2). By user decision of that date it is a touch on a field or
+control or a typed character; a scroll or a move of the screen reader's focus is
+not.
 
 ### GUIDE-008 — References are offered where the first step is written
 

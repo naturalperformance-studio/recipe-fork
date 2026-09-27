@@ -2,7 +2,7 @@
 slug: AUTH
 status: closed
 updated: 2026-09-27
-ids: [AUTH-007, AUTH-008, AUTH-009, AUTH-010, AUTH-017, AUTH-019, AUTH-024]
+ids: [AUTH-007, AUTH-024, AUTH-019, AUTH-008, AUTH-009, AUTH-010, AUTH-017]
 ---
 
 # The account key and the deletion key
@@ -97,7 +97,8 @@ moves between the steps.
 - Given the first step, when the terms are not accepted, then the step cannot be
   left forward.
 - Given the first step completed, when the second step is shown, then it holds
-  the account key and the deletion key with the controls and the confirmation of
+  the account key and the deletion key, each displayed in full with its own copy
+  control, the file of AUTH-007 (2) carrying both, and the one confirmation of
   AUTH-007 and AUTH-017, and neither the nickname control nor the terms.
 - Given the second step confirmed, when the third step is shown, then AUTH-020
   governs it, and confirming it completes creation.
@@ -236,7 +237,16 @@ accept it as the sole proof of ownership at the deletion page (EXT-006).
 
 **Acceptance criteria**
 - Given account creation, when the key is issued, then the deletion key is issued
-  on the same screen and is carried by the file that AUTH-007 offers.
+  on the same step (AUTH-024) and is carried by the file that AUTH-007 offers.
+- Given that step, when it is shown, then the deletion key is displayed in full
+  beside the account key and carries a copy control of its own, which copies the
+  deletion key alone in one action.
+- Given the account key's copy control on that step (AUTH-007 (1)), when it is
+  used, then what reaches the clipboard is the account key alone and not the
+  deletion key.
+- Given that step, when its confirmation is shown, then it is one confirmation
+  whose text names both keys, and AUTH-007 (4) governs it; the deletion key adds
+  no second confirmation.
 - Given a signed-in account, when its own screen is opened, then the deletion key
   is reachable there, masked and copyable in full (AUTH-019).
 - Given two accounts, when their deletion keys are compared, then they differ,
@@ -249,9 +259,17 @@ accept it as the sole proof of ownership at the deletion page (EXT-006).
 - Given an account key entered on another device, when the account opens there,
   then the deletion key is the same one.
 
-**Verification:** read the key from the screen and from the file and confirm they
-match; attempt deletion twice with one key; review the key's entropy against the
-page's rate limit.
+**Verification:** read the key from the screen, from its own copy control and
+from the file and confirm they match; copy the account key and confirm the
+clipboard holds nothing else; attempt deletion twice with one key; review the
+key's entropy against the page's rate limit.
+**Correction, 2026-09-27:** criterion 1 named no control, the "Constrains
+AUTH-014" line asked for copyable text beside the account key, and AUTH-014 (7)
+had the account key carry the deletion key, which read as one copy action taking
+both (SD-029). By user decision of that date the deletion key is shown in full
+beside the account key with a copy control of its own, each control copies one
+key, the file carries both, and one confirmation names both. See
+[ADR — the deletion key is handed over beside the account key](../decisions/20260927-the-deletion-key-is-handed-over-beside.md).
 **Source:** user decision, 2026-09-20. This is what keeps the rule "the account
 key is never uploaded anywhere" free of exceptions, and it bounds what a
 counterfeit page can achieve: a stolen deletion key destroys an account but never

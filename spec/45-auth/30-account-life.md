@@ -141,12 +141,16 @@ without a key presented to it.
 - Given a key presented on any device, when it is checked, then the check happens
   at the server (AUTH-010) and the client decides nothing about it.
 - Given the account key, when it is issued, then it is text the holder can copy
-  and keep anywhere (AUTH-008, EXT-008) and it carries the deletion key
-  (AUTH-017).
+  and keep anywhere (AUTH-008, EXT-008), and the deletion key is issued alongside
+  it as separate text with its own copy control (AUTH-017); the account key's
+  text does not contain the deletion key.
 
 **Verification:** present a forged key and a key of a deleted account; take a
 full copy of the stored data and attempt, from it alone, to reconstruct a key or
 to act as an account.
+**Correction, 2026-09-27:** criterion 7 said the account key "carries" the deletion
+key, which read as one copy action taking both (SD-029). By user decision of that
+date the two are separate texts, each copied by its own control (AUTH-017).
 
 **What this requirement deliberately does not say:** the key's format, the
 cryptography behind it and the protocol by which the server tests it. Those are

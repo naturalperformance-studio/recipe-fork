@@ -2,7 +2,7 @@
 slug: FLOW
 status: closed
 updated: 2026-09-27
-ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-051, FLOW-052]
+ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-058, FLOW-051, FLOW-052]
 ---
 
 # Favourites and what the device keeps
@@ -155,6 +155,42 @@ in the foreground is decided with the recipe card flow, not here.
 reached", which promised a current step the card does not have — the card is one
 scrolling screen (`30-cooking`) and nothing in the product advances through
 steps. What is restored is the scroll position.
+
+### FLOW-058 — A session ends only when the reader closes the application
+
+The system shall treat one session as lasting from a start of the application
+that has nothing to restore until the next such start, shall start a new session
+only when the reader closed the application — removed it from the list of recent
+applications — or the device was restarted, and shall not start one when the
+operating system ended the application's process while it was away.
+
+**Acceptance criteria**
+- Given a view chosen in the favourites section (FLOW-034), when the reader
+  leaves the application by the home action or the task switcher and returns
+  while its process is alive, then it is the same session and the view is still
+  in force.
+- Given the same choice, when the operating system ends the application's
+  process while it is away and the reader returns to it, then it is the same
+  session and the view is still in force, exactly as the recipe being read is
+  restored by FLOW-012.
+- Given the same choice, when the reader removes the application from the list
+  of recent applications and opens it again, then a new session has started and
+  the section opens as FLOW-034 (6) states.
+- Given the same choice, when the device is restarted and the reader opens the
+  application, then a new session has started.
+- Given a new session, when anything held for the length of a session is looked
+  at — the ordering of CAT-001, the filter of FLOW-033, the view of FLOW-034 and a
+  count the reader set on a card (FLOW-017) — then each is back at its default.
+
+**Verification:** choose the own-recipes view, a non-default ordering and the
+own-recipes filter; return after the home action, after ending the process from
+the developer options while away, after removing the application from the recent
+list and after restarting the device, and inspect all three each time.
+**Source:** user decision, 2026-09-27 (SD-028). The line falls where the product
+already put it: leaving the application and the system ending it are not the
+reader's acts and cost nothing (FLOW-012); closing it is, and a fresh start is
+what FLOW-017 already meant. See
+[ADR — a session is ended by the reader](../decisions/20260927-a-session-is-ended-by-the-reader.md).
 
 ### FLOW-051 — Favourites without an account live on the device and nowhere else
 

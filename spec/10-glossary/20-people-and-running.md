@@ -30,8 +30,10 @@ replaces whatever account was active, wiping what the device held for it
 properties it must have are AUTH-014.
 
 **Deletion key** — a second, smaller secret issued beside the account key,
-unique and unguessable. It is the only thing the deletion page accepts, and it
-can destroy an account but never take it over (AUTH-017, EXT-006).
+unique and unguessable. At creation it is shown in full beside the account key
+with a copy control of its own, and the key file carries both. It is the only
+thing the deletion page accepts, and it can destroy an account but never take it
+over (AUTH-017, EXT-006).
 
 **Device slot** — one of three places a device has for creating an account. A
 slot is occupied by creating an account and is free again six calendar months
@@ -165,6 +167,11 @@ account owns that the server has not accepted (`flows`, FLOW-001, FLOW-009).
 **Accepted by the server** — said of a recipe whose every local change, text and
 media, has reached the server. Nothing is submitted for moderation before it is
 (FLOW-005, FLOW-006).
+
+**Session** — the time from a start of the application that has nothing to
+restore until the next such start. Only the reader closing the application or
+a restart of the device ends one; the operating system ending the process while
+the application is away does not (FLOW-058).
 
 **Favourite** — a recipe the reader marked to take with them. Its text is always
 held on the device; whether its media comes too is one setting covering all

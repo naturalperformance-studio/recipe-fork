@@ -44,9 +44,12 @@ not suit a large batch is not rewritten by the product on the author's behalf.
 The serving count itself is displayed on the same fraction set as `household` —
 whole numbers and the fractions ¼, ⅓, ½, ⅔, ¾ — with a floor of ¼ serving, and
 is rounded to the nearest value the set can express, a value exactly between two
-of them going to the larger (SCALE-015). Fractions of a serving are
-displayed below one serving only; at or above one serving the count is displayed
-as a whole number (SCALE-002, SCALE-008).
+of them going to the larger (SCALE-015). The set holds 1, so a computed count
+from 0.875 up is shown as 1: fractions of a serving are displayed only where
+that rounding stays below one serving, and otherwise the count is displayed as a
+whole number (SCALE-002, SCALE-008). Only a computed count is marked as
+approximate; a count the reader asked for is shown as asked, whatever its form
+(SCALE-011).
 
 Divisibility of a `piece` ingredient comes from its entry in the ingredient
 dictionary (DOM: IngredientEntry — egg, garlic clove, bay leaf and so on are

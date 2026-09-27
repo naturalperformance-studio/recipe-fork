@@ -15,6 +15,9 @@
 > the first three; its one residue, FLOW-013 (8) asking for a notification
 > permission Android 10 to 12 do not have, was answered and written the same day,
 > and SD-021 turns resolved only when the product owner says so.
+> Gate 1 then found SD-027 (two entries under one number) and SD-028 to SD-032;
+> all seven were answered by the product owner on 2026-09-27 and written here, and
+> each turns resolved only when the product owner says so.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -29,7 +32,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 
 | File | Slug | Status | What it is for |
 |---|---|---|---|
-| [10-glossary/](10-glossary/00-index.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key, operational signal, openings and 72 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
+| [10-glossary/](10-glossary/00-index.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key, operational signal, openings, session and 72 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked; and, looked up on 2026-09-27, the applications that import recipes from social networks — all of which keep what they import private. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
@@ -132,6 +135,11 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260927-the-three-steps-of-creation.md](decisions/20260927-the-three-steps-of-creation.md) | accepted, writes AUTH-024 | Nickname and terms, then the two keys, then the recovery key; back goes one step back; leaving the application keeps the place while the process lives. |
 | [20260927-a-refusal-is-explained-at-once.md](decisions/20260927-a-refusal-is-explained-at-once.md) | accepted, completes FLOW-013 | A refused platform request at a timer's start is followed at once by the application's explanation; the timer never waits for an answer. |
 | [20260927-no-request-where-the-platform-has-none.md](decisions/20260927-no-request-where-the-platform-has-none.md) | accepted, corrects FLOW-013 (8) | The notification request is made only where the platform has one (Android 13 and later); below that, on means nothing is shown and off means the explanation. |
+| [20260927-the-serving-count-has-one-set.md](decisions/20260927-the-serving-count-has-one-set.md) | accepted, corrects SCALE-001, SCALE-008 and SCALE-011 | The serving count rounds over one set that holds 1, so 0.875 and up is 1; only a computed count is approximate, a requested one is shown as asked. |
+| [20260927-a-session-is-ended-by-the-reader.md](decisions/20260927-a-session-is-ended-by-the-reader.md) | accepted, adds FLOW-058 | A session ends only when the reader closes the application or the device restarts; the system ending the process does not end it. |
+| [20260927-the-deletion-key-is-handed-over-beside.md](decisions/20260927-the-deletion-key-is-handed-over-beside.md) | accepted, corrects AUTH-014, AUTH-017 and AUTH-024 | At creation the deletion key is shown in full beside the account key with its own copy control; each control copies one key; one confirmation names both. |
+| [20260927-timer-duration-and-the-next-action.md](decisions/20260927-timer-duration-and-the-next-action.md) | accepted, completes FLOW-027 and GUIDE-007 | A timer is hours and minutes up to 99:59, and 0:00 is no timer; a scroll or a screen-reader move does not end a hint. |
+| [20260927-the-editor-is-entered-from-the-cards-bar.md](decisions/20260927-the-editor-is-entered-from-the-cards-bar.md) | accepted, corrects FLOW-029 and FLOW-053 | An editable recipe's card carries an edit action in its top bar, outside the recipe; deletion stays on the list. |
 
 ## C4 context
 

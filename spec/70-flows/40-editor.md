@@ -279,15 +279,25 @@ shall offer no separate preview inside the editor.
 **Acceptance criteria**
 - Given a recipe the author saves, when it is opened afterwards, then it is the same
   card a reader sees (FLOW-019, FLOW-020), not an editor with reader styling.
-- Given that view of a recipe that is still editable, when the author chooses to
-  edit, then the editor opens on the same recipe.
-- Given that view, when the author looks for an edit control on the card itself,
-  then there is none: the card is read, the editor is written, and they are two
-  screens.
+- Given that view of a recipe that is still editable, when the author chooses the
+  edit action in the card screen's top bar, then the editor opens on the same
+  recipe.
+- Given that view, when the author looks for an edit control inside the recipe's
+  content — its title, ingredients, steps, description or media — then there is
+  none and no part of it becomes editable in place: the card is read, the editor
+  is written, and they are two screens; the edit action sits in the screen's bar,
+  outside the recipe.
 - Given a recipe that is no longer editable by `entity-states`, when the author
-  opens it, then no way into the editor is offered at all.
+  opens it, then the card screen's bar carries no edit action and no way into the
+  editor is offered at all.
 
-**Verification:** save a recipe, open it, edit it, publish it and try again.
+**Verification:** save a recipe, open it, enter the editor from the bar, publish
+it and look for the action again.
+**Correction, 2026-09-27:** criterion 2 had the author "choose to edit" through no
+named control, and criterion 3 with FLOW-053 (7) read as forbidding one on the card
+screen (SD-031). By user decision of that date the way in is an edit action in the
+card screen's top bar, outside the recipe's content. See
+[ADR — the editor is entered from the card's bar](../decisions/20260927-the-editor-is-entered-from-the-cards-bar.md).
 **Source:** user decision, 2026-09-20: a preview would be a third view of the same
 recipe to build and keep true, when saving already produces the reader's own view
 and the recipe stays editable until it becomes visible to anyone else.

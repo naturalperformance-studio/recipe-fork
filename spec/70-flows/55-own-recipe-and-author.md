@@ -36,9 +36,10 @@ confirmation.
   the recipe keeps its state and everything it holds.
 - Given the confirmation, when the owner gives it, then the entry leaves the view
   and, if the view is now empty, FLOW-042 states so and offers to write a recipe.
-- Given the recipe card of an own recipe, when it is looked at, then it carries
-  no deletion control, because the card is read and the list is where a recipe is
-  managed (FLOW-029).
+- Given the recipe card screen of an own recipe, when it is looked at, then it
+  carries no deletion control, neither in the recipe nor in the screen's bar,
+  because a recipe's state is managed on its entry in the list (FLOW-036); the
+  edit action in the bar (FLOW-029) opens the editor and deletes nothing.
 - Given no network connection, when deletion is asked for, then FLOW-003 refuses
   it before the statement is shown.
 
@@ -52,6 +53,9 @@ already uses for every irreversible act it offers — GUIDE-001 before submissio
 AUTH-013 before an account is replaced, RET-005 before an account is deleted —
 and it names the freed allowance because MEDIA-011 has just told the author that
 deleting a draft is one of the two ways to get it back.
+**Correction, 2026-09-27:** criterion 7 grounded itself on "the card is read",
+which read as forbidding the edit action FLOW-029 now places in the card screen's
+bar (SD-031); it now names the bar and keeps deletion off it.
 
 ### FLOW-054 — The private link is shown, copied, revoked and reissued in one place
 

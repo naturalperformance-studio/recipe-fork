@@ -18,8 +18,9 @@ authored count, rounded by the rounding grid (section index).
 **Acceptance criteria**
 - Given a recipe authored for 4 servings with 500 g of an `exact` ingredient,
   when the reader asks for 6, then it shows 750 g.
-- Given the same recipe with 3 indivisible pieces, when the reader asks for 6,
-  then it shows 6 pieces.
+- Given the same recipe with 3 indivisible pieces, when the reader asks for 6
+  (an exact 4.5 pieces), then it shows 5 pieces and states that the exact value
+  was lower (SCALE-015, SCALE-004).
 - Given the same recipe with an ingredient of type `taste_unmeasured`, when the
   reader asks for any count, then its line is unchanged.
 - Given any scaled view, when the reader returns the count to the authored
@@ -29,6 +30,10 @@ authored count, rounded by the rounding grid (section index).
 **Verification:** scale one recipe covering all five unit types up and down, and
 compare against hand computation.
 **Source:** draft section 3.3.
+**Correction, 2026-09-27:** criterion 2 showed 6 pieces for an exact 4.5, which
+neither the grid nor SCALE-015 produces; 6 pieces is the value at 8 servings
+(SD-027, the criterion on pieces). The behaviour was already decided by the grid
+and SCALE-015; only the example was wrong.
 
 ### SCALE-002 — Scaling from a fixed ingredient
 
@@ -93,9 +98,10 @@ count (user decision, 2026-09-27, SD-011).
 
 ### SCALE-008 — Serving count below one
 
-While the computed serving count is below one serving, the system shall display
-it as the nearest of the fractions ¼, ⅓, ½, ⅔, ¾ instead of as a whole number,
-and shall display ¼ serving when the computed count is below ¼.
+While the computed serving count, taken to the nearest value of the serving-count
+set by SCALE-015, is below one serving, the system shall display it as that
+fraction — one of ¼, ⅓, ½, ⅔, ¾ — instead of as a whole number, and shall display
+¼ serving when the computed count is below ¼.
 
 **Acceptance criteria**
 - Given a recipe authored for 4 servings, when the reader fixes 50 g of an
@@ -104,16 +110,34 @@ and shall display ¼ serving when the computed count is below ¼.
 - Given the same recipe, when the reader fixes 25 g of that ingredient
   (a computed 0.2 servings), then the serving count shows an approximate
   ¼ serving.
-- Given any serving count displayed as a fraction, when it is displayed, then it
-  carries the same approximate marking that SCALE-002 requires.
-- Given a computed count of exactly one serving or more, when it is displayed,
-  then it is displayed as a whole number and not as a fraction.
+- Given a computed serving count displayed as a fraction, when it is displayed,
+  then it carries the same approximate marking that SCALE-002 requires; a count
+  the reader requested is never marked as approximate, in any form (SCALE-011).
+- Given a computed count whose nearest value in the set is one serving or more,
+  when it is displayed, then it is displayed as a whole number and not as a
+  fraction.
 - Given any state, when the serving count is displayed, then no quantity in the
   recipe is computed from it; SCALE-003 governs.
+- Given a recipe authored for 4 servings with 500 g of chicken, when the reader
+  fixes 115 g of it (a computed 0.92 servings), then the serving count shows an
+  approximate 1 serving and not ¾.
+- Given the same recipe, when the reader fixes 109.375 g of chicken (a computed
+  0.875 servings, exactly between ¾ and 1), then the serving count shows an
+  approximate 1 serving.
+- Given the same recipe, when the reader fixes 100 g of chicken (a computed 0.8
+  servings), then the serving count shows an approximate ¾ serving.
 
-**Verification:** fix an ingredient at factors producing 0.4, 0.2 and 1.0
-servings and compare the displayed count against the fraction set.
+**Verification:** fix an ingredient at factors producing 0.2, 0.4, 0.8, 0.875,
+0.92 and 1.0 servings and compare the displayed count against the serving-count
+set.
 **Source:** user decision, 2026-09-20 (OQ-010).
+**Correction, 2026-09-27:** a computed count from 0.875 up to 1 was ≈¾ by this
+statement and ≈1 by SCALE-015 (SD-027, the criterion on counts below one); and
+criterion 3 marked "any" fraction as approximate while SCALE-016 and SCALE-017
+left a requested count unmarked (SD-032). By user decisions of that date the count
+is rounded over one set that holds 1, so fractions are shown only where that
+rounding stays below one; and only a computed count is approximate. See
+[ADR — the serving count has one set, and what the reader asked for is exact](../decisions/20260927-the-serving-count-has-one-set.md).
 
 ### SCALE-010 — The requested serving count has a floor and no ceiling
 
@@ -151,12 +175,16 @@ number.
 - Given the serving count control at ¼ serving, when the reader tries to go
   lower, then the count stays at ¼.
 - Given a count requested as a fraction, when the recipe is displayed, then the
-  count is displayed by SCALE-008 in the same form it was requested.
+  count is displayed in the same form it was requested and is not marked as
+  approximate, because it is the count the reader asked for (SCALE-008).
 
 **Verification:** walk the control from its floor to a two-digit count and back,
 and confirm no value outside the two sets can be produced.
 **Source:** user decision, 2026-09-20 (OQ-011). The requested form matches the
 displayed form of SCALE-008, so one fraction set governs both sides.
+**Correction, 2026-09-27:** criterion 4 routed a requested fraction through
+SCALE-008's approximate marking, which SCALE-016 (3) and SCALE-017 (4) contradicted
+(SD-032). By user decision of that date a requested count is never approximate.
 
 ### SCALE-016 — Changing the serving count releases every fixed ingredient
 

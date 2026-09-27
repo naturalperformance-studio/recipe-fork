@@ -41,10 +41,24 @@ timer on a step that already carries one.
   (FLOW-025).
 - Given a duration the author has not entered, when the recipe is saved, then the
   timer is not stored, because a timer without a duration is not a timer.
+- Given a timer being attached, when its duration is entered, then it is entered
+  as hours and whole minutes, from 0 to 99 hours and from 0 to 59 minutes, and no
+  seconds are offered.
+- Given a duration of 0 hours and 0 minutes, when the recipe is saved, then it is
+  a duration the author has not entered, and criterion 11 governs: the timer is
+  not stored and nothing is refused.
+- Given the duration field, when the author tries to enter more than 99 hours
+  and 59 minutes, then the field cannot hold it, and the longest timer a recipe
+  can carry is 99 hours 59 minutes.
 
 **Verification:** attach a timer, try to attach a second through every path the
 editor offers, delete the step, move the step, and save a recipe with an
-unfinished timer.
+unfinished timer, with a timer of 0 hours 0 minutes and with one of 99 hours 59
+minutes; try to enter 100 hours and 60 minutes.
+**Completed 2026-09-27:** what the duration field accepts was stated nowhere
+(SD-030, item 1). By user decision of that date it is hours and minutes up to
+99:59, and zero is not a duration. See
+[ADR — a timer is hours and minutes, and a hint outlives a scroll](../decisions/20260927-timer-duration-and-the-next-action.md).
 **Source:** user decision, 2026-09-20. One timer per step, because FLOW-016 names
 a timer by its step and two timers on one step would carry one name between them;
 and two waits in sequence are already two steps in the kitchen. The name is shown

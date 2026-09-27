@@ -247,8 +247,8 @@ shall open every recipe at that count.
 - Given a recipe opened at the reader's count, when the reader returns it to the
   authored count, then nothing is marked as derived (SCALE-001).
 - Given a reader who scaled one recipe to a different count and left it, when
-  they open that recipe again in a later session, then it opens at their usual
-  count and not at the count they used last time.
+  they open that recipe again in a later session (FLOW-058), then it opens at
+  their usual count and not at the count they used last time.
 - Given a reader who scaled a recipe and stays in the application, when they
   leave the card and come back to it, then the count they set is still there.
 
@@ -263,8 +263,8 @@ and the household is the durable fact. The cost is deliberate: with the setting
 in use almost every recipe opens in a derived state, and the numbers the author
 wrote are not the numbers the reader meets first — which is why the derived
 markings of SCALE-004 carry the weight they do.
-**Note:** a count the reader set survives for as long as the application keeps
-running, including leaving the card and returning to it; a fresh start of the
+**Note:** a count the reader set survives for as long as the session lasts
+(FLOW-058), including leaving the card and returning to it; a fresh start of the
 application opens every recipe at the usual count again. This boundary follows
 the reason for the decision — a week later the guests are gone, ten minutes
 later the reader is still cooking the same meal.

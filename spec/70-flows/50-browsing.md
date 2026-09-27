@@ -38,7 +38,8 @@ reader turns it on, and shall apply it wherever the catalogue's filters apply.
 - Given any other account, when it browses, then the reader's recipes are listed
   as CAT-003 requires and this filter has no effect on what it sees.
 - Given the filter is on and the reader leaves the catalogue and returns within
-  the same session, then it is still on, as CAT-001 keeps a chosen ordering.
+  the same session (FLOW-058), then it is still on, as CAT-001 keeps a chosen
+  ordering.
 - Given a recipe the account owns that is not published, when the filter is on,
   then it is still absent, because the catalogue holds only what is externally
   visible and the own-recipes view (FLOW-034) is where the rest lives.
@@ -74,10 +75,11 @@ switch between them inside the section without leaving it.
   the own-recipes view alone, because FLOW-040 gives it no way into the other,
   whatever position the catalogue filter of FLOW-033 is in.
 - Given a switch between the views, when the reader leaves the section and
-  returns within the same session, then the view they were in is still in force,
-  as CAT-001 keeps a chosen ordering.
-- Given a session in which the reader has not chosen a view, when they open the
-  section, then it opens on the view of marked recipes, whatever the account holds.
+  returns within the same session (FLOW-058), then the view they were in is still
+  in force, as CAT-001 keeps a chosen ordering.
+- Given a session (FLOW-058) in which the reader has not chosen a view, when they
+  open the section, then it opens on the view of marked recipes, whatever the
+  account holds.
 - Given a device holding no account, when the section is opened, then it shows
   the view of marked recipes alone and no switch; the own-recipes view and the
   switch appear once the device holds an account.
@@ -88,6 +90,8 @@ in a new session and on a device with no account.
 **Completed 2026-09-27:** which view the section opens on and what a device with no
 account sees were decided nowhere (SD-004). By user decision of that date it opens
 on the marked recipes, and a device with no account has that view alone.
+**Completed again 2026-09-27:** "session" was defined nowhere (SD-028); FLOW-058
+now fixes where one ends.
 **Source:** user decision, 2026-09-20: finding one's own recipe must be simple,
 and the author's own work is not discovery, so it lives beside favourites rather
 than in the catalogue. Two views rather than two sections, because a state of a

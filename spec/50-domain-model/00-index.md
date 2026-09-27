@@ -144,7 +144,7 @@ either entity.
 
 | Field | Type | Notes |
 |---|---|---|
-| `duration` | duration | |
+| `duration` | duration | Hours and whole minutes, from 1 minute to 99 hours 59 minutes; zero is no duration and the timer is not stored (FLOW-027). |
 | `label` | text or none | The author's own name for the timer, overriding the name derived from the step. Absent unless the author set one; at most 60 characters (DOM-012). |
 
 A timer's name is derived from the text of the step it belongs to and is not
