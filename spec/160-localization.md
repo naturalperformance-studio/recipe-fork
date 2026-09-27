@@ -1,9 +1,9 @@
 ---
 slug: L10N
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [L10N-001, L10N-002, L10N-003, L10N-004, L10N-005, L10N-006, L10N-007,
-  L10N-008]
+  L10N-008, L10N-009]
 ---
 
 # Localization
@@ -227,3 +227,37 @@ take the absence of a conversion rule for an oversight. Offering a second system
 would mean a second rounding grid for every unit type in `scaling-rules` and a
 second set of comparison factors in DOM-011, and it would be a product decision
 taken on its own merits, not a translation task.
+
+### L10N-009 — Numbers are written the way the interface language writes them
+
+The system shall display every number with the digit grouping and the decimal
+mark of the interface language: in Russian, groups of three digits separated by a
+non-breaking space and a comma before the fractional part; in English, groups of
+three digits separated by a comma and a point before the fractional part.
+
+**Acceptance criteria**
+- Given the interface in Russian, when 10 000 000 pieces are displayed, then the
+  number reads `10 000 000` with a space that never breaks the number across two
+  lines.
+- Given the interface in English, when the same quantity is displayed, then it
+  reads `10,000,000`.
+- Given an `exact` quantity of 1500 g, when it is displayed, then it reads
+  `1,5 кг` in Russian and `1.5 kg` in English (SCALE-013).
+- Given the interface in Russian, when a four-digit whole number such as 1234
+  servings is displayed, then it reads `1 234`; in English it reads `1,234`.
+- Given a recipe declared in one language and the interface in the other, when a
+  quantity is displayed, then it follows the interface language, not the
+  recipe's.
+- Given a vulgar fraction of SCALE-014, when it is displayed, then it carries no
+  decimal mark in either language.
+
+**Verification:** display the same seeded recipe at factors producing four-,
+seven- and eight-digit quantities and decimal kilograms, once in each interface
+language.
+**Source:** user decision, 2026-09-27 (SD-016 item 2): the reader sees numbers in
+the form their language uses. The forms are those the Unicode CLDR publishes for
+`ru` (group separator U+00A0 no-break space, decimal mark comma, grouping from
+four digits) and `en` (group separator comma, decimal mark point, grouping from
+four digits) ([CLDR number data, cldr-json](https://github.com/unicode-org/cldr-json/tree/main/cldr-json/cldr-numbers-full/main),
+checked 2026-09-27). The quantity in a step (SCALE-007) and the serving count
+follow the same rule, being numbers displayed like any other.

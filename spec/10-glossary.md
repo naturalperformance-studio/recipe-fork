@@ -175,7 +175,8 @@ by (CAT-009, CAT-002).
 ## Scaling
 
 **Authored serving count** — the number of servings the author wrote the
-quantities for. The basis of every recalculation (SCALE-001).
+quantities for: a whole number of one or more, with no ceiling (DOM-015). The
+basis of every recalculation (SCALE-001).
 
 **Requested serving count** — the number the reader asks for. Floored at ¼
 serving, with no ceiling; below one serving it is one of ¼, ⅓, ½, ⅔, ¾, and at
@@ -197,9 +198,10 @@ never to the stored recipe and never to the chain of computation (SCALE-003).
 piece divisible, ¼ for `household` and `taste_measured`, ¼ serving for the
 serving count itself. An ingredient is never scaled out of a recipe (SCALE-005).
 
-**Derived** — any quantity a reader sees that is not the authored one. Every
-derived value is marked as derived, and says which way it moved (CON-004,
-SCALE-004).
+**Derived** — any quantity a reader sees while the recipe is displayed at a scale
+factor other than 1, whether or not its displayed value happens to equal the
+authored one. Every derived value is marked as derived, and says which way
+rounding moved it where it did (CON-004, SCALE-004).
 
 ## People and accounts
 

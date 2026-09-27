@@ -1,9 +1,9 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007,
-  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014]
+  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014, DOM-015]
 ---
 
 # Invariants over the entities
@@ -351,3 +351,27 @@ nothing in the product notices. DOM-011 already accepted that shape of error by
 keeping the factor on the entry, where it is correctable for ever, rather than in
 the recipe, where it would not be; and the share of ingredients entered as free
 text (OBS-001) is the signal that says the dictionary is falling behind.
+
+### DOM-015 — The authored serving count is a whole number of one or more
+
+The system shall hold as a recipe's authored serving count only a whole number of
+one or more, and shall set no upper bound on it.
+
+**Acceptance criteria**
+- Given the serving count field of the editor, when the author tries to enter 0,
+  a negative number, or a number with a fractional part such as 2.5 or ½, then the
+  field does not hold it.
+- Given that field, when the author enters 1, 4 or 1000, then it holds that value.
+- Given a recipe whose serving count field holds no value, when it is submitted,
+  then DOM-006 rejects it as missing a serving count; no value of zero stands in
+  for an empty field.
+- Given any authored serving count, when a reader later returns the recipe to it
+  (SCALE-001, FLOW-017), then it is a count the serving count control can hold
+  (SCALE-011), because every whole number of one or more is one.
+
+**Verification:** attempt 0, −1, 2.5, ½, 1, 4 and 1000 in the editor field; submit
+a recipe with the field empty.
+**Source:** user decision, 2026-09-27 (SD-013).
+**Cost, stated:** a recipe written for less than one serving — half a portion of a
+sauce — cannot say so, and its author writes it for one. The requested count
+still goes below one (SCALE-011), so a reader can scale such a recipe down.

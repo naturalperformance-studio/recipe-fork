@@ -77,8 +77,8 @@ derivation rounded the value, show the direction of the rounding.
 
 **Acceptance criteria**
 - Given a recipe scaled to a serving count other than the author's, when its
-  ingredient list is displayed, then every quantity that differs from the
-  authored quantity is visibly marked as derived.
+  ingredient list is displayed, then every quantity is visibly marked as derived,
+  including one whose displayed value equals the authored quantity.
 - Given a derived quantity that was rounded, when it is displayed, then the
   interface states whether the displayed value is above or below the exact
   computed value.
@@ -89,6 +89,11 @@ derivation rounded the value, show the direction of the rounding.
 **Source:** draft section 1 ("any automation is explained in the interface"),
 section 3.2.
 **Detailed rules:** section `scaling-rules`.
+**Correction, 2026-09-27:** criterion 1 marked a quantity by its value ("every
+quantity that differs from the authored quantity") while the statement marks by
+provenance ("a quantity it derived"). By user decision of the same date provenance
+governs: at any scale factor other than 1 every quantity is derived (SCALE-004;
+[ADR — derived by provenance](decisions/20260927-derived-by-provenance.md)).
 
 ### CON-005 — Native Android is the only client surface in the MVP
 
