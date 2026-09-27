@@ -56,7 +56,7 @@ in this wave, and no media is attached.
 | T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | blocked |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | gated |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | blocked |
-| T-021 | A reference in a step reads as the quantity the list shows | T-020 | planned |
+| T-021 | A reference in a step reads as the quantity the list shows | T-020 | gated |
 | T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
 | T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
 | T-034 | A long step with an unnamed timer is shown what its notification will say | T-017, T-023 | planned |
@@ -1132,7 +1132,7 @@ in this wave, and no media is attached.
 ### T-021 — A reference in a step reads as the quantity the list shows
 
 **Requirements:** SCALE-007, FLOW-032, DOM-007, CON-004, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-020
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -1166,7 +1166,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-021-gate1.md; CON-004 (2) added; blocked-by-spec (SD-012, SD-014) — docs/product/verdicts/20260927-T-021-gate1-2.md; re-sliced against spec/ @ ead1a44 after SD-012, SD-014 resolved, re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-021-gate1.md; CON-004 (2) added; blocked-by-spec (SD-012, SD-014) — docs/product/verdicts/20260927-T-021-gate1-2.md; re-sliced against spec/ @ ead1a44 after SD-012, SD-014 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-021-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
