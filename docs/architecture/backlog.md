@@ -30,41 +30,41 @@ A person creates an account, writes a recipe — offline as well — cooks from 
 a fixed ingredient and the step timers, and the draft reaches the server. Nothing is submitted, published or shared
 in this wave, and no media is attached.
 
-| Task | Title | Depends on |
-|---|---|---|
-| T-001 | Quantities follow the serving count | — |
-| T-002 | A fixed ingredient sets the scale | T-001 |
-| T-003 | The store refuses a malformed dictionary entry | — |
-| T-004 | The device holds both dictionaries and replaces them when they change | T-003 |
-| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 |
-| T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 |
-| T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 |
-| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 |
-| T-009 | The creation screen shows the nickname, the terms and the account key | T-006, T-008 |
-| T-010 | The recovery key is issued on its own step, and nothing exists until every confirmation is given | T-009 |
-| T-011 | An ingredient is picked from the dictionary in three fields | T-008 |
-| T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 |
-| T-013 | Steps are written in the editor and survive a restart offline | T-012 |
-| T-014 | A step carries one timer, named by its step unless the author names it | T-013 |
-| T-015 | A quantity goes into a step as a reference | T-014 |
-| T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 |
-| T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 |
-| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-001 |
-| T-019 | A derived quantity says so, and which way it was rounded | T-018 |
-| T-020 | The reader fixes an ingredient on the card | T-019, T-002 |
-| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-015 |
-| T-022 | A timer runs on its step | T-021, T-014, T-010 |
-| T-023 | A timer announces itself when the application is closed | T-022, T-026 |
-| T-024 | Several timers run at once, and restarting one asks first | T-023 |
-| T-025 | The card keeps the screen awake and is where the reader left it | T-024 |
-| T-026 | Writing a recipe asks for an account first | T-010, T-018 |
-| T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 |
-| T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-017, T-026, T-025 |
+| Task | Title | Depends on | Status |
+|---|---|---|---|
+| T-001 | Quantities follow the serving count | — | blocked |
+| T-002 | A fixed ingredient sets the scale | T-001 | blocked |
+| T-003 | The store refuses a malformed dictionary entry | — | gated |
+| T-004 | The device holds both dictionaries and replaces them when they change | T-003 | gated |
+| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | blocked |
+| T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | gated |
+| T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | blocked |
+| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | gated |
+| T-009 | The creation screen shows the nickname, the terms and the account key | T-006, T-008 | blocked |
+| T-010 | The recovery key is issued on its own step, and nothing exists until every confirmation is given | T-009 | blocked |
+| T-011 | An ingredient is picked from the dictionary in three fields | T-008 | blocked |
+| T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | blocked |
+| T-013 | Steps are written in the editor and survive a restart offline | T-012 | returned |
+| T-014 | A step carries one timer, named by its step unless the author names it | T-013 | blocked |
+| T-015 | A quantity goes into a step as a reference | T-014 | planned |
+| T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | planned |
+| T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | planned |
+| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-001 | planned |
+| T-019 | A derived quantity says so, and which way it was rounded | T-018 | planned |
+| T-020 | The reader fixes an ingredient on the card | T-019, T-002 | planned |
+| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-015 | planned |
+| T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
+| T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
+| T-024 | Several timers run at once, and restarting one asks first | T-023 | planned |
+| T-025 | The card keeps the screen awake and is where the reader left it | T-024 | planned |
+| T-026 | Writing a recipe asks for an account first | T-010, T-018 | planned |
+| T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | planned |
+| T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-017, T-026, T-025 | planned |
 
 ### T-001 — Quantities follow the serving count
 
 **Requirements:** SCALE-001, SCALE-003, SCALE-005, SCALE-010
-**Status:** planned
+**Status:** blocked
 **Depends on:** —
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -92,7 +92,7 @@ in this wave, and no media is attached.
 - Given a recipe scaled to a very large count, when an `exact` ingredient exceeds 1000 g, then it is displayed in kilograms by the rounding grid.
 - Given any scaled view, when a quantity is displayed, then it was computed from the exact factor by SCALE-003, whatever the size of the factor.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -100,7 +100,7 @@ in this wave, and no media is attached.
 ### T-002 — A fixed ingredient sets the scale
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-010
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -125,7 +125,7 @@ in this wave, and no media is attached.
 *SCALE-010 — spec/80-scaling-rules.md*
 - Given a recipe authored for 4 servings with 5 g of an `exact` ingredient, when the reader fixes 10 kg of that ingredient, then the derived count is displayed by SCALE-002 and is not capped.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -133,7 +133,7 @@ in this wave, and no media is attached.
 ### T-003 — The store refuses a malformed dictionary entry
 
 **Requirements:** DOM-010, L10N-003, DOM-014
-**Status:** planned
+**Status:** gated
 **Depends on:** —
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/db/**` · `server/src/main/kotlin/app/recipefork/server/dictionary/**` · `server/src/main/resources/db/migration/V1__dictionaries.sql` · `server/src/test/kotlin/app/recipefork/server/db/**` · `server/src/test/kotlin/app/recipefork/server/dictionary/**` · `deploy/local/compose.yml` · `deploy/local/seed/**`
 **Binding ADRs:** decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -152,7 +152,7 @@ in this wave, and no media is attached.
 *DOM-014 — spec/50-domain-model/10-invariants.md*
 - Given the rule that an entry carries a label in both languages (L10N-003), when a half-translated entry is written, then what refuses it is the store's own constraint, because there is no screen at which the refusal could be shown.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-003-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -160,7 +160,7 @@ in this wave, and no media is attached.
 ### T-004 — The device holds both dictionaries and replaces them when they change
 
 **Requirements:** FLOW-001
-**Status:** planned
+**Status:** gated
 **Depends on:** T-003
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/dictionary/**` · `server/src/test/kotlin/app/recipefork/server/dictionary/**` · `core/src/main/kotlin/app/recipefork/core/api/DictionaryContract.kt` · `app/build.gradle.kts` · `build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/RecipeForkApplication.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/data/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -172,7 +172,7 @@ in this wave, and no media is attached.
 *FLOW-001 — spec/70-flows/10-offline-and-sync.md*
 - Given a connection returns after the product owner has changed a dictionary, when the application next reaches the server, then the held copy is replaced.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-004-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -180,7 +180,7 @@ in this wave, and no media is attached.
 ### T-005 — An account is created with a unique nickname and three keys, and only once it is confirmed
 
 **Requirements:** AUTH-014, AUTH-017, AUTH-020, AUTH-018, DOM-001, LEG-004, CON-001
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-004
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/resources/db/migration/V2__accounts.sql` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `server/src/main/resources/nickname/**` · `server/src/test/kotlin/app/recipefork/server/account/**`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -217,7 +217,7 @@ in this wave, and no media is attached.
 *CON-001 — spec/30-constraints.md*
 - Given the stored data of any account, when its fields are enumerated, then none of them holds a value of those four kinds.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-001) — docs/product/verdicts/20260927-T-005-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -225,7 +225,7 @@ in this wave, and no media is attached.
 ### T-006 — Creating an account costs a device slot, and no verdict makes it muted
 
 **Requirements:** AUTH-001, AUTH-002, AUTH-004, AUTH-015
-**Status:** planned
+**Status:** gated
 **Depends on:** T-005
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/kotlin/app/recipefork/server/attestation/**` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `server/src/test/kotlin/app/recipefork/server/account/**` · `server/src/test/kotlin/app/recipefork/server/attestation/**` · `deploy/local/compose.yml`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -252,7 +252,7 @@ in this wave, and no media is attached.
 - Given a verdict received and checked, when the stored record of the account is enumerated, then it holds no field from that verdict.
 - Given the stored data of any account, when it is enumerated, then it holds nothing that identifies a device (CON-001).
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-006-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -260,7 +260,7 @@ in this wave, and no media is attached.
 ### T-007 — The own-recipes view lists every recipe the account owns
 
 **Requirements:** FLOW-034, FLOW-036, FLOW-039, FLOW-041, FLOW-043, FLOW-038, A11Y-008, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-004, T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/lint.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_common.xml` · `app/src/main/res/values-ru/strings_common.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -307,7 +307,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -315,11 +315,11 @@ in this wave, and no media is attached.
 ### T-008 — The editor opens on a new recipe from the own-recipes view
 
 **Requirements:** FLOW-042, FLOW-024, FLOW-002, L10N-004, DOM-006, DOM-008, FLOW-001, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-007
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1–2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (4) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 4, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004
+**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (4) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 4, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004
 
 **Acceptance criteria** (verbatim)
 
@@ -356,7 +356,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-008-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -364,7 +364,7 @@ in this wave, and no media is attached.
 ### T-009 — The creation screen shows the nickname, the terms and the account key
 
 **Requirements:** AUTH-018, AUTH-007, AUTH-017, LEG-004, CON-001, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-006, T-008
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/assets/terms/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
@@ -405,7 +405,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-001, SD-009, SD-010) — docs/product/verdicts/20260927-T-009-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -413,7 +413,7 @@ in this wave, and no media is attached.
 ### T-010 — The recovery key is issued on its own step, and nothing exists until every confirmation is given
 
 **Requirements:** AUTH-020, AUTH-007, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-009
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
@@ -439,19 +439,19 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-007) — docs/product/verdicts/20260927-T-010-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-011 — An ingredient is picked from the dictionary in three fields
 
-**Requirements:** FLOW-023, DOM-002, DOM-009, DOM-010, FLOW-001, L10N-003, DOM-014, DOM-009, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Requirements:** FLOW-023, DOM-002, DOM-009, DOM-010, FLOW-001, L10N-003, DOM-014, L10N-001, A11Y-003, A11Y-005
+**Status:** blocked
 **Depends on:** T-008
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-023 (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–5) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003 · DOM-009 (1, 3–4) → wave 2; (2) → T-012
+**Criteria of these requirements carried elsewhere:** FLOW-023 (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003
 
 **Acceptance criteria** (verbatim)
 
@@ -469,6 +469,7 @@ in this wave, and no media is attached.
 
 *DOM-009 — spec/50-domain-model/10-invariants.md*
 - Given an ingredient the author picked from the dictionary, when it is stored, then it holds that entry, holds no `free_text_name`, and holds a `qualifier` only if the author wrote one.
+- Given a dictionary entry that the product owner removes upstream, when a recipe already refers to it, then the recipe keeps the reference, exactly as FLOW-001 requires of a removed tag.
 
 *DOM-010 — spec/50-domain-model/10-invariants.md*
 - Given a recipe naming `крылышки`, when it is stored, then it holds that entry and nothing about `курица` is copied into the recipe.
@@ -485,9 +486,6 @@ in this wave, and no media is attached.
 *DOM-014 — spec/50-domain-model/10-invariants.md*
 - Given a dictionary changed in the store, when a device next reaches the server, then its held copy is replaced as FLOW-001 already requires, and an entry removed upstream stays resolvable in the recipes that already name it (DOM-009, DOM-010).
 
-*DOM-009 — spec/50-domain-model/10-invariants.md*
-- Given a dictionary entry that the product owner removes upstream, when a recipe already refers to it, then the recipe keeps the reference, exactly as FLOW-001 requires of a removed tag.
-
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
@@ -498,7 +496,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-008, SD-006) — docs/product/verdicts/20260927-T-011-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -506,7 +504,7 @@ in this wave, and no media is attached.
 ### T-012 — An ingredient outside the dictionary is kept as free text with a warning
 
 **Requirements:** FLOW-022, FLOW-023, DOM-009, FLOW-001, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-011
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -539,7 +537,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-006) — docs/product/verdicts/20260927-T-012-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -547,16 +545,15 @@ in this wave, and no media is attached.
 ### T-013 — Steps are written in the editor and survive a restart offline
 
 **Requirements:** FLOW-024, FLOW-002, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** returned
 **Depends on:** T-012
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-024 (3, 5) → wave 4; (4, 6) → T-008 · FLOW-002 (2–3) → T-008; (4) → T-028
+**Criteria of these requirements carried elsewhere:** FLOW-024 (1) → wave 5; (3, 5) → wave 4; (4, 6) → T-008 · FLOW-002 (2–3) → T-008; (4) → T-028
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-024 — spec/70-flows/40-editor.md*
-- Given a new recipe, when the editor opens, then every part is present and reachable by scrolling, in the order above.
 - Given a half-filled recipe, when the author scrolls to the steps without having entered a serving count, then the steps accept input.
 
 *FLOW-002 — spec/70-flows/10-offline-and-sync.md*
@@ -572,15 +569,15 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; FLOW-024 (1) moved to wave 5 with FLOW-026, re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-014 — A step carries one timer, named by its step unless the author names it
 
 **Requirements:** FLOW-027, DOM-013, GUIDE-007, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-013
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -621,7 +618,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-005) — docs/product/verdicts/20260927-T-014-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -960,7 +957,7 @@ in this wave, and no media is attached.
 
 ### T-022 — A timer runs on its step
 
-**Requirements:** FLOW-013, A11Y-003, A11Y-007, L10N-001, A11Y-003, A11Y-005
+**Requirements:** FLOW-013, A11Y-003, A11Y-007, L10N-001, A11Y-005
 **Status:** planned
 **Depends on:** T-021, T-014, T-010
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
@@ -974,6 +971,7 @@ in this wave, and no media is attached.
 - Given a running timer, when the reader cancels it, then nothing announces itself afterwards.
 
 *A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
 - Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 
 *A11Y-007 — spec/200-accessibility.md*
@@ -982,9 +980,6 @@ in this wave, and no media is attached.
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
-
-*A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1403,6 +1398,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | EXT-004 — Storage that cannot be reached costs media, not recipes | all |
 | FLOW-004 — Media added offline is queued, not lost | all |
 | FLOW-005 — Every recipe shows whether the server has accepted it | 3 |
+| FLOW-024 — The editor is one screen in a fixed order | 1 |
 | FLOW-026 — The cover is attached with the title, step media with the step | all |
 | FLOW-038 — Every recipe the account owns is readable without a connection | 3–4 |
 | MEDIA-001 — One cover photograph and one item per step | all |
