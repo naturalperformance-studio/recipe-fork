@@ -19,7 +19,7 @@ is OQ-009's question and is not restated here.
 **Stopped:** T-005, T-009 (both rest on AUTH-018); tasks depending on T-005 wait
 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-002 — The rounding grid does not say which values it holds above 1000 g or above one unit, nor how a value reaches one (2026-09-27)
@@ -60,7 +60,7 @@ whoever writes the code would decide them and gate 2 could not tell:
 content: T-002, T-018, T-019, T-020, T-021; every task downstream of T-001 waits
 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-003 — The two entry points of scaling are not said to combine: a count changed while an ingredient is fixed, the scale left when the last fixing is released, and a serving count exactly between two values (2026-09-27)
@@ -103,7 +103,7 @@ decide them and gate 2 could not tell (TEAM-008).
 of the same three requirements and depends on T-002). T-021–T-025 and T-028 wait
 behind T-020 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-004 — Opening the favourites section is not said to show either view: which one is in force before the reader has chosen, and whether a person with no account is offered the own-recipes view at all (2026-09-27)
@@ -140,7 +140,7 @@ Whoever writes the section would decide both, and gate 2 could not tell (TEAM-00
 **Stopped:** T-007 (FLOW-034). T-008–T-026 and T-028 wait behind T-007 through the
 backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-005 — A second timer on a step is not offered, yet the author is to be told why when they attempt one: no path to the attempt exists, and the statement is to be closed where a hint has nothing to dismiss (2026-09-27)
@@ -182,7 +182,7 @@ gate 2 could tell one build from the other (TEAM-008).
 **Stopped:** T-014 (FLOW-027, GUIDE-007). T-015–T-017, T-021–T-025 and every task
 behind them wait through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-006 — When the ingredient field "matches nothing" is not stated: what the dictionary search counts as a match, and whether free text is offered while entries are offered that are not the author's ingredient (2026-09-27)
@@ -222,7 +222,7 @@ carried by T-011; that task's own gate decides whether it stops there.
 **Stopped:** T-012 (FLOW-022, FLOW-023 (6), DOM-009 (2)). T-013–T-017, T-021–T-025 and
 T-028 wait behind T-012 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «И помечай эти пункты как закрытые» (re-checked against spec/ @ 4cc2c18)
 
 ### SD-007 — The recovery key is presumed to be offered for saving, but no requirement says whether or how, nor on which screen it is shown (2026-09-27)
@@ -267,7 +267,7 @@ decided nowhere, and whoever writes the screen would decide them:
 **Stopped:** T-010 (AUTH-020). T-022, T-026 and the tasks behind them (T-023–T-025,
 T-028) wait through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-008 — The ingredient row's unit field is not specified: which units it offers, whether it stays once "to taste" is picked, and whether a leaf is offered because its parent matched (2026-09-27)
@@ -311,7 +311,7 @@ build from a wrong one (TEAM-008).
 **Stopped:** T-011 (FLOW-023, DOM-002). T-012 is also stopped by SD-006; T-013–T-017,
 T-021–T-025 and T-028 wait behind T-011 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-009 — The creation screen "cannot be left by an ordinary back action", and nothing says how a person who has not confirmed leaves it (2026-09-27)
@@ -348,7 +348,7 @@ not cover this one.
 **Stopped:** T-009 (AUTH-007 (4)). T-010 carries AUTH-007 (7), whose trigger is this
 leaving, and waits behind T-009 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «И помечай эти пункты как закрытые» (re-checked against spec/ @ 4cc2c18)
 
 ### SD-010 — AUTH-018's heading reads as one reroll; its statement, criterion and verification say any number (2026-09-27)
@@ -367,7 +367,7 @@ handed AUTH-018 receives the heading with the rest. The gate does not choose bet
 the readings.
 **Stopped:** T-009 (AUTH-018 (2)).
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-011 — SCALE-006 calls the scale factor "displayed", and no requirement says the reader is shown one (2026-09-27)
@@ -391,7 +391,7 @@ card's gate; T-002 carries the criterion, T-020 the card it would appear on.
 **Stopped:** T-020 (also stopped by SD-003). T-002 carries SCALE-006 (1) and is already
 stopped by SD-003.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-012 — SCALE-004's second criterion states the wrong direction, and a scaled quantity displayed at its authored value is not said to be derived or not (2026-09-27)
@@ -433,7 +433,7 @@ the card and copies these criteria verbatim (C5), so it cannot be corrected at t
 same derived marker the list carries"), T-022–T-025 and T-028 wait behind T-019
 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-013 — The authored serving count's admissible values are stated nowhere: whole or fractional, its floor, zero, and its ceiling (2026-09-27)
@@ -470,7 +470,7 @@ backlog's dependencies. The authored count is also the divisor of T-001 (SCALE-0
 already stopped by SD-002) and the count T-018's card opens at; their own gates decide
 whether they stop here.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-014 — A reference may point at an ingredient that holds no quantity, and nothing says what it shows or whether it survives (2026-09-27)
@@ -505,7 +505,7 @@ reference and waits behind T-015 through the backlog's dependencies; its own gat
 whether it stops here. T-015 is also behind T-014 (SD-005) and T-011–T-013 (SD-006,
 SD-008).
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-015 — What a long step's notification "will say" is not one text when its opening holds a reference, and GUIDE-006 does not say at which serving count it is shown or counted (2026-09-27)
@@ -548,7 +548,7 @@ only in what the editor shows the author, before any reader has chosen a count.
 tasks before it, which SD-004, SD-005, SD-006, SD-008, SD-013 and SD-014 stop; those
 are not this entry's ground.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-016 — "The narrowest supported screen width" is a figure stated nowhere, and the digit grouping SCALE-012 hands to `localization` is not there (2026-09-27)
@@ -587,7 +587,7 @@ nowhere in it:
 **Stopped:** T-018 (SCALE-012). T-018 is also stopped by SD-002 and SD-013. T-019–T-026
 and T-028 wait behind T-018 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-017 — The fork notice of FLOW-008 is tied to opening the application, which automatic sync does not wait for, and FLOW-005 does not say where an accepted recipe is marked (2026-09-27)
@@ -628,7 +628,7 @@ their own and are not questioned here.
 T-017, T-026 and T-025, and through them behind the tasks SD-002–SD-016 stop; those are
 not this entry's ground.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-018 — FLOW-008 does not say whether an offline edit to a recipe whose state, but not whose content, changed on the server is "divergent" (2026-09-27)
@@ -659,7 +659,7 @@ is not `spec/` in any case. Neither reading is preferred here.
 **Stopped:** T-027 (carries FLOW-008 (1, 3, 4) and CON-003 (1)); T-028 (depends on
 T-027 and carries FLOW-008 (2), whose "that outcome" is this one).
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-019 — An account created muted from the write control: AUTH-001 has the action proceed, AUTH-004 has no recipe created, and nothing says what the person is told then or how a muted account attempts writing again (2026-09-27)
@@ -703,7 +703,7 @@ T-028 depend on T-026, and T-024–T-025 wait behind T-023, through the backlog'
 dependencies. Item 1 also reaches AUTH-004 (5) (wave 4) and item 2 AUTH-005 (wave 7)
 when those waves are sliced.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «И помечай эти пункты как закрытые» (re-checked against spec/ @ 4cc2c18)
 
 ### SD-020 — Duplicate of SD-018 (2026-09-27)
@@ -761,7 +761,7 @@ restated.
 **Stopped:** T-023 (FLOW-013 (5), A11Y-007 (3), EXT-009 (1)). T-024, T-025 and T-028 wait
 behind it through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «давай закрывать SD-021» (re-checked against spec/ @ ead1a44)
 
 ### SD-022 — Duplicate of SD-021 (2026-09-27)
@@ -821,7 +821,7 @@ FLOW-014 and A11Y-007 (4) are determinate and are not questioned here. SD-003 it
 cited, not restated.
 **Stopped:** T-025 (FLOW-012). T-028 waits behind it through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-027 — SCALE-001's second criterion shows 6 pieces where the grid and SCALE-015 give 5 (2026-09-27)
@@ -844,7 +844,8 @@ this criterion was examined.
 **Stopped:** T-001 (SCALE-001). Every wave-1 task except T-003, T-004, T-005, T-006 and
 T-027 waits behind T-001 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-09-27 — «Проведи сверку и актуализируй поля Status у записей» (re-checked against spec/ @ 959130e)
 
 ### SD-027 — A computed serving count between ¾ and one is displayed as ¾ by SCALE-008 and as 1 by SCALE-015 (2026-09-27)
 **Requirement IDs:** SCALE-008 (statement, 4), SCALE-015 (statement); read against the serving-count paragraph of the rounding grid (`spec/80-scaling-rules/00-index.md`), the ADR 20260927-the-rounding-grid-completed and the ADR 20260920-scaling-extremes
@@ -877,7 +878,8 @@ is which values the tie is between.
 **Stopped:** T-002 (SCALE-008, SCALE-015 (4–5)). T-030 and T-020 wait behind it through
 the backlog's dependencies, and T-021–T-025 and T-028 behind T-020.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-09-27 — «Проведи сверку и актуализируй поля Status у записей» (re-checked against spec/ @ 959130e)
 
 ### SD-028 — "Session" bounds FLOW-034's kept view from both sides and is defined nowhere: whether closing the application, or the operating system ending it, starts a new one is read more than one way (2026-09-27)
 **Requirement IDs:** FLOW-034 (5, 6, verification); read against CAT-001 (6), FLOW-033 (its "within the same session" criterion), FLOW-017 ("a later session" against "stays in the application"), FLOW-012 and AUTH-024
@@ -908,7 +910,8 @@ it, and gate 2 could not tell (TEAM-008).
 T-007 through the backlog's dependencies. CAT-001 (6) and FLOW-033 carry the same words
 and are placed in wave 2.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-09-27 — «Проведи сверку и актуализируй поля Status у записей» (re-checked against spec/ @ 959130e)
 
 ### SD-029 — How the deletion key is handed over on the second step of creation is read three ways: "the controls of AUTH-017" name no control, and AUTH-014 (7) has the account key carry it (2026-09-27)
 **Requirement IDs:** AUTH-024 (3), AUTH-017 (1) and its "Constrains AUTH-014" line; read against AUTH-014 (7), AUTH-007 (1, 2), AUTH-019 (3), EXT-006 (1) and the ADR 20260920-deletion-key
@@ -946,7 +949,8 @@ and behaviour no criterion asks for under reading 1 (TEAM-008). Found at T-032's
 backlog's dependencies, T-022 and T-026 behind T-010, and T-023, T-033, T-024, T-025
 and T-028 behind those.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-09-27 — «Проведи сверку и актуализируй поля Status у записей» (re-checked against spec/ @ 959130e)
 
 ### SD-030 — A timer's duration has no stated admissible values, and GUIDE-007's "next action" is not said to include a scroll or a screen-reader move (2026-09-27)
 **Requirement IDs:** FLOW-027 (1, 4, 11), GUIDE-007 (4); read against the `Timer` entity's `duration` field (`spec/50-domain-model/00-index.md`), the glossary's "Timer" (`spec/10-glossary/10-recipes-and-scaling.md`), DOM-012, GUIDE-005, A11Y-005 and the ADR `spec/decisions/20260927-steps-timers-and-references.md`
@@ -982,7 +986,8 @@ T-021 and T-022 wait behind T-014 through the backlog's dependencies, and T-023,
 T-024, T-025 and T-028 behind those. T-022 and T-024 run and restart a timer "from its
 full duration"; their own gates decide whether item 1 stops them directly.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-09-27 — «Проведи сверку и актуализируй поля Status у записей» (re-checked against spec/ @ 959130e)
 
 ### SD-031 — Where the author "chooses to edit" a saved recipe is stated nowhere, and FLOW-029 (3) with FLOW-053 (7) reads as forbidding it on the one screen FLOW-029 (2) starts from (2026-09-27)
 **Requirement IDs:** FLOW-029 (2, 3, 4); read against FLOW-053 (7), FLOW-036 and FLOW-038 (1)
@@ -1014,7 +1019,8 @@ not examine this. Found at T-018's second gate 1
 T-023, T-033, T-034, T-024, T-025, T-026 and T-028 wait behind T-018 through the
 backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-09-27 — «Проведи сверку и актуализируй поля Status у записей» (re-checked against spec/ @ 959130e)
 
 ### SD-032 — A serving count the reader asked for as a fraction is marked as approximate by SCALE-008 and SCALE-011, and not marked by SCALE-016 and SCALE-017 (2026-09-27)
 **Requirement IDs:** SCALE-008 (3), SCALE-011 (4), SCALE-016 (3), SCALE-017 (4); read against SCALE-002 (2), SCALE-008's statement ("the computed serving count"), SCALE-011's statement and the ADR 20260927-the-latest-scaling-action-wins
@@ -1050,4 +1056,5 @@ T-024, T-025 and T-028 wait behind T-020 through the backlog's dependencies. T-0
 a gate-1 `accepted` on SCALE-016 and SCALE-017; its criteria use whole counts and are not
 contradicted by themselves, and whether it is re-gated is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-09-27 — «Проведи сверку и актуализируй поля Status у записей» (re-checked against spec/ @ 959130e)
