@@ -823,3 +823,58 @@ cited, not restated.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
 **Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
+
+### SD-027 — SCALE-001's second criterion shows 6 pieces where the grid and SCALE-015 give 5 (2026-09-27)
+**Requirement IDs:** SCALE-001 (2); read against SCALE-015 (statement), the rounding grid (`spec/80-scaling-rules/00-index.md`, `piece`, indivisible: whole pieces) and SCALE-004 (2)
+**Class:** incorrect fact
+**What the gate hit:** T-001 copies SCALE-001's criteria verbatim (C5), so it cannot be
+corrected at the task. SCALE-001 (2) reads: "Given the same recipe with 3 indivisible
+pieces, when the reader asks for 6, then it shows 6 pieces." "The same recipe" is the
+one of SCALE-001 (1), authored for 4 servings, so the factor is 6 / 4 = 1.5 and the
+exact computed value is 3 × 1.5 = 4.5 pieces. SCALE-001's statement displays it
+"rounded by the rounding grid"; the grid holds whole pieces for an indivisible `piece`;
+SCALE-015 sends a value exactly between two grid values to the larger, so 4.5 is shown
+as 5 pieces. SCALE-004 (2) (3 × 0.6 = 1.8 shown as 2) reads the same rule for
+indivisible pieces. No reading of the grid found yields 6: 6 pieces is the value at a
+factor of 2 (8 servings). An implementation that follows the grid fails SCALE-001 (2)
+as written; one that shows 6 breaks SCALE-015 and the grid. Gate 2 can mark this
+criterion met under neither. Found at T-001's second gate 1
+(docs/product/verdicts/20260927-T-001-gate1-2.md); the first gate stopped at C3 before
+this criterion was examined.
+**Stopped:** T-001 (SCALE-001). Every wave-1 task except T-003, T-004, T-005, T-006 and
+T-027 waits behind T-001 through the backlog's dependencies.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-027 — A computed serving count between ¾ and one is displayed as ¾ by SCALE-008 and as 1 by SCALE-015 (2026-09-27)
+**Requirement IDs:** SCALE-008 (statement, 4), SCALE-015 (statement); read against the serving-count paragraph of the rounding grid (`spec/80-scaling-rules/00-index.md`), the ADR 20260927-the-rounding-grid-completed and the ADR 20260920-scaling-extremes
+**Class:** inconsistency
+**What the gate hit:** T-002 builds the approximate serving count a fixed ingredient
+produces (SCALE-002, SCALE-008, SCALE-015 (4–5)) and so computes counts below one
+serving. For a computed count from 0.875 up to, not including, 1 the two statements
+give different cards:
+- SCALE-008: "While the computed serving count is below one serving, the system shall
+  display it as the nearest of the fractions ¼, ⅓, ½, ⅔, ¾". The candidates are the
+  five fractions only; 0.9 is displayed as ≈¾. Its criterion (4) — "a computed count of
+  exactly one serving or more ... is displayed as a whole number" — ties the whole-number
+  form to the computed value, which reads the same way.
+- SCALE-015: "every computed serving count as the value of its grid nearest to the exact
+  computed value, and where the computed value lies exactly between two grid values, as
+  the larger of the two". The section index gives the serving count one set — "whole
+  numbers and the fractions ¼, ⅓, ½, ⅔, ¾ ... rounded to the nearest value the set can
+  express" — and the scaling-extremes ADR says one set governs with "no second grid".
+  1 is in that set, so 0.9 is displayed as ≈1, and 0.875, exactly between ¾ and 1, goes
+  up to 1.
+Reachable through T-002: in a recipe authored for 4 servings with 500 g of chicken,
+fixing 115 g computes 0.92 servings (≈¾ or ≈1), and fixing 109.375 g computes exactly
+0.875. Each reading is internally consistent: SCALE-015 is harmonised with SCALE-008 if
+"its grid" below one computed serving means the five fractions alone, and SCALE-008 is
+harmonised with SCALE-015 if "below one serving" means below one after rounding. Which
+is meant is the product decision. No criterion in `spec/` exercises a computed count in
+this range, so the developer would decide it and gate 2 could not tell (TEAM-008).
+SD-003 item 3 (the tie rule) is not reopened: SCALE-015 answers it; what is open here
+is which values the tie is between.
+**Stopped:** T-002 (SCALE-008, SCALE-015 (4–5)). T-030 and T-020 wait behind it through
+the backlog's dependencies, and T-021–T-025 and T-028 behind T-020.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
