@@ -99,6 +99,8 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260921-a-connection-is-not-an-answer.md](decisions/20260921-a-connection-is-not-an-answer.md) | accepted, widens FLOW-003 | A server that does not answer is refused like being offline, and said differently, because the person has a different thing to do. |
 | [20260921-a-sign-in-empties-the-device.md](decisions/20260921-a-sign-in-empties-the-device.md) | accepted, widens AUTH-012 | Signing in deletes the favourites and blocks the device held with no account; creating an account still keeps them. |
 | [20260921-nothing-exists-until-it-is-confirmed.md](decisions/20260921-nothing-exists-until-it-is-confirmed.md) | accepted, completes AUTH-007 | An abandoned creation leaves nothing: no nickname consumed, no slot occupied, and the displayed keys match nothing. |
+| [20260927-an-import-belongs-to-its-source.md](decisions/20260927-an-import-belongs-to-its-source.md) | accepted, outside the first release | A recipe imported from a social network is published as its source's, parsed by a model, with no author, no media and a mark every descendant keeps. |
+| [20260927-where-an-imports-text-comes-from.md](decisions/20260927-where-an-imports-text-comes-from.md) | accepted, widens EXT-001 when built | TikTok text comes from its official endpoint and publishes at once; Instagram and Pinterest text is pasted by the person and goes through the queue. |
 
 ## C4 context
 
