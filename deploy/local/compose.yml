@@ -21,6 +21,10 @@ services:
       # A fixed value for local development and the hand-test artefact only: it is public,
       # so production sets its own secret and keeps it the same across restarts.
       KEY_SET_SECRET: bSB7OUZbKry6DhribkuwCLr0UhfDgA6oz3CO4m7ne0Q=
+      # The device attestation service: a fake holding each device's three slots in memory, for local
+      # development and the hand-test artefact only. A client sends `fake-device:<label>` as its token;
+      # a creation without a token gets no verdict and makes a muted account (AUTH-004).
+      ATTESTATION: fake
     ports:
       - "8080:8080"
     depends_on:
