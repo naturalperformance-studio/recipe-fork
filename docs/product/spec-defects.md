@@ -1015,3 +1015,39 @@ T-023, T-033, T-034, T-024, T-025, T-026 and T-028 wait behind T-018 through the
 backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-032 — A serving count the reader asked for as a fraction is marked as approximate by SCALE-008 and SCALE-011, and not marked by SCALE-016 and SCALE-017 (2026-09-27)
+**Requirement IDs:** SCALE-008 (3), SCALE-011 (4), SCALE-016 (3), SCALE-017 (4); read against SCALE-002 (2), SCALE-008's statement ("the computed serving count"), SCALE-011's statement and the ADR 20260927-the-latest-scaling-action-wins
+**Class:** inconsistency
+**What the gate hit:** T-020 builds how the serving count is displayed on the card
+(SCALE-002 (2), SCALE-008 (3), SCALE-011 (4)); the card is where the reader both fixes an
+ingredient and asks for a count, and SCALE-011 lets that count be ¼, ⅓, ½, ⅔ or ¾.
+- SCALE-008 (3): "Given any serving count displayed as a fraction, when it is displayed,
+  then it carries the same approximate marking that SCALE-002 requires." SCALE-011 (4):
+  "Given a count requested as a fraction, when the recipe is displayed, then the count is
+  displayed by SCALE-008 in the same form it was requested." Together: a requested ½ is
+  shown as ≈½.
+- SCALE-016 (3): "Given that the fixings were released by a change of count, when the
+  reader looks at the serving count, then it is the count they asked for and is not
+  marked as approximate." SCALE-017 (4): "Given the fixing is released, when the serving
+  count is displayed, then it is not marked as approximate." Neither limits itself to a
+  whole count.
+Reachable path: a recipe authored for 4 servings, 500 g of chicken fixed at 300 g, the
+reader asks for ½ serving — SCALE-016 (3) shows "½", SCALE-008 (3) with SCALE-011 (4)
+shows "≈½". Likewise a count of ½ set, an ingredient fixed, then released (SCALE-017 (4)).
+Each side is internally consistent: SCALE-008's statement speaks of "the computed serving
+count" and the ADR of the latest action ties the approximate count to a fixing, which
+supports reading (3) as covering computed counts only; SCALE-008 (3) says "any", and
+SCALE-011 (4) routes a requested fraction through SCALE-008 without exception, which
+supports marking every fraction. Which is meant is the product decision. The first gate 1
+on T-020 (docs/product/verdicts/20260927-T-020-gate1.md, unknown 4) recorded the literal
+reading as taken and asked the user to confirm it; SCALE-016 and SCALE-017, written
+since, now contradict it. Whoever builds the card would decide it, and gate 2 could mark
+neither form met (TEAM-008). Found at T-020's second gate 1
+(docs/product/verdicts/20260927-T-020-gate1-2.md).
+**Stopped:** T-020 (SCALE-008 (3), SCALE-011 (4)). T-021, T-022, T-023, T-034, T-033,
+T-024, T-025 and T-028 wait behind T-020 through the backlog's dependencies. T-030 holds
+a gate-1 `accepted` on SCALE-016 and SCALE-017; its criteria use whole counts and are not
+contradicted by themselves, and whether it is re-gated is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
