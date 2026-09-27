@@ -44,15 +44,15 @@ in this wave, and no media is attached.
 | T-010 | The recovery key is issued on its own step, and nothing exists until every confirmation is given | T-009 | blocked |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-008 | blocked |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | blocked |
-| T-013 | Steps are written in the editor and survive a restart offline | T-012 | returned |
+| T-013 | Steps are written in the editor and survive a restart offline | T-012 | blocked |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | blocked |
-| T-015 | A quantity goes into a step as a reference | T-014 | planned |
-| T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | planned |
-| T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | planned |
-| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-001 | planned |
-| T-019 | A derived quantity says so, and which way it was rounded | T-018 | planned |
-| T-020 | The reader fixes an ingredient on the card | T-019, T-002 | planned |
-| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-015 | planned |
+| T-015 | A quantity goes into a step as a reference | T-014 | blocked |
+| T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
+| T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | blocked |
+| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-001 | blocked |
+| T-019 | A derived quantity says so, and which way it was rounded | T-018 | blocked |
+| T-020 | The reader fixes an ingredient on the card | T-019, T-002 | blocked |
+| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-015 | returned |
 | T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
 | T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
 | T-024 | Several timers run at once, and restarting one asks first | T-023 | planned |
@@ -545,7 +545,7 @@ in this wave, and no media is attached.
 ### T-013 — Steps are written in the editor and survive a restart offline
 
 **Requirements:** FLOW-024, FLOW-002, L10N-001, A11Y-003, A11Y-005
-**Status:** returned
+**Status:** blocked
 **Depends on:** T-012
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -569,7 +569,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; FLOW-024 (1) moved to wave 5 with FLOW-026, re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; re-sliced; blocked-by-spec (SD-013) — docs/product/verdicts/20260927-T-013-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -626,11 +626,11 @@ in this wave, and no media is attached.
 ### T-015 — A quantity goes into a step as a reference
 
 **Requirements:** FLOW-031, FLOW-032, DOM-007, GUIDE-008, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-014
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/recipe/StepText.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/StepTextTest.kt` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-032 (1–4) → T-021 · DOM-007 (1) → T-021
+**Criteria of these requirements carried elsewhere:** FLOW-032 (1–4) → T-021 · DOM-007 (1) → T-021 · GUIDE-008 (5) → wave 2
 
 **Acceptance criteria** (verbatim)
 
@@ -652,7 +652,6 @@ in this wave, and no media is attached.
 - Given the statement, when it is shown, then it names both ways of inserting a reference that FLOW-031 offers — the trigger character and the control on the step.
 - Given a recipe that holds no ingredient yet, when the author begins a step, then nothing is shown, because there is nothing to reference.
 - Given the statement, when the decision to show it is taken, then no step's text was read to take it: the trigger is that the first step is being written and that the recipe has ingredients, never what the author has typed (NGOAL-007, GUIDE-005).
-- Given the statement, when the author ignores it and types a number by hand, then the number is accepted, nothing is marked, and the recipe submits normally.
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
@@ -664,7 +663,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-014) — docs/product/verdicts/20260927-T-015-gate1.md; GUIDE-008 (5) moved to wave 2, where submission exists
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -672,7 +671,7 @@ in this wave, and no media is attached.
 ### T-016 — Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action
 
 **Requirements:** FLOW-025, FLOW-027, A11Y-006, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-015
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -704,7 +703,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-016-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -712,7 +711,7 @@ in this wave, and no media is attached.
 ### T-017 — A part below the minimum or over a limit is marked on leaving it
 
 **Requirements:** FLOW-028, FLOW-027, DOM-012, GUIDE-006, GUIDE-005, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-016
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/recipe/Limits.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/LimitsTest.kt` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -758,7 +757,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-015) — docs/product/verdicts/20260927-T-017-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -766,7 +765,7 @@ in this wave, and no media is attached.
 ### T-018 — A saved recipe opens as the card a reader sees, at the serving count chosen
 
 **Requirements:** FLOW-029, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-008, T-001
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -827,7 +826,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -835,7 +834,7 @@ in this wave, and no media is attached.
 ### T-019 — A derived quantity says so, and which way it was rounded
 
 **Requirements:** CON-004, SCALE-004, A11Y-008, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-018
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -867,7 +866,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-012) — docs/product/verdicts/20260927-T-019-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -875,7 +874,7 @@ in this wave, and no media is attached.
 ### T-020 — The reader fixes an ingredient on the card
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-019, T-002
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -911,19 +910,19 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-021 — A reference in a step reads as the quantity the list shows
 
-**Requirements:** SCALE-007, FLOW-032, DOM-007, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Requirements:** SCALE-007, FLOW-032, DOM-007, CON-004, L10N-001, A11Y-003, A11Y-005
+**Status:** returned
 **Depends on:** T-020, T-015
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-032 (5) → T-015 · DOM-007 (2) → T-015
+**Criteria of these requirements carried elsewhere:** FLOW-032 (5) → T-015 · DOM-007 (2) → T-015 · CON-004 (1, 3) → T-019
 
 **Acceptance criteria** (verbatim)
 
@@ -940,6 +939,9 @@ in this wave, and no media is attached.
 *DOM-007 — spec/50-domain-model/10-invariants.md*
 - Given a step containing a reference, when the step is displayed, then the referenced quantity equals the quantity shown for that ingredient in the ingredient list at the current scale.
 
+*CON-004 — spec/30-constraints.md*
+- Given a derived quantity that was rounded, when it is displayed, then the interface states whether the displayed value is above or below the exact computed value.
+
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
@@ -950,10 +952,10 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-021-gate1.md; CON-004 (2) added, re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-022 — A timer runs on its step
 
@@ -1293,6 +1295,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | GUIDE-003 — The checklist is a control in the editor, open to the author at any time | all |
 | GUIDE-004 — What the checklist says | all |
 | GUIDE-005 — A hint appears only where the author's own action gives it a reason | 1, 6 |
+| GUIDE-008 — References are offered where the first step is written | 5 |
 | L10N-004 — A recipe declares the language it is written in | 2–3, 5 |
 | L10N-005 — Every language is listed until the reader narrows it | all |
 | L10N-006 — A text query looks at the title and the description | all |
