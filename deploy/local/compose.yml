@@ -1,0 +1,25 @@
+# The server as it runs for development and for the hand-test artefact.
+# Production adds Caddy for TLS and the hourly dump (see the deployment ADR).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: recipefork
+      POSTGRES_USER: recipefork
+      POSTGRES_PASSWORD: recipefork
+    volumes:
+      - db:/var/lib/postgresql/data
+  server:
+    build:
+      context: ../../server
+    environment:
+      PORT: "8080"
+      DATABASE_URL: jdbc:postgresql://db:5432/recipefork
+      DATABASE_USER: recipefork
+      DATABASE_PASSWORD: recipefork
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+volumes:
+  db:
