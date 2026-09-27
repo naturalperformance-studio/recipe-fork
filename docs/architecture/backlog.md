@@ -58,7 +58,7 @@ in this wave, and no media is attached.
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | blocked |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | gated |
 | T-022 | A timer runs on its step | T-021, T-014, T-010 | gated |
-| T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
+| T-023 | A timer announces itself when the application is closed | T-022, T-026 | gated |
 | T-034 | A long step with an unnamed timer is shown what its notification will say | T-017, T-023 | planned |
 | T-033 | A timer asks for notifications when first started, and a refusal is explained at once | T-023 | planned |
 | T-024 | Several timers run at once, and restarting one asks first | T-033 | planned |
@@ -1207,7 +1207,7 @@ in this wave, and no media is attached.
 ### T-023 — A timer announces itself when the application is closed
 
 **Requirements:** FLOW-013, FLOW-016, EXT-009, L10N-001, A11Y-003, A11Y-005, A11Y-007
-**Status:** planned
+**Status:** gated
 **Depends on:** T-022, T-026
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1248,7 +1248,7 @@ in this wave, and no media is attached.
 *A11Y-007 — spec/200-accessibility.md*
 - Given the cooking card, when its controls are measured, then A11Y-003's larger figure holds.
 
-**Gate 1:** blocked-by-spec (SD-021) — docs/product/verdicts/20260927-T-023-gate1.md; FLOW-013 (7) added from T-022 after this verdict, re-gate due with the spec fix; FLOW-013 (5) and the permission criteria moved to T-033; re-sliced against spec/ @ ead1a44 after SD-021 resolved, re-gate due; re-gated: rejected — docs/product/verdicts/20260927-T-023-gate1-2.md (the card's cancel control not held to 56 dp); A11Y-003 (2) and A11Y-007 (2) added, re-gate due
+**Gate 1:** blocked-by-spec (SD-021) — docs/product/verdicts/20260927-T-023-gate1.md; FLOW-013 (7) added from T-022 after this verdict, re-gate due with the spec fix; FLOW-013 (5) and the permission criteria moved to T-033; re-sliced against spec/ @ ead1a44 after SD-021 resolved, re-gate due; re-gated: rejected — docs/product/verdicts/20260927-T-023-gate1-2.md (the card's cancel control not held to 56 dp); A11Y-003 (2) and A11Y-007 (2) added; re-gated: accepted — docs/product/verdicts/20260927-T-023-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
