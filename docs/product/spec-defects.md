@@ -909,3 +909,41 @@ T-007 through the backlog's dependencies. CAT-001 (6) and FLOW-033 carry the sam
 and are placed in wave 2.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-029 — How the deletion key is handed over on the second step of creation is read three ways: "the controls of AUTH-017" name no control, and AUTH-014 (7) has the account key carry it (2026-09-27)
+**Requirement IDs:** AUTH-024 (3), AUTH-017 (1) and its "Constrains AUTH-014" line; read against AUTH-014 (7), AUTH-007 (1, 2), AUTH-019 (3), EXT-006 (1) and the ADR 20260920-deletion-key
+**Class:** ambiguity
+**What the gate hit:** T-032 builds the second step of creation. AUTH-024 (3) has that
+step hold "the account key and the deletion key with the controls and the confirmation
+of AUTH-007 and AUTH-017". AUTH-007 states its controls for the account key: displayed
+in full, copied in one action (1), saved as a file (2). AUTH-017 states no control at
+creation: its only creation criterion (1) says the deletion key "is issued on the same
+screen and is carried by the file that AUTH-007 offers". Three passages of `spec/`
+then say three different things about what a person who prefers copying to a file is
+handed:
+1. AUTH-017 (1) read alone: the deletion key is shown on the step and travels only in
+   the file. A person who copies the account key into a password manager — the use the
+   ADR of the three steps calls expected — leaves creation without the deletion key as
+   text, which is the only form EXT-006 (1) accepts, until AUTH-019 (3) reaches it on
+   the account's own screen.
+2. AUTH-017's "Constrains AUTH-014" line ("issued and carried alongside it as copyable
+   text") and the deletion-key ADR ("it carries this value as copyable text"): the
+   deletion key is displayed in full with a copy control of its own beside the account
+   key's.
+3. AUTH-014 (7) ("Given the account key, when it is issued, then it is text the holder
+   can copy ... and it carries the deletion key"): the account key's one copy action
+   carries the deletion key too, so what reaches the clipboard under AUTH-007 (1) is
+   more than the account key.
+No criterion says whether the deletion key is displayed in full on the step either;
+AUTH-019 (3) masks it only afterwards. Each reading is internally consistent, and the
+three give three different second steps. The Team Lead's ADR
+20260927-keys-are-hashed-random-secrets fixes the file's contents (both keys as text)
+and not what the step displays or copies. The developer would decide it, and gate 2
+could not tell: a separate copy control is "the controls of AUTH-017" under reading 2
+and behaviour no criterion asks for under reading 1 (TEAM-008). Found at T-032's gate 1
+(docs/product/verdicts/20260927-T-032-gate1.md).
+**Stopped:** T-032 (AUTH-024 (3), AUTH-017 (1)). T-010 waits behind T-032 through the
+backlog's dependencies, T-022 and T-026 behind T-010, and T-023, T-033, T-024, T-025
+and T-028 behind those.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
