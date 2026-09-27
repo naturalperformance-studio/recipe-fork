@@ -37,7 +37,7 @@ in this wave, and no media is attached.
 | T-002 | A fixed ingredient sets the scale | T-029 | blocked |
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
-| T-004 | The device holds both dictionaries and replaces them when they change | T-003 | po-review |
+| T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
 | T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | gated |
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | gated |
 | T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | blocked |
@@ -238,7 +238,7 @@ in this wave, and no media is attached.
 ### T-004 — The device holds both dictionaries and replaces them when they change
 
 **Requirements:** FLOW-001
-**Status:** po-review
+**Status:** on-develop
 **Depends on:** T-003
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/dictionary/**` · `server/src/test/kotlin/app/recipefork/server/dictionary/**` · `core/src/main/kotlin/app/recipefork/core/api/DictionaryContract.kt` · `app/build.gradle.kts` · `build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/RecipeForkApplication.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/data/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -253,7 +253,7 @@ in this wave, and no media is attached.
 
 **Gate 1:** accepted — docs/product/verdicts/20260927-T-004-gate1.md
 **Review:** defects — a 200 answer whose body is not the dictionaries escapes refresh() and ends the sync (DictionaryRepository.kt:36); returned to the developer; re-review: pass — FLOW-001 (6) checked by five mutations, worktree as it was
-**Gate 2:** —
+**Gate 2:** accepted — docs/product/verdicts/20260927-T-004-gate2.md
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-005 — An account is created with a unique nickname and three keys, and only once it is confirmed
