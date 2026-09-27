@@ -61,7 +61,7 @@ in this wave, and no media is attached.
 | T-023 | A timer announces itself when the application is closed | T-022, T-026 | gated |
 | T-034 | A long step with an unnamed timer is shown what its notification will say | T-017, T-023 | gated |
 | T-033 | A timer asks for notifications when first started, and a refusal is explained at once | T-023 | gated |
-| T-024 | Several timers run at once, and restarting one asks first | T-033 | planned |
+| T-024 | Several timers run at once, and restarting one asks first | T-033 | gated |
 | T-025 | The card keeps the screen awake and is where the reader left it | T-024 | planned |
 | T-026 | Writing a recipe asks for an account first | T-010, T-018 | planned |
 | T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | gated |
@@ -1340,7 +1340,7 @@ in this wave, and no media is attached.
 ### T-024 — Several timers run at once, and restarting one asks first
 
 **Requirements:** FLOW-016, FLOW-021, DOM-013, A11Y-003, A11Y-007, L10N-001, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-033
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1379,7 +1379,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-024-gate1.md; A11Y-003 (2) and A11Y-007 (2) added, re-gate due; checked against spec/ @ ead1a44
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-024-gate1.md; A11Y-003 (2) and A11Y-007 (2) added, re-gate due; checked against spec/ @ ead1a44; re-gated: accepted — docs/product/verdicts/20260927-T-024-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
