@@ -54,7 +54,7 @@ in this wave, and no media is attached.
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | gated |
 | T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | blocked |
-| T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | planned |
+| T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | gated |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | planned |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | planned |
 | T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
@@ -1032,7 +1032,7 @@ in this wave, and no media is attached.
 ### T-019 — A derived quantity says so, and which way it was rounded
 
 **Requirements:** CON-004, SCALE-004, A11Y-008, L10N-001, A11Y-003, A11Y-005, SCALE-013, SCALE-014, SCALE-015
-**Status:** planned
+**Status:** gated
 **Depends on:** T-018, T-030
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**` · `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1075,7 +1075,7 @@ in this wave, and no media is attached.
 - Given an `exact` quantity computed as 4.5 g, when it is displayed, then it shows 5 g and states that the exact value was lower.
 - Given an `exact` quantity computed as 4.4 g, when it is displayed, then it shows 4 g and states that the exact value was higher.
 
-**Gate 1:** blocked-by-spec (SD-012) — docs/product/verdicts/20260927-T-019-gate1.md; re-sliced against spec/ @ ead1a44 after SD-012 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-012) — docs/product/verdicts/20260927-T-019-gate1.md; re-sliced against spec/ @ ead1a44 after SD-012 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-019-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
