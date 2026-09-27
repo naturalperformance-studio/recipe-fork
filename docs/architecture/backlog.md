@@ -38,7 +38,7 @@ in this wave, and no media is attached.
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
-| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | gated |
+| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | in-progress |
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | gated |
 | T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | blocked |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | gated |
@@ -259,7 +259,7 @@ in this wave, and no media is attached.
 ### T-005 — An account is created with a unique nickname and three keys, and only once it is confirmed
 
 **Requirements:** AUTH-014, AUTH-017, AUTH-020, AUTH-018, DOM-001, LEG-004, CON-001, AUTH-022, AUTH-023
-**Status:** gated
+**Status:** in-progress
 **Depends on:** T-004
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/resources/db/migration/V2__accounts.sql` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `deploy/local/seed/**` · `server/src/test/kotlin/app/recipefork/server/account/**`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
