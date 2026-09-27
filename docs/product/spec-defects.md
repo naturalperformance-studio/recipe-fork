@@ -1151,3 +1151,39 @@ T-019 carries CON-004 (3) at the authored count. Whether either is re-gated once
 answered is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-035 — Whether a server-issued per-device session token is "something that identifies a device" under AUTH-015 (2) is read two ways, and the reading decides whether QUAL-009 and AUTH-021 (3) collide with it (2026-09-27)
+**Requirement IDs:** AUTH-015 (2) and its statement; read against QUAL-009, AUTH-021 (3), `spec/45-auth/00-index.md:38-39` and `spec/100-moderation.md:132`
+**Class:** ambiguity (an inconsistency under one of the two readings)
+**What the gate hit:** T-027's diff (task/T-027 @ c96477a) stores `account_session
+(digest, account_id)`. Each time a device signs in with the account key, the server
+adds one row: the SHA-256 of a 256-bit random token. The device then presents that
+token on every request, and no row is removed. AUTH-015 says "shall store no device
+identifier of any kind", and its criterion (2) says the stored data "holds nothing that
+identifies a device". `spec/` never defines "identifies a device", and there are two
+readings:
+   - *It identifies a device.* `spec/100-moderation.md:132` calls "a delivery token" "a
+     per-device identifier" and keeps it out. `spec/45-auth/00-index.md:38-39`: "The
+     product never learns a device identifier". A token that one device holds and
+     presents on every call fits that vocabulary, and the store now holds one per
+     device.
+   - *It does not.* The token is random, minted by the server, derived from nothing the
+     device is or announces, and replaced at the next sign-in. It identifies a
+     sign-in, not a device.
+The readings matter because QUAL-009 counts every presentation of an account key
+against ten a day per source, and AUTH-021 (3) signs out "every device holding the
+account" when it next reaches the server. Together these make a device-held credential
+other than the account key the evident way to build sign-in. The accepted ADR
+`docs/architecture/decisions/20260927-keys-are-hashed-random-secrets.md` drew exactly
+that from them. Under the first reading, those two requirements and AUTH-015 (2)
+disagree. Under the second, they do not meet. The developer took the second reading in
+commit c96477a ("AUTH-015 (2) admits the session digest"), which widens T-006's AUTH-015
+test to allow `account_session.digest`. Gate 2 therefore cannot say whether AUTH-015 (2)
+still holds on `develop` once T-027 lands (TEAM-008). Also undecided, and the same
+decision: whether such a record may outlive the device that signed in (the diff never
+removes one).
+Found at T-027's gate 2 (docs/product/verdicts/20260927-T-027-gate2.md).
+**Stopped:** T-027 (gate 2). T-028 depends on T-027 in the backlog and carries the
+device side of the same session. Whether it waits is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
