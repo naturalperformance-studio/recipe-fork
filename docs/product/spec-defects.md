@@ -1187,3 +1187,97 @@ Found at T-027's gate 2 (docs/product/verdicts/20260927-T-027-gate2.md).
 device side of the same session. Whether it waits is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-036 — SCALE-008 (7), as corrected for SD-033, names 350 g of an authored 400 g at 4 servings "a computed 0.875 servings" where SCALE-002 gives 3.5, and SCALE-008 (8)'s "the same recipe" now reads as that recipe (2026-09-28)
+**Requirement IDs:** SCALE-008 (7), SCALE-008 (8) and the correction note of 2026-09-27 under SCALE-008 that replaced (7); read against SCALE-002 (statement), SCALE-008 (statement, 4, 6), SCALE-015 (statement, 4) and the serving-count paragraph of `spec/80-scaling-rules/00-index.md`
+**Class:** incorrect fact (criterion 7 and the correction note); ambiguity (criterion 8), an incorrect fact under its nearer reading
+**What the gate hit:** T-002 builds, in the core, the serving count a fixed ingredient
+produces, and carries SCALE-008 (1–2, 4–8) verbatim.
+- SCALE-002 fixes the arithmetic: the factor is "that amount divided by the authored
+  amount of the same ingredient", applied to the whole recipe, and "the resulting serving
+  count" is displayed. SCALE-015 (4) walks it: 250 g fixed against an authored 400 g for
+  4 servings gives 2.5 servings, shown ≈3.
+- SCALE-008 (7), replaced at spec/ @ 1168954 because its 109.375 g was off the grid
+  (SD-033): "Given a recipe authored for 4 servings with 400 g of chicken, when the
+  reader fixes 350 g of it (a computed 0.875 servings, exactly between ¾ and 1), then the
+  serving count shows an approximate 1 serving." 350 ÷ 400 = 0.875 is the factor; the
+  count SCALE-002 gives is 4 × 0.875 = 3.5 servings, a tie between 3 and 4 shown ≈4 by
+  SCALE-015 and SCALE-008 (4). The criterion's parenthesis and its *Then* (≈1) hold only
+  if the factor is displayed as the count. The note under SCALE-008 says the new amounts
+  "reach the same 0.875 servings … the behaviour is unchanged"; by SCALE-002 they do not.
+  The criterion it replaced (109.375 g of 500 g, 0.21875 × 4 = 0.875) did.
+- SCALE-008 (8): "Given the same recipe, when the reader fixes 100 g of chicken (a
+  computed 0.8 servings), then the serving count shows an approximate ¾ serving." Until
+  1168954 "the same recipe" could only be criterion (6)'s 500 g recipe, where
+  100 ÷ 500 × 4 = 0.8. Its nearest antecedent is now (7)'s 400 g recipe, where
+  100 ÷ 400 × 4 = 1.0 serving, shown ≈1. Under the (6) reading the criterion holds.
+Each of (7)'s parts is internally sensible — a 400 g recipe fixed at 350 g, and a
+computed 0.875 servings going to ≈1 — but they are not the same case, and the statement
+decides which one a conformant core shows. A developer of T-002 would choose between
+asserting (7)'s *Then* against SCALE-002 or SCALE-002 against (7)'s *Then*, and gate 2
+could mark neither met (TEAM-008). Which parts of (7) are meant, and which recipe (8)
+names, is the product decision. Found at T-002's fourth gate 1
+(docs/product/verdicts/20260928-T-002-gate1.md); the third
+(docs/product/verdicts/20260927-T-002-gate1-3.md) accepted the criterion as it stood
+before 1168954.
+**Stopped:** T-002 (SCALE-008 (7), (8)). T-030, T-019, T-015, T-016, T-017, T-020,
+T-021, T-022, T-023, T-034, T-033, T-024, T-025 and T-028 wait behind T-002 through the
+backlog's dependencies; none of them carries SCALE-008 (7) or (8). Whether they wait is
+the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-037 — How the quantity field reads what the author types is stated nowhere: the decimal mark and digit grouping in each interface language, and whether a value the grid writes as a fraction is held when typed with a decimal mark (2026-09-28)
+**Requirement IDs:** DOM-017 (statement, table, 1–4); read against L10N-009 (statement, 6), L10N-001 (1), DOM-016 (1), SCALE-014 (5), SCALE-018 (statement, 1), SD-034 item 1 and the spec ADR `spec/decisions/20260927-stated-quantities-lie-on-the-grid.md`
+**Class:** omission (item 1); ambiguity (item 2)
+**What the gate hit:** T-035 builds the rule that decides whether the editor's quantity
+field holds what the author entered, and carries DOM-017 (1–4) verbatim. Each of those
+criteria names the entry as a literal typed string. The verdict turns on the number that
+string is read as.
+1. **The decimal mark and grouping of a typed number are stated for neither language.**
+   L10N-009 fixes how a number is *displayed*. In Russian it uses a comma before the
+   fractional part and groups of three separated by a no-break space. In English it uses
+   a point and groups separated by a comma. No requirement says how a *typed* number is
+   read. DOM-017's examples assume the Russian reading: `1,5 кг` is held only if the
+   comma is a decimal mark (1500 g), and `1,2345 кг` is refused only because it reads as
+   1234.5 g. The field also exists in the English interface (L10N-001 (1)), where
+   DOM-016 (1) names the unit `kg`. There the same keystrokes admit different quantities:
+   - `1,500 kg` is 1500 kg under L10N-009's English grouping and 1.5 kg under a decimal
+     comma. Both values are on the `exact` grid, so DOM-017 holds either one.
+   - `1,2345 kg` is refused if the comma is a decimal mark. It is held as 12 345 kg if
+     the comma is read as a grouping separator whose groups are not checked.
+   - `1.5 кг` in the Russian interface is 1.5 kg if a point is also read as a decimal
+     mark. It is not a number in L10N-009's Russian form if only that form is read.
+   SCALE-018 (1) (`0,3 кг` fixed by a reader) raises the same question at the fixing
+   control.
+2. **Whether a decimal-mark entry of a value on a fraction grid is held is read two ways.**
+   - *By value.* The statement holds "only a value above zero that the rounding grid of
+     its unit type displays". Criterion (4) holds "a number however large that lies on
+     the grid". 2.5 of a divisible piece is the value the grid displays as 2½, and 0.5
+     teaspoon is the value it displays as ½, so `2,5 шт` of a divisible ingredient and
+     `0,5 ч. л.` are held. Under this reading, criterion (2)'s "`2,5 шт` or `½ шт` of an
+     indivisible ingredient" qualifies both items. SD-034 item 1 ("2.5 or ½ of an
+     indivisible piece") and the ADR's cost line ("2.5 indivisible eggs") are worded
+     the same way.
+   - *By written form.* The table gives divisible `piece` values as "½, a whole number,
+     or a whole number followed by ½". It gives `household` and `taste_measured` values
+     in the same fraction terms. SCALE-014 (5) and L10N-009 (6) never let these types
+     carry a decimal mark. Criteria (1) and (3) attach "of a divisible ingredient" and
+     "of an indivisible one" to the single item before each (`1½ шт`, `3 шт`; `½ шт`,
+     `1 шт`). Read the same way, criterion (2)'s qualifier attaches to `½ шт` alone, so
+     `2,5 шт` is refused whatever its divisibility, and `0,5 ч. л.` is refused with it.
+   Under the first reading, a field that refuses a divisible `2,5 шт` fails criterion
+   (4). Under the second, a field that holds it fails criterion (2). No criterion names a
+   divisible `2,5 шт` or a `0,5 ч. л.`.
+Neither item is about the input control, whether that is a fraction picker or a
+keypad. Both decide which typed values the field holds and what quantity it stores. The
+developer of T-035 would settle them in the parser, and gate 2 could not mark a test of
+`1,500 kg`, `1.5 кг` or a divisible `2,5 шт` met or not met (TEAM-008). Found at T-035's
+gate 1 (docs/product/verdicts/20260928-T-035-gate1.md).
+**Stopped:** T-035 (DOM-017 (1–4)). No backlog task depends on T-035. T-011 builds the
+quantity field and holds a gate-1 `accepted` (docs/product/verdicts/20260927-T-011-gate1-3.md).
+Its criteria type only whole numbers (`500`, `2`). SCALE-018, whose (1) meets item 1 at the
+fixing control, is placed in no backlog entry. Whether either is affected is the Team
+Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
