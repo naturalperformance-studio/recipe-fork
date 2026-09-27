@@ -32,14 +32,14 @@ in this wave, and no media is attached.
 
 | Task | Title | Depends on | Status |
 |---|---|---|---|
-| T-001 | Quantities follow the serving count | — | planned |
-| T-029 | Large and fractional quantities are written on the ladder | T-001 | planned |
-| T-002 | A fixed ingredient sets the scale | T-029 | planned |
-| T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | planned |
+| T-001 | Quantities follow the serving count | — | blocked |
+| T-029 | Large and fractional quantities are written on the ladder | T-001 | gated |
+| T-002 | A fixed ingredient sets the scale | T-029 | blocked |
+| T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | in-progress |
-| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | planned |
-| T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | planned |
+| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | gated |
+| T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | gated |
 | T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | planned |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | gated |
 | T-009 | The first step of creation shows the nickname and the terms | T-006, T-008 | planned |
@@ -55,7 +55,7 @@ in this wave, and no media is attached.
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | planned |
 | T-034 | A long step with an unnamed timer is shown what its notification will say | T-017 | planned |
 | T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | planned |
-| T-019 | A derived quantity says so, and which way it was rounded | T-018 | planned |
+| T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | planned |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030 | planned |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020, T-034 | planned |
 | T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
@@ -70,7 +70,7 @@ in this wave, and no media is attached.
 ### T-001 — Quantities follow the serving count
 
 **Requirements:** SCALE-001, SCALE-003, SCALE-005, SCALE-010, SCALE-015
-**Status:** planned
+**Status:** blocked
 **Depends on:** —
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -102,7 +102,7 @@ in this wave, and no media is attached.
 - Given a tablespoon quantity computed as 1 5⁄12, exactly between 1⅓ and 1½, when it is displayed, then it shows 1½ tablespoons.
 - Given a value whose nearest grid value is below the floor of its unit type, when it is displayed, then SCALE-005 governs and the floor is shown.
 
-**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md; re-sliced against spec/ @ ead1a44 after SD-002 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md; re-sliced against spec/ @ ead1a44 after SD-002 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-001 (2)) — docs/product/verdicts/20260927-T-001-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -110,7 +110,7 @@ in this wave, and no media is attached.
 ### T-029 — Large and fractional quantities are written on the ladder
 
 **Requirements:** SCALE-010, SCALE-013, SCALE-014, L10N-009
-**Status:** planned
+**Status:** gated
 **Depends on:** T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -139,7 +139,7 @@ in this wave, and no media is attached.
 - Given the interface in Russian, when a four-digit whole number such as 1234 servings is displayed, then it reads `1 234`; in English it reads `1,234`.
 - Given a vulgar fraction of SCALE-014, when it is displayed, then it carries no decimal mark in either language.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-029-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -147,7 +147,7 @@ in this wave, and no media is attached.
 ### T-002 — A fixed ingredient sets the scale
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-010, SCALE-015
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-029
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -176,7 +176,7 @@ in this wave, and no media is attached.
 - Given a recipe authored for 4 servings with 400 g of an ingredient, when the reader fixes 250 g of it, then the serving count shows an approximate 3 servings.
 - Given a recipe authored for 4 servings with 240 g of an ingredient, when the reader fixes 25 g of it (a computed 5/12 serving), then the serving count shows an approximate ½ serving.
 
-**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-008 vs SCALE-015) — docs/product/verdicts/20260927-T-002-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -184,7 +184,7 @@ in this wave, and no media is attached.
 ### T-030 — Changing the count or releasing the last fixing puts the scale back
 
 **Requirements:** SCALE-016, SCALE-017
-**Status:** planned
+**Status:** gated
 **Depends on:** T-002
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -202,7 +202,7 @@ in this wave, and no media is attached.
 - Given a recipe the reader had set to 6 servings, when they fix an ingredient, then fix a second, then release the second and then the first, then the recipe is displayed at 6 servings.
 - Given the fixing is released, when the serving count is displayed, then it is not marked as approximate.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-030-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -259,7 +259,7 @@ in this wave, and no media is attached.
 ### T-005 — An account is created with a unique nickname and three keys, and only once it is confirmed
 
 **Requirements:** AUTH-014, AUTH-017, AUTH-020, AUTH-018, DOM-001, LEG-004, CON-001, AUTH-022, AUTH-023
-**Status:** planned
+**Status:** gated
 **Depends on:** T-004
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/resources/db/migration/V2__accounts.sql` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `deploy/local/seed/**` · `server/src/test/kotlin/app/recipefork/server/account/**`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -304,7 +304,7 @@ in this wave, and no media is attached.
 - Given a combination of three admitted words, when it is generated, then it is not checked against anything further: no list of forbidden combinations exists.
 - Given a word removed from a list, when an account already holds a nickname containing it, then that nickname is unchanged (DOM-001) and the word is no longer drawn for new ones.
 
-**Gate 1:** blocked-by-spec (SD-001) — docs/product/verdicts/20260927-T-005-gate1.md; re-sliced against spec/ @ ead1a44 after SD-001 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-001) — docs/product/verdicts/20260927-T-005-gate1.md; re-sliced against spec/ @ ead1a44 after SD-001 resolved, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-005-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -312,7 +312,7 @@ in this wave, and no media is attached.
 ### T-006 — Creating an account costs a device slot, and no verdict makes it muted
 
 **Requirements:** AUTH-001, AUTH-002, AUTH-004, AUTH-015
-**Status:** planned
+**Status:** gated
 **Depends on:** T-005
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/kotlin/app/recipefork/server/attestation/**` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `server/src/test/kotlin/app/recipefork/server/account/**` · `server/src/test/kotlin/app/recipefork/server/attestation/**` · `deploy/local/compose.yml`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -339,7 +339,7 @@ in this wave, and no media is attached.
 - Given a verdict received and checked, when the stored record of the account is enumerated, then it holds no field from that verdict.
 - Given the stored data of any account, when it is enumerated, then it holds nothing that identifies a device (CON-001).
 
-**Gate 1:** accepted — docs/product/verdicts/20260927-T-006-gate1.md; AUTH-001 (3) rewritten in spec/ @ ead1a44 and replaced here, re-gate due
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-006-gate1.md; AUTH-001 (3) rewritten in spec/ @ ead1a44 and replaced here, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-006-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1062,8 +1062,8 @@ in this wave, and no media is attached.
 
 **Requirements:** CON-004, SCALE-004, A11Y-008, L10N-001, A11Y-003, A11Y-005, SCALE-013, SCALE-014, SCALE-015
 **Status:** planned
-**Depends on:** T-018
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
+**Depends on:** T-018, T-030
+**Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**` · `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Criteria of these requirements carried elsewhere:** A11Y-008 (2) → wave 6; (3) → T-007; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · SCALE-013 (1–2, 4) → T-029 · SCALE-014 (1–3, 5) → T-029 · SCALE-015 (3, 6) → T-001; (4–5) → T-002
 
