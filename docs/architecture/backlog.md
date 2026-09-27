@@ -352,7 +352,7 @@ in this wave, and no media is attached.
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/lint.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_common.xml` · `app/src/main/res/values-ru/strings_common.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** First screen of the application: it carries the recipe model in `:core` (every field of `50-domain-model`), its local tables, the navigation host and the test helpers for the three cross-cutting criteria every later screen repeats. Expected at 600–800 changed lines.
-**Criteria of these requirements carried elsewhere:** FLOW-034 (2, 4, 6–7) → wave 3 · FLOW-036 (3, 8) → wave 2; (6) → T-028; (7) → wave 3 · FLOW-039 (3–4) → wave 3 · FLOW-041 (1–4, 6) → wave 2 · FLOW-043 (1–4) → wave 2; (6) → wave 3 · FLOW-038 (1–2, 6) → T-018; (3–4) → wave 5; (7) → wave 3 · A11Y-008 (1) → T-019; (2) → wave 6; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-034 (2, 4) → wave 3 · FLOW-036 (3, 8) → wave 2; (6) → T-028; (7) → wave 3 · FLOW-039 (3–4) → wave 3 · FLOW-041 (1–4, 6) → wave 2 · FLOW-043 (1–4) → wave 2; (6) → wave 3 · FLOW-038 (1–2, 6) → T-018; (3–4) → wave 5; (7) → wave 3 · A11Y-008 (1) → T-019; (2) → wave 6; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -360,6 +360,8 @@ in this wave, and no media is attached.
 - Given an account that has marked recipes and owns recipes, when it opens the section, then both views are reachable from it and the switch between them is visible without scrolling.
 - Given the view of the account's own recipes, when it is shown, then it lists every recipe the account owns in every state, including states no other account can see.
 - Given a switch between the views, when the reader leaves the section and returns within the same session, then the view they were in is still in force, as CAT-001 keeps a chosen ordering.
+- Given a session in which the reader has not chosen a view, when they open the section, then it opens on the view of marked recipes, whatever the account holds.
+- Given a device holding no account, when the section is opened, then it shows the view of marked recipes alone and no switch; the own-recipes view and the switch appear once the device holds an account.
 
 *FLOW-036 — spec/70-flows/50-browsing.md*
 - Given a recipe in `private`, when the view is shown, then its entry is marked as a draft.
@@ -394,10 +396,10 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md; re-sliced against spec/ @ ead1a44 after SD-004 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md; re-sliced against spec/ @ ead1a44 after SD-004 resolved, re-gated: rejected — docs/product/verdicts/20260927-T-007-gate1-2.md (FLOW-034 (6, 7) left to wave 3); FLOW-034 (6, 7) added, re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-008 — The editor opens on a new recipe from the own-recipes view
 
@@ -1624,7 +1626,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | FLOW-017 — The reader's usual serving count opens every recipe | all |
 | FLOW-019 — What the card shows when parts of a recipe are absent | 4 |
 | FLOW-020 — The card while it loads and when it cannot be loaded | all |
-| FLOW-034 — The favourites section holds two views | 2, 4, 6–7 |
+| FLOW-034 — The favourites section holds two views | 2, 4 |
 | FLOW-035 — Both views are searched, filtered and ordered exactly as the catalogue is | all |
 | FLOW-036 — An own recipe carries its state on its entry, not in a screen of its own | 7 |
 | FLOW-037 — The own-recipes view narrows to a state | all |
