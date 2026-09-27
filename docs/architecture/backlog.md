@@ -50,14 +50,14 @@ in this wave, and no media is attached.
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | blocked |
-| T-015 | A quantity goes into a step as a reference | T-014 | planned |
+| T-015 | A quantity goes into a step as a reference | T-014, T-019 | planned |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | planned |
 | T-034 | A long step with an unnamed timer is shown what its notification will say | T-017 | planned |
 | T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | planned |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | planned |
-| T-020 | The reader fixes an ingredient on the card | T-019, T-030 | planned |
-| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-034 | planned |
+| T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | planned |
+| T-021 | A reference in a step reads as the quantity the list shows | T-020 | planned |
 | T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
 | T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
 | T-033 | A timer asks for notifications when first started, and a refusal is explained at once | T-023 | planned |
@@ -824,10 +824,11 @@ in this wave, and no media is attached.
 
 **Requirements:** FLOW-031, FLOW-032, DOM-007, GUIDE-008, L10N-001, A11Y-003, A11Y-005
 **Status:** planned
-**Depends on:** T-014
-**Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
+**Depends on:** T-014, T-019
+**Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-032 (1–4, 6–7) → T-021 · DOM-007 (1) → T-021 · GUIDE-008 (5) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** A reference to an ingredient that holds no quantity — none entered yet, or `taste_unmeasured` — is offered, inserted, kept and rendered here, in the editor and in the saved view of FLOW-029, so this task follows T-019, where the card and its derived marker exist.
+**Criteria of these requirements carried elsewhere:** FLOW-032 (1–4) → T-021 · DOM-007 (1) → T-021 · GUIDE-008 (5) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -841,6 +842,8 @@ in this wave, and no media is attached.
 
 *FLOW-032 — spec/70-flows/45-steps-timers-references.md*
 - Given the editor, when the author inserts a reference, then what they see in place of it is the authored quantity, because the authored scale is the recipe's own.
+- Given a reference to a `taste_unmeasured` ingredient, when the step is read at any scale, then the reference reads "to taste" in the interface language (`по вкусу` in Russian), and nothing in it is marked as derived.
+- Given a reference to an ingredient whose quantity is not yet entered, when the step is shown in the editor or in the saved view of FLOW-029, then the reference shows a visibly empty placeholder, followed by the unit where one is chosen; the placeholder occupies a character range and is removed as FLOW-031 (4) removes any reference.
 
 *DOM-007 — spec/50-domain-model/10-invariants.md*
 - Given an ingredient that a step references, when the author deletes that ingredient before the recipe becomes externally visible, then the reference is removed from the step text in the same action.
@@ -861,10 +864,10 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-014) — docs/product/verdicts/20260927-T-015-gate1.md; GUIDE-008 (5) moved to wave 2, where submission exists; re-sliced against spec/ @ ead1a44 after SD-014 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-014) — docs/product/verdicts/20260927-T-015-gate1.md; GUIDE-008 (5) moved to wave 2, where submission exists; re-sliced against spec/ @ ead1a44 after SD-014 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-015-gate1-2.md (FLOW-032 (6, 7) came after the references they render); moved here from T-021, re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-016 — Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action
 
@@ -1122,7 +1125,7 @@ in this wave, and no media is attached.
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, A11Y-003, A11Y-007, L10N-001, A11Y-005
 **Status:** planned
-**Depends on:** T-019, T-030
+**Depends on:** T-019, T-030, T-015
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–5) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
@@ -1170,11 +1173,10 @@ in this wave, and no media is attached.
 
 **Requirements:** SCALE-007, FLOW-032, DOM-007, CON-004, L10N-001, A11Y-003, A11Y-005
 **Status:** planned
-**Depends on:** T-020, T-034
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
+**Depends on:** T-020
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Note:** FLOW-032 (7) shows the placeholder in the editor as well as on the saved view, so this task holds the editor's files and depends on T-034, the last wave-1 task before it that holds them.
-**Criteria of these requirements carried elsewhere:** FLOW-032 (5) → T-015 · DOM-007 (2) → T-015 · CON-004 (1, 3) → T-019 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-032 (5–7) → T-015 · DOM-007 (2) → T-015 · CON-004 (1, 3) → T-019 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1187,8 +1189,6 @@ in this wave, and no media is attached.
 - Given the same step at any scale, when it is read, then the value in the reference equals the value the ingredient list shows for that ingredient (DOM-007).
 - Given a scaled value that the rounding grid changed, when the step is read, then the reference carries the same derived marker the list carries (SCALE-004), so the step never states a rounded number as though it were exact.
 - Given a value held at the floor of its unit type, when the step is read, then it shows the floor exactly as the list does (SCALE-005).
-- Given a reference to a `taste_unmeasured` ingredient, when the step is read at any scale, then the reference reads "to taste" in the interface language (`по вкусу` in Russian), and nothing in it is marked as derived.
-- Given a reference to an ingredient whose quantity is not yet entered, when the step is shown in the editor or in the saved view of FLOW-029, then the reference shows a visibly empty placeholder, followed by the unit where one is chosen; the placeholder occupies a character range and is removed as FLOW-031 (4) removes any reference.
 
 *DOM-007 — spec/50-domain-model/10-invariants.md*
 - Given a step containing a reference, when the step is displayed, then the referenced quantity equals the quantity shown for that ingredient in the ingredient list at the current scale.
