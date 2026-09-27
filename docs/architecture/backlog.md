@@ -34,26 +34,26 @@ in this wave, and no media is attached.
 |---|---|---|---|
 | T-001 | Quantities follow the serving count | — | blocked |
 | T-029 | Large and fractional quantities are written on the ladder | T-001 | gated |
-| T-002 | A fixed ingredient sets the scale | T-029 | blocked |
+| T-002 | A fixed ingredient sets the scale | T-029 | gated |
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
-| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | blocked |
+| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | in-progress |
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | gated |
-| T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | blocked |
+| T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | gated |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | gated |
 | T-009 | The first step of creation shows the nickname and the terms | T-006, T-008 | gated |
-| T-032 | The second step of creation issues the account key and the deletion key | T-009 | blocked |
+| T-032 | The second step of creation issues the account key and the deletion key | T-009 | gated |
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
-| T-014 | A step carries one timer, named by its step unless the author names it | T-013 | blocked |
+| T-014 | A step carries one timer, named by its step unless the author names it | T-013 | gated |
 | T-015 | A quantity goes into a step as a reference | T-014, T-019 | gated |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | gated |
-| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | blocked |
+| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | gated |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | gated |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | blocked |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | gated |
@@ -101,7 +101,7 @@ in this wave, and no media is attached.
 - Given a tablespoon quantity computed as 1 5⁄12, exactly between 1⅓ and 1½, when it is displayed, then it shows 1½ tablespoons.
 - Given a value whose nearest grid value is below the floor of its unit type, when it is displayed, then SCALE-005 governs and the floor is shown.
 
-**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md; re-sliced against spec/ @ ead1a44 after SD-002 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-001 (2)) — docs/product/verdicts/20260927-T-001-gate1-2.md; SCALE-001 (2) corrected in spec/ @ 959130e and moved to T-019, since it now states the rounding direction T-019 renders; re-gate due
+**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md; re-sliced against spec/ @ ead1a44 after SD-002 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-001 (2)) — docs/product/verdicts/20260927-T-001-gate1-2.md; SCALE-001 (2) corrected in spec/ @ 959130e and moved to T-019, since it now states the rounding direction T-019 renders; re-gated: blocked-by-spec (SD-034, what an author may enter as a quantity and how an off-grid one is shown) — docs/product/verdicts/20260927-T-001-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -146,7 +146,7 @@ in this wave, and no media is attached.
 ### T-002 — A fixed ingredient sets the scale
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-010, SCALE-015
-**Status:** blocked
+**Status:** gated
 **Depends on:** T-029
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -178,7 +178,7 @@ in this wave, and no media is attached.
 - Given a recipe authored for 4 servings with 400 g of an ingredient, when the reader fixes 250 g of it, then the serving count shows an approximate 3 servings.
 - Given a recipe authored for 4 servings with 240 g of an ingredient, when the reader fixes 25 g of it (a computed 5/12 serving), then the serving count shows an approximate ½ serving.
 
-**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-008 vs SCALE-015) — docs/product/verdicts/20260927-T-002-gate1-2.md; re-sliced against spec/ @ 959130e after SD-027 resolved (SCALE-008 (4) replaced, (6–8) added); re-gate due
+**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-008 vs SCALE-015) — docs/product/verdicts/20260927-T-002-gate1-2.md; re-sliced against spec/ @ 959130e after SD-027 resolved (SCALE-008 (4) replaced, (6–8) added); re-gated: accepted — docs/product/verdicts/20260927-T-002-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -261,9 +261,9 @@ in this wave, and no media is attached.
 ### T-005 — An account is created with a unique nickname and three keys, and only once it is confirmed
 
 **Requirements:** AUTH-014, AUTH-017, AUTH-020, AUTH-018, DOM-001, LEG-004, CON-001, AUTH-022, AUTH-023
-**Status:** blocked
+**Status:** in-progress
 **Depends on:** T-004
-**Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/resources/db/migration/V2__accounts.sql` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `deploy/local/seed/**` · `server/src/test/kotlin/app/recipefork/server/account/**`
+**Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/resources/db/migration/V2__accounts.sql` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `deploy/local/seed/**` · `deploy/local/compose.yml` · `server/src/test/kotlin/app/recipefork/server/account/**`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
 **Note:** No new library is expected; the version catalog is outside this task's files.
 **Note:** The nickname words are the product owner's two lists (AUTH-023), changed in the store as the dictionaries are. This task holds them in tables of its migration and seeds the local deployment with a placeholder list that says it is one; the real lists are the product owner's to write before the first account (release record AUTH-023 (1)), and their size is OQ-009.
@@ -307,7 +307,7 @@ in this wave, and no media is attached.
 - Given a word removed from a list, when an account already holds a nickname containing it, then that nickname is unchanged (DOM-001) and the word is no longer drawn for new ones.
 
 **Gate 1:** blocked-by-spec (SD-001) — docs/product/verdicts/20260927-T-005-gate1.md; re-sliced against spec/ @ ead1a44 after SD-001 resolved, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-005-gate1-2.md
-**Review:** defects — the confirming call accepts any well-formed keys from the client (keys ADR, AUTH-014 (1, 3), AUTH-017 (4), AUTH-020 (5)); AUTH-023 (4) "no longer drawn" and AUTH-014 (2) strength tests survive their mutations; returned to the developer; re-review: defects — all 17 criteria checked by mutation and the three earlier defects gone; KEY_SET_SECRET missing or blank silently falls back to a per-process secret, so a restart voids issued key sets (AUTH-024 (6)), and a malformed secret fails without naming the variable; no test covers the secret's configuration. Second return: stopped for the user; worktree and branch kept
+**Review:** defects — the confirming call accepts any well-formed keys from the client (keys ADR, AUTH-014 (1, 3), AUTH-017 (4), AUTH-020 (5)); AUTH-023 (4) "no longer drawn" and AUTH-014 (2) strength tests survive their mutations; returned to the developer; re-review: defects — all 17 criteria checked by mutation and the three earlier defects gone; KEY_SET_SECRET missing or blank silently falls back to a per-process secret, so a restart voids issued key sets (AUTH-024 (6)), and a malformed secret fails without naming the variable; no test covers the secret's configuration. Second return: stopped for the user; worktree and branch kept. 2026-09-27: the user authorised a third run beyond the limit for this one defect; `deploy/local/compose.yml` added to the expected files so the local deployment and the artefact carry the secret
 **Gate 2:** —
 **Returns:** 2 of 2 (gate 1 · reviewer · gate 2 share the count)
 
@@ -349,7 +349,7 @@ in this wave, and no media is attached.
 ### T-007 — The own-recipes view lists every recipe the account owns
 
 **Requirements:** FLOW-034, FLOW-058, FLOW-036, FLOW-039, FLOW-041, FLOW-043, FLOW-038, A11Y-008, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Status:** gated
 **Depends on:** T-004, T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/lint.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_common.xml` · `app/src/main/res/values-ru/strings_common.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -404,7 +404,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md; re-sliced against spec/ @ ead1a44 after SD-004 resolved, re-gated: rejected — docs/product/verdicts/20260927-T-007-gate1-2.md (FLOW-034 (6, 7) left to wave 3); FLOW-034 (6, 7) added, re-gated: blocked-by-spec (SD-028, "session" in FLOW-034 (5, 6)) — docs/product/verdicts/20260927-T-007-gate1-3.md; re-sliced against spec/ @ 959130e after SD-028 resolved (FLOW-034 (5, 6) replaced, FLOW-058 (1–4) added; (5) needs the ordering, filter and usual count of waves 2 and 3); re-gate due
+**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md; re-sliced against spec/ @ ead1a44 after SD-004 resolved, re-gated: rejected — docs/product/verdicts/20260927-T-007-gate1-2.md (FLOW-034 (6, 7) left to wave 3); FLOW-034 (6, 7) added, re-gated: blocked-by-spec (SD-028, "session" in FLOW-034 (5, 6)) — docs/product/verdicts/20260927-T-007-gate1-3.md; re-sliced against spec/ @ 959130e after SD-028 resolved (FLOW-034 (5, 6) replaced, FLOW-058 (1–4) added; (5) needs the ordering, filter and usual count of waves 2 and 3); re-gated: accepted — docs/product/verdicts/20260927-T-007-gate1-4.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -507,7 +507,7 @@ in this wave, and no media is attached.
 ### T-032 — The second step of creation issues the account key and the deletion key
 
 **Requirements:** AUTH-024, AUTH-007, AUTH-017, AUTH-014, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Status:** gated
 **Depends on:** T-009
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
@@ -547,7 +547,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-029, the deletion key on the second step) — docs/product/verdicts/20260927-T-032-gate1.md; re-sliced against spec/ @ 959130e after SD-029 resolved (AUTH-024 (3), AUTH-017 (1) replaced; AUTH-017 (2–4) and AUTH-014 (7) added, since this step issues both texts); re-gate due
+**Gate 1:** blocked-by-spec (SD-029, the deletion key on the second step) — docs/product/verdicts/20260927-T-032-gate1.md; re-sliced against spec/ @ 959130e after SD-029 resolved (AUTH-024 (3), AUTH-017 (1) replaced; AUTH-017 (2–4) and AUTH-014 (7) added, since this step issues both texts); re-gated: accepted — docs/product/verdicts/20260927-T-032-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -788,7 +788,7 @@ in this wave, and no media is attached.
 ### T-014 — A step carries one timer, named by its step unless the author names it
 
 **Requirements:** FLOW-027, DOM-013, GUIDE-007, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Status:** gated
 **Depends on:** T-013
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -834,7 +834,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-005) — docs/product/verdicts/20260927-T-014-gate1.md; re-sliced against spec/ @ ead1a44 after SD-005 resolved; re-gated: blocked-by-spec (SD-030, the timer's duration field and GUIDE-007's next action) — docs/product/verdicts/20260927-T-014-gate1-2.md; re-sliced against spec/ @ 959130e after SD-030 resolved (FLOW-027 (12–14) and GUIDE-007 (5–6) added); re-gate due
+**Gate 1:** blocked-by-spec (SD-005) — docs/product/verdicts/20260927-T-014-gate1.md; re-sliced against spec/ @ ead1a44 after SD-005 resolved; re-gated: blocked-by-spec (SD-030, the timer's duration field and GUIDE-007's next action) — docs/product/verdicts/20260927-T-014-gate1-2.md; re-sliced against spec/ @ 959130e after SD-030 resolved (FLOW-027 (12–14) and GUIDE-007 (5–6) added); re-gated: accepted — docs/product/verdicts/20260927-T-014-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -971,7 +971,7 @@ in this wave, and no media is attached.
 ### T-018 — A saved recipe opens as the card a reader sees, at the serving count chosen
 
 **Requirements:** FLOW-029, FLOW-053, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005, L10N-009, DOM-015, FLOW-017
-**Status:** blocked
+**Status:** gated
 **Depends on:** T-008, T-029
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -1047,7 +1047,7 @@ in this wave, and no media is attached.
 *FLOW-017 — spec/70-flows/30-cooking.md*
 - Given the setting has never been set, when the reader opens a recipe, then it opens at the count its author wrote and nothing is marked as derived.
 
-**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-016, SD-002, SD-013 resolved; re-gated: blocked-by-spec (SD-031, where a saved recipe's edit is chosen) — docs/product/verdicts/20260927-T-018-gate1-2.md; re-sliced against spec/ @ 959130e after SD-031 resolved (FLOW-029 (2–4) replaced; FLOW-053 (7) added, since this task builds the bar it constrains); re-gate due
+**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-016, SD-002, SD-013 resolved; re-gated: blocked-by-spec (SD-031, where a saved recipe's edit is chosen) — docs/product/verdicts/20260927-T-018-gate1-2.md; re-sliced against spec/ @ 959130e after SD-031 resolved (FLOW-029 (2–4) replaced; FLOW-053 (7) added, since this task builds the bar it constrains); re-gated: accepted — docs/product/verdicts/20260927-T-018-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1101,7 +1101,7 @@ in this wave, and no media is attached.
 *SCALE-001 — spec/80-scaling-rules/10-scaling.md*
 - Given the same recipe with 3 indivisible pieces, when the reader asks for 6 (an exact 4.5 pieces), then it shows 5 pieces and states that the exact value was lower (SCALE-015, SCALE-004).
 
-**Gate 1:** blocked-by-spec (SD-012) — docs/product/verdicts/20260927-T-019-gate1.md; re-sliced against spec/ @ ead1a44 after SD-012 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-019-gate1-2.md; SCALE-001 (2) moved here from T-001 after spec/ @ 959130e, re-gate due
+**Gate 1:** blocked-by-spec (SD-012) — docs/product/verdicts/20260927-T-019-gate1.md; re-sliced against spec/ @ ead1a44 after SD-012 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-019-gate1-2.md; SCALE-001 (2) moved here from T-001 after spec/ @ 959130e, re-gated: accepted — docs/product/verdicts/20260927-T-019-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1149,7 +1149,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved; re-gated: blocked-by-spec (SD-032, whether a requested fractional count is marked approximate) — docs/product/verdicts/20260927-T-020-gate1-2.md; re-sliced against spec/ @ 959130e after SD-032 resolved (SCALE-008 (3), SCALE-011 (4) replaced; A11Y-003 (2) left to the tasks that build the controls it names); re-gate due
+**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved; re-gated: blocked-by-spec (SD-032, whether a requested fractional count is marked approximate) — docs/product/verdicts/20260927-T-020-gate1-2.md; re-sliced against spec/ @ 959130e after SD-032 resolved (SCALE-008 (3), SCALE-011 (4) replaced; A11Y-003 (2) left to the tasks that build the controls it names); re-gated: blocked-by-spec (SD-033, the amounts a reader may fix) — docs/product/verdicts/20260927-T-020-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
