@@ -19,12 +19,16 @@ data class NicknameOfferDto(
 /**
  * The three keys shown during creation (AUTH-007, AUTH-017, AUTH-020). Issuing them stores
  * nothing: an account holding them exists only once [CreateAccountDto] is sent with them.
+ * [seal] is the server's proof that it issued exactly these three keys; the client keeps it with
+ * the keys and sends it back unchanged. A set the server did not issue, or any change to one it
+ * did, is refused.
  */
 @Serializable
 data class KeySetDto(
     val accountKey: String,
     val deletionKey: String,
     val recoveryKey: String,
+    val seal: String,
 ) {
     companion object {
         const val PATH = "/api/v1/accounts/keys"
@@ -71,10 +75,13 @@ object AccountErrors {
     /** The terms version is not a version identifier. */
     const val TERMS_VERSION_INVALID = "terms_version_invalid"
 
-    /** A key is not a well-formed key of its kind, or one key is given for two kinds. */
+    /**
+     * The key set is not one this server issued, or was changed after issue: a key is not a
+     * well-formed key of its kind, one key is given for two kinds, or the seal does not match.
+     */
     const val KEY_INVALID = "key_invalid"
 
-    /** A key has already been issued to an account. */
+    /** The issued key set has already been used to create an account. */
     const val KEY_TAKEN = "key_taken"
 
     /** No nickname could be generated that no account holds. */

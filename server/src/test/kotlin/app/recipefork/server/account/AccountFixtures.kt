@@ -49,8 +49,12 @@ internal fun DataSource.loadPlaceholderSeed() {
     connection.use { conn -> conn.createStatement().use { it.execute(sql) } }
 }
 
-internal fun serve(db: DataSource, test: suspend ApplicationTestBuilder.() -> Unit) = testApplication {
-    application { module(db) }
+internal fun serve(
+    db: DataSource,
+    seal: KeySetSeal = KeySetSeal.random(),
+    test: suspend ApplicationTestBuilder.() -> Unit,
+) = testApplication {
+    application { module(db, seal) }
     test()
 }
 

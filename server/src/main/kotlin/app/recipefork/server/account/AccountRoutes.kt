@@ -19,12 +19,14 @@ import kotlinx.serialization.json.Json
 
 /**
  * The server's half of creating an account (AUTH-024). The first two calls hand out what the
- * steps show — a nickname, rerolled as often as asked, and the three keys — and store nothing.
- * Only the confirming call creates the account (AUTH-007 (7)).
+ * steps show — a nickname, rerolled as often as asked, and the three keys sealed by [seal] — and
+ * store nothing. Only the confirming call creates the account (AUTH-007 (7)), and only with a key
+ * set this server issued.
  */
 fun Route.accountRoutes(
     store: AccountStore,
     nicknames: NicknameGenerator = NicknameGenerator(store),
+    seal: KeySetSeal,
     keys: KeyIssuer = KeyIssuer(),
 ) {
     post(NicknameOfferDto.PATH) {
@@ -37,7 +39,7 @@ fun Route.accountRoutes(
     post(KeySetDto.PATH) {
         call.response.header(HttpHeaders.CacheControl, "no-store")
         val set = keys.issueSet()
-        call.respond(KeySetDto(set.account.text, set.deletion.text, set.recovery.text))
+        call.respond(KeySetDto(set.account.text, set.deletion.text, set.recovery.text, seal.seal(set)))
     }
 
     post(CreateAccountDto.PATH) {
@@ -53,6 +55,12 @@ fun Route.accountRoutes(
             ?: return@post refuse(HttpStatusCode.BadRequest, AccountErrors.NICKNAME_NOT_ADMITTED)
         if (!TERMS_VERSION.matches(request.termsVersion)) {
             return@post refuse(HttpStatusCode.BadRequest, AccountErrors.TERMS_VERSION_INVALID)
+        }
+        // Only a set this server issued is accepted, and it is checked before any key is looked
+        // up, so a self-made or altered set learns nothing about which keys are held.
+        val offered = request.keys
+        if (!seal.verifies(offered.accountKey, offered.deletionKey, offered.recoveryKey, offered.seal)) {
+            return@post refuse(HttpStatusCode.BadRequest, AccountErrors.KEY_INVALID)
         }
         val account = Keys.parse(KeyKind.ACCOUNT, request.keys.accountKey)
         val deletion = Keys.parse(KeyKind.DELETION, request.keys.deletionKey)

@@ -107,6 +107,7 @@ class AccountRecordTest {
                     put("accountKey", keys.accountKey)
                     put("deletionKey", keys.deletionKey)
                     put("recoveryKey", keys.recoveryKey)
+                    put("seal", keys.seal)
                 }
                 put(field, JsonPrimitive(value))
             }
