@@ -983,3 +983,35 @@ T-024, T-025 and T-028 behind those. T-022 and T-024 run and restart a timer "fr
 full duration"; their own gates decide whether item 1 stops them directly.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-031 — Where the author "chooses to edit" a saved recipe is stated nowhere, and FLOW-029 (3) with FLOW-053 (7) reads as forbidding it on the one screen FLOW-029 (2) starts from (2026-09-27)
+**Requirement IDs:** FLOW-029 (2, 3, 4); read against FLOW-053 (7), FLOW-036 and FLOW-038 (1)
+**Class:** ambiguity
+**What the gate hit:** T-018 builds the saved view of FLOW-029 and carries all four of
+its criteria. Criterion (2): "Given that view of a recipe that is still editable, when
+the author chooses to edit, then the editor opens on the same recipe." Criterion (3):
+"Given that view, when the author looks for an edit control on the card itself, then
+there is none: the card is read, the editor is written, and they are two screens."
+FLOW-053 (7) adds that the card of an own recipe "carries no deletion control, because
+the card is read and the list is where a recipe is managed (FLOW-029)". No requirement
+names the control or the place through which the author chooses to edit. Two readings
+each hold together and give two different screens:
+1. The card screen carries a way into the editor outside "the card itself" — in the
+   screen's bar, beside the recipe rather than in it. (2) is met from "that view"
+   directly; (3) is met because the recipe's content holds no edit control.
+2. The card screen carries no way into the editor at all: "the card is read ... they
+   are two screens" and FLOW-053 (7)'s "the list is where a recipe is managed" place
+   editing on the recipe's entry in the own-recipes view (FLOW-036, FLOW-038 (1)),
+   and (2)'s "that view" is only where the author has come from.
+An edit action in the card screen's bar is required under reading 1 and is an edit
+control on the card under reading 2. The same choice decides where (4)'s "no way into
+the editor" is looked for. Whoever builds the card would decide it, and gate 2 could
+not tell a right card from a wrong one (TEAM-008). The earlier gate 1 on T-018
+(docs/product/verdicts/20260927-T-018-gate1.md) stopped at C3 on other grounds and did
+not examine this. Found at T-018's second gate 1
+(docs/product/verdicts/20260927-T-018-gate1-2.md).
+**Stopped:** T-018 (FLOW-029 (2–4)). T-019, T-015, T-016, T-017, T-020, T-021, T-022,
+T-023, T-033, T-034, T-024, T-025, T-026 and T-028 wait behind T-018 through the
+backlog's dependencies.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
