@@ -878,3 +878,34 @@ is which values the tie is between.
 the backlog's dependencies, and T-021–T-025 and T-028 behind T-020.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-028 — "Session" bounds FLOW-034's kept view from both sides and is defined nowhere: whether closing the application, or the operating system ending it, starts a new one is read more than one way (2026-09-27)
+**Requirement IDs:** FLOW-034 (5, 6, verification); read against CAT-001 (6), FLOW-033 (its "within the same session" criterion), FLOW-017 ("a later session" against "stays in the application"), FLOW-012 and AUTH-024
+**Class:** ambiguity
+**What the gate hit:** T-007 carries FLOW-034 (5), under which a chosen view "is still in
+force" when the reader "returns within the same session", and FLOW-034 (6), under which
+"a session in which the reader has not chosen a view" opens the section on the marked
+view. Together they require a chosen view to be kept until a session ends and to be gone
+when the next one starts. `spec/` does not say where one session ends:
+1. The glossary does not define the word, and neither does FLOW-034. CAT-001 (6) and
+   FLOW-033 use the same words without defining them.
+2. Elsewhere the specification treats three events as different: leaving the
+   application and returning while its process is alive, the operating system ending
+   the process while the application is away, and the reader closing the application
+   (FLOW-012; AUTH-024). FLOW-017 contrasts "a later session" with "stays in the
+   application", which suggests one run of the application. It does not say whether a
+   run that the operating system ended and the platform restored is the same run.
+
+A reader who chose the own-recipes view and comes back after either the process was
+ended or the application was closed and reopened is shown the marked view under one
+reading and the own-recipes view under another. FLOW-034's verification ("open it in a
+new session") needs the answer to start its own walk. Each criterion is observable once
+the boundary is fixed; the boundary itself is the product decision. Until (6) was carried
+the word was harmless, since a view kept forever meets (5) under every reading. It was
+recorded as an unknown in T-007's first two gate-1 verdicts. The developer would decide
+it, and gate 2 could not tell (TEAM-008).
+**Stopped:** T-007 (FLOW-034 (5, 6)). T-008–T-026, T-028 and T-031–T-034 wait behind
+T-007 through the backlog's dependencies. CAT-001 (6) and FLOW-033 carry the same words
+and are placed in wave 2.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
