@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
+import java.security.SecureRandom
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -25,8 +26,22 @@ class KeyStrengthTest {
         set.all.forEach { assertEquals(Keys.KEY_BYTES, it.bytes.size, "${it.kind} key length") }
         assertEquals(1, bodies.map { it.length }.toSet().size, "every kind is written at the same length")
         bodies.forEach { body -> assertTrue(body.all { it in Keys.ALPHABET }) }
-        assertEquals(1, KeyKind.entries.map { entropyBits(it) }.toSet().size, "every kind carries the same entropy")
-        assertEquals(256, entropyBits(KeyKind.DELETION))
+
+        // Strength is what the secure generator supplies: each kind's key is exactly the bytes drawn
+        // from it for that key, the same amount for every kind, with nothing derived, stretched or fixed.
+        val drawn = KeyKind.entries.associateWith { kind -> draws(kind) }
+        drawn.forEach { (kind, draw) ->
+            assertEquals(1, draw.calls.size, "$kind: one draw from the secure generator per key, got ${draw.calls.map { it.size }}")
+            assertTrue(draw.calls.single().contentEquals(draw.key.bytes), "$kind: the key is not the bytes drawn for it")
+        }
+        assertEquals(1, drawn.values.map { it.bits }.toSet().size, "every kind carries the same entropy: ${drawn.mapValues { it.value.bits }}")
+        assertEquals(256, drawn.getValue(KeyKind.DELETION).bits)
+
+        // Issued as a set, the three kinds come from the same generator in the same way.
+        val recorder = RecordingRandom()
+        val issuedSet = KeyIssuer(recorder).issueSet()
+        assertEquals(3, recorder.calls.size)
+        issuedSet.all.zip(recorder.calls).forEach { (key, bytes) -> assertTrue(bytes.contentEquals(key.bytes), "${key.kind} in a set") }
     }
 
     @Test
@@ -95,10 +110,38 @@ class KeyStrengthTest {
         }
     }
 
-    /** The entropy an issued key of [kind] actually carries, measured from what the issuer produces. */
+    /**
+     * The entropy an issued key of [kind] actually carries: the bits drawn from the secure generator
+     * for it, provided the key's text reads back to exactly those bytes.
+     */
     private fun entropyBits(kind: KeyKind): Int {
-        val key = KeyIssuer().issue(kind)
-        val parsed = assertNotNull(Keys.parse(kind, key.text))
-        return parsed.bytes.size * 8
+        val draw = draws(kind)
+        val parsed = assertNotNull(Keys.parse(kind, draw.key.text))
+        assertTrue(parsed.bytes.contentEquals(draw.calls.fold(ByteArray(0)) { acc, b -> acc + b }), "$kind: key is not what was drawn")
+        return draw.bits
+    }
+
+    private class Draw(val key: IssuedKey, val calls: List<ByteArray>) {
+        val bits: Int get() = calls.sumOf { it.size } * 8
+    }
+
+    /** Issues one key of [kind] from a generator that records every byte it hands out. */
+    private fun draws(kind: KeyKind): Draw {
+        val recorder = RecordingRandom()
+        val key = KeyIssuer(recorder).issue(kind)
+        return Draw(key, recorder.calls.toList())
+    }
+
+    /**
+     * A secure generator that records what it supplies. Every draw from a [SecureRandom] — bytes,
+     * ints, longs — passes through [nextBytes], so nothing drawn escapes the record.
+     */
+    private class RecordingRandom : SecureRandom() {
+        val calls = mutableListOf<ByteArray>()
+
+        override fun nextBytes(bytes: ByteArray) {
+            super.nextBytes(bytes)
+            calls += bytes.copyOf()
+        }
     }
 }
