@@ -24,7 +24,7 @@ create it only where the device verdict reports a free slot.
   then no account is created and none is asked for.
 - Given a person with no account, when they use a control that needs one, then
   account creation is offered, and the action they asked for proceeds once the
-  account exists.
+  account exists — for a muted account, as AUTH-004 (5) states.
 - Given account creation, when it succeeds, then one slot on the device is
   occupied with the month it was occupied in.
 - Given a device with no free slot, when creation is attempted, then no account
@@ -137,8 +137,9 @@ truth instead — their favourites already work, and they are tied to this phone
 
 If the server can be reached but a device verdict cannot be obtained, then the
 system shall create a muted account: one that carries favourites beyond the
-device and does nothing else that an account is for. A muted account shall not
-write, fork, edit, submit or rate.
+device, and whose recipes — written, edited and forked — are held on the device
+alone. A muted account shall send no recipe to the server, and shall not attach
+media, submit, request a private link or rate.
 
 **Acceptance criteria**
 - Given no verdict, when an account is created, then favourites carried by that
@@ -148,19 +149,33 @@ write, fork, edit, submit or rate.
   needed: a muted account is still an account, with a unique nickname (DOM-001)
   and three keys the server issues (AUTH-014).
 - Given a muted account, when the recipe card of a published recipe is opened,
-  then the fork control and the rating controls are absent.
-- Given a muted account, when the editor would be reached, then it is not
-  offered and no recipe can be created.
-- Given a muted account, when it was created because the person asked to fork or
-  to rate, then AUTH-006 states at that moment that the action cannot proceed
-  and why.
+  then the fork control is present and the rating controls are absent; a fork it
+  makes is held on the device alone.
+- Given a muted account, when the editor is opened, then recipes can be written,
+  edited and deleted, they are held on the device alone and nothing of them
+  reaches the server, and the controls for attaching media, submitting and
+  requesting a private link are replaced by the statement of AUTH-006.
+- Given a muted account, when it was created because the person asked to write
+  or to fork, then that action proceeds on the device at once; when it was
+  created because they asked to rate, then AUTH-006 states at that moment that
+  the rating cannot proceed and why.
 - Given a muted account, when it is created, then no slot on the device is
   occupied.
 - Given any person with or without an account, when they report a recipe or an
   author, then the report is recorded and delivered as `abuse` requires.
 
 **Verification:** attempt each of the four triggering actions with attestation
-blocked, and walk every control named here.
+blocked, walk every control named here, and confirm at the server that no recipe
+of the muted account arrived.
+**Correction, 2026-09-27:** a muted account created from the write control was
+told by AUTH-001 (2) that writing proceeds and by this requirement that it could
+not (SD-019 item 1). By user decision of that date a muted account writes, edits
+and forks freely on its own device, and nothing of it reaches the server until the
+account is full (AUTH-005); what stays withheld is everything that uses the
+server's storage or the moderator's queue — media, submission, the private link —
+and rating. Media is withheld rather than held locally because every recipe moves
+to the server when the account becomes full, and locally held media could exceed
+the 150 MB an account may hold unpublished (MEDIA).
 **Source:** user decision, 2026-09-20. Refusing to create anything was rejected:
 an outage at the attestation service would then block the one thing a reader
 might legitimately want — favourites that survive the phone. Creating a full
@@ -185,6 +200,9 @@ verdict reports one free.
   such an action, then it stays muted and AUTH-006 states why.
 - Given an account that has become full, when it is used afterwards, then no
   further verdict is requested for it.
+- Given a muted account holding recipes on its device, when it becomes full, then
+  every one of them is sent to the server as FLOW-002 (4) sends offline changes,
+  without the person being asked, and FLOW-005 marks each until it is accepted.
 
 **Verification:** create a muted account offline, restore the connection and
 retry from the statement in place of the fork control; repeat on a device with
@@ -218,6 +236,11 @@ which actions are withheld, and shall state what would lift the limit.
   shown, then it names the month a slot frees instead (AUTH-003).
 - Given a full account, when any screen is shown, then no such statement appears
   anywhere.
+- Given a muted account, when the statement is shown in the editor or in the
+  own-recipes view, then it also says that its recipes are held on this device
+  only, and are lost with the device or when another key signs in (AUTH-012).
+- Given a muted account, when its own account screen is opened, then the same
+  statement stands there, with the retry control, for as long as it is muted.
 
 **Verification:** read every statement a muted account can reach, in both the no
 verdict and the no free slot case.

@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-051, FLOW-052]
 ---
 
@@ -191,7 +191,7 @@ already holding when it was created.
   neither merges into it.
 - Given a muted account (AUTH-004), when it favourites a recipe, then it is
   carried like any other account's, because this is the one thing a muted
-  account is for.
+  account carries beyond the device (its recipes stay on it, AUTH-004).
 - Given a removed favourite, when the removal reaches the server, then it is gone
   on the other device too.
 

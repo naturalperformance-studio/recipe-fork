@@ -238,8 +238,10 @@ the application is running on, including which slots are free. Nothing from it
 is stored (AUTH-015).
 
 **Muted account** — an account created where the server answered and no device
-verdict could be obtained. It carries favourites beyond the device and does
-nothing else an account is for: it does not create, fork, edit, submit or rate.
+verdict could be obtained. It carries favourites beyond the device, and writes,
+edits and forks recipes that stay on the device alone; it attaches no media, does
+not submit, request a private link or rate, and sends no recipe to the server
+until it is full.
 It becomes full when a verdict and a free slot allow (AUTH-004, AUTH-005). With
 no connection at all no account is created, muted or otherwise (FLOW-003).
 

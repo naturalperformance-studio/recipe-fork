@@ -24,12 +24,12 @@ and a free slot allow (AUTH-005). The columns below state what each may do.
 | Open a published recipe | yes | yes | yes | yes | yes |
 | Open a private draft or fork | no | no | yes | no | no |
 | Open a recipe awaiting moderation | no | no | yes | yes | no |
-| Create and fork a recipe | no (AUTH-001) | yes | yes | yes | no (AUTH-004) |
-| Edit a recipe before it becomes externally visible | no | no | yes | no | no (AUTH-004) |
+| Create and fork a recipe | no (AUTH-001) | yes | yes | yes | yes, on this device only (AUTH-004) |
+| Edit a recipe before it becomes externally visible | no | no | yes | no | yes, its own, on this device only (AUTH-004) |
 | Edit a recipe after it becomes externally visible | no | no | no | no | no |
 | Submit a recipe for moderation | no | yes, unless banned | yes, unless banned | yes, unless banned | no (AUTH-004) |
 | Approve or reject a submission | no | no | no | yes | no |
-| Delete a recipe that was never externally visible | no | no | yes, in `private` and `rejected` (ST-010) | no | no (owns none) |
+| Delete a recipe that was never externally visible | no | no | yes, in `private` and `rejected` (ST-010) | no | yes, its own, on this device |
 | Remove a published recipe from the catalogue | no | no | no (ST-001) | yes, including their own (MOD-014) | no |
 | Rate a published recipe | no (AUTH-001) | yes | no (RATE-004) | yes | no (AUTH-004) |
 | Add a recipe to favourites | yes, on this device only (FLOW-051) | yes | no (FLOW-040) | yes | yes |
