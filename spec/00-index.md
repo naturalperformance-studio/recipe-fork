@@ -11,8 +11,10 @@
 > which five are duplicates, in `docs/product/spec-defects.md`). Every one was
 > answered by the product owner on 2026-09-27 and written here. The re-check of
 > the same day left SD-006, SD-009, SD-019 and SD-021 unresolved; what still stood
-> open behind them was answered and written the same day, and those four turn
-> resolved only when the product owner says so.
+> open behind them was answered and written the same day. A second re-check closed
+> the first three; its one residue, FLOW-013 (8) asking for a notification
+> permission Android 10 to 12 do not have, was answered and written the same day,
+> and SD-021 turns resolved only when the product owner says so.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -129,6 +131,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260927-a-retry-restores-the-control.md](decisions/20260927-a-retry-restores-the-control.md) | accepted, completes AUTH-005 and AUTH-006 | A retry that makes a muted account full puts the withheld controls back and performs nothing on the person's behalf. |
 | [20260927-the-three-steps-of-creation.md](decisions/20260927-the-three-steps-of-creation.md) | accepted, writes AUTH-024 | Nickname and terms, then the two keys, then the recovery key; back goes one step back; leaving the application keeps the place while the process lives. |
 | [20260927-a-refusal-is-explained-at-once.md](decisions/20260927-a-refusal-is-explained-at-once.md) | accepted, completes FLOW-013 | A refused platform request at a timer's start is followed at once by the application's explanation; the timer never waits for an answer. |
+| [20260927-no-request-where-the-platform-has-none.md](decisions/20260927-no-request-where-the-platform-has-none.md) | accepted, corrects FLOW-013 (8) | The notification request is made only where the platform has one (Android 13 and later); below that, on means nothing is shown and off means the explanation. |
 
 ## C4 context
 

@@ -43,14 +43,18 @@ is in the foreground, in the background, or closed.
 - Given the reader refused permission to show notifications, when a timer ends,
   then it is still finished and is shown as finished inside the application, and
   nothing announces it while the application is closed or the screen is locked;
-  what the reader is shown about the permission is stated by criteria 8 to 10.
+  what the reader is shown about the permission is stated by criteria 8 to 10
+  and 13.
 - Given a running timer, when the reader opens the recipe, then the time
   remaining is shown on its step.
 - Given a running timer, when the reader cancels it, then nothing announces
   itself afterwards.
-- Given a device on which the permission to show notifications has never been
-  asked for, when the reader starts their first timer, then the platform's request
-  is made at that moment, and at no earlier moment such as the first launch.
+- Given a platform that has a request for the permission to show notifications
+  (Android 13 and later) and a device on which it has never been asked for, when
+  the reader starts their first timer, then the platform's request is made at that
+  moment, and at no earlier moment such as the first launch; on a platform that
+  has no such request (Android 10 to 12) nothing is requested, and criteria 10 and
+  11 govern.
 - Given notifications are not permitted, when the reader starts a timer and the
   platform will still show its own request, then that request is made; and when
   the reader refuses the request made here or by criterion 8, then the
@@ -67,12 +71,19 @@ is in the foreground, in the background, or closed.
 - Given any request or explanation of criteria 8 to 10, when it is shown, then the
   timer has already started at the moment the reader started it and runs whatever
   the reader answers.
+- Given the application's notifications are permitted and those of its timers
+  alone are turned off in the system's settings, when the reader starts a timer,
+  then notifications count as not permitted: the explanation of criterion 10 is
+  shown, stating that timer notifications are turned off and the timer will not be
+  heard, and its control opens those settings.
 
 **Verification:** start a timer, close the application from the task switcher,
 lock the device and wait for the end; repeat with notifications refused; start a
 first timer on a fresh install, refuse the request and confirm the explanation
 follows at once while the timer runs; repeat the refusal until the platform stops
-asking, and on an Android 10 device with notifications turned off in settings.
+asking; on an Android 10 device start a first timer with notifications on and
+confirm nothing is shown, then turn them off in settings and confirm the
+explanation of criterion 10.
 **Correction, 2026-09-27:** criterion 5 had the permission "asked for again" where
 on Android 10–12 there is no request to make and on later versions the platform
 stops showing one after refusals, placed no first request, and was read two ways
@@ -87,6 +98,16 @@ was told nothing, while A11Y-007 (3) says they have been told. By user decision 
 that date a refusal at that moment is followed at once by the explanation, and the
 timer never waits for the answer. Criterion 12 is new. See
 [ADR — a refusal is explained at once](../decisions/20260927-a-refusal-is-explained-at-once.md).
+**Corrected 2026-09-27:** criterion 8 required the platform's request on every
+device, while Android 10 to 12 have none, so it could be met on no device the
+product supports below Android 13 and collided there with criteria 10 and 11
+(SD-021, re-check against spec/ @ 4cc2c18). By user decision of that date the
+request is made only where the platform has one; below that, notifications on
+means nothing is shown and notifications off means the explanation. By the same
+decision, timer notifications turned off alone count as notifications off
+(criterion 13, new), since otherwise the timer would be silent with nobody told
+(A11Y-007 (3)). See
+[ADR — no request where the platform has none](../decisions/20260927-no-request-where-the-platform-has-none.md).
 **Source:** user decision, 2026-09-20: a person may start a timer on the last
 step and close the application entirely — something goes in the oven and is
 taken out in thirty minutes — so the timer cannot depend on the application
