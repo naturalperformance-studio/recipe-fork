@@ -45,7 +45,7 @@ in this wave, and no media is attached.
 | T-009 | The first step of creation shows the nickname and the terms | T-006, T-008 | gated |
 | T-032 | The second step of creation issues the account key and the deletion key | T-009 | blocked |
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
-| T-031 | What the ingredient field offers for what the author types | T-008 | planned |
+| T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | planned |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | planned |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | planned |
@@ -586,7 +586,7 @@ in this wave, and no media is attached.
 ### T-031 — What the ingredient field offers for what the author types
 
 **Requirements:** FLOW-057, L10N-001, A11Y-003, A11Y-005, FLOW-023, FLOW-001
-**Status:** planned
+**Status:** gated
 **Depends on:** T-008
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/text/**` · `core/src/test/kotlin/app/recipefork/core/text/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-one-text-analyser.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -620,7 +620,7 @@ in this wave, and no media is attached.
 *FLOW-001 — spec/70-flows/10-offline-and-sync.md*
 - Given no network connection, when the author looks for an ingredient, then the dictionary is searched on the device and offers the same entries it offers with a connection.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-031-gate1.md (FLOW-057 (8) and FLOW-023 (2) not observable here); moved to T-012 and T-011, re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-031-gate1.md (FLOW-057 (8) and FLOW-023 (2) not observable here); moved to T-012 and T-011; re-gated: accepted — docs/product/verdicts/20260927-T-031-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
