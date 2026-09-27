@@ -1,6 +1,6 @@
 ---
 slug: IMPORT
-status: blocked
+status: closed
 updated: 2026-09-27
 ids: []
 ---
@@ -32,10 +32,15 @@ frozen (CON-003), rated (RATE), reported and hidden (ABUSE-002, ST-006), removed
 only by a moderator (ST-002), forked by anyone (ST-004), and a fork of it carries
 what FORK-001 names.
 
+**Before this feature is built,** the lawyer's review that OQ-029 asks for is
+extended to import (OQ-036): whether the product may republish a recipe derived
+from someone else's post. That question changes no sentence here and holds the
+feature's release, not its specification.
+
 ## Files
 
 | File | Status | Requirements | What it is for |
 |---|---|---|---|
-| [10-starting-an-import.md](10-starting-an-import.md) | blocked | IMPORT-001 – IMPORT-007 | Where an import begins, who may start one, how a post is identified, and what happens when its source already has a recipe, is under review, was rejected or was removed on a claim. |
-| [20-reading-and-publishing.md](20-reading-and-publishing.md) | blocked | IMPORT-008 – IMPORT-016 | Where the text comes from on each platform, what the model makes of it, what the person sees before confirming, what happens when there is no recipe in it, and how a TikTok and an Instagram or Pinterest import reach the catalogue — with no author and no media. |
-| [30-provenance-cost-and-states.md](30-provenance-cost-and-states.md) | blocked | IMPORT-017 – IMPORT-021 | The source mark and the mark every descendant keeps, a moderator's re-reading by a newer model, the USD 50 model budget, the connection, and the state table of an imported recipe. |
+| [10-starting-an-import.md](10-starting-an-import.md) | closed | IMPORT-001 – IMPORT-007, IMPORT-022 | Where an import begins, who may start one, how a post is identified, and what happens when its source already has a recipe, is under review, was rejected or was removed on a claim. |
+| [20-reading-and-publishing.md](20-reading-and-publishing.md) | closed | IMPORT-008 – IMPORT-016, IMPORT-023 | Where the text comes from on each platform, what the model makes of it, what the person sees before confirming, what happens when there is no recipe in it, and how a TikTok and an Instagram or Pinterest import reach the catalogue — with no author and no media. |
+| [30-provenance-cost-and-states.md](30-provenance-cost-and-states.md) | closed | IMPORT-017 – IMPORT-021, IMPORT-024 | The source mark and the mark every descendant keeps, a moderator's re-reading by a newer model, the USD 50 model budget, the connection, and the state table of an imported recipe. |

@@ -1,8 +1,8 @@
 ---
 slug: IMPORT
-status: blocked
+status: closed
 updated: 2026-09-27
-ids: [IMPORT-008, IMPORT-009, IMPORT-010, IMPORT-011, IMPORT-012, IMPORT-013, IMPORT-014, IMPORT-015, IMPORT-016]
+ids: [IMPORT-008, IMPORT-009, IMPORT-010, IMPORT-011, IMPORT-012, IMPORT-013, IMPORT-014, IMPORT-023, IMPORT-015, IMPORT-016]
 ---
 
 # Getting the text and turning it into a recipe
@@ -136,7 +136,29 @@ pasted text beside the produced recipe.
 **Verification:** submit an Instagram and a Pinterest import and decide each.
 **Source:** user decision, 2026-09-27: pasted text could put any words under any
 blogger's link, and the moderator is what compares the two.
-**Blocked by:** OQ-033 for what the importing account is told of the decision.
+
+### IMPORT-023 — The importing account follows its import until it is decided
+
+While an import confirmed by an account is `pending`, the system shall list it
+among that account's imports awaiting a decision, and when a moderator decides
+it, the system shall tell that account the decision as MOD-015 tells an owner.
+
+**Acceptance criteria**
+- Given an Instagram import in `pending`, when the importing account opens its
+  own recipes, then the import appears in a separate list of imports awaiting a
+  decision, and is not one of its recipes.
+- Given the import, when the account looks for a way to withdraw it, then none is
+  offered: withdrawal is an owner's act and the import has no owner (IMPORT-015).
+- Given an approval, when it is recorded, then the account is told, the import
+  leaves the list, and the published recipe does not appear as the account's.
+- Given a rejection, when it is recorded, then the account is told with the
+  moderator's reason (MOD-004), and the import leaves the list.
+- Given a TikTok import, when it is confirmed, then it never enters the list,
+  because it is published at once (IMPORT-013).
+
+**Verification:** submit an Instagram import, open the importing account's
+recipes, approve it; submit another and reject it.
+**Source:** user decision, 2026-09-27, resolving OQ-033.
 
 ### IMPORT-015 — An imported recipe has no author
 

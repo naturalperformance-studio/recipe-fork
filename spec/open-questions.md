@@ -436,7 +436,9 @@ product's own installs after the first release has been out long enough for them
 to mean anything, and decide then rather than on a date.
 Blocks: nothing.
 
-### OQ-032 — Whether the source mark names the post's creator (define after MVP)
+### OQ-032 — Whether the source mark names the post's creator — RESOLVED 2026-09-27
+Resolved by the product owner, accepting the proposal: TikTok's creator name from its endpoint only; no creator for Instagram or Pinterest. See IMPORT-017.
+What was asked:
 Unresolved: whether an imported recipe's source mark (IMPORT-017) names the
 creator of the post — their handle on the platform — or only the platform and the
 link. The product owner's case for import is that it promotes cooking blogs, which
@@ -447,7 +449,9 @@ Proposal (not a decision): the platform and the link everywhere, plus the
 creator's name for TikTok only, taken from the endpoint and never from text.
 Blocks: IMPORT-017.
 
-### OQ-033 — What the importing account is told about its import (define after MVP)
+### OQ-033 — What the importing account is told about its import — RESOLVED 2026-09-27
+Resolved by the product owner, accepting the proposal: a list of its waiting imports, told the decision, no withdrawal. See IMPORT-023.
+What was asked:
 Unresolved: an import has no owner (IMPORT-015), so MOD-015's notice to the owner
 reaches nobody. Whether the importing account sees its Instagram or Pinterest
 import while it waits, is told of the decision, and can take it back before one is
@@ -457,7 +461,9 @@ own list and is told the decision as an owner is; it cannot withdraw one, becaus
 withdrawal is an owner's act and the import has none.
 Blocks: IMPORT-014.
 
-### OQ-034 — Which removals close a source for good (define after MVP)
+### OQ-034 — Which removals close a source for good — RESOLVED 2026-09-27
+Resolved by the product owner, accepting the proposal: `foreign_content` closes a source for good (IMPORT-007); `health_risk` closes it except to a moderator's re-reading by a newer model (IMPORT-022).
+What was asked:
 Unresolved: IMPORT-007 closes a source removed on a rights claim
 (`foreign_content`). A recipe removed as a health risk (`health_risk`) or after
 reports were upheld may be the model's misreading rather than the post's fault,
@@ -467,7 +473,9 @@ that produced it and opens it again for a newer one, through the moderator's
 re-reading of IMPORT-019 only.
 Blocks: IMPORT-007, for categories other than `foreign_content`.
 
-### OQ-035 — Whether a source is ever checked again (define after MVP)
+### OQ-035 — Whether a source is ever checked again — RESOLVED 2026-09-27
+Resolved by the product owner, accepting the proposal: never; the recipe is permanent and the mark leads to whatever the platform shows. See IMPORT-024.
+What was asked:
 Unresolved: a post can be deleted, made private or edited on its platform after
 it was imported. Whether the product ever notices, and whether a deleted source
 changes anything about the recipe, is not decided.
@@ -485,6 +493,7 @@ reproducing content without consent; its developer terms name no storage limit;
 neither settles whether a recipe derived from an oEmbed caption may be
 republished. Checked 2026-09-27, sources in
 [ADR — where an import's text comes from](decisions/20260927-where-an-imports-text-comes-from.md).
-Proposal (not a decision): add import to the lawyer's review that OQ-029 already
-asks for, before the feature is built, not before the first release.
-Blocks: nothing that is written; the feature waits for it.
+Proposal accepted 2026-09-27 as the route, not the answer: import is added to the
+lawyer's review that OQ-029 already asks for, before the feature is built, not
+before the first release. The question stays open until that review reports.
+Blocks: nothing that is written; the feature's release waits for it.

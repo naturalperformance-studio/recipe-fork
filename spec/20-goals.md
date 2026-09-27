@@ -1,7 +1,7 @@
 ---
 slug: GOAL
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [GOAL-001, GOAL-002, GOAL-003, NGOAL-001, NGOAL-002, NGOAL-003, NGOAL-004,
   NGOAL-005, NGOAL-006, NGOAL-007]
 ---
@@ -44,6 +44,10 @@ and [ADR 20260920 — lineage is visible in discovery](decisions/20260920-lineag
 which narrowed this sentence.
 
 **Source:** user decision, 2026-09-20; narrowed by user decision, 2026-09-20.
+Narrowed again 2026-09-27, for the import feature only (not in the first
+release): a descendant of an imported recipe also names that imported ancestor
+(IMPORT-018). See
+[ADR — the imported ancestor is named](decisions/20260927-the-imported-ancestor-is-named.md).
 
 ## Non-goals
 

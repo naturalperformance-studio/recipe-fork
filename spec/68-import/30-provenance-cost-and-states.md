@@ -1,8 +1,8 @@
 ---
 slug: IMPORT
-status: blocked
+status: closed
 updated: 2026-09-27
-ids: [IMPORT-017, IMPORT-018, IMPORT-019, IMPORT-020, IMPORT-021]
+ids: [IMPORT-017, IMPORT-024, IMPORT-018, IMPORT-019, IMPORT-020, IMPORT-021]
 ---
 
 # How an import shows where it came from
@@ -18,13 +18,37 @@ platform and the version of the model that produced it, and leading to the post.
   the platform and the model version, and no nickname is shown.
 - Given the mark, when it is followed, then the post opens outside the application
   and nothing is fetched by the application to open it.
-- Given a post since deleted on its platform, when the mark is followed, then the
-  platform's own page says so; the product does not know.
+- Given a TikTok import, when its mark is shown, then it also names the post's
+  creator as TikTok's oEmbed endpoint returned it at import.
+- Given an Instagram or a Pinterest import, when its mark is shown, then it names
+  no creator, and no name read by the model out of the pasted text appears anywhere.
 
-**Verification:** open an imported recipe as a reader and follow the mark.
-**Source:** user decision, 2026-09-27.
-**Blocked by:** OQ-032 for whether the mark names the post's creator; OQ-035 for
-whether a source is ever checked again.
+**Verification:** open an imported recipe from each platform as a reader and
+follow the mark.
+**Source:** user decision, 2026-09-27; the creator's name resolved OQ-032 the same
+day: only TikTok returns it from an endpoint, and a name read out of pasted text
+would be a name nobody verified.
+
+### IMPORT-024 — A source is never checked again
+
+The system shall make no request to a source's platform about a post after its
+import is confirmed, and shall change nothing about an imported recipe because of
+what later happens to the post.
+
+**Acceptance criteria**
+- Given a post deleted, made private or edited on its platform after import, when
+  the imported recipe is shown, then it is unchanged, and following its mark leads
+  to whatever the platform now shows.
+- Given the product's outbound traffic over a month, when it is enumerated, then
+  no request concerns a post whose import was already confirmed, except a
+  moderator's re-reading (IMPORT-019).
+- Given a creator who wants the recipe gone, when they ask, then the route is
+  ABUSE-007 and nothing else.
+
+**Verification:** delete a post after importing it and reopen the recipe; traffic
+review.
+**Source:** user decision, 2026-09-27, resolving OQ-035: the recipe is permanent
+like any other (ST-001).
 
 ### IMPORT-018 — Every descendant of an import says that its original was imported
 
@@ -38,7 +62,8 @@ imported recipe inside the application.
   outside.
 - Given this mark, when it is read, then it is shown in addition to the direct
   parent of FORK-004, and it is the one exception to GOAL-003's single step: it
-  names one ancestor, the imported one, and nothing between.
+  names one ancestor, the imported one, and nothing between. See
+  [ADR — the imported ancestor is named](../decisions/20260927-the-imported-ancestor-is-named.md).
 - Given an imported ancestor since removed, when a descendant is shown, then the
   mark still says the original was imported and shows it as unavailable
   (ST-007).
@@ -125,7 +150,7 @@ exists:
 | `pending` | moderator approves | actor is a moderator | `published` | Enters the catalogue. |
 | `pending` | moderator rejects | actor is a moderator | `rejected` | Source free again (IMPORT-006). |
 | `published` | third counted report | ABUSE-003 | `reported_hidden` | As ST-006. |
-| `published` | moderator removes | actor is a moderator | `removed` | With `foreign_content`, the source is closed for good (IMPORT-007). |
+| `published` | moderator removes | actor is a moderator | `removed` | With `foreign_content`, the source is closed for good (IMPORT-007); with `health_risk`, it is closed except to a moderator's re-reading by a newer model (IMPORT-022). |
 
 **Disallowed from every state:** any transition an owner triggers — withdrawal,
 edit, resubmission, deletion, a private link, a replacement mark; any edit by

@@ -1,8 +1,8 @@
 ---
 slug: IMPORT
-status: blocked
+status: closed
 updated: 2026-09-27
-ids: [IMPORT-001, IMPORT-002, IMPORT-003, IMPORT-004, IMPORT-005, IMPORT-006, IMPORT-007]
+ids: [IMPORT-001, IMPORT-002, IMPORT-003, IMPORT-004, IMPORT-005, IMPORT-006, IMPORT-007, IMPORT-022]
 ---
 
 # Starting an import
@@ -138,4 +138,25 @@ that this post cannot be imported.
 source again.
 **Source:** user decision, 2026-09-27: otherwise the next person to share the post
 puts it back into the catalogue the claim took it out of.
-**Blocked by:** OQ-034 for removal with any other category.
+
+### IMPORT-022 — A source removed as a health risk is closed to the model that read it
+
+If a person shares a post whose imported recipe was removed with the category
+`health_risk`, then the system shall refuse the import, and shall allow that
+source to be read again only by a moderator's re-reading with a newer model
+version (IMPORT-019).
+
+**Acceptance criteria**
+- Given a recipe removed as `health_risk`, when anyone shares its source, then
+  the import is refused before any model call, whatever the current model version.
+- Given a model version newer than the one that produced the removed recipe, when
+  a moderator opens the removed recipe, then the re-reading of IMPORT-019 is
+  offered.
+- Given the removed recipe's descendants, when they were flagged under MOD-008,
+  then the re-reading changes nothing about them.
+
+**Verification:** remove an import as `health_risk`, share its source, change the
+model version, re-read it as a moderator.
+**Source:** user decision, 2026-09-27, resolving OQ-034: a dangerous recipe may be
+the model's misreading rather than the post's fault, and a newer model may read it
+correctly.
