@@ -1,5 +1,7 @@
 package app.recipefork.server
 
+import app.recipefork.server.account.AccountStore
+import app.recipefork.server.account.accountRoutes
 import app.recipefork.server.db.Database
 import app.recipefork.server.db.DatabaseConfig
 import app.recipefork.server.dictionary.DictionaryStore
@@ -31,5 +33,6 @@ fun Application.module(store: DataSource) {
     module()
     routing {
         dictionaryRoutes(DictionaryStore(store))
+        accountRoutes(AccountStore(store))
     }
 }
