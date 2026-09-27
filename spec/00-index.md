@@ -1,10 +1,12 @@
 # Recipe Fork — specification index
 
 > **NOT READY — 3 questions must be answered before MVP.**
-> Sections: 26 closed · 0 blocked · 0 open · 1 n/a.
-> Blocking: OQ-016, OQ-029, OQ-030. Last updated 2026-09-21.
-> Every section is written. What is open are three questions whose answers change
-> no requirement and hold the store listing instead (MVP-003).
+> Sections: 26 closed · 1 blocked · 0 open · 1 n/a.
+> Blocking: OQ-016, OQ-029, OQ-030. Last updated 2026-09-27.
+> Every section of the first release is written. What is open before it are three
+> questions whose answers change no requirement and hold the store listing
+> instead (MVP-003). The one blocked section, `import`, is outside the first
+> release (MVP-002) and waits on OQ-032 to OQ-036, all classified after MVP.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -28,6 +30,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [50-domain-model/](50-domain-model/00-index.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record; and that the two dictionaries everything here leans on are maintained outside the application, by hand. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen; the one recipe an owner may destroy outright and the six they may not; the server orders every transition, refuses one whose guard has stopped holding, and tells the actor the state the recipe is actually in. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, how provenance is shown, and how an author replaces a published recipe without withdrawing it. |
+| [68-import/](68-import/00-index.md) | IMPORT | blocked | **Not in the first release.** A post on Instagram, TikTok or Pinterest shared to the application is read by a language model and published as the source's recipe: no author, no media, a mark naming the platform and the model version and leading to the post, and a mark on every descendant that its original was imported. One source becomes one recipe; the next person to share it is led to the existing one. TikTok text comes from its official endpoint and publishes at once; Instagram and Pinterest text is pasted and goes through the queue. The model has its own USD 50 a month. |
 | [70-flows/](70-flows/00-index.md) | FLOW | closed | User flows and screens, each with its empty, loading, error and offline behaviour: offline and synchronisation, favourites and the device, cooking on one scrolling card with no step to advance through, the editor, the catalogue and the favourites section including where a draft is deleted and what the author is told first, the private link, the author's screen a nickname leads to — where an author is reported, blocked and banned — and the moderator's queue. |
 | [75-author-guidance.md](75-author-guidance.md) | GUIDE | closed | What the editor tells its author before they can find out the hard way: the statement before an irreversible submission, the checklist of good practice, and the hints that fire on the author's own action. The product teaches here because it inspects nowhere. |
 | [80-scaling-rules.md](80-scaling-rules.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, conflicting constraints, exact rounding rules per unit type. |
@@ -101,6 +104,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260921-nothing-exists-until-it-is-confirmed.md](decisions/20260921-nothing-exists-until-it-is-confirmed.md) | accepted, completes AUTH-007 | An abandoned creation leaves nothing: no nickname consumed, no slot occupied, and the displayed keys match nothing. |
 | [20260927-an-import-belongs-to-its-source.md](decisions/20260927-an-import-belongs-to-its-source.md) | accepted, outside the first release | A recipe imported from a social network is published as its source's, parsed by a model, with no author, no media and a mark every descendant keeps. |
 | [20260927-where-an-imports-text-comes-from.md](decisions/20260927-where-an-imports-text-comes-from.md) | accepted, widens EXT-001 when built | TikTok text comes from its official endpoint and publishes at once; Instagram and Pinterest text is pasted by the person and goes through the queue. |
+| [20260927-the-model-has-its-own-fifty-dollars.md](decisions/20260927-the-model-has-its-own-fifty-dollars.md) | accepted, qualifies CON-002 when built | The language model is capped at USD 50 a month on top of the USD 20; at the cap imports stop until the month ends. |
 
 ## C4 context
 

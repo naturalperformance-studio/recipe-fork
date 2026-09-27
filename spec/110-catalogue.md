@@ -1,7 +1,7 @@
 ---
 slug: CAT
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [CAT-001, CAT-002, CAT-003, CAT-004, CAT-005, CAT-006, CAT-007, CAT-008, CAT-009]
 ---
 
@@ -133,6 +133,8 @@ authored for.
 one unrated, one flagged — and compare each entry against this field list.
 **Source:** user decision, 2026-09-20. The entry is the reader's first contact
 with a recipe; what it does not show cannot influence what they open.
+**Where import is present** (not in the first release), an imported recipe has
+no author and shows its source mark in the nickname's place (IMPORT-017).
 
 ### CAT-004 — A fork is visible as a fork before it is opened
 

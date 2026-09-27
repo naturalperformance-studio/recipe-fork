@@ -1,7 +1,7 @@
 ---
 slug: MVP
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [MVP-001, MVP-002, MVP-003]
 ---
 
@@ -59,6 +59,7 @@ against for the MVP rather than left undone.
 | Any monetisation, advertising or paid tier | 2026-09-20 | NGOAL-006 |
 | Automated classification of images or video | 2026-09-20 | NGOAL-005 |
 | A second client surface of any kind | 2026-09-20 | CON-005 |
+| Import of recipes from Instagram, TikTok and Pinterest | 2026-09-27 | [`import`](68-import/00-index.md) — written ahead, the product owner's next feature |
 
 **Acceptance criteria**
 - Given the release candidate, when each row is looked for, then it is absent.

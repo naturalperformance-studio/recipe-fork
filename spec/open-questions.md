@@ -1,11 +1,11 @@
 ---
 slug: OQ
 status: open
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
-  OQ-031]
+  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036]
 open_before_mvp: [OQ-016, OQ-029, OQ-030]
 ---
 
@@ -435,3 +435,56 @@ Proposal (not a decision): read the channel's distribution figures for the
 product's own installs after the first release has been out long enough for them
 to mean anything, and decide then rather than on a date.
 Blocks: nothing.
+
+### OQ-032 — Whether the source mark names the post's creator (define after MVP)
+Unresolved: whether an imported recipe's source mark (IMPORT-017) names the
+creator of the post — their handle on the platform — or only the platform and the
+link. The product owner's case for import is that it promotes cooking blogs, which
+argues for the name; but only TikTok's oEmbed returns an author name, Instagram's
+removed it in 2025 and Pinterest gives none without OAuth, and a name the model
+reads out of pasted text would be a name nobody verified.
+Proposal (not a decision): the platform and the link everywhere, plus the
+creator's name for TikTok only, taken from the endpoint and never from text.
+Blocks: IMPORT-017.
+
+### OQ-033 — What the importing account is told about its import (define after MVP)
+Unresolved: an import has no owner (IMPORT-015), so MOD-015's notice to the owner
+reaches nobody. Whether the importing account sees its Instagram or Pinterest
+import while it waits, is told of the decision, and can take it back before one is
+made, is not decided.
+Proposal (not a decision): the importing account sees its waiting imports in its
+own list and is told the decision as an owner is; it cannot withdraw one, because
+withdrawal is an owner's act and the import has none.
+Blocks: IMPORT-014.
+
+### OQ-034 — Which removals close a source for good (define after MVP)
+Unresolved: IMPORT-007 closes a source removed on a rights claim
+(`foreign_content`). A recipe removed as a health risk (`health_risk`) or after
+reports were upheld may be the model's misreading rather than the post's fault,
+and a newer model might read it correctly.
+Proposal (not a decision): `health_risk` closes the source for the model version
+that produced it and opens it again for a newer one, through the moderator's
+re-reading of IMPORT-019 only.
+Blocks: IMPORT-007, for categories other than `foreign_content`.
+
+### OQ-035 — Whether a source is ever checked again (define after MVP)
+Unresolved: a post can be deleted, made private or edited on its platform after
+it was imported. Whether the product ever notices, and whether a deleted source
+changes anything about the recipe, is not decided.
+Proposal (not a decision): the product never checks a source again; the recipe is
+permanent like any other (ST-001), its mark leads to whatever the platform now
+shows, and a creator who wants it gone uses ABUSE-007.
+Blocks: IMPORT-017.
+
+### OQ-036 — Whether republishing a recipe read from a post is lawful (define after MVP)
+Unresolved: import makes the product itself — not a user — publish a recipe
+derived from someone else's post (ADR — an import belongs to its source). The
+defence is the one the fork already rests on: ingredients and steps are a method,
+not expression, and the caption's prose is not carried. TikTok's user terms forbid
+reproducing content without consent; its developer terms name no storage limit;
+neither settles whether a recipe derived from an oEmbed caption may be
+republished. Checked 2026-09-27, sources in
+[ADR — where an import's text comes from](decisions/20260927-where-an-imports-text-comes-from.md).
+Proposal (not a decision): add import to the lawyer's review that OQ-029 already
+asks for, before the feature is built, not before the first release.
+Blocks: nothing that is written; the feature waits for it.

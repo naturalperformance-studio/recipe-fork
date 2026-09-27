@@ -1,7 +1,7 @@
 ---
 slug: CON
 status: closed
-updated: 2026-09-20
+updated: 2026-09-27
 ids: [CON-001, CON-002, CON-003, CON-004, CON-005, CON-006]
 ---
 
@@ -43,6 +43,11 @@ calendar month.
 **Source:** user decision, 2026-09-20 (the draft's "minimal infrastructure cost"
 was not measurable and was replaced by this figure).
 **Governs:** OQ-003 (media limits), OQ-004 (retention).
+**Qualified 2026-09-27:** where the import feature is present, the language
+model's cost is not part of this figure and is capped on its own at USD 50 by
+IMPORT-020; see
+[ADR — the model has its own fifty dollars](decisions/20260927-the-model-has-its-own-fifty-dollars.md).
+The first release has no import and this ceiling binds it unchanged.
 
 ### CON-003 — Immutability after first external visibility
 

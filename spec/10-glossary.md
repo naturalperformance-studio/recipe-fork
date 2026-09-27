@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: []
 ---
 
@@ -424,6 +424,28 @@ QUAL-006 is computed from.
 media, kept so that a total failure costs at most an hour of work. Restoring one
 returns the whole state to the moment it began, including up to an hour of
 deletions and moderator decisions (QUAL-008, RET-004).
+
+## Import (not in the first release)
+
+**Import** — turning a post on Instagram, TikTok or Pinterest into a published
+recipe by a language model (IMPORT-001, IMPORT-010).
+
+**Imported recipe** — a recipe produced by an import. It has no author and no
+owner (IMPORT-015), no media (IMPORT-016), and is changed only by being forked.
+
+**Source** — the post an imported recipe was read from, identified by its
+platform and the post's own identifier, however the link to it was written
+(IMPORT-003). One source has at most one current imported recipe (IMPORT-004).
+
+**Source mark** — what an imported recipe shows in place of a nickname: the
+platform, the model version, and the way to the post (IMPORT-017).
+
+**Model version** — the version of the language model that produced an imported
+recipe; shown in its source mark, and what makes a moderator's re-reading
+possible (IMPORT-019).
+
+**Importing account** — the account that shared the post. It is not the author,
+and only a moderator sees it (IMPORT-015).
 
 ## Names
 

@@ -1,7 +1,7 @@
 ---
 slug: ST
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007, ST-008,
   ST-009, ST-010]
 ---
@@ -19,6 +19,10 @@ ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007, ST-008,
 | `published` | everyone | no |
 | `reported_hidden` | owner, moderator | no |
 | `removed` | owner, moderator | no |
+
+An imported recipe (not in the first release) has no owner and so none of the
+owner's transitions; its own table is in
+[`import`](68-import/30-provenance-cost-and-states.md).
 
 `link_shared` is a state of the recipe; whether a particular private link opens
 it is a property of that link (`active`), not of the recipe.

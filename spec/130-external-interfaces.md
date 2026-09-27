@@ -1,7 +1,7 @@
 ---
 slug: EXT
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [EXT-001, EXT-002, EXT-003, EXT-004, EXT-005, EXT-006, EXT-007, EXT-008,
   EXT-009, EXT-010, EXT-011, EXT-012]
 ---
@@ -67,6 +67,11 @@ and given an inbound observer the same day by
 The list is closed rather than open because every addition is a place where
 content or an identifier can leave, and CON-001 is only as strong as the shortest
 list.
+**Widened in advance, 2026-09-27:** when the import feature (not in the first
+release) is built, the list gains TikTok's official oEmbed endpoint (IMPORT-008),
+one language model service (IMPORT-010), and following a platform's short-link
+redirection without reading the page (IMPORT-003). See
+[ADR — where an import's text comes from](decisions/20260927-where-an-imports-text-comes-from.md).
 
 ### EXT-002 — The attestation service may be absent
 
