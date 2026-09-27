@@ -1,7 +1,7 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [AUTH-007, AUTH-008, AUTH-009, AUTH-010, AUTH-017, AUTH-019]
 ---
 
@@ -29,7 +29,8 @@ saved it.
   loses the account unless the recovery key is held (AUTH-021), and that nobody
   at all can restore an account whose keys are both gone.
 - Given the confirmation control, when it is not chosen, then creation does not
-  complete and the screen cannot be left by an ordinary back action.
+  complete, and a back action does not leave the screen without first asking
+  the person to confirm leaving (criterion 10).
 - Given the warning, when any setting is searched for, then none switches it off
   (GUIDE-001 governs the same pattern for submission).
 - Given a completed creation, when the screen is left, then the key is never
@@ -47,9 +48,22 @@ saved it.
   issued as its own artefact with its own confirmation (AUTH-020), and the
   warning above no longer says there is no recovery at all: it says what
   NGOAL-003 now says.
+- Given the creation screen before creation completes, when the person chooses
+  its own cancel control or makes the system back action, then they are asked
+  to confirm leaving without an account and told that any key already shown or
+  copied will match nothing; when they confirm, they are returned to where they
+  were before the offer of AUTH-001, and nothing of the attempt exists (criterion
+  7); when they do not, the screen stays as it was.
 
-**Verification:** create an account, attempt to leave without confirming, then
-take the key both ways and compare them.
+**Verification:** create an account, attempt to leave without confirming — by
+the screen's cancel control and by the system back action, declining and then
+accepting the question — then take the key both ways and compare them.
+**Correction, 2026-09-27:** criterion 4 forbade leaving "by an ordinary back
+action" while criterion 7 and its ADR require that a person who has not confirmed
+can walk away, and no way out was stated (SD-009). By user decision of the same
+date the screen has its own cancel control and the system back action asks before
+leaving; both leave on confirmation (criterion 10). The criteria keep their
+numbers; the new one is appended.
 **Source:** draft section 2.2; user decision, 2026-09-20. Both forms are offered
 because the two ways people keep a secret are a password manager and a file, and
 the product has no opinion about which is right.

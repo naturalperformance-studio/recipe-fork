@@ -212,7 +212,7 @@ interface language, declared recipe language or device setting.
 
 **Acceptance criteria**
 - Given any interface language, when an ingredient is displayed, then its unit is
-  one of those DOM-002 defines and no conversion to another system is offered.
+  one of those DOM-016 lists and no conversion to another system is offered.
 - Given a device configured for a non-metric region, when a recipe is read, then
   nothing about its quantities changes.
 - Given the household units, when they are shown in English, then they are the

@@ -1,7 +1,7 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [AUTH-011, AUTH-012, AUTH-013, AUTH-014, AUTH-015, AUTH-016, AUTH-020,
   AUTH-021]
 ---
@@ -229,10 +229,31 @@ confirmation, and shall never display it again.
 - Given the recovery key, when its uniqueness and its resistance to guessing are
   examined, then AUTH-014 governs it exactly as it governs the account key, at
   the rate QUAL-009 permits.
+- Given the recovery key displayed, when the person wants to keep it, then it can
+  be copied in one action, and no file of it and no other way of saving it is
+  offered.
+- Given account creation, when the person confirms the account key (AUTH-007),
+  then the recovery key is shown on a step of its own that follows, and neither
+  the account key nor its copy and file controls are on that step.
+- Given the recovery key step, when the person makes the system back action, then
+  they return to the account key step with the account key displayed in full and
+  its confirmation still given; creation has not completed, so nothing is shown
+  that could be used.
+- Given the recovery key step, when the person chooses the cancel control of
+  AUTH-007 (10) and confirms, then nothing of the attempt exists, exactly as from
+  the account key step.
 
 **Verification:** create an account and confirm the recovery key is a separate
-artefact; sign in and search every screen for it; inspect the account key file
-and confirm it is absent from it.
+artefact on its own step; go back from it and forward again; copy it; sign in and
+search every screen for it; inspect the account key file and confirm it is absent
+from it.
+**Completed 2026-09-27:** criterion 1 presumed an offer to save the key that no
+requirement stated, and nothing said where the key was shown (SD-007). By user
+decision of that date it is copied and never saved as a file — a file would most
+likely land in the same folder as the account key's, the one outcome the ADR says
+the scheme cannot survive — and it is shown on its own step after the account
+key's confirmation. The recovery key screen of AUTH-021 therefore takes the key as
+text, since no file of it is ever produced.
 **Source:** user decision, 2026-09-21. This deliberately contradicts the
 reasoning of AUTH-019 for this one key: a key that can never be seen again is
 indeed lost with the note it was written on, and that is the price. It is paid

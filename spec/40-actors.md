@@ -1,7 +1,7 @@
 ---
 slug: ACT
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [ACT-001, ACT-002, ACT-003, ACT-004, ACT-005, ACT-006, ACT-007, ACT-008]
 ---
 
@@ -34,6 +34,7 @@ and a free slot allow (AUTH-005). The columns below state what each may do.
 | Rate a published recipe | no (AUTH-001) | yes | no (RATE-004) | yes | no (AUTH-004) |
 | Add a recipe to favourites | yes, on this device only (FLOW-051) | yes | no (FLOW-040) | yes | yes |
 | Carry favourites beyond this device | no (FLOW-051) | yes (FLOW-052) | yes | yes | yes |
+| See the own-recipes view of the favourites section | no (FLOW-034) | yes | yes | yes | yes |
 | Report a recipe or an author | yes (ABUSE-002) | yes | yes | yes | yes |
 | Block an author's recipes from own catalogue and search | yes, on this device only | yes | yes | yes | yes |
 | Ban an account from publishing | no | no | no | yes | no |

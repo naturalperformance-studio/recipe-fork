@@ -3,7 +3,8 @@ slug: DOM
 status: closed
 updated: 2026-09-27
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007,
-  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014, DOM-015]
+  DOM-008, DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014, DOM-015,
+  DOM-016]
 ---
 
 # Invariants over the entities
@@ -38,12 +39,16 @@ for an ingredient whose unit type is `taste_unmeasured`.
 
 **Acceptance criteria**
 - Given an ingredient of type `taste_unmeasured`, when it is stored, then it has
-  no quantity and no unit, and the editor offers no field for either.
+  no quantity and no unit, the editor offers no quantity field for it, and its unit
+  field shows "to taste" (FLOW-023).
 - Given an ingredient of any other type, when it is submitted without a
   quantity, then the recipe cannot be submitted for moderation.
 
 **Verification:** editor check per unit type; validation test on submission.
 **Source:** draft section 3.2; user decision, 2026-09-20.
+**Correction, 2026-09-27:** criterion 1 said the editor offers no field for either
+quantity or unit, while FLOW-023 has the author pick "to taste" in the unit field;
+the unit field stays (SD-008 item 3, user decision).
 
 ### DOM-003 — A household quantity is never expressed as mass
 
@@ -173,7 +178,7 @@ hold neither.
 - Given an ingredient the author picked from the dictionary, when it is stored,
   then it holds that entry, holds no `free_text_name`, and holds a `qualifier`
   only if the author wrote one.
-- Given an ingredient the author typed because no entry matched, when it is
+- Given an ingredient the author added in their own words (FLOW-057), when it is
   stored, then it holds a `free_text_name`, no entry and no `qualifier`.
 - Given a submission carrying both an entry and a `free_text_name`, or neither,
   when it is validated, then it is rejected.
@@ -375,3 +380,36 @@ a recipe with the field empty.
 **Cost, stated:** a recipe written for less than one serving — half a portion of a
 sauce — cannot say so, and its author writes it for one. The requested count
 still goes below one (SCALE-011), so a reader can scale such a recipe down.
+
+### DOM-016 — The units are a closed list of twelve
+
+The system shall hold as an ingredient's unit only one of the units below, and
+shall give each the unit type the table assigns it.
+
+| Unit type | Russian | English |
+|---|---|---|
+| `exact` | г · кг · т · мл · л · м³ | g · kg · t · ml · l · m³ |
+| `piece` | шт | pc |
+| `household` | ч. л. · ст. л. · стакан | tsp · tbsp · cup |
+| `taste_measured` | щепотка | pinch |
+| `taste_unmeasured` | по вкусу | to taste |
+
+**Acceptance criteria**
+- Given the unit field of the editor, when it is opened, then it offers these
+  twelve units, named in the interface language, and no other.
+- Given the author picks `стакан`, when the ingredient is stored, then its unit
+  type is `household`; given `щепотка`, `taste_measured`; given `шт`, `piece`.
+- Given a submission carrying a unit outside the table, when it is validated, then
+  it is rejected.
+- Given a unit shown in English, when it is compared with its Russian name, then
+  it is the same unit translated and not a different measure (L10N-008).
+
+**Verification:** open the unit field in both languages; store one ingredient per
+unit; submit a recipe with a unit outside the table.
+**Source:** user decision, 2026-09-27 (SD-008 item 2). The domain model listed
+units as examples, and whoever wrote the field would have decided which exist. A
+bunch, a clove, a can, a slice and a pack are not units here: a `piece` ingredient
+is counted in pieces, and what a piece is comes from the entry. Whether to add
+them is OQ-037.
+**Cost, stated:** an author writes a bunch of dill as `укроп · 1 · шт`, and a
+reader reads "1 шт" of dill.

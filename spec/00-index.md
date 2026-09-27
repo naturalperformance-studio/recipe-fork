@@ -111,6 +111,11 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260927-derived-by-provenance.md](decisions/20260927-derived-by-provenance.md) | accepted, corrects SCALE-004 and CON-004 | At any scale factor other than 1 every quantity is derived, even one that lands on its authored value. |
 | [20260927-the-authored-serving-count-is-whole.md](decisions/20260927-the-authored-serving-count-is-whole.md) | accepted, writes DOM-015 | The authored serving count is a whole number of one or more, with no ceiling. |
 | [20260927-screen-width-and-numbers.md](decisions/20260927-screen-width-and-numbers.md) | accepted, writes QUAL-011 and L10N-009 | Every requirement holds from a 320 dp window up; numbers are grouped and punctuated as the interface language writes them. |
+| [20260927-nickname-words.md](decisions/20260927-nickname-words.md) | accepted, writes AUTH-022 and AUTH-023 | A nickname is two English adjectives and a noun from lists the product owner keeps by hand; combinations are not checked. |
+| [20260927-leaving-account-creation.md](decisions/20260927-leaving-account-creation.md) | accepted, completes AUTH-007 and AUTH-020 | Creation has its own cancel and a back that asks; the recovery key stands on its own step, is copied, and is never a file. |
+| [20260927-favourites-opens-on-the-marked.md](decisions/20260927-favourites-opens-on-the-marked.md) | accepted, completes FLOW-034 | Favourites open on the marked recipes; a device with no account has that view alone. |
+| [20260927-the-ingredient-field.md](decisions/20260927-the-ingredient-field.md) | accepted, writes FLOW-057 and DOM-016 | Word-beginning match in both languages, leaves before parents, free text always beside the entries, twelve units, and "to taste" chosen and undone in the unit field. |
+| [20260927-steps-timers-and-references.md](decisions/20260927-steps-timers-and-references.md) | accepted, corrects FLOW-027, FLOW-031, FLOW-032, GUIDE-006, GUIDE-007 | A second timer is attempted and explained; every ingredient can be referenced; the notification preview renders at the authored count. |
 
 ## C4 context
 

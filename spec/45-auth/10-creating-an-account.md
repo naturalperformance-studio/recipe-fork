@@ -1,8 +1,9 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-21
-ids: [AUTH-001, AUTH-002, AUTH-003, AUTH-004, AUTH-005, AUTH-006, AUTH-018]
+updated: 2026-09-27
+ids: [AUTH-001, AUTH-002, AUTH-003, AUTH-004, AUTH-005, AUTH-006, AUTH-018,
+  AUTH-022, AUTH-023]
 ---
 
 # Creating an account
@@ -42,7 +43,7 @@ publish and for the reader who wants favourites to outlive the device; a person
 who only cooks mints nothing, consumes no nickname and occupies no slot. See
 [ADR — an account is created on demand](../decisions/20260920-account-on-demand.md).
 
-### AUTH-018 — The nickname is generated and may be rerolled once, before the account exists
+### AUTH-018 — The nickname is generated and may be rerolled any number of times before the account exists
 
 When account creation is offered, the system shall show a generated three-word
 nickname, shall allow the person to replace it with another generated one any
@@ -63,6 +64,10 @@ it is.
 
 **Verification:** reroll several times, create the account, and confirm both the
 permanence of the accepted name and the availability of the rejected ones.
+**Correction, 2026-09-27:** the heading said "rerolled once", which read as a
+single reroll against a statement, a criterion and a glossary entry that all say
+any number of times (SD-010). The heading now says what the rest already did. The
+form of a nickname is AUTH-022 and the words it is drawn from AUTH-023.
 **Source:** user decision, 2026-09-20. The nickname is the only public
 representation of a user, so the person is given a say in it at the one moment
 that costs nothing; after creation it is permanent, because other people's
@@ -170,9 +175,10 @@ verdict reports one free.
 
 **Acceptance criteria**
 - Given a muted account created while the attestation service was unreachable,
-  when the service can be reached again and the person taps the fork control,
-  then a verdict is obtained, a slot is occupied, the account becomes full and
-  the fork proceeds.
+  when the service can be reached again and the person chooses the retry control
+  of the statement that stands where the fork control would be (AUTH-006), then a
+  verdict is obtained, a slot is occupied, the account becomes full, the fork
+  control takes the statement's place and the fork proceeds.
 - Given a muted account on a device with no free slot, when it attempts such an
   action, then it stays muted and AUTH-003 states the month a slot frees.
 - Given a muted account whose verdict still cannot be obtained, when it attempts
@@ -181,7 +187,12 @@ verdict reports one free.
   further verdict is requested for it.
 
 **Verification:** create a muted account offline, restore the connection and
-attempt a fork; repeat on a device with its slots full.
+retry from the statement in place of the fork control; repeat on a device with
+its slots full.
+**Correction, 2026-09-27:** criterion 1 had the person tap the fork control, which
+AUTH-004 (3) makes absent for a muted account, so no path reached this
+requirement (SD-019 item 2). The attempt is made from the statement that replaces
+the control (AUTH-006), by user decision of the same date.
 **Source:** user decision, 2026-09-20. The verdict is asked for at the moment it
 is needed rather than on every launch, which keeps the application independent of
 an external service and keeps requests within the free quota it offers.
@@ -194,6 +205,12 @@ which actions are withheld, and shall state what would lift the limit.
 **Acceptance criteria**
 - Given a muted account, when a withheld control would have been shown, then a
   statement takes its place rather than the control failing silently.
+- Given that statement, when it is shown, then it carries a retry control; when
+  the person chooses it, AUTH-005 is attempted for the action the withheld
+  control stood for.
+- Given a retry that leaves the account muted, when it completes, then the
+  statement remains and says why, by the no verdict or the no free slot case
+  below.
 - Given that statement, when it is read, then it says the device could not be
   checked and that a connection and an installation from the store lift the
   limit.
@@ -205,3 +222,57 @@ which actions are withheld, and shall state what would lift the limit.
 **Verification:** read every statement a muted account can reach, in both the no
 verdict and the no free slot case.
 **Source:** CON-004 — automation that changes what a user may do explains itself.
+**Added 2026-09-27:** the retry control on the statement, which is the only path
+by which a muted account reaches AUTH-005 (SD-019 item 2; user decision).
+
+### AUTH-022 — A nickname is three English words: two adjectives and a noun
+
+The system shall generate every nickname as an adjective, a second adjective and
+a noun, in that order, each an English word in Latin letters beginning with a
+capital letter, separated by single spaces, and shall display it in that form in
+every interface language.
+
+**Acceptance criteria**
+- Given the creation screen, when a nickname is generated, then it has the form
+  `Brave Copper Otter`: two adjectives, then a noun, each capitalised, separated
+  by one space.
+- Given an interface in Russian, when a nickname is displayed anywhere, then it is
+  displayed in Latin letters exactly as generated and is neither translated nor
+  transliterated.
+- Given any two nicknames, when they are compared for uniqueness (DOM-001), then
+  they are compared as the three words, so two nicknames never differ only in
+  letter case or spacing.
+
+**Verification:** generate a large sample and check form and case; display one
+nickname in both interface languages.
+**Source:** user decision, 2026-09-27 (SD-001). English words avoid the agreement
+of gender and case that a Russian adjective owes its noun, which three
+independent word lists cannot give; one form for everyone keeps a nickname the
+same string on every screen. The size of the lists is OQ-009.
+
+### AUTH-023 — The nickname words come from lists the product owner keeps by hand
+
+The system shall draw every nickname word from one of two lists, adjectives and
+nouns, that the product owner maintains outside the application, and shall admit
+to a list only a word that is not profane or insulting and does not name a real
+person, a brand, a nationality or ethnicity, a religion, a disease, a
+sexuality, or a feature of a person's body or appearance.
+
+**Acceptance criteria**
+- Given the two lists, when every word is reviewed against the criteria above,
+  then none fails any of them.
+- Given any screen of the application, when it is enumerated, then none edits a
+  word list; a list changes in the store, as the dictionaries do (DOM-014).
+- Given a combination of three admitted words, when it is generated, then it is
+  not checked against anything further: no list of forbidden combinations exists.
+- Given a word removed from a list, when an account already holds a nickname
+  containing it, then that nickname is unchanged (DOM-001) and the word is no
+  longer drawn for new ones.
+
+**Verification:** review of both lists against the criteria before the first
+account is created and at every change; enumerate every screen.
+**Source:** user decision, 2026-09-27 (SD-001). The lists are written before the
+first account exists, because the first nickname issued is permanent.
+**Cost, stated:** three harmless words can still combine into something that reads
+badly, and nothing catches it; a stop list of combinations was rejected as a list
+kept for ever against a rare case.

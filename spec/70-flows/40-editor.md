@@ -1,9 +1,9 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [FLOW-022, FLOW-023, FLOW-024, FLOW-025, FLOW-026, FLOW-027, FLOW-028,
-  FLOW-029, FLOW-030, FLOW-031, FLOW-032]
+  FLOW-029, FLOW-030, FLOW-031, FLOW-032, FLOW-057]
 ---
 
 # Writing a recipe
@@ -13,15 +13,15 @@ at both bounds, and an explicit statement of what a fork will carry away.
 
 ### FLOW-022 — An ingredient outside the dictionary is accepted with a warning
 
-When the author names an ingredient that matches no entry of the ingredient
-dictionary, the system shall accept the ingredient as free text and shall state
+When the author adds an ingredient in their own words rather than as an entry of
+the ingredient dictionary, the system shall accept the ingredient as free text and shall state
 that no filter on that ingredient will find the recipe and that this cannot be
 changed once the recipe has been published.
 
 **Acceptance criteria**
-- Given the ingredient editor, when the author types a name and the dictionary
-  offers nothing that matches, then adding it as free text is offered and is not
-  refused.
+- Given the ingredient editor, when the author types a name that is not exactly
+  the label of an offered entry, then adding it as free text is offered — beside
+  any entries offered, or alone where none is (FLOW-057) — and is not refused.
 - Given the author adds it, when the warning is shown, then it states both that
   filters will not find the recipe by this ingredient and that publication makes
   it permanent (CON-003).
@@ -36,6 +36,9 @@ changed once the recipe has been published.
 **Verification:** add an ingredient absent from the dictionary, confirm the
 warning's two statements, then replace it with an entry and confirm the warning
 disappears.
+**Correction, 2026-09-27:** the trigger said "matches no entry" without a rule for
+matching or saying whether free text stands beside offered entries (SD-006).
+FLOW-057 now states both, by user decision of that date.
 **Source:** user decision, 2026-09-20: a missing entry never blocks authoring,
 and the author is told what it costs rather than protected from it. See
 [ADR — the ingredient dictionary](../decisions/20260920-ingredient-dictionary.md).
@@ -52,27 +55,37 @@ unit type, which follows from the unit chosen.
 - Given the ingredient field, when the author types, then dictionary entries are
   offered whether they are leaves or parents (DOM-010), so `курица · 500 · г` is an
   ordinary row.
-- Given the ingredient field, when both a leaf and its parent could match what the
-  author typed, then the leaves are offered before the parent, so that a qualifier
-  is a last resort and not a substitute for picking the right entry.
+- Given the ingredient field, when what the author typed matches a parent, then
+  its leaves are offered before it (FLOW-057), so that a qualifier is a last resort
+  and not a substitute for picking the right entry.
 - Given the author picks the entry `филе` and keeps typing `без кожи`, when the row
   is read, then it reads `филе без кожи`, the ingredient holds that entry and that
   qualifier, and no fourth field has appeared.
 - Given such an ingredient, when a reader filters on `курица`, then the recipe
   matches through the entry, and the qualifier plays no part in the match
   (CAT-006).
-- Given the ingredient field, when nothing in the dictionary matches, then free
-  text is offered with the warning FLOW-022 requires.
+- Given the ingredient field, when what the author typed is not exactly the label
+  of an offered entry, then free text is offered with the warning FLOW-022
+  requires (FLOW-057).
 - Given the unit field, when the author picks `шт`, then the ingredient's unit type
   is `piece` and the author is never shown a unit type at all.
 - Given the unit field, when the author picks the unit that means "to taste", then
-  the quantity field is withdrawn and the ingredient is stored with no quantity
-  (DOM-002).
+  the quantity field is withdrawn, the unit field stays and shows "to taste", and
+  the ingredient is stored with no quantity (DOM-002).
+- Given an ingredient set to "to taste", when the author picks another unit in its
+  unit field, then the quantity field returns, empty.
+- Given the unit field, when it is opened, then it offers exactly the units of
+  DOM-016.
 - Given a `piece` ingredient whose dictionary entry supplies its divisibility, when
   the row is shown, then divisibility is not one of the three fields (FLOW-001).
 
 **Verification:** author one ingredient of each unit type through the editor and
-confirm that no row ever presents a fourth field or asks for a unit type.
+confirm that no row ever presents a fourth field or asks for a unit type; switch
+one row to "to taste" and back.
+**Corrections, 2026-09-27** (SD-008, user decisions of that date): criterion 3 now
+matches a leaf through its parent (FLOW-057); criterion 8 keeps the unit field on
+a "to taste" row, since that field is where the choice is made and undone; the
+units offered are the closed list of DOM-016. Criteria 10 and 11 are new.
 **Source:** user decision, 2026-09-20. Three fields is also why a parent entry has
 to be usable on its own: a row is an ingredient, a number and a unit, and there is
 no place in it for the product to demand a narrower entry than the author has. The
@@ -162,14 +175,15 @@ to is written, so a step's photo is never separated from its step.
 ### FLOW-027 — A step carries one timer, attached inside it
 
 The system shall let the author attach one timer to a step and enter its duration
-there, shall hold the timer as part of that step, and shall not offer a second
+there, shall hold the timer as part of that step, and shall not create a second
 timer on a step that already carries one.
 
 **Acceptance criteria**
 - Given a step reading `в духовку на 190 °C на 30 минут`, when the author attaches
   a timer and enters 30 minutes, then the timer belongs to that step.
 - Given a step that already carries a timer, when the author looks at it, then
-  attaching another is not offered at all (DOM-013).
+  the control for attaching a timer is still shown, and choosing it creates no
+  second timer and shows the statement of GUIDE-007 (DOM-013).
 - Given two waits in sequence, when the author writes them, then they are two
   steps with one timer each.
 - Given a timer being attached, when the author is asked for anything, then a
@@ -199,6 +213,10 @@ a timer by its step and two timers on one step would carry one name between them
 and two waits in sequence are already two steps in the kitchen. The name is shown
 rather than asked for, and corrected rather than filled in, so that the author who
 is satisfied with the derived name does nothing at all.
+**Correction, 2026-09-27:** criterion 2 said a second timer was "not offered at
+all", which left GUIDE-007 with no attempt to answer (SD-005). By user decision of
+that date the control stays, and choosing it on a step that has a timer is the
+attempt GUIDE-007 explains.
 **Note:** what the author is told about the first 60 characters of the step
 mattering is in `author-guidance`, not here — this requirement is what the editor
 accepts, that one is what the editor teaches.
@@ -300,17 +318,24 @@ control on that step, and shall offer no ingredient of any other recipe.
   same list is offered and the result is the same reference, so an author who never
   discovers the trigger character loses nothing.
 - Given the list of ingredients offered, when it is shown, then it holds only
-  ingredients of this recipe (DOM-007) and no ingredient whose unit type is
-  `taste_unmeasured`, because such an ingredient carries no quantity to show
-  (DOM-002).
+  ingredients of this recipe (DOM-007), including one whose quantity is not yet
+  entered and one whose unit type is `taste_unmeasured`.
 - Given an inserted reference, when the author deletes the character range it
   occupies, then the reference is gone and the step's text is left as the author
   typed it.
 - Given a reference to an ingredient, when that ingredient is deleted from the
   recipe, then DOM-007 governs and the reference is dropped.
+- Given a referenced ingredient, when the author changes its unit to "to taste" or
+  from it to a measured unit, then the change is allowed and every reference to it
+  stays and renders by FLOW-032.
 
-**Verification:** insert references both ways in one step, attempt to reference a
-`taste_unmeasured` ingredient, and delete a referenced ingredient.
+**Verification:** insert references both ways in one step, reference a
+`taste_unmeasured` ingredient and one with no quantity yet, switch a referenced
+ingredient to "to taste" and back, and delete a referenced ingredient.
+**Correction, 2026-09-27:** criterion 3 kept `taste_unmeasured` ingredients out of
+the list, and nothing said what a reference to an ingredient with no quantity
+yet, or one switched to "to taste", shows (SD-014). By user decision of that date
+both are referenced and render by FLOW-032; the exclusion is lifted.
 **Source:** user decision, 2026-09-20, adopting the spec author's proposal. The
 trigger character is for whoever expects one; the control is why the feature is not
 hidden from everybody else, and the product's readers and authors are not programmers
@@ -319,8 +344,10 @@ hidden from everybody else, and the product's readers and authors are not progra
 ### FLOW-032 — A reference renders as the quantity alone
 
 The system shall render an ingredient reference in a step as that ingredient's
-quantity and unit at the reader's current scale, and shall render no part of the
-ingredient's name.
+quantity and unit at the reader's current scale — or as the words "to taste" where
+the ingredient's unit type is `taste_unmeasured`, or as an empty placeholder where
+its quantity is not yet entered — and shall render no part of the ingredient's
+name.
 
 **Acceptance criteria**
 - Given a recipe authored for 4 servings with 200 g of flour and a step reading
@@ -335,10 +362,63 @@ ingredient's name.
   shows the floor exactly as the list does (SCALE-005).
 - Given the editor, when the author inserts a reference, then what they see in place
   of it is the authored quantity, because the authored scale is the recipe's own.
+- Given a reference to a `taste_unmeasured` ingredient, when the step is read at any
+  scale, then the reference reads "to taste" in the interface language (`по вкусу`
+  in Russian), and nothing in it is marked as derived.
+- Given a reference to an ingredient whose quantity is not yet entered, when the
+  step is shown in the editor or in the saved view of FLOW-029, then the reference
+  shows a visibly empty placeholder, followed by the unit where one is chosen; the
+  placeholder occupies a character range and is removed as FLOW-031 (4) removes
+  any reference.
 
 **Verification:** scale a recipe up, down and to a value the grid rounds, and compare
-every step's reference against the ingredient list line by line.
+every step's reference against the ingredient list line by line; read a reference
+to a "to taste" ingredient and one to an ingredient with no quantity.
+**Completed 2026-09-27:** the two references that have no quantity to show (SD-014;
+user decision).
 **Source:** user decision, 2026-09-20, adopting the spec author's proposal. The name
 is left out because a substituted name would arrive in one grammatical case and every
 sentence needs its own; the author already writes the word, and only the number has
 to change under scaling.
+
+### FLOW-057 — What the ingredient field offers for what the author types
+
+When the author types in the ingredient field, the system shall offer every
+dictionary entry whose label, in either interface language, holds for each typed
+word a word that begins with it, ignoring letter case and treating `ё` and `е` as
+one letter; shall offer the leaves of every parent so offered before that parent;
+and shall offer adding the typed text as free text whenever it is not exactly the
+label of an offered entry.
+
+**Acceptance criteria**
+- Given a dictionary holding `молоко`, when the author types `мол`, then `молоко`
+  is offered.
+- Given the same dictionary and no entry for coconut milk, when the author types
+  `кокосовое молоко`, then `молоко` is not offered, because `кокосовое` begins no
+  word of its label, and adding `кокосовое молоко` as free text is offered.
+- Given the author types `МОЛ` or `Мол`, when entries are offered, then they are
+  those offered for `мол`; and `еж` offers what `ёж` offers.
+- Given a parent `курица` with leaves `крылышки` and `филе`, when the author types
+  `кур`, then `крылышки` and `филе` are offered before `курица`.
+- Given the interface in Russian and an entry whose English label is `chicken`,
+  when the author types `chick`, then the entry is offered, shown by its Russian
+  label (L10N-003).
+- Given entries are offered, when the typed text is not exactly the label of one
+  of them, then adding it as free text is offered beside them, with the warning of
+  FLOW-022, and the author chooses.
+- Given the author has typed exactly the label of an offered entry, when the
+  offer is shown, then free text is not offered, because the entry is that
+  ingredient.
+
+**Verification:** type each of the inputs above against a seeded dictionary, in
+both interface languages.
+**Source:** user decision, 2026-09-27 (SD-006, SD-008 item 1). Matching the
+beginning of a word keeps the offer working while the author is still typing,
+which a whole-word normalisation such as L10N-007's cannot; both languages are
+searched because doing so costs nothing and finds the entry an author names in
+either. Free text stands beside the entries because only the author knows whether
+an offered entry is their ingredient.
+**Cost, stated:** free text is one choice away even when a fitting entry is
+offered, so more ingredients will be free text and found by no filter, and the
+share of free-text ingredients watched as a signal (OBS-001, OQ-019) now counts
+authors' choices as well as the dictionary's gaps.

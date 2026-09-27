@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: []
 ---
 
@@ -25,8 +25,9 @@ identifiers did not change on the split and never will.
 | [10-offline-and-sync.md](10-offline-and-sync.md) | Offline work and synchronisation | FLOW-001–FLOW-008 |
 | [20-device-storage.md](20-device-storage.md) | Favourites and what the device keeps, with and without an account | FLOW-009–FLOW-012, FLOW-051, FLOW-052 |
 | [30-cooking.md](30-cooking.md) | Cooking from a recipe | FLOW-013–FLOW-021 |
-| [40-editor.md](40-editor.md) | Writing a recipe | FLOW-022–FLOW-032 |
-| [50-browsing.md](50-browsing.md) | The catalogue and the favourites section, deleting a recipe of one's own, the private link, and the author's screen | FLOW-033–FLOW-043, FLOW-053–FLOW-055 |
+| [40-editor.md](40-editor.md) | Writing a recipe, including what the ingredient field offers for what is typed | FLOW-022–FLOW-032, FLOW-057 |
+| [50-browsing.md](50-browsing.md) | The catalogue and the favourites section: its two views, the view it opens on, and what a device with no account sees | FLOW-033–FLOW-043 |
+| [55-own-recipe-and-author.md](55-own-recipe-and-author.md) | Deleting a recipe of one's own, the private link, and the author's screen | FLOW-053–FLOW-055 |
 | [60-moderator-queue.md](60-moderator-queue.md) | The moderator's queue, and where a publishing ban is applied | FLOW-044–FLOW-050, FLOW-056 |
 
 ## Open

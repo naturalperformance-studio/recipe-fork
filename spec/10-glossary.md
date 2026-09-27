@@ -159,8 +159,8 @@ recipe on its own. The editor offers leaves before parents (DOM-010, FLOW-023).
 the ingredient's own field so the row reads `филе без кожи`. It is not a fourth
 field, and a filter never matches it (DOM-009, FLOW-023, OQ-020).
 
-**Free text** — an ingredient the author named themselves because no entry
-matched. Accepted with a warning, never refused, and never found by an
+**Free text** — an ingredient the author named in their own words instead of
+picking an offered entry (FLOW-057). Accepted with a warning, never refused, and never found by an
 ingredient filter — permanently, once the recipe is published (DOM-009,
 FLOW-022).
 
@@ -243,8 +243,10 @@ nothing else an account is for: it does not create, fork, edit, submit or rate.
 It becomes full when a verdict and a free slot allow (AUTH-004, AUTH-005). With
 no connection at all no account is created, muted or otherwise (FLOW-003).
 
-**Nickname** — a random three-word name generated at the creation screen, where
-it may be replaced by another generated one any number of times. Once the account
+**Nickname** — a random three-word name — two English adjectives and a noun, as
+`Brave Copper Otter`, drawn from lists the product owner keeps (AUTH-022,
+AUTH-023) — generated at the creation screen, where it may be replaced by another
+generated one any number of times. Once the account
 exists it is globally unique, permanent, and the only thing about an account that
 is ever shown (DOM-001, AUTH-018).
 

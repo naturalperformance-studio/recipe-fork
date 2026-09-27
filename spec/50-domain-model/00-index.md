@@ -26,6 +26,9 @@ in section `scaling-rules`.
 | `taste_measured` | a pinch of salt | yes | linearly, then rounded to a convenient fraction |
 | `taste_unmeasured` | pepper to taste | no | never — the ingredient has no quantity to scale |
 
+The examples of `piece` are ingredients counted in pieces, not units. The units
+themselves are a closed list of twelve, each assigned to one type (DOM-016).
+
 An `exact` ingredient may be authored in any unit of its type, including tonnes
 and cubic metres, so that a production card can be written in the units it is
 already kept in. What is displayed is governed by the rounding grid in section

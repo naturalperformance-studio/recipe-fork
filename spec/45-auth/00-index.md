@@ -1,7 +1,7 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: []
 ---
 
@@ -52,6 +52,6 @@ change on the split and never will.
 
 | Part | What is in it | Requirements |
 |---|---|---|
-| [10-creating-an-account.md](10-creating-an-account.md) | When an account appears, the device slots, the nickname, and the muted account | AUTH-001–AUTH-006, AUTH-018 |
+| [10-creating-an-account.md](10-creating-an-account.md) | When an account appears, the device slots, the nickname — its form and the words it is drawn from — and the muted account | AUTH-001–AUTH-006, AUTH-018, AUTH-022, AUTH-023 |
 | [20-account-key.md](20-account-key.md) | The account key and the deletion key: issuing, keeping, showing, importing | AUTH-007–AUTH-010, AUTH-017, AUTH-019 |
 | [30-account-life.md](30-account-life.md) | One active account, what replacing it destroys, what the server accepts as proof, losing the key, and the recovery key | AUTH-011–AUTH-016, AUTH-020, AUTH-021 |

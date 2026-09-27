@@ -5,7 +5,7 @@ updated: 2026-09-27
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
-  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036]
+  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037]
 open_before_mvp: [OQ-016, OQ-029, OQ-030]
 ---
 
@@ -497,3 +497,17 @@ Proposal accepted 2026-09-27 as the route, not the answer: import is added to th
 lawyer's review that OQ-029 already asks for, before the feature is built, not
 before the first release. The question stays open until that review reports.
 Blocks: nothing that is written; the feature's release waits for it.
+
+### OQ-037 — Counting units beyond the piece (define after MVP)
+Unresolved: whether the unit field gains units such as a bunch (`пучок`), a clove
+(`зубчик`), a can (`банка`), a slice (`ломтик`) or a pack (`упаковка`). DOM-016
+lists twelve units and `piece` has only `шт`, so a bunch of dill is written
+`укроп · 1 · шт`.
+What any answer has to settle: divisibility belongs to the dictionary entry
+(DOM: IngredientEntry), so garlic counted in cloves and garlic counted in heads
+would share one divisibility flag; and a can or a pack has no fixed size, so the
+comparison factors of DOM-011 could not order one against grams.
+Proposal (not a decision): add `пучок` alone, as a `piece` unit, after the first
+release, if free-text ingredients (OBS-001) or authors' qualifiers show bunches
+being written around the gap.
+Blocks: nothing that is written.
