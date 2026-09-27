@@ -193,13 +193,16 @@ class NicknameTest {
     fun `AUTH-023 (4) - a word removed from a list leaves nicknames holding it unchanged and is no longer drawn`() = serve(db) {
         db.admit(listOf("brave", "copper", "calm"), listOf("otter", "heron"))
         assertEquals(HttpStatusCode.Created, client.createAccount("Brave Copper Otter", client.issueKeys()).status)
+        // The word is drawn while it is in the list, by this same running server.
+        val before = List(200) { client.offerNickname() }
+        assertTrue(before.any { "Copper" in it.split(" ") }, "the word was never drawn while listed: $before")
 
         // The product owner removes a word directly in the store (AUTH-023 (2)).
         db.exec("delete from nickname_adjective where word = 'copper'")
 
         assertEquals(listOf("brave copper otter"), heldNicknames(), "the existing nickname is unchanged")
         val offered = List(200) { client.offerNickname() }
-        assertTrue(offered.none { "Copper" in it.split(" ") }, "a removed word was drawn: $offered")
+        assertTrue(offered.none { "Copper" in it.split(" ") }, "a removed word was drawn after its removal: $offered")
         assertTrue(offered.toSet().size > 1)
 
         val response = client.createAccount("Calm Copper Heron", client.issueKeys())
