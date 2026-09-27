@@ -217,4 +217,5 @@ split and never will.
 
 | Part | What is in it | Requirements |
 |---|---|---|
-| [10-invariants.md](10-invariants.md) | Invariants over the entities | DOM-001–DOM-013 |
+| [10-invariants.md](10-invariants.md) | Invariants over the entities: nickname, quantity, household measure, parent, media ownership, the submission minimum, step references, tags, the authored serving count; and what is deliberately not modelled yet | DOM-001–DOM-008, DOM-015 |
+| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, and the twelve units | DOM-009–DOM-014, DOM-016 |

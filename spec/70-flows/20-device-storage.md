@@ -109,9 +109,9 @@ which sets the limits that make this true.
 
 ### FLOW-012 — Leaving the application does not lose the recipe being read
 
-When the reader returns to the application after leaving it, the system shall
-show the recipe that was open, at the scale it was showing, at the place in it
-the reader had scrolled to.
+When the reader returns to the application after leaving it, or opens it again
+after the operating system ended it, the system shall show the recipe that was
+open, at the scale it was showing, at the place in it the reader had scrolled to.
 
 **Acceptance criteria**
 - Given a recipe open at a changed serving count with a fixed ingredient set,
@@ -123,15 +123,29 @@ the reader had scrolled to.
   when the application was left.
 - Given the operating system ended the application while it was away, when the
   reader opens it again, then the same recipe is shown if its content is
-  available — held on the device, or fetchable over the network.
+  available — held on the device, or fetchable over the network — at the same
+  serving count, with the same fixed ingredients and at the same place.
 - Given the operating system ended the application, the recipe is not in
   favourites, and there is no connection, when the reader opens the application
   again, then it states that the recipe needs a connection and offers to retry,
   and does not silently drop the reader into the catalogue.
 
-**Verification:** scale a recipe, fix an ingredient, start a timer, leave the
-application for several minutes and return; repeat with the process ended by the
-operating system, in both the favourited and the non-favourited case.
+- Given the reader had scrolled so that a given ingredient line or step was the
+  first one at the top of the screen, when they return, then that line or step is
+  again the first at the top, even if the text scale (A11Y-004), the orientation
+  of the screen or a timer that ended while they were away changed the layout.
+
+**Verification:** scale a recipe, fix an ingredient, scroll to its middle, start a
+timer, leave the application for several minutes and return; repeat with the
+process ended by the operating system, in both the favourited and the
+non-favourited case, and once with the text scale changed and once with the
+device rotated while away.
+**Correction, 2026-09-27:** the statement restored the place and no criterion
+observed it, and whether scale and place survive the operating system ending the
+application was read two ways (SD-026). By user decisions of that date the place
+is the line or step at the top of the screen, and the recipe, its scale and its
+place all survive the process being ended; the device keeps them for that purpose
+only (RET-010).
 **Source:** user decision, 2026-09-20. Cooking is interrupted constantly, and an
 interruption is not a reason to lose the page: leaving the application and
 closing it are different events and only the second can cost the recipe.

@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [FLOW-001, FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007, FLOW-008]
 ---
 
@@ -164,8 +164,9 @@ the kitchen.
 
 ### FLOW-005 — Every recipe shows whether the server has accepted it
 
-The system shall display, for each recipe the account owns, whether every local
-change to it has been accepted by the server.
+The system shall display, for each recipe the account owns, on its entry in the
+own-recipes view and in the editor, whether every local change to it has been
+accepted by the server.
 
 **Acceptance criteria**
 - Given the list of the account's own recipes, when it is displayed, then each
@@ -175,11 +176,18 @@ change to it has been accepted by the server.
   accepted, then the editor states so.
 - Given a recipe whose text has been accepted but whose media is still queued,
   when it is displayed, then it counts as holding changes that are not accepted.
-- Given a recipe fully accepted by the server, when it is displayed, then it is
-  marked as accepted and not merely left unmarked.
+- Given a recipe fully accepted by the server, when its entry in the own-recipes
+  view or the recipe in the editor is displayed, then it is marked as accepted and
+  not merely left unmarked.
+- Given an own recipe, when it is displayed on its card or in the catalogue, then
+  it carries no mark of acceptance of either kind.
 
 **Verification:** compare the marking against the server state in four cases —
-fully accepted, text pending, media pending, both pending.
+fully accepted, text pending, media pending, both pending — on the list entry and
+in the editor, and confirm the card and the catalogue carry none.
+**Correction, 2026-09-27:** criterion 4 named no surface (SD-017 item 2); by user
+decision of that date the mark is on the own-recipes entry and in the editor
+only.
 **Source:** user decision, 2026-09-20. The marking is per recipe rather than one
 global indicator, so that the owner can see which recipe they would lose by
 reinstalling the application.
@@ -226,26 +234,41 @@ something that does not exist.
 
 ### FLOW-008 — Two devices that diverge produce a fork, never an overwrite
 
-If the same account edits one recipe on two devices while at least one of them
-is offline, so that the local version and the version the server holds have
-diverged, then the system shall keep the server's version as that recipe and
-turn the divergent local version into a fork of it owned by the same account,
-and shall tell the owner that it did so.
+If a device sends an edit to a recipe whose version on the server has changed
+since the version the edit was made from — in its content, or in its state alone —
+then the system shall keep the server's version as that recipe and turn the
+divergent local version into a fork of it owned by the same account, and shall
+tell the owner that it did so.
 
 **Acceptance criteria**
 - Given a recipe edited offline on device B while device A's edit reached the
   server, when device B reconnects, then the server's version keeps the recipe's
   identity and device B's version becomes a `private` fork naming it as parent.
-- Given that outcome, when the owner opens the application on device B, then
-  they are told a fork was created and why, and both recipes are reachable.
+- Given that outcome, when the server's answer reaches device B, then the owner
+  is told a fork was created and why at that moment if the application is open,
+  or when they next open it if it is not; the notice stays until they
+  acknowledge it, is not shown again afterwards, and both recipes are reachable.
 - Given the server's version has since been published or otherwise frozen, when
   device B reconnects with a divergent version, then the same rule applies and
   nothing is written to the frozen recipe.
 - Given no divergence — device B's version is the one the server already holds —
   when device B reconnects, then no fork is created.
 
+- Given a recipe edited offline on device B while, on the server, nobody changed
+  its content but it was submitted and became `pending`, `link_shared` or
+  `published`, when device B reconnects, then device B's version becomes a
+  `private` fork naming it as parent, and the owner is told as criterion 2
+  states.
+
 **Verification:** enter the same account key on a second device, edit one recipe on both
-with one offline, reconnect and inspect both recipes.
+with one offline, reconnect and inspect both recipes; repeat with the reconnection
+while the application is open and while it is closed, and with only a state
+change on the server.
+**Correction, 2026-09-27:** the statement required an edit on each side while
+criterion 4 treated any difference as divergence, and criterion 2 tied the notice
+to opening the application while automatic sync does not wait for it (SD-017 item
+1, SD-018). By user decisions of that date a change of state alone is divergence,
+and the owner is told when the answer arrives, once, until acknowledged.
 **Source:** user decision, 2026-09-20. The product's own answer to a changed
 recipe is a fork (GOAL-002), and the server's version keeps its identity because
 other recipes may already name it as their parent. No edit is discarded.

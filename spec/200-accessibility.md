@@ -1,7 +1,7 @@
 ---
 slug: A11Y
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [A11Y-001, A11Y-002, A11Y-003, A11Y-004, A11Y-005, A11Y-006, A11Y-007,
   A11Y-008]
 ---
@@ -172,9 +172,10 @@ A11Y-003, and shall keep the timer audible when the screen is off.
   scale, then its step text is larger than body text elsewhere in the product.
 - Given the cooking card, when its controls are measured, then A11Y-003's larger
   figure holds.
-- Given a timer that ends while the screen is off or the application is closed,
-  then it announces itself audibly from the device's own facility (FLOW-013,
-  EXT-009).
+- Given notifications are permitted, when a timer ends while the screen is off or
+  the application is closed, then it announces itself audibly from the device's
+  own facility (FLOW-013, EXT-009); with notifications refused FLOW-013 (5)
+  governs and the reader has been told so when starting it.
 - Given the card, when it is left untouched, then the screen is kept awake as
   FLOW-014 requires and this requirement adds no second rule about it.
 - Given the card at 200 per cent font scale, when it is used, then A11Y-004 holds
@@ -182,6 +183,9 @@ A11Y-003, and shall keep the timer audible when the screen is off.
 
 **Verification:** cook a recipe on the bench with the device at default scale and
 at 200 per cent, with the screen allowed to switch off during a timer.
+**Correction, 2026-09-27:** criterion 3 carried no exception for a refused
+notification permission (SD-021 item 3); by user decision of that date nothing
+sounds then, and the reader is told at the timer's start (FLOW-013).
 **Source:** user decision, 2026-09-21. The cooking card is used at arm's length,
 on a surface, by someone whose hands are wet or covered in flour, and it is the
 one screen where that is the normal case rather than the awkward one. Voice

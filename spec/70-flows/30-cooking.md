@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -42,14 +42,38 @@ is in the foreground, in the background, or closed.
   at the step the timer belongs to.
 - Given the reader refused permission to show notifications, when a timer ends,
   then it is still finished and is shown as finished inside the application, and
+  nothing announces it while the application is closed or the screen is locked;
   the permission is asked for again only when the reader next starts a timer.
 - Given a running timer, when the reader opens the recipe, then the time
   remaining is shown on its step.
 - Given a running timer, when the reader cancels it, then nothing announces
   itself afterwards.
 
+- Given a device on which the permission to show notifications has never been
+  asked for, when the reader starts their first timer, then the platform's request
+  is made at that moment, and at no earlier moment such as the first launch.
+- Given notifications are not permitted, when the reader starts a timer and the
+  platform will still show its own request, then that request is made.
+- Given notifications are not permitted, when the reader starts a timer and the
+  platform will not show a request — because it has none to show or because the
+  reader has refused it as often as it allows — then the application shows its own
+  explanation that the timer will not be heard while the application is closed or
+  the screen is locked, with a control that opens the system's notification
+  settings for the application; the timer starts either way.
+- Given notifications are permitted, when the reader starts a timer, then nothing
+  about the permission is shown.
+
 **Verification:** start a timer, close the application from the task switcher,
-lock the device and wait for the end; repeat with notifications refused.
+lock the device and wait for the end; repeat with notifications refused; start a
+first timer on a fresh install; repeat the refusal until the platform stops
+asking, and on an Android 10 device with notifications turned off in settings.
+**Correction, 2026-09-27:** criterion 5 had the permission "asked for again" where
+on Android 10–12 there is no request to make and on later versions the platform
+stops showing one after refusals, placed no first request, and was read two ways
+against A11Y-007 (3) (SD-021). By user decisions of that date: the first request
+comes with the first timer; where the platform will not ask, the application
+explains and leads to the settings; and a timer with notifications refused is
+not heard while the application is closed.
 **Source:** user decision, 2026-09-20: a person may start a timer on the last
 step and close the application entirely — something goes in the oven and is
 taken out in thirty minutes — so the timer cannot depend on the application
