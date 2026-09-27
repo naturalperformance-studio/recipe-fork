@@ -39,17 +39,24 @@ object NoAttestation : AttestationService {
 }
 
 object Attestation {
-    /** The environment variable naming the attestation service: absent or `none`, or `fake`. */
+    /** The environment variable naming the attestation service: `none` or `fake`. It has no default. */
     const val ENV = "ATTESTATION"
 
+    private const val ACCEPTED = "expected one of 'none' (no attestation service: every account created is muted) or 'fake' (the in-memory fake, local deployment only)"
+
     /**
-     * The service [env] names. Absent or `none` is [NoAttestation]; `fake` is a [FakeAttestation] holding its
-     * devices in memory, for the local deployment only. Anything else is refused, naming [ENV].
+     * The service [env] names: `none` is [NoAttestation]; `fake` is a [FakeAttestation] holding its devices
+     * in memory, for the local deployment only. Missing, blank or anything else is refused, naming [ENV]
+     * and the accepted values — a server that silently ran without a verdict would create only muted
+     * accounts (AUTH-001, AUTH-004).
      */
-    fun fromEnvironment(env: Map<String, String>, clock: java.time.Clock): AttestationService =
-        when (val value = env[ENV]?.trim()) {
-            null, "", "none" -> NoAttestation
+    fun fromEnvironment(env: Map<String, String>, clock: java.time.Clock): AttestationService {
+        val raw = env[ENV] ?: throw IllegalStateException("$ENV is missing: $ACCEPTED")
+        return when (val value = raw.trim()) {
+            "" -> throw IllegalStateException("$ENV is blank: $ACCEPTED")
+            "none" -> NoAttestation
             "fake" -> FakeAttestation(clock)
-            else -> throw IllegalStateException("$ENV is '$value': expected 'none' or 'fake'")
+            else -> throw IllegalStateException("$ENV is '$value': $ACCEPTED")
         }
+    }
 }

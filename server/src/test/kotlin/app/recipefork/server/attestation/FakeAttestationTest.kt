@@ -1,9 +1,10 @@
 package app.recipefork.server.attestation
 
+import app.recipefork.server.account.KeySetSeal
+import app.recipefork.server.configuredServer
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.YearMonth
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -44,15 +45,55 @@ class FakeAttestationTest {
     }
 
     @Test
-    fun `the service is none unless configured, the fake when ATTESTATION is fake, and an unknown value is refused`() {
-        assertSame(NoAttestation, Attestation.fromEnvironment(emptyMap(), clock))
+    fun `the service is none when ATTESTATION is none, the fake when it is fake, and an unknown value is refused`() {
         assertSame(NoAttestation, Attestation.fromEnvironment(mapOf(Attestation.ENV to "none"), clock))
         assertTrue(Attestation.fromEnvironment(mapOf(Attestation.ENV to "fake"), clock) is FakeAttestation)
-        assertContains(
-            assertFailsWith<IllegalStateException> { Attestation.fromEnvironment(mapOf(Attestation.ENV to "play"), clock) }.message.orEmpty(),
-            "ATTESTATION",
-        )
+        assertAcceptedValuesListed(assertContains(refusal("play"), "ATTESTATION is 'play'"))
         assertEquals(VerdictOutcome.Unobtainable, NoAttestation.verdict(phone))
+    }
+
+    @Test
+    fun `a missing ATTESTATION is refused, naming it as missing and listing the accepted values`() {
+        assertAcceptedValuesListed(assertContains(refusal(null), "ATTESTATION is missing"))
+    }
+
+    @Test
+    fun `a blank ATTESTATION is refused, naming it as blank and listing the accepted values`() {
+        assertAcceptedValuesListed(assertContains(refusal(""), "ATTESTATION is blank"))
+        assertAcceptedValuesListed(assertContains(refusal("   "), "ATTESTATION is blank"))
+    }
+
+    @Test
+    fun `the server refuses to start with a missing or blank ATTESTATION, before it reaches its store`() {
+        val secret = java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 7 })
+        val env = mapOf(
+            "DATABASE_URL" to "jdbc:postgresql://nowhere/none", "DATABASE_USER" to "u", "DATABASE_PASSWORD" to "p",
+            KeySetSeal.SECRET_ENV to secret,
+        )
+        for ((attestation, expected) in listOf(null to "ATTESTATION is missing", "" to "ATTESTATION is blank", " " to "ATTESTATION is blank")) {
+            val failure = assertFailsWith<IllegalStateException>("ATTESTATION '$attestation'") {
+                configuredServer(env + listOfNotNull(attestation?.let { Attestation.ENV to it })) {
+                    throw AssertionError("the server reached its store before refusing its configuration")
+                }
+            }
+            assertAcceptedValuesListed(assertContains(failure.message.orEmpty(), expected))
+        }
+    }
+
+    /** The message [Attestation.fromEnvironment] refuses [value] with (absent when null). */
+    private fun refusal(value: String?): String =
+        assertFailsWith<IllegalStateException>("ATTESTATION '$value'") {
+            Attestation.fromEnvironment(listOfNotNull(value?.let { Attestation.ENV to it }).toMap(), clock)
+        }.message.orEmpty()
+
+    private fun assertContains(message: String, expected: String): String {
+        kotlin.test.assertContains(message, expected)
+        return message
+    }
+
+    private fun assertAcceptedValuesListed(message: String) {
+        kotlin.test.assertContains(message, "'none'")
+        kotlin.test.assertContains(message, "'fake'")
     }
 
     @Test

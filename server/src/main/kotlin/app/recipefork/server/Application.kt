@@ -29,8 +29,8 @@ fun main() {
 /**
  * The server as configured by [env], not yet started. Its configuration is read before the store is
  * reached ([connect]), so a server that cannot run — `KEY_SET_SECRET` missing, blank or malformed —
- * refuses to start with a message naming what is wrong, as does an `ATTESTATION` it does not know
- * ([Attestation.fromEnvironment]).
+ * refuses to start with a message naming what is wrong, as does an `ATTESTATION` that is missing, blank
+ * or not one it knows ([Attestation.fromEnvironment]).
  */
 internal fun configuredServer(
     env: Map<String, String>,
