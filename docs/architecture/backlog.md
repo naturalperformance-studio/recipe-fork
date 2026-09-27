@@ -32,9 +32,9 @@ in this wave, and no media is attached.
 
 | Task | Title | Depends on | Status |
 |---|---|---|---|
-| T-001 | Quantities follow the serving count | — | planned |
+| T-001 | Quantities follow the serving count | — | gated |
 | T-029 | Large and fractional quantities are written on the ladder | T-001 | gated |
-| T-002 | A fixed ingredient sets the scale | T-029 | planned |
+| T-002 | A fixed ingredient sets the scale | T-029 | blocked |
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
@@ -48,7 +48,7 @@ in this wave, and no media is attached.
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
-| T-035 | The quantity field holds only a value on its unit type's grid | T-012, T-029 | planned |
+| T-035 | The quantity field holds only a value on its unit type's grid | T-012, T-029 | blocked |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | gated |
 | T-015 | A quantity goes into a step as a reference | T-014, T-019 | gated |
@@ -71,7 +71,7 @@ in this wave, and no media is attached.
 ### T-001 — Quantities follow the serving count
 
 **Requirements:** SCALE-001, SCALE-003, SCALE-005, SCALE-010, SCALE-015, DOM-017
-**Status:** planned
+**Status:** gated
 **Depends on:** —
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -105,7 +105,7 @@ in this wave, and no media is attached.
 *DOM-017 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given a recipe at its authored serving count, when an ingredient is displayed, then it shows the authored value, which is a grid value and so is the same under SCALE-001 (4) and under the grid; DOM-018 is the one exception.
 
-**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md; re-sliced against spec/ @ ead1a44 after SD-002 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-001 (2)) — docs/product/verdicts/20260927-T-001-gate1-2.md; SCALE-001 (2) corrected in spec/ @ 959130e and moved to T-019, since it now states the rounding direction T-019 renders; re-gated: blocked-by-spec (SD-034, what an author may enter as a quantity and how an off-grid one is shown) — docs/product/verdicts/20260927-T-001-gate1-3.md; SD-034 answered in spec/ @ 1168954 (DOM-017: an authored quantity lies on its grid; DOM-018 the one exception, placed in wave 4 with DOM-017 (8)); DOM-017 (7) added, re-gate due
+**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md; re-sliced against spec/ @ ead1a44 after SD-002 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-001 (2)) — docs/product/verdicts/20260927-T-001-gate1-2.md; SCALE-001 (2) corrected in spec/ @ 959130e and moved to T-019, since it now states the rounding direction T-019 renders; re-gated: blocked-by-spec (SD-034, what an author may enter as a quantity and how an off-grid one is shown) — docs/product/verdicts/20260927-T-001-gate1-3.md; SD-034 answered in spec/ @ 1168954 (DOM-017: an authored quantity lies on its grid; DOM-018 the one exception, placed in wave 4 with DOM-017 (8)); DOM-017 (7) added, re-gate due; re-gated: accepted — docs/product/verdicts/20260928-T-001-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -150,7 +150,7 @@ in this wave, and no media is attached.
 ### T-002 — A fixed ingredient sets the scale
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-010, SCALE-015
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-029
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -182,7 +182,7 @@ in this wave, and no media is attached.
 - Given a recipe authored for 4 servings with 400 g of an ingredient, when the reader fixes 250 g of it, then the serving count shows an approximate 3 servings.
 - Given a recipe authored for 4 servings with 240 g of an ingredient, when the reader fixes 25 g of it (a computed 5/12 serving), then the serving count shows an approximate ½ serving.
 
-**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-008 vs SCALE-015) — docs/product/verdicts/20260927-T-002-gate1-2.md; re-sliced against spec/ @ 959130e after SD-027 resolved (SCALE-008 (4) replaced, (6–8) added); re-gated: accepted — docs/product/verdicts/20260927-T-002-gate1-3.md; SCALE-008 (7) replaced in spec/ @ 1168954 (SD-033: 109.375 g is off the grid), re-gate due
+**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-008 vs SCALE-015) — docs/product/verdicts/20260927-T-002-gate1-2.md; re-sliced against spec/ @ 959130e after SD-027 resolved (SCALE-008 (4) replaced, (6–8) added); re-gated: accepted — docs/product/verdicts/20260927-T-002-gate1-3.md; SCALE-008 (7) replaced in spec/ @ 1168954 (SD-033: 109.375 g is off the grid), re-gate due; re-gated: blocked-by-spec (SD-036, SCALE-008 (7) gives 3.5 servings, not 0.875, and (8)'s "same recipe" is ambiguous) — docs/product/verdicts/20260928-T-002-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -757,7 +757,7 @@ in this wave, and no media is attached.
 ### T-035 — The quantity field holds only a value on its unit type's grid
 
 **Requirements:** DOM-017, L10N-001
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-012, T-029
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -776,7 +776,7 @@ in this wave, and no media is attached.
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-037, how a typed number is read in each language, and whether a decimal entry of a fraction value is held) — docs/product/verdicts/20260928-T-035-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
