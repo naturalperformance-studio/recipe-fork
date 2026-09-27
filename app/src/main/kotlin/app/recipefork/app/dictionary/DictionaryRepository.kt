@@ -20,24 +20,26 @@ class DictionaryRepository(
      * Asks the server for both dictionaries, naming the version held. A changed version replaces the
      * held copy; an unchanged one, or a server that cannot be reached, leaves it as it is.
      */
-    suspend fun refresh(): Refresh {
+    suspend fun refresh(): Refresh = try {
         val held = dao.version()
-        val response = try {
-            client.get(DictionariesDto.PATH) {
-                if (held != null) header(HttpHeaders.IfNoneMatch, "\"$held\"")
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            return Refresh.Unreachable
+        val response = client.get(DictionariesDto.PATH) {
+            if (held != null) header(HttpHeaders.IfNoneMatch, "\"$held\"")
         }
-        return when (response.status) {
+        when (response.status) {
             HttpStatusCode.OK -> {
+                // Read the whole body before touching the held copy: a response that is not the
+                // dictionaries (a captive portal's login page, say) must leave it as it is.
                 dao.replace(response.body<DictionariesDto>())
                 Refresh.Replaced
             }
             HttpStatusCode.NotModified -> Refresh.Unchanged
             else -> Refresh.Unreachable
         }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        // No request, an unreadable answer or a failed write: the held copy stays, and the next
+        // return of the connection tries again.
+        Refresh.Unreachable
     }
 }

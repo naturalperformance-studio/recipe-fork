@@ -36,6 +36,7 @@ class DictionaryStore(private val dataSource: DataSource) {
     fun snapshot(): DictionarySnapshot =
         dataSource.connection.use { conn ->
             val autoCommit = conn.autoCommit
+            val isolation = conn.transactionIsolation
             conn.transactionIsolation = Connection.TRANSACTION_REPEATABLE_READ
             conn.autoCommit = false
             try {
@@ -46,7 +47,7 @@ class DictionaryStore(private val dataSource: DataSource) {
             } finally {
                 conn.rollback()
                 conn.autoCommit = autoCommit
-                conn.transactionIsolation = Connection.TRANSACTION_READ_COMMITTED
+                conn.transactionIsolation = isolation
             }
         }
 

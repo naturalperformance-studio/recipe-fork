@@ -14,6 +14,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,6 +27,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,11 +70,21 @@ class DictionarySyncTest {
     }
     private val heldVersionsSent: MutableList<String?> = Collections.synchronizedList(mutableListOf())
 
+    /** How many of the next requests a captive portal answers with its login page instead of the server. */
+    @Volatile private var portalAnswers = 0
+
     private val engine = MockEngine { request ->
         if (!connected) throw IOException("no network")
         val held = request.headers[HttpHeaders.IfNoneMatch]
         heldVersionsSent += held
-        if (held == "\"${served.version}\"") {
+        if (portalAnswers > 0) {
+            portalAnswers--
+            respond(
+                "<html><body>Log in to the Wi-Fi</body></html>",
+                HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType, "text/html"),
+            )
+        } else if (held == "\"${served.version}\"") {
             respond("", HttpStatusCode.NotModified)
         } else {
             respond(
@@ -90,7 +102,9 @@ class DictionarySyncTest {
     private lateinit var db: AppDatabase
     private lateinit var dao: DictionaryDao
     private lateinit var sync: DictionarySync
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // What would crash the process on a device: an exception escaping the sync into the application scope.
+    private val uncaught: MutableList<Throwable> = Collections.synchronizedList(mutableListOf())
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, e -> uncaught += e })
 
     @Before
     fun setUp() {
@@ -135,6 +149,28 @@ class DictionarySyncTest {
 
         assertEquals(listOf(null, "\"v1\""), heldVersionsSent.toList())
         assertHeld(v1)
+    }
+
+    @Test
+    fun `FLOW-001 - an answer that is not the dictionaries leaves the held copy, and a later return of the connection still replaces it`() = runBlocking {
+        sync.start(scope)
+        awaitHeldVersion("v1")
+
+        connection(false)
+        served = v2
+        portalAnswers = 1
+        connection(true)
+        // The connection is back but a captive portal answers 200 with its login page.
+        withTimeout(5_000) { while (heldVersionsSent.size < 2 || portalAnswers > 0) delay(10) }
+        delay(200)
+        assertHeld(v1)
+        assertTrue("the sync must not fail: $uncaught", uncaught.isEmpty())
+
+        connection(false)
+        connection(true)
+        awaitHeldVersion("v2")
+        assertHeld(v2)
+        assertTrue("the sync must not fail: $uncaught", uncaught.isEmpty())
     }
 
     private suspend fun awaitHeldVersion(version: String) {
