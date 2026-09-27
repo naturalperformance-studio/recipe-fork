@@ -44,7 +44,17 @@ All commands run from the repository root.
 | `deploy/` | Compose definitions: `deploy/local/` for development and the artefact. | — |
 | `scripts/` | Setup, artefact and device-test commands. | — |
 
-Packages: `app.recipefork.core`, `app.recipefork.server`, `app.recipefork.app`.
+Packages: `app.recipefork.core`, `app.recipefork.server`, `app.recipefork.app`. Inside each, one package per feature, so that tasks running at the same time touch disjoint files (`backlog.md`):
+
+| Module | Feature packages |
+|---|---|
+| `:core` | `recipe` (the model of `spec/50-domain-model`, units, step text, limits), `scaling`, `timer`, `text`, `api` (one contract file per feature) |
+| `:server` | `db`, `dictionary`, `account`, `attestation`, `auth`, `recipe`, and one per later feature; `Application.kt` installs each feature's routes |
+| `:app` | `data` (database, network), `recipe`, `dictionary`, `account`, `library` (the favourites section), `editor`, `card`, `timer`, `sync`, `ui` (theme, navigation); `AppContainer.kt` is the composition root |
+
+Interface strings: one resource file per feature, `res/values/strings_<feature>.xml` beside `res/values-ru/strings_<feature>.xml`. Server migrations: `server/src/main/resources/db/migration/V<n>__<feature>.sql`, numbered in the order the backlog's dependencies give.
+
+The task list and its statuses: [backlog.md](backlog.md).
 
 ## Decisions
 
