@@ -573,3 +573,232 @@ nowhere in it:
 and T-028 wait behind T-018 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-017 — The fork notice of FLOW-008 is tied to opening the application, which automatic sync does not wait for, and FLOW-005 does not say where an accepted recipe is marked (2026-09-27)
+**Requirement IDs:** FLOW-008 (statement, 2), FLOW-005 (statement, 2, 4); read against FLOW-002 (4), FLOW-036 (6), FLOW-029 (the card of an own recipe, cited by FLOW-053) and the binding ADR `docs/architecture/decisions/20260927-server-authoritative-sync-with-outbox.md` (outbox drained "whenever a connection exists")
+**Class:** ambiguity (items 1 and 2)
+**What the gate hit:** T-028 carries FLOW-008 (2) and FLOW-005 (1), (2), (4) verbatim
+(C5), so neither gap can be corrected at the task.
+1. **When, and how often, the owner is told of a divergence fork.** FLOW-008's
+   statement "shall tell the owner that it did so", unconditionally. Its criterion (2)
+   names one trigger: "when the owner opens the application on device B, then they are
+   told a fork was created and why". FLOW-002 (4) sends offline changes "without the
+   owner asking for it" when a connection returns, which happens as often while the
+   application is open as while it is closed; the fork is then created during a
+   session the owner has already opened, and the criterion's trigger does not occur
+   until the next launch. Nothing says whether the owner is told at that moment, at
+   the next opening, or both. Nor does anything bound the telling: read literally,
+   every opening of the application on device B after the outcome tells them again,
+   and no criterion says whether the notice stays until the owner acknowledges it,
+   is shown once, or stops at some other point. An implementation that tells the owner
+   the moment the server answers and never again, and one that tells them at every
+   launch, both read as conforming to one sentence and failing the other.
+2. **Where a fully accepted recipe is marked.** FLOW-005's statement displays the
+   state "for each recipe the account owns" and names no surface. Criterion (1) names
+   the own-recipes list and criterion (2) the editor, the latter only for a recipe
+   that holds unaccepted changes. Criterion (4) — "Given a recipe fully accepted by
+   the server, when it is displayed, then it is marked as accepted" — names none. An
+   own recipe is also displayed on its card (FLOW-029; FLOW-053 cites "the recipe card
+   of an own recipe") and, once published, in the catalogue. Read as the surfaces of
+   (1) and (2), the accepted mark is on the list entry and in the editor; read as
+   "whenever it is displayed", it is also on the own recipe's card and on every
+   catalogue entry of an own published recipe; read narrowest, the editor need carry
+   no positive mark at all, because (2) speaks only of unaccepted changes. Which
+   surfaces carry the mark is visible to the owner and is decided nowhere.
+Whoever builds T-028 would choose both, and gate 2 could not tell a right choice from a
+wrong one (TEAM-008). FLOW-005 (1), FLOW-036 (6) and FLOW-002 (4) read determinately on
+their own and are not questioned here.
+**Stopped:** T-028 (FLOW-008 (2), FLOW-005 (2), (4)). T-028 also waits behind T-027,
+T-017, T-026 and T-025, and through them behind the tasks SD-002–SD-016 stop; those are
+not this entry's ground.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-018 — FLOW-008 does not say whether an offline edit to a recipe whose state, but not whose content, changed on the server is "divergent" (2026-09-27)
+**Requirement IDs:** FLOW-008 (statement, 1, 3, 4); read against CON-003 (1), ST-003 (statement, 1), ST-009 (statement), FLOW-002 (2, 4), the state table of `spec/60-entity-states.md` and the glossary's "Frozen" (`spec/10-glossary.md`)
+**Class:** ambiguity
+**What the gate hit:** T-027 builds the server side of FLOW-008 and CON-003 (1): it
+decides, for every edit a device sends late, whether it is stored, refused, or stored
+as a `private` fork. FLOW-008 gives "divergent" two readings that part on one case.
+The statement fires when "the same account edits one recipe on two devices while at
+least one of them is offline, so that the local version and the version the server
+holds have diverged" — an edit on each side. Criterion 4 glosses the opposite as
+"no divergence — device B's version is the one the server already holds", which
+makes any difference between the two versions a divergence. The case where they
+part: device B edits a recipe offline; on the server nobody edited its content, but
+it was submitted and has since become `pending`, `link_shared` or `published`.
+Under the gloss, B's version is divergent, criterion 3 applies, and B's edit becomes
+a `private` fork. Under the statement, only one device edited, FLOW-008 does not
+fire, CON-003 (1) and ST-003 (1) reject the edit — and no requirement says what then
+becomes of the change B holds: whether it is kept, discarded, or turned into
+something, and what B's owner is told (ST-009 speaks of transitions, and an edit is
+not one; FLOW-008's source says "No edit is discarded", but only for the case the
+statement covers). The two readings leave different recipes in the account and
+different things on device B; each is consistent with CON-003 (1), so gate 2 could
+not tell which one was built, and the developer would be making the choice
+(TEAM-008). The sync ADR (`docs/architecture/decisions/20260927-server-authoritative-sync-with-outbox.md`)
+compares a revision number but does not say whether a state change moves it, and
+is not `spec/` in any case. Neither reading is preferred here.
+**Stopped:** T-027 (carries FLOW-008 (1, 3, 4) and CON-003 (1)); T-028 (depends on
+T-027 and carries FLOW-008 (2), whose "that outcome" is this one).
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-019 — An account created muted from the write control: AUTH-001 has the action proceed, AUTH-004 has no recipe created, and nothing says what the person is told then or how a muted account attempts writing again (2026-09-27)
+**Requirement IDs:** AUTH-001 (statement, 2, 5), ACT-001 (3), AUTH-004 (statement, 2, 4, 5, verification), AUTH-006 (1), AUTH-005 (statement, 1); read against AUTH-004 (3), the permissions table of `spec/40-actors.md` ("Create and fork a recipe": "no (AUTH-004)" for a muted account) and ADR 20260920-account-on-demand
+**Class:** inconsistency (items 1 and 2); omission (item 1, what the person is told)
+**What the gate hit:** T-026 builds the offer of an account when a person with no
+account uses a control that writes a recipe, and carries AUTH-001 (2), ACT-001 (3),
+AUTH-004 (4) and AUTH-006 (1). Creation on that trigger yields a muted account
+whenever the server answers and no verdict can be obtained (AUTH-001 (5): "AUTH-004
+governs what is created"; built by T-006). Two things the person then sees are
+decided by the specification in two ways at once:
+1. **Whether writing proceeds once a muted account exists, and what the person is
+   told at that moment.** AUTH-001 (2) and ACT-001 (3): "the action they asked for
+   proceeds once the account exists"; AUTH-004 (2) says that "a muted account is
+   still an account". AUTH-004's statement ("shall not write") and (4) ("the editor
+   … is not offered and no recipe can be created") say the same action does not
+   proceed. For two of the four triggering actions the specification settles the
+   collision explicitly: AUTH-004 (5) has AUTH-006 state "at that moment that the
+   action cannot proceed and why" when the muted account "was created because the
+   person asked to fork or to rate". Writing — one of the four actions AUTH-004's
+   verification walks with attestation blocked — is not named there, and nothing
+   else says whether the person who asked to write is told at that moment, or is
+   returned to where they were with the write control replaced by AUTH-006 (1)'s
+   statement, or anything else. The readings give different screens on the task's
+   own trigger; under any of them AUTH-001 (2) as written is not met, and gate 2
+   could not tell a right outcome from a wrong one (TEAM-008).
+2. **Whether a muted account can attempt writing at all.** AUTH-004 (4) and AUTH-006
+   (1) take the control away: the editor "is not offered", and "a statement takes
+   its place". AUTH-005's statement fires "when a muted account attempts an action
+   that AUTH-004 withholds", and its criterion (1) has the person "tap the fork
+   control" — the control AUTH-004 (3) makes "absent". Whether the statement that
+   replaces the write control is itself something the person can act on (so that
+   AUTH-005 obtains a verdict and writing proceeds on a full account), or whether a
+   muted account has no path to the attempt AUTH-005 is written for, is not stated.
+   T-026 builds that replacement; AUTH-005 is placed in wave 7, and whichever
+   surface T-026 ships decides whether AUTH-005 can ever be reached from writing.
+The replacement is not stated here. Each requirement is consistent on its own; they
+meet only where creation from a withheld action yields a muted account.
+**Stopped:** T-026 (AUTH-001 (2), ACT-001 (3), AUTH-004 (4), AUTH-006 (1)). T-023 and
+T-028 depend on T-026, and T-024–T-025 wait behind T-023, through the backlog's
+dependencies. Item 1 also reaches AUTH-004 (5) (wave 4) and item 2 AUTH-005 (wave 7)
+when those waves are sliced.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-020 — Duplicate of SD-018 (2026-09-27)
+**Duplicate of:** SD-018. The same text was appended a second time through a scratchpad-file
+collision between concurrent gate-1 calls. SD-018 is the entry of record; this number is
+not reused and records nothing of its own.
+**Status:** duplicate — see SD-018
+
+### SD-021 — A refused notification permission: "asked for again" cannot be done on Android 10–12 or after a second refusal, its first request is placed nowhere, and whether the timer still sounds is answered two ways (2026-09-27)
+**Requirement IDs:** FLOW-013 (5), A11Y-007 (3), EXT-009 (statement, 1); read against FLOW-013 (statement, 1, 2, note), QUAL-005 (statement, 3), CON-005 and L10N-001 (1)
+**Class:** not implementable (item 1); omission (item 2); inconsistency (item 3)
+**What the gate hit:** T-023 builds the announcement of a timer that ends while the
+application is closed or the screen is locked, and carries FLOW-013 (1–5), A11Y-007 (3)
+and EXT-009 (1) together, copied verbatim (C5), so none of this can be corrected at the
+task. FLOW-013 (5) is the only sentence in `spec/` about the notification permission.
+1. **"Asked for again" on the platform the product is bound to.** FLOW-013 (5): "the
+   permission is asked for again only when the reader next starts a timer." CON-005
+   makes the client native Android and QUAL-005 requires every function of the
+   specification on Android 10 (API 29) and every later version. On Android 10–12 there
+   is no runtime permission to show notifications: they are on unless the reader turns
+   them off in the system's settings, and the application has no request it can make
+   that the reader answers. On Android 13 and later the permission is requested at run
+   time, and once the reader has refused it twice the platform stops showing the request
+   when the application makes it. On those devices, and on every device at API 29–32,
+   the request FLOW-013 (5) places at the next timer start either shows the reader
+   nothing or has to be something the application draws itself — an explanation that
+   sends the reader to the system's settings — which is a screen, with strings under
+   L10N-001 (1), that no criterion describes. Whether "asked for" means the platform's
+   request, and so holds only where the platform allows it, or any request the product
+   makes, is what separates a build that shows nothing from one that shows a screen of
+   its own, and gate 2 could not tell which is right.
+2. **When the permission is first asked for.** FLOW-013 (5) fixes only when it is asked
+   "again". On Android 13 and later notifications are withheld until the permission is
+   granted, so some first request is needed for FLOW-013 (1) and (2) to hold at all.
+   Nothing says whether it comes on the first start of a timer, on first launch, or
+   elsewhere; each is a request the reader sees at a different moment, and a request
+   placed anywhere FLOW-013 (5) does not name is behaviour with no requirement behind it
+   at gate 2.
+3. **Whether a timer ending with notifications refused is heard.** A11Y-007 (3): "Given
+   a timer that ends while the screen is off or the application is closed, then it
+   announces itself audibly from the device's own facility (FLOW-013, EXT-009)." It
+   carries no exception for a refused permission. EXT-009's statement drives "every
+   announcement from the device's own clock and its own notification facility", which
+   is the facility the reader refused. FLOW-013 (5) says of the refused case only that
+   the timer "is still finished and is shown as finished inside the application".
+   Read with EXT-009, a refused facility means nothing sounds while the application is
+   closed, and A11Y-007 (3) does not hold for that reader. Read with A11Y-007 (3), the
+   timer must still sound, which the device can only do through something other than
+   its notification facility, which EXT-009's statement does not provide for. The two
+   builds differ in the one thing a cook with the oven on would notice.
+FLOW-013 (1)–(4), FLOW-016 (3)–(8) and EXT-009 (1) with the permission granted are not
+questioned here. SD-014 (a reference to an ingredient holding no quantity) and SD-015
+(GUIDE-006's display) also touch the derived name T-023 announces and are cited, not
+restated.
+**Stopped:** T-023 (FLOW-013 (5), A11Y-007 (3), EXT-009 (1)). T-024, T-025 and T-028 wait
+behind it through the backlog's dependencies.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-022 — Duplicate of SD-021 (2026-09-27)
+**Duplicate of:** SD-021. The same text was appended again through a scratchpad-file
+collision between concurrent gate-1 calls. SD-021 is the entry of record; this number is
+not reused and records nothing of its own.
+**Status:** duplicate — see SD-021
+
+### SD-023 — Duplicate of SD-021 (2026-09-27)
+**Duplicate of:** SD-021. The same text was appended again through a scratchpad-file
+collision between concurrent gate-1 calls. SD-021 is the entry of record; this number is
+not reused and records nothing of its own.
+**Status:** duplicate — see SD-021
+
+### SD-024 — Duplicate of SD-021 (2026-09-27)
+**Duplicate of:** SD-021. The same text was appended again through a scratchpad-file
+collision between concurrent gate-1 calls. SD-021 is the entry of record; this number is
+not reused and records nothing of its own.
+**Status:** duplicate — see SD-021
+
+### SD-025 — Duplicate of SD-021 (2026-09-27)
+**Duplicate of:** SD-021. The same text was appended again through a scratchpad-file
+collision between concurrent gate-1 calls. SD-021 is the entry of record; this number is
+not reused and records nothing of its own.
+**Status:** duplicate — see SD-021
+
+### SD-026 — The place a reader had scrolled to is restored by FLOW-012's statement and observed by none of its criteria, and whether scale and place survive the operating system ending the application is read two ways (2026-09-27)
+**Requirement IDs:** FLOW-012 (statement, 1, 3, verification, source); read against the ADR 20260921-the-cooking-card-is-one-scrolling-screen, the preamble of `30-cooking`, RET-010 (2) and A11Y-004
+**Class:** omission (item 1); ambiguity (item 2)
+**What the gate hit:** T-025 promises in its title that the card "is where the reader
+left it", and carries FLOW-012 (1–3) copied verbatim (C5), so neither item can be
+corrected at the task.
+1. **The place is restored by the statement and observed by no criterion.** FLOW-012's
+   statement returns the reader "at the place in it the reader had scrolled to"; its
+   correction of 2026-09-21, the ADR ("What the product restores on return is the
+   scroll position") and the preamble of `30-cooking` all name the scroll position as
+   what is restored. None of FLOW-012's four criteria, nor any other in `spec/`,
+   observes it. The task's titular behaviour therefore reaches the developer through
+   the statement alone, and gate 2, walking criteria, can neither find its absence nor
+   say what "the place" is when the card is laid out differently on return — text at
+   another scale under A11Y-004, a rotated screen, a timer that ended while the reader
+   was away.
+2. **What survives the operating system ending the application.** The statement covers
+   "when the reader returns to the application after leaving it". The criteria
+   separate "leaves the application and returns" ((1), (2): recipe, scale, fixed
+   ingredient, timers) from "the operating system ended the application ... opens it
+   again" ((3): "the same recipe is shown", nothing more), and the source adds that
+   only closing "can cost the recipe". Whether the changed serving count, the fixed
+   ingredient and the place come back after the process was ended, or only the recipe,
+   is read two ways, and the two readings meet different limits on device state:
+   RET-010 (2) lists "the recipe last open (FLOW-012)" among what the device holds, and
+   the ADR says "nothing about a reader's progress is stored". FLOW-012's own
+   verification repeats the walk "with the process ended by the operating system", so
+   the case is meant to be tested.
+FLOW-014 and A11Y-007 (4) are determinate and are not questioned here. SD-003 item 1
+(the combined state of a changed count with a fixed ingredient, FLOW-012 (1)'s Given) is
+cited, not restated.
+**Stopped:** T-025 (FLOW-012). T-028 waits behind it through the backlog's dependencies.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
