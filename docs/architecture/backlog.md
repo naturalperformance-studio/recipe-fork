@@ -52,14 +52,14 @@ in this wave, and no media is attached.
 | T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-001 | blocked |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018 | blocked |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-002 | blocked |
-| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-015 | returned |
-| T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
-| T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
-| T-024 | Several timers run at once, and restarting one asks first | T-023 | planned |
-| T-025 | The card keeps the screen awake and is where the reader left it | T-024 | planned |
-| T-026 | Writing a recipe asks for an account first | T-010, T-018 | planned |
-| T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | planned |
-| T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-017, T-026, T-025 | planned |
+| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-015 | blocked |
+| T-022 | A timer runs on its step | T-021, T-014, T-010 | returned |
+| T-023 | A timer announces itself when the application is closed | T-022, T-026 | blocked |
+| T-024 | Several timers run at once, and restarting one asks first | T-023 | returned |
+| T-025 | The card keeps the screen awake and is where the reader left it | T-024 | blocked |
+| T-026 | Writing a recipe asks for an account first | T-010, T-018 | blocked |
+| T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | blocked |
+| T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-017, T-026, T-025 | blocked |
 
 ### T-001 — Quantities follow the serving count
 
@@ -265,7 +265,7 @@ in this wave, and no media is attached.
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/lint.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_common.xml` · `app/src/main/res/values-ru/strings_common.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** First screen of the application: it carries the recipe model in `:core` (every field of `50-domain-model`), its local tables, the navigation host and the test helpers for the three cross-cutting criteria every later screen repeats. Expected at 600–800 changed lines.
-**Criteria of these requirements carried elsewhere:** FLOW-034 (2, 4) → wave 3 · FLOW-036 (3, 8) → wave 2; (6) → T-028; (7) → wave 3 · FLOW-039 (3–4) → wave 3 · FLOW-041 (1–4, 6) → wave 2 · FLOW-043 (1–4) → wave 2; (6) → wave 3 · FLOW-038 (1–2, 6) → T-018; (3–4) → wave 5; (7) → wave 3 · A11Y-008 (1) → T-019; (2) → wave 6; (4) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-034 (2, 4) → wave 3 · FLOW-036 (3, 8) → wave 2; (6) → T-028; (7) → wave 3 · FLOW-039 (3–4) → wave 3 · FLOW-041 (1–4, 6) → wave 2 · FLOW-043 (1–4) → wave 2; (6) → wave 3 · FLOW-038 (1–2, 6) → T-018; (3–4) → wave 5; (7) → wave 3 · A11Y-008 (1) → T-019; (2) → wave 6; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -319,7 +319,7 @@ in this wave, and no media is attached.
 **Depends on:** T-007
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (4) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 4, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004
+**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (4) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 4, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -369,7 +369,7 @@ in this wave, and no media is attached.
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/assets/terms/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
 **Note:** Open, raised to the user: the text of the terms of use does not exist yet (MVP-003, OQ-029). The task presents the versioned document from `app/src/main/assets/terms/`; until the text is supplied that document is a placeholder that says so in both languages.
-**Criteria of these requirements carried elsewhere:** AUTH-018 (3, 5) → T-005; (4) → wave 7 · AUTH-007 (7, 9) → T-010; (8) → wave 7 · AUTH-017 (2, 5–6) → wave 7; (3–4) → T-005 · LEG-004 (2) → wave 3; (3) → wave 7; (4) → T-005 · CON-001 (2) → T-005
+**Criteria of these requirements carried elsewhere:** AUTH-018 (3, 5) → T-005; (4) → wave 7 · AUTH-007 (7, 9) → T-010; (8) → wave 7 · AUTH-017 (2, 5–6) → wave 7; (3–4) → T-005 · LEG-004 (2) → wave 3; (3) → wave 7; (4) → T-005 · CON-001 (2) → T-005 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -417,7 +417,7 @@ in this wave, and no media is attached.
 **Depends on:** T-009
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** AUTH-020 (3–4) → wave 7; (5) → T-005 · AUTH-007 (1–6) → T-009; (8) → wave 7
+**Criteria of these requirements carried elsewhere:** AUTH-020 (3–4) → wave 7; (5) → T-005 · AUTH-007 (1–6) → T-009; (8) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -451,7 +451,7 @@ in this wave, and no media is attached.
 **Depends on:** T-008
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-023 (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003
+**Criteria of these requirements carried elsewhere:** FLOW-023 (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -508,7 +508,7 @@ in this wave, and no media is attached.
 **Depends on:** T-011
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1–4, 7–9) → T-011; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 4, 7) → T-011; (5) → wave 3; (6) → T-004
+**Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1–4, 7–9) → T-011; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 4, 7) → T-011; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -549,7 +549,7 @@ in this wave, and no media is attached.
 **Depends on:** T-012
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-024 (1) → wave 5; (3, 5) → wave 4; (4, 6) → T-008 · FLOW-002 (2–3) → T-008; (4) → T-028
+**Criteria of these requirements carried elsewhere:** FLOW-024 (1) → wave 5; (3, 5) → wave 4; (4, 6) → T-008 · FLOW-002 (2–3) → T-008; (4) → T-028 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -581,7 +581,7 @@ in this wave, and no media is attached.
 **Depends on:** T-013
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-027 (8) → T-017; (10) → T-016 · DOM-013 (5) → T-024
+**Criteria of these requirements carried elsewhere:** FLOW-027 (8) → T-017; (10) → T-016 · DOM-013 (5) → T-024 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -630,7 +630,7 @@ in this wave, and no media is attached.
 **Depends on:** T-014
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/recipe/StepText.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/StepTextTest.kt` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-032 (1–4) → T-021 · DOM-007 (1) → T-021 · GUIDE-008 (5) → wave 2
+**Criteria of these requirements carried elsewhere:** FLOW-032 (1–4) → T-021 · DOM-007 (1) → T-021 · GUIDE-008 (5) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -675,7 +675,7 @@ in this wave, and no media is attached.
 **Depends on:** T-015
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-027 (1–7, 9, 11) → T-014; (8) → T-017 · A11Y-006 (2) → wave 8; (3) → wave 2
+**Criteria of these requirements carried elsewhere:** FLOW-027 (1–7, 9, 11) → T-014; (8) → T-017 · A11Y-006 (2) → wave 8; (3) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -715,7 +715,7 @@ in this wave, and no media is attached.
 **Depends on:** T-016
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/recipe/Limits.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/LimitsTest.kt` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-028 (4, 6) → wave 2 · FLOW-027 (1–7, 9, 11) → T-014; (10) → T-016 · DOM-012 (1–7) → wave 2 · GUIDE-005 (1, 6) → wave 2; (4) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-028 (4, 6) → wave 2 · FLOW-027 (1–7, 9, 11) → T-014; (10) → T-016 · DOM-012 (1–7) → wave 2 · GUIDE-005 (1, 6) → wave 2; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -764,13 +764,13 @@ in this wave, and no media is attached.
 
 ### T-018 — A saved recipe opens as the card a reader sees, at the serving count chosen
 
-**Requirements:** FLOW-029, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, L10N-001, A11Y-003, A11Y-005
+**Requirements:** FLOW-029, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005
 **Status:** blocked
 **Depends on:** T-008, T-001
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** The card is the screen the product exists for and its first version carries the layout every later card task builds on. Expected at 450–550 changed lines.
-**Criteria of these requirements carried elsewhere:** FLOW-019 (4) → wave 3 · FLOW-038 (3–4) → wave 5; (5) → T-007; (7) → wave 3 · SCALE-011 (4) → T-020 · DOM-011 (2–3) → wave 2; (4) → wave 8 · L10N-003 (1) → T-003; (2) → T-011 · A11Y-007 (2) → T-022; (3) → T-023; (4) → T-025; (5) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-019 (4) → wave 3 · FLOW-038 (3–4) → wave 5; (5) → T-007; (7) → wave 3 · SCALE-011 (4) → T-020 · DOM-011 (2–3) → wave 2; (4) → wave 8 · L10N-003 (1) → T-003; (2) → T-011 · A11Y-007 (3) → T-023; (4) → T-025; (5) → wave 8 · A11Y-003 (3–4) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -815,18 +815,20 @@ in this wave, and no media is attached.
 
 *A11Y-007 — spec/200-accessibility.md*
 - Given the cooking card, when it is opened with the device at its default font scale, then its step text is larger than body text elsewhere in the product.
+- Given the cooking card, when its controls are measured, then A11Y-003's larger figure holds.
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
-*A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
-
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md
+**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -838,7 +840,7 @@ in this wave, and no media is attached.
 **Depends on:** T-018
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** A11Y-008 (2) → wave 6; (3) → T-007; (4) → wave 8
+**Criteria of these requirements carried elsewhere:** A11Y-008 (2) → wave 6; (3) → T-007; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -873,12 +875,12 @@ in this wave, and no media is attached.
 
 ### T-020 — The reader fixes an ingredient on the card
 
-**Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, L10N-001, A11Y-003, A11Y-005
+**Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, A11Y-003, A11Y-007, L10N-001, A11Y-005
 **Status:** blocked
 **Depends on:** T-019, T-002
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–5) → T-002 · SCALE-011 (1–3) → T-018
+**Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–5) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-023; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -900,17 +902,21 @@ in this wave, and no media is attached.
 *SCALE-011 — spec/80-scaling-rules.md*
 - Given a count requested as a fraction, when the recipe is displayed, then the count is displayed by SCALE-008 in the same form it was requested.
 
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
+
+*A11Y-007 — spec/200-accessibility.md*
+- Given the cooking card, when its controls are measured, then A11Y-003's larger figure holds.
+
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
-*A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
-
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md
+**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -918,11 +924,11 @@ in this wave, and no media is attached.
 ### T-021 — A reference in a step reads as the quantity the list shows
 
 **Requirements:** SCALE-007, FLOW-032, DOM-007, CON-004, L10N-001, A11Y-003, A11Y-005
-**Status:** returned
+**Status:** blocked
 **Depends on:** T-020, T-015
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-032 (5) → T-015 · DOM-007 (2) → T-015 · CON-004 (1, 3) → T-019
+**Criteria of these requirements carried elsewhere:** FLOW-032 (5) → T-015 · DOM-007 (2) → T-015 · CON-004 (1, 3) → T-019 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -952,7 +958,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-021-gate1.md; CON-004 (2) added, re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-021-gate1.md; CON-004 (2) added; blocked-by-spec (SD-012, SD-014) — docs/product/verdicts/20260927-T-021-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -960,17 +966,16 @@ in this wave, and no media is attached.
 ### T-022 — A timer runs on its step
 
 **Requirements:** FLOW-013, A11Y-003, A11Y-007, L10N-001, A11Y-005
-**Status:** planned
+**Status:** returned
 **Depends on:** T-021, T-014, T-010
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-013 (1–5) → T-023 · A11Y-007 (1) → T-018; (3) → T-023; (4) → T-025; (5) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-013 (1–5, 7) → T-023 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-023; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-013 — spec/70-flows/30-cooking.md*
 - Given a running timer, when the reader opens the recipe, then the time remaining is shown on its step.
-- Given a running timer, when the reader cancels it, then nothing announces itself afterwards.
 
 *A11Y-003 — spec/200-accessibility.md*
 - Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
@@ -986,19 +991,19 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-022-gate1.md; FLOW-013 (7) moved to T-023, re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-023 — A timer announces itself when the application is closed
 
 **Requirements:** FLOW-013, FLOW-016, EXT-009, A11Y-007, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-022, T-026
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-013 (6–7) → T-022 · FLOW-016 (1–2, 9–11) → T-024 · EXT-009 (2) → wave 8; (3) → wave 2 · A11Y-007 (1) → T-018; (2) → T-022; (4) → T-025; (5) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-013 (6) → T-022 · FLOW-016 (1–2, 9–11) → T-024 · EXT-009 (2) → wave 8; (3) → wave 2 · A11Y-007 (1–2) → T-018; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1008,6 +1013,7 @@ in this wave, and no media is attached.
 - Given the announcement, when it is displayed, then it names the recipe and the step, so that timers from two recipes are told apart.
 - Given the announcement, when the reader acts on it, then the application opens at the step the timer belongs to.
 - Given the reader refused permission to show notifications, when a timer ends, then it is still finished and is shown as finished inside the application, and the permission is asked for again only when the reader next starts a timer.
+- Given a running timer, when the reader cancels it, then nothing announces itself afterwards.
 
 *FLOW-016 — spec/70-flows/30-cooking.md*
 - Given a timer whose author gave it no name, when it ends, then the announcement carries the recipe's title and the first 60 characters of its step's text, cut at a word boundary, with an ellipsis where the text was longer.
@@ -1033,19 +1039,19 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-021) — docs/product/verdicts/20260927-T-023-gate1.md; FLOW-013 (7) added from T-022 after this verdict, re-gate due with the spec fix
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-024 — Several timers run at once, and restarting one asks first
 
-**Requirements:** FLOW-016, FLOW-021, DOM-013, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Requirements:** FLOW-016, FLOW-021, DOM-013, A11Y-003, A11Y-007, L10N-001, A11Y-005
+**Status:** returned
 **Depends on:** T-023
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-016 (3–8) → T-023 · DOM-013 (1–4) → T-014
+**Criteria of these requirements carried elsewhere:** FLOW-016 (3–8) → T-023 · DOM-013 (1–4) → T-014 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-023; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1066,29 +1072,33 @@ in this wave, and no media is attached.
 *DOM-013 — spec/50-domain-model/10-invariants.md*
 - Given a recipe whose steps each carry a timer, when the reader starts several of them, then all of them run at once (FLOW-016).
 
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
+
+*A11Y-007 — spec/200-accessibility.md*
+- Given the cooking card, when its controls are measured, then A11Y-003's larger figure holds.
+
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
-*A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
-
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-024-gate1.md; A11Y-003 (2) and A11Y-007 (2) added, re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-025 — The card keeps the screen awake and is where the reader left it
 
 **Requirements:** FLOW-014, FLOW-012, A11Y-007, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-024
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-012 (4) → wave 3 · A11Y-007 (1) → T-018; (2) → T-022; (3) → T-023; (5) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-012 (4) → wave 3 · A11Y-007 (1–2) → T-018; (3) → T-023; (5) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1117,7 +1127,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-026) — docs/product/verdicts/20260927-T-025-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1125,11 +1135,11 @@ in this wave, and no media is attached.
 ### T-026 — Writing a recipe asks for an account first
 
 **Requirements:** ACT-001, AUTH-001, FLOW-003, AUTH-004, AUTH-006, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-010, T-018
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7 · AUTH-004 (1) → wave 3; (3, 5) → wave 4; (6) → T-006; (7) → wave 6 · AUTH-006 (3) → wave 7
+**Criteria of these requirements carried elsewhere:** ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7 · AUTH-004 (1) → wave 3; (3, 5) → wave 4; (6) → T-006; (7) → wave 6 · AUTH-006 (3) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1164,7 +1174,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-019) — docs/product/verdicts/20260927-T-026-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1172,7 +1182,7 @@ in this wave, and no media is attached.
 ### T-027 — The server keeps an account's drafts and turns a stale edit into a fork
 
 **Requirements:** FLOW-008, CON-003, ACT-002, DOM-004
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-006
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/kotlin/app/recipefork/server/auth/**` · `server/src/main/resources/db/migration/V3__recipes.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/auth/**`
 **Binding ADRs:** decisions/20260927-server-authoritative-sync-with-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
@@ -1196,7 +1206,7 @@ in this wave, and no media is attached.
 - Given a forked recipe, when its parent is resolved, then it is the recipe it was forked from, at every point in its lifetime.
 - Given any recipe, when its stored fields are enumerated, then none of them lists descendants or names a chain root.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-018) — docs/product/verdicts/20260927-T-027-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1204,11 +1214,11 @@ in this wave, and no media is attached.
 ### T-028 — Drafts written offline reach the server by themselves, and each says whether they have
 
 **Requirements:** FLOW-002, FLOW-005, FLOW-008, FLOW-036, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-027, T-017, T-026, T-025
 **Expected files:** `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/sync/**` · `app/src/test/kotlin/app/recipefork/app/sync/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-server-authoritative-sync-with-outbox.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-002 (1) → T-013; (2–3) → T-008 · FLOW-005 (3) → wave 5 · FLOW-008 (1, 3–4) → T-027 · FLOW-036 (1–2, 4–5) → T-007; (3, 8) → wave 2; (7) → wave 3
+**Criteria of these requirements carried elsewhere:** FLOW-002 (1) → T-013; (2–3) → T-008 · FLOW-005 (3) → wave 5 · FLOW-008 (1, 3–4) → T-027 · FLOW-036 (1–2, 4–5) → T-007; (3, 8) → wave 2; (7) → wave 3 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1236,7 +1246,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
