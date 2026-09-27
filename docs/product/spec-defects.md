@@ -20,6 +20,7 @@ is OQ-009's question and is not restated here.
 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-002 — The rounding grid does not say which values it holds above 1000 g or above one unit, nor how a value reaches one (2026-09-27)
 **Requirement IDs:** SCALE-001, SCALE-010 (the rounding grid of `spec/80-scaling-rules.md` they invoke); read against DOM unit-type table (`spec/50-domain-model/00-index.md`), SCALE-008, ADR 20260920-scaling-extremes
@@ -60,6 +61,7 @@ content: T-002, T-018, T-019, T-020, T-021; every task downstream of T-001 waits
 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-003 — The two entry points of scaling are not said to combine: a count changed while an ingredient is fixed, the scale left when the last fixing is released, and a serving count exactly between two values (2026-09-27)
 **Requirement IDs:** SCALE-001, SCALE-002, SCALE-006, SCALE-008; read against SCALE-003, the glossary's "Fixed ingredient" (`spec/10-glossary.md`), FLOW-012 (1) and FLOW-017
@@ -102,6 +104,7 @@ of the same three requirements and depends on T-002). T-021–T-025 and T-028 wa
 behind T-020 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-004 — Opening the favourites section is not said to show either view: which one is in force before the reader has chosen, and whether a person with no account is offered the own-recipes view at all (2026-09-27)
 **Requirement IDs:** FLOW-034; read against FLOW-042 (4–5), FLOW-051 (6), ACT-001 (1, 5) and the permissions table of `spec/40-actors.md`
@@ -138,6 +141,7 @@ Whoever writes the section would decide both, and gate 2 could not tell (TEAM-00
 backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-005 — A second timer on a step is not offered, yet the author is to be told why when they attempt one: no path to the attempt exists, and the statement is to be closed where a hint has nothing to dismiss (2026-09-27)
 **Requirement IDs:** FLOW-027, GUIDE-007, DOM-013; read against GUIDE-005 and the ADR `spec/decisions/20260920-timer-named-by-its-step.md`
@@ -179,6 +183,7 @@ gate 2 could tell one build from the other (TEAM-008).
 behind them wait through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-006 — When the ingredient field "matches nothing" is not stated: what the dictionary search counts as a match, and whether free text is offered while entries are offered that are not the author's ingredient (2026-09-27)
 **Requirement IDs:** FLOW-022, FLOW-023 (6), DOM-009 (2); read against FLOW-023 (2–4), the glossary's "Free text" and "Qualifier" (`spec/10-glossary.md`), OQ-019, OQ-020, L10N-007 and the ADR `spec/decisions/20260920-ingredient-dictionary.md`
@@ -218,6 +223,7 @@ carried by T-011; that task's own gate decides whether it stops there.
 T-028 wait behind T-012 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «И помечай эти пункты как закрытые» (re-checked against spec/ @ 4cc2c18)
 
 ### SD-007 — The recovery key is presumed to be offered for saving, but no requirement says whether or how, nor on which screen it is shown (2026-09-27)
 **Requirement IDs:** AUTH-020 (1, 2); read against AUTH-007 (statement, 1, 2, 4, 6, 7), AUTH-008 (1), EXT-008, AUTH-021, the glossary's "Recovery key" (`spec/10-glossary.md`) and ADR 20260921-the-recovery-key
@@ -262,6 +268,7 @@ decided nowhere, and whoever writes the screen would decide them:
 T-028) wait through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-008 — The ingredient row's unit field is not specified: which units it offers, whether it stays once "to taste" is picked, and whether a leaf is offered because its parent matched (2026-09-27)
 **Requirement IDs:** FLOW-023 (1, 3, 7, 8), DOM-002 (1); read against L10N-008, the unit-type table of `spec/50-domain-model/00-index.md`, the glossary's "Unit type" (`spec/10-glossary.md`) and OQ-020. SD-006 item 1 (what the ingredient field counts as a match) also reaches FLOW-023 (2), (3) and FLOW-001 (4) here and is cited, not restated.
@@ -305,6 +312,7 @@ build from a wrong one (TEAM-008).
 T-021–T-025 and T-028 wait behind T-011 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-009 — The creation screen "cannot be left by an ordinary back action", and nothing says how a person who has not confirmed leaves it (2026-09-27)
 **Requirement IDs:** AUTH-007 (4, 7); read against AUTH-007 (8), AUTH-001 (2, 7) and ADR 20260921-nothing-exists-until-it-is-confirmed
@@ -341,6 +349,7 @@ not cover this one.
 leaving, and waits behind T-009 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «И помечай эти пункты как закрытые» (re-checked against spec/ @ 4cc2c18)
 
 ### SD-010 — AUTH-018's heading reads as one reroll; its statement, criterion and verification say any number (2026-09-27)
 **Requirement IDs:** AUTH-018 (heading, statement, criterion 2, verification); read against the glossary's "Nickname" (`spec/10-glossary.md`), DOM-001 (2) and ADR 20260920-account-on-demand
@@ -359,6 +368,7 @@ the readings.
 **Stopped:** T-009 (AUTH-018 (2)).
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-011 — SCALE-006 calls the scale factor "displayed", and no requirement says the reader is shown one (2026-09-27)
 **Requirement IDs:** SCALE-006 (1); read against SCALE-002 (statement), SCALE-006 (statement, 3), SCALE-008 (5) and the glossary's "Fixed ingredient" (`spec/10-glossary.md`)
@@ -382,6 +392,7 @@ card's gate; T-002 carries the criterion, T-020 the card it would appear on.
 stopped by SD-003.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-012 — SCALE-004's second criterion states the wrong direction, and a scaled quantity displayed at its authored value is not said to be derived or not (2026-09-27)
 **Requirement IDs:** SCALE-004 (statement, 1, 2), CON-004 (statement, 1, 2); read against SCALE-004 (3), SCALE-005 (statement, 1), SCALE-001 (4), FLOW-017 (1) and the glossary's "Derived" (`spec/10-glossary.md`)
@@ -423,6 +434,7 @@ same derived marker the list carries"), T-022–T-025 and T-028 wait behind T-01
 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-013 — The authored serving count's admissible values are stated nowhere: whole or fractional, its floor, zero, and its ceiling (2026-09-27)
 **Requirement IDs:** FLOW-002 (1), DOM-006 (statement); read against the `servings` field of the domain model (`spec/50-domain-model/00-index.md`: "number"), the glossary's "Authored serving count" and "Requested serving count" (`spec/10-glossary.md`), SCALE-001 (statement), SCALE-011 (statement, 1, 2), the serving-count paragraph of the rounding grid (`spec/80-scaling-rules.md`), FLOW-017 ("when the reader returns it to the authored count"), CON-004 (3) and DOM-012
@@ -459,6 +471,7 @@ already stopped by SD-002) and the count T-018's card opens at; their own gates 
 whether they stop here.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-014 — A reference may point at an ingredient that holds no quantity, and nothing says what it shows or whether it survives (2026-09-27)
 **Requirement IDs:** FLOW-031 (1, 3, 4), FLOW-032 (statement, 5); read against DOM-002 (1, 2), DOM-007 (statement), FLOW-023 (8) and the glossary's "Ingredient reference" (`spec/10-glossary.md`)
@@ -493,6 +506,7 @@ whether it stops here. T-015 is also behind T-014 (SD-005) and T-011–T-013 (SD
 SD-008).
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-015 — What a long step's notification "will say" is not one text when its opening holds a reference, and GUIDE-006 does not say at which serving count it is shown or counted (2026-09-27)
 **Requirement IDs:** GUIDE-006 (statement, 1, 2, 4); read against FLOW-016 (3, 4, 8), FLOW-032 (1, 3, 5), FLOW-031 (1), GUIDE-004 (item 4) and GUIDE-008
@@ -535,6 +549,7 @@ tasks before it, which SD-004, SD-005, SD-006, SD-008, SD-013 and SD-014 stop; t
 are not this entry's ground.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-016 — "The narrowest supported screen width" is a figure stated nowhere, and the digit grouping SCALE-012 hands to `localization` is not there (2026-09-27)
 **Requirement IDs:** SCALE-012 (1, 2, verification, note); read against QUAL-005, the device classes of `spec/140-quality.md`, section `localization` (L10N-001–L10N-008, `spec/160-localization.md`) and A11Y-004
@@ -573,6 +588,7 @@ nowhere in it:
 and T-028 wait behind T-018 through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-017 — The fork notice of FLOW-008 is tied to opening the application, which automatic sync does not wait for, and FLOW-005 does not say where an accepted recipe is marked (2026-09-27)
 **Requirement IDs:** FLOW-008 (statement, 2), FLOW-005 (statement, 2, 4); read against FLOW-002 (4), FLOW-036 (6), FLOW-029 (the card of an own recipe, cited by FLOW-053) and the binding ADR `docs/architecture/decisions/20260927-server-authoritative-sync-with-outbox.md` (outbox drained "whenever a connection exists")
@@ -613,6 +629,7 @@ T-017, T-026 and T-025, and through them behind the tasks SD-002–SD-016 stop; 
 not this entry's ground.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-018 — FLOW-008 does not say whether an offline edit to a recipe whose state, but not whose content, changed on the server is "divergent" (2026-09-27)
 **Requirement IDs:** FLOW-008 (statement, 1, 3, 4); read against CON-003 (1), ST-003 (statement, 1), ST-009 (statement), FLOW-002 (2, 4), the state table of `spec/60-entity-states.md` and the glossary's "Frozen" (`spec/10-glossary.md`)
@@ -643,6 +660,7 @@ is not `spec/` in any case. Neither reading is preferred here.
 T-027 and carries FLOW-008 (2), whose "that outcome" is this one).
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
 
 ### SD-019 — An account created muted from the write control: AUTH-001 has the action proceed, AUTH-004 has no recipe created, and nothing says what the person is told then or how a muted account attempts writing again (2026-09-27)
 **Requirement IDs:** AUTH-001 (statement, 2, 5), ACT-001 (3), AUTH-004 (statement, 2, 4, 5, verification), AUTH-006 (1), AUTH-005 (statement, 1); read against AUTH-004 (3), the permissions table of `spec/40-actors.md` ("Create and fork a recipe": "no (AUTH-004)" for a muted account) and ADR 20260920-account-on-demand
@@ -686,6 +704,7 @@ dependencies. Item 1 also reaches AUTH-004 (5) (wave 4) and item 2 AUTH-005 (wav
 when those waves are sliced.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «И помечай эти пункты как закрытые» (re-checked against spec/ @ 4cc2c18)
 
 ### SD-020 — Duplicate of SD-018 (2026-09-27)
 **Duplicate of:** SD-018. The same text was appended a second time through a scratchpad-file
@@ -743,6 +762,7 @@ restated.
 behind it through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «давай закрывать SD-021» (re-checked against spec/ @ ead1a44)
 
 ### SD-022 — Duplicate of SD-021 (2026-09-27)
 **Duplicate of:** SD-021. The same text was appended again through a scratchpad-file
@@ -802,3 +822,4 @@ cited, not restated.
 **Stopped:** T-025 (FLOW-012). T-028 waits behind it through the backlog's dependencies.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+**Resolved:** 2026-09-27 — «Запусти перепроверку спеки по дефектам, отметь что однозначно разрешено» (re-checked against spec/ @ 08e6223)
