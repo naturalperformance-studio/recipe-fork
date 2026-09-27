@@ -11,10 +11,14 @@ data class NicknameWords(val adjectives: List<String>, val nouns: List<String>)
 
 /** What confirming creation came to. */
 sealed interface CreationResult {
-    data class Created(val accountId: Long, val nickname: Nickname) : CreationResult
+    /** Created; [muted] unless a slot was occupied for it (AUTH-004). */
+    data class Created(val accountId: Long, val nickname: Nickname, val muted: Boolean) : CreationResult
     data object NicknameNotAdmitted : CreationResult
     data object NicknameTaken : CreationResult
     data object KeyTaken : CreationResult
+
+    /** The account could be created, but the slot could not be occupied, so nothing was stored. */
+    data object SlotNotOccupied : CreationResult
 }
 
 /**
@@ -42,12 +46,24 @@ class AccountStore(private val dataSource: DataSource) {
      * Creates the account in one transaction: the nickname must be two adjectives and a noun from
      * the current lists, and must be held by no account; the keys are stored as digests only. The
      * store's unique keys decide between two creations at the same moment (AUTH-018 (5)).
+     *
+     * [occupySlot], when given, is called once everything else has been written and before the commit, so a
+     * slot is occupied only for an account that is then created (AUTH-001 (3)); if it returns false, nothing
+     * is stored. Nothing it involves is written here (AUTH-015).
      */
-    fun create(nickname: Nickname, termsVersion: String, keys: KeySet): CreationResult =
+    fun create(
+        nickname: Nickname,
+        termsVersion: String,
+        keys: KeySet,
+        occupySlot: (() -> Boolean)? = null,
+    ): CreationResult =
         dataSource.connection.use { conn ->
             conn.autoCommit = false
             try {
-                val result = conn.createIn(nickname, termsVersion, keys)
+                var result = conn.createIn(nickname, termsVersion, keys)
+                if (result is CreationResult.Created && occupySlot != null) {
+                    result = if (occupySlot()) result.copy(muted = false) else CreationResult.SlotNotOccupied
+                }
                 if (result is CreationResult.Created) conn.commit() else conn.rollback()
                 result
             } catch (e: PSQLException) {
@@ -93,7 +109,7 @@ class AccountStore(private val dataSource: DataSource) {
                 stmt.executeUpdate()
             }
         }
-        return CreationResult.Created(accountId, nickname)
+        return CreationResult.Created(accountId, nickname, muted = true)
     }
 
     private fun <T> Connection.query(sql: String, vararg params: Any, row: (ResultSet) -> T): List<T> =

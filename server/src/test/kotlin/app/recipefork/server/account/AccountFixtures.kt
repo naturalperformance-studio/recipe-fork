@@ -3,6 +3,8 @@ package app.recipefork.server.account
 import app.recipefork.core.api.CreateAccountDto
 import app.recipefork.core.api.KeySetDto
 import app.recipefork.core.api.NicknameOfferDto
+import app.recipefork.server.attestation.AttestationService
+import app.recipefork.server.attestation.NoAttestation
 import app.recipefork.server.module
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
@@ -16,6 +18,7 @@ import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.security.SecureRandom
+import java.time.Clock
 import javax.sql.DataSource
 
 /** Plain SQL on the store, as the operator and an inspector of the store would use it. */
@@ -56,9 +59,11 @@ internal fun randomSeal(): KeySetSeal = KeySetSeal(ByteArray(KeySetSeal.MIN_SECR
 internal fun serve(
     db: DataSource,
     seal: KeySetSeal = randomSeal(),
+    attestation: AttestationService = NoAttestation,
+    clock: Clock = Clock.systemUTC(),
     test: suspend ApplicationTestBuilder.() -> Unit,
 ) = testApplication {
-    application { module(db, seal) }
+    application { module(db, seal, attestation, clock) }
     test()
 }
 
@@ -72,7 +77,8 @@ internal suspend fun HttpClient.createAccount(
     nickname: String,
     keys: KeySetDto,
     termsVersion: String = "2026-09-27",
-): HttpResponse = createAccountRaw(Json.encodeToString(CreateAccountDto(nickname, termsVersion, keys)))
+    attestationToken: String? = null,
+): HttpResponse = createAccountRaw(Json.encodeToString(CreateAccountDto(nickname, termsVersion, keys, attestationToken)))
 
 internal suspend fun HttpClient.createAccountRaw(body: String): HttpResponse =
     post(CreateAccountDto.PATH) {

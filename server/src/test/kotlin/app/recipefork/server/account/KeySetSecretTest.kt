@@ -4,6 +4,7 @@ import app.recipefork.core.api.AccountErrorDto
 import app.recipefork.core.api.AccountErrors
 import app.recipefork.core.api.CreateAccountDto
 import app.recipefork.core.api.KeySetDto
+import app.recipefork.server.attestation.Attestation
 import app.recipefork.server.configuredServer
 import app.recipefork.server.db.DatabaseConfig
 import app.recipefork.server.db.TestDatabase
@@ -40,7 +41,11 @@ class KeySetSecretTest {
     @AfterEach
     fun tearDown() = db.close()
 
-    private val databaseEnv = mapOf("DATABASE_URL" to "jdbc:postgresql://nowhere/none", "DATABASE_USER" to "u", "DATABASE_PASSWORD" to "p")
+    /** The rest of the server's configuration; `ATTESTATION` is set explicitly, as it has no default. */
+    private val databaseEnv = mapOf(
+        "DATABASE_URL" to "jdbc:postgresql://nowhere/none", "DATABASE_USER" to "u", "DATABASE_PASSWORD" to "p",
+        Attestation.ENV to "none",
+    )
 
     /** Starting the server under [secret] (absent when null); the store is never reached if it refuses. */
     private fun refusal(secret: String?): String {
