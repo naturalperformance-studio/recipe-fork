@@ -1,7 +1,6 @@
 package app.recipefork.server.account
 
 import java.security.MessageDigest
-import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -56,17 +55,27 @@ class KeySetSeal(secret: ByteArray) {
         /** The environment variable carrying the secret, base64-encoded. */
         const val SECRET_ENV = "KEY_SET_SECRET"
 
-        /** A seal under a fresh random secret: sets issued before a restart are not accepted after it. */
-        fun random(random: SecureRandom = SecureRandom()): KeySetSeal =
-            KeySetSeal(ByteArray(MIN_SECRET_BYTES).also(random::nextBytes))
+        private const val EXPECTED_FORM =
+            "expected a base64-encoded secret of at least $MIN_SECRET_BYTES bytes, the same on every start " +
+                "(for example the output of `openssl rand -base64 $MIN_SECRET_BYTES`)"
 
         /**
-         * The seal under [SECRET_ENV] when it is set (base64, at least 32 bytes), so that issued sets
-         * survive a restart; otherwise under a random secret for this process only.
+         * The seal under the secret in [SECRET_ENV]. There is no fallback: a secret made up for one process
+         * would void, on the next restart, every key set issued and not yet confirmed (AUTH-024 (6)). A
+         * missing, blank or malformed secret is refused with a message naming [SECRET_ENV].
          */
-        fun fromEnvironment(env: Map<String, String> = System.getenv()): KeySetSeal =
-            env[SECRET_ENV]?.takeIf { it.isNotBlank() }
-                ?.let { KeySetSeal(Base64.getDecoder().decode(it.trim())) }
-                ?: random()
+        fun fromEnvironment(env: Map<String, String> = System.getenv()): KeySetSeal {
+            val value = env[SECRET_ENV] ?: throw IllegalStateException("$SECRET_ENV is missing: $EXPECTED_FORM")
+            if (value.isBlank()) throw IllegalStateException("$SECRET_ENV is blank: $EXPECTED_FORM")
+            val secret = try {
+                Base64.getDecoder().decode(value.trim())
+            } catch (e: IllegalArgumentException) {
+                throw IllegalStateException("$SECRET_ENV is malformed: it is not base64 (${e.message}); $EXPECTED_FORM")
+            }
+            if (secret.size < MIN_SECRET_BYTES) {
+                throw IllegalStateException("$SECRET_ENV is malformed: it decodes to ${secret.size} bytes; $EXPECTED_FORM")
+            }
+            return KeySetSeal(secret)
+        }
     }
 }

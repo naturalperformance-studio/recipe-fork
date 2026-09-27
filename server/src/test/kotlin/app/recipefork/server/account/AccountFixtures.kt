@@ -15,6 +15,7 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.security.SecureRandom
 import javax.sql.DataSource
 
 /** Plain SQL on the store, as the operator and an inspector of the store would use it. */
@@ -49,9 +50,12 @@ internal fun DataSource.loadPlaceholderSeed() {
     connection.use { conn -> conn.createStatement().use { it.execute(sql) } }
 }
 
+/** A seal under a fresh random secret, as a server configured with its own secret would have. */
+internal fun randomSeal(): KeySetSeal = KeySetSeal(ByteArray(KeySetSeal.MIN_SECRET_BYTES).also(SecureRandom()::nextBytes))
+
 internal fun serve(
     db: DataSource,
-    seal: KeySetSeal = KeySetSeal.random(),
+    seal: KeySetSeal = randomSeal(),
     test: suspend ApplicationTestBuilder.() -> Unit,
 ) = testApplication {
     application { module(db, seal) }

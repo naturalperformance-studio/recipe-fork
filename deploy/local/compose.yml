@@ -17,6 +17,10 @@ services:
       DATABASE_URL: jdbc:postgresql://db:5432/recipefork
       DATABASE_USER: recipefork
       DATABASE_PASSWORD: recipefork
+      # Seals the key sets issued before an account exists (base64, at least 32 bytes).
+      # A fixed value for local development and the hand-test artefact only: it is public,
+      # so production sets its own secret and keeps it the same across restarts.
+      KEY_SET_SECRET: bSB7OUZbKry6DhribkuwCLr0UhfDgA6oz3CO4m7ne0Q=
     ports:
       - "8080:8080"
     depends_on:

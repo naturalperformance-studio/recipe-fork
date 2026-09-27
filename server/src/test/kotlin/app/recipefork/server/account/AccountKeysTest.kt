@@ -112,7 +112,7 @@ class AccountKeysTest {
         val allZero = KeySetDto("account-$zero", "deletion-${Keys.encode(ByteArray(Keys.KEY_BYTES) { 1 })}", "recovery-${Keys.encode(ByteArray(Keys.KEY_BYTES) { 2 })}", seal = "")
         val selfMade = List(3) { fresh() } // well-formed, generated off the server, sealed with nothing it issued
         val holdingKnownKey = fresh(accountKey = held.accountKey)
-        val forgedSeal = allZero.copy(seal = KeySetSeal.random().seal(allZero.accountKey, allZero.deletionKey, allZero.recoveryKey))
+        val forgedSeal = allZero.copy(seal = randomSeal().seal(allZero.accountKey, allZero.deletionKey, allZero.recoveryKey))
 
         val answers = (listOf(allZero, forgedSeal, holdingKnownKey) + selfMade).map { keys ->
             val response = client.createAccount("Calm Calm Wren", keys)
@@ -156,7 +156,7 @@ class AccountKeysTest {
 
     @Test
     fun `AUTH-007 (7), AUTH-024 (6) - an issued key set confirms after going back and forward, with nothing stored before`() {
-        val secret = KeySetSeal.random()
+        val secret = randomSeal()
         lateinit var issued: KeySetDto
         serve(db, secret) {
             issued = client.issueKeys()
@@ -171,7 +171,7 @@ class AccountKeysTest {
             assertEquals(HttpStatusCode.Created, client.createAccount("Brave Copper Otter", issued).status)
         }
         // ...while under another secret the very same set would not have been accepted.
-        val other = KeySetSeal.random()
+        val other = randomSeal()
         assertFalse(other.verifies(issued.accountKey, issued.deletionKey, issued.recoveryKey, issued.seal))
         assertEquals(1, db.count("account"))
         assertEquals(3, db.count("account_key"))
