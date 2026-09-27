@@ -32,100 +32,177 @@ in this wave, and no media is attached.
 
 | Task | Title | Depends on | Status |
 |---|---|---|---|
-| T-001 | Quantities follow the serving count | — | blocked |
-| T-002 | A fixed ingredient sets the scale | T-001 | blocked |
-| T-003 | The store refuses a malformed dictionary entry | — | gated |
-| T-004 | The device holds both dictionaries and replaces them when they change | T-003 | gated |
-| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | blocked |
-| T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | gated |
-| T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | blocked |
+| T-001 | Quantities follow the serving count | — | planned |
+| T-029 | Large and fractional quantities are written on the ladder | T-001 | planned |
+| T-002 | A fixed ingredient sets the scale | T-029 | planned |
+| T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | planned |
+| T-003 | The store refuses a malformed dictionary entry | — | on-develop |
+| T-004 | The device holds both dictionaries and replaces them when they change | T-003 | in-progress |
+| T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | planned |
+| T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | planned |
+| T-007 | The own-recipes view lists every recipe the account owns | T-004, T-001 | planned |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | gated |
-| T-009 | The creation screen shows the nickname, the terms and the account key | T-006, T-008 | blocked |
-| T-010 | The recovery key is issued on its own step, and nothing exists until every confirmation is given | T-009 | blocked |
-| T-011 | An ingredient is picked from the dictionary in three fields | T-008 | blocked |
-| T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | blocked |
-| T-013 | Steps are written in the editor and survive a restart offline | T-012 | blocked |
-| T-014 | A step carries one timer, named by its step unless the author names it | T-013 | blocked |
-| T-015 | A quantity goes into a step as a reference | T-014 | blocked |
+| T-009 | The first step of creation shows the nickname and the terms | T-006, T-008 | planned |
+| T-032 | The second step of creation issues the account key and the deletion key | T-009 | planned |
+| T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | planned |
+| T-011 | An ingredient is picked from the dictionary in three fields | T-008 | planned |
+| T-031 | What the ingredient field offers for what the author types | T-011 | planned |
+| T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-031 | planned |
+| T-013 | Steps are written in the editor and survive a restart offline | T-012 | planned |
+| T-014 | A step carries one timer, named by its step unless the author names it | T-013 | planned |
+| T-015 | A quantity goes into a step as a reference | T-014 | planned |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
-| T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | blocked |
-| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-001 | blocked |
-| T-019 | A derived quantity says so, and which way it was rounded | T-018 | blocked |
-| T-020 | The reader fixes an ingredient on the card | T-019, T-002 | blocked |
-| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-015 | blocked |
-| T-022 | A timer runs on its step | T-021, T-014, T-010 | returned |
-| T-023 | A timer announces itself when the application is closed | T-022, T-026 | blocked |
-| T-024 | Several timers run at once, and restarting one asks first | T-023 | returned |
-| T-025 | The card keeps the screen awake and is where the reader left it | T-024 | blocked |
-| T-026 | Writing a recipe asks for an account first | T-010, T-018 | blocked |
-| T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | blocked |
-| T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-017, T-026, T-025 | blocked |
+| T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | planned |
+| T-034 | A long step with an unnamed timer is shown what its notification will say | T-017 | planned |
+| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | planned |
+| T-019 | A derived quantity says so, and which way it was rounded | T-018 | planned |
+| T-020 | The reader fixes an ingredient on the card | T-019, T-030 | planned |
+| T-021 | A reference in a step reads as the quantity the list shows | T-020, T-034 | planned |
+| T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
+| T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
+| T-033 | A timer asks for notifications when first started, and a refusal is explained at once | T-023 | planned |
+| T-024 | Several timers run at once, and restarting one asks first | T-033 | planned |
+| T-025 | The card keeps the screen awake and is where the reader left it | T-024 | planned |
+| T-026 | Writing a recipe asks for an account first | T-010, T-018 | planned |
+| T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | planned |
+| T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-034, T-026, T-025 | planned |
 
 ### T-001 — Quantities follow the serving count
 
-**Requirements:** SCALE-001, SCALE-003, SCALE-005, SCALE-010
-**Status:** blocked
+**Requirements:** SCALE-001, SCALE-003, SCALE-005, SCALE-010, SCALE-015
+**Status:** planned
 **Depends on:** —
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** SCALE-010 (2) → T-002
+**Note:** `Units.kt` holds the twelve units of DOM-016 with the unit type the table in `spec/50-domain-model/20-ingredients-and-limits.md` gives each; T-011 and T-029 read it and do not change it.
+**Criteria of these requirements carried elsewhere:** SCALE-010 (2) → T-002; (3) → T-029 · SCALE-015 (1–2) → T-019; (4–5) → T-002
 
 **Acceptance criteria** (verbatim)
 
-*SCALE-001 — spec/80-scaling-rules.md*
+*SCALE-001 — spec/80-scaling-rules/10-scaling.md*
 - Given a recipe authored for 4 servings with 500 g of an `exact` ingredient, when the reader asks for 6, then it shows 750 g.
 - Given the same recipe with 3 indivisible pieces, when the reader asks for 6, then it shows 6 pieces.
 - Given the same recipe with an ingredient of type `taste_unmeasured`, when the reader asks for any count, then its line is unchanged.
 - Given any scaled view, when the reader returns the count to the authored value, then every quantity equals the authored quantity and nothing is marked as derived.
 
-*SCALE-003 — spec/80-scaling-rules.md*
+*SCALE-003 — spec/80-scaling-rules/10-scaling.md*
 - Given a factor of 0.6 and an authored 7 g, when the line is displayed, then it shows 4 g and the stored value remains 7 g.
 - Given that same view, when the reader changes the factor to 1.0, then the line shows 7 g again, not a value derived from 4 g.
 
-*SCALE-005 — spec/80-scaling-rules.md*
+*SCALE-005 — spec/80-scaling-rules/20-display.md*
 - Given 3 indivisible pieces at a factor of 0.1, when the line is displayed, then it shows 1 piece and not 0.
 - Given 1 teaspoon at a factor of 0.05, when the line is displayed, then it shows ¼ teaspoon and not 0.
 - Given any factor above zero, when the list is displayed, then no line shows a zero quantity.
 
-*SCALE-010 — spec/80-scaling-rules.md*
+*SCALE-010 — spec/80-scaling-rules/10-scaling.md*
 - Given any recipe, when the reader requests 1000 servings, then the recipe is displayed at that count and nothing is refused.
-- Given a recipe scaled to a very large count, when an `exact` ingredient exceeds 1000 g, then it is displayed in kilograms by the rounding grid.
 - Given any scaled view, when a quantity is displayed, then it was computed from the exact factor by SCALE-003, whatever the size of the factor.
 
-**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md
+*SCALE-015 — spec/80-scaling-rules/20-display.md*
+- Given a tablespoon quantity computed as 1 5⁄12, exactly between 1⅓ and 1½, when it is displayed, then it shows 1½ tablespoons.
+- Given a value whose nearest grid value is below the floor of its unit type, when it is displayed, then SCALE-005 governs and the floor is shown.
+
+**Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md; re-sliced against spec/ @ ead1a44 after SD-002 resolved, re-gate due
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-029 — Large and fractional quantities are written on the ladder
+
+**Requirements:** SCALE-010, SCALE-013, SCALE-014, L10N-009
+**Status:** planned
+**Depends on:** T-001
+**Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
+**Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
+**Criteria of these requirements carried elsewhere:** SCALE-010 (1, 4) → T-001; (2) → T-002 · SCALE-013 (3) → T-019 · SCALE-014 (4) → T-019 · L10N-009 (5) → T-018
+
+**Acceptance criteria** (verbatim)
+
+*SCALE-010 — spec/80-scaling-rules/10-scaling.md*
+- Given a recipe scaled to a very large count, when an `exact` ingredient exceeds 1000 g, then it is displayed in kilograms by the rounding grid.
+
+*SCALE-013 — spec/80-scaling-rules/20-display.md*
+- Given an `exact` quantity computed as 1234 g, when it is displayed, then it shows 1.234 kg.
+- Given an `exact` quantity computed as 1500 g, when it is displayed, then it shows 1.5 kg and not 1.500 kg or 2 kg.
+- Given an `exact` quantity computed as 999.6 g, when it is displayed, then it shows 1 kg, because the nearest whole gram is 1000 g.
+
+*SCALE-014 — spec/80-scaling-rules/20-display.md*
+- Given 1 tablespoon at a factor of 1.5, when the line is displayed, then it shows 1½ tablespoons.
+- Given 1 teaspoon at a factor of 2.3, when the line is displayed, then it shows 2⅓ teaspoons.
+- Given 1 divisible onion at a factor of 2.5, when the line is displayed, then it shows 2½ onions.
+- Given any quantity of these unit types, when it is displayed, then it never carries a decimal mark.
+
+*L10N-009 — spec/160-localization.md*
+- Given the interface in Russian, when 10 000 000 pieces are displayed, then the number reads `10 000 000` with a space that never breaks the number across two lines.
+- Given the interface in English, when the same quantity is displayed, then it reads `10,000,000`.
+- Given an `exact` quantity of 1500 g, when it is displayed, then it reads `1,5 кг` in Russian and `1.5 kg` in English (SCALE-013).
+- Given the interface in Russian, when a four-digit whole number such as 1234 servings is displayed, then it reads `1 234`; in English it reads `1,234`.
+- Given a vulgar fraction of SCALE-014, when it is displayed, then it carries no decimal mark in either language.
+
+**Gate 1:** —
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-002 — A fixed ingredient sets the scale
 
-**Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-010
-**Status:** blocked
-**Depends on:** T-001
+**Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-010, SCALE-015
+**Status:** planned
+**Depends on:** T-029
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** SCALE-002 (2) → T-020 · SCALE-006 (2) → T-020 · SCALE-008 (3) → T-020 · SCALE-010 (1, 3–4) → T-001
+**Criteria of these requirements carried elsewhere:** SCALE-002 (2) → T-020 · SCALE-006 (2) → T-020 · SCALE-008 (3) → T-020 · SCALE-010 (1, 4) → T-001; (3) → T-029 · SCALE-015 (1–2) → T-019; (3, 6) → T-001
 
 **Acceptance criteria** (verbatim)
 
-*SCALE-002 — spec/80-scaling-rules.md*
+*SCALE-002 — spec/80-scaling-rules/10-scaling.md*
 - Given a recipe authored for 4 servings with 500 g of chicken, when the reader fixes 300 g of chicken, then the chicken line shows exactly 300 g.
 - Given that state, when another `exact` ingredient of 350 g is displayed, then it shows 210 g, computed from 0.6 and not from a rounded serving count.
 
-*SCALE-006 — spec/80-scaling-rules.md*
-- Given 300 g of chicken fixed against an authored 500 g, when the reader then fixes 3 eggs against an authored 3, then the displayed factor is 1.0 and the chicken line shows a requirement of 500 g against 300 g available.
+*SCALE-006 — spec/80-scaling-rules/10-scaling.md*
+- Given 300 g of chicken fixed against an authored 500 g, when the reader then fixes 3 eggs against an authored 3, then the factor in force is 1.0 and the chicken line shows a requirement of 500 g against 300 g available.
 - Given that state, when the reader releases the egg fixing, then the factor returns to the one implied by the chicken and the shortfall marking disappears.
 
-*SCALE-008 — spec/80-scaling-rules.md*
+*SCALE-008 — spec/80-scaling-rules/10-scaling.md*
 - Given a recipe authored for 4 servings, when the reader fixes 50 g of an ingredient authored at 500 g, then the serving count shows an approximate ⅓ serving.
 - Given the same recipe, when the reader fixes 25 g of that ingredient (a computed 0.2 servings), then the serving count shows an approximate ¼ serving.
 - Given a computed count of exactly one serving or more, when it is displayed, then it is displayed as a whole number and not as a fraction.
 - Given any state, when the serving count is displayed, then no quantity in the recipe is computed from it; SCALE-003 governs.
 
-*SCALE-010 — spec/80-scaling-rules.md*
+*SCALE-010 — spec/80-scaling-rules/10-scaling.md*
 - Given a recipe authored for 4 servings with 5 g of an `exact` ingredient, when the reader fixes 10 kg of that ingredient, then the derived count is displayed by SCALE-002 and is not capped.
 
-**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md
+*SCALE-015 — spec/80-scaling-rules/20-display.md*
+- Given a recipe authored for 4 servings with 400 g of an ingredient, when the reader fixes 250 g of it, then the serving count shows an approximate 3 servings.
+- Given a recipe authored for 4 servings with 240 g of an ingredient, when the reader fixes 25 g of it (a computed 5/12 serving), then the serving count shows an approximate ½ serving.
+
+**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-030 — Changing the count or releasing the last fixing puts the scale back
+
+**Requirements:** SCALE-016, SCALE-017
+**Status:** planned
+**Depends on:** T-002
+**Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
+**Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
+**Criteria of these requirements carried elsewhere:** SCALE-017 (3) → wave 3
+
+**Acceptance criteria** (verbatim)
+
+*SCALE-016 — spec/80-scaling-rules/10-scaling.md*
+- Given a recipe authored for 4 servings with 500 g of chicken fixed at 300 g, when the reader asks for 6 servings, then the chicken line shows 750 g and is no longer marked as fixed.
+- Given two fixed ingredients, one showing a shortfall (SCALE-006), when the reader changes the serving count, then neither is marked as fixed and no shortfall is shown.
+- Given that the fixings were released by a change of count, when the reader looks at the serving count, then it is the count they asked for and is not marked as approximate.
+
+*SCALE-017 — spec/80-scaling-rules/10-scaling.md*
+- Given a recipe opened at its authored 4 servings, when the reader fixes an ingredient and then releases it, then the recipe is displayed at 4 servings and nothing is marked as derived.
+- Given a recipe the reader had set to 6 servings, when they fix an ingredient, then fix a second, then release the second and then the first, then the recipe is displayed at 6 servings.
+- Given the fixing is released, when the serving count is displayed, then it is not marked as approximate.
+
+**Gate 1:** —
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -133,38 +210,40 @@ in this wave, and no media is attached.
 ### T-003 — The store refuses a malformed dictionary entry
 
 **Requirements:** DOM-010, L10N-003, DOM-014
-**Status:** gated
+**Status:** on-develop
 **Depends on:** —
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/db/**` · `server/src/main/kotlin/app/recipefork/server/dictionary/**` · `server/src/main/resources/db/migration/V1__dictionaries.sql` · `server/src/test/kotlin/app/recipefork/server/db/**` · `server/src/test/kotlin/app/recipefork/server/dictionary/**` · `deploy/local/compose.yml` · `deploy/local/seed/**`
 **Binding ADRs:** decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
 **Size:** First task to hold data on the server: it carries the connection pool, the migration runner and the PostgreSQL test fixture every later server task uses. Expected at 300–400 changed lines.
+**Note:** spec paths updated to spec/ @ ead1a44; criteria unchanged word for word, so the gate-1 verdict stands.
 **Criteria of these requirements carried elsewhere:** DOM-010 (3–4) → T-011; (5) → wave 2 · L10N-003 (2) → T-011; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (2) → T-011
 
 **Acceptance criteria** (verbatim)
 
-*DOM-010 — spec/50-domain-model/10-invariants.md*
+*DOM-010 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given the entry `крылышки` whose parent is `курица`, when `курица` is read, then it has no parent of its own.
 - Given an attempt to give a parent to an entry that already has children, when it is validated, then it is rejected.
 
 *L10N-003 — spec/160-localization.md*
 - Given a new dictionary entry, when it is added with a label in one language only, then it is rejected and does not become available to any author.
 
-*DOM-014 — spec/50-domain-model/10-invariants.md*
+*DOM-014 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given the rule that an entry carries a label in both languages (L10N-003), when a half-translated entry is written, then what refuses it is the store's own constraint, because there is no screen at which the refusal could be shown.
 
 **Gate 1:** accepted — docs/product/verdicts/20260927-T-003-gate1.md
-**Review:** —
-**Gate 2:** —
+**Review:** pass — 4 of 4 criteria checked by mutation, worktree as it was
+**Gate 2:** accepted — docs/product/verdicts/20260927-T-003-gate2.md
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-004 — The device holds both dictionaries and replaces them when they change
 
 **Requirements:** FLOW-001
-**Status:** gated
+**Status:** in-progress
 **Depends on:** T-003
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/dictionary/**` · `server/src/test/kotlin/app/recipefork/server/dictionary/**` · `core/src/main/kotlin/app/recipefork/core/api/DictionaryContract.kt` · `app/build.gradle.kts` · `build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/RecipeForkApplication.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/data/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** One criterion, but it is the first path from the server to the device: it carries the application container, the local database, the network client and connectivity observation. Indivisible because the criterion needs both ends. Expected at 500–700 changed lines.
+**Note:** checked against spec/ @ ead1a44; criteria and their spec paths unchanged word for word, so the gate-1 verdict stands.
 **Criteria of these requirements carried elsewhere:** FLOW-001 (1) → T-008; (2, 4, 7) → T-011; (3) → T-012; (5) → wave 3
 
 **Acceptance criteria** (verbatim)
@@ -179,14 +258,14 @@ in this wave, and no media is attached.
 
 ### T-005 — An account is created with a unique nickname and three keys, and only once it is confirmed
 
-**Requirements:** AUTH-014, AUTH-017, AUTH-020, AUTH-018, DOM-001, LEG-004, CON-001
-**Status:** blocked
+**Requirements:** AUTH-014, AUTH-017, AUTH-020, AUTH-018, DOM-001, LEG-004, CON-001, AUTH-022, AUTH-023
+**Status:** planned
 **Depends on:** T-004
-**Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/resources/db/migration/V2__accounts.sql` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `server/src/main/resources/nickname/**` · `server/src/test/kotlin/app/recipefork/server/account/**`
+**Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/resources/db/migration/V2__accounts.sql` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `deploy/local/seed/**` · `server/src/test/kotlin/app/recipefork/server/account/**`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
 **Note:** No new library is expected; the version catalog is outside this task's files.
-**Note:** Open, raised to the Product Owner: the specification fixes a generated three-word nickname and says nothing about which words or which alphabet they are drawn from.
-**Criteria of these requirements carried elsewhere:** AUTH-014 (5–7) → wave 7 · AUTH-017 (1) → T-009; (2, 5–6) → wave 7 · AUTH-020 (1–2) → T-010; (3–4) → wave 7 · AUTH-018 (1–2) → T-009; (4) → wave 7 · DOM-001 (2) → wave 7 · LEG-004 (1, 5) → T-009; (2) → wave 3; (3) → wave 7 · CON-001 (1) → T-009
+**Note:** The nickname words are the product owner's two lists (AUTH-023), changed in the store as the dictionaries are. This task holds them in tables of its migration and seeds the local deployment with a placeholder list that says it is one; the real lists are the product owner's to write before the first account (release record AUTH-023 (1)), and their size is OQ-009.
+**Criteria of these requirements carried elsewhere:** AUTH-014 (5–7) → wave 7 · AUTH-017 (1) → T-032; (2, 5–6) → wave 7 · AUTH-020 (1–2, 6–9) → T-010; (3–4) → wave 7 · AUTH-018 (1–2) → T-009; (4) → wave 7 · DOM-001 (2) → wave 7 · LEG-004 (1, 5) → T-009; (2) → wave 3; (3) → wave 7 · CON-001 (1) → T-009 · AUTH-022 (2) → T-009 · AUTH-023 (1) → release record; (2) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -217,7 +296,15 @@ in this wave, and no media is attached.
 *CON-001 — spec/30-constraints.md*
 - Given the stored data of any account, when its fields are enumerated, then none of them holds a value of those four kinds.
 
-**Gate 1:** blocked-by-spec (SD-001) — docs/product/verdicts/20260927-T-005-gate1.md
+*AUTH-022 — spec/45-auth/10-creating-an-account.md*
+- Given the creation screen, when a nickname is generated, then it has the form `Brave Copper Otter`: two adjectives, then a noun, each capitalised, separated by one space.
+- Given any two nicknames, when they are compared for uniqueness (DOM-001), then they are compared as the three words, so two nicknames never differ only in letter case or spacing.
+
+*AUTH-023 — spec/45-auth/10-creating-an-account.md*
+- Given a combination of three admitted words, when it is generated, then it is not checked against anything further: no list of forbidden combinations exists.
+- Given a word removed from a list, when an account already holds a nickname containing it, then that nickname is unchanged (DOM-001) and the word is no longer drawn for new ones.
+
+**Gate 1:** blocked-by-spec (SD-001) — docs/product/verdicts/20260927-T-005-gate1.md; re-sliced against spec/ @ ead1a44 after SD-001 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -225,17 +312,17 @@ in this wave, and no media is attached.
 ### T-006 — Creating an account costs a device slot, and no verdict makes it muted
 
 **Requirements:** AUTH-001, AUTH-002, AUTH-004, AUTH-015
-**Status:** gated
+**Status:** planned
 **Depends on:** T-005
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/account/**` · `server/src/main/kotlin/app/recipefork/server/attestation/**` · `core/src/main/kotlin/app/recipefork/core/api/AccountContract.kt` · `server/src/test/kotlin/app/recipefork/server/account/**` · `server/src/test/kotlin/app/recipefork/server/attestation/**` · `deploy/local/compose.yml`
 **Binding ADRs:** decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
 **Note:** The attestation service sits behind an interface (test-strategy ADR). Tests and the local deployment use a fake that models the service's three per-device bits and their write months; the Play Integrity adapter is a later task.
-**Criteria of these requirements carried elsewhere:** AUTH-001 (1) → wave 3; (2, 6–7) → T-026; (4) → wave 7 · AUTH-004 (1) → wave 3; (2, 4) → T-026; (3, 5) → wave 4; (7) → wave 6 · AUTH-015 (3) → wave 7
+**Criteria of these requirements carried elsewhere:** AUTH-001 (1) → wave 3; (2, 6–7) → T-026; (4) → wave 7 · AUTH-004 (1) → wave 3; (2) → T-026; (3, 5) → wave 4; (4, 7) → wave 6 · AUTH-015 (3) → wave 7
 
 **Acceptance criteria** (verbatim)
 
 *AUTH-001 — spec/45-auth/10-creating-an-account.md*
-- Given account creation, when it succeeds, then one slot on the device is occupied with the month it was occupied in.
+- Given account creation, when a full account is created, then one slot on the device is occupied with the month it was occupied in; a muted account occupies none (AUTH-004).
 - Given a verdict that cannot be obtained while the server can be reached, when creation is attempted, then AUTH-004 governs what is created.
 
 *AUTH-002 — spec/45-auth/10-creating-an-account.md*
@@ -252,7 +339,7 @@ in this wave, and no media is attached.
 - Given a verdict received and checked, when the stored record of the account is enumerated, then it holds no field from that verdict.
 - Given the stored data of any account, when it is enumerated, then it holds nothing that identifies a device (CON-001).
 
-**Gate 1:** accepted — docs/product/verdicts/20260927-T-006-gate1.md
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-006-gate1.md; AUTH-001 (3) rewritten in spec/ @ ead1a44 and replaced here, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -260,12 +347,12 @@ in this wave, and no media is attached.
 ### T-007 — The own-recipes view lists every recipe the account owns
 
 **Requirements:** FLOW-034, FLOW-036, FLOW-039, FLOW-041, FLOW-043, FLOW-038, A11Y-008, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-004, T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/lint.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_common.xml` · `app/src/main/res/values-ru/strings_common.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** First screen of the application: it carries the recipe model in `:core` (every field of `50-domain-model`), its local tables, the navigation host and the test helpers for the three cross-cutting criteria every later screen repeats. Expected at 600–800 changed lines.
-**Criteria of these requirements carried elsewhere:** FLOW-034 (2, 4) → wave 3 · FLOW-036 (3, 8) → wave 2; (6) → T-028; (7) → wave 3 · FLOW-039 (3–4) → wave 3 · FLOW-041 (1–4, 6) → wave 2 · FLOW-043 (1–4) → wave 2; (6) → wave 3 · FLOW-038 (1–2, 6) → T-018; (3–4) → wave 5; (7) → wave 3 · A11Y-008 (1) → T-019; (2) → wave 6; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-034 (2, 4, 6–7) → wave 3 · FLOW-036 (3, 8) → wave 2; (6) → T-028; (7) → wave 3 · FLOW-039 (3–4) → wave 3 · FLOW-041 (1–4, 6) → wave 2 · FLOW-043 (1–4) → wave 2; (6) → wave 3 · FLOW-038 (1–2, 6) → T-018; (3–4) → wave 5; (7) → wave 3 · A11Y-008 (1) → T-019; (2) → wave 6; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -307,7 +394,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md
+**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md; re-sliced against spec/ @ ead1a44 after SD-004 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -319,6 +406,7 @@ in this wave, and no media is attached.
 **Depends on:** T-007
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Note:** checked against spec/ @ ead1a44; criteria and their spec paths unchanged word for word, so the gate-1 verdict stands.
 **Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (4) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 4, 7) → T-011; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
@@ -361,35 +449,31 @@ in this wave, and no media is attached.
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
-### T-009 — The creation screen shows the nickname, the terms and the account key
+### T-009 — The first step of creation shows the nickname and the terms
 
-**Requirements:** AUTH-018, AUTH-007, AUTH-017, LEG-004, CON-001, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** AUTH-024, AUTH-018, AUTH-022, LEG-004, CON-001, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-006, T-008
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/assets/terms/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
 **Note:** Open, raised to the user: the text of the terms of use does not exist yet (MVP-003, OQ-029). The task presents the versioned document from `app/src/main/assets/terms/`; until the text is supplied that document is a placeholder that says so in both languages.
-**Criteria of these requirements carried elsewhere:** AUTH-018 (3, 5) → T-005; (4) → wave 7 · AUTH-007 (7, 9) → T-010; (8) → wave 7 · AUTH-017 (2, 5–6) → wave 7; (3–4) → T-005 · LEG-004 (2) → wave 3; (3) → wave 7; (4) → T-005 · CON-001 (2) → T-005 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** AUTH-024 (3, 5–6) → T-032; (4, 7–9) → T-010 · AUTH-018 (3, 5) → T-005; (4) → wave 7 · AUTH-022 (1, 3) → T-005 · LEG-004 (2) → wave 3; (3) → wave 7; (4) → T-005 · CON-001 (2) → T-005 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
+*AUTH-024 — spec/45-auth/20-account-key.md*
+- Given creation is offered, when it opens, then the first step shows the generated nickname with the control for another (AUTH-018) and the terms of use with their acceptance (LEG-004), and no key is shown on it.
+- Given the first step, when the terms are not accepted, then the step cannot be left forward.
+
 *AUTH-018 — spec/45-auth/10-creating-an-account.md*
-- Given the creation screen, when it opens, then a generated nickname is already shown and nothing is typed by the person (CON-001).
+- Given the first step of creation (AUTH-024), when it opens, then a generated nickname is already shown and nothing is typed by the person (CON-001).
 - Given a shown nickname, when the person asks for another, then a different generated nickname replaces it.
 
-*AUTH-007 — spec/45-auth/20-account-key.md*
-- Given the creation screen, when it is shown, then the key is displayed in full and can be copied in one action.
-- Given the same screen, when the person prefers a file, then the key can be saved as one, and the product does not choose where.
-- Given the warning, when it is read, then it states that losing the account key loses the account unless the recovery key is held (AUTH-021), and that nobody at all can restore an account whose keys are both gone.
-- Given the confirmation control, when it is not chosen, then creation does not complete and the screen cannot be left by an ordinary back action.
-- Given the warning, when any setting is searched for, then none switches it off (GUIDE-001 governs the same pattern for submission).
-- Given a completed creation, when the screen is left, then the key is never shown in full again and AUTH-019 governs how it is reached.
-
-*AUTH-017 — spec/45-auth/20-account-key.md*
-- Given account creation, when the key is issued, then the deletion key is issued on the same screen and is carried by the file that AUTH-007 offers.
+*AUTH-022 — spec/45-auth/10-creating-an-account.md*
+- Given an interface in Russian, when a nickname is displayed anywhere, then it is displayed in Latin letters exactly as generated and is neither translated nor transliterated.
 
 *LEG-004 — spec/190-legal.md*
-- Given account creation (AUTH-007), when the account is created, then the terms are presented and accepted there, and the accepted version is recorded with the account.
+- Given account creation (AUTH-007), when the account is created, then the terms are presented and accepted there — on its first step, before any key is shown (AUTH-024) — and the accepted version is recorded with the account.
 - Given the terms, when they are opened from inside the application, then they are readable in full without leaving it, in the interface language (L10N-002).
 
 *CON-001 — spec/30-constraints.md*
@@ -405,29 +489,37 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-001, SD-009, SD-010) — docs/product/verdicts/20260927-T-009-gate1.md
+**Gate 1:** blocked-by-spec (SD-001, SD-009, SD-010) — docs/product/verdicts/20260927-T-009-gate1.md; split into T-009 and T-032 by the three steps of AUTH-024; re-sliced against spec/ @ ead1a44 after SD-001, SD-009, SD-010 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
-### T-010 — The recovery key is issued on its own step, and nothing exists until every confirmation is given
+### T-032 — The second step of creation issues the account key and the deletion key
 
-**Requirements:** AUTH-020, AUTH-007, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** AUTH-024, AUTH-007, AUTH-017, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-009
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** AUTH-020 (3–4) → wave 7; (5) → T-005 · AUTH-007 (1–6) → T-009; (8) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** AUTH-024 (1–2) → T-009; (4, 7–9) → T-010 · AUTH-007 (7, 9–10) → T-010; (8) → wave 7 · AUTH-017 (2, 5–6) → wave 7; (3–4) → T-005 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
-*AUTH-020 — spec/45-auth/30-account-life.md*
-- Given account creation, when the keys are issued, then the recovery key is presented on its own, is not contained in the file AUTH-007 offers, and is not offered to be saved in the same action as the account key.
-- Given that screen, when it is shown, then it states that the recovery key is the only way to retire a leaked or stolen account key, that it must be kept somewhere other than the account key, and that losing it loses that ability for good; and creation does not complete until the person confirms they have saved it.
+*AUTH-024 — spec/45-auth/20-account-key.md*
+- Given the first step completed, when the second step is shown, then it holds the account key and the deletion key with the controls and the confirmation of AUTH-007 and AUTH-017, and neither the nickname control nor the terms.
+- Given the second step, when the person makes the system back action, then the first step is shown with the nickname and the acceptance as they were left, and nothing is asked.
+- Given the first step reached by going back, when the person asks for another nickname and goes forward again, then the account key and the deletion key shown are the ones shown before: nothing exists yet, so nothing is issued anew.
 
 *AUTH-007 — spec/45-auth/20-account-key.md*
-- Given the creation screen, when the person leaves it without giving every confirmation it requires — this key, the recovery key (AUTH-020) and the terms of use (LEG-004) — then no account exists at all: the nickname is not consumed (AUTH-018, DOM-001), no slot on the device is occupied (AUTH-001, AUTH-002), and nothing of the attempt is kept anywhere.
-- Given the same creation, when it completes, then the recovery key has been issued as its own artefact with its own confirmation (AUTH-020), and the warning above no longer says there is no recovery at all: it says what NGOAL-003 now says.
+- Given the account key step of creation (AUTH-024), when it is shown, then the key is displayed in full and can be copied in one action.
+- Given the same screen, when the person prefers a file, then the key can be saved as one, and the product does not choose where.
+- Given the warning, when it is read, then it states that losing the account key loses the account unless the recovery key is held (AUTH-021), and that nobody at all can restore an account whose keys are both gone.
+- Given the confirmation control, when it is not chosen, then creation does not complete, and a back action does not leave creation without first asking the person to confirm leaving (criterion 10); on this step it returns to the first step of creation (AUTH-024).
+- Given the warning, when any setting is searched for, then none switches it off (GUIDE-001 governs the same pattern for submission).
+- Given a completed creation, when the screen is left, then the key is never shown in full again and AUTH-019 governs how it is reached.
+
+*AUTH-017 — spec/45-auth/20-account-key.md*
+- Given account creation, when the key is issued, then the deletion key is issued on the same screen and is carried by the file that AUTH-007 offers.
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
@@ -439,39 +531,86 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-007) — docs/product/verdicts/20260927-T-010-gate1.md
+**Gate 1:** —
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-010 — The recovery key is issued on the third step, and leaving creation leaves nothing
+
+**Requirements:** AUTH-020, AUTH-007, AUTH-024, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
+**Depends on:** T-032
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
+**Criteria of these requirements carried elsewhere:** AUTH-020 (3–4) → wave 7; (5) → T-005 · AUTH-007 (1–6) → T-032; (8) → wave 7 · AUTH-024 (1–2) → T-009; (3, 5–6) → T-032 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+
+**Acceptance criteria** (verbatim)
+
+*AUTH-020 — spec/45-auth/30-account-life.md*
+- Given account creation, when the keys are issued, then the recovery key is presented on its own, is not contained in the file AUTH-007 offers, and is not offered to be saved in the same action as the account key.
+- Given that screen, when it is shown, then it states that the recovery key is the only way to retire a leaked or stolen account key, that it must be kept somewhere other than the account key, and that losing it loses that ability for good; and creation does not complete until the person confirms they have saved it.
+- Given the recovery key displayed, when the person wants to keep it, then it can be copied in one action, and no file of it and no other way of saving it is offered.
+- Given account creation, when the person confirms the account key (AUTH-007), then the recovery key is shown on a step of its own that follows, and neither the account key nor its copy and file controls are on that step.
+- Given the recovery key step, when the person makes the system back action, then they return to the account key step with the account key displayed in full and its confirmation still given; creation has not completed, so nothing is shown that could be used.
+- Given the recovery key step, when the person chooses the cancel control of AUTH-007 (10) and confirms, then nothing of the attempt exists, exactly as from the account key step.
+
+*AUTH-007 — spec/45-auth/20-account-key.md*
+- Given creation, when the person leaves it without giving every confirmation it requires — this key, the recovery key (AUTH-020) and the terms of use (LEG-004) — then no account exists at all: the nickname is not consumed (AUTH-018, DOM-001), no slot on the device is occupied (AUTH-001, AUTH-002), and nothing of the attempt is kept anywhere.
+- Given the same creation, when it completes, then the recovery key has been issued as its own artefact with its own confirmation (AUTH-020), and the warning above no longer says there is no recovery at all: it says what NGOAL-003 now says.
+- Given any step of creation before it completes, when the person chooses its cancel control, or makes the system back action on the first step (AUTH-024), then they are asked to confirm leaving without an account and told that any key already shown or copied will match nothing; when they confirm, they are returned to where they were before the offer of AUTH-001, and nothing of the attempt exists (criterion 7); when they do not, the step stays as it was.
+
+*AUTH-024 — spec/45-auth/20-account-key.md*
+- Given the second step confirmed, when the third step is shown, then AUTH-020 governs it, and confirming it completes creation.
+- Given the first step, when the person makes the system back action, then AUTH-007 (10) governs it; every step carries the cancel control of AUTH-007 (10).
+- Given any step, when the person leaves the application by the home action or the task switcher and returns while its process is still alive, then the same step is shown with the same nickname, keys and confirmations, and creation has not been left in the sense of AUTH-007 (7).
+- Given any step, when the operating system ends the application's process before creation completes, then on the next opening creation is not resumed, nothing of the attempt exists (AUTH-007 (7)), and the application opens as it would for a person who declined the offer (AUTH-001 (7)).
+
+*L10N-001 — spec/160-localization.md*
+- Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
+- Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+
+*A11Y-005 — spec/200-accessibility.md*
+- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
+
+**Gate 1:** blocked-by-spec (SD-007) — docs/product/verdicts/20260927-T-010-gate1.md; re-sliced against spec/ @ ead1a44 after SD-007 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-011 — An ingredient is picked from the dictionary in three fields
 
-**Requirements:** FLOW-023, DOM-002, DOM-009, DOM-010, FLOW-001, L10N-003, DOM-014, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** FLOW-023, DOM-002, DOM-009, DOM-010, FLOW-001, L10N-003, DOM-014, L10N-001, A11Y-003, A11Y-005, DOM-016
+**Status:** planned
 **Depends on:** T-008
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-023 (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-023 (5) → wave 2; (6) → T-012 · DOM-002 (2) → wave 2 · DOM-009 (2) → T-012; (3–4) → wave 2 · DOM-010 (1–2) → T-003; (5) → wave 2 · FLOW-001 (1) → T-008; (3) → T-012; (5) → wave 3; (6) → T-004 · L10N-003 (1) → T-003; (3–5) → T-018 · DOM-014 (1, 4–5) → wave 8; (3) → T-003 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · DOM-016 (3) → wave 2; (4) → wave 8
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-023 — spec/70-flows/40-editor.md*
 - Given the editor, when the author adds an ingredient, then exactly three fields are offered: `крылышки` · `500` · `г`, or `тушка` · `2` · `шт`.
 - Given the ingredient field, when the author types, then dictionary entries are offered whether they are leaves or parents (DOM-010), so `курица · 500 · г` is an ordinary row.
-- Given the ingredient field, when both a leaf and its parent could match what the author typed, then the leaves are offered before the parent, so that a qualifier is a last resort and not a substitute for picking the right entry.
+- Given the ingredient field, when what the author typed matches a parent, then its leaves are offered before it (FLOW-057), so that a qualifier is a last resort and not a substitute for picking the right entry.
 - Given the author picks the entry `филе` and keeps typing `без кожи`, when the row is read, then it reads `филе без кожи`, the ingredient holds that entry and that qualifier, and no fourth field has appeared.
 - Given the unit field, when the author picks `шт`, then the ingredient's unit type is `piece` and the author is never shown a unit type at all.
-- Given the unit field, when the author picks the unit that means "to taste", then the quantity field is withdrawn and the ingredient is stored with no quantity (DOM-002).
+- Given the unit field, when the author picks the unit that means "to taste", then the quantity field is withdrawn, the unit field stays and shows "to taste", and the ingredient is stored with no quantity (DOM-002).
+- Given an ingredient set to "to taste", when the author picks another unit in its unit field, then the quantity field returns, empty.
+- Given the unit field, when it is opened, then it offers exactly the units of DOM-016.
 - Given a `piece` ingredient whose dictionary entry supplies its divisibility, when the row is shown, then divisibility is not one of the three fields (FLOW-001).
 
 *DOM-002 — spec/50-domain-model/10-invariants.md*
-- Given an ingredient of type `taste_unmeasured`, when it is stored, then it has no quantity and no unit, and the editor offers no field for either.
+- Given an ingredient of type `taste_unmeasured`, when it is stored, then it has no quantity and no unit, the editor offers no quantity field for it, and its unit field shows "to taste" (FLOW-023).
 
-*DOM-009 — spec/50-domain-model/10-invariants.md*
+*DOM-009 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given an ingredient the author picked from the dictionary, when it is stored, then it holds that entry, holds no `free_text_name`, and holds a `qualifier` only if the author wrote one.
 - Given a dictionary entry that the product owner removes upstream, when a recipe already refers to it, then the recipe keeps the reference, exactly as FLOW-001 requires of a removed tag.
 
-*DOM-010 — spec/50-domain-model/10-invariants.md*
+*DOM-010 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given a recipe naming `крылышки`, when it is stored, then it holds that entry and nothing about `курица` is copied into the recipe.
 - Given a recipe whose author had only generic chicken to state, when they pick `курица` itself, then it is accepted as the ingredient's entry.
 
@@ -483,7 +622,7 @@ in this wave, and no media is attached.
 *L10N-003 — spec/160-localization.md*
 - Given any entry the author can pick, when the interface language changes, then its label changes with it and the ingredient the author chose does not.
 
-*DOM-014 — spec/50-domain-model/10-invariants.md*
+*DOM-014 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given a dictionary changed in the store, when a device next reaches the server, then its held copy is replaced as FLOW-001 already requires, and an entry removed upstream stays resolvable in the recipes that already name it (DOM-009, DOM-010).
 
 *L10N-001 — spec/160-localization.md*
@@ -496,36 +635,35 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-008, SD-006) — docs/product/verdicts/20260927-T-011-gate1.md
+*DOM-016 — spec/50-domain-model/20-ingredients-and-limits.md*
+- Given the unit field of the editor, when it is opened, then it offers these twelve units, named in the interface language, and no other.
+- Given the author picks `стакан`, when the ingredient is stored, then its unit type is `household`; given `щепотка`, `taste_measured`; given `шт`, `piece`.
+
+**Gate 1:** blocked-by-spec (SD-008, SD-006) — docs/product/verdicts/20260927-T-011-gate1.md; re-sliced against spec/ @ ead1a44 after SD-008, SD-006 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
-### T-012 — An ingredient outside the dictionary is kept as free text with a warning
+### T-031 — What the ingredient field offers for what the author types
 
-**Requirements:** FLOW-022, FLOW-023, DOM-009, FLOW-001, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** FLOW-057, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-011
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
-**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1–4, 7–9) → T-011; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 4, 7) → T-011; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Expected files:** `core/src/main/kotlin/app/recipefork/core/text/**` · `core/src/test/kotlin/app/recipefork/core/text/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-one-text-analyser.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
+**Note:** The folding FLOW-057 names — letter case ignored, `ё` and `е` one letter — is the first stage of the analyser the one-text-analyser ADR places in `:core` `text`; this task builds that stage. The offer matches the beginnings of words, not the stemmed tokens of L10N-007 (spec ADR `20260927-the-ingredient-field.md`), so no stemmer is added here.
+**Criteria of these requirements carried elsewhere:** FLOW-057 (2, 6–7) → T-012 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
-*FLOW-022 — spec/70-flows/40-editor.md*
-- Given the ingredient editor, when the author types a name and the dictionary offers nothing that matches, then adding it as free text is offered and is not refused.
-- Given the author adds it, when the warning is shown, then it states both that filters will not find the recipe by this ingredient and that publication makes it permanent (CON-003).
-- Given a recipe that holds a free-text ingredient, when the author later finds a matching entry while the recipe is still editable, then the ingredient can be replaced by the entry and the warning is gone.
-- Given a `piece` ingredient added as free text, when it is added, then the author is asked for its divisibility, because no entry supplies it (FLOW-001).
-
-*FLOW-023 — spec/70-flows/40-editor.md*
-- Given the ingredient field, when nothing in the dictionary matches, then free text is offered with the warning FLOW-022 requires.
-
-*DOM-009 — spec/50-domain-model/10-invariants.md*
-- Given an ingredient the author typed because no entry matched, when it is stored, then it holds a `free_text_name`, no entry and no `qualifier`.
-
-*FLOW-001 — spec/70-flows/10-offline-and-sync.md*
-- Given no network connection, when the author adds a `piece` ingredient as free text because no entry matched, then the author sets its divisibility, because there is no entry to take it from.
+*FLOW-057 — spec/70-flows/40-editor.md*
+- Given a dictionary holding `молоко`, when the author types `мол`, then `молоко` is offered.
+- Given the author types `МОЛ` or `Мол`, when entries are offered, then they are those offered for `мол`; and `еж` offers what `ёж` offers.
+- Given a parent `курица` with leaves `крылышки` and `филе`, when the author types `кур`, then `крылышки` and `филе` are offered before `курица`.
+- Given the interface in Russian and an entry whose English label is `chicken`, when the author types `chick`, then the entry is offered, shown by its Russian label (L10N-003).
+- Given the interface in Russian and an entry `молоко` whose English label is `milk`, when the author types `Молоко`, ` молоко ` or `milk`, then the entry is offered and free text is not.
+- Given a dictionary holding `молоко` and `кокосовое молоко`, when the author types `мол`, then `молоко` is offered before `кокосовое молоко`, because its label begins with the typed text and the other's does not.
+- Given a parent `курица` with leaves `филе` and `крылышки`, and an entry `куркума`, when the author types `кур`, then the offer reads `крылышки`, `филе`, `курица`, `куркума`, and no entry appears twice.
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
@@ -537,19 +675,65 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-006) — docs/product/verdicts/20260927-T-012-gate1.md
+**Gate 1:** —
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-012 — An ingredient outside the dictionary is kept as free text with a warning
+
+**Requirements:** FLOW-022, FLOW-023, DOM-009, FLOW-001, L10N-001, A11Y-003, A11Y-005, FLOW-057
+**Status:** planned
+**Depends on:** T-031
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Criteria of these requirements carried elsewhere:** FLOW-022 (4) → wave 2 · FLOW-023 (1–4, 7–11) → T-011; (5) → wave 2 · DOM-009 (1, 5) → T-011; (3–4) → wave 2 · FLOW-001 (1) → T-008; (2, 4, 7) → T-011; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · FLOW-057 (1, 3–5, 8–10) → T-031
+
+**Acceptance criteria** (verbatim)
+
+*FLOW-022 — spec/70-flows/40-editor.md*
+- Given the ingredient editor, when the author types a name that is not exactly the label of an offered entry, as FLOW-057 compares them, then adding it as free text is offered — beside any entries offered, or alone where none is (FLOW-057) — and is not refused.
+- Given the author adds it, when the warning is shown, then it states both that filters will not find the recipe by this ingredient and that publication makes it permanent (CON-003).
+- Given a recipe that holds a free-text ingredient, when the author later finds a matching entry while the recipe is still editable, then the ingredient can be replaced by the entry and the warning is gone.
+- Given a `piece` ingredient added as free text, when it is added, then the author is asked for its divisibility, because no entry supplies it (FLOW-001).
+
+*FLOW-023 — spec/70-flows/40-editor.md*
+- Given the ingredient field, when what the author typed is not exactly the label of an offered entry, then free text is offered with the warning FLOW-022 requires (FLOW-057).
+
+*DOM-009 — spec/50-domain-model/20-ingredients-and-limits.md*
+- Given an ingredient the author added in their own words (FLOW-057), when it is stored, then it holds a `free_text_name`, no entry and no `qualifier`.
+
+*FLOW-001 — spec/70-flows/10-offline-and-sync.md*
+- Given no network connection, when the author adds a `piece` ingredient as free text, then the author sets its divisibility, because there is no entry to take it from.
+
+*L10N-001 — spec/160-localization.md*
+- Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
+- Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+
+*A11Y-005 — spec/200-accessibility.md*
+- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
+
+*FLOW-057 — spec/70-flows/40-editor.md*
+- Given the same dictionary and no entry for coconut milk, when the author types `кокосовое молоко`, then `молоко` is not offered, because `кокосовое` begins no word of its label, and adding `кокосовое молоко` as free text is offered.
+- Given entries are offered, when the typed text is not exactly the label of one of them, then adding it as free text is offered beside them, with the warning of FLOW-022, and the author chooses.
+- Given the author has typed exactly the label of an offered entry, when the offer is shown, then free text is not offered, because the entry is that ingredient.
+
+**Gate 1:** blocked-by-spec (SD-006) — docs/product/verdicts/20260927-T-012-gate1.md; re-sliced against spec/ @ ead1a44 after SD-006 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-013 — Steps are written in the editor and survive a restart offline
 
-**Requirements:** FLOW-024, FLOW-002, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** FLOW-024, FLOW-002, L10N-001, A11Y-003, A11Y-005, DOM-015
+**Status:** planned
 **Depends on:** T-012
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-024 (1) → wave 5; (3, 5) → wave 4; (4, 6) → T-008 · FLOW-002 (2–3) → T-008; (4) → T-028 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-024 (1) → wave 5; (3, 5) → wave 4; (4, 6) → T-008 · FLOW-002 (2–3) → T-008; (4) → T-028 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · DOM-015 (3) → wave 2; (4) → T-018
 
 **Acceptance criteria** (verbatim)
 
@@ -569,7 +753,11 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; re-sliced; blocked-by-spec (SD-013) — docs/product/verdicts/20260927-T-013-gate1-2.md
+*DOM-015 — spec/50-domain-model/10-invariants.md*
+- Given the serving count field of the editor, when the author tries to enter 0, a negative number, or a number with a fractional part such as 2.5 or ½, then the field does not hold it.
+- Given that field, when the author enters 1, 4 or 1000, then it holds that value.
+
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; re-sliced; blocked-by-spec (SD-013) — docs/product/verdicts/20260927-T-013-gate1-2.md; re-sliced against spec/ @ ead1a44 after SD-013 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -577,7 +765,7 @@ in this wave, and no media is attached.
 ### T-014 — A step carries one timer, named by its step unless the author names it
 
 **Requirements:** FLOW-027, DOM-013, GUIDE-007, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-013
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -585,9 +773,9 @@ in this wave, and no media is attached.
 
 **Acceptance criteria** (verbatim)
 
-*FLOW-027 — spec/70-flows/40-editor.md*
+*FLOW-027 — spec/70-flows/45-steps-timers-references.md*
 - Given a step reading `в духовку на 190 °C на 30 минут`, when the author attaches a timer and enters 30 minutes, then the timer belongs to that step.
-- Given a step that already carries a timer, when the author looks at it, then attaching another is not offered at all (DOM-013).
+- Given a step that already carries a timer, when the author looks at it, then the control for attaching a timer is still shown, and choosing it creates no second timer and shows the statement of GUIDE-007 (DOM-013).
 - Given two waits in sequence, when the author writes them, then they are two steps with one timer each.
 - Given a timer being attached, when the author is asked for anything, then a duration is the only thing required of them.
 - Given a timer with no name of its own, when the author looks at it, then the name it will announce itself by is shown, derived from the step (FLOW-016), and correcting it by hand is offered there.
@@ -596,17 +784,17 @@ in this wave, and no media is attached.
 - Given a step with a timer, when the step is deleted, then its timer is deleted with it.
 - Given a duration the author has not entered, when the recipe is saved, then the timer is not stored, because a timer without a duration is not a timer.
 
-*DOM-013 — spec/50-domain-model/10-invariants.md*
+*DOM-013 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given a step with no timer, when a timer is attached to it, then it is accepted.
 - Given a step that already carries a timer, when another is attached, then the attachment is refused and the step still carries exactly one.
 - Given two waits in sequence — thirty minutes covered, then fifteen uncovered — when the author writes them, then they are two steps with one timer each, and nothing in the product joins them back together.
 - Given a step whose timer the author deleted, when a new timer is attached, then it is accepted.
 
 *GUIDE-007 — spec/75-author-guidance.md*
-- Given a step that already carries a timer, when the author attempts to attach another, then the statement is shown and no second timer is created (DOM-013).
+- Given a step that already carries a timer, when the author chooses the control for attaching a timer on it (FLOW-027), then the statement is shown and no second timer is created (DOM-013).
 - Given that statement, when it is shown, then it names splitting the step as what to do instead, so the author is not left with a refusal and no way forward.
 - Given a step with no timer, when a timer is attached, then nothing is shown.
-- Given the statement, when the author closes it, then the step is unchanged and the timer it already had still holds its duration.
+- Given the statement, when the author takes their next action in the editor, then the statement is gone, the step is unchanged, and the timer it already had still holds its duration; the statement has no control that closes it (GUIDE-005).
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
@@ -618,7 +806,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-005) — docs/product/verdicts/20260927-T-014-gate1.md
+**Gate 1:** blocked-by-spec (SD-005) — docs/product/verdicts/20260927-T-014-gate1.md; re-sliced against spec/ @ ead1a44 after SD-005 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -626,22 +814,23 @@ in this wave, and no media is attached.
 ### T-015 — A quantity goes into a step as a reference
 
 **Requirements:** FLOW-031, FLOW-032, DOM-007, GUIDE-008, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-014
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/recipe/StepText.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/StepTextTest.kt` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-032 (1–4) → T-021 · DOM-007 (1) → T-021 · GUIDE-008 (5) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-032 (1–4, 6–7) → T-021 · DOM-007 (1) → T-021 · GUIDE-008 (5) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
-*FLOW-031 — spec/70-flows/40-editor.md*
+*FLOW-031 — spec/70-flows/45-steps-timers-references.md*
 - Given a step being written, when the author types the trigger character, then the recipe's ingredients are offered and choosing one inserts a reference at that position.
 - Given the same step, when the author uses the control on the step instead, then the same list is offered and the result is the same reference, so an author who never discovers the trigger character loses nothing.
-- Given the list of ingredients offered, when it is shown, then it holds only ingredients of this recipe (DOM-007) and no ingredient whose unit type is `taste_unmeasured`, because such an ingredient carries no quantity to show (DOM-002).
+- Given the list of ingredients offered, when it is shown, then it holds only ingredients of this recipe (DOM-007), including one whose quantity is not yet entered and one whose unit type is `taste_unmeasured`.
 - Given an inserted reference, when the author deletes the character range it occupies, then the reference is gone and the step's text is left as the author typed it.
 - Given a reference to an ingredient, when that ingredient is deleted from the recipe, then DOM-007 governs and the reference is dropped.
+- Given a referenced ingredient, when the author changes its unit to "to taste" or from it to a measured unit, then the change is allowed and every reference to it stays and renders by FLOW-032.
 
-*FLOW-032 — spec/70-flows/40-editor.md*
+*FLOW-032 — spec/70-flows/45-steps-timers-references.md*
 - Given the editor, when the author inserts a reference, then what they see in place of it is the authored quantity, because the authored scale is the recipe's own.
 
 *DOM-007 — spec/50-domain-model/10-invariants.md*
@@ -663,7 +852,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-014) — docs/product/verdicts/20260927-T-015-gate1.md; GUIDE-008 (5) moved to wave 2, where submission exists
+**Gate 1:** blocked-by-spec (SD-014) — docs/product/verdicts/20260927-T-015-gate1.md; GUIDE-008 (5) moved to wave 2, where submission exists; re-sliced against spec/ @ ead1a44 after SD-014 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -675,6 +864,7 @@ in this wave, and no media is attached.
 **Depends on:** T-015
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Note:** spec paths updated to spec/ @ ead1a44; criteria unchanged word for word, so the gate-1 verdict stands.
 **Criteria of these requirements carried elsewhere:** FLOW-027 (1–7, 9, 11) → T-014; (8) → T-017 · A11Y-006 (2) → wave 8; (3) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
@@ -687,7 +877,7 @@ in this wave, and no media is attached.
 - Given an ingredient that a step references, when the author deletes that ingredient, then the reference is dropped as DOM-007 already requires.
 - Given a user who cannot drag, when they reorder a step or an ingredient, then a discrete action does the same thing (A11Y-006).
 
-*FLOW-027 — spec/70-flows/40-editor.md*
+*FLOW-027 — spec/70-flows/45-steps-timers-references.md*
 - Given a step with a timer, when the step is moved, then the timer moves with it (FLOW-025).
 
 *A11Y-006 — spec/200-accessibility.md*
@@ -710,12 +900,12 @@ in this wave, and no media is attached.
 
 ### T-017 — A part below the minimum or over a limit is marked on leaving it
 
-**Requirements:** FLOW-028, FLOW-027, DOM-012, GUIDE-006, GUIDE-005, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** FLOW-028, FLOW-027, DOM-012, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-016
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/recipe/Limits.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/LimitsTest.kt` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-028 (4, 6) → wave 2 · FLOW-027 (1–7, 9, 11) → T-014; (10) → T-016 · DOM-012 (1–7) → wave 2 · GUIDE-005 (1, 6) → wave 2; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-028 (4, 6) → wave 2 · FLOW-027 (1–7, 9, 11) → T-014; (10) → T-016 · DOM-012 (1–7) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -726,17 +916,46 @@ in this wave, and no media is attached.
 - Given a step that passes 2 000 characters, when the author leaves it, then it is marked as over its limit and the text they typed is kept in full, not truncated.
 - Given a field the author has not yet visited, when the editor opens, then it is not marked, because nothing has been left.
 
-*FLOW-027 — spec/70-flows/40-editor.md*
+*FLOW-027 — spec/70-flows/45-steps-timers-references.md*
 - Given a name the author is typing, when it passes 60 characters, then FLOW-028 governs — it is marked on leaving the field and refused at submission (DOM-012), never refused while typing.
 
-*DOM-012 — spec/50-domain-model/10-invariants.md*
+*DOM-012 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given a recipe over a limit, when the author keeps editing it, then editing is not blocked and the recipe stays in its state (FLOW-028).
 
+*L10N-001 — spec/160-localization.md*
+- Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
+- Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+
+*A11Y-005 — spec/200-accessibility.md*
+- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
+
+**Gate 1:** blocked-by-spec (SD-015) — docs/product/verdicts/20260927-T-017-gate1.md; GUIDE-006 and GUIDE-005 moved to T-034; re-sliced against spec/ @ ead1a44 after SD-015 resolved, re-gate due
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-034 — A long step with an unnamed timer is shown what its notification will say
+
+**Requirements:** GUIDE-006, GUIDE-005, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
+**Depends on:** T-017
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
+**Note:** The cut FLOW-016 makes — the first 60 characters at a word boundary, with an ellipsis — is built here in `:core` `timer`, because this display must show the notification's text exactly; T-023 builds the notification from the same function.
+**Criteria of these requirements carried elsewhere:** GUIDE-005 (1, 6) → wave 2; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+
+**Acceptance criteria** (verbatim)
+
 *GUIDE-006 — spec/75-author-guidance.md*
-- Given such a step, when the author leaves it, then what is shown is the text the notification will carry, cut exactly as FLOW-016 cuts it, with the ellipsis.
+- Given such a step, when the author leaves it, then what is shown is the text the notification will carry at the authored serving count, cut exactly as FLOW-016 cuts it, with the ellipsis.
+- Given the step holds a reference within the text shown, when the display is read, then it states that the quantities in it follow the reader's serving count, so the reader's notification may read and be cut differently.
 - Given that display, when the author reads it, then it states that this is what the notification will say and offers to name the timer differently, and it does not tell the author to rewrite the step.
 - Given that display, when the author names the timer from it, then the timer holds that name and the display does not appear for this step again while the name is set (FLOW-016).
-- Given a step of 60 characters or fewer carrying a timer, when the author leaves it, then nothing is shown, because nothing will be cut.
+- Given a step of 60 characters or fewer at the authored serving count, holding no reference, carrying a timer, when the author leaves it, then nothing is shown, because nothing will be cut.
+- Given a step of 55 characters at the authored serving count whose opening holds a reference, carrying an unnamed timer, when the author leaves it, then the display is shown, because a reader's larger count can lengthen it past the cut.
 - Given a step of more than 60 characters carrying no timer, when the author leaves it, then nothing is shown, because no notification will be built from it.
 - Given a timer the author already named, when they leave its step however long, then nothing is shown, because the step's length no longer decides anything.
 - Given an unnamed timer whose step the author rewrites so the decisive words come first, when they leave it again, then the new opening is shown, because this reports a fact and not an error that was corrected.
@@ -757,20 +976,20 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-015) — docs/product/verdicts/20260927-T-017-gate1.md
+**Gate 1:** —
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-018 — A saved recipe opens as the card a reader sees, at the serving count chosen
 
-**Requirements:** FLOW-029, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005
-**Status:** blocked
-**Depends on:** T-008, T-001
+**Requirements:** FLOW-029, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005, L10N-009, DOM-015
+**Status:** planned
+**Depends on:** T-008, T-029
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** The card is the screen the product exists for and its first version carries the layout every later card task builds on. Expected at 450–550 changed lines.
-**Criteria of these requirements carried elsewhere:** FLOW-019 (4) → wave 3 · FLOW-038 (3–4) → wave 5; (5) → T-007; (7) → wave 3 · SCALE-011 (4) → T-020 · DOM-011 (2–3) → wave 2; (4) → wave 8 · L10N-003 (1) → T-003; (2) → T-011 · A11Y-007 (3) → T-023; (4) → T-025; (5) → wave 8 · A11Y-003 (3–4) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-019 (4) → wave 3 · FLOW-038 (3–4) → wave 5; (5) → T-007; (7) → wave 3 · SCALE-011 (4) → T-020 · DOM-011 (2–3) → wave 2; (4) → wave 8 · L10N-003 (1) → T-003; (2) → T-011 · A11Y-007 (3) → T-033; (4) → T-025; (5) → wave 8 · A11Y-003 (3–4) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8 · L10N-009 (1–4, 6) → T-029 · DOM-015 (1–2) → T-013; (3) → wave 2
 
 **Acceptance criteria** (verbatim)
 
@@ -791,13 +1010,13 @@ in this wave, and no media is attached.
 - Given no network connection, when the owner scales an own published recipe, then `scaling-rules` applies to it exactly as to a favourite.
 - Given a recipe a moderator removed, when the owner opens the view offline, then it is still listed and still opens, because its owner may read it.
 
-*SCALE-011 — spec/80-scaling-rules.md*
+*SCALE-011 — spec/80-scaling-rules/10-scaling.md*
 - Given the serving count control, when the reader takes the count below one serving, then the values it can hold are ¼, ⅓, ½, ⅔ and ¾ and no others.
 - Given the serving count control, when the reader takes the count to one serving or above, then it can hold whole numbers only.
 - Given the serving count control at ¼ serving, when the reader tries to go lower, then the count stays at ¼.
 
-*SCALE-012 — spec/80-scaling-rules.md*
-- Given an ingredient displayed as 10 000 000 pieces, when its line is shown on the narrowest supported screen width, then every digit is visible and no ellipsis replaces part of the number.
+*SCALE-012 — spec/80-scaling-rules/20-display.md*
+- Given an ingredient displayed as 10 000 000 pieces, when its line is shown in a window 320 dp wide (QUAL-011) with the device text scale at 200 per cent (A11Y-004), then every digit is visible and no ellipsis replaces part of the number.
 - Given that same line, when the ingredient name does not fit beside the quantity, then the name wraps to another line and remains fully readable.
 - Given an `exact` ingredient above 1000 kg, when its line is shown, then it is displayed in tonnes by the rounding grid, which is a change of unit and not an abbreviation of the number.
 - Given a `household` ingredient of 2 000 000 tablespoons, when its line is shown, then it is displayed in tablespoons in full and is not converted to any other unit.
@@ -805,7 +1024,7 @@ in this wave, and no media is attached.
 *DOM-003 — spec/50-domain-model/10-invariants.md*
 - Given an ingredient measured in tablespoons, when the recipe is displayed at any scale, then its quantity is shown in tablespoons only.
 
-*DOM-011 — spec/50-domain-model/10-invariants.md*
+*DOM-011 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given an ingredient of 3 tablespoons, when the recipe is displayed at any scale, then it is displayed in tablespoons and no mass appears anywhere (DOM-003).
 
 *L10N-003 — spec/160-localization.md*
@@ -828,30 +1047,37 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict
+*L10N-009 — spec/160-localization.md*
+- Given a recipe declared in one language and the interface in the other, when a quantity is displayed, then it follows the interface language, not the recipe's.
+
+*DOM-015 — spec/50-domain-model/10-invariants.md*
+- Given any authored serving count, when a reader later returns the recipe to it (SCALE-001, FLOW-017), then it is a count the serving count control can hold (SCALE-011), because every whole number of one or more is one.
+
+**Gate 1:** blocked-by-spec (SD-016, SD-002, SD-013) — docs/product/verdicts/20260927-T-018-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-016, SD-002, SD-013 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-019 — A derived quantity says so, and which way it was rounded
 
-**Requirements:** CON-004, SCALE-004, A11Y-008, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** CON-004, SCALE-004, A11Y-008, L10N-001, A11Y-003, A11Y-005, SCALE-013, SCALE-014, SCALE-015
+**Status:** planned
 **Depends on:** T-018
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** A11Y-008 (2) → wave 6; (3) → T-007; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** A11Y-008 (2) → wave 6; (3) → T-007; (4) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8 · SCALE-013 (1–2, 4) → T-029 · SCALE-014 (1–3, 5) → T-029 · SCALE-015 (3, 6) → T-001; (4–5) → T-002
 
 **Acceptance criteria** (verbatim)
 
 *CON-004 — spec/30-constraints.md*
-- Given a recipe scaled to a serving count other than the author's, when its ingredient list is displayed, then every quantity that differs from the authored quantity is visibly marked as derived.
+- Given a recipe scaled to a serving count other than the author's, when its ingredient list is displayed, then every quantity is visibly marked as derived, including one whose displayed value equals the authored quantity.
 - Given a derived quantity that was rounded, when it is displayed, then the interface states whether the displayed value is above or below the exact computed value.
 - Given a recipe displayed at its authored serving count, when its ingredient list is displayed, then no quantity is marked as derived.
 
-*SCALE-004 — spec/80-scaling-rules.md*
-- Given a scaled recipe, when its list is displayed, then every changed quantity carries a derived marker.
-- Given 3 indivisible pieces at a factor of 0.6, when the line is displayed, then it shows 2 pieces and states that the exact value was higher.
+*SCALE-004 — spec/80-scaling-rules/20-display.md*
+- Given a scaled recipe, when its list is displayed, then every quantity carries a derived marker, including one whose displayed value equals its authored value.
+- Given 3 indivisible pieces at a factor of 0.6, when the line is displayed, then it shows 2 pieces and states that the exact value was lower.
+- Given a recipe authored for 4 servings with 1 indivisible egg, when the reader asks for 2 servings, then the line shows 1 egg, is marked as derived, and states that the exact value was lower.
 - Given 1 teaspoon at a factor of 0.2, when the line is displayed, then it shows ¼ teaspoon and states that the exact value was lower.
 - Given a quantity that the grid represented exactly, when it is displayed, then it is marked as derived but carries no direction.
 
@@ -868,7 +1094,17 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-012) — docs/product/verdicts/20260927-T-019-gate1.md
+*SCALE-013 — spec/80-scaling-rules/20-display.md*
+- Given an `exact` quantity computed as 1 234 567 g, when it is displayed, then it shows 1.235 t and states that the exact value was lower (SCALE-004).
+
+*SCALE-014 — spec/80-scaling-rules/20-display.md*
+- Given 1 divisible onion at a factor of 2.3, when the line is displayed, then it shows 2½ onions and states that the exact value was lower.
+
+*SCALE-015 — spec/80-scaling-rules/20-display.md*
+- Given an `exact` quantity computed as 4.5 g, when it is displayed, then it shows 5 g and states that the exact value was lower.
+- Given an `exact` quantity computed as 4.4 g, when it is displayed, then it shows 4 g and states that the exact value was higher.
+
+**Gate 1:** blocked-by-spec (SD-012) — docs/product/verdicts/20260927-T-019-gate1.md; re-sliced against spec/ @ ead1a44 after SD-012 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -876,30 +1112,30 @@ in this wave, and no media is attached.
 ### T-020 — The reader fixes an ingredient on the card
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, A11Y-003, A11Y-007, L10N-001, A11Y-005
-**Status:** blocked
-**Depends on:** T-019, T-002
+**Status:** planned
+**Depends on:** T-019, T-030
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–5) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-023; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–5) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
-*SCALE-002 — spec/80-scaling-rules.md*
+*SCALE-002 — spec/80-scaling-rules/10-scaling.md*
 - Given that state, when the serving count is displayed, then it is shown as an approximate 2 servings and is marked as approximate.
 
-*SCALE-006 — spec/80-scaling-rules.md*
+*SCALE-006 — spec/80-scaling-rules/10-scaling.md*
 - Given that state, when the shortfall is displayed, then it names both the required and the available amount.
 
-*SCALE-008 — spec/80-scaling-rules.md*
+*SCALE-008 — spec/80-scaling-rules/10-scaling.md*
 - Given any serving count displayed as a fraction, when it is displayed, then it carries the same approximate marking that SCALE-002 requires.
 
-*SCALE-009 — spec/80-scaling-rules.md*
+*SCALE-009 — spec/80-scaling-rules/20-display.md*
 - Given a recipe scaled so that exactly one ingredient is held at its floor by SCALE-005, when the recipe is displayed, then no warning is shown.
 - Given a recipe scaled so that two ingredients are held at their floors, when the recipe is displayed, then the warning is shown.
 - Given a recipe scaled so that two ingredients are held at their floors, when the reader returns the recipe to its authored scale, then the warning disappears.
 - Given the warning is shown, when the reader reads the ingredient list, then every affected line still carries its own rounded-up marking from SCALE-005.
 
-*SCALE-011 — spec/80-scaling-rules.md*
+*SCALE-011 — spec/80-scaling-rules/10-scaling.md*
 - Given a count requested as a fraction, when the recipe is displayed, then the count is displayed by SCALE-008 in the same form it was requested.
 
 *A11Y-003 — spec/200-accessibility.md*
@@ -916,7 +1152,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict
+**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -924,23 +1160,26 @@ in this wave, and no media is attached.
 ### T-021 — A reference in a step reads as the quantity the list shows
 
 **Requirements:** SCALE-007, FLOW-032, DOM-007, CON-004, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
-**Depends on:** T-020, T-015
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
+**Status:** planned
+**Depends on:** T-020, T-034
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
+**Note:** FLOW-032 (7) shows the placeholder in the editor as well as on the saved view, so this task holds the editor's files and depends on T-034, the last wave-1 task before it that holds them.
 **Criteria of these requirements carried elsewhere:** FLOW-032 (5) → T-015 · DOM-007 (2) → T-015 · CON-004 (1, 3) → T-019 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
-*SCALE-007 — spec/80-scaling-rules.md*
+*SCALE-007 — spec/80-scaling-rules/20-display.md*
 - Given a scaled recipe, when a step referencing an ingredient is read, then the quantity in the step equals the quantity in the list, including its rounding and its derived marker.
 - Given a recipe at its authored scale, when a step is read, then the referenced quantity equals the authored one.
 
-*FLOW-032 — spec/70-flows/40-editor.md*
+*FLOW-032 — spec/70-flows/45-steps-timers-references.md*
 - Given a recipe authored for 4 servings with 200 g of flour and a step reading `всыпьте [200 г] муки`, when the reader asks for 8 servings, then the step reads `всыпьте 400 г муки` and the word `муки` is the author's own text, untouched.
 - Given the same step at any scale, when it is read, then the value in the reference equals the value the ingredient list shows for that ingredient (DOM-007).
 - Given a scaled value that the rounding grid changed, when the step is read, then the reference carries the same derived marker the list carries (SCALE-004), so the step never states a rounded number as though it were exact.
 - Given a value held at the floor of its unit type, when the step is read, then it shows the floor exactly as the list does (SCALE-005).
+- Given a reference to a `taste_unmeasured` ingredient, when the step is read at any scale, then the reference reads "to taste" in the interface language (`по вкусу` in Russian), and nothing in it is marked as derived.
+- Given a reference to an ingredient whose quantity is not yet entered, when the step is shown in the editor or in the saved view of FLOW-029, then the reference shows a visibly empty placeholder, followed by the unit where one is chosen; the placeholder occupies a character range and is removed as FLOW-031 (4) removes any reference.
 
 *DOM-007 — spec/50-domain-model/10-invariants.md*
 - Given a step containing a reference, when the step is displayed, then the referenced quantity equals the quantity shown for that ingredient in the ingredient list at the current scale.
@@ -958,7 +1197,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-021-gate1.md; CON-004 (2) added; blocked-by-spec (SD-012, SD-014) — docs/product/verdicts/20260927-T-021-gate1-2.md
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-021-gate1.md; CON-004 (2) added; blocked-by-spec (SD-012, SD-014) — docs/product/verdicts/20260927-T-021-gate1-2.md; re-sliced against spec/ @ ead1a44 after SD-012, SD-014 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -966,11 +1205,11 @@ in this wave, and no media is attached.
 ### T-022 — A timer runs on its step
 
 **Requirements:** FLOW-013, A11Y-003, A11Y-007, L10N-001, A11Y-005
-**Status:** returned
+**Status:** planned
 **Depends on:** T-021, T-014, T-010
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-013 (1–5, 7) → T-023 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-023; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-013 (1–4, 7) → T-023; (5, 8–13) → T-033 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -991,19 +1230,19 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-022-gate1.md; FLOW-013 (7) moved to T-023, re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-022-gate1.md; FLOW-013 (7) moved to T-023, re-gate due; checked against spec/ @ ead1a44
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-023 — A timer announces itself when the application is closed
 
-**Requirements:** FLOW-013, FLOW-016, EXT-009, A11Y-007, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** FLOW-013, FLOW-016, EXT-009, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-022, T-026
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-013 (6) → T-022 · FLOW-016 (1–2, 9–11) → T-024 · EXT-009 (2) → wave 8; (3) → wave 2 · A11Y-007 (1–2) → T-018; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-013 (5, 8–13) → T-033; (6) → T-022 · FLOW-016 (1–2, 9–11) → T-024 · EXT-009 (2) → wave 8; (3) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1012,7 +1251,6 @@ in this wave, and no media is attached.
 - Given the screen is locked when the timer ends, then it announces itself.
 - Given the announcement, when it is displayed, then it names the recipe and the step, so that timers from two recipes are told apart.
 - Given the announcement, when the reader acts on it, then the application opens at the step the timer belongs to.
-- Given the reader refused permission to show notifications, when a timer ends, then it is still finished and is shown as finished inside the application, and the permission is asked for again only when the reader next starts a timer.
 - Given a running timer, when the reader cancels it, then nothing announces itself afterwards.
 
 *FLOW-016 — spec/70-flows/30-cooking.md*
@@ -1026,9 +1264,6 @@ in this wave, and no media is attached.
 *EXT-009 — spec/130-external-interfaces.md*
 - Given a timer, when it ends while the application is closed, then the announcement comes from the device itself (FLOW-013).
 
-*A11Y-007 — spec/200-accessibility.md*
-- Given a timer that ends while the screen is off or the application is closed, then it announces itself audibly from the device's own facility (FLOW-013, EXT-009).
-
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
@@ -1039,7 +1274,47 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-021) — docs/product/verdicts/20260927-T-023-gate1.md; FLOW-013 (7) added from T-022 after this verdict, re-gate due with the spec fix
+**Gate 1:** blocked-by-spec (SD-021) — docs/product/verdicts/20260927-T-023-gate1.md; FLOW-013 (7) added from T-022 after this verdict, re-gate due with the spec fix; FLOW-013 (5) and the permission criteria moved to T-033; re-sliced against spec/ @ ead1a44 after SD-021 resolved, re-gate due
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-033 — A timer asks for notifications when first started, and a refusal is explained at once
+
+**Requirements:** FLOW-013, A11Y-007, A11Y-003, L10N-001, A11Y-005
+**Status:** planned
+**Depends on:** T-023
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Criteria of these requirements carried elsewhere:** FLOW-013 (1–4, 7) → T-023; (6) → T-022 · A11Y-007 (1) → T-018; (4) → T-025; (5) → wave 8 · A11Y-003 (3–4) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
+
+**Acceptance criteria** (verbatim)
+
+*FLOW-013 — spec/70-flows/30-cooking.md*
+- Given the reader refused permission to show notifications, when a timer ends, then it is still finished and is shown as finished inside the application, and nothing announces it while the application is closed or the screen is locked; what the reader is shown about the permission is stated by criteria 8 to 10 and 13.
+- Given a platform that has a request for the permission to show notifications (Android 13 and later) and a device on which it has never been asked for, when the reader starts their first timer, then the platform's request is made at that moment, and at no earlier moment such as the first launch; on a platform that has no such request (Android 10 to 12) nothing is requested, and criteria 10 and 11 govern.
+- Given notifications are not permitted, when the reader starts a timer and the platform will still show its own request, then that request is made; and when the reader refuses the request made here or by criterion 8, then the explanation of criterion 10 is shown at once, before the reader returns to the recipe.
+- Given notifications are not permitted, when the reader starts a timer and the platform will not show a request — because it has none to show or because the reader has refused it as often as it allows — then the application shows its own explanation that the timer will not be heard while the application is closed or the screen is locked, with a control that opens the system's notification settings for the application; the timer starts either way.
+- Given notifications are permitted, when the reader starts a timer, then nothing about the permission is shown.
+- Given any request or explanation of criteria 8 to 10, when it is shown, then the timer has already started at the moment the reader started it and runs whatever the reader answers.
+- Given the application's notifications are permitted and those of its timers alone are turned off in the system's settings, when the reader starts a timer, then notifications count as not permitted: the explanation of criterion 10 is shown, stating that timer notifications are turned off and the timer will not be heard, and its control opens those settings.
+
+*A11Y-007 — spec/200-accessibility.md*
+- Given the cooking card, when its controls are measured, then A11Y-003's larger figure holds.
+- Given notifications are permitted, when a timer ends while the screen is off or the application is closed, then it announces itself audibly from the device's own facility (FLOW-013, EXT-009); with notifications refused FLOW-013 (5) governs and the reader has been told so when starting it (FLOW-013 (9), (10)).
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
+
+*L10N-001 — spec/160-localization.md*
+- Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
+- Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
+
+*A11Y-005 — spec/200-accessibility.md*
+- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
+
+**Gate 1:** —
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1047,11 +1322,11 @@ in this wave, and no media is attached.
 ### T-024 — Several timers run at once, and restarting one asks first
 
 **Requirements:** FLOW-016, FLOW-021, DOM-013, A11Y-003, A11Y-007, L10N-001, A11Y-005
-**Status:** returned
-**Depends on:** T-023
+**Status:** planned
+**Depends on:** T-033
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-016 (3–8) → T-023 · DOM-013 (1–4) → T-014 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-023; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-016 (3–8) → T-023 · DOM-013 (1–4) → T-014 · A11Y-003 (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1069,7 +1344,7 @@ in this wave, and no media is attached.
 - Given two steps with running timers, when one is restarted, then the other is untouched (FLOW-016).
 - Given a timer that has already ended, when the reader starts it again, then it starts with no question.
 
-*DOM-013 — spec/50-domain-model/10-invariants.md*
+*DOM-013 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given a recipe whose steps each carry a timer, when the reader starts several of them, then all of them run at once (FLOW-016).
 
 *A11Y-003 — spec/200-accessibility.md*
@@ -1086,7 +1361,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-024-gate1.md; A11Y-003 (2) and A11Y-007 (2) added, re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-024-gate1.md; A11Y-003 (2) and A11Y-007 (2) added, re-gate due; checked against spec/ @ ead1a44
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1094,11 +1369,11 @@ in this wave, and no media is attached.
 ### T-025 — The card keeps the screen awake and is where the reader left it
 
 **Requirements:** FLOW-014, FLOW-012, A11Y-007, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-024
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-012 (4) → wave 3 · A11Y-007 (1–2) → T-018; (3) → T-023; (5) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-012 (4) → wave 3 · A11Y-007 (1–2) → T-018; (3) → T-033; (5) → wave 8 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1112,7 +1387,8 @@ in this wave, and no media is attached.
 *FLOW-012 — spec/70-flows/20-device-storage.md*
 - Given a recipe open at a changed serving count with a fixed ingredient set, when the reader leaves the application and returns to it, then the same recipe is shown at the same scale with the same fixed ingredient, whether or not it is in favourites and whether or not there is a connection.
 - Given a running timer, when the reader leaves the application and returns, then the timer shows the time remaining by the clock, not the time it held when the application was left.
-- Given the operating system ended the application while it was away, when the reader opens it again, then the same recipe is shown if its content is available — held on the device, or fetchable over the network.
+- Given the operating system ended the application while it was away, when the reader opens it again, then the same recipe is shown if its content is available — held on the device, or fetchable over the network — at the same serving count, with the same fixed ingredients and at the same place.
+- Given the reader had scrolled so that a given ingredient line or step was the first one at the top of the screen, when they return, then that line or step is again the first at the top, even if the text scale (A11Y-004), the orientation of the screen or a timer that ended while they were away changed the layout.
 
 *A11Y-007 — spec/200-accessibility.md*
 - Given the card, when it is left untouched, then the screen is kept awake as FLOW-014 requires and this requirement adds no second rule about it.
@@ -1127,19 +1403,19 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-026) — docs/product/verdicts/20260927-T-025-gate1.md
+**Gate 1:** blocked-by-spec (SD-026) — docs/product/verdicts/20260927-T-025-gate1.md; re-sliced against spec/ @ ead1a44 after SD-026 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-026 — Writing a recipe asks for an account first
 
-**Requirements:** ACT-001, AUTH-001, FLOW-003, AUTH-004, AUTH-006, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** ACT-001, AUTH-001, FLOW-003, AUTH-004, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-010, T-018
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7 · AUTH-004 (1) → wave 3; (3, 5) → wave 4; (6) → T-006; (7) → wave 6 · AUTH-006 (3) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7 · AUTH-004 (1) → wave 3; (3, 5) → wave 4; (4, 7) → wave 6; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1148,7 +1424,7 @@ in this wave, and no media is attached.
 - Given a person with no account, when they use a control that needs one, then account creation is offered and the action proceeds once the account exists.
 
 *AUTH-001 — spec/45-auth/10-creating-an-account.md*
-- Given a person with no account, when they use a control that needs one, then account creation is offered, and the action they asked for proceeds once the account exists.
+- Given a person with no account, when they use a control that needs one, then account creation is offered, and the action they asked for proceeds once the account exists — for a muted account, as AUTH-004 (5) states.
 - Given no network connection at all, when creation is attempted, then nothing is created and FLOW-003 states that a connection is needed.
 - Given a person who declines the offer, when they return to what they were doing, then everything that works without an account still works.
 
@@ -1157,12 +1433,6 @@ in this wave, and no media is attached.
 
 *AUTH-004 — spec/45-auth/10-creating-an-account.md*
 - Given no network connection at all, when an account is asked for, then nothing is created, not even a muted account, and FLOW-003 states that a connection is needed: a muted account is still an account, with a unique nickname (DOM-001) and three keys the server issues (AUTH-014).
-- Given a muted account, when the editor would be reached, then it is not offered and no recipe can be created.
-
-*AUTH-006 — spec/45-auth/10-creating-an-account.md*
-- Given a muted account, when a withheld control would have been shown, then a statement takes its place rather than the control failing silently.
-- Given that statement, when it is read, then it says the device could not be checked and that a connection and an installation from the store lift the limit.
-- Given a full account, when any screen is shown, then no such statement appears anywhere.
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
@@ -1174,7 +1444,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-019) — docs/product/verdicts/20260927-T-026-gate1.md
+**Gate 1:** blocked-by-spec (SD-019) — docs/product/verdicts/20260927-T-026-gate1.md; re-sliced against spec/ @ ead1a44 after SD-019 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1182,7 +1452,7 @@ in this wave, and no media is attached.
 ### T-027 — The server keeps an account's drafts and turns a stale edit into a fork
 
 **Requirements:** FLOW-008, CON-003, ACT-002, DOM-004
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-006
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/kotlin/app/recipefork/server/auth/**` · `server/src/main/resources/db/migration/V3__recipes.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/auth/**`
 **Binding ADRs:** decisions/20260927-server-authoritative-sync-with-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
@@ -1195,6 +1465,7 @@ in this wave, and no media is attached.
 - Given a recipe edited offline on device B while device A's edit reached the server, when device B reconnects, then the server's version keeps the recipe's identity and device B's version becomes a `private` fork naming it as parent.
 - Given the server's version has since been published or otherwise frozen, when device B reconnects with a divergent version, then the same rule applies and nothing is written to the frozen recipe.
 - Given no divergence — device B's version is the one the server already holds — when device B reconnects, then no fork is created.
+- Given a recipe edited offline on device B while, on the server, nobody changed its content but it was submitted and became `pending`, `link_shared` or `published`, when device B reconnects, then device B's version becomes a `private` fork naming it as parent, and the owner is told as criterion 2 states.
 
 *CON-003 — spec/30-constraints.md*
 - Given a recipe that has become accessible to anyone but its owner, when any edit is attempted through any interface, then the edit is rejected and the stored content is unchanged.
@@ -1206,7 +1477,7 @@ in this wave, and no media is attached.
 - Given a forked recipe, when its parent is resolved, then it is the recipe it was forked from, at every point in its lifetime.
 - Given any recipe, when its stored fields are enumerated, then none of them lists descendants or names a chain root.
 
-**Gate 1:** blocked-by-spec (SD-018) — docs/product/verdicts/20260927-T-027-gate1.md
+**Gate 1:** blocked-by-spec (SD-018) — docs/product/verdicts/20260927-T-027-gate1.md; re-sliced against spec/ @ ead1a44 after SD-018 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1214,11 +1485,12 @@ in this wave, and no media is attached.
 ### T-028 — Drafts written offline reach the server by themselves, and each says whether they have
 
 **Requirements:** FLOW-002, FLOW-005, FLOW-008, FLOW-036, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
-**Depends on:** T-027, T-017, T-026, T-025
+**Status:** planned
+**Depends on:** T-027, T-034, T-026, T-025
 **Expected files:** `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/sync/**` · `app/src/test/kotlin/app/recipefork/app/sync/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-server-authoritative-sync-with-outbox.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Criteria of these requirements carried elsewhere:** FLOW-002 (1) → T-013; (2–3) → T-008 · FLOW-005 (3) → wave 5 · FLOW-008 (1, 3–4) → T-027 · FLOW-036 (1–2, 4–5) → T-007; (3, 8) → wave 2; (7) → wave 3 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** AUTH-004 (4) — nothing of a muted account's recipes reaches the server — is placed in wave 6, where the last of the controls it names exists. Until then no wave-1 criterion checks that this task's outbox holds a muted account's recipes back.
+**Criteria of these requirements carried elsewhere:** FLOW-002 (1) → T-013; (2–3) → T-008 · FLOW-005 (3) → wave 5; (5) → wave 2 · FLOW-008 (1, 3–5) → T-027 · FLOW-036 (1–2, 4–5) → T-007; (3, 8) → wave 2; (7) → wave 3 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1228,10 +1500,10 @@ in this wave, and no media is attached.
 *FLOW-005 — spec/70-flows/10-offline-and-sync.md*
 - Given the list of the account's own recipes, when it is displayed, then each entry states whether it is fully accepted by the server or holds changes that are not.
 - Given a recipe open in the editor, when it holds changes the server has not accepted, then the editor states so.
-- Given a recipe fully accepted by the server, when it is displayed, then it is marked as accepted and not merely left unmarked.
+- Given a recipe fully accepted by the server, when its entry in the own-recipes view or the recipe in the editor is displayed, then it is marked as accepted and not merely left unmarked.
 
 *FLOW-008 — spec/70-flows/10-offline-and-sync.md*
-- Given that outcome, when the owner opens the application on device B, then they are told a fork was created and why, and both recipes are reachable.
+- Given that outcome, when the server's answer reaches device B, then the owner is told a fork was created and why at that moment if the application is open, or when they next open it if it is not; the notice stays until they acknowledge it, is not shown again afterwards, and both recipes are reachable.
 
 *FLOW-036 — spec/70-flows/50-browsing.md*
 - Given a recipe the server has not yet accepted, when its entry is shown, then the indication FLOW-005 requires is present as well and does not replace the state marker.
@@ -1246,7 +1518,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md
+**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved, re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1280,8 +1552,11 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | DOM-010 — The ingredient dictionary is two levels deep at most | 5 |
 | DOM-011 — A comparison factor orders and nothing else | 2–3 |
 | DOM-012 — Submission maximum | 1–7 |
+| DOM-015 — The authored serving count is a whole number of one or more | 3 |
+| DOM-016 — The units are a closed list of twelve | 3 |
 | EXT-009 — The product sends nothing to a device | 3 |
 | FLOW-003 — What is refused while the server has not answered | 1–4, 7–11 |
+| FLOW-005 — Every recipe shows whether the server has accepted it | 5 |
 | FLOW-006 — Nothing is submitted for moderation before the server holds it | all |
 | FLOW-022 — An ingredient outside the dictionary is accepted with a warning | 4 |
 | FLOW-023 — An ingredient is three fields and nothing more | 5 |
@@ -1348,7 +1623,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | FLOW-017 — The reader's usual serving count opens every recipe | all |
 | FLOW-019 — What the card shows when parts of a recipe are absent | 4 |
 | FLOW-020 — The card while it loads and when it cannot be loaded | all |
-| FLOW-034 — The favourites section holds two views | 2, 4 |
+| FLOW-034 — The favourites section holds two views | 2, 4, 6–7 |
 | FLOW-035 — Both views are searched, filtered and ordered exactly as the catalogue is | all |
 | FLOW-036 — An own recipe carries its state on its entry, not in a screen of its own | 7 |
 | FLOW-037 — The own-recipes view narrows to a state | all |
@@ -1377,6 +1652,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | RATE-014 — A rating that cannot be recorded says so | all |
 | RATE-015 — Hiding a recipe keeps its ratings | all |
 | RATE-016 — Favouriting is not rating | all |
+| SCALE-017 — Releasing the last fixed ingredient restores the count in force before the first | 3 |
 
 ### Wave 4 — Forking
 
@@ -1441,7 +1717,8 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | ACT-005 — A publishing ban stops what would make a recipe public, not the account | all |
 | ACT-006 — A publishing ban leaves published content in place | all |
 | ACT-007 — A banned account is told it is banned | all |
-| AUTH-004 — Without a verdict the account is created muted | 7 |
+| AUTH-004 — Without a verdict the account is created muted | 4, 7 |
+| AUTH-006 — A muted account is told what it is and what lifts it | 1, 4, 6–7 |
 | CON-005 — Native Android is the only client surface in the MVP | 2 |
 | EXT-007 — A private link outside the application reveals nothing | all |
 | FLOW-018 — A flagged recipe says what it descends from | all |
@@ -1462,7 +1739,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | AUTH-001 — An account appears when an action needs one | 4 |
 | AUTH-003 — A device with no free slot says when it will have one | all |
 | AUTH-005 — A muted account becomes full when a verdict and a slot allow it | all |
-| AUTH-006 — A muted account is told what it is and what lifts it | 3 |
+| AUTH-006 — A muted account is told what it is and what lifts it | 2–3, 5, 8 |
 | AUTH-007 — The key is issued once, in full, and creation waits for an acknowledgement | 8 |
 | AUTH-008 — The product neither stores the key nor recovers an account | all |
 | AUTH-009 — Signing in with a key costs no slot | all |
@@ -1474,7 +1751,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | AUTH-015 — Nothing from the device verdict is kept | 3 |
 | AUTH-016 — Losing the key keeps the published work in the world | all |
 | AUTH-017 — Every account carries a deletion key | 2, 5–6 |
-| AUTH-018 — The nickname is generated and may be rerolled once, before the account exists | 4 |
+| AUTH-018 — The nickname is generated and may be rerolled any number of times before the account exists | 4 |
 | AUTH-019 — Afterwards the key is shown masked and copied whole | all |
 | AUTH-020 — The recovery key is issued apart from the account key and shown once | 3–4 |
 | AUTH-021 — Using the recovery key retires every key the account had | all |
@@ -1511,9 +1788,11 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | ANL-002 — The product can be described from what it already holds | all |
 | ANL-003 — Reach is taken from the distribution channel, not measured here | all |
 | ANL-004 — Application starts are counted, and nothing else about them | all |
+| AUTH-023 — The nickname words come from lists the product owner keeps by hand | 2 |
 | CON-005 — Native Android is the only client surface in the MVP | 1 |
 | DOM-011 — A comparison factor orders and nothing else | 4 |
 | DOM-014 — Both dictionaries are maintained outside the application | 1, 4–5 |
+| DOM-016 — The units are a closed list of twelve | 4 |
 | EXT-001 — The list of external dependencies is closed | all |
 | EXT-009 — The product sends nothing to a device | 2 |
 | EXT-010 — Nothing receives content or identifiers | all |
@@ -1533,6 +1812,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | QUAL-005 — The lowest supported Android version | all |
 | QUAL-008 — The store is copied every hour and the copy is known to work | all |
 | QUAL-010 — The time a moderation decision takes | all |
+| QUAL-011 — The narrowest supported window is 320 dp wide | all |
 | RET-006 — Inactivity destroys nothing | all |
 | RET-007 — Abandoned storage is watched rather than swept | all |
 | RET-008 — Server logs are kept for fourteen days | all |
@@ -1543,6 +1823,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | Requirement | Criteria |
 |---|---|
 | A11Y-001 — The commitment is this list, and conformance is not claimed | all |
+| AUTH-023 — The nickname words come from lists the product owner keeps by hand | 1 |
 | CON-002 — Recurring infrastructure cost ceiling | all |
 | CON-006 — Google Play policy is binding | all |
 | EXT-005 — The distribution channel's obligations are traceable | all |
