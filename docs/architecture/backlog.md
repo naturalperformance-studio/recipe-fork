@@ -305,9 +305,9 @@ in this wave, and no media is attached.
 - Given a word removed from a list, when an account already holds a nickname containing it, then that nickname is unchanged (DOM-001) and the word is no longer drawn for new ones.
 
 **Gate 1:** blocked-by-spec (SD-001) — docs/product/verdicts/20260927-T-005-gate1.md; re-sliced against spec/ @ ead1a44 after SD-001 resolved, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-005-gate1-2.md
-**Review:** —
+**Review:** defects — the confirming call accepts any well-formed keys from the client (keys ADR, AUTH-014 (1, 3), AUTH-017 (4), AUTH-020 (5)); AUTH-023 (4) "no longer drawn" and AUTH-014 (2) strength tests survive their mutations; returned to the developer
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-006 — Creating an account costs a device slot, and no verdict makes it muted
 
