@@ -1,6 +1,6 @@
 # A sign-in empties the device, including what no account held
 
-**Status:** accepted; widens AUTH-012 and AUTH-013
+**Status:** superseded by [several accounts on one device](20260928-several-accounts-on-one-device.md) (2026-09-28); it had widened AUTH-012 and AUTH-013
 
 **Context:** FLOW-051 lets a person with no account keep favourites and blocked
 authors on the device. FLOW-052 says that when an existing account then signs in

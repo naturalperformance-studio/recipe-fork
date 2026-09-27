@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -159,9 +159,8 @@ one.
   unchanged, when they fork it again, then the unchanged one is the one offered.
 - Given the reader holds no fork of that recipe, when they fork it, then a fork
   is created and nothing is said.
-- Given an unchanged fork that has not yet reached the server, when the reader
-  forks the same recipe again, then it counts exactly as one the server holds
-  (FLOW-007).
+- Given an unchanged fork that was never sent (FLOW-059), when the reader forks
+  the same recipe again, then it counts exactly as one the server holds.
 
 **Verification:** fork a recipe twice without touching the first fork; change the
 first fork and repeat; confirm both outcomes and the explicit second fork.

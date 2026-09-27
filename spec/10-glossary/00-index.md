@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: []
 ---
 

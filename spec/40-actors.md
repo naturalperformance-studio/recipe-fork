@@ -1,40 +1,47 @@
 ---
 slug: ACT
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [ACT-001, ACT-002, ACT-003, ACT-004, ACT-005, ACT-006, ACT-007, ACT-008]
 ---
 
 # Actors and permissions
 
 Three actors exist. A person with no account is one of them: most of what the
-product is for — finding a recipe, cooking from it, keeping it on the device —
-needs no account at all, and one appears only when an action requires it
-(ACT-001, AUTH-001). "Owner" and "reader" are roles an account holds with
+product is for — finding a recipe, cooking from it, writing and forking one,
+keeping it on the device — needs no account at all, and one appears only when an
+action requires it (ACT-001, AUTH-001). What a person with no account writes is
+in the pool of their device (AUTH-026), and they are its owner there for every row
+below that speaks of the owner, on that device. "Owner" and "reader" are roles an account holds with
 respect to a particular recipe, not separate actors.
 
 An account is full or muted. A muted account is what the product creates when the
 device cannot be attested (AUTH-004); it is not a fourth actor but an account
-with a smaller set of permitted actions, and it becomes full as soon as a verdict
-and a free slot allow (AUTH-005). The columns below state what each may do.
+that uses nothing of the server but carrying its favourites, and it becomes full
+as soon as a verdict and a free slot allow (AUTH-005). The columns below state
+what each may do while the server runs; in serverless mode every row that needs
+the server is gone for everyone (FLOW-062).
 
 | | No account | Account holder | Owner of the recipe | Moderator | Muted account |
 |---|---|---|---|---|---|
 | Browse and search the public catalogue | yes | yes | yes | yes | yes |
 | Open a published recipe | yes | yes | yes | yes | yes |
-| Open a private draft or fork | no | no | yes | no | no |
+| Open a private draft or fork | its own, on this device | no | yes | no | its own |
 | Open a recipe awaiting moderation | no | no | yes | yes | no |
-| Create and fork a recipe | no (AUTH-001) | yes | yes | yes | yes, on this device only (AUTH-004) |
-| Edit a recipe before it becomes externally visible | no | no | yes | no | yes, its own, on this device only (AUTH-004) |
+| Create and fork a recipe | yes, on this device (FLOW-002) | yes | yes | yes | yes, on this device |
+| Edit a recipe before it becomes externally visible | its own, on this device | no | yes | no | its own, on this device |
+| Send a recipe to the server (FLOW-059) | no (AUTH-001) | its own | yes | its own | no (AUTH-004) |
 | Edit a recipe after it becomes externally visible | no | no | no | no | no |
 | Submit a recipe for moderation | no | yes, unless banned | yes, unless banned | yes, unless banned | no (AUTH-004) |
 | Approve or reject a submission | no | no | no | yes | no |
-| Delete a recipe that was never externally visible | no | no | yes, in `private` and `rejected` (ST-010) | no | yes, its own, on this device |
+| Delete a recipe that was never externally visible | its own, on this device | no | yes, in `local`, `private` and `rejected` (ST-010) | no | its own, on this device |
 | Remove a published recipe from the catalogue | no | no | no (ST-001) | yes, including their own (MOD-014) | no |
 | Rate a published recipe | no (AUTH-001) | yes | no (RATE-004) | yes | no (AUTH-004) |
 | Add a recipe to favourites | yes, on this device only (FLOW-051) | yes | no (FLOW-040) | yes | yes |
 | Carry favourites beyond this device | no (FLOW-051) | yes (FLOW-052) | yes | yes | yes |
-| See the own-recipes view of the favourites section | no (FLOW-034) | yes | yes | yes | yes |
+| See the own-recipes view of the recipe book (FLOW-034) | yes, the pool's | yes | yes | yes | yes |
+| Hold several accounts on the device and switch between them (AUTH-011) | — | yes | yes | yes | yes |
+| Export a recipe to a file, import one (serverless mode only, FLOW-063, FLOW-064) | yes | yes | yes | yes | yes |
 | Report a recipe or an author | yes (ABUSE-002) | yes | yes | yes | yes |
 | Block an author's recipes from own catalogue and search | yes, on this device only | yes | yes | yes | yes |
 | Ban an account from publishing | no | no | no | yes | no |
@@ -60,15 +67,15 @@ which is about moderator actions and says nothing about the rest of the matrix.
 ### ACT-001 — Most of the product needs no account
 
 The system shall allow a person holding no account to browse and search the
-catalogue, open and cook from any published recipe, keep favourites on the
-device, report content and block an author, and shall create an account only
-when an action requires one (AUTH-001).
+catalogue, open and cook from any published recipe, write, edit, fork and delete
+recipes on the device, keep favourites on the device, report content and block an
+author, and shall create an account only when an action requires one (AUTH-001).
 
 **Acceptance criteria**
 - Given a clean installation, when the application is opened, then it is usable
   at once and nothing is created, asked for or generated.
-- Given a person with no account, when they favourite a recipe, then it is kept
-  on the device and is not carried anywhere else (FLOW-051).
+- Given a person with no account, when they favourite a recipe or write one,
+  then it is kept on the device and is not carried anywhere else (FLOW-051).
 - Given a person with no account, when they use a control that needs one, then
   account creation is offered and the action proceeds once the account exists.
 - Given an account, when its public representation is displayed, then it shows
@@ -81,21 +88,32 @@ trigger creation from each action that requires it.
 **Source:** draft section 2.1; user decision, 2026-09-20, replacing the earlier
 decision that an account is created at first launch. See
 [ADR — an account is created on demand](decisions/20260920-account-on-demand.md).
+**Changed 2026-09-28:** writing, editing, forking and deleting on the device need
+no account, by user decision of that date
+([ADR — the device first](decisions/20260928-the-device-first.md)).
 
-### ACT-002 — Ownership is fixed at creation
+### ACT-002 — Ownership is fixed at creation, or when the pool is moved
 
-The system shall treat the account that created a recipe as that recipe's owner
-for the lifetime of the recipe, and shall provide no means of transferring
-ownership to another account.
+The system shall treat the account in whose recipe book a recipe was created as
+that recipe's owner for the lifetime of the recipe; shall treat a recipe created in
+the pool (AUTH-026) as having no owner until the pool is moved into an account,
+which becomes its owner; and shall provide no other means of transferring
+ownership.
 
 **Acceptance criteria**
-- Given a recipe, when its owner is resolved at any point in its lifetime, then
-  it is the account that created it.
+- Given a recipe created while an account was active, when its owner is resolved
+  at any point in its lifetime, then it is that account.
+- Given a recipe created in the pool, when the pool is moved into account A, then
+  A is its owner from then on, and it can be sent only by A.
+- Given a recipe the server holds, when its owner is resolved, then it is the
+  account that sent it, which is always the account it belonged to on the device.
 - Given any interface of the application, when it is enumerated, then it offers
   no action that changes a recipe's owner.
 
-**Verification:** interface review and data model review.
-**Source:** draft sections 2.3, 4.1.
+**Verification:** interface review and data model review; move a pool into an
+account and send one of its recipes.
+**Source:** draft sections 2.3, 4.1. The pool's one move added 2026-09-28 by user
+decision ([ADR — several accounts on one device](decisions/20260928-several-accounts-on-one-device.md)).
 
 ### ACT-003 — Moderator authority is an assignable role
 

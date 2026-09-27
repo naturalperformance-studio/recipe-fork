@@ -1,7 +1,7 @@
 ---
 slug: GOAL
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [GOAL-001, GOAL-002, GOAL-003, NGOAL-001, NGOAL-002, NGOAL-003, NGOAL-004,
   NGOAL-005, NGOAL-006, NGOAL-007]
 ---
@@ -72,6 +72,10 @@ data and nobody's help. See
 
 ### NGOAL-004 — No editing of published content
 Once a recipe is visible to anyone other than its owner it is immutable forever.
+A recipe file exported in serverless mode (FLOW-063) is not visibility through the
+product and freezes nothing: by user decision, 2026-09-28, once the server is gone
+the product publishes nothing, and what a person posts elsewhere is for the place
+they post it to answer for.
 
 ### NGOAL-005 — No automated media moderation
 Automatic classification of images and video is not purchased or built.

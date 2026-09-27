@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007, DOM-008, DOM-015]
 ---
 
@@ -79,18 +79,22 @@ the root of its chain.
 
 ### DOM-005 — Media is owned by an account from upload
 
-When a user adds a media item to a recipe, the system shall bind that item to
-the user's account at upload time, before the recipe becomes externally visible.
+When a recipe's media is uploaded by sending the recipe (FLOW-059), the system
+shall bind each item to the owner's account at that moment, before the recipe
+becomes externally visible.
 
 **Acceptance criteria**
-- Given an unpublished recipe with media, when the same account signs in on
-  another device signed in to it, then that media is available there.
+- Given a sent, unpublished recipe with media, when the same account is signed in
+  on another device, then that media is available there.
+- Given a recipe never sent, when another device of the same account is looked
+  at, then neither the recipe nor its media is there (FLOW-059).
 - Given a media item belonging to an unpublished recipe, when any other account
   requests it, then it is not served.
 
-**Verification:** two-device test with one account key; access test from a second
-account.
-**Source:** draft section 5.2.
+**Verification:** two-device test with one account key, before and after sending;
+access test from a second account.
+**Source:** draft section 5.2; upload moved to the sending of the recipe by user
+decision, 2026-09-28.
 
 ### DOM-006 — Submission minimum
 
@@ -186,6 +190,6 @@ to the answer instead of to the gap.
 - Media size, duration and count limits — settled in [`media`](../90-media.md),
   MEDIA-001 to MEDIA-010.
 - What a fork shows when its parent is gone — settled in
-  [`entity-states`](../60-entity-states.md), ST-007, which closed OQ-005 and
+  [`entity-states`](../60-entity-states/00-index.md), ST-007, which closed OQ-005 and
   OQ-007 on 2026-09-20.
 - Account deletion — settled in [`retention`](../150-retention.md), RET-001 to RET-005.

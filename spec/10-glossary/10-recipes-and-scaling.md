@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: []
 ---
 
@@ -70,13 +70,19 @@ as anyone else's (MOD-014).
 
 **Deletion of a recipe** — the owner destroying a recipe that was never
 externally visible, so that it and its submission records cease to exist
-(ST-010). It reaches `private` and `rejected` and nothing else, and it is a
+(ST-010). It reaches `local`, `private` and `rejected` and nothing else — a
+`local` recipe on the device alone, the others on the server too — and it is a
 different act from removal, which a moderator performs on what everyone can see,
 and from deletion of an account, which destroys every unpublished recipe at once
 (RET-001).
 
+**Local** — the state of a recipe never sent: it exists on one device, in an
+account's recipe book or in the pool, and the server holds nothing of it (ST-004,
+ST-010, FLOW-059).
+
 **Unavailable** — what a fork's card says about a parent that cannot be opened,
-with no reason given and no further chain shown (ST-007). A favourite that stops
+with no reason given and no further chain shown (ST-007); in serverless mode, a
+parent not held in the recipe book, named as its file states (FLOW-065). A favourite that stops
 being accessible is marked the same way (FLOW-010).
 
 **Safety flag** — the mark a recipe carries while an ancestor was removed as
@@ -110,9 +116,9 @@ re-encoding it to its limit, discarding every metadata field but orientation,
 and removing a video's audio track. The author is always told it happened
 (MEDIA-002, MEDIA-003, MEDIA-004, MEDIA-005).
 
-**Unpublished allowance** — the 150 MB of media one account may hold across
-recipes that have never been published. Publishing a recipe frees what it holds
-(MEDIA-010).
+**Unpublished allowance** — the 150 MB of media one account may hold on the
+server across recipes it sent and has not published. Publishing a recipe frees
+what it holds; a recipe never sent counts nothing (MEDIA-010).
 
 **Tag** — a label from a fixed dictionary the product owner maintains, in one of
 two facets, `cuisine` or `dish_type`. A user cannot create one (DOM-008).

@@ -1,118 +1,17 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-27
-ids: [AUTH-011, AUTH-012, AUTH-013, AUTH-014, AUTH-015, AUTH-016, AUTH-020,
-  AUTH-021, AUTH-025]
+updated: 2026-09-28
+ids: [AUTH-014, AUTH-015, AUTH-016, AUTH-020, AUTH-021, AUTH-025]
 ---
 
-# One account at a time, and losing it
+# Losing an account
 
-What a device holds, what replacing the active account destroys, and what
-survives an account whose key is gone.
-
-## One account at a time
-
-### AUTH-011 — One account is active on a device
-
-The system shall hold at most one active account on a device, and shall offer no
-means of holding several accounts at once or switching between them.
-
-**Acceptance criteria**
-- Given an active account, when another account's key is entered, then that
-  account replaces it and the previous one is no longer reachable on that device.
-- Given a device with no account at all, when an account is created or signed in
-  to, then it becomes the one active account.
-- Given any screen, when it is enumerated, then none lists accounts or offers a
-  choice between them.
-- Given a device whose account was replaced, when the previous key is entered
-  again, then that account becomes active again and the current one is replaced
-  in turn.
-
-**Verification:** sign in with two keys in sequence and inspect every screen for
-an account list.
-**Source:** user decision, 2026-09-20: the MVP is the fork mechanic done well,
-and multi-account switching multiplies favourites, held media and the storage
-setting of FLOW-011 by the number of accounts. Deferred as OQ-028.
-
-### AUTH-012 — Replacing the account wipes what the device held
-
-When the active account is replaced, the system shall delete from the device
-every recipe, draft, media item and favourite the previous account held, and
-every favourite and blocked author the device was holding with no account at
-all.
-
-**Acceptance criteria**
-- Given the previous account's drafts, when the account is replaced, then they
-  are gone from the device and no screen reaches them.
-- Given a recipe the server had accepted, when the previous key is entered again,
-  then that recipe is fetched from the server and is readable once more, and so
-  are the favourites that account carried.
-- Given a recipe holding changes the server had not accepted (FLOW-005), when the
-  account is replaced, then those changes are gone permanently and importing the
-  key again does not bring them back.
-- Given media queued for upload (FLOW-004), when the account is replaced, then it
-  is deleted with the rest.
-- Given a device sold or handed on, when its new holder creates an account or
-  signs in, then nothing of the previous account's content is present on it.
-- Given favourites kept on a device that had no account, when an account is then
-  created, then they are carried into it rather than deleted (FLOW-051).
-- Given favourites and blocked authors kept on a device with no account, when an
-  existing account signs in there instead, then they are deleted with everything
-  else and merge into nothing (FLOW-052). A device handed on must carry nothing
-  of whoever held it before, and that promise is false if the previous holder's
-  favourites survive precisely because they never made an account.
-- Given the interface language (L10N-002), the reader's usual serving count
-  (FLOW-017) and the recipe that was open (FLOW-012), when the account is
-  replaced, then none of them is touched: they belong to the device and to
-  nobody's account, and this requirement reaches only what the previous account
-  held.
-- Given the setting that governs whether media is held (FLOW-011), when the
-  account is replaced, then it is unchanged too, and it applies to whatever the
-  new account brings.
-
-**Verification:** author unsent drafts, replace the account, enter the original
-key again, and compare what returns against what was accepted.
-**Source:** user decision, 2026-09-20; the three device settings named
-2026-09-21, because the list above is closed and a reader could not tell whether
-their omission was deliberate. It is: a phone's language and the number of people
-its owner cooks for are facts about the phone, not about whoever holds the key
-today (L10N-002 already keeps the language off the account for exactly this
-reason). **Cost, stated:** a device handed on carries the previous person's usual
-serving count into the next person's recipes, marked as derived (SCALE-004) but
-unexplained, until they change it. See
-[ADR — replacing the account wipes the device](../decisions/20260920-replacing-the-account-wipes-the-device.md).
-**Widened 2026-09-21** to what the device held with no account at all: FLOW-052
-sent the reader here for that case, and this requirement spoke only of a previous
-account, of which there is none. See
-[ADR — a sign-in empties the device](../decisions/20260921-a-sign-in-empties-the-device.md).
-
-### AUTH-013 — The warning before replacing names what will be lost
-
-When the user asks to replace the active account, the system shall state what
-will be deleted, shall name each recipe holding changes the server has not
-accepted, and shall require an explicit confirmation before anything is deleted.
-
-**Acceptance criteria**
-- Given three recipes with unsent changes, when the replacement is confirmed,
-  then all three were named on the screen that asked for confirmation.
-- Given a device holding favourites or blocked authors kept with no account,
-  when the replacement is asked for, then the statement says those go too, in
-  numbers rather than in general terms; nothing else in the product would ever
-  tell that person they are about to lose them.
-- Given an account whose every change the server holds, when the replacement is
-  asked for, then the statement says nothing will be lost and still asks for
-  confirmation.
-- Given the confirmation control, when any setting is searched for, then none
-  switches this statement off (GUIDE-001 governs the same pattern).
-- Given the user declines, when they return to the application, then the active
-  account and everything it holds are untouched.
-
-**Verification:** replace an account with unsent drafts present and absent, and
-read both statements.
-**Source:** user decision, 2026-09-20. FLOW-005 already marks exactly which
-recipes hold changes the server has not accepted, so the product can name them
-instead of warning in general terms.
+What the server accepts as proof of ownership, what counts as a device
+identifier, what survives an account whose key is gone, the recovery key, and the
+record a sign-in leaves. What a device holds for each account, and how accounts
+are switched and removed, is [25-accounts-on-a-device.md](25-accounts-on-a-device.md)
+(split out 2026-09-28; no identifier changed).
 
 ## Losing the key
 
@@ -210,8 +109,10 @@ such a recipe from a new account.
   (AUTH-002), then it may fork those recipes like any other account.
 - Given such a fork, when it is created, then its author is the new account and
   the fork names the published recipe as its parent (FORK-006).
-- Given the lost account's unpublished recipes, when anything is attempted, then
-  they are reachable by nobody, on the server or on any device (AUTH-012).
+- Given the lost account's unpublished recipes on the server, when anything is
+  attempted, then they are reachable by nobody; what the account holds on a device
+  still signed in to it is AUTH-011's, and on a device that removed it, gone
+  (AUTH-013).
 
 **Verification:** publish, discard the key, create a new account and fork the
 published recipe.
@@ -294,10 +195,17 @@ the new recovery key once.
   key in the wrong hands or lost.
 - Given the previous account key, deletion key and recovery key, when any of them
   is presented after the replacement, then each matches no account.
-- Given every device holding the account, when it next reaches the server, then
-  it is signed out and holds nothing of that account afterwards, exactly as
-  AUTH-012 leaves a device whose account was replaced — including a device its
-  rightful holder is using.
+- Given every device holding the account other than the one the recovery key was
+  presented from, when it next reaches the server, then it is signed out and holds
+  nothing of that account afterwards — its recipes never sent and its changes not
+  sent included — exactly as AUTH-013 leaves a device the account was removed
+  from, and including another device its rightful holder is using.
+- Given the device the recovery key was presented from, when it holds the account,
+  then it keeps everything the account holds on it and is signed in with the new
+  account key.
+- Given the screen that accepts a recovery key, when it is shown, then it states
+  before the replacement that every other device holding the account will lose
+  what it holds of it, the recipes never sent there included.
 - Given the screen that accepts a recovery key, when it is reached, then it needs
   no account, and it is rate-limited as QUAL-009 requires.
 - Given no connection, when a recovery key is presented, then FLOW-003 refuses
@@ -308,15 +216,19 @@ the new recovery key once.
 - Given the new recovery key, when it is issued, then AUTH-020 governs it in full
   — shown once, kept apart, never displayed again.
 
-**Verification:** present a recovery key with a second device signed in and
-holding an unsent recipe; confirm all three old keys stop working, the second
-device is emptied at its next contact, and the account is otherwise unchanged.
+**Verification:** present a recovery key from a device holding the account and an
+unsent recipe, with a second device signed in and holding another; confirm all
+three old keys stop working, the second device is emptied at its next contact, the
+first keeps its unsent recipe, and the account is otherwise unchanged.
 **Source:** user decision, 2026-09-21. What it does not do is stated rather than
 implied: it does not stop a thief destroying the account, because the deletion
 key travels in the account key's own file and EXT-006 is deliberately easy to
 use; it does not help anyone who kept both keys in one place; and it makes the
 recovery key exactly as valuable as the account key, so an account is now two
 artefacts to keep safe rather than one.
+**Changed 2026-09-28:** the device the recovery key is presented from keeps what it
+holds, and the others lose their unsent work too, stated beforehand; by user
+decision of that date, once recipes live on the device first.
 
 ### AUTH-025 — A sign-in leaves a record that lapses after six months unused
 

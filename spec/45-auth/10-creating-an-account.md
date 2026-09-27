@@ -1,7 +1,7 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [AUTH-001, AUTH-002, AUTH-003, AUTH-004, AUTH-005, AUTH-006, AUTH-018,
   AUTH-022, AUTH-023]
 ---
@@ -13,16 +13,17 @@ given, and what happens when the device cannot be attested at all.
 
 ### AUTH-001 — An account appears when an action needs one
 
-When a person without an account performs an action that requires one — writing
-a recipe, forking a recipe, rating a recipe, or choosing to carry favourites
-beyond this device — the system shall offer to create an account, shall create
+When a person without an account performs an action that requires one — sending
+a recipe to the server (FLOW-059), rating a recipe, or choosing to carry the
+recipe book beyond this device — the system shall offer to create an account, shall create
 a full account only where the device verdict reports a free slot, and otherwise
 shall act as AUTH-003 and AUTH-004 state.
 
 **Acceptance criteria**
 - Given a person with no account, when they browse, search, open a recipe, cook
-  from it, run its timers, keep favourites on the device or report something,
-  then no account is created and none is asked for.
+  from it, run its timers, write, edit, fork or delete a recipe, keep favourites
+  on the device or report something, then no account is created and none is asked
+  for (FLOW-002).
 - Given a person with no account, when they use a control that needs one, then
   account creation is offered, and the action they asked for proceeds once the
   account exists — for a muted account, as AUTH-004 (5) states.
@@ -38,8 +39,9 @@ shall act as AUTH-003 and AUTH-004 state.
 - Given a person who declines the offer, when they return to what they were
   doing, then everything that works without an account still works.
 
-**Verification:** walk every account-less path on a clean install; then trigger
-creation from each of the four actions that require it.
+**Verification:** walk every account-less path on a clean install, writing and
+forking included; then trigger creation from each of the three actions that
+require it.
 **Correction, 2026-09-27:** the statement said an account is created "only where
 the device verdict reports a free slot", and criterion 3 had every successful
 creation occupy a slot, while AUTH-004 creates a muted account with no verdict
@@ -48,6 +50,9 @@ and no slot. Both now speak of a full account; no decision changed.
 publish and for the reader who wants favourites to outlive the device; a person
 who only cooks mints nothing, consumes no nickname and occupies no slot. See
 [ADR — an account is created on demand](../decisions/20260920-account-on-demand.md).
+**Changed 2026-09-28:** writing and forking no longer require an account; sending a
+recipe does. By user decision of that date
+([ADR — the device first](../decisions/20260928-the-device-first.md)).
 
 ### AUTH-018 — The nickname is generated and may be rerolled any number of times before the account exists
 
@@ -143,9 +148,9 @@ truth instead — their favourites already work, and they are tied to this phone
 
 If the server can be reached but a device verdict cannot be obtained, then the
 system shall create a muted account: one that carries favourites beyond the
-device, and whose recipes — written, edited and forked — are held on the device
-alone. A muted account shall send no recipe to the server, and shall not attach
-media, submit, request a private link or rate.
+device and does on the device everything anyone does there (FLOW-002). A muted
+account shall send no recipe to the server, and shall not submit, request a
+private link or rate.
 
 **Acceptance criteria**
 - Given no verdict, when an account is created, then favourites carried by that
@@ -158,19 +163,18 @@ media, submit, request a private link or rate.
   then the fork control is present and the rating controls are absent; a fork it
   makes is held on the device alone.
 - Given a muted account, when the editor is opened, then recipes can be written,
-  edited and deleted, they are held on the device alone and nothing of them
-  reaches the server, and the controls for attaching media, submitting and
-  requesting a private link are replaced by the statement of AUTH-006.
-- Given a muted account, when it was created because the person asked to write
-  or to fork, then that action proceeds on the device at once; when it was
-  created because they asked to rate, then AUTH-006 states at that moment that
-  the rating cannot proceed and why.
+  edited, given media and deleted, they are held on the device alone and nothing
+  of them reaches the server, and the send control of FLOW-059 is replaced by the
+  statement of AUTH-006.
+- Given a muted account, when it was created because the person asked to send a
+  recipe or to rate, then AUTH-006 states at that moment that the action cannot
+  proceed and why.
 - Given a muted account, when it is created, then no slot on the device is
   occupied.
 - Given any person with or without an account, when they report a recipe or an
   author, then the report is recorded and delivered as `abuse` requires.
 
-**Verification:** attempt each of the four triggering actions with attestation
+**Verification:** attempt each of the three triggering actions with attestation
 blocked, walk every control named here, and confirm at the server that no recipe
 of the muted account arrived.
 **Correction, 2026-09-27:** a muted account created from the write control was
@@ -182,6 +186,11 @@ server's storage or the moderator's queue — media, submission, the private lin
 and rating. Media is withheld rather than held locally because every recipe moves
 to the server when the account becomes full, and locally held media could exceed
 the 150 MB an account may hold unpublished (MEDIA).
+**Changed 2026-09-28:** once anyone writes, forks and attaches media on the device
+(FLOW-002, FLOW-004), what a muted account lacks is what uses the server: sending,
+submission, the private link and rating. Media is no longer withheld, because it
+counts against nothing until the recipe is sent (MEDIA-010). By user decision of
+that date ([ADR — the device first](../decisions/20260928-the-device-first.md)).
 **Source:** user decision, 2026-09-20. Refusing to create anything was rejected:
 an outage at the attestation service would then block the one thing a reader
 might legitimately want — favourites that survive the phone. Creating a full
@@ -208,13 +217,11 @@ verdict reports one free.
 - Given an account that has become full, when it is used afterwards, then no
   further verdict is requested for it.
 - Given a muted account holding recipes on its device, when it becomes full, then
-  every one of them is sent to the server as FLOW-002 (4) sends offline changes,
-  without the person being asked, and FLOW-005 marks each until it is accepted.
+  none of them is sent; each keeps the mark FLOW-005 gives a recipe never sent, and
+  the send control of FLOW-059 is offered on each.
 - Given a muted account whose recipe is in the editor, when a retry from the
-  statement standing where the submission control would be makes the account
-  full, then the submission control takes the statement's place and nothing is
-  submitted; choosing it then shows GUIDE-001's statement as every submission
-  does.
+  statement standing where the send control would be makes the account full, then
+  the send control takes the statement's place and nothing is sent.
 - Given any retry that makes the account full, when it completes, then every
   control AUTH-004 withheld is offered wherever it belongs and no withheld action
   is performed on the person's behalf.
@@ -236,6 +243,10 @@ account full restores the withheld controls and performs nothing itself: a ratin
 has no value until the person picks one, and a submission must pass GUIDE-001.
 Criteria 6 and 7 are new; the earlier ones keep their numbers. See
 [ADR — a retry restores the control](../decisions/20260927-a-retry-restores-the-control.md).
+**Changed 2026-09-28:** becoming full sends nothing (criterion 5), and the statement
+of criterion 6 stands in place of the send control rather than the submission
+control, because a recipe is sent before it is submitted (FLOW-006). By user
+decision of that date that sending is the owner's act.
 **Source:** user decision, 2026-09-20. The verdict is asked for at the moment it
 is needed rather than on every launch, which keeps the application independent of
 an external service and keeps requests within the free quota it offers.
@@ -263,8 +274,8 @@ which actions are withheld, and shall state what would lift the limit.
 - Given a full account, when any screen is shown, then no such statement appears
   anywhere.
 - Given a muted account, when the statement is shown in the editor or in the
-  own-recipes view, then it also says that its recipes are held on this device
-  only, and are lost with the device or when another key signs in (AUTH-012).
+  own-recipes view, then it also says that its recipes cannot be sent while it is
+  muted, and are held on this device only and lost with it (FLOW-005).
 - Given a muted account, when its own account screen is opened, then the same
   statement stands there, with the retry control, for as long as it is muted.
 

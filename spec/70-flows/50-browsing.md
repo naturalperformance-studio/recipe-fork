@@ -1,16 +1,17 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [FLOW-033, FLOW-034, FLOW-035, FLOW-036, FLOW-037, FLOW-038, FLOW-039,
   FLOW-040, FLOW-041, FLOW-042, FLOW-043]
 ---
 
-# Browsing: the catalogue and the favourites section
+# Browsing: the catalogue and the recipe book
 
 Two sections, not one. The catalogue is where a reader meets recipes other
-people wrote. The favourites section is where a reader keeps what they took
-with them and where an author finds what they wrote themselves. The rules the
+people wrote. The favourites section — named "My recipe book" in the interface
+(FLOW-034) — is where a reader keeps what they took with them and where an author
+finds what they wrote themselves. The rules the
 two share — orderings, filters, what an entry shows — were decided in
 [`catalogue`](../110-catalogue.md) and are referenced here, never restated.
 
@@ -56,11 +57,12 @@ reader's own filter, which is true of every other filter in the product.
 It is off by default because an author's own recipe is noise in the one place
 built for meeting recipes they do not know.
 
-### FLOW-034 — The favourites section holds two views
+### FLOW-034 — The recipe book holds two views
 
-The system shall present the favourites section as two views — the recipes the
-account has marked, and every recipe the account owns — and shall let the reader
-switch between them inside the section without leaving it.
+The system shall present the favourites section under the name "My recipe book"
+(«Моя книга рецептов») as two views — the recipes marked in the active recipe
+book, and every recipe written in it — and shall let the reader switch between
+them inside the section without leaving it.
 
 **Acceptance criteria**
 - Given an account that has marked recipes and owns recipes, when it opens the
@@ -80,9 +82,12 @@ switch between them inside the section without leaving it.
 - Given a session (FLOW-058) in which the reader has not chosen a view, when they
   open the section, then it opens on the view of marked recipes, whatever the
   account holds.
-- Given a device holding no account, when the section is opened, then it shows
-  the view of marked recipes alone and no switch; the own-recipes view and the
-  switch appear once the device holds an account.
+- Given no account active, when the section is opened, then both views and the
+  switch are there, holding the pool of AUTH-026: what was marked and what was
+  written with no account.
+- Given the section in either interface language, when its name is shown, then
+  it is "My recipe book" in English and «Моя книга рецептов» in Russian, and the
+  word "favourites" names no section anywhere in the interface.
 
 **Verification:** open the section on an account that owns recipes in several
 states and has marked recipes of other authors, and inspect both views; open it
@@ -92,6 +97,11 @@ account sees were decided nowhere (SD-004). By user decision of that date it ope
 on the marked recipes, and a device with no account has that view alone.
 **Completed again 2026-09-27:** "session" was defined nowhere (SD-028); FLOW-058
 now fixes where one ends.
+**Changed 2026-09-28:** the section is named "My recipe book", and a device with no
+account active has both views, because anyone writes recipes (FLOW-002). By user
+decision of that date: it is the person's own recipe book, where they write
+recipes and paste in the ones they found
+([ADR — the device first](../decisions/20260928-the-device-first.md)).
 **Source:** user decision, 2026-09-20: finding one's own recipe must be simple,
 and the author's own work is not discovery, so it lives beside favourites rather
 than in the catalogue. Two views rather than two sections, because a state of a
@@ -125,13 +135,13 @@ learns it once.
 ### FLOW-036 — An own recipe carries its state on its entry, not in a screen of its own
 
 The system shall mark every entry in the own-recipes view with the state of that
-recipe — `private`, `pending`, `rejected`, `link_shared`, `published`,
+recipe — `local`, `private`, `pending`, `rejected`, `link_shared`, `published`,
 `reported_hidden` or `removed` — and shall create no separate screen or section
 for any state.
 
 **Acceptance criteria**
-- Given a recipe in `private`, when the view is shown, then its entry is marked
-  as a draft.
+- Given a recipe in `local` or `private`, when the view is shown, then its entry
+  is marked as a draft, and FLOW-005 says whether it was sent.
 - Given a recipe in `pending`, when its entry is shown, then it states that the
   recipe is awaiting review, and the expectation MOD-005 states is not repeated
   on the entry.
@@ -142,16 +152,16 @@ for any state.
   that the recipe is hidden and gives no further detail (ST-006).
 - Given a recipe in `removed`, when its entry is shown, then it stays in the view
   marked as removed, because its owner may still open it (`entity-states`).
-- Given a recipe the server has not yet accepted, when its entry is shown, then
-  the indication FLOW-005 requires is present as well and does not replace the
-  state marker.
+- Given a recipe never sent or holding changes not sent, when its entry is
+  shown, then the mark FLOW-005 requires is present as well and does not replace
+  the state marker.
 - Given any state, when the reader looks for its recipes, then the way to see
   only them is the filter of FLOW-037 and not a separate screen.
-- Given an entry in `private` or `rejected`, when it is shown, then deletion is
-  offered on it and FLOW-053 governs what the author is told; given an entry in
-  any other state, then it is not offered.
+- Given an entry in `local`, `private` or `rejected`, when it is shown, then
+  deletion is offered on it and FLOW-053 governs what the author is told; given an
+  entry in any other state, then it is not offered.
 
-**Verification:** hold one account with a recipe in each of the seven states and
+**Verification:** hold one account with a recipe in each of the eight states and
 inspect every entry in the view.
 **Source:** user decision, 2026-09-20: a marker on the entry, because a state is
 not worth a screen and an author may hold many drafts at once.
@@ -181,9 +191,10 @@ per state, but the states are worth filtering by.
 
 ### FLOW-038 — Every recipe the account owns is readable without a connection
 
-The system shall hold on the device the full text of every recipe the account
-owns, in every state, and shall hold that recipe's media under the single setting
-of FLOW-011, on the same terms as a favourite.
+The system shall hold on the device the full text of every recipe written in the
+active recipe book — the account's, or the pool's — in every state, and shall hold
+that recipe's media under the single setting of FLOW-011, on the same terms as a
+favourite, except the media of which the device holds the only copy (FLOW-011).
 
 **Acceptance criteria**
 - Given no network connection, when the owner opens the own-recipes view, then

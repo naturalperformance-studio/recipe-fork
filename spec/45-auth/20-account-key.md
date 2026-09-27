@@ -1,7 +1,7 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [AUTH-007, AUTH-024, AUTH-019, AUTH-008, AUTH-009, AUTH-010, AUTH-017]
 ---
 
@@ -190,7 +190,8 @@ consume nor require a free slot on that device.
 
 **Acceptance criteria**
 - Given a second device, when the key is entered there, then the same account is
-  active on both and both hold its recipes (FLOW-038).
+  active on both and both hold the recipes it has sent (FLOW-059) and its
+  favourites; a recipe never sent stays on the device it was written on.
 - Given a device with all three slots occupied, when a key is entered, then
   signing in succeeds.
 - Given a key pasted as text and the same key taken from a file, when either is
@@ -199,7 +200,10 @@ consume nor require a free slot on that device.
   signing in is refused, the reason is stated, and whatever was active stays
   active.
 - Given the same key entered twice in succession, when the second attempt
-  happens, then nothing changes and no data is wiped.
+  happens, then nothing changes and nothing is deleted.
+- Given a device where other accounts are signed in, when a key is entered,
+  then the account it holds joins them and becomes the active one, and none of
+  theirs is touched (AUTH-011).
 
 **Verification:** sign in on a fresh device, on a device with slots full, twice
 in a row, and with a damaged key.
@@ -209,10 +213,11 @@ none. Without this, a household sharing one tablet could not reach accounts they
 already hold. Flagged to the product owner as the spec author's inference rather
 than a stated decision.
 
-### AUTH-010 — Signing in requires a connection
+### AUTH-010 — Signing in with a new key requires a connection
 
 If the device has no network connection, then the system shall refuse to sign in
-with a key and shall state that a connection is needed.
+with a key not yet used on this device and shall state that a connection is
+needed; a key already used on this device is AUTH-027.
 
 **Acceptance criteria**
 - Given no connection, when a key is entered, then signing in is refused, the
@@ -227,6 +232,9 @@ and then with both working.
 **Source:** the server decides whether a key holds a real account (AUTH-014);
 until that test can run, the client has accepted nothing. Consistent with
 FLOW-003, which refuses every action whose answer only the server holds.
+**Narrowed 2026-09-28** to a key not yet used on the device, by user decision of
+that date: a key the device has already seen opens what the device already holds
+for it (AUTH-027).
 
 ### AUTH-017 — Every account carries a deletion key
 

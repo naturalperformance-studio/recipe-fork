@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: []
 ---
 
@@ -11,22 +11,34 @@ Part of the [glossary](00-index.md); holds no requirements.
 
 ## People and accounts
 
-**Account** — created only when an action requires one — writing, forking,
-rating, or carrying favourites beyond the device — and carrying no personal data
+**Account** — created only when an action requires one — sending a recipe to
+the server, rating, or carrying the recipe book beyond the device — and carrying
+no personal data
 of any kind (ACT-001, AUTH-001, CON-001). Not an identity: a person on two
 devices holds one account by holding one key.
 
 **Person with no account** — an actor, not an absence: they browse, search,
-cook, keep favourites on the device, report and block, and the product creates
-nothing for them (ACT-001, FLOW-051).
+cook, write, edit, fork and delete recipes on the device, keep favourites there,
+report and block, and the product creates nothing for them; what they make is in
+the pool (ACT-001, FLOW-002, FLOW-051).
+
+**Pool** — what is made on a device while no account is active: recipes,
+favourites and blocked authors that belong to no account. Shown whenever no
+account is active, and offered once to each account that becomes active on the
+device (AUTH-026).
+
+**Account list** — the accounts signed in on a device, each holding its own
+content apart from the others'; the active one is switched by choosing another
+(AUTH-011). An account leaves it only when removed (AUTH-013).
 
 **Account key** — the string that holds an account, offered both to copy and to
 save as a file. Whoever holds it holds the account; losing it, with no device
 still signed in, loses the account and there is no recovery (NGOAL-003). It is
 shown in full exactly once, at creation, and afterwards only masked with a
-control that copies it whole (AUTH-007, AUTH-019). Entering it signs in and
-replaces whatever account was active, wiping what the device held for it
-(AUTH-009, AUTH-012). Its form and cryptography are an engineering choice; the
+control that copies it whole (AUTH-007, AUTH-019). Entering it signs in and makes
+that account the active one beside any others on the device, deleting nothing
+(AUTH-009, AUTH-011, AUTH-012); a key already used on the device opens its account
+there without the server (AUTH-027). Its form and cryptography are an engineering choice; the
 properties it must have are AUTH-014.
 
 **Deletion key** — a second, smaller secret issued beside the account key,
@@ -58,10 +70,9 @@ the application is running on, including which slots are free. Nothing from it
 is stored (AUTH-015).
 
 **Muted account** — an account created where the server answered and no device
-verdict could be obtained. It carries favourites beyond the device, and writes,
-edits and forks recipes that stay on the device alone; it attaches no media, does
-not submit, request a private link or rate, and sends no recipe to the server
-until it is full.
+verdict could be obtained. It carries favourites beyond the device and does on
+the device everything anyone does there; it does not send a recipe, submit,
+request a private link or rate.
 It becomes full when a verdict and a free slot allow (AUTH-004, AUTH-005). With
 no connection at all no account is created, muted or otherwise (FLOW-003).
 
@@ -76,10 +87,12 @@ is ever shown (DOM-001, AUTH-018).
 the ratings it gave and the reports it filed stay; everything unpublished, its
 favourites and its keys are gone, its nickname is never reissued, and its
 recipes show that the author is deleted instead of a nickname (RET-001, RET-002,
-RET-003).
+RET-003). What it held on any device, recipes never sent included, is deleted
+there too (RET-001).
 
-**Owner** — the account that created a recipe, for that recipe's whole life.
-Ownership is never transferred (ACT-002). Not an actor: a role an account holds
+**Owner** — the account in whose recipe book a recipe was created, for that
+recipe's whole life; a recipe created in the pool has none until the pool is
+moved into an account. Ownership is otherwise never transferred (ACT-002). Not an actor: a role an account holds
 with respect to one recipe.
 
 **Reader** — an account looking at a recipe it does not own. Also a role, not an
@@ -173,20 +186,40 @@ else, and it accepts nothing back (OBS-004, OBS-005).
 ## The device
 
 **Held on the device** — content stored locally so it opens without a
-connection: the account's favourites, both dictionaries, and every recipe the
-account owns that the server has not accepted (`flows`, FLOW-001, FLOW-009).
+connection: the recipe book of every account on the device and of the pool, both
+dictionaries, and every recipe written there, in every state (`flows`, FLOW-001,
+FLOW-009, FLOW-038).
 
-**Accepted by the server** — said of a recipe whose every local change, text and
-media, has reached the server. Nothing is submitted for moderation before it is
-(FLOW-005, FLOW-006).
+**Sent** — said of a recipe its owner sent to the server (FLOW-059); what the
+server holds of a recipe is what was last sent. A recipe is never sent, sent, or
+sent with changes not sent, and FLOW-005 marks which. Nothing is submitted for
+moderation before every change is sent (FLOW-006). Replaces "accepted by the
+server" (2026-09-28).
+
+**Recipe book** — the interface name, "My recipe book" («Моя книга рецептов»), of
+what this specification calls the favourites section: the recipes a person found
+and marked, and the recipes they wrote (FLOW-034).
+
+**Serverless mode** — the state of a release built for after the product owner's
+server is switched off: everything that needs the server is gone, everything the
+device does alone stays, and recipe files appear. Switched on by a release, never
+by the application (FLOW-061, FLOW-062).
+
+**Recipe file** — a recipe exported to a file in serverless mode, carrying its
+text, the media the device holds, its author's nickname and its direct parent
+(FLOW-063). Imported, it becomes a found recipe — a favourite — whose stated
+author is shown as not verified (FLOW-064). Not to be confused with the import of
+a post from a social network (`import`).
 
 **Session** — the time from a start of the application that has nothing to
 restore until the next such start. Only the reader closing the application or
 a restart of the device ends one; the operating system ending the process while
 the application is away does not (FLOW-058).
 
-**Favourite** — a recipe the reader marked to take with them. Its text is always
-held on the device; whether its media comes too is one setting covering all
-favourites (FLOW-009, FLOW-011). Without an account a favourite lives on that
-device and nowhere else, and is lost with it; an account carries its favourites
-to every device it signs in to (FLOW-051, FLOW-052).
+**Favourite** — a recipe the reader marked to take with them, or imported from a
+file (FLOW-064); in the interface, a found recipe in "My recipe book". Its text is
+always held on the device; whether its media comes too is one setting covering all
+favourites, beside an action that clears it (FLOW-009, FLOW-011, FLOW-060).
+Without an account a favourite lives in the pool of that device and nowhere else,
+and is lost with it; an account carries its favourites to every device it signs
+in to, by themselves, without being sent (FLOW-051, FLOW-052).

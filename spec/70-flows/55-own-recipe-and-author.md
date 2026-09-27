@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [FLOW-053, FLOW-054, FLOW-055]
 ---
 
@@ -13,23 +13,25 @@ Split from `50-browsing.md` on 2026-09-27; no identifier changed.
 
 ### FLOW-053 — Deleting a recipe is offered in one place and confirmed against what it costs
 
-Where a recipe the account owns is in `private` or `rejected`, the system shall
+Where a recipe written in the active recipe book is in `local`, `private` or
+`rejected`, the system shall
 offer to delete it from that recipe's entry in the own-recipes view, shall state
 before anything is destroyed that the deletion is immediate and cannot be undone
 and how much media it frees, and shall delete it only after an explicit
 confirmation.
 
 **Acceptance criteria**
-- Given a recipe in `private` or `rejected`, when its entry in the own-recipes
-  view is opened, then deletion is offered there; given a recipe in any other
+- Given a recipe in `local`, `private` or `rejected`, when its entry in the
+  own-recipes view is opened, then deletion is offered there; given a recipe in any other
   state, then no deletion control is present and no space is reserved for one
   (ST-010).
 - Given the statement, when it is shown, then it says the recipe and its
-  photographs and video go at once and cannot be brought back, and it names the
-  amount of the unpublished allowance the deletion frees (MEDIA-010, MEDIA-011).
-- Given a recipe holding changes the server has not accepted (FLOW-005), when the
-  statement is shown, then it names them, exactly as AUTH-013 names them before
-  an account is replaced.
+  photographs and video go at once and cannot be brought back, and, for a sent
+  recipe, it names the amount of the unpublished allowance the deletion frees
+  (MEDIA-010, MEDIA-011); a recipe in `local` frees none and no amount is named.
+- Given a recipe holding changes not sent (FLOW-005), when the statement is
+  shown, then it says so, exactly as AUTH-013 names such recipes before an account
+  is removed from the device.
 - Given any setting, when it is searched for, then none switches this statement
   off (GUIDE-001 governs the same pattern).
 - Given the confirmation, when the owner declines it, then nothing is deleted and
@@ -40,8 +42,9 @@ confirmation.
   carries no deletion control, neither in the recipe nor in the screen's bar,
   because a recipe's state is managed on its entry in the list (FLOW-036); the
   edit action in the bar (FLOW-029) opens the editor and deletes nothing.
-- Given no network connection, when deletion is asked for, then FLOW-003 refuses
-  it before the statement is shown.
+- Given no network connection, when deletion of a sent recipe is asked for, then
+  FLOW-003 refuses it before the statement is shown; a recipe in `local` is
+  deleted with or without a connection.
 
 **Verification:** delete a draft carrying media and unsent changes and read the
 statement; decline once and confirm once; look for the control on a card, on a
@@ -50,12 +53,15 @@ statement; decline once and confirm once; look for the control on a card, on a
 Where the control sits follows FLOW-036: a state is not worth a screen, so
 neither is deleting one recipe. The statement follows the pattern the product
 already uses for every irreversible act it offers — GUIDE-001 before submission,
-AUTH-013 before an account is replaced, RET-005 before an account is deleted —
+AUTH-013 before an account is removed from the device, RET-005 before an account is deleted —
 and it names the freed allowance because MEDIA-011 has just told the author that
 deleting a draft is one of the two ways to get it back.
 **Correction, 2026-09-27:** criterion 7 grounded itself on "the card is read",
 which read as forbidding the edit action FLOW-029 now places in the card screen's
 bar (SD-031); it now names the bar and keeps deletion off it.
+**Changed 2026-09-28:** a recipe never sent is deleted on the device alone, with or
+without a connection, and frees no allowance, since recipes reach the server only
+when sent (user decision of that date).
 
 ### FLOW-054 — The private link is shown, copied, revoked and reissued in one place
 

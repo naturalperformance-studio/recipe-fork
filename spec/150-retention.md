@@ -1,7 +1,7 @@
 ---
 slug: RET
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [RET-001, RET-002, RET-003, RET-004, RET-005, RET-006, RET-007, RET-008,
   RET-009, RET-010]
 ---
@@ -10,9 +10,12 @@ ids: [RET-001, RET-002, RET-003, RET-004, RET-005, RET-006, RET-007, RET-008,
 
 The product keeps almost everything it is given, because almost none of it is
 about a person: a recipe is a method, a rating is a number, and an account is a
-nickname with no one behind it (CON-001). Deletion therefore happens for three
-reasons only — the holder asks for their account to go, a moderator takes a
-recipe out of the world, or a stored file has nothing left holding it.
+nickname with no one behind it (CON-001). Deletion on the server therefore
+happens for three reasons only — the holder asks for their account to go, a
+moderator takes a recipe out of the world, or a stored file has nothing left
+holding it. On a device the holder also deletes by their own act: a recipe never
+sent (ST-010), media the device can fetch again (FLOW-060), an account removed from
+the device (AUTH-013).
 
 Decided elsewhere and not repeated here: a stored media file is deleted once no
 surviving recipe holds it, in batches rather than at once (MEDIA-012,
@@ -31,7 +34,8 @@ with a price, and it is recorded as
 When an account is deleted, the system shall destroy the account record, its
 account key and deletion key, its favourites, its list of blocked authors, and
 every recipe it owns that has never been published, together with that recipe's
-media.
+media — on the server, and on every device that holds the account, recipes never
+sent included.
 
 **Acceptance criteria**
 - Given a deleted account, when its key is entered anywhere, then it opens
@@ -47,9 +51,20 @@ media.
   then that nickname is never issued again (DOM-001).
 - Given the device the account was created on, when the account is deleted, then
   the slot it occupied is not freed (AUTH-002).
+- Given the device the deletion was made from, when the account is deleted, then
+  everything the account held on it — recipes never sent and changes not sent
+  included — is gone at once and the account leaves the account list (AUTH-011).
+- Given another device holding the account, when it next reaches the server, then
+  it deletes everything the account held on it in the same way; until then it
+  cannot know.
+- Given the pool of a device (AUTH-026), when an account on it is deleted, then
+  the pool is untouched, because it belongs to no account.
 
 **Verification:** delete an account holding recipes in every unpublished state,
 with favourites, blocks and a live private link, and inspect each afterwards.
+**Changed 2026-09-28:** once recipes live on the device first, deleting an account
+also deletes what it holds on every device, by user decision of that date: the
+deletion means the account is gone, not that its unsent work is kept somewhere.
 **Source:** user decision, 2026-09-20. The slot is deliberately not freed: if it
 were, deleting and recreating would reset the device gate, and the gate would be
 worth nothing. A `link_shared` recipe goes with the account because it was never
@@ -255,7 +270,8 @@ The system shall hold no record of what a person read, searched for, or cooked.
 - Given the stored data of any account, when it is enumerated, then it holds no
   history of recipes opened, searches made, timers run or scales applied.
 - Given the reader's own device, when its held state is enumerated, then what is
-  there serves the reader — favourites, the recipe last open with its scale,
+  there serves the reader — the recipe books of the accounts on it and of the
+  pool, recipes never sent, favourites, the recipe last open with its scale,
   its fixed ingredients and the place scrolled to (FLOW-012), the usual serving
   count — and is sent nowhere.
 - Given `analytics`, when its measurements are defined, then they obey this

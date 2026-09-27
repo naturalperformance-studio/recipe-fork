@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [FLOW-022, FLOW-023, FLOW-057, FLOW-024, FLOW-025, FLOW-026, FLOW-028, FLOW-029, FLOW-030]
 ---
 
@@ -230,8 +230,9 @@ media for a step at that step.
   that step is offered at that step and nowhere else.
 - Given a recipe with no cover, when it is saved, then it saves, because a cover is
   not part of the minimum (DOM-006).
-- Given media attached with no connection, when it is attached, then FLOW-004
-  governs and the recipe is marked as not accepted by the server (FLOW-005).
+- Given media attached with or without a connection, when it is attached, then
+  FLOW-004 governs: it stays on the device until the recipe is sent, and a sent
+  recipe is marked as holding changes not sent (FLOW-005).
 - Given a step, when the number of items it may carry is asked, then MEDIA-001
   answers it — one — and not this requirement, which places the control and says
   nothing about the limit.

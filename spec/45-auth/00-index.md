@@ -1,17 +1,21 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: []
 ---
 
 # Accounts and the account key
 
 Most people who use this product never need an account. Browsing, searching,
-opening a recipe, cooking from it, running its timers, keeping favourites on the
-device and reporting something all work without one. An account is what an
-author needs, and what a reader chooses if they want their favourites to survive
-the phone.
+opening a recipe, cooking from it, running its timers, writing and forking
+recipes, keeping them and favourites in the recipe book on the device, and
+reporting something all work without one (FLOW-002). An account is what an author
+needs to send a recipe to the server — for a copy the server keeps, for the
+recipe on another device, and to submit it — and what a reader chooses if they
+want their recipe book to survive the phone. A device holds every account signed
+in on it, each apart, and a pool for what was made with none (AUTH-011,
+AUTH-026).
 
 An account carries no personal data (CON-001) and is held by keys its holder
 keeps — three of them, each with one job: the account key signs in, the deletion
@@ -56,4 +60,5 @@ change on the split and never will.
 |---|---|---|
 | [10-creating-an-account.md](10-creating-an-account.md) | When an account appears, the device slots, the nickname — its form and the words it is drawn from — and the muted account | AUTH-001–AUTH-006, AUTH-018, AUTH-022, AUTH-023 |
 | [20-account-key.md](20-account-key.md) | The three steps of creation, and the account key and the deletion key: issuing, keeping, showing, importing | AUTH-007–AUTH-010, AUTH-017, AUTH-019, AUTH-024 |
-| [30-account-life.md](30-account-life.md) | One active account, what replacing it destroys, what the server accepts as proof, what counts as a device identifier, losing the key, the recovery key, and the record a sign-in leaves | AUTH-011–AUTH-016, AUTH-020, AUTH-021, AUTH-025 |
+| [25-accounts-on-a-device.md](25-accounts-on-a-device.md) | Several accounts on a device, the switch between them, removing one, the pool made with no account and the offer to move it, and a known key opening its account without the server | AUTH-011–AUTH-013, AUTH-026, AUTH-027 |
+| [30-account-life.md](30-account-life.md) | What the server accepts as proof, what counts as a device identifier, losing the key, the recovery key, and the record a sign-in leaves | AUTH-014–AUTH-016, AUTH-020, AUTH-021, AUTH-025 |

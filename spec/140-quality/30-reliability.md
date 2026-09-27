@@ -1,7 +1,7 @@
 ---
 slug: QUAL
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [QUAL-006, QUAL-008]
 ---
 
@@ -20,11 +20,13 @@ EXT-011 answered as healthy.
   recorded, because the figure allows roughly 36 hours and a month that spends
   them is a month with an unexamined fault in it.
 - Given the product is unavailable, when a reader uses the application, then
-  every recipe in favourites opens, cooks and recalculates, and every timer runs
-  (FLOW-009, FLOW-013, EXT-009), because none of that reaches the server.
+  every recipe in the recipe book — favourites and recipes written on the device
+  — opens, cooks and recalculates, recipes are written, edited and forked, and
+  every timer runs (FLOW-002, FLOW-009, FLOW-013, EXT-009), because none of that
+  reaches the server.
 - Given the product is unavailable, when a reader uses the application, then the
-  catalogue, search, publication, moderation, rating, account creation and
-  signing in with a key are all refused, each of them stating that the product
+  catalogue, search, sending, publication, moderation, rating, account creation
+  and signing in with a key not yet used on the device are all refused, each of them stating that the product
   could not be reached rather than that a connection is needed (FLOW-003), and
   none of them fails silently.
 - Given the figure, when it is quoted anywhere the user can read it, then it is

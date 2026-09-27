@@ -1,11 +1,11 @@
 ---
 slug: OQ
 status: open
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
-  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037]
+  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037, OQ-038]
 open_before_mvp: [OQ-016, OQ-029, OQ-030]
 ---
 
@@ -108,8 +108,9 @@ Narrowed twice on 2026-09-20. First by the device gate: a nickname can no longer
 be consumed at an unbounded rate, because creating an account costs one of three
 slots per device and a slot frees only after six months (AUTH-002). Then by
 account creation on demand: an installation no longer mints an account at all,
-so only a person who writes, forks, rates or wants favourites carried beyond the
-device consumes a nickname (AUTH-001). The question survives as an arithmetic one
+so only a person who sends a recipe, rates or wants favourites carried beyond the
+device consumes a nickname (AUTH-001; writing and forking need no account since
+2026-09-28). The question survives as an arithmetic one
 about the word lists, not as an abuse vector.
 Blocks: nothing while the fraction consumed stays low.
 
@@ -346,7 +347,14 @@ confirmed in both directions — restricting and releasing — because undoing
 either means finding that one recipe again with no way to search for it.
 Written as FLOW-049 and FLOW-050; FLOW-046 is no longer blocked.
 
-### OQ-028 — Several accounts on one device (define after MVP)
+### OQ-028 — Several accounts on one device — RESOLVED 2026-09-28
+Resolved by the product owner, reversing the earlier deferral: a device holds
+every account signed in on it, each with its own content, switched from a list;
+what is made with no account is a pool offered once to each account. Written as
+AUTH-011, AUTH-012, AUTH-013, AUTH-026 and AUTH-027. See
+[ADR — several accounts on one device](decisions/20260928-several-accounts-on-one-device.md).
+The original entry follows.
+
 Unresolved: whether a device may hold more than one account at a time, with a
 switch between them, instead of the single active account of AUTH-011.
 Decided for the MVP by the product owner 2026-09-20 by not adopting it: one
@@ -511,3 +519,18 @@ Proposal (not a decision): add `пучок` alone, as a `piece` unit, after the 
 release, if free-text ingredients (OBS-001) or authors' qualifiers show bunches
 being written around the gap.
 Blocks: nothing that is written.
+
+### OQ-038 — A server someone else runs, after the product owner's is gone (define after MVP)
+Unresolved: whether the final update of serverless mode offers a field for the
+address of a server run by someone else, and whether the server's code is
+published when the product owner's server is switched off, so that a community
+could bring back the catalogue and every function that needs a server.
+Raised by the product owner 2026-09-28 as a possibility. Not in the first
+release: serverless mode is switched on by a later release
+([ADR — serverless mode and recipe files](decisions/20260928-serverless-mode-and-recipe-files.md)),
+which can carry the field itself.
+Proposal (not a decision): decide it when the final update is prepared. It then
+needs its own answers on who moderates a server the product owner does not run,
+what the terms of LEG say about content published there, and what the licence of
+the published code is.
+Blocks: nothing.

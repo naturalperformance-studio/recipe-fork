@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: []
 ---
 
@@ -55,17 +55,22 @@ stays smooth, while being displayed in pieces.
 An account holds, as separate collections: favourites (recipes), ratings (one
 value per rated recipe), blocked authors (accounts), and the recipes it owns.
 The account carries no field that identifies the person behind it (CON-001).
-An account exists only where one was asked for (AUTH-001); favourites and
-blocked authors also exist on a device that holds no account, and live only
-there (FLOW-051).
+An account exists only where one was asked for (AUTH-001); recipes, favourites
+and blocked authors also exist on a device with no account active, in a pool that
+belongs to no account and lives only there (FLOW-051, AUTH-026). A device holds
+the content of every account signed in on it, each apart from the others
+(AUTH-011).
 
 ### Recipe
 
 | Field | Type | Notes |
 |---|---|---|
-| `recipe_id` | identifier | |
-| `owner` | Account | Fixed at creation, not transferable (ACT-002). |
-| `parent` | Recipe or none | The direct parent this recipe was forked from. Fixed at creation. Only the direct parent is held; no chain root, no descendant list (GOAL-003). |
+| `recipe_id` | identifier | Given when the recipe is created on the device, and kept unchanged when it is sent, exported or imported, so that a fork can name a parent the server does not yet hold (FLOW-007) and a file can be recognised when imported twice (FLOW-064). |
+| `owner` | Account or none | None while the recipe is in the pool of a device (AUTH-026); an account once it is written in that account's book or moved into it, and fixed from the recipe's first sending, not transferable (ACT-002). |
+| `parent` | Recipe identity or none | The direct parent this recipe was forked from, held by its identity, which need not be held on the device or on the server (FLOW-007, FLOW-065). Fixed at creation. Only the direct parent is held; no chain root, no descendant list (GOAL-003). |
+| `sent` | never, sent, or sent with changes not sent | What FLOW-005 marks. Held on the device; the server holds only what was sent (FLOW-059). |
+| `stated_author` | nickname as text, or none | Only on a recipe imported from a file: the author's nickname the file states, shown as not verified (FLOW-064). |
+| `stated_parent` | title and nickname as text, or none | Only on a recipe imported from a file: the title and author's nickname its file states for its parent (FLOW-065). |
 | `title` | text | |
 | `description` | text | |
 | `tags` | set of Tag | Chosen from the fixed dictionary. |
@@ -158,13 +163,13 @@ step.
 | Field | Type | Notes |
 |---|---|---|
 | `media_id` | identifier | |
-| `owner` | Account | Media is bound to an account at upload, before publication. |
+| `owner` | Account | Media is bound to an account when its recipe is sent, before publication; before that it is on the device alone (FLOW-004). |
 | `kind` | `photo` or `video` | |
 | `attachment` | recipe cover, or a Step | |
 | `visibility` | `private` or `published` | Follows the visibility of the recipe it belongs to. |
 
-Limits on size, duration, count per recipe and total unpublished size per
-account are in [`media`](../90-media.md), MEDIA-001 to MEDIA-010.
+Limits on size, duration, count per recipe and total size of sent, unpublished
+media per account are in [`media`](../90-media.md), MEDIA-001 to MEDIA-010.
 
 ### Tag
 

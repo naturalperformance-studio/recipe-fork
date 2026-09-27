@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: []
 ---
 
@@ -77,7 +77,8 @@ deletions and moderator decisions (QUAL-008, RET-004).
 ## Import (not in the first release)
 
 **Import** — turning a post on Instagram, TikTok or Pinterest into a published
-recipe by a language model (IMPORT-001, IMPORT-010).
+recipe by a language model (IMPORT-001, IMPORT-010). Not the import of a recipe
+file in serverless mode, which is its own term, "recipe file".
 
 **Imported recipe** — a recipe produced by an import. It has no author and no
 owner (IMPORT-015), no media (IMPORT-016), and is changed only by being forked.
