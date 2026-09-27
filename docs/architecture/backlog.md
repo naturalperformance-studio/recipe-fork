@@ -44,7 +44,7 @@ in this wave, and no media is attached.
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | gated |
 | T-009 | The first step of creation shows the nickname and the terms | T-006, T-008 | gated |
 | T-032 | The second step of creation issues the account key and the deletion key | T-009 | blocked |
-| T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | planned |
+| T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-008 | planned |
 | T-031 | What the ingredient field offers for what the author types | T-011 | planned |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-031 | planned |
@@ -541,7 +541,7 @@ in this wave, and no media is attached.
 ### T-010 — The recovery key is issued on the third step, and leaving creation leaves nothing
 
 **Requirements:** AUTH-020, AUTH-007, AUTH-024, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-032
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
@@ -578,7 +578,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-007) — docs/product/verdicts/20260927-T-010-gate1.md; re-sliced against spec/ @ ead1a44 after SD-007 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-007) — docs/product/verdicts/20260927-T-010-gate1.md; re-sliced against spec/ @ ead1a44 after SD-007 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-010-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
