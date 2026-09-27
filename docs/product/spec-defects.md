@@ -1058,3 +1058,96 @@ contradicted by themselves, and whether it is re-gated is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** resolved
 **Resolved:** 2026-09-27 — «Проведи сверку и актуализируй поля Status у записей» (re-checked against spec/ @ 959130e)
+
+### SD-033 — The amounts a reader may fix are stated nowhere: zero, an amount off the unit type's grid, and the unit it is stated in (2026-09-27)
+**Requirement IDs:** SCALE-002, SCALE-005; read against SCALE-008 (7), SCALE-009, SCALE-010 (2), SCALE-011, SCALE-015, DOM-003, DOM-015, FLOW-027 and the rounding grid (`spec/80-scaling-rules/00-index.md`)
+**Class:** omission
+**What the gate hit:** T-020 adds the card's fixing control, the one place a reader
+states the available amount of an ingredient (SCALE-002: "When the reader fixes the
+available amount of an ingredient"; glossary: "an ingredient whose available amount the
+reader states"). What that control accepts and what it refuses is observable, and no
+requirement states it — unlike the requested serving count (SCALE-011), the authored
+serving count (DOM-015, after SD-013) and a timer's duration (FLOW-027, after SD-030),
+whose admissible values are each stated. Whoever builds the control would decide three
+things, and gate 2 could mark neither choice met (TEAM-008):
+1. **Zero, and below it.** Nothing refuses a fixed amount of 0. Read literally, SCALE-002
+   gives a factor of 0; SCALE-005's statement then holds every line at its floor and marks
+   it rounded up — the ingredient the reader fixed at 0 g included, shown as 1 g — while
+   SCALE-005 (3) speaks only of "any factor above zero"; SCALE-008 shows ≈¼ serving and
+   SCALE-009's warning appears. A control that refuses 0 adds a refusal no requirement
+   asks for, which gate 2 would have to reject as an addition; a control that accepts it
+   produces that screen. The same holds for a negative amount, if the control can take
+   one.
+2. **An amount off the unit type's grid.** SCALE-008 (7) has the reader fix 109.375 g,
+   which the `exact` grid (whole grams below 1000 g) does not hold, so the specification
+   expects at least that amount to be stateable; whether a reader may likewise state 2.5
+   of an indivisible piece, or 1⅕ tablespoons, is not said. How an accepted off-grid
+   amount is then displayed is read as determinate (the grid and SCALE-015, as for any
+   computed quantity — docs/product/verdicts/20260927-T-002-gate1-3.md); whether it is
+   accepted is not.
+3. **The unit the amount is stated in.** SCALE-010 (2) fixes "10 kg" against an authored
+   5 g, so the rungs of the `exact` ladder are accepted. For `household`, whether an
+   ingredient authored in tablespoons can be fixed in teaspoons or cups is not stated,
+   and DOM-003 forbids converting a household quantity "to mass or volume"; for `piece`
+   and `taste_measured` there is one unit and nothing to decide.
+Raised at T-002's second and third gates 1 as not reached by T-002's criteria and left
+for T-020's gate (docs/product/verdicts/20260927-T-002-gate1-2.md,
+docs/product/verdicts/20260927-T-002-gate1-3.md). Found at T-020's third gate 1
+(docs/product/verdicts/20260927-T-020-gate1-3.md).
+**Stopped:** T-020 (SCALE-002, the fixing control). T-021, T-022, T-023, T-034, T-033,
+T-024, T-025 and T-028 wait behind T-020 through the backlog's dependencies. T-002 holds a
+gate-1 `accepted` (docs/product/verdicts/20260927-T-002-gate1-3.md) whose criteria use
+positive amounts and do not reach the control; whether it is re-gated once this is
+answered is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-034 — What an author may enter as an ingredient's quantity is stated nowhere, and a quantity off its unit type's grid is displayed at the authored count as the grid value by SCALE-001's statement and as the authored value by its criterion (4) (2026-09-27)
+**Requirement IDs:** SCALE-001 (statement, 4), SCALE-003 (2), CON-004 (statement, 3); read against the Ingredient `quantity` field and the unit-type paragraph of the domain model (`spec/50-domain-model/00-index.md`), FLOW-023 (statement, 1), DOM-012, DOM-016, the rounding grid (`spec/80-scaling-rules/00-index.md`), SCALE-014 (5), SCALE-015 (statement) and the glossary's "Rounding grid" (`spec/10-glossary/10-recipes-and-scaling.md`)
+**Class:** omission (item 1); inconsistency (item 2)
+**What the gate hit:** T-001 builds the step from an authored quantity, its unit type and
+the factor to the value a cook reads, and carries SCALE-001 (4) and SCALE-003 (2), which
+fix what is shown when the count is back at the authored value (factor 1).
+1. **The admissible values of an authored quantity are stated nowhere.** The domain
+   model types `quantity` as "number or none"; FLOW-023 composes the row from a quantity
+   field whose only examples are `500` and `2`; DOM-012 sets no limit on it; DOM-016
+   closes the units but not the values. Nothing says whether the field takes a value the
+   grid of its unit type does not hold — 7.5 g, 1234.5 g, 0.3 teaspoon, 2.5 or ½ of an
+   indivisible piece. The section index's "A recipe that needs half of something the
+   dictionary calls indivisible has no way to say so" reads either as the field refusing
+   ½ egg or as the display rounding it, and is not a requirement. The authored serving
+   count had the same gap (SD-013, answered by DOM-015); the reader's fixed amount has it
+   now (SD-033); the authored ingredient quantity has had no such decision.
+2. **At the authored count, such a value is displayed two ways.**
+   - *As the grid value.* SCALE-001's statement governs a change of count, the return of
+     criterion (4) included: "every ingredient quantity multiplied by the ratio … rounded
+     by the rounding grid", here at a ratio of 1. The domain model: "What is displayed is
+     governed by the rounding grid … not by the unit the author chose." The glossary: the
+     grid is "the set of values each unit type may display". SCALE-014 (5): a
+     `household`, `taste_measured` or divisible `piece` quantity "never carries a decimal
+     mark". So 0.3 teaspoon reads ⅓, 7.5 g reads 8 g, 2.5 indivisible eggs read 3 (tie
+     up, SCALE-015), ½ egg reads 1 (floor, SCALE-005).
+   - *As the authored value.* SCALE-001 (4): "every quantity equals the authored quantity
+     and nothing is marked as derived". SCALE-015 rounds "every computed quantity", and a
+     quantity at its authored count is the one the author entered. CON-004's statement
+     marks "a quantity it derived rather than the quantity its author entered", with the
+     direction when it was rounded, and CON-004 (3) marks nothing at the authored count —
+     so under the first reading ⅓ teaspoon for an entered 0.3 is a rounded value that
+     carries neither a derived marker nor a direction.
+   The first reading fails SCALE-001 (4) and shows a rounded number with nothing saying
+   so; the second shows values the grid does not hold, decimal marks included. The two
+   agree wherever the authored value lies on the grid, and every criterion in `spec/`
+   uses such a value (500 g, 7 g, 3 pieces, 1 teaspoon, 1 tablespoon). No criterion
+   exercises an off-grid authored quantity, so the developer of T-001 — and of the
+   quantity field — would decide it, and gate 2 could not tell (TEAM-008). Whether such
+   a value can exist, and if it can, which of the two it shows at the authored count, is
+   the product decision.
+Found at T-001's third gate 1 (docs/product/verdicts/20260927-T-001-gate1-3.md).
+**Stopped:** T-001 (SCALE-001, SCALE-003). Every wave-1 task except T-003, T-004, T-005,
+T-006 and T-027 waits behind T-001 through the backlog's dependencies. T-011 carries
+FLOW-023 (1), the quantity field where such a value would be entered, and holds a gate-1
+`accepted` (docs/product/verdicts/20260927-T-011-gate1-3.md) issued before this entry;
+T-019 carries CON-004 (3) at the authored count. Whether either is re-gated once this is
+answered is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
