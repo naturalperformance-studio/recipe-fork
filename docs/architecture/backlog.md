@@ -1457,7 +1457,7 @@ in this wave, and no media is attached.
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/kotlin/app/recipefork/server/auth/**` · `server/src/main/resources/db/migration/V3__recipes.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/auth/**`
 **Binding ADRs:** decisions/20260927-server-authoritative-sync-with-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-keys-are-hashed-random-secrets.md, decisions/20260927-test-strategy.md
 **Note:** The server-stack ADR leaves one choice to this task: whether a recipe's content is kept as `jsonb` beside relational columns. The task makes the choice and states it in its report; the team lead records it as an ADR when the task merges.
-**Criteria of these requirements carried elsewhere:** FLOW-008 (2) → T-028 · CON-003 (2) → wave 4 · ACT-002 (2) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-008 (2, 5) → T-028 · CON-003 (2) → wave 4 · ACT-002 (2) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1465,7 +1465,6 @@ in this wave, and no media is attached.
 - Given a recipe edited offline on device B while device A's edit reached the server, when device B reconnects, then the server's version keeps the recipe's identity and device B's version becomes a `private` fork naming it as parent.
 - Given the server's version has since been published or otherwise frozen, when device B reconnects with a divergent version, then the same rule applies and nothing is written to the frozen recipe.
 - Given no divergence — device B's version is the one the server already holds — when device B reconnects, then no fork is created.
-- Given a recipe edited offline on device B while, on the server, nobody changed its content but it was submitted and became `pending`, `link_shared` or `published`, when device B reconnects, then device B's version becomes a `private` fork naming it as parent, and the owner is told as criterion 2 states.
 
 *CON-003 — spec/30-constraints.md*
 - Given a recipe that has become accessible to anyone but its owner, when any edit is attempted through any interface, then the edit is rejected and the stored content is unchanged.
@@ -1477,7 +1476,7 @@ in this wave, and no media is attached.
 - Given a forked recipe, when its parent is resolved, then it is the recipe it was forked from, at every point in its lifetime.
 - Given any recipe, when its stored fields are enumerated, then none of them lists descendants or names a chain root.
 
-**Gate 1:** blocked-by-spec (SD-018) — docs/product/verdicts/20260927-T-027-gate1.md; re-sliced against spec/ @ ead1a44 after SD-018 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-018) — docs/product/verdicts/20260927-T-027-gate1.md; re-sliced against spec/ @ ead1a44 after SD-018 resolved, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-027-gate1-2.md; FLOW-008 (5) then moved to T-028 (its notice is on the device), re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1490,7 +1489,7 @@ in this wave, and no media is attached.
 **Expected files:** `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/sync/**` · `app/src/test/kotlin/app/recipefork/app/sync/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-server-authoritative-sync-with-outbox.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** AUTH-004 (4) — nothing of a muted account's recipes reaches the server — is placed in wave 6, where the last of the controls it names exists. Until then no wave-1 criterion checks that this task's outbox holds a muted account's recipes back.
-**Criteria of these requirements carried elsewhere:** FLOW-002 (1) → T-013; (2–3) → T-008 · FLOW-005 (3) → wave 5; (5) → wave 2 · FLOW-008 (1, 3–5) → T-027 · FLOW-036 (1–2, 4–5) → T-007; (3, 8) → wave 2; (7) → wave 3 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-002 (1) → T-013; (2–3) → T-008 · FLOW-005 (3) → wave 5; (5) → wave 2 · FLOW-008 (1, 3–4) → T-027 · FLOW-036 (1–2, 4–5) → T-007; (3, 8) → wave 2; (7) → wave 3 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1504,6 +1503,7 @@ in this wave, and no media is attached.
 
 *FLOW-008 — spec/70-flows/10-offline-and-sync.md*
 - Given that outcome, when the server's answer reaches device B, then the owner is told a fork was created and why at that moment if the application is open, or when they next open it if it is not; the notice stays until they acknowledge it, is not shown again afterwards, and both recipes are reachable.
+- Given a recipe edited offline on device B while, on the server, nobody changed its content but it was submitted and became `pending`, `link_shared` or `published`, when device B reconnects, then device B's version becomes a `private` fork naming it as parent, and the owner is told as criterion 2 states.
 
 *FLOW-036 — spec/70-flows/50-browsing.md*
 - Given a recipe the server has not yet accepted, when its entry is shown, then the indication FLOW-005 requires is present as well and does not replace the state marker.
