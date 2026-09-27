@@ -252,9 +252,9 @@ in this wave, and no media is attached.
 - Given a connection returns after the product owner has changed a dictionary, when the application next reaches the server, then the held copy is replaced.
 
 **Gate 1:** accepted — docs/product/verdicts/20260927-T-004-gate1.md
-**Review:** —
+**Review:** defects — a 200 answer whose body is not the dictionaries escapes refresh() and ends the sync (DictionaryRepository.kt:36); returned to the developer
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-005 — An account is created with a unique nickname and three keys, and only once it is confirmed
 
