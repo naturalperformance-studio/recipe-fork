@@ -1,7 +1,7 @@
 ---
 slug: LEG
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [LEG-001, LEG-002, LEG-003, LEG-004, LEG-005, LEG-006, LEG-007, LEG-008,
   LEG-009, LEG-010]
 ---
@@ -121,8 +121,8 @@ and shall require no acceptance from anyone who only reads.
 
 **Acceptance criteria**
 - Given account creation (AUTH-007), when the account is created, then the terms
-  are presented and accepted there, and the accepted version is recorded with the
-  account.
+  are presented and accepted there — on its first step, before any key is shown
+  (AUTH-024) — and the accepted version is recorded with the account.
 - Given a person with no account, when they browse, search, cook, favourite or
   report, then they accept nothing, because those need no account (AUTH-001,
   ACT-001).

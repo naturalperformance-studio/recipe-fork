@@ -224,9 +224,9 @@ shall match neither a `qualifier` nor a `free_text_name`.
 - Given the same dictionary, when the reader filters on `крылышки`, then only
   recipes holding `крылышки` match, and a recipe holding `курица` itself does not,
   because a parent is not evidence of any particular child.
-- Given a recipe whose chicken was added as free text because no entry matched,
-  when the reader filters on `курица`, then it does not match — exactly what
-  FLOW-022 warned the author about.
+- Given a recipe whose chicken was added as free text, when the reader filters
+  on `курица`, then it does not match — exactly what FLOW-022 warned the author
+  about.
 - Given a recipe holding the entry `бульон` qualified `куриный` and no chicken of
   its own, when the reader filters on `курица`, then it does not match.
 - Given a published recipe whose ingredient name was misspelled as free text,

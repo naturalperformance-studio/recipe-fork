@@ -19,7 +19,7 @@ changed once the recipe has been published.
 
 **Acceptance criteria**
 - Given the ingredient editor, when the author types a name that is not exactly
-  the label of an offered entry, then adding it as free text is offered — beside
+  the label of an offered entry, as FLOW-057 compares them, then adding it as free text is offered — beside
   any entries offered, or alone where none is (FLOW-057) — and is not refused.
 - Given the author adds it, when the warning is shown, then it states both that
   filters will not find the recipe by this ingredient and that publication makes
@@ -99,8 +99,21 @@ When the author types in the ingredient field, the system shall offer every
 dictionary entry whose label, in either interface language, holds for each typed
 word a word that begins with it, ignoring letter case and treating `ё` and `е` as
 one letter; shall offer the leaves of every parent so offered before that parent;
-and shall offer adding the typed text as free text whenever it is not exactly the
-label of an offered entry.
+shall order the offer by the rule below; and shall offer adding the typed text as
+free text whenever it is not exactly the label of an offered entry.
+
+"Exactly the label" compares the typed text with an entry's label in either
+interface language after the same folding as the offer — letter case ignored,
+`ё` and `е` one letter — and with spaces before and after the text ignored.
+
+The offer is ordered in two groups: first the entries whose label, in either
+interface language and after the same folding, begins with the typed text; then
+every other entry offered.
+Within each group entries follow the alphabetical order, in the interface
+language, of the label shown. The
+leaves offered with a parent stand immediately before that parent, in the
+alphabetical order of their own labels; a leaf that the typed text also matches
+on its own is offered once, in that place.
 
 **Acceptance criteria**
 - Given a dictionary holding `молоко`, when the author types `мол`, then `молоко`
@@ -121,9 +134,24 @@ label of an offered entry.
 - Given the author has typed exactly the label of an offered entry, when the
   offer is shown, then free text is not offered, because the entry is that
   ingredient.
+- Given the interface in Russian and an entry `молоко` whose English label is
+  `milk`, when the author types `Молоко`, ` молоко ` or `milk`, then the entry is
+  offered and free text is not.
+- Given a dictionary holding `молоко` and `кокосовое молоко`, when the author
+  types `мол`, then `молоко` is offered before `кокосовое молоко`, because its
+  label begins with the typed text and the other's does not.
+- Given a parent `курица` with leaves `филе` and `крылышки`, and an entry
+  `куркума`, when the author types `кур`, then the offer reads `крылышки`,
+  `филе`, `курица`, `куркума`, and no entry appears twice.
 
 **Verification:** type each of the inputs above against a seeded dictionary, in
 both interface languages.
+**Completed 2026-09-27:** after the re-check of SD-006, "exactly the label" had no
+stated comparison — whether `Молоко`, or an English label under a Russian
+interface, is the label — and the offer had no order beyond leaves before their
+parent. By user decisions of that date the comparison folds as the offer does and
+takes either language, and the offer is ordered as stated above. See
+[ADR — the exact label and the order of the offer](../decisions/20260927-the-exact-label-and-the-order-of-the-offer.md).
 **Source:** user decision, 2026-09-27 (SD-006, SD-008 item 1). Matching the
 beginning of a word keeps the offer working while the author is still typing,
 which a whole-word normalisation such as L10N-007's cannot; both languages are

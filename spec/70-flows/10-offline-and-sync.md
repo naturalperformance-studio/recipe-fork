@@ -35,8 +35,8 @@ available.
   dictionary entry is marked indivisible, then its divisibility is set from the
   entry and the author is not asked to set it by hand.
 - Given no network connection, when the author adds a `piece` ingredient as free
-  text because no entry matched, then the author sets its divisibility, because
-  there is no entry to take it from.
+  text, then the author sets its divisibility, because there is no entry to take
+  it from.
 - Given no network connection, when the author looks for an ingredient, then the
   dictionary is searched on the device and offers the same entries it offers with
   a connection.

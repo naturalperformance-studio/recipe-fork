@@ -175,7 +175,8 @@ A11Y-003, and shall keep the timer audible when the screen is off.
 - Given notifications are permitted, when a timer ends while the screen is off or
   the application is closed, then it announces itself audibly from the device's
   own facility (FLOW-013, EXT-009); with notifications refused FLOW-013 (5)
-  governs and the reader has been told so when starting it.
+  governs and the reader has been told so when starting it (FLOW-013 (9),
+  (10)).
 - Given the card, when it is left untouched, then the screen is kept awake as
   FLOW-014 requires and this requirement adds no second rule about it.
 - Given the card at 200 per cent font scale, when it is used, then A11Y-004 holds

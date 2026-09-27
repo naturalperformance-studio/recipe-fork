@@ -15,8 +15,9 @@ given, and what happens when the device cannot be attested at all.
 
 When a person without an account performs an action that requires one — writing
 a recipe, forking a recipe, rating a recipe, or choosing to carry favourites
-beyond this device — the system shall offer to create an account, and shall
-create it only where the device verdict reports a free slot.
+beyond this device — the system shall offer to create an account, shall create
+a full account only where the device verdict reports a free slot, and otherwise
+shall act as AUTH-003 and AUTH-004 state.
 
 **Acceptance criteria**
 - Given a person with no account, when they browse, search, open a recipe, cook
@@ -25,8 +26,9 @@ create it only where the device verdict reports a free slot.
 - Given a person with no account, when they use a control that needs one, then
   account creation is offered, and the action they asked for proceeds once the
   account exists — for a muted account, as AUTH-004 (5) states.
-- Given account creation, when it succeeds, then one slot on the device is
-  occupied with the month it was occupied in.
+- Given account creation, when a full account is created, then one slot on the
+  device is occupied with the month it was occupied in; a muted account occupies
+  none (AUTH-004).
 - Given a device with no free slot, when creation is attempted, then no account
   is created and AUTH-003 governs what the person is told.
 - Given a verdict that cannot be obtained while the server can be reached, when
@@ -38,6 +40,10 @@ create it only where the device verdict reports a free slot.
 
 **Verification:** walk every account-less path on a clean install; then trigger
 creation from each of the four actions that require it.
+**Correction, 2026-09-27:** the statement said an account is created "only where
+the device verdict reports a free slot", and criterion 3 had every successful
+creation occupy a slot, while AUTH-004 creates a muted account with no verdict
+and no slot. Both now speak of a full account; no decision changed.
 **Source:** user decision, 2026-09-20. An account exists for the people who
 publish and for the reader who wants favourites to outlive the device; a person
 who only cooks mints nothing, consumes no nickname and occupies no slot. See
@@ -51,8 +57,8 @@ number of times before the account is created, and shall fix it permanently once
 it is.
 
 **Acceptance criteria**
-- Given the creation screen, when it opens, then a generated nickname is already
-  shown and nothing is typed by the person (CON-001).
+- Given the first step of creation (AUTH-024), when it opens, then a generated
+  nickname is already shown and nothing is typed by the person (CON-001).
 - Given a shown nickname, when the person asks for another, then a different
   generated nickname replaces it.
 - Given a nickname the person passed over, when the account is created, then only
@@ -191,9 +197,10 @@ verdict reports one free.
 **Acceptance criteria**
 - Given a muted account created while the attestation service was unreachable,
   when the service can be reached again and the person chooses the retry control
-  of the statement that stands where the fork control would be (AUTH-006), then a
-  verdict is obtained, a slot is occupied, the account becomes full, the fork
-  control takes the statement's place and the fork proceeds.
+  of the statement that stands where the rating controls would be (AUTH-006),
+  then a verdict is obtained, a slot is occupied, the account becomes full, and
+  the like and dislike controls take the statement's place; no rating is given
+  until the person chooses one.
 - Given a muted account on a device with no free slot, when it attempts such an
   action, then it stays muted and AUTH-003 states the month a slot frees.
 - Given a muted account whose verdict still cannot be obtained, when it attempts
@@ -203,14 +210,32 @@ verdict reports one free.
 - Given a muted account holding recipes on its device, when it becomes full, then
   every one of them is sent to the server as FLOW-002 (4) sends offline changes,
   without the person being asked, and FLOW-005 marks each until it is accepted.
+- Given a muted account whose recipe is in the editor, when a retry from the
+  statement standing where the submission control would be makes the account
+  full, then the submission control takes the statement's place and nothing is
+  submitted; choosing it then shows GUIDE-001's statement as every submission
+  does.
+- Given any retry that makes the account full, when it completes, then every
+  control AUTH-004 withheld is offered wherever it belongs and no withheld action
+  is performed on the person's behalf.
 
-**Verification:** create a muted account offline, restore the connection and
-retry from the statement in place of the fork control; repeat on a device with
-its slots full.
+**Verification:** create a muted account with the attestation service unreachable
+and the server reachable, restore the service and retry from the statement in
+place of the rating controls; repeat from the statement in place of the submission
+control; repeat on a device with its slots full.
 **Correction, 2026-09-27:** criterion 1 had the person tap the fork control, which
 AUTH-004 (3) makes absent for a muted account, so no path reached this
 requirement (SD-019 item 2). The attempt is made from the statement that replaces
 the control (AUTH-006), by user decision of the same date.
+**Corrected again 2026-09-27:** the same day's decision on SD-019 item 1 gave a
+muted account the fork control back (AUTH-004 (3)), so criterion 1 retried from a
+statement that no longer exists, and the verification created a muted account
+offline, which AUTH-004 (2) forbids. Criterion 1 now retries from the statement in
+place of the rating controls. By user decision of that date a retry that makes the
+account full restores the withheld controls and performs nothing itself: a rating
+has no value until the person picks one, and a submission must pass GUIDE-001.
+Criteria 6 and 7 are new; the earlier ones keep their numbers. See
+[ADR — a retry restores the control](../decisions/20260927-a-retry-restores-the-control.md).
 **Source:** user decision, 2026-09-20. The verdict is asked for at the moment it
 is needed rather than on every launch, which keeps the application independent of
 an external service and keeps requests within the free quota it offers.
@@ -225,7 +250,8 @@ which actions are withheld, and shall state what would lift the limit.
   statement takes its place rather than the control failing silently.
 - Given that statement, when it is shown, then it carries a retry control; when
   the person chooses it, AUTH-005 is attempted for the action the withheld
-  control stood for.
+  control stood for, and if the account becomes full the control returns in the
+  statement's place without being acted on (AUTH-005 (7)).
 - Given a retry that leaves the account muted, when it completes, then the
   statement remains and says why, by the no verdict or the no free slot case
   below.

@@ -43,17 +43,19 @@ is in the foreground, in the background, or closed.
 - Given the reader refused permission to show notifications, when a timer ends,
   then it is still finished and is shown as finished inside the application, and
   nothing announces it while the application is closed or the screen is locked;
-  the permission is asked for again only when the reader next starts a timer.
+  what the reader is shown about the permission is stated by criteria 8 to 10.
 - Given a running timer, when the reader opens the recipe, then the time
   remaining is shown on its step.
 - Given a running timer, when the reader cancels it, then nothing announces
   itself afterwards.
-
 - Given a device on which the permission to show notifications has never been
   asked for, when the reader starts their first timer, then the platform's request
   is made at that moment, and at no earlier moment such as the first launch.
 - Given notifications are not permitted, when the reader starts a timer and the
-  platform will still show its own request, then that request is made.
+  platform will still show its own request, then that request is made; and when
+  the reader refuses the request made here or by criterion 8, then the
+  explanation of criterion 10 is shown at once, before the reader returns to the
+  recipe.
 - Given notifications are not permitted, when the reader starts a timer and the
   platform will not show a request — because it has none to show or because the
   reader has refused it as often as it allows — then the application shows its own
@@ -62,10 +64,14 @@ is in the foreground, in the background, or closed.
   settings for the application; the timer starts either way.
 - Given notifications are permitted, when the reader starts a timer, then nothing
   about the permission is shown.
+- Given any request or explanation of criteria 8 to 10, when it is shown, then the
+  timer has already started at the moment the reader started it and runs whatever
+  the reader answers.
 
 **Verification:** start a timer, close the application from the task switcher,
 lock the device and wait for the end; repeat with notifications refused; start a
-first timer on a fresh install; repeat the refusal until the platform stops
+first timer on a fresh install, refuse the request and confirm the explanation
+follows at once while the timer runs; repeat the refusal until the platform stops
 asking, and on an Android 10 device with notifications turned off in settings.
 **Correction, 2026-09-27:** criterion 5 had the permission "asked for again" where
 on Android 10–12 there is no request to make and on later versions the platform
@@ -74,6 +80,13 @@ against A11Y-007 (3) (SD-021). By user decisions of that date: the first request
 comes with the first timer; where the platform will not ask, the application
 explains and leads to the settings; and a timer with notifications refused is
 not heard while the application is closed.
+**Completed 2026-09-27:** after the re-check of SD-021 criterion 5 still carried
+"asked for again only when the reader next starts a timer", which criteria 8 to 10
+had replaced, and a reader who refused the platform's request at a timer's start
+was told nothing, while A11Y-007 (3) says they have been told. By user decision of
+that date a refusal at that moment is followed at once by the explanation, and the
+timer never waits for the answer. Criterion 12 is new. See
+[ADR — a refusal is explained at once](../decisions/20260927-a-refusal-is-explained-at-once.md).
 **Source:** user decision, 2026-09-20: a person may start a timer on the last
 step and close the application entirely — something goes in the oven and is
 taken out in thirty minutes — so the timer cannot depend on the application

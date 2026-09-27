@@ -9,8 +9,10 @@
 > release (MVP-002); its own release waits on OQ-036, classified after MVP.
 > Gate 1 of the first backlog found 21 specification defects (SD-001–SD-026, of
 > which five are duplicates, in `docs/product/spec-defects.md`). Every one was
-> answered by the product owner on 2026-09-27 and written here; each entry turns
-> resolved only when the product owner says so at the re-gate.
+> answered by the product owner on 2026-09-27 and written here. The re-check of
+> the same day left SD-006, SD-009, SD-019 and SD-021 unresolved; what still stood
+> open behind them was answered and written the same day, and those four turn
+> resolved only when the product owner says so.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -30,7 +32,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked; and, looked up on 2026-09-27, the applications that import recipes from social networks — all of which keep what they import private. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
 | [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in; what the moderator role reaches on its holder's own work — their own actions and nothing else, so a moderator still keeps their drafts and still rates nobody's recipe of their own; what a publishing ban stops, which is every route into the catalogue and not only the queue; and the one thing no screen anywhere offers — granting the moderator role, which happens in the store. |
-| [45-auth/](45-auth/00-index.md) | AUTH | closed | Who needs an account at all and when one appears, the three device slots and the six months that free one, the nickname and its reroll, the muted account created when a device cannot be attested, which writes and forks on its own device only, and the account's three keys — the account key that signs in, the deletion key that destroys it from outside, and the recovery key issued apart and shown once, the only thing that can retire a stolen account key. What the server accepts as proof is a set of properties; the cryptography is left to engineering. |
+| [45-auth/](45-auth/00-index.md) | AUTH | closed | Who needs an account at all and when one appears, the three device slots and the six months that free one, the nickname and its reroll, the muted account created when a device cannot be attested, which writes and forks on its own device only, and the account's three keys — the account key that signs in, the deletion key that destroys it from outside, and the recovery key issued apart and shown once, the only thing that can retire a stolen account key; and creation as three steps — nickname and terms, the two keys, the recovery key. What the server accepts as proof is a set of properties; the cryptography is left to engineering. |
 | [50-domain-model/](50-domain-model/00-index.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record; and that the two dictionaries everything here leans on are maintained outside the application, by hand. |
 | [60-entity-states.md](60-entity-states.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen; the one recipe an owner may destroy outright and the six they may not; the server orders every transition, refuses one whose guard has stopped holding, and tells the actor the state the recipe is actually in. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, how provenance is shown, and how an author replaces a published recipe without withdrawing it. |
@@ -123,6 +125,10 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260927-a-muted-account-writes-on-its-device.md](decisions/20260927-a-muted-account-writes-on-its-device.md) | accepted, supersedes part of 20260920-account-creation-gated-by-the-device | A muted account writes, edits and forks on its own device; media, submission, private links and rating stay withheld; everything moves to the server when it is full. |
 | [20260927-divergence-and-its-notice.md](decisions/20260927-divergence-and-its-notice.md) | accepted, corrects FLOW-005 and FLOW-008 | A change of state alone is divergence; the fork notice comes when the answer does, once; acceptance is marked on the own-recipes entry and in the editor. |
 | [20260927-the-card-survives-the-process.md](decisions/20260927-the-card-survives-the-process.md) | accepted, corrects FLOW-012, FLOW-013, A11Y-007 | The recipe, its scale and the line at the top survive the process; the notification permission is asked with the first timer and its refusal is said at every start. |
+| [20260927-the-exact-label-and-the-order-of-the-offer.md](decisions/20260927-the-exact-label-and-the-order-of-the-offer.md) | accepted, completes FLOW-057 | "Exactly the label" folds case and `ё` and takes either language; entries whose label begins with the typed text come first, alphabetically. |
+| [20260927-a-retry-restores-the-control.md](decisions/20260927-a-retry-restores-the-control.md) | accepted, completes AUTH-005 and AUTH-006 | A retry that makes a muted account full puts the withheld controls back and performs nothing on the person's behalf. |
+| [20260927-the-three-steps-of-creation.md](decisions/20260927-the-three-steps-of-creation.md) | accepted, writes AUTH-024 | Nickname and terms, then the two keys, then the recovery key; back goes one step back; leaving the application keeps the place while the process lives. |
+| [20260927-a-refusal-is-explained-at-once.md](decisions/20260927-a-refusal-is-explained-at-once.md) | accepted, completes FLOW-013 | A refused platform request at a timer's start is followed at once by the application's explanation; the timer never waits for an answer. |
 
 ## C4 context
 
