@@ -57,7 +57,7 @@ in this wave, and no media is attached.
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | gated |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | blocked |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | gated |
-| T-022 | A timer runs on its step | T-021, T-014, T-010 | planned |
+| T-022 | A timer runs on its step | T-021, T-014, T-010 | gated |
 | T-023 | A timer announces itself when the application is closed | T-022, T-026 | planned |
 | T-034 | A long step with an unnamed timer is shown what its notification will say | T-017, T-023 | planned |
 | T-033 | A timer asks for notifications when first started, and a refusal is explained at once | T-023 | planned |
@@ -1174,7 +1174,7 @@ in this wave, and no media is attached.
 ### T-022 — A timer runs on its step
 
 **Requirements:** FLOW-013, A11Y-003, A11Y-007, L10N-001, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-021, T-014, T-010
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1199,7 +1199,7 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-022-gate1.md; FLOW-013 (7) moved to T-023, re-gate due; checked against spec/ @ ead1a44
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-022-gate1.md; FLOW-013 (7) moved to T-023, re-gate due; checked against spec/ @ ead1a44; re-gated: accepted — docs/product/verdicts/20260927-T-022-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1209,7 +1209,7 @@ in this wave, and no media is attached.
 **Requirements:** FLOW-013, FLOW-016, EXT-009, L10N-001, A11Y-003, A11Y-005
 **Status:** planned
 **Depends on:** T-022, T-026
-**Expected files:** `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `core/src/main/kotlin/app/recipefork/core/timer/**` · `core/src/test/kotlin/app/recipefork/core/timer/**` · `app/src/main/kotlin/app/recipefork/app/timer/**` · `app/src/test/kotlin/app/recipefork/app/timer/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_timer.xml` · `app/src/main/res/values-ru/strings_timer.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** The cut of FLOW-016 (3–8) is built here as a function in `:core` `timer`, so that T-034's editor display shows exactly the text this notification carries.
 **Criteria of these requirements carried elsewhere:** FLOW-013 (5, 8–13) → T-033; (6) → T-022 · FLOW-016 (1–2, 9–11) → T-024 · EXT-009 (2) → wave 8; (3) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
