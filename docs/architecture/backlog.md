@@ -65,7 +65,7 @@ in this wave, and no media is attached.
 | T-025 | The card keeps the screen awake and is where the reader left it | T-024 | gated |
 | T-026 | Writing a recipe asks for an account first | T-010, T-018 | returned |
 | T-027 | The server keeps an account's drafts and turns a stale edit into a fork | T-006 | gated |
-| T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-034, T-026, T-025 | planned |
+| T-028 | Drafts written offline reach the server by themselves, and each says whether they have | T-027, T-034, T-026, T-025 | returned |
 
 ### T-001 — Quantities follow the serving count
 
@@ -1503,12 +1503,13 @@ in this wave, and no media is attached.
 ### T-028 — Drafts written offline reach the server by themselves, and each says whether they have
 
 **Requirements:** FLOW-002, FLOW-005, FLOW-008, FLOW-036, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** returned
 **Depends on:** T-027, T-034, T-026, T-025
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/sync/**` · `app/src/test/kotlin/app/recipefork/app/sync/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/AndroidManifest.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Note:** The server half of FLOW-008 (5) — a change of state to `pending` alone making the device's version a fork — and the answer that carries the notice of FLOW-008 (2) to device B live in T-027's server files, which this task may extend; T-027 is on `develop` before this task starts.
 **Binding ADRs:** decisions/20260927-server-authoritative-sync-with-outbox.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** AUTH-004 (4) — nothing of a muted account's recipes reaches the server — is placed in wave 6, where the last of the controls it names exists. Until then no wave-1 criterion checks that this task's outbox holds a muted account's recipes back.
+**Note:** Re-slice due with T-026 (team lead): the observation that a muted account's recipes never reach the server (AUTH-004 statement and (4)) must be carried where the outbox is built, and AUTH-004 (4)'s other half — the media, submission and private-link controls replaced by AUTH-006's statement — observed where those controls exist. One return is left.
 **Criteria of these requirements carried elsewhere:** FLOW-002 (1) → T-013; (2–3) → T-008 · FLOW-005 (3) → wave 5; (5) → wave 2 · FLOW-008 (1, 3–4) → T-027 · FLOW-036 (1–2, 4–5) → T-007; (3, 8) → wave 2; (7) → wave 3 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
@@ -1538,10 +1539,10 @@ in this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved, re-gate due
+**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-028-gate1-2.md (the outbox would send a muted account's recipes; AUTH-004 carried by no wave-1 task)
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ## Coverage beyond wave 1
 
