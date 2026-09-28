@@ -1281,3 +1281,37 @@ fixing control, is placed in no backlog entry. Whether either is affected is the
 Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-038 — FLOW-042 (4) observes the empty own-recipes view for an account only, while the view with no account active holds the pool, and no criterion observes that view empty or its offer to write (2026-09-28)
+**Requirement IDs:** FLOW-042 (statement, 4); read against FLOW-034 (7), AUTH-026 (statement), FLOW-002 (statement, 1), ACT-001 (2), FLOW-053 (criterion "if the view is now empty, FLOW-042 states so")
+**Class:** omission
+**What the gate hit:** T-008 opens the editor on a new recipe from the own-recipes view.
+It is in wave 1, where the device holds no account and the only recipe book is the pool
+(AUTH-026). Reading the spec, not choosing:
+- FLOW-042's statement makes an empty own-recipes view offer "writing a recipe". It does not
+  say whose view.
+- FLOW-034 (7), as rewritten on 2026-09-28 (0745e70), says that with no account active the view
+  holds the pool.
+- FLOW-002 (1) has a person with no account create a recipe on a clean installation, where the
+  pool is empty. The spec names no other place where a recipe is started.
+- FLOW-053 sends a view emptied by a deletion back to FLOW-042, and a `local` recipe in the pool
+  can be deleted.
+
+Together these imply that the empty pool offers to write a recipe. FLOW-042's only criterion for the
+own-recipes view says "Given an account that has written nothing". AUTH-026 defines the pool as
+"one pool that belongs to no account", so that Given cannot be read to cover it. No
+criterion states what an empty pool view shows, whether it offers writing, or that the
+offer opens the editor. The device-first change gave FLOW-034 a criterion of its own for
+the no-account case, (7), and left FLOW-042 (4) as it was.
+
+T-008 must copy FLOW-042 (4) word for word (C5), and its Given cannot be set up in
+wave 1. If (4) moved to wave 1b, wave 1's only way into the editor would have a statement and no
+criterion, and gate 2 could mark nothing met or not met there (TEAM-008). Found at T-008's gate 1
+(docs/product/verdicts/20260928-T-008-gate1.md).
+**Stopped:** T-008 (FLOW-042 (4)). T-031, T-018 and the wave 1 chain that follows them
+wait on T-008 through the backlog's dependencies and hold their gate-1 verdicts
+unchanged. T-007 is not stopped (accepted today, docs/product/verdicts/20260928-T-007-gate1.md).
+Its account-worded criteria FLOW-034 (1, 3) are backed by FLOW-034 (7), which observes
+the pool. FLOW-042 has no such counterpart for the empty view.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
