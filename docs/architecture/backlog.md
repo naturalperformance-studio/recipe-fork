@@ -46,12 +46,12 @@ this wave, and no media is attached.
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
 | T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | on-develop |
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
-| T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | planned |
-| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | planned |
+| T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | gated |
+| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | blocked |
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
-| T-013 | Steps are written in the editor and survive a restart offline | T-012 | planned |
+| T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
 | T-014 | A step carries one timer, named by its step unless the author names it | T-013 | gated |
 | T-015 | A quantity goes into a step as a reference | T-014, T-019 | gated |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
@@ -66,6 +66,7 @@ this wave, and no media is attached.
 | T-033 | A timer asks for notifications when first started, and a refusal is explained at once | T-023 | gated |
 | T-024 | Several timers run at once, and restarting one asks first | T-033 | gated |
 | T-025 | The card keeps the screen awake and is where the reader left it | T-024 | gated |
+| T-039 | The fixing control accepts only an amount on its unit type's grid | T-025 | planned |
 | T-035 | The quantity field holds only a value on its unit type's grid | T-028, T-029 | blocked |
 
 ### T-001 — Quantities follow the serving count
@@ -354,7 +355,7 @@ this wave, and no media is attached.
 ### T-007 — The recipe book's own-recipes view lists every recipe written in it
 
 **Requirements:** FLOW-034, FLOW-058, FLOW-036, FLOW-005, FLOW-039, FLOW-041, FLOW-043, FLOW-038, A11Y-008, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-004, T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/lint.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_common.xml` · `app/src/main/res/values-ru/strings_common.xml` · `app/src/main/kotlin/app/recipefork/app/data/AppDatabase.kt` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md, decisions/20260928-one-database-per-recipe-book.md
@@ -416,7 +417,7 @@ this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md; re-sliced against spec/ @ ead1a44 after SD-004 resolved, re-gated: rejected — docs/product/verdicts/20260927-T-007-gate1-2.md (FLOW-034 (6, 7) left to wave 3); FLOW-034 (6, 7) added, re-gated: blocked-by-spec (SD-028, "session" in FLOW-034 (5, 6)) — docs/product/verdicts/20260927-T-007-gate1-3.md; re-sliced against spec/ @ 959130e after SD-028 resolved (FLOW-034 (5, 6) replaced, FLOW-058 (1–4) added; (5) needs the ordering, filter and usual count of waves 2 and 3); re-gated: accepted — docs/product/verdicts/20260927-T-007-gate1-4.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-034 (7) and FLOW-036 (1) replaced, FLOW-034 (8), FLOW-036 (6) and FLOW-005 (1–2) added; the pool is the only book; re-gate due
+**Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md; re-sliced against spec/ @ ead1a44 after SD-004 resolved, re-gated: rejected — docs/product/verdicts/20260927-T-007-gate1-2.md (FLOW-034 (6, 7) left to wave 3); FLOW-034 (6, 7) added, re-gated: blocked-by-spec (SD-028, "session" in FLOW-034 (5, 6)) — docs/product/verdicts/20260927-T-007-gate1-3.md; re-sliced against spec/ @ 959130e after SD-028 resolved (FLOW-034 (5, 6) replaced, FLOW-058 (1–4) added; (5) needs the ordering, filter and usual count of waves 2 and 3); re-gated: accepted — docs/product/verdicts/20260927-T-007-gate1-4.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-034 (7) and FLOW-036 (1) replaced, FLOW-034 (8), FLOW-036 (6) and FLOW-005 (1–2) added; the pool is the only book; re-gate due; re-gated: accepted — docs/product/verdicts/20260928-T-007-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -424,7 +425,7 @@ this wave, and no media is attached.
 ### T-008 — The editor opens on a new recipe from the own-recipes view
 
 **Requirements:** FLOW-042, FLOW-024, FLOW-002, L10N-004, DOM-006, DOM-008, FLOW-001, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-007
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/assets/dictionaries.json` · `scripts/dictionary-snapshot.sh`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md, decisions/20260928-dictionaries-ship-with-the-application.md, decisions/20260928-one-database-per-recipe-book.md
@@ -466,7 +467,7 @@ this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** accepted — docs/product/verdicts/20260927-T-008-gate1.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-002 (3–4) replaced; the shipped dictionaries added for FLOW-001 (1) on a clean installation; re-gate due
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-008-gate1.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-002 (3–4) replaced; the shipped dictionaries added for FLOW-001 (1) on a clean installation; re-gate due; re-gated: blocked-by-spec (SD-038, FLOW-042 (4) observes the empty own-recipes view of an account only, and wave 1 has the pool alone) — docs/product/verdicts/20260928-T-008-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -626,7 +627,7 @@ this wave, and no media is attached.
 ### T-013 — Steps are written in the editor and survive a restart offline
 
 **Requirements:** FLOW-024, FLOW-002, L10N-001, A11Y-003, A11Y-005, DOM-015
-**Status:** planned
+**Status:** gated
 **Depends on:** T-012
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -654,7 +655,7 @@ this wave, and no media is attached.
 - Given the serving count field of the editor, when the author tries to enter 0, a negative number, or a number with a fractional part such as 2.5 or ½, then the field does not hold it.
 - Given that field, when the author enters 1, 4 or 1000, then it holds that value.
 
-**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; re-sliced; blocked-by-spec (SD-013) — docs/product/verdicts/20260927-T-013-gate1-2.md; re-sliced against spec/ @ ead1a44 after SD-013 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-013-gate1-3.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-002 (1) replaced: a clean installation with no account; re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260927-T-013-gate1.md; re-sliced; blocked-by-spec (SD-013) — docs/product/verdicts/20260927-T-013-gate1-2.md; re-sliced against spec/ @ ead1a44 after SD-013 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-013-gate1-3.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-002 (1) replaced: a clean installation with no account; re-gate due; re-gated: accepted — docs/product/verdicts/20260928-T-013-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -982,14 +983,13 @@ this wave, and no media is attached.
 
 ### T-020 — The reader fixes an ingredient on the card
 
-**Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, A11Y-003, A11Y-007, L10N-001, A11Y-005, SCALE-018
+**Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, A11Y-003, A11Y-007, L10N-001, A11Y-005
 **Status:** planned
 **Depends on:** T-019, T-030, T-015
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Note:** The rules for a fixed line and for releasing a fixing (SCALE-016, SCALE-017) are T-030's, checked in `:core` where they are computed; this card renders the state T-030's model gives it and computes none of it. A11Y-003 (2) is not carried here: the controls it names are the serving control (T-018) and the timer controls (T-022 onwards); the fixing control this task adds is held to 56 dp by A11Y-007 (2).
-**Note:** SCALE-018 (answer to SD-033) bounds what the fixing control this task adds accepts; the grid it checks against is the one T-001 and T-029 compute in `:core` `scaling`, read and not changed here.
-**Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–8) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** SCALE-018 (all) → T-039 · SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–8) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1024,17 +1024,7 @@ this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-*SCALE-018 — spec/80-scaling-rules/10-scaling.md*
-- Given 500 g of chicken, when the reader fixes `300 г` or `0,3 кг`, then either is accepted and the chicken line shows 300 g (SCALE-002).
-- Given 5 g of an ingredient, when the reader fixes `10 кг`, then it is accepted (SCALE-010).
-- Given the fixing control, when the reader enters 0, a negative number or `109,375 г`, then the control does not hold it and the scale in force does not change.
-- Given an indivisible piece ingredient, when the reader enters `2,5 шт` or `½ шт`, then the control does not hold it; given a divisible one, `2½ шт` is held.
-- Given an ingredient authored in grams, when the reader looks for a unit to fix it in, then ml, l and m³ are not offered: nothing converts a mass to a volume.
-- Given an ingredient authored in `ст. л.`, when the reader fixes it, then the control accepts tablespoons only, on the `household` grid, and offers neither `ч. л.` nor `стакан` (DOM-003).
-- Given a `taste_unmeasured` ingredient, when the ingredient list is displayed, then it offers no fixing, because it has no authored amount to divide by (DOM-002, SCALE-002).
-- Given the fixing control holding an amount, when the reader clears it, then the scale in force does not change until the reader enters an accepted amount or releases the fixing (SCALE-017); clearing the control is not a release.
-
-**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved; re-gated: blocked-by-spec (SD-032, whether a requested fractional count is marked approximate) — docs/product/verdicts/20260927-T-020-gate1-2.md; re-sliced against spec/ @ 959130e after SD-032 resolved (SCALE-008 (3), SCALE-011 (4) replaced; A11Y-003 (2) left to the tasks that build the controls it names); re-gated: blocked-by-spec (SD-033, the amounts a reader may fix) — docs/product/verdicts/20260927-T-020-gate1-3.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): SD-033 answered in spec/ @ 1168954; SCALE-018 added; re-gate due
+**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved; re-gated: blocked-by-spec (SD-032, whether a requested fractional count is marked approximate) — docs/product/verdicts/20260927-T-020-gate1-2.md; re-sliced against spec/ @ 959130e after SD-032 resolved (SCALE-008 (3), SCALE-011 (4) replaced; A11Y-003 (2) left to the tasks that build the controls it names); re-gated: blocked-by-spec (SD-033, the amounts a reader may fix) — docs/product/verdicts/20260927-T-020-gate1-3.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): SD-033 answered in spec/ @ 1168954; SCALE-018 added; re-gate due; re-gated: blocked-by-spec (SD-037, reached through SCALE-018) — docs/product/verdicts/20260928-T-020-gate1.md; SCALE-018 moved to T-039 at the end of the card chain, so that SD-037 holds up only the control's input rule; re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1334,6 +1324,33 @@ this wave, and no media is attached.
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
 **Gate 1:** blocked-by-spec (SD-026) — docs/product/verdicts/20260927-T-025-gate1.md; re-sliced against spec/ @ ead1a44 after SD-026 resolved; re-gated: accepted — docs/product/verdicts/20260927-T-025-gate1-2.md
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-039 — The fixing control accepts only an amount on its unit type's grid
+
+**Requirements:** SCALE-018
+**Status:** planned
+**Depends on:** T-025
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
+**Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Note:** Split from T-020 on 2026-09-28 after its gate 1 found SD-037 in how a typed amount is read. The fixing control is T-020's; this task bounds what it accepts, against the grid T-001 and T-029 compute in `:core` `scaling`, read and not changed here. Ordered after T-025, the last task on the card's files, so that SD-037 holds up no other task. Not put to gate 1 until SD-037 is answered: the gate would stop it there.
+**Criteria of these requirements carried elsewhere:** —
+
+**Acceptance criteria** (verbatim)
+
+*SCALE-018 — spec/80-scaling-rules/10-scaling.md*
+- Given 500 g of chicken, when the reader fixes `300 г` or `0,3 кг`, then either is accepted and the chicken line shows 300 g (SCALE-002).
+- Given 5 g of an ingredient, when the reader fixes `10 кг`, then it is accepted (SCALE-010).
+- Given the fixing control, when the reader enters 0, a negative number or `109,375 г`, then the control does not hold it and the scale in force does not change.
+- Given an indivisible piece ingredient, when the reader enters `2,5 шт` or `½ шт`, then the control does not hold it; given a divisible one, `2½ шт` is held.
+- Given an ingredient authored in grams, when the reader looks for a unit to fix it in, then ml, l and m³ are not offered: nothing converts a mass to a volume.
+- Given an ingredient authored in `ст. л.`, when the reader fixes it, then the control accepts tablespoons only, on the `household` grid, and offers neither `ч. л.` nor `стакан` (DOM-003).
+- Given a `taste_unmeasured` ingredient, when the ingredient list is displayed, then it offers no fixing, because it has no authored amount to divide by (DOM-002, SCALE-002).
+- Given the fixing control holding an amount, when the reader clears it, then the scale in force does not change until the reader enters an accepted amount or releases the fixing (SCALE-017); clearing the control is not a release.
+
+**Gate 1:** —
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
