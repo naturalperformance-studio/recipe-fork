@@ -1368,3 +1368,43 @@ On an accepted offer the requirements agree. On a declined one, FLOW-059 (1) has
 **Stopped:** T-026. T-036 is not stopped (gated, docs/product/verdicts/20260928-T-036-gate1.md). Its offer fires on any creation, and its criteria hold on either outcome here. T-028 is not stopped. It carries ACT-002 (2) and AUTH-026 (7), which concern recipes already moved.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-041 — A sending sent again after its answer was lost is a divergence by FLOW-008's condition and not one by its "divergent local version", while FLOW-059 (8) says such a sending never reached the server (2026-09-29)
+**Requirement IDs:** FLOW-008 (statement, 2, 4, 5, Source); FLOW-059 (statement, 4, 8); read with FLOW-005
+**Class:** ambiguity (FLOW-008: whether a sent version that is the same as the server's is "divergent"); not implementable (FLOW-059 (8), for a sending the server stored but whose answer did not arrive)
+**What the gate hit:** T-027's diff (task/T-027 @ 4d1da42) answers a sending whose content
+is exactly what the server now holds with `forked = false`: nothing is written and no fork
+is made, whatever revision the sending was made from. A divergent sending sent again with
+the same fork identity gets back the fork already stored and makes no second one. The
+tests describe both as a device whose "earlier answer never arrived". A user reaches this
+when the server commits a sending, the answer is lost, and the owner sends again; FLOW-005
+still marks the recipe as holding changes not sent. A user also reaches it when device B's
+edit happens to be the same as device A's. Read, not chosen:
+- *It is a divergence.* FLOW-008's statement (`spec/70-flows/10-offline-and-sync.md:332-336`)
+  forks whenever "the server's version has changed since the version the device's copy was
+  made from". Criterion (5) (line 352) glosses no divergence as "made from the one the
+  server holds". A resend after a lost answer, and a device B that made device A's edit,
+  both meet that condition. The version sent becomes a `private` fork, here one with the
+  same content as its parent, and the owner is told (FLOW-008 (3), T-038).
+- *It is not a divergence.* The same requirement forks "the divergent local version"
+  (line 335) and "a divergent version" (criterion 4, line 350). Its title is "Two devices
+  that diverge", and its Source says "No edit is discarded" (line 372). A version that is
+  the same as the server's has not diverged from it, and nothing would be lost without a
+  fork.
+- FLOW-059 (8) (line 133): "Given a sending that fails, or no connection, or a server that
+  does not answer, … then … nothing of it reaches the server". A server that stored the
+  sending and then lost its answer has had the sending reach it. Neither the device nor the
+  server can make that impossible. So the case exists although (8) says it cannot, and no
+  requirement says what the owner sees when they send again.
+Under the first reading T-027's diff fails the gate-2 sweep; under the second it conforms.
+A corrected diff would face the same question from the other side. Whether the owner sees a
+fork of their own sending, and what (8) promises when the answer is lost, is the product
+decision (TEAM-008). Found at T-027's gate 2
+(docs/product/verdicts/20260929-T-027-gate2.md).
+**Stopped:** T-027 (gate 2). All eleven of its criteria are met on the diff. T-028 carries
+the device half of sending: the revision and content digest the device keeps, and FLOW-059
+(4). T-038 carries the owner's notice of FLOW-008 (3). Both already read `blocked`, and both
+meet this case on the device. FLOW-059 (8) is placed in wave 5. Whether any of these waits
+on this entry is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
