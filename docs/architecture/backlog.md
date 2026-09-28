@@ -1378,7 +1378,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | gated |
 | T-027 | The server keeps a sent recipe and turns a divergent sending into a fork | T-006 | blocked |
-| T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-027, T-036, T-025, T-034 | planned |
+| T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-027, T-036, T-025, T-034 | gated |
 | T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | blocked |
 | T-026 | Sending with no account offers to create one | T-038 | blocked |
 
@@ -1613,7 +1613,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 ### T-028 — The owner sends a recipe, and every recipe says whether it was sent
 
 **Requirements:** FLOW-059, FLOW-005, FLOW-002, ACT-002, AUTH-026, AUTH-006, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-027, T-036, T-025, T-034
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `app/build.gradle.kts` · `scripts/artefact.sh` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-serverless-mode-is-a-build-flag.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1663,7 +1663,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-028-gate1-2.md (the outbox would send a muted account's recipes; AUTH-004 carried by no wave-1 task); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten for manual sending; re-gate due; re-gated: rejected — docs/product/verdicts/20260928-T-028-gate1.md (a muted account can exist in wave 1b, and the entry's send control has no rule for it: FLOW-059 (2), AUTH-004 (4) and AUTH-006 left in wave 6); second return, taken to the user; FLOW-059 (2) and AUTH-006 (1, 4–7) added; third gate 1 authorised by the user on 2026-09-29
+**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-028-gate1-2.md (the outbox would send a muted account's recipes; AUTH-004 carried by no wave-1 task); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten for manual sending; re-gate due; re-gated: rejected — docs/product/verdicts/20260928-T-028-gate1.md (a muted account can exist in wave 1b, and the entry's send control has no rule for it: FLOW-059 (2), AUTH-004 (4) and AUTH-006 left in wave 6); second return, taken to the user; FLOW-059 (2) and AUTH-006 (1, 4–7) added; third gate 1 authorised by the user on 2026-09-29; re-gated: accepted — docs/product/verdicts/20260929-T-028-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 2 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1708,7 +1708,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md, decisions/20260927-test-strategy.md
 **Note:** 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): writing needs no account any more (FLOW-002); the control that needs one is the send control of T-028, which is this task's trigger. The earlier gate-1 rejection — no control in wave 1 fired the offer — is answered by it.
-**Criteria of these requirements carried elsewhere:** FLOW-059 (2) → wave 6; (3) → wave 7; (4–6, 10) → T-028; (7–8) → wave 5; (9) → wave 4 · ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7; (12) → wave 9 · AUTH-004 (1) → wave 3; (3) → wave 4; (4–5, 7) → wave 6; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-059 (2) → T-028; (3) → wave 7; (4–6, 10) → T-028; (7–8) → wave 5; (9) → wave 4 · ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7; (12) → wave 9 · AUTH-004 (1) → wave 3; (3) → wave 4; (4–5, 7) → wave 6; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
