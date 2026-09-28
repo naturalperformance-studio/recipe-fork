@@ -1,6 +1,6 @@
 # Keys are hashed random secrets; a sign-in yields a device session
 
-**Status:** accepted
+**Status:** superseded by 20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md
 **Date:** 2026-09-27
 **Requirements:** AUTH-007, AUTH-009, AUTH-010, AUTH-014, AUTH-017, AUTH-019, AUTH-020, AUTH-021, EXT-006, EXT-008, QUAL-007, QUAL-009, RET-008
 
