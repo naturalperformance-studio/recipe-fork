@@ -1315,3 +1315,56 @@ Its account-worded criteria FLOW-034 (1, 3) are backed by FLOW-034 (7), which ob
 the pool. FLOW-042 has no such counterpart for the empty view.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-039 — FLOW-008 (6) tells the owner "as criterion 2 states", and since the device-first change criterion 2 is the one that states no notice (2026-09-28)
+**Requirement IDs:** FLOW-008 (6) and the "Changed 2026-09-28" note under FLOW-008; read against FLOW-008 (statement, 2, 3) and its "Correction, 2026-09-27" note
+**Class:** incorrect fact (a stale cross-reference); ambiguity in what criterion 6's *Then* obliges
+**What the gate hit:** T-038 builds the device half of FLOW-008 and carries FLOW-008 (1, 3, 6)
+verbatim. The last clause of (6) is "and the owner is told as criterion 2 states"
+(`spec/70-flows/10-offline-and-sync.md:359`). Before 0745e70 the list began with the
+identity criterion, so criterion 2 was the notice ("told a fork was created and why at
+that moment if the application is open, or when they next open it if it is not; the
+notice stays until they acknowledge it, is not shown again afterwards, and both recipes
+are reachable"). 0745e70 put a new criterion first (the device keeps its own version).
+The notice is now criterion 3. Criterion 2 is now "the server's version keeps the
+recipe's identity and device B's version becomes a `private` fork naming it as parent",
+and it says nothing about telling anyone. The "Changed 2026-09-28" note added in the same
+commit also calls the notice "criterion 2" (line 375).
+Reading the spec, not choosing:
+- Under the reading that follows the old numbering, (6) obliges the whole notice of (3)
+  for a change of state alone: when it is shown, that it stays until acknowledged, that
+  it is not shown again, and that both recipes are reachable. The statement ("shall tell
+  the owner that it did so") and the 2026-09-27 correction ("the owner is told when the
+  answer arrives, once, until acknowledged") point this way.
+- Under the reading of the words as they stand, (6) points at FLOW-008 (2). That
+  criterion states no notice, so the clause obliges only that the owner is told of the
+  outcome (2) describes. Nothing is said about when, for how long, or whether both
+  recipes are reachable.
+A state-only fork that shows a one-off message meets the second reading and fails the
+first. T-038's entry also uses both numberings. Its carried-elsewhere line sends
+"FLOW-008 (2, 4–5) → T-027", where 2 is the identity criterion. In its own list of
+criteria, the notice is the second item. The developer agent gets that entry and its
+slice of `spec/` (TL-008). Gate 2 could mark (6)'s last clause met or not met only by
+putting "3" where the criterion says "2", and that is a rewording of the criterion
+(TEAM-008). Which criterion (6) means is for `/req-forge` to state. Found at T-038's
+gate 1 (docs/product/verdicts/20260928-T-038-gate1.md).
+**Stopped:** T-038 (FLOW-008 (6)). T-026 depends on T-038 in the backlog and waits
+behind it. T-027 holds a gate-1 `accepted` and carries no criterion of FLOW-008 (6). Its
+server half of the state-only case is met only at T-038's gate 2
+(docs/product/verdicts/20260928-T-027-gate1-2.md, unknown (5)). Whether that affects
+T-027 is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-040 — A pool recipe sent with no account active is sent and becomes the new account's by FLOW-059 (1), while a declined pool offer leaves it outside that account and unsendable by it under AUTH-026 (3) and ACT-002 (2026-09-28)
+**Requirement IDs:** FLOW-059 (1); AUTH-026 (statement, 1, 3); ACT-002 (statement, 2); read with AUTH-001 (2), ACT-001 (3), FLOW-051 (6)
+**Class:** inconsistency
+**What the gate hit:** T-026 is triggered by a recipe written with no account active, which is a recipe in the pool, being sent. This is what the requirements say, read and not chosen:
+- FLOW-059 (1) says account creation is offered and "the recipe is sent once the account exists, becoming that account's". AUTH-001 (2) and ACT-001 (3) say the action "proceeds once the account exists".
+- The account so created becomes active on a device whose pool holds at least that recipe. AUTH-026 (1) then shows the offer to move the whole pool. FLOW-051 (6) says the same.
+- On a declined offer, AUTH-026 (3) says "nothing from the pool is in" the account's recipe book. ACT-002's statement gives a pool recipe "no owner until the pool is moved into an account" and "no other means of transferring ownership". ACT-002 (2) says a pool recipe "can be sent only by" the account the pool was moved into.
+
+On an accepted offer the requirements agree. On a declined one, FLOW-059 (1) has the recipe sent and made the account's, and AUTH-026 (3) with ACT-002 has it stay in the pool, owned by no one and unsendable by that account. Each requirement is consistent on its own terms. They meet only on this trigger. T-026 cannot be built without deciding which holds, and gate 2 could not tell a right outcome from a wrong one (TEAM-008). Found at T-026's gate 1 (docs/product/verdicts/20260928-T-026-gate1.md).
+**Stopped:** T-026. T-036 is not stopped (gated, docs/product/verdicts/20260928-T-036-gate1.md). Its offer fires on any creation, and its criteria hold on either outcome here. T-028 is not stopped. It carries ACT-002 (2) and AUTH-026 (7), which concern recipes already moved.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
