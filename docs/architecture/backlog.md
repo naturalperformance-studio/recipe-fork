@@ -46,7 +46,7 @@ this wave, and no media is attached.
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
 | T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | on-develop |
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
-| T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | in-progress |
+| T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | in-review |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | blocked |
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
@@ -354,7 +354,7 @@ this wave, and no media is attached.
 ### T-007 — The recipe book's own-recipes view lists every recipe written in it
 
 **Requirements:** FLOW-034, FLOW-058, FLOW-036, FLOW-005, FLOW-039, FLOW-041, FLOW-043, FLOW-038, A11Y-008, L10N-001, A11Y-003, A11Y-005
-**Status:** in-progress
+**Status:** in-review
 **Depends on:** T-004, T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/db/**` · `app/src/main/kotlin/app/recipefork/app/recipe/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/recipe/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/lint.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_common.xml` · `app/src/main/res/values-ru/strings_common.xml` · `app/src/main/kotlin/app/recipefork/app/data/AppDatabase.kt` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md, decisions/20260928-one-database-per-recipe-book.md
