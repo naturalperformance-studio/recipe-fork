@@ -71,3 +71,4 @@ The task list and its statuses: [backlog.md](backlog.md).
 | [decisions/20260927-single-vm-deployment-and-hourly-dump.md](decisions/20260927-single-vm-deployment-and-hourly-dump.md) | One VM with Compose; hourly `pg_dump` to R2, 48 hourly + 30 daily. |
 | [decisions/20260927-telegram-alerting.md](decisions/20260927-telegram-alerting.md) | Alerts via Telegram `sendMessage`, never reading from the bot. |
 | [decisions/20260927-test-strategy.md](decisions/20260927-test-strategy.md) | JVM suite for every task; emulator tests only where a device is required. |
+| [decisions/20260928-recipe-file-is-a-zip.md](decisions/20260928-recipe-file-is-a-zip.md) | A recipe file is a ZIP of a versioned `recipe.json` and its media, streamed at import. |
