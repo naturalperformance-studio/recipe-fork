@@ -1378,7 +1378,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | gated |
 | T-027 | The server keeps a sent recipe and turns a divergent sending into a fork | T-006 | blocked |
-| T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-027, T-036, T-025, T-034 | blocked |
+| T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-027, T-036, T-025, T-034 | planned |
 | T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | blocked |
 | T-026 | Sending with no account offers to create one | T-038 | blocked |
 
@@ -1612,18 +1612,20 @@ when a divergent sending became a fork. Sending with no account offers creation.
 
 ### T-028 — The owner sends a recipe, and every recipe says whether it was sent
 
-**Requirements:** FLOW-059, FLOW-005, FLOW-002, ACT-002, AUTH-026, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** FLOW-059, FLOW-005, FLOW-002, ACT-002, AUTH-026, AUTH-006, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-027, T-036, T-025, T-034
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `app/build.gradle.kts` · `scripts/artefact.sh` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-serverless-mode-is-a-build-flag.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Size:** The first path from the editor to the server's store and back to the mark: the send request, the per-recipe revision and digest on the device, the three marks, and the first `Mode` passed from `MainActivity` (FLOW-059 (10), FLOW-005 (7)). Indivisible because the mark is only observable against a sending that happened. Expected at 600–800 changed lines.
-**Note:** 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): the automatic sending this task was cut around no longer exists. The earlier gate-1 rejection (a muted account's recipes left through the outbox) has no object now: a muted account's send control is replaced by AUTH-006's statement, carried in wave 6 with that statement (FLOW-059 (2)). This task is the first to read the serverless `Mode`: `MainActivity` passes it, and `scripts/artefact.sh` gains the serverless APK.
-**Criteria of these requirements carried elsewhere:** FLOW-059 (1) → T-026; (2) → wave 6; (3) → wave 7; (7–8) → wave 5; (9) → wave 4 · FLOW-005 (1–2) → T-007; (4) → wave 5; (6) → wave 2 · FLOW-002 (1) → T-013; (2) → wave 4; (3–4) → T-008 · ACT-002 (1) → T-036; (3) → T-027; (4) → wave 8 · AUTH-026 (1–3, 6) → T-036; (4–5) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): the automatic sending this task was cut around no longer exists. The earlier gate-1 rejection (a muted account's recipes left through the outbox) has no object now; a muted account's send control is replaced by AUTH-006's statement (see the note of 2026-09-29). This task is the first to read the serverless `Mode`: `MainActivity` passes it, and `scripts/artefact.sh` gains the serverless APK.
+**Note:** 2026-09-29, third gate 1 authorised by the user after the second return: a muted account can be created in wave 1b (T-006 creates one when no verdict is obtained), so the send control's replacement for it is carried here — FLOW-059 (2) and the statement of AUTH-006 it names, its contents (4, 5, 7) and its absence for a full account (6). The statement's retry control (AUTH-006 (2–3, 8)) stays in wave 7 with AUTH-005; AUTH-004 (4), which also names media, stays in wave 6.
+**Criteria of these requirements carried elsewhere:** FLOW-059 (1) → T-026; (3) → wave 7; (7–8) → wave 5; (9) → wave 4 · FLOW-005 (1–2) → T-007; (4) → wave 5; (6) → wave 2 · FLOW-002 (1) → T-013; (2) → wave 4; (3–4) → T-008 · ACT-002 (1) → T-036; (3) → T-027; (4) → wave 8 · AUTH-026 (1–3, 6) → T-036; (4–5) → wave 7 · AUTH-006 (2–3, 8) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-059 — spec/70-flows/10-offline-and-sync.md*
+- Given a muted account (AUTH-004), when a recipe is open in the editor, then the send control is replaced by the statement of AUTH-006.
 - Given a sent recipe edited on the device, when it is sent again, then the server's copy is replaced by the device's version, unless FLOW-008 finds the two diverged.
 - Given a recipe that holds no change the server does not hold, when its entry or its editor is shown, then no send control is offered.
 - Given a recipe in `pending`, `link_shared`, `published`, `reported_hidden` or `removed`, when it is shown, then no send control is offered, because the server already holds it and it cannot change.
@@ -1644,6 +1646,13 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *AUTH-026 — spec/45-auth/25-accounts-on-a-device.md*
 - Given recipes in the pool that were moved into an account, when they are sent (FLOW-059), then that account is their owner (ACT-002).
 
+*AUTH-006 — spec/45-auth/10-creating-an-account.md*
+- Given a muted account, when a withheld control would have been shown, then a statement takes its place rather than the control failing silently.
+- Given that statement, when it is read, then it says the device could not be checked and that a connection and an installation from the store lift the limit.
+- Given a muted account on a device with no free slot, when the statement is shown, then it names the month a slot frees instead (AUTH-003).
+- Given a full account, when any screen is shown, then no such statement appears anywhere.
+- Given a muted account, when the statement is shown in the editor or in the own-recipes view, then it also says that its recipes cannot be sent while it is muted, and are held on this device only and lost with it (FLOW-005).
+
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
@@ -1654,7 +1663,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-028-gate1-2.md (the outbox would send a muted account's recipes; AUTH-004 carried by no wave-1 task); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten for manual sending; re-gate due; re-gated: rejected — docs/product/verdicts/20260928-T-028-gate1.md (a muted account can exist in wave 1b, and the entry's send control has no rule for it: FLOW-059 (2), AUTH-004 (4) and AUTH-006 left in wave 6); second return, taken to the user
+**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-028-gate1-2.md (the outbox would send a muted account's recipes; AUTH-004 carried by no wave-1 task); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten for manual sending; re-gate due; re-gated: rejected — docs/product/verdicts/20260928-T-028-gate1.md (a muted account can exist in wave 1b, and the entry's send control has no rule for it: FLOW-059 (2), AUTH-004 (4) and AUTH-006 left in wave 6); second return, taken to the user; FLOW-059 (2) and AUTH-006 (1, 4–7) added; third gate 1 authorised by the user on 2026-09-29
 **Review:** —
 **Gate 2:** —
 **Returns:** 2 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1945,14 +1954,13 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | ACT-006 — A publishing ban leaves published content in place | all |
 | ACT-007 — A banned account is told it is banned | all |
 | AUTH-004 — Without a verdict the account is created muted | 4–5, 7 |
-| AUTH-006 — A muted account is told what it is and what lifts it | 1, 4, 6–7 |
+| AUTH-006 — A muted account is told what it is and what lifts it | 1, 4, 6–7 (again, for the controls of this wave; first carried by T-028 for the send control) |
 | CON-005 — Native Android is the only client surface in the MVP | 2 |
 | EXT-007 — A private link outside the application reveals nothing | all |
 | FLOW-018 — A flagged recipe says what it descends from | all |
 | FLOW-054 — The private link is shown, copied, revoked and reissued in one place | all |
 | FLOW-055 — An author's screen is reached from their nickname | all |
 | FLOW-056 — A ban is applied and lifted on the author's screen | all |
-| FLOW-059 — A recipe reaches the server only when its owner sends it | 2 |
 | MOD-008 — Removing a recipe as dangerous flags every descendant | all |
 | MOD-009 — Flagged recipes are reviewed from the youngest upwards | all |
 | MOD-010 — Clearing a flag clears one recipe and no other | all |
@@ -1970,7 +1978,7 @@ The list of accounts on a device and the switch between them (AUTH-011 (1–5), 
 | AUTH-001 — An account appears when an action needs one | 4 |
 | AUTH-003 — A device with no free slot says when it will have one | all |
 | AUTH-005 — A muted account becomes full when a verdict and a slot allow it | all |
-| AUTH-006 — A muted account is told what it is and what lifts it | 2–3, 5, 8 |
+| AUTH-006 — A muted account is told what it is and what lifts it | 2–3, 8 |
 | AUTH-007 — The key is issued once, in full, and creation waits for an acknowledgement | 8 |
 | AUTH-008 — The product neither stores the key nor recovers an account | all |
 | AUTH-009 — Signing in with a key costs no slot | all |
