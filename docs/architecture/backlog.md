@@ -39,7 +39,7 @@ this wave, and no media is attached.
 | Task | Title | Depends on | Status |
 |---|---|---|---|
 | T-001 | Quantities follow the serving count | — | on-develop |
-| T-029 | Large and fractional quantities are written on the ladder | T-001 | in-review |
+| T-029 | Large and fractional quantities are written on the ladder | T-001 | po-review |
 | T-002 | A fixed ingredient sets the scale | T-029 | blocked |
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
@@ -113,7 +113,7 @@ this wave, and no media is attached.
 ### T-029 — Large and fractional quantities are written on the ladder
 
 **Requirements:** SCALE-010, SCALE-013, SCALE-014, L10N-009
-**Status:** in-review
+**Status:** po-review
 **Depends on:** T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -143,7 +143,7 @@ this wave, and no media is attached.
 - Given a vulgar fraction of SCALE-014, when it is displayed, then it carries no decimal mark in either language.
 
 **Gate 1:** accepted — docs/product/verdicts/20260927-T-029-gate1.md
-**Review:** —
+**Review:** pass — 13 of 13 criteria checked by mutation, worktree as it was
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
