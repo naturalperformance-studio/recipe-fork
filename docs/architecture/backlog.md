@@ -38,8 +38,8 @@ this wave, and no media is attached.
 
 | Task | Title | Depends on | Status |
 |---|---|---|---|
-| T-001 | Quantities follow the serving count | — | po-review |
-| T-029 | Large and fractional quantities are written on the ladder | T-001 | gated |
+| T-001 | Quantities follow the serving count | — | on-develop |
+| T-029 | Large and fractional quantities are written on the ladder | T-001 | in-progress |
 | T-002 | A fixed ingredient sets the scale | T-029 | blocked |
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
@@ -71,7 +71,7 @@ this wave, and no media is attached.
 ### T-001 — Quantities follow the serving count
 
 **Requirements:** SCALE-001, SCALE-003, SCALE-005, SCALE-010, SCALE-015, DOM-017
-**Status:** po-review
+**Status:** on-develop
 **Depends on:** —
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -107,13 +107,13 @@ this wave, and no media is attached.
 
 **Gate 1:** blocked-by-spec (SD-002) — docs/product/verdicts/20260927-T-001-gate1.md; re-sliced against spec/ @ ead1a44 after SD-002 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-001 (2)) — docs/product/verdicts/20260927-T-001-gate1-2.md; SCALE-001 (2) corrected in spec/ @ 959130e and moved to T-019, since it now states the rounding direction T-019 renders; re-gated: blocked-by-spec (SD-034, what an author may enter as a quantity and how an off-grid one is shown) — docs/product/verdicts/20260927-T-001-gate1-3.md; SD-034 answered in spec/ @ 1168954 (DOM-017: an authored quantity lies on its grid; DOM-018 the one exception, placed in wave 4 with DOM-017 (8)); DOM-017 (7) added, re-gate due; re-gated: accepted — docs/product/verdicts/20260928-T-001-gate1.md
 **Review:** pass — 13 of 13 criteria checked by mutation, worktree as it was
-**Gate 2:** —
+**Gate 2:** accepted — docs/product/verdicts/20260929-T-001-gate2.md
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-029 — Large and fractional quantities are written on the ladder
 
 **Requirements:** SCALE-010, SCALE-013, SCALE-014, L10N-009
-**Status:** gated
+**Status:** in-progress
 **Depends on:** T-001
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
