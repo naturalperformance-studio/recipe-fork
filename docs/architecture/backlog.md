@@ -1378,9 +1378,9 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | gated |
 | T-027 | The server keeps a sent recipe and turns a divergent sending into a fork | T-006 | gated |
-| T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-027, T-036, T-025, T-034 | planned |
-| T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | planned |
-| T-026 | Sending with no account offers to create one | T-038 | planned |
+| T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-027, T-036, T-025, T-034 | blocked |
+| T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | blocked |
+| T-026 | Sending with no account offers to create one | T-038 | blocked |
 
 ### T-009 — The first step of creation shows the nickname and the terms
 
@@ -1613,7 +1613,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 ### T-028 — The owner sends a recipe, and every recipe says whether it was sent
 
 **Requirements:** FLOW-059, FLOW-005, FLOW-002, ACT-002, AUTH-026, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-027, T-036, T-025, T-034
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `app/build.gradle.kts` · `scripts/artefact.sh` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-serverless-mode-is-a-build-flag.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1654,15 +1654,15 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-028-gate1-2.md (the outbox would send a muted account's recipes; AUTH-004 carried by no wave-1 task); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten for manual sending; re-gate due
+**Gate 1:** blocked-by-spec (SD-017) — docs/product/verdicts/20260927-T-028-gate1.md; re-sliced against spec/ @ ead1a44 after SD-017 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-028-gate1-2.md (the outbox would send a muted account's recipes; AUTH-004 carried by no wave-1 task); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten for manual sending; re-gate due; re-gated: rejected — docs/product/verdicts/20260928-T-028-gate1.md (a muted account can exist in wave 1b, and the entry's send control has no rule for it: FLOW-059 (2), AUTH-004 (4) and AUTH-006 left in wave 6); second return, taken to the user
 **Review:** —
 **Gate 2:** —
-**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 2 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-038 — A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's
 
 **Requirements:** FLOW-008, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-028
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1686,7 +1686,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-039, FLOW-008 (6) points to "criterion 2", which since 0745e70 states no notice) — docs/product/verdicts/20260928-T-038-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1694,7 +1694,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 ### T-026 — Sending with no account offers to create one
 
 **Requirements:** FLOW-059, ACT-001, AUTH-001, FLOW-003, AUTH-004, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-038
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md, decisions/20260927-test-strategy.md
@@ -1731,7 +1731,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-019) — docs/product/verdicts/20260927-T-026-gate1.md; re-sliced against spec/ @ ead1a44 after SD-019 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-026-gate1-2.md (no control in wave 1 fires the offer for a person with no account); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten: the send control is the trigger; re-gate due
+**Gate 1:** blocked-by-spec (SD-019) — docs/product/verdicts/20260927-T-026-gate1.md; re-sliced against spec/ @ ead1a44 after SD-019 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-026-gate1-2.md (no control in wave 1 fires the offer for a person with no account); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten: the send control is the trigger; re-gate due; re-gated: blocked-by-spec (SD-040, a pool recipe sent with no account against a declined pool offer) — docs/product/verdicts/20260928-T-026-gate1.md; noted for the re-slice once SD-040 is answered: a muted account can be created from the send control, so AUTH-004 (5) and the statement of AUTH-006 it names belong here, not in wave 6
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
