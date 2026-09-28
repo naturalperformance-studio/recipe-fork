@@ -1,0 +1,199 @@
+package app.recipefork.core.recipe
+
+import app.recipefork.core.scaling.Rational
+import java.time.Instant
+import java.util.UUID
+import kotlin.time.Duration
+
+/** A recipe's identity: minted on the device at creation and never changed (spec/50-domain-model, `recipe_id`). */
+@JvmInline
+value class RecipeId(val value: String) {
+    companion object {
+        /** A new identity, minted on the device so that nothing waits for the server. */
+        fun mint(): RecipeId = RecipeId(UUID.randomUUID().toString())
+    }
+}
+
+/** An account's internal identity; never shown to anyone. */
+@JvmInline
+value class AccountId(val value: String)
+
+/** The eight states of a recipe (spec/60-entity-states). A new recipe is `local`. */
+enum class RecipeState(
+    /** True where the owner may edit the content; false where the content is frozen. */
+    val editable: Boolean,
+) {
+    LOCAL(true),
+    PRIVATE(true),
+    PENDING(false),
+    REJECTED(true),
+    LINK_SHARED(false),
+    PUBLISHED(false),
+    REPORTED_HIDDEN(false),
+    REMOVED(false),
+    ;
+
+    /** `local` and `private` are drafts (FLOW-036). */
+    val isDraft: Boolean get() = this == LOCAL || this == PRIVATE
+
+    companion object {
+        /** The state a recipe is created in, with or without an account. */
+        val NEW = LOCAL
+    }
+}
+
+/** What FLOW-005 marks: never sent, sent with every change on the server, or sent holding changes not sent. */
+enum class SentStatus { NEVER, SENT, SENT_WITH_CHANGES }
+
+/** The languages of L10N-001. */
+enum class RecipeLanguage { RU, EN }
+
+/** A parent as a recipe file states it: text only, never verified (FLOW-065). */
+data class StatedParent(val title: String, val nickname: String)
+
+data class Timer(
+    /** From 1 minute to 99 h 59 min (FLOW-027). */
+    val duration: Duration,
+    /** The author's own name; null means the name follows the step (FLOW-016). */
+    val label: String? = null,
+)
+
+data class IngredientReference(
+    /** The position of the referenced ingredient in its recipe. */
+    val ingredientPosition: Int,
+    /** Where in the step's text the reference sits. */
+    val textOffset: Int,
+)
+
+data class Step(
+    val position: Int,
+    val text: String,
+    val ingredientReferences: List<IngredientReference> = emptyList(),
+    val timer: Timer? = null,
+)
+
+data class Ingredient(
+    val position: Int,
+    /** The dictionary entry's id; null exactly when [freeTextName] is present (DOM-009). */
+    val dictionaryEntry: Long?,
+    val qualifier: String? = null,
+    val freeTextName: String? = null,
+    val unitType: UnitType,
+    /** Null for `taste_unmeasured`. */
+    val unit: QuantityUnit?,
+    /** Null exactly when [unitType] is `taste_unmeasured`. */
+    val quantity: Rational?,
+    /** Mass of one piece, `piece` only. */
+    val pieceWeight: Rational? = null,
+    /** `piece` only. */
+    val divisible: Boolean? = null,
+)
+
+enum class MediaKind { PHOTO, VIDEO }
+
+enum class MediaVisibility { PRIVATE, PUBLISHED }
+
+sealed interface MediaAttachment {
+    data object Cover : MediaAttachment
+    data class ToStep(val stepPosition: Int) : MediaAttachment
+}
+
+data class Media(
+    val mediaId: String,
+    /** Null until its recipe is sent (FLOW-004). */
+    val owner: AccountId?,
+    val kind: MediaKind,
+    val attachment: MediaAttachment,
+    val visibility: MediaVisibility,
+)
+
+/**
+ * A recipe (spec/50-domain-model, "Recipe").
+ *
+ * [createdAt] and [contentChangedAt] are what the own-recipes view orders by (FLOW-039): a change of state
+ * is not a change of content, so a frozen recipe keeps the time of its last edit.
+ */
+data class Recipe(
+    val id: RecipeId,
+    /** None while in the pool of a device (AUTH-026). */
+    val owner: AccountId?,
+    /** The direct parent's identity, which need not be held anywhere (FLOW-007). */
+    val parent: RecipeId?,
+    val sent: SentStatus,
+    val statedAuthor: String?,
+    val statedParent: StatedParent?,
+    val title: String,
+    val description: String,
+    val tags: Set<Long>,
+    /** Null until declared (L10N-004). */
+    val language: RecipeLanguage?,
+    /** Null while the field holds no value (DOM-015); otherwise 1 or more. */
+    val servings: Int?,
+    val ingredients: List<Ingredient>,
+    val steps: List<Step>,
+    val media: List<Media>,
+    val state: RecipeState,
+    val replacesParent: Boolean,
+    val wasPublished: Boolean,
+    val safetyFlag: Boolean,
+    val createdAt: Instant,
+    val contentChangedAt: Instant,
+) {
+    init {
+        require(servings == null || servings >= 1) { "servings must be 1 or more" }
+        require(!contentChangedAt.isBefore(createdAt)) { "content cannot change before creation" }
+    }
+
+    /** The time FLOW-039 orders by under `newest`. */
+    val newestKey: Instant get() = contentChangedAt
+
+    /**
+     * The content changed at [at]. Only an editable state allows it; a sent recipe now holds changes not
+     * sent (FLOW-005).
+     */
+    fun edited(at: Instant, change: (Recipe) -> Recipe): Recipe {
+        check(state.editable) { "a recipe in $state is frozen" }
+        val changed = change(this)
+        check(changed.id == id && changed.state == state) { "an edit changes content only" }
+        return changed.copy(
+            contentChangedAt = at,
+            sent = if (sent == SentStatus.SENT) SentStatus.SENT_WITH_CHANGES else sent,
+        )
+    }
+
+    /** A change of state, which leaves the content and its time alone. */
+    fun inState(next: RecipeState): Recipe = copy(
+        state = next,
+        wasPublished = wasPublished || next == RecipeState.PUBLISHED,
+    )
+
+    companion object {
+        /** An empty recipe in `local`, in the active book: the pool's when [owner] is null. */
+        fun create(at: Instant, owner: AccountId?, parent: RecipeId? = null, id: RecipeId = RecipeId.mint()) =
+            Recipe(
+                id = id,
+                owner = owner,
+                parent = parent,
+                sent = SentStatus.NEVER,
+                statedAuthor = null,
+                statedParent = null,
+                title = "",
+                description = "",
+                tags = emptySet(),
+                language = null,
+                servings = null,
+                ingredients = emptyList(),
+                steps = emptyList(),
+                media = emptyList(),
+                state = RecipeState.NEW,
+                replacesParent = false,
+                wasPublished = false,
+                safetyFlag = false,
+                createdAt = at,
+                contentChangedAt = at,
+            )
+    }
+}
+
+/** The own-recipes view under `newest`: the last change of content first (FLOW-039). */
+val NewestOwnFirst: Comparator<Recipe> = compareByDescending<Recipe> { it.newestKey }.thenBy { it.id.value }
