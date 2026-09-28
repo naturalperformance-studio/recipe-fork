@@ -15,7 +15,7 @@
 
 **Consequences:**
 - "No request to the product's server" (FLOW-061 (2)) is checked by a test that the serverless composition root constructs no HTTP client.
-- Each task that adds a control FLOW-062 removes carries FLOW-062 (1) for that control, as every screen task carries L10N-001, so the mode is not retrofitted at the end.
+- Each task that adds a control FLOW-062 removes carries that control's own serverless criterion where the specification states one (FLOW-059 (10) for the send control, FLOW-005 (7) for the marks), so the mode is not retrofitted at the end; the sweep of FLOW-062 (1) over every screen is carried once, by the last wave.
 - The build commands of `00-index.md` do not change.
 
 **Alternatives considered:**
