@@ -91,17 +91,20 @@ class BookDatabaseTest {
         recipes.forEach { assertEquals(it, repository.get(it.id)) }
     }
 
-    // FLOW-039 (1, 2, 5) as the book orders them.
+    // FLOW-039 (1, 2, 5) as the book orders them. The published recipe was created before the untouched draft
+    // and last edited after it, so ordering it by its creation, or putting published recipes last, changes
+    // the order; its publication yesterday is a change of state and moves nothing.
     @Test
     fun theBookOrdersOwnRecipesByTheirLastChangeOfContent() = runBlocking {
         fun ago(days: Long) = now.minus(Duration.ofDays(days))
         val editedDraft = Recipe.create(ago(30), null).edited(now) { it.copy(title = "old draft edited today") }
-        val published = Recipe.create(ago(5), null).edited(ago(4)) { it.copy(title = "published yesterday") }
+        val published = Recipe.create(ago(10), null).edited(ago(2)) { it.copy(title = "published yesterday") }
             .inState(RecipeState.PRIVATE).inState(RecipeState.PENDING).inState(RecipeState.PUBLISHED)
-        val untouched = Recipe.create(ago(3), null).copy(title = "untouched draft created 3 days ago")
+        val untouched = Recipe.create(ago(5), null).copy(title = "untouched draft created 5 days ago")
+        assertTrue(published.createdAt < untouched.createdAt && untouched.createdAt < published.contentChangedAt)
         listOf(published, untouched, editedDraft).forEach { repository.save(it) }
         assertEquals(
-            listOf(editedDraft.title, untouched.title, published.title),
+            listOf(editedDraft.title, published.title, untouched.title),
             repository.ownNewest(10).first().map { it.title },
         )
     }

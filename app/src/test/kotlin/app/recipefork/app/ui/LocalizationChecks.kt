@@ -64,21 +64,42 @@ object LocalizationChecks {
         assertEquals("interface text fixed in the code", emptyList<String>(), found)
     }
 
-    /** Every string resource of the application, resolved in [context]'s current language. */
-    fun resolvedStrings(context: Context): List<String> =
-        R.string::class.java.fields.map { context.getString(it.getInt(null)) }
+    /**
+     * The `values` directory that holds [context]'s current language itself: `values-<language>` where it
+     * exists, `values` for English. Android resolves a string missing there from `values`, which is the
+     * fallback L10N-001 (1) forbids, so this directory — not what `getString` returns — says what the
+     * language holds.
+     */
+    fun ownValuesDir(context: Context, res: File = resDir): File {
+        val language = context.resources.configuration.locales[0].language
+        val own = File(res, "values-$language")
+        if (own.isDirectory) return own
+        assertEquals("no values directory of its own for the language in force", "en", language)
+        return File(res, "values")
+    }
+
+    /**
+     * The string resources of [context]'s current language that the language holds itself, resolved in it:
+     * a string that exists only in another language's directory is left out, so its fallback value is not
+     * accepted as this language's text.
+     */
+    fun ownResolvedStrings(context: Context, res: File = resDir): List<String> {
+        val own = stringsIn(ownValuesDir(context, res)).keys
+        return R.string::class.java.fields.filter { it.name in own }.map { context.getString(it.getInt(null)) }
+    }
 
     /**
      * L10N-001 (1) on a rendered screen: every text, description and action label shown is a string resource
-     * of the language in force — so none falls back to the other language and none is fixed in the code —
-     * except the reader's own content listed in [content].
+     * that the language in force holds in its own `values` directory — so none falls back to the other
+     * language and none is fixed in the code — except the reader's own content listed in [content].
      */
     fun assertScreenTextFromResources(
         screen: SemanticsNodeInteractionsProvider,
         context: Context,
         content: Set<String> = emptySet(),
+        res: File = resDir,
     ) {
-        val patterns = resolvedStrings(context).map { value ->
+        val patterns = ownResolvedStrings(context, res).map { value ->
             Regex(Regex.escape(value).replace(Regex("""%(\d+\$)?[sd]"""), """\\E.+\\Q"""))
         }
         val shown = screen.onAllNodes(isRoot().not() or isRoot(), useUnmergedTree = true).fetchSemanticsNodes()

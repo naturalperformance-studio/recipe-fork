@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -38,6 +39,7 @@ class LibraryLanguageTest {
     private val database = Room.inMemoryDatabaseBuilder(context, BookDatabase::class.java).build()
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, database))
     private val titles = mutableSetOf<String>()
+    private var ownCount = 0
 
     @After
     fun close() = database.close()
@@ -50,9 +52,11 @@ class LibraryLanguageTest {
                     val title = "Recipe $state $sent"
                     titles += title
                     recipes.save(Recipe.create(now.minusSeconds(i * 10L), null).copy(title = title, sent = sent).inState(state))
+                    ownCount++
                 }
             }
             recipes.save(Recipe.create(now.minusSeconds(1_000), null)) // untitled
+            ownCount++
             database.favourites().put(FavouriteEntity("m", "Marked pie", now))
             titles += "Marked pie"
         }
@@ -67,7 +71,13 @@ class LibraryLanguageTest {
                 compose.onAllNodes(hasTestTag(LibraryTags.entry("m")), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
         }
         compose.waitForIdle()
-        LocalizationChecks.assertScreenTextFromResources(compose, context, titles)
+        // A lazy list composes only what fits on the screen: every entry, and so every state's and every
+        // mark's text, is brought on screen and checked in turn.
+        for (index in 0 until ownCount) {
+            compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToIndex(index)
+            compose.waitForIdle()
+            LocalizationChecks.assertScreenTextFromResources(compose, context, titles)
+        }
     }
 
     // FLOW-034 (8), L10N-001 (1): English.
