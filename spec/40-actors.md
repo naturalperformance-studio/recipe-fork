@@ -1,7 +1,7 @@
 ---
 slug: ACT
 status: closed
-updated: 2026-09-28
+updated: 2026-09-29
 ids: [ACT-001, ACT-002, ACT-003, ACT-004, ACT-005, ACT-006, ACT-007, ACT-008]
 ---
 
@@ -92,19 +92,23 @@ decision that an account is created at first launch. See
 no account, by user decision of that date
 ([ADR — the device first](decisions/20260928-the-device-first.md)).
 
-### ACT-002 — Ownership is fixed at creation, or when the pool is moved
+### ACT-002 — Ownership is fixed at creation, or when a pool recipe first gets an account
 
 The system shall treat the account in whose recipe book a recipe was created as
 that recipe's owner for the lifetime of the recipe; shall treat a recipe created in
-the pool (AUTH-026) as having no owner until the pool is moved into an account,
-which becomes its owner; and shall provide no other means of transferring
-ownership.
+the pool (AUTH-026) as having no owner until either the pool is moved into an
+account or the recipe's own sending creates an account (FLOW-059 (1)), that account
+becoming its owner; and shall provide no other means of transferring ownership.
 
 **Acceptance criteria**
 - Given a recipe created while an account was active, when its owner is resolved
   at any point in its lifetime, then it is that account.
 - Given a recipe created in the pool, when the pool is moved into account A, then
   A is its owner from then on, and it can be sent only by A.
+- Given a recipe in the pool sent with no account active, when the account created
+  for that sending exists, then that account is the recipe's owner whether the
+  offer of AUTH-026 is accepted or declined, and the rest of the pool stays
+  without an owner if it is declined.
 - Given a recipe the server holds, when its owner is resolved, then it is the
   account that sent it, which is always the account it belonged to on the device.
 - Given any interface of the application, when it is enumerated, then it offers
@@ -114,6 +118,9 @@ ownership.
 account and send one of its recipes.
 **Source:** draft sections 2.3, 4.1. The pool's one move added 2026-09-28 by user
 decision ([ADR — several accounts on one device](decisions/20260928-several-accounts-on-one-device.md)).
+**Changed 2026-09-29:** a pool recipe whose sending creates an account becomes that
+account's whatever the answer to the pool offer, by user decision of that date
+(SD-040; [ADR — the recipe that created the account is the account's](decisions/20260929-the-recipe-that-created-the-account.md)).
 
 ### ACT-003 — Moderator authority is an assignable role
 

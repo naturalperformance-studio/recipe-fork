@@ -1,7 +1,7 @@
 ---
 slug: L10N
 status: closed
-updated: 2026-09-27
+updated: 2026-09-29
 ids: [L10N-001, L10N-002, L10N-003, L10N-004, L10N-005, L10N-006, L10N-007,
   L10N-008, L10N-009]
 ---
@@ -261,3 +261,6 @@ four digits) and `en` (group separator comma, decimal mark point, grouping from
 four digits) ([CLDR number data, cldr-json](https://github.com/unicode-org/cldr-json/tree/main/cldr-json/cldr-numbers-full/main),
 checked 2026-09-27). The quantity in a step (SCALE-007) and the serving count
 follow the same rule, being numbers displayed like any other.
+**Note, 2026-09-29:** this requirement governs display only. How a typed number is
+read — a comma or a point as its decimal mark in either language, and no grouping
+separator — is DOM-019 (SD-037).

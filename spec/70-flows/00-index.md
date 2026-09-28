@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-28
+updated: 2026-09-29
 ids: []
 ---
 
@@ -22,7 +22,7 @@ identifiers did not change on the split and never will.
 
 | Part | What is in it | Requirements |
 |---|---|---|
-| [10-offline-and-sync.md](10-offline-and-sync.md) | The device first: writing with no account and no connection, sending a recipe to the server by the owner's act, what is refused, and divergence | FLOW-001–FLOW-008, FLOW-059 |
+| [10-offline-and-sync.md](10-offline-and-sync.md) | The device first: writing with no account and no connection, sending a recipe to the server by the owner's act, what is refused, divergence, and a sending the server already holds | FLOW-001–FLOW-008, FLOW-059, FLOW-066 |
 | [20-device-storage.md](20-device-storage.md) | The recipe book and what the device keeps, with and without an account; clearing media the device can fetch again | FLOW-009–FLOW-012, FLOW-058, FLOW-051, FLOW-052, FLOW-060 |
 | [30-cooking.md](30-cooking.md) | Cooking from a recipe | FLOW-013–FLOW-021 |
 | [40-editor.md](40-editor.md) | Writing a recipe: the ingredient row and what its field offers, the editor's order, media, warnings, the saved view and what a fork carries | FLOW-022–FLOW-026, FLOW-028–FLOW-030, FLOW-057 |

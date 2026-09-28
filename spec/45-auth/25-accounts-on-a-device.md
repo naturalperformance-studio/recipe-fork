@@ -1,7 +1,7 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-28
+updated: 2026-09-29
 ids: [AUTH-011, AUTH-012, AUTH-013, AUTH-026, AUTH-027]
 ---
 
@@ -128,8 +128,11 @@ once to move the whole pool into that account.
 - Given the offer accepted, when it completes, then everything in the pool is
   that account's, the pool is empty, and the account's recipe book shows it.
 - Given the offer declined, when the account's recipe book is shown, then nothing
-  from the pool is in it, and the pool is shown again whenever no account is
-  active.
+  from the pool is in it but a recipe whose sending created the account
+  (FLOW-059 (1)), and the pool is shown again whenever no account is active.
+- Given an account created by sending a recipe from the pool, when the offer is
+  shown, then it states that this recipe is already in the account whatever the
+  answer, and the offer covers the rest of the pool.
 - Given an account that declined, when it becomes active again later, then the
   offer is not shown again; the account's menu holds an action that makes the same
   offer at any time while the pool holds anything.
@@ -147,6 +150,11 @@ refilled.
 common pool; at a sign-in the person is offered to move it into the account,
 may refuse, and the offer then stays in the menu rather than returning at every
 sign-in.
+**Correction, 2026-09-29:** a declined offer left outside the account the pool
+recipe whose sending had just created it, which FLOW-059 (1) had sent and made
+the account's (SD-040). By user decision of that date that one recipe is the
+account's whatever the answer. See
+[ADR — the recipe that created the account is the account's](../decisions/20260929-the-recipe-that-created-the-account.md).
 
 ### AUTH-027 — A key already used on this device opens its account without the server
 

@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-28
+updated: 2026-09-29
 ids: []
 ---
 
@@ -92,7 +92,8 @@ there too (RET-001).
 
 **Owner** — the account in whose recipe book a recipe was created, for that
 recipe's whole life; a recipe created in the pool has none until the pool is
-moved into an account. Ownership is otherwise never transferred (ACT-002). Not an actor: a role an account holds
+moved into an account, or until its own sending creates one. Ownership is
+otherwise never transferred (ACT-002). Not an actor: a role an account holds
 with respect to one recipe.
 
 **Reader** — an account looking at a recipe it does not own. Also a role, not an

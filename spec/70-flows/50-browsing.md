@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-28
+updated: 2026-09-29
 ids: [FLOW-033, FLOW-034, FLOW-035, FLOW-036, FLOW-037, FLOW-038, FLOW-039,
   FLOW-040, FLOW-041, FLOW-042, FLOW-043]
 ---
@@ -324,11 +324,13 @@ view of marked recipes.
 - Given a catalogue holding no recipe the reader may see, when it is opened with
   no query and no filter, then it states that there is nothing in it yet and
   offers to write a recipe.
-- Given an account that has written nothing, when it opens the own-recipes view,
-  then the view states so and offers to write a recipe, and the offer opens the
-  editor (FLOW-024).
-- Given an account that has marked nothing, when it opens the view of marked
-  recipes, then the view states so and offers to open the catalogue.
+- Given an active recipe book in which nothing has been written — an account's,
+  or the pool of AUTH-026 when no account is active — when the own-recipes view is
+  opened, then the view states so and offers to write a recipe, and the offer opens
+  the editor on a new recipe in that recipe book (FLOW-024, FLOW-002).
+- Given an active recipe book in which nothing is marked — an account's, or the
+  pool when no account is active — when the view of marked recipes is opened, then
+  the view states so and offers to open the catalogue.
 - Given any of these offers, when the reader takes it, then they land on exactly
   that screen and nothing else is changed by the offer.
 - Given an empty listing, when it is shown, then it holds one offer and not
@@ -340,6 +342,11 @@ view — and take each offered action.
 **Source:** user decision, 2026-09-20: an empty listing offers the action that
 belongs to that place rather than only reporting emptiness, because the reader
 who reached it has no other way forward from that screen.
+**Correction, 2026-09-29:** criteria 4 and 5 observed an account's empty views
+only, while with no account active the same views hold the pool (FLOW-034 (7)),
+and a clean installation reaches the editor through that empty pool view (SD-038).
+By user decision of that date both criteria name the active recipe book, the pool
+included; the statement already did.
 
 ### FLOW-043 — A listing loading for the first time, and a listing that failed to load
 

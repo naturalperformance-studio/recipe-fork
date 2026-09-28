@@ -1,9 +1,9 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-27
+updated: 2026-09-29
 ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014, DOM-016, DOM-017,
-  DOM-018]
+  DOM-018, DOM-019]
 ---
 
 # Invariants over ingredients, the dictionaries, units and limits
@@ -252,8 +252,13 @@ The values held are, by unit type:
   `1½ шт` of a divisible ingredient or `3 шт` of an indivisible one, then the field
   holds that value.
 - Given the quantity field, when the author enters 0, a negative number, `7,5 г`,
-  `1,2345 кг`, `0,3 ч. л.`, `2,5 шт` or `½ шт` of an indivisible ingredient, then
-  the field does not hold it.
+  `1,2345 кг`, `0,3 ч. л.`, or, of an indivisible ingredient, `2,5 шт` or `½ шт`,
+  then the field does not hold it.
+- Given the quantity field, when the author enters a value of a fraction grid
+  with a decimal mark — `2,5 шт` of a divisible ingredient, `0,5 ч. л.`,
+  `0,25 ч. л.` — then the field holds it and it is displayed as the grid writes
+  it: 2½, ½, ¼. `0,33 ч. л.` and `0,66 ч. л.` are not held, because ⅓ and ⅔ have
+  no decimal form on the grid; the field's error names the fractions it accepts.
 - Given the quantity field, when the author enters `1 г`, `¼ ч. л.`, `½ шт` of a
   divisible ingredient or `1 шт` of an indivisible one, then the field holds it:
   each is the floor of its grid.
@@ -283,6 +288,48 @@ See [ADR — a quantity anyone states lies on the grid](../decisions/20260927-st
 **Cost, stated:** an author cannot write 2,5 g of yeast or 0,3 teaspoon; they write
 3 g and ⅓. Half of an indivisible piece cannot be written at all, which the section
 `scaling-rules` had already accepted.
+**Completed 2026-09-29:** whether `2,5 шт` of a divisible ingredient and
+`0,5 ч. л.` are held was read two ways — by the value the grid displays, or by the
+written form of its fraction grids (SD-037 item 2). By user decision of that date
+the value decides; criterion 2 now names the indivisible ingredient for both of its
+piece examples, and criterion 3 is new. How the typed number is read is DOM-019.
+See [ADR — a typed quantity is read by its value](../decisions/20260929-a-typed-quantity-is-read-by-its-value.md).
+
+### DOM-019 — A typed number takes a comma or a point as its decimal mark
+
+When a person types a number into a quantity field (DOM-017) or into the fixing
+control (SCALE-018), the system shall read both a comma and a point as the decimal
+mark, in either interface language, and shall not accept a digit grouping
+separator.
+
+**Acceptance criteria**
+- Given the interface in Russian, when `1,5 кг` or `1.5 кг` is typed, then either
+  is read as 1.5 kg and displayed as `1,5 кг` (L10N-009).
+- Given the interface in English, when `1.5 kg` or `1,5 kg` is typed, then either
+  is read as 1.5 kg and displayed as `1.5 kg`.
+- Given the interface in English, when `1,500 kg` is typed, then it is read as
+  1.5 kg, not 1500 kg, and the field displays `1.5 kg`.
+- Given either interface language, when `1,2345 кг` or `1.2345 kg` is typed, then
+  it is read as 1.2345 kg and not held, because it is not a whole number of grams
+  (DOM-017).
+- Given either interface language, when a number carrying a space, two decimal
+  marks, or both a comma and a point is typed — `1 500 г`, `1.500,5 г`,
+  `1,5,0 кг` — then the field does not hold it and states that a number is written
+  without separators.
+- Given the fixing control, when `0,3 кг` or `0.3 кг` is typed for an ingredient
+  authored in grams, then either is accepted as 300 g (SCALE-018 (1)).
+
+**Verification:** type every example above in both interface languages, into the
+editor's quantity field and into the fixing control, and compare what is held and
+displayed.
+**Source:** user decision, 2026-09-29 (SD-037 item 1). L10N-009 fixes how a number
+is displayed and nothing fixed how one is read. A phone's keyboard often offers
+only a point or only a comma whatever the interface language, so reading one mark
+per language would refuse a number typed the only way the person could type it.
+See [ADR — a typed quantity is read by its value](../decisions/20260929-a-typed-quantity-is-read-by-its-value.md).
+**Cost, stated:** an English-speaking author who types `1,500 kg` meaning a tonne
+and a half gets 1.5 kg; the field displays the value it read, so the difference is
+visible at once, but it is theirs to catch.
 
 ### DOM-018 — A quantity published before a divisibility correction stays as written
 

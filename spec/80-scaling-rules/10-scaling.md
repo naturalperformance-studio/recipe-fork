@@ -1,7 +1,7 @@
 ---
 slug: SCALE
 status: closed
-updated: 2026-09-27
+updated: 2026-09-29
 ids: [SCALE-001, SCALE-002, SCALE-003, SCALE-006, SCALE-008, SCALE-010, SCALE-011, SCALE-016, SCALE-017,
   SCALE-018]
 ---
@@ -126,11 +126,12 @@ fraction — one of ¼, ⅓, ½, ⅔, ¾ — instead of as a whole number, and s
 - Given a recipe authored for 4 servings with 500 g of chicken, when the reader
   fixes 115 g of it (a computed 0.92 servings), then the serving count shows an
   approximate 1 serving and not ¾.
-- Given a recipe authored for 4 servings with 400 g of chicken, when the reader
-  fixes 350 g of it (a computed 0.875 servings, exactly between ¾ and 1), then the
-  serving count shows an approximate 1 serving.
-- Given the same recipe, when the reader fixes 100 g of chicken (a computed 0.8
-  servings), then the serving count shows an approximate ¾ serving.
+- Given a recipe authored for 4 servings with 320 g of chicken, when the reader
+  fixes 70 g of it (a factor of 0.21875, a computed 0.875 servings, exactly
+  between ¾ and 1), then the serving count shows an approximate 1 serving.
+- Given a recipe authored for 4 servings with 500 g of chicken, when the reader
+  fixes 100 g of it (a factor of 0.2, a computed 0.8 servings), then the serving
+  count shows an approximate ¾ serving.
 
 **Verification:** fix an ingredient at factors producing 0.2, 0.4, 0.8, 0.875,
 0.92 and 1.0 servings and compare the displayed count against the serving-count
@@ -146,6 +147,14 @@ rounding stays below one; and only a computed count is approximate. See
 **Correction, 2026-09-27:** criterion 7 fixed 109.375 g, an amount SCALE-018 does
 not accept (SD-033). It now reaches the same 0.875 servings with amounts on the
 grid; the behaviour is unchanged.
+**Correction, 2026-09-29:** the amounts that correction chose, 350 g of 400 g,
+give a factor of 0.875 and so 3.5 servings by SCALE-002, not 0.875 servings; and
+criterion 8's "the same recipe" came to name that 400 g recipe, where 100 g gives
+1 serving (SD-036). By user decision of that date criterion 7 keeps its case —
+0.875 servings shown as ≈1 — with 70 g of 320 g, and criterion 8 names its own
+500 g recipe. Only the examples changed; the behaviour is the one the
+[ADR — the serving count has one set](../decisions/20260927-the-serving-count-has-one-set.md)
+decided.
 
 ### SCALE-010 — The requested serving count has a floor and no ceiling
 
@@ -279,6 +288,8 @@ clear the control of a fixed ingredient.
 **Source:** user decision, 2026-09-27 (SD-033, and its follow-up on a cleared
 control). Scaling runs on the device, so the control behaves the same with no
 connection. See [ADR — a quantity anyone states lies on the grid](../decisions/20260927-stated-quantities-lie-on-the-grid.md).
+**Note, 2026-09-29:** how the typed amount is read — a comma or a point as its
+decimal mark, no grouping separator — is DOM-019 (SD-037).
 **Cost, stated:** a reader holding 2 teaspoons of an ingredient written in
 tablespoons converts in their head; the product holds no ratio between household
 units, and a cup has no single volume to hold one for.

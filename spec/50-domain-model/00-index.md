@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-28
+updated: 2026-09-29
 ids: []
 ---
 
@@ -223,4 +223,4 @@ split and never will.
 | Part | What is in it | Requirements |
 |---|---|---|
 | [10-invariants.md](10-invariants.md) | Invariants over the entities: nickname, quantity, household measure, parent, media ownership, the submission minimum, step references, tags, the authored serving count; and what is deliberately not modelled yet | DOM-001–DOM-008, DOM-015 |
-| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, the twelve units, and the values a quantity may hold | DOM-009–DOM-014, DOM-016–DOM-018 |
+| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, the twelve units, the values a quantity may hold, and how a typed number is read | DOM-009–DOM-014, DOM-016–DOM-019 |

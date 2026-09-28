@@ -1,9 +1,9 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-28
+updated: 2026-09-29
 ids: [FLOW-001, FLOW-002, FLOW-059, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007,
-  FLOW-008]
+  FLOW-008, FLOW-066]
 ---
 
 # The device first, and sending to the server
@@ -113,7 +113,8 @@ it.
 **Acceptance criteria**
 - Given a recipe written with no account active, when the person chooses to send
   it, then account creation is offered (AUTH-001) and the recipe is sent once the
-  account exists, becoming that account's.
+  account exists, becoming that account's whether the offer of AUTH-026 that
+  follows is accepted or declined (ACT-002).
 - Given a muted account (AUTH-004), when a recipe is open in the editor, then the
   send control is replaced by the statement of AUTH-006.
 - Given a recipe in `local`, when it is sent, then the server holds it in
@@ -131,9 +132,12 @@ it.
   MEDIA-010, when it is sent, then nothing of it reaches the server, MEDIA-011
   states why, and the recipe is on the device exactly as before.
 - Given a sending that fails, or no connection, or a server that does not answer,
-  when the recipe is sent, then FLOW-003 refuses it, nothing is queued, and
-  nothing of it reaches the server — not its text without its media, nor part of
-  its media.
+  when the recipe is sent, then FLOW-003 refuses it, nothing is queued, and the
+  server holds either the whole sending or nothing of it — never its text without
+  its media, nor part of its media.
+- Given a sending the server stored whose answer did not reach the device, when
+  the recipe is shown, then FLOW-005 still marks it as holding changes not sent,
+  and sending it again is answered by FLOW-066.
 - Given a fork whose parent the server does not hold, when the fork is sent, then
   it is sent alone and FLOW-007 governs how it names its parent.
 - Given serverless mode (FLOW-061), when any screen is shown, then no send control
@@ -147,6 +151,14 @@ fork of an unsent recipe.
 gives a copy the server keeps, the recipe on the account's other devices, and the
 possibility of submitting it. See
 [ADR — the device first](../decisions/20260928-the-device-first.md).
+**Correction, 2026-09-29:** criterion 8 said nothing of a failed sending reaches
+the server, which no device and no server can promise when the server stores a
+sending and its answer is lost (SD-041); by user decision of that date a sending
+is stored whole or not at all, and a lost answer is settled by FLOW-066. Criterion
+1 said the recipe becomes the new account's and AUTH-026 (3) with ACT-002 left it
+in the pool when the offer is declined (SD-040); by user decision of that date it
+becomes the account's either way. See
+[ADR — the recipe that created the account is the account's](../decisions/20260929-the-recipe-that-created-the-account.md).
 
 ### FLOW-003 — What is refused while the server has not answered
 
@@ -331,7 +343,8 @@ possible. See
 
 If the owner sends a recipe whose version on the server has changed since the
 version the device's copy was made from — in its content, or in its state alone —
-then the system shall keep the server's version as that recipe and turn the
+and whose content differs from the content the server holds, then the system
+shall keep the server's version as that recipe and turn the
 divergent local version into a fork of it owned by the same account, and shall
 tell the owner that it did so.
 
@@ -352,12 +365,14 @@ tell the owner that it did so.
 - Given no divergence — device B's version was made from the one the server
   holds — when device B sends, then the server's copy is replaced and no fork is
   created.
-
 - Given a recipe edited on device B while, on the server, nobody changed
   its content but it was submitted and became `pending`, `link_shared` or
   `published`, when device B sends it, then device B's version becomes a
-  `private` fork naming it as parent, and the owner is told as criterion 2
+  `private` fork naming it as parent, and the owner is told as criterion 3
   states.
+- Given a sending whose content is the same as the content the server holds, when
+  it arrives, then it is not a divergence whatever version it was made from, and
+  FLOW-066 governs it.
 
 **Verification:** enter the same account key on a second device, edit one recipe on
 both, send from one and then from the other, and inspect both recipes; repeat with
@@ -372,5 +387,52 @@ recipe is a fork (GOAL-002), and the server's version keeps its identity because
 other recipes may already name it as their parent. No edit is discarded.
 **Changed 2026-09-28:** sending is the owner's act (FLOW-059), so the divergence is
 found when device B sends, not when it reconnects, and device B keeps its unsent
-version rather than taking the server's over it. The notice of criterion 2 reaches
+version rather than taking the server's over it. The notice of criterion 3 reaches
 an owner who is sending, so it is shown at once. By user decision of that date.
+**Correction, 2026-09-29:** criterion 6 and the note above said "criterion 2" for
+the notice, which the 2026-09-28 renumbering had moved to criterion 3 (SD-039); by
+user decision of that date they mean the whole notice of criterion 3. The same day
+a sending the same as the server's stopped being a divergence (SD-041): the
+statement forked "the divergent local version" and its condition also caught a
+version that had not diverged. By user decision of that date it is governed by
+FLOW-066. See
+[ADR — a sending the server already holds changes nothing](../decisions/20260929-a-sending-the-server-already-holds.md).
+
+### FLOW-066 — A sending the server already holds changes nothing
+
+If the owner sends a recipe whose content — every field and every media item — is
+the same as the content the server holds for it, then the system shall write
+nothing to the recipe, shall create no fork, shall mark the recipe on the device as
+sent with every change on the server (FLOW-005), and shall show on the device the
+state the server holds it in.
+
+**Acceptance criteria**
+- Given a sending the server stored whose answer never reached the device, when the
+  owner sends the recipe again, then no fork is created, no notice of FLOW-008 (3)
+  is shown, and the recipe is marked as sent.
+- Given device A's edit sent to the server, when device B sends an edit that leaves
+  the recipe exactly as device A left it, then the server's copy is unchanged, no
+  fork is created and device B marks the recipe as sent.
+- Given a recipe that, on the server, was submitted and became `pending` since the
+  device's copy was made, when the device sends content the same as the server's,
+  then no fork is created and the device shows the recipe in `pending`.
+- Given a divergent sending that made a fork (FLOW-008) whose answer never reached
+  the device, when the same sending arrives again, then the server answers with the
+  fork it already created and creates no second one, and the owner is told of that
+  fork once, as FLOW-008 (3) states.
+- Given a sending whose content differs from the server's in one character or one
+  media item, when it arrives, then it is not governed here: FLOW-059 (4) or
+  FLOW-008 applies.
+
+**Verification:** send a recipe with the server's answer dropped and send it
+again; make the same edit on two devices and send from both; drop the answer to a
+divergent sending and send it again; inspect the server for writes and forks after
+each.
+**Source:** user decision, 2026-09-29 (SD-041). A server that stored a sending and
+lost its answer cannot be told apart from one that did not store it, so the case
+exists and the owner meets it by sending again; forking there would hand them a
+copy of their own recipe and a notice about nothing. No edit is discarded, because
+nothing differs. See
+[ADR — a sending the server already holds changes nothing](../decisions/20260929-a-sending-the-server-already-holds.md).
+**Cost, stated:** sameness is decided over the whole content, media included, so
+the device must be able to tell that its version is the one the server holds.
