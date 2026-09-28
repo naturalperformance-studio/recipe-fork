@@ -38,7 +38,7 @@ this wave, and no media is attached.
 
 | Task | Title | Depends on | Status |
 |---|---|---|---|
-| T-001 | Quantities follow the serving count | — | in-progress |
+| T-001 | Quantities follow the serving count | — | in-review |
 | T-029 | Large and fractional quantities are written on the ladder | T-001 | gated |
 | T-002 | A fixed ingredient sets the scale | T-029 | blocked |
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
@@ -71,7 +71,7 @@ this wave, and no media is attached.
 ### T-001 — Quantities follow the serving count
 
 **Requirements:** SCALE-001, SCALE-003, SCALE-005, SCALE-010, SCALE-015, DOM-017
-**Status:** in-progress
+**Status:** in-review
 **Depends on:** —
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -1377,7 +1377,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-032 | The second step of creation issues the account key and the deletion key | T-009 | gated |
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | gated |
-| T-027 | The server keeps a sent recipe and turns a divergent sending into a fork | T-006 | in-progress |
+| T-027 | The server keeps a sent recipe and turns a divergent sending into a fork | T-006 | in-review |
 | T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-027, T-036, T-025, T-034 | blocked |
 | T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | blocked |
 | T-026 | Sending with no account offers to create one | T-038 | blocked |
@@ -1570,7 +1570,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 ### T-027 — The server keeps a sent recipe and turns a divergent sending into a fork
 
 **Requirements:** FLOW-008, CON-003, ACT-002, DOM-004, AUTH-015, AUTH-025, FLOW-059
-**Status:** in-progress
+**Status:** in-review
 **Depends on:** T-006
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/kotlin/app/recipefork/server/auth/**` · `server/src/main/resources/db/migration/V3__recipes.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/auth/**` · `server/src/test/kotlin/app/recipefork/server/account/VerdictNotKeptTest.kt` (added at the re-run: the session digest the keys ADR requires is a second `bytea` column that T-006's AUTH-015 (2) test did not admit)
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md, decisions/20260927-test-strategy.md
