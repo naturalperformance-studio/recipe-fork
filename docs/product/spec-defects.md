@@ -1408,3 +1408,64 @@ meet this case on the device. FLOW-059 (8) is placed in wave 5. Whether any of t
 on this entry is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-042 — Whether the pool recipe whose sending caused an account to be created becomes that account's when it is not sent (the account created muted, or the sending refused) is read two ways (2026-09-29)
+**Requirement IDs:** FLOW-059 (statement, 1); ACT-002 (statement, 3); AUTH-026 (3, 4); AUTH-004 (statement, 5); read with AUTH-001 (2), AUTH-005 (5), ACT-002 (2), FLOW-003 (statement, 3, 8), the glossary entry "Sent" (`spec/10-glossary/20-people-and-running.md`) and the ADR `spec/decisions/20260929-the-recipe-that-created-the-account.md`
+**Class:** ambiguity
+**What the gate hit:** T-026 carries the answer to SD-040: a pool recipe whose sending creates an account becomes that account's whatever the answer to the pool offer. It also carries AUTH-004 (5), because the account created from the send control can be muted (T-006 creates one when no verdict is obtained). On that path nothing is sent. This is what the requirements say, read and not chosen:
+- *Reading A: the recipe becomes the account's because the account was created for it.* ACT-002's statement gives a pool recipe its owner when "the recipe's own sending creates an account". AUTH-026 (3) keeps in the account's book "a recipe whose sending created the account". AUTH-026 (4) has the offer state "that this recipe is already in the account whatever the answer" for "an account created by sending a recipe from the pool". A muted account "created because the person asked to send a recipe" (AUTH-004 (5)) was created by that request.
+- *Reading B: the recipe becomes the account's by being sent.* FLOW-059 (1) attaches "becoming that account's" to "the recipe is sent once the account exists". ACT-002 (3)'s Given is "a recipe in the pool sent with no account active". The glossary defines "Sent" as sent to the server. A muted account "shall send no recipe" (AUTH-004), and AUTH-001 (2) says the action does not proceed for it, so the recipe is never sent. The ADR of 2026-09-29 decides that the recipe "becomes that account's and is sent", and its stated reason is that "the person's explicit act — send this recipe — is carried out as asked". On a muted account that act is not carried out, and the ADR does not mention a muted account.
+
+What a user would see differ, for a muted account whose pool offer is declined:
+- Under reading A, the recipe is in the muted account's recipe book. The offer tells the person it "is already in the account". Once the account becomes full, AUTH-005 (5) offers the send control on it.
+- Under reading B, the recipe stays in the pool, owned by no one. The offer does not say that. Under ACT-002 (2), the recipe can then be sent only by an account the whole pool moves into.
+
+The same question arises for a full account when the server refuses the sending that follows creation, for example when it stops answering. FLOW-003 says that on a refusal "nothing changes on the device", and FLOW-003 (3) says "the recipe is unchanged on the device". The question is whether the recipe is the new account's without having been sent. Refused sendings are otherwise FLOW-059 (8), placed in wave 5. Who owns the recipe on this path is what T-026's carried criteria observe.
+
+Whoever builds T-026 would choose between the two readings, and gate 2 could not tell a right outcome from a wrong one (TEAM-008). Found at T-026's gate 1 (docs/product/verdicts/20260929-T-026-gate1.md).
+**Stopped:** T-026. T-036 is not stopped: in its scope no account is created by a sending, and a declined offer leaves nothing from the pool in the book under either reading. T-028 is not stopped: the statement of AUTH-006 it builds is the same under either reading.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-043 — FLOW-059 (9) has a recipe whose sending was stored but not answered "still" marked as holding changes not sent, and on a first sending that recipe was marked never sent, which `spec/` treats as a different case (2026-09-29)
+**Requirement IDs:** FLOW-059 (statement, 9); read with FLOW-005 (statement, 2, 5), FLOW-006 (statement), FLOW-066 (statement, 1, Source) and the ADR `spec/decisions/20260929-a-sending-the-server-already-holds.md` (Decision, third bullet)
+**Class:** ambiguity (whether FLOW-059 (9) covers a recipe's first sending, and which mark it then requires); not implementable under one of the two readings
+**What the gate hit:** T-038 carries FLOW-059 (9) verbatim: "Given a sending the server
+stored whose answer did not reach the device, when the recipe is shown, then FLOW-005 still
+marks it as holding changes not sent, and sending it again is answered by FLOW-066"
+(`spec/70-flows/10-offline-and-sync.md:138-140`). FLOW-059's statement makes a recipe's
+first sending a sending ("creating it there in `private` on its first sending", line 109),
+so the Given covers it. Before a first sending the recipe carries FLOW-005's first mark,
+"never sent and held on this device alone" (line 258), which "says the recipe is held on
+this device alone and is lost with it" (FLOW-005 (2), line 266). `spec/` keeps "never sent"
+and "holding changes not sent" apart: FLOW-005's statement lists them as two of its three
+cases, and FLOW-006's statement says "was never sent or holds changes not sent" (line 291).
+The gate has already read them that way (docs/product/verdicts/20260929-T-028-gate1.md,
+unknown (2)). Read, not chosen:
+- *(9) requires the third mark.* The words say the recipe is marked as holding changes not
+  sent, that is "sent, holding changes not sent". On a first sending the recipe never carried
+  that mark, so "still" has nothing to continue. The device cannot tell a stored sending whose
+  answer was lost from one the server never stored (FLOW-066 Source). It would therefore put
+  the third mark on every first sending that got no answer. On one whose sending truly failed,
+  that contradicts FLOW-005 (2): the recipe was never sent, and its mark must say it is held
+  on this device alone.
+- *(9) requires the mark to stay as it was.* "Still", and the ADR's "the recipe keeps its mark
+  of holding changes not sent", point to an unchanged mark. On a first sending that mark is
+  "never sent … held on this device alone and is lost with it". It is shown for a recipe the
+  server now holds, and it is not the mark the words of (9) name.
+- *(9) does not reach a first sending.* On this reading "still" limits the Given to a recipe
+  already sent. Then no criterion states what a recipe shows after its first sending was
+  stored and its answer lost. FLOW-005 (5) asks for "sent" on "a recipe whose every change is
+  on the server", which the device cannot know.
+A device test that drops the answer to a first sending and shows "never sent" meets the
+second reading and fails the first. A test that shows the third mark does the reverse. On a
+later sending all three readings agree. Which mark a first sending shows when its answer is
+lost is the product decision (TEAM-008). Found at T-038's gate 1
+(docs/product/verdicts/20260929-T-038-gate1.md).
+**Stopped:** T-038 (FLOW-059 (9)). T-026 depends on T-038 in the backlog and waits behind it;
+it is also held by SD-042. T-028 is not stopped: it carries no criterion of FLOW-059 (9), and
+the lost answer is not in its scope. T-027 is not stopped: the server marks nothing on the
+device, and its half of FLOW-066 (1) is the same under every reading. Whether any of them
+waits on this entry is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
