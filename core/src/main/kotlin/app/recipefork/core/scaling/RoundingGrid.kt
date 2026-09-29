@@ -5,7 +5,8 @@ import app.recipefork.core.recipe.UnitType
 
 /**
  * The rounding grids of spec/80-scaling-rules/00-index.md, one per unit type that carries a
- * quantity (divisible and indivisible `piece` each have their own).
+ * quantity (divisible and indivisible `piece` each have their own), and the set the serving
+ * count is displayed on.
  *
  * [EXACT] is expressed in the base unit of its dimension — grams or millilitres: whole units
  * below 1 000 000 (1000 kg or 1000 l), whole thousands of them at and above. The unit ladder
@@ -21,6 +22,12 @@ enum class RoundingGrid(
 
     /** `household` and `taste_measured`: a whole number, alone or followed by ¼, ⅓, ½, ⅔ or ¾. */
     FRACTIONAL(Rational.of(1, 4)),
+
+    /**
+     * The serving count: below one, the fractions ¼, ⅓, ½, ⅔, ¾; at one and above, whole numbers
+     * only. One set that holds 1, so a count from 0.875 up goes to 1 (SCALE-008, SCALE-015).
+     */
+    SERVING_COUNT(Rational.of(1, 4)),
     ;
 
     /** True when [value] is one of the values this grid displays. */
@@ -55,6 +62,7 @@ enum class RoundingGrid(
         PIECE_INDIVISIBLE -> steps(value, WHOLE)
         PIECE_DIVISIBLE -> steps(value, HALVES)
         FRACTIONAL -> steps(value, KITCHEN_FRACTIONS)
+        SERVING_COUNT -> steps(value, if (value < Rational.ONE) KITCHEN_FRACTIONS else WHOLE)
     }
 
     private fun steps(value: Rational, fractions: List<Rational>): Pair<Rational, Rational> {
