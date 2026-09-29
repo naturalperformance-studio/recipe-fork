@@ -40,7 +40,7 @@ this wave, and no media is attached.
 |---|---|---|---|
 | T-001 | Quantities follow the serving count | — | on-develop |
 | T-029 | Large and fractional quantities are written on the ladder | T-001 | on-develop |
-| T-002 | A fixed ingredient sets the scale | T-029 | in-review |
+| T-002 | A fixed ingredient sets the scale | T-029 | on-develop |
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
@@ -150,7 +150,7 @@ this wave, and no media is attached.
 ### T-002 — A fixed ingredient sets the scale
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-010, SCALE-015
-**Status:** in-review
+**Status:** on-develop
 **Depends on:** T-029
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -183,8 +183,8 @@ this wave, and no media is attached.
 - Given a recipe authored for 4 servings with 240 g of an ingredient, when the reader fixes 25 g of it (a computed 5/12 serving), then the serving count shows an approximate ½ serving.
 
 **Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-008 vs SCALE-015) — docs/product/verdicts/20260927-T-002-gate1-2.md; re-sliced against spec/ @ 959130e after SD-027 resolved (SCALE-008 (4) replaced, (6–8) added); re-gated: accepted — docs/product/verdicts/20260927-T-002-gate1-3.md; SCALE-008 (7) replaced in spec/ @ 1168954 (SD-033: 109.375 g is off the grid), re-gate due; re-gated: blocked-by-spec (SD-036, SCALE-008 (7) gives 3.5 servings, not 0.875, and (8)'s "same recipe" is ambiguous) — docs/product/verdicts/20260928-T-002-gate1.md; re-sliced against spec/ @ 952398f after SD-036 resolved (SCALE-008 (7–8) replaced); re-gate due; re-gated: accepted — docs/product/verdicts/20260929-T-002-gate1.md
-**Review:** —
-**Gate 2:** —
+**Review:** pass — 14 of 14 criteria checked by mutation, build and suite run by the reviewer, worktree as it was
+**Gate 2:** accepted — docs/product/verdicts/20260929-T-002-gate2.md
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-030 — Changing the count or releasing the last fixing puts the scale back
