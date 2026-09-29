@@ -47,8 +47,9 @@ this wave, and no media is attached.
 | T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | on-develop |
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
-| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | in-progress |
-| T-031 | What the ingredient field offers for what the author types | T-008 | gated |
+| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | planned |
+| T-043 | Interface text comes only from resources, and every target is 48 dp, on every screen so far | T-008 | planned |
+| T-031 | What the ingredient field offers for what the author types | T-043 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
@@ -423,14 +424,15 @@ this wave, and no media is attached.
 
 ### T-008 — The editor opens on a new recipe from the own-recipes view
 
-**Requirements:** FLOW-042, FLOW-024, FLOW-002, L10N-004, DOM-006, DOM-008, FLOW-001, L10N-001, A11Y-003, A11Y-005
-**Status:** in-progress
+**Requirements:** FLOW-042, FLOW-024, FLOW-002, L10N-004, DOM-006, DOM-008, FLOW-001, L10N-001, A11Y-005
+**Status:** planned
 **Depends on:** T-007
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/assets/dictionaries.json` · `scripts/dictionary-snapshot.sh` · `app/src/test/kotlin/app/recipefork/app/ui/InterfaceStringsTest.kt` · `app/src/test/kotlin/app/recipefork/app/ui/LocalizationChecks.kt` · `app/src/main/kotlin/app/recipefork/app/ui/**` · `app/src/main/res/values/strings_common.xml` · `app/src/main/res/values-ru/strings_common.xml` (added at the return: the release-wide L10N-001 (2) check is T-007's and missed this task's code)
 **Size:** not declared at slicing, which was a slicing miss: the shipped snapshot, its seeding and the editor's screen tests came to about 1,900 changed lines (1,929 at review).
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md, decisions/20260928-dictionaries-ship-with-the-application.md, decisions/20260928-one-database-per-recipe-book.md
 **Note:** FLOW-001 (1) holds on a clean installation with no connection only if the device already has the dictionaries, so the shipped snapshot and the seeding of the dictionaries-ship ADR are built here: `scripts/dictionary-snapshot.sh`, the committed `dictionaries.json`, and seeding through T-004's replacement path. A new recipe is created in `local`, in the active book — the pool in this wave.
-**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (2) → wave 4; (5–6) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 7) → T-011; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** Re-sliced on 2026-09-30 after its third run, as the entry stated: all three reviews that returned it found defects in the cross-cutting checks for L10N-001 (2) and A11Y-003 (1) that T-007 built and every screen reuses — never in this task's own behaviour. Those two criteria move to T-043, which rebuilds both checks over the library and the editor. The branch `task/T-008` (cada29d) is kept and carries on: the last review found no defect in the 11 criteria that remain. Returns restart at 0 for this narrower entry; before the re-slice it stood at 2 of 2 plus one run the user authorised.
+**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (2) → wave 4; (5–6) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 7) → T-011; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (2) → T-043; (3) → release record · A11Y-003 (1) → T-043; (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -459,24 +461,44 @@ this wave, and no media is attached.
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
+
+*A11Y-005 — spec/200-accessibility.md*
+- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
+
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-008-gate1.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-002 (3–4) replaced; the shipped dictionaries added for FLOW-001 (1) on a clean installation; re-gate due; re-gated: blocked-by-spec (SD-038, FLOW-042 (4) observes the empty own-recipes view of an account only, and wave 1 has the pool alone) — docs/product/verdicts/20260928-T-008-gate1.md; re-sliced against spec/ @ 952398f after SD-038 resolved (FLOW-042 (4) replaced: it names the pool, the only book of this wave); re-gate due; re-gated: accepted — docs/product/verdicts/20260929-T-008-gate1.md; re-sliced on 2026-09-30 (L10N-001 (2), A11Y-003 (1) moved to T-043); re-gate due
+**Review:** defects — build and suite ok; `InterfaceStringsTest.noInterfaceTextIsFixedInTheCode` still passed with a literal in place of `stringResource` in EditorScreen.kt, because its check reads one line at a time and misses `Text(` followed by the literal on the next line (L10N-001 (2)); worktree as it was. Returned to the developer; after the fix: defects — build and suite ok; the widened check still misses a literal when the argument breaks across lines after an operator or inside `if`/`else` (e.g. `Text(name +\n "Tags")`), because it cuts an expression at a line break at bracket depth 0 (LocalizationChecks.kt:145); worktree as it was. Second return: blocked, taken to the user; a third run authorised by the user on 2026-09-30: the text scanner is replaced by a strict rule — any string literal holding a letter in the interface packages fails, except a short named allow-list; if its review finds defects again, T-008 is re-sliced; after the third run: defects — build and suite ok; the strict literal rule reads only the interface packages and `src/main/kotlin`, and accepts any literal given an allowed constant name; the A11Y-003 check measures touch bounds, which Compose widens to 48 dp for any clickable, so it cannot fail; worktree as it was. Re-sliced as stated
+**Gate 2:** —
+**Returns:** 0 of 2 since the re-slice of 2026-09-30 (gate 1 · reviewer · gate 2 share the count)
+
+### T-043 — Interface text comes only from resources, and every target is 48 dp, on every screen so far
+
+**Requirements:** L10N-001, A11Y-003
+**Status:** planned
+**Depends on:** T-008
+**Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/**` · `app/src/main/java/**` · `app/src/main/res/values/strings_*.xml` · `app/src/main/res/values-ru/strings_*.xml`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Size:** Two test checks and the fixes they force: about 300–500 changed lines.
+**Note:** Cut on 2026-09-30 out of T-008, whose three returns all came from the checks T-007 built for these two criteria. Every later screen task reuses these checks, so they are made to bite here once. L10N-001 (2) is checked over every Kotlin and Java source the app module compiles, not a chosen set of packages: a string literal holding a letter fails unless its exact value is on a short allow-list kept in the test (test tags, log tags, SQL, route and key names), so no name or placement lets interface text through. A11Y-003 (1) is checked on the size of each interactive node as laid out, not on the touch bounds Compose widens, and on the gap between neighbouring targets. Both are applied to the library (T-007) and the editor (T-008), and whatever they find is fixed there.
+**Criteria of these requirements carried elsewhere:** L10N-001 (1) → every screen task; (3) → release record · A11Y-003 (1) → every later screen task, through these checks; (2) → T-018; (3–4) → wave 8
+
+**Acceptance criteria** (verbatim)
+
+*L10N-001 — spec/160-localization.md*
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
 - Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
 
-*A11Y-005 — spec/200-accessibility.md*
-- Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
-
-**Gate 1:** accepted — docs/product/verdicts/20260927-T-008-gate1.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-002 (3–4) replaced; the shipped dictionaries added for FLOW-001 (1) on a clean installation; re-gate due; re-gated: blocked-by-spec (SD-038, FLOW-042 (4) observes the empty own-recipes view of an account only, and wave 1 has the pool alone) — docs/product/verdicts/20260928-T-008-gate1.md; re-sliced against spec/ @ 952398f after SD-038 resolved (FLOW-042 (4) replaced: it names the pool, the only book of this wave); re-gate due; re-gated: accepted — docs/product/verdicts/20260929-T-008-gate1.md
-**Review:** defects — build and suite ok; `InterfaceStringsTest.noInterfaceTextIsFixedInTheCode` still passed with a literal in place of `stringResource` in EditorScreen.kt, because its check reads one line at a time and misses `Text(` followed by the literal on the next line (L10N-001 (2)); worktree as it was. Returned to the developer; after the fix: defects — build and suite ok; the widened check still misses a literal when the argument breaks across lines after an operator or inside `if`/`else` (e.g. `Text(name +\n "Tags")`), because it cuts an expression at a line break at bracket depth 0 (LocalizationChecks.kt:145); worktree as it was. Second return: blocked, taken to the user; a third run authorised by the user on 2026-09-30: the text scanner is replaced by a strict rule — any string literal holding a letter in the interface packages fails, except a short named allow-list; if its review finds defects again, T-008 is re-sliced
+**Gate 1:** —
+**Review:** —
 **Gate 2:** —
-**Returns:** 2 of 2, plus a third run the user authorised (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-031 — What the ingredient field offers for what the author types
 
 **Requirements:** FLOW-057, L10N-001, A11Y-003, A11Y-005, FLOW-023, FLOW-001
 **Status:** gated
-**Depends on:** T-008
+**Depends on:** T-043
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/text/**` · `core/src/test/kotlin/app/recipefork/core/text/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-one-text-analyser.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Note:** The folding FLOW-057 names — letter case ignored, `ё` and `е` one letter — is the first stage of the analyser the one-text-analyser ADR places in `:core` `text`; this task builds that stage. The offer matches the beginnings of words, not the stemmed tokens of L10N-007 (spec ADR `20260927-the-ingredient-field.md`), so no stemmer is added here.
