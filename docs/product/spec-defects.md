@@ -1469,3 +1469,92 @@ device, and its half of FLOW-066 (1) is the same under every reading. Whether an
 waits on this entry is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-044 — A divergent sending that made a fork, sent again after its answer was lost, is answered with that fork and a notice by FLOW-066 (4) and as sent with no notice by FLOW-066's statement and (2) when the server's content has since become the same as the sending's (2026-09-30)
+**Requirement IDs:** FLOW-066 (statement, 2, 4); FLOW-008 (statement, 3, 7); read with FLOW-059 (9) and the ADR `spec/decisions/20260929-a-sending-the-server-already-holds.md` (Decision, first and second bullets)
+**Class:** inconsistency
+**What the gate hit:** T-042 builds the server's answer to a sending the server already
+holds. It carries FLOW-008 (7) and FLOW-066 (1–5) at the server. This sequence is reachable
+with two devices on one account:
+1. The server holds the recipe at revision r2, content Y, from device A's edit.
+2. Device B, whose copy was made from r1, sends content X, which differs from Y. The server
+   keeps its version and makes the `private` fork F with content X (FLOW-008 (2)).
+3. The answer never reaches device B. By FLOW-059 (9), the recipe still holds changes not
+   sent.
+4. Device A sends an edit that leaves the recipe with content X, and the server's copy
+   becomes X at r3. This is the same-edit-on-two-devices case that FLOW-066 (2) names.
+5. Device B sends the same sending again: content X, made from r1.
+
+At step 5 two requirements each name the case and give different outcomes. Read, not chosen:
+- *FLOW-066's statement, FLOW-066 (2) and FLOW-008 (7) govern it.* The content is the same
+  as the content the server holds, so "it is not a divergence whatever version it was made
+  from" (FLOW-008 (7)). The system "shall create no fork, shall mark the recipe on the
+  device as sent … and shall show on the device the state the server holds it in" (FLOW-066
+  statement). FLOW-066 (2)'s Given is also met, "device B sends an edit that leaves the
+  recipe exactly as device A left it", and its Then is "device B marks the recipe as sent".
+  The ADR's first bullet adds "no notice is shown". Under this reading the server answers
+  that recipe R is sent, and fork F stays on the server. The owner is never told of F,
+  although FLOW-008's statement says the system "shall tell the owner that it did so".
+- *FLOW-066 (4) and FLOW-008's statement govern it.* The Given of (4) is also met: "a
+  divergent sending that made a fork (FLOW-008) whose answer never reached the device",
+  and "the same sending arrives again". The Then is that "the server answers with the fork
+  it already created … and the owner is told of that fork once, as FLOW-008 (3) states".
+  The ADR's second bullet says the same. Under this reading device B is told that a fork was
+  made, and the recipe is not answered as sent, which contradicts FLOW-066 (2) and the
+  statement.
+
+What a user sees differs. Under the first reading there is no notice, the recipe is marked
+as sent, and a fork exists that nobody told them about. Under the second reading a notice
+of fork F appears once. The server has to check one of two things first: sameness with the
+recipe's current content, or the sending that already made a fork. Either order is a
+product decision (TEAM-008), and a gate-2 test built on either order would fail the
+criterion of the other. The words of (4) do not limit its Given to a server whose content
+still differs. The words of (2) and of FLOW-008 (7) do not exclude a sending that already
+made a fork. Found at T-042's gate 1 (docs/product/verdicts/20260930-T-042-gate1.md).
+**Stopped:** T-042. T-038 carries FLOW-066 (2) and (4) on the device. It meets the same
+case at the notice, and it is already `blocked` (SD-043). T-040 and T-041 are not stopped:
+neither carries a repeated sending. T-028 depends on T-042 in the backlog. Whether it waits
+on this entry is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
+
+### SD-045 — What the server does with a sending that names a revision for a recipe it no longer holds is stated nowhere, and the case is reached after a restore (QUAL-008) and after deletion on another device (ST-010 (2)) (2026-09-30)
+**Requirement IDs:** FLOW-059 (statement, 4); FLOW-008 (statement, 5); read with QUAL-008 (statement, 3, 8), ST-010 (2), RET-004 (4), FLOW-006 (statement) and the ADR `docs/architecture/decisions/20260928-manual-sending-replaces-the-outbox.md` (Decision, first and third bullets)
+**Class:** omission
+**What the gate hit:** T-040 builds the server's answer to a sending. It carries FLOW-059 (4)
+and the statement's first sending. Two paths bring the server a sending for a recipe it no
+longer holds, naming a revision it gave that recipe earlier:
+- *A restore.* QUAL-008 loses "at most one hour of accepted work", and after a restore
+  "nothing accepted after the copy began is present" (QUAL-008 (3)). A recipe first sent
+  inside that hour stays on the device with its revision. The owner edits it and sends it.
+- *A deletion on another device.* ST-010 (2): a `private` recipe deleted by its owner "is
+  gone from the server and from every device the account holds". Device B holds it with a
+  revision until it learns of the deletion. The owner edits it there and sends it.
+
+Read, not chosen:
+- FLOW-059's statement creates the recipe "on its first sending" and replaces "the server's
+  copy on a later one". This sending is neither: it is not the first, and there is no copy.
+  FLOW-059 (4)'s *Then* ("the server's copy is replaced") has no object. FLOW-008 needs "the
+  server's version" to keep and to fork from, and there is none.
+- FLOW-059's statement says the system "shall send that recipe". A refusal repeats on every
+  attempt, so the recipe can never be sent again. By FLOW-006 it can then never be submitted
+  either.
+- Creating the recipe again puts a recipe the owner deleted back on the server, and ST-010
+  (2) says it is gone from the server. RET-004 (4) accepts that a restore undoes deletions.
+  It says nothing about a device sending into the restored store.
+- ST-010 keeps no record of a deleted recipe, so the server cannot tell the two paths apart.
+
+What a user would see differs. Under a refusal, the recipe stays on the device and can never
+be sent or submitted. Under creation again, it reappears on the server in `private`,
+including after the owner deleted it elsewhere. The T-040 entry refuses such a sending ("A
+revision the server never issued is refused and stores nothing"), and gate 2 could not tell
+that outcome from creation again as right or wrong (TEAM-008). Found at T-040's gate 1
+(docs/product/verdicts/20260930-T-040-gate1.md). The same verdict records a related case
+that `spec/` does answer, and it is not part of this entry. After a restore, the server
+still holds the recipe at a revision below the one the device names. FLOW-008's statement
+and (5) make that a divergence.
+**Stopped:** T-040. T-041 depends on T-040 in the backlog, and T-042 depends on T-041. Neither carries this
+case: T-041 forks only a sending made from an older revision of a recipe the server holds.
+Whether they wait on this entry is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
