@@ -1395,9 +1395,9 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-032 | The second step of creation issues the account key and the deletion key | T-009 | gated |
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
 | T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | gated |
-| T-040 | The server keeps a sent recipe under its owner, reached with a sign-in secret | T-006 | planned |
-| T-041 | A divergent sending becomes a fork, and a frozen recipe is never written | T-040 | planned |
-| T-042 | A sending the server already holds changes nothing, and a repeated divergent sending makes one fork | T-041 | planned |
+| T-040 | The server keeps a sent recipe under its owner, reached with a sign-in secret | T-006 | blocked |
+| T-041 | A divergent sending becomes a fork, and a frozen recipe is never written | T-040 | gated |
+| T-042 | A sending the server already holds changes nothing, and a repeated divergent sending makes one fork | T-041 | blocked |
 | T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-042, T-036, T-025, T-034 | gated |
 | T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | blocked |
 | T-026 | Sending with no account offers to create one | T-038 | blocked |
@@ -1591,7 +1591,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 ### T-040 — The server keeps a sent recipe under its owner, reached with a sign-in secret
 
 **Requirements:** ACT-002, AUTH-015, AUTH-025, FLOW-059, FLOW-008
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-006
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/kotlin/app/recipefork/server/auth/**` · `server/src/main/resources/db/migration/V3__recipes.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/auth/**` · `server/src/test/kotlin/app/recipefork/server/account/VerdictNotKeptTest.kt`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md, decisions/20260927-test-strategy.md
@@ -1618,7 +1618,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *FLOW-059 — spec/70-flows/10-offline-and-sync.md*
 - Given a sent recipe edited on the device, when it is sent again, then the server's copy is replaced by the device's version, unless FLOW-008 finds the two diverged.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-045, what the server does with a sending that names a revision of a recipe it no longer holds — after a restore that lost it, or a deletion on another device) — docs/product/verdicts/20260930-T-040-gate1.md; the verdict also names, for the re-slice, a device revision ahead of the server's after a restore, which FLOW-008 makes a divergence and this entry refused
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1626,7 +1626,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 ### T-041 — A divergent sending becomes a fork, and a frozen recipe is never written
 
 **Requirements:** FLOW-008, CON-003, DOM-004
-**Status:** planned
+**Status:** gated
 **Depends on:** T-040
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/resources/db/migration/V4__forks.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -1647,7 +1647,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 - Given a forked recipe, when its parent is resolved, then it is the recipe it was forked from, at every point in its lifetime.
 - Given any recipe, when its stored fields are enumerated, then none of them lists descendants or names a chain root.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20260930-T-041-gate1.md; waits on T-040. For the packet: until T-042 is on `develop`, a same-content sending from an older revision is refused and stores nothing, never forked; `pending` is tested as frozen under FLOW-008 (4); CON-003 (1) holds against a non-divergent sending to a frozen recipe
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1655,7 +1655,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 ### T-042 — A sending the server already holds changes nothing, and a repeated divergent sending makes one fork
 
 **Requirements:** FLOW-008, FLOW-066
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-041
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/resources/db/migration/V5__sending_digest.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -1675,7 +1675,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 - Given a divergent sending that made a fork (FLOW-008) whose answer never reached the device, when the same sending arrives again, then the server answers with the fork it already created and creates no second one, and the owner is told of that fork once, as FLOW-008 (3) states.
 - Given a sending whose content differs from the server's in one character or one media item, when it arrives, then it is not governed here: FLOW-059 (4) or FLOW-008 applies.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-044, whether a repeated divergent sending whose content the server now holds is answered with its fork, FLOW-066 (4), or as sent, FLOW-066 (2)) — docs/product/verdicts/20260930-T-042-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
