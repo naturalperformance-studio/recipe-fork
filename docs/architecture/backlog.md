@@ -41,7 +41,7 @@ this wave, and no media is attached.
 | T-001 | Quantities follow the serving count | — | on-develop |
 | T-029 | Large and fractional quantities are written on the ladder | T-001 | on-develop |
 | T-002 | A fixed ingredient sets the scale | T-029 | on-develop |
-| T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | in-progress |
+| T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | on-develop |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
 | T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | on-develop |
@@ -190,7 +190,7 @@ this wave, and no media is attached.
 ### T-030 — Changing the count or releasing the last fixing puts the scale back
 
 **Requirements:** SCALE-016, SCALE-017
-**Status:** in-progress
+**Status:** on-develop
 **Depends on:** T-002
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -209,8 +209,8 @@ this wave, and no media is attached.
 - Given the fixing is released, when the serving count is displayed, then it is not marked as approximate.
 
 **Gate 1:** accepted — docs/product/verdicts/20260927-T-030-gate1.md
-**Review:** —
-**Gate 2:** —
+**Review:** pass — 6 of 6 criteria checked by mutation, build and suite run by the reviewer, worktree as it was
+**Gate 2:** accepted — docs/product/verdicts/20260929-T-030-gate2.md
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-003 — The store refuses a malformed dictionary entry
