@@ -48,7 +48,7 @@ this wave, and no media is attached.
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | in-review |
-| T-043 | Every interface string of the release exists in both languages, and every target is 48 dp, on every screen so far | T-008 | planned |
+| T-043 | Every interface string of the release exists in both languages, and every target is 48 dp, on every screen so far | T-008 | gated |
 | T-031 | What the ingredient field offers for what the author types | T-043 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
@@ -473,7 +473,7 @@ this wave, and no media is attached.
 ### T-043 — Every interface string of the release exists in both languages, and every target is 48 dp, on every screen so far
 
 **Requirements:** L10N-001, A11Y-003
-**Status:** planned
+**Status:** gated
 **Depends on:** T-008
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/**` · `app/src/main/java/**` · `app/src/main/res/values/strings_*.xml` · `app/src/main/res/values-ru/strings_*.xml` · `core/src/main/kotlin/app/recipefork/core/**` · `core/src/test/kotlin/app/recipefork/core/**`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -489,7 +489,7 @@ this wave, and no media is attached.
 *A11Y-003 — spec/200-accessibility.md*
 - Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
 
-**Gate 1:** rejected — docs/product/verdicts/20260930-T-043-gate1.md (the check of L10N-001 (2) left out `:core`, which holds interface strings of the release); `:core` and two-language tables added, the spacing clause removed; re-gate due
+**Gate 1:** rejected — docs/product/verdicts/20260930-T-043-gate1.md (the check of L10N-001 (2) left out `:core`, which holds interface strings of the release); `:core` and two-language tables added, the spacing clause removed; re-gate due; re-gated: accepted — docs/product/verdicts/20260930-T-043-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
