@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,12 +25,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -38,19 +41,40 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import app.recipefork.app.R
 import app.recipefork.app.book.OwnRecipeRow
+import app.recipefork.app.editor.EditorEnvironment
+import app.recipefork.app.editor.EditorScreen
+import app.recipefork.app.editor.interfaceLanguage
+import app.recipefork.app.editor.newRecipe
+import app.recipefork.app.editor.rememberEditorEnvironment
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 /** How many own recipes are read from the device at a time, and asked for again near the end (FLOW-041). */
 const val OWN_PAGE = 30
 
-/** "My recipe book": the marked recipes and the recipes written in the active book (FLOW-034). */
+/**
+ * "My recipe book": the marked recipes and the recipes written in the active book (FLOW-034), and the editor on
+ * an own recipe opened from it.
+ */
 @Composable
-fun LibraryScreen(session: LibrarySession, recipes: RecipeRepository, modifier: Modifier = Modifier) {
+fun LibraryScreen(
+    session: LibrarySession,
+    recipes: RecipeRepository,
+    modifier: Modifier = Modifier,
+    editor: EditorEnvironment = rememberEditorEnvironment(),
+) {
+    val editing by session.editing.collectAsState()
+    editing?.let { id ->
+        EditorScreen(RecipeId(id), recipes, editor, session.viewModelScope, onClose = session::closeEditor, modifier = modifier)
+        return
+    }
     val view by session.view.collectAsState()
     Column(modifier.fillMaxSize()) {
         Text(
@@ -66,7 +90,7 @@ fun LibraryScreen(session: LibrarySession, recipes: RecipeRepository, modifier: 
         HorizontalDivider()
         when (view) {
             LibraryView.MARKED -> MarkedList(recipes)
-            LibraryView.OWN -> OwnList(recipes)
+            LibraryView.OWN -> OwnList(recipes, session, editor)
         }
     }
 }
@@ -104,7 +128,7 @@ private fun androidx.compose.foundation.layout.RowScope.ViewTab(
 
 /** Built from the device alone: nothing here waits on or fails for the network (FLOW-043 (5)). */
 @Composable
-private fun OwnList(recipes: RecipeRepository) {
+private fun OwnList(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment) {
     var limit by rememberSaveable { mutableIntStateOf(OWN_PAGE) }
     val rows by remember(limit) { recipes.ownNewest(limit) }.collectAsState(initial = null)
     val listState = rememberLazyListState()
@@ -118,17 +142,50 @@ private fun OwnList(recipes: RecipeRepository) {
                 if (size == limit && last >= size - OWN_PAGE / 3) limit += OWN_PAGE
             }
     }
+    if (loaded != null && loaded.isEmpty()) {
+        NothingWritten(recipes, session, editor)
+        return
+    }
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST)) {
-        items(loaded.orEmpty(), key = { it.recipeId }) { OwnEntry(it) }
+        items(loaded.orEmpty(), key = { it.recipeId }) { row -> OwnEntry(row) { session.openEditor(row.recipeId) } }
+    }
+}
+
+/**
+ * The own-recipes view of a book in which nothing has been written: it says so, and its one offer writes a new
+ * recipe in that book and opens it in the editor (FLOW-042).
+ */
+@Composable
+private fun NothingWritten(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment) {
+    val language = interfaceLanguage(LocalConfiguration.current)
+    var writing by remember { mutableStateOf(false) }
+    Column(
+        Modifier.fillMaxSize().padding(16.dp).testTag(LibraryTags.OWN_EMPTY),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(stringResource(R.string.library_own_empty), style = MaterialTheme.typography.bodyLarge)
+        Button(
+            onClick = {
+                if (writing) return@Button
+                writing = true
+                val recipe = newRecipe(editor, language)
+                session.viewModelScope.launch {
+                    recipes.save(recipe)
+                    session.openEditor(recipe.id.value)
+                }
+            },
+            modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.WRITE),
+        ) { Text(stringResource(R.string.library_own_write)) }
     }
 }
 
 @Composable
-private fun OwnEntry(row: OwnRecipeRow) {
+private fun OwnEntry(row: OwnRecipeRow, open: () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {}
+            .clickable(onClickLabel = stringResource(R.string.library_own_open_action), onClick = open)
             .testTag(LibraryTags.entry(row.recipeId))
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
@@ -185,6 +242,8 @@ object LibraryTags {
     const val SWITCH = "library-switch"
     const val OWN_LIST = "library-own"
     const val MARKED_LIST = "library-marked"
+    const val OWN_EMPTY = "library-own-empty"
+    const val WRITE = "library-write"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
     fun entry(recipeId: String) = "library-entry-$recipeId"
 }

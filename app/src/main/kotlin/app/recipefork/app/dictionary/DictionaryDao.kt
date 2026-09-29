@@ -31,6 +31,20 @@ abstract class DictionaryDao {
         setVersion(DictionaryVersionEntity(version = dictionaries.version))
     }
 
+    /**
+     * Replaces the held copy with the shipped [snapshot] when the device holds none, or when the held copy is the
+     * earlier snapshot [seededVersion] and [snapshot] has another version; returns whether it did. The check and
+     * the replacement are one transaction, so a refresh from the server is never overwritten by a snapshot.
+     */
+    @Transaction
+    open suspend fun seed(snapshot: DictionariesDto, seededVersion: String?): Boolean {
+        val held = version()
+        val fromSnapshot = held != null && held == seededVersion
+        if (held != null && !(fromSnapshot && snapshot.version != held)) return false
+        replace(snapshot)
+        return true
+    }
+
     @Query("delete from ingredient_entry")
     protected abstract suspend fun deleteIngredients()
 

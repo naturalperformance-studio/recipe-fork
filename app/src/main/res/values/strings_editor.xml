@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The editor (FLOW-024). -->
+    <string name="editor_back">Back</string>
+    <string name="editor_back_action">Return to My recipe book</string>
+    <string name="editor_title">Title</string>
+    <!-- A recipe outside local, private and rejected is open, not editable (FLOW-002). -->
+    <string name="editor_frozen">This recipe cannot be changed in its current state.</string>
+    <!-- The declared language, beside the title (FLOW-024, L10N-004). -->
+    <string name="editor_language">Language</string>
+    <string name="editor_language_ru">Russian</string>
+    <string name="editor_language_en">English</string>
+    <string name="editor_language_none">Not declared</string>
+    <string name="editor_language_to_ru">Declare the recipe written in Russian</string>
+    <string name="editor_language_to_en">Declare the recipe written in English</string>
+    <string name="editor_language_clear">Clear</string>
+    <string name="editor_language_clear_action">Clear the declared language</string>
+    <!-- The tag editor: dictionary entries only (DOM-008). -->
+    <string name="editor_tags">Tags</string>
+    <string name="editor_tag_search">Find a tag</string>
+    <string name="editor_tag_add_action">Add the tag %1$s</string>
+    <string name="editor_tag_remove">Remove</string>
+    <string name="editor_tag_remove_action">Remove the tag %1$s</string>
+    <string name="editor_tag_no_match">No tag in the dictionary matches this.</string>
+</resources>

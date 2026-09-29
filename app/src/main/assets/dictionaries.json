@@ -1,0 +1,43 @@
+{
+  "version": "3022c26e287092b0a0d7f13541049b68b5a487450abbabef7acbd4f4e17564fb",
+  "ingredients": [
+    {
+      "id": 1,
+      "labelRu": "курица",
+      "labelEn": "chicken"
+    },
+    {
+      "id": 2,
+      "labelRu": "крылышки",
+      "labelEn": "chicken wings",
+      "parentId": 1
+    },
+    {
+      "id": 3,
+      "labelRu": "мясо",
+      "labelEn": "meat"
+    },
+    {
+      "id": 4,
+      "labelRu": "фарш",
+      "labelEn": "mince"
+    },
+    {
+      "id": 5,
+      "labelRu": "говядина",
+      "labelEn": "beef"
+    }
+  ],
+  "tags": [
+    {
+      "id": 10,
+      "labelRu": "итальянская",
+      "labelEn": "Italian"
+    },
+    {
+      "id": 11,
+      "labelRu": "грузинская",
+      "labelEn": "Georgian"
+    }
+  ]
+}

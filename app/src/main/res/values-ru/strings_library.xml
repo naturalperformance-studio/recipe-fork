@@ -15,4 +15,7 @@
     <string name="library_sent_never">Не отправлен: хранится только на этом устройстве и пропадёт вместе с ним</string>
     <string name="library_sent_sent">Отправлен</string>
     <string name="library_sent_with_changes">Отправлен, есть неотправленные изменения</string>
+    <string name="library_own_empty">В этой книге рецептов пока ничего не написано.</string>
+    <string name="library_own_write">Написать рецепт</string>
+    <string name="library_own_open_action">Открыть рецепт</string>
 </resources>

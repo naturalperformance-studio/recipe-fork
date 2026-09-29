@@ -1,0 +1,118 @@
+package app.recipefork.app.editor
+
+import android.content.Context
+import android.net.ConnectivityManager
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.IdlingResource
+import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.room.Room
+import app.recipefork.app.data.AppDatabase
+import app.recipefork.app.dictionary.DictionaryCatalog
+import app.recipefork.app.dictionary.DictionarySeeding
+import app.recipefork.app.dictionary.DictionarySnapshot
+import app.recipefork.app.dictionary.SeededVersion
+import app.recipefork.core.api.DictionariesDto
+import app.recipefork.core.api.IngredientEntryDto
+import app.recipefork.core.api.TagDto
+import org.robolectric.Shadows.shadowOf
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
+
+/**
+ * The device database held in memory for a screen test, whose work the Compose rule waits for — as `TestBook`
+ * does for a recipe book: every task handed to Room's executors is counted until it has finished.
+ */
+class TestDevice(context: Context) {
+    private val running = AtomicInteger(0)
+    private val threads = Executors.newCachedThreadPool()
+
+    private val counted = Executor { task ->
+        running.incrementAndGet()
+        try {
+            threads.execute {
+                try {
+                    task.run()
+                } finally {
+                    running.decrementAndGet()
+                }
+            }
+        } catch (e: RuntimeException) {
+            running.decrementAndGet()
+            throw e
+        }
+    }
+
+    val database: AppDatabase = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+        .setQueryExecutor(counted)
+        .setTransactionExecutor(counted)
+        .build()
+
+    val idling: IdlingResource = object : IdlingResource {
+        override val isIdleNow: Boolean get() = running.get() == 0
+        override fun getDiagnosticMessageIfBusy() = "${running.get()} device database tasks queued or running"
+    }
+
+    /** The version the held copy was seeded from, as the device's preferences would keep it. */
+    val seeded = object : SeededVersion {
+        @Volatile private var version: String? = null
+        override fun get() = version
+        override fun set(version: String) {
+            this.version = version
+        }
+    }
+
+    /** The dictionaries as the editor reads them, seeded from the snapshot this application ships. */
+    fun catalog(context: Context) = database.dictionaryDao().let { dao ->
+        DictionaryCatalog(dao, DictionarySeeding(dao, seeded) { DictionarySnapshot.read(context) })
+    }
+
+    fun close() {
+        database.close()
+        threads.shutdown()
+    }
+}
+
+/** Dictionaries as a server could hold them: three tags and a few entries. */
+val SAMPLE_DICTIONARIES = DictionariesDto(
+    version = "sample-1",
+    ingredients = listOf(IngredientEntryDto(1, "курица", "chicken"), IngredientEntryDto(2, "крылышки", "chicken wings", 1)),
+    tags = listOf(
+        TagDto(10, "итальянская", "Italian"),
+        TagDto(11, "грузинская", "Georgian"),
+        TagDto(12, "десерт", "Dessert"),
+    ),
+)
+
+/** Every label of [dictionaries]' tags, in both languages: the author's content on a screen, not interface text. */
+fun tagLabels(dictionaries: DictionariesDto): Set<String> = dictionaries.tags.flatMap { listOf(it.labelRu, it.labelEn) }.toSet()
+
+object Connection {
+    fun offline(context: Context) {
+        val manager = context.getSystemService(ConnectivityManager::class.java)
+        shadowOf(manager).setDefaultNetworkActive(false)
+        @Suppress("DEPRECATION")
+        shadowOf(manager).setActiveNetworkInfo(null)
+    }
+
+    fun isOffline(context: Context): Boolean =
+        context.getSystemService(ConnectivityManager::class.java).activeNetworkInfo == null
+}
+
+/** How long a wait on a condition may take before it counts as failed: generous, never what passes. */
+const val PATIENCE_MS = 60_000L
+
+/** Waits until exactly one node carries [tag]. */
+fun ComposeTestRule.awaitTag(tag: String) = waitUntil(PATIENCE_MS) {
+    onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().size == 1
+}
+
+/** The texts of the node tagged [tag], merged as the screen reader reads them, then what a field holds. */
+fun SemanticsNodeInteractionsProvider.textsOf(tag: String): List<String> {
+    val config = onNodeWithTag(tag).fetchSemanticsNode().config
+    return config.getOrElse(SemanticsProperties.Text) { emptyList() }.map { it.text } +
+        listOfNotNull(config.getOrElseNullable(SemanticsProperties.EditableText) { null }?.text)
+}
