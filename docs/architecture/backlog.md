@@ -47,7 +47,7 @@ this wave, and no media is attached.
 | T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | on-develop |
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
-| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | in-progress |
+| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | in-review |
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
@@ -424,9 +424,10 @@ this wave, and no media is attached.
 ### T-008 — The editor opens on a new recipe from the own-recipes view
 
 **Requirements:** FLOW-042, FLOW-024, FLOW-002, L10N-004, DOM-006, DOM-008, FLOW-001, L10N-001, A11Y-003, A11Y-005
-**Status:** in-progress
+**Status:** in-review
 **Depends on:** T-007
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/assets/dictionaries.json` · `scripts/dictionary-snapshot.sh`
+**Size:** not declared at slicing, which was a slicing miss: the shipped snapshot, its seeding and the editor's screen tests came to about 1,900 changed lines (1,929 at review).
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md, decisions/20260928-dictionaries-ship-with-the-application.md, decisions/20260928-one-database-per-recipe-book.md
 **Note:** FLOW-001 (1) holds on a clean installation with no connection only if the device already has the dictionaries, so the shipped snapshot and the seeding of the dictionaries-ship ADR are built here: `scripts/dictionary-snapshot.sh`, the committed `dictionaries.json`, and seeding through T-004's replacement path. A new recipe is created in `local`, in the active book — the pool in this wave.
 **Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (2) → wave 4; (5–6) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 7) → T-011; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
