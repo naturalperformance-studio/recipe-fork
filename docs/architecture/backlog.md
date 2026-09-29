@@ -24,7 +24,7 @@ verbatim; where a requirement's criteria are split between tasks, the entry says
   and A11Y-005 (every control announces what it does) are copied into every task that adds a screen; T-007 builds the
   test helpers they are checked with.
 - **Serverless mode is built as it goes.** A task that adds a control serverless mode removes carries that control's
-  own serverless criterion where the specification states one (FLOW-059 (10), FLOW-005 (7)); wave 9 carries the mode
+  own serverless criterion where the specification states one (FLOW-059 (11), FLOW-005 (7)); wave 9 carries the mode
   itself, the sweep of FLOW-062 (1) and recipe files. See `decisions/20260928-serverless-mode-is-a-build-flag.md`.
 - **Commands.** Build `./gradlew assembleAll`, full suite `./gradlew testAll`, setup `scripts/setup.sh` — see
   `00-index.md`. No task of waves 1 and 1b needs the device-test command.
@@ -40,14 +40,14 @@ this wave, and no media is attached.
 |---|---|---|---|
 | T-001 | Quantities follow the serving count | — | on-develop |
 | T-029 | Large and fractional quantities are written on the ladder | T-001 | on-develop |
-| T-002 | A fixed ingredient sets the scale | T-029 | blocked |
+| T-002 | A fixed ingredient sets the scale | T-029 | planned |
 | T-030 | Changing the count or releasing the last fixing puts the scale back | T-002 | gated |
 | T-003 | The store refuses a malformed dictionary entry | — | on-develop |
 | T-004 | The device holds both dictionaries and replaces them when they change | T-003 | on-develop |
 | T-005 | An account is created with a unique nickname and three keys, and only once it is confirmed | T-004 | on-develop |
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | in-progress |
-| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | blocked |
+| T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | planned |
 | T-031 | What the ingredient field offers for what the author types | T-008 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
@@ -58,7 +58,7 @@ this wave, and no media is attached.
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | gated |
 | T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | gated |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | gated |
-| T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | blocked |
+| T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | planned |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | gated |
 | T-022 | A timer runs on its step | T-021, T-014 | gated |
 | T-023 | A timer announces itself when the application is closed | T-022 | gated |
@@ -66,7 +66,7 @@ this wave, and no media is attached.
 | T-033 | A timer asks for notifications when first started, and a refusal is explained at once | T-023 | gated |
 | T-024 | Several timers run at once, and restarting one asks first | T-033 | gated |
 | T-025 | The card keeps the screen awake and is where the reader left it | T-024 | gated |
-| T-035 | The quantity field holds only a value on its unit type's grid | T-028, T-029 | blocked |
+| T-035 | The quantity field holds only a value on its unit type's grid | T-028, T-029 | planned |
 
 ### T-001 — Quantities follow the serving count
 
@@ -76,7 +76,7 @@ this wave, and no media is attached.
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Note:** `Units.kt` holds the twelve units of DOM-016 with the unit type the table in `spec/50-domain-model/20-ingredients-and-limits.md` gives each; T-011 and T-029 read it and do not change it.
-**Criteria of these requirements carried elsewhere:** SCALE-001 (2) → T-019 · SCALE-010 (2) → T-002; (3) → T-029 · SCALE-015 (1–2) → T-019; (4–5) → T-002 · DOM-017 (1–4) → T-035; (5–6) → wave 2; (8) → wave 4
+**Criteria of these requirements carried elsewhere:** SCALE-001 (2) → T-019 · SCALE-010 (2) → T-002; (3) → T-029 · SCALE-015 (1–2) → T-019; (4–5) → T-002 · DOM-017 (1–5) → T-035; (6–7) → wave 2; (9) → wave 4
 
 **Acceptance criteria** (verbatim)
 
@@ -150,7 +150,7 @@ this wave, and no media is attached.
 ### T-002 — A fixed ingredient sets the scale
 
 **Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-010, SCALE-015
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-029
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/scaling/**` · `core/src/test/kotlin/app/recipefork/core/scaling/**`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
@@ -172,8 +172,8 @@ this wave, and no media is attached.
 - Given a computed count whose nearest value in the set is one serving or more, when it is displayed, then it is displayed as a whole number and not as a fraction.
 - Given any state, when the serving count is displayed, then no quantity in the recipe is computed from it; SCALE-003 governs.
 - Given a recipe authored for 4 servings with 500 g of chicken, when the reader fixes 115 g of it (a computed 0.92 servings), then the serving count shows an approximate 1 serving and not ¾.
-- Given a recipe authored for 4 servings with 400 g of chicken, when the reader fixes 350 g of it (a computed 0.875 servings, exactly between ¾ and 1), then the serving count shows an approximate 1 serving.
-- Given the same recipe, when the reader fixes 100 g of chicken (a computed 0.8 servings), then the serving count shows an approximate ¾ serving.
+- Given a recipe authored for 4 servings with 320 g of chicken, when the reader fixes 70 g of it (a factor of 0.21875, a computed 0.875 servings, exactly between ¾ and 1), then the serving count shows an approximate 1 serving.
+- Given a recipe authored for 4 servings with 500 g of chicken, when the reader fixes 100 g of it (a factor of 0.2, a computed 0.8 servings), then the serving count shows an approximate ¾ serving.
 
 *SCALE-010 — spec/80-scaling-rules/10-scaling.md*
 - Given a recipe authored for 4 servings with 5 g of an `exact` ingredient, when the reader fixes 10 kg of that ingredient, then the derived count is displayed by SCALE-002 and is not capped.
@@ -182,7 +182,7 @@ this wave, and no media is attached.
 - Given a recipe authored for 4 servings with 400 g of an ingredient, when the reader fixes 250 g of it, then the serving count shows an approximate 3 servings.
 - Given a recipe authored for 4 servings with 240 g of an ingredient, when the reader fixes 25 g of it (a computed 5/12 serving), then the serving count shows an approximate ½ serving.
 
-**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-008 vs SCALE-015) — docs/product/verdicts/20260927-T-002-gate1-2.md; re-sliced against spec/ @ 959130e after SD-027 resolved (SCALE-008 (4) replaced, (6–8) added); re-gated: accepted — docs/product/verdicts/20260927-T-002-gate1-3.md; SCALE-008 (7) replaced in spec/ @ 1168954 (SD-033: 109.375 g is off the grid), re-gate due; re-gated: blocked-by-spec (SD-036, SCALE-008 (7) gives 3.5 servings, not 0.875, and (8)'s "same recipe" is ambiguous) — docs/product/verdicts/20260928-T-002-gate1.md
+**Gate 1:** blocked-by-spec (SD-003) — docs/product/verdicts/20260927-T-002-gate1.md; re-sliced against spec/ @ ead1a44 after SD-003 resolved, re-gate due; re-gated: blocked-by-spec (SD-027, SCALE-008 vs SCALE-015) — docs/product/verdicts/20260927-T-002-gate1-2.md; re-sliced against spec/ @ 959130e after SD-027 resolved (SCALE-008 (4) replaced, (6–8) added); re-gated: accepted — docs/product/verdicts/20260927-T-002-gate1-3.md; SCALE-008 (7) replaced in spec/ @ 1168954 (SD-033: 109.375 g is off the grid), re-gate due; re-gated: blocked-by-spec (SD-036, SCALE-008 (7) gives 3.5 servings, not 0.875, and (8)'s "same recipe" is ambiguous) — docs/product/verdicts/20260928-T-002-gate1.md; re-sliced against spec/ @ 952398f after SD-036 resolved (SCALE-008 (7–8) replaced); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -417,14 +417,14 @@ this wave, and no media is attached.
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
 **Gate 1:** blocked-by-spec (SD-004) — docs/product/verdicts/20260927-T-007-gate1.md; re-sliced against spec/ @ ead1a44 after SD-004 resolved, re-gated: rejected — docs/product/verdicts/20260927-T-007-gate1-2.md (FLOW-034 (6, 7) left to wave 3); FLOW-034 (6, 7) added, re-gated: blocked-by-spec (SD-028, "session" in FLOW-034 (5, 6)) — docs/product/verdicts/20260927-T-007-gate1-3.md; re-sliced against spec/ @ 959130e after SD-028 resolved (FLOW-034 (5, 6) replaced, FLOW-058 (1–4) added; (5) needs the ordering, filter and usual count of waves 2 and 3); re-gated: accepted — docs/product/verdicts/20260927-T-007-gate1-4.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-034 (7) and FLOW-036 (1) replaced, FLOW-034 (8), FLOW-036 (6) and FLOW-005 (1–2) added; the pool is the only book; re-gate due; re-gated: accepted — docs/product/verdicts/20260928-T-007-gate1.md
-**Review:** defects — build and suite ok, 22 of 24 criteria held under mutation; two tests did not: BookDatabaseTest.theBookOrdersOwnRecipesByTheirLastChangeOfContent leaves the view's ordering of a published recipe untested (FLOW-039 (2)), and the screen helper LocalizationChecks.assertScreenTextFromResources accepts a Russian string that fell back to English (L10N-001 (1); the criterion itself is held at resource level); worktree as it was. Second return, taken to the user; a third run authorised by the user on 2026-09-29, to fix the two tests; after the third run: defects — build and suite ok; the two earlier findings now held; four more tests did not bite: BookDatabaseTest leaves the view's ordering of a never-edited draft untested (FLOW-039 (3)); LibraryScreenTest compares the pending and hidden entries with their own string resources, so an entry repeating MOD-005's expectation or giving detail on hiding passes (FLOW-036 (2), (4)); the offline scrolling test stops at the last entry, so a "connection needed" notice at the end of the list goes unseen (FLOW-041); two screen tests with fixed 5 s waits each failed once in about twenty runs; worktree as it was. Taken to the user; a fourth and last run authorised by the user on 2026-09-29: if its review finds defects again, the branch is abandoned, T-007 is re-sliced into smaller tasks and built again
+**Review:** defects — build and suite ok, 22 of 24 criteria held under mutation; two tests did not: BookDatabaseTest.theBookOrdersOwnRecipesByTheirLastChangeOfContent leaves the view's ordering of a published recipe untested (FLOW-039 (2)), and the screen helper LocalizationChecks.assertScreenTextFromResources accepts a Russian string that fell back to English (L10N-001 (1); the criterion itself is held at resource level); worktree as it was. Second return, taken to the user; a third run authorised by the user on 2026-09-29, to fix the two tests; after the third run: defects — build and suite ok; the two earlier findings now held; four more tests did not bite: BookDatabaseTest leaves the view's ordering of a never-edited draft untested (FLOW-039 (3)); LibraryScreenTest compares the pending and hidden entries with their own string resources, so an entry repeating MOD-005's expectation or giving detail on hiding passes (FLOW-036 (2), (4)); the offline scrolling test stops at the last entry, so a "connection needed" notice at the end of the list goes unseen (FLOW-041); two screen tests with fixed 5 s waits each failed once in about twenty runs; worktree as it was. Taken to the user; a fourth and last run authorised by the user on 2026-09-29: if its review finds defects again, the branch is abandoned, T-007 is re-sliced into smaller tasks and built again; the fourth run was interrupted when its session ended, leaving uncommitted test changes in the worktree; kept by the user on 2026-09-29 and the run resumed on them
 **Gate 2:** —
 **Returns:** 2 of 2, plus a third run the user authorised (gate 1 · reviewer · gate 2 share the count)
 
 ### T-008 — The editor opens on a new recipe from the own-recipes view
 
 **Requirements:** FLOW-042, FLOW-024, FLOW-002, L10N-004, DOM-006, DOM-008, FLOW-001, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-007
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/assets/dictionaries.json` · `scripts/dictionary-snapshot.sh`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md, decisions/20260928-dictionaries-ship-with-the-application.md, decisions/20260928-one-database-per-recipe-book.md
@@ -434,7 +434,7 @@ this wave, and no media is attached.
 **Acceptance criteria** (verbatim)
 
 *FLOW-042 — spec/70-flows/50-browsing.md*
-- Given an account that has written nothing, when it opens the own-recipes view, then the view states so and offers to write a recipe, and the offer opens the editor (FLOW-024).
+- Given an active recipe book in which nothing has been written — an account's, or the pool of AUTH-026 when no account is active — when the own-recipes view is opened, then the view states so and offers to write a recipe, and the offer opens the editor on a new recipe in that recipe book (FLOW-024, FLOW-002).
 
 *FLOW-024 — spec/70-flows/40-editor.md*
 - Given a new recipe, when the editor opens, then the declared language is already set to the author's interface language and sits beside the title, where changing it is one action and missing it is not possible (L10N-004).
@@ -466,7 +466,7 @@ this wave, and no media is attached.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** accepted — docs/product/verdicts/20260927-T-008-gate1.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-002 (3–4) replaced; the shipped dictionaries added for FLOW-001 (1) on a clean installation; re-gate due; re-gated: blocked-by-spec (SD-038, FLOW-042 (4) observes the empty own-recipes view of an account only, and wave 1 has the pool alone) — docs/product/verdicts/20260928-T-008-gate1.md
+**Gate 1:** accepted — docs/product/verdicts/20260927-T-008-gate1.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): FLOW-002 (3–4) replaced; the shipped dictionaries added for FLOW-001 (1) on a clean installation; re-gate due; re-gated: blocked-by-spec (SD-038, FLOW-042 (4) observes the empty own-recipes view of an account only, and wave 1 has the pool alone) — docs/product/verdicts/20260928-T-008-gate1.md; re-sliced against spec/ @ 952398f after SD-038 resolved (FLOW-042 (4) replaced: it names the pool, the only book of this wave); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -982,13 +982,14 @@ this wave, and no media is attached.
 
 ### T-020 — The reader fixes an ingredient on the card
 
-**Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, A11Y-003, A11Y-007, L10N-001, A11Y-005, SCALE-018
-**Status:** blocked
+**Requirements:** SCALE-002, SCALE-006, SCALE-008, SCALE-009, SCALE-011, A11Y-003, A11Y-007, L10N-001, A11Y-005, SCALE-018, DOM-019
+**Status:** planned
 **Depends on:** T-019, T-030, T-015
-**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml`
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `core/src/main/kotlin/app/recipefork/core/recipe/TypedNumber.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/TypedNumberTest.kt`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Note:** The rules for a fixed line and for releasing a fixing (SCALE-016, SCALE-017) are T-030's, checked in `:core` where they are computed; this card renders the state T-030's model gives it and computes none of it. A11Y-003 (2) is not carried here: the controls it names are the serving control (T-018) and the timer controls (T-022 onwards); the fixing control this task adds is held to 56 dp by A11Y-007 (2).
-**Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–8) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8
+**Note:** 20260929 re-slice against spec/ @ 952398f (SD-037 answered by DOM-019): a typed number is read by one reader in `:core`, `recipe/TypedNumber.kt`, built here for the fixing control and used again by T-035 for the quantity field. DOM-019 (1–3, 5) speak of any typed number: they are observed here in the fixing control and again in T-035 in the quantity field; DOM-019 (4) is the quantity field's grid (DOM-017) and is T-035's.
+**Criteria of these requirements carried elsewhere:** SCALE-002 (1, 3) → T-002 · SCALE-006 (1, 3) → T-002 · SCALE-008 (1–2, 4–8) → T-002 · SCALE-011 (1–3) → T-018 · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-007 (1) → T-018; (3) → T-033; (4) → T-025; (5) → wave 8 · L10N-001 (3) → release record · A11Y-005 (2–6) → wave 8 · DOM-019 (1–3, 5) → T-035 as well, in the quantity field; (4) → T-035
 
 **Acceptance criteria** (verbatim)
 
@@ -1033,7 +1034,14 @@ this wave, and no media is attached.
 - Given a `taste_unmeasured` ingredient, when the ingredient list is displayed, then it offers no fixing, because it has no authored amount to divide by (DOM-002, SCALE-002).
 - Given the fixing control holding an amount, when the reader clears it, then the scale in force does not change until the reader enters an accepted amount or releases the fixing (SCALE-017); clearing the control is not a release.
 
-**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved; re-gated: blocked-by-spec (SD-032, whether a requested fractional count is marked approximate) — docs/product/verdicts/20260927-T-020-gate1-2.md; re-sliced against spec/ @ 959130e after SD-032 resolved (SCALE-008 (3), SCALE-011 (4) replaced; A11Y-003 (2) left to the tasks that build the controls it names); re-gated: blocked-by-spec (SD-033, the amounts a reader may fix) — docs/product/verdicts/20260927-T-020-gate1-3.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): SD-033 answered in spec/ @ 1168954; SCALE-018 added; re-gate due; re-gated: blocked-by-spec (SD-037, reached through SCALE-018) — docs/product/verdicts/20260928-T-020-gate1.md; SCALE-018 moved to T-039 at the end of the card chain, so that SD-037 holds up only the control's input rule; re-gate due; re-gated: blocked-by-spec (SD-037: reading a typed amount belongs to the control this task builds) — docs/product/verdicts/20260928-T-020-gate1-2.md; SCALE-018 returned to this task and T-039 withdrawn, since the split moved nothing SD-037 stops
+*DOM-019 — spec/50-domain-model/20-ingredients-and-limits.md*
+- Given the interface in Russian, when `1,5 кг` or `1.5 кг` is typed, then either is read as 1.5 kg and displayed as `1,5 кг` (L10N-009).
+- Given the interface in English, when `1.5 kg` or `1,5 kg` is typed, then either is read as 1.5 kg and displayed as `1.5 kg`.
+- Given the interface in English, when `1,500 kg` is typed, then it is read as 1.5 kg, not 1500 kg, and the field displays `1.5 kg`.
+- Given either interface language, when a number carrying a space, two decimal marks, or both a comma and a point is typed — `1 500 г`, `1.500,5 г`, `1,5,0 кг` — then the field does not hold it and states that a number is written without separators.
+- Given the fixing control, when `0,3 кг` or `0.3 кг` is typed for an ingredient authored in grams, then either is accepted as 300 g (SCALE-018 (1)).
+
+**Gate 1:** blocked-by-spec (SD-003, SD-011, SD-002) — docs/product/verdicts/20260927-T-020-gate1.md; A11Y-003 (2) and A11Y-007 (2) added after this verdict; re-sliced against spec/ @ ead1a44 after SD-003, SD-011, SD-002 resolved; re-gated: blocked-by-spec (SD-032, whether a requested fractional count is marked approximate) — docs/product/verdicts/20260927-T-020-gate1-2.md; re-sliced against spec/ @ 959130e after SD-032 resolved (SCALE-008 (3), SCALE-011 (4) replaced; A11Y-003 (2) left to the tasks that build the controls it names); re-gated: blocked-by-spec (SD-033, the amounts a reader may fix) — docs/product/verdicts/20260927-T-020-gate1-3.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): SD-033 answered in spec/ @ 1168954; SCALE-018 added; re-gate due; re-gated: blocked-by-spec (SD-037, reached through SCALE-018) — docs/product/verdicts/20260928-T-020-gate1.md; SCALE-018 moved to T-039 at the end of the card chain, so that SD-037 holds up only the control's input rule; re-gate due; re-gated: blocked-by-spec (SD-037: reading a typed amount belongs to the control this task builds) — docs/product/verdicts/20260928-T-020-gate1-2.md; SCALE-018 returned to this task and T-039 withdrawn, since the split moved nothing SD-037 stops; re-sliced against spec/ @ 952398f after SD-037 resolved (DOM-019 (1–3, 5–6) added, observed in the fixing control); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1339,28 +1347,37 @@ this wave, and no media is attached.
 
 ### T-035 — The quantity field holds only a value on its unit type's grid
 
-**Requirements:** DOM-017, L10N-001
-**Status:** blocked
+**Requirements:** DOM-017, DOM-019, L10N-001
+**Status:** planned
 **Depends on:** T-028, T-029
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/recipe/**` · `!core/src/main/kotlin/app/recipefork/core/recipe/Units.kt` · `core/src/test/kotlin/app/recipefork/core/recipe/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** The grid values are those T-001 and T-029 compute in `:core` `scaling`; this task reads them and does not change `scaling`. The quantity field itself is T-011's and the free-text divisibility T-012's; this task constrains what that field holds.
+**Note:** 20260929 re-slice against spec/ @ 952398f (SD-037 answered): a typed number is read by T-020's `recipe/TypedNumber.kt`, which this task uses in the quantity field; DOM-019 (1–3, 5) are observed here in that field as T-020 observes them in the fixing control. A decimal entry of a fraction-grid value is held and displayed as the grid writes it, and the field's error names the fractions it accepts (DOM-017 (3)).
 **Note:** Ordered after T-028, the last task on the editor's files, so that SD-037 holds up no other task.
-**Criteria of these requirements carried elsewhere:** DOM-017 (5–6) → wave 2, where submission exists; (7) → T-001; (8) → wave 4 · L10N-001 (3) → release record
+**Criteria of these requirements carried elsewhere:** DOM-017 (6–7) → wave 2, where submission exists; (8) → T-001; (9) → wave 4 · DOM-019 (6) → T-020 · L10N-001 (3) → release record
 
 **Acceptance criteria** (verbatim)
 
 *DOM-017 — spec/50-domain-model/20-ingredients-and-limits.md*
 - Given the quantity field, when the author enters `500 г`, `1,5 кг`, `⅓ ч. л.`, `1½ шт` of a divisible ingredient or `3 шт` of an indivisible one, then the field holds that value.
-- Given the quantity field, when the author enters 0, a negative number, `7,5 г`, `1,2345 кг`, `0,3 ч. л.`, `2,5 шт` or `½ шт` of an indivisible ingredient, then the field does not hold it.
+- Given the quantity field, when the author enters 0, a negative number, `7,5 г`, `1,2345 кг`, `0,3 ч. л.`, or, of an indivisible ingredient, `2,5 шт` or `½ шт`, then the field does not hold it.
+- Given the quantity field, when the author enters a value of a fraction grid with a decimal mark — `2,5 шт` of a divisible ingredient, `0,5 ч. л.`, `0,25 ч. л.` — then the field holds it and it is displayed as the grid writes it: 2½, ½, ¼. `0,33 ч. л.` and `0,66 ч. л.` are not held, because ⅓ and ⅔ have no decimal form on the grid; the field's error names the fractions it accepts.
 - Given the quantity field, when the author enters `1 г`, `¼ ч. л.`, `½ шт` of a divisible ingredient or `1 шт` of an indivisible one, then the field holds it: each is the floor of its grid.
 - Given the quantity field, when the author enters a number however large that lies on the grid, then the field holds it.
+
+*DOM-019 — spec/50-domain-model/20-ingredients-and-limits.md*
+- Given the interface in Russian, when `1,5 кг` or `1.5 кг` is typed, then either is read as 1.5 kg and displayed as `1,5 кг` (L10N-009).
+- Given the interface in English, when `1.5 kg` or `1,5 kg` is typed, then either is read as 1.5 kg and displayed as `1.5 kg`.
+- Given the interface in English, when `1,500 kg` is typed, then it is read as 1.5 kg, not 1500 kg, and the field displays `1.5 kg`.
+- Given either interface language, when `1,2345 кг` or `1.2345 kg` is typed, then it is read as 1.2345 kg and not held, because it is not a whole number of grams (DOM-017).
+- Given either interface language, when a number carrying a space, two decimal marks, or both a comma and a point is typed — `1 500 г`, `1.500,5 г`, `1,5,0 кг` — then the field does not hold it and states that a number is written without separators.
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
-**Gate 1:** blocked-by-spec (SD-037, how a typed number is read in each language, and whether a decimal entry of a fraction value is held) — docs/product/verdicts/20260928-T-035-gate1.md
+**Gate 1:** blocked-by-spec (SD-037, how a typed number is read in each language, and whether a decimal entry of a fraction value is held) — docs/product/verdicts/20260928-T-035-gate1.md; re-sliced against spec/ @ 952398f after SD-037 resolved (DOM-017 (2) replaced, (3) added; DOM-019 (1–5) added); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1376,11 +1393,11 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-009 | The first step of creation shows the nickname and the terms | T-006, T-022 | gated |
 | T-032 | The second step of creation issues the account key and the deletion key | T-009 | gated |
 | T-010 | The recovery key is issued on the third step, and leaving creation leaves nothing | T-032 | gated |
-| T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | gated |
-| T-027 | The server keeps a sent recipe and turns a divergent sending into a fork | T-006 | blocked |
+| T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | planned |
+| T-027 | The server keeps a sent recipe and turns a divergent sending into a fork | T-006 | planned |
 | T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-027, T-036, T-025, T-034 | gated |
-| T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | blocked |
-| T-026 | Sending with no account offers to create one | T-038 | blocked |
+| T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | planned |
+| T-026 | Sending with no account offers to create one | T-038 | planned |
 
 ### T-009 — The first step of creation shows the nickname and the terms
 
@@ -1531,19 +1548,20 @@ when a divergent sending became a fork. Sending with no account offers creation.
 ### T-036 — A new account gets a recipe book of its own, and the pool is offered to it once
 
 **Requirements:** AUTH-026, ACT-002, FLOW-051, L10N-001, A11Y-003, A11Y-005
-**Status:** gated
+**Status:** planned
 **Depends on:** T-010
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** The account created by T-009–T-010 gets its book database here and becomes the active book; the pool's move into it is one transaction of the account's database, as the one-database-per-book ADR states. In this wave the pool holds recipes only: favourites arrive in wave 3.
-**Criteria of these requirements carried elsewhere:** AUTH-026 (4–5) → wave 7; (7) → T-028 · ACT-002 (2) → T-028; (3) → T-027; (4) → wave 8 · FLOW-051 (1–5) → wave 3; (7) → T-009 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** 20260929: AUTH-026 (3) now keeps in the account the pool recipe whose sending created it (SD-040). That recipe first exists with T-026, which carries (3) again for it; here a declined offer leaves nothing from the pool in the account's book.
+**Criteria of these requirements carried elsewhere:** AUTH-026 (3) → T-026 as well, for the recipe whose sending created the account; (4) → T-026; (5–6) → wave 7; (8) → T-028 · ACT-002 (2) → T-028; (3) → T-026; (4) → T-027; (5) → wave 8 · FLOW-051 (1–5) → wave 3; (7) → T-009 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
 *AUTH-026 — spec/45-auth/25-accounts-on-a-device.md*
 - Given a pool holding recipes and favourites, when an account is created or signs in on the device, then the offer is shown before the account's recipe book is.
 - Given the offer accepted, when it completes, then everything in the pool is that account's, the pool is empty, and the account's recipe book shows it.
-- Given the offer declined, when the account's recipe book is shown, then nothing from the pool is in it, and the pool is shown again whenever no account is active.
+- Given the offer declined, when the account's recipe book is shown, then nothing from the pool is in it but a recipe whose sending created the account (FLOW-059 (1)), and the pool is shown again whenever no account is active.
 - Given a pool that is empty, when any account becomes active, then no offer is shown and the menu action is not offered.
 
 *ACT-002 — spec/40-actors.md*
@@ -1562,21 +1580,22 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** accepted — docs/product/verdicts/20260928-T-036-gate1.md
+**Gate 1:** accepted — docs/product/verdicts/20260928-T-036-gate1.md; AUTH-026 (3) replaced in spec/ @ 952398f (SD-040: the pool recipe whose sending created the account is that account's); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-027 — The server keeps a sent recipe and turns a divergent sending into a fork
 
-**Requirements:** FLOW-008, CON-003, ACT-002, DOM-004, AUTH-015, AUTH-025, FLOW-059
-**Status:** blocked
+**Requirements:** FLOW-008, CON-003, ACT-002, DOM-004, AUTH-015, AUTH-025, FLOW-059, FLOW-066
+**Status:** planned
 **Depends on:** T-006
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/Application.kt` · `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/kotlin/app/recipefork/server/auth/**` · `server/src/main/resources/db/migration/V3__recipes.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/auth/**` · `server/src/test/kotlin/app/recipefork/server/account/VerdictNotKeptTest.kt` (added at the re-run: the session digest the keys ADR requires is a second `bytea` column that T-006's AUTH-015 (2) test did not admit)
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md, decisions/20260927-test-strategy.md
 **Note:** ADR due at merge: a recipe's content is one `jsonb` document beside relational `recipe_id` (the device-minted UUID), `owner_id`, `parent_id`, `state`, `revision`, with a store trigger holding owner, parent and frozen content fixed (developer's choice under the server-stack ADR).
 **Note:** 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): the device sends a recipe by the owner's act, in one request, under a UUID the device minted (manual-sending ADR); the server no longer receives a reconnecting device's changes. SD-035 is answered by AUTH-015 (4) and AUTH-025, which this task's sign-in secret now carries (AUTH-025 (1, 3)); AUTH-025's lapse and silent re-sign-in are wave 7. The branch `task/T-027` and its worktree are kept: after gate 1 the developer reworks that branch, the review runs again, then gate 2. The gate-2 finding on FLOW-008 (3) — a state-only change to a frozen recipe — is now FLOW-008 (4) for a frozen recipe and (6) for a submitted one; (6) ends in the owner's notice and is T-038's, observed against the server half built here. A recipe's first sending creates it on the server (FLOW-059), so an edit for a recipe the server does not hold no longer arises. The server half of FLOW-059 (4) is carried here and observed at the service: a recipe's first sending creates it in `private`, and a later one replaces it unless FLOW-008 finds a divergence; T-028 carries the same criterion on the device. FLOW-008 (4) is to be tested with a change of state alone to `link_shared` or `published` as well as with an edit. AUTH-025 (1)'s "does not count toward QUAL-009" is observed as the sign-in secret, not the key, being presented; the attempt counter itself is wave 7's.
-**Criteria of these requirements carried elsewhere:** FLOW-008 (1, 3, 6) → T-038 · CON-003 (2) → wave 4; (3) → wave 9 · ACT-002 (1) → T-036; (2) → T-028; (4) → wave 8 · AUTH-015 (1–2) → T-006; (3) → wave 7 · AUTH-025 (2, 4–9) → wave 7 · FLOW-059 (1) → T-026; (2) → wave 6; (3) → wave 7; (4–6, 10) → T-028; (7–8) → wave 5; (9) → wave 4
+**Note:** 20260929 re-slice against spec/ @ 952398f (SD-041 answered): a sending whose content — every field and every media item — is the same as the server's is no divergence whatever revision it was made from (FLOW-008 (7)), and nothing is written and no fork made (FLOW-066); a divergent sending that already made a fork, arriving again, is answered with that fork and makes no second one (FLOW-066 (4)). The server half of FLOW-066 (1–5) is carried here and observed at the service: what is written, what forks exist, and what the answer carries — the state the server holds and, for (4), the fork already made. T-038 carries FLOW-066 (1–4) on the device. Recipes carry no media before wave 5, so sameness is decided here over the content document; wave 5 extends it to media. FLOW-059 (8) — a sending stored whole or not at all, never text without its media — stays in wave 5 with the first sending that carries media; FLOW-059 (9) is the device's and T-038's. The branch `task/T-027` and its worktree are kept: after gate 1 the developer reworks that branch, then the review, then gate 2.
+**Criteria of these requirements carried elsewhere:** FLOW-008 (1, 3, 6) → T-038 · CON-003 (2) → wave 4; (3) → wave 9 · ACT-002 (1) → T-036; (2) → T-028; (3) → T-026; (5) → wave 8 · AUTH-015 (1–2) → T-006; (3) → wave 7 · AUTH-025 (2, 4–9) → wave 7 · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4 · FLOW-066 (1–4) → T-038 as well, on the device
 
 **Acceptance criteria** (verbatim)
 
@@ -1584,6 +1603,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 - Given a recipe edited on device B while device A's edit was sent to the server, when device B sends it, then the server's version keeps the recipe's identity and device B's version becomes a `private` fork naming it as parent.
 - Given the server's version has since been published or otherwise frozen, when device B sends a divergent version, then the same rule applies and nothing is written to the frozen recipe.
 - Given no divergence — device B's version was made from the one the server holds — when device B sends, then the server's copy is replaced and no fork is created.
+- Given a sending whose content is the same as the content the server holds, when it arrives, then it is not a divergence whatever version it was made from, and FLOW-066 governs it.
 
 *CON-003 — spec/30-constraints.md*
 - Given a recipe that has become accessible to anyone but its owner, when any edit is attempted through any interface, then the edit is rejected and the stored content is unchanged.
@@ -1605,7 +1625,14 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *FLOW-059 — spec/70-flows/10-offline-and-sync.md*
 - Given a sent recipe edited on the device, when it is sent again, then the server's copy is replaced by the device's version, unless FLOW-008 finds the two diverged.
 
-**Gate 1:** blocked-by-spec (SD-018) — docs/product/verdicts/20260927-T-027-gate1.md; re-sliced against spec/ @ ead1a44 after SD-018 resolved, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-027-gate1-2.md; FLOW-008 (5) then moved to T-028 (its notice is on the device), re-gated: accepted — docs/product/verdicts/20260927-T-027-gate1-3.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten for sending; FLOW-008 (2, 4–5), ACT-002 (3), AUTH-015 (4), AUTH-025 (1, 3); re-gate due; re-gated: rejected — docs/product/verdicts/20260928-T-027-gate1.md (AUTH-015 (4) copied with the definition paragraph after it); AUTH-015 (4) copied as the spec lists it, FLOW-059 (4) added as the server half; re-gate due; re-gated: accepted — docs/product/verdicts/20260928-T-027-gate1-2.md
+*FLOW-066 — spec/70-flows/10-offline-and-sync.md*
+- Given a sending the server stored whose answer never reached the device, when the owner sends the recipe again, then no fork is created, no notice of FLOW-008 (3) is shown, and the recipe is marked as sent.
+- Given device A's edit sent to the server, when device B sends an edit that leaves the recipe exactly as device A left it, then the server's copy is unchanged, no fork is created and device B marks the recipe as sent.
+- Given a recipe that, on the server, was submitted and became `pending` since the device's copy was made, when the device sends content the same as the server's, then no fork is created and the device shows the recipe in `pending`.
+- Given a divergent sending that made a fork (FLOW-008) whose answer never reached the device, when the same sending arrives again, then the server answers with the fork it already created and creates no second one, and the owner is told of that fork once, as FLOW-008 (3) states.
+- Given a sending whose content differs from the server's in one character or one media item, when it arrives, then it is not governed here: FLOW-059 (4) or FLOW-008 applies.
+
+**Gate 1:** blocked-by-spec (SD-018) — docs/product/verdicts/20260927-T-027-gate1.md; re-sliced against spec/ @ ead1a44 after SD-018 resolved, re-gate due; re-gated: accepted — docs/product/verdicts/20260927-T-027-gate1-2.md; FLOW-008 (5) then moved to T-028 (its notice is on the device), re-gated: accepted — docs/product/verdicts/20260927-T-027-gate1-3.md; 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten for sending; FLOW-008 (2, 4–5), ACT-002 (3), AUTH-015 (4), AUTH-025 (1, 3); re-gate due; re-gated: rejected — docs/product/verdicts/20260928-T-027-gate1.md (AUTH-015 (4) copied with the definition paragraph after it); AUTH-015 (4) copied as the spec lists it, FLOW-059 (4) added as the server half; re-gate due; re-gated: accepted — docs/product/verdicts/20260928-T-027-gate1-2.md; 20260929 re-slice against spec/ @ 952398f after SD-041 resolved: FLOW-008 (7) added, FLOW-066 (1–5) added as the server half; re-gate due
 **Review:** first run unfinished (T-006's AUTH-015 (2) test outside the expected files), re-run once; pass — 7 of 7 criteria, the adjusted AUTH-015 (2) test and the session token checked by mutation, worktree as it was; rework after the re-slice of 2026-09-28: pass — 11 of 11 criteria checked by mutation, worktree as it was
 **Gate 2:** blocked-by-spec (SD-035, whether a per-device session token "identifies a device" under AUTH-015 (2)) — docs/product/verdicts/20260927-T-027-gate2.md; the verdict also finds FLOW-008 (3) unobserved for a state-only change to a frozen state (no test checks the fork), to be fixed before the re-gate; worktree and branch kept; after the rework: blocked-by-spec (SD-041, whether a sending identical to the server's copy but made from an older revision is a divergence, and FLOW-059 (8) with a lost answer) — docs/product/verdicts/20260929-T-027-gate2.md; all 11 criteria met; worktree and branch kept
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1617,10 +1644,11 @@ when a divergent sending became a fork. Sending with no account offers creation.
 **Depends on:** T-027, T-036, T-025, T-034
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `app/build.gradle.kts` · `scripts/artefact.sh` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-serverless-mode-is-a-build-flag.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Size:** The first path from the editor to the server's store and back to the mark: the send request, the per-recipe revision and digest on the device, the three marks, and the first `Mode` passed from `MainActivity` (FLOW-059 (10), FLOW-005 (7)). Indivisible because the mark is only observable against a sending that happened. Expected at 600–800 changed lines.
+**Size:** The first path from the editor to the server's store and back to the mark: the send request, the per-recipe revision and digest on the device, the three marks, and the first `Mode` passed from `MainActivity` (FLOW-059 (11), FLOW-005 (7)). Indivisible because the mark is only observable against a sending that happened. Expected at 600–800 changed lines.
 **Note:** 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): the automatic sending this task was cut around no longer exists. The earlier gate-1 rejection (a muted account's recipes left through the outbox) has no object now; a muted account's send control is replaced by AUTH-006's statement (see the note of 2026-09-29). This task is the first to read the serverless `Mode`: `MainActivity` passes it, and `scripts/artefact.sh` gains the serverless APK.
 **Note:** 2026-09-29, third gate 1 authorised by the user after the second return: a muted account can be created in wave 1b (T-006 creates one when no verdict is obtained), so the send control's replacement for it is carried here — FLOW-059 (2) and the statement of AUTH-006 it names, its contents (4, 5, 7) and its absence for a full account (6). The statement's retry control (AUTH-006 (2–3, 8)) stays in wave 7 with AUTH-005; AUTH-004 (4), which also names media, stays in wave 6.
-**Criteria of these requirements carried elsewhere:** FLOW-059 (1) → T-026; (3) → wave 7; (7–8) → wave 5; (9) → wave 4 · FLOW-005 (1–2) → T-007; (4) → wave 5; (6) → wave 2 · FLOW-002 (1) → T-013; (2) → wave 4; (3–4) → T-008 · ACT-002 (1) → T-036; (3) → T-027; (4) → wave 8 · AUTH-026 (1–3, 6) → T-036; (4–5) → wave 7 · AUTH-006 (2–3, 8) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** 2026-09-29: spec/ @ 952398f inserted FLOW-059 (9), ACT-002 (3) and AUTH-026 (4), so the criterion numbers in this entry's map moved; no criterion of this task changed in wording.
+**Criteria of these requirements carried elsewhere:** FLOW-059 (1) → T-026; (3) → wave 7; (7–8) → wave 5; (9) → T-038; (10) → wave 4 · FLOW-005 (1–2) → T-007; (4) → wave 5; (6) → wave 2 · FLOW-002 (1) → T-013; (2) → wave 4; (3–4) → T-008 · ACT-002 (1) → T-036; (3) → T-026; (4) → T-027; (5) → wave 8 · AUTH-026 (1–3, 7) → T-036; (3–4) → T-026; (5–6) → wave 7 · AUTH-006 (2–3, 8) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1670,20 +1698,30 @@ when a divergent sending became a fork. Sending with no account offers creation.
 
 ### T-038 — A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's
 
-**Requirements:** FLOW-008, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** FLOW-008, FLOW-059, FLOW-066, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-028
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** The server's half of FLOW-008 — which version keeps the identity, and the answer that says a fork was made, a change of state alone included — is T-027's; this task is what the device does with that answer and with a server copy that changed underneath it.
-**Criteria of these requirements carried elsewhere:** FLOW-008 (2, 4–5) → T-027 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** 20260929 re-slice against spec/ @ 952398f (SD-039, SD-041 answered): FLOW-008 (6) now tells the owner as criterion 3 states. A sending whose answer was lost keeps its mark of changes not sent (FLOW-059 (9)); sent again, the server's answer that it already holds that content is taken as sent with the state the server holds, with no notice (FLOW-066 (1–3)), and an answer naming a fork already made tells the owner of it once (FLOW-066 (4)). The server half of FLOW-066 is T-027's.
+**Criteria of these requirements carried elsewhere:** FLOW-008 (2, 4–5, 7) → T-027 · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4–6, 11) → T-028; (7–8) → wave 5; (10) → wave 4 · FLOW-066 (1–5) → T-027 as well, at the server; (5) → T-027 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-008 — spec/70-flows/10-offline-and-sync.md*
 - Given a device holding changes not sent to a recipe, when the server's copy of that recipe changes, then the device keeps its own version and does not take the server's over it; the difference is settled when the device sends.
 - Given that outcome, when the server's answer reaches device B, then the owner is told a fork was created and why at that moment if the application is open, or when they next open it if it is not; the notice stays until they acknowledge it, is not shown again afterwards, and both recipes are reachable.
-- Given a recipe edited on device B while, on the server, nobody changed its content but it was submitted and became `pending`, `link_shared` or `published`, when device B sends it, then device B's version becomes a `private` fork naming it as parent, and the owner is told as criterion 2 states.
+- Given a recipe edited on device B while, on the server, nobody changed its content but it was submitted and became `pending`, `link_shared` or `published`, when device B sends it, then device B's version becomes a `private` fork naming it as parent, and the owner is told as criterion 3 states.
+
+*FLOW-059 — spec/70-flows/10-offline-and-sync.md*
+- Given a sending the server stored whose answer did not reach the device, when the recipe is shown, then FLOW-005 still marks it as holding changes not sent, and sending it again is answered by FLOW-066.
+
+*FLOW-066 — spec/70-flows/10-offline-and-sync.md*
+- Given a sending the server stored whose answer never reached the device, when the owner sends the recipe again, then no fork is created, no notice of FLOW-008 (3) is shown, and the recipe is marked as sent.
+- Given device A's edit sent to the server, when device B sends an edit that leaves the recipe exactly as device A left it, then the server's copy is unchanged, no fork is created and device B marks the recipe as sent.
+- Given a recipe that, on the server, was submitted and became `pending` since the device's copy was made, when the device sends content the same as the server's, then no fork is created and the device shows the recipe in `pending`.
+- Given a divergent sending that made a fork (FLOW-008) whose answer never reached the device, when the same sending arrives again, then the server answers with the fork it already created and creates no second one, and the owner is told of that fork once, as FLOW-008 (3) states.
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
@@ -1695,25 +1733,33 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-039, FLOW-008 (6) points to "criterion 2", which since 0745e70 states no notice) — docs/product/verdicts/20260928-T-038-gate1.md
+**Gate 1:** blocked-by-spec (SD-039, FLOW-008 (6) points to "criterion 2", which since 0745e70 states no notice) — docs/product/verdicts/20260928-T-038-gate1.md; re-sliced against spec/ @ 952398f after SD-039 and SD-041 resolved (FLOW-008 (6) replaced; FLOW-059 (9) and FLOW-066 (1–4) added as the device half); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-026 — Sending with no account offers to create one
 
-**Requirements:** FLOW-059, ACT-001, AUTH-001, FLOW-003, AUTH-004, L10N-001, A11Y-003, A11Y-005
-**Status:** blocked
+**Requirements:** FLOW-059, ACT-001, ACT-002, AUTH-001, AUTH-026, FLOW-003, AUTH-004, L10N-001, A11Y-003, A11Y-005
+**Status:** planned
 **Depends on:** T-038
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md, decisions/20260927-test-strategy.md
 **Note:** 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): writing needs no account any more (FLOW-002); the control that needs one is the send control of T-028, which is this task's trigger. The earlier gate-1 rejection — no control in wave 1 fired the offer — is answered by it.
-**Criteria of these requirements carried elsewhere:** FLOW-059 (2) → T-028; (3) → wave 7; (4–6, 10) → T-028; (7–8) → wave 5; (9) → wave 4 · ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7; (12) → wave 9 · AUTH-004 (1) → wave 3; (3) → wave 4; (4–5, 7) → wave 6; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** 20260929 re-slice against spec/ @ 952398f (SD-040 answered): the pool recipe whose sending created the account is that account's and is sent whatever the answer to the pool offer T-036 builds; the offer then says so and covers the rest of the pool (ACT-002 (3), AUTH-026 (3–4)). T-036 carries AUTH-026 (3) for the rest of the pool. A muted account can be created from the send control, so AUTH-004 (5) is carried here for sending, showing the statement of AUTH-006 that T-028 builds; its half for rating stays in wave 6.
+**Criteria of these requirements carried elsewhere:** FLOW-059 (2) → T-028; (3) → wave 7; (4–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4 · ACT-002 (1) → T-036; (2) → T-028; (4) → T-027; (5) → wave 8 · AUTH-026 (1–3, 7) → T-036; (5–6) → wave 7; (8) → T-028 · ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7; (12) → wave 9 · AUTH-004 (1) → wave 3; (3) → wave 4; (4, 7) → wave 6; (5) → wave 6 as well, for rating; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-059 — spec/70-flows/10-offline-and-sync.md*
-- Given a recipe written with no account active, when the person chooses to send it, then account creation is offered (AUTH-001) and the recipe is sent once the account exists, becoming that account's.
+- Given a recipe written with no account active, when the person chooses to send it, then account creation is offered (AUTH-001) and the recipe is sent once the account exists, becoming that account's whether the offer of AUTH-026 that follows is accepted or declined (ACT-002).
+
+*ACT-002 — spec/40-actors.md*
+- Given a recipe in the pool sent with no account active, when the account created for that sending exists, then that account is the recipe's owner whether the offer of AUTH-026 is accepted or declined, and the rest of the pool stays without an owner if it is declined.
+
+*AUTH-026 — spec/45-auth/25-accounts-on-a-device.md*
+- Given the offer declined, when the account's recipe book is shown, then nothing from the pool is in it but a recipe whose sending created the account (FLOW-059 (1)), and the pool is shown again whenever no account is active.
+- Given an account created by sending a recipe from the pool, when the offer is shown, then it states that this recipe is already in the account whatever the answer, and the offer covers the rest of the pool.
 
 *ACT-001 — spec/40-actors.md*
 - Given a clean installation, when the application is opened, then it is usable at once and nothing is created, asked for or generated.
@@ -1729,6 +1775,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 
 *AUTH-004 — spec/45-auth/10-creating-an-account.md*
 - Given no network connection at all, when an account is asked for, then nothing is created, not even a muted account, and FLOW-003 states that a connection is needed: a muted account is still an account, with a unique nickname (DOM-001) and three keys the server issues (AUTH-014).
+- Given a muted account, when it was created because the person asked to send a recipe or to rate, then AUTH-006 states at that moment that the action cannot proceed and why.
 
 *L10N-001 — spec/160-localization.md*
 - Given any screen, statement, warning or error in this specification, when it is shown, then it exists in both languages and neither falls back to the other.
@@ -1740,7 +1787,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-019) — docs/product/verdicts/20260927-T-026-gate1.md; re-sliced against spec/ @ ead1a44 after SD-019 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-026-gate1-2.md (no control in wave 1 fires the offer for a person with no account); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten: the send control is the trigger; re-gate due; re-gated: blocked-by-spec (SD-040, a pool recipe sent with no account against a declined pool offer) — docs/product/verdicts/20260928-T-026-gate1.md; noted for the re-slice once SD-040 is answered: a muted account can be created from the send control, so AUTH-004 (5) and the statement of AUTH-006 it names belong here, not in wave 6
+**Gate 1:** blocked-by-spec (SD-019) — docs/product/verdicts/20260927-T-026-gate1.md; re-sliced against spec/ @ ead1a44 after SD-019 resolved; re-gated: rejected — docs/product/verdicts/20260927-T-026-gate1-2.md (no control in wave 1 fires the offer for a person with no account); 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): rewritten: the send control is the trigger; re-gate due; re-gated: blocked-by-spec (SD-040, a pool recipe sent with no account against a declined pool offer) — docs/product/verdicts/20260928-T-026-gate1.md; noted for the re-slice once SD-040 is answered: a muted account can be created from the send control, so AUTH-004 (5) and the statement of AUTH-006 it names belong here, not in wave 6; re-sliced against spec/ @ 952398f after SD-040 resolved (FLOW-059 (1) replaced; ACT-002 (3), AUTH-026 (3–4) and AUTH-004 (5) added); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1776,7 +1823,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | DOM-012 — Submission maximum | 1–7 |
 | DOM-015 — The authored serving count is a whole number of one or more | 3 |
 | DOM-016 — The units are a closed list of twelve | 3 |
-| DOM-017 — An authored quantity is a value of its unit type's grid | 5–6 |
+| DOM-017 — An authored quantity is a value of its unit type's grid | 6–7 |
 | DOM-018 — A quantity published before a divisibility correction stays as written | 3 |
 | EXT-009 — The product sends nothing to a device | 3 |
 | FLOW-003 — What is refused while the server has not answered | 1–4, 7–11 |
@@ -1893,12 +1940,12 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | CAT-005 — The number of direct forks is stated | all |
 | CAT-008 — The fork number opens the recipes forked from it | all |
 | CON-003 — Immutability after first external visibility | 2 |
-| DOM-017 — An authored quantity is a value of its unit type's grid | 8 |
+| DOM-017 — An authored quantity is a value of its unit type's grid | 9 |
 | FLOW-002 — A recipe is written on the device, with no account and no connection | 2 |
 | FLOW-007 — A fork may be sent before its parent, and names it once the parent is published | all |
 | FLOW-015 — Forking twice is offered as the fork already held | all |
 | FLOW-024 — The editor is one screen in a fixed order | 3, 5 |
-| FLOW-059 — A recipe reaches the server only when its owner sends it | 9 |
+| FLOW-059 — A recipe reaches the server only when its owner sends it | 10 |
 | FORK-001 — What a fork inherits | all |
 | FORK-002 — A fork by another account carries no media and no description | all |
 | FORK-003 — The parent's media stays visible in the parent | 1–2 |
@@ -1953,7 +2000,7 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 | ACT-005 — A publishing ban stops what would make a recipe public, not the account | all |
 | ACT-006 — A publishing ban leaves published content in place | all |
 | ACT-007 — A banned account is told it is banned | all |
-| AUTH-004 — Without a verdict the account is created muted | 4–5, 7 |
+| AUTH-004 — Without a verdict the account is created muted | 4, 5 (for rating; its half for sending is T-026's), 7 |
 | AUTH-006 — A muted account is told what it is and what lifts it | 1, 4, 6–7 (again, for the controls of this wave; first carried by T-028 for the send control) |
 | CON-005 — Native Android is the only client surface in the MVP | 2 |
 | EXT-007 — A private link outside the application reveals nothing | all |
@@ -1970,11 +2017,11 @@ tasks, with its hand checks named, when the wave before it is on `develop`.
 
 ### Wave 7 — The account's life: signing in, replacing, recovering and deleting it
 
-The list of accounts on a device and the switch between them (AUTH-011 (1–5), AUTH-012 (3), AUTH-026 (4–6)) were sliced into T-037 for wave 1b and withdrawn after its gate-1 rejection of 2026-09-28 (docs/product/verdicts/20260928-T-037-gate1.md): a second account and a return to the pool are reached only through signing in and AUTH-011 (5), both in this wave. The ID T-037 is kept for the task this wave cuts, with its return count of 1 of 2.
+The list of accounts on a device and the switch between them (AUTH-011 (1–5), AUTH-012 (3), AUTH-026 (5–7) as spec/ @ 952398f numbers them) were sliced into T-037 for wave 1b and withdrawn after its gate-1 rejection of 2026-09-28 (docs/product/verdicts/20260928-T-037-gate1.md): a second account and a return to the pool are reached only through signing in and AUTH-011 (5), both in this wave. The ID T-037 is kept for the task this wave cuts, with its return count of 1 of 2.
 
 | Requirement | Criteria |
 |---|---|
-| AUTH-026 — What is made with no account is a pool, offered once to each account | 1 (again, for an account that signs in; first carried by T-036), 4–5, 6 (again, for the menu action; first carried by T-036) |
+| AUTH-026 — What is made with no account is a pool, offered once to each account | 1 (again, for an account that signs in; first carried by T-036), 5–6, 7 (again, for the menu action; first carried by T-036) |
 | AUTH-001 — An account appears when an action needs one | 4 |
 | AUTH-003 — A device with no free slot says when it will have one | all |
 | AUTH-005 — A muted account becomes full when a verdict and a slot allow it | all |
@@ -2026,7 +2073,7 @@ The list of accounts on a device and the switch between them (AUTH-011 (1–5), 
 | A11Y-008 — Colour is never the only carrier | 4 |
 | ABUSE-007 — A rights holder outside the product reaches it by a published address | all |
 | ACT-001 — Most of the product needs no account | 5 |
-| ACT-002 — Ownership is fixed at creation, or when the pool is moved | 4 |
+| ACT-002 — Ownership is fixed at creation, or when a pool recipe first gets an account | 5 |
 | ANL-001 — Nothing is measured about a person | all |
 | ANL-002 — The product can be described from what it already holds | all |
 | ANL-003 — Reach is taken from the distribution channel, not measured here | all |
@@ -2065,7 +2112,7 @@ The list of accounts on a device and the switch between them (AUTH-011 (1–5), 
 ### Wave 9 — Serverless mode and recipe files
 
 The mode is built with the first release and switched on by a later one (MVP-001 (6)). Each earlier task that adds a control
-serverless mode removes carries that control's own serverless criterion where the specification states one (FLOW-059 (10),
+serverless mode removes carries that control's own serverless criterion where the specification states one (FLOW-059 (11),
 FLOW-005 (7)); this wave carries the mode itself, the sweep of FLOW-062 (1), and recipe files.
 
 | Requirement | Criteria |
