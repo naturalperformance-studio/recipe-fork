@@ -63,8 +63,14 @@ class RecipeTest {
         val created = daysAgo(5)
         val untouched = Recipe.create(created, owner = null)
         assertEquals(created, untouched.newestKey)
-        val older = Recipe.create(daysAgo(6), owner = null)
-        assertEquals(listOf(untouched, older), listOf(older, untouched).sortedWith(NewestOwnFirst))
+        // Its creation falls between two edits: after one recipe's last edit and before another's. Putting
+        // never-edited drafts first or last, or ordering them by anything but their creation, moves it.
+        val editedEarlier = Recipe.create(daysAgo(20), owner = null).edited(daysAgo(6)) { it.copy(title = "earlier") }
+        val editedLater = Recipe.create(daysAgo(30), owner = null).edited(daysAgo(4)) { it.copy(title = "later") }
+        assertEquals(
+            listOf(editedLater, untouched, editedEarlier),
+            listOf(untouched, editedEarlier, editedLater).sortedWith(NewestOwnFirst),
+        )
     }
 
     @Test

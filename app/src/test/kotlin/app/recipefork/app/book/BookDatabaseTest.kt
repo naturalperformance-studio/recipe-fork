@@ -91,20 +91,30 @@ class BookDatabaseTest {
         recipes.forEach { assertEquals(it, repository.get(it.id)) }
     }
 
-    // FLOW-039 (1, 2, 5) as the book orders them. The published recipe was created before the untouched draft
-    // and last edited after it, so ordering it by its creation, or putting published recipes last, changes
-    // the order; its publication yesterday is a change of state and moves nothing.
+    // FLOW-039 (1, 2, 5) as the book orders them.
+    // - The old draft edited today comes first although it was created first: ordering by creation fails.
+    // - The published recipe was created before the older untouched draft and last edited after it, so ordering
+    //   it by its creation, or putting published recipes last, changes the order; its publication yesterday is a
+    //   change of state and moves nothing.
+    // - Two drafts were never edited: one created yesterday, after the published recipe's last edit, and one
+    //   created five days ago, before it. Only their creation places them — the recent one before the published
+    //   recipe, the older one after it — so putting never-edited drafts last, or first, or ordering them by
+    //   anything but their creation, changes the order.
     @Test
     fun theBookOrdersOwnRecipesByTheirLastChangeOfContent() = runBlocking {
         fun ago(days: Long) = now.minus(Duration.ofDays(days))
         val editedDraft = Recipe.create(ago(30), null).edited(now) { it.copy(title = "old draft edited today") }
         val published = Recipe.create(ago(10), null).edited(ago(2)) { it.copy(title = "published yesterday") }
             .inState(RecipeState.PRIVATE).inState(RecipeState.PENDING).inState(RecipeState.PUBLISHED)
-        val untouched = Recipe.create(ago(5), null).copy(title = "untouched draft created 5 days ago")
-        assertTrue(published.createdAt < untouched.createdAt && untouched.createdAt < published.contentChangedAt)
-        listOf(published, untouched, editedDraft).forEach { repository.save(it) }
+        val recentUntouched = Recipe.create(ago(1), null).copy(title = "untouched draft created yesterday")
+        val olderUntouched = Recipe.create(ago(5), null).copy(title = "untouched draft created 5 days ago")
+        listOf(recentUntouched, olderUntouched).forEach { assertEquals(it.createdAt, it.contentChangedAt) }
+        assertTrue(published.contentChangedAt < recentUntouched.createdAt && recentUntouched.createdAt < editedDraft.contentChangedAt)
+        assertTrue(published.createdAt < olderUntouched.createdAt && olderUntouched.createdAt < published.contentChangedAt)
+        // Saved in an order that is neither the expected one nor its reverse.
+        listOf(olderUntouched, editedDraft, recentUntouched, published).forEach { repository.save(it) }
         assertEquals(
-            listOf(editedDraft.title, published.title, untouched.title),
+            listOf(editedDraft.title, recentUntouched.title, published.title, olderUntouched.title),
             repository.ownNewest(10).first().map { it.title },
         )
     }

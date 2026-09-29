@@ -102,14 +102,44 @@ object LocalizationChecks {
         val patterns = ownResolvedStrings(context, res).map { value ->
             Regex(Regex.escape(value).replace(Regex("""%(\d+\$)?[sd]"""), """\\E.+\\Q"""))
         }
-        val shown = screen.onAllNodes(isRoot().not() or isRoot(), useUnmergedTree = true).fetchSemanticsNodes()
+        val shown = shownText(screen)
+        assertTrue("the screen shows no text", shown.isNotEmpty())
+        val foreign = shown.filter { it !in content && patterns.none { p -> p.matches(it) } }
+        assertEquals("text not taken from the resources of this language", emptyList<String>(), foreign)
+    }
+
+    /**
+     * L10N-001 (1) as the reader reads it: every text, description and action label shown, except the reader's
+     * own content listed in [content], is written in the script of the language in force — Cyrillic in Russian,
+     * Latin in English — whatever directory it came from. A Russian resource that holds English text, or the
+     * reverse, fails here although it exists in both directories.
+     */
+    fun assertScreenTextWrittenInItsLanguage(
+        screen: SemanticsNodeInteractionsProvider,
+        context: Context,
+        content: Set<String> = emptySet(),
+    ) {
+        val language = context.resources.configuration.locales[0].language
+        val script = when (language) {
+            "ru" -> Character.UnicodeScript.CYRILLIC
+            "en" -> Character.UnicodeScript.LATIN
+            else -> error("no script known for the language $language")
+        }
+        val shown = shownText(screen).filter { it !in content }
+        assertTrue("the screen shows no interface text", shown.isNotEmpty())
+        val foreign = shown.filter { text ->
+            val letters = text.filter(Char::isLetter)
+            letters.isEmpty() || letters.any { Character.UnicodeScript.of(it.code) != script }
+        }
+        assertEquals("text not written in $language", emptyList<String>(), foreign)
+    }
+
+    /** Every text, description and click-action label on [screen], as the screen reader can reach them. */
+    private fun shownText(screen: SemanticsNodeInteractionsProvider): List<String> =
+        screen.onAllNodes(isRoot().not() or isRoot(), useUnmergedTree = true).fetchSemanticsNodes()
             .flatMap { node ->
                 node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } +
                     node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
                     listOfNotNull(node.config.getOrNull(SemanticsActions.OnClick)?.label)
             }
-        assertTrue("the screen shows no text", shown.isNotEmpty())
-        val foreign = shown.filter { it !in content && patterns.none { p -> p.matches(it) } }
-        assertEquals("text not taken from the resources of this language", emptyList<String>(), foreign)
-    }
 }
