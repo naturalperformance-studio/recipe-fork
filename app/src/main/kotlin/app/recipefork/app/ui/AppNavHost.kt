@@ -12,7 +12,7 @@ import app.recipefork.app.recipe.RecipeRepository
 
 /** The application's destinations. */
 object Destinations {
-    const val LIBRARY = "library"
+    const val LIBRARY_ROUTE = "library"
 }
 
 /** The navigation host; the recipe book is where the application opens. */
@@ -23,7 +23,7 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
-    NavHost(navController, startDestination = Destinations.LIBRARY, modifier = modifier) {
-        composable(Destinations.LIBRARY) { LibraryScreen(session, recipes) }
+    NavHost(navController, startDestination = Destinations.LIBRARY_ROUTE, modifier = modifier) {
+        composable(Destinations.LIBRARY_ROUTE) { LibraryScreen(session, recipes) }
     }
 }

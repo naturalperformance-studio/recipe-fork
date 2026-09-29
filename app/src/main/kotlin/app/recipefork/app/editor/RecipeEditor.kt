@@ -28,7 +28,7 @@ class EditorEnvironment(
 
 /** The author's interface language (L10N-001): Russian where the interface is Russian, English otherwise. */
 fun interfaceLanguage(configuration: Configuration): RecipeLanguage =
-    if (configuration.locales[0].language == "ru") RecipeLanguage.RU else RecipeLanguage.EN
+    if (configuration.locales[0].language == RecipeLanguage.RU.name.lowercase()) RecipeLanguage.RU else RecipeLanguage.EN
 
 /**
  * A new recipe in `local`, in the active book — the pool's when no account is active (FLOW-042, FLOW-002) — whose
