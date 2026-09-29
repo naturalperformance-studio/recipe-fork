@@ -48,20 +48,182 @@ object LocalizationChecks {
         }
     }
 
-    private val hardcoded = listOf(
-        Regex("""\bText\(\s*"[^"]*\p{L}"""),
-        Regex("""\b(text|contentDescription|label|onClickLabel|placeholder|title)\s*=\s*"[^"]*\p{L}"""),
-        Regex("""makeText\([^,]+,\s*"[^"]*\p{L}"""),
-    )
-
-    /** L10N-001 (2): no interface text is written into the code in one language; it comes from resources. */
+    /**
+     * L10N-001 (2): no interface text is written into the code in one language; it comes from resources.
+     *
+     * Each Kotlin source is read whole — comments blanked, string literals (plain, raw, with templates) lexed —
+     * so a call reads the same however it is laid out across lines. Interface text is the value of:
+     *  - the text argument of `Text`/`BasicText` (first positional or `text =`), of `Toast.makeText` (second
+     *    positional or `text =`) and of `showSnackbar` (first positional, `message =` or `actionLabel =`);
+     *  - a named argument or assignment [uiOnlyNames] anywhere — `contentDescription = "…"`, `label = { … }`,
+     *    `placeholder = { … }`, `semantics { contentDescription = "…" }` and so on;
+     *  - a named argument or assignment [uiFileNames] (`text`, `title`, `message`) in a file that imports
+     *    Compose or Android widgets, where these names are the interface's; in the data layer they name the
+     *    reader's content.
+     * A value is the whole argument expression, lambdas included (`text = x.ifBlank { "…" }` is caught). It is
+     * fixed in the code when a string literal in it holds a letter outside its `$` templates and escapes;
+     * test tags, log messages, SQL and other non-interface strings are not in these places and are not read.
+     */
     fun assertNoHardcodedInterfaceText(sources: File = sourceDir) {
         val found = sources.walkTopDown().filter { it.extension == "kt" }.flatMap { file ->
-            file.readLines().mapIndexedNotNull { i, line ->
-                if (hardcoded.any { it.containsMatchIn(line) }) "${file.path}:${i + 1}: ${line.trim()}" else null
-            }
+            hardcodedInterfaceText(file.readText()).map { (line, literal) -> "${file.path}:$line: $literal" }
         }.toList()
         assertEquals("interface text fixed in the code", emptyList<String>(), found)
+    }
+
+    private val uiOnlyNames = listOf(
+        "contentDescription", "label", "onClickLabel", "placeholder", "stateDescription", "actionLabel",
+        "supportingText", "paneTitle",
+    )
+    private val uiFileNames = listOf("text", "title", "message")
+    private val uiImport = Regex("""^import (androidx\.compose|android\.widget|android\.app)\.""", RegexOption.MULTILINE)
+    private val textCall = Regex("""\b(Text|BasicText|makeText|showSnackbar)\s*\(""")
+
+    /** The position of the text among positional arguments, and the names it may be passed by, per call. */
+    private val textArgument = mapOf(
+        "Text" to (0 to setOf("text")),
+        "BasicText" to (0 to setOf("text")),
+        "makeText" to (1 to setOf("text")),
+        "showSnackbar" to (0 to setOf("message", "actionLabel")),
+    )
+
+    private class Literal(val start: Int, val end: Int, val hasLetter: Boolean)
+
+    /** Every string literal in [source] passed as interface text, as (line, literal) pairs. */
+    fun hardcodedInterfaceText(source: String): List<Pair<Int, String>> {
+        val (code, literals) = lex(source)
+        val literalAt = literals.associateBy { it.start }
+        fun inLiteral(i: Int) = literals.any { i >= it.start && i < it.end }
+        val values = mutableListOf<IntRange>()
+
+        textCall.findAll(code).filter { !inLiteral(it.range.first) }.forEach { call ->
+            val (position, names) = textArgument.getValue(call.groupValues[1])
+            val args = arguments(code, call.range.last + 1, literalAt)
+            args.filter { it.first == null }.getOrNull(position)?.let { values += it.second }
+            args.filter { it.first in names }.forEach { values += it.second }
+        }
+        val names = uiOnlyNames + if (uiImport.containsMatchIn(code)) uiFileNames else emptyList()
+        Regex("""\b(${names.joinToString("|")})\s*=(?!=)""").findAll(code)
+            .filter { !inLiteral(it.range.first) }
+            .forEach { values += expression(code, it.range.last + 1, literalAt) }
+
+        return literals.filter { lit -> lit.hasLetter && values.any { lit.start in it } }
+            .map { lit -> (source.substring(0, lit.start).count { it == '\n' } + 1) to source.substring(lit.start, lit.end) }
+    }
+
+    /** The arguments of the call whose `(` ends before [from]: (name or null, range of the value). */
+    private fun arguments(code: String, from: Int, literalAt: Map<Int, Literal>): List<Pair<String?, IntRange>> {
+        val args = mutableListOf<Pair<String?, IntRange>>()
+        var i = from
+        while (i < code.length) {
+            val value = expression(code, i, literalAt)
+            val text = code.substring(value.first, value.last + 1)
+            val named = Regex("""^\s*(\w+)\s*=(?!=)""").find(text)
+            if (text.isNotBlank()) args += (named?.groupValues?.get(1) to value)
+            i = value.last + 1
+            if (i >= code.length || code[i] != ',') break
+            i++
+        }
+        return args
+    }
+
+    /**
+     * The expression that starts at [from] (leading blanks and line breaks skipped): up to a `,`, `;`, closing
+     * bracket, or line break not followed by a continuing operator, outside brackets and string literals.
+     */
+    private fun expression(code: String, from: Int, literalAt: Map<Int, Literal>): IntRange {
+        var i = from
+        while (i < code.length && code[i].isWhitespace()) i++
+        val start = i
+        var depth = 0
+        while (i < code.length) {
+            literalAt[i]?.let { i = it.end; continue }
+            val c = code[i]
+            if (depth == 0 && (c == ',' || c == ';' || c == ')' || c == '}' || c == ']')) break
+            if (depth == 0 && c == '\n') {
+                val next = code.substring(i).trimStart().firstOrNull()
+                if (next == null || next !in ".?:+-*/&|") break
+            }
+            if (c == '(' || c == '{' || c == '[') depth++
+            if (c == ')' || c == '}' || c == ']') depth--
+            i++
+        }
+        return start until i
+    }
+
+    /** [source] with its comments blanked (line breaks kept), and its string literals. */
+    private fun lex(source: String): Pair<String, List<Literal>> {
+        val code = StringBuilder(source)
+        val literals = mutableListOf<Literal>()
+        fun blank(from: Int, to: Int) { for (k in from until to) if (code[k] != '\n') code[k] = ' ' }
+        var i = 0
+        while (i < source.length) {
+            when {
+                source.startsWith("//", i) -> {
+                    val end = source.indexOf('\n', i).let { if (it < 0) source.length else it }
+                    blank(i, end); i = end
+                }
+                source.startsWith("/*", i) -> {
+                    var depth = 0
+                    var j = i
+                    while (j < source.length) {
+                        if (source.startsWith("/*", j)) { depth++; j += 2 }
+                        else if (source.startsWith("*/", j)) { depth--; j += 2; if (depth == 0) break }
+                        else j++
+                    }
+                    blank(i, j); i = j
+                }
+                source[i] == '\'' -> {
+                    var j = i + 1
+                    if (j < source.length && source[j] == '\\') j++
+                    j++
+                    i = if (j < source.length && source[j] == '\'') j + 1 else i + 1
+                }
+                source[i] == '"' -> {
+                    val (end, hasLetter) = stringLiteral(source, i)
+                    literals += Literal(i, end, hasLetter); i = end
+                }
+                else -> i++
+            }
+        }
+        return code.toString() to literals
+    }
+
+    /** The end of the string literal opening at [start], and whether it holds a letter outside templates. */
+    private fun stringLiteral(source: String, start: Int): Pair<Int, Boolean> {
+        val raw = source.startsWith("\"\"\"", start)
+        var i = start + if (raw) 3 else 1
+        var hasLetter = false
+        while (i < source.length) {
+            val c = source[i]
+            when {
+                raw && source.startsWith("\"\"\"", i) -> {
+                    i += 3
+                    while (i < source.length && source[i] == '"') i++
+                    return i to hasLetter
+                }
+                !raw && c == '"' -> return (i + 1) to hasLetter
+                !raw && c == '\\' -> i += 2
+                c == '$' && source.startsWith("\${", i) -> {
+                    var depth = 1
+                    i += 2
+                    while (i < source.length && depth > 0) {
+                        when (source[i]) {
+                            '"' -> { i = stringLiteral(source, i).first; continue }
+                            '{' -> depth++
+                            '}' -> depth--
+                        }
+                        i++
+                    }
+                }
+                c == '$' && i + 1 < source.length && (source[i + 1].isLetter() || source[i + 1] == '_') -> {
+                    i++
+                    while (i < source.length && (source[i].isLetterOrDigit() || source[i] == '_')) i++
+                }
+                else -> { if (c.isLetter()) hasLetter = true; i++ }
+            }
+        }
+        return i to hasLetter
     }
 
     /**
