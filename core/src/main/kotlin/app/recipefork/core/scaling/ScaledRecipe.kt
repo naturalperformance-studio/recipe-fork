@@ -102,9 +102,26 @@ class ScaledRecipe private constructor(
         return ScaledRecipe(authoredServings, ingredients, requestedServings, kept + Fixing(ingredient, inLineUnit))
     }
 
-    /** Releases the fixing of the ingredient at [ingredient]; the latest remaining one sets the scale. */
+    /**
+     * Releases the fixing of the ingredient at [ingredient]; the latest remaining one sets the
+     * scale. Releasing the last one displays the recipe at [requestedServings], the count in force
+     * immediately before the first of the fixings (SCALE-017): a fixing never changes the
+     * requested count, and a change of count releases every fixing ([requestServings]), so the
+     * requested count is always the one in force before the first fixing. The approximate count
+     * shown during a fixing is never taken as a requested count.
+     */
     fun release(ingredient: Int): ScaledRecipe =
         ScaledRecipe(authoredServings, ingredients, requestedServings, fixings.filter { it.ingredient != ingredient })
+
+    /**
+     * The reader asks for [servings]: every fixing is released and the recipe is displayed at
+     * that count by SCALE-001, which is shown as the reader asked for it and not as approximate
+     * (SCALE-016).
+     */
+    fun requestServings(servings: Rational): ScaledRecipe {
+        ScaleFactor.forServings(servings, authoredServings)
+        return ScaledRecipe(authoredServings, ingredients, servings, emptyList())
+    }
 
     private fun authoredInLineUnit(i: Int): Rational {
         val authored = ingredients[i]

@@ -171,3 +171,106 @@ class Scale015ServingCountToNearestTest {
         assertApproximately(q(1, 2), countWhenFixing(25, 240))
     }
 }
+
+class Scale016ChangingTheCountReleasesEveryFixingTest {
+    private val chickenAndEggs = ScaledRecipe.of(
+        authoredServings = 4,
+        ingredients = listOf(AuthoredQuantity(GRAM, q(500)), AuthoredQuantity(PIECE, q(3), divisible = false)),
+    )
+
+    @Test
+    fun `chicken 500 g fixed at 300 g, asking for 6 servings shows 750 g and the line is no longer fixed`() {
+        val fixed = chickenAndEggs.fix(0, q(300), GRAM)
+        assertTrue(fixed.lines[0].fixed)
+        val six = fixed.requestServings(q(6))
+        val chicken = six.lines[0]
+        assertEquals(GRAM, chicken.quantity.unit)
+        assertEquals(q(750), chicken.quantity.value)
+        assertFalse(chicken.fixed)
+        assertNull(chicken.shortfall)
+        assertEquals(ScaleFactor.forServings(q(6), 4), six.factor)
+        assertTrue(six.fixings.isEmpty())
+    }
+
+    @Test
+    fun `with two fixings, one showing a shortfall, a change of count leaves neither fixed and no shortfall`() {
+        val both = chickenAndEggs.fix(0, q(300), GRAM).fix(1, q(3), PIECE)
+        assertTrue(both.lines.all { it.fixed })
+        assertEquals(q(300), both.lines[0].shortfall?.available) // the precondition: a shortfall is shown
+        for (count in listOf(q(2), q(4), q(6), q(1, 2))) {
+            val changed = both.requestServings(count)
+            changed.lines.forEach {
+                assertFalse(it.fixed, "at $count: $it")
+                assertNull(it.shortfall, "at $count: $it")
+            }
+            assertEquals(ScaleFactor.forServings(count, 4), changed.factor)
+        }
+    }
+
+    @Test
+    fun `after a change of count released the fixings, the count is the one asked for and not approximate`() {
+        val one = chickenAndEggs.fix(0, q(300), GRAM)
+        val two = one.fix(1, q(3), PIECE)
+        assertTrue(one.servingCount.approximate) // the precondition: a computed count is shown
+        for (fixedView in listOf(one, two)) {
+            for (count in listOf(q(6), q(3), q(4), q(1, 3))) {
+                assertEquals(ServingCount(count, approximate = false), fixedView.requestServings(count).servingCount)
+            }
+        }
+    }
+}
+
+class Scale017ReleasingTheLastFixingRestoresTheCountTest {
+    private val chickenAndEggs = ScaledRecipe.of(
+        authoredServings = 4,
+        ingredients = listOf(
+            AuthoredQuantity(GRAM, q(500)),
+            AuthoredQuantity(PIECE, q(3), divisible = false),
+            AuthoredQuantity(GRAM, q(350)),
+        ),
+    )
+
+    @Test
+    fun `opened at the authored 4 servings, fixing and releasing an ingredient displays 4 servings, nothing derived`() {
+        val released = chickenAndEggs.fix(0, q(300), GRAM).release(0)
+        assertEquals(ServingCount(q(4), approximate = false), released.servingCount)
+        assertEquals(ScaleFactor.ONE, released.factor)
+        assertEquals(listOf(q(500), q(3), q(350)), released.lines.map { it.quantity.value })
+        released.lines.forEach {
+            assertFalse(it.quantity.derived, "$it")
+            assertFalse(it.fixed, "$it")
+            assertNull(it.shortfall, "$it")
+        }
+        assertEquals(chickenAndEggs.lines, released.lines)
+    }
+
+    @Test
+    fun `set to 6, fixing two ingredients then releasing the second and then the first displays 6 servings`() {
+        val six = chickenAndEggs.requestServings(q(6))
+        val first = six.fix(0, q(300), GRAM)
+        val second = first.fix(1, q(1), PIECE)
+        assertEquals(q(1), second.servingCount.value) // ⅓ of the eggs: a computed 1.33 → ≈1
+        val releasedSecond = second.release(1)
+        assertEquals(first.factor, releasedSecond.factor)
+        assertEquals(q(2), releasedSecond.servingCount.value) // 0.6 × 4 = 2.4 → ≈2, still fixed
+        val releasedBoth = releasedSecond.release(0)
+        assertEquals(ServingCount(q(6), approximate = false), releasedBoth.servingCount)
+        assertEquals(ScaleFactor.forServings(q(6), 4), releasedBoth.factor)
+        assertEquals(listOf(q(750), q(5), q(525)), releasedBoth.lines.map { it.quantity.value }) // 4.5 eggs → 5
+        assertEquals(six.lines, releasedBoth.lines)
+    }
+
+    @Test
+    fun `once the fixing is released, the serving count is not marked as approximate`() {
+        val starts = listOf(chickenAndEggs, chickenAndEggs.requestServings(q(6)), chickenAndEggs.requestServings(q(1, 2)))
+        for (start in starts) {
+            val fixed = start.fix(0, q(300), GRAM)
+            assertTrue(fixed.servingCount.approximate)
+            val released = fixed.release(0)
+            assertFalse(released.servingCount.approximate, "from ${start.requestedServings}")
+            assertEquals(start.requestedServings, released.servingCount.value)
+            val twiceReleased = fixed.fix(2, q(700), GRAM).release(2).release(0)
+            assertEquals(ServingCount(start.requestedServings, approximate = false), twiceReleased.servingCount)
+        }
+    }
+}
