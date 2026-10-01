@@ -2,6 +2,7 @@ package app.recipefork.app.editor
 
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -16,7 +17,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
-import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -24,6 +24,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -38,8 +39,8 @@ import java.time.Instant
 
 /**
  * L10N-001 (1), A11Y-003 (1) and A11Y-005 (1) on every state of the screens this task adds — the empty own-recipes
- * view with its offer, the editor on a new recipe, its tag editor and the editor on a recipe that is not editable —
- * in each interface language.
+ * view with its offer, the editor on a new recipe, its tag editor and the editor on a recipe that is not editable
+ * (seeded, and opened on it directly) — in each interface language.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -55,11 +56,11 @@ class EditorLanguageAndAccessibilityTest {
     private val session = LibrarySession(SavedStateHandle())
     private val frozenTitle = "Plum cake"
     private val content = tagLabels(SAMPLE_DICTIONARIES) + frozenTitle
+    private val opened = mutableStateOf<RecipeId?>(null)
 
     /** What the screen reader says each element does, in one language. */
     private class Actions(
         val write: String,
-        val open: String,
         val back: String,
         val toRussian: String,
         val toEnglish: String,
@@ -71,7 +72,6 @@ class EditorLanguageAndAccessibilityTest {
 
     private val english = Actions(
         write = "Write a recipe",
-        open = "Open the recipe",
         back = "Return to My recipe book",
         toRussian = "Declare the recipe written in Russian",
         toEnglish = "Declare the recipe written in English",
@@ -83,7 +83,6 @@ class EditorLanguageAndAccessibilityTest {
 
     private val russian = Actions(
         write = "Написать рецепт",
-        open = "Открыть рецепт",
         back = "Вернуться в «Мою книгу рецептов»",
         toRussian = "Указать, что рецепт написан по-русски",
         toEnglish = "Указать, что рецепт написан по-английски",
@@ -132,7 +131,7 @@ class EditorLanguageAndAccessibilityTest {
 
     private fun everyScreen(w: Actions) {
         compose.setContent {
-            MaterialTheme { LibraryScreen(session, recipes, editor = EditorEnvironment(active, device.catalog(context))) }
+            MaterialTheme { LibraryOrEditor(session, recipes, EditorEnvironment(active, device.catalog(context)), opened) }
         }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
@@ -167,18 +166,16 @@ class EditorLanguageAndAccessibilityTest {
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.LANGUAGE_CLEAR), PATIENCE_MS)
         checkTheScreen(expectInteractive = 5)
 
-        // Back in the own view, the entry opens the recipe.
+        // Back in the own view, which lists the recipe.
         val id = requireNotNull(session.editing.value)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id)), PATIENCE_MS)
-        assertAnnounces(LibraryTags.entry(id), w.open)
 
-        // The editor on a recipe that cannot be changed.
+        // The editor on a recipe that cannot be changed, seeded and opened on it directly.
         val frozen = Recipe.create(Instant.parse("2026-09-29T13:00:00Z"), null).copy(title = frozenTitle, tags = setOf(10L))
             .inState(RecipeState.PUBLISHED)
         runBlocking { recipes.save(frozen) }
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(frozen.id.value)), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.entry(frozen.id.value)).performClick()
+        compose.runOnIdle { opened.value = frozen.id }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FROZEN), PATIENCE_MS)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.chosen(10)), PATIENCE_MS)
         checkTheScreen(expectInteractive = 1)

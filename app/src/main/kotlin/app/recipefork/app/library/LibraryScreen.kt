@@ -61,7 +61,8 @@ const val OWN_PAGE = 30
 
 /**
  * "My recipe book": the marked recipes and the recipes written in the active book (FLOW-034), and the editor on
- * an own recipe opened from it.
+ * a new recipe written from it (FLOW-042). An entry of the list opens nothing: a saved recipe opens as its card
+ * (FLOW-029), which is not built yet.
  */
 @Composable
 fun LibraryScreen(
@@ -147,7 +148,7 @@ private fun OwnList(recipes: RecipeRepository, session: LibrarySession, editor: 
         return
     }
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST)) {
-        items(loaded.orEmpty(), key = { it.recipeId }) { row -> OwnEntry(row) { session.openEditor(row.recipeId) } }
+        items(loaded.orEmpty(), key = { it.recipeId }) { OwnEntry(it) }
     }
 }
 
@@ -180,12 +181,11 @@ private fun NothingWritten(recipes: RecipeRepository, session: LibrarySession, e
 }
 
 @Composable
-private fun OwnEntry(row: OwnRecipeRow, open: () -> Unit) {
+private fun OwnEntry(row: OwnRecipeRow) {
     Column(
         Modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {}
-            .clickable(onClickLabel = stringResource(R.string.library_own_open_action), onClick = open)
             .testTag(LibraryTags.entry(row.recipeId))
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {

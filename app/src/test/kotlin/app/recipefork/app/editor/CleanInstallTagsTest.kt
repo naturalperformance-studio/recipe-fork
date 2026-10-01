@@ -23,12 +23,12 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.data.Network
 import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySnapshot
-import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.api.DictionariesDto
+import app.recipefork.core.recipe.RecipeId
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -64,6 +64,7 @@ class CleanInstallTagsTest {
     private val session = LibrarySession(SavedStateHandle())
     private val connected = TestDevice(context)
     private val clean = TestDevice(context)
+    private val opened = mutableStateOf<RecipeId?>(null)
 
     /** What the production server serves: the dictionaries the application ships, as the release step took them. */
     private val served: DictionariesDto =
@@ -98,7 +99,7 @@ class CleanInstallTagsTest {
         var device by mutableStateOf(connected)
         compose.setContent {
             MaterialTheme {
-                key(device) { LibraryScreen(session, recipes, editor = EditorEnvironment(active, device.catalog(context))) }
+                key(device) { LibraryOrEditor(session, recipes, EditorEnvironment(active, device.catalog(context)), opened) }
             }
         }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
@@ -116,7 +117,8 @@ class CleanInstallTagsTest {
         assertTrue(Connection.isOffline(context))
         device = clean
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id)), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.entry(id)).performClick()
+        // The same recipe, opened on it directly in the editor.
+        compose.runOnIdle { opened.value = RecipeId(id) }
         compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
 
         assertEquals(withAConnection, offeredTags())

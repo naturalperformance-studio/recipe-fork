@@ -3,6 +3,7 @@ package app.recipefork.app.editor
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -15,7 +16,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
@@ -24,7 +24,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
-import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -48,7 +47,10 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.time.Instant
 
-/** The editor as the author meets it, opened from the own-recipes view of the active book. */
+/**
+ * The editor as the author meets it: on a new recipe, opened by the offer of the own-recipes view of the active
+ * book; and on a seeded recipe, opened on it directly (the own-recipes view opens no saved recipe: FLOW-029).
+ */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
 class EditorScreenTest {
@@ -64,6 +66,7 @@ class EditorScreenTest {
     private val created = Instant.parse("2026-09-29T12:00:00Z")
     private var now = created.plusSeconds(60)
     private var shown = false
+    private val opened = mutableStateOf<RecipeId?>(null)
 
     @Before
     fun setUp() {
@@ -82,7 +85,7 @@ class EditorScreenTest {
 
     private fun show() {
         val environment = EditorEnvironment(active, device.catalog(context)) { now }
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, editor = environment) } }
+        compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
     }
@@ -96,24 +99,20 @@ class EditorScreenTest {
         return RecipeId(requireNotNull(session.editing.value))
     }
 
-    /** Seeds an own recipe in [state] and opens it from the own-recipes view. */
+    /** Opens the editor directly on the recipe [id], as a test fixture: no screen of the application routes there. */
+    private fun openDirectly(id: RecipeId) {
+        compose.runOnIdle { opened.value = id }
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
+    }
+
+    /** Seeds an own recipe in [state] and opens the editor on it directly. */
     private fun openOwn(state: RecipeState, sent: SentStatus = SentStatus.NEVER): Recipe {
         val recipe = Recipe.create(created, null)
             .copy(title = "Beetroot salad", language = RecipeLanguage.RU, tags = setOf(11L), sent = sent).inState(state)
         runBlocking { recipes.save(recipe) }
         if (!shown) show()
         shown = true
-        // The list composes only what fits on screen: the entry is scrolled to once the book has listed it.
-        compose.waitUntil(PATIENCE_MS) {
-            try {
-                compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToNode(hasTestTag(LibraryTags.entry(recipe.id.value)))
-                true
-            } catch (e: AssertionError) {
-                false
-            }
-        }
-        compose.onNodeWithTag(LibraryTags.entry(recipe.id.value)).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
+        openDirectly(recipe.id)
         return recipe
     }
 
@@ -184,7 +183,7 @@ class EditorScreenTest {
         assertEquals(RecipeLanguage.EN, stored(id).language)
     }
 
-    // FLOW-024 (6): the author leaves the editor by its back action and returns to the recipe from the own view.
+    // FLOW-024 (6): the author leaves the editor by its back action and returns to the same recipe, opened directly.
     @Test
     fun leavingByTheBackActionAndReturningKeepsTheOrderAndEverythingEntered() =
         leaveAndReturn { compose.onNodeWithTag(EditorTags.BACK).performClick() }
@@ -207,8 +206,7 @@ class EditorScreenTest {
         compose.onNodeWithTag(EditorTags.SCREEN).assertDoesNotExist()
         compose.onNode(hasText("Borscht") and hasAnyAncestor(hasTestTag(LibraryTags.OWN_LIST))).assertExists()
 
-        compose.onNodeWithTag(LibraryTags.entry(id.value)).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
+        openDirectly(id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.chosen(12)), PATIENCE_MS)
         assertEquals(listOf("Title", "Borscht"), compose.textsOf(EditorTags.TITLE).filter { it.isNotBlank() }.distinct())
         assertEquals(listOf("Language", "Russian"), languageShown())
@@ -365,8 +363,7 @@ class EditorScreenTest {
 
         Connection.offline(context)
         assertTrue(Connection.isOffline(context))
-        compose.onNodeWithTag(LibraryTags.entry(id.value)).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
+        openDirectly(id)
         compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
         assertEquals(online, offeredTags())
         assertEquals(SAMPLE_DICTIONARIES.tags.map { it.labelEn }.sorted(), offeredTags())

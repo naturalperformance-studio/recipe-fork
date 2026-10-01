@@ -2,21 +2,28 @@ package app.recipefork.app.editor
 
 import android.content.Context
 import android.net.ConnectivityManager
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.IdlingResource
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.dictionary.DictionaryCatalog
 import app.recipefork.app.dictionary.DictionarySeeding
 import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.SeededVersion
+import app.recipefork.app.library.LibraryScreen
+import app.recipefork.app.library.LibrarySession
+import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.api.DictionariesDto
 import app.recipefork.core.api.IngredientEntryDto
 import app.recipefork.core.api.TagDto
+import app.recipefork.core.recipe.RecipeId
 import org.robolectric.Shadows.shadowOf
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -73,6 +80,26 @@ class TestDevice(context: Context) {
     fun close() {
         database.close()
         threads.shutdown()
+    }
+}
+
+/**
+ * The own-recipes view, or — while [opened] holds a recipe — the editor opened on that recipe directly, through the
+ * editor screen's own entry point. This is a test fixture for what the editor allows on a seeded recipe; the
+ * own-recipes view itself opens no saved recipe (FLOW-029). The editor's back action and the system back close it.
+ */
+@Composable
+fun LibraryOrEditor(
+    session: LibrarySession,
+    recipes: RecipeRepository,
+    environment: EditorEnvironment,
+    opened: MutableState<RecipeId?>,
+) {
+    val id = opened.value
+    if (id != null) {
+        EditorScreen(id, recipes, environment, session.viewModelScope, onClose = { opened.value = null })
+    } else {
+        LibraryScreen(session, recipes, editor = environment)
     }
 }
 
