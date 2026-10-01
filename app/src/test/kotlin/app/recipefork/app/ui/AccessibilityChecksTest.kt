@@ -1,10 +1,14 @@
 package app.recipefork.app.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Dp
@@ -16,7 +20,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** A11Y-003 (1): the touch-target check measures each interactive node as laid out. */
+/** A11Y-003 (1): the touch-target check measures each interactive node as laid out, nested ones included. */
 @RunWith(AndroidJUnit4::class)
 class AccessibilityChecksTest {
     @get:Rule
@@ -56,5 +60,27 @@ class AccessibilityChecksTest {
     fun anElementOf48dpPasses() {
         show(48.dp, 48.dp)
         AccessibilityChecks.assertTouchTargets(compose)
+    }
+
+    // A11Y-003 (1): an element interactive only through a semantics action does not hide inside a merging parent.
+    @Test
+    fun aSmallSemanticsActionInsideAClickableParentFails() {
+        compose.setContent {
+            Box(Modifier.size(200.dp, 200.dp).clickable(onClickLabel = "outer") {}) {
+                Box(Modifier.size(24.dp, 24.dp).semantics { onClick(label = "inner") { true } })
+            }
+        }
+        assertCheckFailsOnSize()
+    }
+
+    // A11Y-003 (1): a small toggleable inside a merging parent is measured on its own and fails.
+    @Test
+    fun aSmallToggleableInsideAMergingParentFails() {
+        compose.setContent {
+            Box(Modifier.size(200.dp, 200.dp).semantics(mergeDescendants = true) { contentDescription = "row" }) {
+                Box(Modifier.size(24.dp, 24.dp).toggleable(value = false) {})
+            }
+        }
+        assertCheckFailsOnSize()
     }
 }

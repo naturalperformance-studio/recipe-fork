@@ -29,16 +29,20 @@ object AccessibilityChecks {
      *
      * The size read is the node's own layout size, not its touch bounds: Compose widens the touch bounds of any
      * clickable to the platform's minimum touch target, so a check on them could never fail.
+     *
+     * The nodes are read from the unmerged tree. On the merged tree an element that is interactive only through a
+     * semantics action, and does not merge its descendants itself, folds into a merging parent's node, and only
+     * the parent would be measured.
      */
     fun assertTouchTargets(screen: SemanticsNodeInteractionsProvider, min: Dp = 48.dp, expectAtLeast: Int = 1) {
-        val nodes = screen.onAllNodes(isInteractive).fetchSemanticsNodes()
+        val nodes = screen.onAllNodes(isInteractive, useUnmergedTree = true).fetchSemanticsNodes()
         assertTrue("expected at least $expectAtLeast interactive elements, found ${nodes.size}", nodes.size >= expectAtLeast)
         val small = nodes.filter { node ->
             val minPx = with(node.layoutInfo.density) { min.toPx() }
             node.size.width + 0.5f < minPx || node.size.height + 0.5f < minPx
         }.map { node ->
             val density = node.layoutInfo.density.density
-            "${announcedLabel(node).ifBlank { "node ${node.id}" }}: " +
+            "${labelWithin(node).ifBlank { "node ${node.id}" }}: " +
                 "${node.size.width / density} x ${node.size.height / density} dp laid out"
         }
         if (small.isNotEmpty()) fail("interactive elements smaller than $min by $min: $small")
@@ -63,6 +67,10 @@ object AccessibilityChecks {
         val text = node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
         return (description + text).joinToString(" ").trim()
     }
+
+    /** [node]'s own label or, on the unmerged tree where its text sits in its children, theirs. */
+    private fun labelWithin(node: SemanticsNode): String =
+        announcedLabel(node).ifBlank { node.children.joinToString(" ") { labelWithin(it) }.trim() }
 
     /** The label the screen reader speaks for [node]'s click action ("double tap to …"), if it has one. */
     fun clickActionLabel(node: SemanticsNode): String? = node.config.getOrNull(SemanticsActions.OnClick)?.label
