@@ -57,7 +57,7 @@ this wave, and no media is attached.
 | T-015 | A quantity goes into a step as a reference | T-014, T-019 | gated |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | gated |
-| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029 | gated |
+| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029, T-043 | gated |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | gated |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | gated |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | gated |
@@ -869,7 +869,7 @@ this wave, and no media is attached.
 
 **Requirements:** FLOW-029, FLOW-053, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005, L10N-009, DOM-015, FLOW-017
 **Status:** gated
-**Depends on:** T-008, T-029
+**Depends on:** T-008, T-029, T-043 (added 2026-10-01: T-043's expected files cover all of `:app`'s main code, so the two cannot run together)
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** The card is the screen the product exists for and its first version carries the layout every later card task builds on. Expected at 450–550 changed lines.
