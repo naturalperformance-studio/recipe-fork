@@ -1571,3 +1571,37 @@ Whether they wait on this entry is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** resolved
 **Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
+
+### SD-046 — Whether an unanswered sending that FLOW-066 answered by writing nothing is one "the server stored", and so what a later edited sending is made from, is read two ways (2026-10-02)
+**Requirement IDs:** FLOW-067 (statement, 3, 4); FLOW-066 (statement, 2, 3); FLOW-008 (statement, 2, 6, 8); read with FLOW-059 (4, 9) and the ADRs `spec/decisions/20261001-a-sending-is-made-from-what-the-unanswered-one-stored.md` (Decision, Alternatives considered) and `spec/decisions/20260929-a-sending-the-server-already-holds.md` (Decision, "A sending is stored whole or not at all")
+**Class:** ambiguity
+**What the gate hit:** T-048 builds the server's half of FLOW-067. That requirement takes
+a sending as made from "what the latest of those unanswered sendings that the server stored
+left there — the revision it wrote to the recipe, or the fork it created under FLOW-008".
+An unanswered sending answered under FLOW-066 wrote no revision and created no fork. The
+sequence, with two devices on one account: the server holds r1, and device A sends X, so
+r2 = X. Device B, made from r1, sends the same X (S1). FLOW-066 (2) answers it and writes
+nothing, and the answer is lost. The owner edits on device B to X′ and sends it (S2).
+
+Read, not chosen:
+- *S1 is not stored.* FLOW-067 (3) makes S2 "made from the revision the device held before
+  that sending, as if it had never been made", which is r1. The server is at r2 and X′
+  differs, so FLOW-008's statement and (2) fork device B's version and tell the owner.
+  FLOW-008 (8) does not apply, because r2 was device A's change.
+- *S1 is stored.* It was received whole and answered, and the 2026-09-29 ADR calls such a
+  sending stored. What it left is r2, so S2 is made from r2 and FLOW-059 (4) replaces the
+  copy with no fork and no notice. FLOW-067's Source supports this reading: "The device's
+  edit was made on top of what it sent". So does its ADR's rejected alternative: "a notice
+  about a divergence that never happened".
+
+What a user would see differs: a fork and a notice, or a replaced recipe. FLOW-066 (3) splits
+the same way, where S1 is answered `pending` with nothing written. FLOW-066 (1) and (4)
+answers do not split, because an earlier sending in the same run that wrote a revision or
+made a fork gives the same base either way. The task's design has to decide whether such a
+sending leaves a record. Gate 2 could not call either result right or wrong (TEAM-008).
+Found at T-048's gate 1 (docs/product/verdicts/20261002-T-048-gate1.md).
+**Stopped:** T-048. T-049 (device half of FLOW-067 (3, 4), which meets the same question in
+the mark and notice it shows) and T-028 depend on T-048 in the backlog. Whether they wait on
+this entry is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
