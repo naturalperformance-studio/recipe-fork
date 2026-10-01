@@ -49,6 +49,7 @@ this wave, and no media is attached.
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
 | T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | on-develop |
+| T-050 | A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not | T-044 | planned |
 | T-045 | No interface string of the release is fixed in the code in one language only | T-008 | in-progress |
 | T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
@@ -480,7 +481,7 @@ this wave, and no media is attached.
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** Split out of T-043 on 2026-10-01 (see the withdrawal note after T-045). A11Y-003 (1) is checked on the size of each interactive node as laid out, not on the touch bounds Compose widens to 48 dp for any clickable, so a node drawn smaller than 48 dp fails however its touch bounds read; spacing between targets is A11Y-003 (3), wave 8's, and is not checked here. The check is the one the library (T-007) and the editor (T-008) tests already call, so it applies to both screens through them; a self-test shows a node Compose widens failing. Both reviews of T-043 found this half sound, and the branch `task/T-043` (4b797c1) holds it and may be read as a reference. Should the check find an element under 48 dp on either screen, the fix is not in this entry's files: it is returned as an open item.
 **Note:** Review bar, set by the user on 2026-10-01 after the third run: from the fourth run on, a review defect of this task is a miss — an interactive element laid out under 48 dp in either direction that the check lets pass, on a screen or in a fixture built from controls the release uses. The wording of a failure message, and constructs no screen would contain, are listed under the review line for later screen tasks and do not return the task.
-**Criteria of this requirement carried elsewhere:** A11Y-003 (1) → every later screen task, through this check; (2) → T-018; (3–4) → wave 8
+**Criteria of this requirement carried elsewhere:** A11Y-003 (1) → every later screen task, through this check; (2) → T-018; (3–4) → wave 8; (5–7), added at spec/ @ bff8d33 → T-050
 
 **Acceptance criteria** (verbatim)
 
@@ -491,6 +492,29 @@ this wave, and no media is attached.
 **Review:** defects — build and suite ok; the check reads the merged tree, so an element interactive through a semantics action alone inside a merging parent folds into the parent and is not measured (a 24 dp `semantics { onClick }` inside a 200 dp `clickable` passed; on the unmerged tree it fails and both screens still pass) (AccessibilityChecks.kt:34); noted, not a defect: Material controls such as `Checkbox` (24 dp) and `IconButton` (40 dp) measure under 48 dp as laid out and need an explicit size; after the fifth run (164e4c3, one width-only fixture): pass — build and suite ok, the criterion checked by mutation in both directions in the self-tests and on both screens, worktree as it was. Questions the developer returned unanswered, for the gate: whether a scroll container is an interactive element (excluded today), whether a disabled element is measured (it is), and whether a node whose only action is focus, text selection or copying is interactive (focus excluded, selection and copying included); no current screen has any of them on later screens; worktree as it was. Returned to the developer; after the fix (unmerged tree, 2d5f551): defects — build and suite ok, every size mutation on both screens and in the fixtures caught; a nested element with no label of its own is named in the failure by its semantics id ("node 40"), not by its click label, test tag or labelled ancestor (AccessibilityChecks.kt:45); a node acted on only through custom actions, expand/collapse, dismiss or an IME action is never selected, so one at 24 dp passes (AccessibilityChecks.kt:20); worktree as it was. Second return: blocked, taken to the user; a third run authorised by the user on 2026-10-01: the failure names an element by its click label, test tag or labelled ancestor, every node with any semantics action is selected, and the KDoc states that a tap handled by bare `pointerInput` is invisible to a semantics check; if its review finds defects again, it goes to the user (there is nothing left to split); after the third run (c8d8895): defects — build and suite ok, every size mutation on both screens and every selection and naming weakening caught; a small unlabelled element inside a merging ancestor that has a click label or test tag but no text is named by its semantics id, and the message wrongly says no action label exists (AccessibilityChecks.kt:103-108; on each such screen A11Y-005 fails too); worktree as it was. Blocked, taken to the user; a fourth run authorised by the user on 2026-10-01 for that naming defect, with the review bar below; after the fourth run (8fcfca1): defects — build and suite ok, no miss (18 screen mutations, 900 fixture combinations, every weakening but one caught); removing the width comparison fails no test, since no fixture is short in width alone (AccessibilityChecksTest.kt:81); worktree as it was. The user read that as within the bar on 2026-10-02 and authorised a fifth run to add the fixture; notes for later screen tasks: no self-test for an element whose only action is OnLongClick, SetProgress or Collapse; Material `Checkbox` (24 dp) and `IconButton` (40 dp) need an explicit size
 **Gate 2:** accepted — docs/product/verdicts/20261002-T-044-gate2.md
 **Returns:** 2 of 2, plus a third, fourth and fifth run the user authorised (gate 1 · reviewer · gate 2 share the count)
+
+### T-050 — A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not
+
+**Requirements:** A11Y-003
+**Status:** planned
+**Depends on:** T-044
+**Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecksTest.kt`
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Size:** about 100–200 changed lines: three rules of the check and their self-tests.
+**Note:** Cut on 2026-10-02 after spec/ @ bff8d33 defined the interactive element of A11Y-003 and added criteria 5 to 7, answering the three questions gate 2 of T-044 named (`docs/product/verdicts/20261002-T-044-gate2.md`, item b). The check T-044 put on `develop` excludes scrolling containers and selects text whose only action is selection or copying; both now contradict the specification. This task changes the check that every screen test calls, so the criteria hold on every screen through it: a scrolling container is selected and measured across its scroll direction only; a disabled control is measured, and a self-test shows a control measured the same size disabled and enabled; a node whose only actions are focus, selection or copying is not selected, and a link inside text is. The library and the editor tests run the changed check; whatever it finds there is returned as an open item, not fixed here. The review bar of T-044 applies: a defect is a miss, a test that does not fail once the behaviour it covers is removed, or a failing build or suite.
+**Criteria of this requirement carried elsewhere:** A11Y-003 (1) → T-044, and every later screen task through the check; (2) → T-018; (3–4) → wave 8
+
+**Acceptance criteria** (verbatim)
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given a container that scrolls, when it is measured across the direction it scrolls in, then it is at least 48 dp — a strip that scrolls sideways at least 48 dp tall, a list that scrolls down at least 48 dp wide.
+- Given a disabled control, when it is measured, then its touch target is the one it has when enabled, and it does not change size when it becomes enabled.
+- Given text whose only answer to a touch is focus, selection or copying, when the screen is measured, then that text is not measured; a separate control that copies it is, and a link inside text is.
+
+**Gate 1:** —
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-045 — No interface string of the release is fixed in the code in one language only
 
