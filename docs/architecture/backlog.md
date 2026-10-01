@@ -52,7 +52,7 @@ this wave, and no media is attached.
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
 | T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | on-develop |
 | T-050 | A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not | T-044 | in-progress |
-| T-045 | No interface string of the release is fixed in the code in one language only | T-008 | in-progress |
+| T-045 | No interface string of the release is fixed in the code in one language only | T-008 | blocked |
 | T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
@@ -521,7 +521,7 @@ this wave, and no media is attached.
 ### T-045 — No interface string of the release is fixed in the code in one language only
 
 **Requirements:** L10N-001
-**Status:** in-progress
+**Status:** blocked
 **Depends on:** T-008
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/LocalizationChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/InterfaceStringsTest.kt` · `app/src/test/kotlin/app/recipefork/app/ui/l10n/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/**` · `app/src/main/java/**` · `app/src/main/res/values/strings_*.xml` · `app/src/main/res/values-ru/strings_*.xml` · `core/src/main/kotlin/app/recipefork/core/**` · `core/src/test/kotlin/app/recipefork/core/**` · not `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks*.kt` (T-044's)
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -537,7 +537,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 **Gate 1:** accepted — docs/product/verdicts/20261001-T-045-gate1.md
-**Review:** defects — build and suite ok; every T-043 hole and the new probes caught (aliases, raw strings, `String.format`, Java text blocks, a same-named holder elsewhere); a programming-error call is still owned by name: a `error`/`require` inherited from a class in another file, or a member of an implicit receiver (`with(Say) { error(…) }`), passes a listed message as plain text (CodeLiterals.kt:159, 210); no test fails when Java files stop being listed (CodeLiterals.kt:67); noted: no test keeps `ScaleFactor` from becoming a data class; worktree as it was. Returned to the developer; after the fix (7cc07d5): defects — build and suite ok, every earlier hole and new probes caught; an unqualified `error` in a class whose companion object extends a class of another file, or in a class nested in such a class, still passes a listed message (CodeLiterals.kt:305-325); a supertype written `Any` is taken for `kotlin.Any` though an import alias may name another class `Any` (CodeLiterals.kt:315); no test fails when the Java throw condition is removed (CodeLiterals.kt:413) or when Kotlin's same-file declaration clause is removed (CodeLiterals.kt:253); worktree as it was. Second return: blocked, taken to the user; a third run authorised by the user on 2026-10-01: a programming-error message counts only in a fully qualified call (`kotlin.require`, `kotlin.check`, `kotlin.error`, `kotlin.requireNotNull`, `kotlin.checkNotNull`, and `java.lang.IllegalArgumentException`/`IllegalStateException` built in a `throw`), with the review bar below; the third run's review did not happen: the reviewer wrote a probe into the main tree's `LibraryScreen.kt` while running its tests in the worktree, was stopped on 2026-10-02 and left a mutation in `CodeLiterals.kt:243`; both restored on the user's word; not a return, the review is run again
+**Review:** defects — build and suite ok; every T-043 hole and the new probes caught (aliases, raw strings, `String.format`, Java text blocks, a same-named holder elsewhere); a programming-error call is still owned by name: a `error`/`require` inherited from a class in another file, or a member of an implicit receiver (`with(Say) { error(…) }`), passes a listed message as plain text (CodeLiterals.kt:159, 210); no test fails when Java files stop being listed (CodeLiterals.kt:67); noted: no test keeps `ScaleFactor` from becoming a data class; worktree as it was. Returned to the developer; after the fix (7cc07d5): defects — build and suite ok, every earlier hole and new probes caught; an unqualified `error` in a class whose companion object extends a class of another file, or in a class nested in such a class, still passes a listed message (CodeLiterals.kt:305-325); a supertype written `Any` is taken for `kotlin.Any` though an import alias may name another class `Any` (CodeLiterals.kt:315); no test fails when the Java throw condition is removed (CodeLiterals.kt:413) or when Kotlin's same-file declaration clause is removed (CodeLiterals.kt:253); worktree as it was. Second return: blocked, taken to the user; a third run authorised by the user on 2026-10-01: a programming-error message counts only in a fully qualified call (`kotlin.require`, `kotlin.check`, `kotlin.error`, `kotlin.requireNotNull`, `kotlin.checkNotNull`, and `java.lang.IllegalArgumentException`/`IllegalStateException` built in a `throw`), with the review bar below; the third run's review did not happen: the reviewer wrote a probe into the main tree's `LibraryScreen.kt` while running its tests in the worktree, was stopped on 2026-10-02 and left a mutation in `CodeLiterals.kt:243`; both restored on the user's word; not a return, the review is run again; a second attempt stopped on the T-050 gate's own writes under docs/ (the rule was too wide; not a return); after the third run (28628b0): defects — build and suite ok, 97 of 105 condition removals caught; literals pass through a non-Room annotation that Room's name resolves to (a nested `Query` in a supertype of another file, a release class named `androidx`) (CodeLiterals.kt:292-302, 346-375); letters outside the Basic Multilingual Plane are not seen (CodeLiterals.kt:213, 336); an `<item type="string">` resource in one language passes (LocalizationChecks.kt:32, 48); conditions no test fails without at CodeLiterals.kt:153, 158-163, 348, 374 and CodeTextCheck.kt:59; worktree as it was. Blocked, taken to the user
 **Gate 2:** —
 **Returns:** 2 of 2, plus a third run the user authorised (gate 1 · reviewer · gate 2 share the count)
 
@@ -1473,7 +1473,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-048 | A sending after the device's own unanswered sending is made from what that sending stored, at the server | T-046 | planned |
 | T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-042, T-046, T-048, T-036, T-025, T-034 | gated |
 | T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | gated |
-| T-049 | A sending after a lost answer is made from what the server holds, on the device | T-038, T-048 | planned |
+| T-049 | A sending after a lost answer is made from what the server holds, on the device | T-038, T-048 | gated |
 | T-026 | Sending with no account offers to create one | T-049 | gated |
 | T-047 | A pool recipe whose account was created muted, or whose sending was refused, waits in that account's book | T-026 | gated |
 
@@ -1947,7 +1947,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 ### T-049 — A sending after a lost answer is made from what the server holds, on the device
 
 **Requirements:** FLOW-067, FLOW-059
-**Status:** planned
+**Status:** gated
 **Depends on:** T-038, T-048
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/library/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1971,7 +1971,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a recipe the device holds as sent, when the server no longer holds it — its store restored from a copy older than the recipe's sending (QUAL-008), or the recipe deleted on another device of the account before this device learned of it (ST-010 (2)) — and the owner sends it, then the server creates it again in `private` with the same identity, owned by the sending account, as on a first sending, and FLOW-005 marks it as sent.
 - Given a recipe whose first sending the server stored and whose answer did not reach the device, so that the device holds no revision for it, when the owner sends it again, edited or not, then the server treats the sending as made from the recipe's first revision: it replaces the server's copy if that copy has not changed since (criterion 4), FLOW-008 governs if another device changed it, and FLOW-066 governs if the content is the same.
 
-**Gate 1:** accepted — docs/product/verdicts/20261002-T-049-gate1.md; spec/ @ 71ea18a added FLOW-067 (3–4) (an unanswered sending FLOW-066 wrote nothing for counts as stored) and renumbered the rest; both added; re-gate due
+**Gate 1:** accepted — docs/product/verdicts/20261002-T-049-gate1.md; spec/ @ 71ea18a added FLOW-067 (3–4) (an unanswered sending FLOW-066 wrote nothing for counts as stored) and renumbered the rest; both added; re-gate due; re-gated: accepted — docs/product/verdicts/20261002-T-049-gate1-2.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
