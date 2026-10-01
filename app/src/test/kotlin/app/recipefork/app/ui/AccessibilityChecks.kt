@@ -24,17 +24,24 @@ object AccessibilityChecks {
             SemanticsProperties.ToggleableState in config
     }
 
-    /** A11Y-003 (1): every interactive element's touch target is at least [min] by [min]. */
+    /**
+     * A11Y-003 (1): every interactive element is at least [min] by [min] as laid out.
+     *
+     * The size read is the node's own layout size, not its touch bounds: Compose widens the touch bounds of any
+     * clickable to the platform's minimum touch target, so a check on them could never fail.
+     */
     fun assertTouchTargets(screen: SemanticsNodeInteractionsProvider, min: Dp = 48.dp, expectAtLeast: Int = 1) {
         val nodes = screen.onAllNodes(isInteractive).fetchSemanticsNodes()
         assertTrue("expected at least $expectAtLeast interactive elements, found ${nodes.size}", nodes.size >= expectAtLeast)
-        nodes.forEach { node ->
-            val bounds = node.touchBoundsInRoot
+        val small = nodes.filter { node ->
             val minPx = with(node.layoutInfo.density) { min.toPx() }
-            if (bounds.width + 0.5f < minPx || bounds.height + 0.5f < minPx) {
-                fail("${announcedLabel(node)}: touch target ${bounds.width}x${bounds.height} px is below $min ($minPx px)")
-            }
+            node.size.width + 0.5f < minPx || node.size.height + 0.5f < minPx
+        }.map { node ->
+            val density = node.layoutInfo.density.density
+            "${announcedLabel(node).ifBlank { "node ${node.id}" }}: " +
+                "${node.size.width / density} x ${node.size.height / density} dp laid out"
         }
+        if (small.isNotEmpty()) fail("interactive elements smaller than $min by $min: $small")
     }
 
     /**
