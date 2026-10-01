@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-10-01
+updated: 2026-10-02
 ids: []
 ---
 
@@ -207,6 +207,11 @@ server" (2026-09-28).
 the device cannot tell whether the server stored it (FLOW-059 (9)). The recipe
 keeps the mark it had (FLOW-005 (8)), and the next sending is made from what the
 latest stored one left there (FLOW-067).
+
+**Interactive element** — anything that answers a tap, a long press, a drag or a
+swipe with an action of the product, including a link inside text and a disabled
+control, and any container that scrolls; not text whose only answer is focus,
+selection or copying. What the touch-target rule measures (A11Y-003).
 
 **Recipe book** — the interface name, "My recipe book" («Моя книга рецептов»), of
 what this specification calls the favourites section: the recipes a person found

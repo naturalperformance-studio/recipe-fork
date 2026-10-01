@@ -1,7 +1,7 @@
 ---
 slug: A11Y
 status: closed
-updated: 2026-09-27
+updated: 2026-10-02
 ids: [A11Y-001, A11Y-002, A11Y-003, A11Y-004, A11Y-005, A11Y-006, A11Y-007,
   A11Y-008]
 ---
@@ -69,6 +69,11 @@ checked 2026-09-21). The numbers are borrowed; the conformance claim is not
 The system shall give every interactive element a touch target of at least 48 by
 48 density-independent pixels, and at least 56 by 56 on the cooking card.
 
+An interactive element is anything that answers a tap, a long press, a drag or a
+swipe with an action of the product — a link inside text included, and a control
+included while it is disabled — and any container that scrolls. Text whose only
+answer is focus, selection or copying is not one.
+
 **Acceptance criteria**
 - Given any screen, when each interactive element is measured, then its touch
   target is at least 48 by 48 dp, whatever the element looks like.
@@ -80,9 +85,24 @@ The system shall give every interactive element a touch target of at least 48 by
 - Given a control smaller than its target by design, when it is touched near its
   edge, then it still responds, because the target is the rule and not the
   drawing.
+- Given a container that scrolls, when it is measured across the direction it
+  scrolls in, then it is at least 48 dp — a strip that scrolls sideways at least
+  48 dp tall, a list that scrolls down at least 48 dp wide.
+- Given a disabled control, when it is measured, then its touch target is the one
+  it has when enabled, and it does not change size when it becomes enabled.
+- Given text whose only answer to a touch is focus, selection or copying, when the
+  screen is measured, then that text is not measured; a separate control that
+  copies it is, and a link inside text is.
 
 **Verification:** measure every interactive element on the bench, with the
-cooking card measured separately.
+cooking card measured separately; include every scrolling container across its
+scroll direction and every control in its disabled state.
+**Correction, 2026-10-02:** "interactive element" was defined nowhere, and gate 2
+of T-044 (`docs/product/verdicts/20261002-T-044-gate2.md`, item b) named three
+cases it could not read: a scrolling container, a disabled control, and text
+that only takes focus or selection. By user decision of that date the definition
+and criteria 5 to 7 are added. See
+[ADR — what an interactive element is](decisions/20261002-what-an-interactive-element-is.md).
 **Source:** 48 by 48 dp is the Android platform guidance, chosen because it never
 falls below about 7 mm on any screen size or density
 ([Touch target size, Android Accessibility Help](https://support.google.com/accessibility/android/answer/7101858?hl=en),

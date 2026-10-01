@@ -2,7 +2,7 @@
 
 > **NOT READY — 3 questions must be answered before MVP.**
 > Sections: 27 closed · 0 blocked · 0 open · 1 n/a.
-> Blocking: OQ-016, OQ-029, OQ-030. Last updated 2026-10-01.
+> Blocking: OQ-016, OQ-029, OQ-030. Last updated 2026-10-02.
 > Every section of the first release is written. What is open before it are three
 > questions whose answers change no requirement and hold the store listing
 > instead (MVP-003). Section `import` is written ahead and is outside the first
@@ -46,6 +46,9 @@
 > the device's own unanswered sending was forked by FLOW-008 and not forked by
 > FLOW-066 (1). The product owner answered it on 2026-10-01 — the sending is made
 > from what the unanswered one stored — and it is written as FLOW-067.
+> Gate 2 of T-044 then found "interactive element" in A11Y-003 defined nowhere; the
+> product owner defined it on 2026-10-02 — a scrolling container and a disabled
+> control are measured, text that only takes focus or selection is not.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -63,7 +66,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 
 | File | Slug | Status | What it is for |
 |---|---|---|---|
-| [10-glossary/](10-glossary/00-index.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key, operational signal, openings, session, sign-in secret, sent, unanswered sending, pool, recipe book, serverless mode, recipe file and 74 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
+| [10-glossary/](10-glossary/00-index.md) | GLOSS | closed | Terms that mean something specific here — fork, parent, frozen, private link, unit type, derived, counted report, net score, device slot, unpublished allowance, deletion key, operational signal, openings, session, sign-in secret, sent, unanswered sending, interactive element, pool, recipe book, serverless mode, recipe file and 74 more — each pointing at the requirement that decides it. Holds no requirements and is never a second source. |
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked; and, looked up on 2026-09-27, the applications that import recipes from social networks — all of which keep what they import private. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
@@ -185,6 +188,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20261001-a-recipe-the-server-lost-is-sent-as-new.md](decisions/20261001-a-recipe-the-server-lost-is-sent-as-new.md) | accepted, adds FLOW-059 (13), qualifies ST-010 (2) | A sending of a recipe the server no longer holds creates it again in `private`, with its identity. |
 | [20261001-a-sending-with-no-revision-is-made-from-the-first.md](decisions/20261001-a-sending-with-no-revision-is-made-from-the-first.md) | accepted, adds FLOW-059 (14); generalised by 20261001-a-sending-is-made-from-what-the-unanswered-one-stored | A sending that names no revision for a recipe the server holds is taken as made from its first revision. |
 | [20261001-a-sending-is-made-from-what-the-unanswered-one-stored.md](decisions/20261001-a-sending-is-made-from-what-the-unanswered-one-stored.md) | accepted, adds FLOW-067 and FLOW-008 (8), narrows FLOW-066 (1) and FLOW-059 (9) | A sending after the device's own unanswered sending is made from what that sending stored — a revision or a fork; an edit in between is not a divergence. |
+| [20261002-what-an-interactive-element-is.md](decisions/20261002-what-an-interactive-element-is.md) | accepted, completes A11Y-003 | A scrolling container is measured across its scroll, a disabled control at its enabled size; text that only takes focus or selection is not measured. |
 
 ## C4 context
 
