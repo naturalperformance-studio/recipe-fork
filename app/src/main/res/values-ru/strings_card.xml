@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="card_back">Назад</string>
+    <string name="card_back_action">Вернуться в «Мою книгу рецептов»</string>
+    <string name="card_edit">Изменить</string>
+    <string name="card_edit_action">Открыть этот рецепт в редакторе</string>
+    <string name="card_servings">Порций: %1$d</string>
+    <string name="card_ingredients">Ингредиенты</string>
+    <string name="card_steps">Шаги</string>
+    <string name="card_unnamed_ingredient">Ингредиент без названия</string>
+    <string name="card_missing">Этого рецепта больше нет в этой книге рецептов.</string>
+</resources>

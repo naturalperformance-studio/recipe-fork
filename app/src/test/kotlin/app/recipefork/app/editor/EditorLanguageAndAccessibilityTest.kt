@@ -18,6 +18,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.library.LibrarySession
+import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
@@ -169,6 +170,7 @@ class EditorLanguageAndAccessibilityTest {
         // Back in the own view, which lists the recipe.
         val id = requireNotNull(session.editing.value)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
+        compose.backThroughTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id)), PATIENCE_MS)
 
         // The editor on a recipe that cannot be changed, seeded and opened on it directly.

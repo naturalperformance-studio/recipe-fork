@@ -23,6 +23,7 @@ import app.recipefork.core.recipe.Timer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlin.time.Duration.Companion.minutes
 
 /** The recipes of the active book, read from and written to the device alone (FLOW-038, FLOW-043). */
@@ -39,7 +40,21 @@ class RecipeRepository(private val book: ActiveBook) {
 
     suspend fun get(id: RecipeId): Recipe? = book.database.recipes().get(id.value)?.toRecipe()
 
+    /**
+     * The recipe [id] of the active book as it is now and after every later write to it; null while the book
+     * holds no such recipe. A screen that shows it never shows a version older than the last write.
+     */
+    fun observe(id: RecipeId): Flow<Recipe?> = book.open.flatMapLatest { open ->
+        open.database.invalidationTracker.createFlow(*RECIPE_TABLES)
+            .map { open.database.recipes().get(id.value)?.toRecipe() }
+    }
+
     suspend fun count(): Int = book.database.recipes().count()
+
+    private companion object {
+        /** Every table a recipe's rows live in. */
+        val RECIPE_TABLES = arrayOf("recipe", "ingredient", "step", "step_reference", "media", "recipe_tag")
+    }
 }
 
 internal fun Recipe.toRows(): RecipeRows {

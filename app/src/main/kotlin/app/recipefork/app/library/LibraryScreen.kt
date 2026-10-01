@@ -44,6 +44,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.recipefork.app.R
 import app.recipefork.app.book.OwnRecipeRow
+import app.recipefork.app.card.CardEnvironment
+import app.recipefork.app.card.CardScreen
+import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.EditorScreen
 import app.recipefork.app.editor.interfaceLanguage
@@ -61,8 +64,8 @@ const val OWN_PAGE = 30
 
 /**
  * "My recipe book": the marked recipes and the recipes written in the active book (FLOW-034), and the editor on
- * a new recipe written from it (FLOW-042). An entry of the list opens nothing: a saved recipe opens as its card
- * (FLOW-029), which is not built yet.
+ * a new recipe written from it (FLOW-042). An own recipe's entry opens its card (FLOW-029 (1)); the card's edit
+ * action opens the editor on it, and leaving the editor shows that card again.
  */
 @Composable
 fun LibraryScreen(
@@ -70,10 +73,21 @@ fun LibraryScreen(
     recipes: RecipeRepository,
     modifier: Modifier = Modifier,
     editor: EditorEnvironment = rememberEditorEnvironment(),
+    card: CardEnvironment = rememberCardEnvironment(),
 ) {
     val editing by session.editing.collectAsState()
     editing?.let { id ->
         EditorScreen(RecipeId(id), recipes, editor, session.viewModelScope, onClose = session::closeEditor, modifier = modifier)
+        return
+    }
+    val viewing by session.viewing.collectAsState()
+    viewing?.let { id ->
+        CardScreen(
+            RecipeId(id), recipes, card,
+            onBack = session::closeCard,
+            onEdit = { session.openEditor(id) },
+            modifier = modifier,
+        )
         return
     }
     val view by session.view.collectAsState()
@@ -147,8 +161,15 @@ private fun OwnList(recipes: RecipeRepository, session: LibrarySession, editor: 
         NothingWritten(recipes, session, editor)
         return
     }
-    LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST)) {
-        items(loaded.orEmpty(), key = { it.recipeId }) { OwnEntry(it) }
+    Column(Modifier.fillMaxSize()) {
+        // A book that lists recipes still offers to write one, above the list and never scrolled away (FLOW-042 (5)).
+        if (loaded != null) {
+            WriteButton(R.string.library_own_new, LibraryTags.NEW, recipes, session, editor, Modifier.padding(16.dp))
+            HorizontalDivider()
+        }
+        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST)) {
+            items(loaded.orEmpty(), key = { it.recipeId }) { row -> OwnEntry(row) { session.openCard(row.recipeId) } }
+        }
     }
 }
 
@@ -158,34 +179,50 @@ private fun OwnList(recipes: RecipeRepository, session: LibrarySession, editor: 
  */
 @Composable
 private fun NothingWritten(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment) {
-    val language = interfaceLanguage(LocalConfiguration.current)
-    var writing by remember { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize().padding(16.dp).testTag(LibraryTags.OWN_EMPTY),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.library_own_empty), style = MaterialTheme.typography.bodyLarge)
-        Button(
-            onClick = {
-                if (writing) return@Button
-                writing = true
-                val recipe = newRecipe(editor, language)
-                session.viewModelScope.launch {
-                    recipes.save(recipe)
-                    session.openEditor(recipe.id.value)
-                }
-            },
-            modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.WRITE),
-        ) { Text(stringResource(R.string.library_own_write)) }
+        WriteButton(R.string.library_own_write, LibraryTags.WRITE, recipes, session, editor)
     }
 }
 
+/** Writes a new recipe in the active book and opens it in the editor (FLOW-042 (4, 5)); a second tap adds none. */
 @Composable
-private fun OwnEntry(row: OwnRecipeRow) {
+private fun WriteButton(
+    @StringRes label: Int,
+    tag: String,
+    recipes: RecipeRepository,
+    session: LibrarySession,
+    editor: EditorEnvironment,
+    modifier: Modifier = Modifier,
+) {
+    val language = interfaceLanguage(LocalConfiguration.current)
+    var writing by remember { mutableStateOf(false) }
+    Button(
+        onClick = {
+            if (writing) return@Button
+            writing = true
+            val recipe = newRecipe(editor, language)
+            session.viewModelScope.launch {
+                recipes.save(recipe)
+                session.openEditor(recipe.id.value)
+            }
+        },
+        modifier = modifier.heightIn(min = 48.dp).testTag(tag),
+    ) { Text(stringResource(label)) }
+}
+
+/** An own recipe's entry; tapping it opens the recipe's card (FLOW-029 (1)). */
+@Composable
+private fun OwnEntry(row: OwnRecipeRow, onOpen: () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .semantics(mergeDescendants = true) {}
+            .clickable(onClickLabel = stringResource(R.string.library_entry_open_action), role = Role.Button, onClick = onOpen)
             .testTag(LibraryTags.entry(row.recipeId))
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
@@ -244,6 +281,7 @@ object LibraryTags {
     const val MARKED_LIST = "library-marked"
     const val OWN_EMPTY = "library-own-empty"
     const val WRITE = "library-write"
+    const val NEW = "library-new"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
     fun entry(recipeId: String) = "library-entry-$recipeId"
 }
