@@ -48,8 +48,9 @@ this wave, and no media is attached.
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
-| T-043 | Every interface string of the release exists in both languages, and every target is 48 dp, on every screen so far | T-008 | in-progress |
-| T-031 | What the ingredient field offers for what the author types | T-043 | gated |
+| T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | planned |
+| T-045 | No interface string of the release is fixed in the code in one language only | T-008 | planned |
+| T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
 | T-013 | Steps are written in the editor and survive a restart offline | T-012 | gated |
@@ -57,7 +58,7 @@ this wave, and no media is attached.
 | T-015 | A quantity goes into a step as a reference | T-014, T-019 | gated |
 | T-016 | Steps and ingredients are inserted anywhere and moved, by dragging or by a discrete action | T-015 | gated |
 | T-017 | A part below the minimum or over a limit is marked on leaving it | T-016 | gated |
-| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029, T-043 | gated |
+| T-018 | A saved recipe opens as the card a reader sees, at the serving count chosen | T-008, T-029, T-044, T-045 | gated |
 | T-019 | A derived quantity says so, and which way it was rounded | T-018, T-030 | gated |
 | T-020 | The reader fixes an ingredient on the card | T-019, T-030, T-015 | gated |
 | T-021 | A reference in a step reads as the quantity the list shows | T-020 | gated |
@@ -432,7 +433,7 @@ this wave, and no media is attached.
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md, decisions/20260928-dictionaries-ship-with-the-application.md, decisions/20260928-one-database-per-recipe-book.md
 **Note:** FLOW-001 (1) holds on a clean installation with no connection only if the device already has the dictionaries, so the shipped snapshot and the seeding of the dictionaries-ship ADR are built here: `scripts/dictionary-snapshot.sh`, the committed `dictionaries.json`, and seeding through T-004's replacement path. A new recipe is created in `local`, in the active book — the pool in this wave.
 **Note:** Re-sliced on 2026-09-30 after its third run, as the entry stated: all three reviews that returned it found defects in the cross-cutting checks for L10N-001 (2) and A11Y-003 (1) that T-007 built and every screen reuses — never in this task's own behaviour. Those two criteria move to T-043, which rebuilds both checks over the library and the editor. The branch `task/T-008` (cada29d) is kept and carries on: the last review found no defect in the 11 criteria that remain. The return count does not restart: it stays at 2 of 2 with the user's third run spent, so any further defect goes to the user.
-**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (2) → wave 4; (5–6) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 7) → T-011; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (2) → T-043; (3) → release record · A11Y-003 (1) → T-043; (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-042 (1–3, 6–7) → wave 2; (5) → wave 3 · FLOW-024 (1) → wave 5; (2) → T-013; (3, 5) → wave 4 · FLOW-002 (1) → T-013; (2) → wave 4; (5–6) → T-028 · L10N-004 (2–3, 5) → wave 2; (4) → wave 4 · DOM-006 (1–2) → wave 2 · DOM-008 (2) → wave 2 · FLOW-001 (2, 7) → T-011; (3) → T-012; (4) → T-031; (5) → wave 3; (6) → T-004 · L10N-001 (2) → T-045 (T-043 until its split); (3) → release record · A11Y-003 (1) → T-044 (T-043 until its split); (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -470,35 +471,55 @@ this wave, and no media is attached.
 **Gate 2:** rejected — docs/product/verdicts/20260930-T-008-gate2.md (every own-recipes entry opens the editor, a frozen one read-only, which FLOW-029 (1, 4) forbid: a saved recipe opens as the card, T-018's); taken to the user; a fourth run authorised by the user on 2026-10-01: the entry route into the editor is removed, and the tests that reached an existing recipe through it (`EditorScreenTest.openOwn`, `leaveAndReturn`, `offlineTheTagEditorOffersExactlyWhatItOffersOnline`, the last two sections of `EditorLanguageAndAccessibilityTest.everyScreen`) open it directly; if its review or gate 2 finds defects again, the branch is abandoned and T-008 is re-sliced, without asking again; after the fourth run: accepted — docs/product/verdicts/20261001-T-008-gate2.md
 **Returns:** 2 of 2, plus a third and a fourth run the user authorised (gate 1 · reviewer · gate 2 share the count)
 
-### T-043 — Every interface string of the release exists in both languages, and every target is 48 dp, on every screen so far
+### T-044 — Every interactive element on the screens so far is 48 dp as laid out
 
-**Requirements:** L10N-001, A11Y-003
-**Status:** in-progress
+**Requirements:** A11Y-003
+**Status:** planned
 **Depends on:** T-008
-**Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/**` · `app/src/main/java/**` · `app/src/main/res/values/strings_*.xml` · `app/src/main/res/values-ru/strings_*.xml` · `core/src/main/kotlin/app/recipefork/core/**` · `core/src/test/kotlin/app/recipefork/core/**`
+**Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecksTest.kt`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Size:** Two test checks and the fixes they force: about 300–500 changed lines.
-**Note:** Cut on 2026-09-30 out of T-008, whose three returns all came from the checks T-007 built for these two criteria. Every later screen task reuses these checks, so they are made to bite here once. L10N-001 (2) is checked over every Kotlin and Java main source of the release's code, `:app` and `:core` alike, not a chosen set of packages. A string literal holding a letter fails unless either its exact value is on a short allow-list of text that is never shown to a person (test tags, log tags, SQL, route and key names, file and module names, refusal codes on the wire, and the messages of programming-error checks such as `require` and `check`), kept in the test by value and by the one declared holder of its kind, so that the value passes only where that holder declares it — the same word anywhere else fails, and no name lets interface text through; or it sits in a two-language table the test names (today `UnitLabels` in `:core`, the twelve DOM-016 units), and the check then proves every entry of that table holds a Russian and an English value. Text in resources is enumerated by key: every key of `values/` exists in `values-ru/` and the reverse. A11Y-003 (1) is checked on the size of each interactive node as laid out, not on the touch bounds Compose widens; spacing between targets is A11Y-003 (3), wave 8's, and is not checked here. Both are applied to the library (T-007) and the editor (T-008), and whatever they find is fixed there, with each moved string given its `values-ru` twin.
-**Criteria of these requirements carried elsewhere:** L10N-001 (1) → every screen task; (3) → release record · A11Y-003 (1) → every later screen task, through these checks; (2) → T-018; (3–4) → wave 8
+**Note:** Split out of T-043 on 2026-10-01 (see the withdrawal note after T-045). A11Y-003 (1) is checked on the size of each interactive node as laid out, not on the touch bounds Compose widens to 48 dp for any clickable, so a node drawn smaller than 48 dp fails however its touch bounds read; spacing between targets is A11Y-003 (3), wave 8's, and is not checked here. The check is the one the library (T-007) and the editor (T-008) tests already call, so it applies to both screens through them; a self-test shows a node Compose widens failing. Both reviews of T-043 found this half sound, and the branch `task/T-043` (4b797c1) holds it and may be read as a reference. Should the check find an element under 48 dp on either screen, the fix is not in this entry's files: it is returned as an open item.
+**Criteria of this requirement carried elsewhere:** A11Y-003 (1) → every later screen task, through this check; (2) → T-018; (3–4) → wave 8
+
+**Acceptance criteria** (verbatim)
+
+*A11Y-003 — spec/200-accessibility.md*
+- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+
+**Gate 1:** —
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+### T-045 — No interface string of the release is fixed in the code in one language only
+
+**Requirements:** L10N-001
+**Status:** planned
+**Depends on:** T-008
+**Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/LocalizationChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/InterfaceStringsTest.kt` · `app/src/test/kotlin/app/recipefork/app/ui/l10n/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/**` · `app/src/main/java/**` · `app/src/main/res/values/strings_*.xml` · `app/src/main/res/values-ru/strings_*.xml` · `core/src/main/kotlin/app/recipefork/core/**` · `core/src/test/kotlin/app/recipefork/core/**` · not `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks*.kt` (T-044's)
+**Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Size:** about 500–700 changed lines, over the review ceiling of this backlog. It cannot be split: L10N-001 (2) is one criterion and one check, and it is reviewed as a whole because the holes three reviews found were each in a different part of it (the reading of the sources, the allow-list, the holders). The constant moves into holders are mechanical and make up roughly a third.
+**Note:** Split out of T-043 on 2026-10-01 (see the withdrawal note below). L10N-001 (2) is checked over every Kotlin and Java main source of the release's code, `:app` and `:core` alike, not a chosen set of packages. A string literal holding a letter fails unless either its exact value is on a short allow-list of text that is never shown to a person (test tags, log tags, SQL, route and key names, file and module names, refusal codes on the wire, and the messages of programming-error checks such as `require` and `check`), kept in the test by value and by the one declared holder of its kind, so that the value passes only where that holder declares it — the same word anywhere else fails, and no name lets interface text through; or it sits in a two-language table the test names (today `UnitLabels` in `:core`, the twelve DOM-016 units), and the check then proves every entry of that table holds a Russian and an English value. Text in resources is enumerated by key: every key of `values/` exists in `values-ru/` and the reverse. Applied to the library (T-007) and the editor (T-008); whatever it finds is fixed there, with each moved string given its `values-ru` twin.
+**Note:** How the check reads the code, decided after T-043's third review found a hand-written lexer reading Java by Kotlin's rules and holders matched by simple name: sources are read by real front ends — Kotlin through the Kotlin compiler's PSI, Java through JavaParser, each with its own comment and literal rules (Java comments do not nest; `$` in a Java literal is a letter like any other). A holder is matched by what it resolves to, not by its simple name: an object holder by its fully qualified name; a Room annotation only when it is `androidx.room`'s, by import or by full name; a programming-error call only when it is Kotlin's own `require`, `check`, `error`, `requireNotNull` or `checkNotNull` with no declaration of that name in the file or its package, or the argument of an `IllegalArgumentException` or `IllegalStateException` that is thrown where it is built. A literal of no kind is rewritten so that it is none, and the rewrite changes no invariant: a type whose constructor guards a value does not become a data class, whose `copy()` would bypass the guard. A kind may have one holder per module or per screen; each allowed value has exactly one. The branch `task/T-043` (a2fab41) holds the holder moves and may be read as a reference; what lands here is written and tested for this entry alone.
+**Criteria of this requirement carried elsewhere:** L10N-001 (1) → every screen task; (3) → release record
 
 **Acceptance criteria** (verbatim)
 
 *L10N-001 — spec/160-localization.md*
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
-*A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
-
-**Gate 1:** rejected — docs/product/verdicts/20260930-T-043-gate1.md (the check of L10N-001 (2) left out `:core`, which holds interface strings of the release); `:core` and two-language tables added, the spacing clause removed; re-gate due; re-gated: accepted — docs/product/verdicts/20260930-T-043-gate1-2.md; Note amended at the third run (never-shown kinds, values tied to their holder); re-gated: accepted — docs/product/verdicts/20261001-T-043-gate1.md
-**Review:** defects — build and suite ok; A11Y-003 (1) and the resource-key check bit on every mutation tried; L10N-001 (2): the allow-list holds a group marked pending (file and module names, API refusal codes, programming-error diagnostics in `:core`) outside the four kinds this entry's Note names (LocalizationChecks.kt:113-131), and because the list is kept by value, an everyday word on it ("recipe", "step", "tag", "library") passes the code check wherever it stands, e.g. `"recipe" + " " + "step"` in the editor; worktree as it was. Second return: blocked, taken to the user; a third run authorised by the user on 2026-10-01: the Note names the three kinds of text the pending group held and ties each allowed value to the declared holder of its kind; re-gate due; if review or a gate finds defects again, the branch is abandoned and the task split into A11Y-003 (1) and L10N-001 (2), without asking again
+**Gate 1:** —
+**Review:** —
 **Gate 2:** —
-**Returns:** 2 of 2, plus a third run the user authorised (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+**T-043 withdrawn (2026-10-01).** T-043 — the release-wide checks of L10N-001 (2) and A11Y-003 (1), cut out of T-008 on 2026-09-30 — was rejected at gate 1 once (`:core` left out), and its first review returned it for the allow-list (a group outside the Note's kinds, and words let through by value): the second return. The user authorised a third run on 2026-10-01 with the fallback stated: if review or a gate found defects again, the branch would be abandoned and the task split into A11Y-003 (1) and L10N-001 (2) without asking again. Its third review found the A11Y-003 (1) check and the resource-key check sound, and four defects in the code check: Java comments read with Kotlin's nesting rule, so `/* /* */` hid the rest of a Java file; Java literals read with Kotlin's `$` template rule; the SQL and programming-error holders matched by simple name, so a local `Query` annotation or a local `error` function faked them; and `ScaleFactor` made a data class, whose `copy()` bypasses the positive-factor guard. So T-043 is split into T-044 and T-045. Its verdicts stay where they are: docs/product/verdicts/20260930-T-043-gate1.md, 20260930-T-043-gate1-2.md, 20261001-T-043-gate1.md. The branch `task/T-043` (a2fab41) and its worktree are kept as a reference; nothing of it is merged. The ID T-043 is not reused.
 
 ### T-031 — What the ingredient field offers for what the author types
 
 **Requirements:** FLOW-057, L10N-001, A11Y-003, A11Y-005, FLOW-023, FLOW-001
 **Status:** gated
-**Depends on:** T-043
+**Depends on:** T-044, T-045 (T-043 until its split on 2026-10-01)
 **Expected files:** `core/src/main/kotlin/app/recipefork/core/text/**` · `core/src/test/kotlin/app/recipefork/core/text/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/dictionary/**` · `app/src/test/kotlin/app/recipefork/app/dictionary/**` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-one-text-analyser.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Note:** The folding FLOW-057 names — letter case ignored, `ё` and `е` one letter — is the first stage of the analyser the one-text-analyser ADR places in `:core` `text`; this task builds that stage. The offer matches the beginnings of words, not the stemmed tokens of L10N-007 (spec ADR `20260927-the-ingredient-field.md`), so no stemmer is added here.
@@ -869,7 +890,7 @@ this wave, and no media is attached.
 
 **Requirements:** FLOW-029, FLOW-053, FLOW-019, FLOW-038, SCALE-011, SCALE-012, DOM-003, DOM-011, L10N-003, A11Y-007, A11Y-003, L10N-001, A11Y-005, L10N-009, DOM-015, FLOW-017
 **Status:** gated
-**Depends on:** T-008, T-029, T-043 (added 2026-10-01: T-043's expected files cover all of `:app`'s main code, so the two cannot run together)
+**Depends on:** T-008, T-029, T-044, T-045 (added 2026-10-01 as T-043, whose expected files covered all of `:app`'s main code; T-043 was split the same day)
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/card/**` · `app/src/test/kotlin/app/recipefork/app/card/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_card.xml` · `app/src/main/res/values-ru/strings_card.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-kotlin-monorepo-with-shared-core.md, decisions/20260927-test-strategy.md
 **Size:** The card is the screen the product exists for and its first version carries the layout every later card task builds on. Expected at 450–550 changed lines.
