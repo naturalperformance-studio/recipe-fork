@@ -91,21 +91,27 @@ object AccessibilityChecks {
     /**
      * A name for [node] the reader can find on screen, taken from the unmerged tree in this order: its own text or
      * content description, or its descendants'; else its click or long-click action label; else its test tag;
-     * else the text of the nearest merging ancestor that has one, as `inside "…"`. Only when none exists is the
-     * internal semantics id given, and the name says so.
+     * else the nearest merging ancestor that has any of these, named the same way, as `unlabelled element inside …`.
+     * Only when none exists is the internal semantics id given, and the name says what was searched.
      */
     fun nameOf(node: SemanticsNode): String {
+        ownName(node)?.let { return it }
+        generateSequence(node.parent) { it.parent }
+            .filter { it.config.isMergingSemanticsOfDescendants }
+            .firstNotNullOfOrNull { ownName(it) }
+            ?.let { return "unlabelled element inside $it" }
+        return "node ${node.id} (no text or content description on it or its descendants, no click or long-click " +
+            "label, no test tag, and no merging ancestor with any of these)"
+    }
+
+    /** [node]'s text or content description, or its descendants'; else its click or long-click label; else its test tag. */
+    private fun ownName(node: SemanticsNode): String? {
         labelWithin(node).takeIf { it.isNotBlank() }?.let { return "\"$it\"" }
         val actionLabel = node.config.getOrNull(SemanticsActions.OnClick)?.label?.takeIf { it.isNotBlank() }
             ?: node.config.getOrNull(SemanticsActions.OnLongClick)?.label?.takeIf { it.isNotBlank() }
         actionLabel?.let { return "\"$it\" (action label)" }
         node.config.getOrNull(SemanticsProperties.TestTag)?.takeIf { it.isNotBlank() }?.let { return "tag \"$it\"" }
-        generateSequence(node.parent) { it.parent }
-            .filter { it.config.isMergingSemanticsOfDescendants }
-            .map { labelWithin(it) }
-            .firstOrNull { it.isNotBlank() }
-            ?.let { return "unlabelled element inside \"$it\"" }
-        return "node ${node.id} (no text, content description, action label, test tag or labelled merging ancestor)"
+        return null
     }
 
     /**

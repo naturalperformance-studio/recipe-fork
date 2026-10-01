@@ -2,11 +2,13 @@ package app.recipefork.app.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.customActions
@@ -176,5 +178,46 @@ class AccessibilityChecksTest {
     fun aSmallElementWithOnlyAnImeActionFails() {
         showSmallBeside { onImeAction(ImeAction.Done) { true } }
         assertFailsNaming("\"small\"")
+    }
+
+    /** [content] at 24 dp, with no name of its own, inside a 200 dp clickable named only by its click label. */
+    private fun showInsideClickableLabelled(content: @Composable () -> Unit) = compose.setContent {
+        Box(Modifier.size(200.dp, 200.dp).clickable(onClickLabel = "big") {}) { content() }
+    }
+
+    // A11Y-003 (1): a small toggleable inside a clickable is named by the clickable's action label.
+    @Test
+    fun aSmallToggleableInsideAClickableIsNamedByItsActionLabel() {
+        showInsideClickableLabelled { Box(Modifier.size(24.dp, 24.dp).toggleable(value = false) {}) }
+        assertFailsNaming("unlabelled element inside \"big\" (action label)")
+    }
+
+    // A11Y-003 (1): a small switch inside a clickable is named by the clickable's action label.
+    @Test
+    fun aSmallSwitchInsideAClickableIsNamedByItsActionLabel() {
+        showInsideClickableLabelled {
+            Switch(checked = false, onCheckedChange = {}, modifier = Modifier.size(24.dp, 24.dp))
+        }
+        assertFailsNaming("unlabelled element inside \"big\" (action label)")
+    }
+
+    // A11Y-003 (1): a small text field inside a clickable is named by the clickable's action label.
+    @Test
+    fun aSmallTextFieldInsideAClickableIsNamedByItsActionLabel() {
+        showInsideClickableLabelled {
+            BasicTextField(value = "", onValueChange = {}, modifier = Modifier.size(24.dp, 24.dp))
+        }
+        assertFailsNaming("unlabelled element inside \"big\" (action label)")
+    }
+
+    // A11Y-003 (1): a small toggleable inside a merging ancestor named only by a test tag is named by that tag.
+    @Test
+    fun aSmallToggleableInsideATaggedMergingAncestorIsNamedByItsTag() {
+        compose.setContent {
+            Box(Modifier.size(200.dp, 200.dp).semantics(mergeDescendants = true) {}.testTag("row")) {
+                Box(Modifier.size(24.dp, 24.dp).toggleable(value = false) {})
+            }
+        }
+        assertFailsNaming("unlabelled element inside tag \"row\"")
     }
 }
