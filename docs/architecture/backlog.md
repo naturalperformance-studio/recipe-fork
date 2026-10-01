@@ -48,7 +48,7 @@ this wave, and no media is attached.
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
-| T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | in-progress |
+| T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | blocked |
 | T-045 | No interface string of the release is fixed in the code in one language only | T-008 | in-progress |
 | T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
@@ -474,7 +474,7 @@ this wave, and no media is attached.
 ### T-044 — Every interactive element on the screens so far is 48 dp as laid out
 
 **Requirements:** A11Y-003
-**Status:** in-progress
+**Status:** blocked
 **Depends on:** T-008
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecksTest.kt`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -487,9 +487,9 @@ this wave, and no media is attached.
 - Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
 
 **Gate 1:** accepted — docs/product/verdicts/20261001-T-044-gate1.md
-**Review:** defects — build and suite ok; the check reads the merged tree, so an element interactive through a semantics action alone inside a merging parent folds into the parent and is not measured (a 24 dp `semantics { onClick }` inside a 200 dp `clickable` passed; on the unmerged tree it fails and both screens still pass) (AccessibilityChecks.kt:34); noted, not a defect: Material controls such as `Checkbox` (24 dp) and `IconButton` (40 dp) measure under 48 dp as laid out and need an explicit size on later screens; worktree as it was. Returned to the developer
+**Review:** defects — build and suite ok; the check reads the merged tree, so an element interactive through a semantics action alone inside a merging parent folds into the parent and is not measured (a 24 dp `semantics { onClick }` inside a 200 dp `clickable` passed; on the unmerged tree it fails and both screens still pass) (AccessibilityChecks.kt:34); noted, not a defect: Material controls such as `Checkbox` (24 dp) and `IconButton` (40 dp) measure under 48 dp as laid out and need an explicit size on later screens; worktree as it was. Returned to the developer; after the fix (unmerged tree, 2d5f551): defects — build and suite ok, every size mutation on both screens and in the fixtures caught; a nested element with no label of its own is named in the failure by its semantics id ("node 40"), not by its click label, test tag or labelled ancestor (AccessibilityChecks.kt:45); a node acted on only through custom actions, expand/collapse, dismiss or an IME action is never selected, so one at 24 dp passes (AccessibilityChecks.kt:20); worktree as it was. Second return: blocked, taken to the user
 **Gate 2:** —
-**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 2 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-045 — No interface string of the release is fixed in the code in one language only
 
