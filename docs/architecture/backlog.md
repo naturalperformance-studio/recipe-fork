@@ -1442,11 +1442,13 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | gated |
 | T-040 | The server keeps a sent recipe under its owner, reached with a sign-in secret | T-006, T-045 | gated |
 | T-041 | A divergent sending becomes a fork, and a frozen recipe is never written | T-040 | gated |
-| T-042 | A sending the server already holds changes nothing, and a repeated divergent sending makes one fork | T-041 | gated |
+| T-042 | A sending the server already holds changes nothing, and a repeated divergent sending makes one fork | T-041 | planned |
 | T-046 | A recipe the server lost is created again, and a sending with no revision is taken as made from the first | T-042 | gated |
-| T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-042, T-046, T-036, T-025, T-034 | gated |
-| T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | gated |
-| T-026 | Sending with no account offers to create one | T-038 | gated |
+| T-048 | A sending after the device's own unanswered sending is made from what that sending stored, at the server | T-046 | planned |
+| T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-042, T-046, T-048, T-036, T-025, T-034 | gated |
+| T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | planned |
+| T-049 | A sending after a lost answer is made from what the server holds, on the device | T-038, T-048 | planned |
+| T-026 | Sending with no account offers to create one | T-049 | gated |
 | T-047 | A pool recipe whose account was created muted, or whose sending was refused, waits in that account's book | T-026 | gated |
 
 ### T-009 — The first step of creation shows the nickname and the terms
@@ -1645,7 +1647,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 **Size:** The first recipe on the server and the first request signed with a sign-in secret: the recipes table and its guards, the multipart sending of the sending ADR, the sign-in record and its secret. Expected at 500–700 changed lines.
 **Note:** Re-sliced out of T-027 on 2026-09-30 (see the withdrawal note after T-042). The branch `task/T-027` (727bd60) holds a working implementation of all three tasks and may be read as a reference; what lands here is written and tested for this entry's criteria alone, and a test of sameness or divergence varies every field of the content, not the title only.
 **Note:** A sending is one multipart request whose one part, until wave 5, is the recipe document; it names the revision the device's copy was made from, or none on a first sending. A first sending creates the recipe in `private` under the sending account; a later one whose revision is the server's current one replaces it. A recipe of another account is answered as one that does not exist. Until the tasks after this one land, three kinds of sending are refused here and store nothing, and no user can reach any of them before T-028, which depends on all of those tasks: a revision other than the server's current one, which is divergence and becomes T-041's (this includes a revision above the server's current one, which a restore under QUAL-008 can leave on a device, as the gate-1 verdict of 2026-09-30 found); a recipe the server does not hold, sent naming a revision, which is FLOW-059 (13) and T-046's; and a recipe the server holds, sent naming no revision, which is FLOW-059 (14) and T-046's. The server half of FLOW-059 (4) is carried here and observed at the service; T-028 carries the same criterion on the device. AUTH-025 (1)'s "does not count toward QUAL-009" is observed as the sign-in secret, not the key, being presented; the attempt counter itself is wave 7's.
-**Criteria of these requirements carried elsewhere:** ACT-002 (1) → T-036; (2) → T-028; (3) → T-026 and T-047; (5) → wave 8 · AUTH-015 (1–2) → T-006; (3) → wave 7 · AUTH-025 (2, 4–9) → wave 7 · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-028 as well, on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 at the server, T-038 on the device · FLOW-008 (1, 3, 6) → T-038; (2, 4) → T-041; (7) → T-042
+**Criteria of these requirements carried elsewhere:** ACT-002 (1) → T-036; (2) → T-028; (3) → T-026 and T-047; (5) → wave 8 · AUTH-015 (1–2) → T-006; (3) → wave 7 · AUTH-025 (2, 4–9) → wave 7 · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-028 as well, on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 at the server, T-049 on the device · FLOW-008 (1, 3, 6) → T-038; (2, 4) → T-041; (7) → T-042; (8) → T-048
 
 **Acceptance criteria** (verbatim)
 
@@ -1670,6 +1672,8 @@ when a divergent sending became a fork. Sending with no account offers creation.
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
+<!-- T-041: map only -->
+
 ### T-041 — A divergent sending becomes a fork, and a frozen recipe is never written
 
 **Requirements:** FLOW-008, CON-003, DOM-004
@@ -1683,7 +1687,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 - a sending against a server copy whose state alone changed.
 
 The store holds the parent and the frozen content fixed. The notice on the device is T-038's. FLOW-008 (4) is tested two ways: with an edit, and with a change of state alone to `link_shared` or `published` where device B's version carries an edit. A version the same as the server's is T-042's case, not a fork. States other than `private` cannot be reached in wave 1b, so tests seed them.
-**Criteria of these requirements carried elsewhere:** FLOW-008 (1, 3, 6) → T-038; (5) → T-040; (7) → T-042 · CON-003 (2) → wave 4; (3) → wave 9
+**Criteria of these requirements carried elsewhere:** FLOW-008 (1, 3, 6) → T-038; (5) → T-040; (7) → T-042; (8) → T-048 · CON-003 (2) → wave 4; (3) → wave 9
 
 **Acceptance criteria** (verbatim)
 
@@ -1703,10 +1707,12 @@ The store holds the parent and the frozen content fixed. The notice on the devic
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
+<!-- T-042: changed -->
+
 ### T-042 — A sending the server already holds changes nothing, and a repeated divergent sending makes one fork
 
 **Requirements:** FLOW-008, FLOW-066
-**Status:** gated
+**Status:** planned
 **Depends on:** T-041
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/resources/db/migration/V5__sending_digest.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -1718,7 +1724,8 @@ The store holds the parent and the frozen content fixed. The notice on the devic
 FLOW-066 (4) is therefore tested with the server's content changed, after the fork, to the same content as the repeated sending. A test that leaves the server's content untouched cannot tell the two orders apart.
 
 The server half of FLOW-066 (1–5) is carried here and observed at the service: what is written, what forks exist, and what the answer carries, which is the state the server holds and, for (4), the fork already made. T-038 carries FLOW-066 (1–4) on the device. A test of FLOW-066 (5) differs from the server's content by one character in each kind of field in turn (the title, the description, an ingredient and a step), not in the title alone.
-**Criteria of these requirements carried elsewhere:** FLOW-008 (1, 3, 6) → T-038; (2, 4) → T-041; (5) → T-040 · FLOW-066 (1–4) → T-038 as well, on the device
+**Note:** 20261002 re-slice against spec/ @ 86164a9 (FLOW-067): FLOW-066 (1) now covers a repeat sent unedited; an edited sending after an unanswered one is FLOW-067's and T-048's at the server. Here (1) is tested with the repeat unedited only.
+**Criteria of these requirements carried elsewhere:** FLOW-008 (1, 3, 6) → T-038; (2, 4) → T-041; (5) → T-040; (8) → T-048 · FLOW-066 (1–4) → T-038 as well, on the device
 
 **Acceptance criteria** (verbatim)
 
@@ -1726,16 +1733,18 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a sending whose content is the same as the content the server holds, when it arrives, then it is not a divergence whatever version it was made from, and FLOW-066 governs it — including a repeat of a sending that already made a fork, which FLOW-066 (4) answers with that fork.
 
 *FLOW-066 — spec/70-flows/15-divergence.md*
-- Given a sending the server stored whose answer never reached the device, when the owner sends the recipe again, then no fork is created, no notice of FLOW-008 (3) is shown, and the recipe is marked as sent.
+- Given a sending the server stored whose answer never reached the device, when the owner sends the recipe again unedited, then no fork is created, no notice of FLOW-008 (3) is shown, and the recipe is marked as sent; sent again edited, it is governed by FLOW-067.
 - Given device A's edit sent to the server, when device B sends an edit that leaves the recipe exactly as device A left it and that has not already made a fork, then the server's copy is unchanged, no fork is created and device B marks the recipe as sent.
 - Given a recipe that, on the server, was submitted and became `pending` since the device's copy was made, when the device sends content the same as the server's, then no fork is created and the device shows the recipe in `pending`.
 - Given a divergent sending that made a fork (FLOW-008) whose answer never reached the device, when the same sending — the same content, made from the same revision — arrives again, then, whatever the server's content has become since, the server answers with the fork it already created and creates no second one, and the owner is told of that fork once, as FLOW-008 (3) states.
 - Given a sending whose content differs from the server's in one character or one media item, when it arrives, then it is not governed here: FLOW-059 (4) or FLOW-008 applies.
 
-**Gate 1:** blocked-by-spec (SD-044, whether a repeated divergent sending whose content the server now holds is answered with its fork, FLOW-066 (4), or as sent, FLOW-066 (2)) — docs/product/verdicts/20260930-T-042-gate1.md; re-sliced against spec/ @ e70b62c after SD-042–SD-045 resolved (FLOW-008 (7), FLOW-066 (2) and (4) recopied as changed, from 15-divergence.md; the fork already made is checked first, and tested against a server content that became the same since); re-gate due; re-gated: accepted — docs/product/verdicts/20261001-T-042-gate1.md
+**Gate 1:** blocked-by-spec (SD-044, whether a repeated divergent sending whose content the server now holds is answered with its fork, FLOW-066 (4), or as sent, FLOW-066 (2)) — docs/product/verdicts/20260930-T-042-gate1.md; re-sliced against spec/ @ e70b62c after SD-042–SD-045 resolved (FLOW-008 (7), FLOW-066 (2) and (4) recopied as changed, from 15-divergence.md; the fork already made is checked first, and tested against a server content that became the same since); re-gate due; re-gated: accepted — docs/product/verdicts/20261001-T-042-gate1.md; re-sliced against spec/ @ 86164a9 (FLOW-067 added; FLOW-066 (1) recopied as changed: a repeat sent unedited; FLOW-008 (8) placed in T-048); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+<!-- T-046: map only -->
 
 ### T-046 — A recipe the server lost is created again, and a sending with no revision is taken as made from the first
 
@@ -1745,7 +1754,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
 **Note:** Cut on 2026-10-01 from the re-slice against spec/ @ e70b62c, which answered SD-045 and added FLOW-059 (13) and (14). Both are the server's answer to a sending that neither creates a recipe on its first sending nor replaces a copy made from the server's current revision, and T-040 refuses both until this task lands. (14)'s three outcomes need T-040's replacement, T-041's fork and T-042's sameness, which is why this task follows T-042. The server half of both criteria is carried here and observed at the service: whether the recipe exists, under which account and in which state, what forks exist, and what the answer carries. The mark of FLOW-005 that each criterion names is T-038's, on the device. For (13), both routes are seeded as the server's store sees them: the recipe is absent and the device names a revision. The server cannot tell a restore from a deletion, and the test shows the same answer for both. A recipe whose identity another account holds is still answered as one that does not exist (T-040), not created again. For (14), each of the three outcomes is tested, and the test that the server's copy "has not changed since" varies every field of the content, not the title only.
-**Criteria of this requirement carried elsewhere:** FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-038 as well, on the device
+**Criteria of this requirement carried elsewhere:** FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-049 as well, on the device
 
 **Acceptance criteria** (verbatim)
 
@@ -1758,20 +1767,55 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
 
+<!-- T-048: new (split) -->
+
+### T-048 — A sending after the device's own unanswered sending is made from what that sending stored, at the server
+
+**Requirements:** FLOW-067, FLOW-008
+**Status:** planned
+**Depends on:** T-046
+**Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/resources/db/migration/V6__sendings.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**`
+**Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
+**Note:** Cut on 2026-10-02 from the re-slice against spec/ @ 86164a9, which added FLOW-067 and FLOW-008 (8) on the question left by T-038's gate 1 (item 7). This is the server half: what the server takes a sending as made from when the device names its own unanswered sendings. It follows T-046 because FLOW-067 (7) is FLOW-059 (14)'s case, which T-046 builds, and because it answers against T-040's replacement, T-041's fork and T-042's sameness.
+**Note:** The Team Lead's design (to be written into `decisions/20260928-manual-sending-replaces-the-outbox.md` before this task starts): every sending carries an identity the device mints for it, and the identities of the device's sendings of that recipe that went unanswered since it last learned what the server holds, oldest first. The server records, for each sending it stores, its identity and what it left — the revision it wrote, or the fork it created under FLOW-008. A sending naming unanswered identities is taken as made from what the latest of them that the server stored left: a revision is the version it was made from; a fork means the sending is answered against the fork (FLOW-067 (5)). An identity the server never stored is passed over (FLOW-067 (3)); none stored leaves the sending made from the revision it names. The answer says what the sending was made from when it was a fork, so the device can take the fork as its recipe (T-049).
+**Note:** Observed at the service: what is written, what forks exist and under which parent, and what the answer carries. The device's halves of FLOW-067 (1–5, 7) — keeping the unanswered sendings, naming them, the mark, the notice, the fork as the device's recipe — are T-049's. FLOW-067 (6) is observed here alone: the device half of an unedited repeat is FLOW-066's, carried by T-038. Each criterion is tested with a test of "nothing changed it since" that varies every field of the content, not the title only, and FLOW-067 (4) with the server storing the first of two unanswered sendings and not the second, and the reverse.
+**Criteria of these requirements carried elsewhere:** FLOW-067 (1–5, 7) → T-049 as well, on the device · FLOW-008 (1, 3, 6) → T-038; (2, 4) → T-041; (5) → T-040; (7) → T-042
+
+**Acceptance criteria** (verbatim)
+
+*FLOW-067 — spec/70-flows/15-divergence.md*
+- Given a sent recipe edited and sent, the server having stored that sending and its answer not having reached the device, when the owner edits the recipe again and sends it while no other device has changed it, then the server's copy is replaced by the new version, no fork is created, no notice of FLOW-008 (3) is shown, and FLOW-005 marks the recipe as sent.
+- Given the same unanswered sending, when another device of the account has sent a change to the recipe before this device sends its edit, then this device's version becomes a `private` fork as FLOW-008 states, and the owner is told as FLOW-008 (3) states.
+- Given an unanswered sending the server did not store, when the owner sends the recipe again, then the sending is made from the revision the device held before that sending, as if it had never been made.
+- Given two or more unanswered sendings in a row, of which the server stored any, when the owner sends the recipe, then the sending is made from what the latest stored one left, whichever earlier ones the server stored.
+- Given an unanswered sending that made a fork under FLOW-008, when the owner edits the recipe and sends it, then the sending is made from that fork: the fork's copy is replaced if nothing changed it since, FLOW-008 forks the fork if another device changed it, no second fork of the original recipe is created, the device's recipe is that fork with the original reachable beside it, and the owner is told of the fork once, as FLOW-008 (3) states.
+- Given an unanswered sending, when the owner sends the recipe again unedited, then FLOW-066 answers it as its criteria 1 and 4 state; this requirement only fixes what the sending is made from.
+- Given an unanswered first sending, when the owner sends the recipe again, then what that sending stored is the recipe's first revision, and FLOW-059 (14) states the outcome.
+
+*FLOW-008 — spec/70-flows/15-divergence.md*
+- Given a server's version changed since the device's copy only by this device's own unanswered sending, when the device sends, then that change is not a divergence: FLOW-067 takes the sending as made from what that sending stored.
+
+**Gate 1:** —
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+<!-- T-028: map and dependency only -->
+
 **T-027 withdrawn (2026-09-30).** T-027 — the server's whole half of sending — was accepted at gate 1 four times as the specification moved and passed review twice, and after the re-slice of 2026-09-29 its reviews found a different defect at each run: the wire shape against the sending ADR and a disclosed `forkId` (second return), a revision the server never issued forked instead of refused (third run), and a FLOW-066 (5) test that could not tell sameness over the whole content from sameness over the title (fourth run). The fourth run was authorised by the user on 2026-09-30 as the last, with the branch abandoned and the task re-sliced if its review found defects again. It did, so its 17 criteria are carried by T-040, T-041 and T-042, which are small enough for a review to cover. Its verdicts stay where they are: docs/product/verdicts/20260927-T-027-gate1.md, -gate1-2.md, -gate1-3.md, 20260928-T-027-gate1.md, -gate1-2.md, 20260929-T-027-gate1.md, 20260927-T-027-gate2.md, 20260929-T-027-gate2.md. The branch `task/T-027` (727bd60) and its worktree are kept as a reference; nothing of it is merged. The ID T-027 is not reused.
 
 ### T-028 — The owner sends a recipe, and every recipe says whether it was sent
 
 **Requirements:** FLOW-059, FLOW-005, FLOW-002, ACT-002, AUTH-026, AUTH-006, L10N-001, A11Y-003, A11Y-005
 **Status:** gated
-**Depends on:** T-042, T-046, T-036, T-025, T-034 (T-046 added 2026-10-01: until it lands, a sending with no revision for a recipe the server holds is refused, and no user may reach that before it)
+**Depends on:** T-042, T-046, T-048, T-036, T-025, T-034 (T-046 added 2026-10-01: until it lands, a sending with no revision for a recipe the server holds is refused, and no user may reach that before it; T-048 added 2026-10-02: its expected files share `server/.../recipe/**` and `RecipeContract.kt` with this entry's, so one must follow the other, and the server is finished before a device sends)
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/test/kotlin/app/recipefork/server/recipe/**` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `app/build.gradle.kts` · `scripts/artefact.sh` · `app/src/main/kotlin/app/recipefork/app/MainActivity.kt` · `app/src/main/kotlin/app/recipefork/app/AppContainer.kt` · `app/src/main/kotlin/app/recipefork/app/data/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/kotlin/app/recipefork/app/editor/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml` · `app/src/main/res/values/strings_library.xml` · `app/src/main/res/values-ru/strings_library.xml` · `app/src/main/res/values/strings_editor.xml` · `app/src/main/res/values-ru/strings_editor.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-serverless-mode-is-a-build-flag.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Size:** The first path from the editor to the server's store and back to the mark: the send request, the per-recipe revision and digest on the device, the three marks, and the first `Mode` passed from `MainActivity` (FLOW-059 (11), FLOW-005 (7)). Indivisible because the mark is only observable against a sending that happened. Expected at 600–800 changed lines.
 **Note:** 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): the automatic sending this task was cut around no longer exists. The earlier gate-1 rejection (a muted account's recipes left through the outbox) has no object now; a muted account's send control is replaced by AUTH-006's statement (see the note of 2026-09-29). This task is the first to read the serverless `Mode`: `MainActivity` passes it, and `scripts/artefact.sh` gains the serverless APK.
 **Note:** 2026-09-29, third gate 1 authorised by the user after the second return: a muted account can be created in wave 1b (T-006 creates one when no verdict is obtained), so the send control's replacement for it is carried here — FLOW-059 (2) and the statement of AUTH-006 it names, its contents (4, 5, 7) and its absence for a full account (6). The statement's retry control (AUTH-006 (2–3, 8)) stays in wave 7 with AUTH-005; AUTH-004 (4), which also names media, stays in wave 6.
 **Note:** 2026-09-29: spec/ @ 952398f inserted FLOW-059 (9), ACT-002 (3) and AUTH-026 (4), so the criterion numbers in this entry's map moved; no criterion of this task changed in wording.
-**Criteria of these requirements carried elsewhere:** FLOW-059 (1) → T-026; (3) → wave 7; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 at the server, T-038 on the device · FLOW-005 (1–2) → T-007; (4) → wave 5; (6) → wave 2; (8) → T-038 · FLOW-002 (1) → T-013; (2) → wave 4; (3–4) → T-008 · ACT-002 (1) → T-036; (3) → T-026 and T-047; (4) → T-040; (5) → wave 8 · AUTH-026 (1–3, 7) → T-036; (3–4) → T-026; (4) → T-047 as well, for a recipe not sent; (5–6) → wave 7 · AUTH-006 (2–3, 8) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-059 (1) → T-026; (3) → wave 7; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 at the server, T-049 on the device · FLOW-005 (1–2) → T-007; (4) → wave 5; (6) → wave 2; (8) → T-038 · FLOW-002 (1) → T-013; (2) → wave 4; (3–4) → T-008 · ACT-002 (1) → T-036; (3) → T-026 and T-047; (4) → T-040; (5) → wave 8 · AUTH-026 (1–3, 7) → T-036; (3–4) → T-026; (4) → T-047 as well, for a recipe not sent; (5–6) → wave 7 · AUTH-006 (2–3, 8) → wave 7 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1819,22 +1863,22 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 **Gate 2:** —
 **Returns:** 2 of 2 (gate 1 · reviewer · gate 2 share the count)
 
+<!-- T-038: changed + split -->
+
 ### T-038 — A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's
 
 **Requirements:** FLOW-008, FLOW-059, FLOW-066, FLOW-005, L10N-001, A11Y-003, A11Y-005
-**Status:** gated
+**Status:** planned
 **Depends on:** T-028
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
-**Size:** about 400–550 changed lines. The criteria added on 2026-10-01 are further ways of taking the server's answer to a sending, and they reuse the marks of T-028 and this entry's handling of answers. They add no screen.
 **Note:** The server's half of FLOW-008 is T-041's and T-042's: which version keeps the identity, and the answer that says a fork was made, a change of state alone included. This task is what the device does with that answer and with a server copy that changed underneath it.
 **Note:** 20260929 re-slice against spec/ @ 952398f (SD-039, SD-041 answered): FLOW-008 (6) now tells the owner as criterion 3 states. If a sending's answer is lost and the recipe is sent again, the server's answer that it already holds that content is taken as sent, with the state the server holds and no notice (FLOW-066 (1–3)). An answer naming a fork already made tells the owner of it once (FLOW-066 (4)). The server half of FLOW-066 is T-042's.
 **Note:** 20261001 re-slice against spec/ @ e70b62c (SD-043 answered):
 - **Lost or refused answer.** A sending that was refused, or whose answer was lost, leaves the recipe with the mark it carried before that sending (FLOW-059 (9), FLOW-005 (8)). After a first sending that is "never sent". After a later one it is "holding changes not sent". Both are tested, each with the server having stored the sending and with it not having stored it.
-- **No revision held.** After a lost first answer the device holds no revision for the recipe, and its next sending names none. The server's answer to that sending is T-046's at the server. Here the device sends it and takes each of the three answers: sent, a fork, or already held (FLOW-059 (14)).
-- **Recipe the server no longer holds.** The server creates it again (T-046), and the device marks it as sent (FLOW-059 (13)).
 - **Statement wording.** FLOW-066 (4) changed in wording only. The device half is unchanged: an answer naming a fork already made tells the owner once.
-**Criteria of these requirements carried elsewhere:** FLOW-008 (2, 4) → T-041; (5) → T-040; (7) → T-042 · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (10) → wave 4; (12) → T-047; (13–14) → T-046 as well, at the server · FLOW-066 (1–4) → T-042 as well, at the server; (5) → T-042 · FLOW-005 (1–2) → T-007; (3, 5, 7) → T-028; (4) → wave 5; (6) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Note:** 20261002 re-slice against spec/ @ 86164a9 (FLOW-067): what a sending after a lost answer is made from — the device keeping its unanswered sendings, naming them, and taking the outcome, FLOW-059 (13) and (14) with it — moves to T-049, so this entry keeps how the device takes the server's answers and marks the recipe. FLOW-059 (9) and FLOW-066 (1) are recopied as changed: an unedited repeat is FLOW-066's, an edited one FLOW-067's. Without its two added criteria this entry is expected under 450 changed lines, so its Size line is dropped.
+**Criteria of these requirements carried elsewhere:** FLOW-008 (2, 4) → T-041; (5) → T-040; (7) → T-042; (8) → T-048 · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (10) → wave 4; (12) → T-047; (13–14) → T-046 at the server, T-049 on the device · FLOW-066 (1–4) → T-042 as well, at the server; (5) → T-042 · FLOW-005 (1–2) → T-007; (3, 5, 7) → T-028; (4) → wave 5; (6) → wave 2 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1844,15 +1888,13 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a recipe edited on device B while, on the server, nobody changed its content but it was submitted and became `pending`, `link_shared` or `published`, when device B sends it, then device B's version becomes a `private` fork naming it as parent, and the owner is told as criterion 3 states.
 
 *FLOW-059 — spec/70-flows/10-offline-and-sync.md*
-- Given a sending the server stored whose answer did not reach the device, when the recipe is shown, then FLOW-005 marks it exactly as it marked it before that sending — never sent after a first sending, holding changes not sent after a later one — and sending it again is answered by FLOW-066.
-- Given a recipe the device holds as sent, when the server no longer holds it — its store restored from a copy older than the recipe's sending (QUAL-008), or the recipe deleted on another device of the account before this device learned of it (ST-010 (2)) — and the owner sends it, then the server creates it again in `private` with the same identity, owned by the sending account, as on a first sending, and FLOW-005 marks it as sent.
-- Given a recipe whose first sending the server stored and whose answer did not reach the device, so that the device holds no revision for it, when the owner sends it again, edited or not, then the server treats the sending as made from the recipe's first revision: it replaces the server's copy if that copy has not changed since (criterion 4), FLOW-008 governs if another device changed it, and FLOW-066 governs if the content is the same.
+- Given a sending the server stored whose answer did not reach the device, when the recipe is shown, then FLOW-005 marks it exactly as it marked it before that sending — never sent after a first sending, holding changes not sent after a later one — and sending it again is answered by FLOW-066 when unedited and by FLOW-067 when edited.
 
 *FLOW-005 — spec/70-flows/10-offline-and-sync.md*
 - Given a sending that was refused or whose answer did not reach the device, when the recipe is shown afterwards, then it carries the mark it carried before that sending, whether or not the server stored it, because the device cannot tell the two apart (FLOW-059 (9)).
 
 *FLOW-066 — spec/70-flows/15-divergence.md*
-- Given a sending the server stored whose answer never reached the device, when the owner sends the recipe again, then no fork is created, no notice of FLOW-008 (3) is shown, and the recipe is marked as sent.
+- Given a sending the server stored whose answer never reached the device, when the owner sends the recipe again unedited, then no fork is created, no notice of FLOW-008 (3) is shown, and the recipe is marked as sent; sent again edited, it is governed by FLOW-067.
 - Given device A's edit sent to the server, when device B sends an edit that leaves the recipe exactly as device A left it and that has not already made a fork, then the server's copy is unchanged, no fork is created and device B marks the recipe as sent.
 - Given a recipe that, on the server, was submitted and became `pending` since the device's copy was made, when the device sends content the same as the server's, then no fork is created and the device shows the recipe in `pending`.
 - Given a divergent sending that made a fork (FLOW-008) whose answer never reached the device, when the same sending — the same content, made from the same revision — arrives again, then, whatever the server's content has become since, the server answers with the fork it already created and creates no second one, and the owner is told of that fork once, as FLOW-008 (3) states.
@@ -1867,16 +1909,50 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-039, FLOW-008 (6) points to "criterion 2", which since 0745e70 states no notice) — docs/product/verdicts/20260928-T-038-gate1.md; re-sliced against spec/ @ 952398f after SD-039 and SD-041 resolved (FLOW-008 (6) replaced; FLOW-059 (9) and FLOW-066 (1–4) added as the device half); re-gate due; re-gated: blocked-by-spec (SD-043, which mark a recipe shows when its first sending was stored and the answer lost, FLOW-059 (9)) — docs/product/verdicts/20260929-T-038-gate1.md; re-sliced against spec/ @ e70b62c after SD-042–SD-045 resolved (FLOW-059 (9), FLOW-066 (2, 4) recopied as changed; FLOW-005 (8) and the device halves of FLOW-059 (13–14) added; FLOW-008 and FLOW-066 recopied from 15-divergence.md); re-gate due; re-gated: accepted — docs/product/verdicts/20261001-T-038-gate1.md
+**Gate 1:** blocked-by-spec (SD-039, FLOW-008 (6) points to "criterion 2", which since 0745e70 states no notice) — docs/product/verdicts/20260928-T-038-gate1.md; re-sliced against spec/ @ 952398f after SD-039 and SD-041 resolved (FLOW-008 (6) replaced; FLOW-059 (9) and FLOW-066 (1–4) added as the device half); re-gate due; re-gated: blocked-by-spec (SD-043, which mark a recipe shows when its first sending was stored and the answer lost, FLOW-059 (9)) — docs/product/verdicts/20260929-T-038-gate1.md; re-sliced against spec/ @ e70b62c after SD-042–SD-045 resolved (FLOW-059 (9), FLOW-066 (2, 4) recopied as changed; FLOW-005 (8) and the device halves of FLOW-059 (13–14) added; FLOW-008 and FLOW-066 recopied from 15-divergence.md); re-gate due; re-gated: accepted — docs/product/verdicts/20261001-T-038-gate1.md; re-sliced against spec/ @ 86164a9 (FLOW-067 added; FLOW-059 (9) and FLOW-066 (1) recopied as changed; FLOW-059 (13–14) device halves moved to T-049 with FLOW-067's; Size line dropped); re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+<!-- T-049: new (split) -->
+
+### T-049 — A sending after a lost answer is made from what the server holds, on the device
+
+**Requirements:** FLOW-067, FLOW-059
+**Status:** planned
+**Depends on:** T-038, T-048
+**Expected files:** `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/library/**`
+**Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
+**Note:** Cut on 2026-10-02 from the re-slice against spec/ @ 86164a9. It carries the device half of FLOW-067 and the device halves of FLOW-059 (13) and (14), which T-038 carried until then: everything the device does to say what a sending after a lost answer is made from. T-038 keeps how the device takes the server's answers and marks the recipe, and the notice of a fork, which this task reuses; it adds no screen and no interface string. If one proves needed, it is returned as an open item, not added.
+**Note:** By the design T-048 records in the sending ADR, the device mints an identity for each sending and keeps, per recipe and in the recipe's book database, the identities of its sendings that went unanswered until it next learns what the server holds of that recipe — the cost FLOW-067 states. Its next sending names them, oldest first. When the answer says the sending was answered against a fork its earlier unanswered sending made, the device's recipe becomes that fork with the original reachable beside it, and the owner is told of the fork once, through T-038's notice (FLOW-067 (5)). Each criterion is tested against a server double that stores or drops each sending as the case needs; T-048 tests the server itself.
+**Criteria of these requirements carried elsewhere:** FLOW-067 (1–7) → T-048 at the server; (6) on the device is FLOW-066's, T-038's · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 as well, at the server
+
+**Acceptance criteria** (verbatim)
+
+*FLOW-067 — spec/70-flows/15-divergence.md*
+- Given a sent recipe edited and sent, the server having stored that sending and its answer not having reached the device, when the owner edits the recipe again and sends it while no other device has changed it, then the server's copy is replaced by the new version, no fork is created, no notice of FLOW-008 (3) is shown, and FLOW-005 marks the recipe as sent.
+- Given the same unanswered sending, when another device of the account has sent a change to the recipe before this device sends its edit, then this device's version becomes a `private` fork as FLOW-008 states, and the owner is told as FLOW-008 (3) states.
+- Given an unanswered sending the server did not store, when the owner sends the recipe again, then the sending is made from the revision the device held before that sending, as if it had never been made.
+- Given two or more unanswered sendings in a row, of which the server stored any, when the owner sends the recipe, then the sending is made from what the latest stored one left, whichever earlier ones the server stored.
+- Given an unanswered sending that made a fork under FLOW-008, when the owner edits the recipe and sends it, then the sending is made from that fork: the fork's copy is replaced if nothing changed it since, FLOW-008 forks the fork if another device changed it, no second fork of the original recipe is created, the device's recipe is that fork with the original reachable beside it, and the owner is told of the fork once, as FLOW-008 (3) states.
+- Given an unanswered first sending, when the owner sends the recipe again, then what that sending stored is the recipe's first revision, and FLOW-059 (14) states the outcome.
+
+*FLOW-059 — spec/70-flows/10-offline-and-sync.md*
+- Given a recipe the device holds as sent, when the server no longer holds it — its store restored from a copy older than the recipe's sending (QUAL-008), or the recipe deleted on another device of the account before this device learned of it (ST-010 (2)) — and the owner sends it, then the server creates it again in `private` with the same identity, owned by the sending account, as on a first sending, and FLOW-005 marks it as sent.
+- Given a recipe whose first sending the server stored and whose answer did not reach the device, so that the device holds no revision for it, when the owner sends it again, edited or not, then the server treats the sending as made from the recipe's first revision: it replaces the server's copy if that copy has not changed since (criterion 4), FLOW-008 governs if another device changed it, and FLOW-066 governs if the content is the same.
+
+**Gate 1:** —
+**Review:** —
+**Gate 2:** —
+**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+<!-- T-026: map and dependency only -->
 
 ### T-026 — Sending with no account offers to create one
 
 **Requirements:** FLOW-059, ACT-001, ACT-002, AUTH-001, AUTH-026, FLOW-003, AUTH-004, L10N-001, A11Y-003, A11Y-005
 **Status:** gated
-**Depends on:** T-038
+**Depends on:** T-049 (T-038 until 2026-10-02: T-049 shares its `send/**` and `book/**` files and comes before it)
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/account/**` · `app/src/test/kotlin/app/recipefork/app/account/**` · `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/ui/nav/**` · `app/src/main/res/values/strings_account.xml` · `app/src/main/res/values-ru/strings_account.xml` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md, decisions/20260927-test-strategy.md
 **Note:** 20260928 re-slice against spec/ @ 21b80b2 (the device first, 0745e70): writing needs no account any more (FLOW-002); the control that needs one is the send control of T-028, which is this task's trigger. The earlier gate-1 rejection — no control in wave 1 fired the offer — is answered by it.
@@ -1885,7 +1961,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - **What decides ownership.** The account's creation makes the pool recipe the account's, not the sending (FLOW-059 (1), ACT-002 (3), AUTH-026 (4)). This task carries the path where the account is created full and the sending that follows succeeds.
 - **What moved to T-047.** The two paths where nothing is sent move to T-047, which depends on this task because their files overlap: an account created muted, and a sending refused after creation (FLOW-059 (12)). With them go AUTH-004 (5), which the 2026-09-29 re-slice had placed here, and the not-sent clauses of ACT-002 (3) and AUTH-026 (4). Those two criteria are carried by both tasks, divided by path.
 - **No connection.** Creation offered with no connection creates nothing (AUTH-001 (2), AUTH-004 (2), FLOW-003 (6)). That stays here, because no account exists to receive the recipe.
-**Criteria of these requirements carried elsewhere:** FLOW-059 (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 at the server, T-038 on the device · ACT-002 (1) → T-036; (2) → T-028; (3) → T-047 as well, for a recipe not sent; (4) → T-040; (5) → wave 8 · AUTH-026 (1–3, 7) → T-036; (4) → T-047 as well, for a recipe not sent; (5–6) → wave 7; (8) → T-028 · ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7; (12) → wave 9 · AUTH-004 (1) → wave 3; (3) → wave 4; (4, 7) → wave 6; (5) → T-047, and wave 6 for rating; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-059 (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 at the server, T-049 on the device · ACT-002 (1) → T-036; (2) → T-028; (3) → T-047 as well, for a recipe not sent; (4) → T-040; (5) → wave 8 · AUTH-026 (1–3, 7) → T-036; (4) → T-047 as well, for a recipe not sent; (5–6) → wave 7; (8) → T-028 · ACT-001 (2) → wave 3; (4) → wave 2; (5) → wave 8 · AUTH-001 (1) → wave 3; (3, 5) → T-006; (4) → wave 7 · FLOW-003 (1–4, 7–11) → wave 2; (5) → wave 7; (12) → wave 9 · AUTH-004 (1) → wave 3; (3) → wave 4; (4, 7) → wave 6; (5) → T-047, and wave 6 for rating; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1929,6 +2005,8 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
+<!-- T-047: map only -->
+
 ### T-047 — A pool recipe whose account was created muted, or whose sending was refused, waits in that account's book
 
 **Requirements:** FLOW-059, ACT-002, AUTH-026, AUTH-004, L10N-001, A11Y-003, A11Y-005
@@ -1942,7 +2020,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - **Muted path.** The statement of AUTH-006 that T-028 builds takes the control's place. AUTH-004 (5) is observed for sending only; its half for rating stays in wave 6.
 - **Muted account that becomes full.** FLOW-059 (12)'s clause "once the account is full when it is muted" needs AUTH-005 (5), which is wave 7's, so it is carried there. Here the test observes that a muted account is not offered the control.
 - **Shared criteria.** ACT-002 (3) and AUTH-026 (4) are carried by T-026 for the path that sends, and here for the two that do not.
-**Criteria of these requirements carried elsewhere:** FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → wave 7 as well, once a muted account becomes full (AUTH-005 (5)); (13–14) → T-046 at the server, T-038 on the device · ACT-002 (1) → T-036; (2) → T-028; (3) → T-026 as well, for a recipe sent; (4) → T-040; (5) → wave 8 · AUTH-026 (1–3, 7) → T-036; (3) → T-026; (4) → T-026 as well, for a recipe sent; (5–6) → wave 7; (8) → T-028 · AUTH-004 (1) → wave 3; (2) → T-026; (3) → wave 4; (4, 7) → wave 6; (5) → wave 6 as well, for rating; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
+**Criteria of these requirements carried elsewhere:** FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → wave 7 as well, once a muted account becomes full (AUTH-005 (5)); (13–14) → T-046 at the server, T-049 on the device · ACT-002 (1) → T-036; (2) → T-028; (3) → T-026 as well, for a recipe sent; (4) → T-040; (5) → wave 8 · AUTH-026 (1–3, 7) → T-036; (3) → T-026; (4) → T-026 as well, for a recipe sent; (5–6) → wave 7; (8) → T-028 · AUTH-004 (1) → wave 3; (2) → T-026; (3) → wave 4; (4, 7) → wave 6; (5) → wave 6 as well, for rating; (6) → T-006 · L10N-001 (3) → release record · A11Y-003 (2) → T-018; (3–4) → wave 8 · A11Y-005 (2–6) → wave 8
 
 **Acceptance criteria** (verbatim)
 
@@ -1972,6 +2050,8 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+
+---
 
 ## Coverage beyond waves 1 and 1b
 
