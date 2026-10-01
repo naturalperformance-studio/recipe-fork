@@ -49,7 +49,7 @@ this wave, and no media is attached.
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
 | T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | in-progress |
-| T-045 | No interface string of the release is fixed in the code in one language only | T-008 | in-progress |
+| T-045 | No interface string of the release is fixed in the code in one language only | T-008 | blocked |
 | T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
@@ -495,7 +495,7 @@ this wave, and no media is attached.
 ### T-045 — No interface string of the release is fixed in the code in one language only
 
 **Requirements:** L10N-001
-**Status:** in-progress
+**Status:** blocked
 **Depends on:** T-008
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/LocalizationChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/InterfaceStringsTest.kt` · `app/src/test/kotlin/app/recipefork/app/ui/l10n/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/**` · `app/src/main/java/**` · `app/src/main/res/values/strings_*.xml` · `app/src/main/res/values-ru/strings_*.xml` · `core/src/main/kotlin/app/recipefork/core/**` · `core/src/test/kotlin/app/recipefork/core/**` · not `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks*.kt` (T-044's)
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -510,9 +510,9 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 **Gate 1:** accepted — docs/product/verdicts/20261001-T-045-gate1.md
-**Review:** defects — build and suite ok; every T-043 hole and the new probes caught (aliases, raw strings, `String.format`, Java text blocks, a same-named holder elsewhere); a programming-error call is still owned by name: a `error`/`require` inherited from a class in another file, or a member of an implicit receiver (`with(Say) { error(…) }`), passes a listed message as plain text (CodeLiterals.kt:159, 210); no test fails when Java files stop being listed (CodeLiterals.kt:67); noted: no test keeps `ScaleFactor` from becoming a data class; worktree as it was. Returned to the developer
+**Review:** defects — build and suite ok; every T-043 hole and the new probes caught (aliases, raw strings, `String.format`, Java text blocks, a same-named holder elsewhere); a programming-error call is still owned by name: a `error`/`require` inherited from a class in another file, or a member of an implicit receiver (`with(Say) { error(…) }`), passes a listed message as plain text (CodeLiterals.kt:159, 210); no test fails when Java files stop being listed (CodeLiterals.kt:67); noted: no test keeps `ScaleFactor` from becoming a data class; worktree as it was. Returned to the developer; after the fix (7cc07d5): defects — build and suite ok, every earlier hole and new probes caught; an unqualified `error` in a class whose companion object extends a class of another file, or in a class nested in such a class, still passes a listed message (CodeLiterals.kt:305-325); a supertype written `Any` is taken for `kotlin.Any` though an import alias may name another class `Any` (CodeLiterals.kt:315); no test fails when the Java throw condition is removed (CodeLiterals.kt:413) or when Kotlin's same-file declaration clause is removed (CodeLiterals.kt:253); worktree as it was. Second return: blocked, taken to the user
 **Gate 2:** —
-**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 2 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 **T-043 withdrawn (2026-10-01).** T-043 — the release-wide checks of L10N-001 (2) and A11Y-003 (1), cut out of T-008 on 2026-09-30 — was rejected at gate 1 once (`:core` left out), and its first review returned it for the allow-list (a group outside the Note's kinds, and words let through by value): the second return. The user authorised a third run on 2026-10-01 with the fallback stated: if review or a gate found defects again, the branch would be abandoned and the task split into A11Y-003 (1) and L10N-001 (2) without asking again. Its third review found the A11Y-003 (1) check and the resource-key check sound, and four defects in the code check: Java comments read with Kotlin's nesting rule, so `/* /* */` hid the rest of a Java file; Java literals read with Kotlin's `$` template rule; the SQL and programming-error holders matched by simple name, so a local `Query` annotation or a local `error` function faked them; and `ScaleFactor` made a data class, whose `copy()` bypasses the positive-factor guard. So T-043 is split into T-044 and T-045. Its verdicts stay where they are: docs/product/verdicts/20260930-T-043-gate1.md, 20260930-T-043-gate1-2.md, 20261001-T-043-gate1.md. The branch `task/T-043` (a2fab41) and its worktree are kept as a reference; nothing of it is merged. The ID T-043 is not reused.
 
