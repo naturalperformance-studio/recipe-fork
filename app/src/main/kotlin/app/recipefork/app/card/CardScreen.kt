@@ -66,10 +66,11 @@ private sealed interface CardContent {
  * order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
  * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe.
  *
- * The top bar holds the screen's actions, outside the recipe: back to the book and, only while the recipe is
- * editable, the edit action that opens the editor on it (FLOW-029 (2–4)). Nothing inside the recipe edits it; the
- * one control in the content is the serving count's − and +, which change how the recipe is read and never the
- * recipe (SCALE-001, SCALE-011). It opens at the authored count each time.
+ * The top bar holds the screen's actions, outside the recipe: back to the book, the fork action on every recipe,
+ * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
+ * editor on it (FLOW-029 (2–4)). Nothing inside the recipe edits it; the serving count's − and +, which change how
+ * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
+ * provenance, which opens its parent's card, the other. It opens at the authored count each time.
  */
 @Composable
 fun CardScreen(
@@ -79,6 +80,8 @@ fun CardScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     modifier: Modifier = Modifier,
+    onFork: () -> Unit = {},
+    onOpenParent: (RecipeId) -> Unit = {},
 ) {
     val content by remember(recipeId, recipes) {
         recipes.observe(recipeId).map { recipe -> recipe?.let(CardContent::Shown) ?: CardContent.Missing }
@@ -99,7 +102,13 @@ fun CardScreen(
 
     Column(modifier.fillMaxSize().testTag(CardTags.SCREEN)) {
         val shown = content
-        TopBar(editable = shown is CardContent.Shown && shown.recipe.state.editable, onBack = onBack, onEdit = onEdit)
+        TopBar(
+            shown = shown is CardContent.Shown,
+            editable = shown is CardContent.Shown && shown.recipe.state.editable,
+            onBack = onBack,
+            onFork = onFork,
+            onEdit = onEdit,
+        )
         HorizontalDivider()
         when (shown) {
             CardContent.Loading -> Unit
@@ -108,14 +117,14 @@ fun CardScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
             )
-            is CardContent.Shown -> entries?.let { RecipeContent(shown.recipe, it) }
+            is CardContent.Shown -> entries?.let { RecipeContent(shown.recipe, it, recipes, onOpenParent) }
         }
     }
 }
 
-/** The screen's bar: back on one side, the recipe's actions on the other — edit now, more to come beside it. */
+/** The screen's bar: back on one side, the recipe's actions on the other — fork on any recipe shown, edit beside it. */
 @Composable
-private fun TopBar(editable: Boolean, onBack: () -> Unit, onEdit: () -> Unit) {
+private fun TopBar(shown: Boolean, editable: Boolean, onBack: () -> Unit, onFork: () -> Unit, onEdit: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp).testTag(CardTags.BAR),
         verticalAlignment = Alignment.CenterVertically,
@@ -127,6 +136,14 @@ private fun TopBar(editable: Boolean, onBack: () -> Unit, onEdit: () -> Unit) {
             modifier = Modifier.testTag(CardTags.BACK),
         )
         Spacer(Modifier.weight(1f))
+        if (shown) {
+            BarAction(
+                text = stringResource(R.string.card_fork),
+                action = stringResource(R.string.card_fork_action),
+                onClick = onFork,
+                modifier = Modifier.testTag(CardTags.FORK),
+            )
+        }
         if (editable) {
             BarAction(
                 text = stringResource(R.string.card_edit),
@@ -139,7 +156,12 @@ private fun TopBar(editable: Boolean, onBack: () -> Unit, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun RecipeContent(recipe: Recipe, entries: Map<Long, IngredientEntryEntity>) {
+private fun RecipeContent(
+    recipe: Recipe,
+    entries: Map<Long, IngredientEntryEntity>,
+    recipes: RecipeRepository,
+    onOpenParent: (RecipeId) -> Unit,
+) {
     val language = when (interfaceLanguage(LocalConfiguration.current)) {
         RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
         RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
@@ -153,6 +175,7 @@ private fun RecipeContent(recipe: Recipe, entries: Map<Long, IngredientEntryEnti
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.semantics { heading() }.testTag(CardTags.TITLE),
         )
+        recipe.parent?.let { Provenance(it, recipes, onOpenParent) }
         // The card always opens at the authored count (FLOW-017 (2)); the count requested is the card's alone.
         val authored = recipe.servings?.takeIf { it >= 1 }
         var requested by remember(recipe.id, authored) { mutableStateOf(authored?.let { Rational.of(it.toLong()) }) }
@@ -195,6 +218,54 @@ private fun RecipeContent(recipe: Recipe, entries: Map<Long, IngredientEntryEnti
                 recipe.description,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.testTag(CardTags.DESCRIPTION),
+            )
+        }
+    }
+}
+
+/** What the provenance area knows of the parent: nothing yet, its title, or that the book does not hold it. */
+private sealed interface ParentContent {
+    data object Loading : ParentContent
+    data object Unavailable : ParentContent
+    data class Held(val title: String) : ParentContent
+}
+
+/**
+ * The provenance area: the one direct parent, named by its title (FORK-003 (3), FORK-004 (1), FLOW-065). While the
+ * book holds the parent, tapping it opens the parent's card; a parent the book does not hold is said to be
+ * unavailable and opens nothing. No descendant is ever listed or counted (FORK-004 (3)).
+ */
+@Composable
+private fun Provenance(parent: RecipeId, recipes: RecipeRepository, onOpenParent: (RecipeId) -> Unit) {
+    val content by remember(parent, recipes) {
+        recipes.observe(parent).map { it?.let { held -> ParentContent.Held(held.title) } ?: ParentContent.Unavailable }
+    }.collectAsState(initial = ParentContent.Loading)
+    when (val shown = content) {
+        ParentContent.Loading -> Unit
+        ParentContent.Unavailable -> Text(
+            stringResource(R.string.card_parent_unavailable),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.testTag(CardTags.PROVENANCE),
+        )
+        is ParentContent.Held -> Box(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clickable(
+                    onClickLabel = stringResource(R.string.card_parent_open_action),
+                    role = Role.Button,
+                    onClick = { onOpenParent(parent) },
+                )
+                .testTag(CardTags.PROVENANCE),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Text(
+                stringResource(
+                    R.string.card_parent,
+                    shown.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
     }
@@ -314,6 +385,8 @@ object CardTags {
     const val BAR = "card-bar"
     const val BACK = "card-back"
     const val EDIT = "card-edit"
+    const val FORK = "card-fork"
+    const val PROVENANCE = "card-provenance"
     const val MISSING = "card-missing"
     const val CONTENT = "card-content"
     const val TITLE = "card-title"

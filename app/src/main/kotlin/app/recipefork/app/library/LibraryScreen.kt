@@ -46,6 +46,7 @@ import app.recipefork.app.R
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardScreen
+import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.EditorScreen
@@ -65,7 +66,9 @@ const val OWN_PAGE = 30
 /**
  * "My recipe book": the marked recipes and the recipes written in the active book (FLOW-034), and the editor on
  * a new recipe written from it (FLOW-042). An own recipe's entry opens its card (FLOW-029 (1)); the card's edit
- * action opens the editor on it, and leaving the editor shows that card again.
+ * action opens the editor on it, and leaving the editor shows that card again. The card's fork action writes a fork
+ * and opens the editor on it, so that leaving it shows the fork's card; a fork's provenance opens its parent's card
+ * in place of the fork's.
  */
 @Composable
 fun LibraryScreen(
@@ -82,11 +85,24 @@ fun LibraryScreen(
     }
     val viewing by session.viewing.collectAsState()
     viewing?.let { id ->
+        // One fork per tap: a second tap while the first is being written adds none.
+        var forking by remember(id) { mutableStateOf(false) }
         CardScreen(
             RecipeId(id), recipes, card,
             onBack = session::closeCard,
             onEdit = { session.openEditor(id) },
             modifier = modifier,
+            onFork = {
+                if (!forking) {
+                    forking = true
+                    session.viewModelScope.launch {
+                        // The editor opens on the fork; leaving it shows the fork's card (FLOW-029 (1)).
+                        forkRecipe(recipes, editor.book, RecipeId(id), editor.clock())?.let { session.openEditor(it.value) }
+                        forking = false
+                    }
+                }
+            },
+            onOpenParent = { parent -> session.openCard(parent.value) },
         )
         return
     }

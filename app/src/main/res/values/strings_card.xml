@@ -5,6 +5,12 @@
     <string name="card_back_action">Return to My recipe book</string>
     <string name="card_edit">Edit</string>
     <string name="card_edit_action">Open this recipe in the editor</string>
+    <string name="card_fork">Fork</string>
+    <string name="card_fork_action">Make an editable copy of this recipe</string>
+    <!-- A fork's provenance area (FORK-003, FORK-004): its one direct parent. -->
+    <string name="card_parent">Forked from “%1$s”</string>
+    <string name="card_parent_open_action">Open the recipe this one was forked from</string>
+    <string name="card_parent_unavailable">Forked from a recipe that is not in this recipe book</string>
     <!-- The recipe's parts, each shown only where the recipe holds it (FLOW-019). -->
     <string name="card_servings">Servings: %1$s</string>
     <!-- The serving count control (SCALE-011): its two actions, named and announced for the screen reader. -->
