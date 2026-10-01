@@ -1,11 +1,17 @@
 ---
 slug: MVP
 status: closed
-updated: 2026-09-28
+updated: 2026-10-02
 ids: [MVP-001, MVP-002, MVP-003]
 ---
 
 # The MVP boundary
+
+> **Superseded 2026-10-02 by user decision.** The product is now built in increments
+> (`docs/increments/`), and the first release is whatever increments have shipped,
+> not "every closed section". MVP-001 no longer binds. MVP-002 stays useful as a list
+> of things decided against; MVP-003 stays as a checklist for the first public
+> release to a store. `/req-forge` rewrites this section when the vision is next synced.
 
 This section takes no decision of its own. It collects decisions already taken
 elsewhere into one boundary: what the first release contains, what it

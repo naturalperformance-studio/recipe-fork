@@ -1,57 +1,11 @@
 # Recipe Fork — specification index
 
-> **NOT READY — 3 questions must be answered before MVP.**
-> Sections: 27 closed · 0 blocked · 0 open · 1 n/a.
-> Blocking: OQ-016, OQ-029, OQ-030. Last updated 2026-10-02.
-> Every section of the first release is written. What is open before it are three
-> questions whose answers change no requirement and hold the store listing
-> instead (MVP-003). Section `import` is written ahead and is outside the first
-> release (MVP-002); its own release waits on OQ-036, classified after MVP.
-> Gate 1 of the first backlog found 21 specification defects (SD-001–SD-026, of
-> which five are duplicates, in `docs/product/spec-defects.md`). Every one was
-> answered by the product owner on 2026-09-27 and written here. The re-check of
-> the same day left SD-006, SD-009, SD-019 and SD-021 unresolved; what still stood
-> open behind them was answered and written the same day. A second re-check closed
-> the first three; its one residue, FLOW-013 (8) asking for a notification
-> permission Android 10 to 12 do not have, was answered and written the same day,
-> and SD-021 turns resolved only when the product owner says so.
-> Gate 1 then found SD-027 (two entries under one number) and SD-028 to SD-032;
-> all seven were answered by the product owner on 2026-09-27 and written here, and
-> each turns resolved only when the product owner says so.
-> Gates 1 and 2 then found SD-033 to SD-035 — what a reader may fix, what an
-> author may enter as a quantity, and whether a per-sign-in secret identifies a
-> device; all three were answered by the product owner on 2026-09-27 and written
-> here (DOM-017, DOM-018, SCALE-018, AUTH-015, AUTH-025), and each turns resolved
-> only when the product owner says so.
-> On 2026-09-28 the product owner put the device first: anyone writes and forks
-> with no account and no server, a recipe reaches the server only when sent, a
-> device holds several accounts and a pool, and serverless mode with recipe files
-> is built into the first release (FLOW-059 to FLOW-065, AUTH-026, AUTH-027, and
-> the sections they touch). The backlog cut before that date needs cutting again.
-> Gates 1 and 2 then found SD-036 to SD-041 — two wrong examples of SCALE-008, how
-> a typed number is read, the empty pool view, a stale cross-reference in FLOW-008,
-> the pool recipe that creates an account, and a sending the server already holds.
-> All six were answered by the product owner on 2026-09-29 and written here
-> (SCALE-008, DOM-017, DOM-019, FLOW-042, FLOW-008, FLOW-059, FLOW-066, AUTH-026,
-> ACT-002), and each turns resolved only when the product owner says so.
-> Gate 1 then found SD-042 to SD-045 — whose a pool recipe is when the account
-> created for it sends nothing, the mark after a first sending whose answer is lost,
-> which check comes first for a repeated sending that already made a fork, and a
-> sending of a recipe the server no longer holds; and, following from the second, a
-> sending that names no revision for a recipe the server holds. All were answered by the
-> product owner on 2026-10-01 and written here (FLOW-059, FLOW-005, FLOW-008,
-> FLOW-066, ACT-002, AUTH-004, AUTH-026, ST-010), and each turns resolved only when
-> the product owner says so.
-> Gate 1 of T-038 then left a question for this specification: an edit sent after
-> the device's own unanswered sending was forked by FLOW-008 and not forked by
-> FLOW-066 (1). The product owner answered it on 2026-10-01 — the sending is made
-> from what the unanswered one stored — and it is written as FLOW-067.
-> Gate 2 of T-044 then found "interactive element" in A11Y-003 defined nowhere; the
-> product owner defined it on 2026-10-02 — a scrolling container and a disabled
-> control are measured, text that only takes focus or selection is not.
-> Gate 1 then found SD-046 and SD-047, both answered on 2026-10-02: a sending
-> FLOW-066 answered by writing nothing counts as stored for FLOW-067, and a
-> scrolling container is measured across its scroll direction only (A11Y-003).
+> **Vision** — 27 sections closed · 0 open · 1 n/a. Open questions: 38 in the ledger, all `later` until an increment touches them.
+> Synced through: — (no increment shipped yet). Last updated 2026-10-02.
+> Since 2026-10-02 this specification is the product vision, not a contract: the product is built in
+> increments planned by `/team-lead` (`docs/increments/`), and releases are whatever increments have
+> shipped. MVP-001 is superseded (see `220-mvp-boundary.md`). The history of the earlier gate process
+> is in `docs/archive/process-v1/`.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
