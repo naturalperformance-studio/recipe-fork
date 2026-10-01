@@ -139,7 +139,8 @@ later one — and shall send no other recipe with it.
 - Given a sending the server stored whose answer did not reach the device, when
   the recipe is shown, then FLOW-005 marks it exactly as it marked it before that
   sending — never sent after a first sending, holding changes not sent after a
-  later one — and sending it again is answered by FLOW-066.
+  later one — and sending it again is answered by FLOW-066 when unedited and by
+  FLOW-067 when edited.
 - Given a fork whose parent the server does not hold, when the fork is sent, then
   it is sent alone and FLOW-007 governs how it names its parent.
 - Given serverless mode (FLOW-061), when any screen is shown, then no send control
@@ -199,6 +200,9 @@ answer was lost leaves the recipe marked never sent, its next sending names no
 revision for a recipe the server holds, which neither criterion 4 nor FLOW-008
 answered. See
 [ADR — a sending with no revision is made from the first](../decisions/20261001-a-sending-with-no-revision-is-made-from-the-first.md).
+Criterion 9 is narrowed the same day by user decision: an edited sending after an
+unanswered one is governed by FLOW-067, of which criterion 14 is the case of a first
+sending.
 
 ### FLOW-003 — What is refused while the server has not answered
 

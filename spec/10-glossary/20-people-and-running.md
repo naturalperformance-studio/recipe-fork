@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-29
+updated: 2026-10-01
 ids: []
 ---
 
@@ -202,6 +202,11 @@ server holds of a recipe is what was last sent. A recipe is never sent, sent, or
 sent with changes not sent, and FLOW-005 marks which. Nothing is submitted for
 moderation before every change is sent (FLOW-006). Replaces "accepted by the
 server" (2026-09-28).
+
+**Unanswered sending** — a sending whose answer did not reach the device, so that
+the device cannot tell whether the server stored it (FLOW-059 (9)). The recipe
+keeps the mark it had (FLOW-005 (8)), and the next sending is made from what the
+latest stored one left there (FLOW-067).
 
 **Recipe book** — the interface name, "My recipe book" («Моя книга рецептов»), of
 what this specification calls the favourites section: the recipes a person found

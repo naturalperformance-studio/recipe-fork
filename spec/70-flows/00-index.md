@@ -23,7 +23,7 @@ identifiers did not change on the split and never will.
 | Part | What is in it | Requirements |
 |---|---|---|
 | [10-offline-and-sync.md](10-offline-and-sync.md) | The device first: writing with no account and no connection, sending a recipe to the server by the owner's act — including the pool recipe that created an account, an unanswered sending, and a recipe the server no longer holds — and what is refused | FLOW-001–FLOW-007, FLOW-059 |
-| [15-divergence.md](15-divergence.md) | Two devices that diverge, and a sending the server already holds — including a repeated sending that already made a fork | FLOW-008, FLOW-066 |
+| [15-divergence.md](15-divergence.md) | Two devices that diverge, and a sending the server already holds — including a repeated sending that already made a fork; and a sending after an unanswered one, made from what that one stored | FLOW-008, FLOW-066, FLOW-067 |
 | [20-device-storage.md](20-device-storage.md) | The recipe book and what the device keeps, with and without an account; clearing media the device can fetch again | FLOW-009–FLOW-012, FLOW-058, FLOW-051, FLOW-052, FLOW-060 |
 | [30-cooking.md](30-cooking.md) | Cooking from a recipe | FLOW-013–FLOW-021 |
 | [40-editor.md](40-editor.md) | Writing a recipe: the ingredient row and what its field offers, the editor's order, media, warnings, the saved view and what a fork carries | FLOW-022–FLOW-026, FLOW-028–FLOW-030, FLOW-057 |

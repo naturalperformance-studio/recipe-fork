@@ -1,6 +1,6 @@
 # A sending with no revision is made from the first revision
 
-**Status:** accepted — adds FLOW-059 (14); follows from 20261001-an-unanswered-sending-keeps-its-mark.
+**Status:** accepted — adds FLOW-059 (14); follows from 20261001-an-unanswered-sending-keeps-its-mark; generalised to every sending by 20261001-a-sending-is-made-from-what-the-unanswered-one-stored.
 
 **Context:** a first sending the server stored whose answer was lost leaves the
 recipe marked never sent, and the device holds no revision for it. When the owner,
