@@ -29,6 +29,8 @@ verbatim; where a requirement's criteria are split between tasks, the entry says
 - **Commands.** Build `./gradlew assembleAll`, full suite `./gradlew testAll`, setup `scripts/setup.sh` — see
   `00-index.md`. No task of waves 1 and 1b needs the device-test command.
 
+- **Recopied criteria.** On 2026-10-02 A11Y-003 (1) was recopied in every entry that carries it, to its wording at spec/ @ 71ea18a (a scrolling container is measured by criterion 5 alone); no other criterion of those entries changed, and gate 2 re-checks every criterion against spec/ as it then stands.
+
 ## Wave 1 — a person writes a recipe on the device and cooks from it
 
 A person with no account and no connection writes a recipe in the recipe book's pool, and cooks from it on the card
@@ -49,7 +51,7 @@ this wave, and no media is attached.
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
 | T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | on-develop |
-| T-050 | A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not | T-044 | blocked |
+| T-050 | A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not | T-044 | planned |
 | T-045 | No interface string of the release is fixed in the code in one language only | T-008 | in-progress |
 | T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
@@ -414,7 +416,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -486,7 +488,7 @@ this wave, and no media is attached.
 **Acceptance criteria** (verbatim)
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 **Gate 1:** accepted — docs/product/verdicts/20261001-T-044-gate1.md
 **Review:** defects — build and suite ok; the check reads the merged tree, so an element interactive through a semantics action alone inside a merging parent folds into the parent and is not measured (a 24 dp `semantics { onClick }` inside a 200 dp `clickable` passed; on the unmerged tree it fails and both screens still pass) (AccessibilityChecks.kt:34); noted, not a defect: Material controls such as `Checkbox` (24 dp) and `IconButton` (40 dp) measure under 48 dp as laid out and need an explicit size; after the fifth run (164e4c3, one width-only fixture): pass — build and suite ok, the criterion checked by mutation in both directions in the self-tests and on both screens, worktree as it was. Questions the developer returned unanswered, for the gate: whether a scroll container is an interactive element (excluded today), whether a disabled element is measured (it is), and whether a node whose only action is focus, text selection or copying is interactive (focus excluded, selection and copying included); no current screen has any of them on later screens; worktree as it was. Returned to the developer; after the fix (unmerged tree, 2d5f551): defects — build and suite ok, every size mutation on both screens and in the fixtures caught; a nested element with no label of its own is named in the failure by its semantics id ("node 40"), not by its click label, test tag or labelled ancestor (AccessibilityChecks.kt:45); a node acted on only through custom actions, expand/collapse, dismiss or an IME action is never selected, so one at 24 dp passes (AccessibilityChecks.kt:20); worktree as it was. Second return: blocked, taken to the user; a third run authorised by the user on 2026-10-01: the failure names an element by its click label, test tag or labelled ancestor, every node with any semantics action is selected, and the KDoc states that a tap handled by bare `pointerInput` is invisible to a semantics check; if its review finds defects again, it goes to the user (there is nothing left to split); after the third run (c8d8895): defects — build and suite ok, every size mutation on both screens and every selection and naming weakening caught; a small unlabelled element inside a merging ancestor that has a click label or test tag but no text is named by its semantics id, and the message wrongly says no action label exists (AccessibilityChecks.kt:103-108; on each such screen A11Y-005 fails too); worktree as it was. Blocked, taken to the user; a fourth run authorised by the user on 2026-10-01 for that naming defect, with the review bar below; after the fourth run (8fcfca1): defects — build and suite ok, no miss (18 screen mutations, 900 fixture combinations, every weakening but one caught); removing the width comparison fails no test, since no fixture is short in width alone (AccessibilityChecksTest.kt:81); worktree as it was. The user read that as within the bar on 2026-10-02 and authorised a fifth run to add the fixture; notes for later screen tasks: no self-test for an element whose only action is OnLongClick, SetProgress or Collapse; Material `Checkbox` (24 dp) and `IconButton` (40 dp) need an explicit size
@@ -496,7 +498,7 @@ this wave, and no media is attached.
 ### T-050 — A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not
 
 **Requirements:** A11Y-003
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-044
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecksTest.kt`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -507,14 +509,14 @@ this wave, and no media is attached.
 **Acceptance criteria** (verbatim)
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given a container that scrolls, when it is measured across the direction it scrolls in, then it is at least 48 dp — a strip that scrolls sideways at least 48 dp tall, a list that scrolls down at least 48 dp wide.
+- Given a container that scrolls, when it is measured across the direction it scrolls in, then it is at least 48 dp — a strip that scrolls sideways at least 48 dp tall, a list that scrolls down at least 48 dp wide — and its length along that direction is not measured.
 - Given a disabled control, when it is measured, then its touch target is the one it has when enabled, and it does not change size when it becomes enabled.
 - Given text whose only answer to a touch is focus, selection or copying, when the screen is measured, then that text is not measured; a separate control that copies it is, and a link inside text is.
 
-**Gate 1:** blocked-by-spec (SD-047, whether a scrolling container is measured across its scroll direction only or in both) — docs/product/verdicts/20261002-T-050-gate1.md
+**Gate 1:** blocked-by-spec (SD-047, whether a scrolling container is measured across its scroll direction only or in both) — docs/product/verdicts/20261002-T-050-gate1.md; SD-047 answered at spec/ @ 71ea18a; re-gated against the unchanged entry: rejected — docs/product/verdicts/20261002-T-050-gate1-2.md (the entry predated the answer); criterion 5 recopied; re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-045 — No interface string of the release is fixed in the code in one language only
 
@@ -567,7 +569,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -632,7 +634,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -677,7 +679,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -715,7 +717,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -773,7 +775,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -822,7 +824,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -863,7 +865,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -902,7 +904,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -972,7 +974,7 @@ this wave, and no media is attached.
 - Given the cooking card, when its controls are measured, then A11Y-003's larger figure holds.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 - Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 
 *L10N-001 — spec/160-localization.md*
@@ -1027,7 +1029,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1082,7 +1084,7 @@ this wave, and no media is attached.
 - Given a count requested as a fraction, when the recipe is displayed, then the count is displayed in the same form it was requested and is not marked as approximate, because it is the count the reader asked for (SCALE-008).
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-007 — spec/200-accessibility.md*
 - Given the cooking card, when its controls are measured, then A11Y-003's larger figure holds.
@@ -1148,7 +1150,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1174,7 +1176,7 @@ this wave, and no media is attached.
 - Given a running timer, when the reader opens the recipe, then the time remaining is shown on its step.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 - Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 
 *A11Y-007 — spec/200-accessibility.md*
@@ -1228,7 +1230,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 - Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 
 *A11Y-005 — spec/200-accessibility.md*
@@ -1276,7 +1278,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1311,7 +1313,7 @@ this wave, and no media is attached.
 - Given notifications are permitted, when a timer ends while the screen is off or the application is closed, then it announces itself audibly from the device's own facility (FLOW-013, EXT-009); with notifications refused FLOW-013 (5) governs and the reader has been told so when starting it (FLOW-013 (9), (10)).
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 - Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 
 *L10N-001 — spec/160-localization.md*
@@ -1355,7 +1357,7 @@ this wave, and no media is attached.
 - Given a recipe whose steps each carry a timer, when the reader starts several of them, then all of them run at once (FLOW-016).
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 - Given the cooking card, when its controls are measured — the timer controls and the serving control — then each is at least 56 by 56 dp. There is no step advance among them: the card is one scrolling screen (`flows`, 30-cooking).
 
 *A11Y-007 — spec/200-accessibility.md*
@@ -1405,7 +1407,7 @@ this wave, and no media is attached.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1468,10 +1470,10 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-041 | A divergent sending becomes a fork, and a frozen recipe is never written | T-040 | gated |
 | T-042 | A sending the server already holds changes nothing, and a repeated divergent sending makes one fork | T-041 | gated |
 | T-046 | A recipe the server lost is created again, and a sending with no revision is taken as made from the first | T-042 | gated |
-| T-048 | A sending after the device's own unanswered sending is made from what that sending stored, at the server | T-046 | blocked |
+| T-048 | A sending after the device's own unanswered sending is made from what that sending stored, at the server | T-046 | planned |
 | T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-042, T-046, T-048, T-036, T-025, T-034 | gated |
 | T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | gated |
-| T-049 | A sending after a lost answer is made from what the server holds, on the device | T-038, T-048 | gated |
+| T-049 | A sending after a lost answer is made from what the server holds, on the device | T-038, T-048 | planned |
 | T-026 | Sending with no account offers to create one | T-049 | gated |
 | T-047 | A pool recipe whose account was created muted, or whose sending was refused, waits in that account's book | T-026 | gated |
 
@@ -1510,7 +1512,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1562,7 +1564,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1608,7 +1610,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1651,7 +1653,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1796,20 +1798,22 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 ### T-048 — A sending after the device's own unanswered sending is made from what that sending stored, at the server
 
 **Requirements:** FLOW-067, FLOW-008
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-046
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/resources/db/migration/V6__sendings.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
-**Note:** Cut on 2026-10-02 from the re-slice against spec/ @ 86164a9, which added FLOW-067 and FLOW-008 (8) on the question left by T-038's gate 1 (item 7). This is the server half: what the server takes a sending as made from when the device names its own unanswered sendings. It follows T-046 because FLOW-067 (7) is FLOW-059 (14)'s case, which T-046 builds, and because it answers against T-040's replacement, T-041's fork and T-042's sameness.
-**Note:** The Team Lead's design (to be written into `decisions/20260928-manual-sending-replaces-the-outbox.md` before this task starts): every sending carries an identity the device mints for it, and the identities of the device's sendings of that recipe that went unanswered since it last learned what the server holds, oldest first. The server records, for each sending it stores, its identity and what it left — the revision it wrote, or the fork it created under FLOW-008. A sending naming unanswered identities is taken as made from what the latest of them that the server stored left: a revision is the version it was made from; a fork means the sending is answered against the fork (FLOW-067 (5)). An identity the server never stored is passed over (FLOW-067 (3)); none stored leaves the sending made from the revision it names. The answer says what the sending was made from when it was a fork, so the device can take the fork as its recipe (T-049).
-**Note:** Observed at the service: what is written, what forks exist and under which parent, and what the answer carries. The device's halves of FLOW-067 (1–5, 7) — keeping the unanswered sendings, naming them, the mark, the notice, the fork as the device's recipe — are T-049's. FLOW-067 (6) is observed here alone: the device half of an unedited repeat is FLOW-066's, carried by T-038. Each criterion is tested with a test of "nothing changed it since" that varies every field of the content, not the title only, and FLOW-067 (4) with the server storing the first of two unanswered sendings and not the second, and the reverse.
-**Criteria of these requirements carried elsewhere:** FLOW-067 (1–5, 7) → T-049 as well, on the device · FLOW-008 (1, 3, 6) → T-038; (2, 4) → T-041; (5) → T-040; (7) → T-042
+**Note:** Cut on 2026-10-02 from the re-slice against spec/ @ 86164a9, which added FLOW-067 and FLOW-008 (8) on the question left by T-038's gate 1 (item 7). This is the server half: what the server takes a sending as made from when the device names its own unanswered sendings. It follows T-046 because FLOW-067 (9) is FLOW-059 (14)'s case, which T-046 builds, and because it answers against T-040's replacement, T-041's fork and T-042's sameness.
+**Note:** The Team Lead's design (to be written into `decisions/20260928-manual-sending-replaces-the-outbox.md` before this task starts): every sending carries an identity the device mints for it, and the identities of the device's sendings of that recipe that went unanswered since it last learned what the server holds, oldest first. The server records, for each sending it stores, its identity and what it left — the revision it wrote, the fork it created under FLOW-008, or, when FLOW-066 answered it by writing nothing, the revision the server held then (FLOW-067 (3), (4)). A sending naming unanswered identities is taken as made from what the latest of them that the server stored left: a revision is the version it was made from; a fork means the sending is answered against the fork (FLOW-067 (7)). An identity the server never stored is passed over (FLOW-067 (5)); none stored leaves the sending made from the revision it names. The answer says what the sending was made from when it was a fork, so the device can take the fork as its recipe (T-049).
+**Note:** Observed at the service: what is written, what forks exist and under which parent, and what the answer carries. The device's halves of FLOW-067 (1–7, 9) — keeping the unanswered sendings, naming them, the mark, the notice, the fork as the device's recipe — are T-049's. FLOW-067 (8) is observed here alone: the device half of an unedited repeat is FLOW-066's, carried by T-038. Each criterion is tested with a test of "nothing changed it since" that varies every field of the content, not the title only, and FLOW-067 (6) with the server storing the first of two unanswered sendings and not the second, and the reverse.
+**Criteria of these requirements carried elsewhere:** FLOW-067 (1–7, 9) → T-049 as well, on the device · FLOW-008 (1, 3, 6) → T-038; (2, 4) → T-041; (5) → T-040; (7) → T-042
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-067 — spec/70-flows/15-divergence.md*
 - Given a sent recipe edited and sent, the server having stored that sending and its answer not having reached the device, when the owner edits the recipe again and sends it while no other device has changed it, then the server's copy is replaced by the new version, no fork is created, no notice of FLOW-008 (3) is shown, and FLOW-005 marks the recipe as sent.
 - Given the same unanswered sending, when another device of the account has sent a change to the recipe before this device sends its edit, then this device's version becomes a `private` fork as FLOW-008 states, and the owner is told as FLOW-008 (3) states.
+- Given an unanswered sending whose content was the same as the server's, so that FLOW-066 wrote nothing, when the owner edits the recipe and sends it while no other device has changed it since, then the sending is made from the revision the server held when that sending arrived: the server's copy is replaced, no fork is created and no notice is shown — the device took the server's changes, and the edit lies on top of them.
+- Given that revision held in `pending`, `link_shared` or `published`, when the owner's edit is sent, then nothing is written to it and the edit becomes a `private` fork as FLOW-008 (4) states, because that recipe cannot change.
 - Given an unanswered sending the server did not store, when the owner sends the recipe again, then the sending is made from the revision the device held before that sending, as if it had never been made.
 - Given two or more unanswered sendings in a row, of which the server stored any, when the owner sends the recipe, then the sending is made from what the latest stored one left, whichever earlier ones the server stored.
 - Given an unanswered sending that made a fork under FLOW-008, when the owner edits the recipe and sends it, then the sending is made from that fork: the fork's copy is replaced if nothing changed it since, FLOW-008 forks the fork if another device changed it, no second fork of the original recipe is created, the device's recipe is that fork with the original reachable beside it, and the owner is told of the fork once, as FLOW-008 (3) states.
@@ -1819,10 +1823,10 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 *FLOW-008 — spec/70-flows/15-divergence.md*
 - Given a server's version changed since the device's copy only by this device's own unanswered sending, when the device sends, then that change is not a divergence: FLOW-067 takes the sending as made from what that sending stored.
 
-**Gate 1:** blocked-by-spec (SD-046, whether an unanswered sending FLOW-066 answered by writing nothing counts as one the server stored) — docs/product/verdicts/20261002-T-048-gate1.md
+**Gate 1:** blocked-by-spec (SD-046, whether an unanswered sending FLOW-066 answered by writing nothing counts as one the server stored) — docs/product/verdicts/20261002-T-048-gate1.md; SD-046 answered at spec/ @ 71ea18a; re-gated against the unchanged entry: rejected — docs/product/verdicts/20261002-T-048-gate1-2.md (the entry predated the answer); FLOW-067 (3–4) added, its later criteria renumbered (5–9); re-gate due
 **Review:** —
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 <!-- T-028: map and dependency only -->
 
@@ -1877,7 +1881,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1928,7 +1932,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -1943,19 +1947,21 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 ### T-049 — A sending after a lost answer is made from what the server holds, on the device
 
 **Requirements:** FLOW-067, FLOW-059
-**Status:** gated
+**Status:** planned
 **Depends on:** T-038, T-048
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/library/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Note:** Cut on 2026-10-02 from the re-slice against spec/ @ 86164a9. It carries the device half of FLOW-067 and the device halves of FLOW-059 (13) and (14), which T-038 carried until then: everything the device does to say what a sending after a lost answer is made from. T-038 keeps how the device takes the server's answers and marks the recipe, and the notice of a fork, which this task reuses; it adds no screen and no interface string. If one proves needed, it is returned as an open item, not added.
-**Note:** By the design T-048 records in the sending ADR, the device mints an identity for each sending and keeps, per recipe and in the recipe's book database, the identities of its sendings that went unanswered until it next learns what the server holds of that recipe — the cost FLOW-067 states. Its next sending names them, oldest first. When the answer says the sending was answered against a fork its earlier unanswered sending made, the device's recipe becomes that fork with the original reachable beside it, and the owner is told of the fork once, through T-038's notice (FLOW-067 (5)). Each criterion is tested against a server double that stores or drops each sending as the case needs; T-048 tests the server itself.
-**Criteria of these requirements carried elsewhere:** FLOW-067 (1–7) → T-048 at the server; (6) on the device is FLOW-066's, T-038's · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 as well, at the server
+**Note:** By the design T-048 records in the sending ADR, the device mints an identity for each sending and keeps, per recipe and in the recipe's book database, the identities of its sendings that went unanswered until it next learns what the server holds of that recipe — the cost FLOW-067 states. Its next sending names them, oldest first. When the answer says the sending was answered against a fork its earlier unanswered sending made, the device's recipe becomes that fork with the original reachable beside it, and the owner is told of the fork once, through T-038's notice (FLOW-067 (7)). Each criterion is tested against a server double that stores or drops each sending as the case needs; T-048 tests the server itself.
+**Criteria of these requirements carried elsewhere:** FLOW-067 (1–9) → T-048 at the server; (8) on the device is FLOW-066's, T-038's · FLOW-059 (1) → T-026; (2) → T-028; (3) → wave 7; (4) → T-040 at the server, T-028 on the device; (5–6, 11) → T-028; (7–8) → wave 5; (9) → T-038; (10) → wave 4; (12) → T-047; (13–14) → T-046 as well, at the server
 
 **Acceptance criteria** (verbatim)
 
 *FLOW-067 — spec/70-flows/15-divergence.md*
 - Given a sent recipe edited and sent, the server having stored that sending and its answer not having reached the device, when the owner edits the recipe again and sends it while no other device has changed it, then the server's copy is replaced by the new version, no fork is created, no notice of FLOW-008 (3) is shown, and FLOW-005 marks the recipe as sent.
 - Given the same unanswered sending, when another device of the account has sent a change to the recipe before this device sends its edit, then this device's version becomes a `private` fork as FLOW-008 states, and the owner is told as FLOW-008 (3) states.
+- Given an unanswered sending whose content was the same as the server's, so that FLOW-066 wrote nothing, when the owner edits the recipe and sends it while no other device has changed it since, then the sending is made from the revision the server held when that sending arrived: the server's copy is replaced, no fork is created and no notice is shown — the device took the server's changes, and the edit lies on top of them.
+- Given that revision held in `pending`, `link_shared` or `published`, when the owner's edit is sent, then nothing is written to it and the edit becomes a `private` fork as FLOW-008 (4) states, because that recipe cannot change.
 - Given an unanswered sending the server did not store, when the owner sends the recipe again, then the sending is made from the revision the device held before that sending, as if it had never been made.
 - Given two or more unanswered sendings in a row, of which the server stored any, when the owner sends the recipe, then the sending is made from what the latest stored one left, whichever earlier ones the server stored.
 - Given an unanswered sending that made a fork under FLOW-008, when the owner edits the recipe and sends it, then the sending is made from that fork: the fork's copy is replaced if nothing changed it since, FLOW-008 forks the fork if another device changed it, no second fork of the original recipe is created, the device's recipe is that fork with the original reachable beside it, and the owner is told of the fork once, as FLOW-008 (3) states.
@@ -1965,7 +1971,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a recipe the device holds as sent, when the server no longer holds it — its store restored from a copy older than the recipe's sending (QUAL-008), or the recipe deleted on another device of the account before this device learned of it (ST-010 (2)) — and the owner sends it, then the server creates it again in `private` with the same identity, owned by the sending account, as on a first sending, and FLOW-005 marks it as sent.
 - Given a recipe whose first sending the server stored and whose answer did not reach the device, so that the device holds no revision for it, when the owner sends it again, edited or not, then the server treats the sending as made from the recipe's first revision: it replaces the server's copy if that copy has not changed since (criterion 4), FLOW-008 governs if another device changed it, and FLOW-066 governs if the content is the same.
 
-**Gate 1:** accepted — docs/product/verdicts/20261002-T-049-gate1.md
+**Gate 1:** accepted — docs/product/verdicts/20261002-T-049-gate1.md; spec/ @ 71ea18a added FLOW-067 (3–4) (an unanswered sending FLOW-066 wrote nothing for counts as stored) and renumbered the rest; both added; re-gate due
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -2019,7 +2025,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
@@ -2065,7 +2071,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
 *A11Y-003 — spec/200-accessibility.md*
-- Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like; a container that scrolls is measured by criterion 5 alone.
 
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
