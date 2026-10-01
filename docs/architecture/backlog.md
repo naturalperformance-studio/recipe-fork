@@ -514,7 +514,7 @@ this wave, and no media is attached.
 - Given text whose only answer to a touch is focus, selection or copying, when the screen is measured, then that text is not measured; a separate control that copies it is, and a link inside text is.
 
 **Gate 1:** blocked-by-spec (SD-047, whether a scrolling container is measured across its scroll direction only or in both) — docs/product/verdicts/20261002-T-050-gate1.md; SD-047 answered at spec/ @ 71ea18a; re-gated against the unchanged entry: rejected — docs/product/verdicts/20261002-T-050-gate1-2.md (the entry predated the answer); criterion 5 recopied; re-gate due; re-gated: accepted — docs/product/verdicts/20261002-T-050-gate1-3.md
-**Review:** —
+**Review:** — (the developer's run finished at 36edabc on 2026-10-02, build and suite passing in its report; not yet reviewed when the user stopped the process)
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
@@ -1470,7 +1470,7 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-041 | A divergent sending becomes a fork, and a frozen recipe is never written | T-040 | gated |
 | T-042 | A sending the server already holds changes nothing, and a repeated divergent sending makes one fork | T-041 | gated |
 | T-046 | A recipe the server lost is created again, and a sending with no revision is taken as made from the first | T-042 | gated |
-| T-048 | A sending after the device's own unanswered sending is made from what that sending stored, at the server | T-046 | planned |
+| T-048 | A sending after the device's own unanswered sending is made from what that sending stored, at the server | T-046 | gated |
 | T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-042, T-046, T-048, T-036, T-025, T-034 | gated |
 | T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | gated |
 | T-049 | A sending after a lost answer is made from what the server holds, on the device | T-038, T-048 | gated |
@@ -1798,7 +1798,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 ### T-048 — A sending after the device's own unanswered sending is made from what that sending stored, at the server
 
 **Requirements:** FLOW-067, FLOW-008
-**Status:** planned
+**Status:** gated
 **Depends on:** T-046
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/resources/db/migration/V6__sendings.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -1823,7 +1823,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 *FLOW-008 — spec/70-flows/15-divergence.md*
 - Given a server's version changed since the device's copy only by this device's own unanswered sending, when the device sends, then that change is not a divergence: FLOW-067 takes the sending as made from what that sending stored.
 
-**Gate 1:** blocked-by-spec (SD-046, whether an unanswered sending FLOW-066 answered by writing nothing counts as one the server stored) — docs/product/verdicts/20261002-T-048-gate1.md; SD-046 answered at spec/ @ 71ea18a; re-gated against the unchanged entry: rejected — docs/product/verdicts/20261002-T-048-gate1-2.md (the entry predated the answer); FLOW-067 (3–4) added, its later criteria renumbered (5–9); re-gate due
+**Gate 1:** blocked-by-spec (SD-046, whether an unanswered sending FLOW-066 answered by writing nothing counts as one the server stored) — docs/product/verdicts/20261002-T-048-gate1.md; SD-046 answered at spec/ @ 71ea18a; re-gated against the unchanged entry: rejected — docs/product/verdicts/20261002-T-048-gate1-2.md (the entry predated the answer); FLOW-067 (3–4) added, its later criteria renumbered (5–9); re-gate due; re-gated: accepted — docs/product/verdicts/20261002-T-048-gate1-3.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
