@@ -13,6 +13,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import app.recipefork.core.scaling.Rational
+import app.recipefork.core.scaling.RequestedServings
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
@@ -55,12 +62,14 @@ private sealed interface CardContent {
 
 /**
  * The recipe card: the saved recipe exactly as a reader sees it, not an editor with reader styling (FLOW-029 (1)).
- * One scrolling screen (the card intro of `cooking`): the title, the authored serving count, the ingredients in
+ * One scrolling screen (the card intro of `cooking`): the title, the serving count, the ingredients in
  * order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
  * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe.
  *
  * The top bar holds the screen's actions, outside the recipe: back to the book and, only while the recipe is
- * editable, the edit action that opens the editor on it (FLOW-029 (2–4)). Nothing inside the recipe acts.
+ * editable, the edit action that opens the editor on it (FLOW-029 (2–4)). Nothing inside the recipe edits it; the
+ * one control in the content is the serving count's − and +, which change how the recipe is read and never the
+ * recipe (SCALE-001, SCALE-011). It opens at the authored count each time.
  */
 @Composable
 fun CardScreen(
@@ -144,18 +153,22 @@ private fun RecipeContent(recipe: Recipe, entries: Map<Long, IngredientEntryEnti
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.semantics { heading() }.testTag(CardTags.TITLE),
         )
-        recipe.servings?.let {
-            Text(
-                stringResource(R.string.card_servings, it),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.testTag(CardTags.SERVINGS),
+        // The card always opens at the authored count (FLOW-017 (2)); the count requested is the card's alone.
+        val authored = recipe.servings?.takeIf { it >= 1 }
+        var requested by remember(recipe.id, authored) { mutableStateOf(authored?.let { Rational.of(it.toLong()) }) }
+        requested?.let { count ->
+            ServingsControl(
+                count = RequestedServings.text(count, language),
+                canDecrease = count > RequestedServings.MIN,
+                onDecrease = { requested = RequestedServings.decreased(count) },
+                onIncrease = { requested = RequestedServings.increased(count) },
             )
         }
         val ingredients = recipe.ingredients.sortedBy { it.position }
         if (ingredients.isNotEmpty()) {
             Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
-                ingredients.forEach { ingredient ->
-                    IngredientRow(ingredientLine(ingredient, entries, language), CardTags.ingredient(ingredient.position))
+                ingredientLines(ingredients, entries, language, authored, requested).forEachIndexed { i, line ->
+                    IngredientRow(line, CardTags.ingredient(ingredients[i].position))
                 }
             }
         }
@@ -216,6 +229,69 @@ private fun IngredientRow(line: IngredientLine, tag: String) {
 }
 
 /**
+ * The serving count and the two actions that walk it (SCALE-011): the count as the reader requested it, never
+ * marked approximate, between a fewer and a more action. At ¼ the fewer action is disabled and does nothing.
+ */
+@Composable
+private fun ServingsControl(count: String, canDecrease: Boolean, onDecrease: () -> Unit, onIncrease: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(R.string.card_servings, count),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }.testTag(CardTags.SERVINGS),
+        )
+        StepAction(
+            glyph = MINUS,
+            name = stringResource(R.string.card_servings_fewer),
+            action = stringResource(R.string.card_servings_fewer_action),
+            enabled = canDecrease,
+            onClick = onDecrease,
+            modifier = Modifier.testTag(CardTags.SERVINGS_FEWER),
+        )
+        StepAction(
+            glyph = PLUS,
+            name = stringResource(R.string.card_servings_more),
+            action = stringResource(R.string.card_servings_more_action),
+            enabled = true,
+            onClick = onIncrease,
+            modifier = Modifier.testTag(CardTags.SERVINGS_MORE),
+        )
+    }
+}
+
+/**
+ * A − or + action, 48 by 48 dp (A11Y-003): the screen reader names it by [name] rather than by its glyph, and
+ * announces its click as [action] (A11Y-005).
+ */
+@Composable
+private fun StepAction(
+    glyph: String,
+    name: String,
+    action: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier
+            .size(48.dp)
+            .clickable(enabled = enabled, onClickLabel = action, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = name },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            glyph,
+            color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.clearAndSetSemantics {},
+        )
+    }
+}
+
+private const val MINUS = "\u2212"
+private const val PLUS = "+"
+
+/**
  * An action of the bar, at least 48 by 48 dp (A11Y-003), whose click the screen reader announces as what it
  * does — [action] — beside the visible [text] (A11Y-005).
  */
@@ -242,6 +318,8 @@ object CardTags {
     const val CONTENT = "card-content"
     const val TITLE = "card-title"
     const val SERVINGS = "card-servings"
+    const val SERVINGS_FEWER = "card-servings-fewer"
+    const val SERVINGS_MORE = "card-servings-more"
     const val INGREDIENTS = "card-ingredients"
     const val STEPS = "card-steps"
     const val DESCRIPTION = "card-description"
