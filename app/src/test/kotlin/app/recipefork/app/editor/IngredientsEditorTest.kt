@@ -29,6 +29,7 @@ import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -592,6 +593,7 @@ class IngredientsEditorTest {
         }
         val before = stored(id)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
+        compose.backThroughTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id.value)), PATIENCE_MS)
 
         openDirectly(id)

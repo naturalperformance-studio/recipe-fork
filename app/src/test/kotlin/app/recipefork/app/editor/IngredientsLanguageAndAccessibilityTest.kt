@@ -18,6 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -137,6 +138,7 @@ class IngredientsLanguageAndAccessibilityTest {
 
         // A frozen recipe's rows, read only.
         compose.onNodeWithTag(EditorTags.BACK).performClick()
+        compose.backThroughTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.OWN_LIST), PATIENCE_MS)
         val frozen = Recipe.create(Instant.parse("2026-10-02T12:00:00Z"), null).copy(
             title = "Pancakes",
