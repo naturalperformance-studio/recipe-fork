@@ -25,6 +25,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.library.LibrarySession
+import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
@@ -202,6 +203,7 @@ class EditorScreenTest {
         compose.onNodeWithTag(EditorTags.offered(12)).performClick()
         // Left at once, with the last change just made.
         leave()
+        compose.backThroughTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id.value)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.SCREEN).assertDoesNotExist()
         compose.onNode(hasText("Borscht") and hasAnyAncestor(hasTestTag(LibraryTags.OWN_LIST))).assertExists()
@@ -359,6 +361,7 @@ class EditorScreenTest {
         compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
         val online = offeredTags()
         compose.onNodeWithTag(EditorTags.BACK).performClick()
+        compose.backThroughTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id.value)), PATIENCE_MS)
 
         Connection.offline(context)

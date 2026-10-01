@@ -17,4 +17,6 @@
     <string name="library_sent_with_changes">Отправлен, есть неотправленные изменения</string>
     <string name="library_own_empty">В этой книге рецептов пока ничего не написано.</string>
     <string name="library_own_write">Написать рецепт</string>
+    <string name="library_own_new">Новый рецепт</string>
+    <string name="library_entry_open_action">Открыть рецепт</string>
 </resources>

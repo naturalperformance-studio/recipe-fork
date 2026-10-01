@@ -21,4 +21,8 @@
     <!-- FLOW-042: the own-recipes view of a book in which nothing has been written, and its one offer. -->
     <string name="library_own_empty">Nothing has been written in this recipe book yet.</string>
     <string name="library_own_write">Write a recipe</string>
+    <!-- FLOW-042 (5): writing a new recipe from an own-recipes view that already lists some. -->
+    <string name="library_own_new">New recipe</string>
+    <!-- FLOW-029 (1): an own recipe's entry opens its card. -->
+    <string name="library_entry_open_action">Open the recipe</string>
 </resources>

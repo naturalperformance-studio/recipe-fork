@@ -24,6 +24,7 @@ import app.recipefork.app.data.Network
 import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.library.LibrarySession
+import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
@@ -109,6 +110,7 @@ class CleanInstallTagsTest {
         val withAConnection = offeredTags()
         val id = requireNotNull(session.editing.value)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
+        compose.backThroughTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id)), PATIENCE_MS)
 
         // A clean installation — no dictionaries held, never seeded — with no connection.

@@ -6,7 +6,18 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.compose.ui.test.hasTestTag
+import androidx.test.core.app.ApplicationProvider
 import app.recipefork.app.MainActivity
+import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.card.CardTags
+import app.recipefork.app.card.awaitCard
+import app.recipefork.app.editor.PATIENCE_MS
+import app.recipefork.app.editor.textsOf
+import app.recipefork.core.recipe.Recipe
+import kotlinx.coroutines.runBlocking
+import java.time.Instant
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,6 +29,8 @@ import org.robolectric.android.controller.ActivityController
 class LibrarySessionTest {
     @get:Rule
     val compose = createEmptyComposeRule()
+
+    private val container = ApplicationProvider.getApplicationContext<RecipeForkApplication>().container
 
     private fun launch(saved: Bundle? = null): ActivityController<MainActivity> =
         Robolectric.buildActivity(MainActivity::class.java)
@@ -77,6 +90,31 @@ class LibrarySessionTest {
         activity.destroy()
         launch(saved)
         assertView(LibraryView.OWN)
+    }
+
+    // A card open when the process ends reopens on return, as the editor does (FLOW-058 (2), FLOW-029).
+    @Test
+    fun aCardOpenWhenTheProcessEndsReopensOnReturn() {
+        val recipe = Recipe.create(Instant.parse("2026-10-01T12:00:00Z"), null).copy(title = "Borscht")
+        runBlocking { container.recipes.save(recipe) }
+        val activity = launch()
+        chooseOwn()
+        val entry = LibraryTags.entry(recipe.id.value)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(entry)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(entry).performClick()
+        compose.awaitCard()
+        val saved = Bundle()
+        activity.pause().stop().saveInstanceState(saved)
+        // The process dies: the Activity and every object in memory are gone, only the saved state remains.
+        activity.destroy()
+        launch(saved)
+        compose.awaitCard()
+        assertEquals(listOf("Borscht"), compose.textsOf(CardTags.TITLE))
+        // And back from it is the own-recipes view.
+        compose.onNodeWithTag(CardTags.BACK).performClick()
+        compose.waitForIdle()
+        assertView(LibraryView.OWN)
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).assertExists()
     }
 
     // FLOW-058 (3): removed from the recent applications, the task starts anew with nothing to restore.

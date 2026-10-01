@@ -32,12 +32,31 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         saved[EDITING_KEY] = recipeId
     }
 
+    /** Leaving the editor shows the card of the recipe just edited (FLOW-029 (1)). */
     fun closeEditor() {
+        editing.value?.let { saved[VIEWING_KEY] = it }
         saved[EDITING_KEY] = null
+    }
+
+    /**
+     * The recipe whose card is open, if one is (FLOW-029): kept like the editor's, so that a card open when the
+     * process ends reopens on return. The editor opened from the card lies above it, and leaving it shows the card.
+     */
+    val viewing: StateFlow<String?> = saved.getStateFlow(VIEWING_KEY, null)
+
+    fun openCard(recipeId: String) {
+        saved[VIEWING_KEY] = recipeId
+    }
+
+    /** Back from the card returns to the own-recipes view, from which a saved recipe is opened. */
+    fun closeCard() {
+        saved[VIEWING_KEY] = null
+        saved[VIEW_KEY] = LibraryView.OWN
     }
 
     private companion object {
         const val VIEW_KEY = "library.view"
         const val EDITING_KEY = "library.editing"
+        const val VIEWING_KEY = "library.viewing"
     }
 }
