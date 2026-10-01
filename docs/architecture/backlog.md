@@ -48,7 +48,7 @@ this wave, and no media is attached.
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
-| T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | planned |
+| T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | in-progress |
 | T-045 | No interface string of the release is fixed in the code in one language only | T-008 | in-progress |
 | T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
@@ -474,7 +474,7 @@ this wave, and no media is attached.
 ### T-044 — Every interactive element on the screens so far is 48 dp as laid out
 
 **Requirements:** A11Y-003
-**Status:** planned
+**Status:** in-progress
 **Depends on:** T-008
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecksTest.kt`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -486,7 +486,7 @@ this wave, and no media is attached.
 *A11Y-003 — spec/200-accessibility.md*
 - Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20261001-T-044-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
