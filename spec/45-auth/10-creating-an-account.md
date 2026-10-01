@@ -1,7 +1,7 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-28
+updated: 2026-10-01
 ids: [AUTH-001, AUTH-002, AUTH-003, AUTH-004, AUTH-005, AUTH-006, AUTH-018,
   AUTH-022, AUTH-023]
 ---
@@ -168,7 +168,8 @@ private link or rate.
   statement of AUTH-006.
 - Given a muted account, when it was created because the person asked to send a
   recipe or to rate, then AUTH-006 states at that moment that the action cannot
-  proceed and why.
+  proceed and why; a recipe from the pool whose sending created it is in its
+  recipe book, marked never sent (FLOW-059 (12), ACT-002).
 - Given a muted account, when it is created, then no slot on the device is
   occupied.
 - Given any person with or without an account, when they report a recipe or an
@@ -196,6 +197,9 @@ an outage at the attestation service would then block the one thing a reader
 might legitimately want — favourites that survive the phone. Creating a full
 account was rejected: the gate would be worth nothing, since a sideloaded build
 obtains no verdict by construction.
+**Changed 2026-10-01:** criterion 5 names where the pool recipe that created a muted
+account is, by user decision of that date (SD-042;
+[ADR — the account's creation gives the owner](../decisions/20261001-the-accounts-creation-gives-the-owner.md)).
 
 ### AUTH-005 — A muted account becomes full when a verdict and a slot allow it
 

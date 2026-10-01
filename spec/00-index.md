@@ -2,7 +2,7 @@
 
 > **NOT READY — 3 questions must be answered before MVP.**
 > Sections: 27 closed · 0 blocked · 0 open · 1 n/a.
-> Blocking: OQ-016, OQ-029, OQ-030. Last updated 2026-09-29.
+> Blocking: OQ-016, OQ-029, OQ-030. Last updated 2026-10-01.
 > Every section of the first release is written. What is open before it are three
 > questions whose answers change no requirement and hold the store listing
 > instead (MVP-003). Section `import` is written ahead and is outside the first
@@ -34,6 +34,14 @@
 > All six were answered by the product owner on 2026-09-29 and written here
 > (SCALE-008, DOM-017, DOM-019, FLOW-042, FLOW-008, FLOW-059, FLOW-066, AUTH-026,
 > ACT-002), and each turns resolved only when the product owner says so.
+> Gate 1 then found SD-042 to SD-045 — whose a pool recipe is when the account
+> created for it sends nothing, the mark after a first sending whose answer is lost,
+> which check comes first for a repeated sending that already made a fork, and a
+> sending of a recipe the server no longer holds; and, following from the second, a
+> sending that names no revision for a recipe the server holds. All were answered by the
+> product owner on 2026-10-01 and written here (FLOW-059, FLOW-005, FLOW-008,
+> FLOW-066, ACT-002, AUTH-004, AUTH-026, ST-010), and each turns resolved only when
+> the product owner says so.
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
@@ -61,7 +69,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [60-entity-states/](60-entity-states/00-index.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen; the state `local` of a recipe never sent, the recipes an owner may destroy outright and those they may not; the server orders every transition, refuses one whose guard has stopped holding, and tells the actor the state the recipe is actually in. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits, what it never inherits, how provenance is shown, and how an author replaces a published recipe without withdrawing it. |
 | [68-import/](68-import/00-index.md) | IMPORT | closed | **Not in the first release.** A post on Instagram, TikTok or Pinterest shared to the application is read by a language model and published as the source's recipe: no author, no media, a mark naming the platform and the model version and leading to the post, and a mark on every descendant that its original was imported. One source becomes one recipe; the next person to share it is led to the existing one. TikTok text comes from its official endpoint and publishes at once; Instagram and Pinterest text is pasted and goes through the queue. The model has its own USD 50 a month. |
-| [70-flows/](70-flows/00-index.md) | FLOW | closed | User flows and screens, each with its empty, loading, error and offline behaviour: the device first and sending to the server, including a sending the server already holds, which changes nothing, the recipe book and the device, serverless mode and recipe files, cooking on one scrolling card with no step to advance through, the editor, the catalogue and the favourites section including where a draft is deleted and what the author is told first, the private link, the author's screen a nickname leads to — where an author is reported, blocked and banned — and the moderator's queue. |
+| [70-flows/](70-flows/00-index.md) | FLOW | closed | User flows and screens, each with its empty, loading, error and offline behaviour: the device first and sending to the server, including a sending the server already holds, which changes nothing unless it already made a fork, an unanswered sending, which keeps its mark, and a recipe the server no longer holds, which is sent as new, the recipe book and the device, serverless mode and recipe files, cooking on one scrolling card with no step to advance through, the editor, the catalogue and the favourites section including where a draft is deleted and what the author is told first, the private link, the author's screen a nickname leads to — where an author is reported, blocked and banned — and the moderator's queue. |
 | [75-author-guidance.md](75-author-guidance.md) | GUIDE | closed | What the editor tells its author before they can find out the hard way: the statement before an irreversible submission, the checklist of good practice, and the hints that fire on the author's own action. The product teaches here because it inspects nowhere. |
 | [80-scaling-rules/](80-scaling-rules/00-index.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, how the two combine and what releasing a fixing restores; the exact values every unit type may display — kilograms to the gram, mixed numbers above one — the nearest-value rule with ties going up, a derived marker on every quantity at any scale but the authored one; and what a reader may fix, in which unit. |
 | [90-media.md](90-media.md) | MEDIA | closed | What a recipe may carry, what the device does to a file before it leaves — re-encoding, stripping every metadata field but orientation, silencing and shortening a video — what the author is told about it, the 150 MB an account may hold sent and unpublished, and when a stored file is finally deleted. |
@@ -164,9 +172,14 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260928-the-device-first.md](decisions/20260928-the-device-first.md) | accepted, rewrites FLOW-002–FLOW-007, adds FLOW-059, FLOW-060 | Anyone writes and forks with no account and no server; a recipe reaches the server only when its owner sends it; the book is "My recipe book"; the allowance counts sent, unpublished media. |
 | [20260928-several-accounts-on-one-device.md](decisions/20260928-several-accounts-on-one-device.md) | accepted, rewrites AUTH-011–AUTH-013, adds AUTH-026, AUTH-027 | A device holds every account signed in on it, each apart, switched from a list; what is made with no account is a pool offered once to each account. |
 | [20260928-serverless-mode-and-recipe-files.md](decisions/20260928-serverless-mode-and-recipe-files.md) | accepted, adds FLOW-061–FLOW-065 | A release switches on serverless mode; recipes then travel as files, imported as found recipes with an unverified author, forks naming their parent. |
-| [20260929-a-sending-the-server-already-holds.md](decisions/20260929-a-sending-the-server-already-holds.md) | accepted, narrows FLOW-008, corrects FLOW-059 (8), adds FLOW-066 | A sending the same as the server's content is no divergence and changes nothing; a sending is stored whole or not at all, and a lost answer is settled by sending again. |
-| [20260929-the-recipe-that-created-the-account.md](decisions/20260929-the-recipe-that-created-the-account.md) | accepted, widens ACT-002, corrects AUTH-026 (3) | A pool recipe whose sending creates an account is that account's whatever the answer to the pool offer. |
+| [20260929-a-sending-the-server-already-holds.md](decisions/20260929-a-sending-the-server-already-holds.md) | accepted, narrows FLOW-008, corrects FLOW-059 (8), adds FLOW-066; order of checks completed by 20261001-a-fork-already-made-is-answered-first | A sending the same as the server's content is no divergence and changes nothing; a sending is stored whole or not at all, and a lost answer is settled by sending again. |
+| [20260929-the-recipe-that-created-the-account.md](decisions/20260929-the-recipe-that-created-the-account.md) | accepted, widens ACT-002, corrects AUTH-026 (3); reason completed by 20261001-the-accounts-creation-gives-the-owner | A pool recipe whose sending creates an account is that account's whatever the answer to the pool offer. |
 | [20260929-a-typed-quantity-is-read-by-its-value.md](decisions/20260929-a-typed-quantity-is-read-by-its-value.md) | accepted, adds DOM-019, completes DOM-017 | A comma and a point are both a decimal mark and no grouping is typed; a value on its grid is held however it is written. |
+| [20261001-the-accounts-creation-gives-the-owner.md](decisions/20261001-the-accounts-creation-gives-the-owner.md) | accepted, corrects FLOW-059 (1), ACT-002 (3), adds FLOW-059 (12) | A pool recipe whose sending created an account is that account's even when nothing is sent — the account muted or the sending refused. |
+| [20261001-an-unanswered-sending-keeps-its-mark.md](decisions/20261001-an-unanswered-sending-keeps-its-mark.md) | accepted, corrects FLOW-059 (9), adds FLOW-005 (8) | After a refused or unanswered sending a recipe keeps the mark it had; a first sending stays "never sent". |
+| [20261001-a-fork-already-made-is-answered-first.md](decisions/20261001-a-fork-already-made-is-answered-first.md) | accepted, corrects FLOW-066, FLOW-008 (7) | A repeated sending that already made a fork is answered with that fork before sameness of content is checked. |
+| [20261001-a-recipe-the-server-lost-is-sent-as-new.md](decisions/20261001-a-recipe-the-server-lost-is-sent-as-new.md) | accepted, adds FLOW-059 (13), qualifies ST-010 (2) | A sending of a recipe the server no longer holds creates it again in `private`, with its identity. |
+| [20261001-a-sending-with-no-revision-is-made-from-the-first.md](decisions/20261001-a-sending-with-no-revision-is-made-from-the-first.md) | accepted, adds FLOW-059 (14) | A sending that names no revision for a recipe the server holds is taken as made from its first revision. |
 
 ## C4 context
 

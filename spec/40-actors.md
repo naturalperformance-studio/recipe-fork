@@ -1,7 +1,7 @@
 ---
 slug: ACT
 status: closed
-updated: 2026-09-29
+updated: 2026-10-01
 ids: [ACT-001, ACT-002, ACT-003, ACT-004, ACT-005, ACT-006, ACT-007, ACT-008]
 ---
 
@@ -105,10 +105,12 @@ becoming its owner; and shall provide no other means of transferring ownership.
   at any point in its lifetime, then it is that account.
 - Given a recipe created in the pool, when the pool is moved into account A, then
   A is its owner from then on, and it can be sent only by A.
-- Given a recipe in the pool sent with no account active, when the account created
-  for that sending exists, then that account is the recipe's owner whether the
-  offer of AUTH-026 is accepted or declined, and the rest of the pool stays
-  without an owner if it is declined.
+- Given a recipe in the pool whose sending, with no account active, creates an
+  account, when that account exists, then that account is the recipe's owner
+  whether the offer of AUTH-026 is accepted or declined and whether or not the
+  recipe was then sent — the account muted (AUTH-004) or the sending refused
+  (FLOW-003) — and the rest of the pool stays without an owner if the offer is
+  declined.
 - Given a recipe the server holds, when its owner is resolved, then it is the
   account that sent it, which is always the account it belonged to on the device.
 - Given any interface of the application, when it is enumerated, then it offers
@@ -121,6 +123,10 @@ decision ([ADR — several accounts on one device](decisions/20260928-several-ac
 **Changed 2026-09-29:** a pool recipe whose sending creates an account becomes that
 account's whatever the answer to the pool offer, by user decision of that date
 (SD-040; [ADR — the recipe that created the account is the account's](decisions/20260929-the-recipe-that-created-the-account.md)).
+**Correction, 2026-10-01:** criterion 3's Given read as a recipe that was sent,
+which a muted account or a refused sending never does (SD-042); by user decision of
+that date the account's creation, not the sending, makes it the owner
+([ADR — the account's creation gives the owner](decisions/20261001-the-accounts-creation-gives-the-owner.md)).
 
 ### ACT-003 — Moderator authority is an assignable role
 

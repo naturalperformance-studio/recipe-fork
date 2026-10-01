@@ -1,6 +1,6 @@
 # A sending the server already holds changes nothing
 
-**Status:** accepted — narrows FLOW-008, corrects FLOW-059 (8), adds FLOW-066.
+**Status:** accepted — narrows FLOW-008, corrects FLOW-059 (8), adds FLOW-066; the order of its checks completed by 20261001-a-fork-already-made-is-answered-first.
 
 **Context:** FLOW-008 forked whenever the server's version had changed since the
 version the device's copy was made from, and it also called what it forked "the

@@ -1,6 +1,6 @@
 # The recipe that created the account is the account's
 
-**Status:** accepted — widens ACT-002, corrects AUTH-026 (3) and FLOW-059 (1).
+**Status:** accepted — widens ACT-002, corrects AUTH-026 (3) and FLOW-059 (1); its reason completed by 20261001-the-accounts-creation-gives-the-owner (a recipe not sent).
 
 **Context:** a person with no account active sends a recipe from the pool. Account
 creation is offered, the account is created, and AUTH-026 then offers to move the

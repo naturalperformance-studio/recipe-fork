@@ -1,7 +1,7 @@
 ---
 slug: ST
 status: closed
-updated: 2026-09-28
+updated: 2026-10-01
 ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007, ST-010]
 ---
 
@@ -178,7 +178,8 @@ record attached to it.
   server, which never held it.
 - Given a recipe in `private` or in `rejected`, when its owner deletes it, then
   it is gone from the server and from every device the account holds, and no
-  screen reaches it.
+  screen reaches it; a device that still holds it and sends it before learning of
+  the deletion creates it again (FLOW-059 (13)).
 - Given a recipe in `pending`, `link_shared`, `published`, `reported_hidden` or
   `removed`, when its owner attempts to delete it, then the attempt is refused;
   a `pending` recipe is withdrawn first and deleted from `private`.
@@ -225,3 +226,6 @@ reason: deleting an account destroys every recipe it owns that was never
 published, which includes a `link_shared` recipe and one that reached `removed`
 or `reported_hidden` without ever being published. What is permanent is
 publication, not every state beyond the owner's reach.
+**Changed 2026-10-01:** criterion 2 names the device that sends a recipe deleted
+elsewhere before it learned of the deletion, by user decision of that date (SD-045;
+[ADR — a recipe the server lost is sent as new](../decisions/20261001-a-recipe-the-server-lost-is-sent-as-new.md)).
