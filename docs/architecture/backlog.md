@@ -49,7 +49,7 @@ this wave, and no media is attached.
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
 | T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | on-develop |
-| T-050 | A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not | T-044 | planned |
+| T-050 | A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not | T-044 | blocked |
 | T-045 | No interface string of the release is fixed in the code in one language only | T-008 | in-progress |
 | T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
@@ -496,7 +496,7 @@ this wave, and no media is attached.
 ### T-050 — A scrolling container is measured across its scroll, a disabled control at its enabled size, and text that only selects is not
 
 **Requirements:** A11Y-003
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-044
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecksTest.kt`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -511,7 +511,7 @@ this wave, and no media is attached.
 - Given a disabled control, when it is measured, then its touch target is the one it has when enabled, and it does not change size when it becomes enabled.
 - Given text whose only answer to a touch is focus, selection or copying, when the screen is measured, then that text is not measured; a separate control that copies it is, and a link inside text is.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-047, whether a scrolling container is measured across its scroll direction only or in both) — docs/product/verdicts/20261002-T-050-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
