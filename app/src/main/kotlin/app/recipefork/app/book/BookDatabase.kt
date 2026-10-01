@@ -11,6 +11,8 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
 import androidx.room.Upsert
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import app.recipefork.app.data.db.Converters
 import kotlinx.coroutines.flow.Flow
 
@@ -20,7 +22,7 @@ import kotlinx.coroutines.flow.Flow
         RecipeEntity::class, IngredientEntity::class, StepEntity::class, StepReferenceEntity::class,
         MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -30,7 +32,17 @@ abstract class BookDatabase : RoomDatabase() {
 
     companion object {
         fun open(context: Context, book: BookName): BookDatabase =
-            Room.databaseBuilder(context, BookDatabase::class.java, book.fileName).build()
+            Room.databaseBuilder(context, BookDatabase::class.java, book.fileName).addMigrations(*MIGRATIONS).build()
+
+        /** Every step from an older book file to this version; a book already on a phone keeps every recipe. */
+        val MIGRATIONS: Array<Migration> = arrayOf(
+            // 1 → 2: an ingredient row keeps a quantity the author typed that reads as no value (FLOW-024 (6)).
+            object : Migration(1, 2) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table ingredient add column entered_quantity text")
+                }
+            },
+        )
     }
 }
 

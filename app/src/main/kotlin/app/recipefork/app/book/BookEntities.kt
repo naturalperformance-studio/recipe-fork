@@ -55,6 +55,8 @@ data class IngredientEntity(
     val quantity: Rational?,
     @ColumnInfo(name = "piece_weight") val pieceWeight: Rational?,
     val divisible: Boolean?,
+    /** What the author typed when it reads as no quantity; added in version 2 (FLOW-024 (6)). */
+    @ColumnInfo(name = "entered_quantity") val enteredQuantity: String? = null,
 )
 
 @Entity(

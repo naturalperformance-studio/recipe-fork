@@ -71,7 +71,7 @@ internal fun Recipe.toRows(): RecipeRows {
         ingredients = ingredients.map {
             IngredientEntity(
                 id, it.position, it.dictionaryEntry, it.qualifier, it.freeTextName, it.unitType, it.unit,
-                it.quantity, it.pieceWeight, it.divisible,
+                it.quantity, it.pieceWeight, it.divisible, it.enteredQuantity,
             )
         },
         steps = steps.map { StepEntity(id, it.position, it.text, it.timer?.duration?.inWholeMinutes, it.timer?.label) },
@@ -105,7 +105,7 @@ internal fun RecipeRows.toRecipe(): Recipe {
         ingredients = ingredients.map {
             Ingredient(
                 it.position, it.dictionaryEntry, it.qualifier, it.freeTextName, it.unitType, it.unit, it.quantity,
-                it.pieceWeight, it.divisible,
+                it.pieceWeight, it.divisible, it.enteredQuantity,
             )
         },
         steps = steps.map { step ->
