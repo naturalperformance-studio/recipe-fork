@@ -1442,12 +1442,12 @@ when a divergent sending became a fork. Sending with no account offers creation.
 | T-036 | A new account gets a recipe book of its own, and the pool is offered to it once | T-010 | gated |
 | T-040 | The server keeps a sent recipe under its owner, reached with a sign-in secret | T-006, T-045 | gated |
 | T-041 | A divergent sending becomes a fork, and a frozen recipe is never written | T-040 | gated |
-| T-042 | A sending the server already holds changes nothing, and a repeated divergent sending makes one fork | T-041 | planned |
+| T-042 | A sending the server already holds changes nothing, and a repeated divergent sending makes one fork | T-041 | gated |
 | T-046 | A recipe the server lost is created again, and a sending with no revision is taken as made from the first | T-042 | gated |
-| T-048 | A sending after the device's own unanswered sending is made from what that sending stored, at the server | T-046 | planned |
+| T-048 | A sending after the device's own unanswered sending is made from what that sending stored, at the server | T-046 | blocked |
 | T-028 | The owner sends a recipe, and every recipe says whether it was sent | T-042, T-046, T-048, T-036, T-025, T-034 | gated |
-| T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | planned |
-| T-049 | A sending after a lost answer is made from what the server holds, on the device | T-038, T-048 | planned |
+| T-038 | A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's | T-028 | gated |
+| T-049 | A sending after a lost answer is made from what the server holds, on the device | T-038, T-048 | gated |
 | T-026 | Sending with no account offers to create one | T-049 | gated |
 | T-047 | A pool recipe whose account was created muted, or whose sending was refused, waits in that account's book | T-026 | gated |
 
@@ -1712,7 +1712,7 @@ The store holds the parent and the frozen content fixed. The notice on the devic
 ### T-042 — A sending the server already holds changes nothing, and a repeated divergent sending makes one fork
 
 **Requirements:** FLOW-008, FLOW-066
-**Status:** planned
+**Status:** gated
 **Depends on:** T-041
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/resources/db/migration/V5__sending_digest.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -1739,7 +1739,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a divergent sending that made a fork (FLOW-008) whose answer never reached the device, when the same sending — the same content, made from the same revision — arrives again, then, whatever the server's content has become since, the server answers with the fork it already created and creates no second one, and the owner is told of that fork once, as FLOW-008 (3) states.
 - Given a sending whose content differs from the server's in one character or one media item, when it arrives, then it is not governed here: FLOW-059 (4) or FLOW-008 applies.
 
-**Gate 1:** blocked-by-spec (SD-044, whether a repeated divergent sending whose content the server now holds is answered with its fork, FLOW-066 (4), or as sent, FLOW-066 (2)) — docs/product/verdicts/20260930-T-042-gate1.md; re-sliced against spec/ @ e70b62c after SD-042–SD-045 resolved (FLOW-008 (7), FLOW-066 (2) and (4) recopied as changed, from 15-divergence.md; the fork already made is checked first, and tested against a server content that became the same since); re-gate due; re-gated: accepted — docs/product/verdicts/20261001-T-042-gate1.md; re-sliced against spec/ @ 86164a9 (FLOW-067 added; FLOW-066 (1) recopied as changed: a repeat sent unedited; FLOW-008 (8) placed in T-048); re-gate due
+**Gate 1:** blocked-by-spec (SD-044, whether a repeated divergent sending whose content the server now holds is answered with its fork, FLOW-066 (4), or as sent, FLOW-066 (2)) — docs/product/verdicts/20260930-T-042-gate1.md; re-sliced against spec/ @ e70b62c after SD-042–SD-045 resolved (FLOW-008 (7), FLOW-066 (2) and (4) recopied as changed, from 15-divergence.md; the fork already made is checked first, and tested against a server content that became the same since); re-gate due; re-gated: accepted — docs/product/verdicts/20261001-T-042-gate1.md; re-sliced against spec/ @ 86164a9 (FLOW-067 added; FLOW-066 (1) recopied as changed: a repeat sent unedited; FLOW-008 (8) placed in T-048); re-gate due; re-gated: accepted — docs/product/verdicts/20261002-T-042-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1772,7 +1772,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 ### T-048 — A sending after the device's own unanswered sending is made from what that sending stored, at the server
 
 **Requirements:** FLOW-067, FLOW-008
-**Status:** planned
+**Status:** blocked
 **Depends on:** T-046
 **Expected files:** `server/src/main/kotlin/app/recipefork/server/recipe/**` · `server/src/main/resources/db/migration/V6__sendings.sql` · `core/src/main/kotlin/app/recipefork/core/api/RecipeContract.kt` · `server/src/test/kotlin/app/recipefork/server/recipe/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-server-stack-ktor-postgres.md, decisions/20260927-test-strategy.md
@@ -1795,7 +1795,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 *FLOW-008 — spec/70-flows/15-divergence.md*
 - Given a server's version changed since the device's copy only by this device's own unanswered sending, when the device sends, then that change is not a divergence: FLOW-067 takes the sending as made from what that sending stored.
 
-**Gate 1:** —
+**Gate 1:** blocked-by-spec (SD-046, whether an unanswered sending FLOW-066 answered by writing nothing counts as one the server stored) — docs/product/verdicts/20261002-T-048-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1868,7 +1868,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 ### T-038 — A divergent sending tells the owner a fork was made, and a changed server copy never overwrites the device's
 
 **Requirements:** FLOW-008, FLOW-059, FLOW-066, FLOW-005, L10N-001, A11Y-003, A11Y-005
-**Status:** planned
+**Status:** gated
 **Depends on:** T-028
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/main/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/main/res/values/strings_send.xml` · `app/src/main/res/values-ru/strings_send.xml`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1909,7 +1909,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 *A11Y-005 — spec/200-accessibility.md*
 - Given any interactive element, when the screen reader reaches it, then it announces what the element does, not what it looks like, and an element with no visible label carries one anyway.
 
-**Gate 1:** blocked-by-spec (SD-039, FLOW-008 (6) points to "criterion 2", which since 0745e70 states no notice) — docs/product/verdicts/20260928-T-038-gate1.md; re-sliced against spec/ @ 952398f after SD-039 and SD-041 resolved (FLOW-008 (6) replaced; FLOW-059 (9) and FLOW-066 (1–4) added as the device half); re-gate due; re-gated: blocked-by-spec (SD-043, which mark a recipe shows when its first sending was stored and the answer lost, FLOW-059 (9)) — docs/product/verdicts/20260929-T-038-gate1.md; re-sliced against spec/ @ e70b62c after SD-042–SD-045 resolved (FLOW-059 (9), FLOW-066 (2, 4) recopied as changed; FLOW-005 (8) and the device halves of FLOW-059 (13–14) added; FLOW-008 and FLOW-066 recopied from 15-divergence.md); re-gate due; re-gated: accepted — docs/product/verdicts/20261001-T-038-gate1.md; re-sliced against spec/ @ 86164a9 (FLOW-067 added; FLOW-059 (9) and FLOW-066 (1) recopied as changed; FLOW-059 (13–14) device halves moved to T-049 with FLOW-067's; Size line dropped); re-gate due
+**Gate 1:** blocked-by-spec (SD-039, FLOW-008 (6) points to "criterion 2", which since 0745e70 states no notice) — docs/product/verdicts/20260928-T-038-gate1.md; re-sliced against spec/ @ 952398f after SD-039 and SD-041 resolved (FLOW-008 (6) replaced; FLOW-059 (9) and FLOW-066 (1–4) added as the device half); re-gate due; re-gated: blocked-by-spec (SD-043, which mark a recipe shows when its first sending was stored and the answer lost, FLOW-059 (9)) — docs/product/verdicts/20260929-T-038-gate1.md; re-sliced against spec/ @ e70b62c after SD-042–SD-045 resolved (FLOW-059 (9), FLOW-066 (2, 4) recopied as changed; FLOW-005 (8) and the device halves of FLOW-059 (13–14) added; FLOW-008 and FLOW-066 recopied from 15-divergence.md); re-gate due; re-gated: accepted — docs/product/verdicts/20261001-T-038-gate1.md; re-sliced against spec/ @ 86164a9 (FLOW-067 added; FLOW-059 (9) and FLOW-066 (1) recopied as changed; FLOW-059 (13–14) device halves moved to T-049 with FLOW-067's; Size line dropped); re-gate due; re-gated: accepted — docs/product/verdicts/20261002-T-038-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
@@ -1919,7 +1919,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 ### T-049 — A sending after a lost answer is made from what the server holds, on the device
 
 **Requirements:** FLOW-067, FLOW-059
-**Status:** planned
+**Status:** gated
 **Depends on:** T-038, T-048
 **Expected files:** `app/src/main/kotlin/app/recipefork/app/send/**` · `app/src/test/kotlin/app/recipefork/app/send/**` · `app/src/main/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/book/**` · `app/src/test/kotlin/app/recipefork/app/library/**`
 **Binding ADRs:** decisions/20260928-manual-sending-replaces-the-outbox.md, decisions/20260928-one-database-per-recipe-book.md, decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -1941,7 +1941,7 @@ The server half of FLOW-066 (1–5) is carried here and observed at the service:
 - Given a recipe the device holds as sent, when the server no longer holds it — its store restored from a copy older than the recipe's sending (QUAL-008), or the recipe deleted on another device of the account before this device learned of it (ST-010 (2)) — and the owner sends it, then the server creates it again in `private` with the same identity, owned by the sending account, as on a first sending, and FLOW-005 marks it as sent.
 - Given a recipe whose first sending the server stored and whose answer did not reach the device, so that the device holds no revision for it, when the owner sends it again, edited or not, then the server treats the sending as made from the recipe's first revision: it replaces the server's copy if that copy has not changed since (criterion 4), FLOW-008 governs if another device changed it, and FLOW-066 governs if the content is the same.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20261002-T-049-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
