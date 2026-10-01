@@ -54,6 +54,8 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** The editor's environment from the composition root: the active book and the device's dictionaries. */
 @Composable
@@ -69,7 +71,7 @@ fun rememberEditorEnvironment(): EditorEnvironment {
 
 /**
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it, the
- * tags, the serving count and the ingredients. The parts after them are written by later tasks.
+ * tags, the serving count, the ingredients, the steps and the description.
  */
 @Composable
 fun EditorScreen(
@@ -81,9 +83,11 @@ fun EditorScreen(
     modifier: Modifier = Modifier,
 ) {
     val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving) }
-    LaunchedEffect(editor) { editor.load() }
+    // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
+    // touched from a database thread.
+    LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }
     var dictionary by remember { mutableStateOf<List<TagEntity>?>(null) }
-    LaunchedEffect(environment) { dictionary = environment.tags.tags() }
+    LaunchedEffect(environment) { withContext(Dispatchers.Main.immediate) { dictionary = environment.tags.tags() } }
     val recipe by editor.recipe.collectAsState()
     BackHandler(onBack = onClose)
 
@@ -111,6 +115,8 @@ fun EditorScreen(
             Tags(shown, editor, dictionary)
             ServingCount(shown, editor)
             Ingredients(shown, editor)
+            Steps(shown, editor)
+            Description(shown, editor)
         }
     }
 }
@@ -310,4 +316,12 @@ object EditorTags {
     fun divisibility(position: Int) = "editor-ingredient-$position-divisibility"
     fun divisible(position: Int, divisible: Boolean) = "editor-ingredient-$position-divisible-$divisible"
     fun unitOption(unit: QuantityUnit) = "editor-unit-${unit.name}"
+    const val STEPS = "editor-steps"
+    const val STEPS_NONE = "editor-steps-none"
+    const val STEP_ADD = "editor-step-add"
+    fun step(position: Int) = "editor-step-$position"
+    fun stepText(position: Int) = "editor-step-$position-text"
+    fun stepRemove(position: Int) = "editor-step-$position-remove"
+    const val DESCRIPTION = "editor-description"
+    const val DESCRIPTION_TEXT = "editor-description-text"
 }

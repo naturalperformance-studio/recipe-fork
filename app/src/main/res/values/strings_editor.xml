@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The editor (FLOW-024). -->
-    <string name="editor_back">Back</string>
-    <string name="editor_back_action">Return to My recipe book</string>
+    <string name="editor_back">Done</string>
+    <string name="editor_back_action">Show the recipe</string>
     <string name="editor_title">Title</string>
     <!-- A recipe outside local, private and rejected is open, not editable (FLOW-002). -->
     <string name="editor_frozen">This recipe cannot be changed in its current state.</string>
@@ -63,4 +63,16 @@
     <string name="editor_unit_cup">cup</string>
     <string name="editor_unit_pinch">pinch</string>
     <string name="editor_unit_to_taste">to taste</string>
+    <!-- The steps, after the ingredients: numbered plain text (FLOW-024). -->
+    <string name="editor_steps">Steps</string>
+    <string name="editor_steps_none">No steps</string>
+    <string name="editor_step">Step %1$d</string>
+    <string name="editor_step_add">Add step</string>
+    <string name="editor_step_add_action">Add a step at the end</string>
+    <string name="editor_step_remove">Remove</string>
+    <string name="editor_step_remove_action">Remove step %1$d</string>
+    <!-- The description, after the steps: one optional field (FLOW-024). -->
+    <string name="editor_description">Description</string>
+    <string name="editor_description_optional">Description (optional)</string>
+    <string name="editor_description_none">No description</string>
 </resources>
