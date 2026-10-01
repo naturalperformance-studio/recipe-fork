@@ -83,6 +83,14 @@ class AccessibilityChecksTest {
         assertCheckFailsOnSize()
     }
 
+    // A11Y-003 (1): an element short in width only fails, and the failure names it.
+    @Test
+    fun anElementShortInWidthOnlyFails() {
+        show(40.dp, 200.dp)
+        val message = assertCheckFailsOnSize()
+        assertTrue(message, message.contains("\"act\" (action label): 40.0 x 200.0 dp laid out"))
+    }
+
     // A11Y-003 (1): an element of 48 by 48 dp passes.
     @Test
     fun anElementOf48dpPasses() {
