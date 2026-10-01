@@ -1605,3 +1605,32 @@ the mark and notice it shows) and T-028 depend on T-048 in the backlog. Whether 
 this entry is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
 **Status:** open
+
+### SD-047 — Whether a container that scrolls must also be 48 dp along the direction it scrolls in, or is measured across that direction only, is read two ways (2026-10-02)
+**Requirement IDs:** A11Y-003 (statement, 1, 5; Verification), read with the ADR `spec/decisions/20261002-what-an-interactive-element-is.md` (Decision) and the glossary entry "Interactive element" (`spec/10-glossary/20-people-and-running.md`)
+**Class:** ambiguity
+**What the gate hit:** T-050 changes the check every screen test calls so that "a scrolling
+container is selected and measured across its scroll direction only". A11Y-003 gives
+"every interactive element a touch target of at least 48 by 48" dp, and its definition makes
+"any container that scrolls" an interactive element; criterion 1 measures each one at "at
+least 48 by 48 dp, whatever the element looks like". Criterion 5 asks for "at least 48 dp"
+across the direction it scrolls in, the Verification line asks to "include every scrolling
+container across its scroll direction", and the ADR's Decision says such a container "is
+measured across its scroll direction".
+
+Read, not chosen:
+- *48 by 48, like every interactive element.* The statement and criterion 1 exempt no
+  dimension, and criterion 5 states the direction that matters most without lifting the
+  other. A list that scrolls down, 200 dp wide and 40 dp tall, fails.
+- *Across the scroll direction only.* The ADR and the Verification line name one
+  measurement for a scrolling container, and criterion 5 would add nothing if criterion 1
+  already applied to it in both directions. The same list passes.
+
+What a user would see differs only on a container shorter than 48 dp along the direction it
+scrolls in, but the check that enforces A11Y-003 (1) on every screen has to take one reading,
+and its self-tests pin it; gate 2 could not call either right or wrong (TEAM-008).
+Found at T-050's gate 1 (docs/product/verdicts/20261002-T-050-gate1.md).
+**Stopped:** T-050. Every later screen task inherits the check's reading through A11Y-003 (1);
+whether any of them waits on this entry is the Team Lead's call.
+**Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
+**Status:** open
