@@ -48,7 +48,7 @@ this wave, and no media is attached.
 | T-006 | Creating an account costs a device slot, and no verdict makes it muted | T-005 | on-develop |
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
-| T-043 | Every interface string of the release exists in both languages, and every target is 48 dp, on every screen so far | T-008 | blocked |
+| T-043 | Every interface string of the release exists in both languages, and every target is 48 dp, on every screen so far | T-008 | planned |
 | T-031 | What the ingredient field offers for what the author types | T-043 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
@@ -473,12 +473,12 @@ this wave, and no media is attached.
 ### T-043 — Every interface string of the release exists in both languages, and every target is 48 dp, on every screen so far
 
 **Requirements:** L10N-001, A11Y-003
-**Status:** blocked
+**Status:** planned
 **Depends on:** T-008
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/**` · `app/src/test/kotlin/app/recipefork/app/library/**` · `app/src/test/kotlin/app/recipefork/app/editor/**` · `app/src/main/kotlin/app/recipefork/app/**` · `app/src/main/java/**` · `app/src/main/res/values/strings_*.xml` · `app/src/main/res/values-ru/strings_*.xml` · `core/src/main/kotlin/app/recipefork/core/**` · `core/src/test/kotlin/app/recipefork/core/**`
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
 **Size:** Two test checks and the fixes they force: about 300–500 changed lines.
-**Note:** Cut on 2026-09-30 out of T-008, whose three returns all came from the checks T-007 built for these two criteria. Every later screen task reuses these checks, so they are made to bite here once. L10N-001 (2) is checked over every Kotlin and Java main source of the release's code, `:app` and `:core` alike, not a chosen set of packages. A string literal holding a letter fails unless either its exact value is on a short allow-list of text that is not interface text (test tags, log tags, SQL, route and key names), kept in the test by value so that no name or placement lets interface text through; or it sits in a two-language table the test names (today `UnitLabels` in `:core`, the twelve DOM-016 units), and the check then proves every entry of that table holds a Russian and an English value. Text in resources is enumerated by key: every key of `values/` exists in `values-ru/` and the reverse. A11Y-003 (1) is checked on the size of each interactive node as laid out, not on the touch bounds Compose widens; spacing between targets is A11Y-003 (3), wave 8's, and is not checked here. Both are applied to the library (T-007) and the editor (T-008), and whatever they find is fixed there, with each moved string given its `values-ru` twin.
+**Note:** Cut on 2026-09-30 out of T-008, whose three returns all came from the checks T-007 built for these two criteria. Every later screen task reuses these checks, so they are made to bite here once. L10N-001 (2) is checked over every Kotlin and Java main source of the release's code, `:app` and `:core` alike, not a chosen set of packages. A string literal holding a letter fails unless either its exact value is on a short allow-list of text that is never shown to a person (test tags, log tags, SQL, route and key names, file and module names, refusal codes on the wire, and the messages of programming-error checks such as `require` and `check`), kept in the test by value and by the one declared holder of its kind, so that the value passes only where that holder declares it — the same word anywhere else fails, and no name lets interface text through; or it sits in a two-language table the test names (today `UnitLabels` in `:core`, the twelve DOM-016 units), and the check then proves every entry of that table holds a Russian and an English value. Text in resources is enumerated by key: every key of `values/` exists in `values-ru/` and the reverse. A11Y-003 (1) is checked on the size of each interactive node as laid out, not on the touch bounds Compose widens; spacing between targets is A11Y-003 (3), wave 8's, and is not checked here. Both are applied to the library (T-007) and the editor (T-008), and whatever they find is fixed there, with each moved string given its `values-ru` twin.
 **Criteria of these requirements carried elsewhere:** L10N-001 (1) → every screen task; (3) → release record · A11Y-003 (1) → every later screen task, through these checks; (2) → T-018; (3–4) → wave 8
 
 **Acceptance criteria** (verbatim)
@@ -490,9 +490,9 @@ this wave, and no media is attached.
 - Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
 
 **Gate 1:** rejected — docs/product/verdicts/20260930-T-043-gate1.md (the check of L10N-001 (2) left out `:core`, which holds interface strings of the release); `:core` and two-language tables added, the spacing clause removed; re-gate due; re-gated: accepted — docs/product/verdicts/20260930-T-043-gate1-2.md
-**Review:** defects — build and suite ok; A11Y-003 (1) and the resource-key check bit on every mutation tried; L10N-001 (2): the allow-list holds a group marked pending (file and module names, API refusal codes, programming-error diagnostics in `:core`) outside the four kinds this entry's Note names (LocalizationChecks.kt:113-131), and because the list is kept by value, an everyday word on it ("recipe", "step", "tag", "library") passes the code check wherever it stands, e.g. `"recipe" + " " + "step"` in the editor; worktree as it was. Second return: blocked, taken to the user
+**Review:** defects — build and suite ok; A11Y-003 (1) and the resource-key check bit on every mutation tried; L10N-001 (2): the allow-list holds a group marked pending (file and module names, API refusal codes, programming-error diagnostics in `:core`) outside the four kinds this entry's Note names (LocalizationChecks.kt:113-131), and because the list is kept by value, an everyday word on it ("recipe", "step", "tag", "library") passes the code check wherever it stands, e.g. `"recipe" + " " + "step"` in the editor; worktree as it was. Second return: blocked, taken to the user; a third run authorised by the user on 2026-10-01: the Note names the three kinds of text the pending group held and ties each allowed value to the declared holder of its kind; re-gate due; if review or a gate finds defects again, the branch is abandoned and the task split into A11Y-003 (1) and L10N-001 (2), without asking again
 **Gate 2:** —
-**Returns:** 2 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 2 of 2, plus a third run the user authorised (gate 1 · reviewer · gate 2 share the count)
 
 ### T-031 — What the ingredient field offers for what the author types
 
