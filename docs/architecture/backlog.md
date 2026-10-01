@@ -49,7 +49,7 @@ this wave, and no media is attached.
 | T-007 | The recipe book's own-recipes view lists every recipe written in it | T-004, T-001 | on-develop |
 | T-008 | The editor opens on a new recipe from the own-recipes view | T-007 | on-develop |
 | T-044 | Every interactive element on the screens so far is 48 dp as laid out | T-008 | planned |
-| T-045 | No interface string of the release is fixed in the code in one language only | T-008 | planned |
+| T-045 | No interface string of the release is fixed in the code in one language only | T-008 | in-progress |
 | T-031 | What the ingredient field offers for what the author types | T-044, T-045 | gated |
 | T-011 | An ingredient is picked from the dictionary in three fields | T-031 | gated |
 | T-012 | An ingredient outside the dictionary is kept as free text with a warning | T-011 | gated |
@@ -494,7 +494,7 @@ this wave, and no media is attached.
 ### T-045 — No interface string of the release is fixed in the code in one language only
 
 **Requirements:** L10N-001
-**Status:** planned
+**Status:** in-progress
 **Depends on:** T-008
 **Expected files:** `app/src/test/kotlin/app/recipefork/app/ui/LocalizationChecks.kt` · `app/src/test/kotlin/app/recipefork/app/ui/InterfaceStringsTest.kt` · `app/src/test/kotlin/app/recipefork/app/ui/l10n/**` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/main/kotlin/app/recipefork/app/**` · `app/src/main/java/**` · `app/src/main/res/values/strings_*.xml` · `app/src/main/res/values-ru/strings_*.xml` · `core/src/main/kotlin/app/recipefork/core/**` · `core/src/test/kotlin/app/recipefork/core/**` · not `app/src/test/kotlin/app/recipefork/app/ui/AccessibilityChecks*.kt` (T-044's)
 **Binding ADRs:** decisions/20260927-android-client-stack.md, decisions/20260927-test-strategy.md
@@ -508,7 +508,7 @@ this wave, and no media is attached.
 *L10N-001 — spec/160-localization.md*
 - Given a release, when its interface strings are enumerated, then none is fixed in the code in one language only.
 
-**Gate 1:** —
+**Gate 1:** accepted — docs/product/verdicts/20261001-T-045-gate1.md
 **Review:** —
 **Gate 2:** —
 **Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
