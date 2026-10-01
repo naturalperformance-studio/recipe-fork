@@ -95,7 +95,8 @@ object QuantityText {
         else "${grouped(whole, language)}${language.decimalMark}$fraction"
     }
 
-    private fun mixedNumber(value: Rational, language: InterfaceLanguage): String {
+    /** A whole number, a vulgar fraction, or a whole number followed by one (SCALE-014), grouped by L10N-009. */
+    internal fun mixedNumber(value: Rational, language: InterfaceLanguage): String {
         val whole = value.floor()
         val rest = value - Rational.of(whole)
         if (rest.signum() == 0) return grouped(whole, language)

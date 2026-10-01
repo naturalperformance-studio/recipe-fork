@@ -270,13 +270,14 @@ class CardScreenTest {
         assertEquals(listOf("Butter", "50 g"), compose.textsOf(CardTags.ingredient(5)))
     }
 
-    // FLOW-029 (2, 3): an editable recipe's bar holds back and edit; nothing inside the recipe acts or takes text.
+    // FLOW-029 (2, 3): an editable recipe's bar holds back and edit; nothing inside the recipe edits it or takes text —
+    // the serving count's two actions are the only thing in it that acts, and they change only how it is read.
     @Test
     fun anEditableRecipeOffersEditInTheBarAndNothingInItsContent() {
         RecipeState.entries.filter { it.editable }.forEach { state ->
             val recipe = save(fullRecipe(state))
             show(recipe.id)
-            assertEquals("$state", listOf(CardTags.BACK, CardTags.EDIT), interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.EDIT) + SERVINGS_ACTIONS, interactiveTags())
             compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.EDIT)).fetchSemanticsNodes()
                 .let { assertEquals("$state", 1, it.size) }
             assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction(), useUnmergedTree = true).fetchSemanticsNodes().size)
@@ -294,7 +295,7 @@ class CardScreenTest {
             val recipe = save(fullRecipe(state))
             show(recipe.id)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
-            assertEquals("$state", listOf(CardTags.BACK), interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK) + SERVINGS_ACTIONS, interactiveTags())
             assertNothingInTheContentActs()
         }
     }
@@ -352,8 +353,8 @@ class CardScreenTest {
             MaterialTheme { key(id) { CardScreen(id, recipes, environment, onBack = {}, onEdit = {}) } }
         }
         compose.awaitCard()
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 2)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 2)
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 4)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 4)
         assertEquals(listOf(w.back), compose.textsOf(CardTags.BACK))
         assertEquals(listOf(w.edit), compose.textsOf(CardTags.EDIT))
         assertEquals(w.backAction, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.BACK).fetchSemanticsNode()))
@@ -361,8 +362,8 @@ class CardScreenTest {
         id = save(fullRecipe(RecipeState.PUBLISHED)).id
         compose.awaitCard()
         compose.waitUntil(PATIENCE) { compose.onAllNodes(hasTestTag(CardTags.EDIT)).fetchSemanticsNodes().isEmpty() }
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 1)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 1)
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 3)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 3)
     }
 
     /** The test tags of every element on screen the reader can act on, in the order laid out. */
@@ -374,7 +375,9 @@ class CardScreenTest {
         val acting = compose.onAllNodes(
             hasAnyAncestor(hasTestTag(CardTags.CONTENT)) and AccessibilityChecks.isInteractive,
             useUnmergedTree = true,
-        ).fetchSemanticsNodes().filter { SemanticsActions.OnClick in it.config || SemanticsActions.SetText in it.config }
+        ).fetchSemanticsNodes()
+            .filter { SemanticsActions.OnClick in it.config || SemanticsActions.SetText in it.config }
+            .filter { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } !in SERVINGS_ACTIONS }
         assertEquals(emptyList<Any>(), acting.map { it.config })
     }
 
@@ -383,5 +386,6 @@ class CardScreenTest {
 
     private companion object {
         const val PATIENCE = 60_000L
+        val SERVINGS_ACTIONS = listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE)
     }
 }

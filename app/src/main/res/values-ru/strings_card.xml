@@ -4,7 +4,11 @@
     <string name="card_back_action">Вернуться в «Мою книгу рецептов»</string>
     <string name="card_edit">Изменить</string>
     <string name="card_edit_action">Открыть этот рецепт в редакторе</string>
-    <string name="card_servings">Порций: %1$d</string>
+    <string name="card_servings">Порций: %1$s</string>
+    <string name="card_servings_fewer">Меньше порций</string>
+    <string name="card_servings_fewer_action">Пересчитать рецепт на меньшее число порций</string>
+    <string name="card_servings_more">Больше порций</string>
+    <string name="card_servings_more_action">Пересчитать рецепт на большее число порций</string>
     <string name="card_ingredients">Ингредиенты</string>
     <string name="card_steps">Шаги</string>
     <string name="card_unnamed_ingredient">Ингредиент без названия</string>

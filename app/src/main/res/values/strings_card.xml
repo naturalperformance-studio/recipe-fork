@@ -6,7 +6,12 @@
     <string name="card_edit">Edit</string>
     <string name="card_edit_action">Open this recipe in the editor</string>
     <!-- The recipe's parts, each shown only where the recipe holds it (FLOW-019). -->
-    <string name="card_servings">Servings: %1$d</string>
+    <string name="card_servings">Servings: %1$s</string>
+    <!-- The serving count control (SCALE-011): its two actions, named and announced for the screen reader. -->
+    <string name="card_servings_fewer">Fewer servings</string>
+    <string name="card_servings_fewer_action">Recalculate the recipe for fewer servings</string>
+    <string name="card_servings_more">More servings</string>
+    <string name="card_servings_more_action">Recalculate the recipe for more servings</string>
     <string name="card_ingredients">Ingredients</string>
     <string name="card_steps">Steps</string>
     <!-- An ingredient row that names nothing the device can show yet. -->
