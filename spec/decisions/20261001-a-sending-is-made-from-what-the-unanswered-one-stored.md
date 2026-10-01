@@ -24,6 +24,14 @@ divergence and still forks. The device keeps, per recipe, what it sent without a
 answer until it next learns what the server holds. Where the unanswered sending
 made a fork, the edit lands on that fork, so the owner holds one fork, not two.
 
+**Completed 2026-10-02 (SD-046):** a sending FLOW-066 answered by writing nothing
+counts as stored; what it left is the revision the server held then, whose content
+is the one the device sent. In the product owner's words, device B simply takes
+the server's changes and has nothing more to do. Rejected: treating it as not
+stored, which forks the owner's next edit with a notice about nothing. Where that
+revision is in a state that cannot change, the edit becomes a fork, as FLOW-008 (4)
+already states for a frozen recipe.
+
 **Alternatives considered:**
 - *A fork, as FLOW-008 read.* Rejected: after any lost answer followed by an edit,
   the owner gets a copy of their own recipe and a notice about a divergence that

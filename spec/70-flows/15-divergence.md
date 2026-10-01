@@ -140,8 +140,9 @@ an unedited sending, and FLOW-067 the edited one.
 When the owner sends a recipe from a device that has sent it without getting an
 answer since the device last learned what the server holds of it, the system shall
 take the sending as made from what the latest of those unanswered sendings that the
-server stored left there — the revision it wrote to the recipe, or the fork it
-created under FLOW-008 — and shall answer the sending against that by FLOW-059 (4),
+server stored left there — the revision it wrote to the recipe, the fork it
+created under FLOW-008, or, when FLOW-066 answered it by writing nothing, the
+revision the server held at that moment — and shall answer the sending against that by FLOW-059 (4),
 FLOW-008 or FLOW-066, as for any other sending.
 
 **Acceptance criteria**
@@ -154,6 +155,15 @@ FLOW-008 or FLOW-066, as for any other sending.
   change to the recipe before this device sends its edit, then this device's
   version becomes a `private` fork as FLOW-008 states, and the owner is told as
   FLOW-008 (3) states.
+- Given an unanswered sending whose content was the same as the server's, so that
+  FLOW-066 wrote nothing, when the owner edits the recipe and sends it while no
+  other device has changed it since, then the sending is made from the revision the
+  server held when that sending arrived: the server's copy is replaced, no fork is
+  created and no notice is shown — the device took the server's changes, and the
+  edit lies on top of them.
+- Given that revision held in `pending`, `link_shared` or `published`, when the
+  owner's edit is sent, then nothing is written to it and the edit becomes a
+  `private` fork as FLOW-008 (4) states, because that recipe cannot change.
 - Given an unanswered sending the server did not store, when the owner sends the
   recipe again, then the sending is made from the revision the device held before
   that sending, as if it had never been made.
@@ -187,3 +197,8 @@ from is what that sending stored. No edit is discarded. See
 [ADR — a sending is made from what the unanswered one stored](../decisions/20261001-a-sending-is-made-from-what-the-unanswered-one-stored.md).
 **Cost, stated:** the device keeps, for each recipe, what it sent without an answer
 until it next learns what the server holds of that recipe.
+**Correction, 2026-10-02:** the statement named a revision written and a fork made,
+and not a sending FLOW-066 answered by writing nothing, so whether that sending
+counted as stored was read two ways (SD-046). By user decision of that date it
+does: device B takes the server's changes, and an edit after it lies on top of them
+with nothing more for the owner to do. Criteria 3 and 4 are added.

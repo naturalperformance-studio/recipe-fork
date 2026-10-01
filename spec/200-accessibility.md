@@ -75,8 +75,9 @@ included while it is disabled — and any container that scrolls. Text whose onl
 answer is focus, selection or copying is not one.
 
 **Acceptance criteria**
-- Given any screen, when each interactive element is measured, then its touch
-  target is at least 48 by 48 dp, whatever the element looks like.
+- Given any screen, when each interactive element other than a container that
+  scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the
+  element looks like; a container that scrolls is measured by criterion 5 alone.
 - Given the cooking card, when its controls are measured — the timer controls and
   the serving control — then each is at least 56 by 56 dp. There is no step
   advance among them: the card is one scrolling screen (`flows`, 30-cooking).
@@ -87,7 +88,8 @@ answer is focus, selection or copying is not one.
   drawing.
 - Given a container that scrolls, when it is measured across the direction it
   scrolls in, then it is at least 48 dp — a strip that scrolls sideways at least
-  48 dp tall, a list that scrolls down at least 48 dp wide.
+  48 dp tall, a list that scrolls down at least 48 dp wide — and its length along
+  that direction is not measured.
 - Given a disabled control, when it is measured, then its touch target is the one
   it has when enabled, and it does not change size when it becomes enabled.
 - Given text whose only answer to a touch is focus, selection or copying, when the
@@ -101,7 +103,9 @@ scroll direction and every control in its disabled state.
 of T-044 (`docs/product/verdicts/20261002-T-044-gate2.md`, item b) named three
 cases it could not read: a scrolling container, a disabled control, and text
 that only takes focus or selection. By user decision of that date the definition
-and criteria 5 to 7 are added. See
+and criteria 5 to 7 are added. The same day criterion 1 still read as measuring a
+scrolling container 48 by 48 (SD-047); the user's decision was across the scroll
+direction only, so criteria 1 and 5 now say so. See
 [ADR — what an interactive element is](decisions/20261002-what-an-interactive-element-is.md).
 **Source:** 48 by 48 dp is the Android platform guidance, chosen because it never
 falls below about 7 mm on any screen size or density

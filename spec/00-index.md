@@ -49,6 +49,9 @@
 > Gate 2 of T-044 then found "interactive element" in A11Y-003 defined nowhere; the
 > product owner defined it on 2026-10-02 — a scrolling container and a disabled
 > control are measured, text that only takes focus or selection is not.
+> Gate 1 then found SD-046 and SD-047, both answered on 2026-10-02: a sending
+> FLOW-066 answered by writing nothing counts as stored for FLOW-067, and a
+> scrolling container is measured across its scroll direction only (A11Y-003).
 
 The product is a recipe platform built on a fork model: any accessible recipe
 can be forked into an independent recipe that names its direct parent. A recipe
