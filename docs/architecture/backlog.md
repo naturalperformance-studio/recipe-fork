@@ -487,9 +487,9 @@ this wave, and no media is attached.
 - Given any screen, when each interactive element is measured, then its touch target is at least 48 by 48 dp, whatever the element looks like.
 
 **Gate 1:** accepted — docs/product/verdicts/20261001-T-044-gate1.md
-**Review:** —
+**Review:** defects — build and suite ok; the check reads the merged tree, so an element interactive through a semantics action alone inside a merging parent folds into the parent and is not measured (a 24 dp `semantics { onClick }` inside a 200 dp `clickable` passed; on the unmerged tree it fails and both screens still pass) (AccessibilityChecks.kt:34); noted, not a defect: Material controls such as `Checkbox` (24 dp) and `IconButton` (40 dp) measure under 48 dp as laid out and need an explicit size on later screens; worktree as it was. Returned to the developer
 **Gate 2:** —
-**Returns:** 0 of 2 (gate 1 · reviewer · gate 2 share the count)
+**Returns:** 1 of 2 (gate 1 · reviewer · gate 2 share the count)
 
 ### T-045 — No interface string of the release is fixed in the code in one language only
 
