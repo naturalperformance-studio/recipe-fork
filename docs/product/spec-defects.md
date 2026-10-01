@@ -1100,7 +1100,8 @@ gate-1 `accepted` (docs/product/verdicts/20260927-T-002-gate1-3.md) whose criter
 positive amounts and do not reach the control; whether it is re-gated once this is
 answered is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-034 — What an author may enter as an ingredient's quantity is stated nowhere, and a quantity off its unit type's grid is displayed at the authored count as the grid value by SCALE-001's statement and as the authored value by its criterion (4) (2026-09-27)
 **Requirement IDs:** SCALE-001 (statement, 4), SCALE-003 (2), CON-004 (statement, 3); read against the Ingredient `quantity` field and the unit-type paragraph of the domain model (`spec/50-domain-model/00-index.md`), FLOW-023 (statement, 1), DOM-012, DOM-016, the rounding grid (`spec/80-scaling-rules/00-index.md`), SCALE-014 (5), SCALE-015 (statement) and the glossary's "Rounding grid" (`spec/10-glossary/10-recipes-and-scaling.md`)
@@ -1150,7 +1151,8 @@ FLOW-023 (1), the quantity field where such a value would be entered, and holds 
 T-019 carries CON-004 (3) at the authored count. Whether either is re-gated once this is
 answered is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-035 — Whether a server-issued per-device session token is "something that identifies a device" under AUTH-015 (2) is read two ways, and the reading decides whether QUAL-009 and AUTH-021 (3) collide with it (2026-09-27)
 **Requirement IDs:** AUTH-015 (2) and its statement; read against QUAL-009, AUTH-021 (3), `spec/45-auth/00-index.md:38-39` and `spec/100-moderation.md:132`
@@ -1186,7 +1188,8 @@ Found at T-027's gate 2 (docs/product/verdicts/20260927-T-027-gate2.md).
 **Stopped:** T-027 (gate 2). T-028 depends on T-027 in the backlog and carries the
 device side of the same session. Whether it waits is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-036 — SCALE-008 (7), as corrected for SD-033, names 350 g of an authored 400 g at 4 servings "a computed 0.875 servings" where SCALE-002 gives 3.5, and SCALE-008 (8)'s "the same recipe" now reads as that recipe (2026-09-28)
 **Requirement IDs:** SCALE-008 (7), SCALE-008 (8) and the correction note of 2026-09-27 under SCALE-008 that replaced (7); read against SCALE-002 (statement), SCALE-008 (statement, 4, 6), SCALE-015 (statement, 4) and the serving-count paragraph of `spec/80-scaling-rules/00-index.md`
@@ -1225,7 +1228,8 @@ T-021, T-022, T-023, T-034, T-033, T-024, T-025 and T-028 wait behind T-002 thro
 backlog's dependencies; none of them carries SCALE-008 (7) or (8). Whether they wait is
 the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-037 — How the quantity field reads what the author types is stated nowhere: the decimal mark and digit grouping in each interface language, and whether a value the grid writes as a fraction is held when typed with a decimal mark (2026-09-28)
 **Requirement IDs:** DOM-017 (statement, table, 1–4); read against L10N-009 (statement, 6), L10N-001 (1), DOM-016 (1), SCALE-014 (5), SCALE-018 (statement, 1), SD-034 item 1 and the spec ADR `spec/decisions/20260927-stated-quantities-lie-on-the-grid.md`
@@ -1280,7 +1284,8 @@ Its criteria type only whole numbers (`500`, `2`). SCALE-018, whose (1) meets it
 fixing control, is placed in no backlog entry. Whether either is affected is the Team
 Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-038 — FLOW-042 (4) observes the empty own-recipes view for an account only, while the view with no account active holds the pool, and no criterion observes that view empty or its offer to write (2026-09-28)
 **Requirement IDs:** FLOW-042 (statement, 4); read against FLOW-034 (7), AUTH-026 (statement), FLOW-002 (statement, 1), ACT-001 (2), FLOW-053 (criterion "if the view is now empty, FLOW-042 states so")
@@ -1314,7 +1319,8 @@ unchanged. T-007 is not stopped (accepted today, docs/product/verdicts/20260928-
 Its account-worded criteria FLOW-034 (1, 3) are backed by FLOW-034 (7), which observes
 the pool. FLOW-042 has no such counterpart for the empty view.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-039 — FLOW-008 (6) tells the owner "as criterion 2 states", and since the device-first change criterion 2 is the one that states no notice (2026-09-28)
 **Requirement IDs:** FLOW-008 (6) and the "Changed 2026-09-28" note under FLOW-008; read against FLOW-008 (statement, 2, 3) and its "Correction, 2026-09-27" note
@@ -1354,7 +1360,8 @@ server half of the state-only case is met only at T-038's gate 2
 (docs/product/verdicts/20260928-T-027-gate1-2.md, unknown (5)). Whether that affects
 T-027 is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-040 — A pool recipe sent with no account active is sent and becomes the new account's by FLOW-059 (1), while a declined pool offer leaves it outside that account and unsendable by it under AUTH-026 (3) and ACT-002 (2026-09-28)
 **Requirement IDs:** FLOW-059 (1); AUTH-026 (statement, 1, 3); ACT-002 (statement, 2); read with AUTH-001 (2), ACT-001 (3), FLOW-051 (6)
@@ -1367,7 +1374,8 @@ T-027 is the Team Lead's call.
 On an accepted offer the requirements agree. On a declined one, FLOW-059 (1) has the recipe sent and made the account's, and AUTH-026 (3) with ACT-002 has it stay in the pool, owned by no one and unsendable by that account. Each requirement is consistent on its own terms. They meet only on this trigger. T-026 cannot be built without deciding which holds, and gate 2 could not tell a right outcome from a wrong one (TEAM-008). Found at T-026's gate 1 (docs/product/verdicts/20260928-T-026-gate1.md).
 **Stopped:** T-026. T-036 is not stopped (gated, docs/product/verdicts/20260928-T-036-gate1.md). Its offer fires on any creation, and its criteria hold on either outcome here. T-028 is not stopped. It carries ACT-002 (2) and AUTH-026 (7), which concern recipes already moved.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-041 — A sending sent again after its answer was lost is a divergence by FLOW-008's condition and not one by its "divergent local version", while FLOW-059 (8) says such a sending never reached the server (2026-09-29)
 **Requirement IDs:** FLOW-008 (statement, 2, 4, 5, Source); FLOW-059 (statement, 4, 8); read with FLOW-005
@@ -1407,7 +1415,8 @@ the device half of sending: the revision and content digest the device keeps, an
 meet this case on the device. FLOW-059 (8) is placed in wave 5. Whether any of these waits
 on this entry is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-042 — Whether the pool recipe whose sending caused an account to be created becomes that account's when it is not sent (the account created muted, or the sending refused) is read two ways (2026-09-29)
 **Requirement IDs:** FLOW-059 (statement, 1); ACT-002 (statement, 3); AUTH-026 (3, 4); AUTH-004 (statement, 5); read with AUTH-001 (2), AUTH-005 (5), ACT-002 (2), FLOW-003 (statement, 3, 8), the glossary entry "Sent" (`spec/10-glossary/20-people-and-running.md`) and the ADR `spec/decisions/20260929-the-recipe-that-created-the-account.md`
@@ -1425,7 +1434,8 @@ The same question arises for a full account when the server refuses the sending 
 Whoever builds T-026 would choose between the two readings, and gate 2 could not tell a right outcome from a wrong one (TEAM-008). Found at T-026's gate 1 (docs/product/verdicts/20260929-T-026-gate1.md).
 **Stopped:** T-026. T-036 is not stopped: in its scope no account is created by a sending, and a declined offer leaves nothing from the pool in the book under either reading. T-028 is not stopped: the statement of AUTH-006 it builds is the same under either reading.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-043 — FLOW-059 (9) has a recipe whose sending was stored but not answered "still" marked as holding changes not sent, and on a first sending that recipe was marked never sent, which `spec/` treats as a different case (2026-09-29)
 **Requirement IDs:** FLOW-059 (statement, 9); read with FLOW-005 (statement, 2, 5), FLOW-006 (statement), FLOW-066 (statement, 1, Source) and the ADR `spec/decisions/20260929-a-sending-the-server-already-holds.md` (Decision, third bullet)
@@ -1468,7 +1478,8 @@ the lost answer is not in its scope. T-027 is not stopped: the server marks noth
 device, and its half of FLOW-066 (1) is the same under every reading. Whether any of them
 waits on this entry is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-044 — A divergent sending that made a fork, sent again after its answer was lost, is answered with that fork and a notice by FLOW-066 (4) and as sent with no notice by FLOW-066's statement and (2) when the server's content has since become the same as the sending's (2026-09-30)
 **Requirement IDs:** FLOW-066 (statement, 2, 4); FLOW-008 (statement, 3, 7); read with FLOW-059 (9) and the ADR `spec/decisions/20260929-a-sending-the-server-already-holds.md` (Decision, first and second bullets)
@@ -1516,7 +1527,8 @@ case at the notice, and it is already `blocked` (SD-043). T-040 and T-041 are no
 neither carries a repeated sending. T-028 depends on T-042 in the backlog. Whether it waits
 on this entry is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
 
 ### SD-045 — What the server does with a sending that names a revision for a recipe it no longer holds is stated nowhere, and the case is reached after a restore (QUAL-008) and after deletion on another device (ST-010 (2)) (2026-09-30)
 **Requirement IDs:** FLOW-059 (statement, 4); FLOW-008 (statement, 5); read with QUAL-008 (statement, 3, 8), ST-010 (2), RET-004 (4), FLOW-006 (statement) and the ADR `docs/architecture/decisions/20260928-manual-sending-replaces-the-outbox.md` (Decision, first and third bullets)
@@ -1557,4 +1569,5 @@ and (5) make that a divergence.
 case: T-041 forks only a sending made from an older revision of a recipe the server holds.
 Whether they wait on this entry is the Team Lead's call.
 **Replacement:** none written, by PO-006. Route: the user runs `/req-forge`.
-**Status:** open
+**Status:** resolved
+**Resolved:** 2026-10-01 — «Я разрешаю тебе проставить статусы resolved у перечисленных записей» (re-checked against spec/ @ e70b62c)
