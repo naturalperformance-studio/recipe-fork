@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="editor_back">Назад</string>
+    <string name="editor_back_action">Вернуться в «Мою книгу рецептов»</string>
+    <string name="editor_title">Название</string>
+    <string name="editor_frozen">Этот рецепт нельзя изменить в его нынешнем состоянии.</string>
+    <string name="editor_language">Язык</string>
+    <string name="editor_language_ru">Русский</string>
+    <string name="editor_language_en">Английский</string>
+    <string name="editor_language_none">Не указан</string>
+    <string name="editor_language_to_ru">Указать, что рецепт написан по-русски</string>
+    <string name="editor_language_to_en">Указать, что рецепт написан по-английски</string>
+    <string name="editor_language_clear">Сбросить</string>
+    <string name="editor_language_clear_action">Сбросить указанный язык</string>
+    <string name="editor_tags">Теги</string>
+    <string name="editor_tag_search">Найти тег</string>
+    <string name="editor_tag_add_action">Добавить тег %1$s</string>
+    <string name="editor_tag_remove">Убрать</string>
+    <string name="editor_tag_remove_action">Убрать тег %1$s</string>
+    <string name="editor_tag_no_match">В словаре нет подходящего тега.</string>
+</resources>

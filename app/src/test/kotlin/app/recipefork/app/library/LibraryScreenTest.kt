@@ -266,6 +266,8 @@ class LibraryScreenTest {
     // FLOW-034 (3 of the task: leaving the section and returning in one session keeps the view).
     @Test
     fun leavingTheSectionAndReturningKeepsTheView() {
+        // A book with a recipe written in it, so that the own view is its list (an empty one says so: FLOW-042).
+        own("Soup", RecipeState.LOCAL)
         var inSection by mutableStateOf(true)
         compose.setContent { MaterialTheme { if (inSection) LibraryScreen(session, recipes) } }
         openOwn()

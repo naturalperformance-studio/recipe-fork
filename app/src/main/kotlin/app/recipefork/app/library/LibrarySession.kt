@@ -22,7 +22,22 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         saved[VIEW_KEY] = view
     }
 
+    /**
+     * The recipe open in the editor, if one is: kept like the view, so that an author who leaves the editor by the
+     * home action, or whose process ends while away, returns to it (FLOW-024).
+     */
+    val editing: StateFlow<String?> = saved.getStateFlow(EDITING_KEY, null)
+
+    fun openEditor(recipeId: String) {
+        saved[EDITING_KEY] = recipeId
+    }
+
+    fun closeEditor() {
+        saved[EDITING_KEY] = null
+    }
+
     private companion object {
         const val VIEW_KEY = "library.view"
+        const val EDITING_KEY = "library.editing"
     }
 }
