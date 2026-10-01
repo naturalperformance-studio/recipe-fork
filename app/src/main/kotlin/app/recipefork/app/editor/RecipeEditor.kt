@@ -7,9 +7,16 @@ import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
+import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
+import app.recipefork.core.recipe.ServingCountInput
+import app.recipefork.core.recipe.ServingCountReading
+import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.recipe.withTypedQuantity
+import app.recipefork.core.recipe.withUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,6 +78,63 @@ class RecipeEditor(
     fun addTag(tag: TagEntity) = edit { it.copy(tags = it.tags + tag.id) }
 
     fun removeTag(tagId: Long) = edit { it.copy(tags = it.tags - tagId) }
+
+    /**
+     * What the author typed into the serving count field. A whole number of one or more is held, and an empty field
+     * holds no value; anything else is not held and changes nothing (DOM-015). Returns whether it was held.
+     */
+    fun setServings(typed: String): Boolean = when (val reading = ServingCountInput.read(typed)) {
+        ServingCountReading.Empty -> edit { it.copy(servings = null) }
+        is ServingCountReading.Count -> edit { it.copy(servings = reading.servings) }
+        ServingCountReading.Refused -> false
+    }
+
+    /**
+     * Appends an empty row, named in the author's own words (FLOW-022) until the dictionary offers entries. Its unit
+     * starts as grams, so the row always has a unit and so a unit type (DOM-016); its quantity starts empty.
+     */
+    fun addIngredient() = edit { recipe ->
+        val row = Ingredient(
+            position = recipe.ingredients.size, dictionaryEntry = null, freeTextName = null,
+            unitType = QuantityUnit.GRAM.type, unit = QuantityUnit.GRAM, quantity = null,
+        )
+        recipe.copy(ingredients = recipe.ingredients + row)
+    }
+
+    /** The row's name, in the author's own words; an empty field holds none. */
+    fun setIngredientName(position: Int, name: String) = editIngredient(position) { it.copy(freeTextName = name.ifEmpty { null }) }
+
+    /** What the author typed into the row's quantity field, kept whether or not the field holds it (DOM-017 (6)). */
+    fun setIngredientQuantity(position: Int, typed: String) = editIngredient(position) { it.withTypedQuantity(typed) }
+
+    fun setIngredientUnit(position: Int, unit: QuantityUnit) = editIngredient(position) { it.withUnit(unit) }
+
+    /** A `piece` row's divisibility, which the author is asked for (FLOW-022 (5)). */
+    fun setIngredientDivisible(position: Int, divisible: Boolean) = editIngredient(position) { row ->
+        if (row.unitType == UnitType.PIECE) row.copy(divisible = divisible) else row
+    }
+
+    /**
+     * Deletes the row at [position]; the rows after it move up. A step's reference to the deleted row is dropped,
+     * and references to the rows after it follow them (DOM-007, FLOW-025 (5)).
+     */
+    fun removeIngredient(position: Int) = edit { recipe ->
+        if (position !in recipe.ingredients.indices) return@edit recipe
+        val rows = recipe.ingredients.filterIndexed { i, _ -> i != position }.mapIndexed { i, row -> row.copy(position = i) }
+        val steps = recipe.steps.map { step ->
+            step.copy(
+                ingredientReferences = step.ingredientReferences.filter { it.ingredientPosition != position }.map {
+                    if (it.ingredientPosition > position) it.copy(ingredientPosition = it.ingredientPosition - 1) else it
+                },
+            )
+        }
+        recipe.copy(ingredients = rows, steps = steps)
+    }
+
+    private fun editIngredient(position: Int, change: (Ingredient) -> Ingredient) = edit { recipe ->
+        if (position !in recipe.ingredients.indices) return@edit recipe
+        recipe.copy(ingredients = recipe.ingredients.mapIndexed { i, row -> if (i == position) change(row) else row })
+    }
 
     /** Applies [change] and writes the result; a recipe in a frozen state is left as it is. */
     private fun edit(change: (Recipe) -> Recipe): Boolean {

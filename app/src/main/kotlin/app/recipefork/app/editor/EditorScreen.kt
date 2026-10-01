@@ -49,6 +49,7 @@ import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.PreferencesSeededVersion
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
@@ -67,8 +68,8 @@ fun rememberEditorEnvironment(): EditorEnvironment {
 }
 
 /**
- * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it,
- * then the tags. The parts after them are written by later tasks.
+ * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it, the
+ * tags, the serving count and the ingredients. The parts after them are written by later tasks.
  */
 @Composable
 fun EditorScreen(
@@ -108,6 +109,8 @@ fun EditorScreen(
             }
             TitleAndLanguage(shown, editor)
             Tags(shown, editor, dictionary)
+            ServingCount(shown, editor)
+            Ingredients(shown, editor)
         }
     }
 }
@@ -265,7 +268,7 @@ private fun TagSearch(recipe: Recipe, editor: RecipeEditor, dictionary: List<Tag
  * does — [action] — beside the visible [text] (A11Y-005).
  */
 @Composable
-private fun ActionText(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ActionText(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier
             .heightIn(min = 48.dp)
@@ -293,4 +296,18 @@ object EditorTags {
     fun offered(tagId: Long) = "editor-tag-offered-$tagId"
     fun chosen(tagId: Long) = "editor-tag-chosen-$tagId"
     fun remove(tagId: Long) = "editor-tag-remove-$tagId"
+    const val SERVINGS = "editor-servings"
+    const val SERVINGS_ACCEPTS = "editor-servings-accepts"
+    const val INGREDIENTS = "editor-ingredients"
+    const val INGREDIENT_ADD = "editor-ingredient-add"
+    fun ingredient(position: Int) = "editor-ingredient-$position"
+    fun ingredientName(position: Int) = "editor-ingredient-$position-name"
+    fun ingredientQuantity(position: Int) = "editor-ingredient-$position-quantity"
+    fun ingredientUnit(position: Int) = "editor-ingredient-$position-unit"
+    fun ingredientRemove(position: Int) = "editor-ingredient-$position-remove"
+    fun ingredientError(position: Int) = "editor-ingredient-$position-error"
+    fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
+    fun divisibility(position: Int) = "editor-ingredient-$position-divisibility"
+    fun divisible(position: Int, divisible: Boolean) = "editor-ingredient-$position-divisible-$divisible"
+    fun unitOption(unit: QuantityUnit) = "editor-unit-${unit.name}"
 }

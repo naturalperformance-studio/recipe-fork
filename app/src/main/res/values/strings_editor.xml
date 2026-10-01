@@ -22,4 +22,45 @@
     <string name="editor_tag_remove">Remove</string>
     <string name="editor_tag_remove_action">Remove the tag %1$s</string>
     <string name="editor_tag_no_match">No tag in the dictionary matches this.</string>
+    <!-- The serving count, after the tags (FLOW-024, DOM-015). -->
+    <string name="editor_servings">Servings</string>
+    <string name="editor_servings_accepts">A whole number, 1 or more</string>
+    <string name="editor_servings_none">Not given</string>
+    <!-- The ingredient rows: three fields each (FLOW-023). -->
+    <string name="editor_ingredients">Ingredients</string>
+    <string name="editor_ingredient_add">Add ingredient</string>
+    <string name="editor_ingredient_add_action">Add an ingredient row</string>
+    <string name="editor_ingredient_name">Ingredient</string>
+    <string name="editor_ingredient_unnamed">Unnamed ingredient</string>
+    <string name="editor_ingredient_quantity">Quantity</string>
+    <string name="editor_ingredient_unit">Unit</string>
+    <string name="editor_ingredient_unit_action">Choose the unit</string>
+    <string name="editor_ingredient_remove">Remove</string>
+    <string name="editor_ingredient_remove_action">Remove ingredient row %1$d</string>
+    <!-- An ingredient in the author's own words (FLOW-022): both statements, always together. -->
+    <string name="editor_ingredient_free_text_warning">Not from the ingredient dictionary: filters will not find this recipe by this ingredient, and once the recipe is published this cannot be changed.</string>
+    <!-- A piece ingredient in the author's own words carries no divisibility, so the author is asked (FLOW-022). -->
+    <string name="editor_ingredient_divisible_question">Can one piece be halved?</string>
+    <string name="editor_ingredient_divisible_yes">Yes, halves are fine</string>
+    <string name="editor_ingredient_divisible_no">No, whole pieces only</string>
+    <!-- What the quantity field accepts, named when it does not hold a value (DOM-017, DOM-019). -->
+    <string name="editor_quantity_separators">A number is written without separators: no spaces, and at most one comma or point.</string>
+    <string name="editor_quantity_accepts_grams">This field accepts a whole number of grams, and from 1000 kg a whole number of kilograms.</string>
+    <string name="editor_quantity_accepts_millilitres">This field accepts a whole number of millilitres, and from 1000 l a whole number of litres.</string>
+    <string name="editor_quantity_accepts_whole_pieces">This field accepts a whole number of pieces, 1 or more.</string>
+    <string name="editor_quantity_accepts_halves">This field accepts ½, a whole number, or a whole number and ½.</string>
+    <string name="editor_quantity_accepts_fractions">This field accepts ¼, ⅓, ½, ⅔, ¾, a whole number, or a whole number and one of these fractions. Type ⅓ as 1/3.</string>
+    <!-- The twelve units, named as DOM-016 names them. -->
+    <string name="editor_unit_gram">g</string>
+    <string name="editor_unit_kilogram">kg</string>
+    <string name="editor_unit_tonne">t</string>
+    <string name="editor_unit_millilitre">ml</string>
+    <string name="editor_unit_litre">l</string>
+    <string name="editor_unit_cubic_metre">m³</string>
+    <string name="editor_unit_piece">pc</string>
+    <string name="editor_unit_teaspoon">tsp</string>
+    <string name="editor_unit_tablespoon">tbsp</string>
+    <string name="editor_unit_cup">cup</string>
+    <string name="editor_unit_pinch">pinch</string>
+    <string name="editor_unit_to_taste">to taste</string>
 </resources>

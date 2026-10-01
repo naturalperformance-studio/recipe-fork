@@ -1,5 +1,6 @@
 package app.recipefork.core.recipe
 
+import app.recipefork.core.scaling.AuthoredQuantity
 import app.recipefork.core.scaling.Rational
 import java.time.Instant
 import java.util.UUID
@@ -72,6 +73,14 @@ data class Step(
     val timer: Timer? = null,
 )
 
+/**
+ * An ingredient row as the author wrote it.
+ *
+ * A complete ingredient ([isComplete]) names an entry or its own words (DOM-009), holds a unit, holds a quantity on
+ * its unit type's grid exactly when that type carries one (DOM-002, DOM-017), and, for `piece`, its divisibility.
+ * A row the author is still writing may lack any of these, or hold a value off its grid, and is kept exactly as it
+ * stands (FLOW-024 (6)): its [authoredQuantity] is null, and a reader shows it as written and never scales it.
+ */
 data class Ingredient(
     val position: Int,
     /** The dictionary entry's id; null exactly when [freeTextName] is present (DOM-009). */
@@ -81,13 +90,40 @@ data class Ingredient(
     val unitType: UnitType,
     /** Null for `taste_unmeasured`. */
     val unit: QuantityUnit?,
-    /** Null exactly when [unitType] is `taste_unmeasured`. */
+    /**
+     * The value read from what the author typed, always above zero; on its grid unless the row is marked
+     * (DOM-017 (6)). Null for `taste_unmeasured`, and while the field holds no number above zero.
+     */
     val quantity: Rational?,
     /** Mass of one piece, `piece` only. */
     val pieceWeight: Rational? = null,
-    /** `piece` only. */
+    /** `piece` only; null until the author answers. */
     val divisible: Boolean? = null,
-)
+    /**
+     * What the author typed into the quantity field when it reads as no number above zero — zero, a negative
+     * number, a number with separators, or no number (DOM-017 (2), DOM-019 (5)) — kept so the field gives it back.
+     * Never present together with [quantity].
+     */
+    val enteredQuantity: String? = null,
+) {
+    /**
+     * What scaling reads of this ingredient, or null while the row is incomplete or its quantity lies off its grid
+     * (DOM-017): a reader then shows the row as written and scales the others without it.
+     */
+    val authoredQuantity: AuthoredQuantity?
+        get() {
+            if (unitType == UnitType.TASTE_UNMEASURED) return AuthoredQuantity(QuantityUnit.TO_TASTE, null)
+            val unit = unit?.takeIf { it.type == unitType } ?: return null
+            val quantity = quantity ?: return null
+            if (unitType == UnitType.PIECE && divisible == null) return null
+            if (!QuantityInput.holds(quantity, unit, divisible)) return null
+            return AuthoredQuantity(unit, quantity, divisible.takeIf { unitType == UnitType.PIECE })
+        }
+
+    /** Named by an entry or by words of the author's own, never both (DOM-009), with a quantity scaling can read. */
+    val isComplete: Boolean
+        get() = (dictionaryEntry != null) != !freeTextName.isNullOrBlank() && authoredQuantity != null
+}
 
 enum class MediaKind { PHOTO, VIDEO }
 
