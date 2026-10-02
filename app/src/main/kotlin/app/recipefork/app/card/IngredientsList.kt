@@ -74,7 +74,7 @@ internal fun IngredientsList(
         }
         list.lines.forEachIndexed { i, line ->
             val position = ordered[i].position
-            IngredientRow(line, position) { open = if (open == position) null else position }
+            IngredientRow(line, position, cardPlace(CardPlaces.ingredient(position))) { open = if (open == position) null else position }
             val offer = line.fixing
             if (offer != null && open == position) {
                 key(position) {
@@ -134,7 +134,7 @@ private fun RecalculatedLegend() {
  * that offers fixing is one action that opens its control.
  */
 @Composable
-private fun IngredientRow(line: IngredientLine, position: Int, onOpen: () -> Unit) {
+private fun IngredientRow(line: IngredientLine, position: Int, place: Modifier, onOpen: () -> Unit) {
     val tappable = if (line.fixing != null) {
         Modifier
             .heightIn(min = 48.dp)
@@ -143,7 +143,7 @@ private fun IngredientRow(line: IngredientLine, position: Int, onOpen: () -> Uni
         Modifier
     }
     Column(
-        Modifier.fillMaxWidth().then(tappable).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position)),
+        place.fillMaxWidth().then(tappable).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position)),
         verticalArrangement = Arrangement.Center,
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {

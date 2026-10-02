@@ -20,7 +20,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.layout.onGloballyPositioned
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -84,6 +91,7 @@ fun CardScreen(
     modifier: Modifier = Modifier,
     onFork: () -> Unit = {},
     onOpenParent: (RecipeId) -> Unit = {},
+    session: CardSession = remember { TextCardSession.inMemory() },
 ) {
     val content by remember(recipeId, recipes) {
         recipes.observe(recipeId).map { recipe -> recipe?.let(CardContent::Shown) ?: CardContent.Missing }
@@ -121,7 +129,7 @@ fun CardScreen(
             )
             is CardContent.Shown -> entries?.let {
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
-                RecipeContent(shown.recipe, it, recipes, environment.usualServings.count.value, onOpenParent)
+                RecipeContent(shown.recipe, it, recipes, environment.usualServings.count.value, session, onOpenParent)
             }
         }
     }
@@ -166,67 +174,120 @@ private fun RecipeContent(
     entries: Map<Long, IngredientEntryEntity>,
     recipes: RecipeRepository,
     usual: Rational?,
+    session: CardSession,
     onOpenParent: (RecipeId) -> Unit,
 ) {
     val language = when (interfaceLanguage(LocalConfiguration.current)) {
         RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
         RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
     }
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).testTag(CardTags.CONTENT),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Cover(recipe, recipes.bookName())
-        Text(
-            recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.semantics { heading() }.testTag(CardTags.TITLE),
-        )
-        // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
-        recipe.statedAuthor?.let {
+    // The place is restored by the part that was first at the top, not by a scroll in pixels, which a change of text
+    // scale or orientation while away would make point elsewhere (FLOW-012 (5)).
+    val scroll = remember(recipe.id) { ScrollState(0) }
+    val places = remember(recipe.id) { CardPlaces() }
+    // A card brought to a timer's step goes there, not to the place it was left at (FLOW-013 (4)).
+    val toStep = LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipe.id.value
+    KeptPlace(recipe.id, scroll, places, session, restore = !toStep)
+    CompositionLocalProvider(LocalCardPlaces provides places) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(scroll)
+                .onGloballyPositioned(places::content)
+                .padding(16.dp)
+                .testTag(CardTags.CONTENT),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
             Text(
-                stringResource(R.string.file_stated_author, it),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.testTag(CardTags.STATED_AUTHOR),
+                recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
             )
-        }
-        recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
-        // The card opens at the reader's usual count, or at the authored one with none set (FLOW-017 (1, 2)). The
-        // scale — the count in force and any fixing — is the card's alone and is held here only: a change of count
-        // leaves the setting as it is (FLOW-017 (3)). A fixing is of the rows as they stand, so a change to them
-        // starts the scale anew.
-        val authored = recipe.servings?.takeIf { it >= 1 }
-        var scale by remember(recipe.id, authored, recipe.ingredients) {
-            mutableStateOf(CardScale.opening(authored, usual))
-        }
-        val ordered = recipe.ingredients.sortedBy { it.position }
-        val list = ingredientList(ordered, entries, language, authored, scale)
-        list.servingCount?.let { count ->
-            ServingsControl(
-                count = RequestedServings.text(count.value, language),
-                approximate = count.approximate,
-                canDecrease = count.value > RequestedServings.MIN,
-                // A change of count walks from the count shown, and releases every fixing (SCALE-016).
-                onDecrease = { scale = scale.request(RequestedServings.decreased(count.value)) },
-                onIncrease = { scale = scale.request(RequestedServings.increased(count.value)) },
+            // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
+            recipe.statedAuthor?.let {
+                Text(
+                    stringResource(R.string.file_stated_author, it),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.testTag(CardTags.STATED_AUTHOR),
+                )
+            }
+            recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
+            // The card opens at the reader's usual count, or at the authored one with none set (FLOW-017 (1, 2)) — unless
+            // the reader left it at another this session, which it comes back at (FLOW-017 (7), FLOW-012). The scale — the
+            // count in force and any fixing — is the card's alone, kept by the session: a change of count leaves the
+            // setting as it is (FLOW-017 (3)). A fixing is of a row as it stood, so a change to that row drops it.
+            val authored = recipe.servings?.takeIf { it >= 1 }
+            val ordered = recipe.ingredients.sortedBy { it.position }
+            var held by remember(recipe.id, authored, recipe.ingredients) {
+                mutableStateOf(
+                    session.heldScale(recipe.id)?.restored(authored, ordered, usual) ?: CardScale.opening(authored, usual),
+                )
+            }
+            val scale = held
+            fun change(to: CardScale) {
+                held = to
+                session.holdScale(recipe.id, HeldScale.of(to, ordered))
+            }
+            val list = ingredientList(ordered, entries, language, authored, scale)
+            list.servingCount?.let { count ->
+                ServingsControl(
+                    modifier = cardPlace(CardPlaces.SERVINGS_KEY),
+                    count = RequestedServings.text(count.value, language),
+                    approximate = count.approximate,
+                    canDecrease = count.value > RequestedServings.MIN,
+                    // A change of count walks from the count shown, and releases every fixing (SCALE-016).
+                    onDecrease = { change(scale.request(RequestedServings.decreased(count.value))) },
+                    onIncrease = { change(scale.request(RequestedServings.increased(count.value))) },
+                )
+            }
+            IngredientsList(
+                ordered,
+                list,
+                scale.fixings,
+                language,
+                onFix = { change(scale.fix(it)) },
+                onRelease = { change(scale.release(it)) },
             )
+            StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language), StepPhotosOnCard(recipe, recipes.bookName()))
+            if (recipe.description.isNotBlank()) {
+                Text(
+                    recipe.description,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = cardPlace(CardPlaces.DESCRIPTION_KEY).testTag(CardTags.DESCRIPTION),
+                )
+            }
         }
-        IngredientsList(
-            ordered,
-            list,
-            scale.fixings,
-            language,
-            onFix = { scale = scale.fix(it) },
-            onRelease = { scale = scale.release(it) },
-        )
-        StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language), StepPhotosOnCard(recipe, recipes.bookName()))
-        if (recipe.description.isNotBlank()) {
-            Text(
-                recipe.description,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.testTag(CardTags.DESCRIPTION),
-            )
+    }
+}
+
+/**
+ * Keeps the reader's place on the card of [recipe] for the session: the part first at the top of [scroll] whenever
+ * they move. A card coming back to a place held for it is brought there, and kept there while what lies above it is
+ * still being laid out — a cover, a photograph, a timer that ended — until the reader scrolls themselves.
+ */
+@Composable
+private fun KeptPlace(recipe: RecipeId, scroll: ScrollState, places: CardPlaces, session: CardSession, restore: Boolean) {
+    // Decided once, as the card is drawn: a step shown later moves the reader as their own scroll does.
+    val restoring = remember(recipe) { restore }
+    LaunchedEffect(recipe, scroll, places, session) {
+        val anchor = if (restoring) session.heldAnchor(recipe) else null
+        if (anchor != null) {
+            // Every scroll this has made: a move seen late, after the next target was set, is still its own.
+            val ours = mutableSetOf(scroll.value)
+            coroutineScope {
+                val pin = launch {
+                    snapshotFlow { places.scrollOf(anchor)?.coerceIn(0, scroll.maxValue) }.filterNotNull().collect { target ->
+                        ours += target
+                        scroll.scrollTo(target)
+                    }
+                }
+                // Any move but this one's is the reader's own.
+                snapshotFlow { scroll.value }.first { it !in ours }
+                pin.cancel()
+            }
         }
+        snapshotFlow { places.anchorAt(scroll.value) }.collect { session.holdAnchor(recipe, it) }
     }
 }
 
@@ -309,13 +370,14 @@ internal fun Section(@StringRes title: Int, tag: String, lines: @Composable () -
  */
 @Composable
 private fun ServingsControl(
+    modifier: Modifier,
     count: String,
     approximate: Boolean,
     canDecrease: Boolean,
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
             stringResource(if (approximate) R.string.card_servings_approximate else R.string.card_servings, count),
             style = MaterialTheme.typography.titleMedium,
