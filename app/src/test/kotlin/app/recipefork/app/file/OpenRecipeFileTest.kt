@@ -166,4 +166,13 @@ class OpenRecipeFileTest {
         assertTrue(resolves(view(plain, "application/octet-stream")))
         assertNull(shadowOf(context as android.app.Application).nextStartedActivity)
     }
+
+    // A timer's notification is a view of the application's own address: no file, and nothing is imported from it.
+    @Test
+    fun aTimersNotificationIsNoFile() {
+        val notification = app.recipefork.app.timer.TimerIntents.uriOf(app.recipefork.app.timer.TimerKey("book-pool.db", "r1", 0))
+        assertNull(RecipeFileIntents.fileOf(view(notification, null)))
+        assertNull(RecipeFileIntents.fileOf(Intent(Intent.ACTION_SEND).setData(fileOf(ByteArray(1)))))
+        assertNull(RecipeFileIntents.fileOf(null))
+    }
 }

@@ -126,9 +126,15 @@ class RecipeImport(
     }
 }
 
-/** A recipe file handed to the application by another (FLOW-064): the address an `ACTION_VIEW` intent carries. */
+/**
+ * A recipe file handed to the application by another (FLOW-064): the `content:` or `file:` address an `ACTION_VIEW`
+ * intent carries. A timer's notification is a view of the application's own address, and is no file.
+ */
 object RecipeFileIntents {
-    fun fileOf(intent: Intent?): Uri? = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data
+    private val FILE_SCHEMES = setOf(android.content.ContentResolver.SCHEME_CONTENT, android.content.ContentResolver.SCHEME_FILE)
+
+    fun fileOf(intent: Intent?): Uri? =
+        intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data?.takeIf { it.scheme in FILE_SCHEMES }
 }
 
 /** Tells the person what became of the file they opened. */
