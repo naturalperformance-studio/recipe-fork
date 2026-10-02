@@ -404,6 +404,7 @@ object EditorTags {
     fun ingredientRemove(position: Int) = "editor-ingredient-$position-remove"
     fun ingredientMenu(position: Int) = "editor-ingredient-$position-menu"
     fun ingredientHandle(position: Int) = "editor-ingredient-$position-handle"
+    fun ingredientHandleIcon(position: Int) = "editor-ingredient-$position-handle-icon"
     fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
