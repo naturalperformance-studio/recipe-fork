@@ -464,6 +464,22 @@ class StepReferencesEditorTest {
         assertEquals(Step(0, "Всыпьте  муки"), stored(recipe.id).steps.single())
     }
 
+    // A removed reference's quantity typed back as plain text after the screen redrew: every character is kept.
+    @Test
+    fun theQuantityTypedBackWhereAReferenceWasRemovedIsKeptWhole() {
+        val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))))
+        open(recipe.id)
+        placeCursor(0, 13)
+        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.waitForIdle()
+        assertEquals("Всыпьте  муки", stepShown(0))
+        placeCursor(0, 8)
+        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("200 г")
+        compose.waitForIdle()
+        assertEquals("Всыпьте 200 г муки", stepShown(0))
+        assertEquals(Step(0, "Всыпьте 200 г муки"), stored(recipe.id).steps.single())
+    }
+
     // Backspacing the only space between two references removes the one before the cursor; the keyboard is not ignored.
     @Test
     fun backspacingTheSpaceBetweenTwoReferences() {

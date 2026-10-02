@@ -29,6 +29,7 @@ class StepFieldKeyboardTest {
         /** The screen redrawn: the buffer takes what the field is given. */
         fun redraw() {
             buffer = shown()
+            state.redrawn()
         }
 
         /** The keyboard changes the buffer and the field reports it. */
@@ -139,6 +140,21 @@ class StepFieldKeyboardTest {
         assertEquals(StepContent("ab", listOf(IngredientReference(1, 1))), field.content)
         field.redraw()
         assertEquals(TextRange(1), field.buffer.selection)
+    }
+
+    // The quantity typed back as plain text where a removed reference stood, once the screen has redrawn: every
+    // character is kept, none is read as an edit to the reference's old characters.
+    @Test
+    fun aCommitAfterTheRedrawWhereAReferenceWasRemovedKeepsEveryCharacter() {
+        val field = Field(flour, cursor = 13)
+        field.backspace()
+        field.redraw()
+        assertEquals(TextRange(8), field.buffer.selection)
+        field.commit(8, 8, "200")
+        assertEquals(StepContent("Всыпьте 200 муки", emptyList()), field.content)
+        field.redraw()
+        field.type(" г")
+        assertEquals(StepContent("Всыпьте 200 г муки", emptyList()), field.content)
     }
 
     @Test

@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -353,6 +354,11 @@ internal class StepFieldState {
         }
     }
 
+    /** The field was given what the step shows: its buffer is that text again, and the next edit is made to it. */
+    fun redrawn() {
+        buffer = null
+    }
+
     /** Changed on every edit, so the field is redrawn — and its buffer replaced — even when nothing it shows changed. */
     var version by mutableStateOf(0)
         private set
@@ -389,6 +395,7 @@ internal fun StepTextField(
     val display = current()
     val highlight = MaterialTheme.colorScheme.secondaryContainer
     state.version // Read, so that every edit redraws the field.
+    SideEffect { state.redrawn() }
     OutlinedTextField(
         value = state.shown(display),
         onValueChange = { new ->
