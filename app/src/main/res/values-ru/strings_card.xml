@@ -27,7 +27,7 @@
     <string name="card_fix_amount">Сколько у вас есть</string>
     <string name="card_fix_confirm">Пересчитать</string>
     <string name="card_fix_confirm_action">Пересчитать весь рецепт на это количество</string>
-    <string name="card_fix_release">Отменить</string>
+    <string name="card_fix_release">Снять фиксацию</string>
     <string name="card_fix_release_action">Больше не пересчитывать рецепт от этого ингредиента</string>
     <string name="card_fix_cancel">Закрыть</string>
     <string name="card_fix_cancel_action">Закрыть, не меняя рецепт</string>
