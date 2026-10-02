@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
@@ -40,12 +41,14 @@ import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 
@@ -54,6 +57,8 @@ import kotlin.time.Duration.Companion.minutes
  * the session saved left — here a map standing for the application's saved state: the same count and fixing, the same
  * line at the top whatever the text scale did meanwhile, and a running timer at the time left by the clock.
  */
+// Text measured as on a device, so that a larger text or a wider screen really changes the lines' heights.
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
 class CardKeptTest {
     @get:Rule
@@ -71,13 +76,16 @@ class CardKeptTest {
     private val session = TextCardSession(saved::get) { key, value -> if (value == null) saved.remove(key) else saved[key] = value }
     private var fontScale by mutableFloatStateOf(1f)
 
+    /** The text scale a card drawn anew is drawn at, as a process started after a change of the setting sees it. */
+    private var fontScaleOnReturn = 1f
+
     private val stew = Recipe.create(now, null).copy(
         title = "Stew",
         servings = 4,
         ingredients = listOf(
             Ingredient(0, null, freeTextName = "Beef", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(800)),
         ) + (1..15).map {
-            Ingredient(it, null, freeTextName = "Spice $it", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TEASPOON, quantity = Rational.ONE)
+            Ingredient(it, null, freeTextName = "Spice $it, ground in a mortar with coarse salt, a pinch of sugar and dried herbs until fragrant", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TEASPOON, quantity = Rational.ONE)
         },
         steps = listOf(Step(0, "Brown the beef", timer = Timer(10.minutes))) +
             (1..10).map { Step(it, "Step $it: stir the pot slowly and look at it for a while before going on") },
@@ -105,7 +113,7 @@ class CardKeptTest {
             CompositionLocalProvider(
                 LocalCardTimers provides timers.card,
                 LocalAwakeClock provides TestAwakeClock(),
-                LocalDensity provides Density(density.density, fontScale),
+                LocalDensity provides Density(density.density, fontScale * remember { fontScaleOnReturn }),
             ) {
                 MaterialTheme { CardScreen(stew.id, recipes, environment, onBack = {}, onEdit = {}, session = session) }
             }
@@ -127,6 +135,10 @@ class CardKeptTest {
         ?.config?.getOrElseNullable(SemanticsProperties.Text) { null }
         ?.joinToString("") { it.text }
 
+    /** How far the card is scrolled, in pixels. */
+    private fun scrolled(): Float = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode()
+        .config[SemanticsProperties.VerticalScrollAxisRange].value()
+
     private fun scrollBy(pixels: Float) {
         compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, pixels) }
         compose.waitForIdle()
@@ -146,11 +158,11 @@ class CardKeptTest {
         val count = servings()
         scrollBy(1200f)
         val top = compose.firstAtTheTop()
+        val pixels = scrolled()
 
-        compose.runOnIdle {
-            timers.clock.advance(3.minutes)
-            fontScale = 2f
-        }
+        // While away the process is gone, and the text was made larger: only the card drawn anew sees it.
+        compose.runOnIdle { timers.clock.advance(3.minutes) }
+        fontScaleOnReturn = 2f
         tester.emulateSavedInstanceStateRestore()
         awaitLines()
 
@@ -158,7 +170,24 @@ class CardKeptTest {
         assertTrue(fixed(0))
         compose.waitUntil(PATIENCE_MS) { compose.firstAtTheTop() == top }
         assertEquals(top, compose.firstAtTheTop())
+        // The lines above it grew with the text: the same line is at the top at another scroll in pixels.
+        assertNotEquals(pixels, scrolled(), 1f)
         compose.waitUntil(PATIENCE_MS) { timerStatus() == "7:00" }
+    }
+
+    // Once the reader has scrolled after the return, a change of layout above them does not pull the card back.
+    @Test
+    fun aLayoutChangeAfterTheReadersOwnScrollMovesNothing() {
+        val tester = show()
+        scrollBy(1200f)
+        tester.emulateSavedInstanceStateRestore()
+        awaitLines()
+        compose.waitUntil(PATIENCE_MS) { scrolled() > 0f }
+        scrollBy(100f)
+        val pixels = scrolled()
+        compose.runOnIdle { fontScale = 2f }
+        compose.waitForIdle()
+        assertEquals(pixels, scrolled(), 0.5f)
     }
 
     // The reader's own scroll after the return is theirs: the card no longer holds them at the restored line.

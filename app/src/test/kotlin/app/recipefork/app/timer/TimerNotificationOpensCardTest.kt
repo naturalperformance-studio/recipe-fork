@@ -9,6 +9,9 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
+import app.recipefork.app.library.LibraryView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.MainActivity
@@ -123,6 +126,24 @@ class TimerNotificationOpensCardTest {
     fun tappingTheNotificationWithTheApplicationOpenShowsTheCardAtTheStep() {
         val intent = notificationIntent()
         launch()
+        awaitTag(LibraryTags.TITLE)
+        opened!!.newIntent(intent)
+        compose.waitForIdle()
+        assertTheCardShowsTheStep()
+    }
+
+    // FLOW-013 (4) over a held place: a card left scrolled elsewhere is brought to the timer's step all the same.
+    @Test
+    fun theNotificationsStepOutranksThePlaceTheCardWasLeftAt() {
+        val intent = notificationIntent()
+        launch()
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
+        awaitTag(LibraryTags.entry(stew.id.value))
+        compose.onNodeWithTag(LibraryTags.entry(stew.id.value)).performClick()
+        awaitTag(CardTags.step(0))
+        compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 600f) }
+        compose.waitForIdle()
+        compose.onNodeWithTag(CardTags.BACK).performClick()
         awaitTag(LibraryTags.TITLE)
         opened!!.newIntent(intent)
         compose.waitForIdle()

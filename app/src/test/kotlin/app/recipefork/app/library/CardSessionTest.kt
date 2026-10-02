@@ -2,6 +2,11 @@ package app.recipefork.app.library
 
 import android.os.Bundle
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.lifecycle.SavedStateHandle
+import app.recipefork.app.card.CardAnchor
+import app.recipefork.app.card.HeldScale
+import app.recipefork.core.recipe.RecipeId
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -28,10 +33,13 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.GraphicsMode
 import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
@@ -42,6 +50,8 @@ import java.time.Instant
  * rest of the session — through the book, another recipe, the home action and the end of the process while away —
  * with its fixing and the line at the top; a new session opens every recipe at the usual count again.
  */
+// Text measured as on a device, so that a larger text or a wider screen really changes the lines' heights.
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
 class CardSessionTest {
     @get:Rule
@@ -58,7 +68,7 @@ class CardSessionTest {
             Ingredient(0, null, freeTextName = "Chicken", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(500)),
             Ingredient(1, null, freeTextName = "Rice", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(400)),
         ) + (2..19).map {
-            Ingredient(it, null, freeTextName = "Spice $it", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TEASPOON, quantity = Rational.ONE)
+            Ingredient(it, null, freeTextName = "Spice $it, ground in a mortar with coarse salt, a pinch of sugar and dried herbs until fragrant", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TEASPOON, quantity = Rational.ONE)
         },
         steps = (0..11).map { Step(it, "Step $it: stir the pot slowly and look at it for a while before going on") },
     )
@@ -116,6 +126,10 @@ class CardSessionTest {
         compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isEmpty() }
     }
+
+    /** How far the card is scrolled, in pixels. */
+    private fun scrolled(): Float = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode()
+        .config[SemanticsProperties.VerticalScrollAxisRange].value()
 
     /** Scrolls the card down by [pixels], as the reader's own scroll does. */
     private fun scrollBy(pixels: Float) {
@@ -195,6 +209,7 @@ class CardSessionTest {
         scrollBy(1500f)
         val top = compose.firstAtTheTop()
         assertTrue("scrolled into the lines: $top", top.startsWith("card-ingredient-") || top.startsWith("card-step-"))
+        val pixels = scrolled()
         val saved = activity.endTheProcess()
         RuntimeEnvironment.setFontScale(1.6f)
         RuntimeEnvironment.setQualifiers("+land")
@@ -205,6 +220,58 @@ class CardSessionTest {
         assertTrue(fixed(1))
         compose.waitUntil(PATIENCE_MS) { compose.firstAtTheTop() == top }
         assertEquals(top, compose.firstAtTheTop())
+        // The wrapped lines above it changed height: the same line is at the top at another scroll in pixels.
+        assertNotEquals(pixels, scrolled(), 1f)
+    }
+
+    // A fixed row replaced while away — position 0 holds another ingredient now — loses its fixing; the count stays.
+    @Test
+    fun aFixingOfARowReplacedWhileAwayIsDropped() {
+        save(pilaf)
+        val activity = launch()
+        open(pilaf)
+        more(2)
+        fix(0, "300")
+        val saved = activity.endTheProcess()
+        val (chicken, rice) = pilaf.ingredients
+        save(pilaf.copy(ingredients = listOf(rice.copy(position = 0), chicken.copy(position = 1)) + pilaf.ingredients.drop(2)))
+        launch(saved)
+        awaitLines()
+        compose.waitUntil(PATIENCE_MS) { line(0).firstOrNull() == "Rice" }
+        assertEquals("Servings: 6", servings())
+        assertFalse(fixed(0) || fixed(1))
+    }
+
+    // A fixed row edited in the same session loses its fixing when the card is shown again; the count stays.
+    @Test
+    fun aFixingOfARowEditedInTheSessionIsDropped() {
+        save(pilaf)
+        launch()
+        open(pilaf)
+        more(2)
+        fix(0, "300")
+        back()
+        save(pilaf.copy(ingredients = listOf(pilaf.ingredients[0].copy(quantity = Rational.of(600))) + pilaf.ingredients.drop(1)))
+        open(pilaf)
+        compose.waitUntil(PATIENCE_MS) { line(0).any { it.startsWith("900") } }
+        assertEquals("Servings: 6", servings())
+        assertFalse(fixed(0))
+    }
+
+    // Saved state stays small: the 50 cards most recently left at a count or place are held, the oldest forgotten.
+    @Test
+    fun onlyTheFiftyMostRecentCardsAreHeld() {
+        val session = LibrarySession(SavedStateHandle())
+        val ids = (0..50).map { RecipeId("recipe-$it") }
+        ids.forEach { session.cards.holdScale(it, HeldScale(Rational.of(6))); session.cards.holdAnchor(it, CardAnchor("i1", 10)) }
+        assertNull(session.cards.heldScale(ids[0]))
+        assertNull(session.cards.heldAnchor(ids[0]))
+        assertTrue(ids.drop(1).all { session.cards.heldScale(it) != null && session.cards.heldAnchor(it) != null })
+        // Shown again, a card is the most recent: the next one forgotten is the oldest after it.
+        session.cards.holdScale(ids[1], HeldScale(Rational.of(3)))
+        session.cards.holdScale(RecipeId("recipe-new"), HeldScale(Rational.of(2)))
+        assertEquals(HeldScale(Rational.of(3)), session.cards.heldScale(ids[1]))
+        assertNull(session.cards.heldScale(ids[2]))
     }
 
     // The home action and return: the same count and fixing (FLOW-012 (1)).

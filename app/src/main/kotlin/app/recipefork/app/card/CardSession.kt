@@ -41,6 +41,12 @@ class TextCardSession(
     override fun heldAnchor(recipe: RecipeId): CardAnchor? = CardAnchor.decoded(read(ANCHOR_KEY + recipe.value))
     override fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?) = write(ANCHOR_KEY + recipe.value, anchor?.encoded())
 
+    /** Nothing is held for [recipe] any more. */
+    fun forget(recipe: RecipeId) {
+        write(SCALE_KEY + recipe.value, null)
+        write(ANCHOR_KEY + recipe.value, null)
+    }
+
     companion object {
         private const val SCALE_KEY = "card.scale."
         private const val ANCHOR_KEY = "card.anchor."
@@ -98,7 +104,11 @@ data class HeldScale(val requested: Rational?, val fixing: CardFixing? = null, v
             }.getOrNull()
         }
 
-        /** A stable mark of what a row holds, the same from one process to the next. */
+        /**
+         * A stable mark of what a row holds, the same from one process to the next. It is taken of
+         * [Ingredient.toString], so an update of the application between saving and restoring may read every row as
+         * changed and drop the fixing — the count is kept, and nothing worse follows.
+         */
         private fun rowOf(ingredient: Ingredient): Int = ingredient.toString().hashCode()
     }
 }

@@ -3,7 +3,9 @@ package app.recipefork.app.library
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.recipefork.app.card.CardAnchor
 import app.recipefork.app.card.CardSession
+import app.recipefork.app.card.HeldScale
 import app.recipefork.app.card.StepToShow
 import app.recipefork.app.card.TextCardSession
 import app.recipefork.core.recipe.RecipeId
@@ -126,8 +128,34 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
      * step at its top — kept like the view: through leaving the card, the home action and the end of the process,
      * and gone with the task (FLOW-017 (6, 7), FLOW-012, FLOW-058). Only short texts are kept, never a recipe.
      */
-    val cards: CardSession = TextCardSession({ saved.get<String>(CARDS_KEY + it) }) { key, value ->
+    val cards: CardSession get() = shownCards
+
+    private val held = TextCardSession({ saved.get<String>(CARDS_KEY + it) }) { key, value ->
         if (value == null) saved.remove<String>(CARDS_KEY + key) else saved[CARDS_KEY + key] = value
+    }
+
+    /** Saved state stays small: only the [MAX_CARDS] cards most recently left at a count or a place are held. */
+    private val shownCards = object : CardSession {
+        override fun heldScale(recipe: RecipeId) = held.heldScale(recipe)
+        override fun heldAnchor(recipe: RecipeId) = held.heldAnchor(recipe)
+
+        override fun holdScale(recipe: RecipeId, scale: HeldScale) {
+            shown(recipe)
+            held.holdScale(recipe, scale)
+        }
+
+        override fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?) {
+            shown(recipe)
+            held.holdAnchor(recipe, anchor)
+        }
+    }
+
+    private fun shown(recipe: RecipeId) {
+        val order = saved.get<String>(CARDS_ORDER_KEY)?.split(' ')?.filter { it.isNotEmpty() }.orEmpty()
+        if (order.firstOrNull() == recipe.value) return
+        val now = listOf(recipe.value) + (order - recipe.value)
+        now.drop(MAX_CARDS).forEach { held.forget(RecipeId(it)) }
+        saved[CARDS_ORDER_KEY] = now.take(MAX_CARDS).joinToString(" ")
     }
 
     private fun stepOf(value: String?): TimerStep? {
@@ -137,6 +165,8 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     private companion object {
         const val CARDS_KEY = "library."
+        const val CARDS_ORDER_KEY = "library.cards"
+        const val MAX_CARDS = 50
         const val STEP_KEY = "library.step"
         const val MESSAGE_KEY = "library.file_message"
         const val VIEW_KEY = "library.view"

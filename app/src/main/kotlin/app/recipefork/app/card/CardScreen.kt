@@ -185,7 +185,9 @@ private fun RecipeContent(
     // scale or orientation while away would make point elsewhere (FLOW-012 (5)).
     val scroll = remember(recipe.id) { ScrollState(0) }
     val places = remember(recipe.id) { CardPlaces() }
-    KeptPlace(recipe.id, scroll, places, session)
+    // A card brought to a timer's step goes there, not to the place it was left at (FLOW-013 (4)).
+    val toStep = LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipe.id.value
+    KeptPlace(recipe.id, scroll, places, session, restore = !toStep)
     CompositionLocalProvider(LocalCardPlaces provides places) {
         Column(
             Modifier
@@ -265,20 +267,23 @@ private fun RecipeContent(
  * still being laid out — a cover, a photograph, a timer that ended — until the reader scrolls themselves.
  */
 @Composable
-private fun KeptPlace(recipe: RecipeId, scroll: ScrollState, places: CardPlaces, session: CardSession) {
+private fun KeptPlace(recipe: RecipeId, scroll: ScrollState, places: CardPlaces, session: CardSession, restore: Boolean) {
+    // Decided once, as the card is drawn: a step shown later moves the reader as their own scroll does.
+    val restoring = remember(recipe) { restore }
     LaunchedEffect(recipe, scroll, places, session) {
-        val anchor = session.heldAnchor(recipe)
+        val anchor = if (restoring) session.heldAnchor(recipe) else null
         if (anchor != null) {
-            var ours = scroll.value
+            // Every scroll this has made: a move seen late, after the next target was set, is still its own.
+            val ours = mutableSetOf(scroll.value)
             coroutineScope {
                 val pin = launch {
                     snapshotFlow { places.scrollOf(anchor)?.coerceIn(0, scroll.maxValue) }.filterNotNull().collect { target ->
-                        ours = target
+                        ours += target
                         scroll.scrollTo(target)
                     }
                 }
                 // Any move but this one's is the reader's own.
-                snapshotFlow { scroll.value }.first { it != ours }
+                snapshotFlow { scroll.value }.first { it !in ours }
                 pin.cancel()
             }
         }
