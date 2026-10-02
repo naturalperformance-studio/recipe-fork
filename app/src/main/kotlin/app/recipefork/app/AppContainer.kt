@@ -25,8 +25,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-/** The composition root: every long-lived object of the application, wired by hand. */
-class AppContainer(context: Context) {
+/**
+ * What a release is built as (FLOW-061): with the product's server, or without it for good. It is fixed by the build
+ * and read once, by [MainActivity]; every screen that FLOW-062 changes takes the mode it is given.
+ */
+enum class Mode { Standard, Serverless }
+
+/** The composition root: every long-lived object of the application, wired by hand, for the [mode] it is built in. */
+class AppContainer(context: Context, val mode: Mode) {
     val database: AppDatabase = AppDatabase.open(context)
     val httpClient = Network.client(Android.create(), BuildConfig.SERVER_URL)
     val connectivity = AndroidConnectivity(context)

@@ -15,7 +15,7 @@ class RecipeForkApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        container = AppContainer(this)
+        container = AppContainer(this, MainActivity.MODE)
         // The channels exist before any timer is started, so that the timers' one can be read and turned off alone.
         TimerChannels.create(this)
         container.dictionarySync.start(scope)
