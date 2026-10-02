@@ -47,15 +47,17 @@ class OpenRecipeFileTest {
     private val files = File(context.cacheDir, "open-test-files").also { it.deleteRecursively() }
     private val importer = RecipeImport(recipes, files, clock = { Instant.parse("2026-10-02T12:00:00Z") })
     private val session = LibrarySession(SavedStateHandle())
+    private val incoming = TestRecipeFiles.incoming()
 
     @After
     fun close() {
         book.close()
         files.deleteRecursively()
+        incoming.deleteRecursively()
     }
 
     private fun fileOf(bytes: ByteArray, name: String = "Bean soup.recipefork"): Uri =
-        Uri.fromFile(TestRecipeFiles.write(File(context.cacheDir, "incoming"), name, bytes))
+        Uri.fromFile(TestRecipeFiles.write(incoming, name, bytes))
 
     private fun open(mode: Mode, uri: Uri) {
         val work = MainActivity.openRecipeFile(context, mode, importer, session, uri)
@@ -103,7 +105,7 @@ class OpenRecipeFileTest {
             "This recipe file was made by a newer version of the app. Update the app to open it; nothing was added",
             ShadowToast.getTextOfLatestToast(),
         )
-        open(Mode.Serverless, Uri.fromFile(File(context.cacheDir, "missing.recipefork")))
+        open(Mode.Serverless, Uri.fromFile(File(incoming, "missing.recipefork")))
         assertEquals("Couldn't open the file, so nothing was added", ShadowToast.getTextOfLatestToast())
         assertEquals(1, recipes.count())
     }

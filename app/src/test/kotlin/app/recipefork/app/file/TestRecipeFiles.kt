@@ -101,6 +101,12 @@ object TestRecipeFiles {
         return header.array() + nameBytes + compressed
     }
 
+    /**
+     * A new directory outside the application's own data, where another application's file is: the importer refuses
+     * a `file:` address into its own.
+     */
+    fun incoming(): File = java.nio.file.Files.createTempDirectory("recipefork-incoming").toFile()
+
     /** A file of the test's own holding [bytes], which a content resolver opens by its `file:` address. */
     fun write(directory: File, name: String, bytes: ByteArray): File =
         File(directory, name).also { it.parentFile?.mkdirs(); it.writeBytes(bytes) }
