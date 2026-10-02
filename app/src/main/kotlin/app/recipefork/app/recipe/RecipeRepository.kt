@@ -38,6 +38,12 @@ class RecipeRepository(private val book: ActiveBook) {
     /** What is marked in the active book, the found recipes among it (FLOW-009, FLOW-064). */
     fun marked(): Flow<List<MarkedRecipeRow>> = book.open.flatMapLatest { it.database.favourites().marked() }
 
+    /**
+     * The book active now, held: every read and write of what this returns goes to that book, even when another
+     * becomes active meanwhile. Work that spans several steps — an import — holds the book it began in.
+     */
+    fun inOpenBook(): RecipeRepository = book.open.value.let { RecipeRepository(ActiveBook(it.name, it.database)) }
+
     /** The name of the active book, whose media directory a found recipe's media is written to. */
     fun bookName(): BookName = book.open.value.name
 

@@ -16,6 +16,8 @@ import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.StatedParent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
@@ -39,6 +41,8 @@ sealed interface ImportOutcome {
  * active — as a found recipe, marked and not editable, keeping the author and the parent the file states, never
  * verified. Its media is written under names generated here, into the book's media directory under [filesDirectory].
  * A recipe the book already holds adds nothing; a file that cannot be believed is refused and nothing of it is kept.
+ * The book is the one active when the import began, whichever becomes active meanwhile; a cancelled import stops
+ * reading at once and keeps nothing.
  */
 class RecipeImport(
     private val recipes: RecipeRepository,
@@ -46,16 +50,23 @@ class RecipeImport(
     private val clock: () -> Instant = Instant::now,
     private val limits: ArchiveLimits = ArchiveLimits(),
 ) {
-    suspend fun import(open: () -> InputStream): ImportOutcome = withContext(Dispatchers.IO) {
+    suspend fun import(open: () -> InputStream): ImportOutcome {
+        val recipes = recipes.inOpenBook()
+        return withContext(Dispatchers.IO) { importInto(recipes, open) }
+    }
+
+    private suspend fun importInto(recipes: RecipeRepository, open: () -> InputStream): ImportOutcome = coroutineScope {
+        val work = coroutineContext
+        val alive = { work.ensureActive() }
         val content = try {
-            RecipeArchiveReader.document(open, limits)
+            RecipeArchiveReader.document(open, limits, alive)
         } catch (e: RefusedFile) {
-            return@withContext ImportOutcome.Refused(e.refusal)
+            return@coroutineScope ImportOutcome.Refused(e.refusal)
         }
         val held = recipes.get(content.id)
         if (held != null || recipes.isMarked(content.id)) {
             // Named as the book holds it, which is what the person will find there.
-            return@withContext ImportOutcome.AlreadyInBook(content.id, held?.title ?: content.title)
+            return@coroutineScope ImportOutcome.AlreadyInBook(content.id, held?.title ?: content.title)
         }
         val directory = mediaDirectory(filesDirectory, recipes.bookName())
         val written = mutableListOf<Pair<Media, File>>()
@@ -64,12 +75,12 @@ class RecipeImport(
                 if (!directory.isDirectory && !directory.mkdirs()) throw RefusedFile(Refusal.CANNOT_OPEN, "no media directory")
                 val media = Media(UUID.randomUUID().toString(), null, item.kind, item.attachment, MediaVisibility.PRIVATE)
                 File(directory, media.mediaId).also { written += media to it }
-            }, limits)
+            }, limits, alive)
             val at = clock()
             val recipe = foundRecipe(content, written.map { it.first }, at)
             if (!recipes.addFound(recipe, at)) {
                 written.forEach { it.second.delete() }
-                return@withContext ImportOutcome.AlreadyInBook(content.id, content.title)
+                return@coroutineScope ImportOutcome.AlreadyInBook(content.id, content.title)
             }
             ImportOutcome.Added(recipe.id, recipe.title)
         } catch (e: RefusedFile) {
@@ -81,16 +92,23 @@ class RecipeImport(
         }
     }
 
-    /** Opens [uri] through [context]'s content resolver and imports what it holds. */
-    suspend fun import(context: Context, uri: Uri): ImportOutcome = import {
-        context.contentResolver.openInputStream(uri) ?: throw java.io.FileNotFoundException("$uri")
-    }
+    /**
+     * Opens [uri] through [context]'s content resolver and imports what it holds. A `file:` address into the
+     * application's own data is refused unread: no other application has any file of its own there to hand over.
+     */
+    suspend fun import(context: Context, uri: Uri): ImportOutcome =
+        if (isPrivateFile(context, uri)) {
+            ImportOutcome.Refused(Refusal.CANNOT_OPEN)
+        } else {
+            import { context.contentResolver.openInputStream(uri) ?: throw java.io.FileNotFoundException("$uri") }
+        }
 
     /**
      * Removes the found recipe [id] from the active book with its held content and its media files (FLOW-064 (6)).
      * Returns whether the book marked it.
      */
     suspend fun remove(id: RecipeId): Boolean = withContext(Dispatchers.IO) {
+        val recipes = recipes.inOpenBook()
         val book = recipes.bookName()
         val media = recipes.removeMarked(id) ?: return@withContext false
         val directory = mediaDirectory(filesDirectory, book)
@@ -99,6 +117,28 @@ class RecipeImport(
     }
 
     companion object {
+        /**
+         * Whether [uri] is a `file:` address inside the application's own data — its files, its cache with the
+         * exports, its books' databases — however it is spelt: the path is resolved, links and `..` with it.
+         */
+        fun isPrivateFile(context: Context, uri: Uri): Boolean {
+            if (uri.scheme != android.content.ContentResolver.SCHEME_FILE) return false
+            val path = uri.path ?: return true
+            val file = try {
+                File(path).canonicalFile
+            } catch (e: java.io.IOException) {
+                return true
+            }
+            val own = listOfNotNull(
+                context.dataDir, context.filesDir, context.cacheDir, context.noBackupFilesDir, context.codeCacheDir,
+                context.getDatabasePath(BookName.Pool.fileName).parentFile,
+            )
+            return own.any { root ->
+                val canonical = try { root.canonicalFile } catch (e: java.io.IOException) { root.absoluteFile }
+                file == canonical || file.startsWith(canonical)
+            }
+        }
+
         /** The directory the media of [book] is kept in. */
         fun mediaDirectory(filesDirectory: File, book: BookName) = File(filesDirectory, book.mediaDirectoryName)
 

@@ -272,7 +272,9 @@ class FoundRecipesTest {
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }
         val started = activity.nextStartedActivityForResult
         assertEquals(Intent.ACTION_OPEN_DOCUMENT, started.intent.action)
-        val file = TestRecipeFiles.write(File(context.cacheDir, "picked"), "Bean soup.recipefork", TestRecipeFiles.file(TestRecipeFiles.soup()))
+        // Picked from outside the application's own data, where the importer reads nothing.
+        val picked = TestRecipeFiles.incoming()
+        val file = TestRecipeFiles.write(picked, "Bean soup.recipefork", TestRecipeFiles.file(TestRecipeFiles.soup()))
         compose.runOnUiThread {
             activity.receiveResult(started.intent, Activity.RESULT_OK, Intent().setData(Uri.fromFile(file)))
         }
@@ -284,7 +286,7 @@ class FoundRecipesTest {
         compose.onNodeWithTag(LibraryTags.IMPORT).performClick()
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }
         val again = activity.nextStartedActivityForResult
-        val other = TestRecipeFiles.write(File(context.cacheDir, "picked"), "photo.jpg", TestRecipeFiles.jpeg())
+        val other = TestRecipeFiles.write(picked, "photo.jpg", TestRecipeFiles.jpeg())
         compose.runOnUiThread { activity.receiveResult(again.intent, Activity.RESULT_OK, Intent().setData(Uri.fromFile(other))) }
         compose.waitUntil(PATIENCE_MS) { ShadowToast.getTextOfLatestToast() == "This file is not a recipe file, so nothing was added" }
         assertEquals(1, runBlocking { recipes.marked().first() }.size)
