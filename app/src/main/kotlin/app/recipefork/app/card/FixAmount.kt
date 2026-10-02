@@ -1,12 +1,13 @@
 package app.recipefork.app.card
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -111,11 +113,16 @@ internal fun FixAmount(
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag(CardTags.FIX_PROBLEM),
             )
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (current != null) {
-                FixAction(R.string.card_fix_release, R.string.card_fix_release_action, true, onRelease, CardTags.FIX_RELEASE)
-            }
-            Spacer(Modifier.weight(1f))
+        // Release sits on its own line, apart from closing and recalculating; those two wrap as whole buttons when
+        // their labels do not fit side by side (a large font, a narrow screen), the primary one always last.
+        if (current != null) {
+            FixAction(R.string.card_fix_release, R.string.card_fix_release_action, true, onRelease, CardTags.FIX_RELEASE)
+        }
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             FixAction(R.string.card_fix_cancel, R.string.card_fix_cancel_action, true, onClose, CardTags.FIX_CANCEL)
             FixAction(
                 R.string.card_fix_confirm,
@@ -123,27 +130,40 @@ internal fun FixAmount(
                 reading is FixedAmountReading.Accepted,
                 { fix() },
                 CardTags.FIX_CONFIRM,
+                primary = true,
             )
         }
     }
 }
 
-/** One action of the control, at least 48 by 48 dp (A11Y-003), announced by what it does (A11Y-005). */
+/**
+ * One action of the control, at least 48 by 48 dp (A11Y-003), announced by what it does (A11Y-005); the [primary]
+ * one is filled.
+ */
 @Composable
-private fun FixAction(text: Int, action: Int, enabled: Boolean, onClick: () -> Unit, tag: String) {
+private fun FixAction(text: Int, action: Int, enabled: Boolean, onClick: () -> Unit, tag: String, primary: Boolean = false) {
+    val colors = MaterialTheme.colorScheme
+    val fill = if (primary) {
+        Modifier.background(if (enabled) colors.primary else colors.onSurface.copy(alpha = 0.12f), MaterialTheme.shapes.small)
+    } else {
+        Modifier
+    }
+    val color = when {
+        !enabled -> colors.onSurface.copy(alpha = 0.38f)
+        primary -> colors.onPrimary
+        else -> colors.primary
+    }
     Box(
         Modifier
             .heightIn(min = 48.dp)
             .widthIn(min = 48.dp)
+            .then(fill)
+            .clip(MaterialTheme.shapes.small)
             .clickable(enabled = enabled, onClickLabel = stringResource(action), role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp)
             .testTag(tag),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            stringResource(text),
-            color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            style = MaterialTheme.typography.labelLarge,
-        )
+        Text(stringResource(text), color = color, style = MaterialTheme.typography.labelLarge)
     }
 }
