@@ -2,14 +2,17 @@ package app.recipefork.app.editor
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -120,44 +123,58 @@ private fun StepRow(
     drag: RowDrag,
 ) {
     val field = remember { StepFieldState() }
-    Column(Modifier.fillMaxWidth().then(drag.row(position, MaterialTheme.colorScheme.surface)).testTag(EditorTags.step(position))) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            DragHandle(drag, position, count, EditorTags.stepHandle(position))
-            StepTextField(
-                position = position,
-                step = step,
-                ingredients = ingredients,
-                language = language,
-                editor = editor,
-                state = field,
-                modifier = Modifier.weight(1f).testTag(EditorTags.stepText(position)),
-            )
-            ActionText(
-                text = stringResource(R.string.editor_step_remove),
-                action = stringResource(R.string.editor_step_remove_action, position + 1),
-                onClick = { editor.removeStep(position) },
-                modifier = Modifier.testTag(EditorTags.stepRemove(position)),
-            )
-            RowMenu(
-                position = position,
-                count = count,
-                name = stringResource(R.string.editor_step_menu_action, position + 1),
-                tag = EditorTags.stepMenu(position),
-                actionTag = { EditorTags.stepAction(position, it) },
-                onAction = { action ->
-                    when (action) {
-                        RowAction.INSERT_ABOVE -> editor.insertStep(position)
-                        RowAction.INSERT_BELOW -> editor.insertStep(position + 1)
-                        RowAction.MOVE_UP -> editor.moveStep(position, position - 1)
-                        RowAction.MOVE_DOWN -> editor.moveStep(position, position + 1)
-                    }
-                },
-            )
+    // One bounded block per step, as an ingredient's, so where one step ends and the next begins is plain; dragged, it
+    // moves whole.
+    OutlinedCard(
+        Modifier
+            .fillMaxWidth()
+            .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
+            .testTag(EditorTags.step(position)),
+    ) {
+        // Dragged by the column down its left edge; everything of the step stands beside it, at one left edge.
+        DragColumnBlock(drag, position, count, EditorTags.stepHandle(position), EditorTags.stepHandleIcon(position)) {
+            Column(Modifier.fillMaxWidth().padding(STEP_PADDING)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    StepTextField(
+                        position = position,
+                        step = step,
+                        ingredients = ingredients,
+                        language = language,
+                        editor = editor,
+                        state = field,
+                        modifier = Modifier.weight(1f).testTag(EditorTags.stepText(position)),
+                    )
+                    ActionText(
+                        text = stringResource(R.string.editor_step_remove),
+                        action = stringResource(R.string.editor_step_remove_action, position + 1),
+                        onClick = { editor.removeStep(position) },
+                        modifier = Modifier.testTag(EditorTags.stepRemove(position)),
+                    )
+                    RowMenu(
+                        position = position,
+                        count = count,
+                        name = stringResource(R.string.editor_step_menu_action, position + 1),
+                        tag = EditorTags.stepMenu(position),
+                        actionTag = { EditorTags.stepAction(position, it) },
+                        onAction = { action ->
+                            when (action) {
+                                RowAction.INSERT_ABOVE -> editor.insertStep(position)
+                                RowAction.INSERT_BELOW -> editor.insertStep(position + 1)
+                                RowAction.MOVE_UP -> editor.moveStep(position, position - 1)
+                                RowAction.MOVE_DOWN -> editor.moveStep(position, position + 1)
+                            }
+                        },
+                    )
+                }
+                InsertIngredient(position, ingredients, dictionary, language, editor, field)
+                StepTimer(position, step, ingredients, language, editor, stating)
+            }
         }
-        InsertIngredient(position, ingredients, dictionary, language, editor, field)
-        StepTimer(position, step, ingredients, language, editor, stating)
     }
 }
+
+/** The room between a step block's outline, or its drag column, and what the block holds. */
+private val STEP_PADDING = PaddingValues(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 8.dp)
 
 /**
  * The step's timer (FLOW-027): a control that attaches it, then its duration in hours and whole minutes — the only
@@ -305,24 +322,27 @@ internal fun durationText(duration: Duration): String {
 @Composable
 private fun ReadOnlyStep(position: Int, step: Step, ingredients: List<Ingredient>, language: InterfaceLanguage) {
     val display = StepDisplay.of(step, ingredients, language)
-    Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.step(position))) {
-        Text(stringResource(R.string.editor_step, position + 1), style = MaterialTheme.typography.labelMedium)
-        Text(
-            display.styled(MaterialTheme.colorScheme.secondaryContainer),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.testTag(EditorTags.stepText(position)),
-        )
-        val timer = step.timer ?: return@Column
-        Text(
-            stringResource(R.string.editor_timer_read_only, durationText(timer.duration)),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.testTag(EditorTags.timerDuration(position)),
-        )
-        Text(
-            stringResource(R.string.editor_timer_name_read_only, TimerName.of(step, ReferenceText.authored(ingredients, language)).orEmpty()),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.testTag(EditorTags.timerName(position)),
-        )
+    // A block, as an editable step is, without its drag column.
+    OutlinedCard(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.step(position))) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Text(stringResource(R.string.editor_step, position + 1), style = MaterialTheme.typography.labelMedium)
+            Text(
+                display.styled(MaterialTheme.colorScheme.secondaryContainer),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.testTag(EditorTags.stepText(position)),
+            )
+            val timer = step.timer ?: return@Column
+            Text(
+                stringResource(R.string.editor_timer_read_only, durationText(timer.duration)),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(EditorTags.timerDuration(position)),
+            )
+            Text(
+                stringResource(R.string.editor_timer_name_read_only, TimerName.of(step, ReferenceText.authored(ingredients, language)).orEmpty()),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(EditorTags.timerName(position)),
+            )
+        }
     }
 }
 
