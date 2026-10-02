@@ -30,7 +30,7 @@ import kotlin.time.Duration.Companion.minutes
 
 /** The recipes of the active book, read from and written to the device alone (FLOW-038, FLOW-043). */
 @OptIn(ExperimentalCoroutinesApi::class)
-class RecipeRepository(
+open class RecipeRepository(
     private val book: ActiveBook,
     /**
      * The directory the books' media directories are kept under — the application's files — where work on a recipe
@@ -71,7 +71,7 @@ class RecipeRepository(
      */
     suspend fun removeMarked(id: RecipeId): List<String>? = book.database.recipes().removeMarked(id.value)
 
-    suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
+    open suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
 
     /**
      * Deletes the recipe [id] from the active book with everything it holds, on the device alone (FLOW-053 (6, 8)).

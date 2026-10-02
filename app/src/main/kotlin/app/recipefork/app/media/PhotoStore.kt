@@ -26,7 +26,7 @@ sealed interface PhotoOutcome {
  * A photograph is only ever whole in its place: it is written aside and moved there once complete, so one that fails
  * or is cancelled half-way leaves nothing behind (MEDIA-008).
  */
-class PhotoStore(
+open class PhotoStore(
     private val filesDirectory: File,
     private val reencoder: PhotoReencoder = PhotoReencoder(),
     /** Writes the bytes to the file; replaced in a test to fail half-way. */
@@ -77,7 +77,7 @@ class PhotoStore(
      * Copies the file of the media item [from] of [book] to the item [to], whole or not at all: written aside and moved
      * into place once complete. Returns whether it was copied; an item whose file is gone copies nothing.
      */
-    suspend fun copy(book: BookName, from: String, to: String): Boolean = withContext(Dispatchers.IO) {
+    open suspend fun copy(book: BookName, from: String, to: String): Boolean = withContext(Dispatchers.IO) {
         val source = file(book, from)
         val target = file(book, to)
         val partial = File(directory(book), ".$to.part")

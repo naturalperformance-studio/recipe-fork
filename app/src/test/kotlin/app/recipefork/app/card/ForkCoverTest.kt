@@ -110,4 +110,34 @@ class ForkCoverTest {
         assertEquals(emptyList<Media>(), runBlocking { recipes.get(forkId) }!!.media)
         assertEquals(listOf("parent-cover"), store.directory(BookName.Pool).list()!!.toList())
     }
+
+    // A copy that fails leaves the item out of the fork: the fork never names a file it does not hold (MEDIA-008).
+    @Test
+    fun aCoverWhoseCopyFailsIsLeftOutOfTheFork() {
+        val parent = withCover().also { runBlocking { recipes.save(it) } }
+        val failing = object : PhotoStore(context.filesDir) {
+            override suspend fun copy(book: BookName, from: String, to: String): Boolean = false
+        }
+
+        val forkId = runBlocking { forkRecipe(recipes, active, parent.id, now, failing) }!!
+
+        assertEquals(emptyList<Media>(), runBlocking { recipes.get(forkId) }!!.media)
+        assertEquals(listOf("parent-cover"), store.directory(BookName.Pool).list()!!.toList())
+    }
+
+    // A fork that is not written leaves none of the copies made for it.
+    @Test
+    fun aForkThatIsNotWrittenLeavesNoCopy() {
+        val parent = withCover().also { runBlocking { recipes.save(it) } }
+        val refusing = object : RecipeRepository(active, context.filesDir) {
+            override suspend fun save(recipe: Recipe) {
+                if (recipe.id != parent.id) throw IllegalStateException("not written")
+                super.save(recipe)
+            }
+        }
+
+        runCatching { runBlocking { forkRecipe(refusing, active, parent.id, now) } }
+
+        assertEquals(listOf("parent-cover"), store.directory(BookName.Pool).list()!!.toList())
+    }
 }
