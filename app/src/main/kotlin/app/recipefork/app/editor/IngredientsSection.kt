@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.app.dictionary.IngredientOffer
+import app.recipefork.app.dictionary.IngredientSource
+import app.recipefork.app.dictionary.label
 import app.recipefork.core.recipe.AcceptedValues
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityInput
@@ -125,11 +130,19 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
     )
 }
 
-/** The ingredient list, after the serving count (FLOW-024): rows of three fields each (FLOW-023), appended and deleted. */
+/**
+ * The ingredient list, after the serving count (FLOW-024): rows of three fields each (FLOW-023), appended and deleted.
+ * Rows are named from the ingredient dictionary of [ingredients] or in the author's own words (DOM-009).
+ */
 @Composable
-internal fun Ingredients(recipe: Recipe, editor: RecipeEditor) {
+internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: IngredientSource) {
     val editable = recipe.state.editable
     val language = numberLanguage(LocalConfiguration.current)
+    var dictionary by remember(ingredients) { mutableStateOf<List<IngredientEntryEntity>?>(null) }
+    LaunchedEffect(ingredients) {
+        // A dictionary that cannot be read offers nothing; every name can still be written as free text (FLOW-022).
+        dictionary = runCatching { ingredients.ingredients() }.getOrDefault(emptyList())
+    }
     Column(Modifier.fillMaxWidth().testTag(EditorTags.INGREDIENTS), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             stringResource(R.string.editor_ingredients),
@@ -137,7 +150,8 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor) {
             modifier = Modifier.semantics { heading() },
         )
         recipe.ingredients.forEachIndexed { position, row ->
-            if (editable) IngredientRow(position, row, editor, language) else ReadOnlyIngredient(position, row, language)
+            if (editable) IngredientRow(position, row, editor, language, dictionary)
+            else ReadOnlyIngredient(position, row, language, dictionary)
         }
         if (editable) {
             ActionText(
@@ -152,10 +166,10 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor) {
 
 /** A row as a frozen recipe shows it: what it holds, and nothing to change it with. */
 @Composable
-private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: InterfaceLanguage) {
+private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: InterfaceLanguage, dictionary: List<IngredientEntryEntity>?) {
     Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.ingredient(position))) {
         Text(
-            row.freeTextName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.editor_ingredient_unnamed),
+            row.nameIn(dictionary, language).takeIf { it.isNotBlank() } ?: stringResource(R.string.editor_ingredient_unnamed),
             style = MaterialTheme.typography.bodyLarge,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -173,11 +187,17 @@ private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: Interfa
  * divisibility question of a `piece` (FLOW-022 (5)) and the mark of a quantity the field does not hold (DOM-017 (6)).
  */
 @Composable
-private fun IngredientRow(position: Int, row: Ingredient, editor: RecipeEditor, language: InterfaceLanguage) {
+private fun IngredientRow(
+    position: Int,
+    row: Ingredient,
+    editor: RecipeEditor,
+    language: InterfaceLanguage,
+    dictionary: List<IngredientEntryEntity>?,
+) {
     val problem = QuantityInput.problem(row)
     Column(Modifier.fillMaxWidth().testTag(EditorTags.ingredient(position)), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            IngredientNameField(position, row, editor, Modifier.weight(1f))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f))
             ActionText(
                 text = stringResource(R.string.editor_ingredient_remove),
                 action = stringResource(R.string.editor_ingredient_remove_action, position + 1),
@@ -200,7 +220,7 @@ private fun IngredientRow(position: Int, row: Ingredient, editor: RecipeEditor, 
                 modifier = Modifier.testTag(EditorTags.ingredientError(position)),
             )
         }
-        // Every name is the author's own words until the dictionary offers entries (T-052).
+        // Only a name in the author's own words warns; an entry picked in its place takes the warning away (FLOW-022 (3)).
         if (row.dictionaryEntry == null && !row.freeTextName.isNullOrBlank()) {
             Text(
                 stringResource(R.string.editor_ingredient_free_text_warning),
@@ -208,21 +228,113 @@ private fun IngredientRow(position: Int, row: Ingredient, editor: RecipeEditor, 
                 modifier = Modifier.testTag(EditorTags.ingredientWarning(position)),
             )
         }
-        // No entry supplies divisibility yet, so every `piece` row asks for it (the increment's decision log).
+        // No shipped entry supplies divisibility, so every `piece` row asks for it, picked from an entry or not.
         if (row.unitType == UnitType.PIECE) Divisibility(position, row, editor)
     }
 }
 
-/** The row's ingredient, typed as the author's own words. Self-contained, so the dictionary's offer can replace it. */
+/** The name a row shows: its entry's label in the interface language (L10N-003), or the author's own words. */
+private fun Ingredient.nameIn(dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): String =
+    dictionaryEntry?.let { id -> dictionary?.firstOrNull { it.id == id }?.label(language) } ?: freeTextName.orEmpty()
+
+/**
+ * The row's ingredient. What the author types is held as their own words at once, so leaving the editor loses
+ * nothing (FLOW-024); while they type, the field offers the dictionary's entries for it and, beside them, adding the
+ * text as free text (FLOW-057). Picking an entry names the row by it (DOM-009). Leaving the field with exactly an
+ * offered entry's label typed names the row by that entry, because the entry is that ingredient (FLOW-057 (7)).
+ */
 @Composable
-private fun IngredientNameField(position: Int, row: Ingredient, editor: RecipeEditor, modifier: Modifier) {
-    OutlinedTextField(
-        value = row.freeTextName.orEmpty(),
-        onValueChange = { editor.setIngredientName(position, it) },
-        label = { Text(stringResource(R.string.editor_ingredient_name)) },
-        singleLine = true,
-        modifier = modifier.testTag(EditorTags.ingredientName(position)),
+private fun IngredientNameField(
+    position: Int,
+    row: Ingredient,
+    editor: RecipeEditor,
+    language: InterfaceLanguage,
+    dictionary: List<IngredientEntryEntity>?,
+    modifier: Modifier,
+) {
+    var offering by remember { mutableStateOf(false) }
+    var focused by remember { mutableStateOf(false) }
+    val focus = LocalFocusManager.current
+    fun held() = editor.recipe.value?.ingredients?.getOrNull(position) ?: row
+    val shown = row.nameIn(dictionary, language)
+    val offer = if (offering && dictionary != null && row.dictionaryEntry == null) IngredientOffer.of(shown, dictionary, language) else null
+    Column(modifier) {
+        OutlinedTextField(
+            value = shown,
+            onValueChange = {
+                editor.setIngredientFreeText(position, it)
+                offering = true
+            },
+            label = { Text(stringResource(R.string.editor_ingredient_name)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { state ->
+                    if (focused && !state.isFocused) {
+                        offering = false
+                        val latest = held()
+                        val typed = latest.freeTextName
+                        if (latest.dictionaryEntry == null && typed != null && dictionary != null) {
+                            IngredientOffer.of(typed, dictionary, language).exact?.let { editor.setIngredientEntry(position, it.id) }
+                        }
+                    }
+                    focused = state.isFocused
+                }
+                .testTag(EditorTags.ingredientName(position)),
+        )
+        if (offer != null && (offer.entries.isNotEmpty() || offer.freeText != null)) {
+            Column(Modifier.fillMaxWidth().testTag(IngredientNameTags.offer(position))) {
+                offer.entries.forEach { entry ->
+                    val label = entry.label(language)
+                    OfferedChoice(
+                        text = label,
+                        action = stringResource(R.string.editor_ingredient_pick_action, label),
+                        onClick = {
+                            editor.setIngredientEntry(position, entry.id)
+                            offering = false
+                            focus.clearFocus()
+                        },
+                        modifier = Modifier.testTag(IngredientNameTags.entry(position, entry.id)),
+                    )
+                }
+                offer.freeText?.let { text ->
+                    OfferedChoice(
+                        text = stringResource(R.string.editor_ingredient_free_text_offer, text),
+                        action = stringResource(R.string.editor_ingredient_free_text_action, text),
+                        onClick = {
+                            editor.setIngredientFreeText(position, text)
+                            offering = false
+                            focus.clearFocus()
+                        },
+                        modifier = Modifier.testTag(IngredientNameTags.freeText(position)),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** One choice of the ingredient field's offer: a line at least 48 dp tall whose click says what it does (A11Y-003, A11Y-005). */
+@Composable
+private fun OfferedChoice(text: String, action: String, onClick: () -> Unit, modifier: Modifier) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     )
+}
+
+/** The test tags of the ingredient field's offer (FLOW-057). */
+object IngredientNameTags {
+    fun offer(position: Int) = "editor-ingredient-$position-offer"
+    fun entry(position: Int, entryId: Long) = "editor-ingredient-$position-offer-$entryId"
+    fun freeText(position: Int) = "editor-ingredient-$position-offer-free-text"
 }
 
 /**

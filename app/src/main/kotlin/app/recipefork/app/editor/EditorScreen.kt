@@ -110,7 +110,7 @@ fun EditorScreen(
             TitleAndLanguage(shown, editor)
             Tags(shown, editor, dictionary)
             ServingCount(shown, editor)
-            Ingredients(shown, editor)
+            Ingredients(shown, editor, environment.ingredients)
         }
     }
 }
