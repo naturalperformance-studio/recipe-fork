@@ -162,7 +162,7 @@ class ExportAfterTheCardTest {
 
     /** The book's Export: the address of the file handed to the share sheet. */
     private fun exportedFile(): Uri {
-        val entry = LibraryTags.export(pilaf.id.value)
+        val entry = LibraryTags.actions(pilaf.id.value)
         compose.waitUntil(PATIENCE_MS) {
             try {
                 compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToNode(hasTestTag(entry))
@@ -174,7 +174,7 @@ class ExportAfterTheCardTest {
         val activity = shadowOf(compose.activity)
         // Anything an earlier export started is taken first, so that the sheet read below is this one's.
         while (activity.nextStartedActivity != null) continue
-        compose.onNodeWithTag(entry).performClick()
+        compose.chooseEntryAction(pilaf.id.value, LibraryTags.export(pilaf.id.value))
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivity() != null }
         val sheet = activity.nextStartedActivity
         assertEquals(Intent.ACTION_CHOOSER, sheet.action)
