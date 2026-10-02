@@ -7,6 +7,7 @@
 # notes-file (optional): plain text sent as a message after the APK — what changed, what to try.
 # Credentials live outside the repository, in a shared env file (default ~/Projects/.env,
 # override with DELIVERY_ENV): TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID. The token is never printed.
+# DELIVER_APK picks another APK from build/artefact/ (e.g. recipe-fork-serverless-debug.apk).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -17,7 +18,7 @@ token="$(read_var TELEGRAM_BOT_TOKEN)"
 chat="$(read_var TELEGRAM_CHAT_ID)"
 [ -n "$token" ] && [ -n "$chat" ] || { echo "TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set in $env_file" >&2; exit 1; }
 
-apk=build/artefact/recipe-fork-debug.apk
+apk=build/artefact/${DELIVER_APK:-recipe-fork-debug.apk}
 [ -f "$apk" ] || { echo "No $apk — run scripts/artefact.sh first" >&2; exit 1; }
 # The Bot API refuses uploads over 50 MB.
 size=$(stat -c %s "$apk")
@@ -31,7 +32,7 @@ api="https://api.telegram.org/bot${token}"
 ok() { python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get("ok") else (print(d.get("description","failed"), file=sys.stderr) or 1))'; }
 
 curl -sS -F chat_id="$chat" -F caption="$caption" \
-    -F document=@"$apk;filename=recipe-fork-${source_commit}.apk" \
+    -F document=@"$apk;filename=$(basename "$apk" -debug.apk)-${source_commit}.apk" \
     "$api/sendDocument" | ok
 
 if [ $# -ge 1 ] && [ -s "$1" ]; then
