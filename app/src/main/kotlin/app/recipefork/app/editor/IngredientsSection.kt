@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -150,8 +151,12 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
             modifier = Modifier.semantics { heading() },
         )
         recipe.ingredients.forEachIndexed { position, row ->
-            if (editable) IngredientRow(position, row, editor, language, dictionary)
-            else ReadOnlyIngredient(position, row, language, dictionary)
+            // What the screen holds for a row — focus, an open offer, a typed value — stays with it when rows before
+            // it are inserted, moved or deleted.
+            key(editor.ingredientKey(position)) {
+                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary)
+                else ReadOnlyIngredient(position, row, language, dictionary)
+            }
         }
         if (editable) {
             ActionText(
@@ -185,10 +190,12 @@ private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: Interfa
  * One row: exactly the ingredient, the quantity and the unit (FLOW-023 (1)) — never a unit type, which follows from
  * the unit (FLOW-023 (7)). Beside them, only what the row calls for: the free-text warning (FLOW-022 (2)), the
  * divisibility question of a `piece` (FLOW-022 (5)) and the mark of a quantity the field does not hold (DOM-017 (6)).
+ * Beside the ingredient, its removal and its menu of inserting and moving (FLOW-025).
  */
 @Composable
 private fun IngredientRow(
     position: Int,
+    count: Int,
     row: Ingredient,
     editor: RecipeEditor,
     language: InterfaceLanguage,
@@ -203,6 +210,21 @@ private fun IngredientRow(
                 action = stringResource(R.string.editor_ingredient_remove_action, position + 1),
                 onClick = { editor.removeIngredient(position) },
                 modifier = Modifier.testTag(EditorTags.ingredientRemove(position)),
+            )
+            RowMenu(
+                position = position,
+                count = count,
+                name = stringResource(R.string.editor_ingredient_menu_action, position + 1),
+                tag = EditorTags.ingredientMenu(position),
+                actionTag = { EditorTags.ingredientAction(position, it) },
+                onAction = { action ->
+                    when (action) {
+                        RowAction.INSERT_ABOVE -> editor.insertIngredient(position)
+                        RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1)
+                        RowAction.MOVE_UP -> editor.moveIngredient(position, position - 1)
+                        RowAction.MOVE_DOWN -> editor.moveIngredient(position, position + 1)
+                    }
+                },
             )
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {

@@ -31,6 +31,7 @@
     <string name="editor_ingredient_unit_action">Выбрать единицу</string>
     <string name="editor_ingredient_remove">Убрать</string>
     <string name="editor_ingredient_remove_action">Убрать строку ингредиента %1$d</string>
+    <string name="editor_ingredient_menu_action">Действия со строкой ингредиента %1$d</string>
     <string name="editor_ingredient_pick_action">Выбрать ингредиент словаря %1$s</string>
     <string name="editor_ingredient_free_text_offer">Добавить «%1$s» своими словами</string>
     <string name="editor_ingredient_free_text_action">Добавить %1$s своими словами, не из словаря</string>
@@ -63,6 +64,7 @@
     <string name="editor_step_add_action">Добавить шаг в конец</string>
     <string name="editor_step_remove">Убрать</string>
     <string name="editor_step_remove_action">Убрать шаг %1$d</string>
+    <string name="editor_step_menu_action">Действия с шагом %1$d</string>
     <string name="editor_description">Описание</string>
     <string name="editor_description_optional">Описание (необязательно)</string>
     <string name="editor_description_none">Описания нет</string>
@@ -79,4 +81,8 @@
     <string name="editor_timer_duration">%1$d ч %2$d мин</string>
     <string name="editor_timer_duration_hours">%1$d ч</string>
     <string name="editor_timer_duration_minutes">%1$d мин</string>
+    <string name="editor_row_insert_above">Вставить выше</string>
+    <string name="editor_row_insert_below">Вставить ниже</string>
+    <string name="editor_row_move_up">Переместить вверх</string>
+    <string name="editor_row_move_down">Переместить вниз</string>
 </resources>

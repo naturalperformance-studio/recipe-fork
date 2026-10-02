@@ -1,6 +1,7 @@
 package app.recipefork.app.editor
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -13,13 +14,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -39,6 +45,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -315,6 +322,55 @@ internal fun ActionText(text: String, action: String, onClick: () -> Unit, modif
     }
 }
 
+/** What a row's menu does to its row (FLOW-025): a new row above or below it, or the row one place up or down. */
+enum class RowAction(@StringRes val label: Int) {
+    INSERT_ABOVE(R.string.editor_row_insert_above),
+    INSERT_BELOW(R.string.editor_row_insert_below),
+    MOVE_UP(R.string.editor_row_move_up),
+    MOVE_DOWN(R.string.editor_row_move_down),
+    ;
+
+    /** How a test tag names the action: `insert-above` and so on. */
+    internal val tag: String get() = name.lowercase().replace('_', '-')
+}
+
+/**
+ * The menu of the row at [position] of [count] rows: a 48 dp control named for its row by [name] (A11Y-003, A11Y-005)
+ * that opens the four actions of FLOW-025 — the first row has no "Move up", the last no "Move down". Each action is
+ * one tap, so nothing here is done only by dragging (A11Y-006).
+ */
+@Composable
+internal fun RowMenu(
+    position: Int,
+    count: Int,
+    name: String,
+    tag: String,
+    actionTag: (RowAction) -> String,
+    onAction: (RowAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier) {
+        IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(48.dp).testTag(tag)) {
+            Icon(painterResource(R.drawable.ic_row_menu), contentDescription = name)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            RowAction.entries
+                .filter { (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1) }
+                .forEach { action ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(action.label)) },
+                        onClick = {
+                            expanded = false
+                            onAction(action)
+                        },
+                        modifier = Modifier.testTag(actionTag(action)),
+                    )
+                }
+        }
+    }
+}
+
 object EditorTags {
     const val SCREEN = "editor"
     const val BACK = "editor-back"
@@ -339,6 +395,8 @@ object EditorTags {
     fun ingredientQuantity(position: Int) = "editor-ingredient-$position-quantity"
     fun ingredientUnit(position: Int) = "editor-ingredient-$position-unit"
     fun ingredientRemove(position: Int) = "editor-ingredient-$position-remove"
+    fun ingredientMenu(position: Int) = "editor-ingredient-$position-menu"
+    fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
     fun divisibility(position: Int) = "editor-ingredient-$position-divisibility"
@@ -350,6 +408,8 @@ object EditorTags {
     fun step(position: Int) = "editor-step-$position"
     fun stepText(position: Int) = "editor-step-$position-text"
     fun stepRemove(position: Int) = "editor-step-$position-remove"
+    fun stepMenu(position: Int) = "editor-step-$position-menu"
+    fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"
     fun timerAttach(position: Int) = "editor-step-$position-timer"
     fun timerRemove(position: Int) = "editor-step-$position-timer-remove"
     fun timerStatement(position: Int) = "editor-step-$position-timer-statement"

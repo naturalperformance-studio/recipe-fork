@@ -37,6 +37,7 @@
     <string name="editor_ingredient_unit_action">Choose the unit</string>
     <string name="editor_ingredient_remove">Remove</string>
     <string name="editor_ingredient_remove_action">Remove ingredient row %1$d</string>
+    <string name="editor_ingredient_menu_action">Ingredient row %1$d actions</string>
     <!-- What the ingredient field offers while the author types (FLOW-057): entries, and the text as free text. -->
     <string name="editor_ingredient_pick_action">Use the dictionary ingredient %1$s</string>
     <string name="editor_ingredient_free_text_offer">Add “%1$s” as free text</string>
@@ -75,6 +76,7 @@
     <string name="editor_step_add_action">Add a step at the end</string>
     <string name="editor_step_remove">Remove</string>
     <string name="editor_step_remove_action">Remove step %1$d</string>
+    <string name="editor_step_menu_action">Step %1$d actions</string>
     <!-- The description, after the steps: one optional field (FLOW-024). -->
     <string name="editor_description">Description</string>
     <string name="editor_description_optional">Description (optional)</string>
@@ -93,4 +95,9 @@
     <string name="editor_timer_duration">%1$d h %2$d min</string>
     <string name="editor_timer_duration_hours">%1$d h</string>
     <string name="editor_timer_duration_minutes">%1$d min</string>
+    <!-- A row's menu: put a new row beside it, or move it one place; dragging comes later (FLOW-025, A11Y-006). -->
+    <string name="editor_row_insert_above">Insert above</string>
+    <string name="editor_row_insert_below">Insert below</string>
+    <string name="editor_row_move_up">Move up</string>
+    <string name="editor_row_move_down">Move down</string>
 </resources>

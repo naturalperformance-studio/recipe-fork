@@ -245,7 +245,7 @@ class IngredientsEditorTest {
         assertEquals(
             setOf(
                 EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), EditorTags.ingredientUnit(0),
-                EditorTags.ingredientRemove(0),
+                EditorTags.ingredientRemove(0), EditorTags.ingredientMenu(0),
             ),
             actions,
         )

@@ -9,6 +9,8 @@ import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.Media
+import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -103,8 +105,44 @@ class RecipeEditor(
     fun removeStep(position: Int) = edit { recipe ->
         val steps = recipe.steps.sortedBy { it.position }
         if (position !in steps.indices) return@edit recipe
-        if (position < keys.size) keys.removeAt(position)
+        stepKeys.remove(position, steps.size)
         recipe.copy(steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) })
+    }
+
+    /**
+     * Puts a step of no text at [position], from 0 to the number of steps; the steps from there on move down, each
+     * with its own text, timer, references and media (FLOW-025 (1)). Returns whether the step was inserted.
+     */
+    fun insertStep(position: Int): Boolean {
+        val count = current.value?.steps?.size ?: return false
+        if (position !in 0..count) return false
+        return edit { recipe ->
+            val steps = recipe.steps.sortedBy { it.position }.toMutableList()
+            steps.add(position, Step(position = position, text = ""))
+            stepKeys.insert(position, count)
+            recipe.copy(
+                steps = steps.mapIndexed { i, step -> step.copy(position = i) },
+                media = recipe.media.followingSteps { if (it >= position) it + 1 else it },
+            )
+        }
+    }
+
+    /**
+     * Moves the step at [from] to [to]; the steps between close up. The order is all that changes: every step keeps
+     * its text, timer, references and media (FLOW-025 (2, 4)). Returns whether the step moved.
+     */
+    fun moveStep(from: Int, to: Int): Boolean {
+        val count = current.value?.steps?.size ?: return false
+        if (from !in 0 until count || to !in 0 until count || from == to) return false
+        return edit { recipe ->
+            val steps = recipe.steps.sortedBy { it.position }.toMutableList()
+            steps.add(to, steps.removeAt(from))
+            stepKeys.move(from, to, count)
+            recipe.copy(
+                steps = steps.mapIndexed { i, step -> step.copy(position = i) },
+                media = recipe.media.followingSteps { moved(it, from, to) },
+            )
+        }
     }
 
     /**
@@ -172,16 +210,16 @@ class RecipeEditor(
     }
 
     /**
-     * A key for the step at [position] that stays with that step while the steps before it are deleted, so what the
-     * screen holds for a step stays with it.
+     * A key for the step at [position] that stays with that step while steps are inserted, moved or deleted around
+     * it, so what the screen holds for a step stays with it.
      */
-    fun stepKey(position: Int): Long {
-        while (keys.size <= position) keys += nextKey++
-        return keys[position]
-    }
+    fun stepKey(position: Int): Long = stepKeys.of(position)
 
-    private val keys = mutableListOf<Long>()
-    private var nextKey = 0L
+    /** As [stepKey], for the ingredient row at [position]. */
+    fun ingredientKey(position: Int): Long = ingredientKeys.of(position)
+
+    private val stepKeys = RowKeys()
+    private val ingredientKeys = RowKeys()
 
     /** The optional description, kept exactly as typed, line breaks included. */
     fun setDescription(description: String) = edit { it.copy(description = description) }
@@ -200,13 +238,47 @@ class RecipeEditor(
      * Appends an empty row, named in the author's own words (FLOW-022) until the dictionary offers entries. Its unit
      * starts as grams, so the row always has a unit and so a unit type (DOM-016); its quantity starts empty.
      */
-    fun addIngredient() = edit { recipe ->
-        val row = Ingredient(
-            position = recipe.ingredients.size, dictionaryEntry = null, freeTextName = null,
-            unitType = QuantityUnit.GRAM.type, unit = QuantityUnit.GRAM, quantity = null,
-        )
-        recipe.copy(ingredients = recipe.ingredients + row)
+    fun addIngredient() = edit { recipe -> recipe.copy(ingredients = recipe.ingredients + emptyRow(recipe.ingredients.size)) }
+
+    /**
+     * Puts an empty row, exactly like an appended one, at [position], from 0 to the number of rows; the rows from
+     * there on move down, and the references to them follow (DOM-007, FLOW-025 (1, 3)). Returns whether it was put.
+     */
+    fun insertIngredient(position: Int): Boolean {
+        val count = current.value?.ingredients?.size ?: return false
+        if (position !in 0..count) return false
+        return edit { recipe ->
+            val rows = recipe.ingredients.toMutableList().apply { add(position, emptyRow(position)) }
+            ingredientKeys.insert(position, count)
+            recipe.copy(
+                ingredients = rows.mapIndexed { i, row -> row.copy(position = i) },
+                steps = recipe.steps.followingIngredients { if (it >= position) it + 1 else it },
+            )
+        }
     }
+
+    /**
+     * Moves the row at [from] to [to]; the rows between close up. Every row keeps what it holds, and every step's
+     * reference still resolves to the same ingredient (DOM-007, FLOW-025 (2, 3)). Returns whether the row moved.
+     */
+    fun moveIngredient(from: Int, to: Int): Boolean {
+        val count = current.value?.ingredients?.size ?: return false
+        if (from !in 0 until count || to !in 0 until count || from == to) return false
+        return edit { recipe ->
+            val rows = recipe.ingredients.toMutableList().apply { add(to, removeAt(from)) }
+            ingredientKeys.move(from, to, count)
+            recipe.copy(
+                ingredients = rows.mapIndexed { i, row -> row.copy(position = i) },
+                steps = recipe.steps.followingIngredients { moved(it, from, to) },
+            )
+        }
+    }
+
+    /** A new row: its unit starts as grams, so it always has a unit and so a unit type (DOM-016); no quantity yet. */
+    private fun emptyRow(position: Int) = Ingredient(
+        position = position, dictionaryEntry = null, freeTextName = null,
+        unitType = QuantityUnit.GRAM.type, unit = QuantityUnit.GRAM, quantity = null,
+    )
 
     /** The row's name, in the author's own words; an empty field holds none. */
     fun setIngredientName(position: Int, name: String) = editIngredient(position) { it.copy(freeTextName = name.ifEmpty { null }) }
@@ -227,6 +299,7 @@ class RecipeEditor(
      */
     fun removeIngredient(position: Int) = edit { recipe ->
         if (position !in recipe.ingredients.indices) return@edit recipe
+        ingredientKeys.remove(position, recipe.ingredients.size)
         val rows = recipe.ingredients.filterIndexed { i, _ -> i != position }.mapIndexed { i, row -> row.copy(position = i) }
         val steps = recipe.steps.map { step ->
             step.copy(
@@ -264,11 +337,63 @@ class RecipeEditor(
         editIngredient(position) { it.copy(dictionaryEntry = null, qualifier = null, freeTextName = name.ifEmpty { null }) }
 
     companion object {
+        /** Where the row at [position] stands once the row at [from] has moved to [to]. */
+        private fun moved(position: Int, from: Int, to: Int): Int = when {
+            position == from -> to
+            from < to && position in from + 1..to -> position - 1
+            to < from && position in to until from -> position + 1
+            else -> position
+        }
+
+        /** Every reference to the ingredient at a position now at [moved] of it; the rest of each step is kept. */
+        private fun List<Step>.followingIngredients(moved: (Int) -> Int): List<Step> = map { step ->
+            step.copy(ingredientReferences = step.ingredientReferences.map { it.copy(ingredientPosition = moved(it.ingredientPosition)) })
+        }
+
+        /** Every medium attached to the step at a position now attached at [moved] of it. */
+        private fun List<Media>.followingSteps(moved: (Int) -> Int): List<Media> = map { medium ->
+            val attachment = medium.attachment
+            if (attachment is MediaAttachment.ToStep) medium.copy(attachment = MediaAttachment.ToStep(moved(attachment.stepPosition))) else medium
+        }
+
         /** The longest timer a recipe carries is 99 h 59 min (FLOW-027 (14)). */
         const val MAX_HOURS = 99
         const val MAX_MINUTES = 59
 
         /** One queue of writes for every editor, so that an editor opened again reads what the last one wrote. */
         private val writes = Mutex()
+    }
+}
+
+/**
+ * Keys for the rows of one list, each staying with its row while rows are inserted, moved or deleted around it. A
+ * row is given its key when it is first asked for; every change first gives one to each of the [count] rows.
+ */
+private class RowKeys {
+    private val keys = mutableListOf<Long>()
+    private var next = 0L
+
+    fun of(position: Int): Long {
+        fill(position + 1)
+        return keys[position]
+    }
+
+    fun insert(position: Int, count: Int) {
+        fill(count)
+        keys.add(position, next++)
+    }
+
+    fun remove(position: Int, count: Int) {
+        fill(count)
+        keys.removeAt(position)
+    }
+
+    fun move(from: Int, to: Int, count: Int) {
+        fill(count)
+        keys.add(to, keys.removeAt(from))
+    }
+
+    private fun fill(count: Int) {
+        while (keys.size < count) keys += next++
     }
 }
