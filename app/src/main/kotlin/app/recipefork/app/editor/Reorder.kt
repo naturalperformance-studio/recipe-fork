@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -118,8 +120,11 @@ class RowDrag internal constructor(
         }
     }
 
-    /** What the row at [position] wears: where it is laid out, and, while dragged, lifted above the others in [lifted]. */
-    fun row(position: Int, lifted: Color): Modifier {
+    /**
+     * What the row at [position] wears: where it is laid out, and, while dragged, lifted above the others in [lifted],
+     * its shadow and its lifted colour taking the row's [shape].
+     */
+    fun row(position: Int, lifted: Color, shape: Shape = RectangleShape): Modifier {
         val isDragged = dragged == position
         return Modifier
             .onGloballyPositioned { coordinates ->
@@ -132,8 +137,9 @@ class RowDrag internal constructor(
             .graphicsLayer {
                 translationY = translationOf(position)
                 shadowElevation = if (isDragged) 8.dp.toPx() else 0f
+                this.shape = shape
             }
-            .then(if (isDragged) Modifier.background(lifted) else Modifier)
+            .then(if (isDragged) Modifier.background(lifted, shape) else Modifier)
     }
 
     internal fun start(position: Int, rows: Int) {

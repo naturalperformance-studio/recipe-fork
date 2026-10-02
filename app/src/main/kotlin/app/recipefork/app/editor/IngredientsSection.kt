@@ -12,6 +12,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.painterResource
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
@@ -179,16 +192,18 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
 /** A row as a frozen recipe shows it: what it holds, and nothing to change it with. */
 @Composable
 private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: InterfaceLanguage, dictionary: List<IngredientEntryEntity>?) {
-    Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.ingredient(position))) {
-        Text(
-            row.nameIn(dictionary, language).takeIf { it.isNotBlank() } ?: stringResource(R.string.editor_ingredient_unnamed),
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            QuantityInput.fieldText(row, language).takeIf { it.isNotEmpty() }?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium)
+    OutlinedCard(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.ingredient(position))) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Text(
+                row.nameIn(dictionary, language).takeIf { it.isNotBlank() } ?: stringResource(R.string.editor_ingredient_unnamed),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                QuantityInput.fieldText(row, language).takeIf { it.isNotEmpty() }?.let {
+                    Text(it, style = MaterialTheme.typography.bodyMedium)
+                }
+                row.shownUnit?.let { Text(stringResource(unitName(it)), style = MaterialTheme.typography.bodyMedium) }
             }
-            row.shownUnit?.let { Text(stringResource(unitName(it)), style = MaterialTheme.typography.bodyMedium) }
         }
     }
 }
@@ -210,60 +225,85 @@ private fun IngredientRow(
     drag: RowDrag,
 ) {
     val problem = QuantityInput.problem(row)
-    Column(
-        Modifier.fillMaxWidth().then(drag.row(position, MaterialTheme.colorScheme.surface)).testTag(EditorTags.ingredient(position)),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    // One bounded block per row, so where one ingredient ends and the next begins is plain; dragged, it moves whole.
+    OutlinedCard(
+        Modifier
+            .fillMaxWidth()
+            .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
+            .testTag(EditorTags.ingredient(position)),
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        // The handle keeps a gutter of its own, so the name and the quantity below it start at the same edge.
+        Row(Modifier.fillMaxWidth().padding(top = 4.dp, end = 4.dp, bottom = 8.dp), verticalAlignment = Alignment.Top) {
             DragHandle(drag, position, count, EditorTags.ingredientHandle(position), Modifier.padding(top = 8.dp))
-            IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f))
-            ActionText(
-                text = stringResource(R.string.editor_ingredient_remove),
-                action = stringResource(R.string.editor_ingredient_remove_action, position + 1),
-                onClick = { editor.removeIngredient(position) },
-                modifier = Modifier.testTag(EditorTags.ingredientRemove(position)),
-            )
-            RowMenu(
-                position = position,
-                count = count,
-                name = stringResource(R.string.editor_ingredient_menu_action, position + 1),
-                tag = EditorTags.ingredientMenu(position),
-                actionTag = { EditorTags.ingredientAction(position, it) },
-                onAction = { action ->
-                    when (action) {
-                        RowAction.INSERT_ABOVE -> editor.insertIngredient(position)
-                        RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1)
-                        RowAction.MOVE_UP -> editor.moveIngredient(position, position - 1)
-                        RowAction.MOVE_DOWN -> editor.moveIngredient(position, position + 1)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f))
+                    ActionText(
+                        text = stringResource(R.string.editor_ingredient_remove),
+                        action = stringResource(R.string.editor_ingredient_remove_action, position + 1),
+                        onClick = { editor.removeIngredient(position) },
+                        modifier = Modifier.padding(top = 8.dp).testTag(EditorTags.ingredientRemove(position)),
+                    )
+                    RowMenu(
+                        position = position,
+                        count = count,
+                        name = stringResource(R.string.editor_ingredient_menu_action, position + 1),
+                        tag = EditorTags.ingredientMenu(position),
+                        actionTag = { EditorTags.ingredientAction(position, it) },
+                        onAction = { action ->
+                            when (action) {
+                                RowAction.INSERT_ABOVE -> editor.insertIngredient(position)
+                                RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1)
+                                RowAction.MOVE_UP -> editor.moveIngredient(position, position - 1)
+                                RowAction.MOVE_DOWN -> editor.moveIngredient(position, position + 1)
+                            }
+                        },
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                    // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
+                    if (row.unitType != UnitType.TASTE_UNMEASURED) {
+                        QuantityField(position, row, editor, language, isError = problem != null, Modifier.weight(1f))
                     }
-                },
-            )
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-            // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
-            if (row.unitType != UnitType.TASTE_UNMEASURED) {
-                QuantityField(position, row, editor, language, isError = problem != null, Modifier.weight(1f))
+                    UnitField(position, row, editor, Modifier.width(160.dp))
+                }
+                if (problem != null) {
+                    Text(
+                        stringResource(problemMessage(problem)),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.testTag(EditorTags.ingredientError(position)),
+                    )
+                }
+                // No shipped entry supplies divisibility, so every `piece` row asks for it, picked from an entry or not.
+                if (row.unitType == UnitType.PIECE) Divisibility(position, row, editor)
             }
-            UnitField(position, row, editor, Modifier.width(160.dp))
         }
-        if (problem != null) {
-            Text(
-                stringResource(problemMessage(problem)),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.testTag(EditorTags.ingredientError(position)),
-            )
+    }
+}
+
+/**
+ * The free-text warning (FLOW-022 (2)) as an icon beside the name: its shape says there is something to know, its
+ * full text is what the screen reader reads on reaching it, and a tap or a long press shows that text in a tooltip.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FreeTextWarning(position: Int) {
+    val text = stringResource(R.string.editor_ingredient_free_text_warning)
+    val state = rememberTooltipState(isPersistent = true)
+    val scope = rememberCoroutineScope()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        tooltip = { PlainTooltip(Modifier.testTag(EditorTags.ingredientWarningText(position))) { Text(text) } },
+        state = state,
+    ) {
+        IconButton(
+            onClick = { scope.launch { state.show() } },
+            modifier = Modifier.size(48.dp).testTag(EditorTags.ingredientWarning(position)),
+        ) {
+            Icon(painterResource(R.drawable.ic_warning), contentDescription = text)
         }
-        // Only a name in the author's own words warns; an entry picked in its place takes the warning away (FLOW-022 (3)).
-        if (row.dictionaryEntry == null && !row.freeTextName.isNullOrBlank()) {
-            Text(
-                stringResource(R.string.editor_ingredient_free_text_warning),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.testTag(EditorTags.ingredientWarning(position)),
-            )
-        }
-        // No shipped entry supplies divisibility, so every `piece` row asks for it, picked from an entry or not.
-        if (row.unitType == UnitType.PIECE) Divisibility(position, row, editor)
     }
 }
 
@@ -300,6 +340,12 @@ private fun IngredientNameField(
                 offering = true
             },
             label = { Text(stringResource(R.string.editor_ingredient_name)) },
+            // Only a name in the author's own words warns; an entry picked in its place takes the warning away (FLOW-022 (3)).
+            trailingIcon = if (row.dictionaryEntry == null && !row.freeTextName.isNullOrBlank()) {
+                { FreeTextWarning(position) }
+            } else {
+                null
+            },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
