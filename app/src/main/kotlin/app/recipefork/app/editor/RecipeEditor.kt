@@ -143,6 +143,15 @@ class RecipeEditor(
         return editStep(position) { step -> step.copy(timer = step.timer?.copy(label = label.ifEmpty { null })) }
     }
 
+    /**
+     * Takes the step's timer off, name and all: attached again, it starts from the name derived from the step.
+     * Returns whether the step carried a timer.
+     */
+    fun removeTimer(position: Int): Boolean {
+        if (current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timer == null) return false
+        return editStep(position) { it.copy(timer = null) }
+    }
+
     private fun editStep(position: Int, change: (Step) -> Step) = edit { recipe ->
         val steps = recipe.steps.sortedBy { it.position }
         if (position !in steps.indices) return@edit recipe
