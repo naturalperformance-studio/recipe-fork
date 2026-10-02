@@ -73,7 +73,7 @@ class EditorLanguageAndAccessibilityTest {
 
     private val english = Actions(
         write = "Write a recipe",
-        back = "Return to My recipe book",
+        back = "Show the recipe",
         toRussian = "Declare the recipe written in Russian",
         toEnglish = "Declare the recipe written in English",
         clear = "Clear the declared language",
@@ -84,7 +84,7 @@ class EditorLanguageAndAccessibilityTest {
 
     private val russian = Actions(
         write = "Написать рецепт",
-        back = "Вернуться в «Мою книгу рецептов»",
+        back = "Показать рецепт",
         toRussian = "Указать, что рецепт написан по-русски",
         toEnglish = "Указать, что рецепт написан по-английски",
         clear = "Сбросить указанный язык",

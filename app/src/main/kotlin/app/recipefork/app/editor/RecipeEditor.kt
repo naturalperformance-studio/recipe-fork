@@ -14,6 +14,7 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.ServingCountInput
 import app.recipefork.core.recipe.ServingCountReading
+import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.recipe.withUnit
@@ -78,6 +79,33 @@ class RecipeEditor(
     fun addTag(tag: TagEntity) = edit { it.copy(tags = it.tags + tag.id) }
 
     fun removeTag(tagId: Long) = edit { it.copy(tags = it.tags - tagId) }
+
+    // The steps and the description (FLOW-024).
+
+    /** Appends a step of no text yet; it accepts text whatever else the recipe holds (FLOW-024 (2)). */
+    fun addStep() = edit { recipe ->
+        recipe.copy(steps = recipe.steps.sortedBy { it.position } + Step(position = recipe.steps.size, text = ""))
+    }
+
+    /** The step's plain text; its timer and its ingredient references are kept as they stand. */
+    fun setStepText(position: Int, text: String) = edit { recipe ->
+        val steps = recipe.steps.sortedBy { it.position }
+        if (position !in steps.indices) return@edit recipe
+        recipe.copy(steps = steps.mapIndexed { i, step -> if (i == position) step.copy(text = text) else step })
+    }
+
+    /**
+     * Deletes the step at [position], with its own timer and references; the steps after it move up and keep theirs,
+     * which point at ingredients, never at steps, so each still resolves to the same ingredient (DOM-007).
+     */
+    fun removeStep(position: Int) = edit { recipe ->
+        val steps = recipe.steps.sortedBy { it.position }
+        if (position !in steps.indices) return@edit recipe
+        recipe.copy(steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) })
+    }
+
+    /** The optional description, kept exactly as typed, line breaks included. */
+    fun setDescription(description: String) = edit { it.copy(description = description) }
 
     /**
      * What the author typed into the serving count field. A whole number of one or more is held, and an empty field

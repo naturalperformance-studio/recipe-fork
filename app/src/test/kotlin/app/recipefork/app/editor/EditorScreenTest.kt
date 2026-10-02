@@ -50,7 +50,7 @@ import java.time.Instant
 
 /**
  * The editor as the author meets it: on a new recipe, opened by the offer of the own-recipes view of the active
- * book; and on a seeded recipe, opened on it directly (the own-recipes view opens no saved recipe: FLOW-029).
+ * book; and on a seeded recipe, opened on it directly rather than through its card (FLOW-029 (1)).
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -100,7 +100,7 @@ class EditorScreenTest {
         return RecipeId(requireNotNull(session.editing.value))
     }
 
-    /** Opens the editor directly on the recipe [id], as a test fixture: no screen of the application routes there. */
+    /** Opens the editor directly on the recipe [id], as a test fixture: the application routes there through the card. */
     private fun openDirectly(id: RecipeId) {
         compose.runOnIdle { opened.value = id }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)

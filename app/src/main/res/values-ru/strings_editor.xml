@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="editor_back">Назад</string>
-    <string name="editor_back_action">Вернуться в «Мою книгу рецептов»</string>
+    <string name="editor_back">Готово</string>
+    <string name="editor_back_action">Показать рецепт</string>
     <string name="editor_title">Название</string>
     <string name="editor_frozen">Этот рецепт нельзя изменить в его нынешнем состоянии.</string>
     <string name="editor_language">Язык</string>
@@ -53,4 +53,14 @@
     <string name="editor_unit_cup">стакан</string>
     <string name="editor_unit_pinch">щепотка</string>
     <string name="editor_unit_to_taste">по вкусу</string>
+    <string name="editor_steps">Шаги</string>
+    <string name="editor_steps_none">Шагов нет</string>
+    <string name="editor_step">Шаг %1$d</string>
+    <string name="editor_step_add">Добавить шаг</string>
+    <string name="editor_step_add_action">Добавить шаг в конец</string>
+    <string name="editor_step_remove">Убрать</string>
+    <string name="editor_step_remove_action">Убрать шаг %1$d</string>
+    <string name="editor_description">Описание</string>
+    <string name="editor_description_optional">Описание (необязательно)</string>
+    <string name="editor_description_none">Описания нет</string>
 </resources>

@@ -85,8 +85,9 @@ class TestDevice(context: Context) {
 
 /**
  * The own-recipes view, or — while [opened] holds a recipe — the editor opened on that recipe directly, through the
- * editor screen's own entry point. This is a test fixture for what the editor allows on a seeded recipe; the
- * own-recipes view itself opens no saved recipe (FLOW-029). The editor's back action and the system back close it.
+ * editor screen's own entry point. This is a test fixture for what the editor allows on a seeded recipe, frozen ones
+ * included, without going through the recipe's card, which is how the application reaches the editor (FLOW-029 (1)).
+ * The editor's back action and the system back close it straight to the book, with no card in between.
  */
 @Composable
 fun LibraryOrEditor(
