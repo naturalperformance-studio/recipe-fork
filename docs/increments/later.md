@@ -6,3 +6,5 @@ Items the user raised at a demo and asked to keep for the future. Each names whe
 - *(→ v0.8, T-094)* **Entry actions in the ⋮ menu.** On the book's entries, own and imported, "Export" and "Delete"/"Remove" move into a ⋮ menu on the title line. (v0.6 demo, 2026-10-03.)
 - **A left-handed drag column.** (v0.4 demo, 2026-10-02.)
 - **Flaky `AndroidConnectivityTest`** ("a connection that is lost and returns…") timed out once. (T-088 review, 2026-10-02.)
+- **A reference to part of an ingredient.** A step's reference may name a share of the ingredient's quantity, not only the whole — e.g. garlic split between the marinade and the sauce of one recipe; the share scales with the recipe like the whole does. (Asked 2026-10-03, during v0.8.) Touches the persisted reference (`step_reference`, the recipe file's document, a migration) and spec/ FLOW-031, FLOW-032, DOM-007, which say a reference renders the ingredient's whole quantity — a departure to fold back with `/req-forge --sync`.
+
