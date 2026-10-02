@@ -20,6 +20,7 @@
     <string name="card_quantities_recalculated_spoken">Количества пересчитаны. Стрелка вверх — округлено вверх, стрелка вниз — округлено вниз.</string>
     <string name="card_quantity_rounded_up">округлено вверх, точное значение меньше</string>
     <string name="card_quantity_rounded_down">округлено вниз, точное значение больше</string>
+    <string name="card_step_reference_rounded">%1$s (%2$s)</string>
     <string name="card_proportions_warning">Часть количеств на минимуме — пропорции нарушены.</string>
     <string name="card_unnamed_ingredient">Ингредиент без названия</string>
     <string name="card_missing">Этого рецепта больше нет в этой книге рецептов.</string>

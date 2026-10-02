@@ -91,6 +91,29 @@ object TimerName {
         step.timer?.let { it.label ?: derived(StepText.runs(step, quantity)) }
 
     /**
+     * What a derived name is read from, apart from the scale: [step]'s typed text with a mark where each reference sits.
+     * Held with a timer started under a derived name, it tells the step it was started from whatever count or fixing
+     * the reader has chosen since; null where the step carries no timer or one with a given name.
+     */
+    fun source(step: Step): String? {
+        val timer = step.timer ?: return null
+        if (timer.label != null) return null
+        return StepText.render(step) { REFERENCE_MARK }
+    }
+
+    /**
+     * Whether a timer held as [name], started from [source] ([TimerName.source] at its start), is still [step]'s own:
+     * its given name, unchanged; or a derived name read from exactly the words and references the step holds now —
+     * whatever the scale it was read at, so a change of count, a fixing or an ingredient's quantity keeps it, while any
+     * change to the author's words drops it. A timer held without a source was named from the step's typed text alone.
+     */
+    fun holds(step: Step, name: String, source: String?): Boolean {
+        val timer = step.timer ?: return false
+        timer.label?.let { return source == null && it == name }
+        return if (source != null) source(step) == source else of(step) == name
+    }
+
+    /**
      * Whether [codePoint] belongs to the word it stands in: a letter or digit, a hyphen or an apostrophe inside a
      * word ("кое-где", "don't"), or a mark that combines with the letter before it.
      */
@@ -101,4 +124,7 @@ object TimerName {
 
     /** What `\s` matches: the characters that read as one space. */
     private const val WHITESPACE = " \t\n\u000B\u000C\r"
+
+    /** Where a reference sits in a [source]: a character no typed text holds. */
+    private const val REFERENCE_MARK = "\uFFFC"
 }

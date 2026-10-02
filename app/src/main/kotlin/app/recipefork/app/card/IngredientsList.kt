@@ -108,7 +108,7 @@ internal object IngredientTags {
  */
 internal val ShownText = SemanticsPropertyKey<String>(SHOWN_TEXT_KEY)
 private const val SHOWN_TEXT_KEY = "card.shown-text"
-private var SemanticsPropertyReceiver.shownText by ShownText
+internal var SemanticsPropertyReceiver.shownText by ShownText
 
 /**
  * The one line that says the section's quantities are recalculated and what the arrows mean; read by the screen
@@ -194,7 +194,7 @@ private fun Note(text: String) {
 }
 
 /** The arrow a recalculated quantity carries and the words it is read as, or null where the grid held it exactly. */
-private fun roundingMark(rounding: Rounding): Pair<String, Int>? = when (rounding) {
+internal fun roundingMark(rounding: Rounding): Pair<String, Int>? = when (rounding) {
     Rounding.NONE -> null
     Rounding.UP -> "↑" to R.string.card_quantity_rounded_up
     Rounding.DOWN -> "↓" to R.string.card_quantity_rounded_down
