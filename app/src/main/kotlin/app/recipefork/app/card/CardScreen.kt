@@ -49,6 +49,7 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
+import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.map
@@ -68,7 +69,7 @@ private sealed interface CardContent {
  *
  * The top bar holds the screen's actions, outside the recipe: back to the book, the fork action on every recipe,
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
- * editor on it (FLOW-029 (2–4)). Nothing inside the recipe edits it; the serving count's − and +, which change how
+ * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
  * provenance, which opens its parent's card, the other. It opens at the authored count each time.
  */
@@ -175,7 +176,15 @@ private fun RecipeContent(
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.semantics { heading() }.testTag(CardTags.TITLE),
         )
-        recipe.parent?.let { Provenance(it, recipes, onOpenParent) }
+        // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
+        recipe.statedAuthor?.let {
+            Text(
+                stringResource(R.string.file_stated_author, it),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(CardTags.STATED_AUTHOR),
+            )
+        }
+        recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
         // The card always opens at the authored count (FLOW-017 (2)); the scale is the card's alone, and a fixing is
         // of the rows as they stand, so a change to them starts the scale anew.
         val authored = recipe.servings?.takeIf { it >= 1 }
@@ -224,16 +233,25 @@ private sealed interface ParentContent {
  * The provenance area: the one direct parent, named by its title (FORK-003 (3), FORK-004 (1), FLOW-065). While the
  * book holds the parent, tapping it opens the parent's card; a parent the book does not hold is said to be
  * unavailable and opens nothing. No descendant is ever listed or counted (FORK-004 (3)).
+ *
+ * A parent the recipe names in text, [stated] — the one a found recipe's file states, or the found recipe a fork was
+ * made from — is named by that title, and by that author marked as not verified (FLOW-065 (4, 5)), held or not.
  */
 @Composable
-private fun Provenance(parent: RecipeId, recipes: RecipeRepository, onOpenParent: (RecipeId) -> Unit) {
+private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeRepository, onOpenParent: (RecipeId) -> Unit) {
     val content by remember(parent, recipes) {
         recipes.observe(parent).map { it?.let { held -> ParentContent.Held(held.title) } ?: ParentContent.Unavailable }
     }.collectAsState(initial = ParentContent.Loading)
+    val untitled = stringResource(R.string.common_untitled_recipe)
+    val author = stated?.nickname?.takeIf { it.isNotBlank() }
     when (val shown = content) {
         ParentContent.Loading -> Unit
         ParentContent.Unavailable -> Text(
-            stringResource(R.string.card_parent_unavailable),
+            when {
+                stated == null -> stringResource(R.string.card_parent_unavailable)
+                author == null -> stringResource(R.string.card_parent_named_unavailable, stated.title.ifBlank { untitled })
+                else -> stringResource(R.string.card_parent_stated_unavailable, stated.title.ifBlank { untitled }, author)
+            },
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.testTag(CardTags.PROVENANCE),
         )
@@ -249,11 +267,13 @@ private fun Provenance(parent: RecipeId, recipes: RecipeRepository, onOpenParent
                 .testTag(CardTags.PROVENANCE),
             contentAlignment = Alignment.CenterStart,
         ) {
+            val title = (stated?.title ?: shown.title).ifBlank { untitled }
             Text(
-                stringResource(
-                    R.string.card_parent,
-                    shown.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                ),
+                if (author == null) {
+                    stringResource(R.string.card_parent, title)
+                } else {
+                    stringResource(R.string.card_parent_stated, title, author)
+                },
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -369,6 +389,7 @@ object CardTags {
     const val EDIT = "card-edit"
     const val FORK = "card-fork"
     const val PROVENANCE = "card-provenance"
+    const val STATED_AUTHOR = "card-stated-author"
     const val MISSING = "card-missing"
     const val CONTENT = "card-content"
     const val TITLE = "card-title"

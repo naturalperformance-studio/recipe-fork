@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import app.recipefork.app.Mode
 import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.recipe.RecipeRepository
@@ -20,10 +21,11 @@ object Destinations {
 fun AppNavHost(
     session: LibrarySession,
     recipes: RecipeRepository,
+    mode: Mode,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController, startDestination = Destinations.LIBRARY_ROUTE, modifier = modifier) {
-        composable(Destinations.LIBRARY_ROUTE) { LibraryScreen(session, recipes) }
+        composable(Destinations.LIBRARY_ROUTE) { LibraryScreen(session, recipes, mode) }
     }
 }

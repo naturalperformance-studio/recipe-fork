@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="file_export">Экспорт</string>
+    <string name="file_export_sheet">Экспорт «%1$s»</string>
+    <string name="file_export_failed">Не удалось экспортировать рецепт</string>
+    <string name="file_import">Импортировать файл рецепта</string>
+    <string name="file_imported">«%1$s» теперь в вашей книге рецептов</string>
+    <string name="file_import_already">«%1$s» уже есть в вашей книге рецептов, ничего не добавлено</string>
+    <string name="file_import_cannot_open">Не удалось открыть файл, ничего не добавлено</string>
+    <string name="file_import_not_a_recipe">Это не файл рецепта, ничего не добавлено</string>
+    <string name="file_import_later">Файл рецепта создан более новой версией приложения. Обновите приложение, чтобы открыть его; ничего не добавлено</string>
+    <string name="file_import_damaged">Файл рецепта повреждён, ничего не добавлено</string>
+    <string name="file_import_breaks_rules">Рецепт в файле нарушает правила, которые соблюдает каждый рецепт, ничего не добавлено</string>
+    <string name="file_stated_author">Автор: %1$s (указан в файле, не проверен)</string>
+</resources>

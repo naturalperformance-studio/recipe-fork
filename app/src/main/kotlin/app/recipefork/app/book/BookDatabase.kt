@@ -48,6 +48,9 @@ abstract class BookDatabase : RoomDatabase() {
 
 /** Which book a database file holds. Books are named by the account's identity, never by a key. */
 sealed class BookName(val fileName: String) {
+    /** The directory of the book's media, named like its database (decisions/20260928-one-database-per-recipe-book.md). */
+    val mediaDirectoryName: String get() = fileName.removeSuffix(".db") + "-media"
+
     /** What was written and marked with no account (AUTH-026). */
     data object Pool : BookName("book-pool.db")
 
@@ -66,9 +69,13 @@ data class RecipeRows(
 
 @Dao
 abstract class BookRecipeDao {
-    /** The own-recipes view under `newest`: the last change of content first (FLOW-039). */
+    /**
+     * The own-recipes view under `newest`: the last change of content first (FLOW-039). A found recipe — one whose
+     * content the book holds because it is marked (FLOW-009, FLOW-064) — is not written here and is not listed.
+     */
     @Query(
         "select recipe_id, title, state, sent from recipe " +
+            "where recipe_id not in (select recipe_id from favourite) " +
             "order by content_changed_at desc, recipe_id limit :limit",
     )
     abstract fun newest(limit: Int): Flow<List<OwnRecipeRow>>
@@ -107,6 +114,42 @@ abstract class BookRecipeDao {
         deleteTags(recipeId)
         return deleteRecipe(recipeId) > 0
     }
+
+    /**
+     * Writes a found recipe and marks it, atomically (FLOW-064): its rows and its favourite. Returns false, writing
+     * nothing, when the book already holds a recipe of that identity — found before, or its own — or marks one.
+     */
+    @Transaction
+    open suspend fun putFound(rows: RecipeRows, favourite: FavouriteEntity): Boolean {
+        val id = rows.recipe.recipeId
+        if (recipe(id) != null || isMarked(id)) return false
+        put(rows)
+        insertFavourite(favourite)
+        return true
+    }
+
+    /**
+     * Removes the marked recipe [recipeId] from the book with the content it holds of it (FLOW-009 (4), FLOW-064 (6)),
+     * atomically. Returns the identities of the media items it held, whose files are then the caller's to delete, or
+     * null when nothing of that identity was marked.
+     */
+    @Transaction
+    open suspend fun removeMarked(recipeId: String): List<String>? {
+        if (!isMarked(recipeId)) return null
+        val media = media(recipeId).map { it.mediaId }
+        deleteFavourite(recipeId)
+        delete(recipeId)
+        return media
+    }
+
+    @Query("select exists(select 1 from favourite where recipe_id = :id)")
+    abstract suspend fun isMarked(id: String): Boolean
+
+    @Insert
+    protected abstract suspend fun insertFavourite(favourite: FavouriteEntity)
+
+    @Query("delete from favourite where recipe_id = :id")
+    protected abstract suspend fun deleteFavourite(id: String)
 
     @Transaction
     open suspend fun get(recipeId: String): RecipeRows? {
@@ -175,6 +218,17 @@ abstract class BookRecipeDao {
 interface FavouriteDao {
     @Query("select * from favourite order by added_at desc, recipe_id")
     fun all(): Flow<List<FavouriteEntity>>
+
+    /**
+     * The view of marked recipes, the last marked first: each with the title and the stated author of the content
+     * the book holds of it, where it holds any (FLOW-009, FLOW-064 (3)).
+     */
+    @Query(
+        "select f.recipe_id as recipe_id, coalesce(r.title, f.title) as title, r.stated_author as stated_author, " +
+            "r.recipe_id is not null as held from favourite f left join recipe r on r.recipe_id = f.recipe_id " +
+            "order by f.added_at desc, f.recipe_id",
+    )
+    fun marked(): Flow<List<MarkedRecipeRow>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun put(favourite: FavouriteEntity)

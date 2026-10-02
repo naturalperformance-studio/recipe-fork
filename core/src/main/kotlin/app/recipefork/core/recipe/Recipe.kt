@@ -49,7 +49,10 @@ enum class SentStatus { NEVER, SENT, SENT_WITH_CHANGES }
 /** The languages of L10N-001. */
 enum class RecipeLanguage { RU, EN }
 
-/** A parent as a recipe file states it: text only, never verified (FLOW-065). */
+/**
+ * A parent named in text only, never verified (FLOW-065): as a recipe file states it, or, for a fork of someone
+ * else's recipe, as that recipe stood when it was forked. An empty [nickname] names no author.
+ */
 data class StatedParent(val title: String, val nickname: String)
 
 data class Timer(

@@ -27,6 +27,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -65,9 +66,10 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Each ingredient row as one bounded block on a 360 dp phone, at font scale 1.0 and 2.0: every part of a row inside
- * its block, blocks apart from each other with an outline drawn round each, the name and the handle below it at the
- * same left edge and the name's text with room to be read; the free-text warning as an icon beside the name whose text the
- * screen reader reads and a tap or a long press shows; a dragged row moving whole; a frozen recipe's rows as blocks.
+ * its block, blocks apart from each other with an outline drawn round each, a tinted strip across the top of each block
+ * with the handle icon at its centre, the inputs below it at one left edge and of one height, and the name's text with
+ * room to be read; the free-text warning as an icon beside the name whose text the screen reader reads and a tap or a
+ * long press shows; a row dragged from anywhere on its strip moving whole; a frozen recipe's rows as blocks, stripless.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -144,6 +146,7 @@ class IngredientBlocksTest {
     /** Every part of the editable row at [position] that is on the screen. */
     private fun parts(position: Int): List<String> = listOf(
         EditorTags.ingredientHandle(position),
+        EditorTags.ingredientHandleIcon(position),
         EditorTags.ingredientName(position),
         EditorTags.ingredientRemove(position),
         EditorTags.ingredientMenu(position),
@@ -181,7 +184,7 @@ class IngredientBlocksTest {
     }
 
     // Each editable row is one bounded block, separated from the next; every part of it — the divisibility question
-    // and the warning included — inside it; the name and the handle below it at one left edge.
+    // and the warning included — inside it; the drag strip across its top, and the inputs below it at one left edge.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun everyRowIsOneBlockInRussian() = everyRowIsOneBlock(1f)
@@ -206,15 +209,22 @@ class IngredientBlocksTest {
                     b.left >= block.left - 0.5f && b.right <= block.right + 0.5f && b.top >= block.top - 0.5f && b.bottom <= block.bottom + 0.5f,
                 )
             }
-            val handle = bounds(EditorTags.ingredientHandle(position))
+            val strip = bounds(EditorTags.ingredientHandle(position))
+            val icon = bounds(EditorTags.ingredientHandleIcon(position))
             val name = bounds(EditorTags.ingredientName(position))
             val unit = bounds(EditorTags.ingredientUnit(position))
             val below = if (exists(EditorTags.ingredientQuantity(position))) bounds(EditorTags.ingredientQuantity(position)) else unit
-            // One left edge: the name starts the first line, the handle the second, before the quantity and the unit.
-            assertEquals("row $position: the name and the handle below it share their left edge", name.left, handle.left, 0.5f)
-            assertTrue("row $position: the handle is below the name", handle.top >= name.bottom - 0.5f)
-            assertTrue("row $position: the handle is on the quantity's line", handle.top < below.bottom && handle.bottom > below.top)
-            assertTrue("row $position: the handle stands before the quantity", handle.right <= below.left + 0.5f)
+            // The strip starts the block, across its full width, at least 48 dp tall, the handle icon at its centre.
+            assertEquals("row $position: the strip starts the block", block.top, strip.top, 0.5f)
+            assertEquals("row $position: the strip spans the block from its left", block.left, strip.left, 0.5f)
+            assertEquals("row $position: the strip spans the block to its right", block.right, strip.right, 0.5f)
+            assertTrue("row $position: the strip is ${strip.height / compose.density.density} dp tall", strip.height >= px(48f) - 0.5f)
+            assertEquals("row $position: the icon is centred across the strip", strip.center.x, icon.center.x, 1f)
+            assertEquals("row $position: the icon is centred down the strip", strip.center.y, icon.center.y, 1f)
+            // Nothing that drags stands among the inputs: they are all below the strip.
+            assertTrue("row $position: the name is below the strip", name.top >= strip.bottom - 0.5f)
+            // One left edge: the name starts the first line, the quantity (or the unit, with no quantity) the second.
+            assertEquals("row $position: the name and the field below it share their left edge", name.left, below.left, 0.5f)
             assertTrue("row $position: the quantity and unit are below the name", below.top >= name.bottom - 0.5f)
             // The menu and the unit beside a quantity end at one right edge.
             if (below != unit) assertEquals("row $position: the menu and the unit end together", bounds(EditorTags.ingredientMenu(position)).right, unit.right, 0.5f)
@@ -226,6 +236,97 @@ class IngredientBlocksTest {
         val screen = bounds(EditorTags.FORM)
         (0 until count).forEach { assertTrue(bounds(EditorTags.ingredient(it)).right <= screen.right + 0.5f) }
         assertSeparateOutlinedBlocks(count)
+    }
+
+    // The name field, the quantity field and the unit select of a row are of one height, and the quantity and the
+    // unit stand level on their line — at font scale 1.0 and 2.0.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun theInputsOfARowAreOfOneHeight() = inputsAreOfOneHeight(1f)
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun theInputsOfARowAreOfOneHeightAtDoubleFontScale() = inputsAreOfOneHeight(2f)
+
+    @Test
+    @Config(qualifiers = "en-w360dp-h4000dp")
+    fun theInputsOfARowAreOfOneHeightInEnglishAtDoubleFontScale() = inputsAreOfOneHeight(2f)
+
+    private fun inputsAreOfOneHeight(fontScale: Float) {
+        open(fontScale)
+        (0 until rows().size).forEach { position ->
+            val name = bounds(EditorTags.ingredientName(position))
+            val unit = bounds(EditorTags.ingredientUnit(position))
+            fun dp(px: Float) = px / compose.density.density
+            assertEquals("row $position: the unit (${dp(unit.height)} dp) is as tall as the name (${dp(name.height)} dp)", name.height, unit.height, 0.5f)
+            if (exists(EditorTags.ingredientQuantity(position))) {
+                val quantity = bounds(EditorTags.ingredientQuantity(position))
+                assertEquals("row $position: the quantity is as tall as the name", name.height, quantity.height, 0.5f)
+                // Side by side, they stand level; stacked, the unit is below the quantity.
+                if (unit.left > quantity.left) {
+                    assertEquals("row $position: the quantity and the unit stand level", quantity.top, unit.top, 0.5f)
+                } else {
+                    assertTrue("row $position: the unit is below the quantity", unit.top >= quantity.bottom - 0.5f)
+                }
+            }
+        }
+    }
+
+    // The quantity field takes the line from the block's left edge up to the unit: nothing stands before it any more.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun theQuantityTakesTheWholeLineBeforeTheUnit() {
+        open(1f)
+        val quantity = bounds(EditorTags.ingredientQuantity(0))
+        val unit = bounds(EditorTags.ingredientUnit(0))
+        val name = bounds(EditorTags.ingredientName(0))
+        assertEquals(name.left, quantity.left, 0.5f)
+        assertEquals("only the 8 dp gap between the quantity and the unit", px(8f), unit.left - quantity.right, 0.5f)
+        assertTrue("the quantity is ${quantity.width / compose.density.density} dp wide", quantity.width >= px(120f))
+    }
+
+    // A11Y-004: at font scale 2.0 the quantity's label is not wrapped onto the name above it — where it cannot have one
+    // line beside the unit, the quantity takes the whole line and the unit the line below, both from one left edge.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun theQuantityLabelHasOneLineAtDoubleFontScale() = quantityLabelHasOneLine()
+
+    @Test
+    @Config(qualifiers = "en-w360dp-h4000dp")
+    fun theQuantityLabelHasOneLineInEnglishAtDoubleFontScale() = quantityLabelHasOneLine()
+
+    private fun quantityLabelHasOneLine() {
+        open(2f)
+        val label = widthOf(string(R.string.editor_ingredient_quantity), 2f, Typography().bodySmall)
+        listOf(0, 1, 3).forEach { position ->
+            val quantity = bounds(EditorTags.ingredientQuantity(position))
+            val unit = bounds(EditorTags.ingredientUnit(position))
+            assertTrue("row $position: the quantity (${quantity.width} px) has room for its label ($label px) on one line", quantity.width - px(32f) >= label)
+            assertEquals("row $position: the unit starts where the quantity does, or beside it", true, unit.left > quantity.right || abs(unit.left - quantity.left) < 0.5f)
+            assertTrue("row $position: the quantity is below the name", quantity.top >= bounds(EditorTags.ingredientName(position)).bottom - 0.5f)
+        }
+    }
+
+    // The strip is tinted, so the area to drag is seen: its colour differs from the block's own at its centre line and
+    // near both ends — and its icon marks it besides the colour.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun theStripIsTintedAndMarkedByItsIcon() {
+        open(1f)
+        val list = bounds(EditorTags.INGREDIENTS)
+        val image = compose.onNodeWithTag(EditorTags.INGREDIENTS).captureToImage().toPixelMap()
+        fun at(x: Float, y: Float): Color = image[(x - list.left).toInt().coerceIn(0, image.width - 1), (y - list.top).toInt().coerceIn(0, image.height - 1)]
+        fun differs(a: Color, b: Color) = abs(a.red - b.red) + abs(a.green - b.green) + abs(a.blue - b.blue) > 0.02f
+        (0 until rows().size).forEach { position ->
+            val strip = bounds(EditorTags.ingredientHandle(position))
+            val unit = bounds(EditorTags.ingredientUnit(position))
+            // The block's own colour: just below the unit select, inside the block.
+            val body = at(unit.center.x, unit.bottom + px(2f))
+            val tint = at(strip.left + px(12f), strip.center.y)
+            assertTrue("row $position: the strip is tinted ($tint against $body)", differs(tint, body))
+            assertFalse("row $position: the strip is one tint to its right end", differs(tint, at(strip.right - px(12f), strip.center.y)))
+            assertTrue("row $position: the strip carries its icon", exists(EditorTags.ingredientHandleIcon(position)))
+        }
     }
 
     // FLOW-022 (2): the warning is an icon beside the name, not a paragraph under the row; the screen reader reads its
@@ -285,9 +386,9 @@ class IngredientBlocksTest {
         bounds(EditorTags.ingredientWarning(position)).left - (bounds(EditorTags.ingredientName(position)).left + px(16f))
 
     /** How wide [text] is laid out in the name field's style at [fontScale]. */
-    private fun widthOf(text: String, fontScale: Float): Float {
+    private fun widthOf(text: String, fontScale: Float, style: TextStyle = Typography().bodyLarge): Float {
         val measurer = TextMeasurer(createFontFamilyResolver(context), Density(compose.density.density, fontScale), LayoutDirection.Ltr)
-        return measurer.measure(text, Typography().bodyLarge).size.width.toFloat()
+        return measurer.measure(text, style).size.width.toFloat()
     }
 
     // Criterion 1 at large text: a free-text name beside its warning icon keeps room for about eight Cyrillic letters
@@ -348,31 +449,39 @@ class IngredientBlocksTest {
         assertFalse(isFocused(EditorTags.ingredientWarning(0)))
     }
 
-    // FLOW-025: a dragged row moves as one block — every part of it travels with it, by the same distance.
+    // FLOW-025: a row dragged from anywhere on its strip — its centre and both its ends — moves as one block: every
+    // part of it travels with it, by the same distance, and it lands where it is dropped.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun aDraggedRowMovesAsOneBlock() {
+    fun aRowDraggedFromAnywhereOnItsStripMovesAsOneBlock() {
         open(1f)
-        val tags = listOf(EditorTags.ingredient(0)) + parts(0)
-        val before = tags.associateWith { bounds(it).top }
-        val handle = EditorTags.ingredientHandle(0)
-        val distance = bounds(EditorTags.ingredient(1)).bottom - bounds(EditorTags.ingredient(0)).bottom
-        compose.onNodeWithTag(handle, useUnmergedTree = true).performTouchInput {
-            down(center)
-            repeat(10) { moveBy(Offset(0f, distance / 20)) }
+        val names = listOf("черемша", "курица")
+        listOf("its centre" to 0.5f, "its left end" to 0.03f, "its right end" to 0.97f).forEachIndexed { i, (where, across) ->
+            val tags = listOf(EditorTags.ingredient(0)) + parts(0)
+            val before = tags.associateWith { bounds(it).top }
+            val strip = EditorTags.ingredientHandle(0)
+            val distance = bounds(EditorTags.ingredient(1)).bottom - bounds(EditorTags.ingredient(0)).bottom
+            compose.onNodeWithTag(strip, useUnmergedTree = true).performTouchInput {
+                down(Offset(width * across, centerY))
+                repeat(10) { moveBy(Offset(0f, distance / 20)) }
+            }
+            compose.waitForIdle()
+            val moved = bounds(EditorTags.ingredient(0)).top - before.getValue(EditorTags.ingredient(0))
+            assertTrue("dragged from $where, the row follows the finger ($moved px)", moved > px(8f))
+            tags.forEach { tag -> assertEquals("dragged from $where, $tag moves with its row", moved, bounds(tag).top - before.getValue(tag), 1f) }
+            compose.onNodeWithTag(strip, useUnmergedTree = true).performTouchInput {
+                repeat(10) { moveBy(Offset(0f, distance / 20)) }
+                up()
+            }
+            compose.waitForIdle()
+            // Dropped past the second row's middle, it lands second, as the menu's "Move down" would put it.
+            val first = names[(i + 1) % 2]
+            val second = names[i % 2]
+            compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(1)) == second }
+            assertEquals("dragged from $where", first, fieldText(EditorTags.ingredientName(0)))
+            // Dropped, every part is back on its place.
+            compose.waitUntil(PATIENCE_MS) { abs(bounds(EditorTags.ingredient(0)).top - before.getValue(EditorTags.ingredient(0))) < 1f }
         }
-        compose.waitForIdle()
-        val moved = bounds(EditorTags.ingredient(0)).top - before.getValue(EditorTags.ingredient(0))
-        assertTrue("the row follows the finger ($moved px)", moved > px(8f))
-        tags.forEach { tag -> assertEquals("$tag moves with its row", moved, bounds(tag).top - before.getValue(tag), 1f) }
-        compose.onNodeWithTag(handle, useUnmergedTree = true).performTouchInput {
-            repeat(10) { moveBy(Offset(0f, distance / 20)) }
-            up()
-        }
-        compose.waitForIdle()
-        // Dropped past the second row's middle, it lands second, as the menu's "Move down" would put it.
-        compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(1)) == "черемша" }
-        assertEquals("курица", fieldText(EditorTags.ingredientName(0)))
     }
 
     // A frozen recipe's rows read as blocks too.
@@ -386,7 +495,10 @@ class IngredientBlocksTest {
 
     private fun frozenRowsAreBlocks(fontScale: Float) {
         open(fontScale, state = RecipeState.PUBLISHED)
-        assertFalse(exists(EditorTags.ingredientHandle(0)))
+        (0 until rows().size).forEach { position ->
+            assertFalse(exists(EditorTags.ingredientHandle(position)))
+            assertFalse(exists(EditorTags.ingredientHandleIcon(position)))
+        }
         assertSeparateOutlinedBlocks(rows().size)
     }
 }

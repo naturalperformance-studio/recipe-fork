@@ -8,6 +8,8 @@ import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +27,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -40,6 +43,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -220,37 +224,77 @@ internal fun rememberRowDrag(scroll: EditorScroll, spacing: Dp, onDrop: (from: I
  */
 @Composable
 internal fun DragHandle(drag: RowDrag, position: Int, count: Int, tag: String, modifier: Modifier = Modifier) {
-    val placed = remember { arrayOfNulls<LayoutCoordinates>(1) }
-    fun onScreen(local: Offset): Float = placed[0]?.takeIf { it.isAttached }?.localToRoot(local)?.y ?: 0f
     Box(
         modifier
             .size(48.dp)
-            .onGloballyPositioned { placed[0] = it }
             .clearAndSetSemantics {
                 testTag = tag
                 hideFromAccessibility()
             }
-            .pointerInput(drag, position, count) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val slop = awaitVerticalTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
-                        ?: return@awaitEachGesture
-                    drag.start(position, count)
-                    drag.moveBy(slop.position.y - down.position.y, onScreen(slop.position))
-                    val dropped = try {
-                        verticalDrag(slop.id) { change ->
-                            drag.moveBy(change.positionChange().y, onScreen(change.position))
-                            change.consume()
-                        }
-                    } catch (e: Throwable) {
-                        drag.end()
-                        throw e
-                    }
-                    if (dropped) drag.drop() else drag.end()
-                }
-            },
+            .rowDragGesture(drag, position, count),
         contentAlignment = Alignment.Center,
     ) {
         Icon(painterResource(R.drawable.ic_drag_handle), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+}
+
+/**
+ * The strip across the top of the row at [position] of [count] that the whole row is dragged by (FLOW-025): at least
+ * 48 dp tall (A11Y-003), lightly tinted so the area to drag is seen, and marked by the handle icon at its centre, so it
+ * is not told by colour alone. A drag started anywhere on it moves the row. The screen reader does not see it: the row
+ * menu's "Move up" and "Move down" do what it does (A11Y-006).
+ */
+@Composable
+internal fun DragStrip(drag: RowDrag, position: Int, count: Int, tag: String, iconTag: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .semantics {
+                testTag = tag
+                hideFromAccessibility()
+            }
+            .rowDragGesture(drag, position, count),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_drag_handle),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.semantics {
+                testTag = iconTag
+                hideFromAccessibility()
+            },
+        )
+    }
+}
+
+/**
+ * Picks the row at [position] of [count] up once the finger has gone past the touch slop vertically, moves it with the
+ * finger and drops it where the finger lifts.
+ */
+private fun Modifier.rowDragGesture(drag: RowDrag, position: Int, count: Int): Modifier = composed {
+    val placed = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    fun onScreen(local: Offset): Float = placed[0]?.takeIf { it.isAttached }?.localToRoot(local)?.y ?: 0f
+    onGloballyPositioned { placed[0] = it }
+        .pointerInput(drag, position, count) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                val slop = awaitVerticalTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                    ?: return@awaitEachGesture
+                drag.start(position, count)
+                drag.moveBy(slop.position.y - down.position.y, onScreen(slop.position))
+                val dropped = try {
+                    verticalDrag(slop.id) { change ->
+                        drag.moveBy(change.positionChange().y, onScreen(change.position))
+                        change.consume()
+                    }
+                } catch (e: Throwable) {
+                    drag.end()
+                    throw e
+                }
+                if (dropped) drag.drop() else drag.end()
+            }
+        }
 }
