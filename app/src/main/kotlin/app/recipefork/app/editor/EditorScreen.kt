@@ -82,8 +82,8 @@ fun rememberEditorEnvironment(): EditorEnvironment {
 }
 
 /**
- * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it, the
- * tags, the serving count, the ingredients, the steps and the description.
+ * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
+ * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
  */
 @Composable
 fun EditorScreen(
@@ -137,6 +137,7 @@ fun EditorScreen(
                 )
             }
             TitleAndLanguage(shown, editor)
+            CoverSection(shown, editor, recipes.bookName(), saving)
             Tags(shown, editor, dictionary)
             ServingCount(shown, editor)
             Ingredients(shown, editor, environment.ingredients, scroll)

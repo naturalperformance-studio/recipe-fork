@@ -74,6 +74,19 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- The system camera writes a cover or step photograph into the one file this provider shares with it for
+             that picture (FLOW-026). No camera permission is declared: the system camera takes the picture, and an
+             application that declares none needs none to ask it to. -->
+        <provider
+            android:name=".media.CameraFileProvider"
+            android:authorities="${applicationId}.camera"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/camera_paths" />
+        </provider>
+
         <service
             android:name=".timer.TimerService"
             android:exported="false"

@@ -173,13 +173,13 @@ class EditorScreenTest {
         compose.waitForIdle()
         assertEquals(RecipeLanguage.EN, stored(id).language)
         // Clearing is the one way to empty it.
-        compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).performClick()
+        compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).performScrollTo().performClick()
         compose.waitForIdle()
         assertNull(stored(id).language)
         assertEquals(listOf("Language", "Not declared"), languageShown())
         compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).assertDoesNotExist()
         // And one action declares it again, in the interface language.
-        compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
+        compose.onNodeWithTag(EditorTags.LANGUAGE).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(RecipeLanguage.EN, stored(id).language)
     }

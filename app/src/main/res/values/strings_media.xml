@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The cover photograph, offered at the title (FLOW-026) and shown at the top of the card. -->
+    <string name="media_cover">Cover photo (optional)</string>
+    <string name="media_cover_take">Take a photo</string>
+    <string name="media_cover_take_action">Take the cover photo with the camera</string>
+    <string name="media_cover_choose">Choose from gallery</string>
+    <string name="media_cover_choose_action">Choose the cover photo from the gallery</string>
+    <string name="media_cover_remove">Remove</string>
+    <string name="media_cover_remove_action">Remove the cover photo</string>
+    <string name="media_cover_description">Cover photo of “%1$s”</string>
+    <!-- What the author is told about a photograph they offered (MEDIA-005, MEDIA-006, MEDIA-008). -->
+    <string name="media_working">Preparing the photo…</string>
+    <string name="media_processed">Photo attached. It was shrunk on this phone to at most 1 MB and 1600 pixels, and all its data was removed, location included.</string>
+    <string name="media_refused_unreadable">This file could not be read as a photo, so nothing was attached.</string>
+    <string name="media_refused_too_large">This photo could not be shrunk to 1 MB, so nothing was attached.</string>
+    <string name="media_refused_not_stored">The photo could not be saved on this phone, so nothing was attached.</string>
+    <string name="media_unavailable">No app to take or choose a photo was found on this phone.</string>
+    <string name="media_removed">Cover photo removed.</string>
+</resources>
