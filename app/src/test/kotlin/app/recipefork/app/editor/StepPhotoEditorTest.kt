@@ -32,6 +32,7 @@ import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.media.camera.CameraTags
 import app.recipefork.app.media.camera.FakeCamera
 import app.recipefork.app.media.camera.LocalCameraAccess
+import app.recipefork.app.media.crop.CropTags
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
@@ -167,14 +168,23 @@ class StepPhotoEditorTest {
         openCamera(position)
         compose.onNodeWithTag(CameraTags.SHUTTER).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) }
+        cropDone()
     }
 
     /** Picks [file] in the system photo picker at the step at [position]. */
-    private fun choose(position: Int, file: File) {
+    private fun choose(position: Int, file: File, crop: Boolean = true) {
         menu(position, EditorTags.stepPhotoChoose(position))
         val intent = started()
         assertTrue(intent.action, intent.action == MediaStore.ACTION_PICK_IMAGES || intent.action == Intent.ACTION_OPEN_DOCUMENT)
         compose.runOnUiThread { activity.receiveResult(intent, Activity.RESULT_OK, Intent().setData(Uri.fromFile(file))) }
+        if (crop) cropDone()
+    }
+
+    /** The crop, opened on the picture handed over, framed as it opens: Done. */
+    private fun cropDone() {
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.FRAME), PATIENCE_MS)
+        compose.onNodeWithTag(CropTags.DONE).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) }
     }
 
     private val processed =
@@ -245,7 +255,7 @@ class StepPhotoEditorTest {
     fun anUnreadableFileIsRefusedAtTheStepWithAReason() {
         val id = open(threeSteps())
 
-        choose(2, File(incoming, "photo.jpg").apply { writeText("not a photo at all") })
+        choose(2, File(incoming, "photo.jpg").apply { writeText("not a photo at all") }, crop = false)
 
         awaitNotice(2, "This file could not be read as a photo, so nothing was attached.")
         assertTrue(stored(id).media.isEmpty())

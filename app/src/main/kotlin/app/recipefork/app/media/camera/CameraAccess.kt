@@ -20,15 +20,24 @@ fun interface CameraAccess {
 
 /** A camera opened by [CameraAccess.open]; [close] releases it, and nothing else is called after it. */
 interface OpenCamera {
-    /** The live picture of [CameraFrame]'s frame, filling [modifier]'s bounds, which are that frame's shape. */
+    /** The live picture: the whole frame the camera takes, fitted into [modifier]'s bounds. */
     @Composable
     fun Viewfinder(modifier: Modifier)
 
-    /** Takes a picture: exactly what the viewfinder shows, upright, as a JPEG. Throws where none could be taken. */
-    suspend fun takePicture(): ByteArray
+    /**
+     * Takes a picture: the whole frame the viewfinder shows, turned as the phone is held. Throws where none could be
+     * taken.
+     */
+    suspend fun takePicture(): Shot
 
     fun close()
 }
 
 /** The camera the camera screen opens. */
 val LocalCameraAccess = staticCompositionLocalOf<CameraAccess> { CameraXAccess }
+
+/**
+ * A picture the camera took: [jpeg] as the sensor wrote it, and [rotationDegrees] — how far it turns clockwise to stand
+ * as the phone was held when it was taken.
+ */
+class Shot(val jpeg: ByteArray, val rotationDegrees: Int)

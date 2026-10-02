@@ -5,6 +5,13 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.media.ExifInterface
 import android.net.Uri
 import android.provider.MediaStore
 import android.provider.Settings
@@ -19,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -26,10 +34,14 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.media.TestPhotos
+import app.recipefork.app.media.crop.CropTags
 import app.recipefork.app.media.rememberPhotoSources
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -44,13 +56,17 @@ import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowActivity
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 /**
  * "Take a photo" through the application's own camera (FLOW-026): the camera permission asked for on the first one
- * and never earlier; refused, explained, with the settings a tap away and the gallery still working; refused for good,
- * explained straight away; granted, a 4:3 landscape viewfinder whose shutter hands the picture over; closed or backed
- * out of, nothing; a phone without a back camera told so; and the camera released whenever the screen leaves.
+ * and never earlier, and asked for once however often the button is pressed meanwhile; refused, explained, with the
+ * settings a tap away and the gallery still working; refused for good, explained straight away; granted, a viewfinder
+ * filling the screen whose shutter takes the whole frame and opens the crop; the crop's frame moved and zoomed, Done
+ * handing the framed part over the right way up, Retake going back to the camera, back leaving with nothing; a gallery
+ * photo going through the same crop; closed or backed out of, nothing; a phone without a back camera told so; and the
+ * camera released whenever the screen leaves.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -61,7 +77,7 @@ class CameraFlowTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val incoming = File(context.cacheDir, "camera-flow").apply { mkdirs() }
-    private val shot = TestPhotos.jpeg(File(incoming, "shot.jpg"), 400, 300).readBytes()
+    private val shot = TestPhotos.jpeg(File(incoming, "shot.jpg"), 800, 600).readBytes()
     private val camera = FakeCamera(picture = { shot })
     private val offers = mutableListOf<ByteArray>()
     private var unavailable = 0
@@ -134,8 +150,64 @@ class CameraFlowTest {
 
     private fun awaitGone() = compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) }
 
-    /** The system back, pressed while the camera is in front: it goes to the camera's own window, the topmost. */
-    private fun pressBackOnTheCamera() {
+    /** Waits for the crop to show its picture under the frame, ready for Done. */
+    private fun awaitCrop() {
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.FRAME), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.DONE), PATIENCE_MS)
+    }
+
+    /** The shutter pressed with the camera open: the crop opens on the picture taken. */
+    private fun shoot() {
+        compose.onNodeWithTag(CameraTags.SHUTTER).performClick()
+        awaitCrop()
+    }
+
+    /** Done pressed in the crop: one picture is handed over, and the crop leaves. */
+    private fun done(): Bitmap {
+        val before = offers.size
+        compose.onNodeWithTag(CropTags.DONE).performClick()
+        compose.waitUntil(PATIENCE_MS) { offers.size == before + 1 }
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) }
+        return offers.last().let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+    }
+
+    /** Picks [file] in the system photo picker. */
+    private fun choose(file: File) {
+        compose.onNodeWithTag(CHOOSE).performClick()
+        compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }
+        val intent = activity.nextStartedActivityForResult.intent
+        assertTrue(intent.action, intent.action == MediaStore.ACTION_PICK_IMAGES || intent.action == Intent.ACTION_OPEN_DOCUMENT)
+        compose.runOnUiThread { activity.receiveResult(intent, Activity.RESULT_OK, Intent().setData(Uri.fromFile(file))) }
+    }
+
+    private fun isRed(color: Int) = Color.red(color) > 150 && Color.green(color) < 100 && Color.blue(color) < 100
+    private fun isBlue(color: Int) = Color.blue(color) > 150 && Color.red(color) < 100 && Color.green(color) < 100
+
+    /** Upright, a test photo's top is red and its bottom blue. */
+    private fun assertUpright(bitmap: Bitmap) {
+        assertTrue("top", isRed(bitmap.getPixel(bitmap.width / 2, bitmap.height / 8)))
+        assertTrue("bottom", isBlue(bitmap.getPixel(bitmap.width / 2, bitmap.height * 7 / 8)))
+    }
+
+    /** [bitmap] written as a JPEG turned by [degrees] clockwise. */
+    private fun turned(file: File, degrees: Float): ByteArray {
+        val bitmap = BitmapFactory.decodeFile(file.path)
+        val turned = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, Matrix().apply { postRotate(degrees) }, true)
+        return ByteArrayOutputStream().also { turned.compress(Bitmap.CompressFormat.JPEG, 95, it) }.toByteArray()
+    }
+
+    /** A JPEG of [width] by [height], its left half red and its right half blue. */
+    private fun leftAndRight(width: Int, height: Int): ByteArray {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        Canvas(bitmap).apply {
+            drawColor(Color.RED)
+            drawRect(width / 2f, 0f, width.toFloat(), height.toFloat(), Paint().apply { color = Color.BLUE })
+        }
+        return ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 95, it) }.toByteArray()
+    }
+
+    /** The system back, pressed while the camera or the crop is in front: it goes to its own window, the topmost. */
+    private fun pressBack() {
         val global = Class.forName("android.view.WindowManagerGlobal").getMethod("getInstance").invoke(null)
         @Suppress("UNCHECKED_CAST")
         val views = global.javaClass.getDeclaredField("mViews").apply { isAccessible = true }.get(global) as List<android.view.View>
@@ -191,38 +263,231 @@ class CameraFlowTest {
         assertNull(activity.lastRequestedPermission)
     }
 
-    // FLOW-026 (3): the phone held upright, the viewfinder is the recipe's frame: 4:3, wider than tall.
+    // FLOW-026 (3): the viewfinder fills the screen — no frame masked out of it — with the way out at the top and the
+    // shutter at the bottom over it.
     @Test
-    fun theViewfinderIsFourByThreeLandscapeWithThePhoneUpright() {
+    fun theViewfinderFillsTheScreen() {
         grant()
         show()
         val screen = compose.activity.resources.displayMetrics
-        assertTrue("the phone is held upright", screen.heightPixels > screen.widthPixels)
 
         take()
         awaitCamera()
 
-        val size = compose.onNodeWithTag(CameraTags.VIEWFINDER).fetchSemanticsNode().size
-        assertTrue("${size.width} x ${size.height}", size.width > size.height)
-        assertEquals(4.0 / 3.0, size.width.toDouble() / size.height, 0.01)
+        val viewfinder = compose.onNodeWithTag(CameraTags.VIEWFINDER).fetchSemanticsNode().boundsInWindow
+        assertEquals(screen.widthPixels.toFloat(), viewfinder.width, 1f)
+        assertTrue("${viewfinder.height} of ${screen.heightPixels}", viewfinder.height >= screen.heightPixels * 0.9f)
+        val close = compose.onNodeWithTag(CameraTags.CLOSE).fetchSemanticsNode().boundsInWindow
+        val shutter = compose.onNodeWithTag(CameraTags.SHUTTER).fetchSemanticsNode().boundsInWindow
+        assertTrue("close over the top", close.top >= viewfinder.top && close.bottom < viewfinder.center.y)
+        assertTrue("shutter over the bottom", shutter.top > viewfinder.center.y && shutter.bottom <= viewfinder.bottom)
     }
 
-    // FLOW-026 (3): the shutter hands over the picture the camera took — the viewfinder's frame — once, closes the
-    // camera screen and releases the camera.
+    // FLOW-026 (3): the shutter takes the whole frame and opens the crop, releasing the camera; Done hands over the
+    // framed part — 4:3, wider than tall, the right way up — once, and the crop leaves.
     @Test
-    fun theShutterHandsThePictureOverAndReleasesTheCamera() {
+    fun theShutterOpensTheCropAndDoneHandsTheFrameOver() {
         grant()
         show()
         take()
         awaitCamera()
 
-        compose.onNodeWithTag(CameraTags.SHUTTER).performClick()
+        shoot()
 
-        compose.waitUntil(PATIENCE_MS) { offers.size == 1 }
-        assertArrayEquals(shot, offers.single())
-        awaitGone()
+        assertTrue(offers.isEmpty())
+        assertFalse(exists(CameraTags.SCREEN))
         compose.waitUntil(PATIENCE_MS) { !camera.isOpen }
+        assertTrue("a shot from the camera can be retaken", exists(CropTags.RETAKE) && !exists(CropTags.CANCEL))
+        val handed = done()
+        assertEquals(800, handed.width)
+        assertEquals(600, handed.height)
+        assertUpright(handed)
+        assertEquals(1, offers.size)
         assertEquals(1, camera.taken)
+        assertFalse(exists(CameraTags.SCREEN))
+    }
+
+    // FLOW-026 (3): Retake goes back to the camera with nothing handed over; the next shot is cropped and handed over.
+    @Test
+    fun retakeGoesBackToTheCamera() {
+        grant()
+        show()
+        take()
+        awaitCamera()
+        shoot()
+
+        compose.onNodeWithTag(CropTags.RETAKE).performClick()
+
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) }
+        awaitCamera()
+        assertEquals(2, camera.opened)
+        assertTrue(offers.isEmpty())
+        shoot()
+        done()
+        assertEquals(1, offers.size)
+        assertEquals(2, camera.taken)
+    }
+
+    // Back in the crop leaves it with nothing handed over.
+    @Test
+    fun backInTheCropLeavesWithNothing() {
+        grant()
+        show()
+        take()
+        awaitCamera()
+        shoot()
+
+        pressBack()
+
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) }
+        compose.waitForIdle()
+        assertTrue(offers.isEmpty())
+        assertFalse(exists(CameraTags.SCREEN))
+        assertFalse(camera.isOpen)
+        assertTrue(exists(TAKE))
+    }
+
+    // The frame is moved by dragging the photograph under it, and never leaves it: dragged far right, the frame shows
+    // the photograph's left edge.
+    @Test
+    fun aDragMovesThePhotographUnderTheFrame() {
+        camera.picture = { leftAndRight(3200, 1800) }
+        grant()
+        show()
+        take()
+        awaitCamera()
+        shoot()
+
+        compose.onNodeWithTag(CropTags.FRAME).performTouchInput { swipeRight(startX = left + 4f, endX = right - 4f) }
+        compose.onNodeWithTag(CropTags.FRAME).performTouchInput { swipeRight(startX = left + 4f, endX = right - 4f) }
+
+        val handed = done()
+        assertEquals(2400, handed.width)
+        assertEquals(1800, handed.height)
+        // At the widest, centred, the halves would meet in the middle; at the left edge, two thirds are red.
+        assertTrue(isRed(handed.getPixel(handed.width * 6 / 10, handed.height / 2)))
+        assertTrue(isBlue(handed.getPixel(handed.width * 9 / 10, handed.height / 2)))
+    }
+
+    // The frame is zoomed by pinching, down to no narrower than 1600 of the photograph's pixels.
+    @Test
+    fun aPinchZoomsDownToNoNarrowerThan1600() {
+        camera.picture = { leftAndRight(3200, 1800) }
+        grant()
+        show()
+        take()
+        awaitCamera()
+        shoot()
+
+        repeat(3) {
+            compose.onNodeWithTag(CropTags.FRAME).performTouchInput {
+                pinch(center - Offset(10f, 0f), centerLeft + Offset(4f, 0f), center + Offset(10f, 0f), centerRight - Offset(4f, 0f))
+            }
+        }
+
+        val handed = done()
+        assertEquals(1600, handed.width)
+        assertEquals(1200, handed.height)
+    }
+
+    // A shot taken with the phone upside down — the camera saying it turns half a turn — is handed over upright.
+    @Test
+    fun aShotTakenUpsideDownIsHandedOverUpright() {
+        camera.picture = { turned(File(incoming, "shot.jpg"), 180f) }
+        camera.rotationDegrees = 180
+        grant()
+        show()
+        take()
+        awaitCamera()
+        shoot()
+
+        assertUpright(done())
+    }
+
+    // A shot taken with the phone sideways — the sensor's picture a quarter turned — is handed over upright, 4:3 wide.
+    @Test
+    fun aShotTakenSidewaysIsHandedOverUpright() {
+        val tall = TestPhotos.jpeg(File(incoming, "tall.jpg"), 600, 800)
+        camera.picture = { turned(tall, -90f) }
+        camera.rotationDegrees = 90
+        grant()
+        show()
+        take()
+        awaitCamera()
+        shoot()
+
+        val handed = done()
+        assertEquals(600, handed.width)
+        assertEquals(450, handed.height)
+        assertTrue(isRed(handed.getPixel(300, 20)) && isBlue(handed.getPixel(300, 430)))
+    }
+
+    // FLOW-026: a photo from the gallery goes through the same crop — Cancel in place of Retake — before it is handed
+    // over, turned upright by its EXIF.
+    @Test
+    fun aGalleryPhotoGoesThroughTheCropUpright() {
+        show()
+        val upright = TestPhotos.jpeg(File(incoming, "picked-upright.jpg"), 800, 600)
+        val picked = File(incoming, "picked.jpg").apply { writeBytes(turned(upright, -90f)) }
+        TestPhotos.tag(picked, ExifInterface.ORIENTATION_ROTATE_90)
+
+        choose(picked)
+
+        awaitCrop()
+        assertTrue(offers.isEmpty())
+        assertTrue(exists(CropTags.CANCEL) && !exists(CropTags.RETAKE))
+        val handed = done()
+        assertEquals(800, handed.width)
+        assertEquals(600, handed.height)
+        assertUpright(handed)
+        assertEquals(0, camera.opened)
+    }
+
+    // Cancel in the gallery's crop hands nothing over.
+    @Test
+    fun cancelInTheGallerysCropHandsNothingOver() {
+        show()
+        choose(TestPhotos.jpeg(File(incoming, "picked.jpg"), 800, 600))
+        awaitCrop()
+
+        compose.onNodeWithTag(CropTags.CANCEL).performClick()
+
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) }
+        compose.waitForIdle()
+        assertTrue(offers.isEmpty())
+    }
+
+    // MEDIA-008: a file from the gallery that is no picture is handed over as it is, for processing to refuse and say why.
+    @Test
+    fun aFileThatIsNoPictureIsHandedOverForProcessingToRefuse() {
+        show()
+        val file = File(incoming, "photo.jpg").apply { writeText("not a photo at all") }
+
+        choose(file)
+
+        // Read through the screen, which lets the crop come and go.
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) && offers.size == 1 }
+        assertArrayEquals(file.readBytes(), offers.single())
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) }
+    }
+
+    // A second "Take a photo" while the platform's request is up is ignored — it is no refusal; the answer to the one
+    // request then opens the camera.
+    @Test
+    fun aSecondTapWhileAskingIsIgnored() {
+        show()
+        take()
+        val asked = activity.lastRequestedPermission
+        assertNotNull(asked)
+
+        take()
+        take()
+
+        assertSame("asked once", asked, activity.lastRequestedPermission)
+        assertFalse(exists(CameraTags.PERMISSION))
+        answer(granted = true)
+        awaitCamera()
+        assertFalse(exists(CameraTags.PERMISSION))
     }
 
     // A shot that fails says so and leaves the camera open to try again; nothing is handed over.
@@ -265,7 +530,7 @@ class CameraFlowTest {
         take()
         awaitCamera()
 
-        pressBackOnTheCamera()
+        pressBack()
 
         awaitGone()
         compose.waitUntil(PATIENCE_MS) { !camera.isOpen }
@@ -326,15 +591,11 @@ class CameraFlowTest {
         compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.PERMISSION) }
         val asked = activity.lastRequestedPermission
 
-        compose.onNodeWithTag(CHOOSE).performClick()
+        choose(TestPhotos.jpeg(File(incoming, "picked.jpg"), 800, 600))
 
-        compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }
-        val intent = activity.nextStartedActivityForResult.intent
-        assertTrue(intent.action, intent.action == MediaStore.ACTION_PICK_IMAGES || intent.action == Intent.ACTION_OPEN_DOCUMENT)
-        val picked = TestPhotos.jpeg(File(incoming, "picked.jpg"), 800, 600)
-        compose.runOnUiThread { activity.receiveResult(intent, Activity.RESULT_OK, Intent().setData(Uri.fromFile(picked))) }
-        compose.waitUntil(PATIENCE_MS) { offers.size == 1 }
-        assertArrayEquals(picked.readBytes(), offers.single())
+        awaitCrop()
+        val handed = done()
+        assertEquals(800, handed.width)
         assertSame(asked, activity.lastRequestedPermission)
         assertEquals(0, camera.opened)
     }

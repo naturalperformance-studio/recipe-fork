@@ -9,9 +9,14 @@ import java.io.IOException
 
 /**
  * A camera for a test, in place of CameraX, which cannot run on the JVM: [present] says whether the phone has a back
- * camera, [picture] is what the shutter takes (null: the shot fails), and what was opened and closed is counted.
+ * camera, [picture] is what the shutter takes (null: the shot fails), turned by [rotationDegrees] to stand as the phone
+ * was held, and what was opened and closed is counted.
  */
-class FakeCamera(var present: Boolean = true, var picture: () -> ByteArray? = { ByteArray(0) }) : CameraAccess {
+class FakeCamera(
+    var present: Boolean = true,
+    var picture: () -> ByteArray? = { ByteArray(0) },
+    var rotationDegrees: Int = 0,
+) : CameraAccess {
     @Volatile var opened = 0
         private set
 
@@ -31,9 +36,9 @@ class FakeCamera(var present: Boolean = true, var picture: () -> ByteArray? = { 
             @Composable
             override fun Viewfinder(modifier: Modifier) = Box(modifier)
 
-            override suspend fun takePicture(): ByteArray {
+            override suspend fun takePicture(): Shot {
                 taken++
-                return picture() ?: throw IOException("the shot failed")
+                return Shot(picture() ?: throw IOException("the shot failed"), rotationDegrees)
             }
 
             override fun close() {

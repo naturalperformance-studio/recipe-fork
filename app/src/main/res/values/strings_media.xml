@@ -25,8 +25,8 @@
     <string name="media_step_remove">Remove photo</string>
     <string name="media_step_description">Photo of step %1$d</string>
     <string name="media_step_removed">Step photo removed.</string>
-    <!-- The application's own camera (FLOW-026): a 4:3 landscape viewfinder, a shutter and a way out. -->
-    <string name="media_camera_viewfinder">Viewfinder: the photo will be exactly this frame</string>
+    <!-- The application's own camera (FLOW-026): a full-screen viewfinder, a shutter and a way out. -->
+    <string name="media_camera_viewfinder">Viewfinder: the whole frame is taken, and you crop it next</string>
     <string name="media_camera_shutter">Take photo</string>
     <string name="media_camera_close">Close</string>
     <string name="media_camera_close_action">Close the camera without taking a photo</string>
@@ -39,4 +39,11 @@
     <string name="media_camera_permission_text">To take a photo here, Recipe Fork needs permission to use the camera. You can allow it in the app\'s settings, or choose a photo from the gallery instead.</string>
     <string name="media_camera_permission_settings">Open settings</string>
     <string name="media_camera_permission_dismiss">Not now</string>
+    <!-- The crop a photograph goes through before it is attached (FLOW-026): a 4:3 landscape frame over it. -->
+    <string name="media_crop_title">Drag and pinch the photo to frame it</string>
+    <string name="media_crop_frame">Crop frame: drag the photo to move it, pinch to zoom</string>
+    <string name="media_crop_opening">Opening the photo…</string>
+    <string name="media_crop_done">Done</string>
+    <string name="media_crop_retake">Retake</string>
+    <string name="media_crop_cancel">Cancel</string>
 </resources>
