@@ -9,6 +9,7 @@ import app.recipefork.app.card.HeldScale
 import app.recipefork.app.card.StepToShow
 import app.recipefork.app.card.TextCardSession
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.search.BookOrder
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.timer.TimerStep
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,6 +33,23 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     fun choose(view: LibraryView) {
         saved[VIEW_KEY] = view
+    }
+
+    /**
+     * What is typed in the search field of [view] (FLOW-035 (4)): each view keeps its own, kept like the view — through
+     * leaving the section, the home action and the end of the process — and empty in a new session.
+     */
+    fun query(view: LibraryView): StateFlow<String> = saved.getStateFlow(QUERY_KEY + view.name, "")
+
+    fun search(view: LibraryView, query: String) {
+        saved[QUERY_KEY + view.name] = query
+    }
+
+    /** The order [view] is listed in (FLOW-035 (3)): each view keeps its own choice, kept like the query. */
+    fun order(view: LibraryView): StateFlow<BookOrder> = saved.getStateFlow(ORDER_KEY + view.name, BookOrder.NEWEST)
+
+    fun orderBy(view: LibraryView, order: BookOrder) {
+        saved[ORDER_KEY + view.name] = order
     }
 
     /**
@@ -179,6 +197,8 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     private companion object {
         const val CARDS_KEY = "library."
+        const val QUERY_KEY = "library.query."
+        const val ORDER_KEY = "library.order."
         const val CARDS_ORDER_KEY = "library.cards"
         const val MAX_CARDS = 50
         const val STEP_KEY = "library.step"

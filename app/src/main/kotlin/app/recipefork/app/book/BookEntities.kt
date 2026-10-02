@@ -145,3 +145,11 @@ data class OwnRecipeRow(
     /** The media identity of the recipe's cover, if it holds one (MEDIA-001). */
     @ColumnInfo(name = "cover_id") val coverId: String? = null,
 )
+
+/** What names an ingredient row, for the search of the book (FLOW-035 (4)). */
+data class IngredientNameRow(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    @ColumnInfo(name = "dictionary_entry") val dictionaryEntry: Long?,
+    val qualifier: String?,
+    @ColumnInfo(name = "free_text_name") val freeTextName: String?,
+)

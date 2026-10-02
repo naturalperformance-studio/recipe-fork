@@ -54,4 +54,14 @@
     <string name="library_usual_more_action">Raise the usual serving count</string>
     <string name="library_usual_set">Set</string>
     <string name="library_usual_clear">Not set</string>
+    <!-- FLOW-035 (4): the search field at the top of each view, and the result that holds nothing. -->
+    <string name="library_search">Search by title or ingredient</string>
+    <string name="library_search_clear">Clear the search</string>
+    <string name="library_nothing_found">Nothing found for “%1$s”</string>
+    <!-- FLOW-035 (3): the order of each view, and its three choices. -->
+    <string name="library_order">Order: %1$s</string>
+    <string name="library_order_action">Choose the order of the list</string>
+    <string name="library_order_newest">Newest first</string>
+    <string name="library_order_oldest">Oldest first</string>
+    <string name="library_order_title">By title</string>
 </resources>

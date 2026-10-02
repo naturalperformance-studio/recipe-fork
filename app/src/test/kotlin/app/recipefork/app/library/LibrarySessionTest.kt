@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.compose.ui.test.hasTestTag
 import androidx.test.core.app.ApplicationProvider
@@ -13,8 +14,10 @@ import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.editor.PATIENCE_MS
+import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.search.BookOrder
 import kotlinx.coroutines.runBlocking
 import java.time.Instant
 import org.junit.Assert.assertEquals
@@ -138,5 +141,50 @@ class LibrarySessionTest {
         // A restart keeps no task, so the platform hands the new Activity no saved state.
         launch(saved = null)
         assertView(LibraryView.MARKED)
+    }
+
+    /** In the own-recipes view of a book holding a recipe, types [query] and orders the view by title. */
+    private fun searchOwnByTitle(query: String) {
+        runBlocking { container.recipes.save(Recipe.create(Instant.parse("2026-10-01T12:00:00Z"), null).copy(title = "Borscht")) }
+        chooseOwn()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.SEARCH)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement(query)
+        compose.onNodeWithTag(LibraryTags.ORDER).performClick()
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onAllNodes(hasTestTag(LibraryTags.order(BookOrder.TITLE))).fetchSemanticsNodes().size == 1
+        }
+        compose.onNodeWithTag(LibraryTags.order(BookOrder.TITLE)).performClick()
+        compose.waitForIdle()
+    }
+
+    private fun assertOwnSearch(query: String, order: String) {
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.SEARCH)).fetchSemanticsNodes().size == 1 }
+        assertEquals(listOf(query), compose.textsOf(LibraryTags.SEARCH).drop(1))
+        assertEquals(listOf("Order: $order"), compose.descriptionOf(LibraryTags.ORDER))
+    }
+
+    // FLOW-035 (3, 4), FLOW-058 (2): the query and the order of a view survive the end of the process.
+    @Test
+    fun theProcessEndedWhileAwayKeepsTheQueryAndTheOrder() {
+        val activity = launch()
+        searchOwnByTitle("Bor")
+        val saved = Bundle()
+        activity.pause().stop().saveInstanceState(saved)
+        // The process dies: the Activity and every object in memory are gone, only the saved state remains.
+        activity.destroy()
+        launch(saved)
+        assertView(LibraryView.OWN)
+        assertOwnSearch("Bor", "By title")
+    }
+
+    // FLOW-058 (3): a new session starts with no query and the default order.
+    @Test
+    fun aNewSessionStartsWithNoQueryAndTheDefaultOrder() {
+        val activity = launch()
+        searchOwnByTitle("Bor")
+        activity.closeTask()
+        launch()
+        chooseOwn()
+        assertOwnSearch("", "Newest first")
     }
 }
