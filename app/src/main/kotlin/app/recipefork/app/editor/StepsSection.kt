@@ -63,9 +63,10 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor) {
         }
         val stating by editor.statement.collectAsState()
         steps.forEachIndexed { position, step ->
-            // What the screen holds for a step — a timer being attached — stays with it when a step before it goes.
+            // What the screen holds for a step — focus, a timer being attached — stays with it when steps before it
+            // are inserted, moved or deleted.
             key(editor.stepKey(position)) {
-                if (editable) StepRow(position, step, editor, stating == position) else ReadOnlyStep(position, step)
+                if (editable) StepRow(position, steps.size, step, editor, stating == position) else ReadOnlyStep(position, step)
             }
         }
         if (editable) {
@@ -80,11 +81,11 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor) {
 }
 
 /**
- * One step: its number in the field's label, its text over as many lines as it takes, its removal, and the control
- * that attaches its timer (FLOW-027).
+ * One step: its number in the field's label, its text over as many lines as it takes, its removal, its menu of
+ * inserting and moving (FLOW-025), and the control that attaches its timer (FLOW-027).
  */
 @Composable
-private fun StepRow(position: Int, step: Step, editor: RecipeEditor, stating: Boolean) {
+private fun StepRow(position: Int, count: Int, step: Step, editor: RecipeEditor, stating: Boolean) {
     Column(Modifier.fillMaxWidth().testTag(EditorTags.step(position))) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
@@ -99,6 +100,21 @@ private fun StepRow(position: Int, step: Step, editor: RecipeEditor, stating: Bo
                 action = stringResource(R.string.editor_step_remove_action, position + 1),
                 onClick = { editor.removeStep(position) },
                 modifier = Modifier.testTag(EditorTags.stepRemove(position)),
+            )
+            RowMenu(
+                position = position,
+                count = count,
+                name = stringResource(R.string.editor_step_menu_action, position + 1),
+                tag = EditorTags.stepMenu(position),
+                actionTag = { EditorTags.stepAction(position, it) },
+                onAction = { action ->
+                    when (action) {
+                        RowAction.INSERT_ABOVE -> editor.insertStep(position)
+                        RowAction.INSERT_BELOW -> editor.insertStep(position + 1)
+                        RowAction.MOVE_UP -> editor.moveStep(position, position - 1)
+                        RowAction.MOVE_DOWN -> editor.moveStep(position, position + 1)
+                    }
+                },
             )
         }
         StepTimer(position, step, editor, stating)
