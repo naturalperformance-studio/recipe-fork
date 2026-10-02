@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -373,7 +374,8 @@ private fun QuantityField(
     isError: Boolean,
     modifier: Modifier,
 ) {
-    var typed by remember { mutableStateOf<String?>(null) }
+    // Kept across the activity being recreated, under the row's key, so it stays the row's own.
+    var typed by rememberSaveable { mutableStateOf<String?>(null) }
     // The row as the editor holds it now; the text in the field stands only while it is what the row holds.
     fun held() = editor.recipe.value?.ingredients?.getOrNull(position) ?: row
     val shown = typed?.takeIf { held().withTypedQuantity(it) == held() } ?: QuantityInput.fieldText(held(), language)

@@ -199,8 +199,11 @@ class RowOrderTest {
         val editor = open()
         val before = editor.now
         val resolved = before.resolved()
+        // Each row as it was, but for its position; the inserted rows are those holding no name.
+        val rows = before.ingredients.associateBy({ it.freeTextName }, { it.copy(position = 0) })
         fun assertUnchangedApartFromReferences() {
             assertPositions(editor.now)
+            editor.now.ingredients.filter { it.freeTextName != null }.forEach { assertEquals(rows[it.freeTextName], it.copy(position = 0)) }
             assertEquals(resolved, editor.now.resolved())
             assertEquals(before.steps.map { it.copy(ingredientReferences = emptyList()) }, editor.now.steps.map { it.copy(ingredientReferences = emptyList()) })
             assertEquals(before.steps.map { refs -> refs.ingredientReferences.map { it.textOffset } }, editor.now.steps.map { refs -> refs.ingredientReferences.map { it.textOffset } })
@@ -230,6 +233,18 @@ class RowOrderTest {
         assertFalse(editor.moveIngredient(0, -1))
         assertFalse(editor.moveIngredient(held.ingredients.size, 0))
         assertEquals(held, editor.now)
+    }
+
+    // A deleted step's media go with it; the media of the steps after it follow them up.
+    @Test
+    fun aDeletedStepsMediaGoWithItAndTheRestFollowTheirSteps() {
+        val editor = open()
+        assertTrue(editor.removeStep(3))
+        assertEquals(mapOf("cover" to null, "loaf" to 3), editor.now.mediaSteps())
+        assertEquals("Bake with the rest of the flour.", editor.now.steps[3].text)
+        assertTrue(editor.removeStep(0))
+        assertEquals(mapOf("cover" to null, "loaf" to 2), editor.now.mediaSteps())
+        assertEquals(editor.now, stored())
     }
 
     // References move with their step: a step moved keeps resolving to its own ingredients.

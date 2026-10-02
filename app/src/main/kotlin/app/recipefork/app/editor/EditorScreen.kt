@@ -93,7 +93,10 @@ fun EditorScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving) }
+    // The row keys outlive the activity being recreated, as the state the rows saved under them does.
+    val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys) }
     // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
     // touched from a database thread.
     LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }

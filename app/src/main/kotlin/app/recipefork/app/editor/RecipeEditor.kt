@@ -1,6 +1,7 @@
 package app.recipefork.app.editor
 
 import android.content.res.Configuration
+import androidx.compose.runtime.saveable.Saver
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.dictionary.IngredientSource
@@ -66,6 +67,12 @@ class RecipeEditor(
     private val clock: () -> Instant,
     /** Outlives the screen, so that a change made just before leaving is still written. */
     private val saving: CoroutineScope,
+    /**
+     * The keys of the steps and of the ingredient rows. The screen keeps them across the activity being recreated, so
+     * that what it saved for a row comes back on that row and not on whichever stands at its old position.
+     */
+    private val stepKeys: RowKeys = RowKeys(),
+    private val ingredientKeys: RowKeys = RowKeys(),
 ) {
     private val current = MutableStateFlow<Recipe?>(null)
 
@@ -99,14 +106,19 @@ class RecipeEditor(
     fun setStepText(position: Int, text: String) = editStep(position) { it.copy(text = text) }
 
     /**
-     * Deletes the step at [position], with its own timer and references; the steps after it move up and keep theirs,
-     * which point at ingredients, never at steps, so each still resolves to the same ingredient (DOM-007).
+     * Deletes the step at [position], with its own timer, references and media; the steps after it move up and keep
+     * theirs, which point at ingredients, never at steps, so each still resolves to the same ingredient (DOM-007).
      */
     fun removeStep(position: Int) = edit { recipe ->
         val steps = recipe.steps.sortedBy { it.position }
         if (position !in steps.indices) return@edit recipe
         stepKeys.remove(position, steps.size)
-        recipe.copy(steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) })
+        recipe.copy(
+            steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) },
+            media = recipe.media
+                .filter { (it.attachment as? MediaAttachment.ToStep)?.stepPosition != position }
+                .followingSteps { if (it > position) it - 1 else it },
+        )
     }
 
     /**
@@ -217,9 +229,6 @@ class RecipeEditor(
 
     /** As [stepKey], for the ingredient row at [position]. */
     fun ingredientKey(position: Int): Long = ingredientKeys.of(position)
-
-    private val stepKeys = RowKeys()
-    private val ingredientKeys = RowKeys()
 
     /** The optional description, kept exactly as typed, line breaks included. */
     fun setDescription(description: String) = edit { it.copy(description = description) }
@@ -369,9 +378,8 @@ class RecipeEditor(
  * Keys for the rows of one list, each staying with its row while rows are inserted, moved or deleted around it. A
  * row is given its key when it is first asked for; every change first gives one to each of the [count] rows.
  */
-private class RowKeys {
-    private val keys = mutableListOf<Long>()
-    private var next = 0L
+class RowKeys private constructor(private val keys: MutableList<Long>, private var next: Long) {
+    constructor() : this(mutableListOf(), 0L)
 
     fun of(position: Int): Long {
         fill(position + 1)
@@ -395,5 +403,13 @@ private class RowKeys {
 
     private fun fill(count: Int) {
         while (keys.size < count) keys += next++
+    }
+
+    companion object {
+        /** Saved as the next key to give, then the keys row by row. */
+        val Saver: Saver<RowKeys, LongArray> = Saver(
+            save = { longArrayOf(it.next, *it.keys.toLongArray()) },
+            restore = { RowKeys(it.drop(1).toMutableList(), it.first()) },
+        )
     }
 }
