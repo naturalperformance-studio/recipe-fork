@@ -164,7 +164,8 @@ interface RunningTimerDao {
 
     @Query(
         "update running_timer set announced = 1 " +
-            "where book = :book and recipe_id = :recipeId and step_position = :step and ends_at_ms = :endsAt",
+            "where book = :book and recipe_id = :recipeId and step_position = :step and ends_at_ms = :endsAt " +
+            "and announced = 0",
     )
     suspend fun markAnnounced(book: String, recipeId: String, step: Int, endsAt: Long): Int
 

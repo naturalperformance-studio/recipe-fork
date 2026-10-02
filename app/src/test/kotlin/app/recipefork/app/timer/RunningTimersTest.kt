@@ -126,6 +126,14 @@ class RunningTimersTest {
     }
 
     @Test
+    fun anEndedTimerIsMarkedAnnouncedOnlyOnce() = runBlocking {
+        val timers = open()
+        val started = timers.start(TimerKey(BookName.Pool, soup, 2), "Timer", "Soup", 1.minutes)
+        assertTrue(timers.markAnnounced(started))
+        assertFalse(timers.markAnnounced(started))
+    }
+
+    @Test
     fun aCountdownReadsMinutesAndSecondsWithHoursFromAnHourUp() {
         assertEquals("25:00", remainingText(25.minutes))
         assertEquals("0:59", remainingText(59.seconds))
