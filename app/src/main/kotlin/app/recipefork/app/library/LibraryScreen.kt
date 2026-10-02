@@ -144,6 +144,7 @@ fun LibraryScreen(
                 }
             },
             onOpenParent = { parent -> session.openCard(parent.value) },
+            session = session.cards,
         )
         return
     }

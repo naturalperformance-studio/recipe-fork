@@ -18,13 +18,13 @@ import app.recipefork.core.recipe.Recipe
  * cover — or whose cover cannot be read — shows nothing in its place (FLOW-019).
  */
 @Composable
-internal fun Cover(recipe: Recipe, book: BookName) {
+internal fun Cover(recipe: Recipe, book: BookName, modifier: Modifier = Modifier) {
     val cover = recipe.cover ?: return
     val context = LocalContext.current
     val store = remember(context) { PhotoStore(context.applicationContext.filesDir) }
     PhotoImage(
         store.file(book, cover.mediaId),
         stringResource(R.string.media_cover_description, recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }),
-        Modifier.testTag(CardTags.COVER),
+        modifier.testTag(CardTags.COVER),
     )
 }

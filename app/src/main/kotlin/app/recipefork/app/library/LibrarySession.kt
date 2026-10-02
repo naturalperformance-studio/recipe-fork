@@ -3,7 +3,10 @@ package app.recipefork.app.library
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.recipefork.app.card.CardSession
 import app.recipefork.app.card.StepToShow
+import app.recipefork.app.card.TextCardSession
+import app.recipefork.core.recipe.RecipeId
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.timer.TimerStep
 import kotlinx.coroutines.flow.SharingStarted
@@ -87,6 +90,8 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         saved[VIEWING_KEY] = recipeId
         saved[CARD_FROM_KEY] = null
         saved[STEP_KEY] = "$position/$recipeId"
+        // The card is brought to the timer's step, not to the place it was left at.
+        cards.holdAnchor(RecipeId(recipeId), null)
     }
 
     /**
@@ -116,12 +121,22 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         shown = { saved[STEP_KEY] = null },
     )
 
+    /**
+     * What the session keeps of each card the reader opened — the count and fixing it was left at, and the line or
+     * step at its top — kept like the view: through leaving the card, the home action and the end of the process,
+     * and gone with the task (FLOW-017 (6, 7), FLOW-012, FLOW-058). Only short texts are kept, never a recipe.
+     */
+    val cards: CardSession = TextCardSession({ saved.get<String>(CARDS_KEY + it) }) { key, value ->
+        if (value == null) saved.remove<String>(CARDS_KEY + key) else saved[CARDS_KEY + key] = value
+    }
+
     private fun stepOf(value: String?): TimerStep? {
         val (position, recipe) = value?.split('/', limit = 2)?.takeIf { it.size == 2 } ?: return null
         return TimerStep(book = "", recipeId = recipe, stepPosition = position.toIntOrNull() ?: return null)
     }
 
     private companion object {
+        const val CARDS_KEY = "library."
         const val STEP_KEY = "library.step"
         const val MESSAGE_KEY = "library.file_message"
         const val VIEW_KEY = "library.view"

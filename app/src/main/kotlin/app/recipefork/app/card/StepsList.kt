@@ -89,10 +89,11 @@ internal fun StepsList(
     if (shown.isEmpty()) return
     Section(R.string.card_steps, CardTags.STEPS) {
         shown.forEachIndexed { index, step ->
+            val place = cardPlace(CardPlaces.step(step.position))
             val modifier = if (targetShown && step.position == pending?.stepPosition) {
-                Modifier.bringIntoViewRequester(target)
+                place.bringIntoViewRequester(target)
             } else {
-                Modifier
+                place
             }
             StepRow(index + 1, step, references, timers, photos, modifier)
         }
