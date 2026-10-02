@@ -407,6 +407,7 @@ object EditorTags {
     fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
+    fun ingredientWarningText(position: Int) = "editor-ingredient-$position-warning-text"
     fun divisibility(position: Int) = "editor-ingredient-$position-divisibility"
     fun divisible(position: Int, divisible: Boolean) = "editor-ingredient-$position-divisible-$divisible"
     fun unitOption(unit: QuantityUnit) = "editor-unit-${unit.name}"

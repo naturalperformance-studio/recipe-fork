@@ -29,7 +29,6 @@
     <string name="editor_ingredient_quantity">Количество</string>
     <string name="editor_ingredient_unit">Единица</string>
     <string name="editor_ingredient_unit_action">Выбрать единицу</string>
-    <string name="editor_ingredient_remove">Убрать</string>
     <string name="editor_ingredient_remove_action">Убрать строку ингредиента %1$d</string>
     <string name="editor_ingredient_menu_action">Действия со строкой ингредиента %1$d</string>
     <string name="editor_ingredient_pick_action">Выбрать ингредиент словаря %1$s</string>

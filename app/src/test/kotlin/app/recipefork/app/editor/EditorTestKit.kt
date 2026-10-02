@@ -144,3 +144,7 @@ fun SemanticsNodeInteractionsProvider.textsOf(tag: String): List<String> {
     return config.getOrElse(SemanticsProperties.Text) { emptyList() }.map { it.text } +
         listOfNotNull(config.getOrElseNullable(SemanticsProperties.EditableText) { null }?.text)
 }
+
+/** What the screen reader reads for the node tagged [tag] beyond any text: its content description. */
+fun SemanticsNodeInteractionsProvider.descriptionOf(tag: String): List<String> =
+    onNodeWithTag(tag).fetchSemanticsNode().config.getOrElse(SemanticsProperties.ContentDescription) { emptyList() }

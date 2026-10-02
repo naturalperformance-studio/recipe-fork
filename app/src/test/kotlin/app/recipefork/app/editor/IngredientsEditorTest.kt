@@ -337,7 +337,7 @@ class IngredientsEditorTest {
         assertEquals("salt", back.freeTextName)
     }
 
-    // FLOW-022 (2): the name typed as free text shows both statements of the warning.
+    // FLOW-022 (2): the name typed as free text shows the warning icon, which carries both statements.
     @Test
     fun aNameInTheAuthorsOwnWordsShowsTheFreeTextWarning() = freeTextWarning()
 
@@ -351,7 +351,7 @@ class IngredientsEditorTest {
         compose.onNodeWithTag(EditorTags.ingredientWarning(0)).assertDoesNotExist()
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performTextInput("wild garlic")
         compose.waitForIdle()
-        val warning = compose.textsOf(EditorTags.ingredientWarning(0)).single()
+        val warning = compose.descriptionOf(EditorTags.ingredientWarning(0)).single()
         assertEquals(string(R.string.editor_ingredient_free_text_warning), warning)
         val english = context.resources.configuration.locales[0].language == "en"
         // Filters will not find the recipe by it, and publication makes it permanent.
@@ -550,7 +550,8 @@ class IngredientsEditorTest {
             compose.onNodeWithTag(EditorTags.ingredientName(position)).performTextInput(name)
             typeQuantity(position, quantity)
         }
-        assertEquals(string(R.string.editor_ingredient_remove_action, 1), AccessibilityChecks.clickActionLabel(node(EditorTags.ingredientRemove(0))))
+        // The remove control is an icon named for its row: the screen reader reads that name.
+        assertEquals(string(R.string.editor_ingredient_remove_action, 1), AccessibilityChecks.announcedLabel(node(EditorTags.ingredientRemove(0))))
         compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
         compose.waitForIdle()
         val rows = stored(id).ingredients
