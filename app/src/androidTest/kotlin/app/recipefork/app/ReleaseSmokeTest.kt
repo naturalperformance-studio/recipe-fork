@@ -236,7 +236,7 @@ class ReleaseSmokeTest {
         val camera = withContext(Dispatchers.Main) { CameraXAccess.open(activity, activity) }
         assertNotNull("the device has a back camera", camera)
         try {
-            val jpeg = withTimeout(60_000) { camera!!.takePicture() }
+            val jpeg = withTimeout(60_000) { camera!!.takePicture() }.jpeg
             assertTrue(jpeg.size > 2 && jpeg[0] == 0xFF.toByte() && jpeg[1] == 0xD8.toByte())
         } finally {
             withContext(Dispatchers.Main) { camera!!.close() }

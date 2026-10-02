@@ -22,7 +22,7 @@
     <string name="media_step_remove">Убрать фото</string>
     <string name="media_step_description">Фото шага %1$d</string>
     <string name="media_step_removed">Фото шага убрано.</string>
-    <string name="media_camera_viewfinder">Видоискатель: на фото будет ровно этот кадр</string>
+    <string name="media_camera_viewfinder">Видоискатель: снимается весь кадр, обрезать его можно следом</string>
     <string name="media_camera_shutter">Снять</string>
     <string name="media_camera_close">Закрыть</string>
     <string name="media_camera_close_action">Закрыть камеру, не делая снимка</string>
@@ -34,4 +34,10 @@
     <string name="media_camera_permission_text">Чтобы снять фото здесь, Recipe Fork нужно разрешение на камеру. Его можно дать в настройках приложения — или выбрать фото из галереи.</string>
     <string name="media_camera_permission_settings">Открыть настройки</string>
     <string name="media_camera_permission_dismiss">Не сейчас</string>
+    <string name="media_crop_title">Двигайте и растягивайте фото, чтобы выбрать кадр</string>
+    <string name="media_crop_frame">Рамка кадра: перетащите фото, чтобы сдвинуть, разведите пальцы, чтобы приблизить</string>
+    <string name="media_crop_opening">Открываем фото…</string>
+    <string name="media_crop_done">Готово</string>
+    <string name="media_crop_retake">Переснять</string>
+    <string name="media_crop_cancel">Отмена</string>
 </resources>

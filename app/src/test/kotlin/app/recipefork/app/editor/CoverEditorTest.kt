@@ -32,6 +32,7 @@ import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.media.camera.CameraTags
 import app.recipefork.app.media.camera.FakeCamera
 import app.recipefork.app.media.camera.LocalCameraAccess
+import app.recipefork.app.media.crop.CropTags
 import app.recipefork.app.media.cover
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.Media
@@ -149,15 +150,24 @@ class CoverEditorTest {
         openCamera()
         compose.onNodeWithTag(CameraTags.SHUTTER).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) }
+        cropDone()
     }
 
     /** Picks [file] in the system photo picker. */
-    private fun choose(file: File) {
+    private fun choose(file: File, crop: Boolean = true) {
         compose.onNodeWithTag(CoverTags.CHOOSE).performScrollTo().performClick()
         val intent = started()
         assertTrue(intent.action, intent.action == MediaStore.ACTION_PICK_IMAGES || intent.action == Intent.ACTION_OPEN_DOCUMENT)
         assertEquals("image/*", intent.type)
         compose.runOnUiThread { activity.receiveResult(intent, Activity.RESULT_OK, Intent().setData(Uri.fromFile(file))) }
+        if (crop) cropDone()
+    }
+
+    /** The crop, opened on the picture handed over, framed as it opens: Done. */
+    private fun cropDone() {
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.FRAME), PATIENCE_MS)
+        compose.onNodeWithTag(CropTags.DONE).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) }
     }
 
     private val processed =
@@ -216,6 +226,7 @@ class CoverEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(CameraTags.SHUTTER), PATIENCE_MS)
         compose.onNodeWithTag(CameraTags.SHUTTER).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) }
+        cropDone()
         compose.waitUntil(PATIENCE_MS) { stored(id).cover.let { it != null && it.mediaId != picked } && held().size == 1 }
     }
 
@@ -282,7 +293,7 @@ class CoverEditorTest {
         compose.waitUntil(PATIENCE_MS) { stored(id).cover != null }
         val before = stored(id).cover!!.mediaId
 
-        choose(File(incoming, "photo.jpg").apply { writeText("not a photo at all") })
+        choose(File(incoming, "photo.jpg").apply { writeText("not a photo at all") }, crop = false)
 
         awaitNotice("This file could not be read as a photo, so nothing was attached.")
         assertEquals(before, stored(id).cover!!.mediaId)

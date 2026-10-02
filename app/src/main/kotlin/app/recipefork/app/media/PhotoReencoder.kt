@@ -40,7 +40,7 @@ open class PhotoReencoder(private val limits: PhotoLimits = PhotoLimits()) {
      */
     open fun reencode(open: () -> InputStream): ByteArray {
         val original = bounds(open)
-        val orientation = orientation(open)
+        val orientation = exifOrientation(open)
         val sample = PhotoPlan.sampleSize(original, limits.maxEdge)
         val decoded = decode(open, sample)
         try {
@@ -63,15 +63,6 @@ open class PhotoReencoder(private val limits: PhotoLimits = PhotoLimits()) {
         reading { open().use { BitmapFactory.decodeStream(it, null, options) } }
         if (options.outWidth <= 0 || options.outHeight <= 0) throw RefusedPhoto(PhotoRefusal.UNREADABLE)
         return PixelSize(options.outWidth, options.outHeight)
-    }
-
-    /** The EXIF orientation, where the file carries one; a picture without EXIF is upright. */
-    private fun orientation(open: () -> InputStream): Orientation = try {
-        open().use { Orientation.ofExif(ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) }
-    } catch (e: IOException) {
-        Orientation.Upright
-    } catch (e: RuntimeException) {
-        Orientation.Upright
     }
 
     private fun decode(open: () -> InputStream, sample: Int): Bitmap {
@@ -122,4 +113,13 @@ open class PhotoReencoder(private val limits: PhotoLimits = PhotoLimits()) {
     } catch (e: OutOfMemoryError) {
         throw RefusedPhoto(PhotoRefusal.UNREADABLE, e)
     }
+}
+
+/** The EXIF orientation of the picture [open] reads, where the file carries one; a picture without EXIF is upright. */
+internal fun exifOrientation(open: () -> InputStream): Orientation = try {
+    open().use { Orientation.ofExif(ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) }
+} catch (e: IOException) {
+    Orientation.Upright
+} catch (e: RuntimeException) {
+    Orientation.Upright
 }
