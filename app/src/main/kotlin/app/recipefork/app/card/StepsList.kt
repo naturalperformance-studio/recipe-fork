@@ -121,7 +121,10 @@ private fun StepRow(number: Int, step: Step, references: CardReferences, timers:
     }
 }
 
-/** The files of the photographs a recipe's steps carry, by the step's position. */
+/**
+ * The files of the photographs a recipe's steps carry, by the step's position: only those the device holds, so that a
+ * step holding nothing but a photograph whose file is gone is left out rather than shown as a bare number.
+ */
 internal fun interface StepPhotosOnCard {
     fun of(position: Int): File?
 
@@ -134,5 +137,11 @@ internal fun interface StepPhotosOnCard {
 internal fun StepPhotosOnCard(recipe: Recipe, book: BookName): StepPhotosOnCard {
     val context = LocalContext.current
     val store = remember(context) { PhotoStore(context.applicationContext.filesDir) }
-    return remember(store, recipe, book) { StepPhotosOnCard { position -> recipe.stepPhoto(position)?.let { store.file(book, it.mediaId) } } }
+    return remember(store, recipe, book) {
+        // Looked up once for the recipe as it stands, not at every composition.
+        val held = recipe.steps.mapNotNull { step ->
+            recipe.stepPhoto(step.position)?.let { store.file(book, it.mediaId) }?.takeIf { it.isFile }?.let { step.position to it }
+        }.toMap()
+        StepPhotosOnCard { position -> held[position] }
+    }
 }

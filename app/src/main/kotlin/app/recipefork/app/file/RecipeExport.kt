@@ -8,8 +8,12 @@ import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.media.PhotoStore
+import app.recipefork.core.file.FileMedia
 import app.recipefork.core.file.RecipeFile
+import app.recipefork.core.file.RecipeFileCheck
 import app.recipefork.core.file.RecipeFileContent
+import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.RecipeId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -29,14 +33,20 @@ object RecipeExport {
     fun authority(context: Context) = context.packageName + ".files"
 
     /**
-     * Writes the file of the recipe [id] of the active book and returns its shareable address, or null when the book
-     * holds no such recipe. No account exists on the device yet, so no recipe is an account's own and the file names
+     * Writes the file of the recipe [id] of the active book, with every photograph the device holds for it, and returns
+     * its shareable address, or null when the book holds no such recipe. No account exists on the device yet, so no recipe is an account's own and the file names
      * an author only where the recipe states one (FLOW-063 (3)).
      */
     suspend fun write(context: Context, recipes: RecipeRepository, id: RecipeId): Uri? {
-        val recipe = recipes.get(id) ?: return null
-        val parent = recipe.parent?.let { recipes.get(it) }
-        val content = RecipeFileContent.of(recipe, parentInBook = parent, ownerNickname = null)
+        val book = recipes.inOpenBook()
+        val recipe = book.get(id) ?: return null
+        val parent = recipe.parent?.let { book.get(it) }
+        val store = PhotoStore(context.filesDir)
+        val name = book.bookName()
+        val content = withContext(Dispatchers.IO) {
+            RecipeFileContent.of(recipe, parentInBook = parent, ownerNickname = null)
+                .copy(media = fileMedia(recipe.media) { store.file(name, it).isFile })
+        }
         val file = withContext(Dispatchers.IO) {
             // Only the file of this export is kept: those of earlier exports, and of recipes since deleted, go first.
             val exports = File(context.cacheDir, DIRECTORY)
@@ -44,11 +54,22 @@ object RecipeExport {
             val directory = File(exports, id.value.filter { it.isLetterOrDigit() || it == '-' }.ifEmpty { FALLBACK_NAME })
             if (!directory.mkdirs()) throw IOException("cannot make $directory")
             File(directory, fileName(recipe.title)).also { file ->
-                file.outputStream().buffered().use { RecipeArchive.write(content, it) }
+                file.outputStream().buffered().use { out ->
+                    RecipeArchive.write(content, out) { store.file(name, it.mediaId) }
+                }
             }
         }
         return FileProvider.getUriForFile(context, authority(context), file)
     }
+
+    /**
+     * The document's entries for the recipe's [media] (FLOW-063): every item whose file the device holds — [held] says
+     * which — each under `media/` by its identity. An item whose file is gone is left out, so the document never names
+     * an entry the archive does not hold.
+     */
+    fun fileMedia(media: List<Media>, held: (String) -> Boolean): List<FileMedia> = media
+        .map { FileMedia(it.mediaId, it.kind, it.attachment, RecipeFile.MEDIA_DIRECTORY + it.mediaId) }
+        .filter { RecipeFileCheck.isMediaEntry(it.entry) && held(it.mediaId) }
 
     /**
      * Writes the file of the recipe [id] and opens the share and save sheet on it, headed [sheetTitle]. Returns false

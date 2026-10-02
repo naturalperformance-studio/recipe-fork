@@ -21,6 +21,7 @@ class RecipeForkApplication : Application() {
         // The channels exist before any timer is started, so that the timers' one can be read and turned off alone.
         TimerChannels.create(this)
         container.start(scope)
+        container.sweepMedia(scope)
         scope.launch { PhotoSources.clearLeftovers(this@RecipeForkApplication) }
     }
 }

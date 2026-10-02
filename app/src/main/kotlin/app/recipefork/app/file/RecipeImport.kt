@@ -105,14 +105,7 @@ class RecipeImport(
      * Removes the found recipe [id] from the active book with its held content and its media files (FLOW-064 (6)).
      * Returns whether the book marked it.
      */
-    suspend fun remove(id: RecipeId): Boolean = withContext(Dispatchers.IO) {
-        val recipes = recipes.inOpenBook()
-        val book = recipes.bookName()
-        val media = recipes.removeMarked(id) ?: return@withContext false
-        val directory = mediaDirectory(filesDirectory, book)
-        media.forEach { File(directory, it).delete() }
-        true
-    }
+    suspend fun remove(id: RecipeId): Boolean = recipes.inOpenBook().removeMarked(id, filesDirectory)
 
     companion object {
         /**
