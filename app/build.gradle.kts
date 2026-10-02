@@ -35,7 +35,26 @@ android {
             // The local server speaks plain HTTP; only a debug build may reach it that way.
             manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
+        release {
+            // The build the owner installs by hand: shrunk by R8, its unused resources dropped, and signed with the
+            // debug keystore, so it installs over a debug build (one application id, one certificate) keeping the book.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("debug")
+        }
+        // The release build as the instrumented tests reach it (scripts/device-test-release.sh): shrunk by the same
+        // rules, plus only what the test runner and the smoke test take from the shrunk application.
+        create("releaseSmoke") {
+            initWith(getByName("release"))
+            proguardFile("proguard-smoke-test.pro")
+            matchingFallbacks += "release"
+        }
     }
+
+    // The instrumented tests run against the debug build; scripts/device-test-release.sh points them at the minified
+    // one instead (-Precipefork.testBuildType=releaseSmoke), whose test APK R8 maps onto the shrunk application.
+    testBuildType = providers.gradleProperty("recipefork.testBuildType").getOrElse("debug")
 
     buildFeatures {
         compose = true
