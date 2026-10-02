@@ -320,7 +320,7 @@ class StepTimerEditorTest {
         val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Томить.", timer = Timer(2.hours)))))
         openDirectly(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerAttach(0)), PATIENCE_MS)
-        assertEquals("Таймер", compose.textsOf(EditorTags.timerAttach(0)).single())
+        assertEquals("Таймер для шага 1", compose.descriptionOf(EditorTags.timerAttach(0)).single())
         chooseTimer(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
         val statement = compose.textsOf(EditorTags.timerStatement(0)).single()

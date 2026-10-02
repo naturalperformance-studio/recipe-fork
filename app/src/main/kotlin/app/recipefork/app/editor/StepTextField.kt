@@ -1,10 +1,15 @@
 package app.recipefork.app.editor
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,12 +17,14 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -27,9 +34,13 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
@@ -37,6 +48,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
@@ -411,8 +423,19 @@ internal fun StepTextField(
             state.refocus = false
         }
     }
-    OutlinedTextField(
-        value = state.shown(display),
+    val interaction = remember { MutableInteractionSource() }
+    val colors = OutlinedTextFieldDefaults.colors()
+    val shown = state.shown(display)
+    val transformation = VisualTransformation { text ->
+        // The shown text is the field's own text: only its style changes, so every offset maps to itself.
+        if (text.text == display.text) TransformedText(display.styled(highlight), OffsetMapping.Identity)
+        else TransformedText(text, OffsetMapping.Identity)
+    }
+    // An outlined field as dense as its touch target allows (A11Y-003), so that a one-line step takes little height: no
+    // floating label above its text, but the step's number before it — read by the screen reader as the step's name.
+    val name = stringResource(R.string.editor_step, position + 1)
+    BasicTextField(
+        value = shown,
         onValueChange = { new ->
             val trigger = state.change(
                 new,
@@ -425,17 +448,41 @@ internal fun StepTextField(
                 state.offering = true
             }
         },
-        visualTransformation = { text ->
-            // The shown text is the field's own text: only its style changes, so every offset maps to itself.
-            if (text.text == display.text) TransformedText(display.styled(highlight), OffsetMapping.Identity)
-            else TransformedText(text, OffsetMapping.Identity)
-        },
-        label = { Text(stringResource(R.string.editor_step, position + 1)) },
-        minLines = 2,
+        visualTransformation = transformation,
+        textStyle = LocalTextStyle.current.merge(TextStyle(color = MaterialTheme.colorScheme.onSurface)),
+        cursorBrush = SolidColor(colors.cursorColor),
+        interactionSource = interaction,
         // No undo: an earlier value of the field would bring a removed reference back as typed text.
-        modifier = modifier.focusRequester(state.focus).onPreviewKeyEvent { it.isUndo() },
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .semantics(mergeDescendants = true) {}
+            .focusRequester(state.focus)
+            .onPreviewKeyEvent { it.isUndo() },
+        decorationBox = { inner ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = shown.text,
+                innerTextField = inner,
+                enabled = true,
+                singleLine = false,
+                visualTransformation = transformation,
+                interactionSource = interaction,
+                prefix = {
+                    Text(
+                        stringResource(R.string.editor_step_number, position + 1),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(name) },
+                    )
+                },
+                colors = colors,
+                contentPadding = DENSE_FIELD_PADDING,
+                container = { OutlinedTextFieldDefaults.Container(enabled = true, isError = false, interactionSource = interaction, colors = colors) },
+            )
+        },
     )
 }
+
+/** Between a step field's outline and its text: dense, so that one line of text makes a field of about 48 dp. */
+private val DENSE_FIELD_PADDING = PaddingValues(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
 
 /**
  * The control that inserts a reference into the step at [position] (FLOW-031 (2)), and the offer of this recipe's
@@ -455,14 +502,15 @@ internal fun InsertIngredient(
     state: StepFieldState,
 ) {
     Box {
-        ActionText(
-            text = stringResource(R.string.editor_step_insert_ingredient),
+        BlockAction(
+            icon = R.drawable.ic_insert_ingredient,
+            label = stringResource(R.string.editor_step_insert_ingredient_label, position + 1),
+            tag = EditorTags.stepInsert(position),
             action = stringResource(R.string.editor_step_insert_ingredient_action, position + 1),
             onClick = {
                 state.trigger = null
                 state.offering = true
             },
-            modifier = Modifier.testTag(EditorTags.stepInsert(position)),
         )
         DropdownMenu(
             expanded = state.offering,

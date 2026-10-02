@@ -2,7 +2,6 @@ package app.recipefork.app.editor
 
 import android.Manifest
 import android.app.Activity
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +9,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -27,9 +27,11 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.file.FileProviderCache
-import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.TestPhotos
+import app.recipefork.app.media.camera.CameraTags
+import app.recipefork.app.media.camera.FakeCamera
+import app.recipefork.app.media.camera.LocalCameraAccess
 import app.recipefork.app.media.cover
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.Media
@@ -61,8 +63,8 @@ import java.time.Instant
 
 /**
  * The cover in the editor (FLOW-026, MEDIA-005, MEDIA-006, MEDIA-008, MEDIA-009): offered at the title as optional,
- * from the system camera or the system photo picker with no permission asked, said to be shrunk and stripped once
- * attached, refused with a reason when it cannot be, replaced and removed — and shown, not offered, on a frozen recipe.
+ * from the application's own camera — its permission asked on the first photo taken and never earlier — or the system
+ * photo picker, which asks for none, said to be shrunk and stripped once attached, refused with a reason when it cannot be, replaced and removed — and shown, not offered, on a frozen recipe.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -80,6 +82,8 @@ class CoverEditorTest {
     private val now = Instant.parse("2026-10-02T12:00:00Z")
     private val incoming = File(context.externalCacheDir ?: context.cacheDir, "incoming").apply { mkdirs() }
     private var shown by mutableStateOf(true)
+    private var picture: ByteArray? = null
+    private val camera = FakeCamera(picture = { picture })
 
     @Before
     fun setUp() {
@@ -103,7 +107,11 @@ class CoverEditorTest {
         runBlocking { recipes.save(recipe) }
         val environment = EditorEnvironment(ActiveBook(BookName.Pool, book.database), device.catalog(context)) { now }
         compose.setContent {
-            MaterialTheme { if (shown) EditorScreen(recipe.id, recipes, environment, saving, onClose = {}) }
+            MaterialTheme {
+                CompositionLocalProvider(LocalCameraAccess provides camera) {
+                    if (shown) EditorScreen(recipe.id, recipes, environment, saving, onClose = {})
+                }
+            }
         }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         return recipe.id
@@ -126,18 +134,21 @@ class CoverEditorTest {
         return activity.nextStartedActivityForResult.intent
     }
 
-    /** Takes a photograph with the system camera: it writes [width] by [height] into the file it was handed. */
-    private fun takePhoto(width: Int = 3000, height: Int = 2000) {
+    private fun grantCamera() = shadowOf(compose.activity.application).grantPermissions(Manifest.permission.CAMERA)
+
+    /** Opens the application's camera from the cover, the permission granted. */
+    private fun openCamera() {
+        grantCamera()
         compose.onNodeWithTag(CoverTags.TAKE).performScrollTo().performClick()
-        val intent = started()
-        assertEquals(MediaStore.ACTION_IMAGE_CAPTURE, intent.action)
-        @Suppress("DEPRECATION")
-        val output = intent.getParcelableExtra<Uri>(MediaStore.EXTRA_OUTPUT)!!
-        assertEquals(ContentResolver.SCHEME_CONTENT, output.scheme)
-        assertEquals("${context.packageName}.camera", output.authority)
-        val file = PhotoSources.cameraDirectory(context).listFiles()!!.single()
-        TestPhotos.tag(TestPhotos.jpeg(file, width, height))
-        compose.runOnUiThread { activity.receiveResult(intent, Activity.RESULT_OK, Intent()) }
+        compose.waitUntilExactlyOneExists(hasTestTag(CameraTags.VIEWFINDER), PATIENCE_MS)
+    }
+
+    /** Takes a photograph of [width] by [height] with the application's camera: the shutter hands it over. */
+    private fun takePhoto(width: Int = 3000, height: Int = 2000) {
+        picture = TestPhotos.tag(TestPhotos.jpeg(File(incoming, "shot.jpg"), width, height)).readBytes()
+        openCamera()
+        compose.onNodeWithTag(CameraTags.SHUTTER).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) }
     }
 
     /** Picks [file] in the system photo picker. */
@@ -168,23 +179,44 @@ class CoverEditorTest {
         assertTrue(cover.top >= title.bottom && cover.bottom <= tags.top)
     }
 
-    // FLOW-026 (1): neither source asks for a permission at run time, and the application declares none for them.
+    // FLOW-026 (1, 4): the gallery asks for no permission; the camera's is asked for on the first "Take a photo" and
+    // at no earlier moment; no permission to read the phone's storage or media is declared.
     @Test
-    fun noPermissionIsAskedFor() {
+    fun onlyTheCameraAsksAndOnlyOnTheFirstPhoto() {
         val requested = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
             .requestedPermissions.orEmpty().toSet()
+        assertTrue(Manifest.permission.CAMERA in requested)
         listOf(
-            Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.ACCESS_MEDIA_LOCATION,
+            Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.ACCESS_MEDIA_LOCATION,
         ).forEach { assertFalse(it, it in requested) }
         val id = open(Recipe.create(now, null))
+        assertNull(activity.lastRequestedPermission)
 
-        takePhoto()
-        awaitNotice(processed)
         choose(TestPhotos.jpeg(File(incoming, "picked.jpg"), 800, 600))
         compose.waitForIdle()
         compose.waitUntil(PATIENCE_MS) { stored(id).media.size == 1 && held().size == 1 }
+        awaitNotice(processed)
         assertNull(activity.lastRequestedPermission)
+
+        val picked = stored(id).cover!!.mediaId
+        picture = TestPhotos.jpeg(File(incoming, "shot.jpg"), 3000, 2000).readBytes()
+        compose.onNodeWithTag(CoverTags.TAKE).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { activity.lastRequestedPermission != null }
+        val request = activity.lastRequestedPermission!!
+        assertEquals(listOf(Manifest.permission.CAMERA), request.requestedPermissions.toList())
+        assertEquals(0, camera.opened)
+        grantCamera()
+        compose.runOnUiThread {
+            @Suppress("DEPRECATION")
+            compose.activity.onRequestPermissionsResult(
+                request.requestCode, request.requestedPermissions, intArrayOf(PackageManager.PERMISSION_GRANTED),
+            )
+        }
+        compose.waitUntilExactlyOneExists(hasTestTag(CameraTags.SHUTTER), PATIENCE_MS)
+        compose.onNodeWithTag(CameraTags.SHUTTER).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) }
+        compose.waitUntil(PATIENCE_MS) { stored(id).cover.let { it != null && it.mediaId != picked } && held().size == 1 }
     }
 
     // FLOW-026 (1), MEDIA-005: a photograph taken with the camera is attached, said to be shrunk and stripped, shown as
@@ -201,21 +233,24 @@ class CoverEditorTest {
         val cover = stored(id).cover!!
         assertEquals(Media(cover.mediaId, null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE), cover)
         assertEquals(listOf(cover.mediaId), held())
-        assertEquals(emptyList<String>(), PhotoSources.cameraDirectory(context).list()!!.toList())
+        compose.waitUntil(PATIENCE_MS) { !camera.isOpen }
         assertTrue(exists(CoverTags.REMOVE))
     }
 
-    // A camera closed without a photograph attaches nothing and keeps nothing.
+    // A camera closed without a photograph attaches nothing, keeps nothing, and is released.
     @Test
-    fun aCancelledCameraAttachesNothing() {
+    fun aClosedCameraAttachesNothing() {
         val id = open(Recipe.create(now, null))
-        compose.onNodeWithTag(CoverTags.TAKE).performScrollTo().performClick()
-        val intent = started()
-        compose.runOnUiThread { activity.receiveResult(intent, Activity.RESULT_CANCELED, null) }
+        openCamera()
+
+        compose.onNodeWithTag(CameraTags.CLOSE).performClick()
+
+        compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) && !camera.isOpen }
         compose.waitForIdle()
         assertTrue(stored(id).media.isEmpty())
+        assertTrue(held().isEmpty())
         assertFalse(exists(CoverTags.NOTICE))
-        assertEquals(emptyList<String>(), PhotoSources.cameraDirectory(context).list()!!.toList())
+        assertEquals(0, camera.taken)
     }
 
     // FLOW-026 (1), MEDIA-009: one picked from the gallery replaces the cover, whose file is deleted.

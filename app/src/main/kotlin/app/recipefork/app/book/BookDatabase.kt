@@ -57,6 +57,14 @@ sealed class BookName(val fileName: String) {
     data class OfAccount(val accountId: String) : BookName("book-$accountId.db")
 }
 
+/**
+ * The media identity of the cover of the recipe a query names `r`: its one item attached to no step (MEDIA-001), null
+ * for none.
+ */
+private const val COVER_OF_R =
+    "(select m.media_id from media m where m.recipe_id = r.recipe_id and m.step_position is null " +
+        "order by m.position limit 1)"
+
 /** Everything of one recipe as its rows. */
 data class RecipeRows(
     val recipe: RecipeEntity,
@@ -74,9 +82,10 @@ abstract class BookRecipeDao {
      * content the book holds because it is marked (FLOW-009, FLOW-064) — is not written here and is not listed.
      */
     @Query(
-        "select recipe_id, title, state, sent from recipe " +
-            "where recipe_id not in (select recipe_id from favourite) " +
-            "order by content_changed_at desc, recipe_id limit :limit",
+        "select r.recipe_id as recipe_id, r.title as title, r.state as state, r.sent as sent, " +
+            "$COVER_OF_R as cover_id from recipe r " +
+            "where r.recipe_id not in (select recipe_id from favourite) " +
+            "order by r.content_changed_at desc, r.recipe_id limit :limit",
     )
     abstract fun newest(limit: Int): Flow<List<OwnRecipeRow>>
 
@@ -243,7 +252,8 @@ interface FavouriteDao {
      */
     @Query(
         "select f.recipe_id as recipe_id, coalesce(r.title, f.title) as title, r.stated_author as stated_author, " +
-            "r.recipe_id is not null as held from favourite f left join recipe r on r.recipe_id = f.recipe_id " +
+            "r.recipe_id is not null as held, $COVER_OF_R as cover_id " +
+            "from favourite f left join recipe r on r.recipe_id = f.recipe_id " +
             "order by f.added_at desc, f.recipe_id",
     )
     fun marked(): Flow<List<MarkedRecipeRow>>

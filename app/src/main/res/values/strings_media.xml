@@ -15,14 +15,28 @@
     <string name="media_refused_unreadable">This file could not be read as a photo, so nothing was attached.</string>
     <string name="media_refused_too_large">This photo could not be shrunk to 1 MB, so nothing was attached.</string>
     <string name="media_refused_not_stored">The photo could not be saved on this phone, so nothing was attached.</string>
-    <string name="media_unavailable">No app to take or choose a photo was found on this phone.</string>
+    <string name="media_unavailable">No app to choose a photo was found on this phone.</string>
     <string name="media_removed">Cover photo removed.</string>
     <!-- A step's photograph, offered at the step (FLOW-026 (2)) and shown there on the card. -->
-    <string name="media_step_photo">Photo</string>
+    <string name="media_step_photo_label">Photo for step %1$d</string>
     <string name="media_step_photo_action">Add, change or remove the photo of step %1$d</string>
     <string name="media_step_take">Take a photo</string>
     <string name="media_step_choose">Choose from gallery</string>
     <string name="media_step_remove">Remove photo</string>
     <string name="media_step_description">Photo of step %1$d</string>
     <string name="media_step_removed">Step photo removed.</string>
+    <!-- The application's own camera (FLOW-026): a 4:3 landscape viewfinder, a shutter and a way out. -->
+    <string name="media_camera_viewfinder">Viewfinder: the photo will be exactly this frame</string>
+    <string name="media_camera_shutter">Take photo</string>
+    <string name="media_camera_close">Close</string>
+    <string name="media_camera_close_action">Close the camera without taking a photo</string>
+    <string name="media_camera_taking">Taking the photo…</string>
+    <string name="media_camera_missed">The photo could not be taken. Try again.</string>
+    <string name="media_camera_none">This phone has no back camera, so no photo can be taken here. You can choose one from the gallery instead.</string>
+    <string name="media_camera_failed">The camera could not be opened, so no photo was taken. You can choose one from the gallery instead.</string>
+    <!-- The camera permission, refused. -->
+    <string name="media_camera_permission_title">The camera needs permission</string>
+    <string name="media_camera_permission_text">To take a photo here, Recipe Fork needs permission to use the camera. You can allow it in the app\'s settings, or choose a photo from the gallery instead.</string>
+    <string name="media_camera_permission_settings">Open settings</string>
+    <string name="media_camera_permission_dismiss">Not now</string>
 </resources>
