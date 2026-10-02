@@ -18,28 +18,45 @@ import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepRun
 import app.recipefork.core.recipe.StepText
+import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rounding
 
 /**
  * What the card's ingredient references read as at the scale in force: each one exactly its line in the ingredient
- * list — the same quantity, the same rounding — so a step and the list never disagree (SCALE-007, DOM-007). A row the
- * list shows without a quantity reads as the list writes it, its unit alone; one with nothing to show reads as the
- * empty placeholder. A reference to no row of the recipe reads as nothing.
+ * list — the same quantity, the same rounding — so a step and the list never disagree (SCALE-007, DOM-007). A row with
+ * no quantity yet reads as the editor writes it, the visible empty placeholder then its unit (FLOW-032); a row the list
+ * shows unscaled for any other reason reads as the list writes it. A reference to no row of the recipe reads as nothing.
  */
-internal class CardReferences(private val lines: Map<Int, IngredientLine>) {
+internal class CardReferences(
+    private val quantities: Map<Int, String>,
+    private val roundings: Map<Int, Rounding> = emptyMap(),
+) {
     /** What the reference to the row at [position] reads as, with no mark: what a timer is named with too. */
-    fun quantity(position: Int): String? = lines[position]?.let { it.quantity ?: ReferenceText.PLACEHOLDER }
+    fun quantity(position: Int): String? = quantities[position]
 
     /** Which way rounding moved the reference's quantity, as its list line shows it; none for one not recalculated. */
-    fun rounding(position: Int): Rounding = lines[position]?.takeIf { it.derived }?.rounding ?: Rounding.NONE
+    fun rounding(position: Int): Rounding = roundings[position] ?: Rounding.NONE
 
     companion object {
         /** No references read: a card whose list is not known. */
         val NONE = CardReferences(emptyMap())
 
-        /** The references to [ordered] as their lines [list] show them, the two in the same order. */
-        fun of(ordered: List<Ingredient>, list: IngredientList): CardReferences =
-            CardReferences(ordered.zip(list.lines).associate { (ingredient, line) -> ingredient.position to line })
+        /** The references to [ordered] as their lines [list] show them in [language], the two in the same order. */
+        fun of(ordered: List<Ingredient>, list: IngredientList, language: InterfaceLanguage): CardReferences {
+            val pairs = ordered.zip(list.lines)
+            val quantities = pairs.associate { (ingredient, line) ->
+                val unfinished = ingredient.quantity == null && scalableQuantity(ingredient) == null
+                ingredient.position to if (unfinished || line.quantity == null) {
+                    ReferenceText.authored(ingredient, language)
+                } else {
+                    line.quantity
+                }
+            }
+            val roundings = pairs.associate { (ingredient, line) ->
+                ingredient.position to if (line.derived) line.rounding else Rounding.NONE
+            }
+            return CardReferences(quantities, roundings)
+        }
     }
 }
 

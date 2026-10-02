@@ -202,7 +202,7 @@ private fun RecipeContent(
             onFix = { scale = scale.fix(it) },
             onRelease = { scale = scale.release(it) },
         )
-        StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list))
+        StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language))
         if (recipe.description.isNotBlank()) {
             Text(
                 recipe.description,

@@ -129,7 +129,9 @@ class CardStepReferencesTest {
     private fun assertStepsReadAsTheList() {
         ingredients.forEach { ingredient ->
             val p = ingredient.position
-            val quantity = listQuantity(p) ?: "___"
+            // A row with no quantity yet reads as the editor writes it: the placeholder, then the unit the list shows.
+            val unfinished = ingredient.quantity == null && ingredient.unitType != UnitType.TASTE_UNMEASURED
+            val quantity = if (unfinished) listOfNotNull("___", listQuantity(p)).joinToString(" ") else listQuantity(p)!!
             val arrow = listArrow(p)?.let { " $it" } ?: ""
             assertEquals("${ingredient.freeTextName} at ${servings()}", "Take $quantity$arrow.", shown(p + 1))
             val words = listWords(p)?.let { " ($it)" } ?: ""
@@ -217,9 +219,70 @@ class CardStepReferencesTest {
         more(4)
         assertEquals("Take to taste.", shown(4))
         assertEquals(listOf("5.", "Take to taste."), spoken(4))
-        // Unfinished and off-grid rows show only their unit, unscaled; a row with nothing shows the empty placeholder.
-        assertEquals("Take g.", shown(5))
+        // FLOW-032: a row with no quantity yet reads as in the editor, the empty placeholder then its unit; with no
+        // unit either, the placeholder alone. An off-grid row reads as its line, its unit alone, unscaled.
+        assertEquals("Take ___ g.", shown(5))
         assertEquals("Take g.", shown(6))
+        assertEquals("g", listQuantity(5))
         assertEquals("Take ___.", shown(7))
+        assertStepsReadAsTheList()
+    }
+
+    private val flour = ingredients[0]
+
+    private fun fixFlour(amount: String) {
+        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement(amount)
+        compose.waitForIdle()
+        compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().assertIsEnabled().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isEmpty() }
+    }
+
+    // A reference to an ingredient since deleted is gone: the step reads as typed. A step that is only a reference is
+    // shown, numbered, and reads its quantity.
+    @Test
+    fun aDeletedIngredientsReferenceIsGoneAndAReferenceAloneIsAStep() {
+        open(
+            Recipe.create(now, null).copy(
+                title = "Bread",
+                servings = 4,
+                ingredients = listOf(flour),
+                steps = listOf(
+                    Step(0, "Stir well", listOf(IngredientReference(9, 4))),
+                    Step(1, "", listOf(IngredientReference(0, 0))),
+                ),
+            ),
+        )
+        assertEquals("Stir well", shown(0))
+        assertEquals(listOf("1.", "Stir well"), spoken(0))
+        assertEquals("200 g", shown(1))
+        assertEquals(listOf("2.", "200 g"), spoken(1))
+        more(4)
+        assertEquals("Stir well", shown(0))
+        assertEquals("400 g", shown(1))
+    }
+
+    // A recipe with no serving count shows none, and is scaled by a fixing all the same: the references follow.
+    @Test
+    fun aRecipeWithNoCountIsScaledByAFixingAndItsReferencesFollow() {
+        open(
+            Recipe.create(now, null).copy(
+                title = "Bread",
+                servings = null,
+                ingredients = ingredients.take(3),
+                steps = listOf(Step(0, "Add  flour", listOf(IngredientReference(0, 4)))) +
+                    ingredients.take(3).map { Step(it.position + 1, "Take .", listOf(IngredientReference(it.position, 5))) },
+            ),
+        )
+        assertEquals("Add 200 g flour", shown(0))
+        fixFlour("100")
+        assertEquals("Add 100 g flour", shown(0))
+        // 1.5 eggs shown as 2, rounded up, as the list shows it.
+        assertEquals("2 pc", listQuantity(1))
+        assertEquals("Take 2 pc\u202F↑.", shown(2))
+        assertEquals(listOf("3.", "Take 2 pc ($up)."), spoken(2))
+        assertEquals("Take ½ tsp.", shown(3))
+        assertEquals("½ tsp", listQuantity(2))
     }
 }

@@ -28,6 +28,7 @@ import app.recipefork.app.timer.TimerStep
 import app.recipefork.app.timer.rememberRecipeTimers
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.StepText
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -40,8 +41,8 @@ class StepToShow(val pending: StateFlow<TimerStep?>, val shown: () -> Unit)
 val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
 
 /**
- * The card's steps, in order and numbered as they read. A step holding no text yet is not a step a reader can
- * follow and is left out; with none left, so is the whole part, heading included (FLOW-019). A step carrying a timer
+ * The card's steps, in order and numbered as they read. A step that reads as nothing yet — no text and no reference
+ * to show — is not a step a reader can follow and is left out; with none left, so is the whole part, heading included (FLOW-019). A step carrying a timer
  * shows it beneath its text, startable there and running there (FLOW-016). A held timer its step no longer carries
  * is dropped. Opened from a timer's notification, the card is brought to that timer's step (FLOW-013 (4)).
  *
@@ -55,7 +56,8 @@ internal fun StepsList(
     title: String = "",
     references: CardReferences = CardReferences.NONE,
 ) {
-    val shown = steps.sortedBy { it.position }.filter { it.text.isNotBlank() }
+    // A step that is only a reference reads as one; one holding nothing that reads is left out.
+    val shown = steps.sortedBy { it.position }.filter { StepText.render(it, references::quantity).isNotBlank() }
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }

@@ -91,33 +91,26 @@ object TimerName {
         step.timer?.let { it.label ?: derived(StepText.runs(step, quantity)) }
 
     /**
-     * Whether [name] is one [step]'s timer could have been started under at some scale: its given name, or the name
-     * its step derives with each reference read as any quantity at all. A name held since a start at another serving
-     * count, or with an ingredient fixed, still fits; one from text the step no longer holds, or from a timer it no
-     * longer carries, does not. Without references this is [of] exactly.
+     * What a derived name is read from, apart from the scale: [step]'s typed text with a mark where each reference sits.
+     * Held with a timer started under a derived name, it tells the step it was started from whatever count or fixing
+     * the reader has chosen since; null where the step carries no timer or one with a given name.
      */
-    fun fits(step: Step, name: String): Boolean {
+    fun source(step: Step): String? {
+        val timer = step.timer ?: return null
+        if (timer.label != null) return null
+        return StepText.render(step) { REFERENCE_MARK }
+    }
+
+    /**
+     * Whether a timer held as [name], started from [source] ([TimerName.source] at its start), is still [step]'s own:
+     * its given name, unchanged; or a derived name read from exactly the words and references the step holds now —
+     * whatever the scale it was read at, so a change of count, a fixing or an ingredient's quantity keeps it, while any
+     * change to the author's words drops it. A timer held without a source was named from the step's typed text alone.
+     */
+    fun holds(step: Step, name: String, source: String?): Boolean {
         val timer = step.timer ?: return false
-        timer.label?.let { return it == name }
-        if (step.ingredientReferences.isEmpty()) return derived(step.text) == name
-        // Every reference reads as anything; every run of spaces as any, since a name collapses and trims them.
-        val pattern = StringBuilder()
-        for (run in StepText.runs(step) { "" }) {
-            if (run is StepRun.Reference) {
-                pattern.append("(?:.*)")
-                continue
-            }
-            run.text.split(SPACES).forEachIndexed { i, part ->
-                if (i > 0) pattern.append("\\s*")
-                if (part.isNotEmpty()) pattern.append(Regex.escape(part))
-            }
-        }
-        val regex = pattern.toString().toPattern()
-        if (regex.matcher(name).matches()) return true
-        if (!name.endsWith(ELLIPSIS)) return false
-        // A name cut short: what it keeps must be where some full reading of the step starts.
-        val matcher = regex.matcher(name.removeSuffix(ELLIPSIS))
-        return matcher.matches() || matcher.hitEnd()
+        timer.label?.let { return source == null && it == name }
+        return if (source != null) source(step) == source else of(step) == name
     }
 
     /**
@@ -132,5 +125,6 @@ object TimerName {
     /** What `\s` matches: the characters that read as one space. */
     private const val WHITESPACE = " \t\n\u000B\u000C\r"
 
-    private val SPACES = Regex("\\s+")
+    /** Where a reference sits in a [source]: a character no typed text holds. */
+    private const val REFERENCE_MARK = "\uFFFC"
 }

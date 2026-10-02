@@ -170,7 +170,7 @@ class RecipeTimers internal constructor(
     internal fun dropStale(steps: List<Step>, held: Map<Int, RunningTimer>) {
         val stale = held.values.filter { timer ->
             val step = steps.firstOrNull { it.position == timer.key.stepPosition }
-            step == null || step.timer?.duration != timer.duration || !TimerName.fits(step, timer.name)
+            step == null || step.timer?.duration != timer.duration || !TimerName.holds(step, timer.name, timer.source)
         }
         if (stale.isEmpty()) return
         card.scope.launch {
@@ -185,7 +185,7 @@ class RecipeTimers internal constructor(
 
     private suspend fun startNow(step: Step, name: String, title: String) {
         val duration = step.timer?.duration ?: return
-        store.start(key(step), name, title, duration)
+        store.start(key(step), name, title, duration, TimerName.source(step))
         withContext(Dispatchers.Main) { starts++ }
     }
 }
