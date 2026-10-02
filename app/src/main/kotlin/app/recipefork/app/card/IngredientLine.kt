@@ -72,6 +72,15 @@ data class CardScale(val requested: Rational?, val fixings: List<CardFixing> = e
 
     /** The reader asks for [count]: every fixing is released (SCALE-016). */
     fun request(count: Rational): CardScale = CardScale(count)
+
+    companion object {
+        /**
+         * The scale a card opens at, for a recipe authored for [authored] servings: the reader's [usual] count where
+         * one is set, the authored count otherwise (FLOW-017 (1, 2)); a recipe with no count ignores the setting.
+         */
+        fun opening(authored: Int?, usual: Rational?): CardScale =
+            CardScale(authored?.takeIf { it >= 1 }?.let { usual ?: Rational.of(it.toLong()) })
+    }
 }
 
 /**

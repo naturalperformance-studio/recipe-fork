@@ -7,6 +7,8 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.data.AndroidConnectivity
 import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.data.Network
+import app.recipefork.app.data.PreferencesUsualServings
+import app.recipefork.app.data.UsualServings
 import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySync
 import app.recipefork.app.media.MediaSweep
@@ -49,6 +51,9 @@ class AppContainer(
      */
     val httpClient: HttpClient? = if (mode == Mode.Standard) httpClientOf() else null
     val connectivity = AndroidConnectivity(context)
+
+    /** The serving count the reader usually cooks for, one for the device and kept across restarts (FLOW-017). */
+    val usualServings: UsualServings = PreferencesUsualServings(context)
 
     /**
      * Keeps the held dictionaries in step with the server while a connection is available (FLOW-001); none in

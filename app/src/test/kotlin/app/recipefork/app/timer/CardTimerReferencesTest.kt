@@ -79,6 +79,20 @@ class CardTimerReferencesTest : CardTimersKit() {
         assertTrue(timers.announcements.cancelled.isEmpty())
     }
 
+    // FLOW-017 (1), FLOW-016 (8): opened at the usual count, the step and its timer read the quantity at that count.
+    @Test
+    fun aTimerOnACardOpenedAtTheUsualCountIsNamedWithTheQuantityAtIt() {
+        usual.set(Rational.of(2))
+        open()
+        assertEquals(listOf("Servings: 2"), compose.textsOf(CardTags.SERVINGS))
+        assertEquals("Knead 100 g flour", controlName())
+        start(0)
+        awaitHeld { it.size == 1 }
+        assertEquals("Knead 100 g flour", held().single().name)
+        compose.waitUntil(PATIENCE_MS) { timers.announcements.started.isNotEmpty() }
+        assertEquals("Knead 100 g flour", timers.announcements.started.last().name)
+    }
+
     // The card reopens at the authored count: the timer started at another one is still the step's own.
     @Test
     fun aTimerStartedAtAnotherCountSurvivesTheCardReopening() {

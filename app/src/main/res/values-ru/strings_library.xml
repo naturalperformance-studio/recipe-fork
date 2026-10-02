@@ -30,4 +30,15 @@
     <string name="library_remove_statement">Рецепт уйдёт с этого устройства вместе со всем, что книга о нём хранит.</string>
     <string name="library_remove_confirm">Убрать</string>
     <string name="library_remove_decline">Отмена</string>
+    <string name="library_menu">Меню книги</string>
+    <string name="library_menu_action">Открыть меню книги</string>
+    <string name="library_usual_servings">Обычно готовлю на…</string>
+    <string name="library_usual_not_set">не задано</string>
+    <string name="library_usual_count">Порций: %1$s</string>
+    <string name="library_usual_fewer">Меньше порций</string>
+    <string name="library_usual_fewer_action">Уменьшить обычное число порций</string>
+    <string name="library_usual_more">Больше порций</string>
+    <string name="library_usual_more_action">Увеличить обычное число порций</string>
+    <string name="library_usual_set">Задать</string>
+    <string name="library_usual_clear">Не задавать</string>
 </resources>

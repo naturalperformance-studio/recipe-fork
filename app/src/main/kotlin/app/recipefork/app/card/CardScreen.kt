@@ -71,7 +71,8 @@ private sealed interface CardContent {
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
  * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
- * provenance, which opens its parent's card, the other. It opens at the authored count each time.
+ * provenance, which opens its parent's card, the other. It opens each time at the reader's usual count, or at the
+ * authored count while none is set (FLOW-017).
  */
 @Composable
 fun CardScreen(
@@ -118,7 +119,10 @@ fun CardScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
             )
-            is CardContent.Shown -> entries?.let { RecipeContent(shown.recipe, it, recipes, onOpenParent) }
+            is CardContent.Shown -> entries?.let {
+                // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
+                RecipeContent(shown.recipe, it, recipes, environment.usualServings.count.value, onOpenParent)
+            }
         }
     }
 }
@@ -161,6 +165,7 @@ private fun RecipeContent(
     recipe: Recipe,
     entries: Map<Long, IngredientEntryEntity>,
     recipes: RecipeRepository,
+    usual: Rational?,
     onOpenParent: (RecipeId) -> Unit,
 ) {
     val language = when (interfaceLanguage(LocalConfiguration.current)) {
@@ -186,11 +191,13 @@ private fun RecipeContent(
             )
         }
         recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
-        // The card always opens at the authored count (FLOW-017 (2)); the scale is the card's alone, and a fixing is
-        // of the rows as they stand, so a change to them starts the scale anew.
+        // The card opens at the reader's usual count, or at the authored one with none set (FLOW-017 (1, 2)). The
+        // scale — the count in force and any fixing — is the card's alone and is held here only: a change of count
+        // leaves the setting as it is (FLOW-017 (3)). A fixing is of the rows as they stand, so a change to them
+        // starts the scale anew.
         val authored = recipe.servings?.takeIf { it >= 1 }
         var scale by remember(recipe.id, authored, recipe.ingredients) {
-            mutableStateOf(CardScale(authored?.let { Rational.of(it.toLong()) }))
+            mutableStateOf(CardScale.opening(authored, usual))
         }
         val ordered = recipe.ingredients.sortedBy { it.position }
         val list = ingredientList(ordered, entries, language, authored, scale)
