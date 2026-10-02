@@ -37,6 +37,10 @@
     <string name="editor_ingredient_unit_action">Choose the unit</string>
     <string name="editor_ingredient_remove">Remove</string>
     <string name="editor_ingredient_remove_action">Remove ingredient row %1$d</string>
+    <!-- What the ingredient field offers while the author types (FLOW-057): entries, and the text as free text. -->
+    <string name="editor_ingredient_pick_action">Use the dictionary ingredient %1$s</string>
+    <string name="editor_ingredient_free_text_offer">Add “%1$s” as free text</string>
+    <string name="editor_ingredient_free_text_action">Add %1$s in your own words, not from the dictionary</string>
     <!-- An ingredient in the author's own words (FLOW-022): both statements, always together. -->
     <string name="editor_ingredient_free_text_warning">Not from the ingredient dictionary: filters will not find this recipe by this ingredient, and once the recipe is published this cannot be changed.</string>
     <!-- A piece ingredient in the author's own words carries no divisibility, so the author is asked (FLOW-022). -->

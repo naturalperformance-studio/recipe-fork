@@ -81,4 +81,37 @@ class IngredientsOnDiskTest {
             reopened.close()
         }
     }
+
+    // DOM-009 across the book file: a row named by an entry and a row in the author's own words, each read back as
+    // it was chosen once the book is closed and opened again — an entry replacing free text included (FLOW-022 (3)).
+    @Test
+    fun theChosenNameIsReadBackFromTheReopenedBook() = runBlocking {
+        val database = BookDatabase.open(context, book)
+        val recipes = RecipeRepository(ActiveBook(book, database))
+        val recipe = Recipe.create(now, null)
+        recipes.save(recipe)
+        val editor = RecipeEditor(recipes, recipe.id, { now }, CoroutineScope(Dispatchers.Unconfined))
+        editor.load()
+        repeat(3) { editor.addIngredient() }
+        editor.setIngredientFreeText(0, "chicken")
+        editor.setIngredientEntry(0, 10)
+        editor.setIngredientFreeText(1, "wild garlic")
+        editor.setIngredientEntry(2, 11)
+        editor.setIngredientUnit(2, QuantityUnit.PIECE)
+        editor.setIngredientDivisible(2, false)
+        val written = editor.recipe.value!!
+        RecipeEditor(recipes, recipe.id, { now }, CoroutineScope(Dispatchers.Unconfined)).load()
+        database.close()
+
+        val reopened = BookDatabase.open(context, book)
+        try {
+            val read = RecipeRepository(ActiveBook(book, reopened)).get(recipe.id)!!
+            assertEquals(written, read)
+            assertEquals(listOf(10L, null, 11L), read.ingredients.map { it.dictionaryEntry })
+            assertEquals(listOf(null, "wild garlic", null), read.ingredients.map { it.freeTextName })
+            assertEquals(false, read.ingredients[2].divisible)
+        } finally {
+            reopened.close()
+        }
+    }
 }

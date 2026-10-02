@@ -3,6 +3,7 @@ package app.recipefork.app.editor
 import android.content.res.Configuration
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
+import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.recipe.RecipeRepository
@@ -27,10 +28,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 
-/** What the editor needs beyond the recipes of the active book: the book itself, the tag dictionary and a clock. */
+/** What the editor needs beyond the recipes of the active book: the book itself, the dictionaries and a clock. */
 class EditorEnvironment(
     val book: ActiveBook,
     val tags: TagSource,
+    /** The ingredient dictionary the ingredient field offers from (FLOW-057); the catalog that holds the tags holds it. */
+    val ingredients: IngredientSource = tags as? IngredientSource ?: IngredientSource { emptyList() },
     val clock: () -> Instant = Instant::now,
 )
 
@@ -174,6 +177,14 @@ class RecipeEditor(
         saving.launch { writes.withLock { recipes.save(next) } }
         return true
     }
+
+    /** The row's ingredient as the dictionary entry [entryId], with no free-text name beside it (DOM-009). */
+    fun setIngredientEntry(position: Int, entryId: Long) =
+        editIngredient(position) { it.copy(dictionaryEntry = entryId, freeTextName = null) }
+
+    /** The row's ingredient in the author's own words, replacing any entry it held (DOM-009); empty holds neither. */
+    fun setIngredientFreeText(position: Int, name: String) =
+        editIngredient(position) { it.copy(dictionaryEntry = null, qualifier = null, freeTextName = name.ifEmpty { null }) }
 
     private companion object {
         /** One queue of writes for every editor, so that an editor opened again reads what the last one wrote. */
