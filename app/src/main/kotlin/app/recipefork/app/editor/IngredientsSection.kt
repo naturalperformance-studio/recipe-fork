@@ -5,44 +5,42 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.PlainTooltip
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.res.painterResource
-import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,6 +49,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -74,6 +73,7 @@ import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
+import kotlinx.coroutines.launch
 
 /** The interface language as numbers are read and written in it (L10N-009). */
 fun numberLanguage(configuration: Configuration): InterfaceLanguage =
@@ -232,53 +232,59 @@ private fun IngredientRow(
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.ingredient(position)),
     ) {
-        // The handle keeps a gutter of its own, so the name and the quantity below it start at the same edge.
-        Row(Modifier.fillMaxWidth().padding(top = 4.dp, end = 4.dp, bottom = 8.dp), verticalAlignment = Alignment.Top) {
-            DragHandle(drag, position, count, EditorTags.ingredientHandle(position), Modifier.padding(top = 8.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                    IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f))
-                    ActionText(
-                        text = stringResource(R.string.editor_ingredient_remove),
-                        action = stringResource(R.string.editor_ingredient_remove_action, position + 1),
-                        onClick = { editor.removeIngredient(position) },
-                        modifier = Modifier.padding(top = 8.dp).testTag(EditorTags.ingredientRemove(position)),
-                    )
-                    RowMenu(
-                        position = position,
-                        count = count,
-                        name = stringResource(R.string.editor_ingredient_menu_action, position + 1),
-                        tag = EditorTags.ingredientMenu(position),
-                        actionTag = { EditorTags.ingredientAction(position, it) },
-                        onAction = { action ->
-                            when (action) {
-                                RowAction.INSERT_ABOVE -> editor.insertIngredient(position)
-                                RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1)
-                                RowAction.MOVE_UP -> editor.moveIngredient(position, position - 1)
-                                RowAction.MOVE_DOWN -> editor.moveIngredient(position, position + 1)
-                            }
-                        },
-                        modifier = Modifier.padding(top = 8.dp),
+        // The name takes the whole first line up to its two controls, so its text has room at large font scales; the
+        // handle starts the line below at the same left edge, before the quantity and the unit.
+        Column(
+            Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f))
+                // An icon, not a word, so the name keeps room for its text at large font scales.
+                IconButton(
+                    onClick = { editor.removeIngredient(position) },
+                    modifier = Modifier.padding(top = 8.dp).size(48.dp).testTag(EditorTags.ingredientRemove(position)),
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_remove_row),
+                        contentDescription = stringResource(R.string.editor_ingredient_remove_action, position + 1),
                     )
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-                    // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
-                    if (row.unitType != UnitType.TASTE_UNMEASURED) {
-                        QuantityField(position, row, editor, language, isError = problem != null, Modifier.weight(1f))
-                    }
-                    UnitField(position, row, editor, Modifier.width(160.dp))
-                }
-                if (problem != null) {
-                    Text(
-                        stringResource(problemMessage(problem)),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.testTag(EditorTags.ingredientError(position)),
-                    )
-                }
-                // No shipped entry supplies divisibility, so every `piece` row asks for it, picked from an entry or not.
-                if (row.unitType == UnitType.PIECE) Divisibility(position, row, editor)
+                RowMenu(
+                    position = position,
+                    count = count,
+                    name = stringResource(R.string.editor_ingredient_menu_action, position + 1),
+                    tag = EditorTags.ingredientMenu(position),
+                    actionTag = { EditorTags.ingredientAction(position, it) },
+                    onAction = { action ->
+                        when (action) {
+                            RowAction.INSERT_ABOVE -> editor.insertIngredient(position)
+                            RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1)
+                            RowAction.MOVE_UP -> editor.moveIngredient(position, position - 1)
+                            RowAction.MOVE_DOWN -> editor.moveIngredient(position, position + 1)
+                        }
+                    },
+                    modifier = Modifier.padding(top = 8.dp),
+                )
             }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                DragHandle(drag, position, count, EditorTags.ingredientHandle(position), Modifier.padding(top = 8.dp))
+                // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
+                if (row.unitType != UnitType.TASTE_UNMEASURED) {
+                    QuantityField(position, row, editor, language, isError = problem != null, Modifier.weight(1f))
+                }
+                UnitField(position, row, editor, Modifier.width(160.dp))
+            }
+            if (problem != null) {
+                Text(
+                    stringResource(problemMessage(problem)),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.testTag(EditorTags.ingredientError(position)),
+                )
+            }
+            // No shipped entry supplies divisibility, so every `piece` row asks for it, picked from an entry or not.
+            if (row.unitType == UnitType.PIECE) Divisibility(position, row, editor)
         }
     }
 }

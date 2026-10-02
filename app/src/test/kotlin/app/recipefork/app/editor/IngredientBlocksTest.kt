@@ -3,6 +3,7 @@ package app.recipefork.app.editor
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
@@ -21,9 +22,14 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -43,6 +49,8 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
+import java.time.Instant
+import kotlin.math.abs
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -54,13 +62,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import java.time.Instant
-import kotlin.math.abs
 
 /**
  * Each ingredient row as one bounded block on a 360 dp phone, at font scale 1.0 and 2.0: every part of a row inside
- * its block, blocks apart from each other with an outline drawn round each, the handle in a gutter of its own and
- * the name above the quantity at the same left edge; the free-text warning as an icon beside the name whose text the
+ * its block, blocks apart from each other with an outline drawn round each, the name and the handle below it at the
+ * same left edge and the name's text with room to be read; the free-text warning as an icon beside the name whose text the
  * screen reader reads and a tap or a long press shows; a dragged row moving whole; a frozen recipe's rows as blocks.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -175,7 +181,7 @@ class IngredientBlocksTest {
     }
 
     // Each editable row is one bounded block, separated from the next; every part of it — the divisibility question
-    // and the warning included — inside it; the handle in its own gutter, the name above the quantity at one edge.
+    // and the warning included — inside it; the name and the handle below it at one left edge.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun everyRowIsOneBlockInRussian() = everyRowIsOneBlock(1f)
@@ -204,10 +210,11 @@ class IngredientBlocksTest {
             val name = bounds(EditorTags.ingredientName(position))
             val unit = bounds(EditorTags.ingredientUnit(position))
             val below = if (exists(EditorTags.ingredientQuantity(position))) bounds(EditorTags.ingredientQuantity(position)) else unit
-            // The name and the field below it start at one edge; the handle sits in the gutter before both.
-            assertEquals("row $position: the name and the field below it share their left edge", name.left, below.left, 0.5f)
-            assertTrue("row $position: the handle stands before the name", handle.right <= name.left + 0.5f)
-            assertTrue("row $position: the handle is on the name's line", handle.top < name.bottom && handle.bottom > name.top)
+            // One left edge: the name starts the first line, the handle the second, before the quantity and the unit.
+            assertEquals("row $position: the name and the handle below it share their left edge", name.left, handle.left, 0.5f)
+            assertTrue("row $position: the handle is below the name", handle.top >= name.bottom - 0.5f)
+            assertTrue("row $position: the handle is on the quantity's line", handle.top < below.bottom && handle.bottom > below.top)
+            assertTrue("row $position: the handle stands before the quantity", handle.right <= below.left + 0.5f)
             assertTrue("row $position: the quantity and unit are below the name", below.top >= name.bottom - 0.5f)
             // The menu and the unit beside a quantity end at one right edge.
             if (below != unit) assertEquals("row $position: the menu and the unit end together", bounds(EditorTags.ingredientMenu(position)).right, unit.right, 0.5f)
@@ -268,6 +275,77 @@ class IngredientBlocksTest {
         fun texts(node: SemanticsNode): List<String> =
             node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + node.children.flatMap(::texts)
         return texts(tooltip)
+    }
+
+    /**
+     * The width the name field of row [position] leaves for its text: from where the field's text starts — Material 3
+     * pads it 16 dp from the field's edge — to the warning icon at its end.
+     */
+    private fun nameTextWidth(position: Int): Float =
+        bounds(EditorTags.ingredientWarning(position)).left - (bounds(EditorTags.ingredientName(position)).left + px(16f))
+
+    /** How wide [text] is laid out in the name field's style at [fontScale]. */
+    private fun widthOf(text: String, fontScale: Float): Float {
+        val measurer = TextMeasurer(createFontFamilyResolver(context), Density(compose.density.density, fontScale), LayoutDirection.Ltr)
+        return measurer.measure(text, Typography().bodyLarge).size.width.toFloat()
+    }
+
+    // Criterion 1 at large text: a free-text name beside its warning icon keeps room for about eight Cyrillic letters
+    // on a 360 dp phone at font scale 2.0, so "черемша" reads whole.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun aFreeTextNameKeepsRoomForItsTextAtDoubleFontScale() {
+        open(2f)
+        val room = nameTextWidth(0)
+        val eight = widthOf("морковка", 2f)
+        assertTrue("the name leaves ${room / compose.density.density} dp for its text, eight letters take ${eight / compose.density.density} dp", room >= eight)
+    }
+
+    // On a 320 dp phone at font scale 2.0 the text of a free-text name still has room of its own.
+    @Test
+    @Config(qualifiers = "ru-w320dp-h4000dp")
+    fun aFreeTextNameKeepsUsableRoomOnANarrowPhoneAtDoubleFontScale() {
+        open(2f)
+        val room = nameTextWidth(0)
+        val four = widthOf("черм", 2f)
+        assertTrue("the name leaves ${room / compose.density.density} dp for its text, four letters take ${four / compose.density.density} dp", room >= four)
+    }
+
+    private fun isFocused(tag: String): Boolean = node(tag).config.getOrNull(SemanticsProperties.Focused) == true
+
+    // A free-text name typed letter by letter keeps its focus and its text while the warning icon appears beside it;
+    // tapping the icon neither takes the focus from the field nor gives it to it.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun typingAFreeTextNameKeepsFocusAsTheWarningAppears() {
+        open(1f, ingredients = rows() + Ingredient(4, null, null, null, UnitType.EXACT, QuantityUnit.GRAM, null))
+        val name = EditorTags.ingredientName(4)
+        compose.onNodeWithTag(name).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { isFocused(name) }
+        assertFalse(exists(EditorTags.ingredientWarning(4)))
+        var typed = ""
+        "щавель".forEach { letter ->
+            compose.onNodeWithTag(name).performTextInput(letter.toString())
+            typed += letter
+            compose.waitForIdle()
+            assertEquals(typed, fieldText(name))
+            assertTrue("the field keeps the focus after \"$typed\"", isFocused(name))
+            assertTrue("the warning shows after \"$typed\"", exists(EditorTags.ingredientWarning(4)))
+        }
+        // A tap on the icon while the field is focused: the field keeps it, the icon does not take it.
+        compose.onNodeWithTag(EditorTags.ingredientWarning(4)).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarningText(4)) }
+        assertTrue(isFocused(name))
+        assertFalse(isFocused(EditorTags.ingredientWarning(4)))
+        assertEquals("щавель", fieldText(name))
+        // With the focus elsewhere, a tap on the icon does not give it to the field.
+        compose.onNodeWithTag(name).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { !isFocused(name) }
+        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarningText(0)) }
+        assertFalse(isFocused(EditorTags.ingredientName(0)))
+        assertFalse(isFocused(name))
+        assertFalse(isFocused(EditorTags.ingredientWarning(0)))
     }
 
     // FLOW-025: a dragged row moves as one block — every part of it travels with it, by the same distance.

@@ -35,7 +35,6 @@
     <string name="editor_ingredient_quantity">Quantity</string>
     <string name="editor_ingredient_unit">Unit</string>
     <string name="editor_ingredient_unit_action">Choose the unit</string>
-    <string name="editor_ingredient_remove">Remove</string>
     <string name="editor_ingredient_remove_action">Remove ingredient row %1$d</string>
     <string name="editor_ingredient_menu_action">Ingredient row %1$d actions</string>
     <!-- What the ingredient field offers while the author types (FLOW-057): entries, and the text as free text. -->

@@ -550,7 +550,8 @@ class IngredientsEditorTest {
             compose.onNodeWithTag(EditorTags.ingredientName(position)).performTextInput(name)
             typeQuantity(position, quantity)
         }
-        assertEquals(string(R.string.editor_ingredient_remove_action, 1), AccessibilityChecks.clickActionLabel(node(EditorTags.ingredientRemove(0))))
+        // The remove control is an icon named for its row: the screen reader reads that name.
+        assertEquals(string(R.string.editor_ingredient_remove_action, 1), AccessibilityChecks.announcedLabel(node(EditorTags.ingredientRemove(0))))
         compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
         compose.waitForIdle()
         val rows = stored(id).ingredients
