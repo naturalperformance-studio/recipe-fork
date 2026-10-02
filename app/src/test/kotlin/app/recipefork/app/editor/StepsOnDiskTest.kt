@@ -23,6 +23,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Instant
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -72,6 +73,47 @@ class StepsOnDiskTest {
             assertEquals(Timer(5.minutes, "Rest"), read.steps[0].timer)
             assertEquals(listOf(IngredientReference(0, 9)), read.steps[0].ingredientReferences)
             assertEquals("Plain bread.\n\nNo sugar.", read.description)
+        } finally {
+            reopened.close()
+        }
+    }
+
+    // FLOW-027: timers attached and named in the editor, one with its step deleted, read back from the reopened book.
+    @Test
+    fun theTimersAndTheirNamesAreReadBackFromTheReopenedBook() = runBlocking {
+        val database = BookDatabase.open(context, book)
+        val recipes = RecipeRepository(ActiveBook(book, database))
+        val recipe = Recipe.create(now, null)
+        recipes.save(recipe)
+        val editor = RecipeEditor(recipes, recipe.id, { now }, CoroutineScope(Dispatchers.Unconfined))
+        editor.load()
+        repeat(4) { editor.addStep() }
+        editor.setStepText(0, "Marinate overnight.")
+        editor.setStepText(1, "To be deleted, with its timer.")
+        editor.setStepText(2, "Roast the chicken until golden.")
+        editor.setStepText(3, "Rest.")
+        editor.setTimerDuration(0, 12, 0)
+        editor.setTimerLabel(0, "Marinade")
+        editor.setTimerDuration(1, 0, 5)
+        editor.setTimerDuration(2, 1, 5)
+        editor.setTimerDuration(3, 0, 0)
+        editor.removeStep(1)
+        val name = "A name the author wrote that runs well past sixty characters, kept whole"
+        editor.setTimerLabel(1, name)
+        editor.setStepText(1, "Roast the chicken until golden and crisp.")
+        val written = editor.recipe.value!!
+        RecipeEditor(recipes, recipe.id, { now }, CoroutineScope(Dispatchers.Unconfined)).load()
+        database.close()
+
+        val reopened = BookDatabase.open(context, book)
+        try {
+            val read = RecipeRepository(ActiveBook(book, reopened)).get(recipe.id)!!
+            assertEquals(written, read)
+            assertEquals(
+                listOf(Timer(12.hours, "Marinade"), Timer(1.hours + 5.minutes, name), null),
+                read.steps.map { it.timer },
+            )
+            assertEquals(listOf("Marinate overnight.", "Roast the chicken until golden and crisp.", "Rest."), read.steps.map { it.text })
         } finally {
             reopened.close()
         }
