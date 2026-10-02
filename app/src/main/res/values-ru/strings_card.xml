@@ -16,10 +16,11 @@
     <string name="card_servings_more_action">Пересчитать рецепт на большее число порций</string>
     <string name="card_ingredients">Ингредиенты</string>
     <string name="card_steps">Шаги</string>
-    <string name="card_quantity_recalculated">пересчитано</string>
-    <string name="card_quantity_recalculated_exact_lower">пересчитано, точное значение было меньше</string>
-    <string name="card_quantity_recalculated_exact_higher">пересчитано, точное значение было больше</string>
-    <string name="card_proportions_warning">Некоторые ингредиенты уже на самом малом количестве, поэтому пропорции рецепта больше не соблюдаются.</string>
+    <string name="card_quantities_recalculated">Пересчитано · ↑ округлено вверх · ↓ вниз</string>
+    <string name="card_quantities_recalculated_spoken">Количества пересчитаны. Стрелка вверх — округлено вверх, стрелка вниз — округлено вниз.</string>
+    <string name="card_quantity_rounded_up">округлено вверх, точное значение меньше</string>
+    <string name="card_quantity_rounded_down">округлено вниз, точное значение больше</string>
+    <string name="card_proportions_warning">Часть количеств на минимуме — пропорции нарушены.</string>
     <string name="card_unnamed_ingredient">Ингредиент без названия</string>
     <string name="card_missing">Этого рецепта больше нет в этой книге рецептов.</string>
     <string name="card_servings_approximate">Порций: ≈%1$s</string>
@@ -31,6 +32,6 @@
     <string name="card_fix_release_action">Больше не пересчитывать рецепт от этого ингредиента</string>
     <string name="card_fix_cancel">Закрыть</string>
     <string name="card_fix_cancel_action">Закрыть, не меняя рецепт</string>
-    <string name="card_quantity_fixed">зафиксировано: столько у вас есть</string>
+    <string name="card_quantity_fixed">зафиксировано</string>
     <string name="card_quantity_shortfall">зафиксировано: у вас %2$s, а по рецепту теперь нужно %1$s</string>
 </resources>

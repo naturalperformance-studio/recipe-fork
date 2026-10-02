@@ -12,9 +12,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * What each line of the card's list says about how its quantity was computed: derived at any count other than the
- * authored one (SCALE-004 (1), SCALE-001), which way rounding moved it (SCALE-004 (2–5)), rounded up at the floor
- * (SCALE-005), and whether the list still holds the authored proportions (SCALE-009 (1–3)).
+ * What the card's list says about how its quantities were computed: recalculated — once, for the whole list — at any
+ * scale other than the authored one (SCALE-004 (1), SCALE-001), which way rounding moved each line, the arrow it
+ * carries (SCALE-004 (2–5)), rounded up at the floor (SCALE-005), and whether the list still holds the authored
+ * proportions (SCALE-009 (1–3)).
  */
 class RecalculatedLinesTest {
     private fun row(
@@ -43,12 +44,17 @@ class RecalculatedLinesTest {
 
     @Test
     fun atTheAuthoredCountNothingIsMarked() {
+        assertFalse(list(4).recalculated)
+        assertFalse(ingredientList(forFour, emptyMap(), ENGLISH, 4, null).recalculated)
         list(4).lines.forEach { assertFalse("${it.name}", it.derived); assertEquals(Rounding.NONE, it.rounding) }
         ingredientList(forFour, emptyMap(), ENGLISH, 4, null).lines.forEach { assertFalse("${it.name}", it.derived) }
     }
 
     @Test
     fun atAnyOtherCountEveryQuantityIsMarkedAndARoundedOneSaysWhichWay() {
+        assertTrue(list(6).recalculated)
+        assertTrue(list(3).recalculated)
+        assertTrue(list(1, 4).recalculated)
         // 6 servings: 750 g exact, 4.5 eggs → 5 (the exact value was lower), 1½ tsp exact.
         assertEquals(
             listOf(
@@ -73,6 +79,21 @@ class RecalculatedLinesTest {
         val flour = listOf(row("Flour", QuantityUnit.GRAM, Rational.of(400)))
         assertEquals(listOf(Marking("800 g", true, Rounding.NONE)), markings(list(8, ingredients = flour)))
         assertEquals(listOf(Marking("400 g", false, Rounding.NONE)), markings(list(4, ingredients = flour)))
+        assertTrue(list(8, ingredients = flour).recalculated)
+        assertFalse(list(4, ingredients = flour).recalculated)
+    }
+
+    @Test
+    fun aFixedAmountRecalculatesTheListAndMarksItsRoundedLines() {
+        // SCALE-002: 300 g of the 500 g chicken scales the whole list by 3/5 — 1.8 eggs → 2, ⅗ tsp → ⅔ tsp.
+        val fixed = ingredientList(forFour, emptyMap(), ENGLISH, 4, CardScale(null).fix(CardFixing(0, Rational.of(300), QuantityUnit.GRAM)))
+        assertTrue(fixed.recalculated)
+        assertTrue(fixed.lines[0].fixed)
+        assertEquals(Marking("2 pc", true, Rounding.UP), markings(fixed)[1])
+        assertEquals(Marking("⅔ tsp", true, Rounding.UP), markings(fixed)[2])
+        // A recipe without a serving count is recalculated by a fixing all the same.
+        val uncounted = ingredientList(forFour, emptyMap(), ENGLISH, null, CardScale(null).fix(CardFixing(0, Rational.of(300), QuantityUnit.GRAM)))
+        assertTrue(uncounted.recalculated)
     }
 
     @Test
@@ -97,6 +118,7 @@ class RecalculatedLinesTest {
     fun aRecipeWithNoServingCountHoldsItsProportionsAndMarksNothing() {
         val unscaled = ingredientList(forFour, emptyMap(), ENGLISH, null, null)
         assertTrue(unscaled.holdsProportions)
+        assertFalse(unscaled.recalculated)
         unscaled.lines.forEach { assertFalse("${it.name}", it.derived) }
     }
 }

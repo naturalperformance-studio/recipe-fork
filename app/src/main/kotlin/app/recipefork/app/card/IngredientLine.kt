@@ -27,8 +27,9 @@ import app.recipefork.core.scaling.UnitLabels
  * compute from, or null where it holds no unit either.
  *
  * [derived] is true exactly when [quantity] was computed at a scale other than the authored one (SCALE-004 (1)),
- * whatever its value; [rounding] says which way the grid moved it from the exact value, and reads [Rounding.UP] for
- * a quantity held at its floor (SCALE-005). A row shown unscaled is never derived.
+ * whatever its value — the card says so once for its whole list; [rounding] says which way the grid moved it from
+ * the exact value, shown as an arrow after the quantity, and reads [Rounding.UP] for a quantity held at its floor
+ * (SCALE-005). A row shown unscaled is never derived.
  */
 data class IngredientLine(
     val name: String?,
