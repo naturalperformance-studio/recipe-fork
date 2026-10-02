@@ -15,6 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -77,28 +82,56 @@ internal class StepDisplay(val content: StepContent, private val quantity: (Int)
     private fun inside(p: Int): ShownReference? = references.firstOrNull { it.start < p && p < it.end }
 
     /**
-     * The characters from [start] to [end] of the shown text replaced by [inserted]. Every reference the replaced
-     * characters touch is removed whole; the typed text is changed only where it was replaced, and every other
-     * reference stays at its place in the sentence. Null where the edit would bring two references to one offset in
-     * the text, which a step cannot hold: the edit is then not made.
+     * The characters from [start] to [end] of the shown text replaced by [inserted].
+     *
+     * A deletion that touches any character of a reference removes the whole reference. A replacement by text — a
+     * keyboard rewriting a word, autocorrect — removes the references it covers whole, and keeps one it only reaches
+     * into: the replaced range stops at that reference's edge, and the reference's own characters the keyboard
+     * re-commits are dropped from the inserted text, so a reference's characters never become typed text. Text typed
+     * into the middle of a reference goes after it. The typed text is changed only where it was replaced, and every
+     * other reference stays at its place in the sentence.
+     *
+     * A deletion that would bring two references to one offset of the text — which a step cannot hold — removes the
+     * one before the cursor too, as deleting into it would. Null only where no such reading exists.
      */
     fun edit(start: Int, end: Int, inserted: String): StepEdit? {
-        var from = start
-        var to = end
-        // Typed into the middle of a reference: the typing goes after it.
-        if (from == to) inside(from)?.let { from = it.end; to = it.end }
-        val removed = if (from < to) references.filter { it.start < to && from < it.end } else emptyList()
+        var from = start.coerceIn(0, text.length)
+        var to = end.coerceIn(from, text.length)
+        var typing = inserted
+        if (from == to) {
+            inside(from)?.let { from = it.end; to = it.end }
+        } else if (typing.isNotEmpty()) {
+            inside(from)?.let { reference ->
+                val cut = text.substring(from, minOf(reference.end, to))
+                typing = typing.removePrefix(cut)
+                from = reference.end
+            }
+            inside(to)?.let { reference ->
+                val cut = text.substring(maxOf(reference.start, start), to)
+                typing = typing.removeSuffix(cut)
+                to = reference.start
+            }
+            if (from > to) to = from
+        }
+        var removed = if (from < to) references.filter { it.start < to && from < it.end } else emptyList()
+        fun kept() = references.filter { it !in removed }
+        if (typing.isEmpty() && from < to) {
+            // Two references brought together: the one before the cursor goes as well.
+            val after = kept().filter { it.start >= to }.map { it.reference.textOffset - (typed(to) - typed(from)) }.toSet()
+            removed = removed + kept().filter { it.end <= from && it.reference.textOffset in after }
+        }
         val typedFrom = typed(from)
         val typedTo = typed(to)
-        val text = content.text.substring(0, typedFrom) + inserted + content.text.substring(typedTo)
-        val shift = inserted.length - (typedTo - typedFrom)
-        val kept = references.filter { it !in removed }.map {
-            if (it.start >= to) it.reference.copy(textOffset = it.reference.textOffset + shift) else it.reference
-        }
-        if (kept.distinctBy { it.textOffset }.size != kept.size) return null
-        val cursor = from - removed.sumOf { overlap(it.start, it.end, 0, from) } + inserted.length
-        return StepEdit(StepContent(text, kept), cursor, removed.isNotEmpty())
+        val content = StepContent(content.text.substring(0, typedFrom) + typing + content.text.substring(typedTo), kept().map {
+            if (it.start >= to) it.reference.copy(textOffset = it.reference.textOffset + typing.length - (typedTo - typedFrom)) else it.reference
+        })
+        if (content.references.distinctBy { it.textOffset }.size != content.references.size) return null
+        val cursor = from - removed.sumOf { overlap(it.start, it.end, 0, from) } + typing.length
+        return StepEdit(content, cursor, removed.isNotEmpty())
     }
+
+    /** Whether [range] reaches into a reference without covering it whole: a keyboard's composing region must not. */
+    fun splits(range: TextRange): Boolean = inside(range.min) != null || inside(range.max) != null
 
     /**
      * A reference to the ingredient at [ingredientPosition] put at the shown position [at], and the cursor after it.
@@ -180,25 +213,66 @@ internal class StepDisplay(val content: StepContent, private val quantity: (Int)
  * equal characters was typed or deleted.
  */
 internal data class TextChange(val start: Int, val end: Int, val inserted: String) {
+    /** How many characters the change takes out and puts in. */
+    val size: Int get() = end - start + inserted.length
+
     companion object {
+        /**
+         * The change from [old] to [new]: the smallest one, and, of equally small ones, the one the selections place
+         * — where the cursor was and is.
+         */
         fun between(old: TextFieldValue, new: TextFieldValue): TextChange {
-            val a = old.text
-            val b = new.text
-            val limit = minOf(a.length, b.length, old.selection.min, new.selection.min)
+            val placed = of(old.text, new.text, minOf(old.selection.min, new.selection.min), old.text.length - old.selection.max, new.text.length - new.selection.max)
+            val smallest = of(old.text, new.text, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
+            return if (smallest.size < placed.size) smallest else placed
+        }
+
+        private fun of(a: String, b: String, prefixLimit: Int, oldTail: Int, newTail: Int): TextChange {
+            val limit = minOf(a.length, b.length, prefixLimit)
             var prefix = 0
             while (prefix < limit && a[prefix] == b[prefix]) prefix++
-            val suffixLimit = minOf(
-                a.length - prefix,
-                b.length - prefix,
-                (a.length - old.selection.max).coerceAtLeast(0),
-                (b.length - new.selection.max).coerceAtLeast(0),
-            )
+            val suffixLimit = minOf(a.length - prefix, b.length - prefix, oldTail.coerceAtLeast(0), newTail.coerceAtLeast(0))
             var suffix = 0
             while (suffix < suffixLimit && a[a.length - 1 - suffix] == b[b.length - 1 - suffix]) suffix++
             return TextChange(prefix, a.length - suffix, b.substring(prefix, b.length - suffix))
         }
     }
 }
+
+/**
+ * Positions of the text [from] read in the text [to], where the two differ in one stretch: before it and after it a
+ * position keeps its place; inside it, [low] goes to the stretch's start and [high] to its end.
+ */
+internal class Positions(from: String, to: String) {
+    private val prefix: Int
+    private val suffix: Int
+    private val fromLength = from.length
+    private val toLength = to.length
+
+    init {
+        var p = 0
+        while (p < minOf(from.length, to.length) && from[p] == to[p]) p++
+        var s = 0
+        while (s < minOf(from.length, to.length) - p && from[from.length - 1 - s] == to[to.length - 1 - s]) s++
+        prefix = p
+        suffix = s
+    }
+
+    fun low(p: Int): Int = when {
+        p <= prefix -> p
+        p >= fromLength - suffix -> p - fromLength + toLength
+        else -> prefix
+    }
+
+    fun high(p: Int): Int = when {
+        p <= prefix -> p
+        p >= fromLength - suffix -> p - fromLength + toLength
+        else -> toLength - suffix
+    }
+}
+
+/** Undo or redo pressed on a keyboard: Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y. */
+private fun KeyEvent.isUndo(): Boolean = isCtrlPressed && (key == Key.Z || key == Key.Y)
 
 /** What a step's field holds beside the step itself: where the cursor stands, and the ingredients being offered. */
 @Stable
@@ -214,6 +288,74 @@ internal class StepFieldState {
     var trigger by mutableStateOf<Int?>(null)
 
     val focus = FocusRequester()
+
+    /**
+     * What the field's own buffer holds where it differs from what the step shows: after an edit the field was not
+     * given back as it came — a reference removed whole, typing moved past one — and until the field is redrawn, a
+     * keyboard's next edit is made to this text, not to the step's.
+     */
+    private var buffer: TextFieldValue? = null
+
+    /** What the field shows for [display]: its text, the cursor off the inside of every reference. */
+    fun shown(display: StepDisplay) = TextFieldValue(
+        display.text,
+        display.snap(selection ?: TextRange(display.text.length)),
+        composition?.takeIf { it.max <= display.text.length && !display.splits(it) },
+    )
+
+    /**
+     * The field reports [new]. Read against whichever text the field's buffer held — the step as shown in [now], or
+     * the [buffer] of an edit made since that the screen has not yet redrawn — and applied to the step. The step's new
+     * content goes to [commit], [redisplay] showing it. Returns where a just-typed [TRIGGER] stands, or null.
+     */
+    fun change(new: TextFieldValue, now: StepDisplay, redisplay: (StepContent) -> StepDisplay, commit: (StepContent) -> Unit): Int? {
+        val shown = shown(now)
+        val held = buffer
+        // The text the keyboard edited: the one from which its edit is the smaller.
+        val stale = held != null && held.text != shown.text && TextChange.between(held, new).size < TextChange.between(shown, new).size
+        val base = if (stale) held!! else shown
+        val map = if (stale) Positions(base.text, shown.text) else null
+        if (new.text == base.text) {
+            selection = now.snap(map?.let { TextRange(it.low(new.selection.start), it.low(new.selection.end)) } ?: new.selection, shown.selection)
+            composition = new.composition.takeIf { !stale }
+            if (!stale) buffer = null
+            return null
+        }
+        val raw = TextChange.between(base, new)
+        val change = when {
+            map == null -> raw
+            raw.start == raw.end -> TextChange(map.low(raw.start), map.low(raw.start), raw.inserted)
+            else -> TextChange(map.low(raw.start), maxOf(map.low(raw.start), map.high(raw.end)), raw.inserted)
+        }
+        val edit = now.edit(change.start, change.end, change.inserted)
+        if (edit == null) {
+            buffer = new
+            version++
+            return null
+        }
+        commit(edit.content)
+        val next = redisplay(edit.content)
+        if (stale || edit.removedAReference || next.text != new.text) {
+            selection = TextRange(edit.cursor)
+            composition = null
+            buffer = new.takeIf { next.text != it.text }
+        } else {
+            selection = next.snap(new.selection, shown.selection)
+            composition = new.composition?.takeIf { !next.splits(it) }
+            buffer = null
+        }
+        version++
+        // The trigger as the last character typed; text pasted or typed after it opens nothing.
+        return if (change.inserted.endsWith(TRIGGER) && change.start == change.end && !edit.removedAReference) {
+            edit.cursor - TRIGGER.length
+        } else {
+            null
+        }
+    }
+
+    /** Changed on every edit, so the field is redrawn — and its buffer replaced — even when nothing it shows changed. */
+    var version by mutableStateOf(0)
+        private set
 
     fun close() {
         offering = false
@@ -244,37 +386,20 @@ internal fun StepTextField(
         val held = recipe?.steps?.sortedBy { it.position }?.getOrNull(position) ?: step
         return StepDisplay.of(held, recipe?.ingredients ?: ingredients, language)
     }
-    fun shown(display: StepDisplay) = TextFieldValue(
-        display.text,
-        display.snap(state.selection ?: TextRange(display.text.length)),
-        state.composition?.takeIf { it.max <= display.text.length },
-    )
     val display = current()
     val highlight = MaterialTheme.colorScheme.secondaryContainer
+    state.version // Read, so that every edit redraws the field.
     OutlinedTextField(
-        value = shown(display),
+        value = state.shown(display),
         onValueChange = { new ->
-            val now = current()
-            val old = shown(now)
-            if (new.text == old.text) {
-                state.selection = now.snap(new.selection, old.selection)
-                state.composition = new.composition
-                return@OutlinedTextField
-            }
-            val change = TextChange.between(old, new)
-            val edit = now.edit(change.start, change.end, change.inserted) ?: return@OutlinedTextField
-            editor.setStepText(position, edit.content.text, edit.content.references)
-            val next = StepDisplay(edit.content) { ReferenceText.authored(editor.recipe.value?.ingredients ?: ingredients, language)(it) }
-            if (edit.removedAReference || next.text != new.text) {
-                state.selection = TextRange(edit.cursor)
-                state.composition = null
-            } else {
-                state.selection = next.snap(new.selection, old.selection)
-                state.composition = new.composition
-            }
-            // The trigger as the last character typed; text pasted or typed after it opens nothing.
-            if (change.inserted.endsWith(TRIGGER) && change.start == change.end && !edit.removedAReference) {
-                state.trigger = edit.cursor - TRIGGER.length
+            val trigger = state.change(
+                new,
+                current(),
+                redisplay = { StepDisplay(it, ReferenceText.authored(editor.recipe.value?.ingredients ?: ingredients, language)) },
+                commit = { editor.setStepText(position, it.text, it.references) },
+            )
+            if (trigger != null) {
+                state.trigger = trigger
                 state.offering = true
             }
         },
@@ -285,7 +410,8 @@ internal fun StepTextField(
         },
         label = { Text(stringResource(R.string.editor_step, position + 1)) },
         minLines = 2,
-        modifier = modifier.focusRequester(state.focus),
+        // No undo: an earlier value of the field would bring a removed reference back as typed text.
+        modifier = modifier.focusRequester(state.focus).onPreviewKeyEvent { it.isUndo() },
     )
 }
 

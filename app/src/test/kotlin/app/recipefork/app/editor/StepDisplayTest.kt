@@ -99,12 +99,35 @@ class StepDisplayTest {
         assertEquals(16, first.cursor)
     }
 
-    // Two references brought to one offset cannot be held: the edit is not made.
+    // Backspacing the only space between two references removes the one before the cursor, as deleting into it would.
     @Test
-    fun anEditThatWouldMergeTwoReferencesIsNotMade() {
+    fun backspacingTheSpaceBetweenTwoReferencesRemovesTheOneBeforeTheCursor() {
         val two = display("a b", listOf(IngredientReference(0, 1), IngredientReference(1, 2)))
         assertEquals("a200 г по вкусуb", two.text)
-        assertNull(two.edit(6, 7, ""))
+        val back = two.edit(6, 7, "")!!
+        assertEquals(StepContent("ab", listOf(IngredientReference(1, 1))), back.content)
+        assertEquals(1, back.cursor)
+        assertTrue(back.removedAReference)
+        assertEquals("aпо вкусуb", display(back.content.text, back.content.references).text)
+    }
+
+    // A keyboard rewriting text that reaches into a reference keeps the reference, and its characters never become
+    // typed text.
+    @Test
+    fun aRewriteReachingIntoAReferenceKeepsItAndNeverTypesItsCharacters() {
+        // The last character of "200 г" re-committed with one more: only the new one is typed, after the reference.
+        assertEquals(StepContent("Всыпьте р муки", step.ingredientReferences), display().edit(12, 13, "гр")!!.content)
+        // Replaced by something else: the reference stays, the new text goes after it.
+        assertEquals(StepContent("Всыпьте кг муки", step.ingredientReferences), display().edit(12, 13, "кг")!!.content)
+        // Autocorrect of the word before, its region taking in the reference's first character.
+        assertEquals(
+            StepContent("Всыпте  муки", listOf(IngredientReference(0, 7))),
+            display().edit(0, 9, "Всыпте 2")!!.content,
+        )
+        // A region wholly inside one reference: the reference stays whole.
+        assertEquals(StepContent("Всыпьте x муки", step.ingredientReferences), display().edit(9, 11, "x")!!.content)
+        // A region covering a reference whole replaces it.
+        assertEquals(StepContent("Всыпьте сахар муки", emptyList()), display().edit(8, 13, "сахар")!!.content)
     }
 
     @Test

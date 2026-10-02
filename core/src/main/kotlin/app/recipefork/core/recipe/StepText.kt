@@ -57,10 +57,10 @@ object ReferenceText {
      * [ingredient]'s reference at the authored scale in [language]: its quantity and unit as the ingredient list
      * writes them ("200 г"); "to taste" in the interface language for a `taste_unmeasured` row, nothing in it marked
      * as derived; for a row with no quantity yet, [PLACEHOLDER] followed by the unit where one is chosen. A number the
-     * row holds off its grid, or before its divisibility is given, reads as the quantity field writes it.
+     * row holds off its grid, or before its divisibility is given, reads as the quantity field writes it. A "to taste"
+     * row reads as the list writes it too: its authored quantity is the label alone.
      */
     fun authored(ingredient: Ingredient, language: InterfaceLanguage): String {
-        if (ingredient.unitType == UnitType.TASTE_UNMEASURED) return UnitLabels.of(QuantityUnit.TO_TASTE, language)
         ingredient.authoredQuantity?.let { authored ->
             runCatching { QuantityText.of(Scaling.display(authored, ScaleFactor.ONE), language) }.getOrNull()?.let { return it }
         }

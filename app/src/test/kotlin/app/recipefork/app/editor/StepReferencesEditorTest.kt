@@ -20,7 +20,12 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.withKeyDown
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -139,6 +144,26 @@ class StepReferencesEditorTest {
 
     private fun stepShown(position: Int) = fieldText(EditorTags.stepText(position))
 
+    /** The text as laid out on screen under [tag], with its styles. */
+    private fun laidOut(tag: String, unmerged: Boolean = false): AnnotatedString {
+        val results = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithTag(tag, useUnmergedTree = unmerged).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action!!.invoke(results)
+        return results.single().layoutInput.text
+    }
+
+    /** Characters [start] to [end] of [text] are bold and underlined, and the characters of [typed] are neither. */
+    private fun assertSetApart(text: AnnotatedString, start: Int, end: Int, typed: List<Int>) {
+        fun styles(at: Int) = text.spanStyles.filter { it.start <= at && at < it.end }.map { it.item }
+        (start until end).forEach { at ->
+            assertTrue("bold at $at", styles(at).any { it.fontWeight == FontWeight.Bold })
+            assertTrue("underlined at $at", styles(at).any { it.textDecoration == TextDecoration.Underline })
+        }
+        typed.forEach { at ->
+            assertTrue("plain at $at", styles(at).none { it.fontWeight == FontWeight.Bold || it.textDecoration == TextDecoration.Underline })
+        }
+    }
+
     private fun placeCursor(position: Int, at: Int) {
         compose.onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextInputSelection(TextRange(at))
         compose.waitForIdle()
@@ -188,6 +213,10 @@ class StepReferencesEditorTest {
 
         assertEquals("Всыпьте 200 г муки", stepShown(0))
         assertEquals(TextRange(13), selection(0))
+        // Set apart on screen by weight and an underline, not by colour alone.
+        val shown = laidOut(EditorTags.stepText(0))
+        assertEquals("Всыпьте 200 г муки", shown.text)
+        assertSetApart(shown, 8, 13, typed = listOf(0, 7, 13, 17))
         assertEquals(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))), stored(recipe.id).steps.single())
     }
 
@@ -383,6 +412,12 @@ class StepReferencesEditorTest {
         val shownText = compose.onNodeWithTag(EditorTags.stepText(0), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsProperties.Text].map { it.text }
         assertEquals(listOf(text), shownText)
+        // Set apart as the field sets them: all three references, the text between them plain.
+        val laid = laidOut(EditorTags.stepText(0), unmerged = true)
+        assertEquals(text, laid.text)
+        assertSetApart(laid, 8, 13, typed = listOf(7, 13, 18))
+        assertSetApart(laid, 20, 26, typed = listOf(19, 26))
+        assertSetApart(laid, text.length - 8, text.length, typed = listOf(text.length - 9))
         compose.onNodeWithTag(EditorTags.stepInsert(0)).assertDoesNotExist()
         assertFalse(compose.onNodeWithTag(EditorTags.stepText(0), useUnmergedTree = true).fetchSemanticsNode().config.contains(SemanticsActions.SetText))
         val timerName = compose.onNodeWithTag(EditorTags.timerName(0), useUnmergedTree = true).fetchSemanticsNode()
@@ -410,5 +445,37 @@ class StepReferencesEditorTest {
         compose.onNodeWithTag(EditorTags.stepInsert(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOfferNone(0)), PATIENCE_MS)
         assertEquals(listOf(string(R.string.editor_step_insert_ingredient_none)), compose.textsOf(EditorTags.stepOfferNone(0)))
+    }
+
+    // Undo never brings a removed reference back as typed text: the step's field takes no undo.
+    @Test
+    fun undoNeverBringsAReferenceBackAsTypedText() {
+        val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))))
+        open(recipe.id)
+        placeCursor(0, 13)
+        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.waitForIdle()
+        assertEquals("Всыпьте  муки", stepShown(0))
+        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.Z) } }
+        compose.waitForIdle()
+        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { withKeyDown(Key.CtrlLeft) { withKeyDown(Key.ShiftLeft) { pressKey(Key.Z) } } }
+        compose.waitForIdle()
+        assertEquals("Всыпьте  муки", stepShown(0))
+        assertEquals(Step(0, "Всыпьте  муки"), stored(recipe.id).steps.single())
+    }
+
+    // Backspacing the only space between two references removes the one before the cursor; the keyboard is not ignored.
+    @Test
+    fun backspacingTheSpaceBetweenTwoReferences() {
+        val recipe = bread(Step(0, "Всыпьте   и ", listOf(IngredientReference(0, 8), IngredientReference(2, 9))))
+        open(recipe.id)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
+        assertEquals("Всыпьте 200 г по вкусу и ", stepShown(0))
+        placeCursor(0, 14)
+        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.waitForIdle()
+        assertEquals("Всыпьте по вкусу и ", stepShown(0))
+        assertEquals(Step(0, "Всыпьте  и ", listOf(IngredientReference(2, 8))), stored(recipe.id).steps.single())
+        assertEquals(TextRange(8), selection(0))
     }
 }
