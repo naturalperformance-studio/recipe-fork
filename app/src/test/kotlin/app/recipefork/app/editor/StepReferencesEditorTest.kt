@@ -8,7 +8,9 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -60,7 +62,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowInputMethodManager
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 
@@ -292,8 +296,9 @@ class StepReferencesEditorTest {
         compose.onNodeWithTag(EditorTags.stepText(0)).performTextInputSelection(TextRange(20))
         compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
-        assertEquals("Теперь Всыпьте  муки высшего сорта", stepShown(0))
-        assertEquals(Step(0, "Теперь Всыпьте  муки высшего сорта"), stored(recipe.id).steps.single())
+        // Single spacing is left where it stood (T-074).
+        assertEquals("Теперь Всыпьте муки высшего сорта", stepShown(0))
+        assertEquals(Step(0, "Теперь Всыпьте муки высшего сорта"), stored(recipe.id).steps.single())
         assertEquals(TextRange(15), selection(0))
     }
 
@@ -323,10 +328,11 @@ class StepReferencesEditorTest {
 
         compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
         compose.waitForIdle()
-        assertEquals("Всыпьте  муки", stepShown(0))
-        assertEquals("Остаток муки:  и соль по вкусу", stepShown(1))
+        // Single spacing is left where each stood (T-074).
+        assertEquals("Всыпьте муки", stepShown(0))
+        assertEquals("Остаток муки: и соль по вкусу", stepShown(1))
         val steps = stored(recipe.id).steps
-        assertEquals(listOf(Step(0, "Всыпьте  муки"), Step(1, "Остаток муки:  и соль ", listOf(IngredientReference(1, 22)))), steps)
+        assertEquals(listOf(Step(0, "Всыпьте муки"), Step(1, "Остаток муки: и соль ", listOf(IngredientReference(1, 21)))), steps)
     }
 
     /** The system back, pressed while the offer is open: it goes to the offer's own window, the topmost. */
@@ -455,13 +461,13 @@ class StepReferencesEditorTest {
         placeCursor(0, 13)
         compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
-        assertEquals("Всыпьте  муки", stepShown(0))
+        assertEquals("Всыпьте муки", stepShown(0))
         compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.Z) } }
         compose.waitForIdle()
         compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { withKeyDown(Key.CtrlLeft) { withKeyDown(Key.ShiftLeft) { pressKey(Key.Z) } } }
         compose.waitForIdle()
-        assertEquals("Всыпьте  муки", stepShown(0))
-        assertEquals(Step(0, "Всыпьте  муки"), stored(recipe.id).steps.single())
+        assertEquals("Всыпьте муки", stepShown(0))
+        assertEquals(Step(0, "Всыпьте муки"), stored(recipe.id).steps.single())
     }
 
     // A removed reference's quantity typed back as plain text after the screen redrew: every character is kept.
@@ -472,9 +478,9 @@ class StepReferencesEditorTest {
         placeCursor(0, 13)
         compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
-        assertEquals("Всыпьте  муки", stepShown(0))
+        assertEquals("Всыпьте муки", stepShown(0))
         placeCursor(0, 8)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("200 г")
+        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("200 г ")
         compose.waitForIdle()
         assertEquals("Всыпьте 200 г муки", stepShown(0))
         assertEquals(Step(0, "Всыпьте 200 г муки"), stored(recipe.id).steps.single())
@@ -493,5 +499,95 @@ class StepReferencesEditorTest {
         assertEquals("Всыпьте по вкусу и ", stepShown(0))
         assertEquals(Step(0, "Всыпьте  и ", listOf(IngredientReference(2, 8))), stored(recipe.id).steps.single())
         assertEquals(TextRange(8), selection(0))
+    }
+
+    private val keyboard: ShadowInputMethodManager
+        get() = shadowOf(context.getSystemService(InputMethodManager::class.java))
+
+    /** The soft keyboard put away, as the offer's window taking focus puts it away on a device. */
+    private fun hideKeyboard() {
+        compose.runOnUiThread {
+            context.getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(null, 0)
+        }
+        assertFalse(keyboard.isSoftInputVisible)
+    }
+
+    /** The step's field has focus again, the keyboard shown, the cursor at [cursor]. */
+    private fun assertTypingGoesOn(position: Int, cursor: Int) {
+        compose.waitUntil(PATIENCE_MS) { node(EditorTags.stepText(position)).config[SemanticsProperties.Focused] }
+        compose.onNodeWithTag(EditorTags.stepText(position)).assertIsFocused()
+        compose.waitUntil(PATIENCE_MS) { keyboard.isSoftInputVisible }
+        assertEquals(TextRange(cursor), selection(position))
+    }
+
+    // T-074: choosing from the offer the step's control opened leaves the field focused, the keyboard open and the
+    // cursor after the reference and the space typed with it; typing goes on there.
+    @Test
+    fun choosingFromTheControlKeepsTypingGoingAfterTheReference() {
+        val recipe = bread(Step(0, "Всыпьтемуки"))
+        open(recipe.id)
+        placeCursor(0, 7)
+        openOffer(0)
+        hideKeyboard()
+        pick(0, 0)
+        assertEquals("Всыпьте 200 г муки", stepShown(0))
+        assertEquals(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))), stored(recipe.id).steps.single())
+        assertTypingGoesOn(0, 14)
+        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("пшеничной ")
+        compose.waitForIdle()
+        assertEquals("Всыпьте 200 г пшеничной муки", stepShown(0))
+    }
+
+    // T-074: the same after `@`, and dismissing the offer `@` opened returns focus and keyboard to the field.
+    @Test
+    fun choosingOrDismissingAfterTheTriggerKeepsTypingGoing() {
+        val recipe = bread(Step(0, "Всыпьте"))
+        open(recipe.id)
+        placeCursor(0, 7)
+        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOffer(0, 0)), PATIENCE_MS)
+        hideKeyboard()
+        pick(0, 0)
+        assertEquals("Всыпьте 200 г", stepShown(0))
+        assertEquals(Step(0, "Всыпьте ", listOf(IngredientReference(0, 8))), stored(recipe.id).steps.single())
+        assertTypingGoesOn(0, 13)
+
+        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput(" муки, @")
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOffer(0, 0)), PATIENCE_MS)
+        hideKeyboard()
+        pressBackOnTheOffer()
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepOffer(0, 0)), PATIENCE_MS)
+        assertTypingGoesOn(0, "Всыпьте 200 г муки, @".length)
+    }
+
+    // T-074: a reference deleted into by the keyboard leaves single spacing — before punctuation, the space before it
+    // goes; at the end of the text, its neighbouring space.
+    @Test
+    fun deletingIntoAReferenceLeavesSingleSpacing() {
+        val recipe = bread(
+            Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))),
+            Step(1, "добавьте .", listOf(IngredientReference(2, 9))),
+            Step(2, "Посолите ", listOf(IngredientReference(2, 9))),
+        )
+        open(recipe.id)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(2)), PATIENCE_MS)
+        placeCursor(0, 13)
+        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.waitForIdle()
+        assertEquals("Всыпьте муки", stepShown(0))
+        assertEquals(TextRange(8), selection(0))
+        placeCursor(1, 9)
+        compose.onNodeWithTag(EditorTags.stepText(1)).performKeyInput { pressKey(Key.Delete) }
+        compose.waitForIdle()
+        assertEquals("добавьте.", stepShown(1))
+        assertEquals(TextRange(8), selection(1))
+        placeCursor(2, 17)
+        compose.onNodeWithTag(EditorTags.stepText(2)).performKeyInput { pressKey(Key.Backspace) }
+        compose.waitForIdle()
+        assertEquals("Посолите", stepShown(2))
+        assertEquals(
+            listOf(Step(0, "Всыпьте муки"), Step(1, "добавьте."), Step(2, "Посолите")),
+            stored(recipe.id).steps,
+        )
     }
 }

@@ -17,6 +17,7 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
+import app.recipefork.core.recipe.ReferenceSpacing
 import app.recipefork.core.recipe.ServingCountInput
 import app.recipefork.core.recipe.ServingCountReading
 import app.recipefork.core.recipe.Step
@@ -319,16 +320,18 @@ class RecipeEditor(
     }
 
     /**
-     * Deletes the row at [position]; the rows after it move up. A step's reference to the deleted row is dropped,
-     * and references to the rows after it follow them (DOM-007, FLOW-025 (5)).
+     * Deletes the row at [position]; the rows after it move up. A step's reference to the deleted row is dropped, the
+     * text closed up where it stood (single spacing, [ReferenceSpacing.closeUp]), and references to the rows after it
+     * follow them (DOM-007, FLOW-025 (5)).
      */
     fun removeIngredient(position: Int) = edit { recipe ->
         if (position !in recipe.ingredients.indices) return@edit recipe
         ingredientKeys.remove(position, recipe.ingredients.size)
         val rows = recipe.ingredients.filterIndexed { i, _ -> i != position }.mapIndexed { i, row -> row.copy(position = i) }
         val steps = recipe.steps.map { step ->
-            step.copy(
-                ingredientReferences = step.ingredientReferences.filter { it.ingredientPosition != position }.map {
+            val left = ReferenceSpacing.withoutReferencesTo(step, position)
+            left.copy(
+                ingredientReferences = left.ingredientReferences.map {
                     if (it.ingredientPosition > position) it.copy(ingredientPosition = it.ingredientPosition - 1) else it
                 },
             )
