@@ -17,7 +17,7 @@ import app.recipefork.app.card.LocalStepToShow
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeFileIntents
 import app.recipefork.app.file.RecipeImport
-import app.recipefork.app.file.announce
+import app.recipefork.app.file.message
 import app.recipefork.app.file.importSafely
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.timer.TimerIntents
@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 session.viewModelScope.launch {
                     val outcome = files.importSafely(context, uri)
-                    announce(context, outcome)
+                    session.tell(outcome.message())
                     if (outcome is ImportOutcome.Added) session.showImported()
                 }
             }

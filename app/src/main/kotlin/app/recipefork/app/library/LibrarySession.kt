@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.recipefork.app.card.StepToShow
+import app.recipefork.app.file.FileMessage
 import app.recipefork.app.timer.TimerStep
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -88,6 +89,25 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         saved[STEP_KEY] = "$position/$recipeId"
     }
 
+    /**
+     * What the person is to be told about a file — an import's outcome, a failed export — until they close it. Kept
+     * like the view, so that a message shown when the screen turns, or when the process ends, is shown again once, and
+     * a closed one never again.
+     */
+    val message: StateFlow<FileMessage?> = saved.getStateFlow<String?>(MESSAGE_KEY, null)
+        .map(FileMessage::decoded)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, FileMessage.decoded(saved[MESSAGE_KEY]))
+
+    /** Tells the person [message], in place of any not yet closed. */
+    fun tell(message: FileMessage) {
+        saved[MESSAGE_KEY] = message.encoded()
+    }
+
+    /** The message was closed. */
+    fun told() {
+        saved[MESSAGE_KEY] = null
+    }
+
     /** The step the card is to be brought to, until it has been. */
     val stepToShow = StepToShow(
         saved.getStateFlow<String?>(STEP_KEY, null)
@@ -103,6 +123,7 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     private companion object {
         const val STEP_KEY = "library.step"
+        const val MESSAGE_KEY = "library.file_message"
         const val VIEW_KEY = "library.view"
         const val EDITING_KEY = "library.editing"
         const val VIEWING_KEY = "library.viewing"

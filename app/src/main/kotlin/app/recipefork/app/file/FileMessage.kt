@@ -1,0 +1,108 @@
+package app.recipefork.app.file
+
+import android.content.res.Resources
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import app.recipefork.app.R
+
+/**
+ * What the person is told about a file: what became of one they opened for import (FLOW-064), or that an export
+ * failed (FLOW-063). It is said whole, in a dialog closed by its OK, never in a toast that cuts it short; it is kept
+ * as plain data so that it outlives a rotation and the end of the process while it is shown.
+ */
+data class FileMessage(val kind: Kind, val title: String = "") {
+    enum class Kind { ADDED, ALREADY_IN_BOOK, CANNOT_OPEN, NOT_A_RECIPE_FILE, LATER_VERSION, DAMAGED, BREAKS_RULES, EXPORT_FAILED }
+
+    /** The message in the language of [resources]; a recipe's title is named, shortened when long. */
+    fun text(resources: Resources): String {
+        val title = shortened(title.ifBlank { resources.getString(R.string.common_untitled_recipe) })
+        return when (kind) {
+            Kind.ADDED -> resources.getString(R.string.file_imported, title)
+            Kind.ALREADY_IN_BOOK -> resources.getString(R.string.file_import_already, title)
+            Kind.CANNOT_OPEN -> resources.getString(R.string.file_import_cannot_open)
+            Kind.NOT_A_RECIPE_FILE -> resources.getString(R.string.file_import_not_a_recipe)
+            Kind.LATER_VERSION -> resources.getString(R.string.file_import_later)
+            Kind.DAMAGED -> resources.getString(R.string.file_import_damaged)
+            Kind.BREAKS_RULES -> resources.getString(R.string.file_import_breaks_rules)
+            Kind.EXPORT_FAILED -> resources.getString(R.string.file_export_failed)
+        }
+    }
+
+    /** The message as saved state holds it. */
+    fun encoded(): String = kind.name + SEPARATOR + title
+
+    companion object {
+        /** The longest title named whole in a message; a longer one is cut there and ends in "…". */
+        const val TITLE_LENGTH = 40
+
+        private const val SEPARATOR = '\n'
+
+        fun decoded(value: String?): FileMessage? {
+            val (kind, title) = value?.split(SEPARATOR, limit = 2)?.takeIf { it.size == 2 } ?: return null
+            return Kind.entries.firstOrNull { it.name == kind }?.let { FileMessage(it, title) }
+        }
+
+        /** [title] as a message names it: whole up to [TITLE_LENGTH] characters, and cut there otherwise. */
+        fun shortened(title: String): String {
+            val trimmed = title.trim()
+            if (trimmed.length <= TITLE_LENGTH) return trimmed
+            var end = TITLE_LENGTH
+            // A character outside the basic plane is kept whole.
+            if (Character.isHighSurrogate(trimmed[end - 1])) end -= 1
+            return trimmed.substring(0, end).trimEnd() + "…"
+        }
+    }
+}
+
+/** What the person is told of [this] outcome. */
+fun ImportOutcome.message(): FileMessage = when (this) {
+    is ImportOutcome.Added -> FileMessage(FileMessage.Kind.ADDED, title)
+    is ImportOutcome.AlreadyInBook -> FileMessage(FileMessage.Kind.ALREADY_IN_BOOK, title)
+    is ImportOutcome.Refused -> FileMessage(
+        when (refusal) {
+            Refusal.CANNOT_OPEN -> FileMessage.Kind.CANNOT_OPEN
+            Refusal.NOT_A_RECIPE_FILE -> FileMessage.Kind.NOT_A_RECIPE_FILE
+            Refusal.LATER_VERSION -> FileMessage.Kind.LATER_VERSION
+            Refusal.DAMAGED -> FileMessage.Kind.DAMAGED
+            Refusal.BREAKS_RULES -> FileMessage.Kind.BREAKS_RULES
+        },
+    )
+}
+
+object FileMessageTags {
+    const val DIALOG = "file_message"
+    const val TEXT = "file_message_text"
+    const val OK = "file_message_ok"
+}
+
+/**
+ * Says [message] whole: a dialog whose text wraps over as many lines as it needs, scrolling should the screen be too
+ * short for it, read by the screen reader as the dialog opens, and closed by its OK, or by back, through [onDone].
+ */
+@Composable
+fun FileMessageDialog(message: FileMessage, onDone: () -> Unit) {
+    val text = message.text(LocalContext.current.resources)
+    AlertDialog(
+        onDismissRequest = onDone,
+        modifier = Modifier.testTag(FileMessageTags.DIALOG),
+        text = {
+            Text(text, modifier = Modifier.verticalScroll(rememberScrollState()).testTag(FileMessageTags.TEXT))
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onDone,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(FileMessageTags.OK),
+            ) { Text(stringResource(R.string.file_message_ok)) }
+        },
+    )
+}

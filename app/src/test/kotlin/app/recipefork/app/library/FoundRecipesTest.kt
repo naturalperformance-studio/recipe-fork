@@ -34,6 +34,8 @@ import app.recipefork.app.editor.textsOf
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.TestRecipeFiles
+import app.recipefork.app.file.awaitFileMessage
+import app.recipefork.app.file.closeFileMessage
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.file.RecipeFileContent
@@ -53,7 +55,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import org.robolectric.shadows.ShadowToast
 import java.io.File
 import java.time.Instant
 
@@ -280,15 +281,16 @@ class FoundRecipesTest {
         }
         val id = TestRecipeFiles.soup().id
         awaitEntry(id)
-        compose.waitUntil(PATIENCE_MS) { ShadowToast.getTextOfLatestToast() == "“Bean soup” is in your recipe book now" }
+        compose.awaitFileMessage("“Bean soup” is in your recipe book now")
         assertTrue(!exists(LibraryTags.MARKED_EMPTY))
+        compose.closeFileMessage()
         // A picked file that is no recipe file is refused and said to be; nothing more is listed.
         compose.onNodeWithTag(LibraryTags.IMPORT).performClick()
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }
         val again = activity.nextStartedActivityForResult
         val other = TestRecipeFiles.write(picked, "photo.jpg", TestRecipeFiles.jpeg())
         compose.runOnUiThread { activity.receiveResult(again.intent, Activity.RESULT_OK, Intent().setData(Uri.fromFile(other))) }
-        compose.waitUntil(PATIENCE_MS) { ShadowToast.getTextOfLatestToast() == "This file is not a recipe file, so nothing was added" }
+        compose.awaitFileMessage("This file is not a recipe file, so nothing was added")
         assertEquals(1, runBlocking { recipes.marked().first() }.size)
     }
 

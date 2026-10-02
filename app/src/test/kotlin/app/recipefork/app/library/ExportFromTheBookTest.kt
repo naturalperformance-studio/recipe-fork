@@ -34,6 +34,7 @@ import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.TestRecipeFiles
+import app.recipefork.app.file.awaitFileMessage
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.file.FileParent
@@ -61,7 +62,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import org.robolectric.shadows.ShadowToast
 import java.io.File
 import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
@@ -335,7 +335,7 @@ class ExportFromTheBookTest {
         assertTrue(cache.setWritable(false))
         try {
             compose.onNodeWithTag(LibraryTags.export(recipe.id.value)).performClick()
-            compose.waitUntil(PATIENCE_MS) { ShadowToast.getTextOfLatestToast() == message }
+            compose.awaitFileMessage(message)
         } finally {
             cache.setWritable(true)
         }
