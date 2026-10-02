@@ -26,8 +26,9 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * How a timer is made to announce itself with the application closed or the screen locked (FLOW-013 (1, 2)): while
  * any timer awaits its announcement, a foreground service keeps the process, and a partial wake lock keeps the clock
- * read, until the last of them has been announced. It needs no access the reader must grant in the settings. An
- * inexact alarm allowed while idle stands behind it at each timer's end, should the service be taken away.
+ * read, until the last of them has been announced and has stopped ringing. It needs no access the reader must grant in
+ * the settings. An inexact alarm allowed while idle stands behind it at each timer's end, should the service be taken
+ * away.
  */
 class DeviceTimerAnnouncements(
     private val context: Context,
@@ -46,7 +47,7 @@ class DeviceTimerAnnouncements(
     }
 }
 
-/** The foreground service that holds the running timers while the application is closed. */
+/** The foreground service that holds the running timers, and the ringing of ended ones, while the application is closed. */
 class TimerService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var watching: Job? = null
@@ -78,11 +79,13 @@ class TimerService : Service() {
     private suspend fun watch() {
         val container = (application as RecipeForkApplication).container
         val store = container.timers
+        val ringing = container.timerRinging
         val manager = getSystemService(NotificationManager::class.java)
         while (true) {
             container.timerAnnouncer.watch(store) { running ->
-                // Awake until the last running timer has ended, and a little after, to announce it.
-                val last = running.maxOfOrNull { it.endsAt }
+                // Awake until the last running timer has ended, and a little after, to announce it; and until the
+                // last ringing one falls silent by itself.
+                val last = listOfNotNull(running.maxOfOrNull { it.endsAt }, ringing.silentBy()).maxOrNull()
                 if (last != null) {
                     val left = java.time.Duration.between(Instant.now(), last).toMillis().coerceAtLeast(0)
                     wakeLock.acquire(left + WAKE_MARGIN.inWholeMilliseconds)
@@ -95,7 +98,7 @@ class TimerService : Service() {
             }
             // A start that arrived while the store was last read is watched before the service ends.
             val seen = latestStart
-            if (store.unannounced().isNotEmpty() || latestStart != seen) continue
+            if (store.unannounced().isNotEmpty() || ringing.isRinging || latestStart != seen) continue
             break
         }
         if (wakeLock.isHeld) wakeLock.release()
@@ -156,10 +159,59 @@ class TimerEndReceiver : BroadcastReceiver() {
         application.scope.launch {
             try {
                 application.container.timerAnnouncer.announceEnded(application.container.timers)
+                // The service holds the ringing until it is stopped. Where it may not start now — from this alarm, on
+                // Android 12 and later — it rings in this process all the same, and its cap is kept by its own
+                // timeouts: a delay here, and an alarm at the cap should the process be held asleep or gone.
+                if (application.container.timerRinging.isRinging) TimerService.start(context)
             } finally {
                 result.finish()
             }
         }
+    }
+}
+
+/**
+ * The reader stopped an ended timer's ringing from its notification: by its Stop action, which leaves the
+ * notification in place, silent; or by dismissing it. Or its ringing's time is up, which the alarm set at its cap says
+ * should the process have been gone or asleep meanwhile. A Stop or a time up whose ringing the process no longer holds
+ * — it was ended since — still leaves the notification silent and no longer offering to stop.
+ */
+class TimerRingReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val key = TimerIntents.keyOf(intent.data) ?: return
+        val application = context.applicationContext as RecipeForkApplication
+        val container = application.container
+        val ringing = container.timerRinging
+        when (intent.action) {
+            DISMISSED -> ringing.forget(key)
+            STOP, EXPIRED -> if (!ringing.stop(key)) {
+                val result = goAsync()
+                application.scope.launch {
+                    try {
+                        container.timers.get(key)?.takeIf { it.announced }?.let(container.timerNotices::quiet)
+                    } finally {
+                        result.finish()
+                    }
+                }
+            }
+        }
+    }
+
+    companion object {
+        const val STOP = "app.recipefork.timer.STOP"
+        const val DISMISSED = "app.recipefork.timer.DISMISSED"
+        const val EXPIRED = "app.recipefork.timer.EXPIRED"
+
+        /** What [action] on [key]'s notification sends; one per timer and action. */
+        fun intent(context: Context, action: String, key: TimerKey): PendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            Intent(context, TimerRingReceiver::class.java).setAction(action).setData(TimerIntents.uriOf(key)),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
+        /** What the alarm at [key]'s ringing cap sends. */
+        fun expiry(context: Context, key: TimerKey): PendingIntent = intent(context, EXPIRED, key)
     }
 }
 

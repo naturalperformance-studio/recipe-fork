@@ -11,19 +11,34 @@ import androidx.core.app.NotificationCompat
 import app.recipefork.app.MainActivity
 import app.recipefork.app.R
 
-/** The two notification channels of timers: their ends, which are heard, and the quiet note while they run. */
+/** The two notification channels of timers: their ends, which pop up, and the quiet note while they run. */
 object TimerChannels {
-    /** A timer has ended (FLOW-013); the channel the reader may turn off alone (FLOW-013 (13)). */
-    const val ENDED = "timer-ended"
+    /**
+     * A timer has ended (FLOW-013): its notification pops up on the screen and the lock screen; the channel the reader
+     * may turn off alone (FLOW-013 (13)). The channel itself is silent: the ringing is the application's own, which
+     * alone can ring on until stopped and fall silent at its cap, so nothing of the channel plays over it or after it.
+     */
+    const val ENDED = "timer-ended-silent"
+
+    /**
+     * The channels ended timers were once announced on: with the default notification sound, then with the alarm's
+     * sound. A channel's sound cannot change once created, so each change came with a new one; the old are deleted.
+     */
+    val RETIRED = listOf("timer-ended", "timer-ended-alarm")
 
     /** Timers are running: the note the running timers are kept by while the application is closed. */
     const val RUNNING = "timer-running"
 
     fun create(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
+        RETIRED.forEach(manager::deleteNotificationChannel)
         manager.createNotificationChannel(
             NotificationChannel(ENDED, context.getString(R.string.timer_channel_ended), NotificationManager.IMPORTANCE_HIGH)
-                .apply { lockscreenVisibility = Notification.VISIBILITY_PUBLIC },
+                .apply {
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                    setSound(null, null)
+                    enableVibration(false)
+                },
         )
         manager.createNotificationChannel(
             NotificationChannel(RUNNING, context.getString(R.string.timer_channel_running), NotificationManager.IMPORTANCE_LOW)
@@ -66,7 +81,16 @@ object TimerIntents {
         intent.removeExtra(STEP_KEY)
     }
 
-    fun uriOf(key: TimerKey): Uri = Uri.Builder().scheme("recipefork-timer")
+    /** The timer [uri] names, as [uriOf] made it; null where it names none. */
+    fun keyOf(uri: Uri?): TimerKey? {
+        val path = uri?.takeIf { it.scheme == SCHEME }?.pathSegments ?: return null
+        if (path.size != 3) return null
+        return TimerKey(path[0], path[1], path[2].toIntOrNull() ?: return null)
+    }
+
+    private const val SCHEME = "recipefork-timer"
+
+    fun uriOf(key: TimerKey): Uri = Uri.Builder().scheme(SCHEME)
         .appendPath(key.book).appendPath(key.recipeId).appendPath(key.stepPosition.toString()).build()
 
     /** A tag naming [key] among the application's notifications. */
@@ -74,16 +98,36 @@ object TimerIntents {
 }
 
 /** The device's notifications for timers. */
-class AndroidTimerNotices(private val context: Context) : TimerNotices {
+class AndroidTimerNotices(
+    private val context: Context,
+    private val access: NotificationAccess = AndroidNotificationAccess(context),
+) : TimerNotices {
     private val manager = context.getSystemService(NotificationManager::class.java)
 
     /**
      * Each ended timer has its own notification: the recipe's title and the timer's name, nothing of the step beyond
-     * it (FLOW-013 (3), FLOW-016 (3–5)); tapping it opens the card at the step (FLOW-013 (4)). Without permission to
-     * notify, nothing is shown: the timer is finished in the application all the same (FLOW-013 (5)).
+     * it (FLOW-013 (3), FLOW-016 (3–5)); tapping it opens the card at the step (FLOW-013 (4)), and it offers to stop
+     * the ringing. Without permission to notify, nothing is shown: the timer is finished in the application all the
+     * same (FLOW-013 (5)). Returns whether it is shown.
      */
-    override fun announce(timer: RunningTimer) {
-        val notification = NotificationCompat.Builder(context, TimerChannels.ENDED)
+    override fun announce(timer: RunningTimer): Boolean {
+        post(TimerIntents.tagOf(timer.key), ended(timer, ringing = true))
+        return access.state() == NotificationState.PERMITTED
+    }
+
+    /** The notification of [timer], if it is still shown, no longer rings nor offers to stop: it stays, silent. */
+    override fun quiet(timer: RunningTimer) {
+        val tag = TimerIntents.tagOf(timer.key)
+        if (manager.activeNotifications.none { it.tag == tag && it.id == ENDED_ID }) return
+        post(tag, ended(timer, ringing = false))
+    }
+
+    override fun withdraw(key: TimerKey) {
+        manager.cancel(TimerIntents.tagOf(key), ENDED_ID)
+    }
+
+    private fun ended(timer: RunningTimer, ringing: Boolean): Notification {
+        val builder = NotificationCompat.Builder(context, TimerChannels.ENDED)
             .setSmallIcon(R.drawable.ic_timer_notification)
             .setContentTitle(timer.recipe.ifBlank { context.getString(R.string.common_untitled_recipe) })
             .setContentText(timer.name)
@@ -92,16 +136,21 @@ class AndroidTimerNotices(private val context: Context) : TimerNotices {
             .setShowWhen(true)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(openingIntent(context, timer.key))
-            .build()
-        post(TimerIntents.tagOf(timer.key), notification)
-    }
-
-    override fun withdraw(key: TimerKey) {
-        manager.cancel(TimerIntents.tagOf(key), ENDED_ID)
+            .setDeleteIntent(TimerRingReceiver.intent(context, TimerRingReceiver.DISMISSED, timer.key))
+        if (ringing) {
+            builder.addAction(
+                0,
+                context.getString(R.string.timer_stop),
+                TimerRingReceiver.intent(context, TimerRingReceiver.STOP, timer.key),
+            )
+        } else {
+            // Posted again in place: it does not pop up again.
+            builder.setOnlyAlertOnce(true)
+        }
+        return builder.build()
     }
 
     private fun post(tag: String, notification: Notification) {

@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.testTag
 import app.recipefork.app.card.LocalStepToShow
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.timer.TimerIntents
+import app.recipefork.app.timer.TimerKey
 import app.recipefork.app.timer.TimerService
 import app.recipefork.app.ui.AppNavHost
 import kotlinx.coroutines.launch
@@ -49,9 +50,11 @@ class MainActivity : ComponentActivity() {
         follow(intent)
     }
 
-    /** A timer's notification leads to its recipe's card, at its step (FLOW-013 (4)). */
+    /** A timer's notification leads to its recipe's card, at its step (FLOW-013 (4)), and stops its ringing. */
     private fun follow(intent: Intent?) {
         val step = TimerIntents.stepOf(intent) ?: return
+        (application as RecipeForkApplication).container.timerRinging
+            .forget(TimerKey(step.book, step.recipeId, step.stepPosition))
         librarySession.showStep(step.recipeId, step.stepPosition)
         TimerIntents.followed(intent!!)
     }

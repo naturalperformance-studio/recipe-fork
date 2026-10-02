@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- An ended timer rings like an alarm, vibrating until it is stopped. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".RecipeForkApplication"
@@ -32,11 +34,15 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Cooking timers the user started on recipe steps: the service keeps them running while the app is closed and posts a notification when each one ends." />
+                android:value="Cooking timers the user started on recipe steps: the service keeps them running while the app is closed and posts a notification when each one ends, ringing like a kitchen timer until the user stops it." />
         </service>
 
         <receiver
             android:name=".timer.TimerEndReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".timer.TimerRingReceiver"
             android:exported="false" />
 
         <receiver
