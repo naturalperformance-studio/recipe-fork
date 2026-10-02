@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientSource
@@ -49,18 +50,26 @@ import app.recipefork.core.recipe.Timer
 import app.recipefork.core.timer.TimerName
 import kotlin.time.Duration
 
+/** The space between two steps, or two ingredient rows. */
+internal val ROW_SPACING = 12.dp
+
 /**
  * The steps, after the ingredients (FLOW-024): numbered plain text, appended at the end, edited where each stands and
  * deleted. They accept input whatever else the recipe holds or lacks (FLOW-024 (2)), and no text is ever cut short.
  */
 @Composable
-internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource) {
+internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource, scroll: EditorScroll) {
     val editable = recipe.state.editable
     val steps = recipe.steps.sortedBy { it.position }
     val language = numberLanguage(LocalConfiguration.current)
     var dictionary by remember(source) { mutableStateOf<List<IngredientEntryEntity>?>(null) }
     LaunchedEffect(source) { dictionary = runCatching { source.ingredients() }.getOrDefault(emptyList()) }
-    Column(Modifier.fillMaxWidth().testTag(EditorTags.STEPS), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
+    val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveStep(from, to) }
+    Column(
+        Modifier.fillMaxWidth().zIndex(if (drag.dragged != null) 1f else 0f).testTag(EditorTags.STEPS),
+        verticalArrangement = Arrangement.spacedBy(ROW_SPACING),
+    ) {
         Text(
             stringResource(R.string.editor_steps),
             style = MaterialTheme.typography.titleMedium,
@@ -78,7 +87,7 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSourc
             // What the screen holds for a step — focus, a timer being attached — stays with it when steps before it
             // are inserted, moved or deleted.
             key(editor.stepKey(position)) {
-                if (editable) StepRow(position, steps.size, step, recipe.ingredients, dictionary, language, editor, stating == position)
+                if (editable) StepRow(position, steps.size, step, recipe.ingredients, dictionary, language, editor, stating == position, drag)
                 else ReadOnlyStep(position, step, recipe.ingredients, language)
             }
         }
@@ -108,10 +117,12 @@ private fun StepRow(
     language: InterfaceLanguage,
     editor: RecipeEditor,
     stating: Boolean,
+    drag: RowDrag,
 ) {
     val field = remember { StepFieldState() }
-    Column(Modifier.fillMaxWidth().testTag(EditorTags.step(position))) {
+    Column(Modifier.fillMaxWidth().then(drag.row(position, MaterialTheme.colorScheme.surface)).testTag(EditorTags.step(position))) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            DragHandle(drag, position, count, EditorTags.stepHandle(position))
             StepTextField(
                 position = position,
                 step = step,
