@@ -11,6 +11,7 @@ import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.FileParent
 import app.recipefork.core.file.RecipeFile
@@ -58,7 +59,10 @@ class RecipeExportTest {
     fun forgetEarlierDirectories() = FileProviderCache.clear()
 
     @After
-    fun close() = book.close()
+    fun close() {
+        book.close()
+        File(context.cacheDir, "export-test-files").deleteRecursively()
+    }
 
     private fun full(title: String) = Recipe.create(now, owner = null).copy(
         title = title,
@@ -142,6 +146,43 @@ class RecipeExportTest {
     fun aParentNoLongerInTheBookIsNamedByItsIdentity() {
         val fork = full("Green shakshuka").copy(parent = RecipeId("gone")).also(::save)
         assertEquals(FileParent(RecipeId("gone"), null, null), content(export(fork)).parent)
+    }
+
+    // FLOW-063 (2, 6): a found recipe's file carries the author and the parent its own file stated, and the found
+    // recipe is unchanged by it.
+    @Test
+    fun aFoundRecipesFileCarriesTheAuthorAndTheParentItsFileStated() {
+        val id = runBlocking { importFound(TestRecipeFiles.soup()) }
+        val before = runBlocking { recipes.get(id) }!!
+        val read = content(export(before))
+        assertEquals(id, read.id)
+        assertEquals("anna", read.author)
+        assertEquals(FileParent(RecipeId("p-1"), "Soup", "boris"), read.parent)
+        assertEquals(before, runBlocking { recipes.get(id) })
+    }
+
+    // FLOW-065 (6): a fork of a found recipe names it as its parent — by its title and its stated author — while the
+    // book holds it and once it has been removed.
+    @Test
+    fun aForkOfAFoundRecipeNamesItAsItsParent() {
+        val id = runBlocking { importFound(TestRecipeFiles.soup()) }
+        val book = ActiveBook(BookName.Pool, this.book.database)
+        val forkId = requireNotNull(runBlocking { forkRecipe(recipes, book, id, now) })
+        val fork = runBlocking { recipes.get(forkId) }!!
+        val expected = FileParent(id, "Bean soup", "anna")
+        assertEquals(expected, content(export(fork)).parent)
+        assertNull(content(export(fork)).author)
+        assertTrue(runBlocking { importer.remove(id) })
+        assertNull(runBlocking { recipes.get(id) })
+        assertEquals(expected, content(export(fork)).parent)
+    }
+
+    private val importer by lazy { RecipeImport(recipes, File(context.cacheDir, "export-test-files"), clock = { now }) }
+
+    private suspend fun importFound(content: RecipeFileContent): RecipeId {
+        val outcome = importer.import { TestRecipeFiles.file(content).inputStream() }
+        assertTrue("$outcome", outcome is ImportOutcome.Added)
+        return content.id
     }
 
     // FLOW-063 (1): exporting changes nothing in the recipe — an editable recipe stays editable.

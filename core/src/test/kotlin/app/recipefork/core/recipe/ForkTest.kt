@@ -10,7 +10,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 
-/** FORK-001, FORK-006, FORK-007: what an owner's fork holds, compared field by field with its parent. */
+/**
+ * FORK-001, FORK-006, FORK-007: what an owner's fork holds, compared field by field with its parent; FORK-002,
+ * FLOW-065: what anyone else's fork — of a recipe found in a file — holds.
+ */
 class ForkTest {
     private val created = Instant.parse("2026-09-01T08:00:00Z")
     private val lastEdit = Instant.parse("2026-09-10T08:00:00Z")
@@ -190,5 +193,34 @@ class ForkTest {
     fun aForkInheritsTheParentsSafetyFlag() {
         assertTrue(parent(safetyFlag = true).fork(now, owner = null).safetyFlag)
         assertFalse(parent(safetyFlag = false).fork(now, owner = null).safetyFlag)
+    }
+
+    // FORK-002, FLOW-065 (1, 2): a fork by someone other than the author carries the ingredients, steps, references and
+    // timers, and none of the description and none of the media.
+    @Test
+    fun aForkBySomeoneElseCarriesNoDescriptionAndNoMedia() {
+        val parent = parent()
+        val own = parent.fork(now, owner = null, id = RecipeId("fork"))
+        val fork = parent.fork(now, owner = null, id = RecipeId("fork"), byAuthor = false)
+        assertEquals("", fork.description)
+        assertTrue(fork.media.isEmpty())
+        assertEquals(ingredients, fork.ingredients)
+        assertEquals(steps, fork.steps)
+        assertEquals(listOf(IngredientReference(2, 12), IngredientReference(1, 0)), fork.steps[1].ingredientReferences)
+        assertEquals(Timer(12.minutes, "Onion"), fork.steps[0].timer)
+        assertEquals(parent.id, fork.parent)
+        assertEquals(RecipeState.LOCAL, fork.state)
+        assertTrue(fork.state.editable)
+        assertNull(fork.statedAuthor)
+        // Everything else is as in the owner's fork.
+        assertEquals(own.copy(description = "", media = emptyList(), statedParent = fork.statedParent), fork)
+    }
+
+    // FLOW-065 (4, 6): it keeps the parent's title and stated author, to name the parent once the book no longer holds it.
+    @Test
+    fun aForkBySomeoneElseKeepsTheParentsTitleAndStatedAuthor() {
+        assertEquals(StatedParent("Borscht", "chef"), parent().fork(now, owner = null, byAuthor = false).statedParent)
+        val unsigned = parent().copy(statedAuthor = null, title = "")
+        assertEquals(StatedParent("", ""), unsigned.fork(now, owner = null, byAuthor = false).statedParent)
     }
 }

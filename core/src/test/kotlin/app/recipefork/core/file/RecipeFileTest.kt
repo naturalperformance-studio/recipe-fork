@@ -180,6 +180,29 @@ class RecipeFileTest {
         assertEquals("anna", content.author)
     }
 
+    // FLOW-063 (6): a found recipe whose file named a parent the book also holds still names it as its file stated.
+    @Test
+    fun aFoundRecipeNamesTheParentItsFileStatedEvenWhenTheBookHoldsOne() {
+        val held = recipe("Soup, edited since").copy(id = RecipeId("p-1"))
+        val imported = recipe().copy(parent = RecipeId("p-1"), statedParent = StatedParent("Soup", "boris"), statedAuthor = "anna")
+        assertEquals(FileParent(RecipeId("p-1"), "Soup", "boris"), RecipeFileContent.of(imported, held, null).parent)
+    }
+
+    // FLOW-065 (6): a fork of a found recipe names it as its parent, with its title and stated author, held or not.
+    @Test
+    fun aForkOfAFoundRecipeNamesItAsItsParent() {
+        val found = recipe("Bean soup").copy(statedAuthor = "anna", parent = RecipeId("p-1"), statedParent = StatedParent("Soup", "boris"))
+        val fork = found.fork(now, owner = null, byAuthor = false).copy(title = "Green bean soup")
+        val expected = FileParent(found.id, "Bean soup", "anna")
+        assertEquals(expected, RecipeFileContent.of(fork, parentInBook = found, ownerNickname = null).parent)
+        assertEquals(expected, RecipeFileContent.of(fork, parentInBook = null, ownerNickname = null).parent)
+        assertNull(RecipeFileContent.of(fork, found, null).author)
+        val json = parse(RecipeFileContent.of(fork, null, null))["parent"]!!.jsonObject
+        assertEquals(found.id.value, json["id"]!!.jsonPrimitive.content)
+        assertEquals("Bean soup", json["title"]!!.jsonPrimitive.content)
+        assertEquals("anna", json["nickname"]!!.jsonPrimitive.content)
+    }
+
     // decisions/20260928-recipe-file-is-a-zip.md: a later format, and a document that does not parse, are refused.
     @Test
     fun aLaterFormatIsRefused() {

@@ -9,6 +9,9 @@
     <string name="card_parent">Основано на рецепте «%1$s»</string>
     <string name="card_parent_open_action">Открыть рецепт, на котором основан этот</string>
     <string name="card_parent_unavailable">Основано на рецепте, которого нет в этой книге рецептов</string>
+    <string name="card_parent_stated">Основано на рецепте «%1$s» (автор: %2$s, указан в файле, не проверен)</string>
+    <string name="card_parent_named_unavailable">Основано на рецепте «%1$s», которого нет в этой книге рецептов</string>
+    <string name="card_parent_stated_unavailable">Основано на рецепте «%1$s» (автор: %2$s, указан в файле, не проверен), которого нет в этой книге рецептов</string>
     <string name="card_servings">Порций: %1$s</string>
     <string name="card_servings_fewer">Меньше порций</string>
     <string name="card_servings_fewer_action">Пересчитать рецепт на меньшее число порций</string>

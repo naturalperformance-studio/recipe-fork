@@ -12,11 +12,14 @@ import java.time.Instant
  * Forks the recipe [parent] of the active book at [at] and writes the fork to that same book — the active
  * account's, or the pool's when none is active (FORK-001 (7), AUTH-026). Returns the fork's identity, or null when
  * the book no longer holds the parent. Forking again always makes another fork.
+ *
+ * Every recipe written in the book is the owner's own (FORK-007); a found recipe — one the book marks, imported from a
+ * file — is someone else's, and its fork carries neither its description nor its media (FORK-002, FLOW-065 (2)).
  */
 suspend fun forkRecipe(recipes: RecipeRepository, book: ActiveBook, parent: RecipeId, at: Instant): RecipeId? {
     val forked = recipes.get(parent) ?: return null
     val owner = (book.open.value.name as? BookName.OfAccount)?.let { AccountId(it.accountId) }
-    val fork = forked.fork(at, owner)
+    val fork = forked.fork(at, owner, byAuthor = !recipes.isMarked(parent))
     recipes.save(fork)
     return fork.id
 }
