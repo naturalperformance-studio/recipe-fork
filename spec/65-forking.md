@@ -1,7 +1,7 @@
 ---
 slug: FORK
 status: closed
-updated: 2026-09-28
+updated: 2026-10-02
 ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005, FORK-006, FORK-007,
   FORK-008, FORK-009]
 ---
@@ -118,7 +118,8 @@ FORK-005.
 ### FORK-005 — A parent that was never published is not mentioned at all
 
 While a recipe's parent has never been `published`, the system shall show the
-recipe with no parent and shall give no indication that a parent exists.
+recipe with no parent and shall give no indication that a parent exists to
+anyone except the owner of both recipes in their own recipe book.
 
 **Acceptance criteria**
 - Given a published recipe forked from the author's own `private` recipe, when
@@ -130,8 +131,9 @@ recipe with no parent and shall give no indication that a parent exists.
   becomes named on the card from that moment, by FORK-004.
 - Given such a recipe, when the chain is walked upwards from one of its own
   forks, then the chain stops at it and does not reveal its parent.
-- Given the owner of both recipes, when they open either one, then the parent is
-  not named to them either — the card is the same for everyone.
+- Given the owner of both recipes, when they open the fork in their own recipe
+  book, then the parent is named to them by its title, opens while that book holds
+  it, and is named as unavailable when it does not; no one else is shown it.
 - Given serverless mode (FLOW-061), when a recipe imported from a file, or a fork
   of one, is opened, then this requirement does not apply: nothing is published
   any more, and the parent is shown as FLOW-065 states.
@@ -149,6 +151,13 @@ on the parent's state is the display, exactly as it already does in ST-007. See
 **Changed 2026-09-28:** serverless mode and a fork sent before its parent added, by
 user decisions of that date
 ([ADR — serverless mode and recipe files](decisions/20260928-serverless-mode-and-recipe-files.md)).
+**Changed 2026-10-02:** criterion 5 said the parent was hidden from the owner too,
+so that every viewer saw the same card. The v0.1 build names the parent of an own
+fork on the device, and the user accepted it; by user decision at the sync of
+that date the owner keeps seeing it once there is a server. The reason for hiding
+— a parent no reader can open, and a disclosure that the author holds an
+unpublished recipe — does not apply to the person who holds it. See
+[ADR — the owner sees the parent of their own fork](decisions/20261002-the-owner-sees-their-own-parent.md).
 
 ### FORK-006 — No fork carries what readers gave the parent
 
@@ -194,6 +203,9 @@ requires.
   to it, which are the only ones it holds (FORK-002).
 - Given any state ST-004 allows the owner to fork from, when they fork, then this
   requirement applies in that state too.
+- Given no account is active, when the person forks a recipe written in the pool
+  (AUTH-026), then the recipe counts as their own and this requirement applies; a
+  recipe imported from a file does not, and FLOW-065 governs it.
 - Given an account that is not the owner, when it forks the same recipe, then
   FORK-002 governs and neither media nor description travels.
 
@@ -207,6 +219,9 @@ and every word they had written about the dish. What FORK-002 protects is one
 author's expression from another author; in an own fork there is no other author.
 See
 [ADR — an own fork carries everything](decisions/20260920-own-fork-carries-everything.md).
+**Completed 2026-10-02:** who owns a pool recipe for this requirement was not
+stated; the v0.1 build treats a recipe written on the device with no account as
+the person's own, adopted at the sync of that date.
 **Note:** the fork holds Media entities of its own, owned by the same account
 (DOM-005), so the parent's media and the fork's are separable and each follows
 its own recipe's visibility. The bytes behind them are stored once: MEDIA-012

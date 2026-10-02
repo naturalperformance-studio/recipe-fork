@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
-> **Vision** — 27 sections closed · 0 open · 1 n/a. Open questions: 38 in the ledger, all `later` until an increment touches them.
-> Synced through: — (no increment shipped yet). Last updated 2026-10-02.
+> **Vision** — 27 sections closed · 0 open · 1 n/a. Open questions: 0 next, 39 later.
+> Synced through: v0.2. Last updated 2026-10-02.
 > Since 2026-10-02 this specification is the product vision, not a contract: the product is built in
 > increments planned by `/team-lead` (`docs/increments/`), and releases are whatever increments have
 > shipped. MVP-001 is superseded (see `220-mvp-boundary.md`). The history of the earlier gate process
@@ -18,6 +18,19 @@ holder keeps. The product keeps working when its server is switched off for good
 
 Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 (read 2026-09-20; the draft is input, not a spec, and is not maintained here).
+
+## Known departures of the build
+
+Where the shipped build still differs from this vision and the vision stands.
+`/team-lead` closes them in the increments that touch the area; `/req-forge --sync`
+removes them when a shipped increment does.
+
+- FLOW-017 (6, 7) — the card opens at the authored count every time; neither the
+  usual count nor a count held for the session is built (v0.1). Comes with the
+  usual-count increment.
+- FLOW-001 (2) — a `piece` ingredient picked from the dictionary still asks for
+  divisibility, because the shipped dictionary carries none (v0.1). The
+  dictionary is to carry divisibility.
 
 ## Sections
 
@@ -68,7 +81,7 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20260920-own-fork-carries-everything.md](decisions/20260920-own-fork-carries-everything.md) | accepted | An owner forking their own recipe carries its media and description too; readers' ratings travel to no fork. |
 | [20260920-scaling-extremes.md](decisions/20260920-scaling-extremes.md) | accepted | Serving count floors at ¼ with no ceiling; a warning replaces a downward bound. |
 | [20260920-large-quantity-display.md](decisions/20260920-large-quantity-display.md) | accepted | Tonnes and cubic metres extend `exact` only; every unit type stays legible at any magnitude. |
-| [20260920-provenance-follows-publication.md](decisions/20260920-provenance-follows-publication.md) | accepted; a fork sent before its parent (FLOW-007) and serverless mode (FLOW-065) added 2026-09-28 | A parent is named only if it is or has been published; a never-published parent is not mentioned. |
+| [20260920-provenance-follows-publication.md](decisions/20260920-provenance-follows-publication.md) | accepted; a fork sent before its parent (FLOW-007) and serverless mode (FLOW-065) added 2026-09-28; narrowed by 20261002-the-owner-sees-their-own-parent | A parent is named only if it is or has been published; a never-published parent is not mentioned. |
 | [20260920-danger-travels-down-the-chain.md](decisions/20260920-danger-travels-down-the-chain.md) | accepted | A health-danger removal flags every descendant for review; a rights removal gives no reason and touches no fork. |
 | [20260920-lineage-visible-in-discovery.md](decisions/20260920-lineage-visible-in-discovery.md) | accepted | The catalogue marks a fork and states its direct fork count; this narrows GOAL-003. |
 | [20260920-ingredient-dictionary.md](decisions/20260920-ingredient-dictionary.md) | accepted | An ingredient names a dictionary entry with an optional qualifier; free text is accepted with a warning and is never filterable. |
@@ -146,6 +159,9 @@ Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 | [20261001-a-sending-with-no-revision-is-made-from-the-first.md](decisions/20261001-a-sending-with-no-revision-is-made-from-the-first.md) | accepted, adds FLOW-059 (14); generalised by 20261001-a-sending-is-made-from-what-the-unanswered-one-stored | A sending that names no revision for a recipe the server holds is taken as made from its first revision. |
 | [20261001-a-sending-is-made-from-what-the-unanswered-one-stored.md](decisions/20261001-a-sending-is-made-from-what-the-unanswered-one-stored.md) | accepted, adds FLOW-067 and FLOW-008 (8), narrows FLOW-066 (1) and FLOW-059 (9) | A sending after the device's own unanswered sending is made from what that sending stored — a revision or a fork; an edit in between is not a divergence. |
 | [20261002-what-an-interactive-element-is.md](decisions/20261002-what-an-interactive-element-is.md) | accepted, completes A11Y-003 | A scrolling container is measured across its scroll, a disabled control at its enabled size; text that only takes focus or selection is not measured. |
+| [20261002-one-fixed-ingredient-at-a-time.md](decisions/20261002-one-fixed-ingredient-at-a-time.md) | accepted, changes SCALE-006 | Fixing another ingredient releases the first; no shortfall is shown. |
+| [20261002-a-timer-rings-like-an-alarm.md](decisions/20261002-a-timer-rings-like-an-alarm.md) | accepted, adds FLOW-013 (14–16) | Timers stay the application's own and ring like an alarm until stopped, silent after 2 minutes; not handed to the clock application. |
+| [20261002-the-owner-sees-their-own-parent.md](decisions/20261002-the-owner-sees-their-own-parent.md) | accepted, narrows 20260920-provenance-follows-publication, changes FORK-005 (5) | The owner sees the never-published parent of their own fork in their own recipe book; no one else does. |
 
 ## C4 context
 

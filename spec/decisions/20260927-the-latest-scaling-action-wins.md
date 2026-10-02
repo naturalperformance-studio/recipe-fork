@@ -1,6 +1,6 @@
 # The latest scaling action wins: a new count releases every fixing, releasing the last fixing undoes it, and the factor is never shown
 
-**Status:** accepted
+**Status:** accepted; SCALE-006 changed by [20261002-one-fixed-ingredient-at-a-time](20261002-one-fixed-ingredient-at-a-time.md)
 
 **Context:** Scaling has two entry points and the specification required both
 without saying how they combine (SD-003). Asking for 6 servings while 300 g of

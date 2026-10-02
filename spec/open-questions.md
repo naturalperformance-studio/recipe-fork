@@ -1,11 +1,11 @@
 ---
 slug: OQ
 status: open
-updated: 2026-09-28
+updated: 2026-10-02
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
-  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037, OQ-038]
+  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037, OQ-038, OQ-039]
 open_before_mvp: [OQ-016, OQ-029, OQ-030]
 ---
 
@@ -534,3 +534,14 @@ needs its own answers on who moderates a server the product owner does not run,
 what the terms of LEG say about content published there, and what the licence of
 the published code is.
 Blocks: nothing.
+
+### OQ-039 — Store policy for timers that ring with the application closed (later)
+Unresolved: the v0.2 build keeps a timer alive with the application closed through
+a foreground service of type `specialUse`, which has to be declared and justified
+in the Play Console before a store release. Exact alarms were not used: they need
+a permission the reader grants in settings, or one Play restricts to alarm and
+calendar applications. Whether Play accepts the justification is not known.
+Proposal: check the policy, with its source and date, when an increment prepares
+the first store release; if Play refuses, the fallback is to be chosen then, and
+FLOW-013 (1, 2, 14) is what it has to keep.
+Touches: FLOW-013. Raised at the sync of v0.2, 2026-10-02.

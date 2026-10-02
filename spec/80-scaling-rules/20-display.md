@@ -1,7 +1,7 @@
 ---
 slug: SCALE
 status: closed
-updated: 2026-09-27
+updated: 2026-10-02
 ids: [SCALE-004, SCALE-005, SCALE-007, SCALE-009, SCALE-012, SCALE-013, SCALE-014, SCALE-015]
 ---
 
@@ -11,13 +11,19 @@ What a scaled quantity looks like: the values of every grid, how a computed valu
 
 ### SCALE-004 — Every derived quantity says it is derived and which way it moved
 
-While a recipe is displayed at a scale factor other than 1, the system shall mark
-every displayed quantity as derived; and where rounding moved a quantity away
-from the exact computed value, the system shall show the direction of that move.
+While a recipe is displayed at a scale factor other than 1, the system shall
+state that every displayed quantity is derived; and where rounding moved a
+quantity away from the exact computed value, the system shall show the direction
+of that move on that quantity.
 
 **Acceptance criteria**
-- Given a scaled recipe, when its list is displayed, then every quantity carries
-  a derived marker, including one whose displayed value equals its authored value.
+- Given a scaled recipe, when its list is displayed, then every quantity is
+  stated to be derived, including one whose displayed value equals its authored
+  value; the statement may be made once for the whole ingredient list rather
+  than on each line.
+- Given a direction shown by a symbol, when it is read by a screen reader or by
+  someone who does not know the symbol, then its meaning is available in words
+  (a legend, a text alternative); colour alone never carries it.
 - Given 3 indivisible pieces at a factor of 0.6, when the line is displayed,
   then it shows 2 pieces and states that the exact value was lower.
 - Given a recipe authored for 4 servings with 1 indivisible egg, when the reader
@@ -26,7 +32,7 @@ from the exact computed value, the system shall show the direction of that move.
 - Given 1 teaspoon at a factor of 0.2, when the line is displayed, then it shows
   ¼ teaspoon and states that the exact value was lower.
 - Given a quantity that the grid represented exactly, when it is displayed, then
-  it is marked as derived but carries no direction.
+  it is covered by the derived statement but carries no direction.
 
 **Verification:** manual UI check across one rounded-up, one rounded-down, one
 exact case, and one case rounded back onto its authored value.
@@ -37,6 +43,12 @@ an exact 1.8; the exact value is lower, as CON-004 (2) and criterion 3 read it
 authored quantity"); it now marks by provenance — every quantity shown at a
 scale factor other than 1 is derived — by user decision, 2026-09-27
 ([ADR — derived by provenance](../decisions/20260927-derived-by-provenance.md)).
+**Changed 2026-10-02:** the derived marker was required on every line and the
+direction in words. At the v0.2 demo the user found the per-line wording too long
+and asked for symbols; the build states "recalculated" once above the
+ingredients, with a legend, and marks a rounded quantity with an arrow. By that
+decision the statement may cover the whole list, and the direction may be a
+symbol whose meaning is available in words. The exact form is the team's.
 
 ### SCALE-005 — An ingredient is never scaled out of the recipe
 
