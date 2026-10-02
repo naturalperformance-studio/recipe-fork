@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,59 +22,17 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.media.PhotoImage
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.PhotoNotice
-import app.recipefork.app.media.PhotoOffer
-import app.recipefork.app.media.PhotoOutcome
+import app.recipefork.app.media.PhotoAttaching
 import app.recipefork.app.media.PhotoStore
-import app.recipefork.app.media.PhotoWork
 import app.recipefork.app.media.rememberPhotoSources
 import app.recipefork.core.recipe.Recipe
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 /**
- * Attaches a photograph as the cover of the recipe [editor] holds: re-encoded and kept in [book] by [store], then set
- * as the cover, replacing any (MEDIA-009), whose file is deleted once the book no longer holds it. A photograph the
- * recipe does not take — refused, or offered to a recipe now frozen — leaves nothing behind. What the author is told
- * is [notice]. The work runs in [scope], which outlives the screen, so a photograph taken is not lost by leaving.
+ * Attaches a photograph as the cover of the recipe [editor] holds, replacing any (MEDIA-009); see [PhotoAttaching].
  */
-class CoverAttaching(
-    private val editor: RecipeEditor,
-    private val store: PhotoStore,
-    private val book: BookName,
-    private val scope: CoroutineScope,
-    val notice: MutableState<PhotoNotice?> = mutableStateOf(null),
-) {
-    fun attach(offer: PhotoOffer): Job {
-        notice.value = PhotoNotice.WORKING
-        val done = PhotoWork.begin()
-        val job = scope.launch {
-            val outcome = try {
-                store.add(book, offer.open)
-            } finally {
-                offer.release()
-            }
-            notice.value = when (outcome) {
-                is PhotoOutcome.Refused -> PhotoNotice.of(outcome.refusal)
-                is PhotoOutcome.Stored -> {
-                    val set = editor.setCover(outcome.mediaId) { replaced -> replaced?.let { store.delete(book, it) } }
-                    if (set) {
-                        PhotoNotice.PROCESSED
-                    } else {
-                        store.delete(book, outcome.mediaId)
-                        null
-                    }
-                }
-            }
-        }
-        job.invokeOnCompletion { done() }
-        return job
-    }
-
-    fun remove() {
-        if (editor.removeCover { store.delete(book, it) }) notice.value = PhotoNotice.REMOVED
-    }
-}
+fun CoverAttaching(editor: RecipeEditor, store: PhotoStore, book: BookName, scope: CoroutineScope): PhotoAttaching =
+    PhotoAttaching(store, book, scope, PhotoNotice.REMOVED, set = editor::setCover, unset = editor::removeCover)
 
 /**
  * The cover, at the title (FLOW-026): described as optional, taken with the camera or chosen from the gallery, and

@@ -28,11 +28,17 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.library.LibrarySession
+import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.Media
+import app.recipefork.core.recipe.MediaAttachment
+import app.recipefork.core.recipe.MediaKind
+import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -58,7 +64,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Each step as one bounded block, as an ingredient is, on a 360 dp phone at font scale 1.0 and 2.0: every part of a
- * step — its text, the control that inserts an ingredient, its timer, its removal and its menu — inside its block,
+ * step — its text, the control that inserts an ingredient, its timer, its photograph, its removal and its menu — inside its block,
  * blocks apart from each other with an outline drawn round each, a tinted column down the left edge of each block with
  * the handle icon at its centre, the inputs beside it at one left edge; a step dragged from anywhere in its column
  * moving; a frozen recipe's steps as blocks, with no column.
@@ -101,12 +107,22 @@ class StepBlocksTest {
         Step(2, "Shape the loaf, put it on the tray, score the top and bake it until it sounds hollow when tapped."),
     )
 
+    /** The last step carries a photograph, a landscape one, kept where the editor keeps its own. */
+    private fun stepPhoto(): Media {
+        val mediaId = "step-photo"
+        TestPhotos.jpeg(PhotoStore(context.filesDir).file(BookName.Pool, mediaId).apply { parentFile!!.mkdirs() }, 1600, 1200)
+        return Media(mediaId, null, MediaKind.PHOTO, MediaAttachment.ToStep(PHOTO_STEP), MediaVisibility.PRIVATE)
+    }
+
+    private val PHOTO_STEP = 2
+
     /** Opens the editor at [fontScale] directly on a seeded recipe holding [steps()], frozen if [state] says so. */
     private fun open(fontScale: Float, state: RecipeState? = null): RecipeId {
         var recipe = Recipe.create(created, null).copy(
             title = "Bread",
             ingredients = listOf(Ingredient(0, null, null, "flour", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(500))),
             steps = steps(),
+            media = listOf(stepPhoto()),
         )
         if (state != null) recipe = recipe.inState(state)
         runBlocking { recipes.save(recipe) }
@@ -122,6 +138,7 @@ class StepBlocksTest {
         compose.runOnIdle { opened.value = recipe.id }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(steps().lastIndex)), PATIENCE_MS)
         if (state == null) compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(1)), PATIENCE_MS)
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(PHOTO_STEP)) }
         return recipe.id
     }
 
@@ -148,6 +165,8 @@ class StepBlocksTest {
         EditorTags.timerMinutes(position),
         EditorTags.timerRemove(position),
         EditorTags.timerName(position),
+        EditorTags.stepPhoto(position),
+        EditorTags.stepPhotoImage(position),
     ).filter(::exists)
 
     /** The inputs and controls of the step at [position] that start a line of its block. */
@@ -157,6 +176,8 @@ class StepBlocksTest {
         EditorTags.timerAttach(position),
         EditorTags.timerHours(position),
         EditorTags.timerName(position),
+        EditorTags.stepPhoto(position),
+        EditorTags.stepPhotoImage(position),
     ).filter(::exists)
 
     /**
@@ -204,7 +225,7 @@ class StepBlocksTest {
         val screen = bounds(EditorTags.FORM)
         steps().indices.forEach { position ->
             val block = bounds(EditorTags.step(position))
-            listOf(EditorTags.stepText(position), EditorTags.stepInsert(position), EditorTags.stepRemove(position), EditorTags.stepMenu(position), EditorTags.timerAttach(position))
+            listOf(EditorTags.stepText(position), EditorTags.stepInsert(position), EditorTags.stepRemove(position), EditorTags.stepMenu(position), EditorTags.timerAttach(position), EditorTags.stepPhoto(position))
                 .forEach { assertTrue("step $position shows $it", exists(it)) }
             parts(position).forEach { part ->
                 val b = bounds(part)
@@ -227,8 +248,9 @@ class StepBlocksTest {
             assertTrue("step $position: its inputs are right of the column", starts.first() >= column.right - 0.5f)
             assertTrue(block.right <= screen.right + 0.5f)
         }
-        // The timer's fields are there for the step that has one.
+        // The timer's fields are there for the step that has one, and the photograph for the step that carries one.
         assertTrue(exists(EditorTags.timerHours(1)) && exists(EditorTags.timerName(1)))
+        assertTrue(exists(EditorTags.stepPhotoImage(PHOTO_STEP)))
         assertSeparateOutlinedBlocks(steps().size)
     }
 
@@ -289,7 +311,12 @@ class StepBlocksTest {
             val block = bounds(EditorTags.step(position))
             val text = bounds(EditorTags.stepText(position))
             assertTrue("step $position: its text is inside its block", text.left >= block.left && text.right <= block.right && text.top >= block.top && text.bottom <= block.bottom)
+            assertFalse(exists(EditorTags.stepPhoto(position)))
         }
+        // The photograph shows, read-only, inside its step's block.
+        val photo = bounds(EditorTags.stepPhotoImage(PHOTO_STEP))
+        val block = bounds(EditorTags.step(PHOTO_STEP))
+        assertTrue(photo.left >= block.left - 0.5f && photo.right <= block.right + 0.5f && photo.top >= block.top - 0.5f && photo.bottom <= block.bottom + 0.5f)
         assertSeparateOutlinedBlocks(steps().size)
     }
 }
