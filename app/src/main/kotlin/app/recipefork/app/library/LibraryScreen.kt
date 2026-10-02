@@ -47,6 +47,7 @@ import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.forkRecipe
+import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.EditorScreen
@@ -91,7 +92,8 @@ fun LibraryScreen(
             RecipeId(id), recipes, card,
             onBack = session::closeCard,
             onEdit = { session.openEditor(id) },
-            modifier = modifier,
+            // The screen stays on while the card is shown, and is left to the device once it is not (FLOW-014).
+            modifier = modifier.keepScreenAwake(),
             onFork = {
                 if (!forking) {
                     forking = true
