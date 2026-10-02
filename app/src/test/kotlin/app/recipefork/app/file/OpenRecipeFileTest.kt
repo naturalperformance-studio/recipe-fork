@@ -69,6 +69,12 @@ class OpenRecipeFileTest {
         ShadowLooper.idleMainLooper()
     }
 
+    /** What the person is told: the message the session holds, said in a dialog and never in a toast. */
+    private fun told(): String? {
+        assertNull(ShadowToast.getTextOfLatestToast())
+        return session.message.value?.text(context.resources)
+    }
+
     private fun view(uri: Uri, type: String?) = Intent(Intent.ACTION_VIEW).setDataAndType(uri, type)
 
     // FLOW-064 (1): in serverless mode, a file opened from another application is added, said to be, and the marked
@@ -81,7 +87,7 @@ class OpenRecipeFileTest {
         assertEquals(uri, RecipeFileIntents.fileOf(view(uri, RecipeFile.MIME_TYPE)))
         open(Mode.Serverless, uri)
         assertEquals(1, recipes.marked().first().size)
-        assertEquals("“Bean soup” is in your recipe book now", ShadowToast.getTextOfLatestToast())
+        assertEquals("“Bean soup” is in your recipe book now", told())
         assertEquals(LibraryView.MARKED, session.view.value)
         assertNull(session.viewing.value)
     }
@@ -93,20 +99,20 @@ class OpenRecipeFileTest {
         open(Mode.Serverless, uri)
         session.choose(LibraryView.OWN)
         open(Mode.Serverless, uri)
-        assertEquals("“Bean soup” is already in your recipe book, so nothing was added", ShadowToast.getTextOfLatestToast())
+        assertEquals("“Bean soup” is already in your recipe book, so nothing was added", told())
         assertEquals(LibraryView.OWN, session.view.value)
         open(Mode.Serverless, fileOf("garbage".toByteArray(), "other.recipefork"))
-        assertEquals("This file is not a recipe file, so nothing was added", ShadowToast.getTextOfLatestToast())
+        assertEquals("This file is not a recipe file, so nothing was added", told())
         open(Mode.Serverless, fileOf(TestRecipeFiles.zip(RecipeFile.DOCUMENT to "{".toByteArray()), "broken.recipefork"))
-        assertEquals("This recipe file is damaged, so nothing was added", ShadowToast.getTextOfLatestToast())
+        assertEquals("This recipe file is damaged, so nothing was added", told())
         val later = RecipeFile.encode(TestRecipeFiles.soup("other")).replace("\"format_version\": 1", "\"format_version\": 7")
         open(Mode.Serverless, fileOf(TestRecipeFiles.zip(RecipeFile.DOCUMENT to later.toByteArray()), "later.recipefork"))
         assertEquals(
             "This recipe file was made by a newer version of the app. Update the app to open it; nothing was added",
-            ShadowToast.getTextOfLatestToast(),
+            told(),
         )
         open(Mode.Serverless, Uri.fromFile(File(incoming, "missing.recipefork")))
-        assertEquals("Couldn't open the file, so nothing was added", ShadowToast.getTextOfLatestToast())
+        assertEquals("Couldn't open the file, so nothing was added", told())
         assertEquals(1, recipes.count())
     }
 
@@ -115,9 +121,9 @@ class OpenRecipeFileTest {
     fun theOutcomeIsSaidInRussian() = runBlocking {
         val uri = fileOf(TestRecipeFiles.file(TestRecipeFiles.soup()))
         open(Mode.Serverless, uri)
-        assertEquals("«Bean soup» теперь в вашей книге рецептов", ShadowToast.getTextOfLatestToast())
+        assertEquals("«Bean soup» теперь в вашей книге рецептов", told())
         open(Mode.Serverless, fileOf("garbage".toByteArray(), "other.recipefork"))
-        assertEquals("Это не файл рецепта, ничего не добавлено", ShadowToast.getTextOfLatestToast())
+        assertEquals("Это не файл рецепта, ничего не добавлено", told())
     }
 
     // FLOW-064 (7): in standard mode, a file opened imports nothing and is not even read.
@@ -129,6 +135,7 @@ class OpenRecipeFileTest {
         ShadowLooper.idleMainLooper()
         assertEquals(0, recipes.count())
         assertEquals(emptyList<Any>(), recipes.marked().first())
+        assertNull(told())
         assertNull(ShadowToast.getTextOfLatestToast())
         assertEquals(LibraryView.OWN, session.view.value)
     }

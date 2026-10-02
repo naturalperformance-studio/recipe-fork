@@ -116,6 +116,24 @@ abstract class BookRecipeDao {
     }
 
     /**
+     * Deletes the recipe [recipeId] as [delete] does, atomically, and returns the identities of the media items it
+     * held, whose files are then the caller's to delete; null when the book held no such recipe.
+     */
+    @Transaction
+    open suspend fun deleteHolding(recipeId: String): List<String>? {
+        val media = media(recipeId).map { it.mediaId }
+        return if (delete(recipeId)) media else null
+    }
+
+    /** Of the media identities [ids], those some recipe of the book still holds. */
+    @Query("select media_id from media where media_id in (:ids)")
+    abstract suspend fun held(ids: List<String>): List<String>
+
+    /** Every media identity a recipe of the book holds. */
+    @Query("select media_id from media")
+    abstract suspend fun allMedia(): List<String>
+
+    /**
      * Writes a found recipe and marks it, atomically (FLOW-064): its rows and its favourite. Returns false, writing
      * nothing, when the book already holds a recipe of that identity — found before, or its own — or marks one.
      */

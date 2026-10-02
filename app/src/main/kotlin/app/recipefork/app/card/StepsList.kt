@@ -19,7 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import app.recipefork.app.R
+import app.recipefork.app.book.BookName
+import app.recipefork.app.media.PhotoImage
+import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.stepPhoto
+import app.recipefork.core.recipe.Recipe
+import java.io.File
 import app.recipefork.app.timer.RecipeTimers
 import app.recipefork.app.timer.RestartQuestion
 import app.recipefork.app.timer.StepTimer
@@ -55,9 +64,12 @@ internal fun StepsList(
     recipeId: RecipeId,
     title: String = "",
     references: CardReferences = CardReferences.NONE,
+    photos: StepPhotosOnCard = StepPhotosOnCard.NONE,
 ) {
-    // A step that is only a reference reads as one; one holding nothing that reads is left out.
-    val shown = steps.sortedBy { it.position }.filter { StepText.render(it, references::quantity).isNotBlank() }
+    // A step that is only a reference reads as one, and one that is only a photograph shows it; one holding nothing
+    // that reads or shows is left out.
+    val shown = steps.sortedBy { it.position }
+        .filter { StepText.render(it, references::quantity).isNotBlank() || photos.of(it.position) != null }
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }
@@ -82,21 +94,54 @@ internal fun StepsList(
             } else {
                 Modifier
             }
-            StepRow(index + 1, step, references, timers, modifier)
+            StepRow(index + 1, step, references, timers, photos, modifier)
         }
     }
     RestartQuestion(timers)
     TimerNotificationsCheck(timers)
 }
 
-/** One step: its number and its text, read by the screen reader as one line, then its timer, if it carries one. */
+/**
+ * One step: its number and its text, read by the screen reader as one line, then its photograph, named by the step's
+ * number, and its timer, if it carries them.
+ */
 @Composable
-private fun StepRow(number: Int, step: Step, references: CardReferences, timers: RecipeTimers, modifier: Modifier = Modifier) {
+private fun StepRow(number: Int, step: Step, references: CardReferences, timers: RecipeTimers, photos: StepPhotosOnCard, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(CardTags.step(step.position))) {
             Text("$number.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.widthIn(min = 32.dp))
             StepText(step, references, Modifier.weight(1f))
         }
+        photos.of(step.position)?.let { file ->
+            Box(Modifier.fillMaxWidth().padding(start = 32.dp, top = 8.dp)) {
+                PhotoImage(file, stringResource(R.string.media_step_description, number), Modifier.testTag(CardTags.stepPhoto(step.position)))
+            }
+        }
         if (step.timer != null) StepTimer(step, timers, references::quantity, Modifier.padding(start = 32.dp))
+    }
+}
+
+/**
+ * The files of the photographs a recipe's steps carry, by the step's position: only those the device holds, so that a
+ * step holding nothing but a photograph whose file is gone is left out rather than shown as a bare number.
+ */
+internal fun interface StepPhotosOnCard {
+    fun of(position: Int): File?
+
+    companion object {
+        val NONE = StepPhotosOnCard { null }
+    }
+}
+
+@Composable
+internal fun StepPhotosOnCard(recipe: Recipe, book: BookName): StepPhotosOnCard {
+    val context = LocalContext.current
+    val store = remember(context) { PhotoStore(context.applicationContext.filesDir) }
+    return remember(store, recipe, book) {
+        // Looked up once for the recipe as it stands, not at every composition.
+        val held = recipe.steps.mapNotNull { step ->
+            recipe.stepPhoto(step.position)?.let { store.file(book, it.mediaId) }?.takeIf { it.isFile }?.let { step.position to it }
+        }.toMap()
+        StepPhotosOnCard { position -> held[position] }
     }
 }

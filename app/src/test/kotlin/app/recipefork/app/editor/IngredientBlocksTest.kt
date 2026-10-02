@@ -66,10 +66,11 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Each ingredient row as one bounded block on a 360 dp phone, at font scale 1.0 and 2.0: every part of a row inside
- * its block, blocks apart from each other with an outline drawn round each, a tinted strip across the top of each block
- * with the handle icon at its centre, the inputs below it at one left edge and of one height, and the name's text with
- * room to be read; the free-text warning as an icon beside the name whose text the screen reader reads and a tap or a
- * long press shows; a row dragged from anywhere on its strip moving whole; a frozen recipe's rows as blocks, stripless.
+ * its block, blocks apart from each other with an outline drawn round each, a tinted column down the left edge of each
+ * block with the handle icon at its centre, the inputs beside it at one left edge and of one height, and the name's text
+ * with room to be read; the free-text warning as an icon beside the name whose text the screen reader reads and a tap
+ * or a long press shows; a row dragged from anywhere in its column moving whole; a frozen recipe's rows as blocks,
+ * with no column.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -184,7 +185,7 @@ class IngredientBlocksTest {
     }
 
     // Each editable row is one bounded block, separated from the next; every part of it — the divisibility question
-    // and the warning included — inside it; the drag strip across its top, and the inputs below it at one left edge.
+    // and the warning included — inside it; the drag column down its left edge, and the inputs beside it at one left edge.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun everyRowIsOneBlockInRussian() = everyRowIsOneBlock(1f)
@@ -209,20 +210,20 @@ class IngredientBlocksTest {
                     b.left >= block.left - 0.5f && b.right <= block.right + 0.5f && b.top >= block.top - 0.5f && b.bottom <= block.bottom + 0.5f,
                 )
             }
-            val strip = bounds(EditorTags.ingredientHandle(position))
+            val column = bounds(EditorTags.ingredientHandle(position))
             val icon = bounds(EditorTags.ingredientHandleIcon(position))
             val name = bounds(EditorTags.ingredientName(position))
             val unit = bounds(EditorTags.ingredientUnit(position))
             val below = if (exists(EditorTags.ingredientQuantity(position))) bounds(EditorTags.ingredientQuantity(position)) else unit
-            // The strip starts the block, across its full width, at least 48 dp tall, the handle icon at its centre.
-            assertEquals("row $position: the strip starts the block", block.top, strip.top, 0.5f)
-            assertEquals("row $position: the strip spans the block from its left", block.left, strip.left, 0.5f)
-            assertEquals("row $position: the strip spans the block to its right", block.right, strip.right, 0.5f)
-            assertTrue("row $position: the strip is ${strip.height / compose.density.density} dp tall", strip.height >= px(48f) - 0.5f)
-            assertEquals("row $position: the icon is centred across the strip", strip.center.x, icon.center.x, 1f)
-            assertEquals("row $position: the icon is centred down the strip", strip.center.y, icon.center.y, 1f)
-            // Nothing that drags stands among the inputs: they are all below the strip.
-            assertTrue("row $position: the name is below the strip", name.top >= strip.bottom - 0.5f)
+            // The column runs down the block's left edge, its full height, 48 dp wide and no wider, the icon at its centre.
+            assertEquals("row $position: the column starts at the block's left edge", block.left, column.left, 0.5f)
+            assertEquals("row $position: the column starts at the block's top", block.top, column.top, 0.5f)
+            assertEquals("row $position: the column ends at the block's bottom", block.bottom, column.bottom, 0.5f)
+            assertEquals("row $position: the column is ${column.width / compose.density.density} dp wide", px(48f), column.width, 0.5f)
+            assertEquals("row $position: the icon is centred across the column", column.center.x, icon.center.x, 1f)
+            assertEquals("row $position: the icon is centred down the column", column.center.y, icon.center.y, 1f)
+            // Nothing that drags stands among the inputs: they are all right of the column.
+            listOf(name, unit, below).forEach { assertTrue("row $position: the inputs are right of the column", it.left >= column.right - 0.5f) }
             // One left edge: the name starts the first line, the quantity (or the unit, with no quantity) the second.
             assertEquals("row $position: the name and the field below it share their left edge", name.left, below.left, 0.5f)
             assertTrue("row $position: the quantity and unit are below the name", below.top >= name.bottom - 0.5f)
@@ -307,25 +308,25 @@ class IngredientBlocksTest {
         }
     }
 
-    // The strip is tinted, so the area to drag is seen: its colour differs from the block's own at its centre line and
-    // near both ends — and its icon marks it besides the colour.
+    // The column is tinted, so the area to drag is seen: its colour differs from the block's own down its centre line,
+    // near both its ends — and its icon marks it besides the colour.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun theStripIsTintedAndMarkedByItsIcon() {
+    fun theColumnIsTintedAndMarkedByItsIcon() {
         open(1f)
         val list = bounds(EditorTags.INGREDIENTS)
         val image = compose.onNodeWithTag(EditorTags.INGREDIENTS).captureToImage().toPixelMap()
         fun at(x: Float, y: Float): Color = image[(x - list.left).toInt().coerceIn(0, image.width - 1), (y - list.top).toInt().coerceIn(0, image.height - 1)]
         fun differs(a: Color, b: Color) = abs(a.red - b.red) + abs(a.green - b.green) + abs(a.blue - b.blue) > 0.02f
         (0 until rows().size).forEach { position ->
-            val strip = bounds(EditorTags.ingredientHandle(position))
+            val column = bounds(EditorTags.ingredientHandle(position))
             val unit = bounds(EditorTags.ingredientUnit(position))
             // The block's own colour: just below the unit select, inside the block.
             val body = at(unit.center.x, unit.bottom + px(2f))
-            val tint = at(strip.left + px(12f), strip.center.y)
-            assertTrue("row $position: the strip is tinted ($tint against $body)", differs(tint, body))
-            assertFalse("row $position: the strip is one tint to its right end", differs(tint, at(strip.right - px(12f), strip.center.y)))
-            assertTrue("row $position: the strip carries its icon", exists(EditorTags.ingredientHandleIcon(position)))
+            val tint = at(column.center.x, column.top + px(12f))
+            assertTrue("row $position: the column is tinted ($tint against $body)", differs(tint, body))
+            assertFalse("row $position: the column is one tint to its bottom", differs(tint, at(column.center.x, column.bottom - px(12f))))
+            assertTrue("row $position: the column carries its icon", exists(EditorTags.ingredientHandleIcon(position)))
         }
     }
 
@@ -449,27 +450,33 @@ class IngredientBlocksTest {
         assertFalse(isFocused(EditorTags.ingredientWarning(0)))
     }
 
-    // FLOW-025: a row dragged from anywhere on its strip — its centre and both its ends — moves as one block: every
-    // part of it travels with it, by the same distance, and it lands where it is dropped.
+    // FLOW-025: a row dragged from anywhere in its column — its centre, both its ends and both its sides — moves as one
+    // block: every part of it travels with it, by the same distance, and it lands where it is dropped.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun aRowDraggedFromAnywhereOnItsStripMovesAsOneBlock() {
+    fun aRowDraggedFromAnywhereInItsColumnMovesAsOneBlock() {
         open(1f)
         val names = listOf("черемша", "курица")
-        listOf("its centre" to 0.5f, "its left end" to 0.03f, "its right end" to 0.97f).forEachIndexed { i, (where, across) ->
+        listOf(
+            "its centre" to Offset(0.5f, 0.5f),
+            "its top" to Offset(0.5f, 0.03f),
+            "its bottom" to Offset(0.5f, 0.97f),
+            "its left side" to Offset(0.05f, 0.3f),
+            "its right side" to Offset(0.95f, 0.7f),
+        ).forEachIndexed { i, (where, at) ->
             val tags = listOf(EditorTags.ingredient(0)) + parts(0)
             val before = tags.associateWith { bounds(it).top }
-            val strip = EditorTags.ingredientHandle(0)
+            val column = EditorTags.ingredientHandle(0)
             val distance = bounds(EditorTags.ingredient(1)).bottom - bounds(EditorTags.ingredient(0)).bottom
-            compose.onNodeWithTag(strip, useUnmergedTree = true).performTouchInput {
-                down(Offset(width * across, centerY))
+            compose.onNodeWithTag(column, useUnmergedTree = true).performTouchInput {
+                down(Offset(width * at.x, height * at.y))
                 repeat(10) { moveBy(Offset(0f, distance / 20)) }
             }
             compose.waitForIdle()
             val moved = bounds(EditorTags.ingredient(0)).top - before.getValue(EditorTags.ingredient(0))
             assertTrue("dragged from $where, the row follows the finger ($moved px)", moved > px(8f))
             tags.forEach { tag -> assertEquals("dragged from $where, $tag moves with its row", moved, bounds(tag).top - before.getValue(tag), 1f) }
-            compose.onNodeWithTag(strip, useUnmergedTree = true).performTouchInput {
+            compose.onNodeWithTag(column, useUnmergedTree = true).performTouchInput {
                 repeat(10) { moveBy(Offset(0f, distance / 20)) }
                 up()
             }

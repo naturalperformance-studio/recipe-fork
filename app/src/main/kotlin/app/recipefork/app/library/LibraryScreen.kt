@@ -1,7 +1,6 @@
 package app.recipefork.app.library
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -67,7 +66,9 @@ import app.recipefork.app.editor.rememberEditorEnvironment
 import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.ImportOutcome
-import app.recipefork.app.file.announce
+import app.recipefork.app.file.FileMessage
+import app.recipefork.app.file.FileMessageDialog
+import app.recipefork.app.file.message
 import app.recipefork.app.file.importSafely
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.CardTimers
@@ -93,6 +94,9 @@ const val OWN_PAGE = 30
  * The view of marked recipes lists the found recipes the book holds (FLOW-064 (1)), each opening its card and offering
  * its removal (FLOW-064 (6)); in [Mode.Serverless] it offers the import of a recipe file through the system's document
  * picker as well, and in [Mode.Standard] no import exists.
+ *
+ * What became of a file — an import's outcome, a failed export — is said in a dialog over whatever is shown, until it
+ * is closed.
  */
 @Composable
 fun LibraryScreen(
@@ -104,6 +108,8 @@ fun LibraryScreen(
     card: CardEnvironment = rememberCardEnvironment(),
     files: RecipeImport = rememberRecipeImport(recipes),
 ) {
+    val message by session.message.collectAsState()
+    message?.let { FileMessageDialog(it, onDone = session::told) }
     val editing by session.editing.collectAsState()
     editing?.let { id ->
         EditorScreen(RecipeId(id), recipes, editor, session.viewModelScope, onClose = session::closeEditor, modifier = modifier)
@@ -221,7 +227,7 @@ private fun OwnList(
             onDecline = { deleting = null },
         )
     }
-    val export = rememberExport(recipes)
+    val export = rememberExport(recipes, session)
     if (loaded != null && loaded.isEmpty()) {
         NothingWritten(recipes, session, editor)
         return
@@ -357,7 +363,7 @@ private fun DeleteOffer(row: OwnRecipeRow, onDelete: () -> Unit, modifier: Modif
  * starts no second one. Export reads the recipe and changes nothing in it. An export that fails says so.
  */
 @Composable
-private fun rememberExport(recipes: RecipeRepository): (recipeId: String, title: String) -> Unit {
+private fun rememberExport(recipes: RecipeRepository, session: LibrarySession): (recipeId: String, title: String) -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var exporting by remember { mutableStateOf(false) }
@@ -369,7 +375,7 @@ private fun rememberExport(recipes: RecipeRepository): (recipeId: String, title:
                     val title = entryTitle.ifBlank { context.getString(R.string.common_untitled_recipe) }
                     val sheet = context.getString(R.string.file_export_sheet, title)
                     if (!RecipeExport.share(context, recipes, RecipeId(recipeId), sheet)) {
-                        Toast.makeText(context, R.string.file_export_failed, Toast.LENGTH_SHORT).show()
+                        session.tell(FileMessage(FileMessage.Kind.EXPORT_FAILED))
                     }
                 } finally {
                     exporting = false
@@ -462,7 +468,7 @@ private fun MarkedList(
             onDecline = { removing = null },
         )
     }
-    val export = rememberExport(recipes)
+    val export = rememberExport(recipes, session)
     val loaded = marked
     Column(Modifier.fillMaxSize()) {
         if (mode == Mode.Serverless && loaded != null) {
@@ -580,7 +586,7 @@ private fun ImportButton(files: RecipeImport, session: LibrarySession, modifier:
         scope.launch {
             try {
                 val outcome = files.importSafely(context, uri)
-                announce(context, outcome)
+                session.tell(outcome.message())
                 if (outcome is ImportOutcome.Added) session.showImported()
             } finally {
                 importing = false

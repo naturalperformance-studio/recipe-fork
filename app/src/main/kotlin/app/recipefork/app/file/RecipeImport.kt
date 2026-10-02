@@ -3,8 +3,6 @@ package app.recipefork.app.file
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
-import app.recipefork.app.R
 import app.recipefork.app.book.BookName
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.RecipeFileContent
@@ -107,14 +105,7 @@ class RecipeImport(
      * Removes the found recipe [id] from the active book with its held content and its media files (FLOW-064 (6)).
      * Returns whether the book marked it.
      */
-    suspend fun remove(id: RecipeId): Boolean = withContext(Dispatchers.IO) {
-        val recipes = recipes.inOpenBook()
-        val book = recipes.bookName()
-        val media = recipes.removeMarked(id) ?: return@withContext false
-        val directory = mediaDirectory(filesDirectory, book)
-        media.forEach { File(directory, it).delete() }
-        true
-    }
+    suspend fun remove(id: RecipeId): Boolean = recipes.inOpenBook().removeMarked(id, filesDirectory)
 
     companion object {
         /**
@@ -175,25 +166,6 @@ object RecipeFileIntents {
 
     fun fileOf(intent: Intent?): Uri? =
         intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data?.takeIf { it.scheme in FILE_SCHEMES }
-}
-
-/** Tells the person what became of the file they opened. */
-fun announce(context: Context, outcome: ImportOutcome) {
-    val untitled = context.getString(R.string.common_untitled_recipe)
-    val text = when (outcome) {
-        is ImportOutcome.Added -> context.getString(R.string.file_imported, outcome.title.ifBlank { untitled })
-        is ImportOutcome.AlreadyInBook -> context.getString(R.string.file_import_already, outcome.title.ifBlank { untitled })
-        is ImportOutcome.Refused -> context.getString(
-            when (outcome.refusal) {
-                Refusal.CANNOT_OPEN -> R.string.file_import_cannot_open
-                Refusal.NOT_A_RECIPE_FILE -> R.string.file_import_not_a_recipe
-                Refusal.LATER_VERSION -> R.string.file_import_later
-                Refusal.DAMAGED -> R.string.file_import_damaged
-                Refusal.BREAKS_RULES -> R.string.file_import_breaks_rules
-            },
-        )
-    }
-    Toast.makeText(context.applicationContext, text, Toast.LENGTH_LONG).show()
 }
 
 /** Imports [uri], turning any failure of the device into a refusal said to the person rather than a crash. */

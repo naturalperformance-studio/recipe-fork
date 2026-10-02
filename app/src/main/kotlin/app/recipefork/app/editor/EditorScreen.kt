@@ -82,8 +82,8 @@ fun rememberEditorEnvironment(): EditorEnvironment {
 }
 
 /**
- * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it, the
- * tags, the serving count, the ingredients, the steps and the description.
+ * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
+ * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
  */
 @Composable
 fun EditorScreen(
@@ -137,10 +137,11 @@ fun EditorScreen(
                 )
             }
             TitleAndLanguage(shown, editor)
+            CoverSection(shown, editor, recipes.bookName(), saving)
             Tags(shown, editor, dictionary)
             ServingCount(shown, editor)
             Ingredients(shown, editor, environment.ingredients, scroll)
-            Steps(shown, editor, environment.ingredients, scroll)
+            Steps(shown, editor, environment.ingredients, scroll, recipes.bookName(), saving)
             Description(shown, editor)
         }
     }
@@ -420,8 +421,15 @@ object EditorTags {
     fun stepRemove(position: Int) = "editor-step-$position-remove"
     fun stepMenu(position: Int) = "editor-step-$position-menu"
     fun stepHandle(position: Int) = "editor-step-$position-handle"
+    fun stepHandleIcon(position: Int) = "editor-step-$position-handle-icon"
     fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"
     fun stepInsert(position: Int) = "editor-step-$position-insert-ingredient"
+    fun stepPhoto(position: Int) = "editor-step-$position-photo"
+    fun stepPhotoTake(position: Int) = "editor-step-$position-photo-take"
+    fun stepPhotoChoose(position: Int) = "editor-step-$position-photo-choose"
+    fun stepPhotoRemove(position: Int) = "editor-step-$position-photo-remove"
+    fun stepPhotoImage(position: Int) = "editor-step-$position-photo-image"
+    fun stepPhotoNotice(position: Int) = "editor-step-$position-photo-notice"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
     fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
     fun timerAttach(position: Int) = "editor-step-$position-timer"

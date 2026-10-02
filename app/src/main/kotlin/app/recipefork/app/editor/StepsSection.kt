@@ -2,14 +2,17 @@ package app.recipefork.app.editor
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +40,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.recipefork.app.R
+import app.recipefork.app.book.BookName
+import app.recipefork.app.media.stepPhoto
+import app.recipefork.core.recipe.Media
+import kotlinx.coroutines.CoroutineScope
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.core.recipe.Ingredient
@@ -58,7 +65,8 @@ internal val ROW_SPACING = 12.dp
  * deleted. They accept input whatever else the recipe holds or lacks (FLOW-024 (2)), and no text is ever cut short.
  */
 @Composable
-internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource, scroll: EditorScroll) {
+internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource, scroll: EditorScroll, book: BookName, saving: CoroutineScope) {
+    val photos = rememberStepPhotos(book, saving)
     val editable = recipe.state.editable
     val steps = recipe.steps.sortedBy { it.position }
     val language = numberLanguage(LocalConfiguration.current)
@@ -87,8 +95,8 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSourc
             // What the screen holds for a step — focus, a timer being attached — stays with it when steps before it
             // are inserted, moved or deleted.
             key(editor.stepKey(position)) {
-                if (editable) StepRow(position, steps.size, step, recipe.ingredients, dictionary, language, editor, stating == position, drag)
-                else ReadOnlyStep(position, step, recipe.ingredients, language)
+                if (editable) StepRow(position, steps.size, step, recipe.stepPhoto(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos)
+                else ReadOnlyStep(position, step, recipe.stepPhoto(position), recipe.ingredients, language, photos)
             }
         }
         if (editable) {
@@ -104,60 +112,78 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSourc
 
 /**
  * One step: its number in the field's label, its text over as many lines as it takes with its ingredient references in
- * it, its removal, its menu of inserting and moving (FLOW-025), the control that inserts a reference (FLOW-031) and the
- * control that attaches its timer (FLOW-027).
+ * it, its removal, its menu of inserting and moving (FLOW-025), the control that inserts a reference (FLOW-031), the
+ * control that attaches its timer (FLOW-027) and its photograph (FLOW-026 (2)). Removing the step deletes its
+ * photograph's file once the book no longer holds it.
  */
 @Composable
 private fun StepRow(
     position: Int,
     count: Int,
     step: Step,
+    photo: Media?,
     ingredients: List<Ingredient>,
     dictionary: List<IngredientEntryEntity>?,
     language: InterfaceLanguage,
     editor: RecipeEditor,
     stating: Boolean,
     drag: RowDrag,
+    photos: StepPhotos,
 ) {
     val field = remember { StepFieldState() }
-    Column(Modifier.fillMaxWidth().then(drag.row(position, MaterialTheme.colorScheme.surface)).testTag(EditorTags.step(position))) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            DragHandle(drag, position, count, EditorTags.stepHandle(position))
-            StepTextField(
-                position = position,
-                step = step,
-                ingredients = ingredients,
-                language = language,
-                editor = editor,
-                state = field,
-                modifier = Modifier.weight(1f).testTag(EditorTags.stepText(position)),
-            )
-            ActionText(
-                text = stringResource(R.string.editor_step_remove),
-                action = stringResource(R.string.editor_step_remove_action, position + 1),
-                onClick = { editor.removeStep(position) },
-                modifier = Modifier.testTag(EditorTags.stepRemove(position)),
-            )
-            RowMenu(
-                position = position,
-                count = count,
-                name = stringResource(R.string.editor_step_menu_action, position + 1),
-                tag = EditorTags.stepMenu(position),
-                actionTag = { EditorTags.stepAction(position, it) },
-                onAction = { action ->
-                    when (action) {
-                        RowAction.INSERT_ABOVE -> editor.insertStep(position)
-                        RowAction.INSERT_BELOW -> editor.insertStep(position + 1)
-                        RowAction.MOVE_UP -> editor.moveStep(position, position - 1)
-                        RowAction.MOVE_DOWN -> editor.moveStep(position, position + 1)
-                    }
-                },
-            )
+    // One bounded block per step, as an ingredient's, so where one step ends and the next begins is plain; dragged, it
+    // moves whole.
+    OutlinedCard(
+        Modifier
+            .fillMaxWidth()
+            .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
+            .testTag(EditorTags.step(position)),
+    ) {
+        // Dragged by the column down its left edge; everything of the step stands beside it, at one left edge.
+        DragColumnBlock(drag, position, count, EditorTags.stepHandle(position), EditorTags.stepHandleIcon(position)) {
+            Column(Modifier.fillMaxWidth().padding(STEP_PADDING)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    StepTextField(
+                        position = position,
+                        step = step,
+                        ingredients = ingredients,
+                        language = language,
+                        editor = editor,
+                        state = field,
+                        modifier = Modifier.weight(1f).testTag(EditorTags.stepText(position)),
+                    )
+                    ActionText(
+                        text = stringResource(R.string.editor_step_remove),
+                        action = stringResource(R.string.editor_step_remove_action, position + 1),
+                        onClick = { editor.removeStep(position) { removed -> removed.forEach { photos.store.delete(photos.book, it) } } },
+                        modifier = Modifier.testTag(EditorTags.stepRemove(position)),
+                    )
+                    RowMenu(
+                        position = position,
+                        count = count,
+                        name = stringResource(R.string.editor_step_menu_action, position + 1),
+                        tag = EditorTags.stepMenu(position),
+                        actionTag = { EditorTags.stepAction(position, it) },
+                        onAction = { action ->
+                            when (action) {
+                                RowAction.INSERT_ABOVE -> editor.insertStep(position)
+                                RowAction.INSERT_BELOW -> editor.insertStep(position + 1)
+                                RowAction.MOVE_UP -> editor.moveStep(position, position - 1)
+                                RowAction.MOVE_DOWN -> editor.moveStep(position, position + 1)
+                            }
+                        },
+                    )
+                }
+                InsertIngredient(position, ingredients, dictionary, language, editor, field)
+                StepTimer(position, step, ingredients, language, editor, stating)
+                StepPhoto(position, photo, editor, photos)
+            }
         }
-        InsertIngredient(position, ingredients, dictionary, language, editor, field)
-        StepTimer(position, step, ingredients, language, editor, stating)
     }
 }
+
+/** The room between a step block's outline, or its drag column, and what the block holds. */
+private val STEP_PADDING = PaddingValues(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 8.dp)
 
 /**
  * The step's timer (FLOW-027): a control that attaches it, then its duration in hours and whole minutes — the only
@@ -300,29 +326,33 @@ internal fun durationText(duration: Duration): String {
 
 /**
  * A step as a frozen recipe shows it: its number, its whole text with its references read at the authored scale, set
- * apart as the field sets them (FLOW-032 (5–7)), and its timer, and nothing to change them with.
+ * apart as the field sets them (FLOW-032 (5–7)), its photograph and its timer, and nothing to change them with.
  */
 @Composable
-private fun ReadOnlyStep(position: Int, step: Step, ingredients: List<Ingredient>, language: InterfaceLanguage) {
+private fun ReadOnlyStep(position: Int, step: Step, photo: Media?, ingredients: List<Ingredient>, language: InterfaceLanguage, photos: StepPhotos) {
     val display = StepDisplay.of(step, ingredients, language)
-    Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.step(position))) {
-        Text(stringResource(R.string.editor_step, position + 1), style = MaterialTheme.typography.labelMedium)
-        Text(
-            display.styled(MaterialTheme.colorScheme.secondaryContainer),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.testTag(EditorTags.stepText(position)),
-        )
-        val timer = step.timer ?: return@Column
-        Text(
-            stringResource(R.string.editor_timer_read_only, durationText(timer.duration)),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.testTag(EditorTags.timerDuration(position)),
-        )
-        Text(
-            stringResource(R.string.editor_timer_name_read_only, TimerName.of(step, ReferenceText.authored(ingredients, language)).orEmpty()),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.testTag(EditorTags.timerName(position)),
-        )
+    // A block, as an editable step is, without its drag column.
+    OutlinedCard(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.step(position))) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Text(stringResource(R.string.editor_step, position + 1), style = MaterialTheme.typography.labelMedium)
+            Text(
+                display.styled(MaterialTheme.colorScheme.secondaryContainer),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.testTag(EditorTags.stepText(position)),
+            )
+            if (photo != null) StepPhotoImage(position, photo, photos)
+            val timer = step.timer ?: return@Column
+            Text(
+                stringResource(R.string.editor_timer_read_only, durationText(timer.duration)),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(EditorTags.timerDuration(position)),
+            )
+            Text(
+                stringResource(R.string.editor_timer_name_read_only, TimerName.of(step, ReferenceText.authored(ingredients, language)).orEmpty()),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(EditorTags.timerName(position)),
+            )
+        }
     }
 }
 

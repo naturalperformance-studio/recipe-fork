@@ -63,7 +63,7 @@ private sealed interface CardContent {
 
 /**
  * The recipe card: the saved recipe exactly as a reader sees it, not an editor with reader styling (FLOW-029 (1)).
- * One scrolling screen (the card intro of `cooking`): the title, the serving count, the ingredients in
+ * One scrolling screen (the card intro of `cooking`): the cover, the title, the serving count, the ingredients in
  * order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
  * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe.
  *
@@ -171,6 +171,7 @@ private fun RecipeContent(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).testTag(CardTags.CONTENT),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        Cover(recipe, recipes.bookName())
         Text(
             recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
             style = MaterialTheme.typography.headlineSmall,
@@ -211,7 +212,7 @@ private fun RecipeContent(
             onFix = { scale = scale.fix(it) },
             onRelease = { scale = scale.release(it) },
         )
-        StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language))
+        StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language), StepPhotosOnCard(recipe, recipes.bookName()))
         if (recipe.description.isNotBlank()) {
             Text(
                 recipe.description,
@@ -393,6 +394,7 @@ object CardTags {
     const val MISSING = "card-missing"
     const val CONTENT = "card-content"
     const val TITLE = "card-title"
+    const val COVER = "card-cover"
     const val SERVINGS = "card-servings"
     const val SERVINGS_FEWER = "card-servings-fewer"
     const val SERVINGS_MORE = "card-servings-more"
@@ -409,4 +411,5 @@ object CardTags {
     fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
     fun step(position: Int) = "card-step-$position"
+    fun stepPhoto(position: Int) = "card-step-$position-photo"
 }
