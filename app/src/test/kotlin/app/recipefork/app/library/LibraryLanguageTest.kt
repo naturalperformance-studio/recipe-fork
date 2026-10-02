@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.FavouriteEntity
@@ -66,6 +67,8 @@ class LibraryLanguageTest {
                 SentStatus.entries.forEach { sent ->
                     val title = "Recipe $state $sent"
                     titles += title
+                    // An entry's menu is named by its recipe: the name holds the recipe's title, which is content.
+                    titles += context.getString(R.string.library_entry_actions, title)
                     recipes.save(Recipe.create(now.minusSeconds(i * 10L), null).copy(title = title, sent = sent).inState(state))
                     ownCount++
                 }

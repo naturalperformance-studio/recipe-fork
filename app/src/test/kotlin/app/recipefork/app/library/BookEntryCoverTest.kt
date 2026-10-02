@@ -198,6 +198,7 @@ class BookEntryCoverTest {
         awaitCover(recipe)
         assertCoverAtStart(recipe)
         assertDecorative(recipe)
+        compose.openEntryMenu(recipe.id.value)
         assertTrue(exists(LibraryTags.remove(recipe.id.value)))
         assertTrue(exists(LibraryTags.export(recipe.id.value)))
     }
@@ -264,8 +265,8 @@ class BookEntryCoverTest {
         }
     }
 
-    // At 360 dp and font scale 2.0 the title keeps the entry's width less its padding and the cover, and the offers
-    // still stand below it, each laid out whole.
+    // At 360 dp and font scale 2.0 the title keeps the entry's width less its padding and the cover, beside the ⋮ at
+    // the end of its line, and the items of the entry's menu each keep their size.
     @Test
     @Config(qualifiers = "en-w360dp-h640dp")
     fun theTitleStillHasRoomBesideTheCoverAtLargeFontScale() {
@@ -275,7 +276,9 @@ class BookEntryCoverTest {
         val id = recipe.id.value
         val list = compose.onNodeWithTag(LibraryTags.OWN_LIST).fetchSemanticsNode().boundsInRoot
         val entry = bounds(LibraryTags.entry(id))
-        assertEquals("the entry takes the list's whole width", list.width, entry.width, 0.5f)
+        val menu = bounds(LibraryTags.actions(id))
+        assertEquals("the entry takes the list's width less the ⋮", list.width - dp(48f + 4f), entry.width, 1f)
+        assertTrue("the ⋮ lies within the list, after the entry", menu.left >= entry.right && menu.right <= list.right)
         val title = compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode()
         val layout = layoutOf(title.config)
         val room = layout.layoutInput.constraints.maxWidth
@@ -284,11 +287,12 @@ class BookEntryCoverTest {
         assertTrue("the title is not cut short", !layout.hasVisualOverflow)
         assertTrue("each word of the title fits its line", layout.lineCount <= 3)
         assertTrue(title.boundsInRoot.left >= bounds(LibraryTags.cover(id)).right)
+        assertTrue("the title does not reach under the ⋮", title.boundsInRoot.right <= menu.left)
+        val firstLine = title.boundsInRoot.top + (layout.getLineTop(0) + layout.getLineBottom(0)) / 2
+        assertEquals("the ⋮ stands level with the title's first line", firstLine, menu.center.y, dp(2f))
+        compose.openEntryMenu(id)
         listOf(LibraryTags.export(id), LibraryTags.delete(id)).forEach { tag ->
-            val button = bounds(tag)
-            assertTrue("$tag lies within the list", button.left >= list.left && button.right <= list.right)
-            assertTrue("$tag stands below the entry", button.top >= entry.bottom)
-            assertTrue(button.height >= dp(48f) - 0.5f)
+            assertTrue(bounds(tag).height >= dp(48f) - 0.5f)
         }
     }
 

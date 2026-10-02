@@ -21,6 +21,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.HorizontalAlignmentLine
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -59,6 +63,7 @@ import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.data.UsualServings
+import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.EditorScreen
 import app.recipefork.app.editor.interfaceLanguage
@@ -80,6 +85,8 @@ import app.recipefork.core.recipe.SentStatus
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 /** How many own recipes are read from the device at a time, and asked for again near the end (FLOW-041). */
 const val OWN_PAGE = 30
@@ -94,7 +101,8 @@ const val OWN_PAGE = 30
  *
  * The view of marked recipes lists the found recipes the book holds (FLOW-064 (1)), each opening its card and offering
  * its removal (FLOW-064 (6)); in [Mode.Serverless] it offers the import of a recipe file through the system's document
- * picker as well, and in [Mode.Standard] no import exists.
+ * picker as well, and in [Mode.Standard] no import exists. An entry's actions are in its menu, at the end of its title
+ * line; the list's header and its entries stay apart.
  *
  * The book's menu, beside its title, holds the serving count the reader usually cooks for (FLOW-017), which every
  * card opens at.
@@ -308,12 +316,9 @@ private fun WriteButton(
 }
 
 /**
- * An own recipe's entry; tapping it opens the recipe's card (FLOW-029 (1)). A recipe its owner may delete carries the
- * offer to beside it; any other carries none and the entry takes the whole width (FLOW-053 (1), ST-010).
- *
- * In [Mode.Serverless] every entry offers its export as well (FLOW-063). Its offers then stand on a line of their own
- * under the entry's text, which keeps the whole width, so that a title stays readable on a narrow phone at a large
- * font scale.
+ * An own recipe's entry; tapping it opens the recipe's card (FLOW-029 (1)). Its actions are in its menu, at the end of
+ * its title line: deletion for a recipe its owner may delete (FLOW-053 (1), ST-010), and in [Mode.Serverless] the
+ * export of every recipe (FLOW-063). An entry with no action carries no menu, and its text takes the whole width.
  */
 @Composable
 private fun OwnEntry(
@@ -324,28 +329,11 @@ private fun OwnEntry(
     onDelete: () -> Unit,
     onExport: () -> Unit,
 ) {
-    val deletable = row.state in DELETABLE
-    when (mode) {
-        Mode.Standard -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            EntryText(row, cover, onOpen, Modifier.weight(1f))
-            if (deletable) DeleteOffer(row, onDelete, Modifier.padding(end = 8.dp))
-        }
-        Mode.Serverless -> Column(Modifier.fillMaxWidth()) {
-            EntryText(row, cover, onOpen, Modifier.fillMaxWidth())
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(
-                    onClick = onExport,
-                    modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.export(row.recipeId)),
-                ) { Text(stringResource(R.string.file_export)) }
-                if (deletable) DeleteOffer(row, onDelete)
-            }
-        }
+    val actions = buildList {
+        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onExport))
+        if (row.state in DELETABLE) add(EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), onDelete))
     }
-    HorizontalDivider()
+    EntryWithActions(row.recipeId, row.title, actions) { modifier -> EntryText(row, cover, onOpen, modifier) }
 }
 
 @Composable
@@ -366,23 +354,90 @@ private fun EntryText(row: OwnRecipeRow, cover: EntryCover, onOpen: () -> Unit, 
 
 @Composable
 private fun EntryLines(row: OwnRecipeRow) {
-    Text(
-        text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
-    )
+    EntryTitle(row.recipeId, row.title)
     // The state is named in words, never carried by colour alone (A11Y-008).
     Text(stringResource(stateLabel(row.state)), style = MaterialTheme.typography.labelLarge)
     // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005).
     Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
 }
 
+/** An entry's title, which tells the entry's menu where its first line stands ([TitleLine]). */
 @Composable
-private fun DeleteOffer(row: OwnRecipeRow, onDelete: () -> Unit, modifier: Modifier = Modifier) {
-    TextButton(
-        onClick = onDelete,
-        modifier = modifier.heightIn(min = 48.dp).testTag(LibraryTags.delete(row.recipeId)),
-    ) { Text(stringResource(R.string.library_entry_delete)) }
+private fun EntryTitle(recipeId: String, title: String) {
+    // The middle of the first line, as the title was last laid out; the text is laid out while it is measured.
+    val firstLine = remember { FirstLine() }
+    Text(
+        text = title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+        style = MaterialTheme.typography.titleMedium,
+        onTextLayout = { firstLine.centre = ((it.getLineTop(0) + it.getLineBottom(0)) / 2).roundToInt() },
+        modifier = Modifier
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                val centre = firstLine.centre.coerceIn(0, placeable.height)
+                layout(placeable.width, placeable.height, mapOf(TitleLine to centre)) { placeable.place(0, 0) }
+            }
+            .testTag(LibraryTags.entryTitle(recipeId)),
+    )
+}
+
+/** Where the middle of a title's first line stands, in pixels from the title's top. */
+private class FirstLine(var centre: Int = 0)
+
+/** The middle of an entry's first title line, which the entry's menu stands level with. */
+private val TitleLine = HorizontalAlignmentLine { a, b -> min(a, b) }
+
+/** One item of an entry's menu: what it reads, its tag, and what choosing it does. */
+private class EntryAction(@StringRes val label: Int, val tag: String, val onClick: () -> Unit)
+
+/**
+ * An entry of the book and, when it has any [actions], its menu at the end of its title line; the entry's own
+ * [content] takes the rest of the width, or the whole width when there is no action.
+ */
+@Composable
+private fun EntryWithActions(
+    recipeId: String,
+    title: String,
+    actions: List<EntryAction>,
+    content: @Composable (Modifier) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth()) {
+        content(Modifier.weight(1f).alignBy(TitleLine))
+        if (actions.isNotEmpty()) {
+            EntryMenu(recipeId, title, actions, Modifier.alignBy { it.measuredHeight / 2 }.padding(end = 4.dp))
+        }
+    }
+    HorizontalDivider()
+}
+
+/**
+ * The ⋮ of an entry, 48 by 48 dp (A11Y-003), named for the screen reader by the recipe it acts on (A11Y-005), with
+ * the same name in a tooltip on a long press; it opens the menu of the entry's [actions].
+ */
+@Composable
+private fun EntryMenu(recipeId: String, title: String, actions: List<EntryAction>, modifier: Modifier = Modifier) {
+    var expanded by remember { mutableStateOf(false) }
+    val name = title.ifBlank { stringResource(R.string.common_untitled_recipe) }
+    Box(modifier) {
+        BlockAction(
+            R.drawable.ic_row_menu,
+            stringResource(R.string.library_entry_actions, name),
+            LibraryTags.actions(recipeId),
+            onClick = { expanded = !expanded },
+            action = stringResource(R.string.library_entry_actions_action),
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            actions.forEach { action ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(action.label)) },
+                    onClick = {
+                        expanded = false
+                        action.onClick()
+                    },
+                    modifier = Modifier.testTag(action.tag),
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -541,9 +596,8 @@ private fun MarkedList(
 }
 
 /**
- * A marked recipe's entry: its title and any stated author; one whose content the book holds opens and is removable.
- * In [Mode.Serverless] such an entry offers its export as well (FLOW-063 (2)), and its offers then stand on a line of
- * their own under the entry's text, as an own entry's do.
+ * A marked recipe's entry: its title and any stated author; one whose content the book holds opens, and its menu, at
+ * the end of its title line, offers its removal, and in [Mode.Serverless] its export as well (FLOW-063 (2)).
  */
 @Composable
 private fun MarkedEntry(
@@ -554,27 +608,11 @@ private fun MarkedEntry(
     onRemove: () -> Unit,
     onExport: () -> Unit,
 ) {
-    when {
-        mode == Mode.Serverless && row.held -> Column(Modifier.fillMaxWidth()) {
-            MarkedEntryText(row, cover, onOpen, Modifier.fillMaxWidth())
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(
-                    onClick = onExport,
-                    modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.export(row.recipeId)),
-                ) { Text(stringResource(R.string.file_export)) }
-                RemoveOffer(row, onRemove)
-            }
-        }
-        else -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            MarkedEntryText(row, cover, onOpen, Modifier.weight(1f))
-            if (row.held) RemoveOffer(row, onRemove, Modifier.padding(end = 8.dp))
-        }
+    val actions = if (!row.held) emptyList() else buildList {
+        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onExport))
+        add(EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), onRemove))
     }
-    HorizontalDivider()
+    EntryWithActions(row.recipeId, row.title, actions) { modifier -> MarkedEntryText(row, cover, onOpen, modifier) }
 }
 
 @Composable
@@ -604,11 +642,7 @@ private fun MarkedEntryText(row: MarkedRecipeRow, cover: EntryCover, onOpen: () 
 
 @Composable
 private fun MarkedEntryLines(row: MarkedRecipeRow) {
-    Text(
-        text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
-    )
+    EntryTitle(row.recipeId, row.title)
     row.statedAuthor?.let {
         Text(
             stringResource(R.string.file_stated_author, it),
@@ -616,14 +650,6 @@ private fun MarkedEntryLines(row: MarkedRecipeRow) {
             modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
         )
     }
-}
-
-@Composable
-private fun RemoveOffer(row: MarkedRecipeRow, onRemove: () -> Unit, modifier: Modifier = Modifier) {
-    TextButton(
-        onClick = onRemove,
-        modifier = modifier.heightIn(min = 48.dp).testTag(LibraryTags.remove(row.recipeId)),
-    ) { Text(stringResource(R.string.library_entry_remove)) }
 }
 
 /**
@@ -755,6 +781,8 @@ object LibraryTags {
     const val DELETE_CONFIRM = "library-delete-confirm"
     const val DELETE_DECLINE = "library-delete-decline"
     fun entry(recipeId: String) = "library-entry-$recipeId"
+    /** The ⋮ at the end of an entry's title line, which opens the menu of its actions. */
+    fun actions(recipeId: String) = "library-actions-$recipeId"
     fun delete(recipeId: String) = "library-delete-$recipeId"
     fun export(recipeId: String) = "library-export-$recipeId"
     fun entryTitle(recipeId: String) = "library-entry-title-$recipeId"
