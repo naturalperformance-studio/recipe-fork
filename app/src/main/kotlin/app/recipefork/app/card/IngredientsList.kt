@@ -147,11 +147,7 @@ private fun IngredientRow(line: IngredientLine, tag: String, onOpen: () -> Unit)
                 }
             }
         }
-        when {
-            line.shortfall != null ->
-                Note(stringResource(R.string.card_quantity_shortfall, line.shortfall.required, line.shortfall.available))
-            line.fixed -> Note(stringResource(R.string.card_quantity_fixed))
-        }
+        if (line.fixed) Note(stringResource(R.string.card_quantity_fixed))
     }
 }
 

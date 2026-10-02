@@ -14,9 +14,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The card's list while the reader fixes the amount they have of one ingredient (SCALE-002, SCALE-003, SCALE-006,
- * SCALE-008, SCALE-016, SCALE-017, SCALE-018): which rows offer it, the factor it sets for every row, the count shown
- * as approximate, the shortfall of an earlier fixing, and the releases.
+ * The card's list while the reader fixes the amount they have of one ingredient (SCALE-002, SCALE-003, SCALE-008,
+ * SCALE-016, SCALE-017, SCALE-018): which rows offer it, the factor it sets for every row, the count shown as
+ * approximate, a second fixing releasing the first (T-065, departing from SCALE-006), and the releases.
  */
 class FixedLinesTest {
     private fun row(
@@ -40,6 +40,7 @@ class FixedLinesTest {
     )
 
     private val chicken = 0
+    private val rice = 1
     private val eggs = 2
 
     private fun list(scale: CardScale, authored: Int? = 4) = ingredientList(forFour, emptyMap(), ENGLISH, authored, scale)
@@ -49,6 +50,7 @@ class FixedLinesTest {
 
     private val atFour = CardScale(Rational.of(4))
     private val chicken300 = fixing(chicken, 300, QuantityUnit.GRAM)
+    private val rice525 = fixing(rice, 525, QuantityUnit.GRAM)
 
     @Test
     fun aRowCarryingAQuantityOffersFixingInTheUnitsItsUnitReadsIn() {
@@ -70,7 +72,6 @@ class FixedLinesTest {
         assertEquals(listOf("300 g", "210 g", "2 pc", "⅔ tsp", "to taste", "g", "tsp"), quantities(fixed))
         assertEquals(ServingCount(Rational.of(2), approximate = true), fixed.servingCount)
         assertEquals(listOf(true, false, false, false, false, false, false), fixed.lines.map { it.fixed })
-        assertTrue(fixed.lines.none { it.shortfall != null })
     }
 
     @Test
@@ -104,20 +105,17 @@ class FixedLinesTest {
         assertEquals(ServingCount(Rational.of(1, 3), approximate = true), list(atFour.fix(fixing(chicken, 50, QuantityUnit.GRAM))).servingCount)
     }
 
-    // SCALE-006: the latest fixing sets the scale; the earlier one shows what it needs against what was fixed.
+    // T-065: fixing rice while chicken is fixed releases chicken; rice's 525 g of 350 g sets 3/2 for every row.
     @Test
-    fun theLatestFixingSetsTheFactorAndAnEarlierOneShowsItsShortfall() {
-        val both = list(atFour.fix(chicken300).fix(fixing(eggs, 3, QuantityUnit.PIECE)))
-        assertEquals("500 g", both.lines[chicken].quantity)
-        assertEquals(LineShortfall(required = "500 g", available = "300 g"), both.lines[chicken].shortfall)
-        assertTrue(both.lines[chicken].fixed)
-        assertNull(both.lines[eggs].shortfall)
-        assertTrue(both.lines[eggs].fixed)
-        assertEquals("350 g", both.lines[1].quantity)
-        assertEquals(ServingCount(Rational.of(4), approximate = true), both.servingCount)
-        // An earlier fixing still covered by the latest one shows no shortfall.
-        val covered = list(atFour.fix(fixing(chicken, 600, QuantityUnit.GRAM)).fix(fixing(eggs, 3, QuantityUnit.PIECE)))
-        assertNull(covered.lines[chicken].shortfall)
+    fun aSecondFixingReleasesTheFirst() {
+        val both = list(atFour.fix(chicken300).fix(rice525))
+        assertEquals(listOf(false, true, false, false, false, false, false), both.lines.map { it.fixed })
+        assertEquals(listOf("750 g", "525 g", "5 pc", "1½ tsp", "to taste", "g", "tsp"), quantities(both))
+        assertEquals(ServingCount(Rational.of(6), approximate = true), both.servingCount)
+        // Exactly the list of rice fixed alone: nothing of the chicken fixing is left.
+        assertEquals(list(atFour.fix(rice525)), both)
+        // The chicken line is the ordinary line of the recipe at 6: recalculated, not fixed.
+        assertEquals(list(CardScale(Rational.of(6))).lines[chicken], both.lines[chicken])
     }
 
     // SCALE-016: a change of count releases every fixing and is shown as asked for.
@@ -125,26 +123,25 @@ class FixedLinesTest {
     fun changingTheCountReleasesEveryFixing() {
         val asked = list(atFour.fix(chicken300).fix(fixing(eggs, 3, QuantityUnit.PIECE)).request(Rational.of(6)))
         assertEquals(listOf("750 g", "525 g", "5 pc", "1½ tsp", "to taste", "g", "tsp"), quantities(asked))
-        assertTrue(asked.lines.none { it.fixed || it.shortfall != null })
+        assertTrue(asked.lines.none { it.fixed })
         assertEquals(ServingCount(Rational.of(6), approximate = false), asked.servingCount)
     }
 
-    // SCALE-017: releasing the last fixing returns to the count in force before the first.
+    // SCALE-017: releasing the fixing returns to the count in force before the first fixing of the chain.
     @Test
-    fun releasingTheLastFixingReturnsToTheCountBeforeTheFirst() {
+    fun releasingTheFixingReturnsToTheCountBeforeTheFirstOfTheChain() {
+        // At 4: fix chicken, then rice, release rice → back to 4, not approximate.
+        val released = list(atFour.fix(chicken300).fix(rice525).release(rice))
+        assertEquals(ServingCount(Rational.of(4), approximate = false), released.servingCount)
+        assertEquals(list(atFour), released)
+        assertTrue(released.lines.none { it.fixed || it.derived })
+        // From a requested 6, the chain also returns to 6.
         val atSix = CardScale(Rational.of(6))
-        val two = atSix.fix(chicken300).fix(fixing(eggs, 3, QuantityUnit.PIECE))
-        val one = two.release(eggs)
-        assertEquals("300 g", list(one).lines[chicken].quantity)
-        assertEquals(ServingCount(Rational.of(2), approximate = true), list(one).servingCount)
-        val none = list(one.release(chicken))
-        assertEquals(ServingCount(Rational.of(6), approximate = false), none.servingCount)
-        assertEquals(quantities(list(atSix)), quantities(none))
-        assertTrue(none.lines.none { it.fixed })
-        // From the authored count, nothing is derived once released.
-        val back = list(atFour.fix(chicken300).release(chicken))
-        assertEquals(ServingCount(Rational.of(4), approximate = false), back.servingCount)
-        assertTrue(back.lines.none { it.derived })
+        val fromSix = list(atSix.fix(chicken300).fix(fixing(eggs, 3, QuantityUnit.PIECE)).release(eggs))
+        assertEquals(ServingCount(Rational.of(6), approximate = false), fromSix.servingCount)
+        assertEquals(list(atSix), fromSix)
+        // Releasing the row already released by the second fixing leaves the second in force.
+        assertEquals(list(atFour.fix(rice525)), list(atFour.fix(chicken300).fix(rice525).release(chicken)))
     }
 
     @Test

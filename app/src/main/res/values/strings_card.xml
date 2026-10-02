@@ -45,6 +45,4 @@
     <string name="card_fix_cancel">Cancel</string>
     <string name="card_fix_cancel_action">Close without changing the recipe</string>
     <string name="card_quantity_fixed">fixed</string>
-    <!-- %1$s is what the recipe needs at the scale in force, %2$s what the reader fixed. -->
-    <string name="card_quantity_shortfall">fixed: you have %2$s, the recipe now needs %1$s</string>
 </resources>
