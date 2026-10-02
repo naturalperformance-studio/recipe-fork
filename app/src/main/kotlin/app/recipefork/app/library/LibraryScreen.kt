@@ -742,4 +742,6 @@ object LibraryTags {
     fun statedAuthor(recipeId: String) = "library-stated-author-$recipeId"
     fun remove(recipeId: String) = "library-remove-$recipeId"
     fun cover(recipeId: String) = "library-cover-$recipeId"
+    /** The place a cover with the tag [coverTag] holds, whether or not its picture is read yet. */
+    fun coverSlot(coverTag: String) = "$coverTag-slot"
 }

@@ -54,6 +54,8 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * The cover on the book's entries: an own and a found recipe's entry show the recipe's cover as a small square at its
@@ -76,8 +78,11 @@ class BookEntryCoverTest {
 
     /** Every decode the screen asked for: the file, and whether it ran off the main thread. */
     private val decodes = CopyOnWriteArrayList<Pair<String, Boolean>>()
+    /** Holds every decode until it is counted down; open unless a test closes it. */
+    @Volatile private var gate = CountDownLatch(0)
     private val thumbnails = CoverThumbnails(decode = { file, size ->
         decodes += file.name to (Looper.myLooper() != Looper.getMainLooper())
+        gate.await(PATIENCE_MS, TimeUnit.MILLISECONDS)
         decodeThumbnail(file, size)
     })
 
@@ -92,6 +97,7 @@ class BookEntryCoverTest {
 
     @After
     fun close() {
+        gate.countDown()
         compose.unregisterIdlingResource(book.idling)
         book.close()
         store.directory(BookName.Pool).deleteRecursively()
@@ -206,6 +212,7 @@ class BookEntryCoverTest {
         listOf(bare, gone).forEach { recipe ->
             val id = recipe.id.value
             assertFalse(exists(LibraryTags.cover(id)))
+            assertFalse("no place is held for it", exists(LibraryTags.coverSlot(LibraryTags.cover(id))))
             val entry = bounds(LibraryTags.entry(id))
             val title = compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode()
             assertEquals("the text starts at the entry's padding", entry.left + dp(16f), title.boundsInRoot.left, 1f)
@@ -228,13 +235,29 @@ class BookEntryCoverTest {
         assertTrue("decoded off the main thread", decodes.all { it.second })
     }
 
+    // A cover whose file is there holds its place before its picture is read: the title stands where it will stay.
+    @Test
+    fun theTitleStandsBesideTheCoversPlaceBeforeThePictureIsRead() {
+        gate = CountDownLatch(1)
+        val recipe = own("Borscht", photo("c1"))
+        show(LibraryView.OWN)
+        val id = recipe.id.value
+        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.entryTitle(id)) && decodes.isNotEmpty() }
+        assertFalse("the picture is not read yet", exists(LibraryTags.cover(id)))
+        val entry = bounds(LibraryTags.entry(id))
+        val before = bounds(LibraryTags.entryTitle(id)).left
+        assertEquals("the title starts past the cover's place", entry.left + dp(16f + 56f + 12f), before, 1f)
+        gate.countDown()
+        awaitCover(recipe)
+        assertEquals("and does not move once it is read", before, bounds(LibraryTags.entryTitle(id)).left, 0.5f)
+    }
+
     @Test
     fun aThumbnailIsDecodedDownToItsSizeNeverWhole() {
         val file = TestPhotos.jpeg(File(context.cacheDir, "big.jpg"), 1600, 1200)
         try {
             val image: ImageBitmap = runBlocking { CoverThumbnails().load(file, 150) }!!
-            assertTrue("at least the side asked for: ${image.width}x${image.height}", minOf(image.width, image.height) >= 150)
-            assertTrue("less than twice it: ${image.width}x${image.height}", minOf(image.width, image.height) < 300)
+            assertEquals("scaled to the side asked for, keeping its shape", listOf(200, 150), listOf(image.width, image.height))
             assertNull(runBlocking { CoverThumbnails().load(File(context.cacheDir, "missing.jpg"), 150) })
         } finally {
             file.delete()
