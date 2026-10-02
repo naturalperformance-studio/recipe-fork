@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
@@ -35,6 +36,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -43,10 +45,10 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * Scaling from what the reader has of one ingredient, on the card (scenario 5; SCALE-002, SCALE-006, SCALE-008,
- * SCALE-016, SCALE-017, SCALE-018): tapping a line opens the fixing control, an accepted amount scales the whole
- * recipe and the count reads as approximate, a refused one says what is held, and a change of count or a release
- * undoes it.
+ * Scaling from what the reader has of one ingredient, on the card (scenario 5; SCALE-002, SCALE-008, SCALE-016,
+ * SCALE-017, SCALE-018): tapping a line opens the fixing control, an accepted amount scales the whole recipe and the
+ * count reads as approximate, a refused one says what is held, a second fixing releases the first (T-065), and a
+ * change of count or a release undoes it.
  */
 @RunWith(AndroidJUnit4::class)
 class CardFixTest {
@@ -192,15 +194,50 @@ class CardFixTest {
         assertEquals("333 g", quantity(0))
     }
 
-    // SCALE-006: the latest fixing sets the scale, and the earlier one shows what it needs against what was fixed.
+    private val fixedNote get() = context.getString(R.string.card_quantity_fixed)
+    private fun fixed(position: Int) = fixedNote in line(position)
+
+    /** Whether the row's fixing control offers a release, i.e. the card holds a fixing of this row. */
+    private fun holdsFixing(position: Int): Boolean {
+        tap(position)
+        val held = compose.onAllNodes(hasTestTag(CardTags.FIX_RELEASE)).fetchSemanticsNodes().isNotEmpty()
+        compose.onNodeWithTag(CardTags.FIX_CANCEL).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !controlShown() }
+        return held
+    }
+
+    // T-065: fixing rice while chicken is fixed releases chicken; 525 g of 350 g sets 3/2 for every row.
     @Test
-    fun aSecondFixingSetsTheScaleAndTheFirstShowsItsShortfall() {
+    fun aSecondFixingReleasesTheFirst() {
         open()
         fix(0, "300")
-        fix(2, "3")
-        assertEquals("Servings: ≈4", servings())
-        assertEquals(listOf("Chicken", "500 g", "fixed: you have 300 g, the recipe now needs 500 g"), line(0))
-        assertEquals(listOf("Eggs", "3 pc", "fixed: the amount you have"), line(2))
+        fix(1, "525")
+        assertEquals("Servings: ≈6", servings())
+        assertEquals("750 g", quantity(0))
+        assertEquals("525 g", quantity(1))
+        assertTrue(fixed(1))
+        assertFalse(fixed(0))
+        // The chicken line reads as an ordinary recalculated line: the same notes as rice's but for "fixed".
+        assertEquals(line(1).drop(2) - fixedNote, line(0).drop(2))
+        assertEquals(listOf(false, true, false, false), (0..3).map(::fixed))
+        assertFalse(holdsFixing(0))
+        assertTrue(holdsFixing(1))
+    }
+
+    // SCALE-017 for the chain: at 4, fix chicken, then rice, release rice → back to 4, not approximate.
+    @Test
+    fun releasingTheSecondFixingReturnsToTheCountBeforeTheFirst() {
+        open()
+        val atFour = (0..3).map(::line)
+        fix(0, "300")
+        fix(1, "525")
+        tap(1)
+        compose.onNodeWithTag(CardTags.FIX_RELEASE).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !controlShown() }
+        assertEquals("Servings: 4", servings())
+        assertEquals(atFour, (0..3).map(::line))
+        assertEquals("500 g", quantity(0))
+        assertFalse(fixed(0))
     }
 
     // SCALE-016: a change of count releases every fixing, and the count asked for is not approximate.
