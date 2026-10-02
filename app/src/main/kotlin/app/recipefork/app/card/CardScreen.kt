@@ -40,12 +40,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.interfaceLanguage
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
@@ -176,43 +176,33 @@ private fun RecipeContent(
             modifier = Modifier.semantics { heading() }.testTag(CardTags.TITLE),
         )
         recipe.parent?.let { Provenance(it, recipes, onOpenParent) }
-        // The card always opens at the authored count (FLOW-017 (2)); the count requested is the card's alone.
+        // The card always opens at the authored count (FLOW-017 (2)); the scale is the card's alone, and a fixing is
+        // of the rows as they stand, so a change to them starts the scale anew.
         val authored = recipe.servings?.takeIf { it >= 1 }
-        var requested by remember(recipe.id, authored) { mutableStateOf(authored?.let { Rational.of(it.toLong()) }) }
-        requested?.let { count ->
+        var scale by remember(recipe.id, authored, recipe.ingredients) {
+            mutableStateOf(CardScale(authored?.let { Rational.of(it.toLong()) }))
+        }
+        val ordered = recipe.ingredients.sortedBy { it.position }
+        val list = ingredientList(ordered, entries, language, authored, scale)
+        list.servingCount?.let { count ->
             ServingsControl(
-                count = RequestedServings.text(count, language),
-                canDecrease = count > RequestedServings.MIN,
-                onDecrease = { requested = RequestedServings.decreased(count) },
-                onIncrease = { requested = RequestedServings.increased(count) },
+                count = RequestedServings.text(count.value, language),
+                approximate = count.approximate,
+                canDecrease = count.value > RequestedServings.MIN,
+                // A change of count walks from the count shown, and releases every fixing (SCALE-016).
+                onDecrease = { scale = scale.request(RequestedServings.decreased(count.value)) },
+                onIncrease = { scale = scale.request(RequestedServings.increased(count.value)) },
             )
         }
-        val ingredients = recipe.ingredients.sortedBy { it.position }
-        if (ingredients.isNotEmpty()) {
-            Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
-                ingredientLines(ingredients, entries, language, authored, requested).forEachIndexed { i, line ->
-                    IngredientRow(line, CardTags.ingredient(ingredients[i].position))
-                }
-            }
-        }
-        // A step holding no text yet is not a step a reader can follow; the others are numbered as they read.
-        val steps = recipe.steps.sortedBy { it.position }.filter { it.text.isNotBlank() }
-        if (steps.isNotEmpty()) {
-            Section(R.string.card_steps, CardTags.STEPS) {
-                steps.forEachIndexed { index, step ->
-                    Row(
-                        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(CardTags.step(step.position)),
-                    ) {
-                        Text(
-                            "${index + 1}.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.widthIn(min = 32.dp),
-                        )
-                        Text(step.text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-        }
+        IngredientsList(
+            ordered,
+            list,
+            scale.fixings,
+            language,
+            onFix = { scale = scale.fix(it) },
+            onRelease = { scale = scale.release(it) },
+        )
+        StepsList(recipe.steps, recipe.id, recipe.title)
         if (recipe.description.isNotBlank()) {
             Text(
                 recipe.description,
@@ -271,8 +261,9 @@ private fun Provenance(parent: RecipeId, recipes: RecipeRepository, onOpenParent
     }
 }
 
+/** One part of the recipe under its heading; the lists of ingredients and of steps are each one. */
 @Composable
-private fun Section(@StringRes title: Int, tag: String, lines: @Composable () -> Unit) {
+internal fun Section(@StringRes title: Int, tag: String, lines: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(title),
@@ -283,31 +274,22 @@ private fun Section(@StringRes title: Int, tag: String, lines: @Composable () ->
     }
 }
 
-/** One ingredient: its name, and its quantity at the line's end; read by the screen reader as one line. */
-@Composable
-private fun IngredientRow(line: IngredientLine, tag: String) {
-    Row(
-        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(tag),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(
-            line.name ?: stringResource(R.string.card_unnamed_ingredient),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        line.quantity?.let { Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End) }
-    }
-}
-
 /**
  * The serving count and the two actions that walk it (SCALE-011): the count as the reader requested it, never
- * marked approximate, between a fewer and a more action. At ¼ the fewer action is disabled and does nothing.
+ * marked approximate, or, while a fixed ingredient sets the scale, the count it implies marked as approximate
+ * (SCALE-002, SCALE-008); between a fewer and a more action. At ¼ the fewer action is disabled and does nothing.
  */
 @Composable
-private fun ServingsControl(count: String, canDecrease: Boolean, onDecrease: () -> Unit, onIncrease: () -> Unit) {
+private fun ServingsControl(
+    count: String,
+    approximate: Boolean,
+    canDecrease: Boolean,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
-            stringResource(R.string.card_servings, count),
+            stringResource(if (approximate) R.string.card_servings_approximate else R.string.card_servings, count),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }.testTag(CardTags.SERVINGS),
         )
@@ -394,8 +376,16 @@ object CardTags {
     const val SERVINGS_FEWER = "card-servings-fewer"
     const val SERVINGS_MORE = "card-servings-more"
     const val INGREDIENTS = "card-ingredients"
+    const val PROPORTIONS = "card-proportions"
     const val STEPS = "card-steps"
     const val DESCRIPTION = "card-description"
+    const val FIX = "card-fix"
+    const val FIX_FIELD = "card-fix-field"
+    const val FIX_PROBLEM = "card-fix-problem"
+    const val FIX_CONFIRM = "card-fix-confirm"
+    const val FIX_RELEASE = "card-fix-release"
+    const val FIX_CANCEL = "card-fix-cancel"
+    fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
     fun step(position: Int) = "card-step-$position"
 }

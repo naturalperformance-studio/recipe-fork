@@ -20,8 +20,29 @@
     <string name="card_servings_more_action">Recalculate the recipe for more servings</string>
     <string name="card_ingredients">Ingredients</string>
     <string name="card_steps">Steps</string>
+    <!-- Quantities computed at a scale other than the authored one (SCALE-004 (1), shown once for the section), with
+         a legend for the arrows; the spoken form is what the screen reader reads instead of the arrows. -->
+    <string name="card_quantities_recalculated">Recalculated · ↑ rounded up · ↓ rounded down</string>
+    <string name="card_quantities_recalculated_spoken">Quantities are recalculated. An up arrow marks a quantity rounded up, a down arrow one rounded down.</string>
+    <!-- Read aloud for the arrow after a quantity rounding moved (SCALE-004 (2–5), SCALE-005). -->
+    <string name="card_quantity_rounded_up">rounded up, exact value was lower</string>
+    <string name="card_quantity_rounded_down">rounded down, exact value was higher</string>
+    <!-- Two or more ingredients held at their smallest amount (SCALE-009). -->
+    <string name="card_proportions_warning">Some amounts are at their minimum — proportions are off.</string>
     <!-- An ingredient row that names nothing the device can show yet. -->
     <string name="card_unnamed_ingredient">Unnamed ingredient</string>
     <!-- The recipe is no longer in the active book. -->
     <string name="card_missing">This recipe is no longer in this recipe book.</string>
+    <!-- The serving count while a fixed ingredient sets the scale (SCALE-002, SCALE-008): computed, so approximate. -->
+    <string name="card_servings_approximate">Servings: ≈%1$s</string>
+    <!-- Fixing the amount the reader has of one ingredient (SCALE-002, SCALE-006, SCALE-018). -->
+    <string name="card_fix_action">Enter the amount you have and recalculate the recipe for it</string>
+    <string name="card_fix_amount">Amount you have</string>
+    <string name="card_fix_confirm">Recalculate</string>
+    <string name="card_fix_confirm_action">Recalculate the whole recipe for this amount</string>
+    <string name="card_fix_release">Release</string>
+    <string name="card_fix_release_action">Stop recalculating the recipe from this ingredient</string>
+    <string name="card_fix_cancel">Cancel</string>
+    <string name="card_fix_cancel_action">Close without changing the recipe</string>
+    <string name="card_quantity_fixed">fixed</string>
 </resources>

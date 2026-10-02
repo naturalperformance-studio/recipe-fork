@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A step's timer on the card (FLOW-016): named by its step unless the author named it. -->
+    <string name="timer_start_action">Start this timer</string>
+    <string name="timer_finished">Finished</string>
+    <string name="timer_cancel">Cancel</string>
+    <string name="timer_cancel_action">Cancel this timer</string>
+    <string name="timer_clear">Clear</string>
+    <string name="timer_clear_action">Clear this finished timer</string>
+    <string name="timer_duration">%1$d h %2$d min</string>
+    <string name="timer_duration_hours">%1$d h</string>
+    <string name="timer_duration_minutes">%1$d min</string>
+    <!-- Starting a timer that is running asks first (FLOW-021). -->
+    <string name="timer_restart_title">This timer is running</string>
+    <string name="timer_restart_question">“%1$s” has %2$s left. Restart it from %3$s?</string>
+    <string name="timer_restart_confirm">Restart</string>
+    <string name="timer_restart_decline">Keep running</string>
+    <!-- A timer's end is announced (FLOW-013): its channels and its notification. -->
+    <string name="timer_channel_ended">Timer ended</string>
+    <string name="timer_channel_running">Running timers</string>
+    <string name="timer_ended">Timer finished</string>
+    <string name="timer_stop">Stop</string>
+    <string name="timer_stop_action">Stop this timer ringing</string>
+    <string name="timer_running">Timer running</string>
+    <!-- Starting a timer that will not be heard (FLOW-013 (9, 10, 13)). -->
+    <string name="timer_unheard_title">You won’t hear this timer</string>
+    <string name="timer_unheard_off">Notifications are off for Recipe Fork. The timer is running, but it won’t be heard while the app is closed or the screen is locked.</string>
+    <string name="timer_unheard_timers_off">Timer notifications are turned off. The timer is running, but it won’t be heard while the app is closed or the screen is locked.</string>
+    <string name="timer_unheard_settings">Open settings</string>
+    <string name="timer_unheard_dismiss">OK</string>
+</resources>

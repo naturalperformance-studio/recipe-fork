@@ -16,6 +16,21 @@
     <string name="card_servings_more_action">Пересчитать рецепт на большее число порций</string>
     <string name="card_ingredients">Ингредиенты</string>
     <string name="card_steps">Шаги</string>
+    <string name="card_quantities_recalculated">Пересчитано · ↑ округлено вверх · ↓ вниз</string>
+    <string name="card_quantities_recalculated_spoken">Количества пересчитаны. Стрелка вверх — округлено вверх, стрелка вниз — округлено вниз.</string>
+    <string name="card_quantity_rounded_up">округлено вверх, точное значение меньше</string>
+    <string name="card_quantity_rounded_down">округлено вниз, точное значение больше</string>
+    <string name="card_proportions_warning">Часть количеств на минимуме — пропорции нарушены.</string>
     <string name="card_unnamed_ingredient">Ингредиент без названия</string>
     <string name="card_missing">Этого рецепта больше нет в этой книге рецептов.</string>
+    <string name="card_servings_approximate">Порций: ≈%1$s</string>
+    <string name="card_fix_action">Указать, сколько у вас есть, и пересчитать рецепт</string>
+    <string name="card_fix_amount">Сколько у вас есть</string>
+    <string name="card_fix_confirm">Пересчитать</string>
+    <string name="card_fix_confirm_action">Пересчитать весь рецепт на это количество</string>
+    <string name="card_fix_release">Снять фиксацию</string>
+    <string name="card_fix_release_action">Больше не пересчитывать рецепт от этого ингредиента</string>
+    <string name="card_fix_cancel">Закрыть</string>
+    <string name="card_fix_cancel_action">Закрыть, не меняя рецепт</string>
+    <string name="card_quantity_fixed">зафиксировано</string>
 </resources>
