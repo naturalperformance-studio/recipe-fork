@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(LocalStepToShow provides librarySession.stepToShow) {
                 MaterialTheme {
                     Surface(modifier = Modifier.fillMaxSize().testTag(ROOT_TAG)) {
-                        AppNavHost(librarySession, container.recipes, Modifier.safeDrawingPadding())
+                        AppNavHost(librarySession, container.recipes, container.mode, Modifier.safeDrawingPadding())
                     }
                 }
             }
@@ -61,5 +61,13 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val ROOT_TAG = "root"
+
+        /**
+         * The mode this release is built in, passed to the composition root. The only reader of the build's flag
+         * (decisions/20260928-serverless-mode-is-a-build-flag.md).
+         */
+        val MODE: Mode = modeOf(BuildConfig.SERVERLESS)
+
+        fun modeOf(serverless: Boolean): Mode = if (serverless) Mode.Serverless else Mode.Standard
     }
 }

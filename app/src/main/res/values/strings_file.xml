@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FLOW-063: export of a recipe to a file, offered on an own recipe's entry in serverless mode. -->
+    <string name="file_export">Export</string>
+    <!-- The heading of the system's share and save sheet; %1$s is the recipe's title. -->
+    <string name="file_export_sheet">Export “%1$s”</string>
+    <!-- Said when no file could be written, or no sheet opened. -->
+    <string name="file_export_failed">Couldn\'t export the recipe</string>
+</resources>

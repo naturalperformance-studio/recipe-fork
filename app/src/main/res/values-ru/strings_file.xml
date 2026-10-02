@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="file_export">Экспорт</string>
+    <string name="file_export_sheet">Экспорт «%1$s»</string>
+    <string name="file_export_failed">Не удалось экспортировать рецепт</string>
+</resources>

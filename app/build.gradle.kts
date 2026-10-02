@@ -23,6 +23,11 @@ android {
         val serverUrl = providers.gradleProperty("recipefork.serverUrl").getOrElse("http://10.0.2.2:8080")
         buildConfigField("String", "SERVER_URL", "\"$serverUrl\"")
         manifestPlaceholders["usesCleartextTraffic"] = "false"
+
+        // Serverless mode is a build flag (decisions/20260928-serverless-mode-is-a-build-flag.md): only MainActivity
+        // reads it. Both builds keep one application id, so the serverless one installs over the standard one.
+        val serverless = providers.gradleProperty("recipefork.serverless").map { it.toBoolean() }.getOrElse(false)
+        buildConfigField("boolean", "SERVERLESS", "$serverless")
     }
 
     buildTypes {
