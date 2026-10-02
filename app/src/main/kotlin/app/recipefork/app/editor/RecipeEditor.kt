@@ -10,6 +10,7 @@ import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.QuantityUnit
@@ -104,6 +105,21 @@ class RecipeEditor(
 
     /** The step's plain text; its timer and its ingredient references are kept as they stand. */
     fun setStepText(position: Int, text: String) = editStep(position) { it.copy(text = text) }
+
+    /**
+     * The step's text with the ingredient [references] in it as the author left them (FLOW-031): the text never holds
+     * a quantity, and each reference sits at an offset in it. Only references to this recipe's own ingredients, within
+     * the text and one to an offset, are held (DOM-007). Its timer is kept.
+     */
+    fun setStepText(position: Int, text: String, references: List<IngredientReference>) = edit { recipe ->
+        val steps = recipe.steps.sortedBy { it.position }
+        if (position !in steps.indices) return@edit recipe
+        val held = references
+            .filter { it.ingredientPosition in recipe.ingredients.indices && it.textOffset in 0..text.length }
+            .distinctBy { it.textOffset }
+            .sortedBy { it.textOffset }
+        recipe.copy(steps = steps.mapIndexed { i, step -> if (i == position) step.copy(text = text, ingredientReferences = held) else step })
+    }
 
     /**
      * Deletes the step at [position], with its own timer, references and media; the steps after it move up and keep

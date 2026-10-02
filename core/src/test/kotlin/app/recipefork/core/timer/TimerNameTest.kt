@@ -1,6 +1,8 @@
 package app.recipefork.core.timer
 
+import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.StepRun
 import app.recipefork.core.recipe.Timer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -102,5 +104,53 @@ class TimerNameTest {
         // A given name over 60 characters is kept whole.
         val given = "n".repeat(80)
         assertEquals(given, TimerName.of(Step(0, long, timer = Timer(1.minutes, given))))
+    }
+}
+
+class TimerNameWithReferencesTest {
+    private val quantities = mapOf(0 to "200 г", 1 to "по вкусу")
+    private fun name(step: Step) = TimerName.of(step) { quantities[it] }
+
+    // FLOW-016 (8): a reference within the first 60 characters reads as the screen shows it.
+    @Test
+    fun `a reference inside the name reads as shown`() {
+        val step = Step(0, "Всыпьте  муки и перемешайте", listOf(IngredientReference(0, 8)), Timer(5.minutes))
+        assertEquals("Всыпьте 200 г муки и перемешайте", name(step))
+    }
+
+    @Test
+    fun `a reference wholly inside the first 60 characters of a long step is kept, the cut falling after it`() {
+        val text = "Всыпьте  муки, затем медленно перемешивайте венчиком до однородной густой массы"
+        val step = Step(0, text, listOf(IngredientReference(0, 8)), Timer(5.minutes))
+        val shown = name(step)!!
+        assertTrue(shown.startsWith("Всыпьте 200 г муки,"))
+        assertTrue(shown.endsWith(TimerName.ELLIPSIS))
+        assertTrue(shown.removeSuffix(TimerName.ELLIPSIS).length <= 60)
+    }
+
+    // A reference across the cut is one unit: the cut falls before it, never between its number and its unit.
+    @Test
+    fun `a reference across the 60-character cut is left out whole`() {
+        val before = "a".repeat(10) + " " + "b".repeat(45) + " " // 57 characters
+        val step = Step(0, before + " муки", listOf(IngredientReference(0, before.length)), Timer(5.minutes))
+        // Rendered: 57 characters, then "200 г": the 60th character is the space inside the reference.
+        assertEquals(before.trimEnd() + TimerName.ELLIPSIS, name(step))
+        val taste = Step(0, before + " соль", listOf(IngredientReference(1, before.length)), Timer(5.minutes))
+        assertEquals(before.trimEnd() + TimerName.ELLIPSIS, name(taste))
+    }
+
+    @Test
+    fun `a reference ending exactly at the cut is kept whole`() {
+        val shorter = "a".repeat(10) + " " + "b".repeat(43) + " " // 55 characters, then "200 г" ends at the 60th
+        val step = Step(0, shorter + " муки и так далее", listOf(IngredientReference(0, shorter.length)), Timer(5.minutes))
+        assertEquals(shorter + "200 г" + TimerName.ELLIPSIS, name(step))
+    }
+
+    @Test
+    fun `plain text names are unchanged, and a named timer ignores its references`() {
+        val step = Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8)), Timer(5.minutes, "Мука"))
+        assertEquals("Мука", name(step))
+        assertEquals(TimerName.derived("  Knead.\n\nLet it   rise.\n"), TimerName.derived(listOf(StepRun.Typed("  Knead.\n\nLet it   rise.\n"))))
+        assertNull(name(Step(0, "Mix")))
     }
 }

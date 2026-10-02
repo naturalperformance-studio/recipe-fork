@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -23,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,8 +36,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.app.dictionary.IngredientSource
+import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.StepRun
+import app.recipefork.core.recipe.StepText
+import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.timer.TimerName
 import kotlin.time.Duration
@@ -45,9 +54,12 @@ import kotlin.time.Duration
  * deleted. They accept input whatever else the recipe holds or lacks (FLOW-024 (2)), and no text is ever cut short.
  */
 @Composable
-internal fun Steps(recipe: Recipe, editor: RecipeEditor) {
+internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource) {
     val editable = recipe.state.editable
     val steps = recipe.steps.sortedBy { it.position }
+    val language = numberLanguage(LocalConfiguration.current)
+    var dictionary by remember(source) { mutableStateOf<List<IngredientEntryEntity>?>(null) }
+    LaunchedEffect(source) { dictionary = runCatching { source.ingredients() }.getOrDefault(emptyList()) }
     Column(Modifier.fillMaxWidth().testTag(EditorTags.STEPS), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             stringResource(R.string.editor_steps),
@@ -66,7 +78,8 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor) {
             // What the screen holds for a step — focus, a timer being attached — stays with it when steps before it
             // are inserted, moved or deleted.
             key(editor.stepKey(position)) {
-                if (editable) StepRow(position, steps.size, step, editor, stating == position) else ReadOnlyStep(position, step)
+                if (editable) StepRow(position, steps.size, step, recipe.ingredients, dictionary, language, editor, stating == position)
+                else ReadOnlyStep(position, step, recipe.ingredients, language)
             }
         }
         if (editable) {
@@ -81,18 +94,31 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor) {
 }
 
 /**
- * One step: its number in the field's label, its text over as many lines as it takes, its removal, its menu of
- * inserting and moving (FLOW-025), and the control that attaches its timer (FLOW-027).
+ * One step: its number in the field's label, its text over as many lines as it takes with its ingredient references in
+ * it, its removal, its menu of inserting and moving (FLOW-025), the control that inserts a reference (FLOW-031) and the
+ * control that attaches its timer (FLOW-027).
  */
 @Composable
-private fun StepRow(position: Int, count: Int, step: Step, editor: RecipeEditor, stating: Boolean) {
+private fun StepRow(
+    position: Int,
+    count: Int,
+    step: Step,
+    ingredients: List<Ingredient>,
+    dictionary: List<IngredientEntryEntity>?,
+    language: InterfaceLanguage,
+    editor: RecipeEditor,
+    stating: Boolean,
+) {
+    val field = remember { StepFieldState() }
     Column(Modifier.fillMaxWidth().testTag(EditorTags.step(position))) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = step.text,
-                onValueChange = { editor.setStepText(position, it) },
-                label = { Text(stringResource(R.string.editor_step, position + 1)) },
-                minLines = 2,
+            StepTextField(
+                position = position,
+                step = step,
+                ingredients = ingredients,
+                language = language,
+                editor = editor,
+                state = field,
                 modifier = Modifier.weight(1f).testTag(EditorTags.stepText(position)),
             )
             ActionText(
@@ -117,7 +143,8 @@ private fun StepRow(position: Int, count: Int, step: Step, editor: RecipeEditor,
                 },
             )
         }
-        StepTimer(position, step, editor, stating)
+        InsertIngredient(position, ingredients, dictionary, language, editor, field)
+        StepTimer(position, step, ingredients, language, editor, stating)
     }
 }
 
@@ -127,7 +154,7 @@ private fun StepRow(position: Int, count: Int, step: Step, editor: RecipeEditor,
  * timer, and choosing it there creates nothing and says why (GUIDE-007).
  */
 @Composable
-private fun StepTimer(position: Int, step: Step, editor: RecipeEditor, stating: Boolean) {
+private fun StepTimer(position: Int, step: Step, ingredients: List<Ingredient>, language: InterfaceLanguage, editor: RecipeEditor, stating: Boolean) {
     val timer = step.timer
     // Opened by the control before any duration is held: a timer of no duration is no timer, and is not stored.
     var open by rememberSaveable { mutableStateOf(false) }
@@ -205,7 +232,7 @@ private fun StepTimer(position: Int, step: Step, editor: RecipeEditor, stating: 
             }
         }
     }
-    if (timer != null) TimerNameField(position, step.text, timer, editor) { given = it }
+    if (timer != null) TimerNameField(position, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor) { given = it }
 }
 
 /**
@@ -214,8 +241,9 @@ private fun StepTimer(position: Int, step: Step, editor: RecipeEditor, stating: 
  * however long (DOM-012 is not enforced while typing); an emptied field gives the name back to the step.
  */
 @Composable
-private fun TimerNameField(position: Int, stepText: String, timer: Timer, editor: RecipeEditor, onGiven: (String?) -> Unit) {
-    val shown = timer.label ?: TimerName.derived(stepText)
+private fun TimerNameField(position: Int, step: List<StepRun>, timer: Timer, editor: RecipeEditor, onGiven: (String?) -> Unit) {
+    // A reference reads here as the editor shows it (FLOW-016 (8), at the authored scale).
+    val shown = timer.label ?: TimerName.derived(step)
     // While the author is in the field it shows what they typed, so that emptying it does not refill it at once.
     var focused by remember { mutableStateOf(false) }
     var typed by remember { mutableStateOf("") }
@@ -259,12 +287,20 @@ internal fun durationText(duration: Duration): String {
     }
 }
 
-/** A step as a frozen recipe shows it: its number, its whole text and its timer, and nothing to change them with. */
+/**
+ * A step as a frozen recipe shows it: its number, its whole text with its references read at the authored scale, set
+ * apart as the field sets them (FLOW-032 (5–7)), and its timer, and nothing to change them with.
+ */
 @Composable
-private fun ReadOnlyStep(position: Int, step: Step) {
+private fun ReadOnlyStep(position: Int, step: Step, ingredients: List<Ingredient>, language: InterfaceLanguage) {
+    val display = StepDisplay.of(step, ingredients, language)
     Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.step(position))) {
         Text(stringResource(R.string.editor_step, position + 1), style = MaterialTheme.typography.labelMedium)
-        Text(step.text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.testTag(EditorTags.stepText(position)))
+        Text(
+            display.styled(MaterialTheme.colorScheme.secondaryContainer),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.testTag(EditorTags.stepText(position)),
+        )
         val timer = step.timer ?: return@Column
         Text(
             stringResource(R.string.editor_timer_read_only, durationText(timer.duration)),
@@ -272,7 +308,7 @@ private fun ReadOnlyStep(position: Int, step: Step) {
             modifier = Modifier.testTag(EditorTags.timerDuration(position)),
         )
         Text(
-            stringResource(R.string.editor_timer_name_read_only, TimerName.of(step).orEmpty()),
+            stringResource(R.string.editor_timer_name_read_only, TimerName.of(step, ReferenceText.authored(ingredients, language)).orEmpty()),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.testTag(EditorTags.timerName(position)),
         )

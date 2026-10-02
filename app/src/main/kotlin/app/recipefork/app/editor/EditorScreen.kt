@@ -136,7 +136,7 @@ fun EditorScreen(
             Tags(shown, editor, dictionary)
             ServingCount(shown, editor)
             Ingredients(shown, editor, environment.ingredients)
-            Steps(shown, editor)
+            Steps(shown, editor, environment.ingredients)
             Description(shown, editor)
         }
     }
@@ -413,6 +413,9 @@ object EditorTags {
     fun stepRemove(position: Int) = "editor-step-$position-remove"
     fun stepMenu(position: Int) = "editor-step-$position-menu"
     fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"
+    fun stepInsert(position: Int) = "editor-step-$position-insert-ingredient"
+    fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
+    fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
     fun timerAttach(position: Int) = "editor-step-$position-timer"
     fun timerRemove(position: Int) = "editor-step-$position-timer-remove"
     fun timerStatement(position: Int) = "editor-step-$position-timer-statement"
