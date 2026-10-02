@@ -19,6 +19,8 @@
     <string name="library_own_write">Написать рецепт</string>
     <string name="library_own_new">Новый рецепт</string>
     <string name="library_entry_open_action">Открыть рецепт</string>
+    <string name="library_entry_actions">Действия с рецептом «%1$s»</string>
+    <string name="library_entry_actions_action">Показать действия с рецептом</string>
     <string name="library_entry_delete">Удалить</string>
     <string name="library_delete_title">Удалить «%1$s»?</string>
     <string name="library_delete_statement">Рецепт удалится сразу, вместе с фотографиями и видео, и вернуть его будет нельзя.</string>

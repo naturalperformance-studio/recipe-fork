@@ -27,6 +27,7 @@ import app.recipefork.app.file.TestRecipeFiles
 import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
+import app.recipefork.app.library.chooseEntryAction
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
@@ -158,8 +159,8 @@ class ForkAFoundRecipeTest {
             session.closeCard()
             session.choose(LibraryView.MARKED)
         }
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.remove(id.value)), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.remove(id.value)).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.actions(id.value)), PATIENCE_MS)
+        compose.chooseEntryAction(id.value, LibraryTags.remove(id.value))
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.REMOVE_STATEMENT), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.REMOVE_CONFIRM).performClick()
         compose.waitUntil(PATIENCE_MS) { stored(id) == null }
