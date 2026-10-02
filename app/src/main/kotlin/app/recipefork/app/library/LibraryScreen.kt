@@ -97,8 +97,10 @@ fun LibraryScreen(
                     forking = true
                     session.viewModelScope.launch {
                         // The editor opens on the fork; leaving it shows the fork's card (FLOW-029 (1)).
-                        forkRecipe(recipes, editor.book, RecipeId(id), editor.clock())?.let { session.openEditor(it.value) }
-                        forking = false
+                        // The guard stays up once a fork is written: a tap landing before the editor replaces the
+                        // card must not write a second one. Only a fork that was not written lets the card try again.
+                        val fork = forkRecipe(recipes, editor.book, RecipeId(id), editor.clock())
+                        if (fork != null) session.openEditor(fork.value) else forking = false
                     }
                 }
             },
