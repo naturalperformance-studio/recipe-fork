@@ -39,4 +39,16 @@
     <string name="library_remove_statement">The recipe leaves this device with everything the book holds of it.</string>
     <string name="library_remove_confirm">Remove</string>
     <string name="library_remove_decline">Cancel</string>
+    <!-- FLOW-017: the book's menu, and the serving count the reader usually cooks for. -->
+    <string name="library_menu">Book menu</string>
+    <string name="library_menu_action">Open the book menu</string>
+    <string name="library_usual_servings">I usually cook for…</string>
+    <string name="library_usual_not_set">not set</string>
+    <string name="library_usual_count">Servings: %1$s</string>
+    <string name="library_usual_fewer">Fewer servings</string>
+    <string name="library_usual_fewer_action">Lower the usual serving count</string>
+    <string name="library_usual_more">More servings</string>
+    <string name="library_usual_more_action">Raise the usual serving count</string>
+    <string name="library_usual_set">Set</string>
+    <string name="library_usual_clear">Not set</string>
 </resources>

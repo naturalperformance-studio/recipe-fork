@@ -58,6 +58,7 @@ import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
+import app.recipefork.app.data.UsualServings
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.EditorScreen
 import app.recipefork.app.editor.interfaceLanguage
@@ -95,6 +96,9 @@ const val OWN_PAGE = 30
  * its removal (FLOW-064 (6)); in [Mode.Serverless] it offers the import of a recipe file through the system's document
  * picker as well, and in [Mode.Standard] no import exists.
  *
+ * The book's menu, beside its title, holds the serving count the reader usually cooks for (FLOW-017), which every
+ * card opens at.
+ *
  * What became of a file — an import's outcome, a failed export — is said in a dialog over whatever is shown, until it
  * is closed.
  */
@@ -108,6 +112,7 @@ fun LibraryScreen(
     card: CardEnvironment = rememberCardEnvironment(),
     files: RecipeImport = rememberRecipeImport(recipes),
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
+    usualServings: UsualServings = card.usualServings,
 ) {
     val message by session.message.collectAsState()
     message?.let { FileMessageDialog(it, onDone = session::told) }
@@ -145,11 +150,15 @@ fun LibraryScreen(
     val view by session.view.collectAsState()
     val timers = rememberCardTimers()
     Column(modifier.fillMaxSize()) {
-        Text(
-            text = stringResource(R.string.library_title),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(16.dp).semantics { heading() }.testTag(LibraryTags.TITLE),
-        )
+        // The book's top area: its title, with the book's menu beside it (FLOW-017), above the switch of views.
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.library_title),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.weight(1f).padding(16.dp).semantics { heading() }.testTag(LibraryTags.TITLE),
+            )
+            BookMenu(usualServings, Modifier.padding(end = 8.dp))
+        }
         // The switch sits above the list and never scrolls with it (FLOW-034 (1)).
         Row(Modifier.fillMaxWidth().selectableGroup().testTag(LibraryTags.SWITCH)) {
             ViewTab(LibraryView.MARKED, view, R.string.library_view_marked, R.string.library_view_marked_action, session)
@@ -720,6 +729,15 @@ fun sentLabel(sent: SentStatus): Int = when (sent) {
 
 object LibraryTags {
     const val TITLE = "library-title"
+    const val MENU = "library-menu"
+    const val USUAL = "library-usual"
+    const val USUAL_HELD = "library-usual-held"
+    const val USUAL_DIALOG = "library-usual-dialog"
+    const val USUAL_COUNT = "library-usual-count"
+    const val USUAL_FEWER = "library-usual-fewer"
+    const val USUAL_MORE = "library-usual-more"
+    const val USUAL_SET = "library-usual-set"
+    const val USUAL_CLEAR = "library-usual-clear"
     const val SWITCH = "library-switch"
     const val OWN_LIST = "library-own"
     const val MARKED_LIST = "library-marked"
