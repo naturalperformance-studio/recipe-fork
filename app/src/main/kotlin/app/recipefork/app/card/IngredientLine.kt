@@ -9,6 +9,7 @@ import app.recipefork.core.scaling.DisplayedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.QuantityText
 import app.recipefork.core.scaling.Rational
+import app.recipefork.core.scaling.Rounding
 import app.recipefork.core.scaling.RoundingGrid
 import app.recipefork.core.scaling.ScaleFactor
 import app.recipefork.core.scaling.ScaledRecipe
@@ -22,8 +23,23 @@ import app.recipefork.core.scaling.UnitLabels
  * qualifier; null when the row names nothing the device can show, which the screen words itself. [quantity] is
  * what `QuantityText` writes for the row, the unit's label alone where the row holds no quantity the card can
  * compute from, or null where it holds no unit either.
+ *
+ * [derived] is true exactly when [quantity] was computed at a scale other than the authored one (SCALE-004 (1)),
+ * whatever its value; [rounding] says which way the grid moved it from the exact value, and reads [Rounding.UP] for
+ * a quantity held at its floor (SCALE-005). A row shown unscaled is never derived.
  */
-data class IngredientLine(val name: String?, val quantity: String?)
+data class IngredientLine(
+    val name: String?,
+    val quantity: String?,
+    val derived: Boolean = false,
+    val rounding: Rounding = Rounding.NONE,
+)
+
+/**
+ * The card's ingredient list at a serving count: its [lines] in order, and whether the displayed quantities still
+ * hold the authored proportions — false once two or more lines are held at their floors (SCALE-009).
+ */
+data class IngredientList(val lines: List<IngredientLine>, val holdsProportions: Boolean)
 
 /**
  * The line of [ingredient] at [factor] — the authored values at [ScaleFactor.ONE].
@@ -56,19 +72,32 @@ fun ingredientLines(
     language: InterfaceLanguage,
     authoredServings: Int?,
     requestedServings: Rational?,
-): List<IngredientLine> {
+): List<IngredientLine> = ingredientList(ingredients, entries, language, authoredServings, requestedServings).lines
+
+/**
+ * The list [ingredientLines] shows, with whether it still holds the authored proportions (SCALE-009): only rows
+ * that scale are counted, and a list shown as authored always holds them.
+ */
+fun ingredientList(
+    ingredients: List<Ingredient>,
+    entries: Map<Long, IngredientEntryEntity>,
+    language: InterfaceLanguage,
+    authoredServings: Int?,
+    requestedServings: Rational?,
+): IngredientList {
     val scalable = ingredients.map(::scalableQuantity)
     val scaled = authoredServings?.takeIf { it >= 1 }?.let { authored ->
         val requested = requestedServings ?: Rational.of(authored.toLong())
         ScaledRecipe.of(authored, scalable.filterNotNull(), requested)
     }
     var next = 0
-    return ingredients.mapIndexed { i, ingredient ->
+    val lines = ingredients.mapIndexed { i, ingredient ->
         val quantity = scalable[i]?.let { authored ->
             scaled?.lines?.get(next++)?.quantity ?: Scaling.display(authored, ScaleFactor.ONE)
         }
         lineOf(ingredient, entries, language, quantity)
     }
+    return IngredientList(lines, holdsProportions = scaled?.holdsProportions ?: true)
 }
 
 /**
@@ -97,9 +126,10 @@ private fun lineOf(
     language: InterfaceLanguage,
     quantity: DisplayedQuantity?,
 ): IngredientLine {
-    val text = quantity?.let { runCatching { QuantityText.of(it, language) }.getOrNull() }
-        ?: unitOf(ingredient)?.let { UnitLabels.of(it, language) }
-    return IngredientLine(nameOf(ingredient, entries, language), text)
+    val computed = quantity?.let { runCatching { QuantityText.of(it, language) }.getOrNull() }
+    val name = nameOf(ingredient, entries, language)
+    if (computed == null) return IngredientLine(name, unitOf(ingredient)?.let { UnitLabels.of(it, language) })
+    return IngredientLine(name, computed, derived = quantity.derived, rounding = quantity.rounding)
 }
 
 private fun nameOf(ingredient: Ingredient, entries: Map<Long, IngredientEntryEntity>, language: InterfaceLanguage): String? {
