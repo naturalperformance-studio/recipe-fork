@@ -420,6 +420,7 @@ object EditorTags {
     fun stepRemove(position: Int) = "editor-step-$position-remove"
     fun stepMenu(position: Int) = "editor-step-$position-menu"
     fun stepHandle(position: Int) = "editor-step-$position-handle"
+    fun stepHandleIcon(position: Int) = "editor-step-$position-handle-icon"
     fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"
     fun stepInsert(position: Int) = "editor-step-$position-insert-ingredient"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"

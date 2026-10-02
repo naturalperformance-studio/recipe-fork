@@ -8,9 +8,7 @@ import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -35,16 +33,17 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -218,38 +217,55 @@ internal fun rememberRowDrag(scroll: EditorScroll, spacing: Dp, onDrop: (from: I
     return drag
 }
 
+/** How wide the drag column at a block's left edge is: a 48 dp touch target and no wider (A11Y-003). */
+internal val DRAG_COLUMN_WIDTH = 48.dp
+
 /**
- * The 48 dp handle the row at [position] of [count] is dragged by (FLOW-025, A11Y-003). The screen reader does not see
- * it: what it does, the row menu's "Move up" and "Move down" do in one action each (A11Y-006).
+ * A row's block with the column it is dragged by down its left edge, the full height of the block, and [content]
+ * beside it (FLOW-025). Without a [drag] — a frozen recipe — the block is [content] alone, with no column.
  */
 @Composable
-internal fun DragHandle(drag: RowDrag, position: Int, count: Int, tag: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .size(48.dp)
-            .clearAndSetSemantics {
-                testTag = tag
-                hideFromAccessibility()
-            }
-            .rowDragGesture(drag, position, count),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(painterResource(R.drawable.ic_drag_handle), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+internal fun DragColumnBlock(
+    drag: RowDrag?,
+    position: Int,
+    count: Int,
+    tag: String,
+    iconTag: String,
+    content: @Composable () -> Unit,
+) {
+    if (drag == null) {
+        content()
+        return
+    }
+    Layout(
+        contents = listOf({ DragColumn(drag, position, count, tag, iconTag) }, content),
+    ) { (column, body), constraints ->
+        val width = DRAG_COLUMN_WIDTH.roundToPx().coerceAtMost(constraints.maxWidth)
+        val rest = (constraints.maxWidth - width).coerceAtLeast(0)
+        val placedBody = body.map {
+            it.measure(constraints.copy(minWidth = (constraints.minWidth - width).coerceAtLeast(0), maxWidth = rest, minHeight = 0))
+        }
+        val height = maxOf(placedBody.maxOfOrNull { it.height } ?: 0, DRAG_COLUMN_WIDTH.roundToPx(), constraints.minHeight)
+            .let { if (constraints.hasBoundedHeight) it.coerceAtMost(constraints.maxHeight) else it }
+        val placedColumn = column.map { it.measure(Constraints.fixed(width, height)) }
+        layout(width + (placedBody.maxOfOrNull { it.width } ?: 0), height) {
+            placedColumn.forEach { it.placeRelative(0, 0) }
+            placedBody.forEach { it.placeRelative(width, 0) }
+        }
     }
 }
 
 /**
- * The strip across the top of the row at [position] of [count] that the whole row is dragged by (FLOW-025): at least
- * 48 dp tall (A11Y-003), lightly tinted so the area to drag is seen, and marked by the handle icon at its centre, so it
- * is not told by colour alone. A drag started anywhere on it moves the row. The screen reader does not see it: the row
- * menu's "Move up" and "Move down" do what it does (A11Y-006).
+ * The column the row at [position] of [count] is dragged by: lightly tinted so the area to drag is seen, and marked by
+ * the handle icon at its centre, so it is not told by colour alone. A drag started anywhere on it moves the row; a
+ * touch anywhere else in the block never does. The screen reader does not see it: the row menu's "Move up" and
+ * "Move down" do what it does (A11Y-006).
  */
 @Composable
-internal fun DragStrip(drag: RowDrag, position: Int, count: Int, tag: String, iconTag: String, modifier: Modifier = Modifier) {
+private fun DragColumn(drag: RowDrag, position: Int, count: Int, tag: String, iconTag: String) {
     Box(
-        modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
+        Modifier
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .semantics {
                 testTag = tag

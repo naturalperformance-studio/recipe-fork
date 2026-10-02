@@ -248,86 +248,114 @@ private fun IngredientRow(
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.ingredient(position)),
     ) {
-        // The block is dragged by the strip across its top, so nothing that drags stands among the inputs below it.
-        DragStrip(drag, position, count, EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position))
-        // The name takes the whole first line up to its two controls, so its text has room at large font scales; the
-        // quantity and the unit start the line below at the same left edge.
-        Column(
-            Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME))
-                // An icon, not a word, so the name keeps room for its text at large font scales.
-                IconButton(
-                    onClick = { editor.removeIngredient(position) },
-                    modifier = Modifier.padding(top = 8.dp).size(48.dp).testTag(EditorTags.ingredientRemove(position)),
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_remove_row),
-                        contentDescription = stringResource(R.string.editor_ingredient_remove_action, position + 1),
+        // The block is dragged by the column down its left edge, so nothing that drags stands among the inputs.
+        DragColumnBlock(drag, position, count, EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position)) {
+            // The name takes the whole first line up to its two controls, so its text has room at large font scales; the
+            // quantity and the unit start the line below at the same left edge.
+            Column(
+                Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    // Where the name beside both controls would not keep room for a word of eight letters — at large
+                    // font scales — the two controls stand one above the other and the name takes the room of one.
+                    val measurer = rememberTextMeasurer()
+                    val nameStyle = MaterialTheme.typography.bodyLarge
+                    val density = LocalDensity.current
+                    val word = remember(nameStyle, density) { with(density) { measurer.measure(NAME_ROOM_SAMPLE, nameStyle).size.width.toDp() } }
+                    val stacked = maxWidth - CONTROL_SIZE * 2 - NAME_FIELD_FURNITURE < word
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                        IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME))
+                        if (stacked) {
+                            Column(Modifier.padding(top = 8.dp)) { RowControls(position, count, editor) }
+                        } else {
+                            Row(Modifier.padding(top = 8.dp)) { RowControls(position, count, editor) }
+                        }
+                    }
+                }
+                // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
+                val quantity = row.unitType != UnitType.TASTE_UNMEASURED
+                val quantityHeight = heights.of(EvenHeights.Input.QUANTITY)
+                val unitHeight = heights.of(EvenHeights.Input.UNIT)
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    // The quantity's label is never wrapped onto the field above it (A11Y-004): where it does not fit on
+                    // one line beside the unit, the quantity and the unit each take a line of their own.
+                    val label = stringResource(R.string.editor_ingredient_quantity)
+                    val measurer = rememberTextMeasurer()
+                    val labelStyle = MaterialTheme.typography.bodySmall
+                    val density = LocalDensity.current
+                    val labelWidth = remember(label, labelStyle, density) { with(density) { measurer.measure(label, labelStyle).size.width.toDp() } }
+                    val besideUnit = maxWidth - UNIT_WIDTH - 8.dp
+                    if (!quantity || besideUnit >= labelWidth + QUANTITY_LABEL_ROOM) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                            if (quantity) {
+                                QuantityField(position, row, editor, language, isError = problem != null, Modifier.weight(1f).then(quantityHeight))
+                            }
+                            UnitField(position, row, editor, Modifier.width(UNIT_WIDTH).then(unitHeight))
+                        }
+                    } else {
+                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            QuantityField(position, row, editor, language, isError = problem != null, Modifier.fillMaxWidth().then(quantityHeight))
+                            UnitField(position, row, editor, Modifier.fillMaxWidth().then(unitHeight))
+                        }
+                    }
+                }
+                if (problem != null) {
+                    Text(
+                        stringResource(problemMessage(problem)),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.testTag(EditorTags.ingredientError(position)),
                     )
                 }
-                RowMenu(
-                    position = position,
-                    count = count,
-                    name = stringResource(R.string.editor_ingredient_menu_action, position + 1),
-                    tag = EditorTags.ingredientMenu(position),
-                    actionTag = { EditorTags.ingredientAction(position, it) },
-                    onAction = { action ->
-                        when (action) {
-                            RowAction.INSERT_ABOVE -> editor.insertIngredient(position)
-                            RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1)
-                            RowAction.MOVE_UP -> editor.moveIngredient(position, position - 1)
-                            RowAction.MOVE_DOWN -> editor.moveIngredient(position, position + 1)
-                        }
-                    },
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                // No shipped entry supplies divisibility, so every `piece` row asks for it, picked from an entry or not.
+                if (row.unitType == UnitType.PIECE) Divisibility(position, row, editor)
             }
-            // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
-            val quantity = row.unitType != UnitType.TASTE_UNMEASURED
-            val quantityHeight = heights.of(EvenHeights.Input.QUANTITY)
-            val unitHeight = heights.of(EvenHeights.Input.UNIT)
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                // The quantity's label is never wrapped onto the field above it (A11Y-004): where it does not fit on
-                // one line beside the unit, the quantity and the unit each take a line of their own.
-                val label = stringResource(R.string.editor_ingredient_quantity)
-                val measurer = rememberTextMeasurer()
-                val labelStyle = MaterialTheme.typography.bodySmall
-                val density = LocalDensity.current
-                val labelWidth = remember(label, labelStyle, density) { with(density) { measurer.measure(label, labelStyle).size.width.toDp() } }
-                val besideUnit = maxWidth - UNIT_WIDTH - 8.dp
-                if (!quantity || besideUnit >= labelWidth + QUANTITY_LABEL_ROOM) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-                        if (quantity) {
-                            QuantityField(position, row, editor, language, isError = problem != null, Modifier.weight(1f).then(quantityHeight))
-                        }
-                        UnitField(position, row, editor, Modifier.width(UNIT_WIDTH).then(unitHeight))
-                    }
-                } else {
-                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        QuantityField(position, row, editor, language, isError = problem != null, Modifier.fillMaxWidth().then(quantityHeight))
-                        UnitField(position, row, editor, Modifier.fillMaxWidth().then(unitHeight))
-                    }
-                }
-            }
-            if (problem != null) {
-                Text(
-                    stringResource(problemMessage(problem)),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.testTag(EditorTags.ingredientError(position)),
-                )
-            }
-            // No shipped entry supplies divisibility, so every `piece` row asks for it, picked from an entry or not.
-            if (row.unitType == UnitType.PIECE) Divisibility(position, row, editor)
         }
     }
 }
 
-/** How wide the unit select is beside the quantity. */
-private val UNIT_WIDTH = 160.dp
+/** The removal and the menu of the ingredient row at [position] of [count] (FLOW-025), each a 48 dp target. */
+@Composable
+private fun RowControls(position: Int, count: Int, editor: RecipeEditor) {
+    // An icon, not a word, so the name keeps room for its text at large font scales.
+    IconButton(
+        onClick = { editor.removeIngredient(position) },
+        modifier = Modifier.size(CONTROL_SIZE).testTag(EditorTags.ingredientRemove(position)),
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_remove_row),
+            contentDescription = stringResource(R.string.editor_ingredient_remove_action, position + 1),
+        )
+    }
+    RowMenu(
+        position = position,
+        count = count,
+        name = stringResource(R.string.editor_ingredient_menu_action, position + 1),
+        tag = EditorTags.ingredientMenu(position),
+        actionTag = { EditorTags.ingredientAction(position, it) },
+        onAction = { action ->
+            when (action) {
+                RowAction.INSERT_ABOVE -> editor.insertIngredient(position)
+                RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1)
+                RowAction.MOVE_UP -> editor.moveIngredient(position, position - 1)
+                RowAction.MOVE_DOWN -> editor.moveIngredient(position, position + 1)
+            }
+        },
+    )
+}
+
+/** How large a row's removal and its menu are (A11Y-003). */
+private val CONTROL_SIZE = 48.dp
+
+/** The room a name's text keeps beside the row's controls: eight figures, about as wide as a word of eight letters. */
+private const val NAME_ROOM_SAMPLE = "00000000"
+
+/** What a name field takes across besides its text: its start padding and the free-text warning at its end. */
+private val NAME_FIELD_FURNITURE = 16.dp + 48.dp
+
+/** How wide the unit select is beside the quantity: room for its longest unit, "по вкусу", and its arrow. */
+private val UNIT_WIDTH = 140.dp
 
 /** What an outlined field takes across besides its floating label: its padding on both sides and the label's gaps. */
 private val QUANTITY_LABEL_ROOM = 40.dp
