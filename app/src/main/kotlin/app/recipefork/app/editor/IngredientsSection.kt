@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientOffer
@@ -137,7 +138,7 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
  * Rows are named from the ingredient dictionary of [ingredients] or in the author's own words (DOM-009).
  */
 @Composable
-internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: IngredientSource) {
+internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: IngredientSource, scroll: EditorScroll) {
     val editable = recipe.state.editable
     val language = numberLanguage(LocalConfiguration.current)
     var dictionary by remember(ingredients) { mutableStateOf<List<IngredientEntryEntity>?>(null) }
@@ -145,7 +146,12 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
         // A dictionary that cannot be read offers nothing; every name can still be written as free text (FLOW-022).
         dictionary = runCatching { ingredients.ingredients() }.getOrDefault(emptyList())
     }
-    Column(Modifier.fillMaxWidth().testTag(EditorTags.INGREDIENTS), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
+    val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveIngredient(from, to) }
+    Column(
+        Modifier.fillMaxWidth().zIndex(if (drag.dragged != null) 1f else 0f).testTag(EditorTags.INGREDIENTS),
+        verticalArrangement = Arrangement.spacedBy(ROW_SPACING),
+    ) {
         Text(
             stringResource(R.string.editor_ingredients),
             style = MaterialTheme.typography.titleMedium,
@@ -155,7 +161,7 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
             // What the screen holds for a row — focus, an open offer, a typed value — stays with it when rows before
             // it are inserted, moved or deleted.
             key(editor.ingredientKey(position)) {
-                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary)
+                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag)
                 else ReadOnlyIngredient(position, row, language, dictionary)
             }
         }
@@ -201,10 +207,15 @@ private fun IngredientRow(
     editor: RecipeEditor,
     language: InterfaceLanguage,
     dictionary: List<IngredientEntryEntity>?,
+    drag: RowDrag,
 ) {
     val problem = QuantityInput.problem(row)
-    Column(Modifier.fillMaxWidth().testTag(EditorTags.ingredient(position)), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(
+        Modifier.fillMaxWidth().then(drag.row(position, MaterialTheme.colorScheme.surface)).testTag(EditorTags.ingredient(position)),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            DragHandle(drag, position, count, EditorTags.ingredientHandle(position), Modifier.padding(top = 8.dp))
             IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f))
             ActionText(
                 text = stringResource(R.string.editor_ingredient_remove),

@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -103,6 +104,8 @@ fun EditorScreen(
     var dictionary by remember { mutableStateOf<List<TagEntity>?>(null) }
     LaunchedEffect(environment) { withContext(Dispatchers.Main.immediate) { dictionary = environment.tags.tags() } }
     val recipe by editor.recipe.collectAsState()
+    val scrolled = rememberScrollState()
+    val scroll = remember(scrolled) { EditorScroll(scrolled) }
     BackHandler(onBack = onClose)
 
     Column(modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
@@ -120,7 +123,8 @@ fun EditorScreen(
                 // A touch on any field or control is the author's next action, which ends a hint (GUIDE-007);
                 // a scroll is not one.
                 .onEveryTap { editor.noteAction() }
-                .verticalScroll(rememberScrollState())
+                .onGloballyPositioned { scroll.viewport = it }
+                .verticalScroll(scroll.state)
                 .padding(16.dp)
                 .testTag(EditorTags.FORM),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -135,8 +139,8 @@ fun EditorScreen(
             TitleAndLanguage(shown, editor)
             Tags(shown, editor, dictionary)
             ServingCount(shown, editor)
-            Ingredients(shown, editor, environment.ingredients)
-            Steps(shown, editor, environment.ingredients)
+            Ingredients(shown, editor, environment.ingredients, scroll)
+            Steps(shown, editor, environment.ingredients, scroll)
             Description(shown, editor)
         }
     }
@@ -399,6 +403,7 @@ object EditorTags {
     fun ingredientUnit(position: Int) = "editor-ingredient-$position-unit"
     fun ingredientRemove(position: Int) = "editor-ingredient-$position-remove"
     fun ingredientMenu(position: Int) = "editor-ingredient-$position-menu"
+    fun ingredientHandle(position: Int) = "editor-ingredient-$position-handle"
     fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
@@ -412,6 +417,7 @@ object EditorTags {
     fun stepText(position: Int) = "editor-step-$position-text"
     fun stepRemove(position: Int) = "editor-step-$position-remove"
     fun stepMenu(position: Int) = "editor-step-$position-menu"
+    fun stepHandle(position: Int) = "editor-step-$position-handle"
     fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"
     fun stepInsert(position: Int) = "editor-step-$position-insert-ingredient"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
