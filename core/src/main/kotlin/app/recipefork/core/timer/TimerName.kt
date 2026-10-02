@@ -1,6 +1,8 @@
 package app.recipefork.core.timer
 
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.StepRun
+import app.recipefork.core.recipe.StepText
 
 /**
  * The name a timer announces itself by (FLOW-016): the name its author gave it, or else one derived from the text of
@@ -21,23 +23,72 @@ object TimerName {
      * A name is one line, so line breaks and runs of spaces read as one space, and the text is trimmed. Characters are
      * counted as the reader sees them: a character outside the basic plane counts once and is never split.
      */
-    fun derived(stepText: String): String {
-        val text = stepText.trim().replace(WHITESPACE, " ")
+    fun derived(stepText: String): String = derived(listOf(StepRun.Typed(stepText)))
+
+    /**
+     * The name derived from a step as it reads — its [runs], each reference already read as the screen shows it
+     * (FLOW-016 (8)) — cut as [derived] cuts plain text. A reference is one unit: a cut that would fall inside one,
+     * the space between its number and its unit included, falls before it instead.
+     */
+    fun derived(runs: List<StepRun>): String {
+        // The text on one line, with, for every character, the run of the reference it belongs to, or -1.
+        val text = StringBuilder()
+        val owners = ArrayList<Int>()
+        var space = false
+        runs.forEachIndexed { index, run ->
+            val owner = if (run is StepRun.Reference) index else -1
+            for (c in run.text) {
+                if (c in WHITESPACE) {
+                    space = text.isNotEmpty()
+                    continue
+                }
+                if (space) {
+                    // A space between two characters of one reference is part of it.
+                    text.append(' ')
+                    owners += if (owners.last() == owner) owner else -1
+                    space = false
+                }
+                text.append(c)
+                owners += owner
+            }
+        }
+        // Trimmed of every kind of space, as the plain text always was.
+        while (text.isNotEmpty() && text.last().isWhitespace()) {
+            text.setLength(text.length - 1)
+            owners.removeAt(owners.lastIndex)
+        }
+        val lead = text.indexOfFirst { !it.isWhitespace() }.let { if (it < 0) text.length else it }
+        text.delete(0, lead)
+        repeat(lead) { owners.removeAt(0) }
         val length = text.codePointCount(0, text.length)
-        if (length <= LENGTH) return text
+        if (length <= LENGTH) return text.toString()
         val end = text.offsetByCodePoints(0, LENGTH)
         // The cut stays where the next character is no part of a word (a space, a comma); otherwise back to the last space.
-        val head = if (!isPartOfAWord(text.codePointAt(end))) {
-            text.substring(0, end)
+        val cut = if (!isPartOfAWord(Character.codePointAt(text, end))) {
+            end
         } else {
-            val space = text.lastIndexOf(' ', end - 1)
-            if (space > 0) text.substring(0, space) else text.substring(0, end)
+            val space = text.lastIndexOf(" ", end - 1)
+            if (space > 0) space else end
         }
+        // Never inside a reference: back to where it starts.
+        var kept = cut
+        if (kept in 1 until owners.size && owners[kept] != -1 && owners[kept - 1] == owners[kept]) {
+            val owner = owners[kept]
+            while (kept > 0 && owners[kept - 1] == owner) kept--
+        }
+        val head = text.substring(0, if (text.substring(0, kept).isBlank()) cut else kept)
         return head.trimEnd() + ELLIPSIS
     }
 
-    /** The name [step]'s timer announces itself by; null where the step carries no timer. */
+    /** The name [step]'s timer announces itself by, reading its text as typed; null where the step carries no timer. */
     fun of(step: Step): String? = step.timer?.let { it.label ?: derived(step.text) }
+
+    /**
+     * The name [step]'s timer announces itself by, each of its references read as [quantity] gives it (FLOW-016 (8));
+     * null where the step carries no timer.
+     */
+    fun of(step: Step, quantity: (ingredientPosition: Int) -> String?): String? =
+        step.timer?.let { it.label ?: derived(StepText.runs(step, quantity)) }
 
     /**
      * Whether [codePoint] belongs to the word it stands in: a letter or digit, a hyphen or an apostrophe inside a
@@ -48,5 +99,6 @@ object TimerName {
             codePoint == '-'.code || codePoint == '\''.code || codePoint == '\u2019'.code ||
             Character.getType(codePoint) == Character.NON_SPACING_MARK.toInt()
 
-    private val WHITESPACE = Regex("\\s+")
+    /** What `\s` matches: the characters that read as one space. */
+    private const val WHITESPACE = " \t\n\u000B\u000C\r"
 }
