@@ -491,6 +491,8 @@ class StepTimerEditorTest {
         assertEquals(listOf("Шаг 3", "Дать отдохнуть.", "Таймер: 10 мин", "Название таймера: Дать отдохнуть."), compose.textsOf(EditorTags.step(2)))
         assertEquals(listOf("Шаг 4", "Подать."), compose.textsOf(EditorTags.step(3)))
         (0..3).forEach { compose.onNodeWithTag(EditorTags.timerAttach(it)).assertDoesNotExist() }
+        // No control takes a frozen recipe's timer off either.
+        (0..3).forEach { compose.onNodeWithTag(EditorTags.timerRemove(it)).assertDoesNotExist() }
         assertEquals(0, compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
         val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
         assertEquals(listOf(EditorTags.BACK), actions.map { it.config[SemanticsProperties.TestTag] })
@@ -510,6 +512,7 @@ class StepTimerEditorTest {
         assertFalse(editor.setTimerDuration(0, 1, 0))
         assertFalse(editor.setTimerDuration(0, 0, 0))
         assertFalse(editor.setTimerLabel(0, "Oven"))
+        assertFalse(editor.removeTimer(0))
         assertEquals(recipe, editor.recipe.value)
         assertEquals(recipe, stored(recipe.id))
     }
@@ -536,5 +539,93 @@ class StepTimerEditorTest {
         assertEquals(string(R.string.editor_timer_minutes), fieldLabel(EditorTags.timerMinutes(0)))
         assertEquals(string(R.string.editor_timer_name), fieldLabel(EditorTags.timerName(0)))
         assertEquals(string(R.string.editor_timer_action, 1), AccessibilityChecks.clickActionLabel(node(EditorTags.timerAttach(0))))
+        // The control that takes the timer off is named for the screen reader, with its step, and is 48 dp.
+        assertEquals(string(R.string.editor_timer_remove_action, 1), AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(0))))
+        val remove = node(EditorTags.timerRemove(0))
+        val density = remove.layoutInfo.density.density
+        assertTrue(remove.size.width / density >= 48f && remove.size.height / density >= 48f)
+    }
+
+    // At the demo the author asked for a small button that takes a step's timer off: it sits with the timer's fields
+    // of a step that carries one, and nowhere else.
+    @Test
+    fun aRemoveControlSitsWithTheTimerOfAStepThatCarriesOne() {
+        val recipe = seed(
+            Recipe.create(created, null).copy(steps = listOf(Step(0, "Preheat the oven."), Step(1, "Roast.", timer = Timer(20.minutes)))),
+        )
+        openDirectly(recipe.id)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(1)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerRemove(1)).assertExists()
+        assertEquals("Remove timer from step 2", AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(1))))
+        // A step with no timer has none, nor does one whose timer is opened but holds no duration yet.
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
+        chooseTimer(0)
+        compose.onNodeWithTag(EditorTags.timerHours(0)).assertExists()
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
+        type(EditorTags.timerMinutes(0), "10")
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0)), PATIENCE_MS)
+    }
+
+    // Pressing it takes the timer off, its given name with it: the fields go, nothing is stored, the step offers a
+    // timer again, which starts from the derived name; and the removal is in the book after leaving the editor.
+    @Test
+    fun removingATimerTakesItOffWithItsNameAndItStaysOff() {
+        val id = writeANewRecipe()
+        addStep("Roast the chicken.")
+        addStep("Rest it.")
+        chooseTimer(0)
+        type(EditorTags.timerMinutes(0), "20")
+        type(EditorTags.timerName(0), "Chicken in the oven")
+        chooseTimer(1)
+        type(EditorTags.timerMinutes(1), "10")
+        assertEquals(Timer(20.minutes, "Chicken in the oven"), timerOf(id, 0))
+
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.timerName(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
+        assertEquals(setOf(EditorTags.stepText(0)), fieldsIn(0))
+        assertNull(timerOf(id, 0))
+        // The other step's timer stands.
+        assertEquals(Timer(10.minutes), timerOf(id, 1))
+        assertEquals("10", fieldText(EditorTags.timerMinutes(1)))
+
+        // Attached again, the timer starts empty, and from the name derived from the step.
+        chooseTimer(0)
+        compose.onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
+        assertEquals("", fieldText(EditorTags.timerHours(0)))
+        assertEquals("", fieldText(EditorTags.timerMinutes(0)))
+        type(EditorTags.timerMinutes(0), "25")
+        assertEquals(Timer(25.minutes), timerOf(id, 0))
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
+        assertEquals("Roast the chicken.", fieldText(EditorTags.timerName(0)))
+
+        // Taken off again and the editor left: the book holds no timer on the step, and opened again, none shows.
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.BACK).performClick()
+        compose.backThroughTheCard()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id.value)), PATIENCE_MS)
+        assertNull(timerOf(id, 0))
+        assertEquals(Timer(10.minutes), timerOf(id, 1))
+        openDirectly(id)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerAttach(0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerHours(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.timerRemove(1)).assertExists()
+    }
+
+    // The remove control is named in Russian, with its step.
+    @Test
+    @Config(qualifiers = "ru")
+    fun theRemoveControlIsNamedInRussian() {
+        val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Томить.", timer = Timer(2.hours, "Соус")))))
+        openDirectly(recipe.id)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0)), PATIENCE_MS)
+        assertEquals("Убрать таймер шага 1", AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(0))))
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
+        assertNull(timerOf(recipe.id))
     }
 }

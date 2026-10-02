@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -21,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -164,6 +168,26 @@ private fun StepTimer(position: Int, step: Step, editor: RecipeEditor, stating: 
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             modifier = Modifier.weight(1f).testTag(EditorTags.timerMinutes(position)),
         )
+        if (timer != null) {
+            // Takes the timer off, with any name the author gave it.
+            IconButton(
+                onClick = {
+                    if (editor.removeTimer(position)) {
+                        open = false
+                        hours = ""
+                        minutes = ""
+                        given = null
+                    }
+                },
+                // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
+                modifier = Modifier.align(Alignment.CenterVertically).size(48.dp).testTag(EditorTags.timerRemove(position)),
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_remove_timer),
+                    contentDescription = stringResource(R.string.editor_timer_remove_action, position + 1),
+                )
+            }
+        }
     }
     if (timer != null) TimerNameField(position, step.text, timer, editor) { given = it }
 }

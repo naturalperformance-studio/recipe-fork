@@ -82,6 +82,7 @@
     <!-- A step's timer: hours and whole minutes, one per step, named by its step unless the author names it (FLOW-027, GUIDE-007). -->
     <string name="editor_timer">Timer</string>
     <string name="editor_timer_action">Add a timer to step %1$d</string>
+    <string name="editor_timer_remove_action">Remove timer from step %1$d</string>
     <string name="editor_timer_hours">Hours</string>
     <string name="editor_timer_minutes">Minutes</string>
     <string name="editor_timer_name">Timer\'s name</string>

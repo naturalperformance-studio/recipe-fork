@@ -351,6 +351,7 @@ object EditorTags {
     fun stepText(position: Int) = "editor-step-$position-text"
     fun stepRemove(position: Int) = "editor-step-$position-remove"
     fun timerAttach(position: Int) = "editor-step-$position-timer"
+    fun timerRemove(position: Int) = "editor-step-$position-timer-remove"
     fun timerStatement(position: Int) = "editor-step-$position-timer-statement"
     fun timerHours(position: Int) = "editor-step-$position-timer-hours"
     fun timerMinutes(position: Int) = "editor-step-$position-timer-minutes"
