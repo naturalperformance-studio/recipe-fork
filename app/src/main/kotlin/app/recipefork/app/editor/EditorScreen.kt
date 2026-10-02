@@ -2,6 +2,8 @@ package app.recipefork.app.editor
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,6 +33,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -101,7 +105,14 @@ fun EditorScreen(
         HorizontalDivider()
         val shown = recipe ?: return@Column
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).testTag(EditorTags.FORM),
+            Modifier
+                .fillMaxSize()
+                // A touch on any field or control is the author's next action, which ends a hint (GUIDE-007);
+                // a scroll is not one.
+                .onEveryTap { editor.noteAction() }
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+                .testTag(EditorTags.FORM),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (!shown.state.editable) {
@@ -270,6 +281,23 @@ private fun TagSearch(recipe: Recipe, editor: RecipeEditor, dictionary: List<Tag
 }
 
 /**
+ * Calls [onTap] on every touch that lifts without having moved past the touch slop, before whatever it touched
+ * handles it, and consumes nothing: a scroll or a drag is not a tap.
+ */
+private fun Modifier.onEveryTap(onTap: () -> Unit): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        var moved = false
+        while (true) {
+            val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
+            if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) moved = true
+            if (!change.pressed) break
+        }
+        if (!moved) onTap()
+    }
+}
+
+/**
  * A text the author taps, at least 48 by 48 dp (A11Y-003), whose click the screen reader announces as what it
  * does — [action] — beside the visible [text] (A11Y-005).
  */
@@ -322,6 +350,13 @@ object EditorTags {
     fun step(position: Int) = "editor-step-$position"
     fun stepText(position: Int) = "editor-step-$position-text"
     fun stepRemove(position: Int) = "editor-step-$position-remove"
+    fun timerAttach(position: Int) = "editor-step-$position-timer"
+    fun timerStatement(position: Int) = "editor-step-$position-timer-statement"
+    fun timerHours(position: Int) = "editor-step-$position-timer-hours"
+    fun timerMinutes(position: Int) = "editor-step-$position-timer-minutes"
+    fun timerName(position: Int) = "editor-step-$position-timer-name"
+    fun timerNameFollows(position: Int) = "editor-step-$position-timer-name-follows"
+    fun timerDuration(position: Int) = "editor-step-$position-timer-duration"
     const val DESCRIPTION = "editor-description"
     const val DESCRIPTION_TEXT = "editor-description-text"
 }
