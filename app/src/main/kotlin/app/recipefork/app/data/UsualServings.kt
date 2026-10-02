@@ -15,7 +15,7 @@ import java.math.BigInteger
 interface UsualServings {
     val count: StateFlow<Rational?>
 
-    /** Sets the usual count to [count], or clears it with null. */
+    /** Sets the usual count to [count], or clears it with null; a count no reader can request changes nothing. */
     fun set(count: Rational?)
 }
 
@@ -25,20 +25,22 @@ class HeldUsualServings(initial: Rational? = null) : UsualServings {
     override val count: StateFlow<Rational?> = held.asStateFlow()
 
     override fun set(count: Rational?) {
-        held.value = count?.takeIf(RequestedServings::holds)
+        if (count != null && !RequestedServings.holds(count)) return
+        held.value = count
     }
 }
 
 /** The usual count kept in a small preferences file of the device. */
 class PreferencesUsualServings(context: Context) : UsualServings {
     private val preferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-    private val held = MutableStateFlow(parse(preferences.getString(KEY, null)))
+    // Whatever the file holds under the key — another type, or text that is no count — reads as not set, never fails.
+    private val held = MutableStateFlow(parse(preferences.all[KEY] as? String))
     override val count: StateFlow<Rational?> = held.asStateFlow()
 
     override fun set(count: Rational?) {
-        val kept = count?.takeIf(RequestedServings::holds)
-        preferences.edit().apply { if (kept == null) remove(KEY) else putString(KEY, kept.toString()) }.commit()
-        held.value = kept
+        if (count != null && !RequestedServings.holds(count)) return
+        preferences.edit().apply { if (count == null) remove(KEY) else putString(KEY, count.toString()) }.commit()
+        held.value = count
     }
 
     private companion object {

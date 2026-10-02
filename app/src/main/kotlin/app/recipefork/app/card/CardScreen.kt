@@ -120,6 +120,7 @@ fun CardScreen(
                 modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
             )
             is CardContent.Shown -> entries?.let {
+                // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
                 RecipeContent(shown.recipe, it, recipes, environment.usualServings.count.value, onOpenParent)
             }
         }
