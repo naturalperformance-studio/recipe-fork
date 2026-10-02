@@ -136,8 +136,10 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     /** Saved state stays small: only the [MAX_CARDS] cards most recently left at a count or a place are held. */
     private val shownCards = object : CardSession {
-        override fun heldScale(recipe: RecipeId) = held.heldScale(recipe)
-        override fun heldAnchor(recipe: RecipeId) = held.heldAnchor(recipe)
+        // Reading a card on its opening shows it: a card read again is the most recent, whether or not the reader
+        // then changes anything on it.
+        override fun heldScale(recipe: RecipeId) = held.heldScale(recipe).also { if (it != null) shown(recipe) }
+        override fun heldAnchor(recipe: RecipeId) = held.heldAnchor(recipe).also { if (it != null) shown(recipe) }
 
         override fun holdScale(recipe: RecipeId, scale: HeldScale) {
             shown(recipe)

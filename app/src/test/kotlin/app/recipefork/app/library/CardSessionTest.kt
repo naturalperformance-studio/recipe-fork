@@ -274,6 +274,19 @@ class CardSessionTest {
         assertNull(session.cards.heldScale(ids[2]))
     }
 
+    // A card opened again and only read — nothing changed on it — is the most recent too: the oldest shown goes, not it.
+    @Test
+    fun aCardReadAgainWithoutAChangeIsTheMostRecent() {
+        val session = LibrarySession(SavedStateHandle())
+        val ids = (0..49).map { RecipeId("recipe-$it") }
+        ids.forEach { session.cards.holdScale(it, HeldScale(Rational.of(6))) }
+        // The oldest is opened again: its card reads what is held, and the reader changes nothing.
+        assertEquals(HeldScale(Rational.of(6)), session.cards.heldScale(ids[0]))
+        session.cards.holdScale(RecipeId("recipe-new"), HeldScale(Rational.of(2)))
+        assertEquals(HeldScale(Rational.of(6)), session.cards.heldScale(ids[0]))
+        assertNull(session.cards.heldScale(ids[1]))
+    }
+
     // The home action and return: the same count and fixing (FLOW-012 (1)).
     @Test
     fun theHomeActionAndReturnKeepTheCountAndFixing() {
