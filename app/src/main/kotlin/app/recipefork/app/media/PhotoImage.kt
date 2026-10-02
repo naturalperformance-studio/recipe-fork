@@ -1,5 +1,6 @@
 package app.recipefork.app.media
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -56,4 +57,39 @@ fun decodeForDisplay(file: File, width: Int): ImageBitmap? = try {
     null
 } catch (e: RuntimeException) {
     null
+}
+
+/**
+ * [file] decoded as a thumbnail whose shorter side is [size] pixels — enough for a [size]-pixel square cropped about
+ * its centre: read down by a power of two, never whole, then scaled to that size. A smaller photograph is kept as it
+ * is. Null if unreadable.
+ */
+fun decodeThumbnail(file: File, size: Int): ImageBitmap? = try {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(file.path, bounds)
+    val shorter = minOf(bounds.outWidth, bounds.outHeight)
+    if (shorter <= 0) {
+        null
+    } else {
+        var sample = 1
+        while (shorter / (sample * 2) >= size) sample *= 2
+        BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample })
+            ?.let { scaledToShorterSide(it, size) }
+            ?.asImageBitmap()
+    }
+} catch (e: OutOfMemoryError) {
+    null
+} catch (e: RuntimeException) {
+    null
+}
+
+/** [bitmap] scaled down so that its shorter side is [size] pixels, or itself where it is no larger. */
+private fun scaledToShorterSide(bitmap: Bitmap, size: Int): Bitmap {
+    val shorter = minOf(bitmap.width, bitmap.height)
+    if (shorter <= size) return bitmap
+    val width = (bitmap.width.toLong() * size / shorter).toInt().coerceAtLeast(1)
+    val height = (bitmap.height.toLong() * size / shorter).toInt().coerceAtLeast(1)
+    val scaled = Bitmap.createScaledBitmap(bitmap, width, height, true)
+    if (scaled !== bitmap) bitmap.recycle()
+    return scaled
 }

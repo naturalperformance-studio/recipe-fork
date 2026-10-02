@@ -107,6 +107,7 @@ fun LibraryScreen(
     editor: EditorEnvironment = rememberEditorEnvironment(),
     card: CardEnvironment = rememberCardEnvironment(),
     files: RecipeImport = rememberRecipeImport(recipes),
+    thumbnails: CoverThumbnails = rememberCoverThumbnails(),
 ) {
     val message by session.message.collectAsState()
     message?.let { FileMessageDialog(it, onDone = session::told) }
@@ -156,8 +157,8 @@ fun LibraryScreen(
         }
         HorizontalDivider()
         when (view) {
-            LibraryView.MARKED -> MarkedList(recipes, session, files, timers, mode)
-            LibraryView.OWN -> OwnList(recipes, session, editor, timers, mode)
+            LibraryView.MARKED -> MarkedList(recipes, session, files, timers, mode, thumbnails)
+            LibraryView.OWN -> OwnList(recipes, session, editor, timers, mode, thumbnails)
         }
     }
 }
@@ -201,6 +202,7 @@ private fun OwnList(
     editor: EditorEnvironment,
     timers: CardTimers,
     mode: Mode,
+    thumbnails: CoverThumbnails,
 ) {
     var limit by rememberSaveable { mutableIntStateOf(OWN_PAGE) }
     val rows by remember(limit) { recipes.ownNewest(limit) }.collectAsState(initial = null)
@@ -238,11 +240,13 @@ private fun OwnList(
             WriteButton(R.string.library_own_new, LibraryTags.NEW, recipes, session, editor, Modifier.padding(16.dp))
             HorizontalDivider()
         }
+        val cover = coverOf(recipes, thumbnails)
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST)) {
             items(loaded.orEmpty(), key = { it.recipeId }) { row ->
                 OwnEntry(
                     row,
                     mode,
+                    cover,
                     onOpen = { session.openCard(row.recipeId, LibraryView.OWN) },
                     onDelete = { deleting = row.recipeId },
                     onExport = { export(row.recipeId, row.title) },
@@ -302,15 +306,22 @@ private fun WriteButton(
  * font scale.
  */
 @Composable
-private fun OwnEntry(row: OwnRecipeRow, mode: Mode, onOpen: () -> Unit, onDelete: () -> Unit, onExport: () -> Unit) {
+private fun OwnEntry(
+    row: OwnRecipeRow,
+    mode: Mode,
+    cover: EntryCover,
+    onOpen: () -> Unit,
+    onDelete: () -> Unit,
+    onExport: () -> Unit,
+) {
     val deletable = row.state in DELETABLE
     when (mode) {
         Mode.Standard -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            EntryText(row, onOpen, Modifier.weight(1f))
+            EntryText(row, cover, onOpen, Modifier.weight(1f))
             if (deletable) DeleteOffer(row, onDelete, Modifier.padding(end = 8.dp))
         }
         Mode.Serverless -> Column(Modifier.fillMaxWidth()) {
-            EntryText(row, onOpen, Modifier.fillMaxWidth())
+            EntryText(row, cover, onOpen, Modifier.fillMaxWidth())
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.End,
@@ -328,25 +339,32 @@ private fun OwnEntry(row: OwnRecipeRow, mode: Mode, onOpen: () -> Unit, onDelete
 }
 
 @Composable
-private fun EntryText(row: OwnRecipeRow, onOpen: () -> Unit, modifier: Modifier) {
-    Column(
+private fun EntryText(row: OwnRecipeRow, cover: EntryCover, onOpen: () -> Unit, modifier: Modifier) {
+    Row(
         modifier
             .heightIn(min = 48.dp)
             .semantics(mergeDescendants = true) {}
             .clickable(onClickLabel = stringResource(R.string.library_entry_open_action), role = Role.Button, onClick = onOpen)
             .testTag(LibraryTags.entry(row.recipeId))
             .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
-        )
-        // The state is named in words, never carried by colour alone (A11Y-008).
-        Text(stringResource(stateLabel(row.state)), style = MaterialTheme.typography.labelLarge)
-        // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005).
-        Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
+        cover(row.coverId, LibraryTags.cover(row.recipeId))
+        Column(Modifier.weight(1f)) { EntryLines(row) }
     }
+}
+
+@Composable
+private fun EntryLines(row: OwnRecipeRow) {
+    Text(
+        text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
+    )
+    // The state is named in words, never carried by colour alone (A11Y-008).
+    Text(stringResource(stateLabel(row.state)), style = MaterialTheme.typography.labelLarge)
+    // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005).
+    Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable
@@ -382,6 +400,19 @@ private fun rememberExport(recipes: RecipeRepository, session: LibrarySession): 
                 }
             }
         }
+    }
+}
+
+/** Shows an entry's cover, given its media identity (null for none) and the picture's tag. */
+private typealias EntryCover = @Composable (mediaId: String?, tag: String) -> Unit
+
+/** The covers of the active book's entries, read from where its media is kept (MEDIA-001). */
+@Composable
+private fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): EntryCover {
+    val book = recipes.bookName()
+    val files = recipes.filesDirectory
+    return remember(book, files, thumbnails) {
+        { mediaId, tag -> CoverThumbnail(mediaId, book, files, thumbnails, tag) }
     }
 }
 
@@ -455,6 +486,7 @@ private fun MarkedList(
     files: RecipeImport,
     timers: CardTimers,
     mode: Mode,
+    thumbnails: CoverThumbnails,
 ) {
     val marked by remember(recipes) { recipes.marked() }.collectAsState(initial = null)
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
@@ -482,11 +514,13 @@ private fun MarkedList(
             ImportButton(files, session, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             HorizontalDivider()
         }
+        val cover = coverOf(recipes, thumbnails)
         LazyColumn(Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST)) {
             items(loaded.orEmpty(), key = { it.recipeId }) { row ->
                 MarkedEntry(
                     row,
                     mode,
+                    cover,
                     onOpen = { session.openCard(row.recipeId, LibraryView.MARKED) },
                     onRemove = { removing = row.recipeId },
                     onExport = { export(row.recipeId, row.title) },
@@ -502,10 +536,17 @@ private fun MarkedList(
  * their own under the entry's text, as an own entry's do.
  */
 @Composable
-private fun MarkedEntry(row: MarkedRecipeRow, mode: Mode, onOpen: () -> Unit, onRemove: () -> Unit, onExport: () -> Unit) {
+private fun MarkedEntry(
+    row: MarkedRecipeRow,
+    mode: Mode,
+    cover: EntryCover,
+    onOpen: () -> Unit,
+    onRemove: () -> Unit,
+    onExport: () -> Unit,
+) {
     when {
         mode == Mode.Serverless && row.held -> Column(Modifier.fillMaxWidth()) {
-            MarkedEntryText(row, onOpen, Modifier.fillMaxWidth())
+            MarkedEntryText(row, cover, onOpen, Modifier.fillMaxWidth())
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.End,
@@ -519,7 +560,7 @@ private fun MarkedEntry(row: MarkedRecipeRow, mode: Mode, onOpen: () -> Unit, on
             }
         }
         else -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            MarkedEntryText(row, onOpen, Modifier.weight(1f))
+            MarkedEntryText(row, cover, onOpen, Modifier.weight(1f))
             if (row.held) RemoveOffer(row, onRemove, Modifier.padding(end = 8.dp))
         }
     }
@@ -527,7 +568,7 @@ private fun MarkedEntry(row: MarkedRecipeRow, mode: Mode, onOpen: () -> Unit, on
 }
 
 @Composable
-private fun MarkedEntryText(row: MarkedRecipeRow, onOpen: () -> Unit, modifier: Modifier) {
+private fun MarkedEntryText(row: MarkedRecipeRow, cover: EntryCover, onOpen: () -> Unit, modifier: Modifier) {
     val open = if (row.held) {
         Modifier.clickable(
             onClickLabel = stringResource(R.string.library_entry_open_action),
@@ -537,26 +578,33 @@ private fun MarkedEntryText(row: MarkedRecipeRow, onOpen: () -> Unit, modifier: 
     } else {
         Modifier
     }
-    Column(
+    Row(
         modifier
             .heightIn(min = 48.dp)
             .semantics(mergeDescendants = true) {}
             .then(open)
             .testTag(LibraryTags.entry(row.recipeId))
             .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        cover(row.coverId, LibraryTags.cover(row.recipeId))
+        Column(Modifier.weight(1f)) { MarkedEntryLines(row) }
+    }
+}
+
+@Composable
+private fun MarkedEntryLines(row: MarkedRecipeRow) {
+    Text(
+        text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
+    )
+    row.statedAuthor?.let {
         Text(
-            text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
+            stringResource(R.string.file_stated_author, it),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
         )
-        row.statedAuthor?.let {
-            Text(
-                stringResource(R.string.file_stated_author, it),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
-            )
-        }
     }
 }
 
@@ -693,4 +741,7 @@ object LibraryTags {
     fun entryTitle(recipeId: String) = "library-entry-title-$recipeId"
     fun statedAuthor(recipeId: String) = "library-stated-author-$recipeId"
     fun remove(recipeId: String) = "library-remove-$recipeId"
+    fun cover(recipeId: String) = "library-cover-$recipeId"
+    /** The place a cover with the tag [coverTag] holds, whether or not its picture is read yet. */
+    fun coverSlot(coverTag: String) = "$coverTag-slot"
 }
