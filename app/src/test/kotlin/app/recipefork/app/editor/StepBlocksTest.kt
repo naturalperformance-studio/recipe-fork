@@ -169,14 +169,12 @@ class StepBlocksTest {
         EditorTags.stepPhotoImage(position),
     ).filter(::exists)
 
-    /** The inputs and controls of the step at [position] that start a line of its block. */
+    /** The inputs and controls of the step at [position] that start a line of its block: the row of actions by its first. */
     private fun lineStarts(position: Int): List<String> = listOf(
         EditorTags.stepText(position),
         EditorTags.stepInsert(position),
-        EditorTags.timerAttach(position),
         EditorTags.timerHours(position),
         EditorTags.timerName(position),
-        EditorTags.stepPhoto(position),
         EditorTags.stepPhotoImage(position),
     ).filter(::exists)
 

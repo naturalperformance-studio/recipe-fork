@@ -15,7 +15,7 @@
     <string name="media_refused_not_stored">Фото не удалось сохранить на этом телефоне, поэтому ничего не прикреплено.</string>
     <string name="media_unavailable">На этом телефоне не нашлось приложения, чтобы снять или выбрать фото.</string>
     <string name="media_removed">Фото обложки убрано.</string>
-    <string name="media_step_photo">Фото</string>
+    <string name="media_step_photo_label">Фото для шага %1$d</string>
     <string name="media_step_photo_action">Добавить, заменить или убрать фото шага %1$d</string>
     <string name="media_step_take">Сфотографировать</string>
     <string name="media_step_choose">Выбрать из галереи</string>

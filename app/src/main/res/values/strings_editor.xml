@@ -71,13 +71,14 @@
     <string name="editor_steps">Steps</string>
     <string name="editor_steps_none">No steps</string>
     <string name="editor_step">Step %1$d</string>
+    <!-- A step's number before its text in the editor's field; the screen reader reads editor_step instead. -->
+    <string name="editor_step_number">%1$d.</string>
     <string name="editor_step_add">Add step</string>
     <string name="editor_step_add_action">Add a step at the end</string>
-    <string name="editor_step_remove">Remove</string>
     <string name="editor_step_remove_action">Remove step %1$d</string>
     <string name="editor_step_menu_action">Step %1$d actions</string>
     <!-- An ingredient's quantity inside a step's text: inserted from the step's control or by typing @ (FLOW-031). -->
-    <string name="editor_step_insert_ingredient">Insert ingredient</string>
+    <string name="editor_step_insert_ingredient_label">Insert an ingredient into step %1$d</string>
     <string name="editor_step_insert_ingredient_action">Insert an ingredient\'s quantity into step %1$d</string>
     <string name="editor_step_insert_ingredient_none">No ingredients in this recipe yet</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
@@ -86,7 +87,7 @@
     <string name="editor_description_optional">Description (optional)</string>
     <string name="editor_description_none">No description</string>
     <!-- A step's timer: hours and whole minutes, one per step, named by its step unless the author names it (FLOW-027, GUIDE-007). -->
-    <string name="editor_timer">Timer</string>
+    <string name="editor_timer_label">Timer for step %1$d</string>
     <string name="editor_timer_action">Add a timer to step %1$d</string>
     <string name="editor_timer_remove_action">Remove timer from step %1$d</string>
     <string name="editor_timer_hours">Hours</string>

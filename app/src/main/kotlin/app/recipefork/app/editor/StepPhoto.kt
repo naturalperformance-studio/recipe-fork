@@ -27,6 +27,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.media.PhotoAttaching
 import app.recipefork.app.media.PhotoImage
 import app.recipefork.app.media.PhotoNotice
+import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.rememberPhotoSources
 import app.recipefork.core.recipe.Media
@@ -51,35 +52,42 @@ internal fun StepPhotoAttaching(editor: RecipeEditor, photos: StepPhotos, key: L
     unset = { written -> editor.stepPosition(key)?.let { editor.removeStepPhoto(it, written) } ?: false },
 )
 
-/**
- * The photograph of the editable step at [position] (FLOW-026 (2)): one control, "Photo", that opens taking one with
- * the camera, choosing one from the gallery and — once the step carries one — removing it; then the photograph itself,
- * and what the author is told about the last one offered, as the cover tells it.
- */
+/** The photograph work of one editable step: attaching what the camera or the gallery gives, and their launchers. */
+internal class StepPhotoControl(val attaching: PhotoAttaching, val sources: PhotoSources)
+
 @Composable
-internal fun StepPhoto(position: Int, photo: Media?, editor: RecipeEditor, photos: StepPhotos) {
+internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photos: StepPhotos): StepPhotoControl {
     val key = editor.stepKey(position)
     val attaching = remember(editor, photos, key) { StepPhotoAttaching(editor, photos, key) }
-    val notice by attaching.notice
     val sources = rememberPhotoSources(
         key = STEP_KEY + key,
         onPhoto = { attaching.attach(it) },
         onUnavailable = { attaching.notice.value = PhotoNotice.UNAVAILABLE },
     )
+    return StepPhotoControl(attaching, sources)
+}
+
+/**
+ * The photograph control of the editable step at [position] (FLOW-026 (2)), an icon in the step's row of actions: it
+ * opens taking one with the camera, choosing one from the gallery and — once the step carries one — removing it.
+ */
+@Composable
+internal fun StepPhotoAction(position: Int, photo: Media?, control: StepPhotoControl) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        ActionText(
-            text = stringResource(R.string.media_step_photo),
+        BlockAction(
+            icon = R.drawable.ic_step_photo,
+            label = stringResource(R.string.media_step_photo_label, position + 1),
+            tag = EditorTags.stepPhoto(position),
             action = stringResource(R.string.media_step_photo_action, position + 1),
             onClick = { expanded = !expanded },
-            modifier = Modifier.testTag(EditorTags.stepPhoto(position)),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.media_step_take)) },
                 onClick = {
                     expanded = false
-                    sources.takePhoto()
+                    control.sources.takePhoto()
                 },
                 modifier = Modifier.testTag(EditorTags.stepPhotoTake(position)),
             )
@@ -87,7 +95,7 @@ internal fun StepPhoto(position: Int, photo: Media?, editor: RecipeEditor, photo
                 text = { Text(stringResource(R.string.media_step_choose)) },
                 onClick = {
                     expanded = false
-                    sources.choosePhoto()
+                    control.sources.choosePhoto()
                 },
                 modifier = Modifier.testTag(EditorTags.stepPhotoChoose(position)),
             )
@@ -96,13 +104,22 @@ internal fun StepPhoto(position: Int, photo: Media?, editor: RecipeEditor, photo
                     text = { Text(stringResource(R.string.media_step_remove)) },
                     onClick = {
                         expanded = false
-                        attaching.remove()
+                        control.attaching.remove()
                     },
                     modifier = Modifier.testTag(EditorTags.stepPhotoRemove(position)),
                 )
             }
         }
     }
+}
+
+/**
+ * Under the step's row of actions, only when there is something to show: its photograph, and what the author is told
+ * about the last one offered, as the cover tells it.
+ */
+@Composable
+internal fun StepPhotoShown(position: Int, photo: Media?, photos: StepPhotos, control: StepPhotoControl) {
+    val notice by control.attaching.notice
     if (photo != null) StepPhotoImage(position, photo, photos)
     notice?.let {
         Text(
