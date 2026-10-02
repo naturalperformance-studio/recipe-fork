@@ -13,4 +13,13 @@
     <string name="timer_restart_question">У таймера «%1$s» осталось %2$s. Запустить его заново на %3$s?</string>
     <string name="timer_restart_confirm">Заново</string>
     <string name="timer_restart_decline">Пусть идёт</string>
+    <string name="timer_channel_ended">Таймер закончился</string>
+    <string name="timer_channel_running">Идущие таймеры</string>
+    <string name="timer_ended">Таймер закончился</string>
+    <string name="timer_running">Идёт таймер</string>
+    <string name="timer_unheard_title">Этот таймер не будет слышно</string>
+    <string name="timer_unheard_off">Уведомления Recipe Fork выключены. Таймер идёт, но его не будет слышно, пока приложение закрыто или экран заблокирован.</string>
+    <string name="timer_unheard_timers_off">Уведомления таймеров выключены. Таймер идёт, но его не будет слышно, пока приложение закрыто или экран заблокирован.</string>
+    <string name="timer_unheard_settings">Открыть настройки</string>
+    <string name="timer_unheard_dismiss">Понятно</string>
 </resources>

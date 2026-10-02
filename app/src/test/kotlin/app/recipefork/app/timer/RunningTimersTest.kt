@@ -52,7 +52,7 @@ class RunningTimersTest {
     fun aStartedTimerIsHeldByTheMomentItEnds() = runBlocking {
         val timers = open()
         val key = TimerKey(BookName.Pool, soup, 2)
-        val started = timers.start(key, 25.minutes)
+        val started = timers.start(key, "Timer", "Soup", 25.minutes)
         assertEquals(clock.now().plusSeconds(25 * 60), started.endsAt)
         assertEquals(started, timers.get(key))
         assertEquals(listOf(started), announcements.started)
@@ -62,7 +62,7 @@ class RunningTimersTest {
     @Test
     fun theTimeRemainingIsWhatTheClockSays() = runBlocking {
         val timers = open()
-        val timer = timers.start(TimerKey(BookName.Pool, soup, 0), 10.minutes)
+        val timer = timers.start(TimerKey(BookName.Pool, soup, 0), "Timer", "Soup", 10.minutes)
         clock.advance(3.minutes + 20.seconds)
         assertEquals(6.minutes + 40.seconds, timer.remaining(clock.now()))
         assertFalse(timer.hasEnded(clock.now()))
@@ -75,7 +75,7 @@ class RunningTimersTest {
     @Test
     fun aRunningTimerOutlivesTheProcess() = runBlocking {
         val key = TimerKey(BookName.Pool, soup, 1)
-        open().start(key, 2.hours)
+        open().start(key, "Timer", "Soup", 2.hours)
         opened.forEach { it.close() }
         opened.clear()
 
@@ -88,10 +88,10 @@ class RunningTimersTest {
     @Test
     fun timersOfSeveralStepsRecipesAndBooksRunAtOnce() = runBlocking {
         val timers = open()
-        timers.start(TimerKey(BookName.Pool, soup, 0), 5.minutes)
-        timers.start(TimerKey(BookName.Pool, soup, 3), 40.minutes)
-        timers.start(TimerKey(BookName.Pool, bread, 0), 1.hours)
-        timers.start(TimerKey(BookName.OfAccount("a1"), soup, 0), 7.minutes)
+        timers.start(TimerKey(BookName.Pool, soup, 0), "Timer", "Soup", 5.minutes)
+        timers.start(TimerKey(BookName.Pool, soup, 3), "Timer", "Soup", 40.minutes)
+        timers.start(TimerKey(BookName.Pool, bread, 0), "Timer", "Soup", 1.hours)
+        timers.start(TimerKey(BookName.OfAccount("a1"), soup, 0), "Timer", "Soup", 7.minutes)
 
         assertEquals(setOf(0, 3), timers.ofRecipe(BookName.Pool, soup).first().keys)
         assertEquals(setOf(0), timers.ofRecipe(BookName.Pool, bread).first().keys)
@@ -105,8 +105,8 @@ class RunningTimersTest {
         val timers = open()
         val key = TimerKey(BookName.Pool, soup, 0)
         val other = TimerKey(BookName.Pool, soup, 1)
-        timers.start(key, 5.minutes)
-        timers.start(other, 5.minutes)
+        timers.start(key, "Timer", "Soup", 5.minutes)
+        timers.start(other, "Timer", "Soup", 5.minutes)
         timers.cancel(key)
         assertNull(timers.get(key))
         assertEquals(listOf(key), announcements.cancelled)
@@ -118,9 +118,9 @@ class RunningTimersTest {
     fun startingAgainRunsFromTheFullDuration() = runBlocking {
         val timers = open()
         val key = TimerKey(BookName.Pool, soup, 0)
-        timers.start(key, 10.minutes)
+        timers.start(key, "Timer", "Soup", 10.minutes)
         clock.advance(4.minutes)
-        timers.start(key, 10.minutes)
+        timers.start(key, "Timer", "Soup", 10.minutes)
         assertEquals(10.minutes, timers.get(key)!!.remaining(clock.now()))
         assertEquals(1, timers.all.first().size)
     }
