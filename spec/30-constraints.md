@@ -1,7 +1,7 @@
 ---
 slug: CON
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [CON-001, CON-002, CON-003, CON-004, CON-005, CON-006]
 ---
 
@@ -62,11 +62,15 @@ such a user — see
   stored content is unchanged.
 - Given such a recipe, when the owner opens it, then the interface offers
   forking and does not offer editing.
+- Given serverless mode (FLOW-061), when a recipe is exported to a file
+  (FLOW-063), then it is not thereby frozen: a file passes outside the product,
+  and freezing exists to protect what other recipes may name on the server,
+  which no longer exists.
 
 **Verification:** attempted edit on a published recipe and on a recipe shared by
 private link, through the application and directly against the service.
 **Source:** draft sections 1, 4.2; see [NGOAL-004](20-goals.md).
-**Detailed rules:** section [`entity-states`](60-entity-states.md); ST-003 states
+**Detailed rules:** section [`entity-states`](60-entity-states/00-index.md); ST-003 states
 when a recipe freezes and when it becomes editable again.
 
 ### CON-004 — Derived values are always marked as derived
@@ -77,8 +81,8 @@ derivation rounded the value, show the direction of the rounding.
 
 **Acceptance criteria**
 - Given a recipe scaled to a serving count other than the author's, when its
-  ingredient list is displayed, then every quantity that differs from the
-  authored quantity is visibly marked as derived.
+  ingredient list is displayed, then every quantity is visibly marked as derived,
+  including one whose displayed value equals the authored quantity.
 - Given a derived quantity that was rounded, when it is displayed, then the
   interface states whether the displayed value is above or below the exact
   computed value.
@@ -89,6 +93,11 @@ derivation rounded the value, show the direction of the rounding.
 **Source:** draft section 1 ("any automation is explained in the interface"),
 section 3.2.
 **Detailed rules:** section `scaling-rules`.
+**Correction, 2026-09-27:** criterion 1 marked a quantity by its value ("every
+quantity that differs from the authored quantity") while the statement marks by
+provenance ("a quantity it derived"). By user decision of the same date provenance
+governs: at any scale factor other than 1 every quantity is derived (SCALE-004;
+[ADR — derived by provenance](decisions/20260927-derived-by-provenance.md)).
 
 ### CON-005 — Native Android is the only client surface in the MVP
 
@@ -114,7 +123,11 @@ The policy obligations this creates are specified as behaviour elsewhere and are
 listed here only so that their origin is traceable: in-app reporting of content
 and of authors, in-app blocking of authors (section `abuse`), acceptance of
 terms of use before a user creates or uploads content, and a content rating
-questionnaire answered for user-generated content (section `legal`).
+questionnaire answered for user-generated content (section `legal`). The policy
+defines user-generated content as "content that users contribute to an app, and
+which is visible to or accessible by at least a subset of the app's users"; a
+recipe held on the device alone is none of that, so the terms are accepted when an
+account is created, before any recipe can be sent (LEG-004).
 
 **Acceptance criteria**
 - Given a release candidate, when it is checked against the policy obligations
@@ -123,5 +136,5 @@ questionnaire answered for user-generated content (section `legal`).
 
 **Verification:** policy checklist review against the release candidate.
 **Source:** [Google Play — User Generated Content](https://support.google.com/googleplay/android-developer/answer/9876937?hl=en),
-checked 2026-09-20. Re-verify when this section is next touched if that date is
+checked 2026-09-20; the definition quoted above checked 2026-09-28. Re-verify when this section is next touched if that date is
 more than six months old.

@@ -1,7 +1,7 @@
 ---
 slug: MOD
 status: closed
-updated: 2026-09-21
+updated: 2026-09-28
 ids: [MOD-001, MOD-002, MOD-003, MOD-004, MOD-005, MOD-006, MOD-007,
   MOD-008, MOD-009, MOD-010, MOD-011, MOD-012, MOD-013, MOD-014, MOD-015]
 ---
@@ -15,7 +15,7 @@ the same content.
 
 What the moderator may and may not do is in the permission matrix
 ([`actors`](40-actors.md)); the states involved are in
-[`entity-states`](60-entity-states.md).
+[`entity-states`](60-entity-states/00-index.md).
 
 ### MOD-001 — Moderation is triggered by first external visibility
 
@@ -261,8 +261,8 @@ it routes any other.
 moderator role; reject another and confirm it returns to an editable state.
 **Source:** user decision, 2026-09-21. At the first release the product owner is
 the only author and the only moderator, so a prohibition would mean nothing could
-be published at all. The alternative — a second account on a second device,
-because AUTH-011 allows one active account per device — was rejected as pure cost
+be published at all. The alternative — a second account on a second device, as
+AUTH-011 then allowed one active account per device — was rejected as pure cost
 at a launch with one person.
 
 ### MOD-014 — A moderator's own content is moderated like anyone else's

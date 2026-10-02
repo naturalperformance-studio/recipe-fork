@@ -1,14 +1,14 @@
 ---
 slug: FORK
 status: closed
-updated: 2026-09-21
+updated: 2026-09-28
 ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005, FORK-006, FORK-007,
   FORK-008, FORK-009]
 ---
 
 # Forking
 
-Who may fork what is specified in [ST-004](60-entity-states.md); this section
+Who may fork what is specified in [ST-004](60-entity-states/00-index.md); this section
 specifies what a fork contains and what it shows about its origin.
 
 The split between what is inherited and what is not follows the law rather than
@@ -46,8 +46,9 @@ reference to the parent.
   then their names travelled with them, because a timer's name says what the
   wait is for and is part of the method the fork exists to carry, not of the
   author's expression that FORK-002 withholds.
-- Given a forked recipe, when it is created, then its state is `private`, its
-  owner is the forking account, and its parent is the forked recipe.
+- Given a forked recipe, when it is created, then its state is `local`, it is
+  in the forking person's recipe book — the active account's, or the pool's
+  (AUTH-026) — and its parent is the forked recipe.
 
 **Verification:** fork a recipe covering all five unit types, one step with a
 named timer and one with an unnamed timer; compare field by field, then rewrite
@@ -56,8 +57,9 @@ both steps in the fork and compare the two timers' names again.
 
 ### FORK-002 — A fork by another account carries no media and no description
 
-When an account other than the owner forks a recipe, the system shall create the
-fork with no media and with an empty description.
+When anyone other than the owner forks a recipe — another account, a person with
+no account, or anyone forking a recipe imported from a file — the system shall
+create the fork with no media and with an empty description.
 
 **Acceptance criteria**
 - Given a parent with a cover photo and photos on its steps, when another
@@ -86,6 +88,9 @@ offer navigation to the parent, where the parent's own media is shown.
   is named and can be opened, and the parent's photos are visible there.
 - Given a fork whose parent was removed, when its card is opened, then the
   parent is shown as unavailable and cannot be opened (ST-007).
+- Given serverless mode, when a fork of an imported recipe is opened, then its
+  parent opens while it is held in the recipe book and is otherwise shown by name
+  as unavailable (FLOW-065).
 
 **Verification:** manual check on a fork of a published recipe with media.
 **Source:** user decision, 2026-09-20: the author of a fork can see how the dish
@@ -127,6 +132,11 @@ recipe with no parent and shall give no indication that a parent exists.
   forks, then the chain stops at it and does not reveal its parent.
 - Given the owner of both recipes, when they open either one, then the parent is
   not named to them either — the card is the same for everyone.
+- Given serverless mode (FLOW-061), when a recipe imported from a file, or a fork
+  of one, is opened, then this requirement does not apply: nothing is published
+  any more, and the parent is shown as FLOW-065 states.
+- Given a fork sent before its parent (FLOW-007), when the parent is published
+  later, then the parent becomes named on the fork from that moment, by FORK-004.
 
 **Verification:** publish a fork of an own private recipe and inspect the card
 as owner, as another account and as a moderator; then publish the parent and
@@ -136,6 +146,9 @@ reader nothing and discloses that the author holds an unpublished recipe. The
 recipe's stored parent is unchanged, so immutability is untouched: what depends
 on the parent's state is the display, exactly as it already does in ST-007. See
 [ADR — provenance follows the parent's publication](decisions/20260920-provenance-follows-publication.md).
+**Changed 2026-09-28:** serverless mode and a fork sent before its parent added, by
+user decisions of that date
+([ADR — serverless mode and recipe files](decisions/20260928-serverless-mode-and-recipe-files.md)).
 
 ### FORK-006 — No fork carries what readers gave the parent
 

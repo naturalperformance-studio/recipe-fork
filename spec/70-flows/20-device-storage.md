@@ -1,14 +1,17 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-21
-ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-012, FLOW-051, FLOW-052]
+updated: 2026-09-28
+ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-060, FLOW-012, FLOW-058, FLOW-051, FLOW-052]
 ---
 
-# Favourites and what the device keeps
+# The recipe book and what the device keeps
 
-Favourites are the main thing the reader keeps — a list of blocked authors is
-the other — and one setting governs whether the favourites' media comes along.
+Favourites — the recipes a reader found and marked, which with the recipes they
+wrote make up the section the interface calls "My recipe book" (FLOW-034) — are the
+main thing the reader keeps; a list of blocked authors is the other. One setting
+governs whether media comes along, and one action deletes what media the device
+can fetch again.
 
 ### FLOW-009 — Every favourite is readable without a network connection
 
@@ -81,8 +84,10 @@ rather than rearranging itself.
 ### FLOW-011 — One setting governs whether media is held
 
 The system shall offer a single setting that governs whether the media of
-favourited recipes and of the recipes the account owns (FLOW-038) is held on the
-device, and shall hold the text of every one of them regardless of that setting.
+favourited recipes and of the sent recipes the account owns (FLOW-038) is held on
+the device, shall hold the text of every one of them regardless of that setting,
+and shall always hold the media of a recipe that was never sent or holds media not
+sent, because the device holds its only copy.
 
 **Acceptance criteria**
 - Given the setting is on, when a recipe is added to favourites, then its cover,
@@ -95,7 +100,10 @@ device, and shall hold the text of every one of them regardless of that setting.
   held, then the download fails, the recipe stays readable, its media requires a
   connection, and no other favourite's media is deleted to make room.
 - Given any number of favourites, when media is held, then nothing is capped or
-  evicted by count or by size: the setting is the only control.
+  evicted by count or by size: the setting and the action of FLOW-060 are the only
+  controls.
+- Given a recipe never sent, or media added to a sent recipe and not sent, when
+  the setting is turned off, then that media stays on the device.
 
 **Verification:** switch the setting both ways with favourites already held, and
 fill the device to confirm the failure is contained to the recipe being held.
@@ -106,12 +114,43 @@ so its weight is close to a photo's. The split into two settings is a change
 that can be made later without changing anything else.
 **Note:** the setting is on by default. What video is for is recorded in OQ-003,
 which sets the limits that make this true.
+**Changed 2026-09-28:** media the device holds as its only copy is outside the
+setting, since recipes are sent only when their owner sends them (FLOW-059); by
+user decision of that date
+([ADR — the device first](../decisions/20260928-the-device-first.md)).
+
+### FLOW-060 — Media the device can fetch again is deleted on request
+
+The system shall offer, beside the setting of FLOW-011, an action that deletes
+from the device the held media of every favourite and of every sent own recipe,
+and that deletes no media the device holds as its only copy.
+
+**Acceptance criteria**
+- Given held media, when the action is used, then the media of every favourite
+  and of every own recipe whose media the server holds is gone from the device,
+  and every one of those recipes keeps its text.
+- Given a recipe never sent, or media added to a sent recipe and not sent, when
+  the action is used, then that media stays.
+- Given the action used, when a recipe whose media was deleted is opened with a
+  connection, then its media is shown from the server as FLOW-011 (2) shows it
+  with the setting off; the setting itself is unchanged and holds media for
+  recipes added afterwards.
+- Given serverless mode (FLOW-061), when the action is chosen, then it states
+  first that the deleted media cannot be fetched again, and deletes nothing until
+  the person confirms.
+
+**Verification:** hold media for favourites, sent recipes and an unsent draft;
+use the action and inspect what is left; open a cleared recipe with a connection;
+repeat in serverless mode.
+**Source:** user decision, 2026-09-28: the setting stays and an action to clear
+media from the device is added beside it. What is cleared is what can be fetched
+again, since the product owner called it clearing a cache.
 
 ### FLOW-012 — Leaving the application does not lose the recipe being read
 
-When the reader returns to the application after leaving it, the system shall
-show the recipe that was open, at the scale it was showing, at the place in it
-the reader had scrolled to.
+When the reader returns to the application after leaving it, or opens it again
+after the operating system ended it, the system shall show the recipe that was
+open, at the scale it was showing, at the place in it the reader had scrolled to.
 
 **Acceptance criteria**
 - Given a recipe open at a changed serving count with a fixed ingredient set,
@@ -123,15 +162,29 @@ the reader had scrolled to.
   when the application was left.
 - Given the operating system ended the application while it was away, when the
   reader opens it again, then the same recipe is shown if its content is
-  available — held on the device, or fetchable over the network.
+  available — held on the device, or fetchable over the network — at the same
+  serving count, with the same fixed ingredients and at the same place.
 - Given the operating system ended the application, the recipe is not in
   favourites, and there is no connection, when the reader opens the application
   again, then it states that the recipe needs a connection and offers to retry,
   and does not silently drop the reader into the catalogue.
 
-**Verification:** scale a recipe, fix an ingredient, start a timer, leave the
-application for several minutes and return; repeat with the process ended by the
-operating system, in both the favourited and the non-favourited case.
+- Given the reader had scrolled so that a given ingredient line or step was the
+  first one at the top of the screen, when they return, then that line or step is
+  again the first at the top, even if the text scale (A11Y-004), the orientation
+  of the screen or a timer that ended while they were away changed the layout.
+
+**Verification:** scale a recipe, fix an ingredient, scroll to its middle, start a
+timer, leave the application for several minutes and return; repeat with the
+process ended by the operating system, in both the favourited and the
+non-favourited case, and once with the text scale changed and once with the
+device rotated while away.
+**Correction, 2026-09-27:** the statement restored the place and no criterion
+observed it, and whether scale and place survive the operating system ending the
+application was read two ways (SD-026). By user decisions of that date the place
+is the line or step at the top of the screen, and the recipe, its scale and its
+place all survive the process being ended; the device keeps them for that purpose
+only (RET-010).
 **Source:** user decision, 2026-09-20. Cooking is interrupted constantly, and an
 interruption is not a reason to lose the page: leaving the application and
 closing it are different events and only the second can cost the recipe.
@@ -142,11 +195,48 @@ reached", which promised a current step the card does not have — the card is o
 scrolling screen (`30-cooking`) and nothing in the product advances through
 steps. What is restored is the scroll position.
 
-### FLOW-051 — Favourites without an account live on the device and nowhere else
+### FLOW-058 — A session ends only when the reader closes the application
 
-The system shall allow a person holding no account to add recipes to favourites
-and to block authors, shall keep both on the device under the same rules as any
-other favourite or block, and shall send neither anywhere.
+The system shall treat one session as lasting from a start of the application
+that has nothing to restore until the next such start, shall start a new session
+only when the reader closed the application — removed it from the list of recent
+applications — or the device was restarted, and shall not start one when the
+operating system ended the application's process while it was away.
+
+**Acceptance criteria**
+- Given a view chosen in the favourites section (FLOW-034), when the reader
+  leaves the application by the home action or the task switcher and returns
+  while its process is alive, then it is the same session and the view is still
+  in force.
+- Given the same choice, when the operating system ends the application's
+  process while it is away and the reader returns to it, then it is the same
+  session and the view is still in force, exactly as the recipe being read is
+  restored by FLOW-012.
+- Given the same choice, when the reader removes the application from the list
+  of recent applications and opens it again, then a new session has started and
+  the section opens as FLOW-034 (6) states.
+- Given the same choice, when the device is restarted and the reader opens the
+  application, then a new session has started.
+- Given a new session, when anything held for the length of a session is looked
+  at — the ordering of CAT-001, the filter of FLOW-033, the view of FLOW-034 and a
+  count the reader set on a card (FLOW-017) — then each is back at its default.
+
+**Verification:** choose the own-recipes view, a non-default ordering and the
+own-recipes filter; return after the home action, after ending the process from
+the developer options while away, after removing the application from the recent
+list and after restarting the device, and inspect all three each time.
+**Source:** user decision, 2026-09-27 (SD-028). The line falls where the product
+already put it: leaving the application and the system ending it are not the
+reader's acts and cost nothing (FLOW-012); closing it is, and a fresh start is
+what FLOW-017 already meant. See
+[ADR — a session is ended by the reader](../decisions/20260927-a-session-is-ended-by-the-reader.md).
+
+### FLOW-051 — What is kept with no account lives on the device and nowhere else
+
+The system shall allow a person with no account active to add recipes to
+favourites, to write recipes (FLOW-002) and to block authors, shall keep all three
+on the device, in the pool of AUTH-026, under the same rules as an account's, and
+shall send none of them anywhere.
 
 **Acceptance criteria**
 - Given no account, when a recipe is favourited, then it is held on the device
@@ -159,19 +249,22 @@ other favourite or block, and shall send neither anywhere.
 - Given no account, when an author is blocked, then the block is kept on the
   device, is sent nowhere, and hides that author's recipes from this device's
   catalogue and search exactly as ABUSE-005 requires of an account's block.
-- Given no account, when the application is reinstalled, the device is replaced,
-  or an existing account signs in on it (AUTH-012), then those favourites and
-  those blocks are gone and nothing restores them; creating an account on that
-  device is the one act that keeps them (FLOW-052).
-- Given no account, when the favourites screen is opened, then it states that
-  these favourites live on this device and offers to create an account to carry
-  them, without requiring it.
+- Given no account, when the application is reinstalled or the device is
+  replaced, then those favourites, recipes and blocks are gone and nothing
+  restores them.
+- Given the pool, when an account becomes active on the device, then AUTH-026
+  offers to move the pool into it; declined, the pool stays on the device and is
+  shown again whenever no account is active.
+- Given no account, when the recipe book is opened, then it states that what it
+  holds lives on this device and offers to create an account to carry it, without
+  requiring it.
 
 **Verification:** favourite recipes with no account, reinstall, and confirm the
 loss; capture traffic to confirm nothing was sent.
 **Source:** user decision, 2026-09-20; amended 2026-09-21 so that an addition
 counts toward the author's own figure (ANL-005) without the list itself leaving
-the device. Accounts are for the people who publish;
+the device; widened 2026-09-28 to recipes written with no account, and the loss
+at a sign-in replaced by the offer of AUTH-026, by user decision of that date. Accounts are for the people who publish;
 a reader who only cooks should not have to hold one, and the price of that is
 stated plainly rather than discovered after a lost phone.
 
@@ -184,19 +277,24 @@ already holding when it was created.
 **Acceptance criteria**
 - Given an account signed in on two devices, when a recipe is favourited on one,
   then it is in the favourites of the other once it reaches the server.
-- Given favourites and blocked authors kept with no account, when an account is
-  created on that device, then both become the account's and none is lost.
-- Given favourites and blocked authors kept with no account, when an existing
-  account signs in on that device instead, then AUTH-012 governs the device and
-  neither merges into it.
+- Given favourites and blocked authors kept in the pool, when an account is
+  created or signs in on that device, then AUTH-026 offers to move them into it,
+  with the pool's recipes; accepted, they become the account's and none is lost.
 - Given a muted account (AUTH-004), when it favourites a recipe, then it is
   carried like any other account's, because this is the one thing a muted
-  account is for.
+  account carries beyond the device (it cannot send a recipe, AUTH-004).
+- Given favourites, when they are carried, then they reach the server by
+  themselves, without the sending of FLOW-059, which is for recipes the account
+  wrote.
 - Given a removed favourite, when the removal reaches the server, then it is gone
   on the other device too.
 
 **Verification:** favourite on two devices under one account; create an account
-on a device that already held favourites; sign in to an existing account on
-another such device and compare.
+on a device whose pool holds favourites and accept the offer; sign in to an
+existing account on another such device, decline, and compare.
 **Source:** user decision, 2026-09-20: the reason a reader would want an account
-at all is that favourites survive the phone.
+at all is that favourites survive the phone. Favourites keep travelling by
+themselves after sending became manual, by user decision of 2026-09-28: they are
+references, not recipes the account wrote. The pool replaced the rule that a
+sign-in deletes what the device held, by user decision of the same date
+([ADR — several accounts on one device](../decisions/20260928-several-accounts-on-one-device.md)).

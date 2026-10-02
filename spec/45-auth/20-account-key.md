@@ -1,8 +1,8 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-21
-ids: [AUTH-007, AUTH-008, AUTH-009, AUTH-010, AUTH-017, AUTH-019]
+updated: 2026-09-28
+ids: [AUTH-007, AUTH-024, AUTH-019, AUTH-008, AUTH-009, AUTH-010, AUTH-017]
 ---
 
 # The account key and the deletion key
@@ -21,22 +21,24 @@ losing it loses the account unless its holder still has the recovery key
 saved it.
 
 **Acceptance criteria**
-- Given the creation screen, when it is shown, then the key is displayed in full
-  and can be copied in one action.
+- Given the account key step of creation (AUTH-024), when it is shown, then the
+  key is displayed in full and can be copied in one action.
 - Given the same screen, when the person prefers a file, then the key can be
   saved as one, and the product does not choose where.
 - Given the warning, when it is read, then it states that losing the account key
   loses the account unless the recovery key is held (AUTH-021), and that nobody
   at all can restore an account whose keys are both gone.
 - Given the confirmation control, when it is not chosen, then creation does not
-  complete and the screen cannot be left by an ordinary back action.
+  complete, and a back action does not leave creation without first asking
+  the person to confirm leaving (criterion 10); on this step it returns to the
+  first step of creation (AUTH-024).
 - Given the warning, when any setting is searched for, then none switches it off
   (GUIDE-001 governs the same pattern for submission).
 - Given a completed creation, when the screen is left, then the key is never
   shown in full again and AUTH-019 governs how it is reached.
-- Given the creation screen, when the person leaves it without giving every
-  confirmation it requires — this key, the recovery key (AUTH-020) and the terms
-  of use (LEG-004) — then no account exists at all: the nickname is not consumed
+- Given creation, when the person leaves it without giving every confirmation
+  it requires — this key, the recovery key (AUTH-020) and the terms of use
+  (LEG-004) — then no account exists at all: the nickname is not consumed
   (AUTH-018, DOM-001), no slot on the device is occupied (AUTH-001, AUTH-002),
   and nothing of the attempt is kept anywhere.
 - Given a person who copied the key and left before confirming, when they
@@ -47,9 +49,28 @@ saved it.
   issued as its own artefact with its own confirmation (AUTH-020), and the
   warning above no longer says there is no recovery at all: it says what
   NGOAL-003 now says.
+- Given any step of creation before it completes, when the person chooses its
+  cancel control, or makes the system back action on the first step (AUTH-024),
+  then they are asked to confirm leaving without an account and told that any
+  key already shown or copied will match nothing; when they confirm, they are
+  returned to where they were before the offer of AUTH-001, and nothing of the
+  attempt exists (criterion 7); when they do not, the step stays as it was.
 
-**Verification:** create an account, attempt to leave without confirming, then
-take the key both ways and compare them.
+**Verification:** create an account, attempt to leave without confirming — by
+the screen's cancel control and by the system back action, declining and then
+accepting the question — then take the key both ways and compare them.
+**Correction, 2026-09-27:** criterion 4 forbade leaving "by an ordinary back
+action" while criterion 7 and its ADR require that a person who has not confirmed
+can walk away, and no way out was stated (SD-009). By user decision of the same
+date the screen has its own cancel control and the system back action asks before
+leaving; both leave on confirmation (criterion 10). The criteria keep their
+numbers; the new one is appended.
+**Corrected again 2026-09-27:** after the re-check of SD-009 the requirement still
+spoke of one creation screen, while AUTH-020 had given the recovery key a step of
+its own, and nothing said where the nickname and the terms stand or what leaving
+the application mid-creation does. By user decision of that date creation is the
+three steps of AUTH-024; criteria 1, 4, 7 and 10 now speak of steps, and only the
+system back action on the first step asks before leaving.
 **Source:** draft section 2.2; user decision, 2026-09-20. Both forms are offered
 because the two ways people keep a secret are a password manager and a file, and
 the product has no opinion about which is right.
@@ -60,6 +81,54 @@ no recovery, which the recovery key of the same day had already made false — i
 own third and seventh criteria said so, and NGOAL-003 was narrowed for it. The
 sentence a developer writes on the screen is this one, so it is the sentence that
 had to change.
+
+### AUTH-024 — Creating an account is three steps in a fixed order
+
+When account creation is offered, the system shall present it as three steps in
+this order — the nickname with the terms of use, then the account key with the
+deletion key, then the recovery key — shall complete creation only when the last
+step is confirmed, and shall keep what each step holds unchanged while the person
+moves between the steps.
+
+**Acceptance criteria**
+- Given creation is offered, when it opens, then the first step shows the
+  generated nickname with the control for another (AUTH-018) and the terms of use
+  with their acceptance (LEG-004), and no key is shown on it.
+- Given the first step, when the terms are not accepted, then the step cannot be
+  left forward.
+- Given the first step completed, when the second step is shown, then it holds
+  the account key and the deletion key, each displayed in full with its own copy
+  control, the file of AUTH-007 (2) carrying both, and the one confirmation of
+  AUTH-007 and AUTH-017, and neither the nickname control nor the terms.
+- Given the second step confirmed, when the third step is shown, then AUTH-020
+  governs it, and confirming it completes creation.
+- Given the second step, when the person makes the system back action, then the
+  first step is shown with the nickname and the acceptance as they were left, and
+  nothing is asked.
+- Given the first step reached by going back, when the person asks for another
+  nickname and goes forward again, then the account key and the deletion key
+  shown are the ones shown before: nothing exists yet, so nothing is issued anew.
+- Given the first step, when the person makes the system back action, then
+  AUTH-007 (10) governs it; every step carries the cancel control of AUTH-007
+  (10).
+- Given any step, when the person leaves the application by the home action or
+  the task switcher and returns while its process is still alive, then the same
+  step is shown with the same nickname, keys and confirmations, and creation has
+  not been left in the sense of AUTH-007 (7).
+- Given any step, when the operating system ends the application's process
+  before creation completes, then on the next opening creation is not resumed,
+  nothing of the attempt exists (AUTH-007 (7)), and the application opens as it
+  would for a person who declined the offer (AUTH-001 (7)).
+
+**Verification:** walk creation forward and back through all three steps; on a
+return to the first step ask for another nickname and compare the keys on the
+second step with those shown before; leave to the home screen on each step and
+return; end the process on each step and reopen the application.
+**Source:** user decision, 2026-09-27 (re-check of SD-009; completes SD-007). The
+terms are accepted before any secret is handed over, and the nickname is chosen
+on a step where no key stands beside it. Going back is an ordinary back because
+nothing yet exists that going back could lose. See
+[ADR — the three steps of creation](../decisions/20260927-the-three-steps-of-creation.md).
 
 ### AUTH-019 — Afterwards the key is shown masked and copied whole
 
@@ -121,7 +190,8 @@ consume nor require a free slot on that device.
 
 **Acceptance criteria**
 - Given a second device, when the key is entered there, then the same account is
-  active on both and both hold its recipes (FLOW-038).
+  active on both and both hold the recipes it has sent (FLOW-059) and its
+  favourites; a recipe never sent stays on the device it was written on.
 - Given a device with all three slots occupied, when a key is entered, then
   signing in succeeds.
 - Given a key pasted as text and the same key taken from a file, when either is
@@ -130,7 +200,10 @@ consume nor require a free slot on that device.
   signing in is refused, the reason is stated, and whatever was active stays
   active.
 - Given the same key entered twice in succession, when the second attempt
-  happens, then nothing changes and no data is wiped.
+  happens, then nothing changes and nothing is deleted.
+- Given a device where other accounts are signed in, when a key is entered,
+  then the account it holds joins them and becomes the active one, and none of
+  theirs is touched (AUTH-011).
 
 **Verification:** sign in on a fresh device, on a device with slots full, twice
 in a row, and with a damaged key.
@@ -140,10 +213,11 @@ none. Without this, a household sharing one tablet could not reach accounts they
 already hold. Flagged to the product owner as the spec author's inference rather
 than a stated decision.
 
-### AUTH-010 — Signing in requires a connection
+### AUTH-010 — Signing in with a new key requires a connection
 
 If the device has no network connection, then the system shall refuse to sign in
-with a key and shall state that a connection is needed.
+with a key not yet used on this device and shall state that a connection is
+needed; a key already used on this device is AUTH-027.
 
 **Acceptance criteria**
 - Given no connection, when a key is entered, then signing in is refused, the
@@ -158,6 +232,9 @@ and then with both working.
 **Source:** the server decides whether a key holds a real account (AUTH-014);
 until that test can run, the client has accepted nothing. Consistent with
 FLOW-003, which refuses every action whose answer only the server holds.
+**Narrowed 2026-09-28** to a key not yet used on the device, by user decision of
+that date: a key the device has already seen opens what the device already holds
+for it (AUTH-027).
 
 ### AUTH-017 — Every account carries a deletion key
 
@@ -168,7 +245,16 @@ accept it as the sole proof of ownership at the deletion page (EXT-006).
 
 **Acceptance criteria**
 - Given account creation, when the key is issued, then the deletion key is issued
-  on the same screen and is carried by the file that AUTH-007 offers.
+  on the same step (AUTH-024) and is carried by the file that AUTH-007 offers.
+- Given that step, when it is shown, then the deletion key is displayed in full
+  beside the account key and carries a copy control of its own, which copies the
+  deletion key alone in one action.
+- Given the account key's copy control on that step (AUTH-007 (1)), when it is
+  used, then what reaches the clipboard is the account key alone and not the
+  deletion key.
+- Given that step, when its confirmation is shown, then it is one confirmation
+  whose text names both keys, and AUTH-007 (4) governs it; the deletion key adds
+  no second confirmation.
 - Given a signed-in account, when its own screen is opened, then the deletion key
   is reachable there, masked and copyable in full (AUTH-019).
 - Given two accounts, when their deletion keys are compared, then they differ,
@@ -181,9 +267,17 @@ accept it as the sole proof of ownership at the deletion page (EXT-006).
 - Given an account key entered on another device, when the account opens there,
   then the deletion key is the same one.
 
-**Verification:** read the key from the screen and from the file and confirm they
-match; attempt deletion twice with one key; review the key's entropy against the
-page's rate limit.
+**Verification:** read the key from the screen, from its own copy control and
+from the file and confirm they match; copy the account key and confirm the
+clipboard holds nothing else; attempt deletion twice with one key; review the
+key's entropy against the page's rate limit.
+**Correction, 2026-09-27:** criterion 1 named no control, the "Constrains
+AUTH-014" line asked for copyable text beside the account key, and AUTH-014 (7)
+had the account key carry the deletion key, which read as one copy action taking
+both (SD-029). By user decision of that date the deletion key is shown in full
+beside the account key with a copy control of its own, each control copies one
+key, the file carries both, and one confirmation names both. See
+[ADR — the deletion key is handed over beside the account key](../decisions/20260927-the-deletion-key-is-handed-over-beside.md).
 **Source:** user decision, 2026-09-20. This is what keeps the rule "the account
 key is never uploaded anywhere" free of exceptions, and it bounds what a
 counterfeit page can achieve: a stolen deletion key destroys an account but never

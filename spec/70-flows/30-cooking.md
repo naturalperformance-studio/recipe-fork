@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-21
+updated: 2026-09-28
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -42,14 +42,72 @@ is in the foreground, in the background, or closed.
   at the step the timer belongs to.
 - Given the reader refused permission to show notifications, when a timer ends,
   then it is still finished and is shown as finished inside the application, and
-  the permission is asked for again only when the reader next starts a timer.
+  nothing announces it while the application is closed or the screen is locked;
+  what the reader is shown about the permission is stated by criteria 8 to 10
+  and 13.
 - Given a running timer, when the reader opens the recipe, then the time
   remaining is shown on its step.
 - Given a running timer, when the reader cancels it, then nothing announces
   itself afterwards.
+- Given a platform that has a request for the permission to show notifications
+  (Android 13 and later) and a device on which it has never been asked for, when
+  the reader starts their first timer, then the platform's request is made at that
+  moment, and at no earlier moment such as the first launch; on a platform that
+  has no such request (Android 10 to 12) nothing is requested, and criteria 10 and
+  11 govern.
+- Given notifications are not permitted, when the reader starts a timer and the
+  platform will still show its own request, then that request is made; and when
+  the reader refuses the request made here or by criterion 8, then the
+  explanation of criterion 10 is shown at once, before the reader returns to the
+  recipe.
+- Given notifications are not permitted, when the reader starts a timer and the
+  platform will not show a request — because it has none to show or because the
+  reader has refused it as often as it allows — then the application shows its own
+  explanation that the timer will not be heard while the application is closed or
+  the screen is locked, with a control that opens the system's notification
+  settings for the application; the timer starts either way.
+- Given notifications are permitted, when the reader starts a timer, then nothing
+  about the permission is shown.
+- Given any request or explanation of criteria 8 to 10, when it is shown, then the
+  timer has already started at the moment the reader started it and runs whatever
+  the reader answers.
+- Given the application's notifications are permitted and those of its timers
+  alone are turned off in the system's settings, when the reader starts a timer,
+  then notifications count as not permitted: the explanation of criterion 10 is
+  shown, stating that timer notifications are turned off and the timer will not be
+  heard, and its control opens those settings.
 
 **Verification:** start a timer, close the application from the task switcher,
-lock the device and wait for the end; repeat with notifications refused.
+lock the device and wait for the end; repeat with notifications refused; start a
+first timer on a fresh install, refuse the request and confirm the explanation
+follows at once while the timer runs; repeat the refusal until the platform stops
+asking; on an Android 10 device start a first timer with notifications on and
+confirm nothing is shown, then turn them off in settings and confirm the
+explanation of criterion 10.
+**Correction, 2026-09-27:** criterion 5 had the permission "asked for again" where
+on Android 10–12 there is no request to make and on later versions the platform
+stops showing one after refusals, placed no first request, and was read two ways
+against A11Y-007 (3) (SD-021). By user decisions of that date: the first request
+comes with the first timer; where the platform will not ask, the application
+explains and leads to the settings; and a timer with notifications refused is
+not heard while the application is closed.
+**Completed 2026-09-27:** after the re-check of SD-021 criterion 5 still carried
+"asked for again only when the reader next starts a timer", which criteria 8 to 10
+had replaced, and a reader who refused the platform's request at a timer's start
+was told nothing, while A11Y-007 (3) says they have been told. By user decision of
+that date a refusal at that moment is followed at once by the explanation, and the
+timer never waits for the answer. Criterion 12 is new. See
+[ADR — a refusal is explained at once](../decisions/20260927-a-refusal-is-explained-at-once.md).
+**Corrected 2026-09-27:** criterion 8 required the platform's request on every
+device, while Android 10 to 12 have none, so it could be met on no device the
+product supports below Android 13 and collided there with criteria 10 and 11
+(SD-021, re-check against spec/ @ 4cc2c18). By user decision of that date the
+request is made only where the platform has one; below that, notifications on
+means nothing is shown and notifications off means the explanation. By the same
+decision, timer notifications turned off alone count as notifications off
+(criterion 13, new), since otherwise the timer would be silent with nobody told
+(A11Y-007 (3)). See
+[ADR — no request where the platform has none](../decisions/20260927-no-request-where-the-platform-has-none.md).
 **Source:** user decision, 2026-09-20: a person may start a timer on the last
 step and close the application entirely — something goes in the oven and is
 taken out in thirty minutes — so the timer cannot depend on the application
@@ -101,9 +159,8 @@ one.
   unchanged, when they fork it again, then the unchanged one is the one offered.
 - Given the reader holds no fork of that recipe, when they fork it, then a fork
   is created and nothing is said.
-- Given an unchanged fork that has not yet reached the server, when the reader
-  forks the same recipe again, then it counts exactly as one the server holds
-  (FLOW-007).
+- Given an unchanged fork that was never sent (FLOW-059), when the reader forks
+  the same recipe again, then it counts exactly as one the server holds.
 
 **Verification:** fork a recipe twice without touching the first fork; change the
 first fork and repeat; confirm both outcomes and the explicit second fork.
@@ -189,8 +246,8 @@ shall open every recipe at that count.
 - Given a recipe opened at the reader's count, when the reader returns it to the
   authored count, then nothing is marked as derived (SCALE-001).
 - Given a reader who scaled one recipe to a different count and left it, when
-  they open that recipe again in a later session, then it opens at their usual
-  count and not at the count they used last time.
+  they open that recipe again in a later session (FLOW-058), then it opens at
+  their usual count and not at the count they used last time.
 - Given a reader who scaled a recipe and stays in the application, when they
   leave the card and come back to it, then the count they set is still there.
 
@@ -205,8 +262,8 @@ and the household is the durable fact. The cost is deliberate: with the setting
 in use almost every recipe opens in a derived state, and the numbers the author
 wrote are not the numbers the reader meets first — which is why the derived
 markings of SCALE-004 carry the weight they do.
-**Note:** a count the reader set survives for as long as the application keeps
-running, including leaving the card and returning to it; a fresh start of the
+**Note:** a count the reader set survives for as long as the session lasts
+(FLOW-058), including leaving the card and returning to it; a fresh start of the
 application opens every recipe at the usual count again. This boundary follows
 the reason for the decision — a week later the guests are gone, ten minutes
 later the reader is still cooking the same meal.

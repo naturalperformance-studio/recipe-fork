@@ -1,6 +1,6 @@
 # The cooking card is one scrolling screen
 
-**Status:** accepted; corrects FLOW-012 and A11Y-003
+**Status:** accepted; corrects FLOW-012 and A11Y-003. Its consequence that nothing about a reader's progress is stored is narrowed by [20260927-the-card-survives-the-process.md](20260927-the-card-survives-the-process.md).
 
 **Context:** Two requirements referred to a mechanism the specification never
 contained. FLOW-012 promised to return the reader "at the step the reader had

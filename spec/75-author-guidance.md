@@ -1,7 +1,7 @@
 ---
 slug: GUIDE
 status: closed
-updated: 2026-09-21
+updated: 2026-09-27
 ids: [GUIDE-001, GUIDE-002, GUIDE-003, GUIDE-004, GUIDE-005, GUIDE-006,
   GUIDE-007, GUIDE-008]
 ---
@@ -226,21 +226,29 @@ it fresh each time costs nothing and behaves the same everywhere.
 ### GUIDE-006 — A long step carrying an unnamed timer is shown what its notification will say
 
 When the author leaves a step that carries a timer whose name they have not set
-and whose text holds more than 60 characters, the system shall show what that
-timer's notification will read and shall offer to correct the name there.
+and whose text, at the authored serving count, holds more than 60 characters or
+holds an ingredient reference within its first 60, the system shall show what
+that timer's notification will read and shall offer to correct the name there.
 
 **Acceptance criteria**
 - Given such a step, when the author leaves it, then what is shown is the text
-  the notification will carry, cut exactly as FLOW-016 cuts it, with the
-  ellipsis.
+  the notification will carry at the authored serving count, cut exactly as
+  FLOW-016 cuts it, with the ellipsis.
+- Given the step holds a reference within the text shown, when the display is
+  read, then it states that the quantities in it follow the reader's serving
+  count, so the reader's notification may read and be cut differently.
 - Given that display, when the author reads it, then it states that this is what
   the notification will say and offers to name the timer differently, and it does
   not tell the author to rewrite the step.
 - Given that display, when the author names the timer from it, then the timer
   holds that name and the display does not appear for this step again while the
   name is set (FLOW-016).
-- Given a step of 60 characters or fewer carrying a timer, when the author leaves
-  it, then nothing is shown, because nothing will be cut.
+- Given a step of 60 characters or fewer at the authored serving count, holding no
+  reference, carrying a timer, when the author leaves it, then nothing is shown,
+  because nothing will be cut.
+- Given a step of 55 characters at the authored serving count whose opening holds
+  a reference, carrying an unnamed timer, when the author leaves it, then the
+  display is shown, because a reader's larger count can lengthen it past the cut.
 - Given a step of more than 60 characters carrying no timer, when the author
   leaves it, then nothing is shown, because no notification will be built from
   it.
@@ -253,8 +261,15 @@ timer's notification will read and shall offer to correct the name there.
   stored exactly as typed: submission does not depend on it (FLOW-027, DOM-012).
 
 **Verification:** write steps of 59, 60 and 200 characters, each with and without
-a timer, and each with the timer named and unnamed; compare what is shown against
-the announcement FLOW-016 produces.
+a timer, and each with the timer named and unnamed, and a short step opening with
+a reference; compare what is shown against the announcement FLOW-016 produces at
+the authored count and at a doubled count.
+**Correction, 2026-09-27:** the display did not say at which serving count a
+reference inside it is rendered, and a short step whose reference grows with the
+reader's count was never shown although its announcement could be cut (SD-015).
+By user decision of that date the display renders at the authored count, says
+that quantities follow the reader's count, and also fires on any step whose first
+60 characters hold a reference.
 **Source:** user decision, 2026-09-20: the author must not learn where the cut
 falls by having a timer announce the wrong half of a step while their hands are
 full. Showing the result rather than the rule is deliberate — the author sees
@@ -269,18 +284,37 @@ system shall state that a step carries one timer and that two waits in sequence
 are written as two steps.
 
 **Acceptance criteria**
-- Given a step that already carries a timer, when the author attempts to attach
-  another, then the statement is shown and no second timer is created (DOM-013).
+- Given a step that already carries a timer, when the author chooses the control
+  for attaching a timer on it (FLOW-027), then the statement is shown and no
+  second timer is created (DOM-013).
 - Given that statement, when it is shown, then it names splitting the step as
   what to do instead, so the author is not left with a refusal and no way
   forward.
 - Given a step with no timer, when a timer is attached, then nothing is shown.
-- Given the statement, when the author closes it, then the step is unchanged and
-  the timer it already had still holds its duration.
+- Given the statement, when the author takes their next action in the editor,
+  then the statement is gone, the step is unchanged, and the timer it already had
+  still holds its duration; the statement has no control that closes it
+  (GUIDE-005).
+- Given the statement, when the author touches any field or control of the
+  editor or types a character, then that is their next action and the statement
+  is gone.
+- Given the statement, when the author scrolls the editor, or moves the screen
+  reader's focus (A11Y-005) — including onto the statement itself — then that is
+  not an action in the sense of criterion 4, and the statement stays, so a person
+  using the screen reader can reach it and hear it.
 
-**Verification:** attempt a second timer through every path FLOW-027 leaves open
-and confirm both the statement and that the step is untouched.
+**Verification:** choose the timer control on a step that has a timer, confirm
+the statement and that the step is untouched, then act elsewhere and confirm the
+statement is gone.
 **Source:** user decision, 2026-09-20.
+**Correction, 2026-09-27:** criterion 1 answered an attempt FLOW-027 left no path
+to, and criterion 4 closed a statement GUIDE-005 says there is nothing to dismiss
+(SD-005). By user decision of that date the attempt is the timer control kept on a
+step that has a timer, and the statement lasts until the author's next action.
+**Completed 2026-09-27:** which interaction is the author's next action was not
+said (SD-030, item 2). By user decision of that date it is a touch on a field or
+control or a typed character; a scroll or a move of the screen reader's focus is
+not.
 
 ### GUIDE-008 — References are offered where the first step is written
 

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FLOW-034: the section's name. -->
+    <string name="library_title">My recipe book</string>
+    <string name="library_view_marked">Marked</string>
+    <string name="library_view_own">Written here</string>
+    <string name="library_view_marked_action">Show the recipes marked in this book</string>
+    <string name="library_view_own_action">Show the recipes written in this book</string>
+    <!-- FLOW-036: the state on an own recipe's entry; local and private are both drafts. -->
+    <string name="library_state_draft">Draft</string>
+    <string name="library_state_pending">Awaiting review</string>
+    <string name="library_state_rejected">Rejected</string>
+    <string name="library_state_link_shared">Shared by private link</string>
+    <string name="library_state_published">Published</string>
+    <string name="library_state_hidden">Hidden</string>
+    <string name="library_state_removed">Removed</string>
+    <!-- FLOW-005: the three sending marks. -->
+    <string name="library_sent_never">Not sent: kept on this device alone and lost with it</string>
+    <string name="library_sent_sent">Sent</string>
+    <string name="library_sent_with_changes">Sent, with changes not sent</string>
+    <!-- FLOW-042: the own-recipes view of a book in which nothing has been written, and its one offer. -->
+    <string name="library_own_empty">Nothing has been written in this recipe book yet.</string>
+    <string name="library_own_write">Write a recipe</string>
+    <!-- FLOW-042 (5): writing a new recipe from an own-recipes view that already lists some. -->
+    <string name="library_own_new">New recipe</string>
+    <!-- FLOW-029 (1): an own recipe's entry opens its card. -->
+    <string name="library_entry_open_action">Open the recipe</string>
+</resources>

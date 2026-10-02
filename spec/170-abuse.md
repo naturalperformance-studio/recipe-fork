@@ -1,7 +1,7 @@
 ---
 slug: ABUSE
 status: closed
-updated: 2026-09-21
+updated: 2026-09-28
 ids: [ABUSE-001, ABUSE-002, ABUSE-003, ABUSE-004, ABUSE-005, ABUSE-006, ABUSE-007]
 ---
 
@@ -151,9 +151,9 @@ catalogue browsing and search results.
   is kept on the device under the rules FLOW-051 sets for favourites: it is sent
   nowhere, so which authors this device hides is never known to the product, and
   it is lost with the device or with a reinstallation.
-- Given blocks kept with no account, when an account is created on that device,
-  then they are carried into it, and when an existing account signs in instead,
-  then AUTH-012 governs the device and they do not merge into it (FLOW-052).
+- Given blocks kept with no account, when an account is created or signs in on
+  that device, then they move into it with the rest of the pool if the offer of
+  AUTH-026 is accepted, and stay in the pool if it is declined (FLOW-052).
 - Given a blocker holding an account, when they sign in on a second device, then
   their blocks are there too, because the account holds them (DOM: Block).
 - Given the author's screen (FLOW-055), when anyone opens it, then blocking that

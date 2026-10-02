@@ -1,7 +1,7 @@
 ---
 slug: LEG
 status: closed
-updated: 2026-09-21
+updated: 2026-09-28
 ids: [LEG-001, LEG-002, LEG-003, LEG-004, LEG-005, LEG-006, LEG-007, LEG-008,
   LEG-009, LEG-010]
 ---
@@ -113,22 +113,23 @@ the content (NGOAL-006), so there is nothing to buy with the author's pictures.
 
 ## Accepting the terms
 
-### LEG-004 — The terms are accepted before anything is created, and they carry a version
+### LEG-004 — The terms are accepted before anything leaves the device, and they carry a version
 
 The system shall require an account to accept the terms of use before it can
-create, fork, submit or upload anything, shall record which version it accepted,
-and shall require no acceptance from anyone who only reads.
+send, submit or rate anything, shall record which version it accepted, and shall
+require no acceptance from anyone who reads, cooks, or writes and forks recipes on
+the device alone.
 
 **Acceptance criteria**
 - Given account creation (AUTH-007), when the account is created, then the terms
-  are presented and accepted there, and the accepted version is recorded with the
-  account.
-- Given a person with no account, when they browse, search, cook, favourite or
-  report, then they accept nothing, because those need no account (AUTH-001,
-  ACT-001).
+  are presented and accepted there — on its first step, before any key is shown
+  (AUTH-024) — and the accepted version is recorded with the account.
+- Given a person with no account, when they browse, search, cook, favourite,
+  report, or write, edit, fork and delete recipes on the device, then they accept
+  nothing, because those need no account (AUTH-001, ACT-001, FLOW-002).
 - Given an account that has not accepted the current version, when it attempts to
-  create, fork, submit, publish, rate or upload, then the attempt is refused and
-  the terms are presented.
+  send, submit, publish or rate, then the attempt is refused and the terms are
+  presented; writing and forking on the device go on without them.
 - Given the recorded acceptance, when it is inspected, then it is a version
   identifier and a date and nothing about a person (RET-010).
 - Given the terms, when they are opened from inside the application, then they
@@ -138,6 +139,9 @@ and shall require no acceptance from anyone who only reads.
 every reading action with no account and confirm nothing is asked.
 **Source:** user decision, 2026-09-21; CON-006 requires acceptance before a user
 creates or uploads content.
+**Changed 2026-09-28:** a recipe on the device alone is not user-generated content
+under the policy CON-006 cites, so creating and forking there ask for nothing; the
+terms stand before sending, by user decision of that date.
 
 ### LEG-005 — Changed terms are accepted again, and refusing costs only authorship
 
@@ -150,12 +154,11 @@ accepted.
 - Given a new version of the terms, when an account that accepted an older one
   opens the application, then it is not interrupted until it attempts an
   authoring action.
-- Given such an account, when it attempts to create, fork, submit, publish, rate
-  or upload, then the new terms are presented and the action proceeds once they
-  are accepted.
+- Given such an account, when it attempts to send, submit, publish or rate, then
+  the new terms are presented and the action proceeds once they are accepted.
 - Given such an account that declines, when it uses the application afterwards,
-  then it reads, cooks, opens its own recipes and keeps its favourites, and
-  nothing of its own is destroyed or hidden.
+  then it reads, cooks, writes and forks on the device, opens its own recipes and
+  keeps its favourites, and nothing of its own is destroyed or hidden.
 - Given such an account, when it declines, then it is told plainly which actions
   are unavailable until it accepts, and the statement names them.
 - Given its published recipes, when the terms change, then they stay published

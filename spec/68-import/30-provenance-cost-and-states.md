@@ -140,7 +140,7 @@ an import as FLOW-003 refuses a submission, and shall queue nothing.
 ## States of an imported recipe
 
 An imported recipe has no owner, so every transition of
-[`entity-states`](../60-entity-states.md) triggered by an owner is absent. What
+[`entity-states`](../60-entity-states/00-index.md) triggered by an owner is absent. What
 exists:
 
 | From | Trigger | Guard | To | Side effects |

@@ -1,7 +1,7 @@
 ---
 slug: MEDIA
 status: closed
-updated: 2026-09-21
+updated: 2026-09-28
 ids: [MEDIA-001, MEDIA-002, MEDIA-003, MEDIA-004, MEDIA-005, MEDIA-006,
   MEDIA-007, MEDIA-008, MEDIA-009, MEDIA-010, MEDIA-011, MEDIA-012, MEDIA-013]
 ---
@@ -12,10 +12,11 @@ Media is optional everywhere: a recipe with none is complete and publishable
 (DOM-006). What is here is what the product accepts, what it does to a file
 before it leaves the device, and what it costs.
 
-Decided elsewhere and not repeated: media is uploaded when it is added and bound
-to the account before the recipe is visible to anyone (DOM-005); media added
-without a connection is queued and uploaded later (FLOW-004); whether a device
-keeps the media of favourites and own recipes is one setting (FLOW-011); the
+Decided elsewhere and not repeated: media stays on the device until its recipe is
+sent, is uploaded with it, and is bound to the account before the recipe is
+visible to anyone (FLOW-004, FLOW-059, DOM-005); whether a device keeps the media
+of favourites and sent own recipes is one setting, beside an action that clears it
+(FLOW-011, FLOW-060); the
 cover is attached with the title and a step's item at the step (FLOW-026); a
 fork by another account carries no media at all, and an owner's own fork carries
 it (FORK-006, FORK-007); no media is classified automatically, and a human
@@ -228,8 +229,8 @@ addition can only mean a replacement.
 ### MEDIA-010 — An account's unpublished media is capped at 150 MB
 
 The system shall refuse to accept further media for an account once the total
-size of the distinct stored files the account holds for recipes that have never
-been published reaches 150 MB.
+size of the distinct stored files the account holds on the server for recipes
+that were sent and have never been published reaches 150 MB.
 
 **Acceptance criteria**
 - Given an account whose unpublished media totals 149 MB, when a 2 MB item is
@@ -238,9 +239,12 @@ been published reaches 150 MB.
   recipe's media stops counting against the cap and further media is accepted.
 - Given an account at the cap, when it deletes an unpublished recipe (ST-010),
   then the freed space is available once MEDIA-012 has deleted the files.
-- Given media added without a connection, when the queued upload reaches the
-  server and the cap is exceeded, then the upload is refused, the media stays on
-  the device and the recipe stays marked as not accepted (FLOW-004, FLOW-005).
+- Given a recipe whose media would take the account past the cap, when it is
+  sent (FLOW-059), then nothing of it reaches the server, the media stays on the
+  device, and the recipe keeps the mark FLOW-005 gave it.
+- Given media on recipes never sent, when the allowance is computed, then it
+  counts nothing: the device's own storage is the only bound on what was never
+  sent.
 - Given a recipe of fifty steps each carrying a video at or near the 6 MB
   ceiling of MEDIA-004, when it is being built, then it cannot be completed
   under this cap.
@@ -252,9 +256,9 @@ been published reaches 150 MB.
   are counted once: what is counted is the distinct file, not the number of
   recipes holding it.
 
-**Verification:** fill an account to the cap with drafts, publish one, delete
-one, and attempt an upload from a device that was offline while the cap was
-reached.
+**Verification:** fill an account to the cap with sent drafts, publish one,
+delete one, and send a recipe carrying media while the account is at the cap;
+confirm that drafts never sent do not count.
 **Source:** user decision, 2026-09-20. ABUSE-001 limits submissions per day and
 nothing limits the creation of private recipes, so without this an account could
 fill the storage of CON-002 without ever showing anything to anyone. 150 MB is
@@ -262,21 +266,24 @@ roughly sixteen photographic recipes in progress at once; the product owner's
 reasoning for a figure this tight is that a recipe its author does not intend to
 publish can do without photographs. What the cap binds is total weight, not the
 number of items: a recipe of many short clips fits where the same recipe built
-from full-length ones does not.
+from full-length ones does not. **Narrowed 2026-09-28** to recipes that were sent,
+since nothing else reaches the server (FLOW-059); by user decision of that date.
 
 ### MEDIA-011 — What the account is told at the cap
 
-When media is refused because the cap of MEDIA-010 is reached, the system shall
-state how much of the allowance is used, and shall name the two ways to free it:
-publishing a recipe, or deleting an unpublished one.
+When a sending is refused because the cap of MEDIA-010 is reached, the system
+shall state how much of the allowance is used, and shall name the two ways to free
+it: publishing a recipe, or deleting a sent one that was never published.
 
 **Acceptance criteria**
 - Given the refusal, when it is shown, then it states the amount used and the
   amount allowed.
 - Given the refusal, when it is shown, then it names publication and deletion as
   the ways to free space, and offers no way to compress further.
-- Given the refusal, when the author frees space, then adding media works again
+- Given the refusal, when the author frees space, then sending works again
   without reopening the recipe.
+- Given the refusal, when it is shown, then it also says that the recipe stays on
+  the device as it is, and that adding media to it there needs no allowance.
 
 **Verification:** reach the cap and read the message; free space and retry.
 **Source:** CON-004; the product owner rejected compressing harder to fit.

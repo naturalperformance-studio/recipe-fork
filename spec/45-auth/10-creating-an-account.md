@@ -1,8 +1,9 @@
 ---
 slug: AUTH
 status: closed
-updated: 2026-09-21
-ids: [AUTH-001, AUTH-002, AUTH-003, AUTH-004, AUTH-005, AUTH-006, AUTH-018]
+updated: 2026-10-01
+ids: [AUTH-001, AUTH-002, AUTH-003, AUTH-004, AUTH-005, AUTH-006, AUTH-018,
+  AUTH-022, AUTH-023]
 ---
 
 # Creating an account
@@ -12,20 +13,23 @@ given, and what happens when the device cannot be attested at all.
 
 ### AUTH-001 — An account appears when an action needs one
 
-When a person without an account performs an action that requires one — writing
-a recipe, forking a recipe, rating a recipe, or choosing to carry favourites
-beyond this device — the system shall offer to create an account, and shall
-create it only where the device verdict reports a free slot.
+When a person without an account performs an action that requires one — sending
+a recipe to the server (FLOW-059), rating a recipe, or choosing to carry the
+recipe book beyond this device — the system shall offer to create an account, shall create
+a full account only where the device verdict reports a free slot, and otherwise
+shall act as AUTH-003 and AUTH-004 state.
 
 **Acceptance criteria**
 - Given a person with no account, when they browse, search, open a recipe, cook
-  from it, run its timers, keep favourites on the device or report something,
-  then no account is created and none is asked for.
+  from it, run its timers, write, edit, fork or delete a recipe, keep favourites
+  on the device or report something, then no account is created and none is asked
+  for (FLOW-002).
 - Given a person with no account, when they use a control that needs one, then
   account creation is offered, and the action they asked for proceeds once the
-  account exists.
-- Given account creation, when it succeeds, then one slot on the device is
-  occupied with the month it was occupied in.
+  account exists — for a muted account, as AUTH-004 (5) states.
+- Given account creation, when a full account is created, then one slot on the
+  device is occupied with the month it was occupied in; a muted account occupies
+  none (AUTH-004).
 - Given a device with no free slot, when creation is attempted, then no account
   is created and AUTH-003 governs what the person is told.
 - Given a verdict that cannot be obtained while the server can be reached, when
@@ -35,14 +39,22 @@ create it only where the device verdict reports a free slot.
 - Given a person who declines the offer, when they return to what they were
   doing, then everything that works without an account still works.
 
-**Verification:** walk every account-less path on a clean install; then trigger
-creation from each of the four actions that require it.
+**Verification:** walk every account-less path on a clean install, writing and
+forking included; then trigger creation from each of the three actions that
+require it.
+**Correction, 2026-09-27:** the statement said an account is created "only where
+the device verdict reports a free slot", and criterion 3 had every successful
+creation occupy a slot, while AUTH-004 creates a muted account with no verdict
+and no slot. Both now speak of a full account; no decision changed.
 **Source:** user decision, 2026-09-20. An account exists for the people who
 publish and for the reader who wants favourites to outlive the device; a person
 who only cooks mints nothing, consumes no nickname and occupies no slot. See
 [ADR — an account is created on demand](../decisions/20260920-account-on-demand.md).
+**Changed 2026-09-28:** writing and forking no longer require an account; sending a
+recipe does. By user decision of that date
+([ADR — the device first](../decisions/20260928-the-device-first.md)).
 
-### AUTH-018 — The nickname is generated and may be rerolled once, before the account exists
+### AUTH-018 — The nickname is generated and may be rerolled any number of times before the account exists
 
 When account creation is offered, the system shall show a generated three-word
 nickname, shall allow the person to replace it with another generated one any
@@ -50,8 +62,8 @@ number of times before the account is created, and shall fix it permanently once
 it is.
 
 **Acceptance criteria**
-- Given the creation screen, when it opens, then a generated nickname is already
-  shown and nothing is typed by the person (CON-001).
+- Given the first step of creation (AUTH-024), when it opens, then a generated
+  nickname is already shown and nothing is typed by the person (CON-001).
 - Given a shown nickname, when the person asks for another, then a different
   generated nickname replaces it.
 - Given a nickname the person passed over, when the account is created, then only
@@ -63,6 +75,10 @@ it is.
 
 **Verification:** reroll several times, create the account, and confirm both the
 permanence of the accepted name and the availability of the rejected ones.
+**Correction, 2026-09-27:** the heading said "rerolled once", which read as a
+single reroll against a statement, a criterion and a glossary entry that all say
+any number of times (SD-010). The heading now says what the rest already did. The
+form of a nickname is AUTH-022 and the words it is drawn from AUTH-023.
 **Source:** user decision, 2026-09-20. The nickname is the only public
 representation of a user, so the person is given a say in it at the one moment
 that costs nothing; after creation it is permanent, because other people's
@@ -132,8 +148,9 @@ truth instead — their favourites already work, and they are tied to this phone
 
 If the server can be reached but a device verdict cannot be obtained, then the
 system shall create a muted account: one that carries favourites beyond the
-device and does nothing else that an account is for. A muted account shall not
-write, fork, edit, submit or rate.
+device and does on the device everything anyone does there (FLOW-002). A muted
+account shall send no recipe to the server, and shall not submit, request a
+private link or rate.
 
 **Acceptance criteria**
 - Given no verdict, when an account is created, then favourites carried by that
@@ -143,24 +160,46 @@ write, fork, edit, submit or rate.
   needed: a muted account is still an account, with a unique nickname (DOM-001)
   and three keys the server issues (AUTH-014).
 - Given a muted account, when the recipe card of a published recipe is opened,
-  then the fork control and the rating controls are absent.
-- Given a muted account, when the editor would be reached, then it is not
-  offered and no recipe can be created.
-- Given a muted account, when it was created because the person asked to fork or
-  to rate, then AUTH-006 states at that moment that the action cannot proceed
-  and why.
+  then the fork control is present and the rating controls are absent; a fork it
+  makes is held on the device alone.
+- Given a muted account, when the editor is opened, then recipes can be written,
+  edited, given media and deleted, they are held on the device alone and nothing
+  of them reaches the server, and the send control of FLOW-059 is replaced by the
+  statement of AUTH-006.
+- Given a muted account, when it was created because the person asked to send a
+  recipe or to rate, then AUTH-006 states at that moment that the action cannot
+  proceed and why; a recipe from the pool whose sending created it is in its
+  recipe book, marked never sent (FLOW-059 (12), ACT-002).
 - Given a muted account, when it is created, then no slot on the device is
   occupied.
 - Given any person with or without an account, when they report a recipe or an
   author, then the report is recorded and delivered as `abuse` requires.
 
-**Verification:** attempt each of the four triggering actions with attestation
-blocked, and walk every control named here.
+**Verification:** attempt each of the three triggering actions with attestation
+blocked, walk every control named here, and confirm at the server that no recipe
+of the muted account arrived.
+**Correction, 2026-09-27:** a muted account created from the write control was
+told by AUTH-001 (2) that writing proceeds and by this requirement that it could
+not (SD-019 item 1). By user decision of that date a muted account writes, edits
+and forks freely on its own device, and nothing of it reaches the server until the
+account is full (AUTH-005); what stays withheld is everything that uses the
+server's storage or the moderator's queue — media, submission, the private link —
+and rating. Media is withheld rather than held locally because every recipe moves
+to the server when the account becomes full, and locally held media could exceed
+the 150 MB an account may hold unpublished (MEDIA).
+**Changed 2026-09-28:** once anyone writes, forks and attaches media on the device
+(FLOW-002, FLOW-004), what a muted account lacks is what uses the server: sending,
+submission, the private link and rating. Media is no longer withheld, because it
+counts against nothing until the recipe is sent (MEDIA-010). By user decision of
+that date ([ADR — the device first](../decisions/20260928-the-device-first.md)).
 **Source:** user decision, 2026-09-20. Refusing to create anything was rejected:
 an outage at the attestation service would then block the one thing a reader
 might legitimately want — favourites that survive the phone. Creating a full
 account was rejected: the gate would be worth nothing, since a sideloaded build
 obtains no verdict by construction.
+**Changed 2026-10-01:** criterion 5 names where the pool recipe that created a muted
+account is, by user decision of that date (SD-042;
+[ADR — the account's creation gives the owner](../decisions/20261001-the-accounts-creation-gives-the-owner.md)).
 
 ### AUTH-005 — A muted account becomes full when a verdict and a slot allow it
 
@@ -170,18 +209,48 @@ verdict reports one free.
 
 **Acceptance criteria**
 - Given a muted account created while the attestation service was unreachable,
-  when the service can be reached again and the person taps the fork control,
-  then a verdict is obtained, a slot is occupied, the account becomes full and
-  the fork proceeds.
+  when the service can be reached again and the person chooses the retry control
+  of the statement that stands where the rating controls would be (AUTH-006),
+  then a verdict is obtained, a slot is occupied, the account becomes full, and
+  the like and dislike controls take the statement's place; no rating is given
+  until the person chooses one.
 - Given a muted account on a device with no free slot, when it attempts such an
   action, then it stays muted and AUTH-003 states the month a slot frees.
 - Given a muted account whose verdict still cannot be obtained, when it attempts
   such an action, then it stays muted and AUTH-006 states why.
 - Given an account that has become full, when it is used afterwards, then no
   further verdict is requested for it.
+- Given a muted account holding recipes on its device, when it becomes full, then
+  none of them is sent; each keeps the mark FLOW-005 gives a recipe never sent, and
+  the send control of FLOW-059 is offered on each.
+- Given a muted account whose recipe is in the editor, when a retry from the
+  statement standing where the send control would be makes the account full, then
+  the send control takes the statement's place and nothing is sent.
+- Given any retry that makes the account full, when it completes, then every
+  control AUTH-004 withheld is offered wherever it belongs and no withheld action
+  is performed on the person's behalf.
 
-**Verification:** create a muted account offline, restore the connection and
-attempt a fork; repeat on a device with its slots full.
+**Verification:** create a muted account with the attestation service unreachable
+and the server reachable, restore the service and retry from the statement in
+place of the rating controls; repeat from the statement in place of the submission
+control; repeat on a device with its slots full.
+**Correction, 2026-09-27:** criterion 1 had the person tap the fork control, which
+AUTH-004 (3) makes absent for a muted account, so no path reached this
+requirement (SD-019 item 2). The attempt is made from the statement that replaces
+the control (AUTH-006), by user decision of the same date.
+**Corrected again 2026-09-27:** the same day's decision on SD-019 item 1 gave a
+muted account the fork control back (AUTH-004 (3)), so criterion 1 retried from a
+statement that no longer exists, and the verification created a muted account
+offline, which AUTH-004 (2) forbids. Criterion 1 now retries from the statement in
+place of the rating controls. By user decision of that date a retry that makes the
+account full restores the withheld controls and performs nothing itself: a rating
+has no value until the person picks one, and a submission must pass GUIDE-001.
+Criteria 6 and 7 are new; the earlier ones keep their numbers. See
+[ADR — a retry restores the control](../decisions/20260927-a-retry-restores-the-control.md).
+**Changed 2026-09-28:** becoming full sends nothing (criterion 5), and the statement
+of criterion 6 stands in place of the send control rather than the submission
+control, because a recipe is sent before it is submitted (FLOW-006). By user
+decision of that date that sending is the owner's act.
 **Source:** user decision, 2026-09-20. The verdict is asked for at the moment it
 is needed rather than on every launch, which keeps the application independent of
 an external service and keeps requests within the free quota it offers.
@@ -194,6 +263,13 @@ which actions are withheld, and shall state what would lift the limit.
 **Acceptance criteria**
 - Given a muted account, when a withheld control would have been shown, then a
   statement takes its place rather than the control failing silently.
+- Given that statement, when it is shown, then it carries a retry control; when
+  the person chooses it, AUTH-005 is attempted for the action the withheld
+  control stood for, and if the account becomes full the control returns in the
+  statement's place without being acted on (AUTH-005 (7)).
+- Given a retry that leaves the account muted, when it completes, then the
+  statement remains and says why, by the no verdict or the no free slot case
+  below.
 - Given that statement, when it is read, then it says the device could not be
   checked and that a connection and an installation from the store lift the
   limit.
@@ -201,7 +277,66 @@ which actions are withheld, and shall state what would lift the limit.
   shown, then it names the month a slot frees instead (AUTH-003).
 - Given a full account, when any screen is shown, then no such statement appears
   anywhere.
+- Given a muted account, when the statement is shown in the editor or in the
+  own-recipes view, then it also says that its recipes cannot be sent while it is
+  muted, and are held on this device only and lost with it (FLOW-005).
+- Given a muted account, when its own account screen is opened, then the same
+  statement stands there, with the retry control, for as long as it is muted.
 
 **Verification:** read every statement a muted account can reach, in both the no
 verdict and the no free slot case.
 **Source:** CON-004 — automation that changes what a user may do explains itself.
+**Added 2026-09-27:** the retry control on the statement, which is the only path
+by which a muted account reaches AUTH-005 (SD-019 item 2; user decision).
+
+### AUTH-022 — A nickname is three English words: two adjectives and a noun
+
+The system shall generate every nickname as an adjective, a second adjective and
+a noun, in that order, each an English word in Latin letters beginning with a
+capital letter, separated by single spaces, and shall display it in that form in
+every interface language.
+
+**Acceptance criteria**
+- Given the creation screen, when a nickname is generated, then it has the form
+  `Brave Copper Otter`: two adjectives, then a noun, each capitalised, separated
+  by one space.
+- Given an interface in Russian, when a nickname is displayed anywhere, then it is
+  displayed in Latin letters exactly as generated and is neither translated nor
+  transliterated.
+- Given any two nicknames, when they are compared for uniqueness (DOM-001), then
+  they are compared as the three words, so two nicknames never differ only in
+  letter case or spacing.
+
+**Verification:** generate a large sample and check form and case; display one
+nickname in both interface languages.
+**Source:** user decision, 2026-09-27 (SD-001). English words avoid the agreement
+of gender and case that a Russian adjective owes its noun, which three
+independent word lists cannot give; one form for everyone keeps a nickname the
+same string on every screen. The size of the lists is OQ-009.
+
+### AUTH-023 — The nickname words come from lists the product owner keeps by hand
+
+The system shall draw every nickname word from one of two lists, adjectives and
+nouns, that the product owner maintains outside the application, and shall admit
+to a list only a word that is not profane or insulting and does not name a real
+person, a brand, a nationality or ethnicity, a religion, a disease, a
+sexuality, or a feature of a person's body or appearance.
+
+**Acceptance criteria**
+- Given the two lists, when every word is reviewed against the criteria above,
+  then none fails any of them.
+- Given any screen of the application, when it is enumerated, then none edits a
+  word list; a list changes in the store, as the dictionaries do (DOM-014).
+- Given a combination of three admitted words, when it is generated, then it is
+  not checked against anything further: no list of forbidden combinations exists.
+- Given a word removed from a list, when an account already holds a nickname
+  containing it, then that nickname is unchanged (DOM-001) and the word is no
+  longer drawn for new ones.
+
+**Verification:** review of both lists against the criteria before the first
+account is created and at every change; enumerate every screen.
+**Source:** user decision, 2026-09-27 (SD-001). The lists are written before the
+first account exists, because the first nickname issued is permanent.
+**Cost, stated:** three harmless words can still combine into something that reads
+badly, and nothing catches it; a stop list of combinations was rejected as a list
+kept for ever against a rare case.

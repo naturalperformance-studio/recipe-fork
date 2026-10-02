@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-21
+updated: 2026-09-29
 ids: []
 ---
 
@@ -25,6 +25,9 @@ in section `scaling-rules`.
 | `household` | teaspoon, tablespoon, cup | yes | linearly, then rounded to a convenient fraction |
 | `taste_measured` | a pinch of salt | yes | linearly, then rounded to a convenient fraction |
 | `taste_unmeasured` | pepper to taste | no | never — the ingredient has no quantity to scale |
+
+The examples of `piece` are ingredients counted in pieces, not units. The units
+themselves are a closed list of twelve, each assigned to one type (DOM-016).
 
 An `exact` ingredient may be authored in any unit of its type, including tonnes
 and cubic metres, so that a production card can be written in the units it is
@@ -52,22 +55,27 @@ stays smooth, while being displayed in pieces.
 An account holds, as separate collections: favourites (recipes), ratings (one
 value per rated recipe), blocked authors (accounts), and the recipes it owns.
 The account carries no field that identifies the person behind it (CON-001).
-An account exists only where one was asked for (AUTH-001); favourites and
-blocked authors also exist on a device that holds no account, and live only
-there (FLOW-051).
+An account exists only where one was asked for (AUTH-001); recipes, favourites
+and blocked authors also exist on a device with no account active, in a pool that
+belongs to no account and lives only there (FLOW-051, AUTH-026). A device holds
+the content of every account signed in on it, each apart from the others
+(AUTH-011).
 
 ### Recipe
 
 | Field | Type | Notes |
 |---|---|---|
-| `recipe_id` | identifier | |
-| `owner` | Account | Fixed at creation, not transferable (ACT-002). |
-| `parent` | Recipe or none | The direct parent this recipe was forked from. Fixed at creation. Only the direct parent is held; no chain root, no descendant list (GOAL-003). |
+| `recipe_id` | identifier | Given when the recipe is created on the device, and kept unchanged when it is sent, exported or imported, so that a fork can name a parent the server does not yet hold (FLOW-007) and a file can be recognised when imported twice (FLOW-064). |
+| `owner` | Account or none | None while the recipe is in the pool of a device (AUTH-026); an account once it is written in that account's book or moved into it, and fixed from the recipe's first sending, not transferable (ACT-002). |
+| `parent` | Recipe identity or none | The direct parent this recipe was forked from, held by its identity, which need not be held on the device or on the server (FLOW-007, FLOW-065). Fixed at creation. Only the direct parent is held; no chain root, no descendant list (GOAL-003). |
+| `sent` | never, sent, or sent with changes not sent | What FLOW-005 marks. Held on the device; the server holds only what was sent (FLOW-059). |
+| `stated_author` | nickname as text, or none | Only on a recipe imported from a file: the author's nickname the file states, shown as not verified (FLOW-064). |
+| `stated_parent` | title and nickname as text, or none | Only on a recipe imported from a file: the title and author's nickname its file states for its parent (FLOW-065). |
 | `title` | text | |
 | `description` | text | |
 | `tags` | set of Tag | Chosen from the fixed dictionary. |
 | `language` | one of the languages of L10N-001 | Declared by the author, never detected. Selects the catalogue filter of L10N-005 and the search analysis of L10N-007. Frozen with the rest of the content (L10N-004). |
-| `servings` | number | The serving count the author wrote the quantities for. |
+| `servings` | whole number, 1 or more | The serving count the author wrote the quantities for (DOM-015). |
 | `ingredients` | ordered list of Ingredient | |
 | `steps` | ordered list of Step | |
 | `media` | list of Media | |
@@ -86,7 +94,7 @@ there (FLOW-051).
 | `free_text_name` | text or none | The author's own name for an ingredient that matched no entry. Present exactly when `dictionary_entry` is absent (DOM-009). |
 | `unit_type` | unit type | One of the five above. |
 | `unit` | unit | The concrete unit within the type, e.g. `g` within `exact`. Absent for `taste_unmeasured`. |
-| `quantity` | number or none | Absent exactly when `unit_type` is `taste_unmeasured`. |
+| `quantity` | number or none | Absent exactly when `unit_type` is `taste_unmeasured`. Otherwise a value above zero that the rounding grid of its unit type displays (DOM-017), except where DOM-018 keeps one written before a divisibility correction. |
 | `piece_weight` | number or none | Optional, `piece` only: the mass of one piece, used to keep scaling smooth. |
 | `divisible` | boolean or none | `piece` only. Taken from the entry where there is one, and set by the author exactly where there is none, because a free-text ingredient has no entry to take it from (DOM-009). The author never overrides an entry's value (`scaling-rules`). |
 
@@ -141,7 +149,7 @@ either entity.
 
 | Field | Type | Notes |
 |---|---|---|
-| `duration` | duration | |
+| `duration` | duration | Hours and whole minutes, from 1 minute to 99 hours 59 minutes; zero is no duration and the timer is not stored (FLOW-027). |
 | `label` | text or none | The author's own name for the timer, overriding the name derived from the step. Absent unless the author set one; at most 60 characters (DOM-012). |
 
 A timer's name is derived from the text of the step it belongs to and is not
@@ -155,13 +163,13 @@ step.
 | Field | Type | Notes |
 |---|---|---|
 | `media_id` | identifier | |
-| `owner` | Account | Media is bound to an account at upload, before publication. |
+| `owner` | Account | Media is bound to an account when its recipe is sent, before publication; before that it is on the device alone (FLOW-004). |
 | `kind` | `photo` or `video` | |
 | `attachment` | recipe cover, or a Step | |
 | `visibility` | `private` or `published` | Follows the visibility of the recipe it belongs to. |
 
-Limits on size, duration, count per recipe and total unpublished size per
-account are in [`media`](../90-media.md), MEDIA-001 to MEDIA-010.
+Limits on size, duration, count per recipe and total size of sent, unpublished
+media per account are in [`media`](../90-media.md), MEDIA-001 to MEDIA-010.
 
 ### Tag
 
@@ -214,4 +222,5 @@ split and never will.
 
 | Part | What is in it | Requirements |
 |---|---|---|
-| [10-invariants.md](10-invariants.md) | Invariants over the entities | DOM-001–DOM-013 |
+| [10-invariants.md](10-invariants.md) | Invariants over the entities: nickname, quantity, household measure, parent, media ownership, the submission minimum, step references, tags, the authored serving count; and what is deliberately not modelled yet | DOM-001–DOM-008, DOM-015 |
+| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, the twelve units, the values a quantity may hold, and how a typed number is read | DOM-009–DOM-014, DOM-016–DOM-019 |

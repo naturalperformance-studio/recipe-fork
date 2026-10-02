@@ -1,6 +1,6 @@
 # Replacing the account wipes what the device held
 
-**Status:** accepted
+**Status:** superseded by [several accounts on one device](20260928-several-accounts-on-one-device.md) (2026-09-28)
 
 **Context:** the device holds every recipe the account owns, in every state,
 including drafts and changes the server has not accepted (FLOW-038, FLOW-005).

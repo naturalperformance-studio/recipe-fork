@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- L10N-001: a string in one language only, or text written into a layout, stops the build's lint. -->
+<lint>
+    <issue id="MissingTranslation" severity="fatal" />
+    <issue id="ExtraTranslation" severity="fatal" />
+    <issue id="HardcodedText" severity="fatal" />
+</lint>

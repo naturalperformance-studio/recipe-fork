@@ -1,6 +1,6 @@
 # Account creation is gated by the device, not by an identity
 
-**Status:** accepted; narrows ACT-001
+**Status:** accepted; narrows ACT-001. What a muted account may do is superseded by [20260927-a-muted-account-writes-on-its-device.md](20260927-a-muted-account-writes-on-its-device.md).
 
 **Context:** an account was created on first launch with nothing asked and
 nothing verified (ACT-001). That kept CON-001 absolute, and it also made an

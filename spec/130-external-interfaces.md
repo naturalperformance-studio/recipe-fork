@@ -1,7 +1,7 @@
 ---
 slug: EXT
 status: closed
-updated: 2026-09-27
+updated: 2026-09-28
 ids: [EXT-001, EXT-002, EXT-003, EXT-004, EXT-005, EXT-006, EXT-007, EXT-008,
   EXT-009, EXT-010, EXT-011, EXT-012]
 ---
@@ -18,7 +18,9 @@ channel that carries operational numbers to the product's operator
 ([`observability`](210-observability.md)). One observer is outside and is
 depended upon by nothing: an availability probe that calls the product and is
 never called by it (EXT-012). Two artefacts cross the boundary in the user's own
-hands — the account key and a private link. Three surfaces exist outside the
+hands — the account key and a private link — and in serverless mode a third, the
+recipe file (FLOW-063, FLOW-064), which the operating system saves or shares
+where the person chooses and the product never sends anywhere. Three surfaces exist outside the
 application because the distribution channel requires them — the account deletion
 page, the terms of use and the privacy statement (EXT-006, LEG-008) — and one
 endpoint exists for the probe to call (EXT-011), which no user ever reaches. One
@@ -125,18 +127,22 @@ move when the price does.
 
 If the object storage service cannot be reached, then the system shall continue
 to show recipe text, shall state that the media needs a connection, and shall
-keep media added meanwhile on the device (FLOW-004).
+refuse the sending of a recipe carrying media until it can be reached, keeping the
+recipe on the device as it is (FLOW-004, FLOW-059).
 
 **Acceptance criteria**
 - Given the service is unreachable, when a recipe is opened, then its text,
   ingredients, steps and timers work and only its media is absent.
 - Given the service is unreachable, when the author adds a photograph, then it is
-  held on the device and the recipe is marked as not accepted by the server
+  held on the device as any media is until the recipe is sent (FLOW-004).
+- Given the service is unreachable, when the author sends a recipe carrying media,
+  then the sending is refused as FLOW-003 refuses it for an unanswering server,
+  nothing of the recipe reaches the server, and the recipe keeps its mark
   (FLOW-005).
 - Given the service is unreachable, when the author submits for moderation, then
   FLOW-006 refuses, because the server does not hold the content.
-- Given the service returns, when the application next reaches it, then the
-  queued media is uploaded without the author asking.
+- Given the service returns, when the author sends the recipe again, then its
+  media is uploaded; nothing is uploaded without the author sending.
 
 **Verification:** block the storage host and walk reading, authoring and
 submission.
@@ -276,6 +282,9 @@ uses for that recipe's media.
   service itself requires and no recipe content.
 - Given `analytics`, when its measurements are defined, then they obey this
   requirement rather than qualifying it.
+- Given serverless mode, when a recipe is exported (FLOW-063), then the file is
+  handed to the operating system and the product itself sends it to no service;
+  where the person takes it is theirs.
 
 **Verification:** traffic capture of a full session, including a forced crash.
 **Source:** CON-001, NGOAL-006, and the decision of 2026-09-20 to gate accounts

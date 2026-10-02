@@ -1,11 +1,17 @@
 ---
 slug: MVP
 status: closed
-updated: 2026-09-27
+updated: 2026-10-02
 ids: [MVP-001, MVP-002, MVP-003]
 ---
 
 # The MVP boundary
+
+> **Superseded 2026-10-02 by user decision.** The product is now built in increments
+> (`docs/increments/`), and the first release is whatever increments have shipped,
+> not "every closed section". MVP-001 no longer binds. MVP-002 stays useful as a list
+> of things decided against; MVP-003 stays as a checklist for the first public
+> release to a store. `/req-forge` rewrites this section when the vision is next synced.
 
 This section takes no decision of its own. It collects decisions already taken
 elsewhere into one boundary: what the first release contains, what it
@@ -30,12 +36,19 @@ released while any question classified **define before MVP** is open.
   absent, and its absence is not a defect.
 - Given a requirement nobody implemented, when it is found at release time, then
   it is a gap in the release and not a licence to reclassify the requirement.
+- Given serverless mode and the export and import of recipe files (FLOW-061 to
+  FLOW-065), when the release candidate is examined, then they are built and
+  tested in it, and the release is built with the mode off; a later release
+  switches it on (FLOW-061).
 
 **Verification:** a requirement-by-requirement walk of the index against the
 release candidate, plus a reading of the ledger.
 **Source:** user decision, 2026-09-21. Cutting scope further was offered and
 declined: the specification was written throughout against a USD 20 monthly
 ceiling and a single moderator, so what is left is the fork mechanic itself.
+Serverless mode was added to the first release by user decision, 2026-09-28, so
+that switching the server off later needs no new feature, only a release
+([ADR — serverless mode and recipe files](decisions/20260928-serverless-mode-and-recipe-files.md)).
 
 ### MVP-002 — What the first release deliberately does not contain
 
@@ -49,7 +62,6 @@ against for the MVP rather than left undone.
 | A queue of author requests to add an ingredient dictionary entry | 2026-09-20 | OQ-019 |
 | A recipe named as an ingredient of another recipe | 2026-09-20 | OQ-024 |
 | Rejection reasons as fixed categories | 2026-09-20 | OQ-026 |
-| More than one account on a device, with a switch between them | 2026-09-20 | OQ-028 |
 | A third interface language | 2026-09-21 | L10N-001 |
 | Distribution in the Russian Federation | 2026-09-21 | LEG-010 |
 | An imperial or any other non-metric unit system | 2026-09-21 | L10N-008 |
@@ -60,6 +72,7 @@ against for the MVP rather than left undone.
 | Automated classification of images or video | 2026-09-20 | NGOAL-005 |
 | A second client surface of any kind | 2026-09-20 | CON-005 |
 | Import of recipes from Instagram, TikTok and Pinterest | 2026-09-27 | [`import`](68-import/00-index.md) — written ahead, the product owner's next feature |
+| A field for the address of a server someone else runs, and the server's code published at shutdown | 2026-09-28 | OQ-038 |
 
 **Acceptance criteria**
 - Given the release candidate, when each row is looked for, then it is absent.

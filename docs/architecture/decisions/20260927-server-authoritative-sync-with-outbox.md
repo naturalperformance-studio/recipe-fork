@@ -1,6 +1,6 @@
 # Synchronisation: the server is authoritative, the device keeps an outbox
 
-**Status:** accepted
+**Status:** superseded by 20260928-manual-sending-replaces-the-outbox.md
 **Date:** 2026-09-27
 **Requirements:** FLOW-002, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007, FLOW-008, ST-009, AUTH-012, AUTH-013
 
