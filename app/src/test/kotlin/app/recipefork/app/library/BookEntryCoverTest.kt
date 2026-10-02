@@ -14,6 +14,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
@@ -133,8 +134,16 @@ class BookEntryCoverTest {
         compose.waitForIdle()
     }
 
-    private fun awaitCover(recipe: Recipe) =
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.cover(recipe.id.value)) }
+    /** Waits for the cover of [recipe], its entry brought into view first: the list's header may push it below. */
+    private fun awaitCover(recipe: Recipe) = compose.waitUntil(PATIENCE_MS) {
+        val list = listOf(LibraryTags.OWN_LIST, LibraryTags.MARKED_LIST).firstOrNull(::exists) ?: return@waitUntil false
+        try {
+            compose.onNodeWithTag(list).performScrollToNode(hasTestTag(LibraryTags.entry(recipe.id.value)))
+        } catch (e: AssertionError) {
+            return@waitUntil false
+        }
+        exists(LibraryTags.cover(recipe.id.value))
+    }
 
     private fun exists(tag: String) =
         compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
@@ -212,6 +221,7 @@ class BookEntryCoverTest {
         awaitCover(pictured)
         listOf(bare, gone).forEach { recipe ->
             val id = recipe.id.value
+            compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToNode(hasTestTag(LibraryTags.entry(id)))
             assertFalse(exists(LibraryTags.cover(id)))
             assertFalse("no place is held for it", exists(LibraryTags.coverSlot(LibraryTags.cover(id))))
             val entry = bounds(LibraryTags.entry(id))

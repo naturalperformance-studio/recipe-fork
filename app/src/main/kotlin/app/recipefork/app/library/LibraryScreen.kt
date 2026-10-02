@@ -59,6 +59,7 @@ import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardScreen
+import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
@@ -82,13 +83,14 @@ import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
+import app.recipefork.core.search.BookOrder
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-/** How many own recipes are read from the device at a time, and asked for again near the end (FLOW-041). */
+/** How many own recipes are shown at a time, and more shown near the end (FLOW-041). */
 const val OWN_PAGE = 30
 
 /**
@@ -175,8 +177,8 @@ fun LibraryScreen(
         }
         HorizontalDivider()
         when (view) {
-            LibraryView.MARKED -> MarkedList(recipes, session, files, timers, mode, thumbnails)
-            LibraryView.OWN -> OwnList(recipes, session, editor, timers, mode, thumbnails)
+            LibraryView.MARKED -> MarkedList(recipes, session, files, timers, mode, thumbnails, card.ingredients)
+            LibraryView.OWN -> OwnList(recipes, session, editor, timers, mode, thumbnails, card.ingredients)
         }
     }
 }
@@ -212,7 +214,10 @@ private fun androidx.compose.foundation.layout.RowScope.ViewTab(
     }
 }
 
-/** Built from the device alone: nothing here waits on or fails for the network (FLOW-043 (5)). */
+/**
+ * Built from the device alone: nothing here waits on or fails for the network (FLOW-043 (5)). Its header searches and
+ * orders it (FLOW-035); a book in which nothing is written says so in place of the list and the header.
+ */
 @Composable
 private fun OwnList(
     recipes: RecipeRepository,
@@ -221,12 +226,21 @@ private fun OwnList(
     timers: CardTimers,
     mode: Mode,
     thumbnails: CoverThumbnails,
+    dictionary: IngredientEntries,
 ) {
-    var limit by rememberSaveable { mutableIntStateOf(OWN_PAGE) }
-    val rows by remember(limit) { recipes.ownNewest(limit) }.collectAsState(initial = null)
+    val search = rememberSearchField(LibraryView.OWN, session)
+    val params = rememberListingParams(LibraryView.OWN, session)
+    val listed by remember(recipes, params, dictionary) { recipes.ownListed(params, dictionary::entries) }
+        .collectAsState(initial = null)
+    val query by session.query(LibraryView.OWN).collectAsState()
+    val order by session.order(LibraryView.OWN).collectAsState()
+    // A new query or order shows its listing from the beginning (FLOW-041 (4)).
+    var limit by rememberSaveable(query, order) { mutableIntStateOf(OWN_PAGE) }
     val listState = rememberLazyListState()
-    val loaded = rows
-    // Near the end of what is loaded, the next recipes are read from the device (FLOW-041 (5)).
+    val found = listed?.rows
+    val loaded = found?.take(limit)
+    LaunchedEffect(listed?.params) { if (listed != null) listState.scrollToItem(0) }
+    // Near the end of what is shown, the next recipes are shown (FLOW-041 (5)).
     LaunchedEffect(listState, loaded?.size, limit) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
             .distinctUntilChanged()
@@ -237,7 +251,7 @@ private fun OwnList(
     }
     // The recipe whose deletion is being asked about, while it is (FLOW-053 (2)).
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
-    loaded?.firstOrNull { it.recipeId == deleting }?.let { row ->
+    found?.firstOrNull { it.recipeId == deleting }?.let { row ->
         DeleteStatement(
             row,
             onConfirm = {
@@ -248,15 +262,22 @@ private fun OwnList(
         )
     }
     val export = rememberExport(recipes, session)
-    if (loaded != null && loaded.isEmpty()) {
+    val shown = listed
+    if (shown != null && shown.viewIsEmpty && !shown.searched) {
         NothingWritten(recipes, session, editor)
         return
     }
     Column(Modifier.fillMaxSize()) {
         // A book that lists recipes still offers to write one, above the list and never scrolled away (FLOW-042 (5)).
-        if (loaded != null) {
+        if (shown != null) {
             WriteButton(R.string.library_own_new, LibraryTags.NEW, recipes, session, editor, Modifier.padding(16.dp))
             HorizontalDivider()
+            ListHeader(search, order, onOrder = { session.orderBy(LibraryView.OWN, it) })
+            HorizontalDivider()
+        }
+        if (shown != null && shown.searched && shown.rows.isEmpty()) {
+            NothingFound(shown.params.query, onClear = search::clear)
+            return@Column
         }
         val cover = coverOf(recipes, thumbnails)
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST)) {
@@ -542,7 +563,7 @@ fun rememberRecipeImport(recipes: RecipeRepository): RecipeImport {
  * The view of marked recipes (FLOW-034 (2)): what the book marks, the found recipes among it. A found recipe's entry
  * opens its card and offers its removal, and in [Mode.Serverless] its export too (FLOW-063 (2)); one stating its author
  * names it, marked as stated and not verified (FLOW-064 (3)). In [Mode.Serverless] the view offers to import a recipe file above the list; with nothing marked it
- * says so, and that offer is the way out of it (FLOW-042).
+ * says so, and that offer is the way out of it (FLOW-042). Its header, above the list, searches and orders it (FLOW-035).
  */
 @Composable
 private fun MarkedList(
@@ -552,8 +573,17 @@ private fun MarkedList(
     timers: CardTimers,
     mode: Mode,
     thumbnails: CoverThumbnails,
+    dictionary: IngredientEntries,
 ) {
-    val marked by remember(recipes) { recipes.marked() }.collectAsState(initial = null)
+    val search = rememberSearchField(LibraryView.MARKED, session)
+    val params = rememberListingParams(LibraryView.MARKED, session)
+    val listed by remember(recipes, params, dictionary) { recipes.markedListed(params, dictionary::entries) }
+        .collectAsState(initial = null)
+    val order by session.order(LibraryView.MARKED).collectAsState()
+    val listState = rememberLazyListState()
+    // A new query or order shows its listing from the beginning (FLOW-041 (4)).
+    LaunchedEffect(listed?.params) { if (listed != null) listState.scrollToItem(0) }
+    val marked = listed?.rows
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
     marked?.firstOrNull { it.recipeId == removing }?.let { row ->
         RemoveStatement(
@@ -566,10 +596,10 @@ private fun MarkedList(
         )
     }
     val export = rememberExport(recipes, session)
-    val loaded = marked
+    val shown = listed
     Column(Modifier.fillMaxSize()) {
-        if (mode == Mode.Serverless && loaded != null) {
-            if (loaded.isEmpty()) {
+        if (mode == Mode.Serverless && shown != null) {
+            if (shown.viewIsEmpty && !shown.searched) {
                 Text(
                     stringResource(R.string.library_marked_empty),
                     style = MaterialTheme.typography.bodyLarge,
@@ -579,9 +609,18 @@ private fun MarkedList(
             ImportButton(files, session, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             HorizontalDivider()
         }
+        // An empty view with no query keeps its empty state, with no header to search nothing with.
+        if (shown != null && (!shown.viewIsEmpty || shown.searched)) {
+            ListHeader(search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) })
+            HorizontalDivider()
+        }
+        if (shown != null && shown.searched && shown.rows.isEmpty()) {
+            NothingFound(shown.params.query, onClear = search::clear)
+            return@Column
+        }
         val cover = coverOf(recipes, thumbnails)
-        LazyColumn(Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST)) {
-            items(loaded.orEmpty(), key = { it.recipeId }) { row ->
+        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST)) {
+            items(marked.orEmpty(), key = { it.recipeId }) { row ->
                 MarkedEntry(
                     row,
                     mode,
@@ -776,6 +815,14 @@ object LibraryTags {
     const val OWN_EMPTY = "library-own-empty"
     const val WRITE = "library-write"
     const val NEW = "library-new"
+    /** The header above a view's list: its search field and its order. */
+    const val HEADER = "library-header"
+    const val SEARCH = "library-search"
+    const val SEARCH_CLEAR = "library-search-clear"
+    const val ORDER = "library-order"
+    fun order(order: BookOrder) = "library-order-${order.name.lowercase()}"
+    const val NOTHING_FOUND = "library-nothing-found"
+    const val NOTHING_FOUND_CLEAR = "library-nothing-found-clear"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
     const val DELETE_STATEMENT = "library-delete-statement"
     const val DELETE_CONFIRM = "library-delete-confirm"

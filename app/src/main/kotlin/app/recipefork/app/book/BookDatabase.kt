@@ -75,6 +75,9 @@ data class RecipeRows(
     val tags: List<RecipeTagEntity>,
 )
 
+/** SQLite's limit that limits nothing. */
+private const val NO_LIMIT = -1
+
 @Dao
 abstract class BookRecipeDao {
     /**
@@ -88,6 +91,18 @@ abstract class BookRecipeDao {
             "order by r.content_changed_at desc, r.recipe_id limit :limit",
     )
     abstract fun newest(limit: Int): Flow<List<OwnRecipeRow>>
+
+    /** Every own recipe, in the order of [newest]: what the own-recipes view searches and orders (FLOW-035). */
+    fun own(): Flow<List<OwnRecipeRow>> = newest(NO_LIMIT)
+
+    /**
+     * What names each ingredient row of the book — its dictionary entry, its qualifier and its free text — for the
+     * search of either view (FLOW-035 (4)), in the order of the rows.
+     */
+    @Query(
+        "select recipe_id, dictionary_entry, qualifier, free_text_name from ingredient order by recipe_id, position",
+    )
+    abstract fun ingredientNames(): Flow<List<IngredientNameRow>>
 
     @Query("select count(*) from recipe")
     abstract suspend fun count(): Int
