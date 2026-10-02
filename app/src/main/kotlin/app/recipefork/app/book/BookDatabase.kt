@@ -93,6 +93,21 @@ abstract class BookRecipeDao {
         insertTags(rows.tags)
     }
 
+    /**
+     * Deletes the recipe and everything it holds — ingredients, steps, references, media and tags — atomically (ST-010).
+     * Its parts cascade from its row; they are deleted here as well, so that nothing of it is left whatever the
+     * connection's foreign-key setting. Returns whether the book held it.
+     */
+    @Transaction
+    open suspend fun delete(recipeId: String): Boolean {
+        deleteIngredients(recipeId)
+        deleteSteps(recipeId)
+        deleteReferences(recipeId)
+        deleteMedia(recipeId)
+        deleteTags(recipeId)
+        return deleteRecipe(recipeId) > 0
+    }
+
     @Transaction
     open suspend fun get(recipeId: String): RecipeRows? {
         val recipe = recipe(recipeId) ?: return null
@@ -121,6 +136,9 @@ abstract class BookRecipeDao {
 
     @Upsert
     protected abstract suspend fun upsert(recipe: RecipeEntity)
+
+    @Query("delete from recipe where recipe_id = :id")
+    protected abstract suspend fun deleteRecipe(id: String): Int
 
     @Query("delete from ingredient where recipe_id = :id")
     protected abstract suspend fun deleteIngredients(id: String)

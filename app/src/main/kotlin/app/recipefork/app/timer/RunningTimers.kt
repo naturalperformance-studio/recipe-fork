@@ -112,6 +112,14 @@ class RunningTimers(
         dao.delete(key.book, key.recipeId, key.stepPosition)
         announcements.cancelled(key)
     }
+
+    /**
+     * Cancels every timer held for [recipeId] in [book], running or ended: the recipe is gone, so none of them may
+     * announce itself or ring any more, and whatever was said for them is taken back.
+     */
+    suspend fun cancelRecipe(book: BookName, recipeId: RecipeId) {
+        dao.keysOfRecipe(book.fileName, recipeId.value).forEach { cancel(TimerKey(book.fileName, recipeId.value, it)) }
+    }
 }
 
 @Entity(tableName = "running_timer", primaryKeys = ["book", "recipe_id", "step_position"])
@@ -155,6 +163,9 @@ interface RunningTimerDao {
 
     @Query("select * from running_timer where book = :book and recipe_id = :recipeId order by step_position")
     fun ofRecipe(book: String, recipeId: String): Flow<List<RunningTimerEntity>>
+
+    @Query("select step_position from running_timer where book = :book and recipe_id = :recipeId order by step_position")
+    suspend fun keysOfRecipe(book: String, recipeId: String): List<Int>
 
     @Query("select * from running_timer where book = :book and recipe_id = :recipeId and step_position = :step")
     suspend fun get(book: String, recipeId: String, step: Int): RunningTimerEntity?
