@@ -8,21 +8,22 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 
-/** What a camera left behind is cleared as the application starts; a photograph still on its way back is kept. */
+/**
+ * The application's own camera keeps its picture in memory; what the system camera of earlier versions left in its
+ * directory is cleared as the application starts.
+ */
 @RunWith(AndroidJUnit4::class)
 class CameraLeftoversTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Test
-    fun anOldCameraFileIsClearedAndAYoungOneKept() {
+    fun whatTheSystemCameraLeftIsCleared() {
         val directory = PhotoSources.cameraDirectory(context).apply { mkdirs() }
-        val now = 10L * PhotoSources.LEFTOVER_AGE_MS
-        val old = File(directory, "old.jpg").apply { writeText("x"); setLastModified(now - PhotoSources.LEFTOVER_AGE_MS - 1) }
-        val young = File(directory, "young.jpg").apply { writeText("x"); setLastModified(now - 1_000) }
+        File(directory, "old.jpg").writeText("x")
+        File(directory, "young.jpg").writeText("x")
 
-        PhotoSources.clearLeftovers(context, now)
+        PhotoSources.clearLeftovers(context)
 
-        assertEquals(listOf(young.name), directory.list()!!.toList())
-        assertEquals(false, old.exists())
+        assertEquals(false, directory.exists())
     }
 }

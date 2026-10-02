@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- What the camera's FileProvider shares: the one file the system camera writes a photograph into (FLOW-026), and
-     nothing else. -->
-<paths>
-    <cache-path name="camera" path="camera/" />
-</paths>
