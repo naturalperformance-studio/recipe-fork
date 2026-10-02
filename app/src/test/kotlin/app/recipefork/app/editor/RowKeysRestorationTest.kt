@@ -161,4 +161,50 @@ class RowKeysRestorationTest {
         assertEquals(listOf("", "5", "2.50"), (0..2).map { fieldText(EditorTags.ingredientQuantity(it)) })
         compose.onNodeWithTag(EditorTags.ingredientError(2)).assertExists()
     }
+
+    // A row inserted after the state is restored gets a key no other row holds: what the screen keeps for each row
+    // stays on that row, the new one starting empty.
+    @Test
+    fun aRowInsertedAfterARestoreGetsAKeyOfItsOwn() {
+        val recipe = Recipe.create(created, null).copy(
+            steps = listOf(Step(0, "Whisk.", timer = Timer(2.minutes)), Step(1, "Rest.", timer = Timer(7.minutes))),
+        )
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(1)), PATIENCE_MS)
+        choose(EditorTags.stepMenu(1), EditorTags.stepAction(1, RowAction.MOVE_UP))
+
+        restore()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(1)), PATIENCE_MS)
+        choose(EditorTags.stepMenu(0), EditorTags.stepAction(0, RowAction.INSERT_BELOW))
+        choose(EditorTags.stepMenu(0), EditorTags.stepAction(0, RowAction.INSERT_ABOVE))
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(3)), PATIENCE_MS)
+        assertEquals(listOf("", "Rest.", "", "Whisk."), (0..3).map { fieldText(EditorTags.stepText(it)) })
+        assertEquals("7", fieldText(EditorTags.timerMinutes(1)))
+        assertEquals("2", fieldText(EditorTags.timerMinutes(3)))
+        compose.onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.timerMinutes(2)).assertDoesNotExist()
+        // The new rows' own state is their own: a timer opened on one shows on it alone.
+        compose.onNodeWithTag(EditorTags.timerAttach(2)).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(2)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
+        assertEquals(listOf("", "7", "", "2"), (0..3).map { tag -> EditorTags.timerMinutes(tag).let { t -> if (compose.onAllNodes(hasTestTag(t)).fetchSemanticsNodes().isEmpty()) "" else fieldText(t) } })
+    }
+
+    // The keys as saved and restored: every key given after the restore is one no row held before it.
+    @Test
+    fun keysGivenAfterARestoreAreNew() {
+        val keys = RowKeys()
+        repeat(3) { keys.of(it) }
+        keys.insert(1, 3)
+        keys.remove(0, 4)
+        val saved = with(RowKeys.Saver) { object : androidx.compose.runtime.saveable.SaverScope { override fun canBeSaved(value: Any) = true }.save(keys) }!!
+        val restored = RowKeys.Saver.restore(saved)!!
+        val before = (0 until 3).map { restored.of(it) }
+        assertEquals((0 until 3).map { keys.of(it) }, before)
+        restored.insert(0, 3)
+        restored.insert(4, 4)
+        val after = (0 until 5).map { restored.of(it) }
+        assertEquals(5, after.toSet().size)
+        assertEquals(before, after.subList(1, 4))
+    }
 }

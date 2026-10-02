@@ -65,6 +65,10 @@
     <string name="editor_step_remove">Убрать</string>
     <string name="editor_step_remove_action">Убрать шаг %1$d</string>
     <string name="editor_step_menu_action">Действия с шагом %1$d</string>
+    <string name="editor_step_insert_ingredient">Вставить ингредиент</string>
+    <string name="editor_step_insert_ingredient_action">Вставить количество ингредиента в шаг %1$d</string>
+    <string name="editor_step_insert_ingredient_none">В рецепте пока нет ингредиентов</string>
+    <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
     <string name="editor_description">Описание</string>
     <string name="editor_description_optional">Описание (необязательно)</string>
     <string name="editor_description_none">Описания нет</string>

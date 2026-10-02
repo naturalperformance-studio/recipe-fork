@@ -257,7 +257,7 @@ private fun IngredientRow(
 }
 
 /** The name a row shows: its entry's label in the interface language (L10N-003), or the author's own words. */
-private fun Ingredient.nameIn(dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): String =
+internal fun Ingredient.nameIn(dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): String =
     dictionaryEntry?.let { id -> dictionary?.firstOrNull { it.id == id }?.label(language) } ?: freeTextName.orEmpty()
 
 /**
