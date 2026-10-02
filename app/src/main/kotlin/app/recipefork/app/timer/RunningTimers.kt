@@ -9,6 +9,8 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Upsert
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import app.recipefork.app.book.BookName
 import app.recipefork.core.recipe.RecipeId
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +32,8 @@ data class TimerKey(val book: String, val recipeId: String, val stepPosition: In
  * A timer started and not cancelled: running until [endsAt], and ended from then on. It carries what it was started
  * as — the [name] it announces itself by (given or derived, FLOW-016), the title of its [recipe] and its [duration] —
  * so that what announces it never depends on whatever step sits at its position later. [announced] is whether its
- * end has been announced.
+ * end has been announced. [source] is what a derived name was read from, apart from the scale (`TimerName.source`):
+ * null for a given name, and for a timer started before it was held.
  */
 data class RunningTimer(
     val key: TimerKey,
@@ -39,6 +42,7 @@ data class RunningTimer(
     val duration: Duration,
     val endsAt: Instant,
     val announced: Boolean = false,
+    val source: String? = null,
 ) {
     /** The time left at [now]; zero once the timer has ended. */
     fun remaining(now: Instant): Duration =
@@ -86,12 +90,13 @@ class RunningTimers(
     suspend fun get(key: TimerKey): RunningTimer? = dao.get(key.book, key.recipeId, key.stepPosition)?.toTimer()
 
     /**
-     * Starts the timer of [key] for its full [duration] from now, named [name] in the recipe titled [recipe]. A timer
+     * Starts the timer of [key] for its full [duration] from now, named [name], read from [source], in the recipe
+     * titled [recipe]. A timer
      * already held under [key], running or ended, is replaced: what it had counted is gone (FLOW-021 (2)). Asking
      * first is the caller's.
      */
-    suspend fun start(key: TimerKey, name: String, recipe: String, duration: Duration): RunningTimer {
-        val timer = RunningTimer(key, name, recipe, duration, clock.now().plus(duration.toJavaDuration()))
+    suspend fun start(key: TimerKey, name: String, recipe: String, duration: Duration, source: String? = null): RunningTimer {
+        val timer = RunningTimer(key, name, recipe, duration, clock.now().plus(duration.toJavaDuration()), source = source)
         dao.put(RunningTimerEntity.of(timer))
         announcements.started(timer)
         return timer
@@ -112,6 +117,14 @@ class RunningTimers(
         dao.delete(key.book, key.recipeId, key.stepPosition)
         announcements.cancelled(key)
     }
+
+    /**
+     * Cancels every timer held for [recipeId] in [book], running or ended: the recipe is gone, so none of them may
+     * announce itself or ring any more, and whatever was said for them is taken back.
+     */
+    suspend fun cancelRecipe(book: BookName, recipeId: RecipeId) {
+        dao.keysOfRecipe(book.fileName, recipeId.value).forEach { cancel(TimerKey(book.fileName, recipeId.value, it)) }
+    }
 }
 
 @Entity(tableName = "running_timer", primaryKeys = ["book", "recipe_id", "step_position"])
@@ -124,6 +137,7 @@ data class RunningTimerEntity(
     @ColumnInfo(name = "duration_ms") val durationMs: Long,
     @ColumnInfo(name = "ends_at_ms") val endsAtMs: Long,
     @ColumnInfo(name = "announced") val announced: Boolean,
+    @ColumnInfo(name = "step_source") val stepSource: String? = null,
 ) {
     fun toTimer() = RunningTimer(
         TimerKey(book, recipeId, stepPosition),
@@ -132,6 +146,7 @@ data class RunningTimerEntity(
         durationMs.milliseconds,
         Instant.ofEpochMilli(endsAtMs),
         announced,
+        stepSource,
     )
 
     companion object {
@@ -144,6 +159,7 @@ data class RunningTimerEntity(
             timer.duration.inWholeMilliseconds,
             timer.endsAt.toEpochMilli(),
             timer.announced,
+            timer.source,
         )
     }
 }
@@ -155,6 +171,9 @@ interface RunningTimerDao {
 
     @Query("select * from running_timer where book = :book and recipe_id = :recipeId order by step_position")
     fun ofRecipe(book: String, recipeId: String): Flow<List<RunningTimerEntity>>
+
+    @Query("select step_position from running_timer where book = :book and recipe_id = :recipeId order by step_position")
+    suspend fun keysOfRecipe(book: String, recipeId: String): List<Int>
 
     @Query("select * from running_timer where book = :book and recipe_id = :recipeId and step_position = :step")
     suspend fun get(book: String, recipeId: String, step: Int): RunningTimerEntity?
@@ -180,7 +199,7 @@ interface RunningTimerDao {
  * The running timers' own small database, beside the device database and the books: timers belong to the device and
  * span its books, and none of them is ever sent anywhere.
  */
-@Database(entities = [RunningTimerEntity::class], version = 1, exportSchema = false)
+@Database(entities = [RunningTimerEntity::class], version = 2, exportSchema = false)
 abstract class TimerDatabase : RoomDatabase() {
     abstract fun timers(): RunningTimerDao
 
@@ -188,6 +207,13 @@ abstract class TimerDatabase : RoomDatabase() {
         const val FILE_NAME = "timers.db"
 
         fun open(context: Context): TimerDatabase =
-            Room.databaseBuilder(context, TimerDatabase::class.java, FILE_NAME).build()
+            Room.databaseBuilder(context, TimerDatabase::class.java, FILE_NAME).addMigrations(MIGRATION_1_2).build()
+
+        /** Version 2 holds what a derived name was read from; a timer running across the update holds none. */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("alter table running_timer add column step_source TEXT")
+            }
+        }
     }
 }

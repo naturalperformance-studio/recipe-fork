@@ -38,6 +38,12 @@ class RecipeRepository(private val book: ActiveBook) {
 
     suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
 
+    /**
+     * Deletes the recipe [id] from the active book with everything it holds, on the device alone (FLOW-053 (6, 8)).
+     * It is gone at once and cannot be brought back. Returns whether the book held it.
+     */
+    suspend fun delete(id: RecipeId): Boolean = book.database.recipes().delete(id.value)
+
     suspend fun get(id: RecipeId): Recipe? = book.database.recipes().get(id.value)?.toRecipe()
 
     /**

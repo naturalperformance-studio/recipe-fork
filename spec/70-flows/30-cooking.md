@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-28
+updated: 2026-10-02
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -76,6 +76,16 @@ is in the foreground, in the background, or closed.
   then notifications count as not permitted: the explanation of criterion 10 is
   shown, stating that timer notifications are turned off and the timer will not be
   heard, and its control opens those settings.
+- Given a timer that ends with notifications permitted, when it announces itself,
+  then it rings like an alarm clock — the device's alarm sound, repeating, with
+  vibration — until the reader stops it from the announcement or from the timer
+  on its step, and falls silent by itself 2 minutes after it began; it is never
+  mistakable for an ordinary message notification.
+- Given two timers that have ended, when one is stopped, then the other keeps
+  ringing until it is stopped or falls silent by itself.
+- Given a step's timer, when it runs and ends, then it is the application's own
+  timer, counted down on its step; it is not handed to the device's clock
+  application.
 
 **Verification:** start a timer, close the application from the task switcher,
 lock the device and wait for the end; repeat with notifications refused; start a
@@ -112,6 +122,11 @@ decision, timer notifications turned off alone count as notifications off
 step and close the application entirely — something goes in the oven and is
 taken out in thirty minutes — so the timer cannot depend on the application
 staying alive.
+**Changed 2026-10-02:** criteria 14 to 16 added by user decision at the v0.2
+demo: the first build announced an ended timer with one short sound, easy to take
+for a messenger message in a kitchen. Handing timers to the device's clock
+application was considered and rejected. See
+[ADR — a timer is the application's own and rings like an alarm](../decisions/20261002-a-timer-rings-like-an-alarm.md).
 **Note:** this states what the reader observes. Whether it is implemented by a
 system alarm or otherwise is an engineering choice, provided a closed
 application still announces the timer.

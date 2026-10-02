@@ -259,7 +259,7 @@ class IngredientNameFieldTest {
         val words = stored(id).ingredients[1]
         assertNull(words.dictionaryEntry)
         assertEquals("wild garlic", words.freeTextName)
-        assertEquals(string(R.string.editor_ingredient_free_text_warning), compose.textsOf(EditorTags.ingredientWarning(1)).single())
+        assertEquals(string(R.string.editor_ingredient_free_text_warning), compose.descriptionOf(EditorTags.ingredientWarning(1)).single())
         assertEquals(emptyList<String>(), choices(1))
     }
 

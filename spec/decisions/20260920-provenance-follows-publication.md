@@ -1,6 +1,6 @@
 # Provenance is shown only for a parent that has been published
 
-**Status:** accepted
+**Status:** accepted; narrowed by [20261002-the-owner-sees-their-own-parent](20261002-the-owner-sees-their-own-parent.md) — the owner sees the parent in their own recipe book
 
 **Context:** FORK-004 named a recipe's direct parent unconditionally, and ST-007
 covered only a parent that had been removed. Neither considered the ordinary

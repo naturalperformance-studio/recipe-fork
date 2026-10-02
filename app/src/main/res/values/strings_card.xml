@@ -27,6 +27,8 @@
     <!-- Read aloud for the arrow after a quantity rounding moved (SCALE-004 (2–5), SCALE-005). -->
     <string name="card_quantity_rounded_up">rounded up, exact value was lower</string>
     <string name="card_quantity_rounded_down">rounded down, exact value was higher</string>
+    <!-- A rounded reference inside a step, as the screen reader reads it: the quantity, then what its arrow means. -->
+    <string name="card_step_reference_rounded">%1$s (%2$s)</string>
     <!-- Two or more ingredients held at their smallest amount (SCALE-009). -->
     <string name="card_proportions_warning">Some amounts are at their minimum — proportions are off.</string>
     <!-- An ingredient row that names nothing the device can show yet. -->

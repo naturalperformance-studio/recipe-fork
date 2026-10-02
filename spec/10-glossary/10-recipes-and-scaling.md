@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-09-28
+updated: 2026-10-02
 ids: []
 ---
 
@@ -184,8 +184,8 @@ cook for. Where it is set, every recipe opens at it, and it outranks the count
 the reader last used on that particular recipe (FLOW-017).
 
 **Fixed ingredient** — an ingredient whose available amount the reader states, so
-the whole recipe is scaled by the factor that implies. The most recently fixed
-one sets the scale (SCALE-002, SCALE-006). The amounts that may be fixed, and
+the whole recipe is scaled by the factor that implies. One ingredient is fixed
+at a time; fixing another releases it (SCALE-002, SCALE-006). The amounts that may be fixed, and
 the units they may be stated in, are SCALE-018.
 
 **Rounding grid** — the set of values each unit type may display, and the floor

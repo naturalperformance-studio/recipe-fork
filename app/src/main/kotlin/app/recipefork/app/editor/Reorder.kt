@@ -1,0 +1,256 @@
+package app.recipefork.app.editor
+
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.verticalDrag
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import app.recipefork.app.R
+import kotlinx.coroutines.flow.first
+
+/** How far from the editor's top or bottom edge a dragged row starts scrolling it. */
+private val SCROLL_EDGE = 56.dp
+
+/** How far the editor scrolls in one frame at most while a row is dragged against its edge. */
+private val SCROLL_STEP = 16.dp
+
+/** The editor's scrolling as a dragged row needs it: the scroll itself and where its viewport sits on the screen. */
+@Stable
+class EditorScroll(val state: ScrollState) {
+    /** The scrolling viewport, laid out; set by the screen. */
+    internal var viewport: LayoutCoordinates? = null
+}
+
+/**
+ * The dragging of one list of rows — the steps or the ingredients (FLOW-025). Only the dragged row follows the finger,
+ * and the rows it passes make room for it; the list itself is changed once, on drop, by one [onDrop] from the place
+ * the row was picked up to the place it was dropped — the same move the row menu makes (A11Y-006).
+ */
+@Stable
+class RowDrag internal constructor(
+    private val scroll: EditorScroll,
+    private val spacing: Float,
+    private val edge: Float,
+    private val step: Float,
+    private val onDrop: (from: Int, to: Int) -> Unit,
+) {
+    /** The position of the row being dragged, or null. */
+    var dragged by mutableStateOf<Int?>(null)
+        private set
+
+    /** How far the dragged row is from its place, scrolling included. */
+    private var offset by mutableFloatStateOf(0f)
+
+    /** Where the finger is on the screen, while it drags. */
+    private var pointer by mutableStateOf<Float?>(null)
+
+    /** Where the finger was on the screen when the drag began. */
+    private var origin = 0f
+
+    /** Where each row sits in its list, top to bottom, as last laid out at rest. */
+    private val placed = mutableMapOf<Int, ClosedFloatingPointRange<Float>>()
+
+    /** The places of the rows as they were when the drag began. */
+    private var places: Map<Int, ClosedFloatingPointRange<Float>> = emptyMap()
+    private var count = 0
+
+    /** Where the dragged row would land now: past every row whose middle its leading edge has crossed. */
+    private val target by derivedStateOf {
+        val from = dragged ?: return@derivedStateOf -1
+        val own = places[from] ?: return@derivedStateOf from
+        fun middle(row: Int) = places[row]?.let { (it.start + it.endInclusive) / 2 }
+        if (offset > 0) {
+            val bottom = own.endInclusive + offset
+            from + (from + 1 until count).count { row -> middle(row)?.let { it < bottom } == true }
+        } else {
+            val top = own.start + offset
+            from - (0 until from).count { row -> middle(row)?.let { it > top } == true }
+        }
+    }
+
+    /** How far the row at [position] is drawn from its place: the dragged row with the finger, the rows it passed aside. */
+    private fun translationOf(position: Int): Float {
+        val from = dragged ?: return 0f
+        if (position == from) return offset
+        val to = target
+        val shift = (places[from]?.let { it.endInclusive - it.start } ?: 0f) + spacing
+        return when (position) {
+            in from + 1..to -> -shift
+            in to until from -> shift
+            else -> 0f
+        }
+    }
+
+    /**
+     * What the row at [position] wears: where it is laid out, and, while dragged, lifted above the others in [lifted],
+     * its shadow and its lifted colour taking the row's [shape].
+     */
+    fun row(position: Int, lifted: Color, shape: Shape = RectangleShape): Modifier {
+        val isDragged = dragged == position
+        return Modifier
+            .onGloballyPositioned { coordinates ->
+                if (dragged == null) {
+                    val top = coordinates.positionInParent().y
+                    placed[position] = top..top + coordinates.size.height
+                }
+            }
+            .zIndex(if (isDragged) 1f else 0f)
+            .graphicsLayer {
+                translationY = translationOf(position)
+                shadowElevation = if (isDragged) 8.dp.toPx() else 0f
+                this.shape = shape
+            }
+            .then(if (isDragged) Modifier.background(lifted, shape) else Modifier)
+    }
+
+    internal fun start(position: Int, rows: Int) {
+        places = placed.toMap()
+        count = rows
+        offset = 0f
+        dragged = position
+    }
+
+    internal fun moveBy(distance: Float, pointerY: Float) {
+        if (pointer == null) origin = pointerY - distance
+        offset += distance
+        pointer = pointerY
+    }
+
+    internal fun drop() {
+        val from = dragged ?: return
+        val to = target
+        if (to in 0 until count && to != from) onDrop(from, to)
+        end()
+    }
+
+    internal fun end() {
+        dragged = null
+        offset = 0f
+        pointer = null
+    }
+
+    /**
+     * How far to scroll in one frame: towards the edge the finger is near, faster the nearer it is — and only once the
+     * finger has gone towards that edge, so a row picked up near an edge and dragged away from it does not scroll.
+     */
+    private fun edgeSpeed(): Float {
+        val y = pointer ?: return 0f
+        val view = scroll.viewport?.takeIf { it.isAttached }?.boundsInRoot() ?: return 0f
+        return when {
+            y < origin && y < view.top + edge -> -step * ((view.top + edge - y) / edge).coerceAtMost(1f)
+            y > origin && y > view.bottom - edge -> step * ((y - (view.bottom - edge)) / edge).coerceAtMost(1f)
+            else -> 0f
+        }
+    }
+
+    /**
+     * While a row is dragged against the editor's top or bottom edge, scrolls the editor a frame at a time and keeps
+     * the row under the finger, so a row travels the whole recipe. Waits, without asking for frames, while the finger
+     * is away from the edges or the editor can scroll no further.
+     */
+    internal suspend fun scrollAlong() {
+        while (true) {
+            val speed = snapshotFlow { edgeSpeed() }.first { it != 0f }
+            withFrameNanos { }
+            val consumed = scroll.state.scrollBy(speed)
+            offset += consumed
+            if (consumed == 0f) {
+                val at = pointer
+                snapshotFlow { pointer }.first { it != at }
+            }
+        }
+    }
+}
+
+/** A [RowDrag] for one list, held for the screen; [onDrop] makes the move. */
+@Composable
+internal fun rememberRowDrag(scroll: EditorScroll, spacing: Dp, onDrop: (from: Int, to: Int) -> Unit): RowDrag {
+    val density = LocalDensity.current
+    val drop by rememberUpdatedState(onDrop)
+    val drag = remember(scroll, density) {
+        with(density) { RowDrag(scroll, spacing.toPx(), SCROLL_EDGE.toPx(), SCROLL_STEP.toPx()) { from, to -> drop(from, to) } }
+    }
+    val dragging = drag.dragged != null
+    LaunchedEffect(drag, dragging) { if (dragging) drag.scrollAlong() }
+    return drag
+}
+
+/**
+ * The 48 dp handle the row at [position] of [count] is dragged by (FLOW-025, A11Y-003). The screen reader does not see
+ * it: what it does, the row menu's "Move up" and "Move down" do in one action each (A11Y-006).
+ */
+@Composable
+internal fun DragHandle(drag: RowDrag, position: Int, count: Int, tag: String, modifier: Modifier = Modifier) {
+    val placed = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    fun onScreen(local: Offset): Float = placed[0]?.takeIf { it.isAttached }?.localToRoot(local)?.y ?: 0f
+    Box(
+        modifier
+            .size(48.dp)
+            .onGloballyPositioned { placed[0] = it }
+            .clearAndSetSemantics {
+                testTag = tag
+                hideFromAccessibility()
+            }
+            .pointerInput(drag, position, count) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val slop = awaitVerticalTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                        ?: return@awaitEachGesture
+                    drag.start(position, count)
+                    drag.moveBy(slop.position.y - down.position.y, onScreen(slop.position))
+                    val dropped = try {
+                        verticalDrag(slop.id) { change ->
+                            drag.moveBy(change.positionChange().y, onScreen(change.position))
+                            change.consume()
+                        }
+                    } catch (e: Throwable) {
+                        drag.end()
+                        throw e
+                    }
+                    if (dropped) drag.drop() else drag.end()
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painterResource(R.drawable.ic_drag_handle), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}

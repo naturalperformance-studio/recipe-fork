@@ -1,7 +1,7 @@
 ---
 slug: SCALE
 status: closed
-updated: 2026-09-29
+updated: 2026-10-02
 ids: [SCALE-001, SCALE-002, SCALE-003, SCALE-006, SCALE-008, SCALE-010, SCALE-011, SCALE-016, SCALE-017,
   SCALE-018]
 ---
@@ -77,29 +77,34 @@ any further computation.
 values.
 **Source:** CON-004; draft section 3.2.
 
-### SCALE-006 — The most recent fixed ingredient sets the scale
+### SCALE-006 — One ingredient is fixed at a time
 
-When the reader fixes a second ingredient whose implied factor differs from the
-current one, the system shall adopt the factor implied by the most recently
-fixed ingredient, and shall mark every other fixed ingredient whose required
-amount exceeds its fixed amount, showing the shortfall.
+When the reader fixes an ingredient while another is fixed, the system shall
+release the earlier fixing and adopt the factor implied by the ingredient fixed
+last; at most one ingredient is fixed at any moment, and no shortfall is shown.
 
 **Acceptance criteria**
 - Given 300 g of chicken fixed against an authored 500 g, when the reader then
-  fixes 3 eggs against an authored 3, then the factor in force is 1.0 and the
-  chicken line shows a requirement of 500 g against 300 g available.
-- Given that state, when the shortfall is displayed, then it names both the
-  required and the available amount.
-- Given that state, when the reader releases the egg fixing, then the factor
-  returns to the one implied by the chicken and the shortfall marking
-  disappears.
+  fixes 3 eggs against an authored 3, then the factor in force is 1.0, the eggs
+  are marked as fixed, the chicken is no longer marked as fixed and shows 500 g,
+  and no line shows a shortfall.
+- Given that state, when the reader releases the egg fixing, then SCALE-017
+  governs: the recipe returns to the count in force before the chicken was fixed,
+  and the chicken fixing does not come back.
 
-**Verification:** fix two conflicting ingredients in both orders and compare.
-**Source:** draft section 3.4; user decision, 2026-09-20.
+**Verification:** fix two ingredients in both orders, check that only the latest
+is marked fixed, then release it.
+**Source:** draft section 3.4; user decision, 2026-09-20; changed by user
+decision, 2026-10-02 (v0.2 demo).
 **Correction, 2026-09-27:** criterion 1 said "the displayed factor", the only place
 the specification called the factor displayed. The factor is not shown to the
 reader; it is observable only through the quantities and the approximate serving
 count (user decision, 2026-09-27, SD-011).
+**Changed 2026-10-02:** until then the earlier fixing stayed in place and showed
+how far it fell short of what the new factor required. At the v0.2 demo the user
+decided that fixing another ingredient releases the first, so a fixed line always
+means "this is the amount the recipe is computed from". See
+[ADR — one fixed ingredient at a time](../decisions/20261002-one-fixed-ingredient-at-a-time.md).
 
 ### SCALE-008 — Serving count below one
 
@@ -213,9 +218,8 @@ requested count by SCALE-001.
 - Given a recipe authored for 4 servings with 500 g of chicken fixed at 300 g,
   when the reader asks for 6 servings, then the chicken line shows 750 g and is
   no longer marked as fixed.
-- Given two fixed ingredients, one showing a shortfall (SCALE-006), when the
-  reader changes the serving count, then neither is marked as fixed and no
-  shortfall is shown.
+- Given an ingredient fixed after another one was released by SCALE-006, when
+  the reader changes the serving count, then no ingredient is marked as fixed.
 - Given that the fixings were released by a change of count, when the reader
   looks at the serving count, then it is the count they asked for and is not
   marked as approximate.
@@ -223,11 +227,12 @@ requested count by SCALE-001.
 **Verification:** fix one and then two ingredients, change the count in each
 state, and inspect every line and the count.
 **Source:** user decision, 2026-09-27 (SD-003 item 1): the reader's latest action
-sets the scale, as SCALE-006 already decides between two fixings.
+sets the scale, as SCALE-006 already decides between two fixings. Since
+2026-10-02 at most one ingredient is fixed at a time (SCALE-006).
 
 ### SCALE-017 — Releasing the last fixed ingredient restores the count in force before the first
 
-When the reader releases the only remaining fixed ingredient, the system shall
+When the reader releases the fixed ingredient, the system shall
 display the recipe at the serving count that was in force immediately before the
 first of the fixings that led to that state.
 
@@ -236,8 +241,8 @@ first of the fixings that led to that state.
   ingredient and then releases it, then the recipe is displayed at 4 servings and
   nothing is marked as derived.
 - Given a recipe the reader had set to 6 servings, when they fix an ingredient,
-  then fix a second, then release the second and then the first, then the recipe
-  is displayed at 6 servings.
+  then fix a second (which releases the first, SCALE-006), then release the
+  second, then the recipe is displayed at 6 servings.
 - Given a recipe opened at the reader's usual count of 2 (FLOW-017), when the
   reader fixes an ingredient and releases it, then the recipe is displayed at 2
   servings.
@@ -245,7 +250,7 @@ first of the fixings that led to that state.
   not marked as approximate.
 
 **Verification:** fix and release from the authored count, from a requested
-count and from a usual count, with one and with two fixings.
+count and from a usual count, after one fixing and after a chain of fixings.
 **Source:** user decision, 2026-09-27 (SD-003 item 2). Releasing a fixing undoes
 it; the approximate count shown during the fixing is not a count the reader asked
 for, and taking it as one would compute from a rounded value (SCALE-003).

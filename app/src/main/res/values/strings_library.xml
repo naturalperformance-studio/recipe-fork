@@ -25,4 +25,10 @@
     <string name="library_own_new">New recipe</string>
     <!-- FLOW-029 (1): an own recipe's entry opens its card. -->
     <string name="library_entry_open_action">Open the recipe</string>
+    <!-- FLOW-053: deleting an own recipe from its entry, and the statement shown before anything is destroyed. -->
+    <string name="library_entry_delete">Delete</string>
+    <string name="library_delete_title">Delete “%1$s”?</string>
+    <string name="library_delete_statement">The recipe goes at once, with its photographs and video, and cannot be brought back.</string>
+    <string name="library_delete_confirm">Delete</string>
+    <string name="library_delete_decline">Cancel</string>
 </resources>

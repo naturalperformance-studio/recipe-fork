@@ -1,7 +1,7 @@
 ---
 slug: CON
 status: closed
-updated: 2026-09-28
+updated: 2026-10-02
 ids: [CON-001, CON-002, CON-003, CON-004, CON-005, CON-006]
 ---
 
@@ -98,6 +98,10 @@ quantity that differs from the authored quantity") while the statement marks by
 provenance ("a quantity it derived"). By user decision of the same date provenance
 governs: at any scale factor other than 1 every quantity is derived (SCALE-004;
 [ADR — derived by provenance](decisions/20260927-derived-by-provenance.md)).
+**Note, 2026-10-02:** criterion 1 is met by one statement covering the whole
+ingredient list as well as by a mark on each line; the direction of rounding may
+be a symbol whose meaning is available in words (SCALE-004, changed at the v0.2
+sync).
 
 ### CON-005 — Native Android is the only client surface in the MVP
 

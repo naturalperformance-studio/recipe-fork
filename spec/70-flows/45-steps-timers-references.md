@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-27
+updated: 2026-10-02
 ids: [FLOW-027, FLOW-031, FLOW-032]
 ---
 
@@ -50,6 +50,9 @@ timer on a step that already carries one.
 - Given the duration field, when the author tries to enter more than 99 hours
   and 59 minutes, then the field cannot hold it, and the longest timer a recipe
   can carry is 99 hours 59 minutes.
+- Given an editable step carrying a timer, when the author looks at it, then a
+  control removes the timer in one action, together with any name the author
+  gave it; the step then offers attaching a timer again.
 
 **Verification:** attach a timer, try to attach a second through every path the
 editor offers, delete the step, move the step, and save a recipe with an
@@ -68,6 +71,8 @@ is satisfied with the derived name does nothing at all.
 all", which left GUIDE-007 with no attempt to answer (SD-005). By user decision of
 that date the control stays, and choosing it on a step that has a timer is the
 attempt GUIDE-007 explains.
+**Changed 2026-10-02:** criterion 15 added by user decision at the v0.2 demo —
+emptying the duration was the only way to remove a timer, and it was not found.
 **Note:** what the author is told about the first 60 characters of the step
 mattering is in `author-guidance`, not here — this requirement is what the editor
 accepts, that one is what the editor teaches.

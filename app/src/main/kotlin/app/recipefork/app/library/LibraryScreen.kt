@@ -16,10 +16,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,11 +57,14 @@ import app.recipefork.app.editor.interfaceLanguage
 import app.recipefork.app.editor.newRecipe
 import app.recipefork.app.editor.rememberEditorEnvironment
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.timer.CardTimers
+import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 
 /** How many own recipes are read from the device at a time, and asked for again near the end (FLOW-041). */
 const val OWN_PAGE = 30
@@ -111,6 +116,7 @@ fun LibraryScreen(
         return
     }
     val view by session.view.collectAsState()
+    val timers = rememberCardTimers()
     Column(modifier.fillMaxSize()) {
         Text(
             text = stringResource(R.string.library_title),
@@ -125,7 +131,7 @@ fun LibraryScreen(
         HorizontalDivider()
         when (view) {
             LibraryView.MARKED -> MarkedList(recipes)
-            LibraryView.OWN -> OwnList(recipes, session, editor)
+            LibraryView.OWN -> OwnList(recipes, session, editor, timers)
         }
     }
 }
@@ -163,7 +169,7 @@ private fun androidx.compose.foundation.layout.RowScope.ViewTab(
 
 /** Built from the device alone: nothing here waits on or fails for the network (FLOW-043 (5)). */
 @Composable
-private fun OwnList(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment) {
+private fun OwnList(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment, timers: CardTimers) {
     var limit by rememberSaveable { mutableIntStateOf(OWN_PAGE) }
     val rows by remember(limit) { recipes.ownNewest(limit) }.collectAsState(initial = null)
     val listState = rememberLazyListState()
@@ -177,6 +183,18 @@ private fun OwnList(recipes: RecipeRepository, session: LibrarySession, editor: 
                 if (size == limit && last >= size - OWN_PAGE / 3) limit += OWN_PAGE
             }
     }
+    // The recipe whose deletion is being asked about, while it is (FLOW-053 (2)).
+    var deleting by rememberSaveable { mutableStateOf<String?>(null) }
+    loaded?.firstOrNull { it.recipeId == deleting }?.let { row ->
+        DeleteStatement(
+            row,
+            onConfirm = {
+                deleting = null
+                deleteRecipe(recipes, timers, RecipeId(row.recipeId))
+            },
+            onDecline = { deleting = null },
+        )
+    }
     if (loaded != null && loaded.isEmpty()) {
         NothingWritten(recipes, session, editor)
         return
@@ -188,7 +206,9 @@ private fun OwnList(recipes: RecipeRepository, session: LibrarySession, editor: 
             HorizontalDivider()
         }
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST)) {
-            items(loaded.orEmpty(), key = { it.recipeId }) { row -> OwnEntry(row) { session.openCard(row.recipeId) } }
+            items(loaded.orEmpty(), key = { it.recipeId }) { row ->
+                OwnEntry(row, onOpen = { session.openCard(row.recipeId) }, onDelete = { deleting = row.recipeId })
+            }
         }
     }
 }
@@ -234,28 +254,89 @@ private fun WriteButton(
     ) { Text(stringResource(label)) }
 }
 
-/** An own recipe's entry; tapping it opens the recipe's card (FLOW-029 (1)). */
+/**
+ * An own recipe's entry; tapping it opens the recipe's card (FLOW-029 (1)). A recipe its owner may delete carries the
+ * offer to beside it; any other carries none and the entry takes the whole width (FLOW-053 (1), ST-010).
+ */
 @Composable
-private fun OwnEntry(row: OwnRecipeRow, onOpen: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .semantics(mergeDescendants = true) {}
-            .clickable(onClickLabel = stringResource(R.string.library_entry_open_action), role = Role.Button, onClick = onOpen)
-            .testTag(LibraryTags.entry(row.recipeId))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-    ) {
-        Text(
-            text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-            style = MaterialTheme.typography.titleMedium,
-        )
-        // The state is named in words, never carried by colour alone (A11Y-008).
-        Text(stringResource(stateLabel(row.state)), style = MaterialTheme.typography.labelLarge)
-        // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005).
-        Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
+private fun OwnEntry(row: OwnRecipeRow, onOpen: () -> Unit, onDelete: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            Modifier
+                .weight(1f)
+                .heightIn(min = 48.dp)
+                .semantics(mergeDescendants = true) {}
+                .clickable(onClickLabel = stringResource(R.string.library_entry_open_action), role = Role.Button, onClick = onOpen)
+                .testTag(LibraryTags.entry(row.recipeId))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Text(
+                text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                style = MaterialTheme.typography.titleMedium,
+            )
+            // The state is named in words, never carried by colour alone (A11Y-008).
+            Text(stringResource(stateLabel(row.state)), style = MaterialTheme.typography.labelLarge)
+            // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005).
+            Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
+        }
+        if (row.state in DELETABLE) {
+            TextButton(
+                onClick = onDelete,
+                modifier = Modifier.padding(end = 8.dp).heightIn(min = 48.dp).testTag(LibraryTags.delete(row.recipeId)),
+            ) { Text(stringResource(R.string.library_entry_delete)) }
+        }
     }
     HorizontalDivider()
+}
+
+/** The states in which an own recipe may be deleted by its owner (ST-010); in any other it may not. */
+val DELETABLE = setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECTED)
+
+/**
+ * The statement shown before anything is destroyed (FLOW-053 (2)): the recipe goes at once, with its photographs and
+ * video, and cannot be brought back. Nothing is deleted until it is confirmed; declining it changes nothing.
+ */
+@Composable
+private fun DeleteStatement(row: OwnRecipeRow, onConfirm: () -> Unit, onDecline: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDecline,
+        modifier = Modifier.testTag(LibraryTags.DELETE_STATEMENT),
+        title = {
+            Text(
+                stringResource(
+                    R.string.library_delete_title,
+                    row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                ),
+            )
+        },
+        text = { Text(stringResource(R.string.library_delete_statement)) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.DELETE_CONFIRM),
+            ) { Text(stringResource(R.string.library_delete_confirm)) }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDecline,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.DELETE_DECLINE),
+            ) { Text(stringResource(R.string.library_delete_decline)) }
+        },
+    )
+}
+
+/**
+ * Deletes [id] from the active book, on the device alone (FLOW-053 (6, 8)), and cancels its timers, so that none of
+ * them announces itself or rings afterwards. It runs where the timers' work runs, which outlives the screen, one turn
+ * among the timers' starts and cancels, so that it finishes however soon the view is left.
+ */
+fun deleteRecipe(recipes: RecipeRepository, timers: CardTimers, id: RecipeId) {
+    timers.scope.launch {
+        timers.turns.withLock {
+            recipes.delete(id)
+            timers.store.cancelRecipe(timers.book(), id)
+        }
+    }
 }
 
 @Composable
@@ -303,5 +384,9 @@ object LibraryTags {
     const val WRITE = "library-write"
     const val NEW = "library-new"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
+    const val DELETE_STATEMENT = "library-delete-statement"
+    const val DELETE_CONFIRM = "library-delete-confirm"
+    const val DELETE_DECLINE = "library-delete-decline"
     fun entry(recipeId: String) = "library-entry-$recipeId"
+    fun delete(recipeId: String) = "library-delete-$recipeId"
 }

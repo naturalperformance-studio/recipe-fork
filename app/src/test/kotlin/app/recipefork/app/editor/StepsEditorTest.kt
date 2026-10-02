@@ -209,11 +209,12 @@ class StepsEditorTest {
         }
         assertEquals(listOf("Boil the water.", "Add the pasta.", "Drain."), stored(id).steps.map { it.text })
         assertEquals(listOf(0, 1, 2), stored(id).steps.map { it.position })
-        // A step is one text field, its removal and the control that attaches its timer; nothing else.
+        // A step is one text field, its removal, its menu (FLOW-025), the control that inserts an ingredient's quantity
+        // (FLOW-031) and the one that attaches its timer; nothing else.
         val inStep = hasAnyAncestor(hasTestTag(EditorTags.step(1)))
         val actions = compose.onAllNodes(inStep and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }.toSet()
-        assertEquals(setOf(EditorTags.stepText(1), EditorTags.stepRemove(1), EditorTags.timerAttach(1)), actions)
+        assertEquals(setOf(EditorTags.stepText(1), EditorTags.stepRemove(1), EditorTags.stepMenu(1), EditorTags.stepInsert(1), EditorTags.timerAttach(1)), actions)
 
         // Edited in place: the middle step changes, and the others and the numbering stay.
         compose.onNodeWithTag(EditorTags.stepText(1)).performScrollTo().performTextInput(" Stir once.")
@@ -268,16 +269,18 @@ class StepsEditorTest {
         )
         openDirectly(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(2)), PATIENCE_MS)
-        typeStep(1, "Add flour and knead well.")
+        // Typed at the end of the step: the reference before it stays where it is.
+        compose.onNodeWithTag(EditorTags.stepText(1)).performScrollTo().performTextInput(" Rest.")
+        compose.waitForIdle()
         val edited = stored(recipe.id).steps[1]
-        assertEquals("Add flour and knead well.", edited.text)
+        assertEquals("Add flour and knead. Rest.", edited.text)
         assertEquals(Timer(10.minutes), edited.timer)
         assertEquals(listOf(IngredientReference(1, 4)), edited.ingredientReferences)
 
         compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
         compose.waitForIdle()
         val steps = stored(recipe.id).steps
-        assertEquals(listOf("Add flour and knead well.", "Bake with the rest of the flour."), steps.map { it.text })
+        assertEquals(listOf("Add flour and knead. Rest.", "Bake with the rest of the flour."), steps.map { it.text })
         assertEquals(listOf(Timer(10.minutes), Timer(40.minutes, "Oven")), steps.map { it.timer })
         val ingredients = stored(recipe.id).ingredients
         steps.forEach { step ->

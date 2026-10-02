@@ -1,6 +1,7 @@
 package app.recipefork.app.editor
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -13,13 +14,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -35,10 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -86,13 +94,18 @@ fun EditorScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving) }
+    // The row keys outlive the activity being recreated, as the state the rows saved under them does.
+    val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys) }
     // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
     // touched from a database thread.
     LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }
     var dictionary by remember { mutableStateOf<List<TagEntity>?>(null) }
     LaunchedEffect(environment) { withContext(Dispatchers.Main.immediate) { dictionary = environment.tags.tags() } }
     val recipe by editor.recipe.collectAsState()
+    val scrolled = rememberScrollState()
+    val scroll = remember(scrolled) { EditorScroll(scrolled) }
     BackHandler(onBack = onClose)
 
     Column(modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
@@ -110,7 +123,8 @@ fun EditorScreen(
                 // A touch on any field or control is the author's next action, which ends a hint (GUIDE-007);
                 // a scroll is not one.
                 .onEveryTap { editor.noteAction() }
-                .verticalScroll(rememberScrollState())
+                .onGloballyPositioned { scroll.viewport = it }
+                .verticalScroll(scroll.state)
                 .padding(16.dp)
                 .testTag(EditorTags.FORM),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -125,8 +139,8 @@ fun EditorScreen(
             TitleAndLanguage(shown, editor)
             Tags(shown, editor, dictionary)
             ServingCount(shown, editor)
-            Ingredients(shown, editor, environment.ingredients)
-            Steps(shown, editor)
+            Ingredients(shown, editor, environment.ingredients, scroll)
+            Steps(shown, editor, environment.ingredients, scroll)
             Description(shown, editor)
         }
     }
@@ -315,6 +329,55 @@ internal fun ActionText(text: String, action: String, onClick: () -> Unit, modif
     }
 }
 
+/** What a row's menu does to its row (FLOW-025): a new row above or below it, or the row one place up or down. */
+enum class RowAction(@StringRes val label: Int) {
+    INSERT_ABOVE(R.string.editor_row_insert_above),
+    INSERT_BELOW(R.string.editor_row_insert_below),
+    MOVE_UP(R.string.editor_row_move_up),
+    MOVE_DOWN(R.string.editor_row_move_down),
+    ;
+
+    /** How a test tag names the action: `insert-above` and so on. */
+    internal val tag: String get() = name.lowercase().replace('_', '-')
+}
+
+/**
+ * The menu of the row at [position] of [count] rows: a 48 dp control named for its row by [name] (A11Y-003, A11Y-005)
+ * that opens the four actions of FLOW-025 — the first row has no "Move up", the last no "Move down". Each action is
+ * one tap, so nothing here is done only by dragging (A11Y-006).
+ */
+@Composable
+internal fun RowMenu(
+    position: Int,
+    count: Int,
+    name: String,
+    tag: String,
+    actionTag: (RowAction) -> String,
+    onAction: (RowAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier) {
+        IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(48.dp).testTag(tag)) {
+            Icon(painterResource(R.drawable.ic_row_menu), contentDescription = name)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            RowAction.entries
+                .filter { (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1) }
+                .forEach { action ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(action.label)) },
+                        onClick = {
+                            expanded = false
+                            onAction(action)
+                        },
+                        modifier = Modifier.testTag(actionTag(action)),
+                    )
+                }
+        }
+    }
+}
+
 object EditorTags {
     const val SCREEN = "editor"
     const val BACK = "editor-back"
@@ -339,8 +402,12 @@ object EditorTags {
     fun ingredientQuantity(position: Int) = "editor-ingredient-$position-quantity"
     fun ingredientUnit(position: Int) = "editor-ingredient-$position-unit"
     fun ingredientRemove(position: Int) = "editor-ingredient-$position-remove"
+    fun ingredientMenu(position: Int) = "editor-ingredient-$position-menu"
+    fun ingredientHandle(position: Int) = "editor-ingredient-$position-handle"
+    fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
+    fun ingredientWarningText(position: Int) = "editor-ingredient-$position-warning-text"
     fun divisibility(position: Int) = "editor-ingredient-$position-divisibility"
     fun divisible(position: Int, divisible: Boolean) = "editor-ingredient-$position-divisible-$divisible"
     fun unitOption(unit: QuantityUnit) = "editor-unit-${unit.name}"
@@ -350,6 +417,12 @@ object EditorTags {
     fun step(position: Int) = "editor-step-$position"
     fun stepText(position: Int) = "editor-step-$position-text"
     fun stepRemove(position: Int) = "editor-step-$position-remove"
+    fun stepMenu(position: Int) = "editor-step-$position-menu"
+    fun stepHandle(position: Int) = "editor-step-$position-handle"
+    fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"
+    fun stepInsert(position: Int) = "editor-step-$position-insert-ingredient"
+    fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
+    fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
     fun timerAttach(position: Int) = "editor-step-$position-timer"
     fun timerRemove(position: Int) = "editor-step-$position-timer-remove"
     fun timerStatement(position: Int) = "editor-step-$position-timer-statement"
