@@ -44,9 +44,17 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * follow and is left out; with none left, so is the whole part, heading included (FLOW-019). A step carrying a timer
  * shows it beneath its text, startable there and running there (FLOW-016). A held timer its step no longer carries
  * is dropped. Opened from a timer's notification, the card is brought to that timer's step (FLOW-013 (4)).
+ *
+ * Each ingredient reference in a step reads as [references] gives it: its line in the list at the scale in force
+ * (FLOW-032), and a timer started from the step is named with it as it reads at that moment (FLOW-016 (8)).
  */
 @Composable
-internal fun StepsList(steps: List<Step>, recipeId: RecipeId, title: String = "") {
+internal fun StepsList(
+    steps: List<Step>,
+    recipeId: RecipeId,
+    title: String = "",
+    references: CardReferences = CardReferences.NONE,
+) {
     val shown = steps.sortedBy { it.position }.filter { it.text.isNotBlank() }
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
@@ -72,7 +80,7 @@ internal fun StepsList(steps: List<Step>, recipeId: RecipeId, title: String = ""
             } else {
                 Modifier
             }
-            StepRow(index + 1, step, timers, modifier)
+            StepRow(index + 1, step, references, timers, modifier)
         }
     }
     RestartQuestion(timers)
@@ -81,12 +89,12 @@ internal fun StepsList(steps: List<Step>, recipeId: RecipeId, title: String = ""
 
 /** One step: its number and its text, read by the screen reader as one line, then its timer, if it carries one. */
 @Composable
-private fun StepRow(number: Int, step: Step, timers: RecipeTimers, modifier: Modifier = Modifier) {
+private fun StepRow(number: Int, step: Step, references: CardReferences, timers: RecipeTimers, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(CardTags.step(step.position))) {
             Text("$number.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.widthIn(min = 32.dp))
-            Text(step.text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            StepText(step, references, Modifier.weight(1f))
         }
-        if (step.timer != null) StepTimer(step, timers, Modifier.padding(start = 32.dp))
+        if (step.timer != null) StepTimer(step, timers, references::quantity, Modifier.padding(start = 32.dp))
     }
 }

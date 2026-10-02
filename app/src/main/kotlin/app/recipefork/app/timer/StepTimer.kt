@@ -104,8 +104,11 @@ class RecipeTimers internal constructor(
     /** The recipe's title as the card shows it now: what a timer started from it announces (FLOW-013 (3)). */
     internal var title: String = ""
 
-    /** The step whose running timer the reader started again, while they are asked whether to restart it. */
-    internal var asking by mutableStateOf<Step?>(null)
+    /**
+     * The step whose running timer the reader started again, while they are asked whether to restart it, and the name
+     * it would start again under.
+     */
+    internal var asking by mutableStateOf<Restart?>(null)
         private set
 
     /** How many timers this card has started: each start is followed by a look at notifications (FLOW-013 (8–13)). */
@@ -115,19 +118,20 @@ class RecipeTimers internal constructor(
     private fun key(step: Step) = TimerKey(book, recipeId, step.position)
 
     /**
-     * Starts [step]'s timer from its full duration. One that is running is not restarted but asked about (FLOW-021);
+     * Starts [step]'s timer from its full duration, under [name]: the name it reads by on the card at this moment
+     * (FLOW-016 (8)), which it keeps for as long as it is held. One that is running is not restarted but asked about (FLOW-021);
      * one that has ended starts again with no question (FLOW-021 (5)). Whether it runs is read from the store, after
      * any start or cancel still being written, never from what the card has loaded so far.
      */
-    internal fun start(step: Step) {
+    internal fun start(step: Step, name: String) {
         val title = title
         card.scope.launch {
             card.turns.withLock {
                 val running = store.get(key(step))?.takeUnless { it.hasEnded(store.clock.now()) }
                 if (running != null) {
-                    withContext(Dispatchers.Main) { asking = step }
+                    withContext(Dispatchers.Main) { asking = Restart(step, name) }
                 } else {
-                    startNow(step, title)
+                    startNow(step, name, title)
                 }
             }
         }
@@ -135,10 +139,10 @@ class RecipeTimers internal constructor(
 
     /** The reader confirmed: the timer starts again from its full duration; what it had counted is gone. */
     internal fun confirmRestart() {
-        val step = asking ?: return
+        val restart = asking ?: return
         asking = null
         val title = title
-        card.scope.launch { card.turns.withLock { startNow(step, title) } }
+        card.scope.launch { card.turns.withLock { startNow(restart.step, restart.name, title) } }
     }
 
     /** The reader declined: the timer keeps running with the time it had. */
@@ -160,11 +164,13 @@ class RecipeTimers internal constructor(
     /**
      * Drops each held timer whose step no longer carries it — no timer at that position any more, or one with another
      * name or duration — so that none is left hidden and uncancellable, nor announced as what the step no longer is.
+     * A name read with the step's references at another scale is the step's own: a timer is never dropped because
+     * the reader changed the count or fixed an ingredient since it started.
      */
     internal fun dropStale(steps: List<Step>, held: Map<Int, RunningTimer>) {
         val stale = held.values.filter { timer ->
             val step = steps.firstOrNull { it.position == timer.key.stepPosition }
-            step == null || step.timer?.duration != timer.duration || TimerName.of(step) != timer.name
+            step == null || step.timer?.duration != timer.duration || !TimerName.fits(step, timer.name)
         }
         if (stale.isEmpty()) return
         card.scope.launch {
@@ -177,9 +183,8 @@ class RecipeTimers internal constructor(
         }
     }
 
-    private suspend fun startNow(step: Step, title: String) {
+    private suspend fun startNow(step: Step, name: String, title: String) {
         val duration = step.timer?.duration ?: return
-        val name = TimerName.of(step) ?: return
         store.start(key(step), name, title, duration)
         withContext(Dispatchers.Main) { starts++ }
     }
@@ -212,17 +217,27 @@ fun rememberRecipeTimers(recipeId: RecipeId, title: String): RecipeTimers {
     return timers
 }
 
+/** A start the reader is asked to confirm: [step]'s timer, to start again under [name]. */
+internal data class Restart(val step: Step, val name: String)
+
 /**
- * A step's timer on the card (FLOW-016): a control named by the timer's name that starts it, with its duration beside
- * it; once started, the time remaining instead, counting down by the clock, then that it has finished. A started
+ * A step's timer on the card (FLOW-016): a control named by the timer's name — each reference in a derived one read as
+ * [quantity] gives it, as the step reads now (FLOW-016 (8)), or, while it is held, the name it was started under — that
+ * starts it, with its duration beside it; once started, the time remaining instead, counting down by the clock, then that it has finished. A started
  * timer has an action beside it that cancels it, or clears it once finished; while a finished one rings, another
  * beside it stops the ringing.
  */
 @Composable
-fun StepTimer(step: Step, timers: RecipeTimers, modifier: Modifier = Modifier) {
+fun StepTimer(
+    step: Step,
+    timers: RecipeTimers,
+    quantity: (ingredientPosition: Int) -> String?,
+    modifier: Modifier = Modifier,
+) {
     val timer = step.timer ?: return
-    val name = TimerName.of(step) ?: return
+    val current = TimerName.of(step, quantity) ?: return
     val held = timers.held[step.position]
+    val name = held?.name ?: current
     val now = timers.now
     val finished = held != null && held.hasEnded(now)
     val status = when {
@@ -238,7 +253,7 @@ fun StepTimer(step: Step, timers: RecipeTimers, modifier: Modifier = Modifier) {
                 .clickable(
                     onClickLabel = stringResource(R.string.timer_start_action),
                     role = Role.Button,
-                    onClick = { timers.start(step) },
+                    onClick = { timers.start(step, current) },
                 )
                 .testTag(TimerTags.start(step.position)),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -278,7 +293,8 @@ fun StepTimer(step: Step, timers: RecipeTimers, modifier: Modifier = Modifier) {
 /** The question asked when a running timer is started again (FLOW-021); nothing while none is asked. */
 @Composable
 fun RestartQuestion(timers: RecipeTimers) {
-    val step = timers.asking ?: return
+    val restart = timers.asking ?: return
+    val step = restart.step
     val timer = step.timer ?: return
     val remaining = timers.held[step.position]?.remaining(timers.now) ?: Duration.ZERO
     AlertDialog(
@@ -288,7 +304,7 @@ fun RestartQuestion(timers: RecipeTimers) {
             Text(
                 stringResource(
                     R.string.timer_restart_question,
-                    TimerName.of(step).orEmpty(),
+                    timers.held[step.position]?.name ?: restart.name,
                     remainingText(remaining),
                     durationText(timer.duration),
                 ),

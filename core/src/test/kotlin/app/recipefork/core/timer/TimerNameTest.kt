@@ -6,6 +6,7 @@ import app.recipefork.core.recipe.StepRun
 import app.recipefork.core.recipe.Timer
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
@@ -152,5 +153,39 @@ class TimerNameWithReferencesTest {
         assertEquals("Мука", name(step))
         assertEquals(TimerName.derived("  Knead.\n\nLet it   rise.\n"), TimerName.derived(listOf(StepRun.Typed("  Knead.\n\nLet it   rise.\n"))))
         assertNull(name(Step(0, "Mix")))
+    }
+}
+
+/** A held timer's name still fits its step when the reader changed the scale since its start (FLOW-016 (8)). */
+class TimerNameFitsTest {
+    private val long = "Всыпьте  муки, затем медленно перемешивайте венчиком до однородной густой массы"
+    private val flour = Step(0, "Всыпьте  муки и перемешайте", listOf(IngredientReference(0, 8)), Timer(5.minutes))
+    private val longFlour = Step(0, long, listOf(IngredientReference(0, 8)), Timer(5.minutes))
+
+    private fun at(step: Step, quantity: String) = TimerName.of(step) { quantity }!!
+
+    @Test
+    fun `a name derived at any scale fits its step`() {
+        listOf("200 г", "400 г", "1,2 кг", "___ г", "по вкусу").forEach { quantity ->
+            assertTrue(TimerName.fits(flour, at(flour, quantity)), quantity)
+            assertTrue(TimerName.fits(longFlour, at(longFlour, quantity)), quantity)
+        }
+    }
+
+    @Test
+    fun `a name from other text, or of a timer the step no longer carries, does not fit`() {
+        assertFalse(TimerName.fits(flour, "Всыпьте 200 г сахара и перемешайте"))
+        assertFalse(TimerName.fits(flour, "Варите 200 г муки и перемешайте"))
+        assertFalse(TimerName.fits(flour.copy(timer = null), at(flour, "200 г")))
+        assertFalse(TimerName.fits(flour.copy(timer = Timer(5.minutes, "Мука")), at(flour, "200 г")))
+        assertTrue(TimerName.fits(flour.copy(timer = Timer(5.minutes, "Мука")), "Мука"))
+        assertFalse(TimerName.fits(longFlour, "Насыпьте 200 г муки, затем" + TimerName.ELLIPSIS))
+    }
+
+    @Test
+    fun `without references a name fits exactly as derived`() {
+        val plain = Step(0, "Bring the water to the boil", timer = Timer(10.minutes))
+        assertTrue(TimerName.fits(plain, "Bring the water to the boil"))
+        assertFalse(TimerName.fits(plain, "Bring the water"))
     }
 }
