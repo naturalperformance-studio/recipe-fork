@@ -21,6 +21,7 @@ import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.media.cover
+import app.recipefork.app.media.decodeForDisplay
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.FileMedia
@@ -73,6 +74,7 @@ class ExportWithPhotosTest {
     @Before
     fun setUp() {
         FileProviderCache.clear()
+        warmUpNativeGraphics()
         compose.registerIdlingResource(book.idling)
         compose.registerIdlingResource(friendsBook.idling)
         compose.registerIdlingResource(device.idling)
@@ -88,6 +90,16 @@ class ExportWithPhotosTest {
         device.close()
         store.directory(BookName.Pool).deleteRecursively()
         store.directory(friend).deleteRecursively()
+    }
+
+    /**
+     * Decodes a photograph once on the test's own thread before the card decodes any off it: run alone or first, the
+     * native graphics runtime's first decode on a background thread aborts the JVM ("JniConstants: Class not found").
+     */
+    private fun warmUpNativeGraphics() {
+        val file = TestPhotos.jpeg(File(context.cacheDir, "warm-up.jpg"), 16, 16)
+        decodeForDisplay(file, 16)
+        file.delete()
     }
 
     private fun photo(mediaId: String, attachment: MediaAttachment, write: Boolean = true): Media {

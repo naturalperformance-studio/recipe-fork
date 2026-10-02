@@ -98,20 +98,49 @@ class MediaSweepTest {
         assertFalse(store.directory(BookName.Pool).exists())
     }
 
+    // A book that cannot be read stops the sweep before anything is deleted.
+    @Test
+    fun aBookThatCannotBeReadSweepsNothing() {
+        holding("held")
+        file("orphan", ageMinutes = 60)
+        file(".orphan.part", ageMinutes = 60)
+        book.close()
+
+        val outcome = runCatching { runBlocking { sweep.sweep(open) } }
+
+        assertTrue("the query fails on a closed book", outcome.isFailure)
+        assertEquals(listOf(".orphan.part", "orphan"), left())
+    }
+
+    // A book holding no recipe at all beside photographs on disk is more likely one lost and made anew — a damaged
+    // database is recreated empty — than one emptied by hand: its photographs are kept.
+    @Test
+    fun aBookHoldingNoRecipeKeepsItsPhotos() = runBlocking {
+        file("photo", ageMinutes = 600)
+        file(".half.part", ageMinutes = 600)
+
+        assertEquals(emptyList<File>(), sweep.sweep(open))
+
+        assertEquals(listOf(".half.part", "photo"), left())
+    }
+
     // Once per book opened: the active book as the sweep starts, then each book as it is opened.
     @Test
     fun eachBookIsSweptAsItIsOpened() = runBlocking {
+        holding("held")
+        file("held", ageMinutes = 60)
         file("pool-orphan", ageMinutes = 60)
         val other = BookName.OfAccount("sweep-other")
         val otherBook = TestBook(context)
         try {
+            RecipeRepository(ActiveBook(other, otherBook.database)).save(Recipe.create(Instant.ofEpochMilli(now), null))
             File(store.directory(other).apply { mkdirs() }, "other-orphan").apply {
                 writeBytes(byteArrayOf(1))
                 setLastModified(now - 60.minutes.inWholeMilliseconds)
             }
             val books = MutableStateFlow(open)
             sweep.everyOpened(books, scope)
-            withTimeout(10_000) { while (left().isNotEmpty()) yield() }
+            withTimeout(10_000) { while (left() != listOf("held")) yield() }
             assertTrue(store.file(other, "other-orphan").exists())
 
             books.value = ActiveBook.Open(other, otherBook.database)
@@ -126,6 +155,7 @@ class MediaSweepTest {
     @Test
     fun theCompositionRootSweepsTheActiveBook() = runBlocking {
         val container = AppContainer(context, Mode.Serverless)
+        container.recipes.save(Recipe.create(Instant.ofEpochMilli(now), null))
         File(store.directory(BookName.Pool).apply { mkdirs() }, "left-over").apply {
             writeBytes(byteArrayOf(1))
             setLastModified(System.currentTimeMillis() - 60.minutes.inWholeMilliseconds)
