@@ -79,4 +79,17 @@
     <string name="editor_description">Description</string>
     <string name="editor_description_optional">Description (optional)</string>
     <string name="editor_description_none">No description</string>
+    <!-- A step's timer: hours and whole minutes, one per step, named by its step unless the author names it (FLOW-027, GUIDE-007). -->
+    <string name="editor_timer">Timer</string>
+    <string name="editor_timer_action">Add a timer to step %1$d</string>
+    <string name="editor_timer_hours">Hours</string>
+    <string name="editor_timer_minutes">Minutes</string>
+    <string name="editor_timer_name">Timer\'s name</string>
+    <string name="editor_timer_name_follows">Taken from the step. Change it to name the timer yourself.</string>
+    <string name="editor_timer_one_per_step">A step has one timer. For two waits one after another, split this step into two steps, each with its own timer.</string>
+    <string name="editor_timer_read_only">Timer: %1$s</string>
+    <string name="editor_timer_name_read_only">Timer\'s name: %1$s</string>
+    <string name="editor_timer_duration">%1$d h %2$d min</string>
+    <string name="editor_timer_duration_hours">%1$d h</string>
+    <string name="editor_timer_duration_minutes">%1$d min</string>
 </resources>

@@ -187,7 +187,7 @@ private fun RecipeContent(
             )
         }
         IngredientsList(recipe.ingredients, entries, language, authored, requested)
-        StepsList(recipe.steps)
+        StepsList(recipe.steps, recipe.id)
         if (recipe.description.isNotBlank()) {
             Text(
                 recipe.description,

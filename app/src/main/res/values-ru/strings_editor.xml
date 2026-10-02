@@ -66,4 +66,16 @@
     <string name="editor_description">Описание</string>
     <string name="editor_description_optional">Описание (необязательно)</string>
     <string name="editor_description_none">Описания нет</string>
+    <string name="editor_timer">Таймер</string>
+    <string name="editor_timer_action">Добавить таймер к шагу %1$d</string>
+    <string name="editor_timer_hours">Часы</string>
+    <string name="editor_timer_minutes">Минуты</string>
+    <string name="editor_timer_name">Название таймера</string>
+    <string name="editor_timer_name_follows">Взято из шага. Можно назвать таймер по-своему.</string>
+    <string name="editor_timer_one_per_step">У шага один таймер. Если ждать нужно дважды подряд, разделите этот шаг на два, у каждого свой таймер.</string>
+    <string name="editor_timer_read_only">Таймер: %1$s</string>
+    <string name="editor_timer_name_read_only">Название таймера: %1$s</string>
+    <string name="editor_timer_duration">%1$d ч %2$d мин</string>
+    <string name="editor_timer_duration_hours">%1$d ч</string>
+    <string name="editor_timer_duration_minutes">%1$d мин</string>
 </resources>

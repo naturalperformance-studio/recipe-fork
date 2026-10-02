@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A step's timer on the card (FLOW-016): named by its step unless the author named it. -->
+    <string name="timer_start_action">Start this timer</string>
+    <string name="timer_finished">Finished</string>
+    <string name="timer_cancel">Cancel</string>
+    <string name="timer_cancel_action">Cancel this timer</string>
+    <string name="timer_clear">Clear</string>
+    <string name="timer_clear_action">Clear this finished timer</string>
+    <string name="timer_duration">%1$d h %2$d min</string>
+    <string name="timer_duration_hours">%1$d h</string>
+    <string name="timer_duration_minutes">%1$d min</string>
+    <!-- Starting a timer that is running asks first (FLOW-021). -->
+    <string name="timer_restart_title">This timer is running</string>
+    <string name="timer_restart_question">“%1$s” has %2$s left. Restart it from %3$s?</string>
+    <string name="timer_restart_confirm">Restart</string>
+    <string name="timer_restart_decline">Keep running</string>
+</resources>
