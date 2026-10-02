@@ -8,6 +8,7 @@ import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.media.cover
+import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
@@ -128,17 +129,23 @@ class RecipeEditor(
     /**
      * Deletes the step at [position], with its own timer, references and media; the steps after it move up and keep
      * theirs, which point at ingredients, never at steps, so each still resolves to the same ingredient (DOM-007).
+     * Once the change is in the book, [written] is given the identities of the media deleted with the step, whose
+     * files are then the caller's to delete.
      */
-    fun removeStep(position: Int) = edit { recipe ->
-        val steps = recipe.steps.sortedBy { it.position }
-        if (position !in steps.indices) return@edit recipe
-        stepKeys.remove(position, steps.size)
-        recipe.copy(
-            steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) },
-            media = recipe.media
-                .filter { (it.attachment as? MediaAttachment.ToStep)?.stepPosition != position }
-                .followingSteps { if (it > position) it - 1 else it },
-        )
+    fun removeStep(position: Int, written: suspend (removed: List<String>) -> Unit = {}): Boolean {
+        val recipe = current.value ?: return false
+        val removed = recipe.media.filter { it.attachment == MediaAttachment.ToStep(position) }.map { it.mediaId }
+        return edit({ edited ->
+            val steps = edited.steps.sortedBy { it.position }
+            if (position !in steps.indices) return@edit edited
+            stepKeys.remove(position, steps.size)
+            edited.copy(
+                steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) },
+                media = edited.media
+                    .filter { (it.attachment as? MediaAttachment.ToStep)?.stepPosition != position }
+                    .followingSteps { if (it > position) it - 1 else it },
+            )
+        }) { if (removed.isNotEmpty()) written(removed) }
     }
 
     /**
@@ -376,6 +383,40 @@ class RecipeEditor(
         }
     }
 
+    // A step's photograph (FLOW-026 (2), MEDIA-001, MEDIA-009).
+
+    /** The photograph of the step at [position], if it carries one. */
+    fun stepPhoto(position: Int): Media? = current.value?.stepPhoto(position)
+
+    /**
+     * Makes the photograph [mediaId] the one of the step at [position]. A step carries one photograph, so it replaces
+     * any the step carried (MEDIA-001, MEDIA-009); once the change is in the book, [written] is given the identity of
+     * the photograph replaced, or null, whose file is then the caller's to delete. Returns whether it was set: a frozen
+     * recipe takes none, and a step that is not there carries none.
+     */
+    fun setStepPhoto(position: Int, mediaId: String, written: suspend (replaced: String?) -> Unit = {}): Boolean {
+        val recipe = current.value ?: return false
+        if (position !in recipe.steps.indices) return false
+        val at = MediaAttachment.ToStep(position)
+        val replaced = stepPhoto(position)?.mediaId
+        val photo = Media(mediaId, null, MediaKind.PHOTO, at, MediaVisibility.PRIVATE)
+        return edit({ it.copy(media = it.media.filter { m -> !(m.kind == MediaKind.PHOTO && m.attachment == at) } + photo) }) {
+            written(replaced)
+        }
+    }
+
+    /**
+     * Takes the photograph off the step at [position]; once the change is in the book, [written] is given its
+     * identity, whose file is then the caller's to delete. Returns whether the step carried one and was editable.
+     */
+    fun removeStepPhoto(position: Int, written: suspend (removed: String) -> Unit = {}): Boolean {
+        val removed = stepPhoto(position)?.mediaId ?: return false
+        return edit({ it.copy(media = it.media.filter { m -> m.mediaId != removed }) }) { written(removed) }
+    }
+
+    /** Where the step whose [stepKey] is [key] stands now; null once it is deleted. */
+    fun stepPosition(key: Long): Int? = stepKeys.positionOf(key)?.takeIf { it < (current.value?.steps?.size ?: 0) }
+
     /**
      * Applies [change] and writes the result, then runs [then]; a recipe in a frozen state is left as it is, and
      * [then] is not run.
@@ -445,6 +486,9 @@ class RowKeys private constructor(private val keys: MutableList<Long>, private v
         fill(position + 1)
         return keys[position]
     }
+
+    /** Where the row whose key is [key] stands; null for a key no row holds. */
+    fun positionOf(key: Long): Int? = keys.indexOf(key).takeIf { it >= 0 }
 
     fun insert(position: Int, count: Int) {
         fill(count)

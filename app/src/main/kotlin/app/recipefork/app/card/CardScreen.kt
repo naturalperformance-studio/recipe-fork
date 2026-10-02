@@ -212,7 +212,7 @@ private fun RecipeContent(
             onFix = { scale = scale.fix(it) },
             onRelease = { scale = scale.release(it) },
         )
-        StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language))
+        StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language), StepPhotosOnCard(recipe, recipes.bookName()))
         if (recipe.description.isNotBlank()) {
             Text(
                 recipe.description,
@@ -411,4 +411,5 @@ object CardTags {
     fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
     fun step(position: Int) = "card-step-$position"
+    fun stepPhoto(position: Int) = "card-step-$position-photo"
 }

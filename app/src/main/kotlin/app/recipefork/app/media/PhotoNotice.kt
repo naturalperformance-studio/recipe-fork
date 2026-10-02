@@ -18,8 +18,11 @@ enum class PhotoNotice(@StringRes val text: Int) {
     /** No camera application or photo picker could be opened. */
     UNAVAILABLE(R.string.media_unavailable),
 
-    /** The photograph was removed. */
+    /** The cover photograph was removed. */
     REMOVED(R.string.media_removed),
+
+    /** A step's photograph was removed. */
+    STEP_REMOVED(R.string.media_step_removed),
     ;
 
     companion object {

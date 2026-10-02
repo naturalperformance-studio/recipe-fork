@@ -210,11 +210,11 @@ class StepsEditorTest {
         assertEquals(listOf("Boil the water.", "Add the pasta.", "Drain."), stored(id).steps.map { it.text })
         assertEquals(listOf(0, 1, 2), stored(id).steps.map { it.position })
         // A step is one text field, its removal, its menu (FLOW-025), the control that inserts an ingredient's quantity
-        // (FLOW-031) and the one that attaches its timer; nothing else.
+        // (FLOW-031), the one that attaches its timer and the one that attaches its photo (FLOW-026 (2)); nothing else.
         val inStep = hasAnyAncestor(hasTestTag(EditorTags.step(1)))
         val actions = compose.onAllNodes(inStep and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }.toSet()
-        assertEquals(setOf(EditorTags.stepText(1), EditorTags.stepRemove(1), EditorTags.stepMenu(1), EditorTags.stepInsert(1), EditorTags.timerAttach(1)), actions)
+        assertEquals(setOf(EditorTags.stepText(1), EditorTags.stepRemove(1), EditorTags.stepMenu(1), EditorTags.stepInsert(1), EditorTags.timerAttach(1), EditorTags.stepPhoto(1)), actions)
 
         // Edited in place: the middle step changes, and the others and the numbering stay.
         compose.onNodeWithTag(EditorTags.stepText(1)).performScrollTo().performTextInput(" Stir once.")

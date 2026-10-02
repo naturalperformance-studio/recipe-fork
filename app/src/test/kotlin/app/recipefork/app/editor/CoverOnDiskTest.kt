@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.app.media.PhotoAttaching
 import app.recipefork.app.media.PhotoLimits
 import app.recipefork.app.media.PhotoNotice
 import app.recipefork.app.media.PhotoReencoder
@@ -62,7 +63,7 @@ class CoverOnDiskTest {
         return PhotoOffer(open = { file.inputStream() }, release = { file.delete() })
     }
 
-    private fun opened(recipe: Recipe): Pair<RecipeEditor, CoverAttaching> = runBlocking {
+    private fun opened(recipe: Recipe): Pair<RecipeEditor, PhotoAttaching> = runBlocking {
         recipes.save(recipe)
         val editor = RecipeEditor(recipes, recipe.id, { now }, scope)
         editor.load()
