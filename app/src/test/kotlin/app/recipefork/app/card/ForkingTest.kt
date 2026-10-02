@@ -19,6 +19,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
+import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
@@ -124,5 +125,37 @@ class ForkingTest {
         val recipes = RecipeRepository(book)
         assertNull(forkRecipe(recipes, book, RecipeId("gone"), now))
         assertEquals(0, recipes.count())
+    }
+
+    // FORK-002, FLOW-065 (1, 2): a found recipe forks into an editable recipe among the own ones, naming it as its parent,
+    // with its ingredients, steps, references and timers and none of its description and media; the found recipe is
+    // still found, its media untouched. The fork keeps its parent's title and stated author, after reopening too.
+    @Test
+    fun aFoundRecipeForksIntoAnOwnRecipeWithNoDescriptionAndNoMedia() = runBlocking {
+        val first = openBook()
+        val book = ActiveBook(BookName.Pool, first)
+        val recipes = RecipeRepository(book)
+        val found = parent.copy(id = RecipeId("found-1"), statedAuthor = "anna").inState(RecipeState.LINK_SHARED)
+        recipes.addFound(found, created)
+        val forkId = requireNotNull(forkRecipe(recipes, book, found.id, now))
+        first.close()
+
+        val reopened = RecipeRepository(ActiveBook(BookName.Pool, openBook()))
+        val fork = requireNotNull(reopened.get(forkId))
+        assertEquals(found.id, fork.parent)
+        assertEquals(RecipeState.LOCAL, fork.state)
+        assertEquals(true, fork.state.editable)
+        assertNull(fork.owner)
+        assertEquals("", fork.description)
+        assertEquals(emptyList<Media>(), fork.media)
+        assertEquals(found.ingredients, fork.ingredients)
+        assertEquals(found.steps, fork.steps)
+        assertEquals(Timer(40.minutes, "Beet"), fork.steps[0].timer)
+        assertEquals(listOf(IngredientReference(1, 9)), fork.steps[0].ingredientReferences)
+        assertNull(fork.statedAuthor)
+        assertEquals(StatedParent("Borscht", "anna"), fork.statedParent)
+        assertEquals(listOf(forkId.value), reopened.ownNewest(10).first().map { it.recipeId })
+        assertEquals(found, reopened.get(found.id))
+        assertEquals(listOf(found.id.value), reopened.marked().first().map { it.recipeId })
     }
 }

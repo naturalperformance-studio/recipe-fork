@@ -31,17 +31,20 @@ data class RecipeFileContent(
 ) {
     companion object {
         /**
-         * The file's content for [recipe]. [parentInBook] is its direct parent when the book holds it; otherwise
-         * the parent a file stated for [recipe] is named again, so that a re-exported import keeps its lineage
-         * (FLOW-063 (6)). [ownerNickname] is the nickname of the account whose recipe it is, null in the pool.
+         * The file's content for [recipe]. A parent [recipe] states — the one its own file named, or the found recipe
+         * a fork of it was made from — is named as stated, so that a re-exported import keeps its lineage
+         * (FLOW-063 (6)) and a fork of a found recipe names it even once removed (FLOW-065 (6)). Otherwise
+         * [parentInBook], its direct parent when the book holds it, gives the title. [ownerNickname] is the nickname
+         * of the account whose recipe it is, null in the pool.
          */
         fun of(recipe: Recipe, parentInBook: Recipe?, ownerNickname: String?): RecipeFileContent {
             val parent = recipe.parent?.let { id ->
+                val stated = recipe.statedParent
                 val held = parentInBook?.takeIf { it.id == id }
-                if (held != null) {
-                    FileParent(id, held.title, held.statedAuthor)
-                } else {
-                    FileParent(id, recipe.statedParent?.title, recipe.statedParent?.nickname?.takeIf { it.isNotEmpty() })
+                when {
+                    stated != null -> FileParent(id, stated.title, stated.nickname.takeIf { it.isNotEmpty() })
+                    held != null -> FileParent(id, held.title, held.statedAuthor)
+                    else -> FileParent(id, null, null)
                 }
             }
             return RecipeFileContent(

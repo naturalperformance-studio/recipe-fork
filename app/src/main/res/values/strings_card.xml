@@ -11,6 +11,11 @@
     <string name="card_parent">Forked from “%1$s”</string>
     <string name="card_parent_open_action">Open the recipe this one was forked from</string>
     <string name="card_parent_unavailable">Forked from a recipe that is not in this recipe book</string>
+    <!-- A parent named by text the recipe keeps: the title and author a file stated, or the found recipe a fork was made
+         from (FLOW-065). The author is marked as not verified every time it is shown. -->
+    <string name="card_parent_stated">Forked from “%1$s” (author: %2$s, stated in the file, not verified)</string>
+    <string name="card_parent_named_unavailable">Forked from “%1$s”, which is not in this recipe book</string>
+    <string name="card_parent_stated_unavailable">Forked from “%1$s” (author: %2$s, stated in the file, not verified), which is not in this recipe book</string>
     <!-- The recipe's parts, each shown only where the recipe holds it (FLOW-019). -->
     <string name="card_servings">Servings: %1$s</string>
     <!-- The serving count control (SCALE-011): its two actions, named and announced for the screen reader. -->

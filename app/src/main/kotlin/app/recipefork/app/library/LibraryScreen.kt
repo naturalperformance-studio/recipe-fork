@@ -239,7 +239,7 @@ private fun OwnList(
                     mode,
                     onOpen = { session.openCard(row.recipeId, LibraryView.OWN) },
                     onDelete = { deleting = row.recipeId },
-                    onExport = { export(row) },
+                    onExport = { export(row.recipeId, row.title) },
                 )
             }
         }
@@ -352,23 +352,23 @@ private fun DeleteOffer(row: OwnRecipeRow, onDelete: () -> Unit, modifier: Modif
 }
 
 /**
- * Exports an own recipe (FLOW-063): its file is written and the system's share and save sheet opens on it. A tap
- * while a file is being written starts no second one. Export reads the recipe and changes nothing in it. An export that
- * fails says so.
+ * Exports a recipe of the book, own or found (FLOW-063): its file is written and the system's share and save sheet
+ * opens on it. Called with the recipe's identity and the title its entry shows. A tap while a file is being written
+ * starts no second one. Export reads the recipe and changes nothing in it. An export that fails says so.
  */
 @Composable
-private fun rememberExport(recipes: RecipeRepository): (OwnRecipeRow) -> Unit {
+private fun rememberExport(recipes: RecipeRepository): (recipeId: String, title: String) -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var exporting by remember { mutableStateOf(false) }
-    return { row ->
+    return { recipeId, entryTitle ->
         if (!exporting) {
             exporting = true
             scope.launch {
                 try {
-                    val title = row.title.ifBlank { context.getString(R.string.common_untitled_recipe) }
+                    val title = entryTitle.ifBlank { context.getString(R.string.common_untitled_recipe) }
                     val sheet = context.getString(R.string.file_export_sheet, title)
-                    if (!RecipeExport.share(context, recipes, RecipeId(row.recipeId), sheet)) {
+                    if (!RecipeExport.share(context, recipes, RecipeId(recipeId), sheet)) {
                         Toast.makeText(context, R.string.file_export_failed, Toast.LENGTH_SHORT).show()
                     }
                 } finally {
@@ -438,8 +438,8 @@ fun rememberRecipeImport(recipes: RecipeRepository): RecipeImport {
 
 /**
  * The view of marked recipes (FLOW-034 (2)): what the book marks, the found recipes among it. A found recipe's entry
- * opens its card and offers its removal; one stating its author names it, marked as stated and not verified
- * (FLOW-064 (3)). In [Mode.Serverless] the view offers to import a recipe file above the list; with nothing marked it
+ * opens its card and offers its removal, and in [Mode.Serverless] its export too (FLOW-063 (2)); one stating its author
+ * names it, marked as stated and not verified (FLOW-064 (3)). In [Mode.Serverless] the view offers to import a recipe file above the list; with nothing marked it
  * says so, and that offer is the way out of it (FLOW-042).
  */
 @Composable
@@ -462,6 +462,7 @@ private fun MarkedList(
             onDecline = { removing = null },
         )
     }
+    val export = rememberExport(recipes)
     val loaded = marked
     Column(Modifier.fillMaxSize()) {
         if (mode == Mode.Serverless && loaded != null) {
@@ -479,57 +480,86 @@ private fun MarkedList(
             items(loaded.orEmpty(), key = { it.recipeId }) { row ->
                 MarkedEntry(
                     row,
+                    mode,
                     onOpen = { session.openCard(row.recipeId, LibraryView.MARKED) },
                     onRemove = { removing = row.recipeId },
+                    onExport = { export(row.recipeId, row.title) },
                 )
             }
         }
     }
 }
 
-/** A marked recipe's entry: its title and any stated author; one whose content the book holds opens and is removable. */
+/**
+ * A marked recipe's entry: its title and any stated author; one whose content the book holds opens and is removable.
+ * In [Mode.Serverless] such an entry offers its export as well (FLOW-063 (2)), and its offers then stand on a line of
+ * their own under the entry's text, as an own entry's do.
+ */
 @Composable
-private fun MarkedEntry(row: MarkedRecipeRow, onOpen: () -> Unit, onRemove: () -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        val open = if (row.held) {
-            Modifier.clickable(
-                onClickLabel = stringResource(R.string.library_entry_open_action),
-                role = Role.Button,
-                onClick = onOpen,
-            )
-        } else {
-            Modifier
-        }
-        Column(
-            Modifier
-                .weight(1f)
-                .heightIn(min = 48.dp)
-                .semantics(mergeDescendants = true) {}
-                .then(open)
-                .testTag(LibraryTags.entry(row.recipeId))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        ) {
-            Text(
-                text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
-            )
-            row.statedAuthor?.let {
-                Text(
-                    stringResource(R.string.file_stated_author, it),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
-                )
+private fun MarkedEntry(row: MarkedRecipeRow, mode: Mode, onOpen: () -> Unit, onRemove: () -> Unit, onExport: () -> Unit) {
+    when {
+        mode == Mode.Serverless && row.held -> Column(Modifier.fillMaxWidth()) {
+            MarkedEntryText(row, onOpen, Modifier.fillMaxWidth())
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(
+                    onClick = onExport,
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.export(row.recipeId)),
+                ) { Text(stringResource(R.string.file_export)) }
+                RemoveOffer(row, onRemove)
             }
         }
-        if (row.held) {
-            TextButton(
-                onClick = onRemove,
-                modifier = Modifier.padding(end = 8.dp).heightIn(min = 48.dp).testTag(LibraryTags.remove(row.recipeId)),
-            ) { Text(stringResource(R.string.library_entry_remove)) }
+        else -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            MarkedEntryText(row, onOpen, Modifier.weight(1f))
+            if (row.held) RemoveOffer(row, onRemove, Modifier.padding(end = 8.dp))
         }
     }
     HorizontalDivider()
+}
+
+@Composable
+private fun MarkedEntryText(row: MarkedRecipeRow, onOpen: () -> Unit, modifier: Modifier) {
+    val open = if (row.held) {
+        Modifier.clickable(
+            onClickLabel = stringResource(R.string.library_entry_open_action),
+            role = Role.Button,
+            onClick = onOpen,
+        )
+    } else {
+        Modifier
+    }
+    Column(
+        modifier
+            .heightIn(min = 48.dp)
+            .semantics(mergeDescendants = true) {}
+            .then(open)
+            .testTag(LibraryTags.entry(row.recipeId))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(
+            text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
+        )
+        row.statedAuthor?.let {
+            Text(
+                stringResource(R.string.file_stated_author, it),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun RemoveOffer(row: MarkedRecipeRow, onRemove: () -> Unit, modifier: Modifier = Modifier) {
+    TextButton(
+        onClick = onRemove,
+        modifier = modifier.heightIn(min = 48.dp).testTag(LibraryTags.remove(row.recipeId)),
+    ) { Text(stringResource(R.string.library_entry_remove)) }
 }
 
 /**

@@ -31,19 +31,25 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.file.FileProviderCache
+import app.recipefork.app.file.ImportOutcome
+import app.recipefork.app.file.RecipeImport
+import app.recipefork.app.file.TestRecipeFiles
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
+import app.recipefork.core.file.FileParent
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -90,6 +96,7 @@ class ExportFromTheBookTest {
     fun close() {
         compose.unregisterIdlingResource(book.idling)
         book.close()
+        importFiles.deleteRecursively()
     }
 
     private fun own(title: String, state: RecipeState = RecipeState.LOCAL, minutesAgo: Long = 0): Recipe {
@@ -253,6 +260,62 @@ class ExportFromTheBookTest {
         val exportBounds = compose.onNodeWithTag(LibraryTags.export(id)).fetchSemanticsNode().boundsInRoot
         val deleteBounds = compose.onNodeWithTag(LibraryTags.delete(id)).fetchSemanticsNode().boundsInRoot
         assertTrue("the offers do not overlap", exportBounds.right <= deleteBounds.left || deleteBounds.right <= exportBounds.left)
+    }
+
+    // FLOW-063 (2, 6): in serverless mode a found recipe's entry in the marked view offers Export too, beside Remove; its
+    // file carries the author and the parent the found recipe's own file stated, and the found recipe stays as it was.
+    @Test
+    fun inServerlessModeAFoundEntryOffersExportCarryingTheStatedAuthorAndParent() {
+        val id = found()
+        val before = runBlocking { recipes.get(id) }!!
+        show(Mode.Serverless)
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.export(id.value)), PATIENCE_MS)
+        assertEquals(listOf("Export"), compose.textsOf(LibraryTags.export(id.value)))
+        assertTrue(exists(LibraryTags.remove(id.value)))
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 4)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 4)
+        val activity = shadowOf(compose.activity)
+        compose.onNodeWithTag(LibraryTags.export(id.value)).performClick()
+        compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivity() != null }
+        val sheet = activity.nextStartedActivity
+        assertEquals(Intent.ACTION_CHOOSER, sheet.action)
+        assertEquals("Export “Bean soup”", sheet.getCharSequenceExtra(Intent.EXTRA_TITLE).toString())
+        @Suppress("DEPRECATION")
+        val uri = sheet.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)!!
+        val read = RecipeFile.decode(
+            ZipInputStream(context.contentResolver.openInputStream(uri)!!).use { zip ->
+                generateSequence { zip.nextEntry }.first { it.name == RecipeFile.DOCUMENT }
+                zip.readBytes().toString(Charsets.UTF_8)
+            },
+        )
+        assertEquals(id, read.id)
+        assertEquals("anna", read.author)
+        assertEquals(FileParent(RecipeId("p-1"), "Soup", "boris"), read.parent)
+        assertEquals(before, runBlocking { recipes.get(id) })
+        assertEquals(listOf(id.value), runBlocking { recipes.marked().first() }.map { it.recipeId })
+    }
+
+    // FLOW-062 (8): in standard mode a found recipe's entry offers no export.
+    @Test
+    fun inStandardModeAFoundEntryOffersNoExport() {
+        val id = found()
+        show(Mode.Standard)
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.remove(id.value)), PATIENCE_MS)
+        assertTrue(!exists(LibraryTags.export(id.value)))
+        val export = hasText("Export", substring = true, ignoreCase = true) or
+            hasContentDescription("Export", substring = true, ignoreCase = true)
+        assertEquals(0, compose.onAllNodes(export, useUnmergedTree = true).fetchSemanticsNodes().size)
+    }
+
+    private val importFiles = File(context.cacheDir, "export-from-the-book-files")
+
+    private fun found(): RecipeId {
+        val content = TestRecipeFiles.soup()
+        val outcome = runBlocking { RecipeImport(recipes, importFiles, clock = { now }).import { TestRecipeFiles.file(content).inputStream() } }
+        assertTrue("$outcome", outcome is ImportOutcome.Added)
+        return content.id
     }
 
     // An export that fails says so, and opens no sheet.
