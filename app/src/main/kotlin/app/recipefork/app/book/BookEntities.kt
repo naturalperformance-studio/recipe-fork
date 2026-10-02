@@ -113,14 +113,25 @@ data class RecipeTagEntity(
 )
 
 /**
- * A recipe marked in this book (FLOW-009). Nothing can be marked yet; the view of marked recipes reads
- * this table so that it lists what the book holds.
+ * A recipe marked in this book (FLOW-009); the view of marked recipes lists what this table holds. A recipe imported
+ * from a file is marked so (FLOW-064), its content held in the recipe tables under the same identity: a recipe whose
+ * identity is marked is a found one, never written here, and so is not listed among the own recipes.
  */
 @Entity(tableName = "favourite")
 data class FavouriteEntity(
     @PrimaryKey @ColumnInfo(name = "recipe_id") val recipeId: String,
     val title: String,
     @ColumnInfo(name = "added_at") val addedAt: Instant,
+)
+
+/** What an entry of the view of marked recipes shows. */
+data class MarkedRecipeRow(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    val title: String,
+    /** The author's nickname as the recipe's file states it, never verified (FLOW-064 (3)). */
+    @ColumnInfo(name = "stated_author") val statedAuthor: String?,
+    /** Whether the book holds the recipe's content, which its card then shows. */
+    val held: Boolean,
 )
 
 /** What an entry of the own-recipes view shows. */

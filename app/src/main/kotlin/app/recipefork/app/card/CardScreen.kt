@@ -68,7 +68,7 @@ private sealed interface CardContent {
  *
  * The top bar holds the screen's actions, outside the recipe: back to the book, the fork action on every recipe,
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
- * editor on it (FLOW-029 (2–4)). Nothing inside the recipe edits it; the serving count's − and +, which change how
+ * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
  * provenance, which opens its parent's card, the other. It opens at the authored count each time.
  */
@@ -175,6 +175,14 @@ private fun RecipeContent(
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.semantics { heading() }.testTag(CardTags.TITLE),
         )
+        // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
+        recipe.statedAuthor?.let {
+            Text(
+                stringResource(R.string.file_stated_author, it),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(CardTags.STATED_AUTHOR),
+            )
+        }
         recipe.parent?.let { Provenance(it, recipes, onOpenParent) }
         // The card always opens at the authored count (FLOW-017 (2)); the scale is the card's alone, and a fixing is
         // of the rows as they stand, so a change to them starts the scale anew.
@@ -369,6 +377,7 @@ object CardTags {
     const val EDIT = "card-edit"
     const val FORK = "card-fork"
     const val PROVENANCE = "card-provenance"
+    const val STATED_AUTHOR = "card-stated-author"
     const val MISSING = "card-missing"
     const val CONTENT = "card-content"
     const val TITLE = "card-title"

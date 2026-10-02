@@ -6,4 +6,17 @@
     <string name="file_export_sheet">Export “%1$s”</string>
     <!-- Said when no file could be written, or no sheet opened. -->
     <string name="file_export_failed">Couldn\'t export the recipe</string>
+    <!-- FLOW-064: import of a recipe file, from another application or from the view of marked recipes. -->
+    <string name="file_import">Import a recipe file</string>
+    <!-- %1$s is the recipe's title. -->
+    <string name="file_imported">“%1$s” is in your recipe book now</string>
+    <string name="file_import_already">“%1$s” is already in your recipe book, so nothing was added</string>
+    <!-- FLOW-064 (5): why a file was refused. -->
+    <string name="file_import_cannot_open">Couldn\'t open the file, so nothing was added</string>
+    <string name="file_import_not_a_recipe">This file is not a recipe file, so nothing was added</string>
+    <string name="file_import_later">This recipe file was made by a newer version of the app. Update the app to open it; nothing was added</string>
+    <string name="file_import_damaged">This recipe file is damaged, so nothing was added</string>
+    <string name="file_import_breaks_rules">The recipe in this file breaks the rules every recipe keeps, so nothing was added</string>
+    <!-- FLOW-064 (3): the author a file states, marked every time it is shown; %1$s is the nickname. -->
+    <string name="file_stated_author">Author: %1$s (stated in the file, not verified)</string>
 </resources>

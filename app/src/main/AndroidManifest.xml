@@ -26,6 +26,41 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- A recipe file opened from another application (FLOW-064): by the product's own type. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/vnd.recipefork.recipe+zip" />
+            </intent-filter>
+            <!-- ... and by its extension, for a messenger or a file manager that hands it with a generic type or none.
+                 A path pattern does not backtrack, so a name holding further dots needs a pattern of its own. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+                <data android:pathPattern=".*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.recipefork" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.recipefork" />
+            </intent-filter>
         </activity>
 
         <!-- A recipe file is handed to the share and save sheet through this provider (FLOW-063 (7)). -->

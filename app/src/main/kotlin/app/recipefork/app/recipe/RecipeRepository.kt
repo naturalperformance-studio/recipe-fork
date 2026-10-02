@@ -1,7 +1,9 @@
 package app.recipefork.app.recipe
 
 import app.recipefork.app.book.ActiveBook
+import app.recipefork.app.book.BookName
 import app.recipefork.app.book.FavouriteEntity
+import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.IngredientEntity
 import app.recipefork.app.book.MediaEntity
 import app.recipefork.app.book.OwnRecipeRow
@@ -33,8 +35,27 @@ class RecipeRepository(private val book: ActiveBook) {
     fun ownNewest(limit: Int): Flow<List<OwnRecipeRow>> =
         book.open.flatMapLatest { it.database.recipes().newest(limit) }
 
-    /** What is marked in the active book. */
-    fun marked(): Flow<List<FavouriteEntity>> = book.open.flatMapLatest { it.database.favourites().all() }
+    /** What is marked in the active book, the found recipes among it (FLOW-009, FLOW-064). */
+    fun marked(): Flow<List<MarkedRecipeRow>> = book.open.flatMapLatest { it.database.favourites().marked() }
+
+    /** The name of the active book, whose media directory a found recipe's media is written to. */
+    fun bookName(): BookName = book.open.value.name
+
+    /**
+     * Adds [recipe] to the active book as a found recipe, marked at [at] (FLOW-064 (1)). Returns false, adding
+     * nothing, when the book already holds a recipe of that identity — found before, or the person's own (FLOW-064 (4)).
+     */
+    suspend fun addFound(recipe: Recipe, at: java.time.Instant): Boolean =
+        book.database.recipes().putFound(recipe.toRows(), FavouriteEntity(recipe.id.value, recipe.title, at))
+
+    /** Whether the recipe [id] of the active book is a marked one: found, not written in this book. */
+    suspend fun isMarked(id: RecipeId): Boolean = book.database.recipes().isMarked(id.value)
+
+    /**
+     * Removes the marked recipe [id] from the active book with its held content (FLOW-064 (6)). Returns the media
+     * identities it held, or null when the book marks no such recipe.
+     */
+    suspend fun removeMarked(id: RecipeId): List<String>? = book.database.recipes().removeMarked(id.value)
 
     suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
 

@@ -17,7 +17,11 @@ import java.math.BigInteger
 import kotlin.time.Duration.Companion.minutes
 
 /** A recipe file's document cannot be read: it is not one, is damaged, or is of a later format. */
-class UnreadableRecipeFile(message: String, cause: Throwable? = null) : Exception(message, cause)
+open class UnreadableRecipeFile(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/** The document is of a format later than this application reads: written by a later version of it (FLOW-064 (5)). */
+class LaterRecipeFile(val formatVersion: Int) :
+    UnreadableRecipeFile("format $formatVersion is later than ${RecipeFile.FORMAT_VERSION}")
 
 /**
  * The recipe file's shape and its document, `recipe.json` (decisions/20260928-recipe-file-is-a-zip.md).
@@ -36,6 +40,9 @@ object RecipeFile {
     /** The directory of the archive's media entries. */
     const val MEDIA_DIRECTORY = "media/"
 
+    /** Longer numbers are no quantity a kitchen writes, and are not parsed at all. */
+    private const val MAX_DIGITS = 40
+
     private val json = Json { prettyPrint = true; explicitNulls = false; encodeDefaults = true }
     private val versionOnly = Json { ignoreUnknownKeys = true }
 
@@ -49,7 +56,7 @@ object RecipeFile {
         } catch (e: IllegalArgumentException) {
             throw UnreadableRecipeFile("no format version", e)
         }
-        if (version > FORMAT_VERSION) throw UnreadableRecipeFile("format $version is later than $FORMAT_VERSION")
+        if (version > FORMAT_VERSION) throw LaterRecipeFile(version)
         if (version < 1) throw UnreadableRecipeFile("format $version does not exist")
         return try {
             json.decodeFromString(RecipeDocument.serializer(), text).toContent()
@@ -153,7 +160,7 @@ object RecipeFile {
      * The file's names for the domain's enumerations, spelt out here so that renaming a Kotlin constant cannot change
      * the format: a new constant fails to compile until it is given a name.
      */
-    private object Names {
+    internal object Names {
         val unitType = nameTable<UnitType> {
             when (it) {
                 UnitType.EXACT -> "exact"
@@ -193,7 +200,7 @@ object RecipeFile {
         }
     }
 
-    private class NameTable<E : Enum<E>>(private val values: List<E>, private val name: (E) -> String) {
+    internal class NameTable<E : Enum<E>>(val values: List<E>, private val name: (E) -> String) {
         private val byName = values.associateBy(name)
         fun nameOf(value: E): String = name(value)
         fun valueOf(text: String): E = byName[text] ?: throw UnreadableRecipeFile("unknown name: $text")
@@ -201,10 +208,10 @@ object RecipeFile {
 
     private inline fun <reified E : Enum<E>> nameTable(noinline name: (E) -> String) = NameTable(enumValues<E>().toList(), name)
 
-    /** `n` or `n/d`, both whole numbers, the denominator not zero. */
+    /** `n` or `n/d`, both whole numbers of reasonable length, the denominator not zero. */
     private fun rationalOf(text: String): Rational {
         val parts = text.split('/')
-        if (parts.size > 2) throw UnreadableRecipeFile("not a fraction: $text")
+        if (parts.size > 2 || parts.any { it.length > MAX_DIGITS }) throw UnreadableRecipeFile("not a fraction: $text")
         return try {
             Rational.of(BigInteger(parts[0]), if (parts.size == 2) BigInteger(parts[1]) else BigInteger.ONE)
         } catch (e: IllegalArgumentException) {

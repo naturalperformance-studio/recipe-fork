@@ -31,4 +31,12 @@
     <string name="library_delete_statement">The recipe goes at once, with its photographs and video, and cannot be brought back.</string>
     <string name="library_delete_confirm">Delete</string>
     <string name="library_delete_decline">Cancel</string>
+    <!-- FLOW-042: the view of marked recipes when nothing is marked in the book. -->
+    <string name="library_marked_empty">No recipes are marked in this book yet.</string>
+    <!-- FLOW-009 (4), FLOW-064 (6): removing a found recipe from the book, and the statement shown first. -->
+    <string name="library_entry_remove">Remove</string>
+    <string name="library_remove_title">Remove “%1$s” from your book?</string>
+    <string name="library_remove_statement">The recipe leaves this device with everything the book holds of it.</string>
+    <string name="library_remove_confirm">Remove</string>
+    <string name="library_remove_decline">Cancel</string>
 </resources>

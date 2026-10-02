@@ -36,6 +36,8 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     fun openEditor(recipeId: String) {
         saved[EDITING_KEY] = recipeId
+        // Only an own recipe is edited, so the card shown on leaving the editor returns to the own recipes.
+        saved[CARD_FROM_KEY] = LibraryView.OWN
     }
 
     /** Leaving the editor shows the card of the recipe just edited (FLOW-029 (1)). */
@@ -50,14 +52,28 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
      */
     val viewing: StateFlow<String?> = saved.getStateFlow(VIEWING_KEY, null)
 
-    fun openCard(recipeId: String) {
+    fun openCard(recipeId: String, from: LibraryView? = null) {
         saved[VIEWING_KEY] = recipeId
+        from?.let { saved[CARD_FROM_KEY] = it }
     }
 
-    /** Back from the card returns to the own-recipes view, from which a saved recipe is opened. */
+    /**
+     * Back from the card returns to the view its recipe was opened from: the own recipes, from which a saved recipe
+     * is opened, or the marked ones, from which a found recipe is.
+     */
     fun closeCard() {
         saved[VIEWING_KEY] = null
-        saved[VIEW_KEY] = LibraryView.OWN
+        saved[VIEW_KEY] = saved.get<LibraryView>(CARD_FROM_KEY) ?: LibraryView.OWN
+    }
+
+    /**
+     * A recipe file was imported (FLOW-064 (1)): the view of marked recipes is shown, where it is listed now, in place
+     * of whatever was open — an editor keeps what was entered as it is typed.
+     */
+    fun showImported() {
+        saved[EDITING_KEY] = null
+        saved[VIEWING_KEY] = null
+        saved[VIEW_KEY] = LibraryView.MARKED
     }
 
     /**
@@ -68,6 +84,7 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
     fun showStep(recipeId: String, position: Int) {
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = recipeId
+        saved[CARD_FROM_KEY] = null
         saved[STEP_KEY] = "$position/$recipeId"
     }
 
@@ -89,5 +106,6 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         const val VIEW_KEY = "library.view"
         const val EDITING_KEY = "library.editing"
         const val VIEWING_KEY = "library.viewing"
+        const val CARD_FROM_KEY = "library.card_from"
     }
 }
