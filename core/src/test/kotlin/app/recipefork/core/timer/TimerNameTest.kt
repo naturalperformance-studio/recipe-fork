@@ -45,6 +45,27 @@ class TimerNameTest {
     }
 
     @Test
+    fun `a cut at a hyphen inside a word leaves the whole word out`() {
+        val before = "word ".repeat(10) + "abcdef " // 57 characters; the 61st is the hyphen of "кое-где"
+        assertEquals(57, before.length)
+        assertEquals(before.trimEnd() + "…", TimerName.derived(before + "кое-где лежит соль"))
+    }
+
+    @Test
+    fun `a cut at an apostrophe inside a word leaves the whole word out`() {
+        val before = "word ".repeat(10) + "abcdef " // the 61st character is the apostrophe of "don't"
+        assertEquals(before.trimEnd() + "…", TimerName.derived(before + "don't stir it yet"))
+        assertEquals(before.trimEnd() + "…", TimerName.derived(before + "don\u2019t stir it yet"))
+    }
+
+    @Test
+    fun `a cut at a combining mark never parts it from its letter`() {
+        val before = "word ".repeat(11) + "abc " // 59 characters; the 61st is the accent combining with "e"
+        assertEquals(59, before.length)
+        assertEquals(before.trimEnd() + "…", TimerName.derived(before + "e\u0301tude for the oven"))
+    }
+
+    @Test
     fun `a single word longer than 60 characters is cut at 60`() {
         val word = "x".repeat(75)
         assertEquals("x".repeat(60) + "…", TimerName.derived(word))
