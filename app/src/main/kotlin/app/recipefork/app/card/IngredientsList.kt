@@ -21,6 +21,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -72,7 +74,7 @@ internal fun IngredientsList(
         }
         list.lines.forEachIndexed { i, line ->
             val position = ordered[i].position
-            IngredientRow(line, CardTags.ingredient(position)) { open = if (open == position) null else position }
+            IngredientRow(line, position) { open = if (open == position) null else position }
             val offer = line.fixing
             if (offer != null && open == position) {
                 key(position) {
@@ -96,7 +98,17 @@ internal val IngredientList.recalculated: Boolean get() = lines.any { it.derived
 /** Test tags of the ingredients section's own parts. */
 internal object IngredientTags {
     const val RECALCULATED = "card-recalculated"
+    /** The arrow after the quantity of the line at [position], where rounding moved it. */
+    fun rounding(position: Int) = "card-ingredient-$position-rounding"
 }
+
+/**
+ * The text a sighted reader sees on a part whose screen-reader text is set apart from it — the arrows and the
+ * section line — kept in the semantics tree for tests, never read aloud.
+ */
+internal val ShownText = SemanticsPropertyKey<String>(SHOWN_TEXT_KEY)
+private const val SHOWN_TEXT_KEY = "card.shown-text"
+private var SemanticsPropertyReceiver.shownText by ShownText
 
 /**
  * The one line that says the section's quantities are recalculated and what the arrows mean; read by the screen
@@ -105,13 +117,14 @@ internal object IngredientTags {
 @Composable
 private fun RecalculatedLegend() {
     val spoken = stringResource(R.string.card_quantities_recalculated_spoken)
+    val shown = stringResource(R.string.card_quantities_recalculated)
     Text(
-        stringResource(R.string.card_quantities_recalculated),
+        shown,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
-            .clearAndSetSemantics { text = AnnotatedString(spoken); testTag = IngredientTags.RECALCULATED },
+            .clearAndSetSemantics { text = AnnotatedString(spoken); shownText = shown; testTag = IngredientTags.RECALCULATED },
     )
 }
 
@@ -121,7 +134,7 @@ private fun RecalculatedLegend() {
  * that offers fixing is one action that opens its control.
  */
 @Composable
-private fun IngredientRow(line: IngredientLine, tag: String, onOpen: () -> Unit) {
+private fun IngredientRow(line: IngredientLine, position: Int, onOpen: () -> Unit) {
     val tappable = if (line.fixing != null) {
         Modifier
             .heightIn(min = 48.dp)
@@ -130,7 +143,7 @@ private fun IngredientRow(line: IngredientLine, tag: String, onOpen: () -> Unit)
         Modifier
     }
     Column(
-        Modifier.fillMaxWidth().then(tappable).semantics(mergeDescendants = true) {}.testTag(tag),
+        Modifier.fillMaxWidth().then(tappable).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position)),
         verticalArrangement = Arrangement.Center,
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -141,8 +154,18 @@ private fun IngredientRow(line: IngredientLine, tag: String, onOpen: () -> Unit)
             )
             line.quantity?.let { quantity ->
                 Row {
-                    Text(quantity, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End, modifier = Modifier.alignByBaseline())
-                    if (line.derived) roundingMark(line.rounding)?.let { (arrow, spoken) -> RoundingArrow(arrow, stringResource(spoken)) }
+                    // The arrow is measured first, so a long quantity wraps before it squeezes the arrow away.
+                    Text(
+                        quantity,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
+                    )
+                    if (line.derived) {
+                        roundingMark(line.rounding)?.let { (arrow, spoken) ->
+                            RoundingArrow(arrow, stringResource(spoken), IngredientTags.rounding(position))
+                        }
+                    }
                 }
             }
         }
@@ -152,12 +175,16 @@ private fun IngredientRow(line: IngredientLine, tag: String, onOpen: () -> Unit)
 
 /** The arrow after a rounded quantity: small and secondary on screen, the words [spoken] for the screen reader. */
 @Composable
-private fun RowScope.RoundingArrow(arrow: String, spoken: String) {
+private fun RowScope.RoundingArrow(arrow: String, spoken: String, tag: String) {
     Text(
         arrow,
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.alignByBaseline().padding(start = 2.dp).clearAndSetSemantics { text = AnnotatedString(spoken) },
+        modifier = Modifier.alignByBaseline().padding(start = 2.dp).clearAndSetSemantics {
+            text = AnnotatedString(spoken)
+            shownText = arrow
+            testTag = tag
+        },
     )
 }
 

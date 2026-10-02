@@ -105,6 +105,16 @@ class CardRecalculatedTest {
     private fun legends() = compose.onAllNodes(hasTestTag(IngredientTags.RECALCULATED)).fetchSemanticsNodes()
         .map { node -> node.config[SemanticsProperties.Text].joinToString("") { it.text } }
 
+    /** The arrow a sighted reader sees after each line's quantity, or null where it carries none. */
+    private fun arrows() = (0..3).map { position ->
+        compose.onAllNodes(hasTestTag(IngredientTags.rounding(position)), useUnmergedTree = true).fetchSemanticsNodes()
+            .singleOrNull()?.config?.get(ShownText)
+    }
+
+    /** What a sighted reader sees of every section line shown. */
+    private fun shownLegends() = compose.onAllNodes(hasTestTag(IngredientTags.RECALCULATED), useUnmergedTree = true)
+        .fetchSemanticsNodes().map { it.config[ShownText] }
+
     private fun warningShown() = compose.onAllNodes(hasTestTag(CardTags.PROPORTIONS)).fetchSemanticsNodes().isNotEmpty()
 
     private fun awaitWarning(shown: Boolean) = compose.waitUntil(PATIENCE_MS) { warningShown() == shown }
@@ -121,6 +131,8 @@ class CardRecalculatedTest {
             lines(),
         )
         assertEquals(emptyList<String>(), legends())
+        assertEquals(emptyList<String>(), shownLegends())
+        assertEquals(listOf(null, null, null, null), arrows())
         more(2)
         assertEquals("Servings: 6", servings())
         awaitLegend(true)
@@ -135,14 +147,20 @@ class CardRecalculatedTest {
             ),
             lines(),
         )
+        // On screen: 4.5 eggs → 5 carries ↑; the exact chicken and salt and the unscaled flour carry nothing.
+        assertEquals(listOf(null, "↑", null, null), arrows())
+        assertEquals(listOf("Recalculated · ↑ rounded up · ↓ rounded down"), shownLegends())
         fewer(3)
         assertEquals("Servings: 3", servings())
         // 2.25 eggs shown as 2.
         assertEquals(listOf("Eggs", "2 pc", down), lines()[1])
+        assertEquals(listOf(null, "↓", null, null), arrows())
         assertEquals(listOf(legend), legends())
         more()
         assertEquals("Servings: 4", servings())
         awaitLegend(false)
+        assertEquals(emptyList<String>(), shownLegends())
+        assertEquals(listOf(null, null, null, null), arrows())
         assertEquals(listOf(listOf("Chicken", "500 g"), listOf("Eggs", "3 pc"), listOf("Salt", "1 tsp"), listOf("Flour", "g")), lines())
     }
 
@@ -162,6 +180,8 @@ class CardRecalculatedTest {
         assertEquals(listOf("Chicken", "300 g", "fixed"), lines()[0])
         assertEquals(listOf("Eggs", "2 pc", up), lines()[1])
         assertEquals(listOf("Salt", "⅔ tsp", up), lines()[2])
+        assertEquals(listOf(null, "↑", "↑", null), arrows())
+        assertEquals(1, shownLegends().size)
     }
 
     // SCALE-005, SCALE-004 (3): at ¼ serving the eggs and the salt are held at their floors and read as rounded up.
@@ -172,6 +192,8 @@ class CardRecalculatedTest {
         assertEquals("Servings: ¼", servings())
         assertEquals(listOf("Eggs", "1 pc", up), lines()[1])
         assertEquals(listOf("Salt", "¼ tsp", up), lines()[2])
+        // On screen both held lines carry ↑.
+        assertEquals(listOf("↑", "↑"), arrows().subList(1, 3))
     }
 
     // SCALE-009 (1–4): one line at its floor, no warning; two, the warning; back at the authored count, none.
@@ -211,6 +233,7 @@ class CardRecalculatedTest {
     @Test
     fun theMarkingAndTheWarningAreWordsTheScreenReaderReads() = readAloud(
         legend = legend,
+        shownLegend = "Recalculated · ↑ rounded up · ↓ rounded down",
         up = up,
         down = down,
         warning = "Some amounts are at their minimum — proportions are off.",
@@ -220,17 +243,20 @@ class CardRecalculatedTest {
     @Config(qualifiers = "ru")
     fun theMarkingAndTheWarningAreWordsTheScreenReaderReadsInRussian() = readAloud(
         legend = "Количества пересчитаны. Стрелка вверх — округлено вверх, стрелка вниз — округлено вниз.",
+        shownLegend = "Пересчитано · ↑ округлено вверх · ↓ вниз",
         up = "округлено вверх, точное значение меньше",
         down = "округлено вниз, точное значение больше",
         warning = "Часть количеств на минимуме — пропорции нарушены.",
     )
 
-    private fun readAloud(legend: String, up: String, down: String, warning: String) {
+    private fun readAloud(legend: String, shownLegend: String, up: String, down: String, warning: String) {
         open()
         fewer(4)
         awaitWarning(true)
         assertEquals(listOf(legend), legends())
+        assertEquals(listOf(shownLegend), shownLegends())
         assertEquals(up, lines()[1].last())
+        assertEquals("↑", arrows()[1])
         assertEquals(listOf(warning), compose.textsOf(CardTags.PROPORTIONS))
         val content = setOf(forFour.title) + forFour.ingredients.mapNotNull { it.freeTextName } + lines().map { it[1] }
         LocalizationChecks.assertScreenTextFromResources(compose, context, content)
@@ -238,6 +264,7 @@ class CardRecalculatedTest {
         // 3 servings: 2.25 eggs → 2, rounded down.
         more(3)
         compose.waitUntil(PATIENCE_MS) { lines()[1].last() == down }
+        assertEquals("↓", arrows()[1])
         LocalizationChecks.assertScreenTextFromResources(compose, context, content + lines().map { it[1] })
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content + lines().map { it[1] })
     }
