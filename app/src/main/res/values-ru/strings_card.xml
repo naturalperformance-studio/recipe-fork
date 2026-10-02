@@ -16,6 +16,10 @@
     <string name="card_servings_more_action">Пересчитать рецепт на большее число порций</string>
     <string name="card_ingredients">Ингредиенты</string>
     <string name="card_steps">Шаги</string>
+    <string name="card_quantity_recalculated">пересчитано</string>
+    <string name="card_quantity_recalculated_exact_lower">пересчитано, точное значение было меньше</string>
+    <string name="card_quantity_recalculated_exact_higher">пересчитано, точное значение было больше</string>
+    <string name="card_proportions_warning">Некоторые ингредиенты уже на самом малом количестве, поэтому пропорции рецепта больше не соблюдаются.</string>
     <string name="card_unnamed_ingredient">Ингредиент без названия</string>
     <string name="card_missing">Этого рецепта больше нет в этой книге рецептов.</string>
 </resources>

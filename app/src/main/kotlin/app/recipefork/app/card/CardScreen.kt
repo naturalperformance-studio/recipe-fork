@@ -40,7 +40,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
@@ -187,32 +186,8 @@ private fun RecipeContent(
                 onIncrease = { requested = RequestedServings.increased(count) },
             )
         }
-        val ingredients = recipe.ingredients.sortedBy { it.position }
-        if (ingredients.isNotEmpty()) {
-            Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
-                ingredientLines(ingredients, entries, language, authored, requested).forEachIndexed { i, line ->
-                    IngredientRow(line, CardTags.ingredient(ingredients[i].position))
-                }
-            }
-        }
-        // A step holding no text yet is not a step a reader can follow; the others are numbered as they read.
-        val steps = recipe.steps.sortedBy { it.position }.filter { it.text.isNotBlank() }
-        if (steps.isNotEmpty()) {
-            Section(R.string.card_steps, CardTags.STEPS) {
-                steps.forEachIndexed { index, step ->
-                    Row(
-                        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(CardTags.step(step.position)),
-                    ) {
-                        Text(
-                            "${index + 1}.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.widthIn(min = 32.dp),
-                        )
-                        Text(step.text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-        }
+        IngredientsList(recipe.ingredients, entries, language, authored, requested)
+        StepsList(recipe.steps)
         if (recipe.description.isNotBlank()) {
             Text(
                 recipe.description,
@@ -271,8 +246,9 @@ private fun Provenance(parent: RecipeId, recipes: RecipeRepository, onOpenParent
     }
 }
 
+/** One part of the recipe under its heading; the lists of ingredients and of steps are each one. */
 @Composable
-private fun Section(@StringRes title: Int, tag: String, lines: @Composable () -> Unit) {
+internal fun Section(@StringRes title: Int, tag: String, lines: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(title),
@@ -280,22 +256,6 @@ private fun Section(@StringRes title: Int, tag: String, lines: @Composable () ->
             modifier = Modifier.semantics { heading() },
         )
         lines()
-    }
-}
-
-/** One ingredient: its name, and its quantity at the line's end; read by the screen reader as one line. */
-@Composable
-private fun IngredientRow(line: IngredientLine, tag: String) {
-    Row(
-        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(tag),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(
-            line.name ?: stringResource(R.string.card_unnamed_ingredient),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        line.quantity?.let { Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End) }
     }
 }
 
@@ -394,6 +354,7 @@ object CardTags {
     const val SERVINGS_FEWER = "card-servings-fewer"
     const val SERVINGS_MORE = "card-servings-more"
     const val INGREDIENTS = "card-ingredients"
+    const val PROPORTIONS = "card-proportions"
     const val STEPS = "card-steps"
     const val DESCRIPTION = "card-description"
     fun ingredient(position: Int) = "card-ingredient-$position"
