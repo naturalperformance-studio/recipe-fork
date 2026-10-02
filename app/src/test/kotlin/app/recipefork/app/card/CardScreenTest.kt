@@ -277,7 +277,7 @@ class CardScreenTest {
         RecipeState.entries.filter { it.editable }.forEach { state ->
             val recipe = save(fullRecipe(state))
             show(recipe.id)
-            assertEquals("$state", listOf(CardTags.BACK, CardTags.EDIT) + SERVINGS_ACTIONS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT) + SERVINGS_ACTIONS, interactiveTags())
             compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.EDIT)).fetchSemanticsNodes()
                 .let { assertEquals("$state", 1, it.size) }
             assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction(), useUnmergedTree = true).fetchSemanticsNodes().size)
@@ -295,7 +295,7 @@ class CardScreenTest {
             val recipe = save(fullRecipe(state))
             show(recipe.id)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
-            assertEquals("$state", listOf(CardTags.BACK) + SERVINGS_ACTIONS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.FORK) + SERVINGS_ACTIONS, interactiveTags())
             assertNothingInTheContentActs()
         }
     }
@@ -353,8 +353,8 @@ class CardScreenTest {
             MaterialTheme { key(id) { CardScreen(id, recipes, environment, onBack = {}, onEdit = {}) } }
         }
         compose.awaitCard()
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 4)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 4)
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 5)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 5)
         assertEquals(listOf(w.back), compose.textsOf(CardTags.BACK))
         assertEquals(listOf(w.edit), compose.textsOf(CardTags.EDIT))
         assertEquals(w.backAction, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.BACK).fetchSemanticsNode()))
@@ -362,8 +362,8 @@ class CardScreenTest {
         id = save(fullRecipe(RecipeState.PUBLISHED)).id
         compose.awaitCard()
         compose.waitUntil(PATIENCE) { compose.onAllNodes(hasTestTag(CardTags.EDIT)).fetchSemanticsNodes().isEmpty() }
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 3)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 3)
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 4)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 4)
     }
 
     /** The test tags of every element on screen the reader can act on, in the order laid out. */
