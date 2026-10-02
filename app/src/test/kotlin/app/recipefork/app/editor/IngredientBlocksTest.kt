@@ -580,10 +580,14 @@ class IngredientBlocksTest {
                 assertTrue("row $position: the icons are under the unit", remove.top >= unit.bottom - 0.5f)
                 if (exists(EditorTags.ingredientQuantity(position))) assertTrue(remove.top >= bounds(EditorTags.ingredientQuantity(position)).bottom - 0.5f)
                 assertEquals("row $position: the icons start at the inputs' left edge", name.left, remove.left, 0.5f)
+                if (exists(EditorTags.divisibility(position))) {
+                    assertTrue("row $position: the icons come before the divisibility question", remove.bottom <= bounds(EditorTags.divisibility(position)).top + 0.5f)
+                }
             }
-            // No text button: every control in the block but its inputs carries no text of its own, only its spoken name.
+            // No text button: in the merged tree a button carries the text of everything inside it, so a button in the
+            // block with any text is a text button; the icons carry only their spoken names.
             val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(position)))
-            val texts = compose.onAllNodes(inRow and AccessibilityChecks.isInteractive, useUnmergedTree = true).fetchSemanticsNodes()
+            val texts = compose.onAllNodes(inRow and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
                 .filter { it.config.getOrNull(SemanticsProperties.EditableText) == null }
                 .filter { it.config.getOrNull(SemanticsProperties.Role) == androidx.compose.ui.semantics.Role.Button }
                 .filter { it.config.getOrNull(SemanticsProperties.Text).orEmpty().isNotEmpty() }
@@ -610,6 +614,21 @@ class IngredientBlocksTest {
         // A long press only shows the name: the row is still there, and no menu opened.
         assertTrue(exists(EditorTags.ingredient(3)))
         assertFalse(exists(EditorTags.ingredientAction(3, RowAction.INSERT_ABOVE)))
+    }
+
+    // The free-text warning's tooltip and an icon's tooltip never show at once: a long press on remove while the
+    // warning's text is shown takes the warning's text away.
+    @Test
+    @Config(qualifiers = "en-w360dp-h4000dp")
+    fun anIconsTooltipDismissesTheWarningsTooltip() {
+        open(1f)
+        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarningText(0)) }
+        val remove = EditorTags.ingredientRemove(0)
+        compose.onNodeWithTag(remove).performTouchInput { longClick() }
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(remove)) }
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.ingredientWarningText(0)) }
+        assertTrue(exists(EditorTags.ingredient(0)))
     }
 
     @Test
