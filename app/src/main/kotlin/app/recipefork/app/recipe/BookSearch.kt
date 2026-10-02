@@ -19,9 +19,9 @@ data class Listed<R>(val rows: List<R>, val viewIsEmpty: Boolean, val params: Li
 }
 
 /**
- * Finds and orders the rows of one view of the book (FLOW-035 (3, 4)). A query finds a recipe whose title, or one of
- * whose ingredients' names, holds a word beginning with each of its words ([WordPrefix]); an ingredient is named by
- * its dictionary entry's label in either language with its qualifier, or by its free text.
+ * Finds and orders the rows of one view of the book (FLOW-035 (3, 4)). A query finds a recipe in which each of its
+ * words begins a word of the title or of any of its ingredients' names, wherever each stands ([WordPrefix]); an
+ * ingredient is named by its dictionary entry's label in either language with its qualifier, or by its free text.
  *
  * The search index is kept for the rows it was built from and rebuilt only when the book's rows change, so that a
  * keystroke only compares words. The dictionary is read the first time a query is searched. One listing uses it, one

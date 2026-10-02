@@ -170,9 +170,14 @@ class LibrarySearchTest {
         // A row's free text.
         search("свекл")
         assertListed("Борщ")
-        // Every word must begin a word of the title or of one ingredient's name.
+        // Each word may stand anywhere in the recipe: in two ingredients, or in the title and an ingredient.
         search("рис кур")
-        assertListed("Курица с рисом")
+        assertListed("Курица с рисом", "Плов по-домашнему")
+        search("плов кур")
+        assertListed("Плов по-домашнему")
+        // A word found nowhere in the recipe keeps it out.
+        search("плов свекл")
+        assertListed()
     }
 
     // FLOW-035 (4): case and ё/е do not matter, on either side.

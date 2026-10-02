@@ -22,20 +22,21 @@ object WordPrefix {
 }
 
 /**
- * What a query finds among [items]: those one of whose names — given by [names] — matches every word of it
- * ([WordPrefix]). The names' words are worked out once, when the index is built, so that each query only compares
- * them; a query of no word finds every item. What is found keeps the order of [items].
+ * What a query finds among [items]: those in which every word of it begins a word of one of their names — given by
+ * [names] — whichever name each word is found in ([WordPrefix]). The names' words are worked out once, when the index
+ * is built, so that each query only compares them; a query of no word finds every item. What is found keeps the
+ * order of [items].
  */
 class SearchIndex<T>(private val items: List<T>, names: (T) -> List<String>) {
-    private val indexed: List<Pair<T, List<List<String>>>> = run {
+    private val indexed: List<Pair<T, List<String>>> = run {
         // The same name — a dictionary entry's label — stands in many recipes; its words are worked out once.
         val wordsOf = HashMap<String, List<String>>()
-        items.map { item -> item to names(item).map { wordsOf.getOrPut(it) { WordPrefix.words(it) } } }
+        items.map { item -> item to names(item).flatMap { wordsOf.getOrPut(it) { WordPrefix.words(it) } }.distinct() }
     }
 
     fun search(query: String): List<T> {
         val sought = WordPrefix.words(query)
         if (sought.isEmpty()) return items
-        return indexed.filter { (_, names) -> names.any { WordPrefix.holdsEvery(it, sought) } }.map { it.first }
+        return indexed.filter { (_, words) -> WordPrefix.holdsEvery(words, sought) }.map { it.first }
     }
 }

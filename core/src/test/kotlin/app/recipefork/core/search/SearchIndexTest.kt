@@ -34,15 +34,22 @@ class SearchIndexTest {
     }
 
     @Test
-    fun everyWordOfTheQueryMustBeginAWordOfOneName() {
+    fun everyWordOfTheQueryMustBeginAWordOfTheRecipeWhereverItStands() {
         val index = index(
             Entry("Курица с рисом"),
-            // "кур" and "рис" are both here, but in two different names.
+            // "кур" and "рис" are both here, in two different ingredients.
             Entry("Плов", listOf("Курица", "Рис")),
             Entry("Курица запечённая"),
+            Entry("Рисовая каша", listOf("Молоко")),
         )
-        assertEquals(listOf("Курица с рисом"), index.titles("рис  кур"))
-        assertEquals(listOf("Курица с рисом"), index.titles("кур, рис"))
+        // Within one name, as before.
+        assertEquals(listOf("Курица с рисом"), index.titles("кур с"))
+        // Across ingredients, and across the title and an ingredient.
+        assertEquals(listOf("Курица с рисом", "Плов"), index.titles("рис  кур"))
+        assertEquals(listOf("Курица с рисом", "Плов"), index.titles("кур, рис"))
+        assertEquals(listOf("Плов"), index.titles("плов кур"))
+        // A word found nowhere in the recipe keeps it out.
+        assertEquals(emptyList(), index.titles("плов молоко"))
     }
 
     @Test
