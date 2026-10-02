@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="timer_start_action">Запустить этот таймер</string>
+    <string name="timer_finished">Готово</string>
+    <string name="timer_cancel">Отменить</string>
+    <string name="timer_cancel_action">Отменить этот таймер</string>
+    <string name="timer_clear">Убрать</string>
+    <string name="timer_clear_action">Убрать этот законченный таймер</string>
+    <string name="timer_duration">%1$d ч %2$d мин</string>
+    <string name="timer_duration_hours">%1$d ч</string>
+    <string name="timer_duration_minutes">%1$d мин</string>
+    <string name="timer_restart_title">Этот таймер уже идёт</string>
+    <string name="timer_restart_question">У таймера «%1$s» осталось %2$s. Запустить его заново на %3$s?</string>
+    <string name="timer_restart_confirm">Заново</string>
+    <string name="timer_restart_decline">Пусть идёт</string>
+</resources>

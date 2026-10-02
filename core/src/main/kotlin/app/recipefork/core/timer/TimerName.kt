@@ -27,7 +27,7 @@ object TimerName {
         if (length <= LENGTH) return text
         val end = text.offsetByCodePoints(0, LENGTH)
         // The cut stays where the next character is no part of a word (a space, a comma); otherwise back to the last space.
-        val head = if (!Character.isLetterOrDigit(text.codePointAt(end))) {
+        val head = if (!isPartOfAWord(text.codePointAt(end))) {
             text.substring(0, end)
         } else {
             val space = text.lastIndexOf(' ', end - 1)
@@ -38,6 +38,15 @@ object TimerName {
 
     /** The name [step]'s timer announces itself by; null where the step carries no timer. */
     fun of(step: Step): String? = step.timer?.let { it.label ?: derived(step.text) }
+
+    /**
+     * Whether [codePoint] belongs to the word it stands in: a letter or digit, a hyphen or an apostrophe inside a
+     * word ("кое-где", "don't"), or a mark that combines with the letter before it.
+     */
+    private fun isPartOfAWord(codePoint: Int): Boolean =
+        Character.isLetterOrDigit(codePoint) ||
+            codePoint == '-'.code || codePoint == '\''.code || codePoint == '\u2019'.code ||
+            Character.getType(codePoint) == Character.NON_SPACING_MARK.toInt()
 
     private val WHITESPACE = Regex("\\s+")
 }
