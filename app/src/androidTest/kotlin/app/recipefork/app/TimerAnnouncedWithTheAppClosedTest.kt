@@ -14,7 +14,6 @@ import app.recipefork.app.timer.RunningTimer
 import app.recipefork.app.timer.TimerChannels
 import app.recipefork.app.timer.TimerIntents
 import app.recipefork.app.timer.TimerKey
-import app.recipefork.app.timer.TimerSound
 import app.recipefork.core.recipe.RecipeId
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -169,13 +168,11 @@ class TimerAnnouncedWithTheAppClosedTest {
         it.audioAttributes.usage == AudioAttributes.USAGE_ALARM
     }
 
-    /** [timers] ring: the phone rings, with the alarm sound on the alarm stream where the device has one. */
+    /** [timers] ring: the phone rings, a sound playing on the alarm stream. */
     private fun assertRinging(timers: Set<RunningTimer>) {
         assertEquals(timers.map { it.key }.toSet(), ringing.ringing.value)
-        if (TimerSound.uri(application) != null) {
-            assertTrue((ringing.sound as AndroidRingingSound).isPlaying)
-            awaitUntil(5.seconds) { alarmPlaying() }
-        }
+        awaitUntil(5.seconds) { (ringing.sound as AndroidRingingSound).isPlaying }
+        awaitUntil(5.seconds) { alarmPlaying() }
     }
 
     private companion object {

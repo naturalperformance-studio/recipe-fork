@@ -11,16 +11,20 @@ import androidx.core.app.NotificationCompat
 import app.recipefork.app.MainActivity
 import app.recipefork.app.R
 
-/** The two notification channels of timers: their ends, which ring like an alarm, and the quiet note while they run. */
+/** The two notification channels of timers: their ends, which pop up, and the quiet note while they run. */
 object TimerChannels {
     /**
-     * A timer has ended (FLOW-013): heard with the alarm's sound and a vibration; the channel the reader may turn off
-     * alone (FLOW-013 (13)). A channel's sound cannot change once created, so the alarm came with a channel of its own.
+     * A timer has ended (FLOW-013): its notification pops up on the screen and the lock screen; the channel the reader
+     * may turn off alone (FLOW-013 (13)). The channel itself is silent: the ringing is the application's own, which
+     * alone can ring on until stopped and fall silent at its cap, so nothing of the channel plays over it or after it.
      */
-    const val ENDED = "timer-ended-alarm"
+    const val ENDED = "timer-ended-silent"
 
-    /** The channels ended timers were once announced on, with the default notification sound; deleted at start. */
-    val RETIRED = listOf("timer-ended")
+    /**
+     * The channels ended timers were once announced on: with the default notification sound, then with the alarm's
+     * sound. A channel's sound cannot change once created, so each change came with a new one; the old are deleted.
+     */
+    val RETIRED = listOf("timer-ended", "timer-ended-alarm")
 
     /** Timers are running: the note the running timers are kept by while the application is closed. */
     const val RUNNING = "timer-running"
@@ -32,9 +36,8 @@ object TimerChannels {
             NotificationChannel(ENDED, context.getString(R.string.timer_channel_ended), NotificationManager.IMPORTANCE_HIGH)
                 .apply {
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-                    setSound(TimerSound.channelUri(context), TimerSound.ALARM)
-                    enableVibration(true)
-                    vibrationPattern = TimerSound.VIBRATION
+                    setSound(null, null)
+                    enableVibration(false)
                 },
         )
         manager.createNotificationChannel(
@@ -116,8 +119,6 @@ class AndroidTimerNotices(
     override fun quiet(timer: RunningTimer) {
         val tag = TimerIntents.tagOf(timer.key)
         if (manager.activeNotifications.none { it.tag == tag && it.id == ENDED_ID }) return
-        // Taken down first, which ends what the platform still plays of the channel's sound, then posted silent.
-        manager.cancel(tag, ENDED_ID)
         post(tag, ended(timer, ringing = false))
     }
 
@@ -146,7 +147,8 @@ class AndroidTimerNotices(
                 TimerRingReceiver.intent(context, TimerRingReceiver.STOP, timer.key),
             )
         } else {
-            builder.setSilent(true)
+            // Posted again in place: it does not pop up again.
+            builder.setOnlyAlertOnce(true)
         }
         return builder.build()
     }

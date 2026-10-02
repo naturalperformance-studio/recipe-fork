@@ -10,6 +10,7 @@ import app.recipefork.app.data.Network
 import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySync
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.timer.AndroidRingTimeouts
 import app.recipefork.app.timer.AndroidRingingSound
 import app.recipefork.app.timer.AndroidTimerNotices
 import app.recipefork.app.timer.DeviceTimerAnnouncements
@@ -36,10 +37,16 @@ class AppContainer(context: Context) {
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))
     val recipes = RecipeRepository(activeBook)
 
-    private val timerNotices = AndroidTimerNotices(context)
+    /** The notifications of timers' ends. */
+    val timerNotices = AndroidTimerNotices(context)
 
-    /** Ended timers ringing like an alarm until they are stopped (FLOW-013). */
-    val timerRinging = TimerRinging(SystemTimerClock, AndroidRingingSound(context), timerNotices)
+    /** Ended timers ringing like an alarm until they are stopped, or for two minutes at most (FLOW-013). */
+    val timerRinging = TimerRinging(
+        SystemTimerClock,
+        AndroidRingingSound(context),
+        timerNotices,
+        timeouts = AndroidRingTimeouts(context, CoroutineScope(SupervisorJob() + Dispatchers.Default)),
+    )
 
     /** Announces timers as they end, with the application open or closed (FLOW-013), and rings them. */
     val timerAnnouncer = TimerAnnouncer(timerNotices, timerRinging, ::applicationIsOpen)

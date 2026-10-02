@@ -159,7 +159,9 @@ class TimerEndReceiver : BroadcastReceiver() {
         application.scope.launch {
             try {
                 application.container.timerAnnouncer.announceEnded(application.container.timers)
-                // The service holds the ringing until it is stopped; where it may not start now, it rings meanwhile.
+                // The service holds the ringing until it is stopped. Where it may not start now — from this alarm, on
+                // Android 12 and later — it rings in this process all the same, and its cap is kept by its own
+                // timeouts: a delay here, and an alarm at the cap should the process be held asleep or gone.
                 if (application.container.timerRinging.isRinging) TimerService.start(context)
             } finally {
                 result.finish()
@@ -170,21 +172,35 @@ class TimerEndReceiver : BroadcastReceiver() {
 
 /**
  * The reader stopped an ended timer's ringing from its notification: by its Stop action, which leaves the
- * notification in place, silent; or by dismissing it.
+ * notification in place, silent; or by dismissing it. Or its ringing's time is up, which the alarm set at its cap says
+ * should the process have been gone or asleep meanwhile. A Stop or a time up whose ringing the process no longer holds
+ * — it was ended since — still leaves the notification silent and no longer offering to stop.
  */
 class TimerRingReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val key = TimerIntents.keyOf(intent.data) ?: return
-        val ringing = (context.applicationContext as RecipeForkApplication).container.timerRinging
+        val application = context.applicationContext as RecipeForkApplication
+        val container = application.container
+        val ringing = container.timerRinging
         when (intent.action) {
-            STOP -> ringing.stop(key)
             DISMISSED -> ringing.forget(key)
+            STOP, EXPIRED -> if (!ringing.stop(key)) {
+                val result = goAsync()
+                application.scope.launch {
+                    try {
+                        container.timers.get(key)?.takeIf { it.announced }?.let(container.timerNotices::quiet)
+                    } finally {
+                        result.finish()
+                    }
+                }
+            }
         }
     }
 
     companion object {
         const val STOP = "app.recipefork.timer.STOP"
         const val DISMISSED = "app.recipefork.timer.DISMISSED"
+        const val EXPIRED = "app.recipefork.timer.EXPIRED"
 
         /** What [action] on [key]'s notification sends; one per timer and action. */
         fun intent(context: Context, action: String, key: TimerKey): PendingIntent = PendingIntent.getBroadcast(
@@ -193,6 +209,9 @@ class TimerRingReceiver : BroadcastReceiver() {
             Intent(context, TimerRingReceiver::class.java).setAction(action).setData(TimerIntents.uriOf(key)),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+
+        /** What the alarm at [key]'s ringing cap sends. */
+        fun expiry(context: Context, key: TimerKey): PendingIntent = intent(context, EXPIRED, key)
     }
 }
 

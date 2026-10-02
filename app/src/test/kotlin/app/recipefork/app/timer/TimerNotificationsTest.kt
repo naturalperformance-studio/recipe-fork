@@ -5,9 +5,6 @@ import android.app.Application
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.media.AudioAttributes
-import android.media.RingtoneManager
-import android.net.Uri
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
@@ -153,37 +150,29 @@ class TimerNotificationsTest {
         assertEquals(NotificationManager.IMPORTANCE_LOW, manager.getNotificationChannel(TimerChannels.RUNNING).importance)
     }
 
-    // An ended timer rings like an alarm: on the alarm stream, with a vibration; this device has no alarm sound, so
-    // the channel has its default notification sound.
+    // The ended channel pops up and shows on the lock screen, and is itself silent: the application rings alone, so
+    // nothing of the channel echoes its ringing or outlives its cap.
     @Test
-    fun theEndedChannelRingsOnTheAlarmStreamAndVibrates() {
+    fun theEndedChannelPopsUpAndIsSilent() {
         TimerChannels.create(context)
         val channel = manager.getNotificationChannel(TimerChannels.ENDED)
-        assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, channel.sound)
-        assertEquals(AudioAttributes.USAGE_ALARM, channel.audioAttributes.usage)
-        assertTrue(channel.shouldVibrate())
-        assertTrue(channel.vibrationPattern.isNotEmpty())
         assertEquals(NotificationManager.IMPORTANCE_HIGH, channel.importance)
         assertEquals(Notification.VISIBILITY_PUBLIC, channel.lockscreenVisibility)
+        assertEquals(null, channel.sound)
+        assertFalse(channel.shouldVibrate())
     }
 
-    // The channel's sound is the device's alarm sound where it has one, and its notification sound where it has none.
+    // A channel's sound cannot change: the old channels of ended timers are gone, so installs get the silent one.
     @Test
-    fun theChannelsSoundIsTheAlarmSoundWhereThereIsOne() {
-        RingtoneManager.setActualDefaultRingtoneUri(context, RingtoneManager.TYPE_ALARM, Uri.parse("content://media/internal/audio/media/7"))
-        assertEquals(Settings.System.DEFAULT_ALARM_ALERT_URI, TimerSound.channelUri(context))
-        RingtoneManager.setActualDefaultRingtoneUri(context, RingtoneManager.TYPE_ALARM, null)
-        assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, TimerSound.channelUri(context))
-    }
-
-    // A channel's sound cannot change: the old channel of ended timers is gone, so installs get the alarm.
-    @Test
-    fun theOldEndedChannelIsDeleted() {
-        manager.createNotificationChannel(NotificationChannel("timer-ended", "Timer ended", NotificationManager.IMPORTANCE_HIGH))
+    fun theOldEndedChannelsAreDeleted() {
+        for (old in listOf("timer-ended", "timer-ended-alarm")) {
+            manager.createNotificationChannel(NotificationChannel(old, "Timer ended", NotificationManager.IMPORTANCE_HIGH))
+        }
         TimerChannels.create(context)
         assertEquals(null, manager.getNotificationChannel("timer-ended"))
+        assertEquals(null, manager.getNotificationChannel("timer-ended-alarm"))
         assertTrue(manager.getNotificationChannel(TimerChannels.ENDED) != null)
-        assertTrue(TimerChannels.ENDED != "timer-ended")
+        assertFalse(TimerChannels.ENDED in listOf("timer-ended", "timer-ended-alarm"))
     }
 
     // The notification of an ended timer is an alarm, offers to stop its ringing, and tells when it is dismissed.
@@ -211,7 +200,7 @@ class TimerNotificationsTest {
         notices.quiet(timer(2, "Beans"))
         val beans = shown().single { it.text == "Beans" }
         assertTrue(beans.actions.isNullOrEmpty())
-        assertEquals(Notification.GROUP_ALERT_SUMMARY, beans.groupAlertBehavior)
+        assertTrue(beans.flags and Notification.FLAG_ONLY_ALERT_ONCE != 0)
         assertEquals(TimerChannels.ENDED, beans.channelId)
         assertEquals(1, shown().single { it.text == "Water" }.actions.size)
         // One already gone is not posted again.

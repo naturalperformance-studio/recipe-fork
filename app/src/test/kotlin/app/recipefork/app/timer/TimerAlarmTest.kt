@@ -1,9 +1,11 @@
 package app.recipefork.app.timer
 
 import android.Manifest
+import android.app.AlarmManager
 import android.app.NotificationManager
 import android.content.Intent
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Looper
@@ -29,6 +31,7 @@ import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowMediaPlayer
 import org.robolectric.shadows.util.DataSource
+import java.io.IOException
 import java.time.Instant
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -45,6 +48,7 @@ class TimerAlarmTest {
     private val ringing = container.timerRinging
     private val manager = application.getSystemService(NotificationManager::class.java)
     private val vibrator = shadowOf(application.getSystemService(Vibrator::class.java))
+    private val audio = shadowOf(application.getSystemService(AudioManager::class.java))
     private val key = TimerKey(BookName.Pool, RecipeId("soup"), 2)
     private val timer = RunningTimer(key, "Beans", "Soup", 20.minutes, Instant.parse("2026-10-02T12:20:00Z"))
     private val notices = AndroidTimerNotices(application)
@@ -72,19 +76,36 @@ class TimerAlarmTest {
 
     private fun shownNotification() = shadowOf(manager).allNotifications.singleOrNull { it.channelId == TimerChannels.ENDED }
 
-    // The alarm's sound, looping, on the alarm stream; a vibration that repeats; both gone once stopped.
+    private val alarmTone = Uri.parse("content://media/internal/audio/media/7")
+    private val notificationTone = Uri.parse("content://media/internal/audio/media/9")
+
+    /** The device's sound, prepared at once on the calling thread. */
+    private fun sound() = AndroidRingingSound(application) { it.run() }
+
+    private fun source(uri: Uri) = DataSource.toDataSource(application, uri)
+
+    private fun sounds(alarm: Uri?, notification: Uri?) {
+        RingtoneManager.setActualDefaultRingtoneUri(application, RingtoneManager.TYPE_ALARM, alarm)
+        RingtoneManager.setActualDefaultRingtoneUri(application, RingtoneManager.TYPE_NOTIFICATION, notification)
+        ShadowMediaPlayer.setMediaInfoProvider { ShadowMediaPlayer.MediaInfo(3_000, 0) }
+    }
+
+    // The alarm's sound, looping, on the alarm stream, with the audio focus an alarm takes; a vibration that repeats;
+    // all of it given up once stopped.
     @Test
     fun theAlarmSoundLoopsOnTheAlarmStreamWithARepeatingVibration() {
-        RingtoneManager.setActualDefaultRingtoneUri(application, RingtoneManager.TYPE_ALARM, Uri.parse("content://media/internal/audio/media/7"))
-        ShadowMediaPlayer.setMediaInfoProvider { ShadowMediaPlayer.MediaInfo(3_000, 0) }
-        val sound = AndroidRingingSound(application)
+        sounds(alarmTone, notificationTone)
+        val sound = sound()
         sound.start()
         val player = sound.player()
         assertNotNull(player)
         assertTrue(player!!.isLooping)
         assertTrue(player.isPlaying)
         assertEquals(AudioAttributes.USAGE_ALARM, shadowOf(player).audioAttributes.usage)
-        assertEquals(DataSource.toDataSource(application, Uri.parse("content://media/internal/audio/media/7")), shadowOf(player).dataSource)
+        assertEquals(source(alarmTone), shadowOf(player).dataSource)
+        val focus = audio.lastAudioFocusRequest.audioFocusRequest
+        assertEquals(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT, focus.focusGain)
+        assertEquals(AudioAttributes.USAGE_ALARM, focus.audioAttributes.usage)
         assertTrue(vibrator.isVibrating)
         assertEquals(0, vibrator.repeat)
         assertEquals(
@@ -95,19 +116,59 @@ class TimerAlarmTest {
         assertNull(sound.player())
         assertFalse(sound.isPlaying)
         assertFalse(vibrator.isVibrating)
+        assertEquals(focus, audio.lastAbandonedAudioFocusRequest)
     }
 
     // A device without an alarm sound rings with its default notification sound.
     @Test
     fun withoutAnAlarmSoundTheNotificationSoundRings() {
-        RingtoneManager.setActualDefaultRingtoneUri(application, RingtoneManager.TYPE_ALARM, null)
-        RingtoneManager.setActualDefaultRingtoneUri(application, RingtoneManager.TYPE_NOTIFICATION, Uri.parse("content://media/internal/audio/media/9"))
-        ShadowMediaPlayer.setMediaInfoProvider { ShadowMediaPlayer.MediaInfo(3_000, 0) }
-        val sound = AndroidRingingSound(application)
+        sounds(null, notificationTone)
+        val sound = sound()
         sound.start()
-        assertEquals(DataSource.toDataSource(application, Uri.parse("content://media/internal/audio/media/9")), shadowOf(sound.player()!!).dataSource)
+        assertEquals(source(notificationTone), shadowOf(sound.player()!!).dataSource)
         assertEquals(AudioAttributes.USAGE_ALARM, shadowOf(sound.player()!!).audioAttributes.usage)
         sound.stop()
+    }
+
+    // An alarm sound that cannot be played — a deleted tone — gives way to the notification sound.
+    @Test
+    fun anAlarmSoundThatCannotPlayGivesWayToTheNotificationSound() {
+        sounds(alarmTone, notificationTone)
+        ShadowMediaPlayer.addException(source(alarmTone), IOException("deleted"))
+        val sound = sound()
+        sound.start()
+        assertEquals(source(notificationTone), shadowOf(sound.player()!!).dataSource)
+        sound.stop()
+    }
+
+    // Neither of the device's sounds playable, the application's own tone rings, on the alarm stream.
+    @Test
+    fun neitherSoundPlayableTheApplicationsOwnToneRings() {
+        sounds(alarmTone, notificationTone)
+        ShadowMediaPlayer.addException(source(alarmTone), IOException("deleted"))
+        ShadowMediaPlayer.addException(source(notificationTone), IOException("deleted"))
+        val sound = sound()
+        sound.start()
+        assertEquals(source(TimerSound.ownTone(application)), shadowOf(sound.player()!!).dataSource)
+        assertTrue(sound.player()!!.isLooping)
+        assertEquals(AudioAttributes.USAGE_ALARM, shadowOf(sound.player()!!).audioAttributes.usage)
+        sound.stop()
+    }
+
+    // A device with no sound set at all rings with the application's own tone.
+    @Test
+    fun noSoundSetTheApplicationsOwnToneRings() {
+        sounds(null, null)
+        val sound = sound()
+        sound.start()
+        assertEquals(source(TimerSound.ownTone(application)), shadowOf(sound.player()!!).dataSource)
+        sound.stop()
+    }
+
+    // The application's own tone is a resource of the application.
+    @Test
+    fun theOwnToneIsBundled() {
+        application.contentResolver.openInputStream(TimerSound.ownTone(application))!!.use { assertTrue(it.read() >= 0) }
     }
 
     // The notification's Stop action: the ringing stops, the notification stays, silent, with nothing to stop.
@@ -173,5 +234,72 @@ class TimerAlarmTest {
         ringing.stop(key)
         await { shadow.isStoppedBySelf }
         assertTrue(shadow.isForegroundStopped)
+    }
+
+    private val alarms = shadowOf(application.getSystemService(AlarmManager::class.java))
+
+    /** The alarm set at [key]'s ringing cap, if any. */
+    private fun expiry() = alarms.scheduledAlarms.singleOrNull {
+        shadowOf(it.operation).savedIntent.action == TimerRingReceiver.EXPIRED &&
+            TimerIntents.keyOf(shadowOf(it.operation).savedIntent.data) == key
+    }
+
+    /** A timer ended and announced by the alarm at its end, the service gone: as after the process was ended. */
+    private fun endedByTheBackstop() {
+        shadowOf(application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        runBlocking { container.timers.start(key, "Beans", "Soup", 1.milliseconds) }
+        Thread.sleep(5)
+        application.sendBroadcast(Intent(application, TimerEndReceiver::class.java))
+        await { ringing.isRinging }
+    }
+
+    // The service gone at the timer's end: the alarm announces it and it rings all the same, its notification shown;
+    // its two minutes are kept without the service, by an alarm at the cap, which silences it and quiets the notice.
+    @Test
+    fun withoutTheServiceTheCapStillHolds() {
+        val before = System.currentTimeMillis()
+        endedByTheBackstop()
+        assertNotNull("notes: ${shadowOf(manager).allNotifications.map { it.channelId }}", shownNotification())
+        val alarm = expiry()
+        assertNotNull("alarms: ${alarms.scheduledAlarms.map { shadowOf(it.operation).savedIntent }}", alarm)
+        assertEquals(AlarmManager.RTC_WAKEUP, alarm!!.type)
+        assertTrue(alarm.isAllowWhileIdle)
+        val cap = TimerRinging.CAP.inWholeMilliseconds
+        assertTrue(alarm.triggerAtTime in before + cap..System.currentTimeMillis() + cap)
+        alarm.operation!!.send()
+        await { !ringing.isRinging }
+        assertTrue(shownNotification()!!.actions.isNullOrEmpty())
+    }
+
+    // Stopped before its cap, its alarm at the cap is taken back.
+    @Test
+    fun aStoppedRingTakesItsCapAlarmBack() {
+        endedByTheBackstop()
+        assertNotNull(expiry())
+        ringing.stop(key)
+        assertNull(expiry())
+    }
+
+    // The process ended since it rang: Stop on the notification left behind still quiets it.
+    @Test
+    fun stopOnANotificationLeftBehindQuietsIt() {
+        endedByTheBackstop()
+        // The process is gone and comes back: no ringing held, the notification still offering to stop.
+        ringing.forget(key)
+        notices.announce(runBlocking { container.timers.get(key) }!!)
+        assertEquals(1, shownNotification()!!.actions.size)
+        shownNotification()!!.actions.single().actionIntent.send()
+        await { shownNotification()!!.actions.isNullOrEmpty() }
+    }
+
+    // The process ended since it rang: the alarm at the cap still quiets the notification left behind.
+    @Test
+    fun theCapOnANotificationLeftBehindQuietsIt() {
+        endedByTheBackstop()
+        val alarm = expiry()!!
+        ringing.forget(key)
+        notices.announce(runBlocking { container.timers.get(key) }!!)
+        alarm.operation!!.send()
+        await { shownNotification()!!.actions.isNullOrEmpty() }
     }
 }

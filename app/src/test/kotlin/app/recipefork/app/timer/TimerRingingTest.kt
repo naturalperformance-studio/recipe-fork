@@ -227,4 +227,51 @@ class TimerRingingTest {
     private suspend fun awaitUntil(condition: suspend () -> Boolean) = withTimeout(5_000) {
         while (!condition()) delay(10)
     }
+
+    // The cap is kept apart from the watch too: each ring has its timeout, which silences it when due.
+    @Test
+    fun eachRingHasItsTimeoutAtItsCap() {
+        val timeouts = RecordedTimeouts()
+        val ringing = TimerRinging(clock, sound, notices, timeouts = timeouts)
+        val timer = RunningTimer(water, "Water", "Soup", 10.minutes, clock.now())
+        ringing.ring(timer)
+        assertEquals(clock.now().plusSeconds(120), timeouts.set[water]!!.first)
+        timeouts.set.getValue(water).second()
+        assertFalse(sound.ringing)
+        assertEquals(listOf(water), notices.quieted)
+        // Stopped or forgotten sooner, the timeout is cleared.
+        ringing.ring(timer)
+        ringing.stop(water)
+        assertEquals(null, timeouts.set[water])
+        ringing.ring(timer)
+        ringing.forget(water)
+        assertEquals(null, timeouts.set[water])
+    }
+
+    // A timeout of a ring since replaced — the timer ended again — does not silence the new ring.
+    @Test
+    fun aStaleTimeoutLeavesANewerRing() {
+        val timeouts = RecordedTimeouts()
+        val ringing = TimerRinging(clock, sound, notices, timeouts = timeouts)
+        val timer = RunningTimer(water, "Water", "Soup", 10.minutes, clock.now())
+        ringing.ring(timer)
+        val stale = timeouts.set.getValue(water).second
+        ringing.forget(water)
+        ringing.ring(timer)
+        stale()
+        assertTrue(sound.ringing)
+    }
+}
+
+/** Remembers each timeout set and not cleared, with what it calls when due. */
+class RecordedTimeouts : RingTimeouts {
+    val set = mutableMapOf<TimerKey, Pair<java.time.Instant, () -> Unit>>()
+
+    override fun set(key: TimerKey, at: java.time.Instant, due: () -> Unit) {
+        set[key] = at to due
+    }
+
+    override fun clear(key: TimerKey) {
+        set.remove(key)
+    }
 }
