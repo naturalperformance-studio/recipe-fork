@@ -32,5 +32,4 @@
     <string name="card_fix_cancel">Закрыть</string>
     <string name="card_fix_cancel_action">Закрыть, не меняя рецепт</string>
     <string name="card_quantity_fixed">зафиксировано: столько у вас есть</string>
-    <string name="card_quantity_shortfall">зафиксировано: у вас %2$s, а по рецепту теперь нужно %1$s</string>
 </resources>

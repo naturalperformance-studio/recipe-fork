@@ -109,11 +109,7 @@ private fun IngredientRow(line: IngredientLine, tag: String, onOpen: () -> Unit)
             line.quantity?.let { Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End) }
         }
         if (line.derived) Note(stringResource(derivedNote(line.rounding)))
-        when {
-            line.shortfall != null ->
-                Note(stringResource(R.string.card_quantity_shortfall, line.shortfall.required, line.shortfall.available))
-            line.fixed -> Note(stringResource(R.string.card_quantity_fixed))
-        }
+        if (line.fixed) Note(stringResource(R.string.card_quantity_fixed))
     }
 }
 
