@@ -2,7 +2,13 @@ package app.recipefork.app.library
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.recipefork.app.card.StepToShow
+import app.recipefork.app.timer.TimerStep
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 /** The two views of the recipe book (FLOW-034). */
 enum class LibraryView { MARKED, OWN }
@@ -54,7 +60,32 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         saved[VIEW_KEY] = LibraryView.OWN
     }
 
+    /**
+     * A timer's notification was tapped: its recipe's card opens, in place of whatever was open — an editor keeps
+     * what was entered as it is typed — and is brought to the timer's step (FLOW-013 (4)). Kept like the card, so
+     * that the step is still shown should the process end before the card is drawn.
+     */
+    fun showStep(recipeId: String, position: Int) {
+        saved[EDITING_KEY] = null
+        saved[VIEWING_KEY] = recipeId
+        saved[STEP_KEY] = "$position/$recipeId"
+    }
+
+    /** The step the card is to be brought to, until it has been. */
+    val stepToShow = StepToShow(
+        saved.getStateFlow<String?>(STEP_KEY, null)
+            .map(::stepOf)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, stepOf(saved[STEP_KEY])),
+        shown = { saved[STEP_KEY] = null },
+    )
+
+    private fun stepOf(value: String?): TimerStep? {
+        val (position, recipe) = value?.split('/', limit = 2)?.takeIf { it.size == 2 } ?: return null
+        return TimerStep(book = "", recipeId = recipe, stepPosition = position.toIntOrNull() ?: return null)
+    }
+
     private companion object {
+        const val STEP_KEY = "library.step"
         const val VIEW_KEY = "library.view"
         const val EDITING_KEY = "library.editing"
         const val VIEWING_KEY = "library.viewing"

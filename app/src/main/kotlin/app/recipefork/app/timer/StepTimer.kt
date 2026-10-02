@@ -16,9 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
@@ -35,13 +35,28 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.timer.TimerName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import kotlin.time.Duration
 
-/** The running timers as the card reads them, and the book whose recipes the card shows. */
-class CardTimers(val store: RunningTimers, val book: () -> BookName)
+/**
+ * The running timers as the card reads them, and the book whose recipes the card shows. Starting and cancelling run in
+ * [scope], which outlives the card, so that each finishes its write and the scheduling or withdrawing of its
+ * announcement however soon the card is left (FLOW-013 (7)); they run one at a time.
+ */
+class CardTimers(
+    val store: RunningTimers,
+    val scope: CoroutineScope,
+    val access: NotificationAccess,
+    val book: () -> BookName,
+) {
+    internal val turns = Mutex()
+}
 
 /** The card's timers; tests provide their own, held in memory and run by a clock they move. */
 val LocalCardTimers = staticCompositionLocalOf<CardTimers?> { null }
@@ -53,7 +68,9 @@ fun rememberCardTimers(): CardTimers {
     val context = LocalContext.current.applicationContext
     return remember(provided, context) {
         provided ?: (context as RecipeForkApplication).container.let { container ->
-            CardTimers(container.timers) { container.activeBook.open.value.name }
+            CardTimers(container.timers, container.timerWork, AndroidNotificationAccess(context)) {
+                container.activeBook.open.value.name
+            }
         }
     }
 }
@@ -64,33 +81,54 @@ fun rememberCardTimers(): CardTimers {
  */
 @Stable
 class RecipeTimers internal constructor(
-    private val store: RunningTimers,
+    private val card: CardTimers,
     private val book: BookName,
     private val recipeId: RecipeId,
-    private val scope: CoroutineScope,
 ) {
+    private val store get() = card.store
+    internal val access get() = card.access
+
     internal var held by mutableStateOf<Map<Int, RunningTimer>>(emptyMap())
     internal var now: Instant by mutableStateOf(store.clock.now())
 
+    /** The recipe's title as the card shows it now: what a timer started from it announces (FLOW-013 (3)). */
+    internal var title: String = ""
+
     /** The step whose running timer the reader started again, while they are asked whether to restart it. */
     internal var asking by mutableStateOf<Step?>(null)
+        private set
+
+    /** How many timers this card has started: each start is followed by a look at notifications (FLOW-013 (8–13)). */
+    internal var starts by mutableIntStateOf(0)
         private set
 
     private fun key(step: Step) = TimerKey(book, recipeId, step.position)
 
     /**
      * Starts [step]'s timer from its full duration. One that is running is not restarted but asked about (FLOW-021);
-     * one that has ended starts again with no question (FLOW-021 (5)).
+     * one that has ended starts again with no question (FLOW-021 (5)). Whether it runs is read from the store, after
+     * any start or cancel still being written, never from what the card has loaded so far.
      */
     internal fun start(step: Step) {
-        val running = held[step.position]?.takeUnless { it.hasEnded(store.clock.now()) }
-        if (running != null) asking = step else restart(step)
+        val title = title
+        card.scope.launch {
+            card.turns.withLock {
+                val running = store.get(key(step))?.takeUnless { it.hasEnded(store.clock.now()) }
+                if (running != null) {
+                    withContext(Dispatchers.Main) { asking = step }
+                } else {
+                    startNow(step, title)
+                }
+            }
+        }
     }
 
     /** The reader confirmed: the timer starts again from its full duration; what it had counted is gone. */
     internal fun confirmRestart() {
-        asking?.let(::restart)
+        val step = asking ?: return
         asking = null
+        val title = title
+        card.scope.launch { card.turns.withLock { startNow(step, title) } }
     }
 
     /** The reader declined: the timer keeps running with the time it had. */
@@ -99,22 +137,44 @@ class RecipeTimers internal constructor(
     }
 
     internal fun cancel(step: Step) {
-        scope.launch { store.cancel(key(step)) }
+        card.scope.launch { card.turns.withLock { store.cancel(key(step)) } }
     }
 
-    private fun restart(step: Step) {
+    /**
+     * Drops each held timer whose step no longer carries it — no timer at that position any more, or one with another
+     * name or duration — so that none is left hidden and uncancellable, nor announced as what the step no longer is.
+     */
+    internal fun dropStale(steps: List<Step>, held: Map<Int, RunningTimer>) {
+        val stale = held.values.filter { timer ->
+            val step = steps.firstOrNull { it.position == timer.key.stepPosition }
+            step == null || step.timer?.duration != timer.duration || TimerName.of(step) != timer.name
+        }
+        if (stale.isEmpty()) return
+        card.scope.launch {
+            card.turns.withLock {
+                stale.forEach { timer ->
+                    // Only the very timer found stale: one started again meanwhile is the step's own.
+                    if (store.get(timer.key)?.endsAt == timer.endsAt) store.cancel(timer.key)
+                }
+            }
+        }
+    }
+
+    private suspend fun startNow(step: Step, title: String) {
         val duration = step.timer?.duration ?: return
-        scope.launch { store.start(key(step), duration) }
+        val name = TimerName.of(step) ?: return
+        store.start(key(step), name, title, duration)
+        withContext(Dispatchers.Main) { starts++ }
     }
 }
 
-/** The timers of [recipeId] in the card's book, kept current while the card shows them. */
+/** The timers of [recipeId], titled [title], in the card's book, kept current while the card shows them. */
 @Composable
-fun rememberRecipeTimers(recipeId: RecipeId): RecipeTimers {
+fun rememberRecipeTimers(recipeId: RecipeId, title: String): RecipeTimers {
     val card = rememberCardTimers()
-    val scope = rememberCoroutineScope()
     val book = remember(card) { card.book() }
-    val timers = remember(card, book, recipeId) { RecipeTimers(card.store, book, recipeId, scope) }
+    val timers = remember(card, book, recipeId) { RecipeTimers(card, book, recipeId) }
+    timers.title = title
     LaunchedEffect(timers) {
         card.store.ofRecipe(book, recipeId).collect { timers.held = it }
     }
@@ -265,6 +325,10 @@ object TimerTags {
     const val RESTART_QUESTION = "timer-restart"
     const val RESTART_CONFIRM = "timer-restart-confirm"
     const val RESTART_DECLINE = "timer-restart-decline"
+    const val UNHEARD = "timer-unheard"
+    const val UNHEARD_TEXT = "timer-unheard-text"
+    const val UNHEARD_SETTINGS = "timer-unheard-settings"
+    const val UNHEARD_DISMISS = "timer-unheard-dismiss"
     fun start(position: Int) = "timer-start-$position"
     fun status(position: Int) = "timer-status-$position"
     fun cancel(position: Int) = "timer-cancel-$position"

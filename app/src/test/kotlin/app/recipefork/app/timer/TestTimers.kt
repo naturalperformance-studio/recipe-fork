@@ -1,9 +1,14 @@
 package app.recipefork.app.timer
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.ui.test.IdlingResource
 import androidx.room.Room
 import app.recipefork.app.book.BookName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.Instant
@@ -23,6 +28,35 @@ class TestTimerClock(start: Instant = Instant.parse("2026-10-02T12:00:00Z")) : T
 
     fun advance(by: Duration) {
         time.value = time.value.plus(by.toJavaDuration())
+    }
+}
+
+/** Notification settings a test sets; the settings it leads to are the device's own. */
+class TestNotificationAccess(
+    private val context: Context,
+    var state: NotificationState = NotificationState.PERMITTED,
+    override var hasRequest: Boolean = true,
+) : NotificationAccess {
+    /** How many times the state was read. */
+    var reads = 0
+        private set
+
+    override fun state(): NotificationState = state.also { reads++ }
+
+    override fun settings(state: NotificationState): Intent = AndroidNotificationAccess(context).settings(state)
+}
+
+/** Remembers what was announced and withdrawn, in order. */
+class RecordedNotices : TimerNotices {
+    val announced = mutableListOf<RunningTimer>()
+    val withdrawn = mutableListOf<TimerKey>()
+
+    override fun announce(timer: RunningTimer) {
+        synchronized(this) { announced += timer }
+    }
+
+    override fun withdraw(key: TimerKey) {
+        synchronized(this) { withdrawn += key }
     }
 }
 
@@ -71,7 +105,11 @@ class TestTimers(context: Context, val clock: TestTimerClock = TestTimerClock())
 
     val announcements = RecordedAnnouncements()
     val store = RunningTimers(database.timers(), clock, announcements)
-    val card = CardTimers(store) { BookName.Pool }
+    val access = TestNotificationAccess(context)
+
+    /** Outlives the card, as the application's does; on the main thread, whose work the Compose test rule waits for. */
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    val card = CardTimers(store, scope, access) { BookName.Pool }
 
     val idling: IdlingResource = object : IdlingResource {
         override val isIdleNow: Boolean get() = running.get() == 0
@@ -79,6 +117,7 @@ class TestTimers(context: Context, val clock: TestTimerClock = TestTimerClock())
     }
 
     fun close() {
+        scope.cancel()
         database.close()
         threads.shutdown()
     }

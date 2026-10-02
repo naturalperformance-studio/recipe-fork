@@ -26,8 +26,20 @@ data class TimerKey(val book: String, val recipeId: String, val stepPosition: In
     constructor(book: BookName, recipeId: RecipeId, stepPosition: Int) : this(book.fileName, recipeId.value, stepPosition)
 }
 
-/** A timer started and not cancelled: running until [endsAt], and ended from then on. */
-data class RunningTimer(val key: TimerKey, val duration: Duration, val endsAt: Instant) {
+/**
+ * A timer started and not cancelled: running until [endsAt], and ended from then on. It carries what it was started
+ * as — the [name] it announces itself by (given or derived, FLOW-016), the title of its [recipe] and its [duration] —
+ * so that what announces it never depends on whatever step sits at its position later. [announced] is whether its
+ * end has been announced.
+ */
+data class RunningTimer(
+    val key: TimerKey,
+    val name: String,
+    val recipe: String,
+    val duration: Duration,
+    val endsAt: Instant,
+    val announced: Boolean = false,
+) {
     /** The time left at [now]; zero once the timer has ended. */
     fun remaining(now: Instant): Duration =
         java.time.Duration.between(now, endsAt).toMillis().coerceAtLeast(0).milliseconds
@@ -74,15 +86,26 @@ class RunningTimers(
     suspend fun get(key: TimerKey): RunningTimer? = dao.get(key.book, key.recipeId, key.stepPosition)?.toTimer()
 
     /**
-     * Starts the timer of [key] for its full [duration] from now. A timer already held under [key], running or ended,
-     * is replaced: what it had counted is gone (FLOW-021 (2)). Asking first is the caller's.
+     * Starts the timer of [key] for its full [duration] from now, named [name] in the recipe titled [recipe]. A timer
+     * already held under [key], running or ended, is replaced: what it had counted is gone (FLOW-021 (2)). Asking
+     * first is the caller's.
      */
-    suspend fun start(key: TimerKey, duration: Duration): RunningTimer {
-        val timer = RunningTimer(key, duration, clock.now().plus(duration.toJavaDuration()))
+    suspend fun start(key: TimerKey, name: String, recipe: String, duration: Duration): RunningTimer {
+        val timer = RunningTimer(key, name, recipe, duration, clock.now().plus(duration.toJavaDuration()))
         dao.put(RunningTimerEntity.of(timer))
         announcements.started(timer)
         return timer
     }
+
+    /** The timers whose end is not yet announced, running or just ended. */
+    suspend fun unannounced(): List<RunningTimer> = dao.unannounced().map { it.toTimer() }
+
+    /**
+     * Marks [timer] announced, if it is still the one held under its key — not cancelled meanwhile nor started again.
+     * Returns whether it was.
+     */
+    suspend fun markAnnounced(timer: RunningTimer): Boolean =
+        dao.markAnnounced(timer.key.book, timer.key.recipeId, timer.key.stepPosition, timer.endsAt.toEpochMilli()) > 0
 
     /** Cancels the timer of [key]: it never ends and never announces itself (FLOW-013 (7)). */
     suspend fun cancel(key: TimerKey) {
@@ -96,13 +119,19 @@ data class RunningTimerEntity(
     @ColumnInfo(name = "book") val book: String,
     @ColumnInfo(name = "recipe_id") val recipeId: String,
     @ColumnInfo(name = "step_position") val stepPosition: Int,
+    @ColumnInfo(name = "name") val name: String,
+    @ColumnInfo(name = "recipe_title") val recipeTitle: String,
     @ColumnInfo(name = "duration_ms") val durationMs: Long,
     @ColumnInfo(name = "ends_at_ms") val endsAtMs: Long,
+    @ColumnInfo(name = "announced") val announced: Boolean,
 ) {
     fun toTimer() = RunningTimer(
         TimerKey(book, recipeId, stepPosition),
+        name,
+        recipeTitle,
         durationMs.milliseconds,
         Instant.ofEpochMilli(endsAtMs),
+        announced,
     )
 
     companion object {
@@ -110,8 +139,11 @@ data class RunningTimerEntity(
             timer.key.book,
             timer.key.recipeId,
             timer.key.stepPosition,
+            timer.name,
+            timer.recipe,
             timer.duration.inWholeMilliseconds,
             timer.endsAt.toEpochMilli(),
+            timer.announced,
         )
     }
 }
@@ -126,6 +158,16 @@ interface RunningTimerDao {
 
     @Query("select * from running_timer where book = :book and recipe_id = :recipeId and step_position = :step")
     suspend fun get(book: String, recipeId: String, step: Int): RunningTimerEntity?
+
+    @Query("select * from running_timer where announced = 0 order by ends_at_ms")
+    suspend fun unannounced(): List<RunningTimerEntity>
+
+    @Query(
+        "update running_timer set announced = 1 " +
+            "where book = :book and recipe_id = :recipeId and step_position = :step and ends_at_ms = :endsAt " +
+            "and announced = 0",
+    )
+    suspend fun markAnnounced(book: String, recipeId: String, step: Int, endsAt: Long): Int
 
     @Upsert
     suspend fun put(timer: RunningTimerEntity)
