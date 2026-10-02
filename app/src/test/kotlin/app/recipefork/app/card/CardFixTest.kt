@@ -137,11 +137,11 @@ class CardFixTest {
         open()
         fix(0, "300")
         assertEquals("Servings: ≈2", servings())
-        assertEquals(listOf("Chicken", "300 g", "recalculated", "fixed: the amount you have"), line(0))
+        assertEquals(listOf("Chicken", "300 g", "fixed"), line(0))
         // 350 g × 3/5 = 210 g, not the 175 g that 2 servings would give.
-        assertEquals(listOf("Rice", "210 g", "recalculated"), line(1))
-        assertEquals(listOf("Eggs", "2 pc", "recalculated, exact value was lower"), line(2))
-        assertEquals(listOf("Salt", "⅔ tsp", "recalculated, exact value was lower"), line(3))
+        assertEquals(listOf("Rice", "210 g"), line(1))
+        assertEquals(listOf("Eggs", "2 pc", "rounded up, exact value was lower"), line(2))
+        assertEquals(listOf("Salt", "⅔ tsp", "rounded up, exact value was lower"), line(3))
         assertEquals(listOf("Pepper", "to taste"), line(4))
     }
 
@@ -249,8 +249,8 @@ class CardFixTest {
         more()
         // + walks from the count shown, ≈4, to 5.
         assertEquals("Servings: 5", servings())
-        assertEquals(listOf("Chicken", "625 g", "recalculated"), line(0))
-        assertEquals(listOf("Eggs", "4 pc", "recalculated, exact value was lower"), line(2))
+        assertEquals(listOf("Chicken", "625 g"), line(0))
+        assertEquals(listOf("Eggs", "4 pc", "rounded up, exact value was lower"), line(2))
     }
 
     // SCALE-017: releasing the last fixing returns to the count in force before the first; clearing is no release.
@@ -271,7 +271,7 @@ class CardFixTest {
         compose.onNodeWithTag(CardTags.FIX_RELEASE).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { !controlShown() }
         assertEquals("Servings: 6", servings())
-        assertEquals(listOf("Chicken", "750 g", "recalculated"), line(0))
+        assertEquals(listOf("Chicken", "750 g"), line(0))
     }
 
     // A11Y-003, A11Y-005, L10N: the control's actions are large enough, say what they do, and read in Russian.
@@ -291,6 +291,6 @@ class CardFixTest {
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content)
         confirm()
         assertEquals("Порций: ≈2", servings())
-        assertEquals(listOf("Chicken", "300 г", "пересчитано", "зафиксировано: столько у вас есть"), line(0))
+        assertEquals(listOf("Chicken", "300 г", "зафиксировано"), line(0))
     }
 }

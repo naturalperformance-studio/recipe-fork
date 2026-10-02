@@ -41,9 +41,8 @@ import app.recipefork.core.scaling.Rounding
  * (1), met for the section rather than per line); a quantity rounding moved carries ↑ where the exact value was
  * lower — a floor-held one included — and ↓ where it was higher, each read aloud in words (SCALE-004, SCALE-005).
  * Once two or more lines are held at their floors, a warning says the quantities no longer hold the authored
- * proportions (SCALE-009). A fixed line says it is fixed, and a fixed line the latest fixing outgrew says what it needs against
- * what was fixed (SCALE-006). None of it is carried by colour (A11Y-008). With no ingredients the part is left out,
- * heading included (FLOW-019).
+ * proportions (SCALE-009). A fixed line says it is fixed. None of it is carried by colour (A11Y-008). With no
+ * ingredients the part is left out, heading included (FLOW-019).
  *
  * Tapping a line that carries a quantity opens its fixing control below it ([FixAmount]); a line "to taste", an
  * unfinished one, or one off its grid offers nothing (SCALE-018 (7)).
