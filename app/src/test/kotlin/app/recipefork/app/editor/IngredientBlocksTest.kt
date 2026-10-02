@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -43,6 +44,7 @@ import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
@@ -227,8 +229,9 @@ class IngredientBlocksTest {
             // One left edge: the name starts the first line, the quantity (or the unit, with no quantity) the second.
             assertEquals("row $position: the name and the field below it share their left edge", name.left, below.left, 0.5f)
             assertTrue("row $position: the quantity and unit are below the name", below.top >= name.bottom - 0.5f)
-            // The menu and the unit beside a quantity end at one right edge.
-            if (below != unit) assertEquals("row $position: the menu and the unit end together", bounds(EditorTags.ingredientMenu(position)).right, unit.right, 0.5f)
+            // The menu beside the name and the unit beside a quantity end at one right edge.
+            val menu = bounds(EditorTags.ingredientMenu(position))
+            if (below != unit && menu.top < name.bottom) assertEquals("row $position: the menu and the unit end together", menu.right, unit.right, 0.5f)
         }
         // The divisibility question of the free-text piece stays inside its block, below its fields.
         assertTrue(exists(EditorTags.divisibility(0)))
@@ -507,5 +510,128 @@ class IngredientBlocksTest {
             assertFalse(exists(EditorTags.ingredientHandleIcon(position)))
         }
         assertSeparateOutlinedBlocks(rows().size)
+    }
+
+    /** The action icons of the editable row at [position], in their order. */
+    private fun actions(position: Int) = listOf(EditorTags.ingredientRemove(position), EditorTags.ingredientMenu(position))
+
+    private fun labels(position: Int): List<String> = actions(position).map { AccessibilityChecks.announcedLabel(compose.onNodeWithTag(it).fetchSemanticsNode()) }
+
+    private fun dp(px: Float) = px / compose.density.density
+
+    // The block is no taller than it was before its actions became the step's icons: measured at 360 dp and font
+    // scale 1.0 on the block as it stood, 144 dp for a row of name, quantity and unit, 284 dp with the divisibility
+    // question. The icons stand on the name's line, so they add no line of their own.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun theBlockIsNoTallerThanBefore() = blockIsNoTallerThanBefore()
+
+    @Test
+    @Config(qualifiers = "en-w360dp-h4000dp")
+    fun theBlockIsNoTallerThanBeforeInEnglish() = blockIsNoTallerThanBefore()
+
+    private fun blockIsNoTallerThanBefore() {
+        open(1f)
+        val before = listOf(284f, 144f, 144f, 144f)
+        (0 until rows().size).forEach { position ->
+            val height = dp(bounds(EditorTags.ingredient(position)).height)
+            assertTrue("row $position is $height dp tall, it was ${before[position]} dp", height <= before[position] + 0.5f)
+            val name = bounds(EditorTags.ingredientName(position))
+            actions(position).forEach {
+                val b = bounds(it)
+                assertTrue("row $position: $it stands on the name's line", b.top >= name.top - 0.5f && b.bottom <= name.bottom + 0.5f)
+                assertTrue("row $position: $it is right of the name", b.left >= name.right - 0.5f)
+            }
+        }
+    }
+
+    // The row's actions are icons as a step's are: 48 dp each, side by side in one row, inside the block, and no text
+    // button anywhere in the block — at font scale 1.0 beside the name, at 2.0 in a row of their own under the inputs.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun theActionsAreIconsInOneRow() = actionsAreIconsInOneRow(1f)
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun theActionsAreIconsInOneRowAtDoubleFontScale() = actionsAreIconsInOneRow(2f)
+
+    @Test
+    @Config(qualifiers = "en-w360dp-h4000dp")
+    fun theActionsAreIconsInOneRowInEnglishAtDoubleFontScale() = actionsAreIconsInOneRow(2f)
+
+    private fun actionsAreIconsInOneRow(fontScale: Float) {
+        open(fontScale)
+        (0 until rows().size).forEach { position ->
+            val block = bounds(EditorTags.ingredient(position))
+            val name = bounds(EditorTags.ingredientName(position))
+            val unit = bounds(EditorTags.ingredientUnit(position))
+            val controls = actions(position).map { bounds(it) }
+            controls.forEach { b ->
+                assertEquals("row $position: an icon is 48 dp wide", 48f, dp(b.width), 0.5f)
+                assertEquals("row $position: an icon is 48 dp high", 48f, dp(b.height), 0.5f)
+                assertTrue("row $position: the icon lies inside the block", b.left >= block.left - 0.5f && b.right <= block.right + 0.5f && b.top >= block.top - 0.5f && b.bottom <= block.bottom + 0.5f)
+            }
+            val (remove, menu) = controls
+            assertEquals("row $position: the icons stand in one row", remove.top, menu.top, 0.5f)
+            assertTrue("row $position: remove, then the menu", menu.left >= remove.right - 0.5f)
+            if (fontScale == 2f) {
+                // The name has the whole line: it reaches the block's right edge, and the icons are under the inputs.
+                assertTrue("row $position: the name reaches the block's right edge", block.right - name.right <= px(4f) + 0.5f)
+                assertTrue("row $position: the icons are under the unit", remove.top >= unit.bottom - 0.5f)
+                if (exists(EditorTags.ingredientQuantity(position))) assertTrue(remove.top >= bounds(EditorTags.ingredientQuantity(position)).bottom - 0.5f)
+                assertEquals("row $position: the icons start at the inputs' left edge", name.left, remove.left, 0.5f)
+            }
+            // No text button: every control in the block but its inputs carries no text of its own, only its spoken name.
+            val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(position)))
+            val texts = compose.onAllNodes(inRow and AccessibilityChecks.isInteractive, useUnmergedTree = true).fetchSemanticsNodes()
+                .filter { it.config.getOrNull(SemanticsProperties.EditableText) == null }
+                .filter { it.config.getOrNull(SemanticsProperties.Role) == androidx.compose.ui.semantics.Role.Button }
+                .filter { it.config.getOrNull(SemanticsProperties.Text).orEmpty().isNotEmpty() }
+            assertEquals("row $position: no text buttons", emptyList<SemanticsNode>(), texts)
+        }
+        AccessibilityChecks.assertTouchTargets(compose)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose)
+    }
+
+    // Each icon is named for the screen reader by its row, and a long press shows that name in a tooltip.
+    @Test
+    @Config(qualifiers = "en-w360dp-h4000dp")
+    fun eachIconIsNamedByItsRowAndShowsATooltip() {
+        open(1f)
+        assertEquals(listOf("Remove ingredient row 2", "Ingredient row 2 actions"), labels(1))
+        listOf(1, 3).flatMap(::actions).forEach { tag ->
+            compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick() }
+            compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(tag)) }
+            val label = AccessibilityChecks.announcedLabel(compose.onNodeWithTag(tag).fetchSemanticsNode())
+            fun texts(node: SemanticsNode): List<String> = node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + node.children.flatMap(::texts)
+            assertTrue("$tag shows \"$label\" on a long press", texts(node(EditorTags.tooltip(tag))).contains(label))
+            compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.tooltip(tag)) }
+        }
+        // A long press only shows the name: the row is still there, and no menu opened.
+        assertTrue(exists(EditorTags.ingredient(3)))
+        assertFalse(exists(EditorTags.ingredientAction(3, RowAction.INSERT_ABOVE)))
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h4000dp")
+    fun eachIconIsNamedByItsRowInRussian() {
+        open(2f)
+        assertEquals(listOf("Убрать строку ингредиента 2", "Действия со строкой ингредиента 2"), labels(1))
+        val tag = EditorTags.ingredientRemove(0)
+        compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick() }
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(tag)) }
+    }
+
+    // A frozen recipe's ingredient block shows no action icons, and nothing in it is to be pressed.
+    @Test
+    @Config(qualifiers = "en-w360dp-h4000dp")
+    fun aFrozenRecipesRowsShowNoActionIcons() {
+        open(1f, state = RecipeState.PUBLISHED)
+        (0 until rows().size).forEach { position ->
+            assertTrue(exists(EditorTags.ingredient(position)))
+            actions(position).forEach { assertFalse("frozen row $position shows $it", exists(it)) }
+            val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(position)))
+            assertEquals(0, compose.onAllNodes(inRow and AccessibilityChecks.isInteractive, useUnmergedTree = true).fetchSemanticsNodes().size)
+        }
     }
 }
