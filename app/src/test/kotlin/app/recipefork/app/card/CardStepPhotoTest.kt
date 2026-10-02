@@ -142,6 +142,19 @@ class CardStepPhotoTest {
         assertTrue(exists(CardTags.step(1)))
     }
 
+    // A step that holds nothing but a photograph whose file is gone shows nothing, so it is left out — never shown as
+    // a bare number — and the steps after it are numbered without it.
+    @Test
+    fun aStepThatIsOnlyAPhotoWhoseFileIsGoneIsLeftOut() {
+        val gone = Media("gone", null, MediaKind.PHOTO, MediaAttachment.ToStep(0), MediaVisibility.PRIVATE)
+        val recipe = threeSteps(gone, photo("p1", 1)).let { it.copy(steps = listOf(Step(0, ""), it.steps[1], it.steps[2])) }
+        show(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepPhoto(1)), PATIENCE_MS)
+        assertFalse(exists(CardTags.step(0)))
+        assertFalse(exists(CardTags.stepPhoto(0)))
+        assertEquals(listOf("Photo of step 1"), compose.descriptionOf(CardTags.stepPhoto(1)))
+    }
+
     @Test
     fun aFrozenRecipeShowsItsStepPhotos() {
         show(threeSteps(photo("p0", 0), photo("p2", 2)).inState(RecipeState.PUBLISHED))

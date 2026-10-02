@@ -22,7 +22,10 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
+import app.recipefork.app.media.PhotoStore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -66,18 +69,43 @@ open class RecipeRepository(
     suspend fun isMarked(id: RecipeId): Boolean = book.database.recipes().isMarked(id.value)
 
     /**
-     * Removes the marked recipe [id] from the active book with its held content (FLOW-064 (6)). Returns the media
-     * identities it held, or null when the book marks no such recipe.
+     * Removes the marked recipe [id] from the active book with its held content (FLOW-064 (6)) and deletes the media
+     * files it held under [files] that nothing else holds (MEDIA-012). Returns whether the book marked it.
      */
-    suspend fun removeMarked(id: RecipeId): List<String>? = book.database.recipes().removeMarked(id.value)
+    suspend fun removeMarked(id: RecipeId, files: java.io.File? = filesDirectory): Boolean {
+        val open = book.open.value
+        val media = open.database.recipes().removeMarked(id.value) ?: return false
+        release(open, media, files)
+        return true
+    }
 
     open suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
 
     /**
-     * Deletes the recipe [id] from the active book with everything it holds, on the device alone (FLOW-053 (6, 8)).
-     * It is gone at once and cannot be brought back. Returns whether the book held it.
+     * Deletes the recipe [id] from the active book with everything it holds, on the device alone (FLOW-053 (6, 8)),
+     * and the media files it held that nothing else holds (MEDIA-012). It is gone at once and cannot be brought back.
+     * Returns whether the book held it.
      */
-    suspend fun delete(id: RecipeId): Boolean = book.database.recipes().delete(id.value)
+    suspend fun delete(id: RecipeId): Boolean {
+        val open = book.open.value
+        val media = open.database.recipes().deleteHolding(id.value) ?: return false
+        release(open, media, filesDirectory)
+        return true
+    }
+
+    /**
+     * Deletes, under [files], the files of the media items [media] that a recipe of the book [open] no longer holds:
+     * the one way a recipe's leaving the book takes its photographs with it (MEDIA-012). A file a fork copied is the
+     * fork's own, under its own identity, and stays. Finished even when the caller is cancelled: the rows are gone.
+     */
+    private suspend fun release(open: ActiveBook.Open, media: List<String>, files: java.io.File?) {
+        if (files == null || media.isEmpty()) return
+        withContext(NonCancellable) {
+            val held = open.database.recipes().held(media).toSet()
+            val store = PhotoStore(files)
+            media.filterNot { it in held }.forEach { store.delete(open.name, it) }
+        }
+    }
 
     suspend fun get(id: RecipeId): Recipe? = book.database.recipes().get(id.value)?.toRecipe()
 

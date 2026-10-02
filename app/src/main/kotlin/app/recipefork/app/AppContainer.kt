@@ -9,6 +9,7 @@ import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.data.Network
 import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySync
+import app.recipefork.app.media.MediaSweep
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.AndroidRingTimeouts
 import app.recipefork.app.timer.AndroidRingingSound
@@ -62,6 +63,12 @@ class AppContainer(
     /** The pool is the only recipe book so far (AUTH-026). */
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))
     val recipes = RecipeRepository(activeBook, context.filesDir)
+
+    /** Clears each book's media directory of files no recipe holds, once as the book is opened. */
+    val mediaSweep = MediaSweep(context.filesDir)
+
+    /** Starts the sweep of every book opened from now on, the active one first, in [scope]. */
+    fun sweepMedia(scope: CoroutineScope): Job = mediaSweep.everyOpened(activeBook.open, scope)
 
     /** The notifications of timers' ends. */
     val timerNotices = AndroidTimerNotices(context)
