@@ -30,4 +30,18 @@
     <string name="card_unnamed_ingredient">Unnamed ingredient</string>
     <!-- The recipe is no longer in the active book. -->
     <string name="card_missing">This recipe is no longer in this recipe book.</string>
+    <!-- The serving count while a fixed ingredient sets the scale (SCALE-002, SCALE-008): computed, so approximate. -->
+    <string name="card_servings_approximate">Servings: ≈%1$s</string>
+    <!-- Fixing the amount the reader has of one ingredient (SCALE-002, SCALE-006, SCALE-018). -->
+    <string name="card_fix_action">Enter the amount you have and recalculate the recipe for it</string>
+    <string name="card_fix_amount">Amount you have</string>
+    <string name="card_fix_confirm">Recalculate</string>
+    <string name="card_fix_confirm_action">Recalculate the whole recipe for this amount</string>
+    <string name="card_fix_release">Release</string>
+    <string name="card_fix_release_action">Stop recalculating the recipe from this ingredient</string>
+    <string name="card_fix_cancel">Cancel</string>
+    <string name="card_fix_cancel_action">Close without changing the recipe</string>
+    <string name="card_quantity_fixed">fixed: the amount you have</string>
+    <!-- %1$s is what the recipe needs at the scale in force, %2$s what the reader fixed. -->
+    <string name="card_quantity_shortfall">fixed: you have %2$s, the recipe now needs %1$s</string>
 </resources>
