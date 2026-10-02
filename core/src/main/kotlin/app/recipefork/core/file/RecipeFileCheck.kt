@@ -2,16 +2,16 @@ package app.recipefork.core.file
 
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
-import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 
 /**
- * Whether what a recipe file states passes the rules a sending must pass (decisions/20260928-recipe-file-is-a-zip.md):
- * the limits of DOM-012, the closed list of units of DOM-016, the quantities of DOM-017 and the shape every recipe of
- * the book has — positions in order, references and media that point at what the recipe holds. An importer believes
- * nothing of a file that has any [problems].
+ * Whether what a recipe file states could be a recipe of the book (decisions/20260928-recipe-file-is-a-zip.md): the
+ * limits of DOM-012, the closed list of units of DOM-016 each within its type, quantities above zero (DOM-017), and the
+ * shape every recipe of the book has — positions in order, references and media that point at what the recipe holds.
+ * A row still being written, or holding a value off its grid, is accepted as an own draft holds it, because export
+ * takes a recipe in any state (FLOW-063 (1)). An importer believes nothing of a file that has any [problems].
  */
 object RecipeFileCheck {
     const val MAX_INGREDIENTS = 50
@@ -57,23 +57,23 @@ object RecipeFileCheck {
         check(ingredients.map { it.position } == ingredients.indices.toList()) { "ingredient positions out of order" }
         ingredients.forEach { row ->
             val at = "ingredient ${row.position}"
-            // DOM-009: named by an entry or by the author's own words, never both; a qualifier narrows an entry.
-            check((row.dictionaryEntry != null) != !row.freeTextName.isNullOrBlank()) { "$at is named by both or neither" }
+            // A row may stand as its author left it — unnamed, with no unit or quantity yet, with what was typed, or
+            // with a value off its grid — as an own draft keeps it (FLOW-024 (6), DOM-017 (6)); the card then shows
+            // it as written and never scales it. What no row of the book can be is refused.
+            // DOM-009: never named by both an entry and the author's own words; a qualifier narrows an entry.
+            check(row.dictionaryEntry == null || row.freeTextName.isNullOrBlank()) { "$at is named by both" }
             check(row.dictionaryEntry == null || row.dictionaryEntry >= 0) { "$at names an entry that is none" }
             check(row.qualifier == null || row.dictionaryEntry != null) { "$at qualifies no entry" }
-            check(row.enteredQuantity == null) { "$at holds no value" }
+            // A value held, or what was typed, never both; a value held is above zero.
+            check(row.quantity == null || row.enteredQuantity == null) { "$at holds a value and what was typed" }
+            check(row.quantity == null || row.quantity > Rational.ZERO) { "$at holds a value of zero or below" }
             if (row.unitType == UnitType.TASTE_UNMEASURED) {
+                // DOM-002: to taste holds no unit of measure and no quantity.
                 check(row.unit == null || row.unit == QuantityUnit.TO_TASTE) { "$at is to taste in a unit" }
-                check(row.quantity == null) { "$at is to taste with a quantity" }
+                check(row.quantity == null && row.enteredQuantity == null) { "$at is to taste with a quantity" }
             } else {
-                // DOM-016: each unit within the type the table gives it; DOM-017: a value above zero on its grid.
-                val unit = row.unit
-                check(unit != null && unit.type == row.unitType) { "$at has no unit of its type" }
-                val quantity = row.quantity
-                check(quantity != null && unit != null && unit.type == row.unitType && QuantityInput.holds(quantity, unit, row.divisible)) {
-                    "$at holds no quantity on its grid"
-                }
-                if (row.unitType == UnitType.PIECE) check(row.divisible != null) { "$at is a piece of no divisibility" }
+                // DOM-016: a unit, where there is one, is of the type the table gives it.
+                check(row.unit == null || row.unit.type == row.unitType) { "$at has a unit of another type" }
             }
             if (row.unitType != UnitType.PIECE) {
                 check(row.divisible == null && row.pieceWeight == null) { "$at carries what only a piece carries" }

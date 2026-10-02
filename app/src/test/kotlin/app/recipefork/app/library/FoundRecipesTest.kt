@@ -289,4 +289,27 @@ class FoundRecipesTest {
         compose.waitUntil(PATIENCE_MS) { ShadowToast.getTextOfLatestToast() == "This file is not a recipe file, so nothing was added" }
         assertEquals(1, runBlocking { recipes.marked().first() }.size)
     }
+
+    // FLOW-063 (1), FLOW-024 (6): an imported draft shows its unfinished and off-grid rows as written, unscaled, and
+    // scales the rest.
+    @Test
+    fun anImportedDraftShowsItsUnfinishedRowsAsWrittenAndScalesTheRest() {
+        val id = found(TestRecipeFiles.draft())
+        show(Mode.Serverless)
+        openEntry(id)
+        fun quantities() = (0..2).map { compose.textsOf(CardTags.ingredient(it)).getOrNull(1) }
+        val before = quantities()
+        assertEquals("200 g", before[0])
+        compose.onNodeWithTag(CardTags.SERVINGS_MORE).performClick()
+        compose.waitForIdle()
+        assertEquals("Servings: 3", compose.textsOf(CardTags.SERVINGS).single())
+        val after = quantities()
+        assertEquals("300 g", after[0])
+        // The unfinished and the off-grid rows read as they were written, at either count.
+        assertEquals(before[1], after[1])
+        assertEquals(before[2], after[2])
+        // As an own draft's are (CardServingsTest): the row carries its unit and no value it does not hold.
+        assertEquals(listOf("200 g", "ml", "g"), before)
+        assertEquals(listOf("300 g", "ml", "g"), after)
+    }
 }

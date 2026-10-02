@@ -14,6 +14,7 @@ import app.recipefork.app.file.TestRecipeFiles.zip
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.FileMedia
 import app.recipefork.core.file.RecipeFile
+import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityUnit
@@ -21,6 +22,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.StatedParent
+import app.recipefork.core.recipe.Timer
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -36,6 +38,7 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 import java.time.Instant
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * FLOW-064 and decisions/20260928-recipe-file-is-a-zip.md: a recipe file is added to the active book as a found recipe;
@@ -186,14 +189,29 @@ class RecipeImportTest {
         assertRefused(Refusal.DAMAGED, big, limits)
     }
 
-    // The ADR: the document is validated against the rules a sending must pass — DOM-012, DOM-016, DOM-017.
+    // The ADR: the document is validated against the recipe's rules — DOM-012, DOM-016, DOM-017 — and its shape.
     @Test
     fun aDocumentBreakingTheRecipesRulesIsRefused() {
         val content = soup()
-        val offGrid = content.copy(ingredients = content.ingredients.map { if (it.position == 0) it.copy(quantity = Rational.of(15, 2)) else it })
         val wrongUnit = content.copy(ingredients = content.ingredients.map { if (it.position == 0) it.copy(unit = QuantityUnit.TEASPOON) else it })
+        val noValue = content.copy(ingredients = content.ingredients.map { if (it.position == 0) it.copy(quantity = Rational.ZERO) else it })
         val tooLong = content.copy(title = "t".repeat(121))
-        listOf(offGrid, wrongUnit, tooLong).forEach { assertRefused(Refusal.BREAKS_RULES, file(it)) }
+        val missingIngredient = content.copy(steps = content.steps.map { if (it.position == 0) it.copy(ingredientReferences = listOf(IngredientReference(7, 0))) else it })
+        val twoAtOnePlace = content.copy(steps = content.steps.map { if (it.position == 0) it.copy(ingredientReferences = listOf(IngredientReference(0, 9), IngredientReference(1, 9))) else it })
+        val longTimer = content.copy(steps = content.steps.map { if (it.position == 0) it.copy(timer = Timer((100 * 60).minutes)) else it })
+        listOf(wrongUnit, noValue, tooLong, missingIngredient, twoAtOnePlace, longTimer).forEach { assertRefused(Refusal.BREAKS_RULES, file(it)) }
+    }
+
+    // FLOW-063 (1), FLOW-024 (6): a friend's draft — a row still being written, a row off its grid — is imported, its
+    // rows kept exactly as written.
+    @Test
+    fun aDraftIsImportedAsWritten() = runBlocking {
+        val content = TestRecipeFiles.draft()
+        assertTrue(import(file(content)) is ImportOutcome.Added)
+        val found = recipes.get(content.id)!!
+        assertEquals(content.ingredients, found.ingredients)
+        assertNull(found.ingredients[1].authoredQuantity)
+        assertNull(found.ingredients[2].authoredQuantity)
     }
 
     // The ADR: only the media entries the document names are read, written under names the importer makes, each of

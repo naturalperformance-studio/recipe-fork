@@ -43,6 +43,19 @@ object TestRecipeFiles {
         parent = FileParent(RecipeId("p-1"), "Soup", "boris"),
     )
 
+    /**
+     * A friend's draft: beans that scale, a row whose quantity field holds what was typed and no value, and a row of
+     * grams holding a value off their grid (7½ g).
+     */
+    fun draft() = soup(id = "d-1").copy(
+        title = "Draft soup",
+        ingredients = listOf(
+            Ingredient(0, null, freeTextName = "beans", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(200)),
+            Ingredient(1, null, freeTextName = "water", unitType = UnitType.EXACT, unit = QuantityUnit.MILLILITRE, quantity = null, enteredQuantity = "1 500"),
+            Ingredient(2, null, freeTextName = "yeast", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(15, 2)),
+        ),
+    )
+
     fun document(content: RecipeFileContent) = RecipeFile.encode(content).toByteArray(Charsets.UTF_8)
 
     /** A ZIP holding [entries] in order, as the standard library writes one. */

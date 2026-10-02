@@ -76,38 +76,47 @@ class RecipeFileCheckTest {
         refused(valid.copy(steps = listOf(Step(0, "x", timer = Timer(5.minutes, "n".repeat(61)))), media = emptyList()))
     }
 
-    // DOM-016: a unit is of the type its row states; a row to taste holds no unit of measure and no quantity.
+    // DOM-016: a unit, where there is one, is of the type its row states; a row to taste holds no unit of measure and
+    // no quantity.
     @Test
     fun theUnitsOfDom016() {
         refused(row(0) { it.copy(unit = QuantityUnit.TEASPOON) })
-        refused(row(2) { it.copy(unit = null) })
+        refused(row(1) { it.copy(unit = QuantityUnit.GRAM) })
         refused(row(3) { it.copy(unit = QuantityUnit.GRAM) })
         refused(row(3) { it.copy(quantity = Rational.of(1)) })
+        refused(row(3) { it.copy(enteredQuantity = "2") })
+        refused(row(0) { it.copy(divisible = true) })
+        refused(row(2) { it.copy(pieceWeight = Rational.of(5)) })
         assertEquals(emptyList(), RecipeFileCheck.problems(row(3) { it.copy(unit = QuantityUnit.TO_TASTE) }))
     }
 
-    // DOM-017: a quantity above zero, on its unit type's grid; a row holding none, or only what was typed, is refused.
+    // DOM-017: a value held is above zero; one off its grid, or a row still being written, is kept as an own draft
+    // keeps it (FLOW-024 (6), DOM-017 (6)), because export takes a recipe in any state (FLOW-063 (1)).
     @Test
     fun theQuantitiesOfDom017() {
-        refused(row(0) { it.copy(unit = QuantityUnit.GRAM, quantity = Rational.of(15, 2)) })
         refused(row(0) { it.copy(quantity = Rational.ZERO) })
         refused(row(0) { it.copy(quantity = Rational.of(-1)) })
-        refused(row(0) { it.copy(quantity = null) })
-        refused(row(0) { it.copy(quantity = null, enteredQuantity = "-3") })
-        refused(row(1) { it.copy(divisible = false) })
-        refused(row(1) { it.copy(divisible = null) })
-        refused(row(2) { it.copy(quantity = Rational.of(3, 10)) })
+        refused(row(0) { it.copy(enteredQuantity = "-3") })
         refused(row(1) { it.copy(pieceWeight = Rational.ZERO) })
-        refused(row(0) { it.copy(divisible = true) })
+        listOf(
+            row(0) { it.copy(unit = QuantityUnit.GRAM, quantity = Rational.of(15, 2)) },
+            row(2) { it.copy(quantity = Rational.of(3, 10)) },
+            row(1) { it.copy(divisible = false) },
+            row(1) { it.copy(divisible = null) },
+            row(0) { it.copy(quantity = null) },
+            row(0) { it.copy(quantity = null, enteredQuantity = "-3") },
+            row(0) { it.copy(quantity = null, enteredQuantity = "1 500") },
+            row(2) { it.copy(unit = null, quantity = null) },
+        ).forEach { assertEquals(emptyList(), RecipeFileCheck.problems(it), "$it") }
     }
 
-    // DOM-009: an ingredient is named by an entry or by words, never both, never neither.
+    // DOM-009: an ingredient is never named both by an entry and by words; a row not named yet is a draft's.
     @Test
     fun aRowIsNamedOnce() {
         refused(row(0) { it.copy(freeTextName = "beet") })
-        refused(row(2) { it.copy(freeTextName = null) })
-        refused(row(2) { it.copy(freeTextName = " ") })
-        refused(row(2) { it.copy(qualifier = "fine") })
+        refused(row(2) { it.copy(freeTextName = null, qualifier = "fine") })
+        assertEquals(emptyList(), RecipeFileCheck.problems(row(2) { it.copy(freeTextName = null) }))
+        assertEquals(emptyList(), RecipeFileCheck.problems(row(2) { it.copy(freeTextName = " ") }))
     }
 
     @Test
