@@ -7,12 +7,15 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
+import app.recipefork.app.media.cover
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
+import app.recipefork.core.recipe.MediaKind
+import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -344,17 +347,55 @@ class RecipeEditor(
         recipe.copy(ingredients = recipe.ingredients.mapIndexed { i, row -> if (i == position) change(row) else row })
     }
 
-    /** Applies [change] and writes the result; a recipe in a frozen state is left as it is. */
-    private fun edit(change: (Recipe) -> Recipe): Boolean {
+    // The cover (FLOW-026, MEDIA-001, MEDIA-009).
+
+    /** The recipe's cover photograph, if it holds one. */
+    val cover: Media? get() = current.value?.cover
+
+    /**
+     * Makes the photograph [mediaId] the recipe's cover. A recipe holds one cover, so it replaces any it held
+     * (MEDIA-001, MEDIA-009); once the change is in the book, [written] is given the identity of the cover replaced,
+     * or null, whose file is then the caller's to delete. Returns whether the cover was set: a frozen recipe takes none.
+     */
+    fun setCover(mediaId: String, written: suspend (replaced: String?) -> Unit = {}): Boolean {
+        val replaced = cover?.mediaId
+        val photo = Media(mediaId, null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)
+        return edit({ recipe -> recipe.copy(media = listOf(photo) + recipe.media.filter { it.attachment != MediaAttachment.Cover }) }) {
+            written(replaced)
+        }
+    }
+
+    /**
+     * Takes the cover off; once the change is in the book, [written] is given its identity, whose file is then the
+     * caller's to delete. Returns whether the recipe held a cover and was editable.
+     */
+    fun removeCover(written: suspend (removed: String) -> Unit = {}): Boolean {
+        val removed = cover?.mediaId ?: return false
+        return edit({ recipe -> recipe.copy(media = recipe.media.filter { it.attachment != MediaAttachment.Cover }) }) {
+            written(removed)
+        }
+    }
+
+    /**
+     * Applies [change] and writes the result, then runs [then]; a recipe in a frozen state is left as it is, and
+     * [then] is not run.
+     */
+    private fun edit(change: (Recipe) -> Recipe, then: suspend () -> Unit): Boolean {
         val recipe = current.value ?: return false
         if (!recipe.state.editable) return false
         noteAction()
         val next = recipe.edited(clock(), change)
         current.value = next
         // Launched in order and queued on a fair lock, so the book receives the changes in the order made.
-        saving.launch { writes.withLock { recipes.save(next) } }
+        saving.launch {
+            writes.withLock { recipes.save(next) }
+            then()
+        }
         return true
     }
+
+    /** Applies [change] and writes the result; a recipe in a frozen state is left as it is. */
+    private fun edit(change: (Recipe) -> Recipe): Boolean = edit(change) {}
 
     /** The row's ingredient as the dictionary entry [entryId], with no free-text name beside it (DOM-009). */
     fun setIngredientEntry(position: Int, entryId: Long) =

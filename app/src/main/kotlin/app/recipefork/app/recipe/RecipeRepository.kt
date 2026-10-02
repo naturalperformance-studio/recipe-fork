@@ -30,7 +30,14 @@ import kotlin.time.Duration.Companion.minutes
 
 /** The recipes of the active book, read from and written to the device alone (FLOW-038, FLOW-043). */
 @OptIn(ExperimentalCoroutinesApi::class)
-class RecipeRepository(private val book: ActiveBook) {
+open class RecipeRepository(
+    private val book: ActiveBook,
+    /**
+     * The directory the books' media directories are kept under — the application's files — where work on a recipe
+     * also copies or deletes its media files; null where the files are no concern of the caller's.
+     */
+    val filesDirectory: java.io.File? = null,
+) {
     /** The first [limit] own recipes under `newest` (FLOW-039); a longer listing asks for a larger limit. */
     fun ownNewest(limit: Int): Flow<List<OwnRecipeRow>> =
         book.open.flatMapLatest { it.database.recipes().newest(limit) }
@@ -42,7 +49,8 @@ class RecipeRepository(private val book: ActiveBook) {
      * The book active now, held: every read and write of what this returns goes to that book, even when another
      * becomes active meanwhile. Work that spans several steps — an import — holds the book it began in.
      */
-    fun inOpenBook(): RecipeRepository = book.open.value.let { RecipeRepository(ActiveBook(it.name, it.database)) }
+    fun inOpenBook(): RecipeRepository =
+        book.open.value.let { RecipeRepository(ActiveBook(it.name, it.database), filesDirectory) }
 
     /** The name of the active book, whose media directory a found recipe's media is written to. */
     fun bookName(): BookName = book.open.value.name
@@ -63,7 +71,7 @@ class RecipeRepository(private val book: ActiveBook) {
      */
     suspend fun removeMarked(id: RecipeId): List<String>? = book.database.recipes().removeMarked(id.value)
 
-    suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
+    open suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
 
     /**
      * Deletes the recipe [id] from the active book with everything it holds, on the device alone (FLOW-053 (6, 8)).

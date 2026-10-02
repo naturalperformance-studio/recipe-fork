@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="media_cover">Фото обложки (необязательно)</string>
+    <string name="media_cover_take">Сфотографировать</string>
+    <string name="media_cover_take_action">Снять фото обложки камерой</string>
+    <string name="media_cover_choose">Выбрать из галереи</string>
+    <string name="media_cover_choose_action">Выбрать фото обложки из галереи</string>
+    <string name="media_cover_remove">Убрать</string>
+    <string name="media_cover_remove_action">Убрать фото обложки</string>
+    <string name="media_cover_description">Фото обложки рецепта «%1$s»</string>
+    <string name="media_working">Готовим фото…</string>
+    <string name="media_processed">Фото прикреплено. Оно уменьшено на этом телефоне до 1 МБ и 1600 пикселей, и из него удалены все данные, включая место съёмки.</string>
+    <string name="media_refused_unreadable">Этот файл не удалось прочитать как фото, поэтому ничего не прикреплено.</string>
+    <string name="media_refused_too_large">Это фото не удалось уменьшить до 1 МБ, поэтому ничего не прикреплено.</string>
+    <string name="media_refused_not_stored">Фото не удалось сохранить на этом телефоне, поэтому ничего не прикреплено.</string>
+    <string name="media_unavailable">На этом телефоне не нашлось приложения, чтобы снять или выбрать фото.</string>
+    <string name="media_removed">Фото обложки убрано.</string>
+</resources>
