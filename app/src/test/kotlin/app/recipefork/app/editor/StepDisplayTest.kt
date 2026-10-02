@@ -41,12 +41,14 @@ class StepDisplayTest {
     // FLOW-031 (4): deleting into a reference from after it removes it whole and leaves the typed text exactly.
     @Test
     fun deletingIntoAReferenceRemovesItWholeAndLeavesTheText() {
+        // Single spacing is left where it stood (T-074).
         val back = display().edit(12, 13, "")!!
-        assertEquals(StepContent("Всыпьте  муки", emptyList()), back.content)
+        assertEquals(StepContent("Всыпьте муки", emptyList()), back.content)
         assertEquals(8, back.cursor)
         assertTrue(back.removedAReference)
         val forward = display().edit(8, 9, "")!!
-        assertEquals(StepContent("Всыпьте  муки", emptyList()), forward.content)
+        assertEquals(StepContent("Всыпьте муки", emptyList()), forward.content)
+        assertEquals(8, forward.cursor)
         // A selection reaching into it from the typed text: the typed characters go, and the reference.
         val across = display().edit(6, 10, "")!!
         assertEquals(StepContent("Всыпьт муки", emptyList()), across.content)
@@ -96,7 +98,8 @@ class StepDisplayTest {
         assertEquals("Всыпьте 200 г по вкусу муки", display(second.content.text, second.content.references).text)
         val first = display().insert(8, 1)
         assertEquals(StepContent("Всыпьте   муки", listOf(IngredientReference(1, 8), IngredientReference(0, 9))), first.content)
-        assertEquals(16, first.cursor)
+        // The cursor after the space typed between the two (T-074).
+        assertEquals(17, first.cursor)
     }
 
     // Backspacing the only space between two references removes the one before the cursor, as deleting into it would.

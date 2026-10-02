@@ -7,11 +7,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -21,6 +23,8 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -37,9 +41,11 @@ import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.ReferenceSpacing
 import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.scaling.InterfaceLanguage
+import kotlinx.coroutines.flow.first
 
 /** A reference as a step's field shows it: the characters from [start] to [end] of the shown text. */
 internal data class ShownReference(val start: Int, val end: Int, val reference: IngredientReference)
@@ -128,6 +134,12 @@ internal class StepDisplay(val content: StepContent, private val quantity: (Int)
         })
         if (content.references.distinctBy { it.textOffset }.size != content.references.size) return null
         val cursor = from - removed.sumOf { overlap(it.start, it.end, 0, from) } + typing.length
+        if (typing.isEmpty() && removed.isNotEmpty()) {
+            // Deleted into a reference: single spacing is left where it stood (ReferenceSpacing.closeUp).
+            val closed = ReferenceSpacing.closeUp(Step(0, content.text, content.references), typedFrom)
+            val shift = if ((closed.removedAt ?: typedFrom) < typedFrom) 1 else 0
+            return StepEdit(StepContent(closed.step.text, closed.step.ingredientReferences), cursor - shift, true)
+        }
         return StepEdit(content, cursor, removed.isNotEmpty())
     }
 
@@ -135,32 +147,18 @@ internal class StepDisplay(val content: StepContent, private val quantity: (Int)
     fun splits(range: TextRange): Boolean = inside(range.min) != null || inside(range.max) != null
 
     /**
-     * A reference to the ingredient at [ingredientPosition] put at the shown position [at], and the cursor after it.
-     * Where another reference already sits at that offset of the text, a space is typed between the two.
+     * A reference to the ingredient at [ingredientPosition] put at the shown position [at], spaced from a word on
+     * either side ([ReferenceSpacing.insert]), and the cursor after it and any space typed after it. Next to another
+     * reference at that offset of the text, the new one goes on the side of it the cursor stands, a space between.
      */
     fun insert(at: Int, ingredientPosition: Int): StepEdit {
         val p = inside(at)?.end ?: at
         val offset = typed(p)
-        val new = IngredientReference(ingredientPosition, offset)
         val there = references.firstOrNull { it.reference.textOffset == offset }
-        if (there == null) {
-            val references = content.references + new
-            return StepEdit(StepContent(content.text, references.sortedBy { it.textOffset }), cursorAfter(references, new), false)
-        }
-        val text = content.text.substring(0, offset) + " " + content.text.substring(offset)
-        // The reference already there stays on its side of the cursor; the space goes between it and the new one.
-        val before = there.end <= p
-        val moved = content.references.map {
-            if (it.textOffset > offset || (it.textOffset == offset && !before)) it.copy(textOffset = it.textOffset + 1) else it
-        }
-        val placed = if (before) new.copy(textOffset = offset + 1) else new
-        val references = (moved + placed).sortedBy { it.textOffset }
-        return StepEdit(StepContent(text, references), cursorAfter(references, placed, text), false)
-    }
-
-    private fun cursorAfter(references: List<IngredientReference>, reference: IngredientReference, text: String = content.text): Int {
-        val shown = StepDisplay(StepContent(text, references), quantity)
-        return shown.references.first { it.reference == reference }.end
+        val inserted = ReferenceSpacing.insert(Step(0, content.text, content.references), ingredientPosition, offset, afterExisting = there != null && there.end <= p)
+        val spaced = StepContent(inserted.step.text, inserted.step.ingredientReferences)
+        val end = StepDisplay(spaced, quantity).references.first { it.reference == inserted.reference }.end
+        return StepEdit(spaced, end + if (inserted.spaceAfter) 1 else 0, false)
     }
 
     /**
@@ -291,6 +289,12 @@ internal class StepFieldState {
     val focus = FocusRequester()
 
     /**
+     * True from a reference being chosen — or the offer `@` opened being dismissed — until the field has focus again
+     * with the keyboard shown: the offer took them, and the author types on where the reference went.
+     */
+    var refocus by mutableStateOf(false)
+
+    /**
      * What the field's own buffer holds where it differs from what the step shows: after an edit the field was not
      * given back as it came — a reference removed whole, typing moved past one — and until the field is redrawn, a
      * keyboard's next edit is made to this text, not to the step's.
@@ -396,6 +400,17 @@ internal fun StepTextField(
     val highlight = MaterialTheme.colorScheme.secondaryContainer
     state.version // Read, so that every edit redraws the field.
     SideEffect { state.redrawn() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val window = LocalWindowInfo.current
+    if (state.refocus) {
+        LaunchedEffect(state) {
+            // Once the offer is gone and this window has its focus back, so the keyboard serves this field again.
+            snapshotFlow { !state.offering && window.isWindowFocused }.first { it }
+            runCatching { state.focus.requestFocus() }
+            keyboard?.show()
+            state.refocus = false
+        }
+    }
     OutlinedTextField(
         value = state.shown(display),
         onValueChange = { new ->
@@ -426,7 +441,9 @@ internal fun StepTextField(
  * The control that inserts a reference into the step at [position] (FLOW-031 (2)), and the offer of this recipe's
  * [ingredients] it opens — the same offer typing [TRIGGER] opens. Every row of this recipe is offered, one with no
  * quantity yet and one "to taste" included, and no row of any other recipe (FLOW-031 (3), DOM-007). Choosing one
- * puts its reference at the cursor, or in place of the typed [TRIGGER]; dismissing the offer leaves the text as typed.
+ * puts its reference at the cursor, or in place of the typed [TRIGGER], spaced from the words around it; dismissing the
+ * offer leaves the text as typed. Either way the author types on: choosing, or dismissing the offer [TRIGGER] opened,
+ * gives the step's field its focus and the keyboard back, the cursor after the reference and any space typed after it.
  */
 @Composable
 internal fun InsertIngredient(
@@ -447,7 +464,14 @@ internal fun InsertIngredient(
             },
             modifier = Modifier.testTag(EditorTags.stepInsert(position)),
         )
-        DropdownMenu(expanded = state.offering, onDismissRequest = { state.close() }) {
+        DropdownMenu(
+            expanded = state.offering,
+            onDismissRequest = {
+                // Dismissing the offer the author's typing opened returns them to their typing.
+                if (state.trigger != null) state.refocus = true
+                state.close()
+            },
+        ) {
             if (ingredients.isEmpty()) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.editor_step_insert_ingredient_none)) },
@@ -463,8 +487,8 @@ internal fun InsertIngredient(
                     text = { Text(stringResource(R.string.editor_step_offered_ingredient, name, ReferenceText.authored(ingredient, language))) },
                     onClick = {
                         choose(position, row, language, editor, state)
+                        state.refocus = true
                         state.close()
-                        runCatching { state.focus.requestFocus() }
                     },
                     modifier = Modifier.testTag(EditorTags.stepOffer(position, row)),
                 )
@@ -488,7 +512,7 @@ private fun choose(
     val trigger = state.trigger
     if (trigger != null && display.text.startsWith(TRIGGER, trigger)) {
         // Between two references the `@` gives way to a space, so that they keep two places in the text.
-        val removed = display.edit(trigger, trigger + TRIGGER.length, "")
+        val removed = display.edit(trigger, trigger + TRIGGER.length, "")?.takeIf { !it.removedAReference }
             ?: display.edit(trigger, trigger + TRIGGER.length, " ")
             ?: return
         display = StepDisplay(removed.content, ReferenceText.authored(recipe.ingredients, language))

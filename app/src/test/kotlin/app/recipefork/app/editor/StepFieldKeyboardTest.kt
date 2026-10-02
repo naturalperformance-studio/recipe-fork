@@ -63,15 +63,16 @@ class StepFieldKeyboardTest {
     @Test
     fun twoBackspacesInOneFrameAfterAReference() {
         val field = Field(flour, cursor = 13)
-        field.backspace()
-        assertEquals(StepContent("Всыпьте  муки", emptyList()), field.content)
-        field.backspace()
-        assertEquals(StepContent("Всыпьте  муки", emptyList()), field.content)
-        field.redraw()
-        assertEquals("Всыпьте  муки", field.buffer.text)
-        assertEquals(TextRange(8), field.buffer.selection)
+        // Single spacing is left where the reference stood (T-074).
         field.backspace()
         assertEquals(StepContent("Всыпьте муки", emptyList()), field.content)
+        field.backspace()
+        assertEquals(StepContent("Всыпьте муки", emptyList()), field.content)
+        field.redraw()
+        assertEquals("Всыпьте муки", field.buffer.text)
+        assertEquals(TextRange(8), field.buffer.selection)
+        field.backspace()
+        assertEquals(StepContent("Всыпьтемуки", emptyList()), field.content)
     }
 
     // Typing on, several characters in one frame, after the reference was removed or the typing moved past it.
@@ -150,10 +151,11 @@ class StepFieldKeyboardTest {
         field.backspace()
         field.redraw()
         assertEquals(TextRange(8), field.buffer.selection)
-        field.commit(8, 8, "200")
+        // The reference took one of its spaces with it (T-074): the space is typed back too.
+        field.commit(8, 8, "200 ")
         assertEquals(StepContent("Всыпьте 200 муки", emptyList()), field.content)
         field.redraw()
-        field.type(" г")
+        field.type("г ")
         assertEquals(StepContent("Всыпьте 200 г муки", emptyList()), field.content)
     }
 
