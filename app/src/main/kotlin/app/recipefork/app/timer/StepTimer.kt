@@ -45,17 +45,24 @@ import java.time.Instant
 import kotlin.time.Duration
 
 /**
- * The running timers as the card reads them, and the book whose recipes the card shows. Starting and cancelling run in
- * [scope], which outlives the card, so that each finishes its write and the scheduling or withdrawing of its
- * announcement however soon the card is left (FLOW-013 (7)); they run one at a time.
+ * The running timers as the card reads them, the ended ones ringing, and the book whose recipes the card shows.
+ * Starting and cancelling run in [scope], which outlives the card, so that each finishes its write and the scheduling
+ * or withdrawing of its announcement however soon the card is left (FLOW-013 (7)); they run one at a time.
  */
 class CardTimers(
     val store: RunningTimers,
     val scope: CoroutineScope,
     val access: NotificationAccess,
+    val ringing: TimerRinging = TimerRinging(store.clock, NoRinging),
     val book: () -> BookName,
 ) {
     internal val turns = Mutex()
+}
+
+/** Rings nothing: the card's timers where nothing announces them. */
+object NoRinging : RingingSound {
+    override fun start() = Unit
+    override fun stop() = Unit
 }
 
 /** The card's timers; tests provide their own, held in memory and run by a clock they move. */
@@ -68,7 +75,7 @@ fun rememberCardTimers(): CardTimers {
     val context = LocalContext.current.applicationContext
     return remember(provided, context) {
         provided ?: (context as RecipeForkApplication).container.let { container ->
-            CardTimers(container.timers, container.timerWork, AndroidNotificationAccess(context)) {
+            CardTimers(container.timers, container.timerWork, AndroidNotificationAccess(context), container.timerRinging) {
                 container.activeBook.open.value.name
             }
         }
@@ -90,6 +97,9 @@ class RecipeTimers internal constructor(
 
     internal var held by mutableStateOf<Map<Int, RunningTimer>>(emptyMap())
     internal var now: Instant by mutableStateOf(store.clock.now())
+
+    /** The ended timers ringing now, of every recipe. */
+    internal var ringing by mutableStateOf<Set<TimerKey>>(emptySet())
 
     /** The recipe's title as the card shows it now: what a timer started from it announces (FLOW-013 (3)). */
     internal var title: String = ""
@@ -136,6 +146,13 @@ class RecipeTimers internal constructor(
         asking = null
     }
 
+    /** The reader stopped [step]'s timer ringing; it stays finished, and its notification stays, silent. */
+    internal fun stopRinging(step: Step) {
+        card.ringing.stop(key(step))
+    }
+
+    internal fun rings(step: Step): Boolean = key(step) in ringing
+
     internal fun cancel(step: Step) {
         card.scope.launch { card.turns.withLock { store.cancel(key(step)) } }
     }
@@ -178,6 +195,9 @@ fun rememberRecipeTimers(recipeId: RecipeId, title: String): RecipeTimers {
     LaunchedEffect(timers) {
         card.store.ofRecipe(book, recipeId).collect { timers.held = it }
     }
+    LaunchedEffect(timers) {
+        card.ringing.ringing.collect { timers.ringing = it }
+    }
     val held = timers.held
     LaunchedEffect(timers, held) {
         val clock = card.store.clock
@@ -195,7 +215,8 @@ fun rememberRecipeTimers(recipeId: RecipeId, title: String): RecipeTimers {
 /**
  * A step's timer on the card (FLOW-016): a control named by the timer's name that starts it, with its duration beside
  * it; once started, the time remaining instead, counting down by the clock, then that it has finished. A started
- * timer has an action beside it that cancels it, or clears it once finished.
+ * timer has an action beside it that cancels it, or clears it once finished; while a finished one rings, another
+ * beside it stops the ringing.
  */
 @Composable
 fun StepTimer(step: Step, timers: RecipeTimers, modifier: Modifier = Modifier) {
@@ -233,6 +254,14 @@ fun StepTimer(step: Step, timers: RecipeTimers, modifier: Modifier = Modifier) {
                 status,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.testTag(TimerTags.status(step.position)),
+            )
+        }
+        if (finished && timers.rings(step)) {
+            TimerAction(
+                text = stringResource(R.string.timer_stop),
+                action = stringResource(R.string.timer_stop_action),
+                onClick = { timers.stopRinging(step) },
+                modifier = Modifier.testTag(TimerTags.stop(step.position)),
             )
         }
         if (held != null) {
@@ -332,4 +361,5 @@ object TimerTags {
     fun start(position: Int) = "timer-start-$position"
     fun status(position: Int) = "timer-status-$position"
     fun cancel(position: Int) = "timer-cancel-$position"
+    fun stop(position: Int) = "timer-stop-$position"
 }

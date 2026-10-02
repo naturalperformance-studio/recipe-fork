@@ -10,12 +10,15 @@ import app.recipefork.app.data.Network
 import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySync
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.timer.AndroidRingingSound
 import app.recipefork.app.timer.AndroidTimerNotices
 import app.recipefork.app.timer.DeviceTimerAnnouncements
 import app.recipefork.app.timer.RunningTimers
 import app.recipefork.app.timer.SystemTimerClock
 import app.recipefork.app.timer.TimerAnnouncer
 import app.recipefork.app.timer.TimerDatabase
+import app.recipefork.app.timer.TimerRinging
+import app.recipefork.app.timer.applicationIsOpen
 import io.ktor.client.engine.android.Android
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,8 +36,13 @@ class AppContainer(context: Context) {
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))
     val recipes = RecipeRepository(activeBook)
 
-    /** Announces timers as they end, with the application open or closed (FLOW-013). */
-    val timerAnnouncer = TimerAnnouncer(AndroidTimerNotices(context))
+    private val timerNotices = AndroidTimerNotices(context)
+
+    /** Ended timers ringing like an alarm until they are stopped (FLOW-013). */
+    val timerRinging = TimerRinging(SystemTimerClock, AndroidRingingSound(context), timerNotices)
+
+    /** Announces timers as they end, with the application open or closed (FLOW-013), and rings them. */
+    val timerAnnouncer = TimerAnnouncer(timerNotices, timerRinging, ::applicationIsOpen)
 
     /** The device's running timers, of every book; held by the moment each ends (FLOW-016). */
     val timers = RunningTimers(

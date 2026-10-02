@@ -19,6 +19,8 @@
     <string name="timer_channel_ended">Timer ended</string>
     <string name="timer_channel_running">Running timers</string>
     <string name="timer_ended">Timer finished</string>
+    <string name="timer_stop">Stop</string>
+    <string name="timer_stop_action">Stop this timer ringing</string>
     <string name="timer_running">Timer running</string>
     <!-- Starting a timer that will not be heard (FLOW-013 (9, 10, 13)). -->
     <string name="timer_unheard_title">You won’t hear this timer</string>

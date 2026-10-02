@@ -16,6 +16,8 @@
     <string name="timer_channel_ended">Таймер закончился</string>
     <string name="timer_channel_running">Идущие таймеры</string>
     <string name="timer_ended">Таймер закончился</string>
+    <string name="timer_stop">Стоп</string>
+    <string name="timer_stop_action">Остановить звонок этого таймера</string>
     <string name="timer_running">Идёт таймер</string>
     <string name="timer_unheard_title">Этот таймер не будет слышно</string>
     <string name="timer_unheard_off">Уведомления Recipe Fork выключены. Таймер идёт, но его не будет слышно, пока приложение закрыто или экран заблокирован.</string>

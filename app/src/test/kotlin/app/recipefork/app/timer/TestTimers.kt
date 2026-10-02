@@ -46,17 +46,43 @@ class TestNotificationAccess(
     override fun settings(state: NotificationState): Intent = AndroidNotificationAccess(context).settings(state)
 }
 
-/** Remembers what was announced and withdrawn, in order. */
-class RecordedNotices : TimerNotices {
+/** Remembers what was announced, quieted and withdrawn, in order; each announcement is [shown] or not. */
+class RecordedNotices(var shown: Boolean = true) : TimerNotices {
     val announced = mutableListOf<RunningTimer>()
+    val quieted = mutableListOf<TimerKey>()
     val withdrawn = mutableListOf<TimerKey>()
 
-    override fun announce(timer: RunningTimer) {
+    override fun announce(timer: RunningTimer): Boolean {
         synchronized(this) { announced += timer }
+        return shown
+    }
+
+    override fun quiet(timer: RunningTimer) {
+        synchronized(this) { quieted += timer.key }
     }
 
     override fun withdraw(key: TimerKey) {
         synchronized(this) { withdrawn += key }
+    }
+}
+
+/** Rings in memory: whether it rings now, and how many times it started and stopped. */
+class RecordedSound : RingingSound {
+    @Volatile var ringing = false
+        private set
+    @Volatile var starts = 0
+        private set
+    @Volatile var stops = 0
+        private set
+
+    override fun start() {
+        ringing = true
+        starts++
+    }
+
+    override fun stop() {
+        ringing = false
+        stops++
     }
 }
 
@@ -109,7 +135,9 @@ class TestTimers(context: Context, val clock: TestTimerClock = TestTimerClock())
 
     /** Outlives the card, as the application's does; on the main thread, whose work the Compose test rule waits for. */
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    val card = CardTimers(store, scope, access) { BookName.Pool }
+    val sound = RecordedSound()
+    val ringing = TimerRinging(clock, sound)
+    val card = CardTimers(store, scope, access, ringing) { BookName.Pool }
 
     val idling: IdlingResource = object : IdlingResource {
         override val isIdleNow: Boolean get() = running.get() == 0
