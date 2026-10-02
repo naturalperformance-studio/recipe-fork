@@ -78,7 +78,7 @@ object RecipeFile {
         author = author?.let(::DocumentAuthor),
         parent = parent?.let { DocumentParent(it.id.value, it.title, it.nickname) },
         media = media.map {
-            DocumentMedia(it.mediaId, it.kind.name.lowercase(), (it.attachment as? MediaAttachment.ToStep)?.stepPosition, it.entry)
+            DocumentMedia(it.mediaId, Names.kind.nameOf(it.kind), (it.attachment as? MediaAttachment.ToStep)?.stepPosition, it.entry)
         },
     )
 
@@ -87,10 +87,10 @@ object RecipeFile {
         dictionaryEntry = dictionaryEntry,
         freeTextName = freeTextName,
         qualifier = qualifier,
-        unitType = unitType.name.lowercase(),
-        unit = unit?.name?.lowercase(),
-        quantity = quantity?.toString(),
-        pieceWeight = pieceWeight?.toString(),
+        unitType = Names.unitType.nameOf(unitType),
+        unit = unit?.let(Names.unit::nameOf),
+        quantity = quantity?.let(::fractionOf),
+        pieceWeight = pieceWeight?.let(::fractionOf),
         divisible = divisible,
         enteredQuantity = enteredQuantity,
     )
@@ -115,7 +115,7 @@ object RecipeFile {
         parent = parent?.let { FileParent(RecipeId(it.id), it.title, it.nickname) },
         media = media.map {
             FileMedia(
-                it.id, enumOf<MediaKind>(it.kind),
+                it.id, Names.kind.valueOf(it.kind),
                 it.step?.let(MediaAttachment::ToStep) ?: MediaAttachment.Cover, it.entry,
             )
         },
@@ -126,8 +126,8 @@ object RecipeFile {
         dictionaryEntry = dictionaryEntry,
         qualifier = qualifier,
         freeTextName = freeTextName,
-        unitType = enumOf<UnitType>(unitType),
-        unit = unit?.let { enumOf<QuantityUnit>(it) },
+        unitType = Names.unitType.valueOf(unitType),
+        unit = unit?.let(Names.unit::valueOf),
         quantity = quantity?.let(::rationalOf),
         pieceWeight = pieceWeight?.let(::rationalOf),
         divisible = divisible,
@@ -141,14 +141,65 @@ object RecipeFile {
         timer = timer?.let { Timer(it.minutes.minutes, it.label) },
     )
 
-    private fun languageName(language: RecipeLanguage) = language.name.lowercase()
+    private fun languageName(language: RecipeLanguage) = Names.language.nameOf(language)
 
-    private fun languageOf(name: String) = enumOf<RecipeLanguage>(name)
+    private fun languageOf(name: String) = Names.language.valueOf(name)
 
-    /** The constant named [name] in the domain model's lower-case spelling; anything else is refused. */
-    private inline fun <reified E : Enum<E>> enumOf(name: String): E =
-        enumValues<E>().firstOrNull { it.name.lowercase() == name }
-            ?: throw UnreadableRecipeFile("unknown ${E::class.simpleName}: $name")
+    /** `n` for a whole number, `n/d` otherwise, in lowest terms: written here, never by [Rational.toString]. */
+    private fun fractionOf(value: Rational): String =
+        if (value.denominator == BigInteger.ONE) "${value.numerator}" else "${value.numerator}/${value.denominator}"
+
+    /**
+     * The file's names for the domain's enumerations, spelt out here so that renaming a Kotlin constant cannot change
+     * the format: a new constant fails to compile until it is given a name.
+     */
+    private object Names {
+        val unitType = nameTable<UnitType> {
+            when (it) {
+                UnitType.EXACT -> "exact"
+                UnitType.PIECE -> "piece"
+                UnitType.HOUSEHOLD -> "household"
+                UnitType.TASTE_MEASURED -> "taste_measured"
+                UnitType.TASTE_UNMEASURED -> "taste_unmeasured"
+            }
+        }
+        val unit = nameTable<QuantityUnit> {
+            when (it) {
+                QuantityUnit.GRAM -> "gram"
+                QuantityUnit.KILOGRAM -> "kilogram"
+                QuantityUnit.TONNE -> "tonne"
+                QuantityUnit.MILLILITRE -> "millilitre"
+                QuantityUnit.LITRE -> "litre"
+                QuantityUnit.CUBIC_METRE -> "cubic_metre"
+                QuantityUnit.PIECE -> "piece"
+                QuantityUnit.TEASPOON -> "teaspoon"
+                QuantityUnit.TABLESPOON -> "tablespoon"
+                QuantityUnit.CUP -> "cup"
+                QuantityUnit.PINCH -> "pinch"
+                QuantityUnit.TO_TASTE -> "to_taste"
+            }
+        }
+        val language = nameTable<RecipeLanguage> {
+            when (it) {
+                RecipeLanguage.RU -> "ru"
+                RecipeLanguage.EN -> "en"
+            }
+        }
+        val kind = nameTable<MediaKind> {
+            when (it) {
+                MediaKind.PHOTO -> "photo"
+                MediaKind.VIDEO -> "video"
+            }
+        }
+    }
+
+    private class NameTable<E : Enum<E>>(private val values: List<E>, private val name: (E) -> String) {
+        private val byName = values.associateBy(name)
+        fun nameOf(value: E): String = name(value)
+        fun valueOf(text: String): E = byName[text] ?: throw UnreadableRecipeFile("unknown name: $text")
+    }
+
+    private inline fun <reified E : Enum<E>> nameTable(noinline name: (E) -> String) = NameTable(enumValues<E>().toList(), name)
 
     /** `n` or `n/d`, both whole numbers, the denominator not zero. */
     private fun rationalOf(text: String): Rational {

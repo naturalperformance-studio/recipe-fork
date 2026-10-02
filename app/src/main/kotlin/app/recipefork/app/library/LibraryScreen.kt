@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -339,7 +340,8 @@ private fun DeleteOffer(row: OwnRecipeRow, onDelete: () -> Unit, modifier: Modif
 
 /**
  * Exports an own recipe (FLOW-063): its file is written and the system's share and save sheet opens on it. A tap
- * while a file is being written starts no second one. Export reads the recipe and changes nothing in it.
+ * while a file is being written starts no second one. Export reads the recipe and changes nothing in it. An export that
+ * fails says so.
  */
 @Composable
 private fun rememberExport(recipes: RecipeRepository): (OwnRecipeRow) -> Unit {
@@ -351,10 +353,10 @@ private fun rememberExport(recipes: RecipeRepository): (OwnRecipeRow) -> Unit {
             exporting = true
             scope.launch {
                 try {
-                    val uri = RecipeExport.write(context, recipes, RecipeId(row.recipeId))
-                    if (uri != null) {
-                        val title = row.title.ifBlank { context.getString(R.string.common_untitled_recipe) }
-                        RecipeExport.open(context, RecipeExport.shareSheet(uri, context.getString(R.string.file_export_sheet, title)))
+                    val title = row.title.ifBlank { context.getString(R.string.common_untitled_recipe) }
+                    val sheet = context.getString(R.string.file_export_sheet, title)
+                    if (!RecipeExport.share(context, recipes, RecipeId(row.recipeId), sheet)) {
+                        Toast.makeText(context, R.string.file_export_failed, Toast.LENGTH_SHORT).show()
                     }
                 } finally {
                     exporting = false

@@ -1,10 +1,13 @@
 package app.recipefork.app.file
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
@@ -33,6 +36,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.xmlpull.v1.XmlPullParser
+import java.io.File
 import java.time.Instant
 import java.util.zip.ZipInputStream
 import kotlin.time.Duration.Companion.minutes
@@ -199,5 +204,76 @@ class RecipeExportTest {
         assertEquals("Eggs.recipefork", second.lastPathSegment)
         assertEquals("Eggs", content(second).title)
         assertTrue(runCatching { context.contentResolver.openInputStream(first)!!.close() }.isFailure)
+    }
+
+    // Before each export the earlier exports' files go, those of recipes since deleted among them.
+    @Test
+    fun earlierExportsAreClearedBeforeEachExport() {
+        val soup = full("Soup").also(::save)
+        val bread = full("Bread").copy(id = RecipeId("bread")).also(::save)
+        export(soup)
+        runBlocking { recipes.delete(soup.id) }
+        export(bread)
+        val exports = File(context.cacheDir, "exports")
+        assertEquals(listOf("bread/Bread.recipefork"), exports.walkTopDown().filter { it.isFile }.map { it.relativeTo(exports).path }.toList())
+    }
+
+    // An identity that keeps no character a directory may be named with still gets a directory of its own.
+    @Test
+    fun anIdentityWithNoUsableCharacterIsExportedToo() {
+        val odd = full("Soup").copy(id = RecipeId("€/€")).also(::save)
+        val uri = export(odd)
+        assertEquals("Soup", content(uri).title)
+        assertTrue(File(context.cacheDir, "exports/recipe/Soup.recipefork").isFile)
+    }
+
+    // The FileProvider exposes cache/exports/ and nothing else, is not exported, and grants per file only.
+    @Test
+    fun theProviderExposesOnlyTheExportsDirectory() {
+        val paths = mutableListOf<Triple<String, String?, String?>>()
+        context.resources.getXml(R.xml.file_paths).use { xml ->
+            while (xml.next() != XmlPullParser.END_DOCUMENT) {
+                if (xml.eventType == XmlPullParser.START_TAG && xml.name != "paths") {
+                    paths += Triple(xml.name, xml.getAttributeValue(null, "name"), xml.getAttributeValue(null, "path"))
+                }
+            }
+        }
+        assertEquals(listOf(Triple("cache-path", "exports", "exports/")), paths)
+        val info = context.packageManager.getProviderInfo(ComponentName(context, FileProvider::class.java), 0)
+        assertEquals(RecipeExport.authority(context), info.authority)
+        assertFalse(info.exported)
+        assertTrue(info.grantUriPermissions)
+        val authority = RecipeExport.authority(context)
+        listOf(File(context.cacheDir, "other.txt"), File(context.filesDir, "book.db"), File(context.cacheDir, "exportsx/a")).forEach { file ->
+            assertTrue("$file is shared", runCatching { FileProvider.getUriForFile(context, authority, file) }.isFailure)
+        }
+        assertTrue(runCatching { FileProvider.getUriForFile(context, authority, File(context.cacheDir, "exports/a/b.recipefork")) }.isSuccess)
+    }
+
+    // The grant the sheet carries is to read the one file: never to write it, never to keep it.
+    @Test
+    fun theGrantIsReadOnly() {
+        val uri = export(full("Soup").also(::save))
+        @Suppress("DEPRECATION")
+        val send = RecipeExport.shareSheet(uri, "Export").getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!
+        assertTrue(send.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+        assertEquals(0, send.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        assertEquals(0, send.flags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        assertEquals(0, send.flags and Intent.FLAG_GRANT_PREFIX_URI_PERMISSION)
+    }
+
+    // An export that writes no file reports it, so that the person can be told.
+    @Test
+    fun anExportThatWritesNoFileFails() {
+        val soup = full("Soup").also(::save)
+        assertFalse(runBlocking { RecipeExport.share(context, recipes, RecipeId("absent"), "Export") })
+        val cache = context.cacheDir
+        File(cache, "exports").deleteRecursively()
+        assertTrue(cache.setWritable(false))
+        try {
+            assertFalse(runBlocking { RecipeExport.share(context, recipes, soup.id, "Export") })
+        } finally {
+            cache.setWritable(true)
+        }
     }
 }

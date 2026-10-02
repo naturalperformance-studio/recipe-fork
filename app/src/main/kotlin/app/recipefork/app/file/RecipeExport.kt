@@ -11,9 +11,11 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.RecipeId
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 
 /**
  * Export of a recipe to a file (FLOW-063): the file is written to the application's cache and handed to the
@@ -36,16 +38,32 @@ object RecipeExport {
         val parent = recipe.parent?.let { recipes.get(it) }
         val content = RecipeFileContent.of(recipe, parentInBook = parent, ownerNickname = null)
         val file = withContext(Dispatchers.IO) {
-            // One directory per recipe, emptied first: a file shared a moment ago under another title is not left behind.
-            val directory = File(File(context.cacheDir, DIRECTORY), id.value.filter { it.isLetterOrDigit() || it == '-' })
-            directory.deleteRecursively()
-            directory.mkdirs()
+            // Only the file of this export is kept: those of earlier exports, and of recipes since deleted, go first.
+            val exports = File(context.cacheDir, DIRECTORY)
+            exports.deleteRecursively()
+            val directory = File(exports, id.value.filter { it.isLetterOrDigit() || it == '-' }.ifEmpty { FALLBACK_NAME })
+            if (!directory.mkdirs()) throw IOException("cannot make $directory")
             File(directory, fileName(recipe.title)).also { file ->
                 file.outputStream().buffered().use { RecipeArchive.write(content, it) }
             }
         }
         return FileProvider.getUriForFile(context, authority(context), file)
     }
+
+    /**
+     * Writes the file of the recipe [id] and opens the share and save sheet on it, headed [sheetTitle]. Returns false
+     * when no file could be written or no sheet opened, so that the person can be told.
+     */
+    suspend fun share(context: Context, recipes: RecipeRepository, id: RecipeId, sheetTitle: CharSequence): Boolean =
+        try {
+            val uri = write(context, recipes, id)
+            if (uri != null) open(context, shareSheet(uri, sheetTitle))
+            uri != null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            false
+        }
 
     /** The sheet that lets the person save or send the file at [uri]; [title] heads it. */
     fun shareSheet(uri: Uri, title: CharSequence): Intent {

@@ -20,9 +20,11 @@ import app.recipefork.app.timer.TimerAnnouncer
 import app.recipefork.app.timer.TimerDatabase
 import app.recipefork.app.timer.TimerRinging
 import app.recipefork.app.timer.applicationIsOpen
+import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 
 /**
@@ -32,12 +34,30 @@ import kotlinx.coroutines.SupervisorJob
 enum class Mode { Standard, Serverless }
 
 /** The composition root: every long-lived object of the application, wired by hand, for the [mode] it is built in. */
-class AppContainer(context: Context, val mode: Mode) {
+class AppContainer(
+    context: Context,
+    val mode: Mode,
+    /** How the client of the product's server is made; called in [Mode.Standard] only. */
+    httpClientOf: () -> HttpClient = { Network.client(Android.create(), BuildConfig.SERVER_URL) },
+) {
     val database: AppDatabase = AppDatabase.open(context)
-    val httpClient = Network.client(Android.create(), BuildConfig.SERVER_URL)
+
+    /**
+     * The client of the product's server; none at all in [Mode.Serverless], which makes no request to it from the
+     * moment it is installed (FLOW-061 (2), decisions/20260928-serverless-mode-is-a-build-flag.md).
+     */
+    val httpClient: HttpClient? = if (mode == Mode.Standard) httpClientOf() else null
     val connectivity = AndroidConnectivity(context)
-    val dictionaries = DictionaryRepository(httpClient, database.dictionaryDao())
-    val dictionarySync = DictionarySync(connectivity, dictionaries)
+
+    /**
+     * Keeps the held dictionaries in step with the server while a connection is available (FLOW-001); none in
+     * [Mode.Serverless], where the dictionaries stay the snapshot the application ships.
+     */
+    val dictionarySync: DictionarySync? =
+        httpClient?.let { DictionarySync(connectivity, DictionaryRepository(it, database.dictionaryDao())) }
+
+    /** Starts the container's background work in [scope]; returns what it started, nothing in serverless mode. */
+    fun start(scope: CoroutineScope): List<Job> = listOfNotNull(dictionarySync?.start(scope))
 
     /** The pool is the only recipe book so far (AUTH-026). */
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))

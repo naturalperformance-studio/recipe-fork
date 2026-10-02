@@ -2,4 +2,5 @@
 <resources>
     <string name="file_export">Экспорт</string>
     <string name="file_export_sheet">Экспорт «%1$s»</string>
+    <string name="file_export_failed">Не удалось экспортировать рецепт</string>
 </resources>

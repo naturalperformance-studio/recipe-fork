@@ -55,6 +55,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowToast
+import java.io.File
 import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
 import java.util.zip.ZipInputStream
@@ -251,6 +253,31 @@ class ExportFromTheBookTest {
         val exportBounds = compose.onNodeWithTag(LibraryTags.export(id)).fetchSemanticsNode().boundsInRoot
         val deleteBounds = compose.onNodeWithTag(LibraryTags.delete(id)).fetchSemanticsNode().boundsInRoot
         assertTrue("the offers do not overlap", exportBounds.right <= deleteBounds.left || deleteBounds.right <= exportBounds.left)
+    }
+
+    // An export that fails says so, and opens no sheet.
+    @Test
+    fun aFailedExportSaysSo() = failed("Couldn't export the recipe")
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun aFailedExportSaysSoInRussian() = failed("Не удалось экспортировать рецепт")
+
+    private fun failed(message: String) {
+        val recipe = own("Soup")
+        show(Mode.Serverless)
+        bringIntoView(recipe)
+        val cache = context.cacheDir
+        File(cache, "exports").deleteRecursively()
+        assertTrue(cache.setWritable(false))
+        try {
+            compose.onNodeWithTag(LibraryTags.export(recipe.id.value)).performClick()
+            compose.waitUntil(PATIENCE_MS) { ShadowToast.getTextOfLatestToast() == message }
+        } finally {
+            cache.setWritable(true)
+        }
+        assertNull(shadowOf(compose.activity).nextStartedActivity)
+        assertEquals(recipe, runBlocking { recipes.get(recipe.id) })
     }
 
     private fun layoutOf(config: androidx.compose.ui.semantics.SemanticsConfiguration): TextLayoutResult {
