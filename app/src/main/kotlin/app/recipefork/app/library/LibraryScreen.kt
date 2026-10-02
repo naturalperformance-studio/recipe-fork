@@ -1,6 +1,9 @@
 package app.recipefork.app.library
 
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.recipefork.app.Mode
 import app.recipefork.app.R
+import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardScreen
@@ -61,6 +65,10 @@ import app.recipefork.app.editor.interfaceLanguage
 import app.recipefork.app.editor.newRecipe
 import app.recipefork.app.editor.rememberEditorEnvironment
 import app.recipefork.app.file.RecipeExport
+import app.recipefork.app.file.RecipeImport
+import app.recipefork.app.file.ImportOutcome
+import app.recipefork.app.file.announce
+import app.recipefork.app.file.importSafely
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.rememberCardTimers
@@ -81,6 +89,10 @@ const val OWN_PAGE = 30
  * and opens the editor on it, so that leaving it shows the fork's card; a fork's provenance opens its parent's card
  * in place of the fork's. In [Mode.Serverless] every own recipe's entry offers its export to a file (FLOW-063); in
  * [Mode.Standard] no export exists (FLOW-062 (8)).
+ *
+ * The view of marked recipes lists the found recipes the book holds (FLOW-064 (1)), each opening its card and offering
+ * its removal (FLOW-064 (6)); in [Mode.Serverless] it offers the import of a recipe file through the system's document
+ * picker as well, and in [Mode.Standard] no import exists.
  */
 @Composable
 fun LibraryScreen(
@@ -90,6 +102,7 @@ fun LibraryScreen(
     modifier: Modifier = Modifier,
     editor: EditorEnvironment = rememberEditorEnvironment(),
     card: CardEnvironment = rememberCardEnvironment(),
+    files: RecipeImport = rememberRecipeImport(recipes),
 ) {
     val editing by session.editing.collectAsState()
     editing?.let { id ->
@@ -137,7 +150,7 @@ fun LibraryScreen(
         }
         HorizontalDivider()
         when (view) {
-            LibraryView.MARKED -> MarkedList(recipes)
+            LibraryView.MARKED -> MarkedList(recipes, session, files, timers, mode)
             LibraryView.OWN -> OwnList(recipes, session, editor, timers, mode)
         }
     }
@@ -224,7 +237,7 @@ private fun OwnList(
                 OwnEntry(
                     row,
                     mode,
-                    onOpen = { session.openCard(row.recipeId) },
+                    onOpen = { session.openCard(row.recipeId, LibraryView.OWN) },
                     onDelete = { deleting = row.recipeId },
                     onExport = { export(row) },
                 )
@@ -416,18 +429,187 @@ fun deleteRecipe(recipes: RecipeRepository, timers: CardTimers, id: RecipeId) {
     }
 }
 
+/** The import of recipe files, writing found recipes' media under the application's own files. */
 @Composable
-private fun MarkedList(recipes: RecipeRepository) {
-    val marked by remember { recipes.marked() }.collectAsState(initial = emptyList())
-    LazyColumn(Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST)) {
-        items(marked, key = { it.recipeId }) {
-            Text(
-                text = it.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.fillMaxWidth().testTag(LibraryTags.entry(it.recipeId))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-            )
+fun rememberRecipeImport(recipes: RecipeRepository): RecipeImport {
+    val context = LocalContext.current.applicationContext
+    return remember(recipes, context) { RecipeImport(recipes, context.filesDir) }
+}
+
+/**
+ * The view of marked recipes (FLOW-034 (2)): what the book marks, the found recipes among it. A found recipe's entry
+ * opens its card and offers its removal; one stating its author names it, marked as stated and not verified
+ * (FLOW-064 (3)). In [Mode.Serverless] the view offers to import a recipe file above the list; with nothing marked it
+ * says so, and that offer is the way out of it (FLOW-042).
+ */
+@Composable
+private fun MarkedList(
+    recipes: RecipeRepository,
+    session: LibrarySession,
+    files: RecipeImport,
+    timers: CardTimers,
+    mode: Mode,
+) {
+    val marked by remember(recipes) { recipes.marked() }.collectAsState(initial = null)
+    var removing by rememberSaveable { mutableStateOf<String?>(null) }
+    marked?.firstOrNull { it.recipeId == removing }?.let { row ->
+        RemoveStatement(
+            row,
+            onConfirm = {
+                removing = null
+                removeFound(files, timers, RecipeId(row.recipeId))
+            },
+            onDecline = { removing = null },
+        )
+    }
+    val loaded = marked
+    Column(Modifier.fillMaxSize()) {
+        if (mode == Mode.Serverless && loaded != null) {
+            if (loaded.isEmpty()) {
+                Text(
+                    stringResource(R.string.library_marked_empty),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(16.dp).testTag(LibraryTags.MARKED_EMPTY),
+                )
+            }
+            ImportButton(files, session, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             HorizontalDivider()
+        }
+        LazyColumn(Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST)) {
+            items(loaded.orEmpty(), key = { it.recipeId }) { row ->
+                MarkedEntry(
+                    row,
+                    onOpen = { session.openCard(row.recipeId, LibraryView.MARKED) },
+                    onRemove = { removing = row.recipeId },
+                )
+            }
+        }
+    }
+}
+
+/** A marked recipe's entry: its title and any stated author; one whose content the book holds opens and is removable. */
+@Composable
+private fun MarkedEntry(row: MarkedRecipeRow, onOpen: () -> Unit, onRemove: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        val open = if (row.held) {
+            Modifier.clickable(
+                onClickLabel = stringResource(R.string.library_entry_open_action),
+                role = Role.Button,
+                onClick = onOpen,
+            )
+        } else {
+            Modifier
+        }
+        Column(
+            Modifier
+                .weight(1f)
+                .heightIn(min = 48.dp)
+                .semantics(mergeDescendants = true) {}
+                .then(open)
+                .testTag(LibraryTags.entry(row.recipeId))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Text(
+                text = row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.testTag(LibraryTags.entryTitle(row.recipeId)),
+            )
+            row.statedAuthor?.let {
+                Text(
+                    stringResource(R.string.file_stated_author, it),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
+                )
+            }
+        }
+        if (row.held) {
+            TextButton(
+                onClick = onRemove,
+                modifier = Modifier.padding(end = 8.dp).heightIn(min = 48.dp).testTag(LibraryTags.remove(row.recipeId)),
+            ) { Text(stringResource(R.string.library_entry_remove)) }
+        }
+    }
+    HorizontalDivider()
+}
+
+/**
+ * Imports a recipe file the person picks with the system's document picker (FLOW-064). Any file may be picked, because
+ * a file saved from a messenger rarely carries the product's type; one that is no recipe file is refused and said to
+ * be. A tap while a file is being read starts no second import.
+ */
+@Composable
+private fun ImportButton(files: RecipeImport, session: LibrarySession, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var importing by remember { mutableStateOf(false) }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri == null) {
+            importing = false
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
+            try {
+                val outcome = files.importSafely(context, uri)
+                announce(context, outcome)
+                if (outcome is ImportOutcome.Added) session.showImported()
+            } finally {
+                importing = false
+            }
+        }
+    }
+    Button(
+        onClick = {
+            if (!importing) {
+                importing = true
+                picker.launch(arrayOf(ANY_FILE))
+            }
+        },
+        modifier = modifier.heightIn(min = 48.dp).testTag(LibraryTags.IMPORT),
+    ) { Text(stringResource(R.string.file_import)) }
+}
+
+/** Every type: the picker offers any file, and the importer decides what it holds. */
+private const val ANY_FILE = "*/*"
+
+/** The statement shown before a found recipe leaves the book with its content (FLOW-009 (4), FLOW-064 (6)). */
+@Composable
+private fun RemoveStatement(row: MarkedRecipeRow, onConfirm: () -> Unit, onDecline: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDecline,
+        modifier = Modifier.testTag(LibraryTags.REMOVE_STATEMENT),
+        title = {
+            Text(
+                stringResource(
+                    R.string.library_remove_title,
+                    row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                ),
+            )
+        },
+        text = { Text(stringResource(R.string.library_remove_statement)) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.REMOVE_CONFIRM),
+            ) { Text(stringResource(R.string.library_remove_confirm)) }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDecline,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.REMOVE_DECLINE),
+            ) { Text(stringResource(R.string.library_remove_decline)) }
+        },
+    )
+}
+
+/**
+ * Removes the found recipe [id] from the active book with its held content and media (FLOW-064 (6)), and cancels its
+ * timers, one turn among the timers' starts and cancels, where the timers' work runs, as [deleteRecipe] does.
+ */
+fun removeFound(files: RecipeImport, timers: CardTimers, id: RecipeId) {
+    timers.scope.launch {
+        timers.turns.withLock {
+            files.remove(id)
+            timers.store.cancelRecipe(timers.book(), id)
         }
     }
 }
@@ -457,6 +639,11 @@ object LibraryTags {
     const val SWITCH = "library-switch"
     const val OWN_LIST = "library-own"
     const val MARKED_LIST = "library-marked"
+    const val MARKED_EMPTY = "library-marked-empty"
+    const val IMPORT = "library-import"
+    const val REMOVE_STATEMENT = "library-remove-statement"
+    const val REMOVE_CONFIRM = "library-remove-confirm"
+    const val REMOVE_DECLINE = "library-remove-decline"
     const val OWN_EMPTY = "library-own-empty"
     const val WRITE = "library-write"
     const val NEW = "library-new"
@@ -468,4 +655,6 @@ object LibraryTags {
     fun delete(recipeId: String) = "library-delete-$recipeId"
     fun export(recipeId: String) = "library-export-$recipeId"
     fun entryTitle(recipeId: String) = "library-entry-title-$recipeId"
+    fun statedAuthor(recipeId: String) = "library-stated-author-$recipeId"
+    fun remove(recipeId: String) = "library-remove-$recipeId"
 }

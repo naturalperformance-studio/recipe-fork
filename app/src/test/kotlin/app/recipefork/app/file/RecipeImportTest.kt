@@ -1,0 +1,289 @@
+package app.recipefork.app.file
+
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.book.ActiveBook
+import app.recipefork.app.book.BookName
+import app.recipefork.app.book.TestBook
+import app.recipefork.app.file.TestRecipeFiles.file
+import app.recipefork.app.file.TestRecipeFiles.jpeg
+import app.recipefork.app.file.TestRecipeFiles.mp4
+import app.recipefork.app.file.TestRecipeFiles.soup
+import app.recipefork.app.file.TestRecipeFiles.zip
+import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.file.FileMedia
+import app.recipefork.core.file.RecipeFile
+import app.recipefork.core.recipe.MediaAttachment
+import app.recipefork.core.recipe.MediaKind
+import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.RecipeState
+import app.recipefork.core.recipe.StatedParent
+import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.IOException
+import java.time.Instant
+
+/**
+ * FLOW-064 and decisions/20260928-recipe-file-is-a-zip.md: a recipe file is added to the active book as a found recipe;
+ * one the book already holds adds nothing; one that cannot be believed is refused, for its reason, and adds nothing.
+ */
+@RunWith(AndroidJUnit4::class)
+class RecipeImportTest {
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val book = TestBook(context)
+    private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
+    private val now = Instant.parse("2026-10-02T12:00:00Z")
+    private val files = File(context.cacheDir, "import-test-files").also { it.deleteRecursively() }
+    private val importer = RecipeImport(recipes, files, clock = { now })
+    private val mediaDirectory = RecipeImport.mediaDirectory(files, BookName.Pool)
+
+    @After
+    fun close() {
+        book.close()
+        files.deleteRecursively()
+    }
+
+    private fun import(bytes: ByteArray, limits: ArchiveLimits = ArchiveLimits()) = runBlocking {
+        RecipeImport(recipes, files, clock = { now }, limits = limits).import { ByteArrayInputStream(bytes) }
+    }
+
+    private fun assertNothingAdded() = runBlocking {
+        assertEquals(0, recipes.count())
+        assertEquals(emptyList<Any>(), recipes.marked().first())
+        assertEquals(emptyList<String>(), mediaDirectory.list()?.toList().orEmpty())
+    }
+
+    private fun assertRefused(refusal: Refusal, bytes: ByteArray, limits: ArchiveLimits = ArchiveLimits()) {
+        assertEquals(ImportOutcome.Refused(refusal), import(bytes, limits))
+        assertNothingAdded()
+    }
+
+    // FLOW-064 (1): the recipe is added to the active book as a found recipe, listed among the marked ones and not
+    // among the own; it holds the file's content whole, and the author and parent it states.
+    @Test
+    fun aFileIsAddedAsAFoundRecipe() = runBlocking {
+        val content = soup()
+        assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
+        val found = recipes.get(content.id)!!
+        assertEquals(content.title, found.title)
+        assertEquals(content.description, found.description)
+        assertEquals(content.tags, found.tags)
+        assertEquals(content.servings, found.servings)
+        assertEquals(content.ingredients, found.ingredients)
+        assertEquals(content.steps, found.steps)
+        assertEquals("anna", found.statedAuthor)
+        assertEquals(RecipeId("p-1"), found.parent)
+        assertEquals(StatedParent("Soup", "boris"), found.statedParent)
+        assertNull(found.owner)
+        // FLOW-064 (2): a found recipe is not editable.
+        assertFalse(found.state.editable)
+        assertEquals(RecipeState.LINK_SHARED, found.state)
+        val marked = recipes.marked().first().single()
+        assertEquals(content.id.value, marked.recipeId)
+        assertEquals("Bean soup", marked.title)
+        assertEquals("anna", marked.statedAuthor)
+        assertTrue(marked.held)
+        assertEquals(emptyList<Any>(), recipes.ownNewest(10).first())
+    }
+
+    @Test
+    fun aFileNamingNoAuthorStatesNone() = runBlocking {
+        val content = soup(author = null)
+        import(file(content))
+        assertNull(recipes.get(content.id)!!.statedAuthor)
+        assertNull(recipes.marked().first().single().statedAuthor)
+    }
+
+    // FLOW-064 (4): the same file again adds nothing and says the recipe is already in the book.
+    @Test
+    fun theSameFileAgainAddsNothing() = runBlocking {
+        val content = soup()
+        import(file(content))
+        val first = recipes.get(content.id)
+        // Named as the book holds it.
+        assertEquals(ImportOutcome.AlreadyInBook(content.id, "Bean soup"), import(file(content.copy(title = "Changed"))))
+        assertEquals(first, recipes.get(content.id))
+        assertEquals(1, recipes.count())
+        assertEquals(1, recipes.marked().first().size)
+    }
+
+    // FLOW-064 (4): a file holding the person's own recipe adds nothing, and leaves the own recipe as it was.
+    @Test
+    fun aFileOfTheirOwnRecipeAddsNothing() = runBlocking {
+        val own = Recipe.create(now, owner = null, id = RecipeId("0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10")).copy(title = "Mine")
+        recipes.save(own)
+        assertEquals(ImportOutcome.AlreadyInBook(own.id, "Mine"), import(file(soup())))
+        assertEquals(own, recipes.get(own.id))
+        assertEquals(emptyList<Any>(), recipes.marked().first())
+    }
+
+    // FLOW-064 (5): a file that is not a ZIP.
+    @Test
+    fun aFileThatIsNotAZipIsRefused() {
+        assertRefused(Refusal.NOT_A_RECIPE_FILE, "just some text".toByteArray())
+        assertRefused(Refusal.NOT_A_RECIPE_FILE, ByteArray(0))
+    }
+
+    // FLOW-064 (5): a ZIP with no recipe.json.
+    @Test
+    fun aZipWithNoDocumentIsRefused() =
+        assertRefused(Refusal.NOT_A_RECIPE_FILE, zip("notes.txt" to "hello".toByteArray(), "media/" to ByteArray(0)))
+
+    // FLOW-064 (5): a document that does not parse.
+    @Test
+    fun aDocumentThatDoesNotParseIsRefused() {
+        assertRefused(Refusal.DAMAGED, zip(RecipeFile.DOCUMENT to "{ not json".toByteArray()))
+        val unknownUnit = RecipeFile.encode(soup()).replace("\"gram\"", "\"furlong\"")
+        assertRefused(Refusal.DAMAGED, zip(RecipeFile.DOCUMENT to unknownUnit.toByteArray()))
+        assertRefused(Refusal.DAMAGED, zip(RecipeFile.DOCUMENT to byteArrayOf(0xC3.toByte(), 0x28)))
+    }
+
+    // FLOW-064 (5): a document of a later format, written by a later version of the application.
+    @Test
+    fun aLaterFormatIsRefused() {
+        val later = RecipeFile.encode(soup()).replace("\"format_version\": 1", "\"format_version\": 2")
+        assertRefused(Refusal.LATER_VERSION, zip(RecipeFile.DOCUMENT to later.toByteArray()))
+    }
+
+    // The ADR: an entry name that is absolute or climbs with `..` refuses the file, whichever entry it is.
+    @Test
+    fun anUnsafeEntryNameIsRefused() {
+        listOf("/etc/passwd", "../outside", "media/../../outside", "\\windows").forEach { name ->
+            assertRefused(Refusal.DAMAGED, zip(RecipeFile.DOCUMENT to TestRecipeFiles.document(soup()), name to "x".toByteArray()))
+        }
+    }
+
+    // The ADR: inflation stops at the cap, whatever size the archive declares.
+    @Test
+    fun aDocumentInflatingPastItsCapIsRefusedWhateverItDeclares() {
+        val bomb = TestRecipeFiles.lying(RecipeFile.DOCUMENT, ByteArray(3 * 1024 * 1024) { ' '.code.toByte() }, declaredSize = 10)
+        val thrown = runCatching { RecipeArchiveReader.document({ ByteArrayInputStream(bomb) }) }.exceptionOrNull()
+        assertTrue("$thrown", thrown is RefusedFile && thrown.message == "entry over its cap")
+        assertRefused(Refusal.DAMAGED, bomb)
+    }
+
+    @Test
+    fun anIgnoredEntryCountsTowardTheArchivesCap() {
+        val limits = ArchiveLimits(archive = 64 * 1024)
+        val ok = file(soup(), "notes/a.bin" to ByteArray(10_000))
+        assertTrue(import(ok, limits) is ImportOutcome.Added)
+        runBlocking { importer.remove(soup().id) }
+        val big = file(soup(), "notes/a.bin" to ByteArray(40_000), "notes/b.bin" to ByteArray(40_000))
+        assertRefused(Refusal.DAMAGED, big, limits)
+    }
+
+    // The ADR: the document is validated against the rules a sending must pass — DOM-012, DOM-016, DOM-017.
+    @Test
+    fun aDocumentBreakingTheRecipesRulesIsRefused() {
+        val content = soup()
+        val offGrid = content.copy(ingredients = content.ingredients.map { if (it.position == 0) it.copy(quantity = Rational.of(15, 2)) else it })
+        val wrongUnit = content.copy(ingredients = content.ingredients.map { if (it.position == 0) it.copy(unit = QuantityUnit.TEASPOON) else it })
+        val tooLong = content.copy(title = "t".repeat(121))
+        listOf(offGrid, wrongUnit, tooLong).forEach { assertRefused(Refusal.BREAKS_RULES, file(it)) }
+    }
+
+    // The ADR: only the media entries the document names are read, written under names the importer makes, each of
+    // its kind by its leading bytes.
+    @Test
+    fun theMediaItNamesIsWrittenUnderGeneratedNames() = runBlocking {
+        val content = soup().copy(
+            media = listOf(
+                FileMedia("m-1", MediaKind.PHOTO, MediaAttachment.Cover, "media/cover.jpg"),
+                FileMedia("m-2", MediaKind.VIDEO, MediaAttachment.ToStep(0), "media/boil.mp4"),
+            ),
+        )
+        val photo = jpeg(5_000)
+        val video = mp4(7_000)
+        val bytes = file(content, "media/cover.jpg" to photo, "media/boil.mp4" to video, "media/unnamed.jpg" to jpeg())
+        assertTrue(import(bytes) is ImportOutcome.Added)
+        val media = recipes.get(content.id)!!.media
+        assertEquals(listOf(MediaKind.PHOTO to MediaAttachment.Cover, MediaKind.VIDEO to MediaAttachment.ToStep(0)), media.map { it.kind to it.attachment })
+        media.forEach { assertNotEquals("m-1", it.mediaId); assertNotEquals("m-2", it.mediaId) }
+        val written = mediaDirectory.listFiles()!!.associate { it.name to it.readBytes().toList() }
+        assertEquals(media.map { it.mediaId }.toSet(), written.keys)
+        assertEquals(photo.toList(), written.getValue(media[0].mediaId))
+        assertEquals(video.toList(), written.getValue(media[1].mediaId))
+    }
+
+    @Test
+    fun mediaNotOfItsKindIsRefused() {
+        val content = soup().copy(media = listOf(FileMedia("m-1", MediaKind.PHOTO, MediaAttachment.Cover, "media/cover.jpg")))
+        assertRefused(Refusal.DAMAGED, file(content, "media/cover.jpg" to mp4()))
+        assertRefused(Refusal.DAMAGED, file(content, "media/cover.jpg" to "<?php".toByteArray()))
+        assertRefused(Refusal.DAMAGED, file(content, "media/cover.jpg" to ByteArray(0)))
+        val video = soup().copy(media = listOf(FileMedia("m-1", MediaKind.VIDEO, MediaAttachment.ToStep(1), "media/v.mp4")))
+        assertRefused(Refusal.DAMAGED, file(video, "media/v.mp4" to jpeg()))
+    }
+
+    @Test
+    fun mediaOverItsCapIsRefused() {
+        val content = soup().copy(media = listOf(FileMedia("m-1", MediaKind.PHOTO, MediaAttachment.Cover, "media/cover.jpg")))
+        assertTrue(import(file(content, "media/cover.jpg" to jpeg(ArchiveLimits.MIB.toInt())), ArchiveLimits()) is ImportOutcome.Added)
+        runBlocking { importer.remove(content.id) }
+        assertRefused(Refusal.DAMAGED, file(content, "media/cover.jpg" to jpeg(ArchiveLimits.MIB.toInt() + 1)))
+        val video = soup().copy(media = listOf(FileMedia("m-1", MediaKind.VIDEO, MediaAttachment.ToStep(1), "media/v.mp4")))
+        assertRefused(Refusal.DAMAGED, file(video, "media/v.mp4" to mp4(6 * ArchiveLimits.MIB.toInt() + 1)))
+    }
+
+    @Test
+    fun mediaNamedButMissingIsRefused() {
+        val content = soup().copy(media = listOf(FileMedia("m-1", MediaKind.PHOTO, MediaAttachment.Cover, "media/cover.jpg")))
+        assertRefused(Refusal.DAMAGED, file(content))
+        // The same entry twice, which the standard library's writer refuses to write and an archive can still hold.
+        val document = TestRecipeFiles.document(content)
+        val twice = listOf(RecipeFile.DOCUMENT to document, "media/cover.jpg" to jpeg(), "media/cover.jpg" to jpeg())
+            .fold(ByteArray(0)) { archive, (name, bytes) -> archive + TestRecipeFiles.lying(name, bytes, bytes.size) }
+        assertRefused(Refusal.DAMAGED, twice)
+    }
+
+    // A document naming a media entry outside media/, or climbing out of it, breaks the rules and is not read.
+    @Test
+    fun aMediaEntryOutsideTheDirectoryIsRefused() {
+        listOf("cover.jpg", "media/../cover.jpg", "/media/cover.jpg").forEach { entry ->
+            val content = soup().copy(media = listOf(FileMedia("m-1", MediaKind.PHOTO, MediaAttachment.Cover, entry)))
+            assertRefused(Refusal.BREAKS_RULES, file(content))
+        }
+    }
+
+    @Test
+    fun aFileThatCannotBeOpenedIsRefused() = runBlocking {
+        assertEquals(ImportOutcome.Refused(Refusal.CANNOT_OPEN), importer.import { throw IOException("gone") })
+        assertNothingAdded()
+    }
+
+    // FLOW-064 (6): removed from the book, a found recipe leaves it with its content and media.
+    @Test
+    fun aFoundRecipeIsRemovedWithItsContent() = runBlocking {
+        val content = soup().copy(media = listOf(FileMedia("m-1", MediaKind.PHOTO, MediaAttachment.Cover, "media/cover.jpg")))
+        import(file(content, "media/cover.jpg" to jpeg()))
+        assertEquals(1, mediaDirectory.list()!!.size)
+        assertTrue(importer.remove(content.id))
+        assertNull(recipes.get(content.id))
+        assertNothingAdded()
+        // Removed, it can be imported again.
+        assertTrue(import(file(content, "media/cover.jpg" to jpeg())) is ImportOutcome.Added)
+    }
+
+    // Removal never reaches an own recipe: only what is marked is removed.
+    @Test
+    fun removalLeavesAnOwnRecipe() = runBlocking {
+        val own = Recipe.create(now, owner = null).copy(title = "Mine")
+        recipes.save(own)
+        assertFalse(importer.remove(own.id))
+        assertEquals(own, recipes.get(own.id))
+    }
+}
