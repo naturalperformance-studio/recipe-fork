@@ -61,7 +61,7 @@ class AppContainer(
 
     /** The pool is the only recipe book so far (AUTH-026). */
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))
-    val recipes = RecipeRepository(activeBook)
+    val recipes = RecipeRepository(activeBook, context.filesDir)
 
     /** The notifications of timers' ends. */
     val timerNotices = AndroidTimerNotices(context)

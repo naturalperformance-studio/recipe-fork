@@ -76,6 +76,19 @@ class PhotoSources internal constructor(
         private const val EXTENSION = ".jpg"
         private const val AUTHORITY_SUFFIX = ".camera"
 
+        /**
+         * Deletes what a camera left behind more than [age] milliseconds before [now]: a photograph whose result never
+         * came back, which nothing will read. Called as the application starts. A younger file is kept: the system may
+         * have stopped the application while the camera was in front, and the photograph is then handed back to the
+         * activity it recreates, after this start.
+         */
+        fun clearLeftovers(context: Context, now: Long = System.currentTimeMillis(), age: Long = LEFTOVER_AGE_MS) {
+            cameraDirectory(context).listFiles()?.filter { now - it.lastModified() > age }?.forEach { it.delete() }
+        }
+
+        /** A day: no camera stays in front that long. */
+        const val LEFTOVER_AGE_MS = 24L * 60 * 60 * 1000
+
         /** The directory the camera writes into, which [CameraFileProvider] shares. */
         fun cameraDirectory(context: Context) = File(context.cacheDir, DIRECTORY)
 

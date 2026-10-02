@@ -1,6 +1,7 @@
 package app.recipefork.app.media
 
 import android.content.Context
+import android.media.ExifInterface
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
 import app.recipefork.app.book.BookName
@@ -11,6 +12,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,6 +50,43 @@ class PhotoStoreTest {
 
         store.delete(book, stored.mediaId)
         assertEquals(emptyList<String>(), left())
+    }
+
+    // MEDIA-003 (1, 2, 4), read from the very file the store keeps: nothing of the place, the device, the time or
+    // the person who took it.
+    @Test
+    fun theStoredFileCarriesNoMetadata() = runBlocking {
+        assertTrue(ExifInterface(original.path).getLatLong(FloatArray(2)))
+
+        val stored = PhotoStore(files).add(book) { original.inputStream() } as PhotoOutcome.Stored
+
+        val exif = ExifInterface(stored.file.path)
+        assertFalse(exif.getLatLong(FloatArray(2)))
+        TestPhotos.IDENTIFYING.keys.forEach { assertNull(it, exif.getAttribute(it)) }
+        assertFalse(exif.hasThumbnail())
+        assertFalse(String(stored.file.readBytes(), Charsets.ISO_8859_1).contains("Exif\u0000"))
+    }
+
+    // MEDIA-008: whatever else stops the codec — an error of its own, memory running out — is a refusal, not a crash.
+    @Test
+    fun aCodecFailingOtherwiseIsRefusedAsUnreadable() = runBlocking {
+        listOf<Throwable>(IllegalStateException("codec"), OutOfMemoryError("too big")).forEach { failure ->
+            val failing = object : PhotoReencoder() {
+                override fun reencode(open: () -> java.io.InputStream): ByteArray = throw failure
+            }
+            assertEquals(PhotoOutcome.Refused(PhotoRefusal.UNREADABLE), PhotoStore(files, failing).add(book) { original.inputStream() })
+        }
+        assertEquals(emptyList<String>(), left())
+    }
+
+    @Test
+    fun aCoverIsCopiedWholeUnderANewIdentity() = runBlocking {
+        val store = PhotoStore(files)
+        val stored = store.add(book) { original.inputStream() } as PhotoOutcome.Stored
+        assertTrue(store.copy(book, stored.mediaId, "copy"))
+        assertEquals(stored.file.readBytes().toList(), store.file(book, "copy").readBytes().toList())
+        assertFalse(store.copy(book, "missing", "nothing"))
+        assertEquals(listOf("copy", stored.mediaId).sorted(), left().sorted())
     }
 
     @Test

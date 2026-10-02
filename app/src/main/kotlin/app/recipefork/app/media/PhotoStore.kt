@@ -1,6 +1,7 @@
 package app.recipefork.app.media
 
 import app.recipefork.app.book.BookName
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -43,6 +44,13 @@ class PhotoStore(
             reencoder.reencode(open)
         } catch (e: RefusedPhoto) {
             return@withContext PhotoOutcome.Refused(e.refusal)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Whatever else stops the codec is a file it cannot process (MEDIA-008), never a crash.
+            return@withContext PhotoOutcome.Refused(PhotoRefusal.UNREADABLE)
+        } catch (e: OutOfMemoryError) {
+            return@withContext PhotoOutcome.Refused(PhotoRefusal.UNREADABLE)
         }
         ensureActive()
         val mediaId = UUID.randomUUID().toString()
@@ -59,6 +67,28 @@ class PhotoStore(
             PhotoOutcome.Stored(mediaId, target)
         } catch (e: IOException) {
             PhotoOutcome.Refused(PhotoRefusal.NOT_STORED)
+        } finally {
+            partial.delete()
+            if (!kept) target.delete()
+        }
+    }
+
+    /**
+     * Copies the file of the media item [from] of [book] to the item [to], whole or not at all: written aside and moved
+     * into place once complete. Returns whether it was copied; an item whose file is gone copies nothing.
+     */
+    suspend fun copy(book: BookName, from: String, to: String): Boolean = withContext(Dispatchers.IO) {
+        val source = file(book, from)
+        val target = file(book, to)
+        val partial = File(directory(book), ".$to.part")
+        var kept = false
+        try {
+            if (!source.isFile) return@withContext false
+            source.copyTo(partial, overwrite = true)
+            kept = partial.renameTo(target)
+            kept
+        } catch (e: IOException) {
+            false
         } finally {
             partial.delete()
             if (!kept) target.delete()

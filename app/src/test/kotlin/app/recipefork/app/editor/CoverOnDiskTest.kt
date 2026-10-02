@@ -6,7 +6,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.app.media.PhotoLimits
 import app.recipefork.app.media.PhotoNotice
+import app.recipefork.app.media.PhotoReencoder
 import app.recipefork.app.media.PhotoOffer
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.TestPhotos
@@ -144,6 +146,23 @@ class CoverOnDiskTest {
         attaching.attach(PhotoOffer(open = { ByteArrayInputStream("garbage".toByteArray()) }, release = {})).join()
 
         assertEquals(PhotoNotice.UNREADABLE, attaching.notice.value)
+        assertEquals(before, reopened(recipe).cover!!.mediaId)
+        assertEquals(listOf(before), held())
+    }
+
+    // MEDIA-006 (1, 3): a photograph that cannot be brought under its limit is refused as too large — said so, not
+    // as unreadable — the recipe keeps its cover, and nothing of the refused one is kept.
+    @Test
+    fun aPhotographThatDoesNotFitIsRefusedAsTooLarge() = runBlocking {
+        val recipe = Recipe.create(now, null)
+        val (editor, attaching) = opened(recipe)
+        attaching.attach(photo("camera.jpg")).join()
+        val before = held().single()
+        val tiny = CoverAttaching(editor, PhotoStore(context.filesDir, PhotoReencoder(PhotoLimits(maxBytes = 2_000))), book, scope)
+
+        tiny.attach(photo("big.jpg")).join()
+
+        assertEquals(PhotoNotice.TOO_LARGE, tiny.notice.value)
         assertEquals(before, reopened(recipe).cover!!.mediaId)
         assertEquals(listOf(before), held())
     }

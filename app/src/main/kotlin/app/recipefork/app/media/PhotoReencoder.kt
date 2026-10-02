@@ -33,12 +33,12 @@ class RefusedPhoto(val refusal: PhotoRefusal, cause: Throwable? = null) : Except
  * metadata at all: the orientation is applied to the pixels, so the picture needs none, and nothing of the place,
  * the device, the time or the person who took it survives.
  */
-class PhotoReencoder(private val limits: PhotoLimits = PhotoLimits()) {
+open class PhotoReencoder(private val limits: PhotoLimits = PhotoLimits()) {
     /**
      * The re-encoded bytes of the picture [open] reads; [open] is called once per pass over the original. Throws
      * [RefusedPhoto] when the picture cannot be read or does not fit.
      */
-    fun reencode(open: () -> InputStream): ByteArray {
+    open fun reencode(open: () -> InputStream): ByteArray {
         val original = bounds(open)
         val orientation = orientation(open)
         val sample = PhotoPlan.sampleSize(original, limits.maxEdge)
