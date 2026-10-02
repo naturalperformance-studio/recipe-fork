@@ -132,6 +132,8 @@ data class MarkedRecipeRow(
     @ColumnInfo(name = "stated_author") val statedAuthor: String?,
     /** Whether the book holds the recipe's content, which its card then shows. */
     val held: Boolean,
+    /** The media identity of the cover the book holds of it, if any (MEDIA-001). */
+    @ColumnInfo(name = "cover_id") val coverId: String? = null,
 )
 
 /** What an entry of the own-recipes view shows. */
@@ -140,4 +142,6 @@ data class OwnRecipeRow(
     val title: String,
     val state: RecipeState,
     val sent: SentStatus,
+    /** The media identity of the recipe's cover, if it holds one (MEDIA-001). */
+    @ColumnInfo(name = "cover_id") val coverId: String? = null,
 )

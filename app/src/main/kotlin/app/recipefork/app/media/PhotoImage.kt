@@ -57,3 +57,24 @@ fun decodeForDisplay(file: File, width: Int): ImageBitmap? = try {
 } catch (e: RuntimeException) {
     null
 }
+
+/**
+ * [file] decoded down by a power of two to no less than [size] pixels on its shorter side where it is larger — enough
+ * for a [size]-pixel square cropped about its centre, never the whole photograph; null if unreadable.
+ */
+fun decodeThumbnail(file: File, size: Int): ImageBitmap? = try {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(file.path, bounds)
+    val shorter = minOf(bounds.outWidth, bounds.outHeight)
+    if (shorter <= 0) {
+        null
+    } else {
+        var sample = 1
+        while (shorter / (sample * 2) >= size) sample *= 2
+        BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample })?.asImageBitmap()
+    }
+} catch (e: OutOfMemoryError) {
+    null
+} catch (e: RuntimeException) {
+    null
+}
