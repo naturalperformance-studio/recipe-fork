@@ -36,14 +36,14 @@ class TextCardSession(
     private val read: (String) -> String?,
     private val write: (String, String?) -> Unit,
 ) : CardSession {
-    override fun heldScale(recipe: RecipeId): HeldScale? = HeldScale.decoded(read(SCALE + recipe.value))
-    override fun holdScale(recipe: RecipeId, scale: HeldScale) = write(SCALE + recipe.value, scale.encoded())
-    override fun heldAnchor(recipe: RecipeId): CardAnchor? = CardAnchor.decoded(read(ANCHOR + recipe.value))
-    override fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?) = write(ANCHOR + recipe.value, anchor?.encoded())
+    override fun heldScale(recipe: RecipeId): HeldScale? = HeldScale.decoded(read(SCALE_KEY + recipe.value))
+    override fun holdScale(recipe: RecipeId, scale: HeldScale) = write(SCALE_KEY + recipe.value, scale.encoded())
+    override fun heldAnchor(recipe: RecipeId): CardAnchor? = CardAnchor.decoded(read(ANCHOR_KEY + recipe.value))
+    override fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?) = write(ANCHOR_KEY + recipe.value, anchor?.encoded())
 
     companion object {
-        private const val SCALE = "card.scale."
-        private const val ANCHOR = "card.anchor."
+        private const val SCALE_KEY = "card.scale."
+        private const val ANCHOR_KEY = "card.anchor."
 
         /** Held in memory alone, for as long as the object lives. */
         fun inMemory(): TextCardSession {
@@ -182,12 +182,14 @@ internal class CardPlaces {
     fun scrollOf(anchor: CardAnchor): Int? = places[anchor.key]?.let { it.top + (it.height * anchor.permille.toLong() / 1000).toInt() }
 
     companion object {
-        const val COVER = "cover"
-        const val TITLE = "title"
-        const val SERVINGS = "servings"
-        const val DESCRIPTION = "description"
-        fun ingredient(position: Int) = "i$position"
-        fun step(position: Int) = "s$position"
+        const val COVER_KEY = "cover"
+        const val TITLE_KEY = "title"
+        const val SERVINGS_KEY = "servings"
+        const val DESCRIPTION_KEY = "description"
+        private const val INGREDIENT_KEY = "i"
+        private const val STEP_KEY = "s"
+        fun ingredient(position: Int) = INGREDIENT_KEY + position
+        fun step(position: Int) = STEP_KEY + position
     }
 }
 

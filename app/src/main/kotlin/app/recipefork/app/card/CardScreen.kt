@@ -196,11 +196,11 @@ private fun RecipeContent(
                 .testTag(CardTags.CONTENT),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER))
+            Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
             Text(
                 recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = cardPlace(CardPlaces.TITLE).semantics { heading() }.testTag(CardTags.TITLE),
+                modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
             )
             // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
             recipe.statedAuthor?.let {
@@ -230,7 +230,7 @@ private fun RecipeContent(
             val list = ingredientList(ordered, entries, language, authored, scale)
             list.servingCount?.let { count ->
                 ServingsControl(
-                    modifier = cardPlace(CardPlaces.SERVINGS),
+                    modifier = cardPlace(CardPlaces.SERVINGS_KEY),
                     count = RequestedServings.text(count.value, language),
                     approximate = count.approximate,
                     canDecrease = count.value > RequestedServings.MIN,
@@ -252,7 +252,7 @@ private fun RecipeContent(
                 Text(
                     recipe.description,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = cardPlace(CardPlaces.DESCRIPTION).testTag(CardTags.DESCRIPTION),
+                    modifier = cardPlace(CardPlaces.DESCRIPTION_KEY).testTag(CardTags.DESCRIPTION),
                 )
             }
         }
