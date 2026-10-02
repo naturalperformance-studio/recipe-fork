@@ -3,6 +3,8 @@ package app.recipefork.app.library
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
@@ -88,9 +90,10 @@ class NothingWrittenTest {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.OWN_EMPTY), PATIENCE_MS)
         compose.onNode(hasText(statement) and hasAnyAncestor(hasTestTag(LibraryTags.OWN_EMPTY))).assertIsDisplayed()
         assertEquals(listOf(offer), compose.textsOf(LibraryTags.WRITE))
-        // One offer and nothing else to act on in the view below the switch.
+        // One offer and nothing else to act on in the view below the switch; above it, the book's menu.
         val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .filter { SemanticsActions.OnClick in it.config }
+            .filterNot { it.config.getOrNull(SemanticsProperties.TestTag) == LibraryTags.MENU }
         assertEquals(3, actions.size) // the two tabs and the offer
     }
 

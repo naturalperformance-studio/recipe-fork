@@ -22,6 +22,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
+import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.editor.PATIENCE_MS
@@ -50,6 +51,9 @@ abstract class CardTimersKit {
     protected val book = TestBook(context)
     protected val timers = TestTimers(context)
     protected val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
+
+    /** The reader's usual serving count the cards open at; never set unless a test sets it. */
+    protected val usual = HeldUsualServings()
     private var open by mutableStateOf<RecipeId?>(null)
 
     protected val now: Instant = Instant.parse("2026-10-02T12:00:00Z")
@@ -68,7 +72,7 @@ abstract class CardTimersKit {
         compose.registerIdlingResource(book.idling)
         compose.registerIdlingResource(timers.idling)
         runBlocking { recipes.save(soup) }
-        val environment = CardEnvironment { emptyList() }
+        val environment = CardEnvironment(usual) { emptyList() }
         compose.setContent {
             CompositionLocalProvider(LocalCardTimers provides timers.card) {
                 MaterialTheme {
