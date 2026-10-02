@@ -67,6 +67,14 @@ class ScaledRecipe private constructor(
     }
 
     /**
+     * False exactly when two or more lines are held at the floor of their unit type (SCALE-005), so the displayed
+     * quantities no longer hold the authored proportions and a warning says so (SCALE-009). Lines are counted
+     * whatever set the scale: a requested count or a fixed ingredient.
+     */
+    val holdsProportions: Boolean
+        get() = lines.count { it.quantity.heldAtFloor } < 2
+
+    /**
      * The serving count displayed: the one the reader asked for while nothing is fixed, and
      * otherwise the count the factor implies, taken to the nearest value of the serving-count
      * set and marked as approximate (SCALE-002, SCALE-008, SCALE-015). No quantity is computed

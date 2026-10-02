@@ -76,13 +76,16 @@ enum class Rounding {
  * [value] is the grid value in [unit]; for `exact` that unit is the base unit of the dimension
  * (gram or millilitre) and the ladder of SCALE-013 is the text form's concern. [value] is null
  * for `taste_unmeasured`. [derived] is true exactly when the factor is not 1 and the line
- * carries a quantity (SCALE-004); [rounding] says which way the grid moved it.
+ * carries a quantity (SCALE-004); [rounding] says which way the grid moved it. [heldAtFloor] is true exactly when
+ * the exact computed value lies below the floor of the unit's grid, so the floor is displayed in its place and
+ * reads as rounded up (SCALE-005); it is what SCALE-009 counts.
  */
 data class DisplayedQuantity(
     val unit: QuantityUnit,
     val value: Rational?,
     val derived: Boolean,
     val rounding: Rounding,
+    val heldAtFloor: Boolean = false,
 )
 
 object Scaling {
@@ -113,7 +116,7 @@ object Scaling {
             1 -> Rounding.UP
             else -> Rounding.DOWN
         }
-        return DisplayedQuantity(unit, shown, derived = true, rounding = rounding)
+        return DisplayedQuantity(unit, shown, derived = true, rounding = rounding, heldAtFloor = exact < grid.floor)
     }
 
     /** Every line of an ingredient list at [factor], in order. */
