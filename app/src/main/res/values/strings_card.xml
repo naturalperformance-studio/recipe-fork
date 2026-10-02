@@ -20,12 +20,15 @@
     <string name="card_servings_more_action">Recalculate the recipe for more servings</string>
     <string name="card_ingredients">Ingredients</string>
     <string name="card_steps">Steps</string>
-    <!-- A quantity computed at a serving count other than the authored one (SCALE-004), and which way rounding moved it. -->
-    <string name="card_quantity_recalculated">recalculated</string>
-    <string name="card_quantity_recalculated_exact_lower">recalculated, exact value was lower</string>
-    <string name="card_quantity_recalculated_exact_higher">recalculated, exact value was higher</string>
+    <!-- Quantities computed at a scale other than the authored one (SCALE-004 (1), shown once for the section), with
+         a legend for the arrows; the spoken form is what the screen reader reads instead of the arrows. -->
+    <string name="card_quantities_recalculated">Recalculated · ↑ rounded up · ↓ rounded down</string>
+    <string name="card_quantities_recalculated_spoken">Quantities are recalculated. An up arrow marks a quantity rounded up, a down arrow one rounded down.</string>
+    <!-- Read aloud for the arrow after a quantity rounding moved (SCALE-004 (2–5), SCALE-005). -->
+    <string name="card_quantity_rounded_up">rounded up, exact value was lower</string>
+    <string name="card_quantity_rounded_down">rounded down, exact value was higher</string>
     <!-- Two or more ingredients held at their smallest amount (SCALE-009). -->
-    <string name="card_proportions_warning">Some ingredients are already at their smallest amount, so these quantities no longer keep the recipe’s proportions.</string>
+    <string name="card_proportions_warning">Some amounts are at their minimum — proportions are off.</string>
     <!-- An ingredient row that names nothing the device can show yet. -->
     <string name="card_unnamed_ingredient">Unnamed ingredient</string>
     <!-- The recipe is no longer in the active book. -->
@@ -41,7 +44,5 @@
     <string name="card_fix_release_action">Stop recalculating the recipe from this ingredient</string>
     <string name="card_fix_cancel">Cancel</string>
     <string name="card_fix_cancel_action">Close without changing the recipe</string>
-    <string name="card_quantity_fixed">fixed: the amount you have</string>
-    <!-- %1$s is what the recipe needs at the scale in force, %2$s what the reader fixed. -->
-    <string name="card_quantity_shortfall">fixed: you have %2$s, the recipe now needs %1$s</string>
+    <string name="card_quantity_fixed">fixed</string>
 </resources>

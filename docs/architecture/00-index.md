@@ -27,6 +27,7 @@ All commands run from the repository root.
 | Test (full suite) | `./gradlew testAll` | `:core:test`, `:server:test`, `:app:testDebugUnitTest`. Needs Docker (Testcontainers); needs no device. |
 | Dictionary snapshot | `scripts/dictionary-snapshot.sh` | Release step: writes `app/src/main/assets/dictionaries.json` from the production server; the file is committed. Added by the first task that seeds from it. |
 | Device tests | `scripts/device-test.sh` | Instrumented tests (`app/src/androidTest`) on a headless API 29 emulator. Only for tasks whose criteria need real codecs or a real device; named in that task's packet. |
+| Deliver to the phone | `scripts/deliver.sh [notes-file]` | Sends `build/artefact/recipe-fork-debug.apk` (and the notes as a message) to the owner's Telegram chat. Reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` from `~/Projects/.env` (override with `DELIVERY_ENV`); credentials never enter the repository. Run after every hand-test artefact. Bot API limit: 50 MB. |
 | Hand-test artefact | `scripts/artefact.sh` | Lands at `build/artefact/`: `recipe-fork-debug.apk`, `recipe-fork-serverless-debug.apk` (built with `-Precipefork.serverless=true`; the script gains the second build with the first task that reads the mode) and `server/` (run `docker compose up --build` inside it). `SOURCE_COMMIT` names the commit it was built from. |
 
 ## Test frameworks

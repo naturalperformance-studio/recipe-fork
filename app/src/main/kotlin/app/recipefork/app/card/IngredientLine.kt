@@ -27,8 +27,9 @@ import app.recipefork.core.scaling.UnitLabels
  * compute from, or null where it holds no unit either.
  *
  * [derived] is true exactly when [quantity] was computed at a scale other than the authored one (SCALE-004 (1)),
- * whatever its value; [rounding] says which way the grid moved it from the exact value, and reads [Rounding.UP] for
- * a quantity held at its floor (SCALE-005). A row shown unscaled is never derived.
+ * whatever its value — the card says so once for its whole list; [rounding] says which way the grid moved it from
+ * the exact value, shown as an arrow after the quantity, and reads [Rounding.UP] for a quantity held at its floor
+ * (SCALE-005). A row shown unscaled is never derived.
  */
 data class IngredientLine(
     val name: String?,
@@ -37,14 +38,9 @@ data class IngredientLine(
     val rounding: Rounding = Rounding.NONE,
     /** True while the reader has fixed this row's amount (SCALE-002). */
     val fixed: Boolean = false,
-    /** For a fixed row the latest fixing outgrew: what the recipe needs and what was fixed (SCALE-006). */
-    val shortfall: LineShortfall? = null,
     /** How the reader may fix this row's amount (SCALE-018), or null where the row offers no fixing. */
     val fixing: FixOffer? = null,
 )
-
-/** A shortfall as text: the amount the recipe needs at the scale in force, and the amount the reader fixed. */
-data class LineShortfall(val required: String, val available: String)
 
 /** What fixing a row offers: the units the amount may be typed in, the author's first, and its divisibility. */
 data class FixOffer(val units: List<QuantityUnit>, val authoredUnit: QuantityUnit, val divisible: Boolean?)
@@ -64,15 +60,14 @@ data class IngredientList(
 data class CardFixing(val position: Int, val amount: Rational, val unit: QuantityUnit)
 
 /**
- * How the card is scaled: at the serving count [requested] (null for a recipe with none), with the rows the reader
- * fixed since, oldest first; the latest sets the scale (SCALE-002, SCALE-006).
+ * How the card is scaled: at the serving count [requested] (null for a recipe with none), with the row the reader
+ * fixed since, which sets the scale (SCALE-002). The card holds at most one fixing: fixing a row releases any other.
  */
 data class CardScale(val requested: Rational?, val fixings: List<CardFixing> = emptyList()) {
-    /** [fixing] sets the scale; an earlier fixing of the same row is replaced. */
-    fun fix(fixing: CardFixing): CardScale =
-        copy(fixings = fixings.filter { it.position != fixing.position } + fixing)
+    /** [fixing] sets the scale; any earlier fixing, of this row or another, is released. [requested] is kept. */
+    fun fix(fixing: CardFixing): CardScale = copy(fixings = listOf(fixing))
 
-    /** The row at [position] is no longer fixed; with none left the count in force before the first is (SCALE-017). */
+    /** The row at [position] is no longer fixed; the count in force before the first fixing is again (SCALE-017). */
     fun release(position: Int): CardScale = copy(fixings = fixings.filter { it.position != position })
 
     /** The reader asks for [count]: every fixing is released (SCALE-016). */
@@ -126,7 +121,7 @@ fun ingredientList(
 
 /**
  * The list at [scale]: every row that can be scaled is computed through one [ScaledRecipe] from the exact factor in
- * force — that of the latest fixing, or of the requested count with none (SCALE-002, SCALE-003, SCALE-006) — and
+ * force — that of the fixing, or of the requested count with none (SCALE-002, SCALE-003) — and
  * every derived marker and the proportions warning follow it whichever set it. A fixing of a row that offers none is
  * ignored. A recipe with no serving count shows no count, and is scaled by a fixing all the same.
  */
@@ -158,10 +153,6 @@ fun ingredientList(
         val offer = scalable[i]?.takeIf { it.quantity != null }?.let { FixOffer(FixedAmount.units(it.unit), it.unit, it.divisible) }
         shown.copy(
             fixed = line.fixed,
-            shortfall = line.shortfall?.let { short ->
-                val available = DisplayedQuantity(short.required.unit, short.available, derived = false, rounding = Rounding.NONE)
-                LineShortfall(QuantityText.of(short.required, language), QuantityText.of(available, language))
-            },
             fixing = offer,
         )
     }
