@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.lifecycle.SavedStateHandle
 import app.recipefork.app.card.CardAnchor
+import app.recipefork.app.card.CardFixing
 import app.recipefork.app.card.HeldScale
 import app.recipefork.core.recipe.RecipeId
 import androidx.compose.ui.test.hasTestTag
@@ -285,6 +286,23 @@ class CardSessionTest {
         session.cards.holdScale(RecipeId("recipe-new"), HeldScale(Rational.of(2)))
         assertEquals(HeldScale(Rational.of(6)), session.cards.heldScale(ids[0]))
         assertNull(session.cards.heldScale(ids[1]))
+    }
+
+    // T-092: a recipe imported from a file is new to the book; nothing held of a card of its identity — a recipe since
+    // deleted, whose file it is — is applied to it, while every other card keeps what it held.
+    @Test
+    fun anImportedRecipeIsHeldNothingOfAnEarlierCardOfItsIdentity() {
+        val session = LibrarySession(SavedStateHandle())
+        val gone = RecipeId("recipe-gone")
+        val other = RecipeId("recipe-other")
+        val fixing = CardFixing(1, Rational.of(200), QuantityUnit.GRAM)
+        session.cards.holdScale(gone, HeldScale(Rational.of(3), fixing, 42))
+        session.cards.holdAnchor(gone, CardAnchor("i1", 10))
+        session.cards.holdScale(other, HeldScale(Rational.of(6)))
+        session.showImported(gone)
+        assertNull(session.cards.heldScale(gone))
+        assertNull(session.cards.heldAnchor(gone))
+        assertEquals(HeldScale(Rational.of(6)), session.cards.heldScale(other))
     }
 
     // The home action and return: the same count and fixing (FLOW-012 (1)).

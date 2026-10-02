@@ -645,7 +645,7 @@ private fun ImportButton(files: RecipeImport, session: LibrarySession, modifier:
             try {
                 val outcome = files.importSafely(context, uri)
                 session.tell(outcome.message())
-                if (outcome is ImportOutcome.Added) session.showImported()
+                if (outcome is ImportOutcome.Added) session.showImported(outcome.id)
             } finally {
                 importing = false
             }

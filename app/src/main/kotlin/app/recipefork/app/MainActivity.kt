@@ -88,7 +88,7 @@ class MainActivity : ComponentActivity() {
                 session.viewModelScope.launch {
                     val outcome = files.importSafely(context, uri)
                     session.tell(outcome.message())
-                    if (outcome is ImportOutcome.Added) session.showImported()
+                    if (outcome is ImportOutcome.Added) session.showImported(outcome.id)
                 }
             }
 

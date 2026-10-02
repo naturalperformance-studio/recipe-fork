@@ -73,10 +73,17 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
     }
 
     /**
-     * A recipe file was imported (FLOW-064 (1)): the view of marked recipes is shown, where it is listed now, in place
-     * of whatever was open — an editor keeps what was entered as it is typed.
+     * A recipe file was imported as the recipe [id] (FLOW-064 (1)): the view of marked recipes is shown, where it is
+     * listed now, in place of whatever was open — an editor keeps what was entered as it is typed.
+     *
+     * The recipe is new to the book, so nothing the session held of a card of that identity is its: a file carries
+     * its recipe's identity, and the card of a recipe since deleted or removed — exported, perhaps, after a count or a
+     * fixing was set on it — would otherwise reopen the arrival at that count and fixing, as if the file had carried
+     * them. It opens as any card does the first time.
      */
-    fun showImported() {
+    fun showImported(id: RecipeId) {
+        held.forget(id)
+        forgetShown(id)
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
         saved[VIEW_KEY] = LibraryView.MARKED
@@ -158,6 +165,11 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         val now = listOf(recipe.value) + (order - recipe.value)
         now.drop(MAX_CARDS).forEach { held.forget(RecipeId(it)) }
         saved[CARDS_ORDER_KEY] = now.take(MAX_CARDS).joinToString(" ")
+    }
+
+    private fun forgetShown(recipe: RecipeId) {
+        val order = saved.get<String>(CARDS_ORDER_KEY)?.split(' ')?.filter { it.isNotEmpty() } ?: return
+        if (recipe.value in order) saved[CARDS_ORDER_KEY] = (order - recipe.value).joinToString(" ")
     }
 
     private fun stepOf(value: String?): TimerStep? {
