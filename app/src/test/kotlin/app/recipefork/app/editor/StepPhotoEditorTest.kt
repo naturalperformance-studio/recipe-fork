@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -7,6 +8,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,9 +27,11 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.file.FileProviderCache
-import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.TestPhotos
+import app.recipefork.app.media.camera.CameraTags
+import app.recipefork.app.media.camera.FakeCamera
+import app.recipefork.app.media.camera.LocalCameraAccess
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
@@ -82,6 +86,8 @@ class StepPhotoEditorTest {
     private val now = Instant.parse("2026-10-02T12:00:00Z")
     private val incoming = File(context.externalCacheDir ?: context.cacheDir, "incoming").apply { mkdirs() }
     private var shown by mutableStateOf(true)
+    private var picture: ByteArray? = null
+    private val camera = FakeCamera(picture = { picture })
 
     @Before
     fun setUp() {
@@ -108,7 +114,11 @@ class StepPhotoEditorTest {
         runBlocking { recipes.save(recipe) }
         val environment = EditorEnvironment(ActiveBook(BookName.Pool, book.database), device.catalog(context)) { now }
         compose.setContent {
-            MaterialTheme { if (shown) EditorScreen(recipe.id, recipes, environment, saving, onClose = {}) }
+            MaterialTheme {
+                CompositionLocalProvider(LocalCameraAccess provides camera) {
+                    if (shown) EditorScreen(recipe.id, recipes, environment, saving, onClose = {})
+                }
+            }
         }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         return recipe.id
@@ -144,14 +154,19 @@ class StepPhotoEditorTest {
         compose.onNodeWithTag(item).performClick()
     }
 
-    /** Takes a photograph at the step at [position] with the system camera. */
-    private fun takePhoto(position: Int, width: Int = 3000, height: Int = 2000) {
+    /** Opens the application's camera at the step at [position], the permission granted. */
+    private fun openCamera(position: Int) {
+        shadowOf(compose.activity.application).grantPermissions(Manifest.permission.CAMERA)
         menu(position, EditorTags.stepPhotoTake(position))
-        val intent = started()
-        assertEquals(MediaStore.ACTION_IMAGE_CAPTURE, intent.action)
-        val file = PhotoSources.cameraDirectory(context).listFiles()!!.single()
-        TestPhotos.tag(TestPhotos.jpeg(file, width, height))
-        compose.runOnUiThread { activity.receiveResult(intent, Activity.RESULT_OK, Intent()) }
+        compose.waitUntilExactlyOneExists(hasTestTag(CameraTags.VIEWFINDER), PATIENCE_MS)
+    }
+
+    /** Takes a photograph of [width] by [height] at the step at [position] with the application's camera. */
+    private fun takePhoto(position: Int, width: Int = 3000, height: Int = 2000) {
+        picture = TestPhotos.tag(TestPhotos.jpeg(File(incoming, "shot.jpg"), width, height)).readBytes()
+        openCamera(position)
+        compose.onNodeWithTag(CameraTags.SHUTTER).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) }
     }
 
     /** Picks [file] in the system photo picker at the step at [position]. */
@@ -202,7 +217,7 @@ class StepPhotoEditorTest {
         assertEquals(listOf(photo), stored(id).media)
         assertNull(stored(id).cover)
         assertEquals(listOf(photo.mediaId), held())
-        assertEquals(emptyList<String>(), PhotoSources.cameraDirectory(context).list()!!.toList())
+        compose.waitUntil(PATIENCE_MS) { !camera.isOpen }
         listOf(0, 2).forEach { assertFalse(exists(EditorTags.stepPhotoImage(it)) || exists(EditorTags.stepPhotoNotice(it))) }
         assertFalse(exists(CoverTags.IMAGE) || exists(CoverTags.NOTICE))
     }
@@ -275,6 +290,21 @@ class StepPhotoEditorTest {
         compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 2 && held().isEmpty() }
         assertTrue(stored(id).media.isEmpty())
         assertFalse(exists(EditorTags.stepPhotoImage(0)) || exists(EditorTags.stepPhotoImage(1)))
+    }
+
+    // The camera opened at a step and closed attaches nothing to it and is released.
+    @Test
+    fun aClosedCameraAttachesNothingToTheStep() {
+        val id = open(threeSteps())
+        openCamera(1)
+
+        compose.onNodeWithTag(CameraTags.CLOSE).performClick()
+
+        compose.waitUntil(PATIENCE_MS) { !exists(CameraTags.SCREEN) && !camera.isOpen }
+        compose.waitForIdle()
+        assertTrue(stored(id).media.isEmpty())
+        assertTrue(held().isEmpty())
+        assertFalse(exists(EditorTags.stepPhotoNotice(1)))
     }
 
     // A step's photograph survives leaving the editor: opened again, it is shown at its step.

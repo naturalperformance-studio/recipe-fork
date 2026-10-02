@@ -15,7 +15,7 @@ enum class PhotoNotice(@StringRes val text: Int) {
     TOO_LARGE(R.string.media_refused_too_large),
     NOT_STORED(R.string.media_refused_not_stored),
 
-    /** No camera application or photo picker could be opened. */
+    /** No photo picker could be opened. */
     UNAVAILABLE(R.string.media_unavailable),
 
     /** The cover photograph was removed. */
