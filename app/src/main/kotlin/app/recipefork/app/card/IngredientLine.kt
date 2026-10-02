@@ -6,6 +6,7 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.AuthoredQuantity
 import app.recipefork.core.scaling.DisplayedQuantity
+import app.recipefork.core.scaling.FixedAmount
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.QuantityText
 import app.recipefork.core.scaling.Rational
@@ -13,6 +14,7 @@ import app.recipefork.core.scaling.Rounding
 import app.recipefork.core.scaling.RoundingGrid
 import app.recipefork.core.scaling.ScaleFactor
 import app.recipefork.core.scaling.ScaledRecipe
+import app.recipefork.core.scaling.ServingCount
 import app.recipefork.core.scaling.Scaling
 import app.recipefork.core.scaling.UnitLabels
 
@@ -33,13 +35,49 @@ data class IngredientLine(
     val quantity: String?,
     val derived: Boolean = false,
     val rounding: Rounding = Rounding.NONE,
+    /** True while the reader has fixed this row's amount (SCALE-002). */
+    val fixed: Boolean = false,
+    /** For a fixed row the latest fixing outgrew: what the recipe needs and what was fixed (SCALE-006). */
+    val shortfall: LineShortfall? = null,
+    /** How the reader may fix this row's amount (SCALE-018), or null where the row offers no fixing. */
+    val fixing: FixOffer? = null,
 )
 
+/** A shortfall as text: the amount the recipe needs at the scale in force, and the amount the reader fixed. */
+data class LineShortfall(val required: String, val available: String)
+
+/** What fixing a row offers: the units the amount may be typed in, the author's first, and its divisibility. */
+data class FixOffer(val units: List<QuantityUnit>, val authoredUnit: QuantityUnit, val divisible: Boolean?)
+
 /**
- * The card's ingredient list at a serving count: its [lines] in order, and whether the displayed quantities still
- * hold the authored proportions — false once two or more lines are held at their floors (SCALE-009).
+ * The card's ingredient list at a scale: its [lines] in order, whether the displayed quantities still hold the
+ * authored proportions — false once two or more lines are held at their floors (SCALE-009) — and the serving count
+ * the scale displays, null for a recipe without one.
  */
-data class IngredientList(val lines: List<IngredientLine>, val holdsProportions: Boolean)
+data class IngredientList(
+    val lines: List<IngredientLine>,
+    val holdsProportions: Boolean,
+    val servingCount: ServingCount? = null,
+)
+
+/** An amount the reader fixed on the card: of the row at [position], [amount] in [unit] as typed. */
+data class CardFixing(val position: Int, val amount: Rational, val unit: QuantityUnit)
+
+/**
+ * How the card is scaled: at the serving count [requested] (null for a recipe with none), with the rows the reader
+ * fixed since, oldest first; the latest sets the scale (SCALE-002, SCALE-006).
+ */
+data class CardScale(val requested: Rational?, val fixings: List<CardFixing> = emptyList()) {
+    /** [fixing] sets the scale; an earlier fixing of the same row is replaced. */
+    fun fix(fixing: CardFixing): CardScale =
+        copy(fixings = fixings.filter { it.position != fixing.position } + fixing)
+
+    /** The row at [position] is no longer fixed; with none left the count in force before the first is (SCALE-017). */
+    fun release(position: Int): CardScale = copy(fixings = fixings.filter { it.position != position })
+
+    /** The reader asks for [count]: every fixing is released (SCALE-016). */
+    fun request(count: Rational): CardScale = CardScale(count)
+}
 
 /**
  * The line of [ingredient] at [factor] — the authored values at [ScaleFactor.ONE].
@@ -84,20 +122,50 @@ fun ingredientList(
     language: InterfaceLanguage,
     authoredServings: Int?,
     requestedServings: Rational?,
+): IngredientList = ingredientList(ingredients, entries, language, authoredServings, CardScale(requestedServings))
+
+/**
+ * The list at [scale]: every row that can be scaled is computed through one [ScaledRecipe] from the exact factor in
+ * force — that of the latest fixing, or of the requested count with none (SCALE-002, SCALE-003, SCALE-006) — and
+ * every derived marker and the proportions warning follow it whichever set it. A fixing of a row that offers none is
+ * ignored. A recipe with no serving count shows no count, and is scaled by a fixing all the same.
+ */
+fun ingredientList(
+    ingredients: List<Ingredient>,
+    entries: Map<Long, IngredientEntryEntity>,
+    language: InterfaceLanguage,
+    authoredServings: Int?,
+    scale: CardScale,
 ): IngredientList {
     val scalable = ingredients.map(::scalableQuantity)
-    val scaled = authoredServings?.takeIf { it >= 1 }?.let { authored ->
-        val requested = requestedServings ?: Rational.of(authored.toLong())
-        ScaledRecipe.of(authored, scalable.filterNotNull(), requested)
+    val counted = authoredServings?.takeIf { it >= 1 }
+    // A recipe without a count is scaled as one serving; only a fixing can move it, and no count is shown.
+    val authored = counted ?: 1
+    val requested = counted?.let { scale.requested ?: Rational.of(it.toLong()) } ?: Rational.ONE
+    val indices = HashMap<Int, Int>()
+    scalable.forEachIndexed { i, quantity -> if (quantity != null) indices[i] = indices.size }
+    var scaled = ScaledRecipe.of(authored, scalable.filterNotNull(), requested)
+    for (fixing in scale.fixings) {
+        val i = ingredients.indexOfFirst { it.position == fixing.position }.takeIf { it >= 0 } ?: continue
+        val authoredQuantity = scalable[i]?.takeIf { it.quantity != null } ?: continue
+        if (fixing.unit !in FixedAmount.units(authoredQuantity.unit) || fixing.amount.signum() <= 0) continue
+        scaled = scaled.fix(indices.getValue(i), fixing.amount, fixing.unit)
     }
-    var next = 0
     val lines = ingredients.mapIndexed { i, ingredient ->
-        val quantity = scalable[i]?.let { authored ->
-            scaled?.lines?.get(next++)?.quantity ?: Scaling.display(authored, ScaleFactor.ONE)
-        }
-        lineOf(ingredient, entries, language, quantity)
+        val line = scalable[i]?.let { scaled.lines[indices.getValue(i)] }
+        val shown = lineOf(ingredient, entries, language, line?.quantity)
+        if (line == null) return@mapIndexed shown
+        val offer = scalable[i]?.takeIf { it.quantity != null }?.let { FixOffer(FixedAmount.units(it.unit), it.unit, it.divisible) }
+        shown.copy(
+            fixed = line.fixed,
+            shortfall = line.shortfall?.let { short ->
+                val available = DisplayedQuantity(short.required.unit, short.available, derived = false, rounding = Rounding.NONE)
+                LineShortfall(QuantityText.of(short.required, language), QuantityText.of(available, language))
+            },
+            fixing = offer,
+        )
     }
-    return IngredientList(lines, holdsProportions = scaled?.holdsProportions ?: true)
+    return IngredientList(lines, holdsProportions = scaled.holdsProportions, servingCount = counted?.let { scaled.servingCount })
 }
 
 /**
