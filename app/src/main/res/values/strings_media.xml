@@ -18,7 +18,7 @@
     <string name="media_unavailable">No app to take or choose a photo was found on this phone.</string>
     <string name="media_removed">Cover photo removed.</string>
     <!-- A step's photograph, offered at the step (FLOW-026 (2)) and shown there on the card. -->
-    <string name="media_step_photo">Photo</string>
+    <string name="media_step_photo_label">Photo for step %1$d</string>
     <string name="media_step_photo_action">Add, change or remove the photo of step %1$d</string>
     <string name="media_step_take">Take a photo</string>
     <string name="media_step_choose">Choose from gallery</string>

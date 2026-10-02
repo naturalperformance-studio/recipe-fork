@@ -131,6 +131,9 @@ private fun StepRow(
     photos: StepPhotos,
 ) {
     val field = remember { StepFieldState() }
+    val photoControl = rememberStepPhotoControl(position, editor, photos)
+    // Opened by the timer's control before any duration is held: a timer of no duration is no timer, and is not stored.
+    var timerOpen by rememberSaveable { mutableStateOf(false) }
     // One bounded block per step, as an ingredient's, so where one step ends and the next begins is plain; dragged, it
     // moves whole.
     OutlinedCard(
@@ -142,21 +145,32 @@ private fun StepRow(
         // Dragged by the column down its left edge; everything of the step stands beside it, at one left edge.
         DragColumnBlock(drag, position, count, EditorTags.stepHandle(position), EditorTags.stepHandleIcon(position)) {
             Column(Modifier.fillMaxWidth().padding(STEP_PADDING)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    StepTextField(
-                        position = position,
-                        step = step,
-                        ingredients = ingredients,
-                        language = language,
-                        editor = editor,
-                        state = field,
-                        modifier = Modifier.weight(1f).testTag(EditorTags.stepText(position)),
+                // The text across the whole block; under it, one row of the step's actions as icons.
+                StepTextField(
+                    position = position,
+                    step = step,
+                    ingredients = ingredients,
+                    language = language,
+                    editor = editor,
+                    state = field,
+                    modifier = Modifier.fillMaxWidth().testTag(EditorTags.stepText(position)),
+                )
+                BlockActions {
+                    InsertIngredient(position, ingredients, dictionary, language, editor, field)
+                    BlockAction(
+                        icon = R.drawable.ic_step_timer,
+                        label = stringResource(R.string.editor_timer_label, position + 1),
+                        tag = EditorTags.timerAttach(position),
+                        action = stringResource(R.string.editor_timer_action, position + 1),
+                        onClick = { if (!editor.attachTimer(position)) timerOpen = true },
                     )
-                    ActionText(
-                        text = stringResource(R.string.editor_step_remove),
+                    StepPhotoAction(position, photo, photoControl)
+                    BlockAction(
+                        icon = R.drawable.ic_remove_row,
+                        label = stringResource(R.string.editor_step_remove_action, position + 1),
+                        tag = EditorTags.stepRemove(position),
                         action = stringResource(R.string.editor_step_remove_action, position + 1),
                         onClick = { editor.removeStep(position) { removed -> removed.forEach { photos.store.delete(photos.book, it) } } },
-                        modifier = Modifier.testTag(EditorTags.stepRemove(position)),
                     )
                     RowMenu(
                         position = position,
@@ -174,39 +188,45 @@ private fun StepRow(
                         },
                     )
                 }
-                InsertIngredient(position, ingredients, dictionary, language, editor, field)
-                StepTimer(position, step, ingredients, language, editor, stating)
-                StepPhoto(position, photo, editor, photos)
+                // Below the row, only what the step has: its timer, and its photograph with what is told about it.
+                if (step.timer != null || timerOpen || stating || photo != null || photoControl.attaching.notice.value != null) {
+                    Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        StepTimer(position, step, ingredients, language, editor, stating, timerOpen) { timerOpen = it }
+                        StepPhotoShown(position, photo, photos, photoControl)
+                    }
+                }
             }
         }
     }
 }
 
 /** The room between a step block's outline, or its drag column, and what the block holds. */
-private val STEP_PADDING = PaddingValues(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 8.dp)
+private val STEP_PADDING = PaddingValues(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 0.dp)
 
 /**
- * The step's timer (FLOW-027): a control that attaches it, then its duration in hours and whole minutes — the only
- * thing asked — and, once it has one, the name it will announce itself by. The control stays on a step that carries a
- * timer, and choosing it there creates nothing and says why (GUIDE-007).
+ * The step's timer (FLOW-027), under the step's row of actions, whose timer control attaches it — or, [open], begins
+ * one: its duration in hours and whole minutes — the only thing asked — and, once it has one, the name it will announce
+ * itself by. The control stays on a step that carries a timer, and choosing it there creates nothing and says why
+ * (GUIDE-007): what it says shows here while [stating].
  */
 @Composable
-private fun StepTimer(position: Int, step: Step, ingredients: List<Ingredient>, language: InterfaceLanguage, editor: RecipeEditor, stating: Boolean) {
+private fun StepTimer(
+    position: Int,
+    step: Step,
+    ingredients: List<Ingredient>,
+    language: InterfaceLanguage,
+    editor: RecipeEditor,
+    stating: Boolean,
+    open: Boolean,
+    onOpen: (Boolean) -> Unit,
+) {
     val timer = step.timer
-    // Opened by the control before any duration is held: a timer of no duration is no timer, and is not stored.
-    var open by rememberSaveable { mutableStateOf(false) }
     var hours by rememberSaveable { mutableStateOf(timer?.duration?.inWholeHours?.toString().orEmpty()) }
     var minutes by rememberSaveable { mutableStateOf(timer?.duration?.let { (it.inWholeMinutes % 60).toString() }.orEmpty()) }
     // The name the author gave, kept on screen while the duration is cleared and given back when it is entered again.
     var given by rememberSaveable { mutableStateOf(timer?.label) }
     fun hold(h: String, m: String) = editor.setTimerDuration(position, h.toIntOrNull() ?: 0, m.toIntOrNull() ?: 0, given)
 
-    ActionText(
-        text = stringResource(R.string.editor_timer),
-        action = stringResource(R.string.editor_timer_action, position + 1),
-        onClick = { if (!editor.attachTimer(position)) open = true },
-        modifier = Modifier.testTag(EditorTags.timerAttach(position)),
-    )
     if (stating) {
         Text(
             stringResource(R.string.editor_timer_one_per_step),
@@ -225,7 +245,7 @@ private fun StepTimer(position: Int, step: Step, ingredients: List<Ingredient>, 
             onValueChange = { typed ->
                 if (typed != hours && typed.length <= 2 && typed.all { it in '0'..'9' }) {
                     hours = typed
-                    open = true
+                    onOpen(true)
                     hold(typed, minutes)
                 }
             },
@@ -239,7 +259,7 @@ private fun StepTimer(position: Int, step: Step, ingredients: List<Ingredient>, 
             onValueChange = { typed ->
                 if (typed != minutes && typed.length <= 2 && typed.all { it in '0'..'9' } && (typed.toIntOrNull() ?: 0) <= RecipeEditor.MAX_MINUTES) {
                     minutes = typed
-                    open = true
+                    onOpen(true)
                     hold(hours, typed)
                 }
             },
@@ -253,7 +273,7 @@ private fun StepTimer(position: Int, step: Step, ingredients: List<Ingredient>, 
             IconButton(
                 onClick = {
                     if (editor.removeTimer(position)) {
-                        open = false
+                        onOpen(false)
                         hours = ""
                         minutes = ""
                         given = null

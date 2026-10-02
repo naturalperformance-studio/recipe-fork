@@ -175,7 +175,7 @@ class StepPhotoEditorTest {
             val block = bounds(EditorTags.step(position))
             assertTrue("step $position offers its photo inside its block", control.top >= block.top && control.bottom <= block.bottom)
         }
-        assertEquals(listOf("Photo"), compose.textsOf(EditorTags.stepPhoto(1)))
+        assertEquals(listOf("Photo for step 2"), compose.descriptionOf(EditorTags.stepPhoto(1)))
         compose.onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoTake(1)), PATIENCE_MS)
         assertTrue(exists(EditorTags.stepPhotoChoose(1)))
@@ -318,6 +318,6 @@ class StepPhotoEditorTest {
 
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(2)) }
         assertEquals(listOf("Фото шага 3"), compose.descriptionOf(EditorTags.stepPhotoImage(2)))
-        assertEquals(listOf("Фото"), compose.textsOf(EditorTags.stepPhoto(2)))
+        assertEquals(listOf("Фото для шага 3"), compose.descriptionOf(EditorTags.stepPhoto(2)))
     }
 }

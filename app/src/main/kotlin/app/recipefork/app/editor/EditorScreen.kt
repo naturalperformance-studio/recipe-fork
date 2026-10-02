@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -24,8 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -46,7 +43,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -359,9 +355,7 @@ internal fun RowMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier) {
-        IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(48.dp).testTag(tag)) {
-            Icon(painterResource(R.drawable.ic_row_menu), contentDescription = name)
-        }
+        BlockAction(R.drawable.ic_row_menu, name, tag, onClick = { expanded = !expanded })
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             RowAction.entries
                 .filter { (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1) }
@@ -440,6 +434,8 @@ object EditorTags {
     fun timerName(position: Int) = "editor-step-$position-timer-name"
     fun timerNameFollows(position: Int) = "editor-step-$position-timer-name-follows"
     fun timerDuration(position: Int) = "editor-step-$position-timer-duration"
+    /** The tooltip a block's action tagged [action] shows on a long press. */
+    fun tooltip(action: String) = "$action-tooltip"
     const val DESCRIPTION = "editor-description"
     const val DESCRIPTION_TEXT = "editor-description-text"
 }
