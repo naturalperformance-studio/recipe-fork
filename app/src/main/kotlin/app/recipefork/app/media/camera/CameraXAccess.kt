@@ -1,14 +1,12 @@
 package app.recipefork.app.media.camera
 
 import android.content.Context
-import android.util.Rational
+import android.view.OrientationEventListener
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
-import androidx.camera.core.UseCaseGroup
-import androidx.camera.core.ViewPort
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -26,9 +24,9 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * The back camera through CameraX (decisions/20261002-in-app-camera-with-camerax.md). The viewfinder and the picture
- * share one [ViewPort] of [CameraFrame]'s shape, so both are given the same crop of the sensor; the picture is then
- * cut to that crop by [FrameCut].
+ * The back camera through CameraX (decisions/20261002-in-app-camera-with-camerax.md). The viewfinder shows the whole
+ * frame of the sensor and the picture is that whole frame; the crop is chosen after the shot. The capture follows how
+ * the phone is held, so that a picture taken sideways or upside down comes out the right way up.
  */
 object CameraXAccess : CameraAccess {
     override suspend fun open(context: Context, owner: LifecycleOwner): OpenCamera? {
@@ -36,7 +34,7 @@ object CameraXAccess : CameraAccess {
         val selector = CameraSelector.DEFAULT_BACK_CAMERA
         if (!provider.hasCamera(selector)) return null
         val rotation = ContextCompat.getDisplayOrDefault(context).rotation
-        // Both streams in the sensor's own 4:3, so that the one crop shows the same scene in each.
+        // Both streams in the sensor's own 4:3, so that the viewfinder shows the frame the picture is.
         val resolution = ResolutionSelector.Builder()
             .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
             .build()
@@ -46,27 +44,33 @@ object CameraXAccess : CameraAccess {
             .setTargetRotation(rotation)
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .build()
-        // The frame as the screen stands: 4 wide, 3 high.
-        val viewPort = ViewPort.Builder(Rational(CameraFrame.WIDTH, CameraFrame.HEIGHT), rotation)
-            .setScaleType(ViewPort.FILL_CENTER)
-            .build()
-        val group = UseCaseGroup.Builder().setViewPort(viewPort).addUseCase(preview).addUseCase(capture).build()
-        provider.bindToLifecycle(owner, selector, group)
-        return CameraXCamera(provider, preview, capture)
+        provider.bindToLifecycle(owner, selector, preview, capture)
+        return CameraXCamera(context.applicationContext, provider, preview, capture)
     }
 }
 
-private class CameraXCamera(
+/** A back camera opened through CameraX; [turned] is how it hears of the phone being turned. */
+internal class CameraXCamera(
+    context: Context,
     private val provider: ProcessCameraProvider,
     private val preview: Preview,
     private val capture: ImageCapture,
 ) : OpenCamera {
+    private val turns = object : OrientationEventListener(context) {
+        override fun onOrientationChanged(orientation: Int) = turned(orientation)
+    }.also { it.enable() }
+
+    /** The phone is now turned [degrees] clockwise from its natural way up: the next picture is taken that way. */
+    fun turned(degrees: Int) {
+        DeviceTurn.targetRotation(degrees)?.let { capture.targetRotation = it }
+    }
+
     @Composable
     override fun Viewfinder(modifier: Modifier) {
         AndroidView(
             factory = { context ->
                 PreviewView(context).apply {
-                    scaleType = PreviewView.ScaleType.FILL_CENTER
+                    scaleType = PreviewView.ScaleType.FIT_CENTER
                     preview.surfaceProvider = surfaceProvider
                 }
             },
@@ -74,16 +78,14 @@ private class CameraXCamera(
         )
     }
 
-    override suspend fun takePicture(): ByteArray = suspendCancellableCoroutine { continuation ->
+    override suspend fun takePicture(): Shot = suspendCancellableCoroutine { continuation ->
         capture.takePicture(
             Dispatchers.IO.asExecutor(),
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     val result = runCatching {
                         val buffer = image.planes[0].buffer
-                        val jpeg = ByteArray(buffer.remaining()).also { buffer.get(it) }
-                        val crop = image.cropRect
-                        FrameCut.cut(jpeg, PixelRect(crop.left, crop.top, crop.right, crop.bottom), image.imageInfo.rotationDegrees)
+                        Shot(ByteArray(buffer.remaining()).also { buffer.get(it) }, image.imageInfo.rotationDegrees)
                     }
                     image.close()
                     if (continuation.isActive) {
@@ -99,6 +101,7 @@ private class CameraXCamera(
     }
 
     override fun close() {
+        turns.disable()
         preview.surfaceProvider = null
         provider.unbind(preview, capture)
     }

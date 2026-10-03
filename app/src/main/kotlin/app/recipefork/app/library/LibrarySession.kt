@@ -8,7 +8,9 @@ import app.recipefork.app.card.CardSession
 import app.recipefork.app.card.HeldScale
 import app.recipefork.app.card.StepToShow
 import app.recipefork.app.card.TextCardSession
+import app.recipefork.app.recipe.BookFilters
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.search.BookOrder
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.timer.TimerStep
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,6 +34,33 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     fun choose(view: LibraryView) {
         saved[VIEW_KEY] = view
+    }
+
+    /**
+     * What is typed in the search field of [view] (FLOW-035 (4)): each view keeps its own, kept like the view — through
+     * leaving the section, the home action and the end of the process — and empty in a new session.
+     */
+    fun query(view: LibraryView): StateFlow<String> = saved.getStateFlow(QUERY_KEY + view.name, "")
+
+    fun search(view: LibraryView, query: String) {
+        saved[QUERY_KEY + view.name] = query
+    }
+
+    /** The order [view] is listed in (FLOW-035 (3)): each view keeps its own choice, kept like the query. */
+    fun order(view: LibraryView): StateFlow<BookOrder> = saved.getStateFlow(ORDER_KEY + view.name, BookOrder.NEWEST)
+
+    fun orderBy(view: LibraryView, order: BookOrder) {
+        saved[ORDER_KEY + view.name] = order
+    }
+
+    /**
+     * The filters [view] is narrowed by (FLOW-035): each view keeps its own, kept like the query, and none in a new
+     * session.
+     */
+    fun filters(view: LibraryView): StateFlow<BookFilters> = saved.getStateFlow(FILTERS_KEY + view.name, BookFilters())
+
+    fun filter(view: LibraryView, filters: BookFilters) {
+        saved[FILTERS_KEY + view.name] = filters
     }
 
     /**
@@ -73,10 +102,17 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
     }
 
     /**
-     * A recipe file was imported (FLOW-064 (1)): the view of marked recipes is shown, where it is listed now, in place
-     * of whatever was open — an editor keeps what was entered as it is typed.
+     * A recipe file was imported as the recipe [id] (FLOW-064 (1)): the view of marked recipes is shown, where it is
+     * listed now, in place of whatever was open — an editor keeps what was entered as it is typed.
+     *
+     * The recipe is new to the book, so nothing the session held of a card of that identity is its: a file carries
+     * its recipe's identity, and the card of a recipe since deleted or removed — exported, perhaps, after a count or a
+     * fixing was set on it — would otherwise reopen the arrival at that count and fixing, as if the file had carried
+     * them. It opens as any card does the first time.
      */
-    fun showImported() {
+    fun showImported(id: RecipeId) {
+        held.forget(id)
+        forgetShown(id)
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
         saved[VIEW_KEY] = LibraryView.MARKED
@@ -160,6 +196,11 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         saved[CARDS_ORDER_KEY] = now.take(MAX_CARDS).joinToString(" ")
     }
 
+    private fun forgetShown(recipe: RecipeId) {
+        val order = saved.get<String>(CARDS_ORDER_KEY)?.split(' ')?.filter { it.isNotEmpty() } ?: return
+        if (recipe.value in order) saved[CARDS_ORDER_KEY] = (order - recipe.value).joinToString(" ")
+    }
+
     private fun stepOf(value: String?): TimerStep? {
         val (position, recipe) = value?.split('/', limit = 2)?.takeIf { it.size == 2 } ?: return null
         return TimerStep(book = "", recipeId = recipe, stepPosition = position.toIntOrNull() ?: return null)
@@ -167,6 +208,9 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     private companion object {
         const val CARDS_KEY = "library."
+        const val QUERY_KEY = "library.query."
+        const val ORDER_KEY = "library.order."
+        const val FILTERS_KEY = "library.filters."
         const val CARDS_ORDER_KEY = "library.cards"
         const val MAX_CARDS = 50
         const val STEP_KEY = "library.step"

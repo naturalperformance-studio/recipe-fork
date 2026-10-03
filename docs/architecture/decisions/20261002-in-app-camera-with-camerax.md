@@ -8,7 +8,7 @@
 
 **Decision:**
 - The camera screen uses CameraX (`camera-core`, `camera-camera2`, `camera-lifecycle`, `camera-view`) inside the `:app` module, in `app.recipefork.app.media.camera`.
-- The viewfinder and the capture share one crop: what the viewfinder shows is what is stored. The captured image goes through the existing `PhotoAttaching` → `PhotoStore` pipeline unchanged.
+- ~~The viewfinder and the capture share one crop.~~ Amended 2026-10-03 (v0.8, T-093): the viewfinder shows and the shutter takes the sensor's whole frame; after the shot — and for a gallery photo — a crop screen offers a 4:3 landscape frame the author moves and zooms, cut from source pixels with the shot's rotation applied, never narrower than 1600 px when the source allows. The cut goes through the existing `PhotoAttaching` → `PhotoStore` pipeline unchanged; no temp file is written.
 - The CAMERA permission is requested on the first "Take a photo", never at start. "Choose from gallery" (the system photo picker) needs no permission and stays.
 
 **Consequences:**

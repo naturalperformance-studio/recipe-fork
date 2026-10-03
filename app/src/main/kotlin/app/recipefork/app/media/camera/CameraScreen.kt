@@ -3,8 +3,8 @@ package app.recipefork.app.media.camera
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -45,15 +45,16 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 
 /**
- * The application's own camera (FLOW-026): a full-screen window over the editor with the live viewfinder of
- * [CameraFrame]'s 4:3 landscape frame, a shutter, and a way out. The picture taken goes to [onShot]; back or Close
- * leave through [onClose] with nothing. The camera is opened as the window shows and released as it leaves.
+ * The application's own camera (FLOW-026): a full-screen window over the editor, the live viewfinder filling it with
+ * the whole frame the camera takes, and over it a way out at the top and the shutter at the bottom. The picture taken
+ * goes to [onShot] — to be cropped next; back or Close leave through [onClose] with nothing. The camera is opened as
+ * the window shows and released as it leaves.
  */
 @Composable
-fun CameraScreen(camera: CameraAccess, onShot: (ByteArray) -> Unit, onClose: () -> Unit) {
+fun CameraScreen(camera: CameraAccess, onShot: (Shot) -> Unit, onClose: () -> Unit) {
     Dialog(
         onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false, decorFitsSystemWindows = false),
     ) {
         CameraContent(camera, onShot, onClose)
     }
@@ -67,7 +68,7 @@ private sealed interface CameraState {
 }
 
 @Composable
-private fun CameraContent(access: CameraAccess, onShot: (ByteArray) -> Unit, onClose: () -> Unit) {
+private fun CameraContent(access: CameraAccess, onShot: (Shot) -> Unit, onClose: () -> Unit) {
     val context = LocalContext.current
     val owner = LocalLifecycleOwner.current
     var state by remember { mutableStateOf<CameraState>(CameraState.Opening) }
@@ -91,43 +92,47 @@ private fun CameraContent(access: CameraAccess, onShot: (ByteArray) -> Unit, onC
             camera.close()
         }
     }
-    Column(
-        Modifier.fillMaxSize().background(Color.Black).safeDrawingPadding().padding(16.dp).testTag(CameraTags.SCREEN),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(Modifier.fillMaxWidth()) {
-            TextButton(
-                onClick = onClose,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(CameraTags.CLOSE)
-                    .semantics { contentDescription = context.getString(R.string.media_camera_close_action) },
-            ) { Text(stringResource(R.string.media_camera_close), color = Color.White) }
-        }
+    Box(Modifier.fillMaxSize().background(Color.Black).testTag(CameraTags.SCREEN)) {
         when (val current = state) {
-            CameraState.Opening -> Box(Modifier.fillMaxWidth().aspectRatio(CameraFrame.ASPECT))
+            CameraState.Opening -> Unit
             is CameraState.Open -> Shooting(current.camera, onShot)
             CameraState.NoCamera -> Message(R.string.media_camera_none)
             CameraState.Failed -> Message(R.string.media_camera_failed)
         }
+        Box(Modifier.align(Alignment.TopStart).safeDrawingPadding().padding(8.dp)) {
+            TextButton(
+                onClick = onClose,
+                colors = ButtonDefaults.textButtonColors(containerColor = Color.Black.copy(alpha = 0.4f)),
+                modifier = Modifier.heightIn(min = 48.dp).testTag(CameraTags.CLOSE)
+                    .semantics { contentDescription = context.getString(R.string.media_camera_close_action) },
+            ) { Text(stringResource(R.string.media_camera_close), color = Color.White) }
+        }
     }
 }
 
-/** The viewfinder, and under it the shutter and what became of the last press of it. */
+/** The viewfinder over the whole window, and over it at the bottom the shutter and what became of its last press. */
 @Composable
-private fun Shooting(camera: OpenCamera, onShot: (ByteArray) -> Unit) {
+private fun BoxScope.Shooting(camera: OpenCamera, onShot: (Shot) -> Unit) {
     val scope = rememberCoroutineScope()
     var taking by remember(camera) { mutableStateOf(false) }
     var missed by remember(camera) { mutableStateOf(false) }
     val viewfinder = stringResource(R.string.media_camera_viewfinder)
+    camera.Viewfinder(
+        Modifier.fillMaxSize().semantics { contentDescription = viewfinder }.testTag(CameraTags.VIEWFINDER),
+    )
     Column(
-        Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        Modifier.align(Alignment.BottomCenter).fillMaxWidth().safeDrawingPadding().padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        camera.Viewfinder(
-            Modifier.fillMaxWidth().aspectRatio(CameraFrame.ASPECT)
-                .semantics { contentDescription = viewfinder }.testTag(CameraTags.VIEWFINDER),
-        )
+        if (taking || missed) {
+            Text(
+                stringResource(if (taking) R.string.media_camera_taking else R.string.media_camera_missed),
+                color = Color.White,
+                modifier = Modifier.background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 8.dp, vertical = 4.dp)
+                    .semantics { liveRegion = LiveRegionMode.Polite }.testTag(CameraTags.MESSAGE),
+            )
+        }
         Button(
             onClick = {
                 taking = true
@@ -151,24 +156,18 @@ private fun Shooting(camera: OpenCamera, onShot: (ByteArray) -> Unit) {
         ) {
             Text(stringResource(R.string.media_camera_shutter), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelMedium)
         }
-        if (taking || missed) {
-            Text(
-                stringResource(if (taking) R.string.media_camera_taking else R.string.media_camera_missed),
-                color = Color.White,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag(CameraTags.MESSAGE),
-            )
-        }
     }
 }
 
 @Composable
-private fun Message(text: Int) {
+private fun BoxScope.Message(text: Int) {
     Text(
         stringResource(text),
         color = Color.White,
         textAlign = TextAlign.Center,
         style = MaterialTheme.typography.bodyLarge,
-        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }.testTag(CameraTags.MESSAGE),
+        modifier = Modifier.align(Alignment.Center).fillMaxWidth().padding(24.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite }.testTag(CameraTags.MESSAGE),
     )
 }
 

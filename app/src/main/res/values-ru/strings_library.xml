@@ -19,6 +19,8 @@
     <string name="library_own_write">Написать рецепт</string>
     <string name="library_own_new">Новый рецепт</string>
     <string name="library_entry_open_action">Открыть рецепт</string>
+    <string name="library_entry_actions">Действия с рецептом «%1$s»</string>
+    <string name="library_entry_actions_action">Показать действия с рецептом</string>
     <string name="library_entry_delete">Удалить</string>
     <string name="library_delete_title">Удалить «%1$s»?</string>
     <string name="library_delete_statement">Рецепт удалится сразу, вместе с фотографиями и видео, и вернуть его будет нельзя.</string>
@@ -41,4 +43,33 @@
     <string name="library_usual_more_action">Увеличить обычное число порций</string>
     <string name="library_usual_set">Задать</string>
     <string name="library_usual_clear">Не задавать</string>
+    <!-- FLOW-035 (4): поле поиска над каждым видом и результат, в котором ничего нет. -->
+    <string name="library_search">Поиск по названию или ингредиенту</string>
+    <string name="library_search_clear">Очистить поиск</string>
+    <string name="library_nothing_found">По запросу «%1$s» ничего не найдено</string>
+    <!-- FLOW-035 (3): порядок каждого вида и три варианта. -->
+    <string name="library_order">Порядок: %1$s</string>
+    <string name="library_order_action">Выбрать порядок списка</string>
+    <string name="library_order_newest">Сначала новые</string>
+    <string name="library_order_oldest">Сначала старые</string>
+    <string name="library_order_title">По названию</string>
+    <!-- FLOW-035, CAT-002, CAT-006: фильтры под полем поиска — ингредиент и теги. -->
+    <string name="library_filter_add">Добавить фильтр</string>
+    <string name="library_filter_add_action">Выбрать фильтр списка</string>
+    <string name="library_filter_ingredient">Ингредиент</string>
+    <string name="library_filter_tags">Теги</string>
+    <string name="library_filter_clear">Сбросить фильтры</string>
+    <string name="library_filter_remove">Убрать фильтр</string>
+    <string name="library_filter_unknown_ingredient">Неизвестный ингредиент</string>
+    <string name="library_filter_unknown_tag">Неизвестный тег</string>
+    <string name="library_filter_ingredient_title">Фильтр по ингредиенту</string>
+    <string name="library_filter_ingredient_field">Ингредиент</string>
+    <string name="library_filter_ingredient_hint">Покажутся рецепты с ним — сначала те, где его больше на порцию.</string>
+    <string name="library_filter_ingredient_pick_action">Фильтровать по «%1$s»</string>
+    <string name="library_filter_tags_title">Фильтр по тегам</string>
+    <string name="library_filter_tags_hint">Покажутся рецепты со всеми выбранными тегами.</string>
+    <string name="library_filter_tags_none">В словаре тегов пока нет ни одного тега.</string>
+    <string name="library_filter_done">Готово</string>
+    <string name="library_filter_cancel">Отмена</string>
+    <string name="library_nothing_matches">Ни один рецепт не подходит под фильтры</string>
 </resources>

@@ -25,6 +25,9 @@
     <string name="library_own_new">New recipe</string>
     <!-- FLOW-029 (1): an own recipe's entry opens its card. -->
     <string name="library_entry_open_action">Open the recipe</string>
+    <!-- The menu at the end of an entry's title line, holding the entry's actions; it names the recipe. -->
+    <string name="library_entry_actions">Actions for “%1$s”</string>
+    <string name="library_entry_actions_action">Show the recipe\'s actions</string>
     <!-- FLOW-053: deleting an own recipe from its entry, and the statement shown before anything is destroyed. -->
     <string name="library_entry_delete">Delete</string>
     <string name="library_delete_title">Delete “%1$s”?</string>
@@ -51,4 +54,33 @@
     <string name="library_usual_more_action">Raise the usual serving count</string>
     <string name="library_usual_set">Set</string>
     <string name="library_usual_clear">Not set</string>
+    <!-- FLOW-035 (4): the search field at the top of each view, and the result that holds nothing. -->
+    <string name="library_search">Search by title or ingredient</string>
+    <string name="library_search_clear">Clear the search</string>
+    <string name="library_nothing_found">Nothing found for “%1$s”</string>
+    <!-- FLOW-035 (3): the order of each view, and its three choices. -->
+    <string name="library_order">Order: %1$s</string>
+    <string name="library_order_action">Choose the order of the list</string>
+    <string name="library_order_newest">Newest first</string>
+    <string name="library_order_oldest">Oldest first</string>
+    <string name="library_order_title">By title</string>
+    <!-- FLOW-035, CAT-002, CAT-006: the filters under the search field — an ingredient and tags. -->
+    <string name="library_filter_add">Add a filter</string>
+    <string name="library_filter_add_action">Choose a filter for the list</string>
+    <string name="library_filter_ingredient">Ingredient</string>
+    <string name="library_filter_tags">Tags</string>
+    <string name="library_filter_clear">Clear filters</string>
+    <string name="library_filter_remove">Remove the filter</string>
+    <string name="library_filter_unknown_ingredient">Unknown ingredient</string>
+    <string name="library_filter_unknown_tag">Unknown tag</string>
+    <string name="library_filter_ingredient_title">Filter by ingredient</string>
+    <string name="library_filter_ingredient_field">Ingredient</string>
+    <string name="library_filter_ingredient_hint">Recipes holding it are listed, the most per serving first.</string>
+    <string name="library_filter_ingredient_pick_action">Filter by “%1$s”</string>
+    <string name="library_filter_tags_title">Filter by tags</string>
+    <string name="library_filter_tags_hint">Recipes carrying every chosen tag are listed.</string>
+    <string name="library_filter_tags_none">The tag dictionary holds no tags yet.</string>
+    <string name="library_filter_done">Done</string>
+    <string name="library_filter_cancel">Cancel</string>
+    <string name="library_nothing_matches">No recipe matches the filters</string>
 </resources>

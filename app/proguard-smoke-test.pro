@@ -32,7 +32,7 @@
 -keep,allowobfuscation class app.recipefork.app.file.ImportOutcome, app.recipefork.app.file.ImportOutcome$* { *; }
 -keep,allowobfuscation class app.recipefork.app.timer.RunningTimers, app.recipefork.app.timer.RunningTimer { *; }
 -keep,allowobfuscation class app.recipefork.app.timer.TimerKey, app.recipefork.app.timer.TimerRinging { *; }
--keep,allowobfuscation class app.recipefork.app.media.camera.CameraXAccess, app.recipefork.app.media.camera.OpenCamera { *; }
+-keep,allowobfuscation class app.recipefork.app.media.camera.CameraXAccess, app.recipefork.app.media.camera.OpenCamera, app.recipefork.app.media.camera.Shot { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Recipe, app.recipefork.core.recipe.Recipe$Companion { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.RecipeId, app.recipefork.core.recipe.RecipeId$Companion { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Ingredient, app.recipefork.core.recipe.IngredientReference { *; }

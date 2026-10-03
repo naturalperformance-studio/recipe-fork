@@ -141,11 +141,16 @@ class ExportFromTheBookTest {
         show(Mode.Serverless)
         all.forEach { recipe ->
             bringIntoView(recipe)
+            compose.openEntryMenu(recipe.id.value)
             assertEquals("${recipe.state}", listOf("Export"), compose.textsOf(LibraryTags.export(recipe.id.value)))
+            compose.closeEntryMenu(recipe.id.value)
         }
-        // A11Y-003, A11Y-005: the offer is large enough and says what it does.
+        // A11Y-003, A11Y-005: the menu and its offer are large enough and say what they do.
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 3)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 3)
+        compose.openEntryMenu(all.last().id.value)
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 1)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 1)
     }
 
     @Test
@@ -154,6 +159,7 @@ class ExportFromTheBookTest {
         val recipe = own("Суп")
         show(Mode.Serverless)
         bringIntoView(recipe)
+        compose.openEntryMenu(recipe.id.value)
         assertEquals(listOf("Экспорт"), compose.textsOf(LibraryTags.export(recipe.id.value)))
     }
 
@@ -162,14 +168,17 @@ class ExportFromTheBookTest {
     fun inStandardModeNoExportExists() {
         val all = everyState()
         show(Mode.Standard)
+        val export = hasText("Export", substring = true, ignoreCase = true) or
+            hasContentDescription("Export", substring = true, ignoreCase = true)
         all.forEach { recipe ->
             bringIntoView(recipe)
             assertTrue("${recipe.state}", exists(LibraryTags.entry(recipe.id.value)))
+            // The entry's menu, where it has one, holds no export either.
+            if (exists(LibraryTags.actions(recipe.id.value))) compose.openEntryMenu(recipe.id.value)
             assertEquals(0, compose.onAllNodes(hasTestTag(LibraryTags.export(recipe.id.value))).fetchSemanticsNodes().size)
+            assertEquals(0, compose.onAllNodes(export, useUnmergedTree = true).fetchSemanticsNodes().size)
+            if (exists(LibraryTags.actions(recipe.id.value))) compose.closeEntryMenu(recipe.id.value)
         }
-        val export = hasText("Export", substring = true, ignoreCase = true) or
-            hasContentDescription("Export", substring = true, ignoreCase = true)
-        assertEquals(0, compose.onAllNodes(export, useUnmergedTree = true).fetchSemanticsNodes().size)
         // Nor in the marked view.
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
         compose.waitForIdle()
@@ -191,7 +200,7 @@ class ExportFromTheBookTest {
         bringIntoView(recipe)
         val activity = shadowOf(compose.activity)
         assertNull(activity.peekNextStartedActivity())
-        compose.onNodeWithTag(LibraryTags.export(recipe.id.value)).performClick()
+        compose.chooseEntryAction(recipe.id.value, LibraryTags.export(recipe.id.value))
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivity() != null }
         val sheet = activity.nextStartedActivity
         assertEquals(Intent.ACTION_CHOOSER, sheet.action)
@@ -219,11 +228,13 @@ class ExportFromTheBookTest {
         assertEquals(recipe, after)
         assertTrue(after.state.editable)
         assertTrue(compose.textsOf(LibraryTags.entry(recipe.id.value)).contains("Draft"))
+        compose.openEntryMenu(recipe.id.value)
         assertTrue(exists(LibraryTags.delete(recipe.id.value)))
     }
 
-    // The entry stays readable on a 360 dp-wide phone at font scale 2.0: the title keeps the list's whole width less
-    // the entry's padding, the offers sit below it within the list, and each offer's label is laid out whole.
+    // The entry stays readable on a 360 dp-wide phone at font scale 2.0: the title keeps the list's width less the
+    // entry's padding and the ⋮ beside it, the ⋮ stands at the end of the title line within the list, and each item of
+    // its menu is laid out whole.
     @Test
     @Config(qualifiers = "en-w360dp-h640dp")
     fun theEntryStaysReadableAtLargeFontScale() = readable("Shakshuka with feta", "Export", "Delete")
@@ -239,27 +250,30 @@ class ExportFromTheBookTest {
         val id = recipe.id.value
         val list = compose.onNodeWithTag(LibraryTags.OWN_LIST).fetchSemanticsNode().boundsInRoot
         val entry = compose.onNodeWithTag(LibraryTags.entry(id)).fetchSemanticsNode().boundsInRoot
-        assertEquals("the entry takes the list's whole width", list.width, entry.width, 0.5f)
+        val menu = compose.onNodeWithTag(LibraryTags.actions(id)).fetchSemanticsNode().boundsInRoot
+        val dp = { v: Float -> with(compose.density) { v.dp.toPx() } }
+        assertEquals("the entry takes the list's width less the ⋮", list.width - dp(48f + 4f), entry.width, 1f)
+        assertTrue("the ⋮ lies within the list, after the entry: $menu", menu.left >= entry.right && menu.right <= list.right)
         val titleNode = compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode()
         val titleLayout = layoutOf(titleNode.config)
         assertEquals(title, titleLayout.layoutInput.text.text)
         val room = titleLayout.layoutInput.constraints.maxWidth
         assertTrue("the title has the entry's width less its padding ($room px of ${entry.width} px)",
-            room + 0.5f >= entry.width - with(compose.density) { 32.dp.toPx() })
+            room + 0.5f >= entry.width - dp(32f))
+        assertTrue("each word of the title fits its line", titleLayout.lineCount <= 3)
+        assertTrue("the title does not reach under the ⋮", titleNode.boundsInRoot.right <= menu.left)
+        val firstLine = titleNode.boundsInRoot.top + (titleLayout.getLineTop(0) + titleLayout.getLineBottom(0)) / 2
+        assertEquals("the ⋮ stands level with the title's first line", firstLine, menu.center.y, dp(2f))
+        compose.openEntryMenu(id)
         listOf(LibraryTags.export(id) to export, LibraryTags.delete(id) to delete).forEach { (tag, label) ->
-            val button = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
-            val bounds = button.boundsInRoot
-            assertTrue("$label lies within the list: $bounds in $list", bounds.left >= list.left && bounds.right <= list.right)
-            assertTrue("$label stands below the title", bounds.top >= titleNode.boundsInRoot.bottom)
             val text = compose.onNodeWithTag(tag, useUnmergedTree = true).onChildren().fetchSemanticsNodes()
-                .single { it.config.getOrNull(SemanticsActions.GetTextLayoutResult) != null }
+                .flatMap { listOf(it) + it.children }
+                .first { it.config.getOrNull(SemanticsActions.GetTextLayoutResult) != null }
             val layout = layoutOf(text.config)
             assertEquals(label, layout.layoutInput.text.text)
             assertEquals("$label is laid out on one line", 1, layout.lineCount)
+            assertTrue(compose.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.height >= dp(48f) - 0.5f)
         }
-        val exportBounds = compose.onNodeWithTag(LibraryTags.export(id)).fetchSemanticsNode().boundsInRoot
-        val deleteBounds = compose.onNodeWithTag(LibraryTags.delete(id)).fetchSemanticsNode().boundsInRoot
-        assertTrue("the offers do not overlap", exportBounds.right <= deleteBounds.left || deleteBounds.right <= exportBounds.left)
     }
 
     // FLOW-063 (2, 6): in serverless mode a found recipe's entry in the marked view offers Export too, beside Remove; its
@@ -270,11 +284,12 @@ class ExportFromTheBookTest {
         val before = runBlocking { recipes.get(id) }!!
         show(Mode.Serverless)
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.export(id.value)), PATIENCE_MS)
-        assertEquals(listOf("Export"), compose.textsOf(LibraryTags.export(id.value)))
-        assertTrue(exists(LibraryTags.remove(id.value)))
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.actions(id.value)), PATIENCE_MS)
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 4)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 4)
+        compose.openEntryMenu(id.value)
+        assertEquals(listOf("Export"), compose.textsOf(LibraryTags.export(id.value)))
+        assertTrue(exists(LibraryTags.remove(id.value)))
         val activity = shadowOf(compose.activity)
         compose.onNodeWithTag(LibraryTags.export(id.value)).performClick()
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivity() != null }
@@ -302,7 +317,9 @@ class ExportFromTheBookTest {
         val id = found()
         show(Mode.Standard)
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.remove(id.value)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.actions(id.value)), PATIENCE_MS)
+        compose.openEntryMenu(id.value)
+        assertTrue(exists(LibraryTags.remove(id.value)))
         assertTrue(!exists(LibraryTags.export(id.value)))
         val export = hasText("Export", substring = true, ignoreCase = true) or
             hasContentDescription("Export", substring = true, ignoreCase = true)
@@ -334,7 +351,7 @@ class ExportFromTheBookTest {
         File(cache, "exports").deleteRecursively()
         assertTrue(cache.setWritable(false))
         try {
-            compose.onNodeWithTag(LibraryTags.export(recipe.id.value)).performClick()
+            compose.chooseEntryAction(recipe.id.value, LibraryTags.export(recipe.id.value))
             compose.awaitFileMessage(message)
         } finally {
             cache.setWritable(true)

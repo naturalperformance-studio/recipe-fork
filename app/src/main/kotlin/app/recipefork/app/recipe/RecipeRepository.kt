@@ -1,10 +1,13 @@
 package app.recipefork.app.recipe
 
 import app.recipefork.app.book.ActiveBook
+import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.book.FavouriteEntity
 import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.IngredientEntity
+import app.recipefork.app.book.IngredientLineRow
 import app.recipefork.app.book.MediaEntity
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.book.RecipeEntity
@@ -26,7 +29,11 @@ import app.recipefork.app.media.PhotoStore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlin.time.Duration.Companion.minutes
@@ -47,6 +54,40 @@ open class RecipeRepository(
 
     /** What is marked in the active book, the found recipes among it (FLOW-009, FLOW-064). */
     fun marked(): Flow<List<MarkedRecipeRow>> = book.open.flatMapLatest { it.database.favourites().marked() }
+
+    /**
+     * The own recipes of the active book as their view lists them for each of [params] (FLOW-035): searched by title
+     * and ingredient, with the ingredient names of [dictionary], filtered by ingredient and tags, and ordered. Worked out where the book's queries
+     * run, never on the main thread.
+     */
+    fun ownListed(
+        params: Flow<ListingParams>,
+        dictionary: suspend () -> List<IngredientEntryEntity>,
+    ): Flow<Listed<OwnRecipeRow>> =
+        listed(params, { it.recipes().own() }) { BookSearch(dictionary, OwnRecipeRow::recipeId, OwnRecipeRow::title) }
+
+    /** What is marked in the active book as its view lists it for each of [params], as [ownListed] does. */
+    fun markedListed(
+        params: Flow<ListingParams>,
+        dictionary: suspend () -> List<IngredientEntryEntity>,
+    ): Flow<Listed<MarkedRecipeRow>> =
+        listed(params, { it.favourites().marked() }) {
+            BookSearch(dictionary, MarkedRecipeRow::recipeId, MarkedRecipeRow::title)
+        }
+
+    private fun <R> listed(
+        params: Flow<ListingParams>,
+        rows: (BookDatabase) -> Flow<List<R>>,
+        search: () -> BookSearch<R>,
+    ): Flow<Listed<R>> = book.open.flatMapLatest { open ->
+        val searching = search()
+        val recipes = open.database.recipes()
+        combine(rows(open.database), recipes.ingredientLines(), recipes.allTags(), params) { shown, lines, tags, asked ->
+            Listing(shown, lines, tags, asked)
+        }
+            .mapLatest { searching.listed(it.rows, it.lines, it.tags, it.params) }
+            .flowOn(open.database.queryExecutor.asCoroutineDispatcher())
+    }
 
     /**
      * The book active now, held: every read and write of what this returns goes to that book, even when another
@@ -125,6 +166,14 @@ open class RecipeRepository(
         val RECIPE_TABLES = arrayOf("recipe", "ingredient", "step", "step_reference", "media", "recipe_tag")
     }
 }
+
+/** What one listing of a view is worked out from. */
+private class Listing<R>(
+    val rows: List<R>,
+    val lines: List<IngredientLineRow>,
+    val tags: List<RecipeTagEntity>,
+    val params: ListingParams,
+)
 
 internal fun Recipe.toRows(): RecipeRows {
     val id = id.value

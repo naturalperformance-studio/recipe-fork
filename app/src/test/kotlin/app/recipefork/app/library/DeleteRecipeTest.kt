@@ -200,7 +200,7 @@ class DeleteRecipeTest {
 
     private fun askToDelete(recipe: Recipe) {
         bringIntoView(recipe)
-        compose.onNodeWithTag(LibraryTags.delete(recipe.id.value)).performClick()
+        compose.chooseEntryAction(recipe.id.value, LibraryTags.delete(recipe.id.value))
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
     }
 
@@ -226,8 +226,9 @@ class DeleteRecipeTest {
 
     private fun ownRows() = runBlocking { book.database.recipes().newest(100).first() }
 
-    // FLOW-053 (1), ST-010: deletion is offered on the entries of local, private and rejected recipes only; any other
-    // entry carries no control and reserves no space for one — it takes the whole width of the list.
+    // FLOW-053 (1), ST-010: deletion is offered, in the entry's menu, on the entries of local, private and rejected
+    // recipes only; in standard mode any other entry has no action, so it carries no menu and reserves no space for
+    // one — it takes the whole width of the list. No button stands under an entry.
     @Test
     fun deletionIsOfferedOnLocalPrivateAndRejectedEntriesAndNowhereElse() {
         val all = RecipeState.entries.mapIndexed { i, state -> own("Soup in $state", state, i.toLong()) }
@@ -236,12 +237,16 @@ class DeleteRecipeTest {
             bringIntoView(recipe)
             val list = compose.onNodeWithTag(LibraryTags.OWN_LIST).fetchSemanticsNode().boundsInRoot
             val entry = compose.onNodeWithTag(LibraryTags.entry(recipe.id.value)).fetchSemanticsNode().boundsInRoot
+            assertFalse("${recipe.state} shows its offer outside a menu", exists(LibraryTags.delete(recipe.id.value)))
             if (recipe.state in setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECTED)) {
+                assertTrue("${recipe.state} has no menu", exists(LibraryTags.actions(recipe.id.value)))
+                assertTrue(entry.width < list.width)
+                compose.openEntryMenu(recipe.id.value)
                 assertTrue("${recipe.state} offers no deletion", exists(LibraryTags.delete(recipe.id.value)))
                 assertEquals(listOf("Delete"), compose.textsOf(LibraryTags.delete(recipe.id.value)))
-                assertTrue(entry.width < list.width)
+                compose.closeEntryMenu(recipe.id.value)
             } else {
-                assertFalse("${recipe.state} offers deletion", exists(LibraryTags.delete(recipe.id.value)))
+                assertFalse("${recipe.state} has a menu", exists(LibraryTags.actions(recipe.id.value)))
                 assertEquals("${recipe.state} reserves space", list.width, entry.width, 0.5f)
             }
         }
@@ -277,8 +282,11 @@ class DeleteRecipeTest {
     private fun statement(w: Words) {
         val recipe = own(w.recipe)
         show()
+        bringIntoView(recipe)
+        compose.openEntryMenu(recipe.id.value)
         assertEquals(listOf(w.delete), compose.textsOf(LibraryTags.delete(recipe.id.value)))
-        askToDelete(recipe)
+        compose.onNodeWithTag(LibraryTags.delete(recipe.id.value)).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
         val inStatement = hasAnyAncestor(hasTestTag(LibraryTags.DELETE_STATEMENT))
         compose.onNode(hasText(w.title(w.recipe)) and inStatement).assertExists()
         compose.onNode(hasText(w.statement) and inStatement).assertExists()

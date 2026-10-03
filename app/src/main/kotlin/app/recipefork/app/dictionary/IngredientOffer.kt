@@ -1,6 +1,7 @@
 package app.recipefork.app.dictionary
 
 import app.recipefork.core.scaling.InterfaceLanguage
+import app.recipefork.core.search.WordPrefix
 import java.text.Collator
 import java.util.Locale
 
@@ -53,15 +54,13 @@ data class IngredientOffer(
         }
 
         /** Letter case ignored and `ё` read as `е` (FLOW-057). */
-        fun fold(text: String): String = text.lowercase(Locale.ROOT).replace('ё', 'е')
+        fun fold(text: String): String = WordPrefix.fold(text)
 
         private fun IngredientEntryEntity.labels() = listOf(labelRu, labelEn)
 
-        private fun words(folded: String): List<String> = folded.split(Regex("""[^\p{L}\p{N}]+""")).filter { it.isNotEmpty() }
+        private fun words(folded: String): List<String> = WordPrefix.words(folded)
 
-        private fun holdsEveryWord(label: String, typedWords: List<String>): Boolean {
-            val labelWords = words(fold(label))
-            return typedWords.all { typed -> labelWords.any { it.startsWith(typed) } }
-        }
+        private fun holdsEveryWord(label: String, typedWords: List<String>): Boolean =
+            WordPrefix.holdsEvery(WordPrefix.words(label), typedWords)
     }
 }
