@@ -2,7 +2,7 @@
 
 From an audit of spec/ against `develop` @ f150b1e on 2026-10-03, run because the user asked the lead to carry on, increment by increment, until the serverless product is complete (v0.9 decision log), with filling the ingredient dictionary last. Each increment below becomes a `docs/increments/v<next>.md` when it starts; this file then marks it.
 
-## A — The editor helps you write  → v0.10
+## A — The editor helps you write  → v0.10 (started 2026-10-03)
 FLOW-028 (min/max warnings on leaving a field, incl. the 60-character timer name and DOM-012 limits) · GUIDE-008 (references offered as the first step is begun) · GUIDE-006 (a long step with an unnamed timer shown what its notification will say) · FLOW-030 (what a fork carries) · GUIDE-003/004 (the checklist) · FLOW-015 (forking twice offers the fork already held).
 
 ## B — A card for busy hands, in your language  → v0.11
