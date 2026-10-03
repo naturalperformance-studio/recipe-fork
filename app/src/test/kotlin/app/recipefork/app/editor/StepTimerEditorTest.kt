@@ -495,7 +495,7 @@ class StepTimerEditorTest {
         (0..3).forEach { compose.onNodeWithTag(EditorTags.timerRemove(it)).assertDoesNotExist() }
         assertEquals(0, compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
         val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-        assertEquals(listOf(EditorTags.BACK), actions.map { it.config[SemanticsProperties.TestTag] })
+        assertEquals(listOf(EditorTags.BACK, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
         assertEquals(recipe, stored(recipe.id))
     }
 

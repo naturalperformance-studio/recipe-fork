@@ -89,7 +89,12 @@ fun rememberEditorEnvironment(): EditorEnvironment {
         val container = (context as RecipeForkApplication).container
         val dao = container.database.dictionaryDao()
         val seeding = DictionarySeeding(dao, PreferencesSeededVersion(context)) { DictionarySnapshot.read(context) }
-        EditorEnvironment(container.activeBook, DictionaryCatalog(dao, seeding), dragHandleSide = container.dragHandleSide)
+        EditorEnvironment(
+            container.activeBook,
+            DictionaryCatalog(dao, seeding),
+            dragHandleSide = container.dragHandleSide,
+            mode = container.mode,
+        )
     }
 }
 
@@ -130,12 +135,20 @@ fun EditorScreen(
 
     Box(modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
-            ActionText(
-                text = stringResource(R.string.editor_back),
-                action = stringResource(R.string.editor_back_action),
-                onClick = onClose,
-                modifier = Modifier.padding(horizontal = 8.dp).testTag(EditorTags.BACK),
-            )
+            // The top: "Done", and beside it the checklist, there whatever the recipe holds and whatever its state (GUIDE-003).
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ActionText(
+                    text = stringResource(R.string.editor_back),
+                    action = stringResource(R.string.editor_back_action),
+                    onClick = onClose,
+                    modifier = Modifier.testTag(EditorTags.BACK),
+                )
+                ChecklistControl(environment.mode)
+            }
             HorizontalDivider()
             val shown = recipe ?: return@Column
             Column(
@@ -159,6 +172,7 @@ fun EditorScreen(
                         modifier = Modifier.testTag(EditorTags.FROZEN),
                     )
                 }
+                ForkNote(R.string.editor_fork_takes, Modifier.testTag(EditorTags.FORK_TAKES))
                 CompositionLocalProvider(LocalEditorStatements provides statements, LocalEditorScroll provides scroll) {
                     TitleAndLanguage(shown, editor)
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
@@ -458,7 +472,23 @@ internal fun RowMenu(
     }
 }
 
+/**
+ * A quiet line saying what a fork takes and what stays with the author unless the fork is their own (FLOW-030): the
+ * same for every recipe, forked or not, and never a promise that forking can be prevented (FORK-002).
+ */
+@Composable
+private fun ForkNote(@StringRes text: Int, modifier: Modifier = Modifier) {
+    Text(
+        stringResource(text),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
+}
+
 object EditorTags {
+    /** The line at the top saying what a fork takes and what stays with the author (FLOW-030). */
+    const val FORK_TAKES = "editor-fork-takes"
     const val SCREEN = "editor"
     const val BACK = "editor-back"
     const val FORM = "editor-form"
