@@ -304,7 +304,7 @@ private fun OwnList(
             HorizontalDivider()
             ListHeader(
                 search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
-                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages,
+                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold,
             )
             HorizontalDivider()
         }
@@ -665,7 +665,7 @@ private fun MarkedList(
         if (shown != null && (!shown.viewIsEmpty || shown.narrowed)) {
             ListHeader(
                 search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
-                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages,
+                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold,
             )
             HorizontalDivider()
         }

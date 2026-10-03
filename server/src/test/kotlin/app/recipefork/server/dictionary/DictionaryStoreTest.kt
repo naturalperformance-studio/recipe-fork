@@ -5,6 +5,7 @@ import com.zaxxer.hikari.HikariDataSource
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import app.recipefork.core.api.IngredientEntryDto
 import org.postgresql.util.PSQLException
 import java.sql.PreparedStatement
 import kotlin.test.assertEquals
@@ -128,7 +129,54 @@ class DictionaryStoreTest {
         assertTrue(store.tags().isEmpty())
     }
 
+    // DOM-011, CAT-009, divisibility belongs to the ingredient, DOM-009 (5)
+
+    @Test
+    fun `an entry carries its divisibility, its factors by unit and its removal`() {
+        val kuritsa = insertEntry("курица", "chicken")
+        val krylyshki = insertEntry("крылышки", "chicken wings", parent = kuritsa)
+        val myaso = insertEntry("мясо", "meat")
+        execute("update ingredient_entry set divisible = true where entry_id = ?", kuritsa)
+        execute("update ingredient_entry set divisible = false where entry_id = ?", krylyshki)
+        execute("update ingredient_entry set removed = true where entry_id = ?", myaso)
+        insertFactor(kuritsa, "g", 1.0)
+        insertFactor(kuritsa, "pc", 1500.0)
+        insertFactor(krylyshki, "pc", 80.0)
+        insertFactor(krylyshki, "g", 1.0)
+
+        assertEquals(
+            listOf(
+                IngredientEntry(kuritsa, "курица", "chicken", null, true, mapOf("g" to 1.0, "pc" to 1500.0), false),
+                IngredientEntry(krylyshki, "крылышки", "chicken wings", kuritsa, false, mapOf("g" to 1.0, "pc" to 80.0), false),
+                IngredientEntry(myaso, "мясо", "meat", null, null, emptyMap(), true),
+            ),
+            store.ingredientEntries(),
+        )
+        assertEquals(store.ingredientEntries(), store.snapshot().ingredients)
+        assertEquals(mapOf("g" to 1.0, "pc" to 80.0), store.ingredientEntry(krylyshki)!!.factors)
+        assertEquals(true, store.ingredientEntry(myaso)!!.removed)
+    }
+
+    @Test
+    fun `a factor for a unit outside the list or not above zero is refused by the store`() {
+        val kuritsa = insertEntry("курица", "chicken")
+
+        listOf("kg", "l", "t", "m3", "to_taste", "шт", "PC", "").forEach { unit ->
+            assertRefusedBy("ingredient_factor_unit_is_known") { insertFactor(kuritsa, unit, 1.0) }
+        }
+        listOf(0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY).forEach { factor ->
+            assertRefusedBy("ingredient_factor_is_above_zero") { insertFactor(kuritsa, "g", factor) }
+        }
+        listOf("g", "ml", "pc", "tsp", "tbsp", "cup", "pinch").forEach { insertFactor(kuritsa, it, 0.5) }
+
+        assertEquals(setOf("g", "ml", "pc", "tsp", "tbsp", "cup", "pinch"), store.ingredientEntry(kuritsa)!!.factors.keys)
+        assertEquals(IngredientEntryDto.FACTOR_UNITS, store.ingredientEntry(kuritsa)!!.factors.keys)
+    }
+
     // The operator's writes
+
+    private fun insertFactor(entry: Long, unit: String, factor: Double) =
+        execute("insert into ingredient_factor (entry_id, unit, factor) values (?, ?, ?)", entry, unit, factor)
 
     private fun insertEntry(ru: String?, en: String?, parent: Long? = null): Long =
         insertReturningId("insert into ingredient_entry (label_ru, label_en, parent_id) values (?, ?, ?) returning entry_id", ru, en, parent)

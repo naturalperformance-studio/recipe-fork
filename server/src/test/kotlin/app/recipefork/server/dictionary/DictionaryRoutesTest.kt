@@ -84,6 +84,38 @@ class DictionaryRoutesTest {
         assertNotEquals(second, afterEntry.headers[HttpHeaders.ETag])
     }
 
+    // DOM-011, CAT-009, DOM-009 (5): an entry is served with its divisibility, its factors and its removal; a removed
+    // entry is still served, and a change of factor is a change of version.
+    @Test
+    fun `FLOW-001 - an entry is served with its divisibility, factors and removal`() = serve {
+        val kuritsa = sql("insert into ingredient_entry (label_ru, label_en, divisible) values ('курица', 'chicken', true) returning entry_id")
+        val krylyshki = sql(
+            "insert into ingredient_entry (label_ru, label_en, parent_id, divisible) values ('крылышки', 'chicken wings', $kuritsa, false) returning entry_id",
+        )
+        val gus = sql("insert into ingredient_entry (label_ru, label_en, removed) values ('гусь', 'goose', true) returning entry_id")
+        sql("insert into ingredient_factor values ($kuritsa, 'g', 1), ($kuritsa, 'pc', 1500), ($krylyshki, 'g', 1), ($krylyshki, 'pc', 80) returning entry_id")
+
+        val first = client.get(DictionariesDto.PATH)
+        val body = Json.decodeFromString<DictionariesDto>(first.bodyAsText())
+        assertEquals(
+            listOf(
+                IngredientEntryDto(kuritsa, "курица", "chicken", null, true, mapOf("g" to 1.0, "pc" to 1500.0)),
+                IngredientEntryDto(krylyshki, "крылышки", "chicken wings", kuritsa, false, mapOf("g" to 1.0, "pc" to 80.0)),
+                IngredientEntryDto(gus, "гусь", "goose", removed = true),
+            ),
+            body.ingredients,
+        )
+        // The version is the digest of exactly what is served (as ShippedSnapshotTest checks the shipped copy).
+        val content = Json.encodeToString(DictionariesDto.serializer(), body.copy(version = ""))
+        val digest = java.security.MessageDigest.getInstance("SHA-256").digest(content.toByteArray(Charsets.UTF_8))
+        assertEquals(digest.joinToString("") { "%02x".format(it) }, body.version)
+
+        sql("update ingredient_factor set factor = 1200 where entry_id = $kuritsa and unit = 'pc' returning entry_id")
+        val after = client.get(DictionariesDto.PATH) { header(HttpHeaders.IfNoneMatch, first.headers[HttpHeaders.ETag]!!) }
+        assertEquals(HttpStatusCode.OK, after.status)
+        assertEquals(1200.0, Json.decodeFromString<DictionariesDto>(after.bodyAsText()).ingredients.first().factors["pc"])
+    }
+
     private fun serve(test: suspend ApplicationTestBuilder.() -> Unit) = testApplication {
         application { module(db) }
         test()

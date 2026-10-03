@@ -33,7 +33,9 @@ fun Route.dictionaryRoutes(store: DictionaryStore) {
 }
 
 internal fun DictionarySnapshot.toDto(): DictionariesDto {
-    val ingredients = ingredients.map { IngredientEntryDto(it.id, it.labelRu, it.labelEn, it.parentId) }
+    val ingredients = ingredients.map {
+        IngredientEntryDto(it.id, it.labelRu, it.labelEn, it.parentId, it.divisible, it.factors, it.removed)
+    }
     val tags = tags.map { TagDto(it.id, it.labelRu, it.labelEn) }
     val content = Json.encodeToString(DictionariesDto(version = "", ingredients = ingredients, tags = tags))
     val digest = MessageDigest.getInstance("SHA-256").digest(content.toByteArray(Charsets.UTF_8))

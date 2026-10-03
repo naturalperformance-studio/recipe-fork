@@ -1,31 +1,50 @@
 {
-  "version": "3022c26e287092b0a0d7f13541049b68b5a487450abbabef7acbd4f4e17564fb",
+  "version": "07ccf9ce955f045132d2a92eccdf69ae29c53b5b5d3a947edb5cbb85aeed03a3",
   "ingredients": [
     {
       "id": 1,
       "labelRu": "курица",
-      "labelEn": "chicken"
+      "labelEn": "chicken",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0
+      }
     },
     {
       "id": 2,
       "labelRu": "крылышки",
       "labelEn": "chicken wings",
-      "parentId": 1
+      "parentId": 1,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
     },
     {
       "id": 3,
       "labelRu": "мясо",
-      "labelEn": "meat"
+      "labelEn": "meat",
+      "factors": {
+        "g": 1.0
+      }
     },
     {
       "id": 4,
       "labelRu": "фарш",
-      "labelEn": "mince"
+      "labelEn": "mince",
+      "factors": {
+        "g": 1.0
+      }
     },
     {
       "id": 5,
       "labelRu": "говядина",
-      "labelEn": "beef"
+      "labelEn": "beef",
+      "factors": {
+        "g": 1.0
+      }
     }
   ],
   "tags": [

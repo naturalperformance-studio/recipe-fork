@@ -30,14 +30,23 @@ data class IngredientOffer(
          * it, in the alphabetical order of their labels; a leaf matched on its own stands there as well, once.
          * The offer is in two groups — first what begins with the whole typed text in either language, then the
          * rest — each in the alphabetical order of the label shown, a parent placed by its own label.
+         *
+         * An entry removed upstream is never offered, nor matched exactly (FLOW-001 (7), DOM-009 (5)), except one of
+         * [stillHeld] — what the library's filter keeps offering while a recipe in its view holds it.
          */
-        fun of(typed: String, dictionary: List<IngredientEntryEntity>, language: InterfaceLanguage): IngredientOffer {
+        fun of(
+            typed: String,
+            dictionary: List<IngredientEntryEntity>,
+            language: InterfaceLanguage,
+            stillHeld: Set<Long> = emptySet(),
+        ): IngredientOffer {
             val sought = fold(typed).trim()
             val typedWords = words(sought)
             if (typedWords.isEmpty()) return IngredientOffer(emptyList(), freeText = null)
+            val offerable = dictionary.filter { !it.removed || it.id in stillHeld }
 
-            val matched = dictionary.filter { entry -> entry.labels().any { holdsEveryWord(it, typedWords) } }
-            val leaves = dictionary.filter { it.parentId != null }.groupBy { it.parentId }
+            val matched = offerable.filter { entry -> entry.labels().any { holdsEveryWord(it, typedWords) } }
+            val leaves = offerable.filter { it.parentId != null }.groupBy { it.parentId }
             val collator = Collator.getInstance(if (language == InterfaceLanguage.RUSSIAN) Locale("ru") else Locale.ENGLISH)
             val byLabel = compareBy<IngredientEntryEntity, String>(collator) { it.label(language) }.thenBy { it.id }
 

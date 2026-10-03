@@ -68,13 +68,15 @@ data class ListingParams(
 
 /**
  * What a view lists for [params]: the [rows] found, in order; [viewIsEmpty] when the view holds nothing at all; the
- * [languages] its recipes are written in, whatever narrows it, in the order of [BookLanguage].
+ * [languages] its recipes are written in, whatever narrows it, in the order of [BookLanguage]; the dictionary entries
+ * its recipes' ingredients [hold], whatever narrows it — what keeps an entry removed upstream offered by the filter.
  */
 data class Listed<R>(
     val rows: List<R>,
     val viewIsEmpty: Boolean,
     val params: ListingParams,
     val languages: List<BookLanguage> = emptyList(),
+    val hold: Set<Long> = emptySet(),
 ) {
     /** Whether a query was searched: one with a word in it. A query of none lists the whole view. */
     val searched: Boolean get() = WordPrefix.words(params.query).isNotEmpty()
@@ -125,7 +127,9 @@ class BookSearch<R>(
         found = found.inOrder(params.order, params.locale, title)
         filters.ingredient?.let { entry -> found = byIngredient(found, lines, entry) }
         val languages = rows.mapTo(HashSet()) { BookLanguage.of(language(it)) }
-        return Listed(found, rows.isEmpty(), params, BookLanguage.entries.filter { it in languages })
+        val inView = rows.mapTo(HashSet()) { id(it) }
+        val hold = lines.filter { it.recipeId in inView }.mapNotNullTo(HashSet()) { it.dictionaryEntry }
+        return Listed(found, rows.isEmpty(), params, BookLanguage.entries.filter { it in languages }, hold)
     }
 
     /** Of [rows], in their order, those holding [entry] or an entry below it, the most of it per serving first. */
