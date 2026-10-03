@@ -4,16 +4,16 @@
 
 # Fresh herbs and edible leaves (1700-1799). A base herb label carries «свежий» (seasoning owns the dried ones); varieties, leaves and sprigs do not. pc of a soft herb is a bunch; sprigs and leaves are their own entries.
 1700	зелень	fresh herbs		true	g=1 pc=50 tbsp=4 cup=50
-1701	укроп свежий	fresh dill	1700	true	g=1 pc=40 tsp=1 tbsp=3 cup=40
-1702	петрушка свежая	fresh parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60
+1701	укроп свежий	fresh dill	1700	true	g=1 pc=40 tsp=1 tbsp=3 cup=40		укроп	dill
+1702	петрушка свежая	fresh parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60		петрушка	parsley
 1703	петрушка листовая	flat-leaf parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60
 1704	петрушка кудрявая	curly parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60
-1705	кинза свежая	fresh cilantro	1700	true	g=1 pc=40 tsp=1 tbsp=3 cup=40
-1706	базилик свежий	fresh basil	1700	true	g=1 pc=30 tbsp=3 cup=40
+1705	кинза свежая	fresh cilantro	1700	true	g=1 pc=40 tsp=1 tbsp=3 cup=40		кинза	cilantro
+1706	базилик свежий	fresh basil	1700	true	g=1 pc=30 tbsp=3 cup=40		базилик	basil
 1707	базилик фиолетовый	purple basil	1700	true	g=1 pc=30 tbsp=3 cup=40
 1708	базилик тайский	Thai basil	1700	true	g=1 pc=30 tbsp=3 cup=40
 1709	лист базилика	basil leaf	1700	false	g=1 pc=0.5
-1710	мята свежая	fresh mint	1700	true	g=1 pc=30 tbsp=1.5 cup=25
+1710	мята свежая	fresh mint	1700	true	g=1 pc=30 tbsp=1.5 cup=25		мята	mint
 1711	мята перечная	peppermint	1700	true	g=1 pc=30 tbsp=1.5 cup=25
 1712	мята кудрявая	spearmint	1700	true	g=1 pc=30 tbsp=1.5 cup=25
 1713	лист мяты	mint leaf	1700	false	g=1 pc=0.3
@@ -21,9 +21,9 @@
 1715	веточка петрушки	parsley sprig	1700	false	g=1 pc=1
 1716	веточка укропа	dill sprig	1700	false	g=1 pc=1
 1717	мелисса свежая	fresh lemon balm	1700	true	g=1 pc=30 tbsp=3
-1720	розмарин свежий	fresh rosemary	1700		g=1 tsp=0.6 tbsp=1.7
-1721	тимьян свежий	fresh thyme	1700		g=1 tsp=0.8 tbsp=2.4
-1722	шалфей свежий	fresh sage	1700		g=1 tbsp=2
+1720	розмарин свежий	fresh rosemary	1700		g=1 tsp=0.6 tbsp=1.7		розмарин	rosemary
+1721	тимьян свежий	fresh thyme	1700		g=1 tsp=0.8 tbsp=2.4		тимьян	thyme
+1722	шалфей свежий	fresh sage	1700		g=1 tbsp=2		шалфей	sage
 1723	орегано свежий	fresh oregano	1700		g=1 tbsp=2
 1724	майоран свежий	fresh marjoram	1700		g=1 tbsp=2
 1725	эстрагон свежий	fresh tarragon	1700	true	g=1 pc=30 tbsp=3

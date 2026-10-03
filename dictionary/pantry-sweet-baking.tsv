@@ -7,7 +7,7 @@
 
 # сахар
 6100	сахар	sugar			g=1 tsp=4 tbsp=12 cup=200 pinch=0.5
-6101	сахар белый	granulated sugar	6100		g=1 tsp=4 tbsp=12 cup=200 pinch=0.5
+6101	сахар белый	granulated sugar	6100		g=1 tsp=4 tbsp=12 cup=200 pinch=0.5			white sugar
 6102	сахар тростниковый	cane sugar	6100		g=1 tsp=4 tbsp=12 cup=200 pinch=0.5
 6103	сахар коричневый	brown sugar	6100		g=1 tsp=4 tbsp=13 cup=220 pinch=0.5
 6104	сахар коричневый тёмный	dark brown sugar	6100		g=1 tsp=4 tbsp=13 cup=220 pinch=0.5

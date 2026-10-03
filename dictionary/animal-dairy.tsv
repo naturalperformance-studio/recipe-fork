@@ -10,7 +10,7 @@
 4403	яичный белок	egg white	4400	false	g=1 pc=33 ml=1.04 tbsp=15
 4404	яйцо утиное	duck egg	4400	false	g=1 pc=70
 4405	яйцо гусиное	goose egg	4400	false	g=1 pc=150
-4406	яйцо варёное	boiled egg	4400	false	g=1 pc=50
+4406	яйцо варёное	boiled egg	4400	false	g=1 pc=50			hard-boiled egg
 4407	яйцо крупное	large egg	4400	false	g=1 pc=65
 4408	яичный порошок	egg powder	4400		g=1 tsp=3 tbsp=8
 4409	меланж	liquid egg	4400		g=1 ml=1.03 tbsp=15 cup=258
@@ -29,7 +29,7 @@
 4458	молоко безлактозное	lactose-free milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4459	молоко сухое	powdered milk	4450		g=1 tsp=3 tbsp=8 cup=120
 4460	молоко сухое обезжиренное	nonfat dry milk	4450		g=1 tsp=3 tbsp=8 cup=120
-4461	сгущённое молоко	sweetened condensed milk	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325
+4461	сгущённое молоко	sweetened condensed milk	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325		сгущёнка
 4462	варёная сгущёнка	boiled condensed milk	4450		g=1 ml=1.35 tsp=7 tbsp=20 cup=340
 4463	сгущённое молоко без сахара	evaporated milk	4450		g=1 ml=1.07 tsp=5 tbsp=16 cup=265
 4464	молоко 6%	milk 6%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
@@ -105,7 +105,7 @@
 4590	творог мягкий	soft quark	4580		g=1 tsp=6 tbsp=17 cup=240
 
 # масло сливочное
-4600	масло сливочное	butter			g=1 tsp=5 tbsp=14 cup=227
+4600	масло сливочное	butter			g=1 tsp=5 tbsp=14 cup=227		масло
 4601	масло сливочное несолёное	unsalted butter	4600		g=1 tsp=5 tbsp=14 cup=227
 4602	масло сливочное солёное	salted butter	4600		g=1 tsp=5 tbsp=14 cup=227
 4603	масло топлёное	ghee	4600		g=1 ml=0.91 tsp=4.5 tbsp=13 cup=225
@@ -154,7 +154,7 @@
 4729	чанах	chanakh	4700		g=1
 4730	панир	paneer	4700		g=1
 4731	халуми	halloumi	4700		g=1
-4732	пармезан	Parmesan	4700		g=1 tsp=2 tbsp=5 cup=90
+4732	пармезан	Parmesan	4700		g=1 tsp=2 tbsp=5 cup=90		пармиджано реджано	Parmigiano Reggiano
 4733	грана падано	Grana Padano	4700		g=1 tsp=2 tbsp=5 cup=90
 4734	пекорино	Pecorino	4700		g=1 tsp=2 tbsp=5 cup=90
 4735	моцарелла	mozzarella	4700	true	g=1 pc=125
@@ -172,7 +172,7 @@
 4747	фонтина	Fontina	4700		g=1
 4748	азиаго	Asiago	4700		g=1 tbsp=7 cup=100
 4749	чеддер	cheddar	4700		g=1 tbsp=7 cup=113
-4750	эмменталь	Emmental	4700		g=1 tbsp=7 cup=100
+4750	эмменталь	Emmental	4700		g=1 tbsp=7 cup=100			Swiss cheese
 4751	грюйер	Gruyère	4700		g=1 tbsp=7 cup=100
 4752	гауда	Gouda	4700		g=1 tbsp=7 cup=100
 4753	эдам	Edam	4700		g=1 tbsp=7 cup=100
@@ -202,5 +202,5 @@
 4789	пекорино романо	Pecorino Romano	4700		g=1 tsp=2 tbsp=5 cup=90
 4790	бофор	Beaufort	4700		g=1
 4791	лимбургский сыр	Limburger	4700		g=1
-4792	пармиджано реджано	Parmigiano Reggiano	4700		g=1 tsp=2 tbsp=5 cup=90
+4792	пармиджано реджано	Parmigiano Reggiano	4700		g=1 tsp=2 tbsp=5 cup=90	removed
 4491	девонширские сливки	clotted cream	4480		g=1 tsp=5 tbsp=15 cup=240

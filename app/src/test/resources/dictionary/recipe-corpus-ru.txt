@@ -45,7 +45,7 @@
 сосиски | frankfurters | 3830
 копчёные рёбрышки | smoked ribs | 3888
 солёные огурцы | pickled cucumbers | 8401
-огуречный рассол | pickle brine | gap
+огуречный рассол | pickle brine | 8426
 маслины | black olives | 8452
 каперсы | capers | 8420
 лимон | lemon | 2000
@@ -58,7 +58,7 @@
 картофель | potato | 1000
 морковь | carrot | 1030
 лук | onion | 1100
-рассол | brine | gap
+рассол | brine | 8426
 
 @ Уха
 судак | pike-perch | 4120
@@ -295,7 +295,7 @@
 
 @ Вареники с картошкой
 мука | flour | 5000
-картофельное пюре | mashed potatoes | gap
+картофельное пюре | mashed potatoes | 1012
 лук жареный | fried onion | 7248
 сало | salt pork | 3940
 
@@ -816,7 +816,7 @@
 мацони | matsoni | 4533
 
 @ Хаш
-говяжьи ноги | beef feet | gap
+говяжьи ноги | beef feet | 3131
 чеснок | garlic | 1120
 
 @ Чанахи
@@ -1209,7 +1209,7 @@
 сало | salt pork | 3940
 чеснок | garlic | 1120
 соль | salt | 7000
-перец | pepper | 1330
+перец | pepper | 7100
 
 @ Колбаса домашняя
 свинина | pork | 3200

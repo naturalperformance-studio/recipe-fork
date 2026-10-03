@@ -4,7 +4,7 @@
 
 # курица — parts and kinds
 3501	куриное филе	chicken breast fillet	1	true	g=1 pc=200
-3502	куриная грудка	chicken breast	1	true	g=1 pc=350
+3502	куриная грудка	chicken breast	1	true	g=1 pc=350			chicken cutlet
 3503	куриные бёдра	chicken thighs	1	false	g=1 pc=150
 3504	филе куриного бедра	boneless chicken thighs	1	true	g=1 pc=100
 3505	куриные голени	chicken drumsticks	1	false	g=1 pc=110

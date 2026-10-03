@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -220,6 +221,11 @@ class IngredientNameFieldTest {
         assertEquals(listOf(entry), choices(0))
         assertEquals("картофель · картошка", shownText(entry))
         compose.onNodeWithTag(synonym, useUnmergedTree = true).assertTextEquals(" · картошка")
+        // T-131: a synonym too long for the row is cut on its one line with an ellipsis, never clipped mid-letter.
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithTag(synonym, useUnmergedTree = true).performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        assertEquals(TextOverflow.Ellipsis, layouts.single().layoutInput.overflow)
+        assertEquals(1, layouts.single().layoutInput.maxLines)
         val label = textColor(entry, "картофель")
         val muted = textColor(entry, " · картошка")
         assertTrue("$muted is not muted beside $label", muted != label && muted.alpha > 0f)

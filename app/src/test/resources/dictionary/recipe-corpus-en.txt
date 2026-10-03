@@ -60,7 +60,7 @@ cinnamon | cinnamon | 7212
 @ Chocolate chip cookies
 unsalted butter | butter | 4601
 light brown sugar | brown sugar | 6125
-white sugar | sugar | 6100
+white sugar | sugar | 6100/6101
 eggs | eggs | 4400
 vanilla | vanilla | 6350
 flour | flour | 5000
@@ -221,13 +221,13 @@ tomato sauce | tomato sauce | 8106
 lasagna noodles | lasagna | 5420
 ricotta cheese | ricotta | 4740
 mozzarella cheese | mozzarella | 4735
-italian sausage | italian sausage | gap
+italian sausage | italian sausage | 3833
 egg | egg | 4400
 
 @ Fettuccine Alfredo
 fettuccine | fettuccine | 5406
 heavy whipping cream | heavy cream | 4483/4484
-parmigiano reggiano | parmesan | 4792
+parmigiano reggiano | parmesan | 4732
 nutmeg | nutmeg | 7218
 
 @ Stir-fry beef and broccoli

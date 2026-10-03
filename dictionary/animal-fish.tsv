@@ -119,7 +119,7 @@
 4153	филе скумбрии	mackerel fillet	4150	true	g=1 pc=120
 4154	скумбрия консервированная	canned mackerel	4150		g=1
 4155	сельдь	herring		true	g=1 pc=300
-4156	селёдка	salted herring	4155	true	g=1 pc=300
+4156	селёдка	salted herring	4155	true	g=1 pc=300		сельдь солёная;сельдь слабосолёная
 4157	филе сельди	herring fillet	4155		g=1
 4158	сельдь копчёная	kippers	4155		g=1
 4159	сельдь пряного посола	spiced herring	4155		g=1

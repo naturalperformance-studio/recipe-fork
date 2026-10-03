@@ -9,7 +9,7 @@
 @range 1-5
 
 1	курица	chicken		true	g=1 pc=1500
-2	крылышки	chicken wings	1	false	g=1 pc=80
+2	крылышки	chicken wings	1	false	g=1 pc=80		куриные крылья;куриные крылышки
 3	мясо	meat			g=1
 4	фарш	mince			g=1
 5	говядина	beef			g=1
@@ -124,7 +124,7 @@
 3430	медвежатина	bear meat	3420		g=1
 
 # фарш — kinds
-3451	фарш говяжий	ground beef	4		g=1
+3451	фарш говяжий	ground beef	4		g=1			ground chuck
 3452	фарш свиной	ground pork	4		g=1
 3453	фарш куриный	ground chicken	4		g=1
 3454	фарш из индейки	ground turkey	4		g=1
@@ -138,4 +138,5 @@
 3132	сирлойн	sirloin steak	5	true	g=1 pc=300
 3133	ромштекс	rump steak	5	true	g=1 pc=200
 3134	говядина для тушения	beef stew meat	5		g=1
+3131	говяжьи ноги	beef feet	5		g=1		говяжьи ножки
 3222	стейк из свиной шеи	pork neck steak	3200	true	g=1 pc=250

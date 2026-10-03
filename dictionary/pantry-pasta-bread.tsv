@@ -5,7 +5,7 @@
 @range 5000-6999
 
 # макароны
-5400	макароны	pasta			g=1
+5400	макароны	pasta			g=1		паста
 5401	спагетти	spaghetti	5400		g=1
 5402	спагеттини	spaghettini	5400		g=1
 5403	капеллини	capellini	5400		g=1
@@ -150,7 +150,7 @@
 5802	тесто слоёное дрожжевое	yeast puff pastry	5800		g=1
 5803	тесто слоёное бездрожжевое	yeast-free puff pastry	5800		g=1
 5804	тесто дрожжевое	yeast dough	5800		g=1
-5805	тесто песочное	pie crust dough	5800		g=1
+5805	тесто песочное	pie crust dough	5800		g=1			pie dough
 5806	тесто фило	phyllo dough	5800	true	g=1 pc=20
 5807	тесто для пиццы	pizza dough	5800		g=1
 5808	тесто для пельменей	dumpling dough	5800		g=1
