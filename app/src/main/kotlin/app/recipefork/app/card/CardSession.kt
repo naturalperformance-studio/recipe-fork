@@ -146,7 +146,7 @@ private fun rationalOf(text: String): Rational? {
 internal data class Place(val top: Int, val height: Int)
 
 /**
- * Where the parts of one card a reader can find their place by — its cover and count, each ingredient line,
+ * Where the parts of one card a reader can find their place by — its cover, title and count, each ingredient line,
  * each step, its description — lie in its scrolling content, measured as they are laid out.
  */
 internal class CardPlaces {
@@ -188,11 +188,15 @@ internal class CardPlaces {
         return CardAnchor(key, if (place.height == 0) 0 else (into * 1000L / place.height).toInt())
     }
 
+    /** Where the part [key] lies in the content, once it is laid out. */
+    fun placeOf(key: String): Place? = places[key]
+
     /** The scroll that puts [anchor] first at the top again, once its part is laid out. */
     fun scrollOf(anchor: CardAnchor): Int? = places[anchor.key]?.let { it.top + (it.height * anchor.permille.toLong() / 1000).toInt() }
 
     companion object {
         const val COVER_KEY = "cover"
+        const val TITLE_KEY = "title"
         const val SERVINGS_KEY = "servings"
         const val DESCRIPTION_KEY = "description"
         private const val INGREDIENT_KEY = "i"

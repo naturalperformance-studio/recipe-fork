@@ -7,6 +7,7 @@
     <string name="card_fork">Своя версия</string>
     <string name="card_fork_action">Создать редактируемую копию этого рецепта</string>
     <string name="card_loading">Рецепт загружается</string>
+    <string name="card_action_show_name">Показать название</string>
     <string name="card_fork_held">У вас уже есть своя версия этого рецепта, она не менялась с тех пор, как вы её сделали.</string>
     <string name="card_fork_held_open">Открыть её</string>
     <string name="card_fork_held_another">Сделать ещё одну</string>

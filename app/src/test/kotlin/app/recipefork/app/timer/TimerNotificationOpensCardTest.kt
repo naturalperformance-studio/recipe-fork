@@ -4,13 +4,13 @@ import android.Manifest
 import android.app.NotificationManager
 import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties
 import app.recipefork.app.library.LibraryView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -27,7 +27,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -109,8 +108,7 @@ class TimerNotificationOpensCardTest {
         compose.onNodeWithTag(CardTags.step(far)).assertIsDisplayed()
         compose.onNodeWithTag(TimerTags.start(far)).assertIsDisplayed()
         // The card was brought down to it: its top is out of view.
-        compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange]
-            .value().let { assertTrue("the card is scrolled down, by $it px", it > 0f) }
+        compose.onNodeWithTag(CardTags.TITLE).assertIsNotDisplayed()
     }
 
     // FLOW-013 (4): the application closed, tapping the notification opens it on the card at the timer's step.

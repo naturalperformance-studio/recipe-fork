@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -107,11 +110,11 @@ private sealed interface CardContent {
 
 /**
  * The recipe card: the saved recipe exactly as a reader sees it, not an editor with reader styling (FLOW-029 (1)).
- * One scrolling screen (the card intro of `cooking`): the title in the bar, then the cover, the serving count, the
- * ingredients in order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
+ * One scrolling screen (the card intro of `cooking`): the cover, the title, the serving count, the ingredients in
+ * order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
  * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe.
  *
- * The top bar holds the recipe's title and the screen's actions, outside the recipe: back to the book, the fork action on every recipe,
+ * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book, the fork action on every recipe,
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
  * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
@@ -161,11 +164,19 @@ fun CardScreen(
     val bar = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
+    // The title is the content's heading; the bar repeats it, collapsed, only once that heading has scrolled out of
+    // view — as when the reader scrolls on, or the card opens at a place further down, which collapses the bar too.
+    var titleOut by remember(recipeId) { mutableStateOf(false) }
+    LaunchedEffect(titleOut) {
+        val state = bar.state
+        if (titleOut && state.heightOffsetLimit > -Float.MAX_VALUE / 2) state.heightOffset = state.heightOffsetLimit
+    }
     Scaffold(
         modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection).testTag(CardTags.SCREEN),
         topBar = {
             TopBar(
-                title = recipe?.title?.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                shown = recipe != null,
+                title = recipe?.title?.ifBlank { stringResource(R.string.common_untitled_recipe) }?.takeIf { titleOut },
                 editable = recipe?.state?.editable == true,
                 scrollBehavior = bar,
                 onBack = onBack,
@@ -175,7 +186,10 @@ fun CardScreen(
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { padding ->
-        val bottom = padding.calculateBottomPadding()
+        // The keyboard shrinks the content's viewport, so that a focused field is brought above it; the navigation
+        // bar does not: the content runs on under it, padded at its end to scroll clear of it.
+        val keyboard = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+        val bottom = (padding.calculateBottomPadding() - keyboard).coerceAtLeast(0.dp)
         val direction = LocalLayoutDirection.current
         Box(
             Modifier
@@ -184,6 +198,7 @@ fun CardScreen(
                     top = padding.calculateTopPadding(),
                     start = padding.calculateStartPadding(direction),
                     end = padding.calculateEndPadding(direction),
+                    bottom = keyboard,
                 )
                 .consumeWindowInsets(padding),
         ) {
@@ -197,7 +212,7 @@ fun CardScreen(
                 shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
                 recipe != null && loaded != null ->
-                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, onOpenParent, bottom)
+                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, onOpenParent, bottom) { titleOut = it }
                 else -> Loading()
             }
         }
@@ -240,14 +255,15 @@ private fun Unreadable(onRetry: () -> Unit) {
 }
 
 /**
- * The screen's bar: back at its start; the recipe's title, large under the actions until the recipe scrolls under it,
- * then on one line beside them, ellipsized; and the recipe's actions at its end — fork on any recipe shown, edit
+ * The screen's bar: back at its start; the recipe's [title] once the content's heading has scrolled out of view, on one
+ * line beside back, ellipsized — the content holds it whole; and the recipe's actions at its end — fork on any recipe shown, edit
  * beside it while the recipe is editable. Each action is an icon the screen reader names, whose click it announces as
  * what it does (A11Y-005) and whose name a long press shows in a tooltip.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(
+    shown: Boolean,
     title: String?,
     editable: Boolean,
     scrollBehavior: TopAppBarScrollBehavior,
@@ -258,12 +274,7 @@ private fun TopBar(
     MediumTopAppBar(
         title = {
             if (title != null) {
-                Text(
-                    title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.semantics { heading() }.testTag(CardTags.TITLE),
-                )
+                Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag(CardTags.BAR_TITLE))
             }
         },
         modifier = Modifier.testTag(CardTags.BAR),
@@ -277,7 +288,7 @@ private fun TopBar(
             )
         },
         actions = {
-            if (title != null) {
+            if (shown) {
                 BarAction(
                     icon = R.drawable.ic_fork,
                     label = stringResource(R.string.card_fork),
@@ -309,6 +320,7 @@ private fun RecipeContent(
     session: CardSession,
     onOpenParent: (RecipeId) -> Unit,
     bottom: Dp,
+    onTitleOut: (Boolean) -> Unit,
 ) {
     val language = when (interfaceLanguage(LocalConfiguration.current)) {
         RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
@@ -321,6 +333,11 @@ private fun RecipeContent(
     // A card brought to a timer's step goes there, not to the place it was left at (FLOW-013 (4)).
     val toStep = LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipe.id.value
     KeptPlace(recipe.id, scroll, places, session, restore = !toStep)
+    val titleOut by rememberUpdatedState(onTitleOut)
+    LaunchedEffect(scroll, places) {
+        snapshotFlow { places.placeOf(CardPlaces.TITLE_KEY)?.let { scroll.value >= it.top + it.height } == true }
+            .collect { titleOut(it) }
+    }
     CompositionLocalProvider(LocalCardPlaces provides places) {
         Column(
             Modifier
@@ -333,6 +350,12 @@ private fun RecipeContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
+            // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
+            Text(
+                recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
+            )
             // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
             recipe.statedAuthor?.let {
                 Text(
@@ -588,6 +611,7 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
                     role = Role.Button,
                     onClickLabel = action,
                     onClick = onClick,
+                    onLongClickLabel = stringResource(R.string.card_action_show_name),
                     onLongClick = { scope.launch { tooltip.show() } },
                 )
                 .testTag(tag),
@@ -628,6 +652,7 @@ object CardTags {
     const val SCREEN = "card"
     const val BAR = "card-bar"
     const val BACK = "card-back"
+    const val BAR_TITLE = "card-bar-title"
     const val LOADING = "card-loading"
     const val EDIT = "card-edit"
     const val FORK = "card-fork"

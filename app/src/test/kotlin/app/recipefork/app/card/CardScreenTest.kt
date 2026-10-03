@@ -210,9 +210,9 @@ class CardScreenTest {
         (0..2).forEach { assertEquals(listOf("${it + 1}.", stepTexts[it]), compose.textsOf(CardTags.step(it))) }
         (0 until 2).forEach { assertTrue(top(CardTags.step(it)) < top(CardTags.step(it + 1))) }
         assertEquals(listOf("A weeknight dinner."), compose.textsOf(CardTags.DESCRIPTION))
-        // The title, in the bar, and headings naming the two lists.
-        val headings = compose.onAllNodes(isHeading() and hasAnyAncestor(hasTestTag(CardTags.SCREEN)))
-            .fetchSemanticsNodes().sortedBy { it.positionInRoot.y }.map { it.config[SemanticsProperties.Text].joinToString("") { t -> t.text } }
+        // Headings name the two lists.
+        val headings = compose.onAllNodes(isHeading() and hasAnyAncestor(hasTestTag(CardTags.CONTENT)))
+            .fetchSemanticsNodes().map { it.config[SemanticsProperties.Text].joinToString("") { t -> t.text } }
         assertEquals(listOf("Roast chicken", w.ingredients, w.steps), headings)
         // Title, serving count, ingredients, steps, description, one under the other on one scrolling screen.
         val order = listOf(CardTags.TITLE, CardTags.SERVINGS, CardTags.INGREDIENTS, CardTags.STEPS, CardTags.DESCRIPTION)
@@ -228,9 +228,9 @@ class CardScreenTest {
     fun aRecipeHoldingOnlyATitleShowsNoHeadingOrPlaceholderForWhatIsAbsent() {
         val recipe = save(Recipe.create(now, null).copy(title = "Toast"))
         show(recipe.id)
-        // Nothing but the title on the card, in its bar: no serving count, no ingredient or step heading, no
+        // Nothing but the title in the recipe's content: no serving count, no ingredient or step heading, no
         // description block, no media area and no provenance area (it has no parent).
-        val inContent = compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.SCREEN)))
+        val inContent = compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.CONTENT)), useUnmergedTree = true)
             .fetchSemanticsNodes()
             .flatMap { it.config.getOrElse(SemanticsProperties.Text) { emptyList() }.map { t -> t.text } }
         assertEquals(listOf("Toast"), inContent)
