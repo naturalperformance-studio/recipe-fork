@@ -25,6 +25,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
+import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
@@ -354,8 +355,8 @@ class CardScreenTest {
         compose.awaitCard()
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 5)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 5)
-        assertEquals(listOf(w.back), compose.textsOf(CardTags.BACK))
-        assertEquals(listOf(w.edit), compose.textsOf(CardTags.EDIT))
+        assertEquals(listOf(w.back), compose.descriptionOf(CardTags.BACK))
+        assertEquals(listOf(w.edit), compose.descriptionOf(CardTags.EDIT))
         assertEquals(w.backAction, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.BACK).fetchSemanticsNode()))
         assertEquals(w.editAction, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.EDIT).fetchSemanticsNode()))
         id = save(fullRecipe(RecipeState.PUBLISHED)).id
@@ -368,6 +369,7 @@ class CardScreenTest {
     /** The test tags of every element on screen the reader can act on, in the order laid out. */
     private fun interactiveTags(): List<String?> =
         compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
+            .sortedWith(compareBy({ it.positionInRoot.y }, { it.positionInRoot.x }))
             .map { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } }
 
     private fun assertNothingInTheContentActs() {

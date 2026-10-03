@@ -23,6 +23,7 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
+import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
@@ -115,6 +116,7 @@ class CardForkTest {
 
     private fun interactiveTags(): List<String?> =
         compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
+            .sortedWith(compareBy({ it.positionInRoot.y }, { it.positionInRoot.x }))
             .map { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } }
 
     // The fork action is in the bar of every recipe of the book, in each of the eight states, and asks for a fork.
@@ -171,7 +173,7 @@ class CardForkTest {
         val fork = save(parent.fork(now, owner = null).copy(title = w.forkTitle))
         show(fork.id)
         awaitProvenance()
-        assertEquals(listOf(w.fork), compose.textsOf(CardTags.FORK))
+        assertEquals(listOf(w.fork), compose.descriptionOf(CardTags.FORK))
         assertEquals(w.forkAction, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode()))
         assertEquals(listOf(w.provenance), compose.textsOf(CardTags.PROVENANCE))
         assertEquals(w.openAction, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.PROVENANCE).fetchSemanticsNode()))
