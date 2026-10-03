@@ -14,6 +14,7 @@ import androidx.room.Upsert
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import app.recipefork.app.data.db.Converters
+import app.recipefork.core.recipe.SentStatus
 import kotlinx.coroutines.flow.Flow
 
 /** One recipe book's database: an account's, or the pool's (decisions/20260928-one-database-per-recipe-book.md). */
@@ -170,6 +171,18 @@ abstract class BookRecipeDao {
     /** Every media identity a recipe of the book holds. */
     @Query("select media_id from media")
     abstract suspend fun allMedia(): List<String>
+
+    /**
+     * The media identities whose files the device may clear (FLOW-060): those of every found recipe — one the book
+     * marks — and of every own recipe of the status [sent]. A media item belongs to one recipe alone. The rows
+     * themselves are not touched.
+     */
+    @Query(
+        """select m.media_id from media m join recipe r on r.recipe_id = m.recipe_id
+           where r.recipe_id in (select recipe_id from favourite) or r.sent = :sent
+           order by m.media_id""",
+    )
+    abstract suspend fun clearableMedia(sent: SentStatus): List<String>
 
     /**
      * Writes a found recipe and marks it, atomically (FLOW-064): its rows and its favourite. Returns false, writing

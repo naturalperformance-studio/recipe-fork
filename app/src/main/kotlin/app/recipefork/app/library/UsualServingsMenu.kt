@@ -54,10 +54,16 @@ private val FIRST_CHOICE: Rational = Rational.of(2)
  * The book's menu, beside its title: it offers the serving count the reader usually cooks for (FLOW-017), showing the
  * count held or that none is — choosing it opens [UsualServingsDialog] — and, as a checked item, the editor's drag
  * column on the right of each block, for a left hand; and the interface language (L10N-002), which opens
- * [LanguageDialog] and shows the whole application again in the language taken.
+ * [LanguageDialog] and shows the whole application again in the language taken; and, where [onClearMedia] is given,
+ * the clearing of the media the device need not keep (FLOW-060).
  */
 @Composable
-internal fun BookMenu(usual: UsualServings, handleSide: DragHandleSide, modifier: Modifier = Modifier) {
+internal fun BookMenu(
+    usual: UsualServings,
+    handleSide: DragHandleSide,
+    modifier: Modifier = Modifier,
+    onClearMedia: (() -> Unit)? = null,
+) {
     var expanded by remember { mutableStateOf(false) }
     var choosing by rememberSaveable { mutableStateOf(false) }
     var choosingLanguage by rememberSaveable { mutableStateOf(false) }
@@ -110,6 +116,16 @@ internal fun BookMenu(usual: UsualServings, handleSide: DragHandleSide, modifier
                         choosingLanguage = true
                     },
                     modifier = Modifier.testTag(LanguageTags.MENU_ITEM),
+                )
+            }
+            if (onClearMedia != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.library_clear_media)) },
+                    onClick = {
+                        expanded = false
+                        onClearMedia()
+                    },
+                    modifier = Modifier.testTag(LibraryTags.CLEAR_MEDIA),
                 )
             }
         }

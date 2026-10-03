@@ -156,6 +156,15 @@ class ServerlessWordingTest {
         compose.onNodeWithTag(LibraryTags.MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.USUAL)).fetchSemanticsNodes().isEmpty() }
 
+        // The clearing of saved media from the book's menu, with nothing to clear: what it says in place of asking.
+        compose.onNodeWithTag(LibraryTags.MENU).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA), PATIENCE_MS)
+        compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
+        assertSaysNothingOfTheServer("the message that there is no media to clear")
+        compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_OK).performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
+
         // The own view: every entry, the menu of one, and the statement before a deletion.
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         owned.forEach { recipe ->
@@ -257,6 +266,8 @@ class ServerlessWordingTest {
             "library_sent_with_changes",
             "editor_ingredient_free_text_warning",
             "editor_checklist_5_text",
+            // Its serverless form says the media cannot be fetched again (FLOW-060 (4)).
+            "library_clear_media_statement",
         )
 
         fun speaksOfTheServer(text: String): Boolean = WORDS.any { text.contains(it, ignoreCase = true) }
