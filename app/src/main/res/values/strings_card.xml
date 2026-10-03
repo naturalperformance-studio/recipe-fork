@@ -7,6 +7,10 @@
     <string name="card_edit_action">Open this recipe in the editor</string>
     <string name="card_fork">Fork</string>
     <string name="card_fork_action">Make an editable copy of this recipe</string>
+    <!-- Forking a recipe of which the book holds a fork nothing has changed since it was made (FLOW-015). -->
+    <string name="card_fork_held">You already have a fork of this recipe, unchanged since you made it.</string>
+    <string name="card_fork_held_open">Open it</string>
+    <string name="card_fork_held_another">Make another</string>
     <!-- A fork's provenance area (FORK-003, FORK-004): its one direct parent. -->
     <string name="card_parent">Forked from “%1$s”</string>
     <string name="card_parent_open_action">Open the recipe this one was forked from</string>

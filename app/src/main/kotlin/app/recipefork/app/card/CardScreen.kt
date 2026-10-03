@@ -29,7 +29,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -452,7 +454,33 @@ private fun BarAction(text: String, action: String, onClick: () -> Unit, modifie
     }
 }
 
+/**
+ * Said when the reader forks a recipe of which they already hold an unchanged fork (FLOW-015): they may open that
+ * fork, or make another anyway; dismissing it makes nothing.
+ */
+@Composable
+fun HeldForkDialog(onOpen: () -> Unit, onAnother: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(CardTags.FORK_HELD),
+        text = { Text(stringResource(R.string.card_fork_held)) },
+        confirmButton = {
+            TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = 48.dp).testTag(CardTags.FORK_HELD_OPEN)) {
+                Text(stringResource(R.string.card_fork_held_open))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onAnother, modifier = Modifier.heightIn(min = 48.dp).testTag(CardTags.FORK_HELD_ANOTHER)) {
+                Text(stringResource(R.string.card_fork_held_another))
+            }
+        },
+    )
+}
+
 object CardTags {
+    const val FORK_HELD = "card-fork-held"
+    const val FORK_HELD_OPEN = "card-fork-held-open"
+    const val FORK_HELD_ANOTHER = "card-fork-held-another"
     const val SCREEN = "card"
     const val BAR = "card-bar"
     const val BACK = "card-back"

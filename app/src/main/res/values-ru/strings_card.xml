@@ -6,6 +6,9 @@
     <string name="card_edit_action">Открыть этот рецепт в редакторе</string>
     <string name="card_fork">Своя версия</string>
     <string name="card_fork_action">Создать редактируемую копию этого рецепта</string>
+    <string name="card_fork_held">У вас уже есть своя версия этого рецепта, она не менялась с тех пор, как вы её сделали.</string>
+    <string name="card_fork_held_open">Открыть её</string>
+    <string name="card_fork_held_another">Сделать ещё одну</string>
     <string name="card_parent">Основано на рецепте «%1$s»</string>
     <string name="card_parent_open_action">Открыть рецепт, на котором основан этот</string>
     <string name="card_parent_unavailable">Основано на рецепте, которого нет в этой книге рецептов</string>

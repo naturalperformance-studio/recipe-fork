@@ -166,6 +166,7 @@ fun EditorScreen(
                         modifier = Modifier.testTag(EditorTags.FROZEN),
                     )
                 }
+                ForkNote(R.string.editor_fork_takes, Modifier.testTag(EditorTags.FORK_TAKES))
                 TitleAndLanguage(shown, editor)
                 CompositionLocalProvider(LocalEditorStatements provides statements) {
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
@@ -456,7 +457,23 @@ internal fun RowMenu(
     }
 }
 
+/**
+ * A quiet line saying what a fork takes and what stays with the author unless the fork is their own (FLOW-030): the
+ * same for every recipe, forked or not, and never a promise that forking can be prevented (FORK-002).
+ */
+@Composable
+private fun ForkNote(@StringRes text: Int, modifier: Modifier = Modifier) {
+    Text(
+        stringResource(text),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
+}
+
 object EditorTags {
+    /** The line at the top saying what a fork takes and what stays with the author (FLOW-030). */
+    const val FORK_TAKES = "editor-fork-takes"
     const val SCREEN = "editor"
     const val BACK = "editor-back"
     const val FORM = "editor-form"

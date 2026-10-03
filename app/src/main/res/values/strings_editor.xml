@@ -98,6 +98,9 @@
     <string name="editor_description">Description</string>
     <string name="editor_description_optional">Description (optional)</string>
     <string name="editor_description_none">No description</string>
+    <!-- What a fork takes and what stays with the author (FLOW-030, FORK-001, FORK-002, FORK-007): one line at the top
+         of the editor. It says what a fork does, never that it can be prevented. -->
+    <string name="editor_fork_takes">A fork takes the title, tags, servings, ingredients and steps; the description and photos stay with you unless the fork is your own.</string>
     <!-- A step's timer: hours and whole minutes, one per step, named by its step unless the author names it (FLOW-027, GUIDE-007). -->
     <string name="editor_timer_label">Timer for step %1$d</string>
     <string name="editor_timer_action">Add a timer to step %1$d</string>
