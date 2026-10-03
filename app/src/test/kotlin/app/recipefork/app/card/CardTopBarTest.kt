@@ -198,7 +198,8 @@ class CardTopBarTest {
         val expanded = bounds(CardTags.BAR).height
         assertFalse("no title in the bar while the heading is in view", exists(CardTags.BAR_TITLE))
         // One row: the bar is no taller than back's row and the status bar above it.
-        assertTrue("one row: ${'$'}expanded, back ${'$'}{bounds(CardTags.BACK)}", bounds(CardTags.BAR).bottom - bounds(CardTags.BACK).bottom < bounds(CardTags.BACK).height)
+        val backRow = bounds(CardTags.BACK)
+        assertTrue("one row: bar ${bounds(CardTags.BAR)}, back $backRow", bounds(CardTags.BAR).bottom - backRow.bottom < backRow.height / 2)
         repeat(4) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.BAR_TITLE) }
         compose.onNodeWithTag(CardTags.TITLE).assertIsNotDisplayed()
