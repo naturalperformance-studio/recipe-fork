@@ -309,7 +309,7 @@ class IngredientNameFieldTest {
         assertTrue(exists(EditorTags.ingredientWarning(0)))
     }
 
-    // FLOW-023 (11), FLOW-022 (5): the shipped entries carry no divisibility, so a picked `piece` row still asks.
+    // FLOW-023 (11), FLOW-022 (5): these entries give no divisibility, so a picked `piece` row still asks.
     @Test
     fun aPieceRowPickedFromAnEntryStillAsksForDivisibility() {
         val id = writeANewRecipe()
