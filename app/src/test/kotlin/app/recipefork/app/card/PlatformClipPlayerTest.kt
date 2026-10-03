@@ -2,6 +2,7 @@ package app.recipefork.app.card
 
 import android.content.Context
 import android.media.AudioManager
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
@@ -15,6 +16,7 @@ import android.graphics.SurfaceTexture
 import android.view.Surface
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowMediaMetadataRetriever
 import org.robolectric.shadows.ShadowMediaPlayer
 import org.robolectric.shadows.util.DataSource
 import java.io.File
@@ -32,9 +34,11 @@ class PlatformClipPlayerTest {
     private val media = MediaPlayer()
     private val player = PlatformClipPlayer(media)
     private val heard = mutableListOf<String>()
+    private var size: Triple<Int, Int, Int>? = null
     private val listener = object : ClipPlayer.Listener {
-        override fun ready(width: Int, height: Int) {
+        override fun ready(width: Int, height: Int, rotation: Int) {
             heard += "ready"
+            size = Triple(width, height, rotation)
         }
 
         override fun failed() {
@@ -120,5 +124,28 @@ class PlatformClipPlayerTest {
         assertEquals(1, seeks)
         player.release()
         surface.release()
+    }
+
+    // MEDIA-004: the size and turn the file states are told, so that a clip shot upright is shown upright in its box.
+    @Test
+    fun theStoredSizeAndTurnAreTold() {
+        ShadowMediaPlayer.addMediaInfo(source, ShadowMediaPlayer.MediaInfo(4_000, 0))
+        ShadowMediaMetadataRetriever.addMetadata(source, MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH, "1280")
+        ShadowMediaMetadataRetriever.addMetadata(source, MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT, "720")
+        ShadowMediaMetadataRetriever.addMetadata(source, MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION, "90")
+        runBlocking { player.open(file, listener) }
+        idle()
+        assertEquals(Triple(1280, 720, 90), size)
+        player.release()
+    }
+
+    // A file stating no size is told at the player's own, unturned.
+    @Test
+    fun aFileStatingNoSizeIsToldAtThePlayersOwn() {
+        ShadowMediaPlayer.addMediaInfo(source, ShadowMediaPlayer.MediaInfo(4_000, 0))
+        runBlocking { player.open(file, listener) }
+        idle()
+        assertEquals(Triple(media.videoWidth, media.videoHeight, 0), size)
+        player.release()
     }
 }

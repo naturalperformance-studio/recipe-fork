@@ -2,6 +2,8 @@ package app.recipefork.app.card
 
 import android.content.Context
 import android.graphics.Matrix
+import android.graphics.Rect
+import android.media.MediaMetadataRetriever
 import android.graphics.SurfaceTexture
 import android.media.MediaPlayer
 import android.provider.Settings
@@ -12,11 +14,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,11 +29,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -38,6 +48,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import app.recipefork.app.R
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -69,8 +80,12 @@ internal interface ClipPlayer {
     fun release()
 
     interface Listener {
-        /** The clip can be shown, at [width] by [height] pixels (zero where it states none); its first frame is drawn. */
-        fun ready(width: Int, height: Int)
+        /**
+         * The clip can be shown; its first frame is drawn. Its pictures are [width] by [height] pixels as stored (zero
+         * where it states none), turned by [rotation] degrees for display — a phone held upright stores a landscape
+         * picture marked as turned by 90.
+         */
+        fun ready(width: Int, height: Int, rotation: Int)
 
         /** The clip cannot be played. */
         fun failed()
@@ -91,6 +106,7 @@ internal class PlatformClipPlayer(private val player: MediaPlayer = MediaPlayer(
     private var playing = false
     private var released = false
     private var hasSurface = false
+    private var stored: StoredSize? = null
 
     override suspend fun open(file: File, listener: ClipPlayer.Listener) {
         try {
@@ -99,7 +115,10 @@ internal class PlatformClipPlayer(private val player: MediaPlayer = MediaPlayer(
             player.setOnPreparedListener {
                 if (released) return@setOnPreparedListener
                 prepared = true
-                listener.ready(it.videoWidth, it.videoHeight)
+                // The stored size and turn, as the file states them; the player's own size may or may not have the
+                // turn applied already, so it stands in only where the file states none.
+                val stated = stored
+                if (stated != null) listener.ready(stated.width, stated.height, stated.rotation) else listener.ready(it.videoWidth, it.videoHeight, 0)
                 // A paused clip still shows its first frame, not a blank.
                 if (playing) it.start() else it.seekTo(0)
             }
@@ -109,7 +128,10 @@ internal class PlatformClipPlayer(private val player: MediaPlayer = MediaPlayer(
                 true
             }
             // Reading the file is the disc's work, not the main thread's; the player is let go of only once it is done.
-            withContext(Dispatchers.IO) { player.setDataSource(file.path) }
+            withContext(Dispatchers.IO) {
+                stored = storedSize(file)
+                player.setDataSource(file.path)
+            }
             if (released) return
             player.prepareAsync()
         } catch (e: CancellationException) {
@@ -150,6 +172,67 @@ internal class PlatformClipPlayer(private val player: MediaPlayer = MediaPlayer(
     }
 }
 
+/** A clip's pictures as stored, and the turn they are shown at. */
+internal data class StoredSize(val width: Int, val height: Int, val rotation: Int)
+
+/** The size and turn [file] states for its pictures; null where it states no size, or cannot be read. */
+internal fun storedSize(file: File): StoredSize? = try {
+    MediaMetadataRetriever().use { retriever ->
+        retriever.setDataSource(file.path)
+        fun read(key: Int) = retriever.extractMetadata(key)?.toIntOrNull()
+        val width = read(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+        val height = read(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+        if (width == null || height == null || width <= 0 || height <= 0) {
+            null
+        } else {
+            StoredSize(width, height, read(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION) ?: 0)
+        }
+    }
+} catch (e: Exception) {
+    null
+}
+
+/**
+ * Where a clip is drawn in its box. The box fills the step's width as a photograph does: a landscape or square clip is
+ * shown whole at its own proportions, a taller one cropped to a square about its centre (PhotoImage's rule). The
+ * picture is scaled to cover the box, centred, and whatever falls outside the box is clipped away — never drawn over
+ * what is around it.
+ */
+internal object ClipFrame {
+    /** The proportions of the box until a clip's size is known: the usual landscape clip's. */
+    const val UNKNOWN_RATIO = 16f / 9f
+
+    /** The size a clip stored at [width] by [height] and turned by [rotation] degrees is seen at. */
+    fun shown(width: Int, height: Int, rotation: Int): IntSize =
+        if (((rotation % 360) + 360) % 180 == 0) IntSize(width, height) else IntSize(height, width)
+
+    /** The box's width over its height for a clip seen at [shown]: its own if it is landscape or square, else 1. */
+    fun boxRatio(shown: IntSize?): Float =
+        if (shown == null || shown.width <= 0 || shown.height <= 0) UNKNOWN_RATIO else maxOf(shown.width.toFloat() / shown.height, 1f)
+
+    /**
+     * Where the picture of a clip seen at [shown] is drawn in a box of [boxWidth] by [boxHeight]: [left, top, right,
+     * bottom], covering the box, centred on it, its proportions kept.
+     */
+    fun content(boxWidth: Float, boxHeight: Float, shown: IntSize): FloatArray {
+        val scale = maxOf(boxWidth / shown.width, boxHeight / shown.height)
+        val width = shown.width * scale
+        val height = shown.height * scale
+        val left = (boxWidth - width) / 2f
+        val top = (boxHeight - height) / 2f
+        return floatArrayOf(left, top, left + width, top + height)
+    }
+
+    /**
+     * The transform a TextureView of [boxWidth] by [boxHeight] applies to a picture it otherwise stretches over its
+     * whole size (the turn already applied by the player), so that it is drawn at [content]: scaled about the centre.
+     */
+    fun transform(boxWidth: Float, boxHeight: Float, shown: IntSize): Matrix {
+        val (left, top, right, bottom) = content(boxWidth, boxHeight, shown)
+        return Matrix().apply { setScale((right - left) / boxWidth, (bottom - top) / boxHeight, boxWidth / 2f, boxHeight / 2f) }
+    }
+}
+
 /** Whether the system's animations are off — the animator duration scale set to zero. */
 internal fun animationsOff(context: Context): Boolean =
     Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
@@ -157,8 +240,9 @@ internal fun animationsOff(context: Context): Boolean =
 /**
  * A step's clip on the card: muted and looping while it is on screen and the card is in front, paused once the card
  * leaves (MEDIA-004). It holds a player only while on screen — one is made as it comes into view and let go of as it
- * leaves, or as the card goes — so a recipe of many clips holds no more players than the screen shows. A 56 dp control
- * under it pauses and plays it again (A11Y-007, WCAG 2.2.2), and that choice holds across its leaving and coming back;
+ * leaves, or as the card goes — so a recipe of many clips holds no more players than the screen shows. Its box follows
+ * [ClipFrame] and nothing of the picture is drawn outside it. A round 56 dp control in its corner — or a tap on the clip
+ * — pauses and plays it again (A11Y-007, WCAG 2.2.2), and that choice holds across its leaving and coming back;
  * nothing offers sound. With the system's animations off it does not start by itself but shows its first frame, with
  * the control offering to play. [description] names it for the screen reader as the author's video (A11Y-001); a clip
  * that cannot be played shows [unavailable] instead, and is tried again when it next comes into view.
@@ -193,9 +277,9 @@ internal fun StepVideo(
             made.open(
                 file,
                 object : ClipPlayer.Listener {
-                    override fun ready(width: Int, height: Int) {
+                    override fun ready(width: Int, height: Int, rotation: Int) {
                         if (player !== made) return
-                        size = IntSize(width, height)
+                        size = ClipFrame.shown(width, height, rotation)
                         ready = made
                     }
 
@@ -238,11 +322,13 @@ internal fun StepVideo(
             return@Column
         }
         val shown = size
-        val ratio = if (shown == null || shown.width <= 0 || shown.height <= 0) 16f / 9f else maxOf(shown.width.toFloat() / shown.height, 1f)
+        val toggle = { wanted = !wanted }
         Box(
             Modifier
                 .fillMaxWidth()
-                .aspectRatio(ratio)
+                .aspectRatio(ClipFrame.boxRatio(shown))
+                // The picture is scaled to cover the box; nothing of it is drawn outside.
+                .clipToBounds()
                 .semantics {
                     contentDescription = description
                     role = Role.Image
@@ -256,27 +342,54 @@ internal fun StepVideo(
                         it.player = current
                         it.videoSize = shown
                     },
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().clipToBounds(),
                 )
             }
-        }
-        val action = if (wanted) pauseAction else playAction
-        OutlinedButton(
-            onClick = { wanted = !wanted },
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .heightIn(min = CardTarget)
-                .widthIn(min = CardTarget)
-                .testTag(controlTag),
-        ) {
-            Text(action)
+            // A tap anywhere on the clip pauses or plays it, as the control does; the picture's view never sees it.
+            Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { toggle() } })
+            ClipControl(
+                playing = wanted,
+                action = if (wanted) pauseAction else playAction,
+                onClick = toggle,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).testTag(controlTag),
+            )
         }
     }
 }
 
+/** The scrim the clip's control sits on: dark enough that its white icon reads on any frame (≥ 3:1 over white). */
+internal val ClipControlScrim = Color.Black.copy(alpha = 0.6f)
+
+/** The icon of the clip's control. */
+internal val ClipControlIcon = Color.White
+
 /**
- * The surface a clip is drawn on: filling its width, a landscape clip shown whole and a taller one cropped to a square
- * about its centre, as a photograph is.
+ * The control that pauses and plays a clip (A11Y-007, WCAG 2.2.2): a round 56 dp button over the clip's corner, a
+ * pause or play icon on [ClipControlScrim], named by [action].
+ */
+@Composable
+private fun ClipControl(playing: Boolean, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .size(CardTarget)
+            .clip(CircleShape)
+            .background(ClipControlScrim)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = action },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painterResource(if (playing) R.drawable.ic_video_pause else R.drawable.ic_video_play),
+            contentDescription = null,
+            tint = ClipControlIcon,
+            modifier = Modifier.size(32.dp),
+        )
+    }
+}
+
+/**
+ * The surface a clip is drawn on: its picture placed as [ClipFrame] says, and clipped to its own bounds so that a
+ * picture scaled beyond them is never drawn over what is around it.
  */
 private class ClipView(context: Context) : TextureView(context), TextureView.SurfaceTextureListener {
     private var surface: Surface? = null
@@ -305,12 +418,11 @@ private class ClipView(context: Context) : TextureView(context), TextureView.Sur
     }
 
     private fun crop() {
+        if (width <= 0 || height <= 0) return
+        clipBounds = Rect(0, 0, width, height)
         val video = videoSize ?: return
-        if (video.width <= 0 || video.height <= 0 || width <= 0 || height <= 0) return
-        val scale = maxOf(width.toFloat() / video.width, height.toFloat() / video.height)
-        val matrix = Matrix()
-        matrix.setScale(video.width * scale / width, video.height * scale / height, width / 2f, height / 2f)
-        setTransform(matrix)
+        if (video.width <= 0 || video.height <= 0) return
+        setTransform(ClipFrame.transform(width.toFloat(), height.toFloat(), video))
     }
 
     override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
