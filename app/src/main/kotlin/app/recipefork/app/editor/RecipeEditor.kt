@@ -7,6 +7,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.HeldDragHandleSide
+import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
@@ -395,9 +396,40 @@ class RecipeEditor(
         wholeAgain.compareAndSet(statement, null)
     }
 
-    /** A `piece` row's divisibility, which the author is asked for (FLOW-022 (5)). */
-    fun setIngredientDivisible(position: Int, divisible: Boolean) = editIngredient(position) { row ->
-        if (row.unitType == UnitType.PIECE) row.copy(divisible = divisible) else row
+    /**
+     * A `piece` row's divisibility, which the author is asked for (FLOW-022 (5)): for free text, or for an entry the
+     * dictionary gives no divisibility. A row naming an entry that gives one holds the entry's (FLOW-023 (11)), and is
+     * not asked; returns false for it.
+     */
+    fun setIngredientDivisible(position: Int, divisible: Boolean): Boolean {
+        val row = current.value?.ingredients?.getOrNull(position) ?: return false
+        if (entryDivisible(row) != null) return false
+        return editIngredient(position) { if (it.unitType == UnitType.PIECE) it.copy(divisible = divisible) else it }
+    }
+
+    /** The divisibility of each dictionary entry that gives one, by its identity; filled from what the screen reads. */
+    private var entryFlags: Map<Long, Boolean> = emptyMap()
+
+    /**
+     * The dictionary's [entries] as the screen read them: from the next change on, every `piece` row naming an entry
+     * that gives a divisibility holds that divisibility, so a recipe file or a fork of the recipe carries it without
+     * the dictionary (FLOW-023 (11), FLOW-001 (2)). Nothing is written by being told.
+     */
+    fun knowEntries(entries: List<IngredientEntryEntity>) {
+        entryFlags = entries.mapNotNull { entry -> entry.divisible?.let { entry.id to it } }.toMap()
+    }
+
+    /** The divisibility the entry [row] names gives; null for free text, or an entry that gives none. */
+    fun entryDivisible(row: Ingredient): Boolean? = row.dictionaryEntry?.let(entryFlags::get)
+
+    /** [recipe] with each `piece` row naming an entry that gives a divisibility holding it. */
+    private fun withEntryDivisibility(recipe: Recipe): Recipe {
+        if (entryFlags.isEmpty()) return recipe
+        val rows = recipe.ingredients.map { row ->
+            val flag = entryDivisible(row)
+            if (row.unitType == UnitType.PIECE && flag != null && row.divisible != flag) row.copy(divisible = flag) else row
+        }
+        return if (rows == recipe.ingredients) recipe else recipe.copy(ingredients = rows)
     }
 
     /**
@@ -549,7 +581,7 @@ class RecipeEditor(
         val recipe = current.value ?: return false
         if (!recipe.state.editable) return false
         noteAction()
-        val next = recipe.edited(clock(), change)
+        val next = recipe.edited(clock()) { withEntryDivisibility(change(it)) }
         current.value = next
         if (left.value.isNotEmpty()) remark(next)
         // Launched in order and queued on a fair lock, so the book receives the changes in the order made.
@@ -565,11 +597,29 @@ class RecipeEditor(
 
     /** The row's ingredient as the dictionary entry [entryId], with no free-text name beside it (DOM-009). */
     fun setIngredientEntry(position: Int, entryId: Long) =
-        editIngredient(position) { it.copy(dictionaryEntry = entryId, freeTextName = null) }
+        editIngredient(position) { it.copy(dictionaryEntry = entryId, qualifier = null, freeTextName = null) }
 
-    /** The row's ingredient in the author's own words, replacing any entry it held (DOM-009); empty holds neither. */
-    fun setIngredientFreeText(position: Int, name: String) =
-        editIngredient(position) { it.copy(dictionaryEntry = null, qualifier = null, freeTextName = name.ifEmpty { null }) }
+    /**
+     * The row's ingredient in the author's own words, replacing any entry it held, and the entry's qualifier with it
+     * (DOM-009); empty holds neither. A divisibility the entry gave goes with the entry, so the author is asked again.
+     */
+    fun setIngredientFreeText(position: Int, name: String) = editIngredient(position) { row ->
+        val divisible = if (entryDivisible(row) != null) null else row.divisible
+        row.copy(dictionaryEntry = null, qualifier = null, freeTextName = name.ifEmpty { null }, divisible = divisible)
+    }
+
+    /**
+     * The words the author typed after the label of the row's entry, which narrow it ("крылышки острые"): kept beside
+     * the entry without the spaces and commas that separate them from the label; none holds no qualifier (DOM-009).
+     * A row in the author's own words takes none; returns false. The qualifier the row already holds changes nothing.
+     */
+    fun setIngredientQualifier(position: Int, qualifier: String?): Boolean {
+        val row = current.value?.ingredients?.getOrNull(position) ?: return false
+        if (row.dictionaryEntry == null) return false
+        val held = qualifier?.trim { it.isWhitespace() || it == ',' }?.ifEmpty { null }
+        if (held == row.qualifier) return true
+        return editIngredient(position) { it.copy(qualifier = held) }
+    }
 
     companion object {
         /** Where the row at [position] stands once the row at [from] has moved to [to]. */
