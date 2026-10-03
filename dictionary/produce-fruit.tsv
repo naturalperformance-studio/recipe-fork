@@ -1,0 +1,141 @@
+# Produce: citrus with their juice and zest, apples and pears, stone fruit, tropical fruit, coconut, melons and grapes.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 1000-2999
+
+# Citrus (2000-2049), their juice (2050-2059) and zest (2060-2069)
+2000	лимон	lemon		true	g=1 pc=100
+2001	лимон мейер	Meyer lemon	2000	true	g=1 pc=100
+2002	долька лимона	lemon wedge	2000	false	g=1 pc=12
+2003	ломтик лимона	lemon slice	2000	false	g=1 pc=8
+2010	лайм	lime		true	g=1 pc=70
+2011	долька лайма	lime wedge	2010	false	g=1 pc=8
+2012	ломтик лайма	lime slice	2010	false	g=1 pc=5
+2013	лайм мексиканский	key lime	2010	true	g=1 pc=30
+2014	лайм кафир	makrut lime	2010	true	g=1 pc=50
+2020	апельсин	orange		true	g=1 pc=180
+2021	апельсин красный	blood orange	2020	true	g=1 pc=150
+2022	апельсин навел	navel orange	2020	true	g=1 pc=200
+2023	апельсин валенсия	Valencia orange	2020	true	g=1 pc=180
+2024	апельсин горький	sour orange	2020	true	g=1 pc=150
+2025	долька апельсина	orange segment	2020	false	g=1 pc=12
+2026	кружок апельсина	orange slice	2020	false	g=1 pc=15
+2030	мандарин	mandarin		true	g=1 pc=80
+2031	клементин	clementine	2030	true	g=1 pc=70
+2032	танжерин	tangerine	2030	true	g=1 pc=80
+2033	мандарин сацума	satsuma	2030	true	g=1 pc=80
+2034	минеола	minneola	2030	true	g=1 pc=150
+2040	грейпфрут	grapefruit		true	g=1 pc=350
+2041	грейпфрут розовый	pink grapefruit	2040	true	g=1 pc=350
+2045	помело	pomelo		true	g=1 pc=1000
+2046	свити	oroblanco		true	g=1 pc=400
+2047	кумкват	kumquat		false	g=1 pc=15
+2048	юдзу	yuzu		true	g=1 pc=100
+2050	лимонный сок	lemon juice			g=1 ml=1.03 tsp=5 tbsp=15 cup=255
+2051	сок лайма	lime juice			g=1 ml=1.03 tsp=5 tbsp=15 cup=255
+2052	апельсиновый сок	orange juice			g=1 ml=1.04 tsp=5 tbsp=15 cup=260
+2060	цедра	citrus zest			g=1 tsp=2 tbsp=6
+2061	цедра лимона	lemon zest	2060		g=1 tsp=2 tbsp=6
+2062	цедра лайма	lime zest	2060		g=1 tsp=2 tbsp=6
+2063	цедра апельсина	orange zest	2060		g=1 tsp=2 tbsp=6
+2064	цедра мандарина	mandarin zest	2060		g=1 tsp=2 tbsp=6
+2065	цедра грейпфрута	grapefruit zest	2060		g=1 tsp=2 tbsp=6
+# Apples (2100-2119), pears (2120-2129), quince and loquat (2130-2139)
+2100	яблоко	apple		true	g=1 pc=180 cup=110
+2101	яблоко зелёное	green apple	2100	true	g=1 pc=180 cup=110
+2102	яблоко красное	red apple	2100	true	g=1 pc=180 cup=110
+2103	яблоко кислое	tart apple	2100	true	g=1 pc=200 cup=110
+2104	антоновка	Antonovka apple	2100	true	g=1 pc=180
+2105	семеренко	Semerenko apple	2100	true	g=1 pc=180
+2106	белый налив	White Transparent apple	2100	true	g=1 pc=150
+2107	яблоко гренни смит	Granny Smith apple	2100	true	g=1 pc=180 cup=110
+2108	яблоко голден	Golden Delicious apple	2100	true	g=1 pc=180 cup=110
+2109	яблоко гала	Gala apple	2100	true	g=1 pc=160 cup=110
+2110	яблоко фуджи	Fuji apple	2100	true	g=1 pc=200 cup=110
+2111	яблоко ред делишес	Red Delicious apple	2100	true	g=1 pc=180 cup=110
+2112	ранетки	crab apples	2100	false	g=1 pc=25
+2120	груша	pear		true	g=1 pc=180 cup=140
+2121	груша конференция	Conference pear	2120	true	g=1 pc=180
+2122	груша вильямс	Bartlett pear	2120	true	g=1 pc=180
+2123	груша боск	Bosc pear	2120	true	g=1 pc=180
+2124	груша анжу	Anjou pear	2120	true	g=1 pc=200
+2125	груша наши	Asian pear	2120	true	g=1 pc=300
+2130	айва	quince		true	g=1 pc=300
+2131	мушмула	loquat		false	g=1 pc=30
+# Stone fruit (2140-2149)
+2140	персик	peach		true	g=1 pc=150 cup=155
+2141	персик плоский	donut peach	2140	true	g=1 pc=100
+2142	нектарин	nectarine	2140	true	g=1 pc=140 cup=145
+2143	абрикос	apricot		true	g=1 pc=40 cup=155
+2144	унаби	jujube		false	g=1 pc=15
+2145	слива	plum		true	g=1 pc=40 cup=165
+2146	слива венгерка	Italian prune plum	2145	true	g=1 pc=30
+2147	слива жёлтая	yellow plum	2145	true	g=1 pc=40
+2148	слива чёрная	black plum	2145	true	g=1 pc=60
+2149	мирабель	mirabelle plums	2145	false	g=1 pc=15
+2138	алыча	cherry plum	2145	false	g=1 pc=20
+2139	тёрн	sloes	2145		g=1
+# Tropical and exotic fruit, coconut (2150-2199)
+2150	банан	banana		true	g=1 pc=120 cup=150
+2151	банан мини	baby banana	2150	true	g=1 pc=50
+2152	плантан	plantain	2150	true	g=1 pc=250
+2155	манго	mango		true	g=1 pc=300 cup=165
+2156	манго замороженное	frozen mango	2155		g=1 cup=165
+2160	ананас	pineapple		true	g=1 pc=1000 cup=165
+2165	киви	kiwi		true	g=1 pc=75
+2166	киви золотой	golden kiwi	2165	true	g=1 pc=90
+2167	киви мини	kiwi berries	2165	false	g=1 pc=8
+2170	авокадо	avocado		true	g=1 pc=170 cup=150
+2171	авокадо хасс	Hass avocado	2170	true	g=1 pc=170 cup=150
+2175	папайя	papaya		true	g=1 pc=500 cup=145
+2176	маракуйя	passion fruit		true	g=1 pc=20
+2177	гранат	pomegranate		true	g=1 pc=300
+2178	зёрна граната	pomegranate seeds	2177		g=1 tbsp=11 cup=175
+2179	личи	lychee		false	g=1 pc=10
+2180	лонган	longan		false	g=1 pc=8
+2181	рамбутан	rambutan		false	g=1 pc=30
+2182	хурма	persimmon		true	g=1 pc=200
+2183	хурма королёк	chocolate persimmon	2182	true	g=1 pc=180
+2184	фейхоа	feijoa		true	g=1 pc=40
+2185	инжир	fig		true	g=1 pc=50
+2186	карамбола	star fruit		true	g=1 pc=90
+2187	гуава	guava		true	g=1 pc=55
+2188	питахайя	dragon fruit		true	g=1 pc=350
+2189	джекфрут	jackfruit			g=1
+2190	мангостин	mangosteen		false	g=1 pc=80
+2191	физалис	physalis		false	g=1 pc=5
+2192	черимойя	cherimoya		true	g=1 pc=300
+2193	кивано	horned melon		true	g=1 pc=250
+2195	кокос	coconut			g=1
+2196	мякоть кокоса	fresh coconut	2195		g=1 cup=80
+2197	кокосовая стружка	unsweetened shredded coconut	2195		g=1 tbsp=5 cup=80
+2198	кокосовые чипсы	coconut chips	2195		g=1 cup=60
+# Melons and grapes, fruit in general (2200-2299)
+2200	дыня	melon		true	g=1 pc=1500 cup=160
+2201	дыня канталупа	cantaloupe	2200	true	g=1 pc=1000 cup=160
+2202	дыня медовая	honeydew melon	2200	true	g=1 pc=1500 cup=170
+2205	арбуз	watermelon			g=1 cup=150
+2210	виноград	grapes			g=1 cup=150
+2211	виноград зелёный	green grapes	2210		g=1 cup=150
+2212	виноград красный	red grapes	2210		g=1 cup=150
+2213	виноград тёмный	black grapes	2210		g=1 cup=150
+2214	виноград кишмиш	seedless grapes	2210		g=1 cup=150
+2220	фрукты	fruit			g=1
+2221	фруктовая смесь замороженная	frozen mixed fruit	2220		g=1 cup=150
+2153	банановый лист	banana leaf		false	g=1 pc=30
+2157	манго зелёное	green mango	2155	true	g=1 pc=300
+2174	папайя зелёная	green papaya	2175	true	g=1 pc=500
+2215	виноград мускат	muscat grapes	2210		g=1 cup=150
+2216	виноград конкорд	Concord grapes	2210		g=1 cup=150
+2113	яблоко айдаред	Idared apple	2100	true	g=1 pc=180 cup=110
+2114	яблоко джонагольд	Jonagold apple	2100	true	g=1 pc=200 cup=110
+2115	яблоко брейберн	Braeburn apple	2100	true	g=1 pc=180 cup=110
+2137	персик белый	white peach	2140	true	g=1 pc=150
+2049	бергамот	bergamot		true	g=1 pc=150
+2158	манго атаульфо	Ataulfo mango	2155	true	g=1 pc=250
+2203	дыня галия	Galia melon	2200	true	g=1 pc=1000 cup=170
+2204	дыня торпеда	Torpedo melon	2200	true	g=1 pc=3000 cup=170
+2206	арбуз жёлтый	yellow watermelon	2205		g=1 cup=150
+2132	айва японская	Japanese quince	2130	false	g=1 pc=40
+2199	питахайя жёлтая	yellow dragon fruit	2188	true	g=1 pc=250
+2154	банан замороженный	frozen banana	2150	true	g=1 pc=120
+2161	ананас замороженный	frozen pineapple	2160		g=1 cup=165

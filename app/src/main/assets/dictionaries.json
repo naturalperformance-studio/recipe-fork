@@ -1,5 +1,5 @@
 {
-  "version": "8c42dce7d74be3b09311901dc2af5df9d3b6df31ee209a06bd722cbb2e6c4983",
+  "version": "252a93841692c8b665013ae6e7ab3b5849885f7260655bcc48bc256925749f7b",
   "ingredients": [
     {
       "id": 1,
@@ -44,6 +44,6274 @@
       "labelEn": "beef",
       "factors": {
         "g": 1.0
+      }
+    },
+    {
+      "id": 1000,
+      "labelRu": "картофель",
+      "labelEn": "potato",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1001,
+      "labelRu": "картофель молодой",
+      "labelEn": "new potatoes",
+      "parentId": 1000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 1002,
+      "labelRu": "картофель мелкий",
+      "labelEn": "baby potatoes",
+      "parentId": 1000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 1003,
+      "labelRu": "картофель красный",
+      "labelEn": "red potato",
+      "parentId": 1000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1004,
+      "labelRu": "картофель жёлтый",
+      "labelEn": "yellow potato",
+      "parentId": 1000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1005,
+      "labelRu": "картофель фиолетовый",
+      "labelEn": "purple potato",
+      "parentId": 1000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 1006,
+      "labelRu": "картофель рассыпчатый",
+      "labelEn": "starchy potato",
+      "parentId": 1000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1007,
+      "labelRu": "картофель руссет",
+      "labelEn": "russet potato",
+      "parentId": 1000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 1008,
+      "labelRu": "картофель фри замороженный",
+      "labelEn": "frozen French fries",
+      "parentId": 1000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1009,
+      "labelRu": "картофельные дольки замороженные",
+      "labelEn": "frozen potato wedges",
+      "parentId": 1000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1010,
+      "labelRu": "картофель юкон голд",
+      "labelEn": "Yukon Gold potato",
+      "parentId": 1000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 170.0
+      }
+    },
+    {
+      "id": 1011,
+      "labelRu": "картофель фингерлинг",
+      "labelEn": "fingerling potatoes",
+      "parentId": 1000,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 1020,
+      "labelRu": "батат",
+      "labelEn": "sweet potato",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 1021,
+      "labelRu": "батат фиолетовый",
+      "labelEn": "purple sweet potato",
+      "parentId": 1020,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 1030,
+      "labelRu": "морковь",
+      "labelEn": "carrot",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 1031,
+      "labelRu": "морковь молодая",
+      "labelEn": "young carrots",
+      "parentId": 1030,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 1032,
+      "labelRu": "морковь мини",
+      "labelEn": "baby carrots",
+      "parentId": 1030,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 1033,
+      "labelRu": "морковь фиолетовая",
+      "labelEn": "purple carrot",
+      "parentId": 1030,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 1034,
+      "labelRu": "морковь жёлтая",
+      "labelEn": "yellow carrot",
+      "parentId": 1030,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 1035,
+      "labelRu": "морковь замороженная",
+      "labelEn": "frozen carrots",
+      "parentId": 1030,
+      "factors": {
+        "g": 1.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 1040,
+      "labelRu": "свёкла",
+      "labelEn": "beet",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 1041,
+      "labelRu": "свёкла молодая",
+      "labelEn": "baby beets",
+      "parentId": 1040,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 1042,
+      "labelRu": "свёкла варёная",
+      "labelEn": "cooked beets",
+      "parentId": 1040,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 1043,
+      "labelRu": "свёкла золотистая",
+      "labelEn": "golden beets",
+      "parentId": 1040,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1044,
+      "labelRu": "свёкла чиоджа",
+      "labelEn": "Chioggia beets",
+      "parentId": 1040,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1049,
+      "labelRu": "редька",
+      "labelEn": "winter radish",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 1050,
+      "labelRu": "редис",
+      "labelEn": "radish",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 115.0
+      }
+    },
+    {
+      "id": 1051,
+      "labelRu": "редька чёрная",
+      "labelEn": "black radish",
+      "parentId": 1049,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 1052,
+      "labelRu": "редька зелёная",
+      "labelEn": "green radish",
+      "parentId": 1049,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 1053,
+      "labelRu": "дайкон",
+      "labelEn": "daikon",
+      "parentId": 1049,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0,
+        "cup": 115.0
+      }
+    },
+    {
+      "id": 1054,
+      "labelRu": "репа",
+      "labelEn": "turnip",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 1055,
+      "labelRu": "брюква",
+      "labelEn": "rutabaga",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 1056,
+      "labelRu": "пастернак",
+      "labelEn": "parsnip",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 1057,
+      "labelRu": "петрушка корневая",
+      "labelEn": "parsley root",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 1058,
+      "labelRu": "сельдерей корневой",
+      "labelEn": "celeriac",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 600.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 1059,
+      "labelRu": "топинамбур",
+      "labelEn": "Jerusalem artichoke",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1060,
+      "labelRu": "имбирь",
+      "labelEn": "ginger",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 1061,
+      "labelRu": "корень хрена",
+      "labelEn": "horseradish root",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 7.0
+      }
+    },
+    {
+      "id": 1062,
+      "labelRu": "куркума свежая",
+      "labelEn": "fresh turmeric",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0
+      }
+    },
+    {
+      "id": 1063,
+      "labelRu": "галангал",
+      "labelEn": "galangal",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 1064,
+      "labelRu": "маниока",
+      "labelEn": "cassava",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 1065,
+      "labelRu": "ямс",
+      "labelEn": "yam",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 1066,
+      "labelRu": "таро",
+      "labelEn": "taro",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1067,
+      "labelRu": "хикама",
+      "labelEn": "jicama",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 1068,
+      "labelRu": "корень лотоса",
+      "labelEn": "lotus root",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1069,
+      "labelRu": "корень лопуха",
+      "labelEn": "burdock root",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1070,
+      "labelRu": "скорцонера",
+      "labelEn": "salsify",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1071,
+      "labelRu": "редис арбузный",
+      "labelEn": "watermelon radish",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1100,
+      "labelRu": "лук",
+      "labelEn": "onion",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0,
+        "tbsp": 10.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 1101,
+      "labelRu": "лук репчатый",
+      "labelEn": "yellow onion",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0,
+        "tbsp": 10.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 1102,
+      "labelRu": "лук красный",
+      "labelEn": "red onion",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0,
+        "tbsp": 10.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 1103,
+      "labelRu": "лук белый",
+      "labelEn": "white onion",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0,
+        "tbsp": 10.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 1104,
+      "labelRu": "лук сладкий",
+      "labelEn": "sweet onion",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0,
+        "tbsp": 10.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 1105,
+      "labelRu": "лук-шалот",
+      "labelEn": "shallot",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 1106,
+      "labelRu": "лук-порей",
+      "labelEn": "leek",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 1107,
+      "labelRu": "лук зелёный",
+      "labelEn": "scallion",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "tbsp": 6.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 1108,
+      "labelRu": "лук жемчужный",
+      "labelEn": "pearl onions",
+      "parentId": 1100,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 1109,
+      "labelRu": "лук-батун",
+      "labelEn": "Welsh onion",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 1110,
+      "labelRu": "шнитт-лук",
+      "labelEn": "chives",
+      "parentId": 1100,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "cup": 50.0
+      }
+    },
+    {
+      "id": 1111,
+      "labelRu": "лук душистый",
+      "labelEn": "garlic chives",
+      "parentId": 1100,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 1112,
+      "labelRu": "лук ялтинский",
+      "labelEn": "Crimean red onion",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0,
+        "tbsp": 10.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 1113,
+      "labelRu": "лук чипполини",
+      "labelEn": "cipollini onions",
+      "parentId": 1100,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 1114,
+      "labelRu": "лук-порей мини",
+      "labelEn": "baby leeks",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 1115,
+      "labelRu": "черемша",
+      "labelEn": "wild garlic",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1116,
+      "labelRu": "лук-шалот банановый",
+      "labelEn": "banana shallot",
+      "parentId": 1100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 1120,
+      "labelRu": "чеснок",
+      "labelEn": "garlic",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 45.0
+      }
+    },
+    {
+      "id": 1121,
+      "labelRu": "чеснок молодой",
+      "labelEn": "young garlic",
+      "parentId": 1120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 1122,
+      "labelRu": "чеснок чёрный",
+      "labelEn": "black garlic",
+      "parentId": 1120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 1125,
+      "labelRu": "зубчик чеснока",
+      "labelEn": "garlic clove",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0,
+        "tsp": 4.0,
+        "tbsp": 12.0
+      }
+    },
+    {
+      "id": 1126,
+      "labelRu": "стрелки чеснока",
+      "labelEn": "garlic scapes",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1127,
+      "labelRu": "чеснок слоновый",
+      "labelEn": "elephant garlic",
+      "parentId": 1120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1200,
+      "labelRu": "капуста",
+      "labelEn": "cabbage",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1201,
+      "labelRu": "капуста белокочанная",
+      "labelEn": "green cabbage",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1202,
+      "labelRu": "капуста краснокочанная",
+      "labelEn": "red cabbage",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1203,
+      "labelRu": "капуста савойская",
+      "labelEn": "savoy cabbage",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 900.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1204,
+      "labelRu": "капуста пекинская",
+      "labelEn": "napa cabbage",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 900.0,
+        "cup": 75.0
+      }
+    },
+    {
+      "id": 1205,
+      "labelRu": "капуста молодая",
+      "labelEn": "young cabbage",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 800.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1206,
+      "labelRu": "пак-чой",
+      "labelEn": "bok choy",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1207,
+      "labelRu": "капуста кейл",
+      "labelEn": "kale",
+      "parentId": 1200,
+      "factors": {
+        "g": 1.0,
+        "cup": 25.0
+      }
+    },
+    {
+      "id": 1208,
+      "labelRu": "капуста романеско",
+      "labelEn": "romanesco",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 1209,
+      "labelRu": "кольраби",
+      "labelEn": "kohlrabi",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 1210,
+      "labelRu": "капуста листовая",
+      "labelEn": "collard greens",
+      "parentId": 1200,
+      "factors": {
+        "g": 1.0,
+        "cup": 35.0
+      }
+    },
+    {
+      "id": 1211,
+      "labelRu": "чой-сум",
+      "labelEn": "choy sum",
+      "parentId": 1200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1212,
+      "labelRu": "капустный лист",
+      "labelEn": "cabbage leaf",
+      "parentId": 1200,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 1213,
+      "labelRu": "капуста тосканская",
+      "labelEn": "Tuscan kale",
+      "parentId": 1200,
+      "factors": {
+        "g": 1.0,
+        "cup": 25.0
+      }
+    },
+    {
+      "id": 1214,
+      "labelRu": "пак-чой мини",
+      "labelEn": "baby bok choy",
+      "parentId": 1200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 1220,
+      "labelRu": "брокколи",
+      "labelEn": "broccoli",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 1221,
+      "labelRu": "брокколи замороженная",
+      "labelEn": "frozen broccoli",
+      "parentId": 1220,
+      "factors": {
+        "g": 1.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 1222,
+      "labelRu": "брокколини",
+      "labelEn": "broccolini",
+      "parentId": 1220,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1223,
+      "labelRu": "соцветие брокколи",
+      "labelEn": "broccoli floret",
+      "parentId": 1220,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 1224,
+      "labelRu": "китайская брокколи",
+      "labelEn": "Chinese broccoli",
+      "parentId": 1220,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1230,
+      "labelRu": "цветная капуста",
+      "labelEn": "cauliflower",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 700.0,
+        "cup": 105.0
+      }
+    },
+    {
+      "id": 1231,
+      "labelRu": "цветная капуста замороженная",
+      "labelEn": "frozen cauliflower",
+      "parentId": 1230,
+      "factors": {
+        "g": 1.0,
+        "cup": 105.0
+      }
+    },
+    {
+      "id": 1232,
+      "labelRu": "соцветие цветной капусты",
+      "labelEn": "cauliflower floret",
+      "parentId": 1230,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 1240,
+      "labelRu": "брюссельская капуста",
+      "labelEn": "Brussels sprouts",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 1241,
+      "labelRu": "брюссельская капуста замороженная",
+      "labelEn": "frozen Brussels sprouts",
+      "parentId": 1240,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 1300,
+      "labelRu": "помидор",
+      "labelEn": "tomato",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0,
+        "cup": 180.0
+      }
+    },
+    {
+      "id": 1301,
+      "labelRu": "помидор черри",
+      "labelEn": "cherry tomato",
+      "parentId": 1300,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1302,
+      "labelRu": "помидор сливка",
+      "labelEn": "plum tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 70.0,
+        "cup": 180.0
+      }
+    },
+    {
+      "id": 1303,
+      "labelRu": "помидор бычье сердце",
+      "labelEn": "beefsteak tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 1304,
+      "labelRu": "помидор розовый",
+      "labelEn": "pink tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 1305,
+      "labelRu": "помидор жёлтый",
+      "labelEn": "yellow tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 1306,
+      "labelRu": "помидор зелёный",
+      "labelEn": "green tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 1307,
+      "labelRu": "помидор на ветке",
+      "labelEn": "vine tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 1308,
+      "labelRu": "помидор черри жёлтый",
+      "labelEn": "yellow cherry tomato",
+      "parentId": 1300,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1309,
+      "labelRu": "помидор черри сливовидный",
+      "labelEn": "grape tomato",
+      "parentId": 1300,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1310,
+      "labelRu": "помидор черри на ветке",
+      "labelEn": "cherry tomatoes on the vine",
+      "parentId": 1300,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1311,
+      "labelRu": "помидор сан марцано",
+      "labelEn": "San Marzano tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 1312,
+      "labelRu": "помидор чёрный",
+      "labelEn": "black tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1313,
+      "labelRu": "помидор оранжевый",
+      "labelEn": "orange tomato",
+      "parentId": 1300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 1315,
+      "labelRu": "томатилло",
+      "labelEn": "tomatillo",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 35.0
+      }
+    },
+    {
+      "id": 1319,
+      "labelRu": "перец болгарский замороженный",
+      "labelEn": "frozen bell pepper",
+      "parentId": 1330,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1320,
+      "labelRu": "огурец",
+      "labelEn": "cucumber",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 1321,
+      "labelRu": "огурец длинноплодный",
+      "labelEn": "English cucumber",
+      "parentId": 1320,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 1322,
+      "labelRu": "огурец короткоплодный",
+      "labelEn": "mini cucumber",
+      "parentId": 1320,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 1323,
+      "labelRu": "огурец для засолки",
+      "labelEn": "pickling cucumber",
+      "parentId": 1320,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 1324,
+      "labelRu": "огурец армянский",
+      "labelEn": "Armenian cucumber",
+      "parentId": 1320,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 1330,
+      "labelRu": "перец болгарский",
+      "labelEn": "bell pepper",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1331,
+      "labelRu": "перец болгарский красный",
+      "labelEn": "red bell pepper",
+      "parentId": 1330,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 160.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1332,
+      "labelRu": "перец болгарский жёлтый",
+      "labelEn": "yellow bell pepper",
+      "parentId": 1330,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 160.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1333,
+      "labelRu": "перец болгарский зелёный",
+      "labelEn": "green bell pepper",
+      "parentId": 1330,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 140.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1334,
+      "labelRu": "перец болгарский оранжевый",
+      "labelEn": "orange bell pepper",
+      "parentId": 1330,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 160.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1335,
+      "labelRu": "перец рамиро",
+      "labelEn": "pointed pepper",
+      "parentId": 1330,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 1336,
+      "labelRu": "перец мини",
+      "labelEn": "mini sweet pepper",
+      "parentId": 1330,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 1337,
+      "labelRu": "перец падрон",
+      "labelEn": "padrón pepper",
+      "parentId": 1330,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 1338,
+      "labelRu": "перец шишито",
+      "labelEn": "shishito pepper",
+      "parentId": 1330,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0
+      }
+    },
+    {
+      "id": 1339,
+      "labelRu": "перец банановый",
+      "labelEn": "banana pepper",
+      "parentId": 1330,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 1340,
+      "labelRu": "перец чили",
+      "labelEn": "chili pepper",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "tsp": 3.0
+      }
+    },
+    {
+      "id": 1341,
+      "labelRu": "перец чили красный",
+      "labelEn": "red chili",
+      "parentId": 1340,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "tsp": 3.0
+      }
+    },
+    {
+      "id": 1342,
+      "labelRu": "перец чили зелёный",
+      "labelEn": "green chili",
+      "parentId": 1340,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0,
+        "tsp": 3.0
+      }
+    },
+    {
+      "id": 1343,
+      "labelRu": "халапеньо",
+      "labelEn": "jalapeño",
+      "parentId": 1340,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "tsp": 3.0
+      }
+    },
+    {
+      "id": 1344,
+      "labelRu": "перец хабанеро",
+      "labelEn": "habanero",
+      "parentId": 1340,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 1345,
+      "labelRu": "перец птичий глаз",
+      "labelEn": "bird's eye chili",
+      "parentId": 1340,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 2.0
+      }
+    },
+    {
+      "id": 1346,
+      "labelRu": "перец серрано",
+      "labelEn": "serrano pepper",
+      "parentId": 1340,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0
+      }
+    },
+    {
+      "id": 1347,
+      "labelRu": "перец поблано",
+      "labelEn": "poblano pepper",
+      "parentId": 1340,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 1348,
+      "labelRu": "перец скотч боннет",
+      "labelEn": "Scotch bonnet",
+      "parentId": 1340,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 1349,
+      "labelRu": "перец анахайм",
+      "labelEn": "Anaheim pepper",
+      "parentId": 1340,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 1350,
+      "labelRu": "баклажан",
+      "labelEn": "eggplant",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0,
+        "cup": 80.0
+      }
+    },
+    {
+      "id": 1351,
+      "labelRu": "баклажан японский",
+      "labelEn": "Japanese eggplant",
+      "parentId": 1350,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 1352,
+      "labelRu": "баклажан белый",
+      "labelEn": "white eggplant",
+      "parentId": 1350,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 1360,
+      "labelRu": "кабачок",
+      "labelEn": "summer squash",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 1361,
+      "labelRu": "цукини",
+      "labelEn": "zucchini",
+      "parentId": 1360,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 1362,
+      "labelRu": "кабачок молодой",
+      "labelEn": "baby zucchini",
+      "parentId": 1360,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 1363,
+      "labelRu": "кабачок жёлтый",
+      "labelEn": "yellow squash",
+      "parentId": 1360,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 1364,
+      "labelRu": "цветки кабачка",
+      "labelEn": "squash blossoms",
+      "parentId": 1360,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0
+      }
+    },
+    {
+      "id": 1365,
+      "labelRu": "патиссон",
+      "labelEn": "pattypan squash",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 1366,
+      "labelRu": "кабачок замороженный",
+      "labelEn": "frozen zucchini",
+      "parentId": 1360,
+      "factors": {
+        "g": 1.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 1367,
+      "labelRu": "патиссон мини",
+      "labelEn": "baby pattypan squash",
+      "parentId": 1365,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 1370,
+      "labelRu": "тыква",
+      "labelEn": "pumpkin",
+      "factors": {
+        "g": 1.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 1371,
+      "labelRu": "тыква мускатная",
+      "labelEn": "butternut squash",
+      "parentId": 1370,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 1372,
+      "labelRu": "тыква хоккайдо",
+      "labelEn": "red kuri squash",
+      "parentId": 1370,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1200.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 1373,
+      "labelRu": "тыква спагетти",
+      "labelEn": "spaghetti squash",
+      "parentId": 1370,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1200.0
+      }
+    },
+    {
+      "id": 1374,
+      "labelRu": "тыква жёлудевая",
+      "labelEn": "acorn squash",
+      "parentId": 1370,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 600.0
+      }
+    },
+    {
+      "id": 1375,
+      "labelRu": "тыква кабоча",
+      "labelEn": "kabocha squash",
+      "parentId": 1370,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1200.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 1376,
+      "labelRu": "тыква деликата",
+      "labelEn": "delicata squash",
+      "parentId": 1370,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0
+      }
+    },
+    {
+      "id": 1377,
+      "labelRu": "тыква замороженная",
+      "labelEn": "frozen pumpkin",
+      "parentId": 1370,
+      "factors": {
+        "g": 1.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 1380,
+      "labelRu": "чайот",
+      "labelEn": "chayote",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 1381,
+      "labelRu": "момордика",
+      "labelEn": "bitter melon",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 1382,
+      "labelRu": "нопалес",
+      "labelEn": "nopales",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 1400,
+      "labelRu": "кукуруза",
+      "labelEn": "corn",
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 1401,
+      "labelRu": "кукуруза замороженная",
+      "labelEn": "frozen corn",
+      "parentId": 1400,
+      "factors": {
+        "g": 1.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 1402,
+      "labelRu": "початок кукурузы",
+      "labelEn": "corn on the cob",
+      "parentId": 1400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 1403,
+      "labelRu": "мини-кукуруза",
+      "labelEn": "baby corn",
+      "parentId": 1400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 1410,
+      "labelRu": "горошек зелёный",
+      "labelEn": "green peas",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 1411,
+      "labelRu": "горошек замороженный",
+      "labelEn": "frozen peas",
+      "parentId": 1410,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 1412,
+      "labelRu": "горох стручковый",
+      "labelEn": "snow peas",
+      "parentId": 1410,
+      "factors": {
+        "g": 1.0,
+        "cup": 65.0
+      }
+    },
+    {
+      "id": 1413,
+      "labelRu": "горошек сахарный",
+      "labelEn": "sugar snap peas",
+      "parentId": 1410,
+      "factors": {
+        "g": 1.0,
+        "cup": 65.0
+      }
+    },
+    {
+      "id": 1414,
+      "labelRu": "ростки гороха",
+      "labelEn": "pea shoots",
+      "parentId": 1410,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1420,
+      "labelRu": "фасоль стручковая",
+      "labelEn": "green beans",
+      "factors": {
+        "g": 1.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 1421,
+      "labelRu": "фасоль стручковая замороженная",
+      "labelEn": "frozen green beans",
+      "parentId": 1420,
+      "factors": {
+        "g": 1.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 1422,
+      "labelRu": "фасоль стручковая жёлтая",
+      "labelEn": "yellow wax beans",
+      "parentId": 1420,
+      "factors": {
+        "g": 1.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 1423,
+      "labelRu": "фасоль спаржевая",
+      "labelEn": "yardlong beans",
+      "parentId": 1420,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1424,
+      "labelRu": "фасоль стручковая плоская",
+      "labelEn": "romano beans",
+      "parentId": 1420,
+      "factors": {
+        "g": 1.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 1500,
+      "labelRu": "сельдерей",
+      "labelEn": "celery",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 1501,
+      "labelRu": "зелень сельдерея",
+      "labelEn": "celery leaves",
+      "parentId": 1500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0
+      }
+    },
+    {
+      "id": 1502,
+      "labelRu": "стебель сельдерея",
+      "labelEn": "celery stalk",
+      "parentId": 1500,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 1505,
+      "labelRu": "спаржа",
+      "labelEn": "asparagus",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 1506,
+      "labelRu": "спаржа зелёная",
+      "labelEn": "green asparagus",
+      "parentId": 1505,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 1507,
+      "labelRu": "спаржа белая",
+      "labelEn": "white asparagus",
+      "parentId": 1505,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 35.0
+      }
+    },
+    {
+      "id": 1508,
+      "labelRu": "спаржа фиолетовая",
+      "labelEn": "purple asparagus",
+      "parentId": 1505,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0
+      }
+    },
+    {
+      "id": 1510,
+      "labelRu": "артишок",
+      "labelEn": "artichoke",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 1511,
+      "labelRu": "артишок мини",
+      "labelEn": "baby artichoke",
+      "parentId": 1510,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 1515,
+      "labelRu": "фенхель",
+      "labelEn": "fennel",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 1516,
+      "labelRu": "бамия",
+      "labelEn": "okra",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 12.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 1517,
+      "labelRu": "ревень",
+      "labelEn": "rhubarb",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 1518,
+      "labelRu": "папоротник",
+      "labelEn": "fiddleheads",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1520,
+      "labelRu": "ростки фасоли",
+      "labelEn": "bean sprouts",
+      "factors": {
+        "g": 1.0,
+        "cup": 105.0
+      }
+    },
+    {
+      "id": 1521,
+      "labelRu": "ростки люцерны",
+      "labelEn": "alfalfa sprouts",
+      "factors": {
+        "g": 1.0,
+        "cup": 35.0
+      }
+    },
+    {
+      "id": 1522,
+      "labelRu": "микрозелень",
+      "labelEn": "microgreens",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1523,
+      "labelRu": "ростки пшеницы",
+      "labelEn": "wheat sprouts",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1524,
+      "labelRu": "ростки редиса",
+      "labelEn": "radish sprouts",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1525,
+      "labelRu": "ростки сои",
+      "labelEn": "soybean sprouts",
+      "factors": {
+        "g": 1.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1526,
+      "labelRu": "ростки подсолнечника",
+      "labelEn": "sunflower sprouts",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1530,
+      "labelRu": "овощи",
+      "labelEn": "vegetables",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1531,
+      "labelRu": "овощная смесь замороженная",
+      "labelEn": "frozen mixed vegetables",
+      "parentId": 1530,
+      "factors": {
+        "g": 1.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 1532,
+      "labelRu": "мексиканская смесь",
+      "labelEn": "Mexican vegetable mix",
+      "parentId": 1530,
+      "factors": {
+        "g": 1.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 1533,
+      "labelRu": "овощи для вока",
+      "labelEn": "stir-fry vegetables",
+      "parentId": 1530,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1534,
+      "labelRu": "овощи для борща",
+      "labelEn": "borscht vegetable mix",
+      "parentId": 1530,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1535,
+      "labelRu": "овощи для супа",
+      "labelEn": "soup vegetable mix",
+      "parentId": 1530,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1600,
+      "labelRu": "листья салата",
+      "labelEn": "salad greens",
+      "factors": {
+        "g": 1.0,
+        "cup": 30.0
+      }
+    },
+    {
+      "id": 1601,
+      "labelRu": "салат листовой",
+      "labelEn": "lettuce",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0,
+        "cup": 50.0
+      }
+    },
+    {
+      "id": 1602,
+      "labelRu": "салат айсберг",
+      "labelEn": "iceberg lettuce",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1603,
+      "labelRu": "салат романо",
+      "labelEn": "romaine lettuce",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "cup": 50.0
+      }
+    },
+    {
+      "id": 1604,
+      "labelRu": "салат фриллис",
+      "labelEn": "frilly iceberg lettuce",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0,
+        "cup": 50.0
+      }
+    },
+    {
+      "id": 1605,
+      "labelRu": "салат лолло россо",
+      "labelEn": "lollo rosso",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 1606,
+      "labelRu": "салат батавия",
+      "labelEn": "batavia lettuce",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 1607,
+      "labelRu": "салат дубовый лист",
+      "labelEn": "oak leaf lettuce",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 1608,
+      "labelRu": "салат кочанный",
+      "labelEn": "butterhead lettuce",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 1609,
+      "labelRu": "салат корн",
+      "labelEn": "mâche",
+      "parentId": 1600,
+      "factors": {
+        "g": 1.0,
+        "cup": 20.0
+      }
+    },
+    {
+      "id": 1610,
+      "labelRu": "руккола",
+      "labelEn": "arugula",
+      "parentId": 1600,
+      "factors": {
+        "g": 1.0,
+        "cup": 20.0
+      }
+    },
+    {
+      "id": 1611,
+      "labelRu": "радиккио",
+      "labelEn": "radicchio",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 1612,
+      "labelRu": "эндивий",
+      "labelEn": "endive",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 1613,
+      "labelRu": "фризе",
+      "labelEn": "frisée",
+      "parentId": 1600,
+      "factors": {
+        "g": 1.0,
+        "cup": 25.0
+      }
+    },
+    {
+      "id": 1614,
+      "labelRu": "эскариоль",
+      "labelEn": "escarole",
+      "parentId": 1600,
+      "factors": {
+        "g": 1.0,
+        "cup": 25.0
+      }
+    },
+    {
+      "id": 1615,
+      "labelRu": "кресс-салат",
+      "labelEn": "garden cress",
+      "parentId": 1600,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1616,
+      "labelRu": "водяной кресс",
+      "labelEn": "watercress",
+      "parentId": 1600,
+      "factors": {
+        "g": 1.0,
+        "cup": 35.0
+      }
+    },
+    {
+      "id": 1617,
+      "labelRu": "мизуна",
+      "labelEn": "mizuna",
+      "parentId": 1600,
+      "factors": {
+        "g": 1.0,
+        "cup": 25.0
+      }
+    },
+    {
+      "id": 1618,
+      "labelRu": "салатный микс",
+      "labelEn": "mixed greens",
+      "parentId": 1600,
+      "factors": {
+        "g": 1.0,
+        "cup": 30.0
+      }
+    },
+    {
+      "id": 1619,
+      "labelRu": "лист салата",
+      "labelEn": "lettuce leaf",
+      "parentId": 1600,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 1620,
+      "labelRu": "салат лолло бионда",
+      "labelEn": "lollo bionda",
+      "parentId": 1600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 1630,
+      "labelRu": "шпинат",
+      "labelEn": "spinach",
+      "factors": {
+        "g": 1.0,
+        "cup": 30.0
+      }
+    },
+    {
+      "id": 1631,
+      "labelRu": "шпинат молодой",
+      "labelEn": "baby spinach",
+      "parentId": 1630,
+      "factors": {
+        "g": 1.0,
+        "cup": 30.0
+      }
+    },
+    {
+      "id": 1632,
+      "labelRu": "шпинат замороженный",
+      "labelEn": "frozen spinach",
+      "parentId": 1630,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1635,
+      "labelRu": "мангольд",
+      "labelEn": "Swiss chard",
+      "factors": {
+        "g": 1.0,
+        "cup": 36.0
+      }
+    },
+    {
+      "id": 1636,
+      "labelRu": "щавель",
+      "labelEn": "sorrel",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 1637,
+      "labelRu": "крапива",
+      "labelEn": "nettles",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1638,
+      "labelRu": "свекольная ботва",
+      "labelEn": "beet greens",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1639,
+      "labelRu": "листья одуванчика",
+      "labelEn": "dandelion greens",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1640,
+      "labelRu": "листовая горчица",
+      "labelEn": "mustard greens",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1641,
+      "labelRu": "портулак",
+      "labelEn": "purslane",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1642,
+      "labelRu": "водяной шпинат",
+      "labelEn": "water spinach",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1643,
+      "labelRu": "виноградный лист",
+      "labelEn": "grape leaf",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.0
+      }
+    },
+    {
+      "id": 1644,
+      "labelRu": "листья репы",
+      "labelEn": "turnip greens",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1700,
+      "labelRu": "зелень",
+      "labelEn": "fresh herbs",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0,
+        "tbsp": 4.0,
+        "cup": 50.0
+      }
+    },
+    {
+      "id": 1701,
+      "labelRu": "укроп свежий",
+      "labelEn": "fresh dill",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "cup": 40.0
+      }
+    },
+    {
+      "id": 1702,
+      "labelRu": "петрушка свежая",
+      "labelEn": "fresh parsley",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0,
+        "tsp": 1.0,
+        "tbsp": 4.0,
+        "cup": 60.0
+      }
+    },
+    {
+      "id": 1703,
+      "labelRu": "петрушка листовая",
+      "labelEn": "flat-leaf parsley",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0,
+        "tsp": 1.0,
+        "tbsp": 4.0,
+        "cup": 60.0
+      }
+    },
+    {
+      "id": 1704,
+      "labelRu": "петрушка кудрявая",
+      "labelEn": "curly parsley",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0,
+        "tsp": 1.0,
+        "tbsp": 4.0,
+        "cup": 60.0
+      }
+    },
+    {
+      "id": 1705,
+      "labelRu": "кинза свежая",
+      "labelEn": "fresh cilantro",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "cup": 40.0
+      }
+    },
+    {
+      "id": 1706,
+      "labelRu": "базилик свежий",
+      "labelEn": "fresh basil",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 3.0,
+        "cup": 40.0
+      }
+    },
+    {
+      "id": 1707,
+      "labelRu": "базилик фиолетовый",
+      "labelEn": "purple basil",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 3.0,
+        "cup": 40.0
+      }
+    },
+    {
+      "id": 1708,
+      "labelRu": "базилик тайский",
+      "labelEn": "Thai basil",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 3.0,
+        "cup": 40.0
+      }
+    },
+    {
+      "id": 1709,
+      "labelRu": "лист базилика",
+      "labelEn": "basil leaf",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.5
+      }
+    },
+    {
+      "id": 1710,
+      "labelRu": "мята свежая",
+      "labelEn": "fresh mint",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 1.5,
+        "cup": 25.0
+      }
+    },
+    {
+      "id": 1711,
+      "labelRu": "мята перечная",
+      "labelEn": "peppermint",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 1.5,
+        "cup": 25.0
+      }
+    },
+    {
+      "id": 1712,
+      "labelRu": "мята кудрявая",
+      "labelEn": "spearmint",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 1.5,
+        "cup": 25.0
+      }
+    },
+    {
+      "id": 1713,
+      "labelRu": "лист мяты",
+      "labelEn": "mint leaf",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.3
+      }
+    },
+    {
+      "id": 1714,
+      "labelRu": "веточка мяты",
+      "labelEn": "mint sprig",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 2.0
+      }
+    },
+    {
+      "id": 1715,
+      "labelRu": "веточка петрушки",
+      "labelEn": "parsley sprig",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1716,
+      "labelRu": "веточка укропа",
+      "labelEn": "dill sprig",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1717,
+      "labelRu": "мелисса свежая",
+      "labelEn": "fresh lemon balm",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 1718,
+      "labelRu": "кинза вьетнамская",
+      "labelEn": "Vietnamese coriander",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 1719,
+      "labelRu": "зелень замороженная",
+      "labelEn": "frozen herbs",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 4.0
+      }
+    },
+    {
+      "id": 1720,
+      "labelRu": "розмарин свежий",
+      "labelEn": "fresh rosemary",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.6,
+        "tbsp": 1.7
+      }
+    },
+    {
+      "id": 1721,
+      "labelRu": "тимьян свежий",
+      "labelEn": "fresh thyme",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.8,
+        "tbsp": 2.4
+      }
+    },
+    {
+      "id": 1722,
+      "labelRu": "шалфей свежий",
+      "labelEn": "fresh sage",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0
+      }
+    },
+    {
+      "id": 1723,
+      "labelRu": "орегано свежий",
+      "labelEn": "fresh oregano",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0
+      }
+    },
+    {
+      "id": 1724,
+      "labelRu": "майоран свежий",
+      "labelEn": "fresh marjoram",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0
+      }
+    },
+    {
+      "id": 1725,
+      "labelRu": "эстрагон свежий",
+      "labelEn": "fresh tarragon",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 1726,
+      "labelRu": "кервель свежий",
+      "labelEn": "fresh chervil",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0
+      }
+    },
+    {
+      "id": 1727,
+      "labelRu": "любисток свежий",
+      "labelEn": "fresh lovage",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 1728,
+      "labelRu": "огуречная трава",
+      "labelEn": "borage",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1729,
+      "labelRu": "шисо",
+      "labelEn": "shiso",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1730,
+      "labelRu": "лемонграсс",
+      "labelEn": "lemongrass",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0
+      }
+    },
+    {
+      "id": 1731,
+      "labelRu": "лист лайма кафир",
+      "labelEn": "makrut lime leaf",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.5
+      }
+    },
+    {
+      "id": 1732,
+      "labelRu": "листья карри",
+      "labelEn": "curry leaves",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1733,
+      "labelRu": "лист пандана",
+      "labelEn": "pandan leaf",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.0
+      }
+    },
+    {
+      "id": 1734,
+      "labelRu": "лист смородины",
+      "labelEn": "black currant leaf",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1735,
+      "labelRu": "лист вишни",
+      "labelEn": "cherry leaf",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1736,
+      "labelRu": "лист хрена",
+      "labelEn": "horseradish leaf",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 1737,
+      "labelRu": "зонтик укропа",
+      "labelEn": "dill head",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0
+      }
+    },
+    {
+      "id": 1738,
+      "labelRu": "съедобные цветы",
+      "labelEn": "edible flowers",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1739,
+      "labelRu": "цветы бузины",
+      "labelEn": "elderflowers",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1740,
+      "labelRu": "базилик лимонный",
+      "labelEn": "lemon basil",
+      "parentId": 1700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 1741,
+      "labelRu": "тимьян лимонный",
+      "labelEn": "lemon thyme",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.8,
+        "tbsp": 2.4
+      }
+    },
+    {
+      "id": 1742,
+      "labelRu": "чабер свежий",
+      "labelEn": "fresh savory",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0
+      }
+    },
+    {
+      "id": 1743,
+      "labelRu": "зелень фенхеля",
+      "labelEn": "fennel fronds",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0
+      }
+    },
+    {
+      "id": 1744,
+      "labelRu": "укроп замороженный",
+      "labelEn": "frozen dill",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 4.0
+      }
+    },
+    {
+      "id": 1745,
+      "labelRu": "петрушка замороженная",
+      "labelEn": "frozen parsley",
+      "parentId": 1700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 4.0
+      }
+    },
+    {
+      "id": 1746,
+      "labelRu": "веточка розмарина",
+      "labelEn": "rosemary sprig",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 2.0
+      }
+    },
+    {
+      "id": 1747,
+      "labelRu": "веточка тимьяна",
+      "labelEn": "thyme sprig",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1748,
+      "labelRu": "веточка орегано",
+      "labelEn": "oregano sprig",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1749,
+      "labelRu": "веточка базилика",
+      "labelEn": "basil sprig",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.0
+      }
+    },
+    {
+      "id": 1750,
+      "labelRu": "веточка кинзы",
+      "labelEn": "cilantro sprig",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1751,
+      "labelRu": "лист шалфея",
+      "labelEn": "sage leaf",
+      "parentId": 1700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 1800,
+      "labelRu": "грибы",
+      "labelEn": "mushrooms",
+      "factors": {
+        "g": 1.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1801,
+      "labelRu": "шампиньоны",
+      "labelEn": "button mushrooms",
+      "parentId": 1800,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1802,
+      "labelRu": "шампиньоны королевские",
+      "labelEn": "cremini mushrooms",
+      "parentId": 1800,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 25.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1803,
+      "labelRu": "портобелло",
+      "labelEn": "portobello mushroom",
+      "parentId": 1800,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 1804,
+      "labelRu": "вешенки",
+      "labelEn": "oyster mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0,
+        "cup": 85.0
+      }
+    },
+    {
+      "id": 1805,
+      "labelRu": "королевская вешенка",
+      "labelEn": "king oyster mushroom",
+      "parentId": 1800,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 1806,
+      "labelRu": "шиитаке",
+      "labelEn": "shiitake",
+      "parentId": 1800,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1807,
+      "labelRu": "белые грибы",
+      "labelEn": "porcini",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1808,
+      "labelRu": "лисички",
+      "labelEn": "chanterelles",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0,
+        "cup": 55.0
+      }
+    },
+    {
+      "id": 1809,
+      "labelRu": "опята",
+      "labelEn": "honey mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1810,
+      "labelRu": "подберёзовики",
+      "labelEn": "birch boletes",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1811,
+      "labelRu": "подосиновики",
+      "labelEn": "aspen boletes",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1812,
+      "labelRu": "маслята",
+      "labelEn": "slippery jacks",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1813,
+      "labelRu": "грузди",
+      "labelEn": "milk caps",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1814,
+      "labelRu": "рыжики",
+      "labelEn": "saffron milk caps",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1815,
+      "labelRu": "сыроежки",
+      "labelEn": "russula",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1816,
+      "labelRu": "сморчки",
+      "labelEn": "morels",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1817,
+      "labelRu": "эноки",
+      "labelEn": "enoki",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1818,
+      "labelRu": "шимеджи",
+      "labelEn": "shimeji",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1819,
+      "labelRu": "майтаке",
+      "labelEn": "maitake",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1820,
+      "labelRu": "ежовик",
+      "labelEn": "lion's mane mushroom",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1821,
+      "labelRu": "муэр",
+      "labelEn": "wood ear mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1822,
+      "labelRu": "трюфель",
+      "labelEn": "truffle",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1823,
+      "labelRu": "лесные грибы",
+      "labelEn": "wild mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 1824,
+      "labelRu": "трюфель чёрный",
+      "labelEn": "black truffle",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1825,
+      "labelRu": "трюфель белый",
+      "labelEn": "white truffle",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1826,
+      "labelRu": "моховики",
+      "labelEn": "bay boletes",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1827,
+      "labelRu": "зонтики",
+      "labelEn": "parasol mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1828,
+      "labelRu": "волнушки",
+      "labelEn": "woolly milkcaps",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1830,
+      "labelRu": "грибы замороженные",
+      "labelEn": "frozen mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1831,
+      "labelRu": "шампиньоны замороженные",
+      "labelEn": "frozen button mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1832,
+      "labelRu": "белые грибы замороженные",
+      "labelEn": "frozen porcini",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1833,
+      "labelRu": "лисички замороженные",
+      "labelEn": "frozen chanterelles",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1834,
+      "labelRu": "опята замороженные",
+      "labelEn": "frozen honey mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1835,
+      "labelRu": "вешенки замороженные",
+      "labelEn": "frozen oyster mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1836,
+      "labelRu": "маслята замороженные",
+      "labelEn": "frozen slippery jacks",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1840,
+      "labelRu": "грибы сушёные",
+      "labelEn": "dried mushrooms",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1841,
+      "labelRu": "белые грибы сушёные",
+      "labelEn": "dried porcini",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1842,
+      "labelRu": "шиитаке сушёные",
+      "labelEn": "dried shiitake",
+      "parentId": 1800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.0
+      }
+    },
+    {
+      "id": 1843,
+      "labelRu": "сморчки сушёные",
+      "labelEn": "dried morels",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 1844,
+      "labelRu": "лисички сушёные",
+      "labelEn": "dried chanterelles",
+      "parentId": 1800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2000,
+      "labelRu": "лимон",
+      "labelEn": "lemon",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 2001,
+      "labelRu": "лимон мейер",
+      "labelEn": "Meyer lemon",
+      "parentId": 2000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 2002,
+      "labelRu": "долька лимона",
+      "labelEn": "lemon wedge",
+      "parentId": 2000,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 12.0
+      }
+    },
+    {
+      "id": 2003,
+      "labelRu": "ломтик лимона",
+      "labelEn": "lemon slice",
+      "parentId": 2000,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 2010,
+      "labelRu": "лайм",
+      "labelEn": "lime",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 70.0
+      }
+    },
+    {
+      "id": 2011,
+      "labelRu": "долька лайма",
+      "labelEn": "lime wedge",
+      "parentId": 2010,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 2012,
+      "labelRu": "ломтик лайма",
+      "labelEn": "lime slice",
+      "parentId": 2010,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0
+      }
+    },
+    {
+      "id": 2013,
+      "labelRu": "лайм мексиканский",
+      "labelEn": "key lime",
+      "parentId": 2010,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 2014,
+      "labelRu": "лайм кафир",
+      "labelEn": "makrut lime",
+      "parentId": 2010,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 2020,
+      "labelRu": "апельсин",
+      "labelEn": "orange",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 2021,
+      "labelRu": "апельсин красный",
+      "labelEn": "blood orange",
+      "parentId": 2020,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 2022,
+      "labelRu": "апельсин навел",
+      "labelEn": "navel orange",
+      "parentId": 2020,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 2023,
+      "labelRu": "апельсин валенсия",
+      "labelEn": "Valencia orange",
+      "parentId": 2020,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 2024,
+      "labelRu": "апельсин горький",
+      "labelEn": "sour orange",
+      "parentId": 2020,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 2025,
+      "labelRu": "долька апельсина",
+      "labelEn": "orange segment",
+      "parentId": 2020,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 12.0
+      }
+    },
+    {
+      "id": 2026,
+      "labelRu": "кружок апельсина",
+      "labelEn": "orange slice",
+      "parentId": 2020,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 2030,
+      "labelRu": "мандарин",
+      "labelEn": "mandarin",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 2031,
+      "labelRu": "клементин",
+      "labelEn": "clementine",
+      "parentId": 2030,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 70.0
+      }
+    },
+    {
+      "id": 2032,
+      "labelRu": "танжерин",
+      "labelEn": "tangerine",
+      "parentId": 2030,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 2033,
+      "labelRu": "мандарин сацума",
+      "labelEn": "satsuma",
+      "parentId": 2030,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 2034,
+      "labelRu": "минеола",
+      "labelEn": "minneola",
+      "parentId": 2030,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 2040,
+      "labelRu": "грейпфрут",
+      "labelEn": "grapefruit",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 2041,
+      "labelRu": "грейпфрут розовый",
+      "labelEn": "pink grapefruit",
+      "parentId": 2040,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 2045,
+      "labelRu": "помело",
+      "labelEn": "pomelo",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0
+      }
+    },
+    {
+      "id": 2046,
+      "labelRu": "свити",
+      "labelEn": "oroblanco",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 2047,
+      "labelRu": "кумкват",
+      "labelEn": "kumquat",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 2048,
+      "labelRu": "юдзу",
+      "labelEn": "yuzu",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 2049,
+      "labelRu": "бергамот",
+      "labelEn": "bergamot",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 2050,
+      "labelRu": "лимонный сок",
+      "labelEn": "lemon juice",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 2051,
+      "labelRu": "сок лайма",
+      "labelEn": "lime juice",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 2052,
+      "labelRu": "апельсиновый сок",
+      "labelEn": "orange juice",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 2060,
+      "labelRu": "цедра",
+      "labelEn": "citrus zest",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 2061,
+      "labelRu": "цедра лимона",
+      "labelEn": "lemon zest",
+      "parentId": 2060,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 2062,
+      "labelRu": "цедра лайма",
+      "labelEn": "lime zest",
+      "parentId": 2060,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 2063,
+      "labelRu": "цедра апельсина",
+      "labelEn": "orange zest",
+      "parentId": 2060,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 2064,
+      "labelRu": "цедра мандарина",
+      "labelEn": "mandarin zest",
+      "parentId": 2060,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 2065,
+      "labelRu": "цедра грейпфрута",
+      "labelEn": "grapefruit zest",
+      "parentId": 2060,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 2100,
+      "labelRu": "яблоко",
+      "labelEn": "apple",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2101,
+      "labelRu": "яблоко зелёное",
+      "labelEn": "green apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2102,
+      "labelRu": "яблоко красное",
+      "labelEn": "red apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2103,
+      "labelRu": "яблоко кислое",
+      "labelEn": "tart apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2104,
+      "labelRu": "антоновка",
+      "labelEn": "Antonovka apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 2105,
+      "labelRu": "семеренко",
+      "labelEn": "Semerenko apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 2106,
+      "labelRu": "белый налив",
+      "labelEn": "White Transparent apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 2107,
+      "labelRu": "яблоко гренни смит",
+      "labelEn": "Granny Smith apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2108,
+      "labelRu": "яблоко голден",
+      "labelEn": "Golden Delicious apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2109,
+      "labelRu": "яблоко гала",
+      "labelEn": "Gala apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 160.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2110,
+      "labelRu": "яблоко фуджи",
+      "labelEn": "Fuji apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2111,
+      "labelRu": "яблоко ред делишес",
+      "labelEn": "Red Delicious apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2112,
+      "labelRu": "ранетки",
+      "labelEn": "crab apples",
+      "parentId": 2100,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 25.0
+      }
+    },
+    {
+      "id": 2113,
+      "labelRu": "яблоко айдаред",
+      "labelEn": "Idared apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2114,
+      "labelRu": "яблоко джонагольд",
+      "labelEn": "Jonagold apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2115,
+      "labelRu": "яблоко брейберн",
+      "labelEn": "Braeburn apple",
+      "parentId": 2100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2120,
+      "labelRu": "груша",
+      "labelEn": "pear",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2121,
+      "labelRu": "груша конференция",
+      "labelEn": "Conference pear",
+      "parentId": 2120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 2122,
+      "labelRu": "груша вильямс",
+      "labelEn": "Bartlett pear",
+      "parentId": 2120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 2123,
+      "labelRu": "груша боск",
+      "labelEn": "Bosc pear",
+      "parentId": 2120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 2124,
+      "labelRu": "груша анжу",
+      "labelEn": "Anjou pear",
+      "parentId": 2120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 2125,
+      "labelRu": "груша наши",
+      "labelEn": "Asian pear",
+      "parentId": 2120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 2130,
+      "labelRu": "айва",
+      "labelEn": "quince",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 2131,
+      "labelRu": "мушмула",
+      "labelEn": "loquat",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 2132,
+      "labelRu": "айва японская",
+      "labelEn": "Japanese quince",
+      "parentId": 2130,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 2137,
+      "labelRu": "персик белый",
+      "labelEn": "white peach",
+      "parentId": 2140,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 2138,
+      "labelRu": "алыча",
+      "labelEn": "cherry plum",
+      "parentId": 2145,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0
+      }
+    },
+    {
+      "id": 2139,
+      "labelRu": "тёрн",
+      "labelEn": "sloes",
+      "parentId": 2145,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2140,
+      "labelRu": "персик",
+      "labelEn": "peach",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 2141,
+      "labelRu": "персик плоский",
+      "labelEn": "donut peach",
+      "parentId": 2140,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 2142,
+      "labelRu": "нектарин",
+      "labelEn": "nectarine",
+      "parentId": 2140,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 140.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2143,
+      "labelRu": "абрикос",
+      "labelEn": "apricot",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 2144,
+      "labelRu": "унаби",
+      "labelEn": "jujube",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 2145,
+      "labelRu": "слива",
+      "labelEn": "plum",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0,
+        "cup": 165.0
+      }
+    },
+    {
+      "id": 2146,
+      "labelRu": "слива венгерка",
+      "labelEn": "Italian prune plum",
+      "parentId": 2145,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 2147,
+      "labelRu": "слива жёлтая",
+      "labelEn": "yellow plum",
+      "parentId": 2145,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 2148,
+      "labelRu": "слива чёрная",
+      "labelEn": "black plum",
+      "parentId": 2145,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 2149,
+      "labelRu": "мирабель",
+      "labelEn": "mirabelle plums",
+      "parentId": 2145,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 2150,
+      "labelRu": "банан",
+      "labelEn": "banana",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2151,
+      "labelRu": "банан мини",
+      "labelEn": "baby banana",
+      "parentId": 2150,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 2152,
+      "labelRu": "плантан",
+      "labelEn": "plantain",
+      "parentId": 2150,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 2153,
+      "labelRu": "банановый лист",
+      "labelEn": "banana leaf",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 2154,
+      "labelRu": "банан замороженный",
+      "labelEn": "frozen banana",
+      "parentId": 2150,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 2155,
+      "labelRu": "манго",
+      "labelEn": "mango",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0,
+        "cup": 165.0
+      }
+    },
+    {
+      "id": 2156,
+      "labelRu": "манго замороженное",
+      "labelEn": "frozen mango",
+      "parentId": 2155,
+      "factors": {
+        "g": 1.0,
+        "cup": 165.0
+      }
+    },
+    {
+      "id": 2157,
+      "labelRu": "манго зелёное",
+      "labelEn": "green mango",
+      "parentId": 2155,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 2158,
+      "labelRu": "манго атаульфо",
+      "labelEn": "Ataulfo mango",
+      "parentId": 2155,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 2160,
+      "labelRu": "ананас",
+      "labelEn": "pineapple",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0,
+        "cup": 165.0
+      }
+    },
+    {
+      "id": 2161,
+      "labelRu": "ананас замороженный",
+      "labelEn": "frozen pineapple",
+      "parentId": 2160,
+      "factors": {
+        "g": 1.0,
+        "cup": 165.0
+      }
+    },
+    {
+      "id": 2165,
+      "labelRu": "киви",
+      "labelEn": "kiwi",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 75.0
+      }
+    },
+    {
+      "id": 2166,
+      "labelRu": "киви золотой",
+      "labelEn": "golden kiwi",
+      "parentId": 2165,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 90.0
+      }
+    },
+    {
+      "id": 2167,
+      "labelRu": "киви мини",
+      "labelEn": "kiwi berries",
+      "parentId": 2165,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 2170,
+      "labelRu": "авокадо",
+      "labelEn": "avocado",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 170.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2171,
+      "labelRu": "авокадо хасс",
+      "labelEn": "Hass avocado",
+      "parentId": 2170,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 170.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2174,
+      "labelRu": "папайя зелёная",
+      "labelEn": "green papaya",
+      "parentId": 2175,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0
+      }
+    },
+    {
+      "id": 2175,
+      "labelRu": "папайя",
+      "labelEn": "papaya",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2176,
+      "labelRu": "маракуйя",
+      "labelEn": "passion fruit",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0
+      }
+    },
+    {
+      "id": 2177,
+      "labelRu": "гранат",
+      "labelEn": "pomegranate",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 2178,
+      "labelRu": "зёрна граната",
+      "labelEn": "pomegranate seeds",
+      "parentId": 2177,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 11.0,
+        "cup": 175.0
+      }
+    },
+    {
+      "id": 2179,
+      "labelRu": "личи",
+      "labelEn": "lychee",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 2180,
+      "labelRu": "лонган",
+      "labelEn": "longan",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 2181,
+      "labelRu": "рамбутан",
+      "labelEn": "rambutan",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 2182,
+      "labelRu": "хурма",
+      "labelEn": "persimmon",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 2183,
+      "labelRu": "хурма королёк",
+      "labelEn": "chocolate persimmon",
+      "parentId": 2182,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 2184,
+      "labelRu": "фейхоа",
+      "labelEn": "feijoa",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 2185,
+      "labelRu": "инжир",
+      "labelEn": "fig",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 2186,
+      "labelRu": "карамбола",
+      "labelEn": "star fruit",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 90.0
+      }
+    },
+    {
+      "id": 2187,
+      "labelRu": "гуава",
+      "labelEn": "guava",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 55.0
+      }
+    },
+    {
+      "id": 2188,
+      "labelRu": "питахайя",
+      "labelEn": "dragon fruit",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 2189,
+      "labelRu": "джекфрут",
+      "labelEn": "jackfruit",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2190,
+      "labelRu": "мангостин",
+      "labelEn": "mangosteen",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 2191,
+      "labelRu": "физалис",
+      "labelEn": "physalis",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0
+      }
+    },
+    {
+      "id": 2192,
+      "labelRu": "черимойя",
+      "labelEn": "cherimoya",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 2193,
+      "labelRu": "кивано",
+      "labelEn": "horned melon",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 2195,
+      "labelRu": "кокос",
+      "labelEn": "coconut",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2196,
+      "labelRu": "мякоть кокоса",
+      "labelEn": "fresh coconut",
+      "parentId": 2195,
+      "factors": {
+        "g": 1.0,
+        "cup": 80.0
+      }
+    },
+    {
+      "id": 2197,
+      "labelRu": "кокосовая стружка",
+      "labelEn": "unsweetened shredded coconut",
+      "parentId": 2195,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 5.0,
+        "cup": 80.0
+      }
+    },
+    {
+      "id": 2198,
+      "labelRu": "кокосовые чипсы",
+      "labelEn": "coconut chips",
+      "parentId": 2195,
+      "factors": {
+        "g": 1.0,
+        "cup": 60.0
+      }
+    },
+    {
+      "id": 2199,
+      "labelRu": "питахайя жёлтая",
+      "labelEn": "yellow dragon fruit",
+      "parentId": 2188,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 2200,
+      "labelRu": "дыня",
+      "labelEn": "melon",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 2201,
+      "labelRu": "дыня канталупа",
+      "labelEn": "cantaloupe",
+      "parentId": 2200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 2202,
+      "labelRu": "дыня медовая",
+      "labelEn": "honeydew melon",
+      "parentId": 2200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0,
+        "cup": 170.0
+      }
+    },
+    {
+      "id": 2203,
+      "labelRu": "дыня галия",
+      "labelEn": "Galia melon",
+      "parentId": 2200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0,
+        "cup": 170.0
+      }
+    },
+    {
+      "id": 2204,
+      "labelRu": "дыня торпеда",
+      "labelEn": "Torpedo melon",
+      "parentId": 2200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 3000.0,
+        "cup": 170.0
+      }
+    },
+    {
+      "id": 2205,
+      "labelRu": "арбуз",
+      "labelEn": "watermelon",
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2206,
+      "labelRu": "арбуз жёлтый",
+      "labelEn": "yellow watermelon",
+      "parentId": 2205,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2210,
+      "labelRu": "виноград",
+      "labelEn": "grapes",
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2211,
+      "labelRu": "виноград зелёный",
+      "labelEn": "green grapes",
+      "parentId": 2210,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2212,
+      "labelRu": "виноград красный",
+      "labelEn": "red grapes",
+      "parentId": 2210,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2213,
+      "labelRu": "виноград тёмный",
+      "labelEn": "black grapes",
+      "parentId": 2210,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2214,
+      "labelRu": "виноград кишмиш",
+      "labelEn": "seedless grapes",
+      "parentId": 2210,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2215,
+      "labelRu": "виноград мускат",
+      "labelEn": "muscat grapes",
+      "parentId": 2210,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2216,
+      "labelRu": "виноград конкорд",
+      "labelEn": "Concord grapes",
+      "parentId": 2210,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2220,
+      "labelRu": "фрукты",
+      "labelEn": "fruit",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2221,
+      "labelRu": "фруктовая смесь замороженная",
+      "labelEn": "frozen mixed fruit",
+      "parentId": 2220,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2300,
+      "labelRu": "ягоды",
+      "labelEn": "berries",
+      "factors": {
+        "g": 1.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2301,
+      "labelRu": "ягоды замороженные",
+      "labelEn": "frozen berries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2302,
+      "labelRu": "крыжовник",
+      "labelEn": "gooseberries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2303,
+      "labelRu": "земляника",
+      "labelEn": "wild strawberries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2304,
+      "labelRu": "голубика",
+      "labelEn": "blueberries",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2305,
+      "labelRu": "морошка",
+      "labelEn": "cloudberries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2306,
+      "labelRu": "жимолость",
+      "labelEn": "haskap berries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2307,
+      "labelRu": "шелковица",
+      "labelEn": "mulberries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2308,
+      "labelRu": "ирга",
+      "labelEn": "serviceberries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2309,
+      "labelRu": "рябина",
+      "labelEn": "rowan berries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 2310,
+      "labelRu": "черноплодная рябина",
+      "labelEn": "chokeberries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2311,
+      "labelRu": "калина",
+      "labelEn": "viburnum berries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 2312,
+      "labelRu": "кизил",
+      "labelEn": "cornelian cherries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2313,
+      "labelRu": "шиповник",
+      "labelEn": "rose hips",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2314,
+      "labelRu": "бузина",
+      "labelEn": "elderberries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2315,
+      "labelRu": "боярышник",
+      "labelEn": "hawthorn berries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2316,
+      "labelRu": "голубика замороженная",
+      "labelEn": "frozen blueberries",
+      "parentId": 2304,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2317,
+      "labelRu": "княженика",
+      "labelEn": "arctic raspberries",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 2318,
+      "labelRu": "костяника",
+      "labelEn": "stone brambles",
+      "parentId": 2300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2320,
+      "labelRu": "клубника",
+      "labelEn": "strawberries",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2321,
+      "labelRu": "клубника замороженная",
+      "labelEn": "frozen strawberries",
+      "parentId": 2320,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2325,
+      "labelRu": "малина",
+      "labelEn": "raspberries",
+      "factors": {
+        "g": 1.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 2326,
+      "labelRu": "малина замороженная",
+      "labelEn": "frozen raspberries",
+      "parentId": 2325,
+      "factors": {
+        "g": 1.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 2327,
+      "labelRu": "малина жёлтая",
+      "labelEn": "golden raspberries",
+      "parentId": 2325,
+      "factors": {
+        "g": 1.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 2330,
+      "labelRu": "черника",
+      "labelEn": "bilberries",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2331,
+      "labelRu": "черника замороженная",
+      "labelEn": "frozen bilberries",
+      "parentId": 2330,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2335,
+      "labelRu": "ежевика",
+      "labelEn": "blackberries",
+      "factors": {
+        "g": 1.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2336,
+      "labelRu": "ежевика замороженная",
+      "labelEn": "frozen blackberries",
+      "parentId": 2335,
+      "factors": {
+        "g": 1.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2340,
+      "labelRu": "вишня",
+      "labelEn": "sour cherries",
+      "factors": {
+        "g": 1.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 2341,
+      "labelRu": "вишня замороженная",
+      "labelEn": "frozen sour cherries",
+      "parentId": 2340,
+      "factors": {
+        "g": 1.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 2342,
+      "labelRu": "вишня без косточек",
+      "labelEn": "pitted sour cherries",
+      "parentId": 2340,
+      "factors": {
+        "g": 1.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 2345,
+      "labelRu": "черешня",
+      "labelEn": "cherries",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 2346,
+      "labelRu": "черешня замороженная",
+      "labelEn": "frozen cherries",
+      "parentId": 2345,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 2347,
+      "labelRu": "черешня жёлтая",
+      "labelEn": "yellow cherries",
+      "parentId": 2345,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0,
+        "cup": 155.0
+      }
+    },
+    {
+      "id": 2350,
+      "labelRu": "смородина",
+      "labelEn": "currants",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 112.0
+      }
+    },
+    {
+      "id": 2351,
+      "labelRu": "смородина чёрная",
+      "labelEn": "black currants",
+      "parentId": 2350,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 112.0
+      }
+    },
+    {
+      "id": 2352,
+      "labelRu": "смородина красная",
+      "labelEn": "red currants",
+      "parentId": 2350,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 112.0
+      }
+    },
+    {
+      "id": 2353,
+      "labelRu": "смородина белая",
+      "labelEn": "white currants",
+      "parentId": 2350,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 112.0
+      }
+    },
+    {
+      "id": 2354,
+      "labelRu": "смородина замороженная",
+      "labelEn": "frozen currants",
+      "parentId": 2350,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 112.0
+      }
+    },
+    {
+      "id": 2360,
+      "labelRu": "клюква",
+      "labelEn": "cranberries",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 2361,
+      "labelRu": "клюква замороженная",
+      "labelEn": "frozen cranberries",
+      "parentId": 2360,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 2365,
+      "labelRu": "брусника",
+      "labelEn": "lingonberries",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 2366,
+      "labelRu": "брусника замороженная",
+      "labelEn": "frozen lingonberries",
+      "parentId": 2365,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 2370,
+      "labelRu": "облепиха",
+      "labelEn": "sea buckthorn",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 2371,
+      "labelRu": "облепиха замороженная",
+      "labelEn": "frozen sea buckthorn",
+      "parentId": 2370,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 2400,
+      "labelRu": "сухофрукты",
+      "labelEn": "dried fruit",
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2401,
+      "labelRu": "инжир сушёный",
+      "labelEn": "dried figs",
+      "parentId": 2400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2402,
+      "labelRu": "яблоки сушёные",
+      "labelEn": "dried apples",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "cup": 85.0
+      }
+    },
+    {
+      "id": 2403,
+      "labelRu": "груша сушёная",
+      "labelEn": "dried pears",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2404,
+      "labelRu": "персик сушёный",
+      "labelEn": "dried peaches",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2405,
+      "labelRu": "манго сушёное",
+      "labelEn": "dried mango",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2406,
+      "labelRu": "ананас сушёный",
+      "labelEn": "dried pineapple",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2407,
+      "labelRu": "дыня сушёная",
+      "labelEn": "dried melon",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2408,
+      "labelRu": "банановые чипсы",
+      "labelEn": "banana chips",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "cup": 70.0
+      }
+    },
+    {
+      "id": 2409,
+      "labelRu": "яблочные чипсы",
+      "labelEn": "apple chips",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2410,
+      "labelRu": "клюква сушёная",
+      "labelEn": "dried cranberries",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 2411,
+      "labelRu": "вишня сушёная",
+      "labelEn": "dried cherries",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2412,
+      "labelRu": "черника сушёная",
+      "labelEn": "dried bilberries",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2413,
+      "labelRu": "ягоды годжи",
+      "labelEn": "goji berries",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2414,
+      "labelRu": "шиповник сушёный",
+      "labelEn": "dried rose hips",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2415,
+      "labelRu": "малина сублимированная",
+      "labelEn": "freeze-dried raspberries",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0,
+        "cup": 30.0
+      }
+    },
+    {
+      "id": 2416,
+      "labelRu": "клубника сублимированная",
+      "labelEn": "freeze-dried strawberries",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0,
+        "cup": 30.0
+      }
+    },
+    {
+      "id": 2417,
+      "labelRu": "бананы сушёные",
+      "labelEn": "dried bananas",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2418,
+      "labelRu": "хурма сушёная",
+      "labelEn": "dried persimmon",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2419,
+      "labelRu": "папайя сушёная",
+      "labelEn": "dried papaya",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2420,
+      "labelRu": "изюм",
+      "labelEn": "raisins",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2421,
+      "labelRu": "изюм светлый",
+      "labelEn": "golden raisins",
+      "parentId": 2420,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2422,
+      "labelRu": "изюм тёмный",
+      "labelEn": "dark raisins",
+      "parentId": 2420,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2423,
+      "labelRu": "кишмиш",
+      "labelEn": "seedless raisins",
+      "parentId": 2420,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2424,
+      "labelRu": "коринка",
+      "labelEn": "Zante currants",
+      "parentId": 2420,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2425,
+      "labelRu": "шелковица сушёная",
+      "labelEn": "dried mulberries",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2426,
+      "labelRu": "кизил сушёный",
+      "labelEn": "dried cornelian cherries",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2427,
+      "labelRu": "фруктовые чипсы",
+      "labelEn": "fruit chips",
+      "parentId": 2400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 2430,
+      "labelRu": "курага",
+      "labelEn": "dried apricots",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0,
+        "tbsp": 10.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 2431,
+      "labelRu": "урюк",
+      "labelEn": "whole dried apricots",
+      "parentId": 2430,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 2435,
+      "labelRu": "чернослив",
+      "labelEn": "prunes",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0,
+        "cup": 170.0
+      }
+    },
+    {
+      "id": 2436,
+      "labelRu": "чернослив копчёный",
+      "labelEn": "smoked prunes",
+      "parentId": 2435,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 2440,
+      "labelRu": "финики",
+      "labelEn": "dates",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 2441,
+      "labelRu": "финики меджул",
+      "labelEn": "Medjool dates",
+      "parentId": 2440,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 24.0
+      }
+    },
+    {
+      "id": 2445,
+      "labelRu": "цукаты",
+      "labelEn": "candied fruit",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 2446,
+      "labelRu": "цукаты апельсиновые",
+      "labelEn": "candied orange peel",
+      "parentId": 2445,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 2447,
+      "labelRu": "цукаты лимонные",
+      "labelEn": "candied lemon peel",
+      "parentId": 2445,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 2448,
+      "labelRu": "имбирь засахаренный",
+      "labelEn": "crystallized ginger",
+      "parentId": 2445,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 2500,
+      "labelRu": "орехи",
+      "labelEn": "nuts",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2501,
+      "labelRu": "грецкие орехи",
+      "labelEn": "walnuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 2502,
+      "labelRu": "фундук",
+      "labelEn": "hazelnuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 2503,
+      "labelRu": "фундук жареный",
+      "labelEn": "roasted hazelnuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 2504,
+      "labelRu": "фундук молотый",
+      "labelEn": "ground hazelnuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 6.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 2505,
+      "labelRu": "кешью",
+      "labelEn": "cashews",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2506,
+      "labelRu": "фисташки",
+      "labelEn": "pistachios",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 2507,
+      "labelRu": "фисташки очищенные",
+      "labelEn": "shelled pistachios",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 2508,
+      "labelRu": "кедровые орехи",
+      "labelEn": "pine nuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 2509,
+      "labelRu": "пекан",
+      "labelEn": "pecans",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 2510,
+      "labelRu": "макадамия",
+      "labelEn": "macadamia nuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 2511,
+      "labelRu": "бразильский орех",
+      "labelEn": "Brazil nuts",
+      "parentId": 2500,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 2512,
+      "labelRu": "каштаны",
+      "labelEn": "chestnuts",
+      "parentId": 2500,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 2513,
+      "labelRu": "ореховая смесь",
+      "labelEn": "mixed nuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2514,
+      "labelRu": "кешью жареный",
+      "labelEn": "roasted cashews",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2515,
+      "labelRu": "фисташки солёные",
+      "labelEn": "salted pistachios",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 125.0
+      }
+    },
+    {
+      "id": 2516,
+      "labelRu": "каштаны жареные",
+      "labelEn": "roasted chestnuts",
+      "parentId": 2500,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 2517,
+      "labelRu": "грецкие орехи жареные",
+      "labelEn": "toasted walnuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 2518,
+      "labelRu": "грецкие орехи молотые",
+      "labelEn": "ground walnuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 6.0,
+        "cup": 80.0
+      }
+    },
+    {
+      "id": 2519,
+      "labelRu": "кешью сырой",
+      "labelEn": "raw cashews",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2520,
+      "labelRu": "миндаль",
+      "labelEn": "almonds",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2521,
+      "labelRu": "миндаль бланшированный",
+      "labelEn": "blanched almonds",
+      "parentId": 2520,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2522,
+      "labelRu": "миндальные лепестки",
+      "labelEn": "sliced almonds",
+      "parentId": 2520,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 6.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 2523,
+      "labelRu": "миндаль молотый",
+      "labelEn": "almond meal",
+      "parentId": 2520,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 2524,
+      "labelRu": "миндаль жареный",
+      "labelEn": "roasted almonds",
+      "parentId": 2520,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2525,
+      "labelRu": "миндаль рубленый",
+      "labelEn": "chopped almonds",
+      "parentId": 2520,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 8.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 2526,
+      "labelRu": "фисташки молотые",
+      "labelEn": "ground pistachios",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 2527,
+      "labelRu": "миндаль соломка",
+      "labelEn": "slivered almonds",
+      "parentId": 2520,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2528,
+      "labelRu": "фундук бланшированный",
+      "labelEn": "blanched hazelnuts",
+      "parentId": 2500,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 2530,
+      "labelRu": "арахис",
+      "labelEn": "peanuts",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2531,
+      "labelRu": "арахис жареный",
+      "labelEn": "roasted peanuts",
+      "parentId": 2530,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2532,
+      "labelRu": "арахис солёный",
+      "labelEn": "salted peanuts",
+      "parentId": 2530,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2533,
+      "labelRu": "арахис сырой",
+      "labelEn": "raw peanuts",
+      "parentId": 2530,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2600,
+      "labelRu": "семена",
+      "labelEn": "seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2601,
+      "labelRu": "семечки подсолнечника",
+      "labelEn": "sunflower seeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2602,
+      "labelRu": "семечки подсолнечника жареные",
+      "labelEn": "roasted sunflower seeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2603,
+      "labelRu": "тыквенные семечки",
+      "labelEn": "pumpkin seeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 2604,
+      "labelRu": "тыквенные семечки жареные",
+      "labelEn": "roasted pumpkin seeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 130.0
+      }
+    },
+    {
+      "id": 2605,
+      "labelRu": "семена льна",
+      "labelEn": "flaxseeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 10.0,
+        "cup": 170.0
+      }
+    },
+    {
+      "id": 2606,
+      "labelRu": "семена льна молотые",
+      "labelEn": "ground flaxseed",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 7.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 2607,
+      "labelRu": "семена чиа",
+      "labelEn": "chia seeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 4.0,
+        "tbsp": 12.0,
+        "cup": 170.0
+      }
+    },
+    {
+      "id": 2608,
+      "labelRu": "мак",
+      "labelEn": "poppy seeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 2609,
+      "labelRu": "семена конопли",
+      "labelEn": "hemp seeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 10.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 2610,
+      "labelRu": "кунжут",
+      "labelEn": "sesame seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2611,
+      "labelRu": "кунжут белый",
+      "labelEn": "white sesame seeds",
+      "parentId": 2610,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2612,
+      "labelRu": "кунжут чёрный",
+      "labelEn": "black sesame seeds",
+      "parentId": 2610,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2613,
+      "labelRu": "кунжут жареный",
+      "labelEn": "toasted sesame seeds",
+      "parentId": 2610,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "cup": 145.0
+      }
+    },
+    {
+      "id": 2614,
+      "labelRu": "лён золотой",
+      "labelEn": "golden flaxseed",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 10.0,
+        "cup": 170.0
+      }
+    },
+    {
+      "id": 2615,
+      "labelRu": "семена базилика",
+      "labelEn": "basil seeds",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 2616,
+      "labelRu": "лён коричневый",
+      "labelEn": "brown flaxseed",
+      "parentId": 2600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 10.0,
+        "cup": 170.0
       }
     },
     {

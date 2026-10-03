@@ -1,0 +1,43 @@
+# Produce: dried and candied fruit.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 1000-2999
+
+# Dried and candied fruit (2400-2499)
+2400	сухофрукты	dried fruit			g=1 cup=150
+2401	инжир сушёный	dried figs	2400	true	g=1 pc=20 cup=150
+2402	яблоки сушёные	dried apples	2400		g=1 cup=85
+2403	груша сушёная	dried pears	2400		g=1
+2404	персик сушёный	dried peaches	2400		g=1
+2405	манго сушёное	dried mango	2400		g=1
+2406	ананас сушёный	dried pineapple	2400		g=1
+2407	дыня сушёная	dried melon	2400		g=1
+2408	банановые чипсы	banana chips	2400		g=1 cup=70
+2409	яблочные чипсы	apple chips	2400		g=1
+2410	клюква сушёная	dried cranberries	2400		g=1 tbsp=8 cup=120
+2411	вишня сушёная	dried cherries	2400		g=1 tbsp=9 cup=150
+2412	черника сушёная	dried bilberries	2400		g=1 tbsp=9 cup=150
+2413	ягоды годжи	goji berries	2400		g=1 tbsp=9 cup=110
+2414	шиповник сушёный	dried rose hips	2400		g=1
+2415	малина сублимированная	freeze-dried raspberries	2400		g=1 tbsp=2 cup=30
+2416	клубника сублимированная	freeze-dried strawberries	2400		g=1 tbsp=2 cup=30
+2420	изюм	raisins			g=1 tbsp=10 cup=150
+2421	изюм светлый	golden raisins	2420		g=1 tbsp=10 cup=150
+2422	изюм тёмный	dark raisins	2420		g=1 tbsp=10 cup=150
+2423	кишмиш	seedless raisins	2420		g=1 tbsp=10 cup=150
+2424	коринка	Zante currants	2420		g=1 tbsp=9 cup=145
+2430	курага	dried apricots		false	g=1 pc=8 tbsp=10 cup=130
+2431	урюк	whole dried apricots	2430	false	g=1 pc=8
+2435	чернослив	prunes		false	g=1 pc=8 cup=170
+2436	чернослив копчёный	smoked prunes	2435	false	g=1 pc=8
+2440	финики	dates		false	g=1 pc=8 cup=150
+2441	финики меджул	Medjool dates	2440	false	g=1 pc=24
+2445	цукаты	candied fruit			g=1 tbsp=10 cup=160
+2446	цукаты апельсиновые	candied orange peel	2445		g=1 tbsp=10
+2447	цукаты лимонные	candied lemon peel	2445		g=1 tbsp=10
+2448	имбирь засахаренный	crystallized ginger	2445		g=1 tbsp=10
+2417	бананы сушёные	dried bananas	2400		g=1
+2418	хурма сушёная	dried persimmon	2400		g=1
+2419	папайя сушёная	dried papaya	2400		g=1
+2425	шелковица сушёная	dried mulberries	2400		g=1 cup=110
+2426	кизил сушёный	dried cornelian cherries	2400		g=1
+2427	фруктовые чипсы	fruit chips	2400		g=1
