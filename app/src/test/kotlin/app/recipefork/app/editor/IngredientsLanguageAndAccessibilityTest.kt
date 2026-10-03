@@ -112,7 +112,7 @@ class IngredientsLanguageAndAccessibilityTest {
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.offered(10)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
 
         // A serving count; a free-text piece asking for divisibility, holding a quarter it does not accept; a row
         // with separators; and a row to taste.

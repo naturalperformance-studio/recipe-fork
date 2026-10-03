@@ -201,6 +201,8 @@ class LibrarySessionTest {
         compose.onNodeWithTag(LibraryTags.FILTER_ADD).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_BY_TAGS)).fetchSemanticsNodes().size == 1 }
         compose.onNodeWithTag(LibraryTags.FILTER_BY_TAGS).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.TAG_FIELD)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement("ital")
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.tagChoice(ITALIAN))).fetchSemanticsNodes().size == 1 }
         compose.onNodeWithTag(LibraryTags.tagChoice(ITALIAN)).performClick()
         compose.onNodeWithTag(LibraryTags.TAG_CHOOSER_DONE).performClick()

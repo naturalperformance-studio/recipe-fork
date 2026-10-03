@@ -169,7 +169,7 @@ class EditorScreenTest {
         assertEquals(RecipeLanguage.EN, stored(id).language)
         // Writing the other parts leaves it set.
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Borscht")
-        compose.onNodeWithTag(EditorTags.offered(10)).performScrollTo().performClick()
+        compose.addTag("ital", 10)
         compose.waitForIdle()
         assertEquals(RecipeLanguage.EN, stored(id).language)
         // Clearing is the one way to empty it.
@@ -198,7 +198,7 @@ class EditorScreenTest {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Borscht")
         compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
-        compose.onNodeWithTag(EditorTags.offered(11)).performScrollTo().performClick()
+        compose.addTag("geor", 11)
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextInput("des")
         compose.onNodeWithTag(EditorTags.offered(12)).performClick()
         // Left at once, with the last change just made.
@@ -249,7 +249,7 @@ class EditorScreenTest {
             compose.onNodeWithTag(EditorTags.FROZEN).assertDoesNotExist()
             compose.onNodeWithTag(EditorTags.TITLE).performTextReplacement("Beetroot salad with dill")
             compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
-            compose.onNodeWithTag(EditorTags.offered(10)).performScrollTo().performClick()
+            compose.addTag("ital", 10)
             compose.onNodeWithTag(EditorTags.remove(11)).performScrollTo().performClick()
             compose.waitForIdle()
             val edited = stored(recipe.id)
@@ -327,11 +327,15 @@ class EditorScreenTest {
     fun theTagEditorOffersOnlyDictionaryEntriesAndCommitsNoFreeText() {
         val id = writeANewRecipe()
         val dictionary = SAMPLE_DICTIONARIES.tags.map { it.labelEn }.toSet()
-        // Looking with nothing typed, and with parts of words: everything offered is an entry.
-        compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
-        assertEquals(dictionary.sorted(), offeredTags())
-        compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextInput("an")
-        assertEquals(listOf("Georgian", "Italian"), offeredTags())
+        // With nothing typed nothing is offered; with the beginnings of words, everything offered is an entry.
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
+        assertEquals(emptyList<String>(), offeredTags())
+        compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextInput("i")
+        assertEquals(listOf("Italian"), offeredTags())
+        compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextReplacement("")
+        compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextInput("d")
+        assertTrue(dictionary.containsAll(offeredTags()))
+        assertEquals(listOf("Dessert"), offeredTags())
         // A tag that is not in the dictionary: nothing is offered, and the statement says so.
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextReplacement("Mexican")
         assertEquals(emptyList<String>(), offeredTags())
@@ -359,8 +363,7 @@ class EditorScreenTest {
     @Test
     fun offlineTheTagEditorOffersExactlyWhatItOffersOnline() {
         val id = writeANewRecipe()
-        compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
-        val online = offeredTags()
+        val online = offersFor("i", "g", "d")
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.backThroughTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id.value)), PATIENCE_MS)
@@ -368,9 +371,18 @@ class EditorScreenTest {
         Connection.offline(context)
         assertTrue(Connection.isOffline(context))
         openDirectly(id)
-        compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
-        assertEquals(online, offeredTags())
-        assertEquals(SAMPLE_DICTIONARIES.tags.map { it.labelEn }.sorted(), offeredTags())
+        assertEquals(online, offersFor("i", "g", "d"))
+        assertEquals(listOf("Italian", "Georgian", "Dessert"), online)
+    }
+
+    /** What the tag search offers for each of [typed] in turn, once the dictionary is read. */
+    private fun offersFor(vararg typed: String): List<String> {
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
+        return typed.flatMap {
+            compose.onNodeWithTag(EditorTags.TAG_SEARCH).performScrollTo().performTextReplacement(it)
+            compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
+            offeredTags()
+        }.also { compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextReplacement("") }
     }
 
     private fun androidx.compose.ui.test.SemanticsNodeInteractionCollection.assertCountEquals(count: Int) =

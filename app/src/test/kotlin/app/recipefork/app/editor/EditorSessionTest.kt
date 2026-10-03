@@ -53,8 +53,7 @@ class EditorSessionTest {
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Borscht")
         compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
         // The tag editor offers the shipped dictionaries on this fresh installation.
-        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.offered(10))).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(EditorTags.offered(10)).performScrollTo().performClick()
+        compose.addTag("ital", 10)
         compose.waitForIdle()
         // The one recipe the book holds is the one the offer created.
         val id = RecipeId(runBlocking { container.recipes.ownNewest(10).first() }.single().recipeId)

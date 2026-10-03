@@ -223,6 +223,8 @@ class LibraryLanguageFilterTest {
         assertListed("Bolognese", "Borscht")
         click(LibraryTags.FILTER_ADD)
         click(LibraryTags.FILTER_BY_TAGS)
+        click(LibraryTags.TAG_FIELD)
+        compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement("ital")
         click(LibraryTags.tagChoice(italian.id))
         click(LibraryTags.TAG_CHOOSER_DONE)
         compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("bor")

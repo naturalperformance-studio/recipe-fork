@@ -12,6 +12,9 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.lifecycle.viewModelScope
@@ -140,6 +143,17 @@ const val PATIENCE_MS = 60_000L
 /** Waits until exactly one node carries [tag]. */
 fun ComposeTestRule.awaitTag(tag: String) = waitUntil(PATIENCE_MS) {
     onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().size == 1
+}
+
+/**
+ * Adds the tag [id] in the editor as the author does: types [typed] into the tag search — whose presence says the
+ * dictionary is read — and taps the tag once it is offered.
+ */
+fun ComposeTestRule.addTag(typed: String, id: Long) {
+    awaitTag(EditorTags.TAG_SEARCH)
+    onNodeWithTag(EditorTags.TAG_SEARCH).performScrollTo().performTextReplacement(typed)
+    awaitTag(EditorTags.offered(id))
+    onNodeWithTag(EditorTags.offered(id)).performScrollTo().performClick()
 }
 
 /**

@@ -986,6 +986,8 @@ object LibraryTags {
     const val INGREDIENT_FIELD = "library-ingredient-field"
     fun ingredientChoice(entryId: Long) = "library-ingredient-choice-$entryId"
     const val TAG_CHOOSER = "library-tag-chooser"
+    const val TAG_FIELD = "library-tag-field"
+    const val TAG_NO_MATCH = "library-tag-no-match"
     const val TAG_CHOOSER_DONE = "library-tag-chooser-done"
     fun tagChoice(tagId: Long) = "library-tag-choice-$tagId"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
