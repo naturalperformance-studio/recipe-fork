@@ -31,7 +31,14 @@ object TimerName {
      * (FLOW-016 (8)) — cut as [derived] cuts plain text. A reference is one unit: a cut that would fall inside one,
      * the space between its number and its unit included, falls before it instead.
      */
-    fun derived(runs: List<StepRun>): String {
+    fun derived(runs: List<StepRun>): String = reading(runs).name
+
+    /**
+     * How a step's derived name reads (FLOW-016, GUIDE-006): the [Reading.name] as [derived] gives it, whether it was
+     * cut, whether a reference stands within the step's first [LENGTH] characters — which a reader's larger count can
+     * lengthen past the cut — and whether one stands within the name as shown.
+     */
+    fun reading(runs: List<StepRun>): Reading {
         // The text on one line, with, for every character, the run of the reference it belongs to, or -1.
         val text = StringBuilder()
         val owners = ArrayList<Int>()
@@ -62,7 +69,10 @@ object TimerName {
         text.delete(0, lead)
         repeat(lead) { owners.removeAt(0) }
         val length = text.codePointCount(0, text.length)
-        if (length <= LENGTH) return text.toString()
+        if (length <= LENGTH) {
+            val referenced = owners.any { it != -1 }
+            return Reading(text.toString(), cut = false, referenceInOpening = referenced, referenceShown = referenced)
+        }
         val end = text.offsetByCodePoints(0, LENGTH)
         // The cut stays where the next character is no part of a word (a space, a comma); otherwise back to the last space.
         val cut = if (!isPartOfAWord(Character.codePointAt(text, end))) {
@@ -77,8 +87,23 @@ object TimerName {
             val owner = owners[kept]
             while (kept > 0 && owners[kept - 1] == owner) kept--
         }
-        val head = text.substring(0, if (text.substring(0, kept).isBlank()) cut else kept)
-        return head.trimEnd() + ELLIPSIS
+        val head = text.substring(0, if (text.substring(0, kept).isBlank()) cut else kept).trimEnd()
+        return Reading(
+            head + ELLIPSIS,
+            cut = true,
+            referenceInOpening = (0 until end).any { owners[it] != -1 },
+            referenceShown = head.indices.any { owners[it] != -1 },
+        )
+    }
+
+    /**
+     * A derived name and what decides whether the editor shows it (GUIDE-006): [name] is what the notification carries,
+     * [cut] whether the step was longer than [LENGTH] characters, [referenceInOpening] whether a reference stands within
+     * the first [LENGTH], [referenceShown] whether one stands within [name].
+     */
+    data class Reading(val name: String, val cut: Boolean, val referenceInOpening: Boolean, val referenceShown: Boolean) {
+        /** Whether the notification is cut here, or may be cut at a reader's larger serving count. */
+        val mayBeCut: Boolean get() = cut || referenceInOpening
     }
 
     /** The name [step]'s timer announces itself by, reading its text as typed; null where the step carries no timer. */

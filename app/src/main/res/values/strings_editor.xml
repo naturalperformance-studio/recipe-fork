@@ -152,4 +152,11 @@
     <string name="editor_checklist_6_text">When somebody else forks the recipe, they carry the ingredients and the steps away and leave the description behind, so a method written in the description is a method nobody can build on.</string>
     <string name="editor_checklist_7_title">The serving count is the number you actually cooked for.</string>
     <string name="editor_checklist_7_text">Every quantity a reader ever sees is computed from it.</string>
+    <!-- Under the first step of a recipe holding ingredients, once an editing session, while it is begun (GUIDE-008). -->
+    <string name="editor_references_offered">A quantity can go into a step as a reference: type @ or use the step\'s insert-ingredient icon. A reference follows the reader\'s serving count; a number typed by hand does not.</string>
+    <!-- Under a long step's unnamed timer once the author leaves the step: what its notification will say (GUIDE-006). -->
+    <string name="editor_timer_notification">The timer\'s notification will say: “%1$s”</string>
+    <string name="editor_timer_notification_follows">The quantities in it follow the reader\'s serving count, so the reader\'s notification may read and be cut differently.</string>
+    <string name="editor_timer_notification_name">Name the timer</string>
+    <string name="editor_timer_notification_name_action">Name the timer of step %1$d</string>
 </resources>

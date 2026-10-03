@@ -266,6 +266,21 @@ class RecipeEditor(
         stating.value = null
     }
 
+    /** Whether the references of GUIDE-008 were offered in this editing session. */
+    private var referencesOffered = false
+
+    /**
+     * The author begins the step at [position]. Returns whether to offer references (GUIDE-008): once an editing
+     * session, where it is the first step of an editable recipe holding an ingredient. No step's text is read to decide.
+     */
+    fun beginStep(position: Int): Boolean {
+        if (position != 0 || referencesOffered) return false
+        val recipe = current.value ?: return false
+        if (!recipe.state.editable || recipe.ingredients.isEmpty()) return false
+        referencesOffered = true
+        return true
+    }
+
     /**
      * A key for the step at [position] that stays with that step while steps are inserted, moved or deleted around
      * it, so what the screen holds for a step stays with it.

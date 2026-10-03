@@ -132,4 +132,9 @@
     <string name="editor_checklist_6_text">Когда рецепт форкает кто-то другой, он забирает ингредиенты и шаги, а описание оставляет, поэтому способ, записанный в описании, — способ, на котором никто не сможет строить дальше.</string>
     <string name="editor_checklist_7_title">Число порций — то, на сколько вы на самом деле готовили.</string>
     <string name="editor_checklist_7_text">Из него рассчитывается каждое количество, которое когда-либо увидит читатель.</string>
+    <string name="editor_references_offered">Количество можно вставить в шаг ссылкой: наберите @ или нажмите в шаге значок вставки ингредиента. Ссылка следует за числом порций читателя, а число, набранное вручную, — нет.</string>
+    <string name="editor_timer_notification">Уведомление таймера скажет: «%1$s»</string>
+    <string name="editor_timer_notification_follows">Количества в нём следуют за числом порций читателя, поэтому у читателя уведомление может звучать и обрезаться иначе.</string>
+    <string name="editor_timer_notification_name">Назвать таймер</string>
+    <string name="editor_timer_notification_name_action">Назвать таймер шага %1$d</string>
 </resources>
