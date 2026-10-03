@@ -115,6 +115,9 @@ fun EditorScreen(
     // The row keys outlive the activity being recreated, as the state the rows saved under them does.
     val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
     val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    // Not saved: what the editor holds for this session alone — the references offered once (GUIDE-008) among it —
+    // starts again after the activity is recreated or the process restored, which is intended, nothing of a hint
+    // being kept (GUIDE-005).
     val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys) }
     // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
     // touched from a database thread.

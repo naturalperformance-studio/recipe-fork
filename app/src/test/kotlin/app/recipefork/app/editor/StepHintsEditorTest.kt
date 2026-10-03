@@ -311,6 +311,19 @@ class StepHintsEditorTest {
         assertEquals("$longStep Serve.", stored(recipe.id).steps.single().text)
     }
 
+    // 61 characters, the first past the cut, with an unnamed timer: shown, cut with the ellipsis.
+    @Test
+    fun leavingA61CharacterStepWithAnUnnamedTimerShowsTheDisplay() {
+        val text = "Roast the chicken until golden, then rest it under foil now.." // one past the 60 below
+        assertEquals(61, text.length)
+        openDirectly(draft(Step(0, text, timer = Timer(10.minutes))))
+        passThrough(0)
+        awaitNotification(0)
+        val name = TimerName.derived(text)
+        assertTrue(name, name.endsWith(TimerName.ELLIPSIS))
+        assertEquals(string(R.string.editor_timer_notification, name), notificationText(0))
+    }
+
     // 59 and 60 characters with no reference, a long step with no timer, and a long step whose timer is named: nothing.
     @Test
     fun nothingIsShownWhereNothingWillBeCut() {

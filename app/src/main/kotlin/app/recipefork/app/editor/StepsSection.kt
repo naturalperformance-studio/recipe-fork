@@ -152,7 +152,6 @@ private fun StepRow(
     // References offered under the first step while it is first written in this editing session (GUIDE-008).
     var offering by remember { mutableStateOf(false) }
     val offerGoing = rememberGoing()
-    val notificationGoing = rememberGoing()
     // One bounded block per step, as an ingredient's, so where one step ends and the next begins is plain; dragged, it
     // moves whole.
     OutlinedCard(
@@ -180,7 +179,6 @@ private fun StepRow(
                             leaving(
                                 onEnter = {
                                     editor.leave(RecipePart.Ingredients)
-                                    if (leftCut) notificationGoing.went()
                                     leftCut = false
                                     // Beginning the first step offers references, whatever the step says (GUIDE-008).
                                     if (editor.beginStep(position)) offering = true
@@ -246,7 +244,11 @@ private fun StepRow(
                 // Below the row, only what the step has: its timer, and its photograph, or that one is being prepared.
                 if (step.timer != null || timerOpen || stating || photo != null || photoControl.attaching.working.value) {
                     Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        StepTimer(position, step, ingredients, language, editor, stating, timerOpen, leftCut, timerName, notificationGoing) { timerOpen = it }
+                        StepTimer(
+                            position, step, ingredients, language, editor, stating, timerOpen,
+                            left = leftCut,
+                            name = timerName,
+                        ) { timerOpen = it }
                         StepPhotoShown(position, photo, photos, photoControl)
                     }
                 }
@@ -275,7 +277,6 @@ private fun StepTimer(
     open: Boolean,
     left: Boolean,
     name: FocusRequester,
-    going: Going,
     onOpen: (Boolean) -> Unit,
 ) {
     val timer = step.timer
@@ -351,7 +352,7 @@ private fun StepTimer(
         TimerNameField(position, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor, name) { given = it }
         BoundMark(editor, RecipePart.TimerName(position), EditorTags.timerNameMark(position), gap = 0.dp)
         // Under the name, so that it neither moves the name field nor goes from above it once the timer is named.
-        if (left) cutNotification(step, ingredients, language)?.let { reading -> TimerNotification(position, reading, going) { name.requestFocus() } }
+        if (left) cutNotification(step, ingredients, language)?.let { reading -> TimerNotification(position, reading) { name.requestFocus() } }
     }
 }
 
@@ -371,13 +372,12 @@ internal fun cutNotification(step: Step, ingredients: List<Ingredient>, language
  * offer to name the timer, which takes the author to its name field. It refuses nothing and asks no rewrite.
  */
 @Composable
-private fun TimerNotification(position: Int, reading: TimerName.Reading, going: Going, onName: () -> Unit) {
+private fun TimerNotification(position: Int, reading: TimerName.Reading, onName: () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
             // Appearing above the field the author went on to, it keeps that field where it is.
             .then(keepingTheFocusedFieldInPlace(0.dp))
-            .then(going.modifier)
             .padding(top = 8.dp)
             .testTag(EditorTags.timerNotification(position)),
     ) {

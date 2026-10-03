@@ -35,7 +35,7 @@ class TimerNameTest {
     }
 
     @Test
-    fun `a 61-character step whose 60th character ends a word keeps those 60, then the ellipsis`() {
+    fun `a step over 60 characters whose 60th character ends a word keeps those 60, then the ellipsis`() {
         val first = "word ".repeat(11) + "abcde" // 60 characters, ending in a whole word
         assertEquals(60, first.length)
         assertEquals("$first…", TimerName.derived("$first z"))
@@ -229,6 +229,18 @@ class TimerNameReadingTest {
             assertEquals(TimerName.Reading(text, cut = false, referenceInOpening = false, referenceShown = false), read)
             assertFalse(read.mayBeCut)
         }
+    }
+
+    @Test
+    fun `61 characters with no reference are cut`() {
+        val text = "a".repeat(10) + " " + "b".repeat(50)
+        assertEquals(61, text.length)
+        val read = reading(text)
+        assertTrue(read.cut)
+        assertTrue(read.mayBeCut)
+        assertFalse(read.referenceInOpening)
+        assertEquals("a".repeat(10) + TimerName.ELLIPSIS, read.name)
+        assertTrue(read.name.endsWith(TimerName.ELLIPSIS))
     }
 
     @Test
