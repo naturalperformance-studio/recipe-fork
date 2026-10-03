@@ -13,6 +13,7 @@ import androidx.media3.effect.Presentation
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.DefaultEncoderFactory
 import androidx.media3.transformer.EditedMediaItem
+import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
@@ -28,9 +29,10 @@ import java.io.File
 
 /**
  * Converts a clip with Media3 Transformer (decisions/20260927-android-client-stack.md): decoded the right way up,
- * scaled down to the limits' longer edge when it is larger, its audio dropped, and encoded as H.264 at
- * [ClipPlan.BITRATE] into an MP4 written by Media3's own muxer, which is told to keep nothing of the original's
- * metadata — no place, no capture time, no device — but the orientation it writes itself (MEDIA-003, MEDIA-004).
+ * scaled down to the limits' longer edge when it is larger, tone-mapped if HDR, its audio dropped, and encoded as
+ * H.264 at [ClipPlan.bitrate] into an MP4 written by Media3's own muxer, which is told to keep nothing of the
+ * original's metadata — no place, no capture time, no device — but the orientation it writes itself (MEDIA-003,
+ * MEDIA-004).
  */
 @OptIn(UnstableApi::class)
 class ClipTransformer(context: Context) : ClipConverter {
@@ -40,23 +42,15 @@ class ClipTransformer(context: Context) : ClipConverter {
         val shown = withContext(Dispatchers.IO) { shownSize(source) }
             ?: throw ClipConversionFailed("The clip states no picture size")
         val size = ClipPlan.converted(shown, VideoLimits.MAX_LONGER_EDGE)
-        val effects = if (size == shown) {
-            Effects.EMPTY
-        } else {
-            Effects(emptyList(), listOf(Presentation.createForWidthAndHeight(size.width, size.height, Presentation.LAYOUT_SCALE_TO_FIT)))
-        }
-        val item = EditedMediaItem.Builder(MediaItem.fromUri(source))
-            .setRemoveAudio(true)
-            .setEffects(effects)
-            .build()
+        val composition = composition(source, shown, size)
         // Transformer is driven from the thread it was built on; the main one is always there to drive it.
         withContext(Dispatchers.Main) {
             val done = CompletableDeferred<Unit>()
             val transformer = Transformer.Builder(context)
-                .setVideoMimeType(MimeTypes.VIDEO_H264)
+                .setVideoMimeType(VIDEO_MIME_TYPE)
                 .setEncoderFactory(
                     DefaultEncoderFactory.Builder(context)
-                        .setRequestedVideoEncoderSettings(VideoEncoderSettings.Builder().setBitrate(ClipPlan.BITRATE).build())
+                        .setRequestedVideoEncoderSettings(VideoEncoderSettings.Builder().setBitrate(ClipPlan.bitrate(size)).build())
                         .build(),
                 )
                 .setMuxerFactory(InAppMp4Muxer.Factory(OrientationOnly))
@@ -71,7 +65,7 @@ class ClipTransformer(context: Context) : ClipConverter {
                 })
                 .build()
             try {
-                transformer.start(item, target.path)
+                transformer.start(composition, target.path)
             } catch (e: IllegalStateException) {
                 throw ClipConversionFailed("The conversion did not start", e)
             }
@@ -82,6 +76,31 @@ class ClipTransformer(context: Context) : ClipConverter {
                 transformer.cancel()
                 throw e
             }
+        }
+    }
+
+    internal companion object {
+        /** What every clip is encoded as, whatever it was (MEDIA-004). */
+        const val VIDEO_MIME_TYPE: String = MimeTypes.VIDEO_H264
+
+        /**
+         * What the clip [source], shown at [shown], is turned into: its picture alone, brought to [size] when that is
+         * smaller, and tone-mapped to standard range if it was shot in HDR. Left to keep HDR, Transformer would fall
+         * back from H.264 to 10-bit HEVC wherever no H.264 encoder edits HDR — on the very phones that shoot it.
+         */
+        fun composition(source: Uri, shown: PixelSize, size: PixelSize): Composition {
+            val effects = if (size == shown) {
+                Effects.EMPTY
+            } else {
+                Effects(emptyList(), listOf(Presentation.createForWidthAndHeight(size.width, size.height, Presentation.LAYOUT_SCALE_TO_FIT)))
+            }
+            val item = EditedMediaItem.Builder(MediaItem.fromUri(source))
+                .setRemoveAudio(true)
+                .setEffects(effects)
+                .build()
+            return Composition.Builder(EditedMediaItemSequence.withVideoFrom(listOf(item)))
+                .setHdrMode(Composition.HDR_MODE_TONE_MAP_HDR_TO_SDR_USING_OPEN_GL)
+                .build()
         }
     }
 

@@ -43,8 +43,19 @@ class ClipPlanTest {
     // MEDIA-004 / MEDIA-006: the bitrate aims a clip of the longest duration well under the weight limit.
     @Test
     fun theLongestClipAtTheBitrateWeighsWellUnderTheLimit() {
-        val bytes = ClipPlan.BITRATE.toLong() / 8 * VideoLimits.MAX_DURATION.inWholeSeconds
+        val bytes = ClipPlan.MAX_BITRATE.toLong() / 8 * VideoLimits.MAX_DURATION.inWholeSeconds
         assertTrue("$bytes", bytes <= VideoLimits.MAX_BYTES * 2 / 3)
+        assertEquals(ClipPlan.MAX_BITRATE, ClipPlan.bitrate(PixelSize(1280, 720)))
+        assertEquals(ClipPlan.MAX_BITRATE, ClipPlan.bitrate(PixelSize(720, 1280)))
+        assertEquals(ClipPlan.MAX_BITRATE, ClipPlan.bitrate(PixelSize(1280, 1280)))
+    }
+
+    // A small clip is given bits in proportion to its pixels, not inflated to what a full frame needs.
+    @Test
+    fun aSmallClipIsGivenFewerBits() {
+        assertEquals(500_000, ClipPlan.bitrate(PixelSize(640, 360)))
+        assertEquals(1_000_000, ClipPlan.bitrate(PixelSize(1280, 360)))
+        assertEquals(ClipPlan.MIN_BITRATE, ClipPlan.bitrate(PixelSize(160, 96)))
     }
 
     // MEDIA-003: the muxer is handed nothing of the original's metadata, and a time of none rather than of now.

@@ -23,8 +23,10 @@ rm -rf "$results"
     -Pandroid.testInstrumentationRunnerArguments.class=app.recipefork.app.ReleaseSmokeTest \
     :app:connectedReleaseSmokeAndroidTest "$@"
 # A test process that dies before its first test reports no test and no failure; that is no pass.
-if ! grep -qs 'testcase name="theBuildStartsKeepsExportsImportsTakesAPictureAndRingsATimer"' "$results"/*.xml; then
-    echo "The smoke test did not run; see $results and the device's log." >&2
-    exit 1
-fi
+for smoke in theBuildStartsKeepsExportsImportsTakesAPictureAndRingsATimer theBuildConvertsAClip; do
+    if ! grep -qs "testcase name=\"$smoke\"" "$results"/*.xml; then
+        echo "The smoke test $smoke did not run; see $results and the device's log." >&2
+        exit 1
+    fi
+done
 "$sdk/platform-tools/adb" emu kill || true
