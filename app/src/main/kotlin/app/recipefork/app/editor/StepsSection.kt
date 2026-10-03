@@ -86,7 +86,7 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSourc
             modifier = Modifier.semantics { heading() },
         )
         // Under the heading: the steps left with none, or more than the limit (FLOW-028).
-        BoundMark(editor, RecipePart.Steps, EditorTags.STEPS_MARK)
+        BoundMark(editor, RecipePart.Steps, EditorTags.STEPS_MARK, gap = ROW_SPACING)
         if (!editable && steps.isEmpty()) {
             Text(
                 stringResource(R.string.editor_steps_none),
@@ -170,7 +170,7 @@ private fun StepRow(
                         .testTag(EditorTags.stepText(position)),
                 )
                 // The step's own slot for what its text needs, right under the text and above its actions.
-                BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position))
+                BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = 0.dp)
                 BlockActions {
                     InsertIngredient(position, ingredients, dictionary, language, editor, field)
                     BlockAction(
@@ -307,7 +307,7 @@ private fun StepTimer(
     }
     if (timer != null) {
         TimerNameField(position, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor) { given = it }
-        BoundMark(editor, RecipePart.TimerName(position), EditorTags.timerNameMark(position))
+        BoundMark(editor, RecipePart.TimerName(position), EditorTags.timerNameMark(position), gap = 0.dp)
     }
 }
 
@@ -430,6 +430,6 @@ internal fun Description(recipe: Recipe, editor: RecipeEditor) {
                 )
                 .testTag(EditorTags.DESCRIPTION),
         )
-        BoundMark(editor, RecipePart.Description, EditorTags.DESCRIPTION_MARK)
+        BoundMark(editor, RecipePart.Description, EditorTags.DESCRIPTION_MARK, gap = 4.dp)
     }
 }

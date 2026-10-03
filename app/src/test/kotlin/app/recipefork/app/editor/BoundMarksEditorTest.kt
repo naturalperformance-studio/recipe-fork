@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -34,6 +35,8 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
+import app.recipefork.core.scaling.InterfaceLanguage
+import app.recipefork.core.scaling.QuantityText
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -118,6 +121,10 @@ class BoundMarksEditorTest {
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 
+    /** A mark over a limit, its numbers grouped the English way (L10N-009). */
+    private fun over(id: Int, limit: Int, count: Int): String =
+        string(id, QuantityText.whole(limit.toLong(), InterfaceLanguage.ENGLISH), QuantityText.whole(count.toLong(), InterfaceLanguage.ENGLISH))
+
     /** Puts the author in the field tagged [tag]; whatever field they were in, they have left. */
     private fun enter(tag: String) {
         compose.onNodeWithTag(tag).performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
@@ -198,7 +205,8 @@ class BoundMarksEditorTest {
         type(EditorTags.stepText(0), long)
         assertTrue(!marked(EditorTags.stepMark(0)))
         enter(EditorTags.TITLE)
-        awaitMark(EditorTags.stepMark(0), string(R.string.editor_mark_characters_over, 2_000, 2_001))
+        // L10N-009: the limit and the count are grouped as English groups them.
+        awaitMark(EditorTags.stepMark(0), "Over the limit of 2,000 characters: 2,001 now. Kept in full.")
         assertEquals(long, stored(id).steps[0].text)
         // Typing on is not refused, and nothing is cut.
         enter(EditorTags.stepText(0))
@@ -212,13 +220,8 @@ class BoundMarksEditorTest {
     // A step's mark stays with its step when a step is put before it.
     @Test
     fun aStepsMarkFollowsItsStep() {
-        openDirectly(draft { it.copy(title = "Tea", steps = listOf(Step(0, "Boil."), Step(1, "s".repeat(2_001)))) })
-        enter(EditorTags.stepText(1))
-        enter(EditorTags.TITLE)
-        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(1)) }
-        compose.onNodeWithTag(EditorTags.stepMenu(1)).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepAction(1, RowAction.INSERT_ABOVE)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepAction(1, RowAction.INSERT_ABOVE)).performClick()
+        markedSecondStep()
+        stepAction(1, RowAction.INSERT_ABOVE)
         compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(2)) && !marked(EditorTags.stepMark(1)) }
     }
 
@@ -236,7 +239,7 @@ class BoundMarksEditorTest {
         val long = "t".repeat(121)
         type(EditorTags.TITLE, long)
         enter(EditorTags.SERVINGS)
-        awaitMark(EditorTags.TITLE_MARK, string(R.string.editor_mark_characters_over, 120, 121))
+        awaitMark(EditorTags.TITLE_MARK, over(R.string.editor_mark_characters_over, 120, 121))
         assertEquals(long, stored(id).title)
     }
 
@@ -269,7 +272,7 @@ class BoundMarksEditorTest {
         type(EditorTags.DESCRIPTION, long)
         assertTrue(!marked(EditorTags.DESCRIPTION_MARK))
         enter(EditorTags.TITLE)
-        awaitMark(EditorTags.DESCRIPTION_MARK, string(R.string.editor_mark_characters_over, 2_000, 2_001))
+        awaitMark(EditorTags.DESCRIPTION_MARK, over(R.string.editor_mark_characters_over, 2_000, 2_001))
         assertEquals(long, stored(id).description)
         addStep()
         awaitNoMark(EditorTags.STEPS_MARK)
@@ -284,8 +287,8 @@ class BoundMarksEditorTest {
             },
         )
         enter(EditorTags.DESCRIPTION)
-        awaitMark(EditorTags.INGREDIENTS_MARK, string(R.string.editor_mark_ingredients_over, 50, 51))
-        awaitMark(EditorTags.STEPS_MARK, string(R.string.editor_mark_steps_over, 50, 51))
+        awaitMark(EditorTags.INGREDIENTS_MARK, over(R.string.editor_mark_ingredients_over, 50, 51))
+        awaitMark(EditorTags.STEPS_MARK, over(R.string.editor_mark_steps_over, 50, 51))
     }
 
     // v0.2 left a timer name over 60 characters unmarked until FLOW-028; it is now marked on leaving the field, and
@@ -305,7 +308,7 @@ class BoundMarksEditorTest {
         compose.waitForIdle()
         assertTrue(!marked(EditorTags.timerNameMark(0)))
         enter(EditorTags.TITLE)
-        awaitMark(EditorTags.timerNameMark(0), string(R.string.editor_mark_characters_over, 60, name.length))
+        awaitMark(EditorTags.timerNameMark(0), over(R.string.editor_mark_characters_over, 60, name.length))
         assertEquals(name, stored(id).steps[0].timer!!.label)
     }
 
@@ -330,12 +333,12 @@ class BoundMarksEditorTest {
         val marks = listOf(
             string(R.string.editor_mark_title_missing), string(R.string.editor_mark_language_missing),
             string(R.string.editor_mark_servings_missing), string(R.string.editor_mark_ingredients_missing),
-            string(R.string.editor_mark_steps_missing), string(R.string.editor_mark_characters_over, 2_000, 2_140),
-            string(R.string.editor_mark_ingredients_over, 50, 53), string(R.string.editor_mark_steps_over, 50, 53),
+            string(R.string.editor_mark_steps_missing), over(R.string.editor_mark_characters_over, 2_000, 2_140),
+            over(R.string.editor_mark_ingredients_over, 50, 53), over(R.string.editor_mark_steps_over, 50, 53),
         )
         marks.forEach { assertTrue(it, !it.contains("submit", ignoreCase = true)) }
         assertEquals("A recipe needs at least one ingredient.", marks[3])
-        assertEquals("Over the limit of 2000 characters: 2140 now. Kept in full.", marks[5])
+        assertEquals("Over the limit of 2,000 characters: 2,140 now. Kept in full.", marks[5])
         assertEquals("More than 50 steps: 53 now.", marks[7])
     }
 
@@ -347,5 +350,88 @@ class BoundMarksEditorTest {
         addStep()
         awaitMark(EditorTags.INGREDIENTS_MARK, "У рецепта должен быть хотя бы один ингредиент.")
         assertEquals(listOf("Предупреждение"), compose.descriptionOf(EditorTags.INGREDIENTS_MARK))
+        // L10N-009: numbers grouped by a no-break space.
+        type(EditorTags.DESCRIPTION, "d".repeat(2_001))
+        enter(EditorTags.TITLE)
+        awaitMark(EditorTags.DESCRIPTION_MARK, "Больше лимита в 2\u00A0000 символов: сейчас 2\u00A0001. Текст сохранён целиком.")
+    }
+
+    /**
+     * Puts the author in the field tagged [tag], brought into view as little as it takes — at the edge of the screen —
+     * and returns where it stood once the mark tagged [mark] has appeared, and where it stood before.
+     */
+    private fun boundsAroundTheMark(tag: String, mark: String): Pair<Rect, Rect> {
+        compose.onNodeWithTag(tag).performScrollTo()
+        compose.waitForIdle()
+        val before = compose.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.waitUntil(PATIENCE_MS) { marked(mark) }
+        compose.waitForIdle()
+        return before to compose.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+    }
+
+    private fun assertSamePlace(before: Rect, after: Rect) {
+        assertEquals(before.top, after.top, 1f)
+        assertEquals(before.bottom, after.bottom, 1f)
+    }
+
+    // A mark that appears above the field the author has just come into does not push that field away: entering a
+    // step marks the ingredients above it, and the step stays where it was.
+    @Test
+    fun theIngredientMarkDoesNotPushTheStepTheAuthorIsIn() {
+        openDirectly(draft { it.copy(title = "Tea", steps = listOf(Step(0, "Boil the water."))) })
+        val (before, after) = boundsAroundTheMark(EditorTags.stepText(0), EditorTags.INGREDIENTS_MARK)
+        assertSamePlace(before, after)
+    }
+
+    // The same for the steps' mark and the description.
+    @Test
+    fun theStepsMarkDoesNotPushTheDescriptionTheAuthorIsIn() {
+        openDirectly(draft { it.copy(title = "Tea", ingredients = listOf(row(0))) })
+        val (before, after) = boundsAroundTheMark(EditorTags.DESCRIPTION, EditorTags.STEPS_MARK)
+        assertSamePlace(before, after)
+    }
+
+    /** A recipe whose second step is over its limit and marked; returns its identity. */
+    private fun markedSecondStep(): RecipeId {
+        val id = openDirectly(draft { it.copy(title = "Tea", steps = listOf(Step(0, "Boil."), Step(1, "s".repeat(2_001)))) })
+        enter(EditorTags.stepText(1))
+        enter(EditorTags.TITLE)
+        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(1)) }
+        return id
+    }
+
+    private fun stepAction(position: Int, action: RowAction) {
+        compose.onNodeWithTag(EditorTags.stepMenu(position)).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepAction(position, action)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.stepAction(position, action)).performClick()
+    }
+
+    // A step's mark stays with its step when the step is moved.
+    @Test
+    fun aStepsMarkMovesWithItsStep() {
+        markedSecondStep()
+        stepAction(1, RowAction.MOVE_UP)
+        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(0)) && !marked(EditorTags.stepMark(1)) }
+    }
+
+    // A step's mark stays with its step when a step before it is deleted.
+    @Test
+    fun aStepsMarkStaysWithItsStepWhenOneBeforeItIsDeleted() {
+        markedSecondStep()
+        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(0)) && !marked(EditorTags.stepMark(1)) }
+    }
+
+    // Deleting the marked step deletes its mark; a step later put in its place is not marked, never having been left.
+    @Test
+    fun deletingTheMarkedStepDeletesItsMark() {
+        val id = markedSecondStep()
+        compose.onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 1 }
+        compose.waitUntil(PATIENCE_MS) { !marked(EditorTags.stepMark(0)) && !marked(EditorTags.stepMark(1)) }
+        addStep(1)
+        compose.waitForIdle()
+        assertTrue(!marked(EditorTags.stepMark(1)) && !marked(EditorTags.stepMark(0)))
     }
 }

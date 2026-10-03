@@ -62,7 +62,13 @@ private val SCROLL_STEP = 16.dp
 class EditorScroll(val state: ScrollState) {
     /** The scrolling viewport, laid out; set by the screen. */
     internal var viewport: LayoutCoordinates? = null
+
+    /** Where the field the author is in stands; null while they are in none. Set by the screen. */
+    internal var focused: LayoutCoordinates? = null
 }
+
+/** The scrolling of the editor the composition is in; outside one, none. */
+internal val LocalEditorScroll = androidx.compose.runtime.staticCompositionLocalOf<EditorScroll?> { null }
 
 /**
  * The dragging of one list of rows — the steps or the ingredients (FLOW-025). Only the dragged row follows the finger,

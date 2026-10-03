@@ -1,11 +1,11 @@
 package app.recipefork.core.recipe
 
+import app.recipefork.core.file.RecipeFileCheck
 import app.recipefork.core.scaling.Rational
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 
 /** FLOW-028 over DOM-006 and DOM-012: one rule set says which part is below its minimum or over its limit. */
@@ -86,8 +86,19 @@ class RecipeBoundsTest {
 
     @Test
     fun theRecipeFileCheckReadsTheSameLimits() {
-        assertEquals(RecipeBounds.MAX_STEP_TEXT, app.recipefork.core.file.RecipeFileCheck.MAX_STEP_TEXT)
-        assertEquals(RecipeBounds.MAX_TIMER_NAME, app.recipefork.core.file.RecipeFileCheck.MAX_TIMER_NAME)
-        assertTrue(RecipeBounds.MAX_INGREDIENTS == app.recipefork.core.file.RecipeFileCheck.MAX_INGREDIENTS)
+        assertEquals(
+            listOf(
+                RecipeBounds.MAX_INGREDIENTS, RecipeBounds.MAX_STEPS, RecipeBounds.MAX_STEP_TEXT,
+                RecipeBounds.MAX_TITLE, RecipeBounds.MAX_DESCRIPTION, RecipeBounds.MAX_TIMER_NAME,
+            ),
+            listOf(
+                RecipeFileCheck.MAX_INGREDIENTS, RecipeFileCheck.MAX_STEPS, RecipeFileCheck.MAX_STEP_TEXT,
+                RecipeFileCheck.MAX_TITLE, RecipeFileCheck.MAX_DESCRIPTION, RecipeFileCheck.MAX_TIMER_NAME,
+            ),
+        )
+        assertEquals(listOf(50, 50, 2_000, 120, 2_000, 60), listOf(
+            RecipeBounds.MAX_INGREDIENTS, RecipeBounds.MAX_STEPS, RecipeBounds.MAX_STEP_TEXT,
+            RecipeBounds.MAX_TITLE, RecipeBounds.MAX_DESCRIPTION, RecipeBounds.MAX_TIMER_NAME,
+        ))
     }
 }

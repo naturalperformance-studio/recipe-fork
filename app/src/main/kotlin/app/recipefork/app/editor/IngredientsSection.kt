@@ -160,7 +160,7 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
             keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
             modifier = Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Servings) }).testTag(EditorTags.SERVINGS),
         )
-        BoundMark(editor, RecipePart.Servings, EditorTags.SERVINGS_MARK)
+        BoundMark(editor, RecipePart.Servings, EditorTags.SERVINGS_MARK, gap = 4.dp)
     }
 }
 
@@ -189,7 +189,7 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
             modifier = Modifier.semantics { heading() },
         )
         // Under the heading: the list left empty, or longer than the limit (FLOW-028).
-        BoundMark(editor, RecipePart.Ingredients, EditorTags.INGREDIENTS_MARK)
+        BoundMark(editor, RecipePart.Ingredients, EditorTags.INGREDIENTS_MARK, gap = ROW_SPACING)
         recipe.ingredients.forEachIndexed { position, row ->
             // What the screen holds for a row — focus, an open offer, a typed value — stays with it when rows before
             // it are inserted, moved or deleted.

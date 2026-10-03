@@ -106,7 +106,7 @@
     <string name="editor_mark_servings_missing">У рецепта должно быть число порций.</string>
     <string name="editor_mark_ingredients_missing">У рецепта должен быть хотя бы один ингредиент.</string>
     <string name="editor_mark_steps_missing">У рецепта должен быть хотя бы один шаг.</string>
-    <string name="editor_mark_characters_over">Больше лимита в %1$d символов: сейчас %2$d. Текст сохранён целиком.</string>
-    <string name="editor_mark_ingredients_over">Больше %1$d ингредиентов: сейчас %2$d.</string>
-    <string name="editor_mark_steps_over">Больше %1$d шагов: сейчас %2$d.</string>
+    <string name="editor_mark_characters_over">Больше лимита в %1$s символов: сейчас %2$s. Текст сохранён целиком.</string>
+    <string name="editor_mark_ingredients_over">Больше %1$s ингредиентов: сейчас %2$s.</string>
+    <string name="editor_mark_steps_over">Больше %1$s шагов: сейчас %2$s.</string>
 </resources>

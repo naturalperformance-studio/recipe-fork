@@ -2,7 +2,9 @@ package app.recipefork.app.editor
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.onFocusedBoundsChanged
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -95,6 +97,7 @@ fun rememberEditorEnvironment(): EditorEnvironment {
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
  * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EditorScreen(
     recipeId: RecipeId,
@@ -142,6 +145,8 @@ fun EditorScreen(
                     // a scroll is not one.
                     .onEveryTap { editor.noteAction() }
                     .onGloballyPositioned { scroll.viewport = it }
+                    // Where the field the author is in stands, so a mark appearing above it does not push it away.
+                    .onFocusedBoundsChanged { scroll.focused = it }
                     .verticalScroll(scroll.state)
                     .padding(16.dp)
                     .testTag(EditorTags.FORM),
@@ -154,8 +159,8 @@ fun EditorScreen(
                         modifier = Modifier.testTag(EditorTags.FROZEN),
                     )
                 }
-                TitleAndLanguage(shown, editor)
-                CompositionLocalProvider(LocalEditorStatements provides statements) {
+                CompositionLocalProvider(LocalEditorStatements provides statements, LocalEditorScroll provides scroll) {
+                    TitleAndLanguage(shown, editor)
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
                     ServingCount(shown, editor)
@@ -238,8 +243,8 @@ private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor) {
             Language(recipe, editor)
         }
         // Under the title and the language, across the width, what either still needs (FLOW-028).
-        BoundMark(editor, RecipePart.Title, EditorTags.TITLE_MARK)
-        BoundMark(editor, RecipePart.Language, EditorTags.LANGUAGE_MARK)
+        BoundMark(editor, RecipePart.Title, EditorTags.TITLE_MARK, gap = 4.dp)
+        BoundMark(editor, RecipePart.Language, EditorTags.LANGUAGE_MARK, gap = 4.dp)
     }
 }
 
