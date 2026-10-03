@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -27,6 +26,7 @@ import app.recipefork.app.timer.TimerIntents
 import app.recipefork.app.timer.TimerKey
 import app.recipefork.app.timer.TimerService
 import app.recipefork.app.ui.AppNavHost
+import app.recipefork.app.ui.AppTheme
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) follow(intent)
         setContent {
             CompositionLocalProvider(LocalStepToShow provides librarySession.stepToShow) {
-                MaterialTheme {
+                AppTheme {
                     Surface(modifier = Modifier.fillMaxSize().testTag(ROOT_TAG)) {
                         AppNavHost(librarySession, container.recipes, container.mode, Modifier.safeDrawingPadding())
                     }

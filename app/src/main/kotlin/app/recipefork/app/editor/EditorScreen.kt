@@ -182,7 +182,7 @@ fun EditorScreen(
                     Tags(shown, editor, dictionary)
                     ServingCount(shown, editor)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
-                        Ingredients(shown, editor, environment.ingredients, scroll)
+                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode)
                         Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving)
                     }
                     Description(shown, editor)

@@ -9,9 +9,15 @@
     <!-- FLOW-036: the state on an own recipe's entry; local and private are both drafts. -->
     <string name="library_state_draft">Draft</string>
     <string name="library_state_pending">Awaiting review</string>
+    <!-- The same, in a build without the server (FLOW-062 (1)). -->
+    <string name="library_state_pending_serverless">Not yet open to everyone</string>
     <string name="library_state_rejected">Rejected</string>
     <string name="library_state_link_shared">Shared by private link</string>
+    <!-- The same, in a build without the server (FLOW-062 (1)). -->
+    <string name="library_state_link_shared_serverless">Open to those you shared it with</string>
     <string name="library_state_published">Published</string>
+    <!-- The same, in a build without the server, where nothing is published (FLOW-062 (1)). -->
+    <string name="library_state_published_serverless">Open to everyone</string>
     <string name="library_state_hidden">Hidden</string>
     <string name="library_state_removed">Removed</string>
     <!-- FLOW-005: the three sending marks. -->

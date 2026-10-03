@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,12 +65,18 @@ import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
-/** What the card has of its recipe: nothing yet, the recipe, or word that the book no longer holds it. */
+/**
+ * What the card has of its recipe: nothing yet, the recipe, word that the book no longer holds it, or word that it
+ * could not be read from the device.
+ */
 private sealed interface CardContent {
     data object Loading : CardContent
     data object Missing : CardContent
+    data object Unreadable : CardContent
     data class Shown(val recipe: Recipe) : CardContent
 }
 
@@ -96,8 +105,15 @@ fun CardScreen(
     onOpenParent: (RecipeId) -> Unit = {},
     session: CardSession = remember { TextCardSession.inMemory() },
 ) {
-    val content by remember(recipeId, recipes) {
-        recipes.observe(recipeId).map { recipe -> recipe?.let(CardContent::Shown) ?: CardContent.Missing }
+    // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
+    // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
+    // until it is read.
+    var attempt by remember(recipeId, recipes) { mutableIntStateOf(0) }
+    val content by remember(recipeId, recipes, attempt) {
+        recipes.observe(recipeId)
+            .map<Recipe?, CardContent> { recipe -> recipe?.let(CardContent::Shown) ?: CardContent.Missing }
+            .onStart { emit(CardContent.Loading) }
+            .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(CardContent.Unreadable) else throw failure }
     }.collectAsState(initial = CardContent.Loading)
     var entries by remember(environment) { mutableStateOf<Map<Long, IngredientEntryEntity>?>(null) }
     LaunchedEffect(environment) {
@@ -130,11 +146,25 @@ fun CardScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
             )
+            CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
             is CardContent.Shown -> entries?.let {
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
                 RecipeContent(shown.recipe, it, recipes, environment.usualServings.count.value, session, onOpenParent)
             }
         }
+    }
+}
+
+/** The word that the recipe could not be read from the device, and the offer to read it again (FLOW-020 (3)). */
+@Composable
+private fun Unreadable(onRetry: () -> Unit) {
+    Column(Modifier.padding(16.dp).testTag(CardTags.UNREADABLE)) {
+        Text(stringResource(R.string.card_unreadable), style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(8.dp))
+        Button(
+            onClick = onRetry,
+            modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.RETRY),
+        ) { Text(stringResource(R.string.card_retry)) }
     }
 }
 
@@ -495,6 +525,8 @@ object CardTags {
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
     const val MISSING = "card-missing"
+    const val UNREADABLE = "card-unreadable"
+    const val RETRY = "card-retry"
     const val CONTENT = "card-content"
     const val TITLE = "card-title"
     const val COVER = "card-cover"
