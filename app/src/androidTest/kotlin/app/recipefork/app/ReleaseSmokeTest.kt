@@ -48,7 +48,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -297,7 +296,9 @@ class ReleaseSmokeTest {
             val cover = coverOf(runBlocking { container.recipes.get(written.id) })!!
             val exif = ExifInterface(store.file(BookName.Pool, cover.mediaId).path)
             listOf(ExifInterface.TAG_GPS_LATITUDE, ExifInterface.TAG_MAKE, ExifInterface.TAG_MODEL).forEach { assertNull(it, exif.getAttribute(it)) }
-            assertNotEquals(ExifInterface.ORIENTATION_ROTATE_90, exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0))
+            // Stored upright: no turn left for a viewer to apply.
+            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
+            assertTrue("orientation $orientation", orientation == ExifInterface.ORIENTATION_UNDEFINED || orientation == ExifInterface.ORIENTATION_NORMAL)
             awaitUntil(10.seconds) { File(application.cacheDir, "capture").list().orEmpty().isEmpty() }
         } finally {
             instrumentation.removeMonitor(camera)

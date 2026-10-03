@@ -88,7 +88,9 @@ private object PendingCrops {
 
 /**
  * Asks the camera application for one picture written into the content address given — that address alone granted to
- * it, to write and to read back what it wrote, and no other file of this application.
+ * it, to write and to read back what it wrote, and no other file of this application. The platform grants
+ * EXTRA_OUTPUT of ACTION_IMAGE_CAPTURE the same way by itself (Intent.migrateExtraStreamToClipData) where no clip is
+ * set; set here, the grant does not hang on that.
  */
 internal class TakeOnePicture : ActivityResultContracts.TakePicture() {
     override fun createIntent(context: Context, input: Uri): Intent = super.createIntent(context, input).apply {

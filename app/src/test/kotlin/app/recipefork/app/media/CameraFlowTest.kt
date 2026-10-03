@@ -236,12 +236,35 @@ class CameraFlowTest {
         assertTrue(file.isFile && file.length() == 0L)
         assertEquals(Captures.directory(context).canonicalFile, file.canonicalFile.parentFile)
         assertTrue("write granted", intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0)
+        assertNoWiderGrant(intent)
         assertEquals(1, intent.clipData!!.itemCount)
         assertEquals("granted for the shot's address alone", output, intent.clipData!!.getItemAt(0).uri)
         // The provider shares the shots' directory and no other file of the application.
         val book = File(context.filesDir, "book.db").apply { writeText("x") }
         val shared = runCatching { FileProvider.getUriForFile(context, Captures.authority(context), book) }
         assertTrue("nothing outside the shots' directory is shared", shared.isFailure)
+    }
+
+    // The intent the application builds itself — before the platform adds its own grant of EXTRA_OUTPUT — grants
+    // writing and reading the shot's address, that address alone, and nothing that outlives the capture.
+    @Test
+    fun theCaptureIntentGrantsTheShotsAddressAlone() {
+        val output = Uri.parse("content://${context.packageName}.capture/capture/shot-1.jpg")
+
+        val intent = TakeOnePicture().createIntent(context, output)
+
+        assertEquals(MediaStore.ACTION_IMAGE_CAPTURE, intent.action)
+        assertTrue("write granted", intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0)
+        assertTrue("read granted", intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+        assertNoWiderGrant(intent)
+        assertEquals(1, intent.clipData!!.itemCount)
+        assertEquals(output, intent.clipData!!.getItemAt(0).uri)
+    }
+
+    /** No grant of every address under the shot's, nor one that outlives the capture. */
+    private fun assertNoWiderGrant(intent: Intent) {
+        assertEquals("no prefix grant", 0, intent.flags and Intent.FLAG_GRANT_PREFIX_URI_PERMISSION)
+        assertEquals("no persistable grant", 0, intent.flags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
     }
 
     // FLOW-026 (3): the shot opens the crop — Retake in place of Cancel — and Done hands over the framed part, 4:3
