@@ -1,6 +1,8 @@
 package app.recipefork.core.api
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import java.security.MessageDigest
 
 /**
  * Both fixed dictionaries as the server serves them and the device holds them (FLOW-001).
@@ -14,6 +16,19 @@ data class DictionariesDto(
     val ingredients: List<IngredientEntryDto>,
     val tags: List<TagDto>,
 ) {
+    /**
+     * The version this content is given: the lowercase hex SHA-256 of the compact JSON of these dictionaries with an
+     * empty version, whatever [version] holds now.
+     */
+    fun digest(): String {
+        val content = Json.encodeToString(serializer(), copy(version = ""))
+        val digest = MessageDigest.getInstance("SHA-256").digest(content.toByteArray(Charsets.UTF_8))
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    /** These dictionaries with [version] set to their [digest]. */
+    fun versioned(): DictionariesDto = copy(version = digest())
+
     companion object {
         const val PATH = "/api/v1/dictionaries"
     }
