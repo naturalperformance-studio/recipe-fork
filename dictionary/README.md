@@ -147,6 +147,6 @@ The tags file — `id, labelRu, labelEn`:
 - **Ids.** Each family source owns a range (produce 1 000–2 999, animal 3 000–4 999, pantry 5 000–6 999, seasoning
   and the rest 7 000–8 999, tags 100–999; 1–5 and 10–11 stay). Ids are permanent once shipped.
 - **Synonyms.** Only words cooks really write for exactly this entry (картошка, манка, icing sugar) — colloquial or
-  regional names, not kinds of it (a kind is a leaf) and not a vaguer word that would fit several entries.
+  regional names, not kinds of it (a kind is a leaf) and not a vaguer word that would fit several entries — except a bare word that, on its own, cooks use for this entry (масло → butter, перец → black pepper, укроп → fresh dill).
 - **No brands**, no recipes-as-ingredients ("тесто для пиццы" is fine as a bought product; "соус бешамель" as a sauce
   is fine), no duplicates across families (the generator refuses duplicate labels).

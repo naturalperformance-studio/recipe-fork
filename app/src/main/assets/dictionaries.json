@@ -1,5 +1,5 @@
 {
-  "version": "92ed1fea598d32fa473c92ce5a024981554ca21cbd1d04fe010e4953cbdc74a8",
+  "version": "430b72ec0669f047659d86da1071e81accb98299f5d2df9d69f694eae5368e9a",
   "ingredients": [
     {
       "id": 1,
@@ -24146,7 +24146,7 @@
       "labelEn": "pickle brine",
       "factors": {
         "g": 1.0,
-        "ml": 1.03,
+        "ml": 1.0,
         "tbsp": 15.0,
         "cup": 250.0
       },
