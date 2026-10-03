@@ -5,7 +5,7 @@
 # Mushrooms, fresh, frozen and dried (1800-1899)
 1800	грибы	mushrooms			g=1 cup=70
 1801	шампиньоны	button mushrooms	1800	true	g=1 pc=20 cup=70
-1802	шампиньоны королевские	chestnut mushrooms	1800	true	g=1 pc=25 cup=70
+1802	шампиньоны королевские	cremini mushrooms	1800	true	g=1 pc=25 cup=70
 1803	портобелло	portobello mushroom	1800	true	g=1 pc=100
 1804	вешенки	oyster mushrooms	1800		g=1 cup=85
 1805	королевская вешенка	king oyster mushroom	1800	true	g=1 pc=60

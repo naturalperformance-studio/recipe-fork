@@ -15,7 +15,7 @@
 2409	яблочные чипсы	apple chips	2400		g=1
 2410	клюква сушёная	dried cranberries	2400		g=1 tbsp=8 cup=120
 2411	вишня сушёная	dried cherries	2400		g=1 tbsp=9 cup=150
-2412	черника сушёная	dried blueberries	2400		g=1 tbsp=9 cup=150
+2412	черника сушёная	dried bilberries	2400		g=1 tbsp=9 cup=150
 2413	ягоды годжи	goji berries	2400		g=1 tbsp=9 cup=110
 2414	шиповник сушёный	dried rose hips	2400		g=1
 2415	малина сублимированная	freeze-dried raspberries	2400		g=1 tbsp=2 cup=30
@@ -23,7 +23,7 @@
 2420	изюм	raisins			g=1 tbsp=10 cup=150
 2421	изюм светлый	golden raisins	2420		g=1 tbsp=10 cup=150
 2422	изюм тёмный	dark raisins	2420		g=1 tbsp=10 cup=150
-2423	кишмиш	sultanas	2420		g=1 tbsp=10 cup=150
+2423	кишмиш	seedless raisins	2420		g=1 tbsp=10 cup=150
 2424	коринка	Zante currants	2420		g=1 tbsp=9 cup=145
 2430	курага	dried apricots		false	g=1 pc=8 tbsp=10 cup=130
 2431	урюк	whole dried apricots	2430	false	g=1 pc=8
@@ -34,7 +34,7 @@
 2445	цукаты	candied fruit			g=1 tbsp=10 cup=160
 2446	цукаты апельсиновые	candied orange peel	2445		g=1 tbsp=10
 2447	цукаты лимонные	candied lemon peel	2445		g=1 tbsp=10
-2448	имбирь засахаренный	crystallised ginger	2445		g=1 tbsp=10
+2448	имбирь засахаренный	crystallized ginger	2445		g=1 tbsp=10
 2417	бананы сушёные	dried bananas	2400		g=1
 2418	хурма сушёная	dried persimmon	2400		g=1
 2419	папайя сушёная	dried papaya	2400		g=1
