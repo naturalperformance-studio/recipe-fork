@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.recipefork.app.Mode
 import app.recipefork.app.R
 import app.recipefork.core.timer.TimerName
 import kotlinx.coroutines.launch
@@ -45,31 +46,45 @@ import kotlinx.coroutines.launch
  * One item of the checklist (GUIDE-004): what a good recipe does, said as advice, and why. It names nothing in the
  * recipe being written — the checklist is the same for every recipe.
  */
-internal enum class ChecklistItem(@StringRes val title: Int, @StringRes val text: Int) {
+internal enum class ChecklistItem(
+    @StringRes val title: Int,
+    @StringRes val text: Int,
+    /** The explanation in [Mode.Serverless], where nothing is ever published, where it differs from [text]. */
+    @StringRes val serverlessText: Int = text,
+) {
     /** The timer's name is cut from the opening of its step, at the very length [TimerName] cuts at (FLOW-016). */
     TIMER_OPENING(R.string.editor_checklist_1_title, R.string.editor_checklist_1_text),
     ONE_ACTION(R.string.editor_checklist_2_title, R.string.editor_checklist_2_text),
     PHOTO_AT_ITS_STEP(R.string.editor_checklist_3_title, R.string.editor_checklist_3_text),
     REFERENCES(R.string.editor_checklist_4_title, R.string.editor_checklist_4_text),
-    SUGGESTED_INGREDIENTS(R.string.editor_checklist_5_title, R.string.editor_checklist_5_text),
+    SUGGESTED_INGREDIENTS(
+        R.string.editor_checklist_5_title,
+        R.string.editor_checklist_5_text,
+        serverlessText = R.string.editor_checklist_5_text_serverless,
+    ),
     METHOD_IN_THE_STEPS(R.string.editor_checklist_6_title, R.string.editor_checklist_6_text),
     SERVING_COUNT(R.string.editor_checklist_7_title, R.string.editor_checklist_7_text),
     ;
 
-    /** The item's explanation; the first one gives the number of characters a timer's name keeps. */
+    /**
+     * The item's explanation in [mode] — a build without the server says nothing of publication — the first one
+     * giving the number of characters a timer's name keeps.
+     */
     @Composable
-    fun explanation(): String =
-        if (this == TIMER_OPENING) stringResource(text, TimerName.LENGTH) else stringResource(text)
+    fun explanation(mode: Mode): String {
+        val text = if (mode == Mode.Serverless) serverlessText else text
+        return if (this == TIMER_OPENING) stringResource(text, TimerName.LENGTH) else stringResource(text)
+    }
 }
 
 /**
  * The checklist's control at the editor's top (GUIDE-003): an icon with its label, 48 dp high, whose long press shows
  * what it offers in a tooltip. It is there for every recipe in every state, a frozen one too, and opens the checklist
- * in front of the editor, which stays where it was beneath. Whether it was ever opened is kept nowhere.
+ * in front of the editor, which stays where it was beneath; its wording follows the build's [mode]. Whether it was ever opened is kept nowhere.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun ChecklistControl(modifier: Modifier = Modifier) {
+internal fun ChecklistControl(mode: Mode, modifier: Modifier = Modifier) {
     var open by rememberSaveable { mutableStateOf(false) }
     val tooltip = rememberTooltipState()
     val scope = rememberCoroutineScope()
@@ -101,7 +116,7 @@ internal fun ChecklistControl(modifier: Modifier = Modifier) {
             Text(label, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
         }
     }
-    if (open) Checklist(onClose = { open = false })
+    if (open) Checklist(mode, onClose = { open = false })
 }
 
 /**
@@ -109,7 +124,7 @@ internal fun ChecklistControl(modifier: Modifier = Modifier) {
  * the recipe — scrolling where they are longer than the screen, closed by its button, by back or by a touch outside.
  */
 @Composable
-internal fun Checklist(onClose: () -> Unit) {
+internal fun Checklist(mode: Mode, onClose: () -> Unit) {
     AlertDialog(
         onDismissRequest = onClose,
         modifier = Modifier.testTag(ChecklistTags.DIALOG),
@@ -124,7 +139,7 @@ internal fun Checklist(onClose: () -> Unit) {
                 ChecklistItem.entries.forEach { item ->
                     Column(Modifier.testTag(ChecklistTags.item(item.ordinal)), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(stringResource(item.title), style = MaterialTheme.typography.titleSmall)
-                        Text(item.explanation(), style = MaterialTheme.typography.bodyMedium)
+                        Text(item.explanation(mode), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

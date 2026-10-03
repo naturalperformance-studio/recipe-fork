@@ -27,6 +27,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.Mode
 import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
@@ -79,6 +80,7 @@ class ChecklistTest {
     private val created = Instant.parse("2026-10-03T12:00:00Z")
     private val opened = mutableStateOf<RecipeId?>(null)
     private var shown = false
+    private var mode = Mode.Standard
 
     private val englishTitles = listOf(
         "A step that carries a timer opens with what it is waiting for.",
@@ -118,7 +120,7 @@ class ChecklistTest {
     private fun show() {
         if (shown) return
         shown = true
-        val environment = EditorEnvironment(active, device.catalog(context)) { created.plusSeconds(60) }
+        val environment = EditorEnvironment(active, device.catalog(context), clock = { created.plusSeconds(60) }, mode = mode)
         compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
@@ -254,6 +256,49 @@ class ChecklistTest {
         // Every text shown, the checklist's included, is a resource of the language in force, written in it.
         LocalizationChecks.assertScreenTextFromResources(compose, context, tagLabels(SAMPLE_DICTIONARIES))
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, tagLabels(SAMPLE_DICTIONARIES))
+    }
+
+    // In the build without the server nothing is ever published, so no item speaks of publishing, sending or
+    // submitting; item 5 keeps its advice without the clause about publication.
+    @Test
+    fun inServerlessNoItemMentionsPublication() =
+        serverless(Regex("(?i)publi|send|sent|submit"), "What is typed as free text is never found by an ingredient filter.")
+
+    // The same, in Russian.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun inServerlessNoItemMentionsPublicationInRussian() = serverless(
+        Regex("(?i)публик|отправ|подач|модерац"),
+        "Ингредиент, набранный своими словами, никогда не найдётся фильтром по ингредиентам.",
+    )
+
+    private fun serverless(publication: Regex, item5: String) {
+        mode = Mode.Serverless
+        writeANewRecipe()
+        openTheChecklist()
+        val items = checklistTexts()
+        assertEquals(7, items.size)
+        items.flatten().forEach { assertFalse(it, publication.containsMatchIn(it)) }
+        assertEquals(item5, items[4][1])
+        LocalizationChecks.assertScreenTextFromResources(compose, context, tagLabels(SAMPLE_DICTIONARIES))
+        LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, tagLabels(SAMPLE_DICTIONARIES))
+    }
+
+    // In the standard build item 5 keeps the clause: what is typed as free text cannot be changed after publication.
+    @Test
+    fun inStandardItemFiveKeepsThePublicationClause() = standard("after publication that cannot be changed")
+
+    // The same, in Russian.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun inStandardItemFiveKeepsThePublicationClauseInRussian() = standard("после публикации этого уже не изменить")
+
+    private fun standard(clause: String) {
+        mode = Mode.Standard
+        writeANewRecipe()
+        openTheChecklist()
+        val item5 = checklistTexts()[4][1]
+        assertTrue(item5, clause in item5)
     }
 
     // GUIDE-004 (5): the characters item 1 names are the ones FLOW-016 cuts at — the number is not written in the text

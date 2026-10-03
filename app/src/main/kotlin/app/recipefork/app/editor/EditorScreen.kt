@@ -86,7 +86,12 @@ fun rememberEditorEnvironment(): EditorEnvironment {
         val container = (context as RecipeForkApplication).container
         val dao = container.database.dictionaryDao()
         val seeding = DictionarySeeding(dao, PreferencesSeededVersion(context)) { DictionarySnapshot.read(context) }
-        EditorEnvironment(container.activeBook, DictionaryCatalog(dao, seeding), dragHandleSide = container.dragHandleSide)
+        EditorEnvironment(
+            container.activeBook,
+            DictionaryCatalog(dao, seeding),
+            dragHandleSide = container.dragHandleSide,
+            mode = container.mode,
+        )
     }
 }
 
@@ -138,7 +143,7 @@ fun EditorScreen(
                     onClick = onClose,
                     modifier = Modifier.testTag(EditorTags.BACK),
                 )
-                ChecklistControl()
+                ChecklistControl(environment.mode)
             }
             HorizontalDivider()
             val shown = recipe ?: return@Column

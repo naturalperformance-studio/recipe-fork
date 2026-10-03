@@ -133,6 +133,8 @@
     <string name="editor_checklist_4_text">A reference follows the reader\'s serving count; a typed number does not, so a reader cooking a double portion reads 400 g in the list and 200 g in the step.</string>
     <string name="editor_checklist_5_title">An ingredient is picked from the suggestions wherever one fits.</string>
     <string name="editor_checklist_5_text">What is typed as free text is never found by an ingredient filter, and after publication that cannot be changed.</string>
+    <!-- The same, in a build without the server, where nothing is published (FLOW-061). -->
+    <string name="editor_checklist_5_text_serverless">What is typed as free text is never found by an ingredient filter.</string>
     <string name="editor_checklist_6_title">The method goes in the steps, not in the description.</string>
     <string name="editor_checklist_6_text">When somebody else forks the recipe, they carry the ingredients and the steps away and leave the description behind, so a method written in the description is a method nobody can build on.</string>
     <string name="editor_checklist_7_title">The serving count is the number you actually cooked for.</string>
