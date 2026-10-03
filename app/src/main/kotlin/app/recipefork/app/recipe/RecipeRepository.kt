@@ -18,6 +18,7 @@ import app.recipefork.app.book.StepReferenceEntity
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.Recipe
@@ -194,7 +195,9 @@ internal fun Recipe.toRows(): RecipeRows {
         },
         steps = steps.map { StepEntity(id, it.position, it.text, it.timer?.duration?.inWholeMinutes, it.timer?.label) },
         references = steps.flatMap { step ->
-            step.ingredientReferences.map { StepReferenceEntity(id, step.position, it.textOffset, it.ingredientPosition) }
+            step.ingredientReferences.map {
+                StepReferenceEntity(id, step.position, it.textOffset, it.ingredientPosition, it.share?.amount, it.share?.unit)
+            }
         },
         media = media.mapIndexed { index, it ->
             MediaEntity(
@@ -231,7 +234,10 @@ internal fun RecipeRows.toRecipe(): Recipe {
                 position = step.position,
                 text = step.text,
                 ingredientReferences = references[step.position].orEmpty()
-                    .map { IngredientReference(it.ingredientPosition, it.textOffset) },
+                    .map { reference ->
+                        val share = reference.share?.let { amount -> reference.shareUnit?.let { IngredientShare(amount, it) } }
+                        IngredientReference(reference.ingredientPosition, reference.textOffset, share)
+                    },
                 timer = step.timerMinutes?.let { Timer(it.minutes, step.timerLabel) },
             )
         },

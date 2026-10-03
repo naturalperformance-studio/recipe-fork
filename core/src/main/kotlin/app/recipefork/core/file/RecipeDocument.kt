@@ -58,7 +58,13 @@ internal data class DocumentStep(
 internal data class DocumentReference(
     @SerialName("ingredient_position") val ingredientPosition: Int,
     @SerialName("text_offset") val textOffset: Int,
+    /** The part of the ingredient the reference reads; absent for its whole quantity. */
+    val share: DocumentShare? = null,
 )
+
+/** A part of an ingredient: an exact fraction in a unit, named as the ingredient's unit is. */
+@Serializable
+internal data class DocumentShare(val quantity: String, val unit: String)
 
 @Serializable
 internal data class DocumentTimer(val minutes: Long, val label: String? = null)

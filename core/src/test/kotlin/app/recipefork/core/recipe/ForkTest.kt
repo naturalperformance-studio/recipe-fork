@@ -32,7 +32,8 @@ class ForkTest {
     )
     private val steps = listOf(
         Step(0, "Fry the onion until golden", listOf(IngredientReference(0, 9)), Timer(12.minutes, "Onion")),
-        Step(1, "Simmer with the salt", listOf(IngredientReference(2, 12), IngredientReference(1, 0)), Timer(95.minutes)),
+        // A part of an ingredient travels with its reference (v0.9, a share of an ingredient).
+        Step(1, "Simmer with the salt", listOf(IngredientReference(2, 12), IngredientReference(1, 0, IngredientShare(Rational.of(1, 2), QuantityUnit.PIECE))), Timer(95.minutes)),
         Step(2, "Season and serve"),
     )
     private val media = listOf(
@@ -128,7 +129,7 @@ class ForkTest {
         // Every reference resolves to an ingredient of the fork itself (DOM-007).
         val positions = fork.ingredients.map { it.position }.toSet()
         assertTrue(fork.steps.flatMap { it.ingredientReferences }.all { it.ingredientPosition in positions })
-        assertEquals(listOf(IngredientReference(2, 12), IngredientReference(1, 0)), fork.steps[1].ingredientReferences)
+        assertEquals(listOf(IngredientReference(2, 12), IngredientReference(1, 0, IngredientShare(Rational.of(1, 2), QuantityUnit.PIECE))), fork.steps[1].ingredientReferences)
     }
 
     // FORK-001 (4, 5): rewriting the fork's steps keeps the named timer's name and leaves the unnamed one unnamed.
@@ -206,7 +207,7 @@ class ForkTest {
         assertTrue(fork.media.isEmpty())
         assertEquals(ingredients, fork.ingredients)
         assertEquals(steps, fork.steps)
-        assertEquals(listOf(IngredientReference(2, 12), IngredientReference(1, 0)), fork.steps[1].ingredientReferences)
+        assertEquals(listOf(IngredientReference(2, 12), IngredientReference(1, 0, IngredientShare(Rational.of(1, 2), QuantityUnit.PIECE))), fork.steps[1].ingredientReferences)
         assertEquals(Timer(12.minutes, "Onion"), fork.steps[0].timer)
         assertEquals(parent.id, fork.parent)
         assertEquals(RecipeState.LOCAL, fork.state)

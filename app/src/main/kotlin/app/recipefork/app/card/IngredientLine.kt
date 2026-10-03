@@ -54,6 +54,8 @@ data class IngredientList(
     val lines: List<IngredientLine>,
     val holdsProportions: Boolean,
     val servingCount: ServingCount? = null,
+    /** The exact factor the lines were scaled by, which a step's part of an ingredient is scaled by too. */
+    val factor: ScaleFactor = ScaleFactor.ONE,
 )
 
 /** An amount the reader fixed on the card: of the row at [position], [amount] in [unit] as typed. */
@@ -165,7 +167,12 @@ fun ingredientList(
             fixing = offer,
         )
     }
-    return IngredientList(lines, holdsProportions = scaled.holdsProportions, servingCount = counted?.let { scaled.servingCount })
+    return IngredientList(
+        lines,
+        holdsProportions = scaled.holdsProportions,
+        servingCount = counted?.let { scaled.servingCount },
+        factor = scaled.factor,
+    )
 }
 
 /**

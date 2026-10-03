@@ -22,7 +22,7 @@ class StepFieldKeyboardTest {
         var buffer: TextFieldValue = shown()
         var trigger: Int? = null
 
-        fun display() = StepDisplay(content) { quantities[it] }
+        fun display() = StepDisplay(content) { quantities[it.ingredientPosition] }
 
         fun shown() = state.shown(display())
 
@@ -35,7 +35,7 @@ class StepFieldKeyboardTest {
         /** The keyboard changes the buffer and the field reports it. */
         fun keyboard(edit: (TextFieldValue) -> TextFieldValue) {
             buffer = edit(buffer)
-            trigger = state.change(buffer, display(), { StepDisplay(it) { p -> quantities[p] } }, { content = it })
+            trigger = state.change(buffer, display(), { StepDisplay(it) { p -> quantities[p.ingredientPosition] } }, { content = it })
         }
 
         fun backspace() = keyboard { b ->

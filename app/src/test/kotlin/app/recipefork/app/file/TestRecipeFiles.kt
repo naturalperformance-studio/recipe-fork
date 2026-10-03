@@ -5,6 +5,7 @@ import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
@@ -37,7 +38,8 @@ object TestRecipeFiles {
         ),
         steps = listOf(
             Step(0, "Boil the beans", listOf(IngredientReference(0, 9)), Timer(10.minutes)),
-            Step(1, "Add the onion"),
+            // Half the beans again, as a part of them.
+            Step(1, "Add the onion and ", listOf(IngredientReference(0, 18, IngredientShare(Rational.of(100), QuantityUnit.GRAM)))),
         ),
         author = author,
         parent = FileParent(RecipeId("p-1"), "Soup", "boris"),

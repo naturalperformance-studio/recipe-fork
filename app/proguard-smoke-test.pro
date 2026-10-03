@@ -35,7 +35,7 @@
 -keep,allowobfuscation class app.recipefork.app.media.camera.CameraXAccess, app.recipefork.app.media.camera.OpenCamera, app.recipefork.app.media.camera.Shot { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Recipe, app.recipefork.core.recipe.Recipe$Companion { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.RecipeId, app.recipefork.core.recipe.RecipeId$Companion { *; }
--keep,allowobfuscation class app.recipefork.core.recipe.Ingredient, app.recipefork.core.recipe.IngredientReference { *; }
+-keep,allowobfuscation class app.recipefork.core.recipe.Ingredient, app.recipefork.core.recipe.IngredientReference, app.recipefork.core.recipe.IngredientShare { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Step, app.recipefork.core.recipe.Timer { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Media, app.recipefork.core.recipe.MediaAttachment, app.recipefork.core.recipe.MediaAttachment$* { *; }
 -keep,allowobfuscation class app.recipefork.core.scaling.Rational, app.recipefork.core.scaling.Rational$Companion { *; }

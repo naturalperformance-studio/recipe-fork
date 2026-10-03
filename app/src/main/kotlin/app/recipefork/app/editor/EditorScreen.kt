@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -25,6 +26,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -33,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -64,6 +70,7 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** The editor's environment from the composition root: the active book and the device's dictionaries. */
@@ -105,45 +112,66 @@ fun EditorScreen(
     val scrolled = rememberScrollState()
     val scroll = remember(scrolled) { EditorScroll(scrolled) }
     BackHandler(onBack = onClose)
+    val statements = remember { SnackbarHostState() }
+    PartsMadeWholeStatement(editor, statements)
 
-    Column(modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
-        ActionText(
-            text = stringResource(R.string.editor_back),
-            action = stringResource(R.string.editor_back_action),
-            onClick = onClose,
-            modifier = Modifier.padding(horizontal = 8.dp).testTag(EditorTags.BACK),
-        )
-        HorizontalDivider()
-        val shown = recipe ?: return@Column
-        Column(
-            Modifier
-                .fillMaxSize()
-                // A touch on any field or control is the author's next action, which ends a hint (GUIDE-007);
-                // a scroll is not one.
-                .onEveryTap { editor.noteAction() }
-                .onGloballyPositioned { scroll.viewport = it }
-                .verticalScroll(scroll.state)
-                .padding(16.dp)
-                .testTag(EditorTags.FORM),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            if (!shown.state.editable) {
-                Text(
-                    stringResource(R.string.editor_frozen),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.testTag(EditorTags.FROZEN),
-                )
+    Box(modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
+            ActionText(
+                text = stringResource(R.string.editor_back),
+                action = stringResource(R.string.editor_back_action),
+                onClick = onClose,
+                modifier = Modifier.padding(horizontal = 8.dp).testTag(EditorTags.BACK),
+            )
+            HorizontalDivider()
+            val shown = recipe ?: return@Column
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    // A touch on any field or control is the author's next action, which ends a hint (GUIDE-007);
+                    // a scroll is not one.
+                    .onEveryTap { editor.noteAction() }
+                    .onGloballyPositioned { scroll.viewport = it }
+                    .verticalScroll(scroll.state)
+                    .padding(16.dp)
+                    .testTag(EditorTags.FORM),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                if (!shown.state.editable) {
+                    Text(
+                        stringResource(R.string.editor_frozen),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.testTag(EditorTags.FROZEN),
+                    )
+                }
+                TitleAndLanguage(shown, editor)
+                CoverSection(shown, editor, recipes.bookName(), saving)
+                Tags(shown, editor, dictionary)
+                ServingCount(shown, editor)
+                CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
+                    Ingredients(shown, editor, environment.ingredients, scroll)
+                    Steps(shown, editor, environment.ingredients, scroll, recipes.bookName(), saving)
+                }
+                Description(shown, editor)
             }
-            TitleAndLanguage(shown, editor)
-            CoverSection(shown, editor, recipes.bookName(), saving)
-            Tags(shown, editor, dictionary)
-            ServingCount(shown, editor)
-            CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
-                Ingredients(shown, editor, environment.ingredients, scroll)
-                Steps(shown, editor, environment.ingredients, scroll, recipes.bookName(), saving)
-            }
-            Description(shown, editor)
         }
+        SnackbarHost(statements, Modifier.align(Alignment.BottomCenter).imePadding()) { data ->
+            Snackbar(data, modifier = Modifier.testTag(EditorTags.STATEMENT))
+        }
+    }
+}
+
+/** Says once that a row's change of unit made the steps' parts of it whole again. */
+@Composable
+private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: SnackbarHostState) {
+    val statement by editor.partsMadeWhole.collectAsState()
+    val text = statement?.let { stringResource(R.string.editor_parts_made_whole, it.ingredientPosition + 1) }
+    // Shown outside the effect, which ends as soon as the statement is marked as stated.
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(statement) {
+        val shown = statement ?: return@LaunchedEffect
+        scope.launch { statements.showSnackbar(text.orEmpty(), duration = SnackbarDuration.Long) }
+        editor.partsMadeWholeStated(shown)
     }
 }
 
@@ -442,4 +470,13 @@ object EditorTags {
     fun tooltip(action: String) = "$action-tooltip"
     const val DESCRIPTION = "editor-description"
     const val DESCRIPTION_TEXT = "editor-description-text"
+    /** A statement at the bottom of the editor that goes by itself. */
+    const val STATEMENT = "editor-statement"
+    fun stepOfferPart(position: Int, ingredientPosition: Int) = "editor-step-$position-part-$ingredientPosition"
+    const val PART_DIALOG = "editor-part"
+    const val PART_FIELD = "editor-part-field"
+    const val PART_PROBLEM = "editor-part-problem"
+    const val PART_INSERT = "editor-part-insert"
+    const val PART_CANCEL = "editor-part-cancel"
+    fun stepPartWarning(position: Int) = "editor-step-$position-part-warning"
 }

@@ -1,7 +1,9 @@
 package app.recipefork.core.file
 
+import app.recipefork.core.recipe.IngredientShares
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
+import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
@@ -95,6 +97,20 @@ object RecipeFileCheck {
             step.ingredientReferences.forEach { reference ->
                 check(reference.ingredientPosition in ingredients.indices) { "$at refers to no ingredient" }
                 check(reference.textOffset in 0..step.text.length) { "$at refers outside its text" }
+                reference.share?.let { share ->
+                    // A part is checked like any quantity: above zero, on its unit type's grid (DOM-017), and in a
+                    // unit its row reads it in — the row's own, or an `exact` unit of its dimension; a part the row
+                    // could never read would silently read as the whole. Parts are not checked against the whole or
+                    // against each other.
+                    val row = ingredients.getOrNull(reference.ingredientPosition)
+                    check(share.amount > Rational.ZERO) { "$at holds a part of zero or below" }
+                    check(share.unit.type.carriesQuantity && (row == null || share.unit.type == row.unitType && IngredientShares.fits(share, row.unit))) {
+                        "$at holds a part in a unit its ingredient does not read"
+                    }
+                    check(share.amount <= Rational.ZERO || QuantityInput.holds(share.amount, share.unit, row?.divisible)) {
+                        "$at holds a part off its grid"
+                    }
+                }
             }
             check(step.ingredientReferences.map { it.textOffset }.toSet().size == step.ingredientReferences.size) {
                 "$at holds two references at one place"

@@ -26,6 +26,7 @@ import app.recipefork.app.timer.TimerChannels
 import app.recipefork.app.timer.TimerKey
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
@@ -161,7 +162,12 @@ class ReleaseSmokeTest {
             ),
             steps = listOf(
                 Step(0, "Peel the beets.", listOf(IngredientReference(0, 9))),
-                Step(1, "Simmer the beets with salt.", listOf(IngredientReference(0, 11), IngredientReference(1, 22)), Timer(40.minutes, "Simmer")),
+                // A part of the beets: kept by the book and carried by the file through R8 too.
+                Step(
+                    1, "Simmer the beets with salt.",
+                    listOf(IngredientReference(0, 11, IngredientShare(Rational.of(250), QuantityUnit.GRAM)), IngredientReference(1, 22)),
+                    Timer(40.minutes, "Simmer"),
+                ),
             ),
             media = listOf(cover, stepPhoto),
         )

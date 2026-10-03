@@ -6,12 +6,15 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
+import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
@@ -82,6 +85,38 @@ class BookMigrationTest {
             ingredients = listOf(
                 Ingredient(0, null, null, "water", UnitType.EXACT, QuantityUnit.MILLILITRE, null, enteredQuantity = "1 500"),
                 Ingredient(1, null, null, null, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(15, 2)),
+            ),
+        )
+        BookDatabase.open(context, book).let { database ->
+            RecipeRepository(ActiveBook(book, database)).save(recipe)
+            database.close()
+        }
+        val reopened = BookDatabase.open(context, book)
+        try {
+            assertEquals(recipe, RecipeRepository(ActiveBook(book, reopened)).get(recipe.id))
+        } finally {
+            reopened.close()
+        }
+    }
+
+    // A step's part of an ingredient survives the book being closed and reopened, in a book migrated from version 1.
+    @Test
+    fun aPartOfAnIngredientIsKeptAfterTheBookIsReopened() = runBlocking {
+        writeVersion1()
+        val recipe = Recipe.create(Instant.ofEpochMilli(5000), null).copy(
+            ingredients = listOf(
+                Ingredient(0, null, null, "garlic", UnitType.PIECE, QuantityUnit.PIECE, Rational.of(4), divisible = false),
+                Ingredient(1, null, null, "flour", UnitType.EXACT, QuantityUnit.KILOGRAM, Rational.of(3, 2)),
+            ),
+            steps = listOf(
+                Step(
+                    0, "Marinade:  and ",
+                    listOf(
+                        IngredientReference(0, 10, IngredientShare(Rational.of(2), QuantityUnit.PIECE)),
+                        IngredientReference(1, 15, IngredientShare(Rational.of(1, 2), QuantityUnit.KILOGRAM)),
+                    ),
+                ),
+                Step(1, "Sauce: ", listOf(IngredientReference(0, 7))),
             ),
         )
         BookDatabase.open(context, book).let { database ->

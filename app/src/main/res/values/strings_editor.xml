@@ -82,6 +82,18 @@
     <string name="editor_step_insert_ingredient_action">Insert an ingredient\'s quantity into step %1$d</string>
     <string name="editor_step_insert_ingredient_none">No ingredients in this recipe yet</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
+    <!-- A part of an ingredient in a step: offered beside the whole, entered in the ingredient's own unit. -->
+    <string name="editor_step_offered_part">%1$s — part…</string>
+    <string name="editor_part_title">Part of %1$s</string>
+    <string name="editor_part_field">How much, %1$s</string>
+    <string name="editor_part_of_whole">Out of %1$s in the list.</string>
+    <string name="editor_part_more_than_whole">More than the %1$s in the list.</string>
+    <string name="editor_part_insert">Insert</string>
+    <string name="editor_part_cancel">Cancel</string>
+    <!-- A part larger than its ingredient's quantity, after the quantity was changed: marked, not refused. -->
+    <string name="editor_step_part_more_than_whole">The part %1$s is more than the %2$s in the list.</string>
+    <!-- A change of an ingredient's unit made the steps' parts of it whole references again; said once. -->
+    <string name="editor_parts_made_whole">Ingredient %1$d changed its unit: the steps now use all of it where they used a part.</string>
     <!-- The description, after the steps: one optional field (FLOW-024). -->
     <string name="editor_description">Description</string>
     <string name="editor_description_optional">Description (optional)</string>

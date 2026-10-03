@@ -89,4 +89,14 @@
     <string name="editor_row_insert_below">Вставить ниже</string>
     <string name="editor_row_move_up">Переместить вверх</string>
     <string name="editor_row_move_down">Переместить вниз</string>
+    <!-- Часть ингредиента в шаге: предлагается рядом с целым, вводится в единице ингредиента. -->
+    <string name="editor_step_offered_part">%1$s — часть…</string>
+    <string name="editor_part_title">Часть: %1$s</string>
+    <string name="editor_part_field">Сколько, %1$s</string>
+    <string name="editor_part_of_whole">Из %1$s по списку.</string>
+    <string name="editor_part_more_than_whole">Больше, чем %1$s по списку.</string>
+    <string name="editor_part_insert">Вставить</string>
+    <string name="editor_part_cancel">Отмена</string>
+    <string name="editor_step_part_more_than_whole">Часть %1$s больше, чем %2$s по списку.</string>
+    <string name="editor_parts_made_whole">У ингредиента %1$d сменилась единица: где шаги брали его часть, теперь берут целиком.</string>
 </resources>
