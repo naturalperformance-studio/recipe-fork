@@ -96,13 +96,20 @@ abstract class BookRecipeDao {
     fun own(): Flow<List<OwnRecipeRow>> = newest(NO_LIMIT)
 
     /**
-     * What names each ingredient row of the book — its dictionary entry, its qualifier and its free text — for the
-     * search of either view (FLOW-035 (4)), in the order of the rows.
+     * Every ingredient row of the book as the views are searched and filtered by it (FLOW-035): what names it, its
+     * quantity and its recipe's serving count, in the order of the rows.
      */
     @Query(
-        "select recipe_id, dictionary_entry, qualifier, free_text_name from ingredient order by recipe_id, position",
+        "select i.recipe_id as recipe_id, i.dictionary_entry as dictionary_entry, i.qualifier as qualifier, " +
+            "i.free_text_name as free_text_name, i.unit_type as unit_type, i.unit as unit, i.quantity as quantity, " +
+            "r.servings as servings from ingredient i join recipe r on r.recipe_id = i.recipe_id " +
+            "order by i.recipe_id, i.position",
     )
-    abstract fun ingredientNames(): Flow<List<IngredientNameRow>>
+    abstract fun ingredientLines(): Flow<List<IngredientLineRow>>
+
+    /** Every tag the book's recipes carry, which the views are filtered by (FLOW-035). */
+    @Query("select * from recipe_tag order by recipe_id, tag_id")
+    abstract fun allTags(): Flow<List<RecipeTagEntity>>
 
     @Query("select count(*) from recipe")
     abstract suspend fun count(): Int

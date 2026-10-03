@@ -146,10 +146,18 @@ data class OwnRecipeRow(
     @ColumnInfo(name = "cover_id") val coverId: String? = null,
 )
 
-/** What names an ingredient row, for the search of the book (FLOW-035 (4)). */
-data class IngredientNameRow(
+/**
+ * An ingredient row as a view of the book is searched and filtered by it (FLOW-035): what names it — its dictionary
+ * entry, its qualifier and its free text (FLOW-035 (4)) — and its quantity, with the serving count its recipe was
+ * authored for, which a filter by an ingredient orders by (CAT-002).
+ */
+data class IngredientLineRow(
     @ColumnInfo(name = "recipe_id") val recipeId: String,
     @ColumnInfo(name = "dictionary_entry") val dictionaryEntry: Long?,
     val qualifier: String?,
     @ColumnInfo(name = "free_text_name") val freeTextName: String?,
+    @ColumnInfo(name = "unit_type") val unitType: UnitType = UnitType.EXACT,
+    val unit: QuantityUnit? = null,
+    val quantity: Rational? = null,
+    val servings: Int? = null,
 )

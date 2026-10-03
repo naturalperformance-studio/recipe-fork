@@ -7,6 +7,7 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.book.FavouriteEntity
 import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.IngredientEntity
+import app.recipefork.app.book.IngredientLineRow
 import app.recipefork.app.book.MediaEntity
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.book.RecipeEntity
@@ -56,7 +57,7 @@ open class RecipeRepository(
 
     /**
      * The own recipes of the active book as their view lists them for each of [params] (FLOW-035): searched by title
-     * and ingredient, with the ingredient names of [dictionary], and ordered. Worked out where the book's queries
+     * and ingredient, with the ingredient names of [dictionary], filtered by ingredient and tags, and ordered. Worked out where the book's queries
      * run, never on the main thread.
      */
     fun ownListed(
@@ -80,8 +81,11 @@ open class RecipeRepository(
         search: () -> BookSearch<R>,
     ): Flow<Listed<R>> = book.open.flatMapLatest { open ->
         val searching = search()
-        combine(rows(open.database), open.database.recipes().ingredientNames(), params, ::Triple)
-            .mapLatest { (shown, names, asked) -> searching.listed(shown, names, asked) }
+        val recipes = open.database.recipes()
+        combine(rows(open.database), recipes.ingredientLines(), recipes.allTags(), params) { shown, lines, tags, asked ->
+            Listing(shown, lines, tags, asked)
+        }
+            .mapLatest { searching.listed(it.rows, it.lines, it.tags, it.params) }
             .flowOn(open.database.queryExecutor.asCoroutineDispatcher())
     }
 
@@ -162,6 +166,14 @@ open class RecipeRepository(
         val RECIPE_TABLES = arrayOf("recipe", "ingredient", "step", "step_reference", "media", "recipe_tag")
     }
 }
+
+/** What one listing of a view is worked out from. */
+private class Listing<R>(
+    val rows: List<R>,
+    val lines: List<IngredientLineRow>,
+    val tags: List<RecipeTagEntity>,
+    val params: ListingParams,
+)
 
 internal fun Recipe.toRows(): RecipeRows {
     val id = id.value
