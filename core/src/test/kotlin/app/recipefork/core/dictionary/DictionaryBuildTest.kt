@@ -184,6 +184,20 @@ class DictionaryBuildTest {
         built(ingredients("1000\tлук\tonion\t\t\t\tremoved", "1001\tлук\tonion"))
     }
 
+    // T-124: the generator folds diacritics as the search does, and takes a label's words in any order as its exact match does.
+    @Test
+    fun refusesADuplicateLabelWithDiacriticsOrItsWordsInAnotherOrder() {
+        refused(
+            build(ingredients("1000\tкрем-фреш\tcrème fraîche", "1001\tсливки кислые\tcreme fraiche")),
+            "produce.tsv:4",
+            "labelEn 'creme fraiche'",
+        )
+        refused(build(ingredients("1000\tхалапеньо\tjalapeño", "1001\tперец халапеньо\tJalapeno")), "produce.tsv:4", "labelEn")
+        refused(build(ingredients("1000\tмасло сливочное\tbutter", "1001\tсливочное масло\tdairy butter")), "produce.tsv:4", "labelRu")
+        // Words a search tells apart stay apart: a different word is a different label.
+        built(ingredients("1000\tмасло сливочное\tbutter", "1001\tмасло топлёное\tghee"))
+    }
+
     @Test
     fun refusesAParentThatIsMissingRemovedOrNotTopLevel() {
         refused(build(ingredients("1001\tлук репчатый\tonion\t1000")), "produce.tsv:3", "parentId 1000 names no entry")
