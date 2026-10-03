@@ -70,7 +70,7 @@ object WordPrefix {
  * The grammatical forms of a word reduced to one, so that the forms a cook writes find each other: an ending taken off a
  * Russian word ("яйца", "яйцо" → "яйц"; "грецкие", "грецкий" → "грецк") together with its stem without a fleeting vowel
  * ("огурец" → "огурц", the stem of "огурцы"), or the plural ending taken off an English one ("eggs" → "egg", "cherries"
- * → "cherry", "tomatoes" → "tomato"). A light reduction for the names of ingredients, not a full stemmer: two words
+ * → "cherry", "tomatoes" → "tomato", "leaves" → "leaf"). A light reduction for the names of ingredients, not a full stemmer: two words
  * match when one form of each is the same, or is [akin] to it; a word under four letters is its own form, and a stem is
  * never under three.
  */
@@ -84,11 +84,24 @@ object Inflection {
     }
 
     /**
-     * Whether the form of a typed word is akin to a label's though not the same: it begins with the label's, a stem of
-     * at least five letters — "редиска" finds "редис", "морковка" finds "морковь", "картофельное" finds "картофель". The
-     * other way round is too open: "pickles" must not find everything "pickled", nor "кури" "куркума".
+     * Whether the form of a typed word is akin to a label's though not the same: a Russian word that begins with the
+     * label's, a stem of at least five letters, and goes on by no more than a suffix that makes a diminutive or an
+     * adjective of it — "редиска" finds "редис", "морковка" finds "морковь", "картофельное" finds "картофель". Another
+     * word built on the stem is not it: "лимонад" is no "лимон", "сахарин" no "сахар"; nor is an English compound:
+     * "buttermilk" is no "butter", "pepperoni" no "pepper". The other way round is too open: "pickles" must not find
+     * everything "pickled", nor "кури" "куркума".
      */
-    fun akin(typed: String, label: String): Boolean = label.length >= MIN_AKIN && typed.startsWith(label)
+    fun akin(typed: String, label: String): Boolean =
+        label.length >= MIN_AKIN && typed.startsWith(label) && label.any { it in 'а'..'я' } &&
+            typed.substring(label.length) in AKIN_SUFFIXES
+
+    /**
+     * Whether [typed] and [label], both [folded][WordPrefix.fold] words, are the same word in one form or another: the
+     * same, or sharing a [form][forms] — "яйца" is "яйцо", "eggs" "egg", "onions" "onion"; never a word merely akin,
+     * nor a beginning of it still being typed: "яйц" and "молок" are not yet "яйцо" and "молоко".
+     */
+    fun same(typed: String, label: String): Boolean =
+        typed == label || !label.startsWith(typed) && forms(typed).let { forms -> forms(label).any { it in forms } }
 
     private fun russian(word: String): String {
         val ending = RUSSIAN_ENDINGS.firstOrNull { word.endsWith(it) && word.length - it.length >= MIN_STEM }
@@ -96,7 +109,9 @@ object Inflection {
     }
 
     private fun english(word: String): String = when {
+        word in ENGLISH_OWN -> word
         word.endsWith("ies") && word.length > MIN_WORD -> word.dropLast(3) + "y"
+        ENGLISH_VES.any { word.endsWith(it) } -> word.dropLast(3) + "f"
         word.endsWith("oes") || ENGLISH_ES.any { word.endsWith(it) } -> word.dropLast(2)
         word.endsWith("s") && !word.endsWith("ss") && !word.endsWith("us") && !word.endsWith("is") -> word.dropLast(1)
         else -> word
@@ -124,6 +139,15 @@ object Inflection {
     private val FLEETING = listOf("ец", "ок", "ек", "ен")
     private val VOWELS = "аеиоуыэюя".toSet()
     private val ENGLISH_ES = listOf("ches", "shes", "sses", "xes", "zes")
+
+    /** The "-ves" plurals of a word in "-f": "leaves", "loaves", "halves" — not "olives", "cloves" or "chives". */
+    private val ENGLISH_VES = listOf("eaves", "oaves", "lves")
+
+    /** Plurals that are words of their own: "greens" are no "green". */
+    private val ENGLISH_OWN = setOf("greens")
+
+    /** What may follow a label's stem in a word [akin] to it: a diminutive ("редиска") or an adjective ("картофельное"). */
+    private val AKIN_SUFFIXES = setOf("к", "ок", "ек", "ик", "чик", "очк", "ечк", "н", "нн", "ьн", "ов", "ев", "ен", "енн")
 }
 
 /**
