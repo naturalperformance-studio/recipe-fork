@@ -25,7 +25,9 @@ import app.recipefork.app.R
 import app.recipefork.app.book.BookName
 import app.recipefork.app.media.PhotoImage
 import app.recipefork.app.media.PhotoStore
-import app.recipefork.app.media.stepPhoto
+import app.recipefork.app.media.stepMedia
+import app.recipefork.core.recipe.MediaKind
+import androidx.compose.material3.MaterialTheme
 import app.recipefork.core.recipe.Recipe
 import java.io.File
 import app.recipefork.app.timer.RecipeTimers
@@ -63,12 +65,12 @@ internal fun StepsList(
     recipeId: RecipeId,
     title: String = "",
     references: CardReferences = CardReferences.NONE,
-    photos: StepPhotosOnCard = StepPhotosOnCard.NONE,
+    media: StepMediaOnCard = StepMediaOnCard.NONE,
 ) {
-    // A step that is only a reference reads as one, and one that is only a photograph shows it; one holding nothing
-    // that reads or shows is left out.
+    // A step that is only a reference reads as one, and one that is only a photograph or a clip shows it — or says it
+    // is unavailable (FLOW-061); one holding nothing that reads or shows is left out.
     val shown = steps.sortedBy { it.position }
-        .filter { StepText.render(it, references::quantity).isNotBlank() || photos.of(it.position) != null }
+        .filter { StepText.render(it, references::quantity).isNotBlank() || media.of(it.position) != null }
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }
@@ -94,7 +96,7 @@ internal fun StepsList(
             } else {
                 place
             }
-            StepRow(index + 1, step, references, timers, photos, modifier)
+            StepRow(index + 1, step, references, timers, media, modifier)
         }
     }
     RestartQuestion(timers)
@@ -102,46 +104,98 @@ internal fun StepsList(
 }
 
 /**
- * One step: its number and its text, read by the screen reader as one line, then its photograph, named by the step's
- * number, and its timer, if it carries them.
+ * One step: its number and its text, read by the screen reader as one line, then its photograph or its clip, named by
+ * the step's number, and its timer, if it carries them. An item whose file the device does not hold, or cannot show,
+ * says so in its place (FLOW-061).
  */
 @Composable
-private fun StepRow(number: Int, step: Step, references: CardReferences, timers: RecipeTimers, photos: StepPhotosOnCard, modifier: Modifier = Modifier) {
+private fun StepRow(number: Int, step: Step, references: CardReferences, timers: RecipeTimers, media: StepMediaOnCard, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(CardTags.step(step.position))) {
             Text("$number.", style = stepTextStyle, modifier = Modifier.widthIn(min = 32.dp))
             StepText(step, references, Modifier.weight(1f))
         }
-        photos.of(step.position)?.let { file ->
+        media.of(step.position)?.let { item ->
             Box(Modifier.fillMaxWidth().padding(start = 32.dp, top = 8.dp)) {
-                PhotoImage(file, stringResource(R.string.media_step_description, number), Modifier.testTag(CardTags.stepPhoto(step.position)))
+                StepMedia(item, number, step.position)
             }
         }
         if (step.timer != null) StepTimer(step, timers, references::quantity, Modifier.padding(start = 32.dp))
     }
 }
 
-/**
- * The files of the photographs a recipe's steps carry, by the step's position: only those the device holds, so that a
- * step holding nothing but a photograph whose file is gone is left out rather than shown as a bare number.
- */
-internal fun interface StepPhotosOnCard {
-    fun of(position: Int): File?
+@Composable
+private fun StepMedia(item: StepMediaItem, number: Int, position: Int) {
+    val photoUnavailable = @Composable { MediaUnavailable(stringResource(R.string.card_step_photo_unavailable, number), CardTags.stepMediaUnavailable(position)) }
+    val clipUnavailable = @Composable { MediaUnavailable(stringResource(R.string.card_step_video_unavailable, number), CardTags.stepMediaUnavailable(position)) }
+    when (item) {
+        is StepMediaItem.Photo -> PhotoImage(
+            item.file,
+            stringResource(R.string.media_step_description, number),
+            Modifier.testTag(CardTags.stepPhoto(position)),
+            unavailable = photoUnavailable,
+        )
+        is StepMediaItem.Clip -> StepVideo(
+            item.file,
+            description = stringResource(R.string.card_step_video_description, number),
+            playAction = stringResource(R.string.card_video_play),
+            pauseAction = stringResource(R.string.card_video_pause),
+            unavailable = clipUnavailable,
+            videoTag = CardTags.stepVideo(position),
+            controlTag = CardTags.stepVideoControl(position),
+        )
+        is StepMediaItem.Missing -> if (item.kind == MediaKind.VIDEO) clipUnavailable() else photoUnavailable()
+    }
+}
+
+/** The line that stands where media the device does not hold, or cannot show, would be (FLOW-061). */
+@Composable
+internal fun MediaUnavailable(text: String, tag: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.fillMaxWidth().testTag(tag),
+    )
+}
+
+/** What a step shows of the item it carries. */
+internal sealed interface StepMediaItem {
+    /** A photograph whose file the device holds. */
+    data class Photo(val file: File) : StepMediaItem
+
+    /** A clip whose file the device holds. */
+    data class Clip(val file: File) : StepMediaItem
+
+    /** An item of [kind] whose file the device does not hold (FLOW-061). */
+    data class Missing(val kind: MediaKind) : StepMediaItem
+}
+
+/** The item each of a recipe's steps carries, by the step's position; null for a step that carries none. */
+internal fun interface StepMediaOnCard {
+    fun of(position: Int): StepMediaItem?
 
     companion object {
-        val NONE = StepPhotosOnCard { null }
+        val NONE = StepMediaOnCard { null }
     }
 }
 
 @Composable
-internal fun StepPhotosOnCard(recipe: Recipe, book: BookName): StepPhotosOnCard {
+internal fun StepMediaOnCard(recipe: Recipe, book: BookName): StepMediaOnCard {
     val context = LocalContext.current
     val store = remember(context) { PhotoStore(context.applicationContext.filesDir) }
     return remember(store, recipe, book) {
         // Looked up once for the recipe as it stands, not at every composition.
         val held = recipe.steps.mapNotNull { step ->
-            recipe.stepPhoto(step.position)?.let { store.file(book, it.mediaId) }?.takeIf { it.isFile }?.let { step.position to it }
+            recipe.stepMedia(step.position)?.let { media ->
+                val file = store.file(book, media.mediaId)
+                step.position to when {
+                    !file.isFile -> StepMediaItem.Missing(media.kind)
+                    media.kind == MediaKind.VIDEO -> StepMediaItem.Clip(file)
+                    else -> StepMediaItem.Photo(file)
+                }
+            }
         }.toMap()
-        StepPhotosOnCard { position -> held[position] }
+        StepMediaOnCard { position -> held[position] }
     }
 }

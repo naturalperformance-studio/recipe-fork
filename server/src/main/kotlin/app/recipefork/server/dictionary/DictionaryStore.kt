@@ -4,12 +4,18 @@ import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
 
-/** An entry of the ingredient dictionary, as the store holds it. */
+/**
+ * An entry of the ingredient dictionary, as the store holds it: its [divisible] flag (null while the dictionary does
+ * not say), its comparison [factors] by unit code (DOM-011, CAT-009), and whether it is [removed] upstream.
+ */
 data class IngredientEntry(
     val id: Long,
     val labelRu: String,
     val labelEn: String,
     val parentId: Long?,
+    val divisible: Boolean? = null,
+    val factors: Map<String, Double> = emptyMap(),
+    val removed: Boolean = false,
 )
 
 /** A tag of the tag dictionary, as the store holds it. */
@@ -41,7 +47,7 @@ class DictionaryStore(private val dataSource: DataSource) {
             conn.autoCommit = false
             try {
                 DictionarySnapshot(
-                    ingredients = conn.query(INGREDIENTS_SQL) { it.toEntry() },
+                    ingredients = conn.ingredientEntries(),
                     tags = conn.query(TAGS_SQL) { it.toTag() },
                 ).also { conn.commit() }
             } finally {
@@ -52,11 +58,24 @@ class DictionaryStore(private val dataSource: DataSource) {
         }
 
     fun ingredientEntries(): List<IngredientEntry> =
-        query(INGREDIENTS_SQL) { it.toEntry() }
+        dataSource.connection.use { it.ingredientEntries() }
 
-    fun ingredientEntry(id: Long): IngredientEntry? =
-        query("select entry_id, label_ru, label_en, parent_id from ingredient_entry where entry_id = ?", id) { it.toEntry() }
-            .singleOrNull()
+    fun ingredientEntry(id: Long): IngredientEntry? = dataSource.connection.use { conn ->
+        conn.query("$ENTRY_COLUMNS where entry_id = ?", id) { it.toEntry() }.singleOrNull()
+            ?.let { it.copy(factors = conn.factors("where entry_id = ?", id)[it.id].orEmpty()) }
+    }
+
+    /** Every entry with its factors, in the order of their ids. */
+    private fun Connection.ingredientEntries(): List<IngredientEntry> {
+        val factors = factors("")
+        return query(INGREDIENTS_SQL) { it.toEntry() }.map { it.copy(factors = factors[it.id].orEmpty()) }
+    }
+
+    /** The factors of the entries [where] selects, by entry, each in the order of its unit codes. */
+    private fun Connection.factors(where: String, vararg params: Any): Map<Long, Map<String, Double>> =
+        query("select entry_id, unit, factor from ingredient_factor $where order by entry_id, unit", *params) {
+            Triple(it.getLong(1), it.getString(2), it.getDouble(3))
+        }.groupBy({ it.first }) { it.second to it.third }.mapValues { (_, pairs) -> pairs.toMap() }
 
     fun tags(): List<Tag> =
         query(TAGS_SQL) { it.toTag() }
@@ -66,6 +85,8 @@ class DictionaryStore(private val dataSource: DataSource) {
         labelRu = getString(2),
         labelEn = getString(3),
         parentId = getLong(4).takeUnless { wasNull() },
+        divisible = getBoolean(5).takeUnless { wasNull() },
+        removed = getBoolean(6),
     )
 
     private fun ResultSet.toTag() = Tag(id = getLong(1), labelRu = getString(2), labelEn = getString(3))
@@ -80,7 +101,8 @@ class DictionaryStore(private val dataSource: DataSource) {
         }
 
     private companion object {
-        const val INGREDIENTS_SQL = "select entry_id, label_ru, label_en, parent_id from ingredient_entry order by entry_id"
+        const val ENTRY_COLUMNS = "select entry_id, label_ru, label_en, parent_id, divisible, removed from ingredient_entry"
+        const val INGREDIENTS_SQL = "$ENTRY_COLUMNS order by entry_id"
         const val TAGS_SQL = "select tag_id, label_ru, label_en from tag order by tag_id"
     }
 }

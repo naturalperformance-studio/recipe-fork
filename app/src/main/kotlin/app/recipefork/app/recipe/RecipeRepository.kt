@@ -23,11 +23,13 @@ import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.SentStatus
 import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import app.recipefork.app.media.PhotoStore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -160,6 +162,30 @@ open class RecipeRepository(
             val store = PhotoStore(files)
             media.filterNot { it in held }.forEach { store.delete(open.name, it) }
         }
+    }
+
+    /**
+     * The media files of the active book that [clearMedia] would delete, those on the device now: the media of every
+     * found recipe and of every own recipe sent without changes since (FLOW-060 (1)). A recipe never sent, or sent
+     * with changes not sent — which may hold media sent nowhere — keeps its media (FLOW-060 (2)). Empty when the
+     * media files are no concern of this repository's.
+     */
+    suspend fun clearableMedia(): List<java.io.File> {
+        val files = filesDirectory ?: return emptyList()
+        val open = book.open.value
+        val store = PhotoStore(files)
+        val ids = open.database.recipes().clearableMedia(SentStatus.SENT)
+        return withContext(Dispatchers.IO) { ids.map { store.file(open.name, it) }.filter { it.isFile } }
+    }
+
+    /**
+     * Deletes the files of [clearableMedia] from the device (FLOW-060); every media row stays, so a recipe still
+     * names the media it no longer holds a file of. Returns how many files were deleted. Finished even when the caller
+     * is cancelled.
+     */
+    suspend fun clearMedia(): Int = withContext(NonCancellable) {
+        val files = clearableMedia()
+        withContext(Dispatchers.IO) { files.count { it.delete() } }
     }
 
     suspend fun get(id: RecipeId): Recipe? = book.database.recipes().get(id.value)?.toRecipe()

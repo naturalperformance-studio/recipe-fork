@@ -26,18 +26,29 @@ data class IngredientOffer(
          * The offer for [typed] from [dictionary], shown in the interface [language].
          *
          * An entry is offered when one of its labels, in either language, holds for every typed word a word that
-         * begins with it, after [fold]. The leaves of every parent so offered are offered too, immediately before
+         * begins with it, or the same word in another grammatical form ("яйца" for "яйцо"), after [fold]. The leaves of every parent so offered are offered too, immediately before
          * it, in the alphabetical order of their labels; a leaf matched on its own stands there as well, once.
          * The offer is in two groups — first what begins with the whole typed text in either language, then the
          * rest — each in the alphabetical order of the label shown, a parent placed by its own label.
+         *
+         * The exact match is the label's words, as [fold]ed, in any order: "сливочное масло" is "масло сливочное".
+         *
+         * An entry removed upstream is never offered, nor matched exactly (FLOW-001 (7), DOM-009 (5)), except one of
+         * [stillHeld] — what the library's filter keeps offering while a recipe in its view holds it.
          */
-        fun of(typed: String, dictionary: List<IngredientEntryEntity>, language: InterfaceLanguage): IngredientOffer {
+        fun of(
+            typed: String,
+            dictionary: List<IngredientEntryEntity>,
+            language: InterfaceLanguage,
+            stillHeld: Set<Long> = emptySet(),
+        ): IngredientOffer {
             val sought = fold(typed).trim()
             val typedWords = words(sought)
             if (typedWords.isEmpty()) return IngredientOffer(emptyList(), freeText = null)
+            val offerable = dictionary.filter { !it.removed || it.id in stillHeld }
 
-            val matched = dictionary.filter { entry -> entry.labels().any { holdsEveryWord(it, typedWords) } }
-            val leaves = dictionary.filter { it.parentId != null }.groupBy { it.parentId }
+            val matched = offerable.filter { entry -> entry.labels().any { holdsEveryWord(it, typedWords) } }
+            val leaves = offerable.filter { it.parentId != null }.groupBy { it.parentId }
             val collator = Collator.getInstance(if (language == InterfaceLanguage.RUSSIAN) Locale("ru") else Locale.ENGLISH)
             val byLabel = compareBy<IngredientEntryEntity, String>(collator) { it.label(language) }.thenBy { it.id }
 
@@ -49,11 +60,12 @@ data class IngredientOffer(
                 leaves[head.id].orEmpty().sortedWith(byLabel) + head
             }.distinctBy { it.id }
 
-            val exact = offered.firstOrNull { entry -> entry.labels().any { fold(it).trim() == sought } }
+            val soughtWords = typedWords.sorted()
+            val exact = offered.firstOrNull { entry -> entry.labels().any { WordPrefix.Words.of(it).words.sorted() == soughtWords } }
             return IngredientOffer(offered, freeText = if (exact == null) typed.trim() else null, exact = exact)
         }
 
-        /** Letter case ignored and `ё` read as `е` (FLOW-057). */
+        /** Letter case ignored, `ё` read as `е` (FLOW-057) and Latin diacritics dropped. */
         fun fold(text: String): String = WordPrefix.fold(text)
 
         private fun IngredientEntryEntity.labels() = listOf(labelRu, labelEn)
@@ -61,6 +73,6 @@ data class IngredientOffer(
         private fun words(folded: String): List<String> = WordPrefix.words(folded)
 
         private fun holdsEveryWord(label: String, typedWords: List<String>): Boolean =
-            WordPrefix.holdsEvery(WordPrefix.words(label), typedWords)
+            WordPrefix.holdsEvery(WordPrefix.Words.of(label), typedWords)
     }
 }

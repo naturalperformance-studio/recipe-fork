@@ -1,15 +1,17 @@
 ---
 slug: CAT
 status: closed
-updated: 2026-09-27
-ids: [CAT-001, CAT-002, CAT-003, CAT-004, CAT-005, CAT-006, CAT-007, CAT-008, CAT-009]
+updated: 2026-10-03
+ids: [CAT-001, CAT-002, CAT-003, CAT-004, CAT-005, CAT-006, CAT-007, CAT-008, CAT-009,
+  CAT-010]
 ---
 
 # Catalogue and search
 
 The public catalogue is where a reader meets a recipe they did not already know
-about. Searching works over the catalogue and, by the same rules, over the
-reader's own favourites (draft section 7).
+about. Searching works over the catalogue and, by the same orderings and filters,
+over the reader's own favourites (draft section 7); a text query in the device's
+recipe book is matched its own way (L10N-006).
 
 The screens themselves — their empty, loading, error and offline states — are in
 [`flows`](70-flows/00-index.md); what is here is the ordering, the filters and what a
@@ -40,8 +42,8 @@ has not chosen a field.
   that includes unpublished forks takes no part in the ordering.
 - Given a query, when the results are shown, then they are ordered by the same
   chosen field, and choosing another reorders them without repeating the query.
-- Given the reader's favourites, when they are searched, then the same orderings
-  are offered there.
+- Given the reader's favourites, when they are searched, then the orderings
+  FLOW-039 gives each view of the recipe book are offered there.
 - Given a chosen ordering, when the reader leaves the catalogue and returns
   within the same session (FLOW-058), then the choice is still in force.
 - Given the ordering `newest`, when two recipes are ordered, then the one that
@@ -128,11 +130,17 @@ authored for.
   FLOW-018 requires is present in the entry as well.
 - Given any entry, when it is shown, then it carries nothing that identifies the
   author beyond the nickname (CON-001).
+- Given an entry in the device's recipe book (FLOW-034), when it is shown, then it
+  shows the recipe's cover where it has one and nothing in its place where it has
+  none, as a catalogue entry does.
 
 **Verification:** list four recipes — one complete, one without a cover image,
 one unrated, one flagged — and compare each entry against this field list.
 **Source:** user decision, 2026-09-20. The entry is the reader's first contact
-with a recipe; what it does not show cannot influence what they open.
+with a recipe; what it does not show cannot influence what they open; amended
+2026-10-03 (sync v0.3–v0.14): the recipe book's entries show the cover too —
+req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03
+(user decision, v0.6).
 **Where import is present** (not in the first release), an imported recipe has
 no author and shows its source mark in the nickname's place (IMPORT-017).
 
@@ -336,3 +344,26 @@ compare against hand computation; then add the missing factor and repeat.
 that killed it: a recipe using 5 g of chicken per serving would have been ordered
 above one needing two whole carcasses, only because the first was stated in grams.
 See [ADR — comparison factors](decisions/20260920-comparison-factors.md).
+
+### CAT-010 — A filter on tags keeps what carries every chosen tag
+
+Where the reader filters by tags, the system shall let them choose one or more
+tags and shall keep a recipe only if it carries every chosen tag; beside it, at
+most one ingredient filter (CAT-006) is in force at a time.
+
+**Acceptance criteria**
+- Given tags `soup` and `quick` chosen, when the listing is shown, then a recipe
+  carrying both stays and a recipe carrying only one of them does not.
+- Given a single tag chosen, when the listing is shown, then every recipe carrying
+  it stays.
+- Given an ingredient filter in force, when the reader chooses another ingredient,
+  then it replaces the first rather than being added beside it.
+- Given a tag filter and an ingredient filter both in force, when the listing is
+  shown, then a recipe stays only if it satisfies both.
+- Given the recipe book (FLOW-035), when the reader filters there by tags, then the
+  filter means what it means in the catalogue.
+
+**Verification:** tag four recipes with every combination of two tags and filter on
+one tag, on both, and on both with an ingredient filter.
+**Source:** req-forge proposal from the sync of v0.3–v0.14, accepted by the user,
+2026-10-03 (built in the recipe book in v0.8).

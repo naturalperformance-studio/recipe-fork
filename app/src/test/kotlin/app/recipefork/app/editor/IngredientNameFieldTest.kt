@@ -303,13 +303,13 @@ class IngredientNameFieldTest {
         assertNull(row.freeTextName)
         assertEquals("chicken wings", fieldText(EditorTags.ingredientName(0)))
         // Typed over again, the row is the author's words once more and warns again.
-        type(0, "chicken wings, smoked")
+        type(0, "smoked chicken wings")
         assertNull(stored(recipe.id).ingredients.single().dictionaryEntry)
-        assertEquals("chicken wings, smoked", stored(recipe.id).ingredients.single().freeTextName)
+        assertEquals("smoked chicken wings", stored(recipe.id).ingredients.single().freeTextName)
         assertTrue(exists(EditorTags.ingredientWarning(0)))
     }
 
-    // FLOW-023 (11), FLOW-022 (5): the shipped entries carry no divisibility, so a picked `piece` row still asks.
+    // FLOW-023 (11), FLOW-022 (5): these entries give no divisibility, so a picked `piece` row still asks.
     @Test
     fun aPieceRowPickedFromAnEntryStillAsksForDivisibility() {
         val id = writeANewRecipe()
@@ -369,7 +369,7 @@ class IngredientNameFieldTest {
 
     private fun theOpenOffer(typed: String, content: Set<String>) {
         writeANewRecipe()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.offered(10)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
         addIngredient(0)
         type(0, typed)
         assertTrue(choices(0).size >= 3)

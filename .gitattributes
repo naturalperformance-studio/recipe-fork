@@ -1,0 +1,3 @@
+# Generated from dictionary/ by scripts/dictionary-build.sh: never merged by hand. On a conflict git keeps our
+# side whole and reports it; regenerate from the merged sources (dictionary/README.md, "Merging").
+app/src/main/assets/dictionaries.json merge=binary linguist-generated=true

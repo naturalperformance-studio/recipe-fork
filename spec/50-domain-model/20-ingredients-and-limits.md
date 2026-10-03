@@ -1,9 +1,9 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-29
+updated: 2026-10-03
 ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014, DOM-016, DOM-017,
-  DOM-018, DOM-019]
+  DOM-019, DOM-018, DOM-020]
 ---
 
 # Invariants over ingredients, the dictionaries, units and limits
@@ -29,6 +29,13 @@ hold neither.
 - Given a dictionary entry that the product owner removes upstream, when a recipe
   already refers to it, then the recipe keeps the reference, exactly as FLOW-001
   requires of a removed tag.
+- Given an entry the product owner withdraws, when the dictionary is next read,
+  then the entry is still there marked `removed`, under the same `entry_id`; it
+  still names every recipe that holds it, and it is not offered when an author
+  picks an ingredient.
+- Given any later copy of the dictionary, when its identifiers are compared with
+  an earlier one, then no identifier has disappeared, none has been renumbered,
+  and none has been given to a different entry.
 
 **Verification:** store one ingredient of each kind and confirm the two rejected
 shapes are refused.
@@ -37,6 +44,8 @@ something stable, and free text is not stable (OQ-017). The author is never
 blocked by a missing entry — free text stays available with the warning FLOW-022
 requires. See
 [ADR — the ingredient dictionary](../decisions/20260920-ingredient-dictionary.md).
+Amended 2026-10-03 (sync v0.3–v0.14): an entry is withdrawn by a `removed` mark and
+never deleted, and its identifier is permanent (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03).
 
 ### DOM-010 — The ingredient dictionary is two levels deep at most
 
@@ -113,6 +122,8 @@ refuse to accept it for moderation and shall name the part that is over its limi
   so the author does not discover them one at a time.
 - Given a timer name of 61 characters, when the recipe is submitted, then submission
   is refused and that timer is named.
+- Given a step that holds only media and no text, when the recipe is submitted,
+  then no step-length limit applies to it (DOM-006).
 - Given a timer whose name the author never set, when the recipe is submitted, then
   no timer-name limit applies to it, because its name is derived from a step that has
   its own limit (FLOW-016).
@@ -132,6 +143,8 @@ description get 2 000 characters each, because that is where an author actually 
 Without any cap, a single submission could be a recipe of thousands of steps, which
 the one moderator has to read (`abuse`) and every device has to render. These are the
 functional limits; `quality` holds the measurable thresholds that refer to them.
+Amended 2026-10-03 (sync v0.3–v0.14): a step without text is checked against no
+length limit (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03).
 
 ### DOM-013 — A step carries at most one timer
 
@@ -166,6 +179,11 @@ reach, that creates, changes, moves or removes an entry of the ingredient
 dictionary or of the tag dictionary, and both shall be maintained only by direct
 operation on the product's own store by whoever operates it.
 
+In serverless mode there is no store to operate on: both dictionaries shall be
+maintained in the product's source and shipped with the application, and a
+device's copy shall change only with an update of the application. What this
+requirement says of the store holds for the server.
+
 **Acceptance criteria**
 - Given every screen of the application, including those the moderator role
   opens, when they are enumerated, then none edits either dictionary and none
@@ -183,16 +201,25 @@ operation on the product's own store by whoever operates it.
   requirement stands.
 - Given this requirement, when it is read against CON-005 and EXT-001, then it
   adds neither a client surface nor an external dependency.
+- Given serverless mode, when the dictionaries are changed, then the change is
+  made in the product's source and reaches a device only with an application
+  update; nothing the device downloads or a user does changes its copy, and an
+  entry the update marks `removed` stays resolvable in the recipes that name it
+  (DOM-009).
 
 **Verification:** enumerate every screen as an author and as a moderator;
-change an entry in the store and confirm a device picks it up.
+change an entry in the store and confirm a device picks it up; in serverless
+mode, change an entry in the source and confirm a device sees it only after
+installing the updated application.
 **Source:** user decision, 2026-09-21. DOM-008, DOM-009, DOM-010, DOM-011,
 CAT-009 and L10N-003 all require a maintained dictionary — two levels, two
 languages, a divisibility flag and comparison factors — and every one of them
 said only that a user cannot edit it, never where the product owner does. An
 editor for it is a real screen in an MVP whose whole scope is the fork mechanic,
 and it would sit behind the moderator role, which ACT-008 has just placed
-outside the application as well.
+outside the application as well. Amended 2026-10-03 (sync v0.3–v0.14): the
+serverless variant — the dictionaries ship with the application (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03). See
+[ADR — the serverless dictionary ships with the app](../decisions/20261003-the-serverless-dictionary-ships-with-the-app.md).
 **Cost, stated:** a factor typed wrong changes the order of filtered results and
 nothing in the product notices. DOM-011 already accepted that shape of error by
 keeping the factor on the entry, where it is correctable for ever, rather than in
@@ -348,10 +375,40 @@ does not hold it.
 - Given a draft or a withdrawn or rejected recipe holding such a quantity, when it
   is edited, then DOM-017 marks the row as an error and it cannot be submitted
   until corrected.
+- Given serverless mode, when a found recipe (imported from a file and frozen,
+  FLOW-064) holds such a quantity, then it is treated as published for this
+  requirement; an own draft holding one follows criterion 3.
+- Given serverless mode, when a found recipe holds a row with no quantity yet or a
+  quantity off its grid, then it is kept and shown as written, and nothing on the
+  device corrects it.
 
 **Verification:** publish a recipe with a half piece of a divisible entry, mark the
 entry indivisible, and open the recipe at its authored and at another count; open
 a draft holding the same quantity.
 **Source:** user decision, 2026-09-27. A recipe was valid when it was published,
 and CON-003 forbids correcting it afterwards; the correction of the entry is the
-product owner's, not the author's.
+product owner's, not the author's. Amended 2026-10-03 (sync v0.3–v0.14): in
+serverless mode a found recipe counts as published, and may hold incomplete and
+off-grid rows as written (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03).
+
+### DOM-020 — What the dictionaries hold
+
+The product owner shall fill the ingredient and tag dictionaries by these rules:
+where cooks count different things under one word, those are separate entries; an
+entry names no brand; a recipe is not an ingredient; and tags are grouped by
+family.
+
+**Acceptance criteria**
+- Given garlic, which cooks count both as heads and as cloves, when the dictionary
+  is read, then a head of garlic and a clove of garlic are two entries, so what one
+  `шт` is always comes from the entry (DOM-016).
+- Given any entry of the ingredient dictionary, when its labels are read, then
+  none is a brand or trade name.
+- Given any entry of the ingredient dictionary, when it is read, then it names an
+  ingredient a cook buys or keeps, not a recipe presented as an ingredient.
+- Given the tag dictionary, when it is read, then every tag belongs to one family —
+  such as cuisine, meal, diet, method or appliance, occasion.
+
+**Verification:** review of the dictionary's content against each rule.
+**Source:** req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03. How large the dictionaries are and exactly which tag
+families exist are the team's.

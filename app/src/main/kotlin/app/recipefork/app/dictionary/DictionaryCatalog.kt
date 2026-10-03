@@ -12,7 +12,9 @@ fun interface IngredientSource {
 
 /**
  * The held dictionaries, seeded from the shipped snapshot before they are first read, so that a clean
- * installation with no connection offers the same entries as one that has reached the server.
+ * installation with no connection offers the same entries as one that has reached the server. The application holds
+ * one ([app.recipefork.app.AppContainer.dictionaries]), which the editor and the card both read, so the shipped
+ * snapshot is checked once for all of them.
  */
 class DictionaryCatalog(
     private val dao: DictionaryDao,

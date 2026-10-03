@@ -21,17 +21,20 @@ import java.io.File
 /**
  * A photograph kept on the device, read off the main thread and decoded no larger than the width it is shown at.
  * It fills the width: a landscape picture is shown whole, a taller one cropped to a square about its centre. Until it
- * is read — and when it cannot be read at all — nothing is shown in its place. [description] is its text alternative;
- * [modifier] is the picture's, once there is one.
+ * is read nothing is shown in its place, and when it cannot be read at all, [unavailable] — by default nothing.
+ * [description] is its text alternative; [modifier] is the picture's, once there is one.
  */
 @Composable
-fun PhotoImage(file: File, description: String, modifier: Modifier = Modifier) {
+fun PhotoImage(file: File, description: String, modifier: Modifier = Modifier, unavailable: @Composable () -> Unit = {}) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val widthPx = with(LocalDensity.current) { maxWidth.roundToPx() }.coerceAtLeast(1)
-        val image by produceState<ImageBitmap?>(null, file, widthPx) {
-            value = withContext(Dispatchers.IO) { decodeForDisplay(file, widthPx) }
+        // Null until read; then the picture, or a holder of nothing once it could not be read.
+        val read by produceState<Decoded?>(null, file, widthPx) {
+            value = Decoded(withContext(Dispatchers.IO) { decodeForDisplay(file, widthPx) })
         }
-        image?.let {
+        val decoded = read ?: return@BoxWithConstraints
+        if (decoded.image == null) unavailable()
+        decoded.image?.let {
             Image(
                 bitmap = it,
                 contentDescription = description,
@@ -41,6 +44,8 @@ fun PhotoImage(file: File, description: String, modifier: Modifier = Modifier) {
         }
     }
 }
+
+private class Decoded(val image: ImageBitmap?)
 
 /** [file] decoded down by a power of two to no less than [width] pixels wide where it is wider; null if unreadable. */
 fun decodeForDisplay(file: File, width: Int): ImageBitmap? = try {

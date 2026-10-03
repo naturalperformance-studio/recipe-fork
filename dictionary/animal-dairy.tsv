@@ -1,0 +1,206 @@
+# Animal: eggs (4400-4449), milk and dairy (4450-4699), cheese (4700-4999).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Spoon and cup factors are grams per level measure (a cup is 250 ml).
+@range 3000-4999
+
+# яйцо
+4400	яйцо	egg		false	g=1 pc=55
+4401	яйцо перепелиное	quail egg	4400	false	g=1 pc=10
+4402	яичный желток	egg yolk	4400	false	g=1 pc=18
+4403	яичный белок	egg white	4400	false	g=1 pc=33 ml=1.04 tbsp=15
+4404	яйцо утиное	duck egg	4400	false	g=1 pc=70
+4405	яйцо гусиное	goose egg	4400	false	g=1 pc=150
+4406	яйцо варёное	boiled egg	4400	false	g=1 pc=50
+4407	яйцо крупное	large egg	4400	false	g=1 pc=65
+4408	яичный порошок	egg powder	4400		g=1 tsp=3 tbsp=8
+4409	меланж	liquid egg	4400		g=1 ml=1.03 tbsp=15 cup=258
+4410	яйцо индюшиное	turkey egg	4400	false	g=1 pc=80
+4411	яйцо страусиное	ostrich egg	4400	true	g=1 pc=1500
+
+# молоко
+4450	молоко	milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4451	молоко цельное	whole milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4452	молоко обезжиренное	skim milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4453	молоко 1,5%	milk 1.5%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4454	молоко 2,5%	milk 2.5%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4455	молоко 3,2%	milk 3.2%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4456	молоко топлёное	baked milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4457	молоко козье	goat milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4458	молоко безлактозное	lactose-free milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4459	молоко сухое	powdered milk	4450		g=1 tsp=3 tbsp=8 cup=120
+4460	молоко сухое обезжиренное	nonfat dry milk	4450		g=1 tsp=3 tbsp=8 cup=120
+4461	сгущённое молоко	sweetened condensed milk	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325
+4462	варёная сгущёнка	boiled condensed milk	4450		g=1 ml=1.35 tsp=7 tbsp=20 cup=340
+4463	сгущённое молоко без сахара	evaporated milk	4450		g=1 ml=1.07 tsp=5 tbsp=16 cup=265
+4464	молоко 6%	milk 6%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4465	молоко овечье	sheep milk	4450		g=1 ml=1.04 tsp=5 tbsp=15 cup=260
+4466	молоко домашнее	farm milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4467	сгущёнка с какао	condensed milk with cocoa	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325
+
+# сливки
+4480	сливки	cream			g=1 ml=1 tsp=5 tbsp=15 cup=250
+4481	сливки 10%	half-and-half	4480		g=1 ml=1.01 tsp=5 tbsp=15 cup=253
+4482	сливки 20%	light cream 20%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
+4483	сливки 33%	heavy cream 33%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
+4484	сливки 35%	heavy cream 35%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
+4485	сливки для взбивания	whipping cream	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
+4486	двойные сливки	extra-heavy cream	4480		g=1 ml=0.98 tsp=5 tbsp=15 cup=245
+4487	взбитые сливки	whipped cream	4480		g=1 tbsp=4 cup=60
+4488	сливки сухие	powdered cream	4480		g=1 tsp=3 tbsp=7
+4489	сливки 22%	light cream 22%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
+
+# сметана
+4500	сметана	sour cream			g=1 ml=1.02 tsp=5 tbsp=16 cup=245
+4501	сметана 10%	sour cream 10%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
+4502	сметана 15%	sour cream 15%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
+4503	сметана 20%	sour cream 20%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
+4504	сметана 25%	sour cream 25%	4500		g=1 ml=1.01 tsp=5 tbsp=16 cup=245
+4505	сметана 30%	sour cream 30%	4500		g=1 ml=1 tsp=5 tbsp=16 cup=240
+4506	сметана домашняя	farm sour cream	4500		g=1 ml=1 tsp=5 tbsp=16 cup=240
+4507	крем-фреш	crème fraîche	4500		g=1 ml=1 tsp=5 tbsp=15 cup=240
+
+# кефир и кисломолочное
+4520	кефир	kefir			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4521	кефир 1%	kefir 1%	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4522	кефир 2,5%	kefir 2.5%	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4523	кефир 3,2%	kefir 3.2%	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4524	кефир обезжиренный	fat-free kefir	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4530	ряженка	ryazhenka			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4531	простокваша	prostokvasha			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4532	варенец	varenets			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4533	мацони	matsoni			g=1 ml=1.03 tsp=5 tbsp=16 cup=255
+4534	айран	ayran			g=1 ml=1.02 tsp=5 tbsp=15 cup=255
+4535	тан	tan			g=1 ml=1.02 tsp=5 tbsp=15 cup=255
+4536	катык	katyk			g=1 ml=1.03 tsp=5 tbsp=16 cup=255
+4537	ацидофилин	acidophilus milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4538	пахта	buttermilk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4539	сыворотка	whey			g=1 ml=1.02 tsp=5 tbsp=15 cup=255
+4540	кумыс	kumis			g=1 ml=1.01 tsp=5 tbsp=15 cup=252
+4541	снежок	snezhok			g=1 ml=1.05 tsp=5 tbsp=16 cup=262
+4542	бифидок	bifidok			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+
+# йогурт
+4560	йогурт	yogurt			g=1 ml=1.03 tsp=5 tbsp=16 cup=250
+4561	йогурт натуральный	plain yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250
+4562	греческий йогурт	Greek yogurt	4560		g=1 tsp=6 tbsp=17 cup=280
+4563	йогурт питьевой	drinking yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4564	йогурт фруктовый	fruit yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255
+4565	йогурт обезжиренный	fat-free yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250
+4566	лабне	labneh	4560		g=1 tsp=6 tbsp=17 cup=280
+4567	сузьма	suzma	4560		g=1 tsp=6 tbsp=17 cup=280
+4568	скир	skyr	4560		g=1 tsp=6 tbsp=17 cup=280
+4569	йогурт ванильный	vanilla yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255
+
+# творог
+4580	творог	quark			g=1 tsp=6 tbsp=17 cup=230
+4581	творог обезжиренный	fat-free quark	4580		g=1 tsp=6 tbsp=17 cup=230
+4582	творог 2%	quark 2%	4580		g=1 tsp=6 tbsp=17 cup=230
+4583	творог 5%	quark 5%	4580		g=1 tsp=6 tbsp=17 cup=230
+4584	творог 9%	quark 9%	4580		g=1 tsp=6 tbsp=17 cup=230
+4585	творог 18%	quark 18%	4580		g=1 tsp=6 tbsp=17 cup=230
+4586	творог зернистый	cottage cheese	4580		g=1 tsp=6 tbsp=17 cup=225
+4587	творог домашний	farm quark	4580		g=1 tsp=6 tbsp=17 cup=230
+4588	творожная масса	sweet curd spread	4580		g=1 tsp=6 tbsp=18 cup=250
+4589	творожный сырок	glazed curd snack	4580	false	g=1 pc=45
+4590	творог мягкий	soft quark	4580		g=1 tsp=6 tbsp=17 cup=240
+
+# масло сливочное
+4600	масло сливочное	butter			g=1 tsp=5 tbsp=14 cup=227
+4601	масло сливочное несолёное	unsalted butter	4600		g=1 tsp=5 tbsp=14 cup=227
+4602	масло сливочное солёное	salted butter	4600		g=1 tsp=5 tbsp=14 cup=227
+4603	масло топлёное	ghee	4600		g=1 ml=0.91 tsp=4.5 tbsp=13 cup=225
+4605	масло сливочное 82,5%	butter 82.5%	4600		g=1 tsp=5 tbsp=14 cup=227
+4606	масло сливочное 72,5%	butter 72.5%	4600		g=1 tsp=5 tbsp=14 cup=227
+4607	масло шоколадное	chocolate butter	4600		g=1 tsp=5 tbsp=14
+4608	масло крестьянское	farmer's butter	4600		g=1 tsp=5 tbsp=14 cup=227
+
+# мороженое
+4650	мороженое	ice cream			g=1
+4651	пломбир	plombir ice cream	4650		g=1
+4652	мороженое ванильное	vanilla ice cream	4650		g=1
+4653	мороженое сливочное	dairy ice cream	4650		g=1
+4654	мороженое шоколадное	chocolate ice cream	4650		g=1
+4655	мороженое крем-брюле	crème brûlée ice cream	4650		g=1
+
+# сыр
+4700	сыр	cheese			g=1 tbsp=7 cup=100
+4701	сыр твёрдый	hard cheese	4700		g=1 tbsp=7 cup=100
+4702	сыр полутвёрдый	semi-hard cheese	4700		g=1 tbsp=7 cup=100
+4703	сыр мягкий	fresh soft cheese	4700		g=1
+4704	сыр плавленый	processed cheese	4700		g=1 tsp=5 tbsp=15
+4705	плавленый сырок	processed cheese bar	4700	true	g=1 pc=90
+4706	сыр копчёный	smoked cheese	4700		g=1
+4707	сыр рассольный	brined cheese	4700		g=1
+4708	сыр тёртый	grated cheese	4700		g=1 tbsp=7 cup=100
+4709	сливочный сыр	cream cheese	4700		g=1 tsp=5 tbsp=15 cup=230
+4710	творожный сыр	cream cheese spread	4700		g=1 tsp=5 tbsp=15 cup=230
+4711	сыр тостовый	American cheese slices	4700	false	g=1 pc=20
+4712	сыр колбасный	smoked processed cheese	4700		g=1
+4713	сыр с голубой плесенью	blue cheese	4700		g=1 cup=135
+4714	сыр с белой плесенью	bloomy-rind cheese	4700		g=1
+4715	козий сыр	goat cheese	4700		g=1
+4716	овечий сыр	sheep milk cheese	4700		g=1
+4717	сыр российский	Rossiysky cheese	4700		g=1 tbsp=7 cup=100
+4718	сыр голландский	Dutch cheese	4700		g=1 tbsp=7 cup=100
+4719	сыр пошехонский	Poshekhonsky cheese	4700		g=1 tbsp=7 cup=100
+4721	сулугуни	suluguni	4700		g=1 tbsp=7 cup=100
+4722	сулугуни копчёный	smoked suluguni	4700		g=1
+4723	имеретинский сыр	Imeretian cheese	4700		g=1
+4724	адыгейский сыр	Adyghe cheese	4700		g=1
+4725	брынза	brynza	4700		g=1 tbsp=10 cup=150
+4726	фета	feta	4700		g=1 tbsp=10 cup=150
+4727	чечил	chechil	4700		g=1
+4728	осетинский сыр	Ossetian cheese	4700		g=1
+4729	чанах	chanakh	4700		g=1
+4730	панир	paneer	4700		g=1
+4731	халуми	halloumi	4700		g=1
+4732	пармезан	Parmesan	4700		g=1 tsp=2 tbsp=5 cup=90
+4733	грана падано	Grana Padano	4700		g=1 tsp=2 tbsp=5 cup=90
+4734	пекорино	Pecorino	4700		g=1 tsp=2 tbsp=5 cup=90
+4735	моцарелла	mozzarella	4700	true	g=1 pc=125
+4736	моцарелла для пиццы	pizza mozzarella	4700		g=1 tbsp=7 cup=110
+4737	мини-моцарелла	mini mozzarella balls	4700	false	g=1 pc=10
+4738	буррата	burrata	4700	true	g=1 pc=150
+4739	страчателла	stracciatella	4700		g=1 tbsp=15
+4740	рикотта	ricotta	4700		g=1 tsp=5 tbsp=15 cup=245
+4741	маскарпоне	mascarpone	4700		g=1 tsp=5 tbsp=15 cup=240
+4742	скаморца	scamorza	4700		g=1
+4743	проволоне	provolone	4700		g=1
+4744	качокавалло	caciocavallo	4700		g=1
+4745	горгонзола	Gorgonzola	4700		g=1 cup=135
+4746	таледжо	Taleggio	4700		g=1
+4747	фонтина	Fontina	4700		g=1
+4748	азиаго	Asiago	4700		g=1 tbsp=7 cup=100
+4749	чеддер	cheddar	4700		g=1 tbsp=7 cup=113
+4750	эмменталь	Emmental	4700		g=1 tbsp=7 cup=100
+4751	грюйер	Gruyère	4700		g=1 tbsp=7 cup=100
+4752	гауда	Gouda	4700		g=1 tbsp=7 cup=100
+4753	эдам	Edam	4700		g=1 tbsp=7 cup=100
+4754	маасдам	Maasdam	4700		g=1 tbsp=7 cup=100
+4755	тильзитер	Tilsiter	4700		g=1 tbsp=7 cup=100
+4756	бри	Brie	4700		g=1
+4757	камамбер	Camembert	4700	true	g=1 pc=250
+4758	рокфор	Roquefort	4700		g=1 cup=135
+4759	стилтон	Stilton	4700		g=1 cup=135
+4760	манчего	Manchego	4700		g=1 tbsp=7 cup=100
+4761	комте	Comté	4700		g=1 tbsp=7 cup=100
+4762	раклет	raclette cheese	4700		g=1
+4763	монтерей джек	Monterey Jack	4700		g=1 tbsp=7 cup=113
+4765	кесо фреско	queso fresco	4700		g=1
+4766	пармезан тёртый	grated Parmesan	4700		g=1 tsp=2 tbsp=5 cup=90
+4768	сыр шавли	Shavli cheese	4700		g=1
+4769	сыр с травами	herb cheese	4700		g=1
+4772	рикотта салата	ricotta salata	4700		g=1
+4773	сыр для фондю	fondue cheese	4700		g=1
+4774	кашкавал	kashkaval	4700		g=1 tbsp=7 cup=100
+4776	сыр мраморный	marble cheese	4700		g=1 tbsp=7 cup=100
+4777	сыр лёгкий	reduced-fat cheese	4700		g=1 tbsp=7 cup=100
+4779	эпуас	Époisses	4700		g=1
+4783	сыр гриль	grilling cheese	4700		g=1
+4785	сыр-спагетти	string cheese	4700		g=1
+4787	мюнстер	Munster	4700		g=1
+4789	пекорино романо	Pecorino Romano	4700		g=1 tsp=2 tbsp=5 cup=90
+4790	бофор	Beaufort	4700		g=1
+4791	лимбургский сыр	Limburger	4700		g=1
+4792	пармиджано реджано	Parmigiano Reggiano	4700		g=1 tsp=2 tbsp=5 cup=90
+4491	девонширские сливки	clotted cream	4480		g=1 tsp=5 tbsp=15 cup=240

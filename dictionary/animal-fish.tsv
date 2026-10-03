@@ -1,0 +1,195 @@
+# Animal: fish and its fillets, smoked, salted and canned fish (4000-4199), seafood (4200-4299), roe (4300-4399).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 3000-4999
+
+# рыба — generic
+4000	рыба	fish			g=1
+4001	белая рыба	white fish	4000		g=1
+4002	красная рыба	salmon-type fish	4000		g=1
+4003	филе рыбы	fish fillet	4000	true	g=1 pc=150
+4004	рыба копчёная	smoked fish	4000		g=1
+4005	рыба солёная	salted fish	4000		g=1
+4006	рыба вяленая	dried salted fish	4000		g=1
+4007	рыбные консервы	canned fish	4000		g=1
+4008	рыбный суповой набор	fish soup set	4000		g=1
+4009	рыба морская	sea fish	4000		g=1
+4010	рыба речная	freshwater fish	4000		g=1
+4011	стейк рыбы	fish steak	4000	true	g=1 pc=200
+
+# salmon family
+4020	лосось	salmon			g=1
+4021	филе лосося	salmon fillet	4020	true	g=1 pc=200
+4022	стейк лосося	salmon steak	4020	true	g=1 pc=250
+4023	лосось слабосолёный	lightly salted salmon	4020		g=1
+4024	лосось копчёный	smoked salmon	4020		g=1
+4025	брюшки лосося	salmon bellies	4020		g=1
+4026	лосось консервированный	canned salmon	4020		g=1
+4030	сёмга	Atlantic salmon			g=1
+4040	форель	trout		true	g=1 pc=400
+4041	филе форели	trout fillet	4040	true	g=1 pc=150
+4042	стейк форели	trout steak	4040	true	g=1 pc=200
+4043	форель слабосолёная	lightly salted trout	4040		g=1
+4044	форель копчёная	smoked trout	4040		g=1
+4045	форель радужная	rainbow trout	4040	true	g=1 pc=400
+4050	горбуша	pink salmon		true	g=1 pc=1500
+4051	филе горбуши	pink salmon fillet	4050	true	g=1 pc=450
+4052	горбуша консервированная	canned pink salmon	4050		g=1
+4053	горбуша копчёная	smoked pink salmon	4050		g=1
+4055	кета	chum salmon			g=1
+4056	филе кеты	chum salmon fillet	4055	true	g=1 pc=600
+4057	нерка	sockeye salmon			g=1
+4058	кижуч	coho salmon			g=1
+4059	чавыча	chinook salmon			g=1
+4060	голец	char			g=1
+
+# cod family and white sea fish
+4065	треска	cod			g=1
+4066	филе трески	cod fillet	4065	true	g=1 pc=200
+4067	треска солёная	salt cod	4065		g=1
+4068	стейк трески	cod steak	4065	true	g=1 pc=200
+4070	минтай	Alaska pollock		true	g=1 pc=400
+4071	филе минтая	Alaska pollock fillet	4070	true	g=1 pc=150
+4075	хек	hake		true	g=1 pc=400
+4076	филе хека	hake fillet	4075	true	g=1 pc=150
+4080	пикша	haddock			g=1
+4081	филе пикши	haddock fillet	4080	true	g=1 pc=200
+4082	пикша копчёная	smoked haddock	4080		g=1
+4083	сайда	Atlantic pollock			g=1
+4084	путассу	blue whiting		true	g=1 pc=150
+4085	навага	saffron cod		true	g=1 pc=150
+4086	макрурус	grenadier			g=1
+4087	ледяная рыба	icefish		true	g=1 pc=250
+4088	нототения	notothenia			g=1
+4089	зубатка	wolffish			g=1
+4090	палтус	halibut			g=1
+4091	филе палтуса	halibut fillet	4090	true	g=1 pc=200
+4092	палтус копчёный	smoked halibut	4090		g=1
+4093	камбала	flounder		true	g=1 pc=500
+4094	морской язык	sole		true	g=1 pc=300
+4095	тюрбо	turbot			g=1
+4096	окунь морской	ocean perch		true	g=1 pc=400
+4097	филе морского окуня	ocean perch fillet	4096	true	g=1 pc=150
+4098	дорадо	sea bream		true	g=1 pc=400
+4099	филе дорадо	sea bream fillet	4098	true	g=1 pc=120
+4100	сибас	sea bass		true	g=1 pc=400
+4101	филе сибаса	sea bass fillet	4100	true	g=1 pc=120
+4102	тилапия	tilapia			g=1
+4103	филе тилапии	tilapia fillet	4102	true	g=1 pc=120
+4104	пангасиус	pangasius			g=1
+4105	филе пангасиуса	pangasius fillet	4104	true	g=1 pc=250
+4106	масляная рыба	escolar			g=1
+4107	меч-рыба	swordfish			g=1
+4108	кефаль	grey mullet		true	g=1 pc=400
+4109	барабулька	red mullet		false	g=1 pc=50
+4110	ставрида	horse mackerel		true	g=1 pc=200
+4111	лемонема	lemonema			g=1
+4112	сайра	saury		true	g=1 pc=150
+4113	сайра консервированная	canned saury	4112		g=1
+
+# freshwater fish
+4120	судак	zander		true	g=1 pc=1200
+4121	филе судака	zander fillet	4120	true	g=1 pc=250
+4122	щука	pike		true	g=1 pc=1500
+4123	окунь	perch		true	g=1 pc=300
+4124	карп	carp		true	g=1 pc=1500
+4125	сазан	wild carp		true	g=1 pc=1500
+4126	толстолобик	silver carp			g=1
+4127	белый амур	grass carp			g=1
+4128	карась	crucian carp		true	g=1 pc=250
+4129	лещ	bream		true	g=1 pc=800
+4130	сом	catfish			g=1
+4131	налим	burbot			g=1
+4132	сиг	common whitefish			g=1
+4133	муксун	muksun			g=1
+4134	омуль	omul			g=1
+4135	нельма	nelma			g=1
+4136	хариус	grayling			g=1
+4137	вобла	vobla		false	g=1 pc=150
+4138	чехонь	sabre carp			g=1
+4139	осётр	sturgeon			g=1
+4140	стерлядь	sterlet			g=1
+4141	угорь	eel			g=1
+4142	угорь копчёный	smoked eel	4141		g=1
+4143	линь	tench			g=1
+
+# oily small and canned fish
+4150	скумбрия	mackerel		true	g=1 pc=350
+4151	скумбрия копчёная	smoked mackerel	4150	true	g=1 pc=300
+4152	скумбрия солёная	salted mackerel	4150	true	g=1 pc=300
+4153	филе скумбрии	mackerel fillet	4150	true	g=1 pc=120
+4154	скумбрия консервированная	canned mackerel	4150		g=1
+4155	сельдь	herring		true	g=1 pc=300
+4156	селёдка	salted herring	4155	true	g=1 pc=300
+4157	филе сельди	herring fillet	4155		g=1
+4158	сельдь копчёная	kippers	4155		g=1
+4159	сельдь пряного посола	spiced herring	4155		g=1
+4160	иваси	Pacific sardine			g=1
+4161	тунец	tuna			g=1
+4162	стейк тунца	tuna steak	4161	true	g=1 pc=200
+4163	тунец консервированный	canned tuna	4161		g=1
+4164	сардина	sardine		false	g=1 pc=60
+4165	сардины консервированные	canned sardines	4164		g=1
+4166	шпроты	smoked sprats in oil			g=1
+4167	килька	sprat			g=1
+4168	килька в томате	sprats in tomato sauce	4167		g=1
+4169	анчоусы	anchovies		false	g=1 pc=4
+4170	хамса	Black Sea anchovy			g=1
+4171	мойва	capelin		false	g=1 pc=30
+4172	корюшка	smelt		false	g=1 pc=30
+4173	тюлька	Caspian sprat			g=1
+4174	салака	Baltic herring			g=1
+4175	бычки в томате	gobies in tomato sauce			g=1
+4176	крабовые палочки	crab sticks		false	g=1 pc=17
+4177	сурими	surimi			g=1
+
+# морепродукты
+4200	морепродукты	seafood			g=1
+4201	морской коктейль	seafood mix	4200		g=1
+4210	креветки	shrimp		false	g=1 pc=12
+4211	креветки тигровые	tiger shrimp	4210	false	g=1 pc=25
+4212	креветки королевские	jumbo shrimp	4210	false	g=1 pc=20
+4213	креветки коктейльные	cocktail shrimp	4210	false	g=1 pc=5
+4214	креветки очищенные	peeled shrimp	4210	false	g=1 pc=10
+4215	креветки варёно-мороженые	cooked frozen shrimp	4210	false	g=1 pc=12
+4216	креветки аргентинские	Argentine red shrimp	4210	false	g=1 pc=30
+4217	лангустины	langoustines		false	g=1 pc=50
+4220	кальмар	squid		true	g=1 pc=250
+4221	кольца кальмара	squid rings	4220		g=1
+4222	филе кальмара	squid fillet	4220		g=1
+4223	щупальца кальмара	squid tentacles	4220		g=1
+4224	кальмар сушёный	dried squid	4220		g=1
+4230	осьминог	octopus			g=1
+4231	осьминоги мини	baby octopus	4230	false	g=1 pc=30
+4232	каракатица	cuttlefish		true	g=1 pc=300
+4235	мидии	mussels		false	g=1 pc=20
+4237	мясо мидий	mussel meat	4235		g=1
+4238	мидии в половинках раковин	half-shell mussels	4235	false	g=1 pc=15
+4240	гребешки	scallops		false	g=1 pc=25
+4243	устрицы	oysters		false	g=1 pc=80
+4245	вонголе	clams		false	g=1 pc=10
+4250	краб	crab			g=1
+4251	крабовое мясо	crab meat	4250		g=1
+4252	камчатский краб	king crab	4250		g=1
+4253	фаланги краба	crab legs	4250		g=1
+4255	омар	lobster		true	g=1 pc=600
+4256	лангуст	spiny lobster		true	g=1 pc=600
+4257	раки	crayfish		false	g=1 pc=50
+4258	раковые шейки	crayfish tails	4257		g=1
+4260	трепанг	sea cucumber			g=1
+4261	морской ёж	sea urchin			g=1
+4262	рапаны	rapana whelks			g=1
+
+# икра, молоки
+4300	икра	roe			g=1
+4301	красная икра	salmon roe	4300		g=1 tsp=6 tbsp=18
+4302	чёрная икра	black caviar	4300		g=1 tsp=6 tbsp=18
+4303	щучья икра	pike roe	4300		g=1
+4304	икра мойвы	capelin roe	4300		g=1 tsp=6 tbsp=18
+4305	икра летучей рыбы	flying fish roe	4300		g=1 tsp=5 tbsp=15
+4306	икра минтая	pollock roe	4300		g=1
+4307	икра трески	cod roe	4300		g=1
+4308	икра горбуши	pink salmon roe	4300		g=1 tsp=6 tbsp=18
+4309	икра форели	trout roe	4300		g=1 tsp=6 tbsp=18
+4310	икра сельди	herring roe	4300		g=1
+4311	икра судака	zander roe	4300		g=1
+4320	молоки	milt			g=1

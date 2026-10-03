@@ -1,0 +1,178 @@
+# Seasoning and the rest: stocks and bouillon, wine, beer and spirits for cooking, water, coffee, tea, juices, sweets.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 7000-8999
+
+# Stocks and bouillon (8600-8649). A bouillon cube is counted and may be halved.
+8600	бульон	stock			g=1 ml=1 tbsp=15 cup=250
+8601	бульон куриный	chicken stock	8600		g=1 ml=1 tbsp=15 cup=250
+8602	бульон говяжий	beef stock	8600		g=1 ml=1 tbsp=15 cup=250
+8603	бульон овощной	vegetable stock	8600		g=1 ml=1 tbsp=15 cup=250
+8604	бульон рыбный	fish stock	8600		g=1 ml=1 tbsp=15 cup=250
+8605	бульон грибной	mushroom stock	8600		g=1 ml=1 tbsp=15 cup=250
+8606	бульон костный	bone broth	8600		g=1 ml=1 tbsp=15 cup=250
+8607	бульон мясной	meat stock	8600		g=1 ml=1 tbsp=15 cup=250
+8608	бульон сухой	bouillon powder	8600		g=1 tsp=4 tbsp=12
+8609	даши	dashi	8600		g=1 ml=1 tbsp=15 cup=250
+8610	бульон из индейки	turkey stock	8600		g=1 ml=1 tbsp=15 cup=250
+8620	бульонный кубик	bouillon cube		true	g=1 pc=10
+8621	бульонный кубик куриный	chicken bouillon cube	8620	true	g=1 pc=10
+8622	бульонный кубик говяжий	beef bouillon cube	8620	true	g=1 pc=10
+8623	бульонный кубик овощной	vegetable bouillon cube	8620	true	g=1 pc=10
+8624	бульонный кубик грибной	mushroom bouillon cube	8620	true	g=1 pc=10
+8625	бульонный кубик рыбный	fish bouillon cube	8620	true	g=1 pc=10
+8630	даши порошок	dashi powder			g=1 tsp=3
+8631	концентрат бульона	bouillon base			g=1 tsp=6 tbsp=18
+8632	крем-суп грибной концентрированный	condensed cream of mushroom soup		true	g=1 pc=300
+8633	крем-суп куриный концентрированный	condensed cream of chicken soup		true	g=1 pc=300
+
+# Wine, beer and spirits for cooking (8700-8799).
+8700	вино	wine			g=1 ml=0.99 tbsp=15 cup=248
+8701	вино белое	white wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8702	вино белое сухое	dry white wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8703	вино красное	red wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8704	вино красное сухое	dry red wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8705	вино розовое	rose wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8706	вино полусладкое	semi-sweet wine	8700		g=1 ml=1.01 tbsp=15 cup=252
+8707	вино десертное	dessert wine	8700		g=1 ml=1.04 tbsp=16 cup=260
+8708	вино игристое	sparkling wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8709	шампанское	Champagne	8700		g=1 ml=0.99 tbsp=15 cup=248
+8710	просекко	prosecco	8700		g=1 ml=0.99 tbsp=15 cup=248
+8711	херес	sherry	8700		g=1 ml=1 tbsp=15 cup=250
+8712	портвейн	port	8700		g=1 ml=1.02 tbsp=15 cup=255
+8713	марсала	Marsala	8700		g=1 ml=1.02 tbsp=15 cup=255
+8714	мадера	Madeira	8700		g=1 ml=1.02 tbsp=15 cup=255
+8715	кагор	Kagor wine	8700		g=1 ml=1.04 tbsp=16 cup=260
+8716	вермут	vermouth	8700		g=1 ml=1 tbsp=15 cup=250
+8717	вино шаосин	Shaoxing wine	8700		g=1 ml=0.99 tsp=5 tbsp=15
+8718	вино для глинтвейна	mulled wine	8700		g=1 ml=1.02 cup=255
+8720	мирин	mirin			g=1 ml=1.05 tsp=5 tbsp=16 cup=260
+8721	саке	sake			g=1 ml=0.99 tsp=5 tbsp=15 cup=248
+8725	пиво	beer			g=1 ml=1.01 cup=252
+8726	пиво светлое	lager	8725		g=1 ml=1.01 cup=252
+8727	пиво тёмное	dark beer	8725		g=1 ml=1.01 cup=252
+8728	пиво безалкогольное	non-alcoholic beer	8725		g=1 ml=1.01 cup=252
+8729	эль	ale	8725		g=1 ml=1.01 cup=252
+8730	стаут	stout	8725		g=1 ml=1.01 cup=252
+8731	сидр	hard cider			g=1 ml=1.01 cup=252
+8735	коньяк	cognac			g=1 ml=0.95 tsp=4.7 tbsp=14
+8736	бренди	brandy			g=1 ml=0.95 tsp=4.7 tbsp=14
+8737	ром	rum			g=1 ml=0.95 tsp=4.7 tbsp=14
+8738	ром тёмный	dark rum	8737		g=1 ml=0.95 tsp=4.7 tbsp=14
+8739	ром белый	white rum	8737		g=1 ml=0.95 tsp=4.7 tbsp=14
+8740	водка	vodka			g=1 ml=0.95 tsp=4.7 tbsp=14
+8741	виски	whiskey			g=1 ml=0.95 tsp=4.7 tbsp=14
+8742	бурбон	bourbon	8741		g=1 ml=0.95 tsp=4.7 tbsp=14
+8743	джин	gin			g=1 ml=0.95 tsp=4.7 tbsp=14
+8744	текила	tequila			g=1 ml=0.95 tsp=4.7 tbsp=14
+8745	кальвадос	Calvados			g=1 ml=0.95 tsp=4.7 tbsp=14
+8746	чача	chacha			g=1 ml=0.95 tsp=4.7 tbsp=14
+8747	граппа	grappa			g=1 ml=0.95 tsp=4.7 tbsp=14
+8748	кирш	kirsch			g=1 ml=0.95 tsp=4.7 tbsp=14
+8749	спирт	grain alcohol			g=1 ml=0.81 tsp=4 tbsp=12
+8750	ликёр	liqueur			g=1 ml=1.08 tsp=5.4 tbsp=16
+8751	ликёр апельсиновый	orange liqueur	8750		g=1 ml=1.06 tsp=5.3 tbsp=16
+8752	ликёр кофейный	coffee liqueur	8750		g=1 ml=1.1 tsp=5.5 tbsp=16.5
+8753	ликёр сливочный	Irish cream liqueur	8750		g=1 ml=1.06 tsp=5.3 tbsp=16
+8754	амаретто	amaretto	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
+8755	ликёр вишнёвый	cherry liqueur	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
+8756	ликёр кокосовый	coconut liqueur	8750		g=1 ml=1.06 tsp=5.3 tbsp=16
+8757	ликёр ореховый	hazelnut liqueur	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
+8758	ликёр мятный	creme de menthe	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
+8759	ликёр лимонный	limoncello	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
+8760	самбука	sambuca	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
+8761	абсент	absinthe			g=1 ml=0.93 tsp=4.7 tbsp=14
+8762	биттер	bitters			g=1 ml=0.95 tsp=4.7
+
+# Water, ice, coffee, tea, juices and soft drinks (8800-8899).
+8800	вода	water			g=1 ml=1 tsp=5 tbsp=15 cup=250
+8801	вода минеральная	mineral water	8800		g=1 ml=1 tbsp=15 cup=250
+8802	вода газированная	sparkling water	8800		g=1 ml=1 tbsp=15 cup=250
+8803	вода ледяная	ice water	8800		g=1 ml=1 tbsp=15 cup=250
+8804	кипяток	boiling water	8800		g=1 ml=1 tbsp=15 cup=250
+8805	вода тёплая	warm water	8800		g=1 ml=1 tsp=5 tbsp=15 cup=250
+8806	вода кипячёная	boiled water	8800		g=1 ml=1 tbsp=15 cup=250
+8807	содовая	club soda	8800		g=1 ml=1 cup=250
+8808	тоник	tonic water	8800		g=1 ml=1.03 cup=258
+8810	лёд	ice			g=1 cup=150
+8811	кубик льда	ice cube		false	g=1 pc=25
+8812	лёд колотый	crushed ice	8810		g=1 cup=150
+8820	кофе	coffee			g=1 ml=1 tbsp=15 cup=250
+8821	кофе молотый	ground coffee	8820		g=1 tsp=2 tbsp=6
+8822	кофе растворимый	instant coffee	8820		g=1 tsp=2 tbsp=5
+8823	кофе в зёрнах	coffee beans	8820		g=1 cup=85
+8824	эспрессо	espresso	8820		g=1 ml=1 tbsp=15
+8825	кофе сваренный	brewed coffee	8820		g=1 ml=1 tbsp=15 cup=250
+8826	кофе без кофеина	decaf coffee	8820		g=1 ml=1 cup=250
+8827	цикорий	chicory			g=1 tsp=2
+8830	чай	tea			g=1 ml=1 cup=250
+8831	чай чёрный	black tea	8830		g=1 tsp=2.5
+8832	чай зелёный	green tea	8830		g=1 tsp=2
+8833	пакетик чая	tea bag	8830	false	g=1 pc=2
+8834	чай заваренный	brewed tea	8830		g=1 ml=1 cup=250
+8835	матча	matcha	8830		g=1 tsp=2 tbsp=6
+8836	каркаде	hibiscus tea	8830		g=1 tsp=1.5 tbsp=4.5
+8837	чай эрл грей	Earl Grey tea	8830		g=1 tsp=2.5
+8838	ройбуш	rooibos	8830		g=1 tsp=2.5
+8839	чай улун	oolong tea	8830		g=1 tsp=2.5
+8840	чай пуэр	pu-erh tea	8830		g=1 tsp=2.5
+8841	иван-чай	fireweed tea	8830		g=1 tsp=2
+8842	ромашковый чай	chamomile tea	8830		g=1 tsp=1
+8843	чай масала	masala chai	8830		g=1 tsp=2.5
+8850	сок	juice			g=1 ml=1.04 tbsp=16 cup=260
+8851	сок томатный	tomato juice	8850		g=1 ml=1.03 tbsp=15 cup=258
+8852	сок яблочный	apple juice	8850		g=1 ml=1.04 tbsp=16 cup=260
+8853	сок гранатовый	pomegranate juice	8850		g=1 ml=1.05 tbsp=16 cup=262
+8854	сок виноградный	grape juice	8850		g=1 ml=1.06 tbsp=16 cup=265
+8855	сок вишнёвый	cherry juice	8850		g=1 ml=1.05 tbsp=16 cup=262
+8856	сок ананасовый	pineapple juice	8850		g=1 ml=1.05 tbsp=16 cup=262
+8857	сок грейпфрутовый	grapefruit juice	8850		g=1 ml=1.04 tbsp=16 cup=260
+8858	сок клюквенный	cranberry juice	8850		g=1 ml=1.04 tbsp=16 cup=260
+8859	сок морковный	carrot juice	8850		g=1 ml=1.04 tbsp=16 cup=260
+8860	сок мультифрукт	mixed fruit juice	8850		g=1 ml=1.04 tbsp=16 cup=260
+8861	сок персиковый	peach nectar	8850		g=1 ml=1.05 tbsp=16 cup=262
+8862	сок манговый	mango nectar	8850		g=1 ml=1.05 tbsp=16 cup=262
+8863	сок свекольный	beet juice	8850		g=1 ml=1.04 tbsp=16 cup=260
+8864	сок берёзовый	birch sap	8850		g=1 ml=1 cup=250
+8870	квас	kvass			g=1 ml=1.01 cup=252
+8871	морс	berry drink			g=1 ml=1.03 cup=258
+8872	лимонад	lemonade			g=1 ml=1.04 cup=260
+8873	кола	cola			g=1 ml=1.04 cup=260
+8874	кокосовая вода	coconut water			g=1 ml=1.02 cup=255
+8875	кисель	kissel			g=1 ml=1.05 cup=262
+8876	компот	compote drink			g=1 ml=1.03 cup=258
+8877	газировка сладкая	soda			g=1 ml=1.04 cup=260
+8878	имбирный эль	ginger ale			g=1 ml=1.04 cup=260
+8879	холодный чай	iced tea			g=1 ml=1.03 cup=258
+
+# Sweets used as ingredients, snacks (8900-8999).
+8900	зефир	zefir		true	g=1 pc=35
+8901	маршмеллоу	marshmallows		false	g=1 pc=7 cup=50
+8902	маршмеллоу мини	mini marshmallows	8901		g=1 cup=50
+8903	безе	meringues		false	g=1 pc=5
+8904	мармелад	fruit jelly candies			g=1
+8905	мармелад жевательный	gummy candies	8904		g=1
+8906	халва	halva			g=1
+8907	халва подсолнечная	sunflower halva	8906		g=1
+8908	халва тахинная	tahini halva	8906		g=1
+8909	пряники	spice cookies		false	g=1 pc=35
+8910	пряник тульский	Tula gingerbread		true	g=1 pc=140
+8911	вафли	wafer cookies		true	g=1 pc=15
+8912	карамель	caramels		false	g=1 pc=6
+8913	ирис	toffee		false	g=1 pc=6
+8914	конфеты	candies			g=1
+8915	конфеты шоколадные	chocolate candies	8914	false	g=1 pc=12
+8916	леденцы	hard candies	8914	false	g=1 pc=4
+8917	нуга	nougat			g=1
+8918	пастила	pastila			g=1
+8919	рахат-лукум	Turkish delight			g=1
+8920	козинаки	seed brittle			g=1
+8921	чурчхела	churchkhela		true	g=1 pc=80
+8923	грильяж	nut brittle			g=1
+8924	трюфели шоколадные	chocolate truffles		false	g=1 pc=12
+8925	конфеты вафельные	wafer candies	8914	false	g=1 pc=18
+8926	драже	candy-coated chocolates	8914		g=1
+8927	батончик шоколадный	candy bar		true	g=1 pc=50
+8940	чипсы	potato chips			g=1 cup=30
+8941	чипсы кукурузные	tortilla chips	8940		g=1 cup=30
+8942	кукурузные палочки	corn puffs			g=1 cup=20
+8943	попкорн	popcorn			g=1 cup=10

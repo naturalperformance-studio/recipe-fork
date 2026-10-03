@@ -7,7 +7,9 @@ import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.recipe.VideoLimits
 import app.recipefork.core.scaling.Rational
+import kotlin.time.Duration
 
 /**
  * Whether what a recipe file states could be a recipe of the book (decisions/20260928-recipe-file-is-a-zip.md): the
@@ -129,6 +131,18 @@ object RecipeFileCheck {
         check(media.map { it.mediaId }.toSet().size == media.size) { "two media items of one identity" }
         check(media.map { it.entry }.toSet().size == media.size) { "two media items in one entry" }
         check(media.all { isMediaEntry(it.entry) }) { "a media entry outside `media/`" }
+    }
+
+    /**
+     * What is wrong with a clip of the file lasting [duration], or null when nothing is (MEDIA-004, MEDIA-007): longer
+     * than [VideoLimits.MAX_DURATION], of no length, or of a duration that could not be read — null here. The document
+     * does not state a clip's duration, so an importer reads it from the clip itself once it is written.
+     */
+    fun clipProblem(duration: Duration?): String? = when {
+        duration == null -> "a clip whose duration cannot be read"
+        VideoLimits.accepts(duration) -> null
+        duration.isPositive() -> "a clip over ${VideoLimits.MAX_DURATION}"
+        else -> "a clip of no length"
     }
 
     /** An entry's name an importer reads at all: neither absolute nor climbing out of where it stands. */

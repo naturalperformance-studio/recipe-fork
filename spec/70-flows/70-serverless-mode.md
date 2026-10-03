@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-28
+updated: 2026-10-03
 ids: [FLOW-061, FLOW-062, FLOW-063, FLOW-064, FLOW-065]
 ---
 
@@ -73,19 +73,29 @@ switch between them (AUTH-011).
   works as AUTH-011 states.
 - Given the export and import of FLOW-063 and FLOW-064, when the mode is on, then
   both are offered; when it is off, then neither exists anywhere.
+- Given the mode on, when the editor offers a tag or an ingredient, then the
+  dictionaries are those shipped with the application, and a device gets a newer
+  copy only with an application update
+  ([ADR — the serverless dictionary ships with the application](../decisions/20261003-the-serverless-dictionary-ships-with-the-app.md)).
+- Given the mode on, when the checklist (GUIDE-004) or any editor warning is read,
+  then none of them speaks of publication, because nothing is published (FLOW-022).
 
 **Verification:** install a release with the mode on over one holding two
 accounts, own recipes in every state and found recipes with and without held
 media; enumerate every screen, open each recipe, switch accounts.
 **Source:** user decision, 2026-09-28. The catalogue and everything that needs
 the server go; the core the device runs alone stays, because it is the part a
-person installed the application for (GOAL-001).
+person installed the application for (GOAL-001). Amended 2026-10-03 (sync
+v0.3–v0.14): the dictionaries ship with the application, and nothing in the editor
+speaks of publication — req-forge proposal from the sync of v0.3–v0.14, accepted by
+the user, 2026-10-03.
 
 ### FLOW-063 — A recipe is exported to a file
 
 Where serverless mode is on, when a person chooses to export a recipe from the
 recipe book, the system shall write a file holding that recipe's identity, title,
-tags, serving count, ingredients, steps, timers and every media item the device
+description, declared language, tags, serving count, ingredients, steps, timers and
+every media item the device
 holds for it, the nickname of its author, and the identity of its direct parent
 with that parent's title and author's nickname where the device holds them, and
 shall hand the file to the operating system to be saved or shared.
@@ -110,7 +120,10 @@ shall hand the file to the operating system to be saved or shared.
 with and without held media, a pool recipe and a fork; import each on another
 device and compare.
 **Source:** user decision, 2026-09-28: a file carries the text and the media, any
-recipe in the book can be exported, and export does not freeze it. After the
+recipe in the book can be exported, and export does not freeze it. Amended
+2026-10-03 (sync v0.3–v0.14): the file carries the description and the declared
+language as well — req-forge proposal from the sync of v0.3–v0.14, accepted by the
+user, 2026-10-03. After the
 server is gone the product publishes nothing, and what a person posts elsewhere is
 the responsibility of the place where they post it. See
 [ADR — serverless mode and recipe files](../decisions/20260928-serverless-mode-and-recipe-files.md).
@@ -137,8 +150,18 @@ marked every time it is shown as stated in the file and not verified.
 - Given a file that cannot be read — damaged, not a recipe file, or written by a
   later version of the application than the one installed — when it is imported,
   then it is refused, the person is told why, and nothing is added.
+- Given a file holding a draft — ingredient rows incomplete or off the grid, parts
+  of the minimum missing — when it is imported, then it is added as it is, those
+  rows kept as written; only a file whose structure cannot be read is refused.
+- Given a file holding a clip longer than 15 seconds, when it is imported, then the
+  whole file is refused with a message naming the 15-second limit, and nothing is
+  added.
+- Given a file holding a photo larger than 1 MB (1,000,000 bytes), the limit the
+  device's own processing keeps (MEDIA-002), when it is imported, then it is
+  refused, the person is told why, and nothing is added.
 - Given an imported recipe, when it is removed from the recipe book, then it
-  leaves it as any other marked recipe does, with its held content (FLOW-009).
+  leaves it as any other marked recipe does, with its held content (FLOW-009), and
+  its running and ringing timers end.
 - Given serverless mode off, when a recipe file is opened, then nothing is
   imported.
 
@@ -150,6 +173,10 @@ a template; a second import of the same recipe adds nothing; an unreadable file 
 refused and said to be. The nickname cannot be checked with no server, so it is
 labelled rather than trusted or hidden. See
 [ADR — serverless mode and recipe files](../decisions/20260928-serverless-mode-and-recipe-files.md).
+Amended 2026-10-03 (sync v0.3–v0.14): a draft imports as it is, only a
+structurally unreadable file is refused, a clip over 15 seconds or a photo over
+1 MB refuses the file, and removing a found recipe ends its timers — req-forge
+proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### FLOW-065 — A fork of an imported recipe names it as its parent
 
@@ -166,10 +193,14 @@ file names in the same way, with its author's nickname marked as not verified.
 - Given that fork, when it is created, then it carries none of the imported
   recipe's media and none of its description, as any fork by someone other than
   the author does (FORK-002).
+- Given that fork, when its card names its parent, then it names it by title and
+  by the author's nickname the imported file states, the nickname marked as stated
+  in the file and not verified.
 - Given that fork, when the imported recipe is still in the recipe book, then the
   parent can be opened from the fork's card.
 - Given that fork, when the imported recipe has been removed from the book, then
-  the parent is named by its title and shown as unavailable.
+  the parent is still named by its title and stated nickname and is shown as
+  unavailable.
 - Given an imported recipe whose file names a parent, when its card is opened,
   then that parent is named by the title and author's nickname the file states,
   the nickname marked as not verified, and it opens when a recipe with the same
@@ -184,4 +215,6 @@ book and one naming a parent that is not.
 2026-09-28 ("на твоё усмотрение"), and accepted by the product owner the same day.
 FORK-005 hides a parent that was never published; with no server nothing is
 published, so a parent is shown as the file names it, which keeps one step of
-lineage alive between people (GOAL-003).
+lineage alive between people (GOAL-003). Amended 2026-10-03 (sync v0.3–v0.14):
+the fork names its parent by the stated nickname as well as by title —
+req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.

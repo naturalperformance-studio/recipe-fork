@@ -21,12 +21,19 @@ abstract class DictionaryDao {
     @Query("select version from dictionary_version where id = 0")
     abstract fun versionUpdates(): Flow<String?>
 
-    /** Replaces the whole held copy of both dictionaries with [dictionaries], atomically. */
+    /**
+     * Replaces the whole held copy of both dictionaries with [dictionaries], atomically. An entry removed upstream is
+     * held removed rather than dropped — whether [dictionaries] still carry it marked so, or no longer carry it — so
+     * that the card, the editor and search still name every recipe's entry (DOM-009, FLOW-001).
+     */
     @Transaction
     open suspend fun replace(dictionaries: DictionariesDto) {
+        val arrived = dictionaries.ingredients.map(IngredientEntryEntity::of)
+        val arrivedIds = arrived.mapTo(HashSet()) { it.id }
+        val gone = ingredients().filter { it.id !in arrivedIds }.map { it.copy(removed = true) }
         deleteIngredients()
         deleteTags()
-        insertIngredients(dictionaries.ingredients.map { IngredientEntryEntity(it.id, it.labelRu, it.labelEn, it.parentId) })
+        insertIngredients(arrived + gone)
         insertTags(dictionaries.tags.map { TagEntity(it.id, it.labelRu, it.labelEn) })
         setVersion(DictionaryVersionEntity(version = dictionaries.version))
     }

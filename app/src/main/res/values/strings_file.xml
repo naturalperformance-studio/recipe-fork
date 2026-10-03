@@ -17,6 +17,8 @@
     <string name="file_import_later">This recipe file was made by a newer version of the app. Update the app to open it; nothing was added</string>
     <string name="file_import_damaged">This recipe file is damaged, so nothing was added</string>
     <string name="file_import_breaks_rules">The recipe in this file breaks the rules every recipe keeps, so nothing was added</string>
+    <!-- MEDIA-007: %1$d is the longest a clip may last, in seconds. -->
+    <string name="file_import_clip_too_long">A clip in this recipe file is longer than %1$d seconds, so nothing was added</string>
     <!-- FLOW-064 (3): the author a file states, marked every time it is shown; %1$s is the nickname. -->
     <string name="file_stated_author">Author: %1$s (stated in the file, not verified)</string>
     <!-- Closes the dialog that says what became of a file. -->

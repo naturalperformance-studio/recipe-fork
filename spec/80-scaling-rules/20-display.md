@@ -1,7 +1,7 @@
 ---
 slug: SCALE
 status: closed
-updated: 2026-10-02
+updated: 2026-10-03
 ids: [SCALE-004, SCALE-005, SCALE-007, SCALE-009, SCALE-012, SCALE-013, SCALE-014, SCALE-015]
 ---
 
@@ -70,19 +70,36 @@ write. The floors themselves are the user's decision of 2026-09-20.
 
 ### SCALE-007 — Quantities inside steps follow the same view
 
-Where a step references an ingredient, the system shall display in the step the
-same quantity that the ingredient list shows at the current scale.
+Where a step references a whole ingredient, the system shall display in the step
+the same quantity that the ingredient list shows at the current scale; where it
+references a part of an ingredient, the system shall display the part multiplied
+by the scale factor in force and rounded on its own by the grid of the
+ingredient's unit type.
 
 **Acceptance criteria**
-- Given a scaled recipe, when a step referencing an ingredient is read, then the
-  quantity in the step equals the quantity in the list, including its rounding
+- Given a scaled recipe, when a step referencing a whole ingredient is read, then
+  the quantity in the step equals the quantity in the list, including its rounding
   and its derived marker.
 - Given a recipe at its authored scale, when a step is read, then the referenced
-  quantity equals the authored one.
+  quantity equals the authored one, and a part equals the part the author wrote.
+- Given 3 cloves of garlic, indivisible, and a step referencing 1 of them, when the
+  reader doubles the recipe, then the list shows 6 and the step shows 2; at a
+  factor of 0.5 the list shows 2 and the step shows 1, each with its own derived
+  marker and direction, and the step's value is computed from the part (SCALE-003,
+  SCALE-015), not from the list line.
+- Given a part whose computed value falls below the floor of its unit type, when
+  the step is read, then the floor is shown and marked as rounded up (SCALE-005).
+- Given a fixed ingredient (SCALE-002), when a step referencing a part is read,
+  then the part is scaled by the factor that fixing implies, like every other
+  quantity.
 
-**Verification:** compare every referenced quantity against the list at three
-different factors.
-**Source:** draft section 3.5; DOM-007.
+**Verification:** compare every whole reference against the list, and every part
+against its authored value times the factor rounded by the grid, at three
+different factors and under a fixed ingredient.
+**Source:** draft section 3.5; DOM-007; amended 2026-10-03 (sync v0.3–v0.14): a
+part of an ingredient is scaled and rounded on its own (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03, asked by the
+user, v0.9). See
+[ADR — a reference to part of an ingredient](../decisions/20261003-a-reference-to-part-of-an-ingredient.md).
 
 ### SCALE-009 — Warning when the recipe stops holding its proportions
 

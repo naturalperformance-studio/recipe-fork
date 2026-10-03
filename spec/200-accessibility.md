@@ -1,9 +1,9 @@
 ---
 slug: A11Y
 status: closed
-updated: 2026-10-02
-ids: [A11Y-001, A11Y-002, A11Y-003, A11Y-004, A11Y-005, A11Y-006, A11Y-007,
-  A11Y-008]
+updated: 2026-10-03
+ids: [A11Y-001, A11Y-002, A11Y-010, A11Y-003, A11Y-004, A11Y-005, A11Y-006,
+  A11Y-007, A11Y-008, A11Y-009]
 ---
 
 # Accessibility
@@ -17,7 +17,7 @@ device the product actually has to work on.
 
 ### A11Y-001 — The commitment is this list, and conformance is not claimed
 
-The product shall satisfy A11Y-002 to A11Y-008, and shall not state or imply
+The product shall satisfy A11Y-002 to A11Y-010, and shall not state or imply
 conformance to WCAG 2.2 at any level.
 
 **Acceptance criteria**
@@ -52,17 +52,44 @@ what is adjacent to it.
 - Given an icon that carries meaning rather than decoration — the fork marker
   (CAT-004), the derived-quantity mark (CON-004), the safety flag (FLOW-018) —
   when it is measured, then it is at 3:1 or better.
-- Given the interface in a dark presentation, if one exists, then the same ratios
-  hold in it.
+- Given each theme the product ships (A11Y-010), when it is measured, then the
+  same ratios hold in it.
+- Given a disabled control, when the screen is measured, then the control and its
+  text are exempt from these thresholds, as WCAG exempts inactive components; its
+  touch target is still A11Y-003's.
 
 **Verification:** measure every distinct text and control style against its
-background with a contrast tool, in each presentation the product offers.
+background with a contrast tool, in each theme the product ships.
 **Source:** the thresholds are those of WCAG 2.2 success criteria 1.4.3 and
 1.4.11 — 4.5:1 for normal text, 3:1 for large text, 3:1 for user interface
 components and meaningful graphics
 ([Understanding SC 1.4.11, W3C](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html),
 checked 2026-09-21). The numbers are borrowed; the conformance claim is not
-(A11Y-001).
+(A11Y-001). Amended 2026-10-03 (sync v0.3–v0.14): disabled controls are exempt, as
+in WCAG, and the ratios hold in every shipped theme — req-forge proposal from the
+sync of v0.3–v0.14, accepted by the user, 2026-10-03.
+
+### A11Y-010 — A light and a dark theme, chosen by the reader
+
+The system shall present its interface in a light theme and in a dark theme, and
+shall offer a setting that chooses light, dark, or as the device is set.
+
+**Acceptance criteria**
+- Given the setting at "as the device is set", when the device switches between
+  light and dark, then the interface follows it.
+- Given the setting at light or at dark, when the device switches, then the
+  interface stays in the chosen theme.
+- Given either theme, when any screen is shown, then its colours, type and shape
+  come from the one theme definition maintained in the product's source, and no
+  screen carries colours of its own.
+- Given either theme, when it is measured, then A11Y-002 holds in it.
+
+Themes made by users are outside the vision for now.
+
+**Verification:** switch the setting through its three values and the device
+between light and dark, and walk the main screens in each theme.
+**Source:** req-forge proposal from the sync of v0.3–v0.14, accepted by the user,
+2026-10-03 (user decision, 2026-10-03; serverless roadmap F1).
 
 ### A11Y-003 — Touch targets
 
@@ -178,12 +205,17 @@ action that needs no drag.
   enumerated, then a non-gesture equivalent exists and reaches the same result.
 - Given the moderator's decisions by gesture (FLOW-049), when they are made
   without a gesture, then the same confirmation is asked for.
+- Given the device setting for the drag handle's side, when an author sets it to
+  the right or to the left, then the drag handles in the editor sit on that side,
+  so a left-handed author can drag with the hand they use.
 
 **Verification:** reorder a recipe's steps and ingredients and decide a queue
 entry using only discrete actions.
 **Source:** user decision, 2026-09-21. Dragging is the one interaction in the
 editor that has no accessible form of its own, so it needs an alternative rather
-than an improvement.
+than an improvement; amended 2026-10-03 (sync v0.3–v0.14): the drag handle's side
+is a device setting for left-handed use — req-forge proposal from the sync of
+v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### A11Y-007 — The cooking card is built for hands that are busy
 
@@ -237,3 +269,23 @@ distinction above survives.
 **Source:** user decision, 2026-09-21. This product marks a great deal — derived,
 forked, flagged, replaced, pending — and marking is precisely where colour alone
 is the tempting shortcut.
+
+### A11Y-009 — Motion on screen can be stopped and does not start uninvited
+
+The system shall give every step video that plays by itself a control that pauses
+it, and shall start no such video by itself while the device's system animations
+are turned off.
+
+**Acceptance criteria**
+- Given a step video playing on screen (MEDIA-015), when the reader reaches it by
+  touch or with the screen reader, then a control pauses it, and the screen reader
+  announces that control by what it does.
+- Given the system's animations turned off, when a step video comes on screen,
+  then it stays still until the reader starts it.
+
+**Verification:** cook a recipe with step videos with the system's animations on
+and off, by touch and with the screen reader.
+**Source:** req-forge proposal from the sync of v0.3–v0.14, accepted by the user,
+2026-10-03. The intent is that of WCAG 2.2 success criterion 2.2.2 — moving content
+that starts by itself can be paused — borrowed as a commitment, not as a
+conformance claim (A11Y-001).

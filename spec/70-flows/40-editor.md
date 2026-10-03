@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-28
+updated: 2026-10-03
 ids: [FLOW-022, FLOW-023, FLOW-057, FLOW-024, FLOW-025, FLOW-026, FLOW-028, FLOW-029, FLOW-030]
 ---
 
@@ -14,8 +14,8 @@ at both bounds, and an explicit statement of what a fork will carry away.
 
 When the author adds an ingredient in their own words rather than as an entry of
 the ingredient dictionary, the system shall accept the ingredient as free text and shall state
-that no filter on that ingredient will find the recipe and that this cannot be
-changed once the recipe has been published.
+that no filter on that ingredient will find the recipe and, except in serverless
+mode (FLOW-062), that this cannot be changed once the recipe has been published.
 
 **Acceptance criteria**
 - Given the ingredient editor, when the author types a name that is not exactly
@@ -23,7 +23,8 @@ changed once the recipe has been published.
   any entries offered, or alone where none is (FLOW-057) — and is not refused.
 - Given the author adds it, when the warning is shown, then it states both that
   filters will not find the recipe by this ingredient and that publication makes
-  it permanent (CON-003).
+  it permanent (CON-003); in serverless mode it states only the first, because
+  nothing is published there.
 - Given a recipe that holds a free-text ingredient, when the author later finds a
   matching entry while the recipe is still editable, then the ingredient can be
   replaced by the entry and the warning is gone.
@@ -41,6 +42,9 @@ FLOW-057 now states both, by user decision of that date.
 **Source:** user decision, 2026-09-20: a missing entry never blocks authoring,
 and the author is told what it costs rather than protected from it. See
 [ADR — the ingredient dictionary](../decisions/20260920-ingredient-dictionary.md).
+Amended 2026-10-03 (sync v0.3–v0.14): in serverless mode the warning does not
+speak of publication — req-forge proposal from the sync of v0.3–v0.14, accepted by
+the user, 2026-10-03.
 
 ### FLOW-023 — An ingredient is three fields and nothing more
 
@@ -213,10 +217,16 @@ including between two existing ones, and reorder either by dragging it up or dow
   ingredient, then the reference is dropped as DOM-007 already requires.
 - Given a user who cannot drag, when they reorder a step or an ingredient, then
   a discrete action does the same thing (A11Y-006).
+- Given the device setting that places the drag handles on the right or on the
+  left, when the editor is shown, then the handles stand on that physical side of
+  the screen, whatever the interface language's direction.
 
 **Verification:** insert and drag steps and ingredients in a recipe that has
-references and timers, and confirm positions and references afterwards.
-**Source:** user decision, 2026-09-20.
+references and timers, and confirm positions and references afterwards; switch
+the handle side and drag again.
+**Source:** user decision, 2026-09-20. Amended 2026-10-03 (sync v0.3–v0.14): the
+side of the drag handles is a device setting, for left-handed use — req-forge
+proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### FLOW-026 — The cover is attached with the title, step media with the step
 
@@ -230,6 +240,8 @@ media for a step at that step.
   that step is offered at that step and nowhere else.
 - Given a recipe with no cover, when it is saved, then it saves, because a cover is
   not part of the minimum (DOM-006).
+- Given a step holding a photo or a clip and no text, when the recipe is saved,
+  then the step is kept as a step: a step holds text, media or both (DOM-006).
 - Given media attached with or without a connection, when it is attached, then
   FLOW-004 governs: it stays on the device until the recipe is sent, and a sent
   recipe is marked as holding changes not sent (FLOW-005).
@@ -240,7 +252,9 @@ media for a step at that step.
 **Verification:** attach a cover and step media online and offline, and save a
 recipe with neither.
 **Source:** user decision, 2026-09-20: media is attached where the thing it belongs
-to is written, so a step's photo is never separated from its step.
+to is written, so a step's photo is never separated from its step. Amended
+2026-10-03 (sync v0.3–v0.14): a step may be a photo or a clip alone — req-forge
+proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### FLOW-028 — The minimum and the maximum are shown on leaving a field, as a warning
 
@@ -291,6 +305,10 @@ shall offer no separate preview inside the editor.
 - Given a recipe that is no longer editable by `entity-states`, when the author
   opens it, then the card screen's bar carries no edit action and no way into the
   editor is offered at all.
+- Given a step's photo or clip in the editor, when the author taps it, then the
+  photo is shown or the clip plays, muted; a clip never starts by itself. Showing
+  one item of media is not the separate preview this requirement forbids, which
+  is a reader's view of the whole recipe.
 
 **Verification:** save a recipe, open it, enter the editor from the bar, publish
 it and look for the action again.
@@ -301,7 +319,10 @@ card screen's top bar, outside the recipe's content. See
 [ADR — the editor is entered from the card's bar](../decisions/20260927-the-editor-is-entered-from-the-cards-bar.md).
 **Source:** user decision, 2026-09-20: a preview would be a third view of the same
 recipe to build and keep true, when saving already produces the reader's own view
-and the recipe stays editable until it becomes visible to anyone else.
+and the recipe stays editable until it becomes visible to anyone else. Amended
+2026-10-03 (sync v0.3–v0.14): a step's own media is shown in the editor on tap —
+req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03
+(asked by the user, v0.13).
 
 ### FLOW-030 — The editor says which parts a fork will carry away
 

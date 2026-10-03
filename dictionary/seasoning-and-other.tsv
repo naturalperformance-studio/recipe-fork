@@ -1,0 +1,4 @@
+# Seasoning and the rest: spices, dried herbs, salt, sauces and condiments, vinegars, canned and preserved goods,
+# stocks, drinks and alcohol used in cooking, other.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 7000-8999

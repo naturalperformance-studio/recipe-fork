@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-10-02
+updated: 2026-10-03
 ids: []
 ---
 
@@ -225,7 +225,8 @@ by the application (FLOW-061, FLOW-062).
 **Recipe file** — a recipe exported to a file in serverless mode, carrying its
 text, the media the device holds, its author's nickname and its direct parent
 (FLOW-063). Imported, it becomes a found recipe — a favourite — whose stated
-author is shown as not verified (FLOW-064). Not to be confused with the import of
+author is shown as not verified (FLOW-064); it counts as published for DOM-018
+and keeps its rows as written. Not to be confused with the import of
 a post from a social network (`import`).
 
 **Session** — the time from a start of the application that has nothing to

@@ -62,7 +62,7 @@ class RecipeImportTest {
     }
 
     private fun import(bytes: ByteArray, limits: ArchiveLimits = ArchiveLimits()) = runBlocking {
-        RecipeImport(recipes, files, clock = { now }, limits = limits).import { ByteArrayInputStream(bytes) }
+        RecipeImport(recipes, files, clock = { now }, limits = limits, clipDuration = TestRecipeFiles.SHORT_CLIP).import { ByteArrayInputStream(bytes) }
     }
 
     private fun assertNothingAdded() = runBlocking {

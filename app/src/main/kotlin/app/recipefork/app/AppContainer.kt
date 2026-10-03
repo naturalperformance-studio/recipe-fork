@@ -9,11 +9,20 @@ import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.Network
 import app.recipefork.app.data.PreferencesDragHandleSide
+import app.recipefork.app.dictionary.PreferencesSeededVersion
 import app.recipefork.app.data.PreferencesUsualServings
 import app.recipefork.app.data.UsualServings
+import app.recipefork.app.dictionary.DictionaryCatalog
 import app.recipefork.app.dictionary.DictionaryRepository
+import app.recipefork.app.dictionary.DictionarySeeding
+import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.DictionarySync
+import app.recipefork.app.media.ClipConverter
+import app.recipefork.app.media.ClipSourceDuration
+import app.recipefork.app.media.ClipStore
+import app.recipefork.app.media.ClipTransformer
 import app.recipefork.app.media.MediaSweep
+import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.AndroidRingTimeouts
 import app.recipefork.app.timer.AndroidRingingSound
@@ -25,6 +34,7 @@ import app.recipefork.app.timer.TimerAnnouncer
 import app.recipefork.app.timer.TimerDatabase
 import app.recipefork.app.timer.TimerRinging
 import app.recipefork.app.timer.applicationIsOpen
+import app.recipefork.core.api.DictionariesDto
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import kotlinx.coroutines.CoroutineScope
@@ -42,10 +52,28 @@ enum class Mode { Standard, Serverless }
 class AppContainer(
     context: Context,
     val mode: Mode,
+    /** How the dictionaries the application ships are read; replaced in a test to count the reads. */
+    readSnapshot: (Context) -> DictionariesDto = DictionarySnapshot::read,
     /** How the client of the product's server is made; called in [Mode.Standard] only. */
     httpClientOf: () -> HttpClient = { Network.client(Android.create(), BuildConfig.SERVER_URL) },
 ) {
     val database: AppDatabase = AppDatabase.open(context)
+
+    /**
+     * The held dictionaries as every screen reads them — the editor's tags and ingredients, the card's ingredient
+     * names — one for the application, seeded from the shipped snapshot, whose asset is parsed once per installation.
+     */
+    val dictionaries: DictionaryCatalog = database.dictionaryDao().let { dao ->
+        DictionaryCatalog(
+            dao,
+            DictionarySeeding(
+                dao,
+                PreferencesSeededVersion(context),
+                installed = DictionarySnapshot.installedKey(context),
+                checked = PreferencesSeededVersion(context, PreferencesSeededVersion.CHECKED),
+            ) { readSnapshot(context) },
+        )
+    }
 
     /**
      * The client of the product's server; none at all in [Mode.Serverless], which makes no request to it from the
@@ -73,6 +101,15 @@ class AppContainer(
     /** The pool is the only recipe book so far (AUTH-026). */
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))
     val recipes = RecipeRepository(activeBook, context.filesDir)
+
+    /** Converts a step's clip on the device (MEDIA-004), one for the application. */
+    val clipConverter: ClipConverter = ClipTransformer(context)
+
+    /** Reads how long a clip offered to a step lasts, before it is converted (MEDIA-007). */
+    val clipDuration: ClipSourceDuration = RetrieverClipSourceDuration(context)
+
+    /** Where steps' clips are converted and kept, in the books under [context]'s files directory. */
+    fun clipStore(context: Context): ClipStore = ClipStore(context.filesDir, clipConverter, clipDuration)
 
     /** Clears each book's media directory of files no recipe holds, once as the book is opened. */
     val mediaSweep = MediaSweep(context.filesDir)

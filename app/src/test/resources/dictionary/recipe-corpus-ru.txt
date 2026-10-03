@@ -1,0 +1,1358 @@
+# Ingredient lines of common home recipes, as a cook writes them in a recipe list (T-124).
+# Written for the corpus test before the dictionary sources were read.
+# "@ <recipe>" opens a recipe; every other line is "<ingredient line> | <intended meaning, loosely>".
+# A line may hold several names separated by commas ("соль, перец по вкусу"); the test splits them.
+
+@ Борщ
+говядина на кости | beef on the bone
+свёкла | beet
+капуста белокочанная | white cabbage
+картофель | potato
+морковь | carrot
+лук репчатый | onion
+томатная паста | tomato paste
+чеснок | garlic
+лавровый лист | bay leaf
+уксус | vinegar
+сметана | sour cream
+укроп | dill
+соль, перец по вкусу | salt, black pepper
+
+@ Щи из свежей капусты
+свинина | pork
+капуста | cabbage
+картошка | potato
+морковка | carrot
+лук | onion
+помидоры | tomato
+петрушка | parsley
+сметана для подачи | sour cream
+
+@ Кислые щи
+квашеная капуста | sauerkraut
+говяжья грудинка | beef brisket
+сушёные грибы | dried mushrooms
+корень петрушки | parsley root
+лук репчатый | onion
+мука | flour
+
+@ Солянка сборная мясная
+копчёная колбаса | smoked sausage
+ветчина | ham
+сосиски | frankfurters
+копчёные рёбрышки | smoked ribs
+солёные огурцы | pickled cucumbers
+огуречный рассол | pickle brine
+маслины | black olives
+каперсы | capers
+лимон | lemon
+томатная паста | tomato paste
+
+@ Рассольник
+перловка | pearl barley
+солёные огурцы | pickles
+почки говяжьи | beef kidneys
+картофель | potato
+морковь | carrot
+лук | onion
+рассол | brine
+
+@ Уха
+судак | pike-perch
+окунь | perch
+сёмга | salmon
+картофель | potato
+лук | onion
+перец горошком | black peppercorns
+лавровый лист | bay leaf
+водка | vodka
+зелень | herbs
+
+@ Куриный суп с лапшой
+курица | chicken
+куриный бульон | chicken broth
+лапша | noodles
+морковь | carrot
+лук | onion
+зелёный лук | scallion
+
+@ Гороховый суп
+горох колотый | split peas
+копчёные рёбра | smoked ribs
+бекон | bacon
+картофель | potato
+сухарики | croutons
+
+@ Грибной суп
+шампиньоны | white mushrooms
+белые грибы | porcini
+картофель | potato
+сливки | cream
+сливочное масло | butter
+
+@ Окрошка на квасе
+квас | kvass
+редиска | radish
+огурцы | cucumber
+варёная колбаса | bologna sausage
+яйца | eggs
+зелёный лук | green onion
+укроп | dill
+горчица | mustard
+
+@ Окрошка на кефире
+кефир | kefir
+минеральная вода | mineral water
+говядина отварная | boiled beef
+картофель отварной | boiled potato
+
+@ Свекольник
+свёкла с ботвой | beet with greens
+огурец | cucumber
+яйцо | egg
+лимонная кислота | citric acid
+
+@ Харчо
+говядина | beef
+рис | rice
+ткемали | tkemali sauce
+грецкие орехи | walnuts
+хмели-сунели | khmeli suneli
+кинза | cilantro
+острый перец | hot chili pepper
+
+@ Суп-пюре из тыквы
+тыква | pumpkin
+сливки 20% | cream
+имбирь | ginger
+тыквенные семечки | pumpkin seeds
+мускатный орех | nutmeg
+
+@ Сырный суп
+плавленый сыр | processed cheese
+картофель | potato
+куриное филе | chicken breast
+морковь | carrot
+
+@ Суп с фрикадельками
+фарш | ground meat
+вермишель | vermicelli
+картофель | potato
+морковь | carrot
+петрушка | parsley
+
+@ Чечевичный суп
+красная чечевица | red lentils
+зира | cumin
+куркума | turmeric
+лимон | lemon
+оливковое масло | olive oil
+
+@ Оливье
+картофель | potato
+морковь | carrot
+яйца куриные | chicken eggs
+докторская колбаса | bologna sausage
+солёные огурцы | pickles
+зелёный горошек консервированный | canned green peas
+майонез | mayonnaise
+
+@ Винегрет
+свёкла | beet
+картофель | potato
+морковь | carrot
+квашеная капуста | sauerkraut
+солёные огурцы | pickles
+фасоль | beans
+растительное масло | vegetable oil
+
+@ Селёдка под шубой
+сельдь слабосолёная | salted herring
+свёкла | beet
+картофель | potato
+морковь | carrot
+лук | onion
+майонез | mayonnaise
+
+@ Цезарь с курицей
+салат романо | romaine lettuce
+куриная грудка | chicken breast
+пармезан | parmesan
+батон | white bread
+чеснок | garlic
+анчоусы | anchovies
+вустерширский соус | worcestershire sauce
+яичный желток | egg yolk
+лимонный сок | lemon juice
+
+@ Греческий салат
+помидоры | tomato
+огурцы | cucumber
+болгарский перец | bell pepper
+красный лук | red onion
+фета | feta
+оливки | olives
+орегано | oregano
+оливковое масло | olive oil
+
+@ Мимоза
+консервированная сайра | canned saury
+рыбные консервы | canned fish
+яйца | eggs
+картофель | potato
+сыр твёрдый | hard cheese
+майонез | mayonnaise
+
+@ Крабовый салат
+крабовые палочки | crab sticks
+кукуруза консервированная | canned corn
+рис | rice
+яйца | eggs
+огурец | cucumber
+
+@ Салат из свежих овощей
+томаты | tomato
+огурцы | cucumber
+редис | radish
+листья салата | lettuce
+сметана | sour cream
+
+@ Салат Капрезе
+моцарелла | mozzarella
+помидоры черри | cherry tomatoes
+базилик | basil
+бальзамический уксус | balsamic vinegar
+
+@ Морковь по-корейски
+морковь | carrot
+кориандр молотый | ground coriander
+уксус 9% | vinegar
+сахар | sugar
+красный перец | red pepper
+
+@ Салат Витаминный
+капуста | cabbage
+морковь | carrot
+яблоко | apple
+сахар | sugar
+уксус яблочный | apple cider vinegar
+
+@ Салат Нисуаз
+тунец консервированный | canned tuna
+стручковая фасоль | green beans
+картофель | potato
+яйца | eggs
+маслины | olives
+анчоусы | anchovies
+
+@ Салат с тунцом и авокадо
+авокадо | avocado
+тунец | tuna
+руккола | arugula
+лайм | lime
+
+@ Котлеты домашние
+фарш свино-говяжий | ground pork and beef
+белый хлеб | white bread
+молоко | milk
+лук | onion
+яйцо | egg
+панировочные сухари | breadcrumbs
+масло растительное для жарки | vegetable oil
+
+@ Плов узбекский
+баранина | lamb
+рис девзира | devzira rice
+морковь | carrot
+лук | onion
+чеснок | garlic
+зира | cumin
+барбарис | barberry
+нут | chickpeas
+хлопковое масло | cottonseed oil
+курдючный жир | fat tail
+
+@ Голубцы
+капуста | cabbage
+фарш | minced meat
+рис | rice
+морковь | carrot
+лук | onion
+томатный сок | tomato juice
+сметана | sour cream
+
+@ Пельмени
+мука пшеничная | wheat flour
+вода | water
+фарш говяжий | ground beef
+фарш свиной | ground pork
+лук | onion
+соль | salt
+чёрный молотый перец | ground black pepper
+
+@ Вареники с картошкой
+мука | flour
+картофельное пюре | mashed potatoes
+лук жареный | fried onion
+сало | salt pork
+
+@ Вареники с вишней
+вишня | cherry
+сахар | sugar
+крахмал | starch
+
+@ Гуляш
+говядина | beef
+паприка сладкая | sweet paprika
+лук | onion
+томатная паста | tomato paste
+мука | flour
+
+@ Бефстроганов
+говяжья вырезка | beef tenderloin
+сметана | sour cream
+лук | onion
+горчица | mustard
+мука | flour
+
+@ Жаркое по-домашнему
+свиная шея | pork neck
+картофель | potato
+лук | onion
+морковь | carrot
+чеснок | garlic
+
+@ Курица запечённая
+курица целая | whole chicken
+чеснок | garlic
+розмарин | rosemary
+тимьян | thyme
+лимон | lemon
+сливочное масло | butter
+
+@ Куриные окорочка в духовке
+окорочка | chicken leg quarters
+майонез | mayonnaise
+кетчуп | ketchup
+паприка | paprika
+
+@ Тефтели в томатном соусе
+фарш | ground meat
+рис | rice
+томаты в собственном соку | canned tomatoes
+сметана | sour cream
+
+@ Макароны по-флотски
+макароны | pasta
+фарш говяжий | ground beef
+лук | onion
+масло сливочное | butter
+
+@ Гречка по-купечески
+гречка | buckwheat
+свинина | pork
+морковь | carrot
+лук | onion
+
+@ Картофельное пюре
+картофель | potato
+молоко | milk
+масло сливочное | butter
+мускатный орех | nutmeg
+
+@ Драники
+картофель | potato
+лук | onion
+яйцо | egg
+мука | flour
+сметана | sour cream
+
+@ Рыба под маринадом
+минтай | pollock
+треска | cod
+морковь | carrot
+лук | onion
+томатная паста | tomato paste
+гвоздика | cloves
+душистый перец | allspice
+
+@ Скумбрия запечённая
+скумбрия | mackerel
+лимон | lemon
+соевый соус | soy sauce
+
+@ Лосось на сковороде
+филе лосося | salmon fillet
+сливочное масло | butter
+лимон | lemon
+укроп | dill
+
+@ Печень по-строгановски
+печень говяжья | beef liver
+сметана | sour cream
+лук | onion
+
+@ Куриная печень с луком
+куриная печень | chicken liver
+лук | onion
+сливки | cream
+
+@ Отбивные
+свиная корейка | pork loin
+яйца | eggs
+мука | flour
+сухари | breadcrumbs
+
+@ Мясо по-французски
+свинина | pork
+картофель | potato
+лук | onion
+помидоры | tomato
+сыр | cheese
+майонез | mayonnaise
+
+@ Фаршированные перцы
+перец болгарский | bell pepper
+фарш | ground meat
+рис | rice
+томатная паста | tomato paste
+
+@ Ленивые голубцы
+капуста | cabbage
+фарш | ground meat
+рис | rice
+
+@ Солянка из капусты
+капуста | cabbage
+сосиски | frankfurters
+томатная паста | tomato paste
+
+@ Рагу овощное
+кабачки | zucchini
+баклажаны | eggplant
+перец сладкий | bell pepper
+помидоры | tomato
+картофель | potato
+
+@ Овощи на гриле
+цукини | zucchini
+баклажан | eggplant
+шампиньоны | white mushrooms
+кукуруза | corn
+
+@ Голубцы с индейкой
+фарш индейки | ground turkey
+капуста савойская | savoy cabbage
+рис бурый | brown rice
+
+@ Индейка тушёная
+филе индейки | turkey breast
+сливки | cream
+лук-порей | leek
+
+@ Утка с яблоками
+утка | duck
+яблоки | apples
+мёд | honey
+апельсин | orange
+
+@ Кролик в сметане
+кролик | rabbit
+сметана | sour cream
+лук | onion
+
+@ Холодец
+свиные ножки | pork trotters
+говяжья голяшка | beef shank
+чеснок | garlic
+лавровый лист | bay leaf
+перец горошком | peppercorns
+
+@ Заливное из рыбы
+рыба | fish
+желатин | gelatin
+
+@ Рыбные котлеты
+филе трески | cod fillet
+хлеб | bread
+лук | onion
+яйцо | egg
+
+@ Шашлык из свинины
+свиная шея | pork neck
+лук | onion
+уксус | vinegar
+чёрный перец | black pepper
+
+@ Пюре из цветной капусты
+цветная капуста | cauliflower
+сливки | cream
+
+@ Брокколи с сыром
+брокколи | broccoli
+сыр | cheese
+
+@ Запеканка картофельная
+картофель | potato
+фарш | ground meat
+сыр | cheese
+яйца | eggs
+
+@ Каша манная
+манка | semolina
+молоко | milk
+сахар | sugar
+масло | butter
+
+@ Каша овсяная
+овсяные хлопья | rolled oats
+молоко | milk
+соль | salt
+изюм | raisins
+
+@ Каша пшённая с тыквой
+пшено | millet
+тыква | pumpkin
+молоко | milk
+
+@ Рисовая каша
+рис круглозёрный | short-grain rice
+молоко | milk
+сахар | sugar
+
+@ Омлет
+яйца | eggs
+молоко | milk
+масло сливочное | butter
+
+@ Яичница с беконом
+яйца | eggs
+бекон | bacon
+
+@ Шакшука
+яйца | eggs
+томаты | tomatoes
+перец | pepper
+лук | onion
+зира | cumin
+паприка | paprika
+
+@ Блины
+молоко | milk
+яйца | eggs
+мука | flour
+сахар | sugar
+соль | salt
+растительное масло | vegetable oil
+
+@ Блины на кефире
+кефир | kefir
+кипяток | boiling water
+сода | baking soda
+
+@ Сырники
+творог | farmer cheese
+яйцо | egg
+сахар | sugar
+мука | flour
+ванильный сахар | vanilla sugar
+
+@ Оладьи
+кефир | kefir
+мука | flour
+яйцо | egg
+сахар | sugar
+сода | baking soda
+
+@ Оладьи из кабачков
+кабачок | zucchini
+яйцо | egg
+мука | flour
+чеснок | garlic
+
+@ Пирожки с капустой
+мука | flour
+дрожжи сухие | dry yeast
+молоко | milk
+капуста | cabbage
+яйцо | egg
+
+@ Пирожки с яйцом и луком
+яйца | eggs
+зелёный лук | green onion
+тесто дрожжевое | yeast dough
+
+@ Пирог с яблоками
+яблоки | apples
+мука | flour
+сахар | sugar
+масло сливочное | butter
+корица | cinnamon
+
+@ Шарлотка
+яйца | eggs
+сахар | sugar
+мука | flour
+яблоки | apples
+корица | cinnamon
+
+@ Медовик
+мёд | honey
+сахар | sugar
+яйца | eggs
+сода | baking soda
+мука | flour
+сметана | sour cream
+сгущённое молоко | condensed milk
+
+@ Наполеон
+мука | flour
+масло сливочное | butter
+молоко | milk
+сахар | sugar
+яйца | eggs
+ванилин | vanillin
+
+@ Торт Прага
+какао-порошок | cocoa powder
+сгущёнка | condensed milk
+шоколад горький | dark chocolate
+абрикосовый джем | apricot jam
+
+@ Торт Птичье молоко
+агар-агар | agar
+белки | egg whites
+лимонная кислота | citric acid
+шоколад | chocolate
+
+@ Пирог с капустой заливной
+кефир | kefir
+майонез | mayonnaise
+капуста | cabbage
+
+@ Кулебяка
+слоёное тесто | puff pastry
+рис | rice
+лосось | salmon
+яйца | eggs
+
+@ Курник
+курица | chicken
+грибы | mushrooms
+блины | crepes
+
+@ Ватрушки
+творог | farmer cheese
+мука | flour
+дрожжи | yeast
+изюм | raisins
+
+@ Пончики
+мука | flour
+дрожжи | yeast
+сахарная пудра | powdered sugar
+масло для фритюра | frying oil
+
+@ Хворост
+мука | flour
+яйца | eggs
+водка | vodka
+сахарная пудра | powdered sugar
+
+@ Кекс
+мука | flour
+сахар | sugar
+масло | butter
+яйца | eggs
+разрыхлитель | baking powder
+изюм | raisins
+
+@ Творожная запеканка
+творог | cottage cheese
+манная крупа | semolina
+сметана | sour cream
+яйца | eggs
+изюм | raisins
+
+@ Пасха творожная
+творог | farmer cheese
+сливочное масло | butter
+сметана | sour cream
+цукаты | candied fruit
+курага | dried apricots
+
+@ Кулич
+мука | flour
+дрожжи | yeast
+молоко | milk
+яйца | eggs
+изюм | raisins
+кардамон | cardamom
+шафран | saffron
+
+@ Печенье песочное
+мука | flour
+масло сливочное | butter
+сахар | sugar
+желток | egg yolk
+
+@ Овсяное печенье
+овсяные хлопья | oat flakes
+мука | flour
+сахар | sugar
+масло | butter
+грецкий орех | walnut
+
+@ Безе
+яичные белки | egg whites
+сахар | sugar
+
+@ Торт Муравейник
+мука | flour
+маргарин | margarine
+сгущёнка варёная | dulce de leche
+мак | poppy seeds
+
+@ Пирог с вишней
+вишня замороженная | frozen cherries
+мука | flour
+сахар | sugar
+кукурузный крахмал | cornstarch
+
+@ Брусничный морс
+брусника | lingonberry
+клюква | cranberry
+сахар | sugar
+вода | water
+
+@ Компот из сухофруктов
+сухофрукты | dried fruit
+чернослив | prunes
+курага | dried apricots
+сахар | sugar
+
+@ Кисель
+крахмал картофельный | potato starch
+смородина | currant
+сахар | sugar
+
+@ Лимонный кекс
+лимон | lemon
+яйца | eggs
+сахар | sugar
+растительное масло без запаха | refined vegetable oil
+мацони | matsoni
+мука | flour
+разрыхлитель | baking powder
+сода | baking soda
+соль | salt
+сахарная пудра | powdered sugar
+лимонный сок | lemon juice
+
+@ Хачапури по-аджарски
+мука | flour
+дрожжи | yeast
+сулугуни | suluguni
+имеретинский сыр | imeruli cheese
+яйца | eggs
+сливочное масло | butter
+
+@ Хинкали
+мука | flour
+говядина | beef
+свинина | pork
+кинза | cilantro
+зира | cumin
+
+@ Чахохбили
+курица | chicken
+помидоры | tomatoes
+лук | onion
+кинза | cilantro
+базилик | basil
+хмели-сунели | khmeli suneli
+аджика | adjika
+
+@ Сациви
+курица | chicken
+грецкие орехи | walnuts
+уцхо-сунели | blue fenugreek
+шафран имеретинский | marigold
+винный уксус | wine vinegar
+
+@ Пхали
+шпинат | spinach
+грецкие орехи | walnuts
+гранат | pomegranate
+кинза | cilantro
+
+@ Аджапсандал
+баклажаны | eggplant
+болгарский перец | bell pepper
+помидоры | tomatoes
+кинза | cilantro
+базилик | basil
+
+@ Лобио
+красная фасоль | red kidney beans
+грецкие орехи | walnuts
+кинза | cilantro
+винный уксус | wine vinegar
+
+@ Шашлык из баранины
+баранина | lamb
+лук | onion
+сумах | sumac
+гранатовый сок | pomegranate juice
+
+@ Долма
+виноградные листья | grape leaves
+фарш бараний | ground lamb
+рис | rice
+мята | mint
+мацони | matsoni
+
+@ Хаш
+говяжьи ноги | beef feet
+чеснок | garlic
+
+@ Чанахи
+баранина | lamb
+баклажаны | eggplant
+картофель | potato
+помидоры | tomatoes
+
+@ Манты
+мука | flour
+баранина | lamb
+лук | onion
+курдюк | fat tail
+
+@ Лагман
+говядина | beef
+лапша | noodles
+редька | daikon
+перец болгарский | bell pepper
+чеснок | garlic
+
+@ Самса
+слоёное тесто | puff pastry
+баранина | lamb
+кунжут | sesame seeds
+
+@ Шурпа
+баранина | lamb
+картофель | potato
+морковь | carrot
+нут | chickpeas
+помидоры | tomatoes
+
+@ Ачичук
+помидоры | tomatoes
+лук | onion
+базилик | basil
+
+@ Беляши
+мука | flour
+дрожжи | yeast
+фарш | ground meat
+лук | onion
+
+@ Чебуреки
+мука | flour
+фарш бараний | ground lamb
+лук | onion
+масло для жарки | frying oil
+
+@ Спагетти карбонара
+спагетти | spaghetti
+гуанчиале | guanciale
+пекорино романо | pecorino romano
+желтки | egg yolks
+чёрный перец | black pepper
+
+@ Болоньезе
+фарш | ground beef
+томаты в собственном соку | canned tomatoes
+сельдерей | celery
+красное вино | red wine
+пармезан | parmesan
+
+@ Лазанья
+листы для лазаньи | lasagna noodles
+фарш | ground meat
+соус бешамель | bechamel
+моцарелла | mozzarella
+
+@ Ризотто с грибами
+рис арборио | arborio rice
+белое вино | white wine
+бульон | broth
+пармезан | parmesan
+шампиньоны | mushrooms
+
+@ Пицца Маргарита
+мука | flour
+дрожжи | yeast
+томатный соус | tomato sauce
+моцарелла | mozzarella
+базилик | basil
+
+@ Паста с песто
+паста | pasta
+песто | pesto
+кедровые орехи | pine nuts
+
+@ Тирамису
+маскарпоне | mascarpone
+печенье савоярди | ladyfingers
+кофе эспрессо | espresso
+какао | cocoa
+яйца | eggs
+
+@ Минестроне
+фасоль белая | white beans
+кабачок | zucchini
+сельдерей | celery
+макароны | pasta
+
+@ Брускетта
+чиабатта | ciabatta
+помидоры | tomatoes
+чеснок | garlic
+базилик | basil
+
+@ Панна котта
+сливки 33% | heavy cream
+желатин | gelatin
+ваниль | vanilla
+ягоды | berries
+
+@ Жареный рис с яйцом
+рис | rice
+яйца | eggs
+соевый соус | soy sauce
+зелёный лук | scallion
+кунжутное масло | sesame oil
+
+@ Курица терияки
+куриное бедро | chicken thigh
+соус терияки | teriyaki sauce
+кунжут | sesame
+
+@ Курица в кисло-сладком соусе
+куриное филе | chicken breast
+ананас | pineapple
+болгарский перец | bell pepper
+рисовый уксус | rice vinegar
+крахмал | starch
+
+@ Роллы
+рис для суши | sushi rice
+нори | nori
+лосось | salmon
+огурец | cucumber
+сливочный сыр | cream cheese
+васаби | wasabi
+имбирь маринованный | pickled ginger
+
+@ Удон с курицей
+лапша удон | udon noodles
+курица | chicken
+соевый соус | soy sauce
+
+@ Том ям
+креветки | shrimp
+кокосовое молоко | coconut milk
+лемонграсс | lemongrass
+листья лайма | kaffir lime leaves
+рыбный соус | fish sauce
+паста том ям | tom yum paste
+
+@ Карри с курицей
+курица | chicken
+паста карри | curry paste
+кокосовое молоко | coconut milk
+картофель | potato
+
+@ Фунчоза с овощами
+фунчоза | glass noodles
+морковь | carrot
+огурец | cucumber
+соевый соус | soy sauce
+
+@ Пад тай
+рисовая лапша | rice noodles
+креветки | shrimp
+арахис | peanuts
+ростки фасоли | bean sprouts
+тамаринд | tamarind
+
+@ Хумус
+нут | chickpeas
+тахини | tahini
+лимонный сок | lemon juice
+чеснок | garlic
+
+@ Фалафель
+нут | chickpeas
+петрушка | parsley
+кинза | cilantro
+кориандр | coriander
+
+@ Сырный соус
+сыр чеддер | cheddar
+молоко | milk
+мука | flour
+
+@ Тушёная капуста
+капуста | cabbage
+морковь | carrot
+томатная паста | tomato paste
+
+@ Икра кабачковая
+кабачки | zucchini
+морковь | carrot
+лук | onion
+томатная паста | tomato paste
+
+@ Икра баклажанная
+баклажаны | eggplant
+перец | bell pepper
+помидоры | tomatoes
+
+@ Лечо
+перец болгарский | bell pepper
+помидоры | tomatoes
+лук | onion
+сахар | sugar
+уксус | vinegar
+
+@ Солёные огурцы
+огурцы | cucumbers
+хрен | horseradish
+листья смородины | currant leaves
+укроп зонтики | dill heads
+чеснок | garlic
+соль крупная | coarse salt
+
+@ Варенье клубничное
+клубника | strawberry
+сахар | sugar
+
+@ Малиновое варенье
+малина | raspberry
+сахар | sugar
+
+@ Сельдь под маринадом
+сельдь | herring
+лук | onion
+уксус | vinegar
+
+@ Бутерброды со шпротами
+шпроты | sprats
+бородинский хлеб | rye bread
+огурец | cucumber
+
+@ Бутерброды с красной икрой
+икра красная | salmon roe
+масло сливочное | butter
+батон | baguette
+
+@ Жульен
+шампиньоны | mushrooms
+куриное филе | chicken breast
+сливки | cream
+сыр | cheese
+
+@ Грибы маринованные
+опята | honey mushrooms
+уксус | vinegar
+гвоздика | cloves
+
+@ Жареная картошка с грибами
+картофель | potato
+лисички | chanterelles
+лук | onion
+
+@ Баклажаны с чесноком
+баклажан | eggplant
+чеснок | garlic
+майонез | mayonnaise
+
+@ Фаршированные шампиньоны
+шампиньоны крупные | large mushrooms
+сыр | cheese
+ветчина | ham
+
+@ Капустные котлеты
+капуста | cabbage
+манка | semolina
+яйцо | egg
+
+@ Гречневая каша с молоком
+гречневая крупа | buckwheat
+молоко | milk
+
+@ Перловка с тушёнкой
+перловая крупа | pearl barley
+тушёнка | canned stewed meat
+
+@ Булгур с овощами
+булгур | bulgur
+перец | pepper
+лук | onion
+
+@ Кускус
+кускус | couscous
+изюм | raisins
+миндаль | almonds
+
+@ Киноа с овощами
+киноа | quinoa
+авокадо | avocado
+шпинат | spinach
+
+@ Смузи
+банан | banana
+клубника | strawberry
+йогурт | yogurt
+овсянка | oatmeal
+
+@ Глинтвейн
+красное сухое вино | dry red wine
+апельсин | orange
+корица | cinnamon
+гвоздика | cloves
+бадьян | star anise
+
+@ Какао на молоке
+какао | cocoa
+молоко | milk
+сахар | sugar
+
+@ Горячий шоколад
+шоколад молочный | milk chocolate
+сливки | cream
+
+@ Сбитень
+мёд | honey
+имбирь | ginger
+корица | cinnamon
+
+@ Морс клюквенный
+клюква | cranberries
+сахар | sugar
+
+@ Квас домашний
+ржаной хлеб | rye bread
+сахар | sugar
+дрожжи | yeast
+
+@ Компот из яблок
+яблоки | apples
+сахар | sugar
+
+@ Котлеты по-киевски
+куриное филе | chicken breast
+сливочное масло | butter
+панировочные сухари | breadcrumbs
+яйца | eggs
+
+@ Зразы картофельные
+картофель | potato
+фарш | ground meat
+мука | flour
+
+@ Курица в сметане
+курица | chicken
+сметана | sour cream
+чеснок | garlic
+
+@ Пирог с рыбой
+рыбные консервы | canned fish
+рис | rice
+лук | onion
+кефир | kefir
+
+@ Пирог с курицей и картошкой
+куриное филе | chicken breast
+картофель | potato
+тесто | dough
+
+@ Пирог с капустой
+дрожжевое тесто | yeast dough
+капуста | cabbage
+яйца | eggs
+
+@ Вареники с творогом
+творог | farmer cheese
+мука | flour
+яйцо | egg
+сахар | sugar
+
+@ Ленивые вареники
+творог | farmer cheese
+мука | flour
+яйцо | egg
+
+@ Сельдь с картошкой
+сельдь | herring
+картофель | potato
+лук | onion
+растительное масло | sunflower oil
+
+@ Сало солёное
+сало | salt pork
+чеснок | garlic
+соль | salt
+перец | pepper
+
+@ Колбаса домашняя
+свинина | pork
+кишки | sausage casings
+чеснок | garlic
+
+@ Тыква запечённая
+тыква | pumpkin
+мёд | honey
+корица | cinnamon
+
+@ Морковный торт
+морковь | carrot
+мука | flour
+сахар коричневый | brown sugar
+грецкие орехи | walnuts
+сливочный сыр | cream cheese
+
+@ Брауни
+шоколад тёмный | dark chocolate
+масло сливочное | butter
+сахар | sugar
+яйца | eggs
+мука | flour
+
+@ Пряники
+мёд | honey
+мука ржаная | rye flour
+имбирь молотый | ground ginger
+корица | cinnamon
+
+@ Банановый хлеб
+бананы | bananas
+мука | flour
+сахар | sugar
+сода | baking soda
+
+@ Чизкейк
+сливочный сыр | cream cheese
+печенье | cookies
+сливочное масло | butter
+сахар | sugar
+сливки | cream
+
+@ Сметанник
+сметана | sour cream
+мука | flour
+сахар | sugar
+разрыхлитель | baking powder
+
+@ Зефир
+яблочное пюре | applesauce
+агар-агар | agar
+сахар | sugar
+
+@ Мороженое пломбир
+сливки | cream
+сгущённое молоко | condensed milk
+ванильный экстракт | vanilla extract
+
+@ Пирожное картошка
+печенье | cookies
+сгущёнка | condensed milk
+какао | cocoa
+ром | rum
+
+@ Трубочки с кремом
+слоёное тесто | puff pastry
+сливки | cream
+сахарная пудра | powdered sugar
+
+@ Эклеры
+мука | flour
+масло сливочное | butter
+яйца | eggs
+сливки | cream
+
+@ Гренки сладкие
+батон | white bread
+молоко | milk
+яйца | eggs
+сахар | sugar
+
+@ Сельдь в горчичном соусе
+сельдь | herring
+горчица зернистая | whole-grain mustard
+мёд | honey
+
+@ Креветки в чесночном соусе
+креветки тигровые | tiger shrimp
+чеснок | garlic
+сливочное масло | butter
+петрушка | parsley
+
+@ Мидии в сливочном соусе
+мидии | mussels
+сливки | cream
+белое вино | white wine
+чеснок | garlic
+
+@ Кальмары жареные
+кальмары | squid
+лук | onion
+сметана | sour cream
+
+@ Форель запечённая
+форель | trout
+лимон | lemon
+розмарин | rosemary
+
+@ Котлеты из индейки
+фарш из индейки | ground turkey
+кабачок | zucchini
+овсяные хлопья | oat flakes
+
+@ Куриные крылышки
+куриные крылья | chicken wings
+мёд | honey
+соевый соус | soy sauce
+чеснок | garlic
+
+@ Буженина
+свиной окорок | pork leg
+чеснок | garlic
+горчица | mustard
+
+@ Язык отварной
+говяжий язык | beef tongue
+лавровый лист | bay leaf
+хрен | horseradish
+
+@ Капуста квашеная
+капуста | cabbage
+морковь | carrot
+соль | salt
+клюква | cranberry
+
+@ Тыквенные оладьи
+тыква | pumpkin
+кефир | kefir
+мука | flour
+
+@ Пицца домашняя
+мука | flour
+дрожжи | yeast
+колбаса салями | salami
+сыр моцарелла | mozzarella
+кетчуп | ketchup
+грибы | mushrooms

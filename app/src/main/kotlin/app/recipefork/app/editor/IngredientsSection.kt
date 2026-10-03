@@ -87,6 +87,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.recipe.effectiveDivisible
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.launch
@@ -176,7 +177,7 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
     var dictionary by remember(ingredients) { mutableStateOf<List<IngredientEntryEntity>?>(null) }
     LaunchedEffect(ingredients) {
         // A dictionary that cannot be read offers nothing; every name can still be written as free text (FLOW-022).
-        dictionary = runCatching { ingredients.ingredients() }.getOrDefault(emptyList())
+        dictionary = runCatching { ingredients.ingredients() }.getOrDefault(emptyList()).also(editor::knowEntries)
     }
     // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
     val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveIngredient(from, to) }
@@ -216,7 +217,7 @@ private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: Interfa
     OutlinedCard(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.ingredient(position))) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(
-                row.nameIn(dictionary, language).takeIf { it.isNotBlank() } ?: stringResource(R.string.editor_ingredient_unnamed),
+                row.fieldNameIn(dictionary, language).takeIf { it.isNotBlank() } ?: stringResource(R.string.editor_ingredient_unnamed),
                 style = MaterialTheme.typography.bodyLarge,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -246,7 +247,12 @@ private fun IngredientRow(
     drag: RowDrag,
     mode: Mode,
 ) {
-    val problem = QuantityInput.problem(row)
+    // An entry that gives a divisibility decides it (FLOW-023 (11)): the quantity is checked against its grid even before
+    // the row holds it — a draft written before, holding 1½ of an indivisible entry, is marked (DOM-017 (9)).
+    val entryDivisible = row.dictionaryEntry?.let { id -> dictionary?.firstOrNull { it.id == id }?.divisible }
+    val problem = QuantityInput.problem(
+        if (row.unitType == UnitType.PIECE) row.copy(divisible = effectiveDivisible(row, entryDivisible)) else row,
+    )
     // The name, the quantity and the unit each take the height of the tallest of them, so the row's inputs are even.
     val heights = remember { EvenHeights() }
     // One bounded block per row, so where one ingredient ends and the next begins is plain; dragged, it moves whole.
@@ -313,8 +319,8 @@ private fun IngredientRow(
                         )
                     }
                     if (under) BlockActions { RowControls(position, count, editor) }
-                    // No shipped entry supplies divisibility, so every `piece` row asks for it, picked from an entry or not.
-                    if (row.unitType == UnitType.PIECE) Divisibility(position, row, editor)
+                    // A `piece` row asks for its divisibility unless its entry gives one (FLOW-022 (5), FLOW-023 (11)).
+                    if (row.unitType == UnitType.PIECE && entryDivisible == null) Divisibility(position, row, editor)
                 }
             }
         }
@@ -401,11 +407,46 @@ private fun FreeTextWarning(position: Int, mode: Mode) {
 internal fun Ingredient.nameIn(dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): String =
     dictionaryEntry?.let { id -> dictionary?.firstOrNull { it.id == id }?.label(language) } ?: freeTextName.orEmpty()
 
+/** The label of the entry the row names, in the interface language; null for free text, or before the dictionary is read. */
+private fun Ingredient.entryLabelIn(dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): String? =
+    dictionaryEntry?.let { id -> dictionary?.firstOrNull { it.id == id }?.label(language) }
+
+/** What the row's name field reads: its entry's label and, after a space, the entry's qualifier; or the author's own words. */
+internal fun Ingredient.fieldNameIn(dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): String {
+    val name = nameIn(dictionary, language)
+    val qualifier = qualifier?.takeIf { entryLabelIn(dictionary, language) != null && it.isNotBlank() } ?: return name
+    return "$name $qualifier"
+}
+
+/** What a name field typed past an entry's label keeps of it: the entry, with [qualifier] beside it or none. */
+internal data class Qualified(val qualifier: String?)
+
+/**
+ * What [text] typed into the field of a row named by the entry labelled [label] keeps of it (DOM-009): the label alone
+ * keeps the entry with no qualifier; the label, then a space or a comma and words, keeps it with those words — without
+ * the separators — as its qualifier; null once the label itself is edited, which makes the row the author's own words.
+ */
+internal fun qualifierTyped(text: String, label: String): Qualified? {
+    if (!text.startsWith(label)) return null
+    val rest = text.substring(label.length)
+    if (rest.isNotEmpty() && !rest.first().let { it.isWhitespace() || it == ',' }) return null
+    return Qualified(rest.trim { it.isWhitespace() || it == ',' }.ifEmpty { null })
+}
+
+/**
+ * The offerable entry, other than the one [row] names, whose label in either language is exactly [text] as FLOW-057
+ * folds it: a qualifier is no substitute for the entry that is named whole (FLOW-023 (3), FLOW-057 (7)).
+ */
+private fun otherEntryNamed(text: String, row: Ingredient, dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): IngredientEntryEntity? =
+    dictionary?.let { IngredientOffer.of(text, it, language).exact }?.takeIf { it.id != row.dictionaryEntry }
+
 /**
  * The row's ingredient. What the author types is held as their own words at once, so leaving the editor loses
  * nothing (FLOW-024); while they type, the field offers the dictionary's entries for it and, beside them, adding the
  * text as free text (FLOW-057). Picking an entry names the row by it (DOM-009). Leaving the field with exactly an
  * offered entry's label typed names the row by that entry, because the entry is that ingredient (FLOW-057 (7)).
+ * Typed past an entry's label, after a space, the words are the entry's qualifier and the entry stays; an edit inside
+ * the label makes the row the author's own words again, with no qualifier (DOM-009, FLOW-023 (4)).
  */
 @Composable
 private fun IngredientNameField(
@@ -422,14 +463,31 @@ private fun IngredientNameField(
     var focused by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
     fun held() = editor.recipe.value?.ingredients?.getOrNull(position) ?: row
-    val shown = row.nameIn(dictionary, language)
+    // What the author typed past the entry's label stays as typed — a space before the next word included — while it
+    // reads as the qualifier the row holds; once they leave the field, it reads as held.
+    var typed by remember { mutableStateOf<String?>(null) }
+    val label = row.entryLabelIn(dictionary, language)
+    val shown = typed?.takeIf { label != null && qualifierTyped(it, label) == Qualified(row.qualifier) } ?: row.fieldNameIn(dictionary, language)
     val offer = if (offering && dictionary != null && row.dictionaryEntry == null) IngredientOffer.of(shown, dictionary, language) else null
     Column(modifier) {
         OutlinedTextField(
             value = shown,
-            onValueChange = {
-                editor.setIngredientFreeText(position, it)
-                offering = true
+            onValueChange = { text ->
+                val latest = held()
+                val kept = latest.entryLabelIn(dictionary, language)?.let { qualifierTyped(text, it) }
+                val other = if (kept != null) otherEntryNamed(text, latest, dictionary, language) else null
+                if (other != null) {
+                    // "chicken" typed on to "chicken wings" names chicken wings, not chicken qualified by "wings".
+                    typed = text
+                    editor.setIngredientEntry(position, other.id)
+                } else if (kept != null) {
+                    typed = text
+                    editor.setIngredientQualifier(position, kept.qualifier)
+                } else {
+                    typed = null
+                    editor.setIngredientFreeText(position, text)
+                    offering = true
+                }
             },
             label = { Text(stringResource(R.string.editor_ingredient_name)) },
             // Only a name in the author's own words warns; an entry picked in its place takes the warning away (FLOW-022 (3)).
@@ -447,10 +505,15 @@ private fun IngredientNameField(
                 .onFocusChanged { state ->
                     if (focused && !state.isFocused) {
                         offering = false
+                        typed = null
                         val latest = held()
-                        val typed = latest.freeTextName
-                        if (latest.dictionaryEntry == null && typed != null && dictionary != null) {
-                            IngredientOffer.of(typed, dictionary, language).exact?.let { editor.setIngredientEntry(position, it.id) }
+                        val written = latest.freeTextName
+                        if (latest.dictionaryEntry == null && written != null && dictionary != null) {
+                            IngredientOffer.of(written, dictionary, language).exact?.let { editor.setIngredientEntry(position, it.id) }
+                        } else if (latest.qualifier != null) {
+                            // A label and a qualifier that together are another entry's label name that entry.
+                            otherEntryNamed(latest.fieldNameIn(dictionary, language), latest, dictionary, language)
+                                ?.let { editor.setIngredientEntry(position, it.id) }
                         }
                     }
                     focused = state.isFocused
@@ -662,7 +725,7 @@ private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, modi
     }
 }
 
-/** The divisibility of a `piece` row in the author's own words, which no entry supplies (FLOW-022 (5)). */
+/** The divisibility of a `piece` row in the author's own words, or naming an entry that gives none (FLOW-022 (5)). */
 @Composable
 private fun Divisibility(position: Int, row: Ingredient, editor: RecipeEditor) {
     Column(Modifier.fillMaxWidth().selectableGroup().testTag(EditorTags.divisibility(position))) {

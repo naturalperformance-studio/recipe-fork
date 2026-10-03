@@ -9,8 +9,6 @@ import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
-import kotlinx.serialization.json.Json
-import java.security.MessageDigest
 
 /**
  * Serves both dictionaries to devices (FLOW-001). The version is a digest of the content, so it
@@ -33,13 +31,9 @@ fun Route.dictionaryRoutes(store: DictionaryStore) {
 }
 
 internal fun DictionarySnapshot.toDto(): DictionariesDto {
-    val ingredients = ingredients.map { IngredientEntryDto(it.id, it.labelRu, it.labelEn, it.parentId) }
+    val ingredients = ingredients.map {
+        IngredientEntryDto(it.id, it.labelRu, it.labelEn, it.parentId, it.divisible, it.factors, it.removed)
+    }
     val tags = tags.map { TagDto(it.id, it.labelRu, it.labelEn) }
-    val content = Json.encodeToString(DictionariesDto(version = "", ingredients = ingredients, tags = tags))
-    val digest = MessageDigest.getInstance("SHA-256").digest(content.toByteArray(Charsets.UTF_8))
-    return DictionariesDto(
-        version = digest.joinToString("") { "%02x".format(it) },
-        ingredients = ingredients,
-        tags = tags,
-    )
+    return DictionariesDto(version = "", ingredients = ingredients, tags = tags).versioned()
 }

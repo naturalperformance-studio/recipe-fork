@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-01
+updated: 2026-10-03
 ids: [FLOW-001, FLOW-002, FLOW-059, FLOW-003, FLOW-004, FLOW-005, FLOW-006, FLOW-007]
 ---
 
@@ -34,15 +34,18 @@ server is switched off (FLOW-061).
 ### FLOW-001 — Both dictionaries are held on the device
 
 The system shall hold the tag dictionary (DOM-008) and the ingredient dictionary
-(DOM-009) on the device, and shall refresh them whenever a network connection is
-available.
+(DOM-009) on the device, and, outside serverless mode, shall refresh them
+whenever a network connection is available.
 
 **Acceptance criteria**
 - Given no network connection, when the author opens the tag editor, then the
   dictionary entries are offered exactly as they are with a connection.
-- Given no network connection, when the author adds a `piece` ingredient whose
-  dictionary entry is marked indivisible, then its divisibility is set from the
-  entry and the author is not asked to set it by hand.
+- Given no network connection, when the author adds a `piece` ingredient naming
+  an entry that carries a divisibility flag, then its divisibility is set from the
+  entry and the author is not asked; given an entry that carries no flag, then the
+  author answers as for free text. Every entry that has a `piece` comparison
+  factor carries a flag
+  ([ADR — an entry may not know its divisibility](../decisions/20261003-an-entry-may-not-know-its-divisibility.md)).
 - Given no network connection, when the author adds a `piece` ingredient as free
   text, then the author sets its divisibility, because there is no entry to take
   it from.
@@ -56,16 +59,23 @@ available.
   when the application next reaches the server, then the held copy is replaced.
 - Given a dictionary entry was removed upstream, when a held recipe already uses
   it, then the recipe keeps it and the editor stops offering it for new use.
+- Given serverless mode, when the dictionaries are held, then they are the copies
+  shipped with the application and are refreshed only by an application update
+  (FLOW-062).
 
 **Verification:** open the editor in aeroplane mode on a device that has synced
 at least once; change a dictionary upstream and confirm the refresh.
-**Source:** user decision, 2026-09-20. Both dictionaries are labels and flags
-only, with no media and no weights, and both are maintained by the product owner
-alone, so holding them costs little and removes hand-set divisibility flags from
-offline authoring. Holding the ingredient dictionary is also what keeps the
+**Source:** user decision, 2026-09-20. Both dictionaries are labels, flags and
+invisible comparison factors used only to order the ingredient filter (CAT-009) —
+no weight is ever displayed or used in scaling — with no media, and both are
+maintained by the product owner alone, so holding them costs little and removes
+hand-set divisibility flags from offline authoring. Holding the ingredient dictionary is also what keeps the
 editor usable offline at all, now that naming an ingredient means searching it
 (DOM-009). Holding only the entries an account has used was considered and set
-aside on the arithmetic — see OQ-021.
+aside on the arithmetic — see OQ-021. Amended 2026-10-03 (sync v0.3–v0.14): an
+entry may carry no divisibility flag, and in serverless mode the dictionaries ship
+with the application — req-forge proposal from the sync of v0.3–v0.14, accepted by
+the user, 2026-10-03.
 
 ### FLOW-002 — A recipe is written on the device, with no account and no connection
 

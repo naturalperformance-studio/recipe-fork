@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -36,6 +37,7 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -61,13 +63,12 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import app.recipefork.app.AppContainer
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
-import app.recipefork.app.dictionary.DictionaryCatalog
-import app.recipefork.app.dictionary.DictionarySeeding
-import app.recipefork.app.dictionary.DictionarySnapshot
-import app.recipefork.app.dictionary.PreferencesSeededVersion
 import app.recipefork.app.dictionary.TagEntity
+import app.recipefork.app.dictionary.TagOffer
+import app.recipefork.app.dictionary.label
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit
@@ -85,18 +86,17 @@ import kotlinx.coroutines.withContext
 @Composable
 fun rememberEditorEnvironment(): EditorEnvironment {
     val context = LocalContext.current.applicationContext
-    return remember(context) {
-        val container = (context as RecipeForkApplication).container
-        val dao = container.database.dictionaryDao()
-        val seeding = DictionarySeeding(dao, PreferencesSeededVersion(context)) { DictionarySnapshot.read(context) }
-        EditorEnvironment(
-            container.activeBook,
-            DictionaryCatalog(dao, seeding),
-            dragHandleSide = container.dragHandleSide,
-            mode = container.mode,
-        )
-    }
+    return remember(context) { editorEnvironmentOf((context as RecipeForkApplication).container) }
 }
+
+/** The editor's environment of [container]: the active book and the dictionaries it shares with every screen. */
+fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvironment(
+    container.activeBook,
+    container.dictionaries,
+    dragHandleSide = container.dragHandleSide,
+    mode = container.mode,
+    clipStore = container::clipStore,
+)
 
 /**
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
@@ -112,8 +112,12 @@ fun EditorScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // The steps' media work outlives the screen — the activity recreated, or the editor left and opened again —
+    // while a clip converts (FLOW-026); the steps' keys are kept with it, so the work reaches the step it was for.
+    val mediaWork = rememberStepMediaWork(recipeId)
     // The row keys outlive the activity being recreated, as the state the rows saved under them does.
-    val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { mediaWork.stepKeys ?: RowKeys() }
+    remember(mediaWork, stepKeys) { mediaWork.stepKeys = stepKeys }
     val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
     // Not saved: what the editor holds for this session alone — the references offered once (GUIDE-008) among it —
     // starts again after the activity is recreated or the process restored, which is intended, nothing of a hint
@@ -131,6 +135,12 @@ fun EditorScreen(
     BackHandler(onBack = onClose)
     val context = LocalContext.current
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
+    val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
+    remember(mediaWork, editor) { mediaWork.show(editor) }
+    val activity = LocalActivity.current
+    DisposableEffect(mediaWork) {
+        onDispose { if (activity?.isChangingConfigurations != true) mediaWork.left() }
+    }
     val host = remember { SnackbarHostState() }
     val statementScope = rememberCoroutineScope()
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
@@ -183,7 +193,7 @@ fun EditorScreen(
                     ServingCount(shown, editor)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode)
-                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving)
+                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork)
                     }
                     Description(shown, editor)
                 }
@@ -363,11 +373,10 @@ private fun TagSearch(recipe: Recipe, editor: RecipeEditor, dictionary: List<Tag
         keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
         modifier = Modifier.fillMaxWidth().testTag(EditorTags.TAG_SEARCH),
     )
-    val sought = query.trim()
-    val offered = dictionary.filter { it.id !in recipe.tags }.map { it to label(it) }
-        .filter { (_, shown) -> shown.contains(sought, ignoreCase = true) }
-        .sortedBy { (_, shown) -> shown.lowercase() }
-    if (offered.isEmpty() && sought.isNotEmpty()) {
+    // Hundreds of tags are searched, never listed: nothing is offered until a word is typed.
+    val language = numberLanguage(LocalConfiguration.current)
+    val offered = TagOffer.of(query, dictionary, language, excluded = recipe.tags).map { it to it.label(language) }
+    if (offered.isEmpty() && query.isNotBlank()) {
         Text(
             stringResource(R.string.editor_tag_no_match),
             style = MaterialTheme.typography.bodyMedium,
@@ -553,6 +562,14 @@ object EditorTags {
     fun stepPhotoRemove(position: Int) = "editor-step-$position-photo-remove"
     fun stepPhotoImage(position: Int) = "editor-step-$position-photo-image"
     fun stepPhotoWorking(position: Int) = "editor-step-$position-photo-working"
+    fun stepClipRecord(position: Int) = "editor-step-$position-clip-record"
+    fun stepClipChoose(position: Int) = "editor-step-$position-clip-choose"
+    fun stepClipImage(position: Int) = "editor-step-$position-clip-image"
+    fun stepClipMark(position: Int) = "editor-step-$position-clip-mark"
+    /** The round control that plays and pauses a step's clip in place. */
+    fun stepClipControl(position: Int) = "editor-step-$position-clip-control"
+    fun stepClipConverting(position: Int) = "editor-step-$position-clip-converting"
+    fun stepClipCancel(position: Int) = "editor-step-$position-clip-cancel"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
     fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
     fun timerAttach(position: Int) = "editor-step-$position-timer"

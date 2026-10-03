@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-02
+updated: 2026-10-03
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -209,11 +209,17 @@ step's text.
   then the name is unchanged, because it was overridden and no longer follows the
   step.
 - Given a timer whose author gave it no name, when its step's text is changed,
-  then what the announcement will say changes with it, because the name is
-  derived and not stored.
+  then what the announcement will say for any later start changes with it,
+  because the name is derived and not stored.
 - Given a step whose first 60 characters hold an ingredient reference, when a
   derived name is built from it, then the reference reads there exactly as it
   reads on the card, at the scale the reader is using (FLOW-032).
+- Given a timer already running, when the reader changes the scale, then the
+  timer keeps the name it started with, a reference's quantity read at the scale
+  of that moment, while the derived name of a timer not running on the card
+  follows the new scale.
+- Given a step holding media and no text (DOM-006), when it carries a timer, then
+  there is no text to derive a name from, and the author names the timer.
 - Given several running timers, when the reader opens the recipe, then each
   shows its own remaining time on its own step, under the same name the
   announcement would use.
@@ -236,6 +242,8 @@ opening of a step is not always the point of the wait, and an author who can see
 that is the one who should fix it. The step's position is never used, because a
 number tells the cook nothing about which pan. See
 [ADR — a timer is named by its step](../decisions/20260920-timer-named-by-its-step.md).
+Amended 2026-10-03 (sync v0.3–v0.14): a running timer keeps the name it started
+with, and a timer on a step with no text is named by its author — req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 **Note:** 60 characters is the product owner's number, set so that the line
 survives a notification without the operating system deciding where to cut it. It
 bounds a name the author types as well (DOM-012). That the first 60 characters
@@ -265,6 +273,10 @@ shall open every recipe at that count.
   their usual count and not at the count they used last time.
 - Given a reader who scaled a recipe and stays in the application, when they
   leave the card and come back to it, then the count they set is still there.
+- Given the count, the fixing and the place held for the session, when more than
+  50 recipes have been shown since a recipe was last shown, then that recipe
+  opens at the usual count: the session holds them for the 50 recipes most
+  recently shown.
 
 **Verification:** set the count to 2 and to 12, open recipes authored for 1, 4
 and 20, and compare against the authored values and the derived markings.
@@ -276,7 +288,9 @@ guests one evening is unlikely to have twelve guests the next time they open it,
 and the household is the durable fact. The cost is deliberate: with the setting
 in use almost every recipe opens in a derived state, and the numbers the author
 wrote are not the numbers the reader meets first — which is why the derived
-markings of SCALE-004 carry the weight they do.
+markings of SCALE-004 carry the weight they do. Amended 2026-10-03 (sync
+v0.3–v0.14): what the session holds is bounded to the 50 recipes most recently
+shown — req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 **Note:** a count the reader set survives for as long as the session lasts
 (FLOW-058), including leaving the card and returning to it; a fresh start of the
 application opens every recipe at the usual count again. This boundary follows

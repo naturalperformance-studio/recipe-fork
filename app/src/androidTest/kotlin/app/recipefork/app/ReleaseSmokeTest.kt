@@ -11,6 +11,8 @@ import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.ExifInterface
+import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.net.Uri
 import android.provider.MediaStore
 import android.view.accessibility.AccessibilityNodeInfo
@@ -25,8 +27,10 @@ import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.importSafely
+import app.recipefork.app.media.ClipOutcome
 import app.recipefork.app.media.PhotoOutcome
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.TestClips
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.TimerChannels
 import app.recipefork.app.timer.TimerKey
@@ -67,8 +71,9 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * The smoke test of the build the owner installs by hand (scripts/device-test-release.sh runs it against the minified
  * serverless release): every part R8 could break by removing what is reached reflectively — Room, kotlinx.serialization
- * with the recipe file's document, the camera's capture provider, the timers' service and receivers, Compose — is gone
- * through once on a real device. It runs against the debug build too, where it proves the test itself.
+ * with the recipe file's document, the camera's capture provider, the timers' service and receivers, Compose, Media3
+ * Transformer converting a clip — is gone through once on a real device. It runs against the debug build too, where it
+ * proves the test itself.
  */
 @RunWith(AndroidJUnit4::class)
 class ReleaseSmokeTest {
@@ -257,6 +262,29 @@ class ReleaseSmokeTest {
             saveAttributes()
         }
         return file.readBytes().also { file.delete() }
+    }
+
+    // The clip converter (MEDIA-004) as R8 leaves it, reached as the editor reaches it: Media3 Transformer reading a picked clip by its content address,
+    // its codecs and its own muxer, in the minified build.
+    @Test
+    fun theBuildConvertsAClip() = runBlocking {
+        val source = TestClips.write(File(TestClips.directory(application), "release-smoke.mp4"), 640, 360, seconds = 2, location = 1f to 2f)
+        try {
+            // The converter as the application wires it for the editor's steps.
+            val clips = container.clipStore(application)
+            val outcome = clips.add(otherBook, TestClips.uri(application, source))
+            check(outcome is ClipOutcome.Stored) { "$outcome" }
+            val extractor = MediaExtractor()
+            try {
+                extractor.setDataSource(outcome.file.path)
+                assertEquals(1, extractor.trackCount)
+                assertEquals(MediaFormat.MIMETYPE_VIDEO_AVC, extractor.getTrackFormat(0).getString(MediaFormat.KEY_MIME))
+            } finally {
+                extractor.release()
+            }
+        } finally {
+            source.delete()
+        }
     }
 
     /**

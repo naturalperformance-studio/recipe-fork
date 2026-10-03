@@ -116,7 +116,8 @@ const val OWN_PAGE = 30
  * line; the list's header and its entries stay apart.
  *
  * The book's menu, beside its title, holds the serving count the reader usually cooks for (FLOW-017), which every
- * card opens at, and the side the editor's drag column stands on.
+ * card opens at, the side the editor's drag column stands on, and the clearing of the media the device need not keep
+ * (FLOW-060), stated first and done only once confirmed.
  *
  * What became of a file — an import's outcome, a failed export — is said in a dialog over whatever is shown, until it
  * is closed.
@@ -188,6 +189,20 @@ fun LibraryScreen(
     }
     val view by session.view.collectAsState()
     val timers = rememberCardTimers()
+    // The clearing of saved media (FLOW-060): asked about first, or said to have nothing to clear.
+    var clearing by rememberSaveable { mutableStateOf<ClearingMedia?>(null) }
+    when (clearing) {
+        ClearingMedia.ASKING -> ClearMediaStatement(
+            mode,
+            onConfirm = {
+                clearing = null
+                session.viewModelScope.launch { recipes.clearMedia() }
+            },
+            onDecline = { clearing = null },
+        )
+        ClearingMedia.NOTHING -> NothingToClear(onDone = { clearing = null })
+        null -> Unit
+    }
     Column(modifier.fillMaxSize()) {
         // The book's top area: its title, with the book's menu beside it (FLOW-017), above the switch of views.
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -196,7 +211,14 @@ fun LibraryScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.weight(1f).padding(16.dp).semantics { heading() }.testTag(LibraryTags.TITLE),
             )
-            BookMenu(usualServings, dragHandleSide, Modifier.padding(end = 8.dp))
+            BookMenu(
+                usualServings, dragHandleSide, Modifier.padding(end = 8.dp),
+                onClearMedia = {
+                    session.viewModelScope.launch {
+                        clearing = if (recipes.clearableMedia().isEmpty()) ClearingMedia.NOTHING else ClearingMedia.ASKING
+                    }
+                },
+            )
         }
         // The switch sits above the list and never scrolls with it (FLOW-034 (1)).
         Row(Modifier.fillMaxWidth().selectableGroup().testTag(LibraryTags.SWITCH)) {
@@ -304,7 +326,7 @@ private fun OwnList(
             HorizontalDivider()
             ListHeader(
                 search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
-                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages,
+                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold,
             )
             HorizontalDivider()
         }
@@ -572,6 +594,61 @@ private fun DeleteStatement(row: OwnRecipeRow, onConfirm: () -> Unit, onDecline:
     )
 }
 
+/** Where the clearing of saved media stands while a dialog of it is shown. */
+private enum class ClearingMedia { ASKING, NOTHING }
+
+/**
+ * The statement before saved media is cleared (FLOW-060): nothing is deleted until it is confirmed, and declining it
+ * changes nothing. In [Mode.Serverless] it says the media cannot be fetched again (FLOW-060 (4)) and names nothing of
+ * the server (FLOW-062 (1)); in [Mode.Standard] it says the media is fetched again when needed.
+ */
+@Composable
+private fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDecline,
+        modifier = Modifier.testTag(LibraryTags.CLEAR_MEDIA_STATEMENT),
+        title = { Text(stringResource(R.string.library_clear_media_title)) },
+        text = {
+            Text(
+                stringResource(
+                    when (mode) {
+                        Mode.Serverless -> R.string.library_clear_media_statement_serverless
+                        Mode.Standard -> R.string.library_clear_media_statement
+                    },
+                ),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.CLEAR_MEDIA_CONFIRM),
+            ) { Text(stringResource(R.string.library_clear_media_confirm)) }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDecline,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.CLEAR_MEDIA_DECLINE),
+            ) { Text(stringResource(R.string.library_clear_media_decline)) }
+        },
+    )
+}
+
+/** Said in place of the statement when the device holds no media the clearing would delete. */
+@Composable
+private fun NothingToClear(onDone: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDone,
+        modifier = Modifier.testTag(LibraryTags.CLEAR_MEDIA_NOTHING),
+        text = { Text(stringResource(R.string.library_clear_media_nothing)) },
+        confirmButton = {
+            TextButton(
+                onClick = onDone,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.CLEAR_MEDIA_OK),
+            ) { Text(stringResource(R.string.library_clear_media_ok)) }
+        },
+    )
+}
+
 /**
  * Deletes [id] from the active book, on the device alone (FLOW-053 (6, 8)), and cancels its timers, so that none of
  * them announces itself or rings afterwards. It runs where the timers' work runs, which outlives the screen, one turn
@@ -665,7 +742,7 @@ private fun MarkedList(
         if (shown != null && (!shown.viewIsEmpty || shown.narrowed)) {
             ListHeader(
                 search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
-                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages,
+                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold,
             )
             HorizontalDivider()
         }
@@ -863,6 +940,13 @@ object LibraryTags {
     const val USUAL_SET = "library-usual-set"
     const val USUAL_CLEAR = "library-usual-clear"
     const val HANDLE_RIGHT = "library-handle-right"
+    /** The book menu's clearing of saved media (FLOW-060), its statement and its message of nothing to clear. */
+    const val CLEAR_MEDIA = "library-clear-media"
+    const val CLEAR_MEDIA_STATEMENT = "library-clear-media-statement"
+    const val CLEAR_MEDIA_CONFIRM = "library-clear-media-confirm"
+    const val CLEAR_MEDIA_DECLINE = "library-clear-media-decline"
+    const val CLEAR_MEDIA_NOTHING = "library-clear-media-nothing"
+    const val CLEAR_MEDIA_OK = "library-clear-media-ok"
     const val SWITCH = "library-switch"
     const val OWN_LIST = "library-own"
     const val MARKED_LIST = "library-marked"
@@ -902,6 +986,8 @@ object LibraryTags {
     const val INGREDIENT_FIELD = "library-ingredient-field"
     fun ingredientChoice(entryId: Long) = "library-ingredient-choice-$entryId"
     const val TAG_CHOOSER = "library-tag-chooser"
+    const val TAG_FIELD = "library-tag-field"
+    const val TAG_NO_MATCH = "library-tag-no-match"
     const val TAG_CHOOSER_DONE = "library-tag-chooser-done"
     fun tagChoice(tagId: Long) = "library-tag-choice-$tagId"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"

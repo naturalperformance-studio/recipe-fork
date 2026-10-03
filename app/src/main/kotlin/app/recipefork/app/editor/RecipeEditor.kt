@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.runtime.saveable.Saver
 import app.recipefork.app.Mode
@@ -7,11 +8,16 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.HeldDragHandleSide
+import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
+import app.recipefork.app.media.ClipStore
+import app.recipefork.app.media.ClipTransformer
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.media.cover
+import app.recipefork.app.media.stepMedia
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
@@ -62,6 +68,8 @@ class EditorEnvironment(
     val dragHandleSide: DragHandleSide = HeldDragHandleSide(),
     /** Where the editor keeps photographs, given the application's files directory; replaced in a test to hold one back. */
     val photoStore: (File) -> PhotoStore = { PhotoStore(it) },
+    /** Where the editor converts and keeps steps' clips, given the application's context; replaced in a test. */
+    val clipStore: (Context) -> ClipStore = { ClipStore(it.filesDir, ClipTransformer(it), RetrieverClipSourceDuration(it)) },
     /** What the release is built as (FLOW-061): the editor says nothing of publication where nothing can be published. */
     val mode: Mode = Mode.Standard,
     val clock: () -> Instant = Instant::now,
@@ -395,9 +403,40 @@ class RecipeEditor(
         wholeAgain.compareAndSet(statement, null)
     }
 
-    /** A `piece` row's divisibility, which the author is asked for (FLOW-022 (5)). */
-    fun setIngredientDivisible(position: Int, divisible: Boolean) = editIngredient(position) { row ->
-        if (row.unitType == UnitType.PIECE) row.copy(divisible = divisible) else row
+    /**
+     * A `piece` row's divisibility, which the author is asked for (FLOW-022 (5)): for free text, or for an entry the
+     * dictionary gives no divisibility. A row naming an entry that gives one holds the entry's (FLOW-023 (11)), and is
+     * not asked; returns false for it.
+     */
+    fun setIngredientDivisible(position: Int, divisible: Boolean): Boolean {
+        val row = current.value?.ingredients?.getOrNull(position) ?: return false
+        if (entryDivisible(row) != null) return false
+        return editIngredient(position) { if (it.unitType == UnitType.PIECE) it.copy(divisible = divisible) else it }
+    }
+
+    /** The divisibility of each dictionary entry that gives one, by its identity; filled from what the screen reads. */
+    private var entryFlags: Map<Long, Boolean> = emptyMap()
+
+    /**
+     * The dictionary's [entries] as the screen read them: from the next change on, every `piece` row naming an entry
+     * that gives a divisibility holds that divisibility, so a recipe file or a fork of the recipe carries it without
+     * the dictionary (FLOW-023 (11), FLOW-001 (2)). Nothing is written by being told.
+     */
+    fun knowEntries(entries: List<IngredientEntryEntity>) {
+        entryFlags = entries.mapNotNull { entry -> entry.divisible?.let { entry.id to it } }.toMap()
+    }
+
+    /** The divisibility the entry [row] names gives; null for free text, or an entry that gives none. */
+    fun entryDivisible(row: Ingredient): Boolean? = row.dictionaryEntry?.let(entryFlags::get)
+
+    /** [recipe] with each `piece` row naming an entry that gives a divisibility holding it. */
+    private fun withEntryDivisibility(recipe: Recipe): Recipe {
+        if (entryFlags.isEmpty()) return recipe
+        val rows = recipe.ingredients.map { row ->
+            val flag = entryDivisible(row)
+            if (row.unitType == UnitType.PIECE && flag != null && row.divisible != flag) row.copy(divisible = flag) else row
+        }
+        return if (rows == recipe.ingredients) recipe else recipe.copy(ingredients = rows)
     }
 
     /**
@@ -454,24 +493,35 @@ class RecipeEditor(
         }
     }
 
-    // A step's photograph (FLOW-026 (2), MEDIA-001, MEDIA-009).
+    // A step's item, a photograph or a clip (FLOW-026 (2), MEDIA-001, MEDIA-009).
 
-    /** The photograph of the step at [position], if it carries one. */
+    /** The photograph of the step at [position], if the item it carries is one. */
     fun stepPhoto(position: Int): Media? = current.value?.stepPhoto(position)
 
+    /** The item of the step at [position], a photograph or a clip, if it carries one. */
+    fun stepMedia(position: Int): Media? = current.value?.stepMedia(position)
+
     /**
-     * Makes the photograph [mediaId] the one of the step at [position]. A step carries one photograph, so it replaces
-     * any the step carried (MEDIA-001, MEDIA-009); once the change is in the book, [written] is given the identity of
-     * the photograph replaced, or null, whose file is then the caller's to delete. Returns whether it was set: a frozen
-     * recipe takes none, and a step that is not there carries none.
+     * Makes the photograph [mediaId] the item of the step at [position], replacing whatever item the step carried,
+     * as [setStepMedia] does.
      */
-    fun setStepPhoto(position: Int, mediaId: String, written: suspend (replaced: String?) -> Unit = {}): Boolean {
+    fun setStepPhoto(position: Int, mediaId: String, written: suspend (replaced: String?) -> Unit = {}): Boolean =
+        setStepMedia(position, mediaId, MediaKind.PHOTO, written)
+
+    /**
+     * Makes [mediaId], of [kind], the item of the step at [position]. A step carries one item of either kind, so it
+     * replaces any the step carried — a photograph a clip, a clip a photograph (MEDIA-001, MEDIA-009); once the change
+     * is in the book, [written] is given the identity of the item replaced, or null, whose file is then the caller's
+     * to delete (MEDIA-012). Returns whether it was set: a frozen recipe takes none, and a step that is not there
+     * carries none.
+     */
+    fun setStepMedia(position: Int, mediaId: String, kind: MediaKind, written: suspend (replaced: String?) -> Unit = {}): Boolean {
         val recipe = current.value ?: return false
         if (position !in recipe.steps.indices) return false
         val at = MediaAttachment.ToStep(position)
-        val replaced = stepPhoto(position)?.mediaId
-        val photo = Media(mediaId, null, MediaKind.PHOTO, at, MediaVisibility.PRIVATE)
-        return edit({ it.copy(media = it.media.filter { m -> !(m.kind == MediaKind.PHOTO && m.attachment == at) } + photo) }) {
+        val replaced = stepMedia(position)?.mediaId
+        val item = Media(mediaId, null, kind, at, MediaVisibility.PRIVATE)
+        return edit({ it.copy(media = it.media.filter { m -> m.attachment != at } + item) }) {
             written(replaced)
         }
     }
@@ -482,6 +532,16 @@ class RecipeEditor(
      */
     fun removeStepPhoto(position: Int, written: suspend (removed: String) -> Unit = {}): Boolean {
         val removed = stepPhoto(position)?.mediaId ?: return false
+        return edit({ it.copy(media = it.media.filter { m -> m.mediaId != removed }) }) { written(removed) }
+    }
+
+    /**
+     * Takes the item, a photograph or a clip, off the step at [position]; once the change is in the book, [written] is
+     * given its identity, whose file is then the caller's to delete. Returns whether the step carried one and was
+     * editable.
+     */
+    fun removeStepMedia(position: Int, written: suspend (removed: String) -> Unit = {}): Boolean {
+        val removed = stepMedia(position)?.mediaId ?: return false
         return edit({ it.copy(media = it.media.filter { m -> m.mediaId != removed }) }) { written(removed) }
     }
 
@@ -549,7 +609,7 @@ class RecipeEditor(
         val recipe = current.value ?: return false
         if (!recipe.state.editable) return false
         noteAction()
-        val next = recipe.edited(clock(), change)
+        val next = recipe.edited(clock()) { withEntryDivisibility(change(it)) }
         current.value = next
         if (left.value.isNotEmpty()) remark(next)
         // Launched in order and queued on a fair lock, so the book receives the changes in the order made.
@@ -565,11 +625,29 @@ class RecipeEditor(
 
     /** The row's ingredient as the dictionary entry [entryId], with no free-text name beside it (DOM-009). */
     fun setIngredientEntry(position: Int, entryId: Long) =
-        editIngredient(position) { it.copy(dictionaryEntry = entryId, freeTextName = null) }
+        editIngredient(position) { it.copy(dictionaryEntry = entryId, qualifier = null, freeTextName = null) }
 
-    /** The row's ingredient in the author's own words, replacing any entry it held (DOM-009); empty holds neither. */
-    fun setIngredientFreeText(position: Int, name: String) =
-        editIngredient(position) { it.copy(dictionaryEntry = null, qualifier = null, freeTextName = name.ifEmpty { null }) }
+    /**
+     * The row's ingredient in the author's own words, replacing any entry it held, and the entry's qualifier with it
+     * (DOM-009); empty holds neither. A divisibility the entry gave goes with the entry, so the author is asked again.
+     */
+    fun setIngredientFreeText(position: Int, name: String) = editIngredient(position) { row ->
+        val divisible = if (entryDivisible(row) != null) null else row.divisible
+        row.copy(dictionaryEntry = null, qualifier = null, freeTextName = name.ifEmpty { null }, divisible = divisible)
+    }
+
+    /**
+     * The words the author typed after the label of the row's entry, which narrow it ("крылышки острые"): kept beside
+     * the entry without the spaces and commas that separate them from the label; none holds no qualifier (DOM-009).
+     * A row in the author's own words takes none; returns false. The qualifier the row already holds changes nothing.
+     */
+    fun setIngredientQualifier(position: Int, qualifier: String?): Boolean {
+        val row = current.value?.ingredients?.getOrNull(position) ?: return false
+        if (row.dictionaryEntry == null) return false
+        val held = qualifier?.trim { it.isWhitespace() || it == ',' }?.ifEmpty { null }
+        if (held == row.qualifier) return true
+        return editIngredient(position) { it.copy(qualifier = held) }
+    }
 
     companion object {
         /** Where the row at [position] stands once the row at [from] has moved to [to]. */

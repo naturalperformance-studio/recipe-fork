@@ -46,12 +46,14 @@ class DictionarySyncTest {
         tags = listOf(TagDto(10, "итальянская", "Italian")),
     )
 
-    // The product owner removes beef, relabels a tag and adds both an entry and a tag.
+    // The product owner removes beef — kept, marked removed, so recipes naming it keep its name — relabels a tag and
+    // adds both an entry and a tag.
     private val v2 = DictionariesDto(
         version = "v2",
         ingredients = listOf(
             IngredientEntryDto(1, "курица", "chicken"),
             IngredientEntryDto(2, "крылышки", "chicken wings", parentId = 1),
+            IngredientEntryDto(3, "говядина", "beef", removed = true),
             IngredientEntryDto(4, "бедро", "chicken thigh", parentId = 1),
         ),
         tags = listOf(TagDto(10, "итальянская", "Italian cuisine"), TagDto(11, "грузинская", "Georgian")),
@@ -180,7 +182,7 @@ class DictionarySyncTest {
     private suspend fun assertHeld(expected: DictionariesDto) {
         assertEquals(expected.version, dao.version())
         assertEquals(
-            expected.ingredients.map { IngredientEntryEntity(it.id, it.labelRu, it.labelEn, it.parentId) },
+            expected.ingredients.map(IngredientEntryEntity::of),
             dao.ingredients(),
         )
         assertEquals(expected.tags.map { TagEntity(it.id, it.labelRu, it.labelEn) }, dao.tags())

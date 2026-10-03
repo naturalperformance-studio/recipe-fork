@@ -21,13 +21,13 @@ import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientOffer
 import app.recipefork.app.dictionary.TagEntity
+import app.recipefork.app.dictionary.TagOffer
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.dictionary.label
 import app.recipefork.app.editor.numberLanguage
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.Listed
-import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -66,6 +66,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import app.recipefork.app.R
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.interfaceLanguage
@@ -115,7 +116,9 @@ private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lower
 /**
  * The header above a view's list: its search field (FLOW-035 (4)) and, at its end, the control that adds a filter
  * (FLOW-035, CAT-002, CAT-006) and the choice of the view's order (FLOW-035 (3)); under them, while any filter is on,
- * the row of the view's filters. The [languages] of the view's recipes are what its language filter offers (L10N-005). It never scrolls with the list, and is no taller for filters while none is on.
+ * the row of the view's filters. The [languages] of the view's recipes are what its language filter offers (L10N-005);
+ * the entries they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)). It never
+ * scrolls with the list, and is no taller for filters while none is on.
  */
 @Composable
 internal fun ListHeader(
@@ -126,6 +129,7 @@ internal fun ListHeader(
     onFilters: (BookFilters) -> Unit,
     choices: FilterChoices,
     languages: List<BookLanguage>,
+    hold: Set<Long> = emptySet(),
     modifier: Modifier = Modifier,
 ) {
     val focus = LocalFocusManager.current
@@ -150,7 +154,7 @@ internal fun ListHeader(
                 keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
                 modifier = Modifier.weight(1f).testTag(LibraryTags.SEARCH),
             )
-            AddFilter(filters, onFilters, choices, languages)
+            AddFilter(filters, onFilters, choices, languages, hold)
             OrderChoice(order, onOrder)
         }
         if (filters.any) FilterRow(filters, onFilters, choices)
@@ -275,6 +279,7 @@ private fun AddFilter(
     onFilters: (BookFilters) -> Unit,
     choices: FilterChoices,
     languages: List<BookLanguage>,
+    hold: Set<Long>,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var choosing by rememberSaveable { mutableStateOf<Chooser?>(null) }
@@ -323,6 +328,7 @@ private fun AddFilter(
     when (choosing) {
         Chooser.INGREDIENT -> IngredientChooser(
             choices.ingredients,
+            hold,
             onPick = {
                 choosing = null
                 onFilters(filters.copy(ingredient = it))
@@ -404,13 +410,19 @@ private fun FilterChipOn(name: String, tag: String, onRemove: () -> Unit) {
 
 /**
  * The choice of the ingredient to filter by: its field offers the dictionary's entries as the editor's ingredient field
- * does (FLOW-057), and picking one filters by it. Free text is never offered: it names no entry (CAT-006).
+ * does (FLOW-057), and picking one filters by it. Free text is never offered: it names no entry (CAT-006). An entry
+ * removed upstream is offered only while a recipe of the view [hold]s it (FLOW-001 (7)).
  */
 @Composable
-private fun IngredientChooser(dictionary: List<IngredientEntryEntity>?, onPick: (Long) -> Unit, onDismiss: () -> Unit) {
+private fun IngredientChooser(
+    dictionary: List<IngredientEntryEntity>?,
+    hold: Set<Long>,
+    onPick: (Long) -> Unit,
+    onDismiss: () -> Unit,
+) {
     var typed by rememberSaveable { mutableStateOf("") }
     val language = numberLanguage(LocalConfiguration.current)
-    val offered = dictionary?.let { IngredientOffer.of(typed, it, language).entries }.orEmpty()
+    val offered = dictionary?.let { IngredientOffer.of(typed, it, language, stillHeld = hold).entries }.orEmpty()
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(LibraryTags.INGREDIENT_CHOOSER),
@@ -454,7 +466,12 @@ private fun IngredientChooser(dictionary: List<IngredientEntryEntity>?, onPick: 
     )
 }
 
-/** The choice of the tags to filter by: every tag of the dictionary, each chosen or not; a recipe must carry them all. */
+/**
+ * The choice of the tags to filter by; a recipe must carry them all. The dictionary holds hundreds of tags, so they
+ * are searched, never listed: the tags chosen stand first, checked, and typing offers up to [TagOffer.LIMIT] more
+ * whose label has a word beginning with the text, as the editor's tag search does. Picking one checks it and
+ * clears the field.
+ */
 @Composable
 private fun TagChooser(
     dictionary: List<TagEntity>?,
@@ -463,28 +480,52 @@ private fun TagChooser(
     onDismiss: () -> Unit,
 ) {
     val language = numberLanguage(LocalConfiguration.current)
+    var typed by rememberSaveable { mutableStateOf("") }
+    val chosen = dictionary.orEmpty().filter { it.id in filters.tags }.sortedBy { it.label(language).lowercase() }
+    val offered = dictionary?.let { TagOffer.of(typed, it, language, excluded = filters.tags) }.orEmpty()
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(LibraryTags.TAG_CHOOSER),
+        // The dialog sizes itself rather than taking the platform's width, so that a field in it is laid out once.
+        modifier = Modifier.padding(horizontal = 16.dp).testTag(LibraryTags.TAG_CHOOSER),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         title = { Text(stringResource(R.string.library_filter_tags_title)) },
         text = {
-            Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.library_filter_tags_hint), style = MaterialTheme.typography.bodyMedium)
                 if (dictionary != null && dictionary.isEmpty()) {
                     Text(stringResource(R.string.library_filter_tags_none), style = MaterialTheme.typography.bodyMedium)
                 }
-                dictionary.orEmpty().forEach { tag ->
-                    val chosen = tag.id in filters.tags
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .toggleable(value = chosen, role = Role.Checkbox) { onFilters(filters.toggled(tag.id)) }
-                            .testTag(LibraryTags.tagChoice(tag.id)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(checked = chosen, onCheckedChange = null)
-                        Text(tag.label(language), modifier = Modifier.padding(start = 8.dp))
+                OutlinedTextField(
+                    value = typed,
+                    onValueChange = { typed = it },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.library_filter_tags_field)) },
+                    modifier = Modifier.fillMaxWidth().testTag(LibraryTags.TAG_FIELD),
+                )
+                if (offered.isEmpty() && typed.isNotBlank() && dictionary != null) {
+                    Text(
+                        stringResource(R.string.library_filter_tags_no_match),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag(LibraryTags.TAG_NO_MATCH),
+                    )
+                }
+                Column {
+                    (chosen + offered).forEach { tag ->
+                        val on = tag.id in filters.tags
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .toggleable(value = on, role = Role.Checkbox) {
+                                    onFilters(filters.toggled(tag.id))
+                                    if (!on) typed = ""
+                                }
+                                .testTag(LibraryTags.tagChoice(tag.id)),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = on, onCheckedChange = null)
+                            Text(tag.label(language), modifier = Modifier.padding(start = 8.dp))
+                        }
                     }
                 }
             }
@@ -545,7 +586,3 @@ private fun languageLabel(language: BookLanguage): Int = when (language) {
     BookLanguage.EN -> R.string.library_filter_language_en
     BookLanguage.NOT_GIVEN -> R.string.library_filter_language_none
 }
-
-/** The label of this tag in the interface [language]. */
-private fun TagEntity.label(language: InterfaceLanguage): String =
-    if (language == InterfaceLanguage.RUSSIAN) labelRu else labelEn

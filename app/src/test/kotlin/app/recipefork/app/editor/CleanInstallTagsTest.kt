@@ -14,22 +14,27 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.data.Network
 import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySnapshot
+import app.recipefork.app.dictionary.TagEntity
+import app.recipefork.app.dictionary.TagOffer
 import app.recipefork.app.library.LibrarySession
-import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.api.DictionariesDto
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.scaling.InterfaceLanguage
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -86,6 +91,14 @@ class CleanInstallTagsTest {
         compose.onAllNodes(hasAnyAncestor(hasTestTag(EditorTags.OFFERED)) and hasClickAction()).fetchSemanticsNodes()
             .map { node -> node.config[SemanticsProperties.Text].joinToString("") { it.text } }
 
+    /** What the tag search offers for [typed], once the dictionary is read. */
+    private fun offeredFor(typed: String): List<String> {
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.TAG_SEARCH).performScrollTo().performTextReplacement(typed)
+        compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
+        return offeredTags()
+    }
+
     @Test
     fun aCleanInstallationWithNoConnectionOffersTheTagsAsTheyAreWithAConnection() {
         // The connected device has fetched the dictionaries from the server.
@@ -106,8 +119,7 @@ class CleanInstallTagsTest {
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
-        compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
-        val withAConnection = offeredTags()
+        val withAConnection = offeredFor(QUERY)
         val id = requireNotNull(session.editing.value)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.backThroughTheCard()
@@ -121,10 +133,15 @@ class CleanInstallTagsTest {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id)), PATIENCE_MS)
         // The same recipe, opened on it directly in the editor.
         compose.runOnIdle { opened.value = RecipeId(id) }
-        compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
-
-        assertEquals(withAConnection, offeredTags())
-        assertEquals(served.tags.map { it.labelEn }.sorted(), offeredTags())
+        assertEquals(withAConnection, offeredFor(QUERY))
+        // What is offered is the shipped dictionary's, searched as the editor searches it.
+        val shipped = served.tags.map { TagEntity(it.id, it.labelRu, it.labelEn) }
+        assertEquals(TagOffer.of(QUERY, shipped, InterfaceLanguage.ENGLISH).map { it.labelEn }, withAConnection)
         assertEquals(served.version, runBlocking { clean.database.dictionaryDao().version() })
+    }
+
+    private companion object {
+        /** A beginning many shipped tags share. */
+        const val QUERY = "s"
     }
 }

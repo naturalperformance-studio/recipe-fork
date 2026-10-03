@@ -1,0 +1,46 @@
+# Produce: mushrooms, fresh, frozen and dried.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 1000-2999
+
+# Mushrooms, fresh, frozen and dried (1800-1899)
+1800	грибы	mushrooms			g=1 cup=70
+1801	шампиньоны	button mushrooms	1800	true	g=1 pc=20 cup=70
+1802	шампиньоны королевские	cremini mushrooms	1800	true	g=1 pc=25 cup=70
+1803	портобелло	portobello mushroom	1800	true	g=1 pc=100
+1804	вешенки	oyster mushrooms	1800		g=1 cup=85
+1805	королевская вешенка	king oyster mushroom	1800	true	g=1 pc=60
+1806	шиитаке	shiitake	1800	true	g=1 pc=15 cup=70
+1807	белые грибы	porcini	1800		g=1 cup=70
+1808	лисички	chanterelles	1800		g=1 cup=55
+1809	опята	honey mushrooms	1800		g=1 cup=70
+1810	подберёзовики	birch boletes	1800		g=1
+1811	подосиновики	aspen boletes	1800		g=1
+1812	маслята	slippery jacks	1800		g=1
+1813	грузди	milk caps	1800		g=1
+1814	рыжики	saffron milk caps	1800		g=1
+1815	сыроежки	russula	1800		g=1
+1816	сморчки	morels	1800		g=1
+1817	эноки	enoki	1800		g=1
+1818	шимеджи	shimeji	1800		g=1
+1819	майтаке	maitake	1800		g=1
+1820	ежовик	lion's mane mushroom	1800		g=1
+1821	муэр	wood ear mushrooms	1800		g=1
+1822	трюфель	truffle	1800		g=1
+1823	лесные грибы	wild mushrooms	1800		g=1 cup=70
+1830	грибы замороженные	frozen mushrooms	1800		g=1
+1831	шампиньоны замороженные	frozen button mushrooms	1800		g=1
+1832	белые грибы замороженные	frozen porcini	1800		g=1
+1833	лисички замороженные	frozen chanterelles	1800		g=1
+1834	опята замороженные	frozen honey mushrooms	1800		g=1
+1840	грибы сушёные	dried mushrooms	1800		g=1
+1841	белые грибы сушёные	dried porcini	1800		g=1
+1842	шиитаке сушёные	dried shiitake	1800	false	g=1 pc=3
+1843	сморчки сушёные	dried morels	1800		g=1
+1835	вешенки замороженные	frozen oyster mushrooms	1800		g=1
+1836	маслята замороженные	frozen slippery jacks	1800		g=1
+1844	лисички сушёные	dried chanterelles	1800		g=1
+1824	трюфель чёрный	black truffle	1800		g=1
+1825	трюфель белый	white truffle	1800		g=1
+1826	моховики	bay boletes	1800		g=1
+1827	зонтики	parasol mushrooms	1800		g=1
+1828	волнушки	woolly milkcaps	1800		g=1

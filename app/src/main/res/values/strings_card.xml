@@ -59,4 +59,13 @@
     <string name="card_fix_cancel">Cancel</string>
     <string name="card_fix_cancel_action">Close without changing the recipe</string>
     <string name="card_quantity_fixed">fixed</string>
+    <!-- A step's clip (MEDIA-004): named for the screen reader as the author's video, never described (A11Y-001); the
+         control that pauses it and plays it again (A11Y-007). No control offers sound. -->
+    <string name="card_step_video_description">Video of step %1$d</string>
+    <string name="card_video_pause">Pause video</string>
+    <string name="card_video_play">Play video</string>
+    <!-- Media the device does not hold, or cannot show, says so in its place (FLOW-061). -->
+    <string name="card_step_photo_unavailable">The photo of step %1$d is unavailable on this phone.</string>
+    <string name="card_step_video_unavailable">The video of step %1$d is unavailable on this phone.</string>
+    <string name="card_cover_unavailable">The cover photo is unavailable on this phone.</string>
 </resources>

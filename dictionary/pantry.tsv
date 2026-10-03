@@ -1,0 +1,67 @@
+# Pantry: vegetable oils (6700-6799), fats (6800-6899).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Oils are about 0.92 g per ml; spoon and cup factors are grams per level measure, a cup is 250 ml.
+# Cured pork fat (сало, шпик) is the animal family's; butter and ghee too.
+@range 5000-6999
+
+# масло растительное
+6700	масло растительное	vegetable oil			g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6701	масло подсолнечное	sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6702	масло подсолнечное нерафинированное	unrefined sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6703	масло подсолнечное рафинированное	refined sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6704	масло оливковое	olive oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6705	масло оливковое extra virgin	extra virgin olive oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6706	масло оливковое рафинированное	light olive oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6707	масло оливковое pomace	olive pomace oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6708	масло кукурузное	corn oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6709	масло рапсовое	canola oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6710	масло кунжутное	sesame oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6711	масло кунжутное тёмное	toasted sesame oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6712	масло льняное	flaxseed oil	6700		g=1 ml=0.93 tsp=5 tbsp=14 cup=230
+6713	масло кокосовое	coconut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6714	масло кокосовое рафинированное	refined coconut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6715	масло арахисовое	peanut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6716	масло виноградных косточек	grapeseed oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6717	масло авокадо	avocado oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6718	масло горчичное	mustard oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6719	масло тыквенное	pumpkin seed oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6720	масло грецкого ореха	walnut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6721	масло соевое	soybean oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6722	масло рисовое	rice bran oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6723	масло пальмовое	palm oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6724	масло рыжиковое	camelina oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6725	масло кедровое	pine nut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6726	масло миндальное	almond oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6727	масло фундуковое	hazelnut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6728	масло трюфельное	truffle oil	6700		g=1 ml=0.92 tsp=5 tbsp=14
+6729	масло для фритюра	deep-frying oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6730	масло конопляное	hemp seed oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6733	масло макадамии	macadamia oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6734	масло фисташковое	pistachio oil	6700		g=1 ml=0.92 tsp=5 tbsp=14
+6735	масло хлопковое	cottonseed oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6736	масло сафлоровое	safflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6739	масло растительное без запаха	neutral oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6741	масло подсолнечное высокоолеиновое	high-oleic sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6742	масло кокосовое нерафинированное	virgin coconut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+6760	спрей для жарки	cooking spray			g=1
+
+# жиры
+6800	жир	fat			g=1 tsp=4 tbsp=13 cup=205
+6801	смалец	lard	6800		g=1 tsp=4 tbsp=13 cup=205
+6803	жир утиный	duck fat	6800		g=1 tsp=4 tbsp=13 cup=205
+6804	жир гусиный	goose fat	6800		g=1 tsp=4 tbsp=13 cup=205
+6805	жир говяжий	beef tallow	6800		g=1 tsp=4 tbsp=13 cup=205
+6806	жир куриный	chicken fat	6800		g=1 tsp=4 tbsp=13 cup=205
+6807	жир бараний	mutton fat	6800		g=1 tsp=4 tbsp=13 cup=205
+6808	жир кулинарный	vegetable shortening	6800		g=1 tsp=4 tbsp=13 cup=205
+6809	жир кондитерский	confectionery fat	6800		g=1 tsp=4 tbsp=13
+6811	смалец с луком	lard with onions	6800		g=1 tsp=4 tbsp=13
+6812	жир говяжий почечный	beef suet	6800		g=1 tsp=4 tbsp=12
+6820	маргарин	margarine		true	g=1 pc=250 tsp=5 tbsp=14 cup=230
+6821	маргарин сливочный	butter-flavored margarine	6820	true	g=1 pc=250 tsp=5 tbsp=14 cup=230
+6822	маргарин для выпечки	baking margarine	6820	true	g=1 pc=250 tsp=5 tbsp=14 cup=230
+6823	маргарин для слоёного теста	puff pastry margarine	6820	true	g=1 pc=250
+6824	маргарин мягкий	soft margarine	6820		g=1 tsp=5 tbsp=14 cup=230
+6830	спред	spread			g=1 tsp=5 tbsp=14
+6831	спред сливочно-растительный	butter blend spread	6830		g=1 tsp=5 tbsp=14
+6833	масло веганское	vegan butter	6830	true	g=1 pc=200 tsp=5 tbsp=14

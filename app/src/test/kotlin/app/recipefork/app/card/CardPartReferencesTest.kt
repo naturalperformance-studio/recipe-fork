@@ -136,14 +136,14 @@ class CardPartReferencesTest {
     @Test
     fun theReferencesOfACardTellAPartFromTheWhole() {
         val list = ingredientList(listOf(garlic), emptyMap(), InterfaceLanguage.ENGLISH, 4, Rational.of(3))
-        val references = CardReferences.of(listOf(garlic), list, InterfaceLanguage.ENGLISH)
+        val references = CardReferences.of(listOf(garlic), list, InterfaceLanguage.ENGLISH, emptyMap())
         assertEquals("2 pc", references.quantity(half(0)))
         assertEquals(Rounding.UP, references.rounding(half(0)))
         assertEquals("3 pc", references.quantity(IngredientReference(0, 0)))
         assertEquals(Rounding.NONE, references.rounding(IngredientReference(0, 0)))
         // A part of a row the card cannot scale reads as the editor writes it.
         val unfinished = garlic.copy(divisible = null)
-        val unscaled = CardReferences.of(listOf(unfinished), ingredientList(listOf(unfinished), emptyMap(), InterfaceLanguage.ENGLISH, 4, Rational.of(8)), InterfaceLanguage.ENGLISH)
+        val unscaled = CardReferences.of(listOf(unfinished), ingredientList(listOf(unfinished), emptyMap(), InterfaceLanguage.ENGLISH, 4, Rational.of(8)), InterfaceLanguage.ENGLISH, emptyMap())
         assertEquals("2 pc", unscaled.quantity(half(0)))
         assertEquals(Rounding.NONE, unscaled.rounding(half(0)))
     }

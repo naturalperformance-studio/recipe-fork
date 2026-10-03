@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.core.recipe.VideoLimits
 
 /**
  * What the person is told about a file: what became of one they opened for import (FLOW-064), or that an export
@@ -21,7 +22,7 @@ import app.recipefork.app.R
  * as plain data so that it outlives a rotation and the end of the process while it is shown.
  */
 data class FileMessage(val kind: Kind, val title: String = "") {
-    enum class Kind { ADDED, ALREADY_IN_BOOK, CANNOT_OPEN, NOT_A_RECIPE_FILE, LATER_VERSION, DAMAGED, BREAKS_RULES, EXPORT_FAILED }
+    enum class Kind { ADDED, ALREADY_IN_BOOK, CANNOT_OPEN, NOT_A_RECIPE_FILE, LATER_VERSION, DAMAGED, BREAKS_RULES, CLIP_TOO_LONG, EXPORT_FAILED }
 
     /** The message in the language of [resources]; a recipe's title is named, shortened when long. */
     fun text(resources: Resources): String {
@@ -34,6 +35,7 @@ data class FileMessage(val kind: Kind, val title: String = "") {
             Kind.LATER_VERSION -> resources.getString(R.string.file_import_later)
             Kind.DAMAGED -> resources.getString(R.string.file_import_damaged)
             Kind.BREAKS_RULES -> resources.getString(R.string.file_import_breaks_rules)
+            Kind.CLIP_TOO_LONG -> resources.getString(R.string.file_import_clip_too_long, VideoLimits.MAX_DURATION.inWholeSeconds.toInt())
             Kind.EXPORT_FAILED -> resources.getString(R.string.file_export_failed)
         }
     }
@@ -75,6 +77,7 @@ fun ImportOutcome.message(): FileMessage = when (this) {
             Refusal.LATER_VERSION -> FileMessage.Kind.LATER_VERSION
             Refusal.DAMAGED -> FileMessage.Kind.DAMAGED
             Refusal.BREAKS_RULES -> FileMessage.Kind.BREAKS_RULES
+            Refusal.CLIP_TOO_LONG -> FileMessage.Kind.CLIP_TOO_LONG
         },
     )
 }

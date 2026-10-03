@@ -1,7 +1,7 @@
 ---
 slug: SCALE
 status: closed
-updated: 2026-09-27
+updated: 2026-10-03
 ids: []
 ---
 
@@ -60,9 +60,13 @@ Divisibility of a `piece` ingredient comes from its entry in the ingredient
 dictionary (DOM: IngredientEntry — egg, garlic clove, bay leaf and so on are
 indivisible), and the author does not override it: the entry decides for every
 ingredient that names it. An ingredient the author typed as free text has no
-entry (DOM-009), so there its author sets divisibility, which is the one place a
-person supplies the flag. The dictionary holds divisibility only. It holds no
-weights: DOM-003 stands.
+entry (DOM-009), so there its author sets divisibility; so does the author of an
+ingredient whose entry leaves divisibility unset, exactly as for free text. Those
+are the only places a person supplies the flag, and every entry that carries a
+comparison factor for `шт` carries the flag. The dictionary holds divisibility and
+invisible comparison factors, which only order the ingredient filter (DOM-011); no
+weight is ever displayed or used in scaling, and DOM-003 stands. See
+[ADR — an entry may not know its divisibility](../decisions/20261003-an-entry-may-not-know-its-divisibility.md).
 
 A recipe that needs half of something the dictionary calls indivisible has no way
 to say so — the quantity field does not hold it (DOM-017) — and that cost is

@@ -104,6 +104,11 @@ dependencies {
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    // Converts a step's clip on the device (MEDIA-004); the client-stack ADR names Media3 Transformer.
+    implementation(libs.media3.transformer)
+    implementation(libs.media3.common)
+    implementation(libs.media3.effect)
+    implementation(libs.media3.container)
 
     testImplementation(libs.junit4)
     testImplementation(libs.robolectric)
@@ -111,6 +116,8 @@ dependencies {
     testImplementation(libs.ktor.client.mock)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)

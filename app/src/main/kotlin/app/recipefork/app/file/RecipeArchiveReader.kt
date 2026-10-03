@@ -7,6 +7,7 @@ import app.recipefork.core.file.RecipeFileCheck
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.file.UnreadableRecipeFile
 import app.recipefork.core.recipe.MediaKind
+import app.recipefork.core.recipe.VideoLimits
 import java.io.ByteArrayOutputStream
 import java.io.EOFException
 import java.io.File
@@ -35,6 +36,9 @@ enum class Refusal {
 
     /** Its recipe breaks the rules a sending must pass (DOM-012, DOM-016, DOM-017). */
     BREAKS_RULES,
+
+    /** A clip it holds is longer than MEDIA-004 accepts (MEDIA-007); the person is told the limit. */
+    CLIP_TOO_LONG,
 }
 
 class RefusedFile(val refusal: Refusal, message: String, cause: Throwable? = null) : Exception(message, cause)
@@ -48,8 +52,8 @@ class RefusedFile(val refusal: Refusal, message: String, cause: Throwable? = nul
 data class ArchiveLimits(
     val document: Long = MIB,
     val photo: Long = MIB,
-    val video: Long = 6 * MIB,
-    val archive: Long = MIB + MIB + RecipeFileCheck.MAX_STEPS * 6 * MIB,
+    val video: Long = VideoLimits.MAX_BYTES,
+    val archive: Long = MIB + MIB + RecipeFileCheck.MAX_STEPS * VideoLimits.MAX_BYTES,
     val entries: Int = 2 + 1 + RecipeFileCheck.MAX_STEPS,
 ) {
     fun of(kind: MediaKind): Long = when (kind) {
@@ -135,6 +139,16 @@ object RecipeArchiveReader {
         }
         val missing = named.keys - read
         if (missing.isNotEmpty()) throw RefusedFile(Refusal.DAMAGED, "missing $missing")
+    }
+
+    /**
+     * Refuses a clip written to [file] that MEDIA-007 does not accept, its duration read by [duration]: one longer than
+     * [VideoLimits.MAX_DURATION] for its length, and one whose duration cannot be read as damaged.
+     */
+    fun checkClip(file: File, duration: (File) -> kotlin.time.Duration?) {
+        val read = duration(file)
+        val problem = RecipeFileCheck.clipProblem(read) ?: return
+        throw RefusedFile(if (read != null && read > VideoLimits.MAX_DURATION) Refusal.CLIP_TOO_LONG else Refusal.DAMAGED, problem)
     }
 
     /**

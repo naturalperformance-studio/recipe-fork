@@ -45,7 +45,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * FLOW-035, CAT-002, CAT-006, CAT-007: the filters under the search field of each view of the recipe book — by a
+ * FLOW-035, CAT-002, CAT-006, CAT-007, CAT-009: the filters under the search field of each view of the recipe book — by a
  * dictionary ingredient and by tags. The screen is tall enough for every entry of a test to be laid out at once.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -62,15 +62,17 @@ class LibraryFilterTest {
     private val session = LibrarySession(SavedStateHandle())
     private val now = Instant.parse("2026-10-01T12:00:00Z")
 
-    private val chicken = IngredientEntryEntity(1, "курица", "chicken", null)
-    private val wings = IngredientEntryEntity(2, "крылышки", "chicken wings", 1)
-    private val thigh = IngredientEntryEntity(3, "филе бедра", "thigh fillet", 1)
+    private val chicken = IngredientEntryEntity(1, "курица", "chicken", null, factors = mapOf("g" to 1.0, "pc" to 1500.0))
+    private val wings = IngredientEntryEntity(2, "крылышки", "chicken wings", 1, factors = mapOf("g" to 1.0, "pc" to 80.0))
+    private val thigh = IngredientEntryEntity(3, "филе бедра", "thigh fillet", 1, factors = mapOf("g" to 1.0))
     private val broth = IngredientEntryEntity(4, "бульон", "broth", null)
+    /** An entry the product owner removed upstream (FLOW-001 (7), DOM-009 (5)). */
+    private val goose = IngredientEntryEntity(5, "гусь", "goose", null, removed = true)
     private val italian = TagEntity(10, "итальянская", "Italian")
     private val georgian = TagEntity(11, "грузинская", "Georgian")
     private val quick = TagEntity(12, "быстро", "Quick")
 
-    private val card = CardEnvironment(ingredients = IngredientEntries { listOf(chicken, wings, thigh, broth) })
+    private val card = CardEnvironment(ingredients = IngredientEntries { listOf(chicken, wings, thigh, broth, goose) })
     private val editor = EditorEnvironment(
         active,
         object : TagSource {
@@ -108,10 +110,19 @@ class LibraryFilterTest {
         return recipe
     }
 
-    /** A found recipe, marked [minutesAgo] minutes before now. */
-    private fun found(title: String, vararg ingredients: Ingredient, tags: Set<Long> = emptySet(), minutesAgo: Long = 0): Recipe {
+    private fun pieces(position: Int, entry: IngredientEntryEntity, pieces: Long) =
+        Ingredient(position, entry.id, null, null, UnitType.PIECE, QuantityUnit.PIECE, Rational.of(pieces), null, null)
+
+    /** A found recipe for [servings], marked [minutesAgo] minutes before now. */
+    private fun found(
+        title: String,
+        vararg ingredients: Ingredient,
+        servings: Int = 2,
+        tags: Set<Long> = emptySet(),
+        minutesAgo: Long = 0,
+    ): Recipe {
         val recipe = Recipe.create(now, owner = null)
-            .copy(title = title, ingredients = ingredients.toList(), servings = 2, tags = tags)
+            .copy(title = title, ingredients = ingredients.toList(), servings = servings, tags = tags)
             .inState(RecipeImport.FOUND_STATE)
         runBlocking { recipes.addFound(recipe, now.minusSeconds(minutesAgo * 60)) }
         return recipe
@@ -158,11 +169,20 @@ class LibraryFilterTest {
         compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.INGREDIENT_CHOOSER) }
     }
 
-    /** Turns each of [tags] on or off in the tag chooser. */
+    /**
+     * Turns each of [tags] on or off in the tag chooser: a chosen tag stands there checked; another is found by
+     * typing its label.
+     */
     private fun toggleTags(vararg tags: TagEntity) {
         click(LibraryTags.FILTER_ADD)
         click(LibraryTags.FILTER_BY_TAGS)
-        tags.forEach { click(LibraryTags.tagChoice(it.id)) }
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_FIELD), PATIENCE_MS)
+        tags.forEach {
+            if (!exists(LibraryTags.tagChoice(it.id))) {
+                compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement(it.labelEn)
+            }
+            click(LibraryTags.tagChoice(it.id))
+        }
         click(LibraryTags.TAG_CHOOSER_DONE)
         compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.TAG_CHOOSER) }
     }
@@ -220,6 +240,29 @@ class LibraryFilterTest {
         click(LibraryTags.FILTERS_CLEAR)
         assertListed("Aa 125 g a serving", "Bb 150 g a serving", "Cc 200 g a serving", "Dd to taste", "Ee no servings", "Ff no chicken")
         assertEquals(BookOrder.TITLE, session.order(LibraryView.OWN).value)
+    }
+
+    // CAT-009, FLOW-035 (2): in both views, for 4 servings, 1 piece of chicken (375) before 8 wings (160) before 500 g of
+    // chicken (125); a recipe holding chicken only to taste, or only in a unit with no factor, comes last.
+    @Test
+    fun bothViewsOrderByComparableQuantity() {
+        own("A wings", pieces(0, wings, 8), minutesAgo = 1)
+        own("B grams", grams(0, chicken, 500), minutesAgo = 2)
+        own("C carcass", pieces(0, chicken, 1), minutesAgo = 3)
+        own("D to taste", grams(0, chicken, null), minutesAgo = 4)
+        own("E thigh pieces", pieces(0, thigh, 3), minutesAgo = 5)
+        found("Fa wings", pieces(0, wings, 8), servings = 4, minutesAgo = 1)
+        found("Fb to taste", grams(0, chicken, null), servings = 4, minutesAgo = 2)
+        found("Fc grams", grams(0, chicken, 500), servings = 4, minutesAgo = 3)
+        found("Fd carcass", pieces(0, chicken, 1), servings = 4, minutesAgo = 4)
+        show(LibraryView.OWN)
+        filterByIngredient("курица", chicken)
+        assertListed("C carcass", "A wings", "B grams", "D to taste", "E thigh pieces")
+        orderBy(BookOrder.OLDEST)
+        assertListed("C carcass", "A wings", "B grams", "E thigh pieces", "D to taste")
+        choose(LibraryView.MARKED)
+        filterByIngredient("курица", chicken)
+        assertListed("Fd carcass", "Fa wings", "Fc grams", "Fb to taste")
     }
 
     // A filter by one or more tags keeps the recipes carrying all of them.
@@ -316,5 +359,46 @@ class LibraryFilterTest {
         assertListed("Чахохбили", "Пицца")
         assertEquals(BookFilters(tags = setOf(georgian.id)), session.filters(LibraryView.OWN).value)
         assertEquals(BookFilters(ingredient = chicken.id), session.filters(LibraryView.MARKED).value)
+    }
+
+    /** Opens the ingredient chooser and types [typed] into its field. */
+    private fun openChooser(typed: String) {
+        click(LibraryTags.FILTER_ADD)
+        click(LibraryTags.FILTER_BY_INGREDIENT)
+        retype(typed)
+    }
+
+    private fun retype(typed: String) {
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.INGREDIENT_FIELD), PATIENCE_MS)
+        compose.onNodeWithTag(LibraryTags.INGREDIENT_FIELD).performTextReplacement(typed)
+        compose.waitForIdle()
+    }
+
+    // FLOW-001 (7), DOM-009 (5): an entry removed upstream is offered by the filter only while a recipe in the view holds
+    // it, and a recipe holding it is still found by its name.
+    @Test
+    fun aRemovedEntryIsOfferedOnlyWhileARecipeInTheViewHoldsIt() {
+        own("Гусь с яблоками", grams(0, goose, 900), minutesAgo = 1)
+        own("Курица целиком", grams(0, chicken, 200), minutesAgo = 2)
+        found("Щи", grams(0, broth, 300), minutesAgo = 1)
+        show(LibraryView.OWN)
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("goose")
+        assertListed("Гусь с яблоками")
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("")
+        openChooser("гус")
+        click(LibraryTags.ingredientChoice(goose.id))
+        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.INGREDIENT_CHOOSER) }
+        assertChip(LibraryTags.INGREDIENT_FILTER, "goose")
+        assertListed("Гусь с яблоками")
+        // No recipe of the found view holds it: there it is not offered, though the dictionary is read.
+        choose(LibraryView.MARKED)
+        assertListed("Щи")
+        openChooser("бул")
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.ingredientChoice(broth.id)), PATIENCE_MS)
+        retype("гус")
+        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.ingredientChoice(broth.id)) }
+        assertEquals(false, exists(LibraryTags.ingredientChoice(goose.id)))
+        retype("goose")
+        assertEquals(false, exists(LibraryTags.ingredientChoice(goose.id)))
     }
 }

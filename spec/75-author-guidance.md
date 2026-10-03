@@ -1,7 +1,7 @@
 ---
 slug: GUIDE
 status: closed
-updated: 2026-09-27
+updated: 2026-10-03
 ids: [GUIDE-001, GUIDE-002, GUIDE-003, GUIDE-004, GUIDE-005, GUIDE-006,
   GUIDE-007, GUIDE-008]
 ---
@@ -158,7 +158,8 @@ The seven items:
    (FLOW-031, FLOW-032).
 5. **An ingredient is picked from the suggestions wherever one fits.** What is
    typed as free text is never found by an ingredient filter, and after
-   publication that cannot be changed (FLOW-022, CAT-006).
+   publication that cannot be changed (FLOW-022, CAT-006). In serverless mode the
+   item says only the first half, because nothing is published (FLOW-062).
 6. **The method goes in the steps, not in the description.** When somebody else
    forks the recipe they carry the ingredients and the steps away and leave the
    description behind, so a method written in the description is a method nobody
@@ -176,13 +177,16 @@ The seven items:
   accepted, provided DOM-006, DOM-012 and FLOW-006 are satisfied.
 - Given item 1, when it is read, then the 60 characters it names are the same 60
   characters FLOW-016 cuts at, and the two are never allowed to disagree.
+- Given serverless mode, when item 5 is read, then it states that free text is
+  never found by an ingredient filter and says nothing about publication.
 
 **Verification:** read the checklist against NGOAL-007 item by item; submit a
 recipe that follows none of the advice and confirm it is accepted.
 **Source:** user decision, 2026-09-20. Items 1, 2 and 3 are the product owner's
 own; items 4, 5, 6 and 7 were proposed by the spec author and adopted. Each one
 is a consequence of a decision recorded elsewhere, so the checklist states no
-rule that is not already true of the product.
+rule that is not already true of the product. Amended 2026-10-03 (sync
+v0.3–v0.14): in serverless mode item 5 does not speak of publication — req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 **Note:** item 3 says "the best quality the camera gives" rather than naming a
 resolution, because what survives upload is decided by the client-side
 re-encoding, not by the author. Re-read against OQ-003 when it closed on

@@ -11,7 +11,6 @@ import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.QuantityText
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.Rounding
-import app.recipefork.core.scaling.RoundingGrid
 import app.recipefork.core.scaling.ScaleFactor
 import app.recipefork.core.scaling.ScaledRecipe
 import app.recipefork.core.scaling.ServingCount
@@ -97,7 +96,7 @@ fun ingredientLine(
     language: InterfaceLanguage,
     factor: ScaleFactor = ScaleFactor.ONE,
 ): IngredientLine {
-    val scalable = scalableQuantity(ingredient)
+    val scalable = scalableQuantity(ingredient, entries)
     return lineOf(ingredient, entries, language, scalable?.let { Scaling.display(it, factor) })
 }
 
@@ -143,7 +142,7 @@ fun ingredientList(
     authoredServings: Int?,
     scale: CardScale,
 ): IngredientList {
-    val scalable = ingredients.map(::scalableQuantity)
+    val scalable = ingredients.map { scalableQuantity(it, entries) }
     val counted = authoredServings?.takeIf { it >= 1 }
     // A recipe without a count is scaled as one serving; only a fixing can move it, and no count is shown.
     val authored = counted ?: 1
@@ -176,21 +175,12 @@ fun ingredientList(
 }
 
 /**
- * What scaling reads of [ingredient], or null where the row is incomplete or off its grid and so is shown
- * unscaled: a unit that carries a quantity with none, or none above zero; a `piece` without its divisibility; a
- * value that is not on its unit's grid; anything [AuthoredQuantity] refuses. The one place the card decides it.
+ * What scaling reads of [ingredient], or null where the row is incomplete or off its grid and so is shown unscaled
+ * (`Scaling.authored`). A `piece` row is read with its effective divisibility: the flag of the dictionary entry it
+ * names among [entries] where the entry sets one, the row's own otherwise. The one place the card decides it.
  */
-internal fun scalableQuantity(ingredient: Ingredient): AuthoredQuantity? {
-    val unit = unitOf(ingredient) ?: return null
-    val quantity = if (unit.type.carriesQuantity) ingredient.quantity ?: return null else null
-    if (quantity != null) {
-        if (quantity.signum() <= 0) return null
-        val grid = runCatching { RoundingGrid.of(unit, ingredient.divisible) }.getOrNull() ?: return null
-        // Only a value on its grid is the author's number; anything else is not scaled from.
-        if (!grid.holds(unit.baseMultiple?.let { quantity * Rational.of(it) } ?: quantity)) return null
-    }
-    return runCatching { AuthoredQuantity(unit, quantity, ingredient.divisible) }.getOrNull()
-}
+internal fun scalableQuantity(ingredient: Ingredient, entries: Map<Long, IngredientEntryEntity>): AuthoredQuantity? =
+    Scaling.authored(ingredient, ingredient.dictionaryEntry?.let(entries::get)?.divisible)
 
 private fun unitOf(ingredient: Ingredient): QuantityUnit? =
     ingredient.unit ?: if (ingredient.unitType == UnitType.TASTE_UNMEASURED) QuantityUnit.TO_TASTE else null

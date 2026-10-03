@@ -237,7 +237,7 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
     @Config(qualifiers = "en-w360dp-h4000dp")
     fun eachIconIsNamedByItsStepAndShowsATooltip() {
         open(1f)
-        assertEquals(listOf("Insert an ingredient into step 2", "Timer for step 2", "Photo for step 2", "Remove step 2", "Step 2 actions"), labels(1))
+        assertEquals(listOf("Insert an ingredient into step 2", "Timer for step 2", "Photo or clip for step 2", "Remove step 2", "Step 2 actions"), labels(1))
         actions(1).forEach { tag ->
             compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick() }
             compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(tag)) }
@@ -252,7 +252,7 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun eachIconIsNamedByItsStepInRussian() {
         open(1f)
-        assertEquals(listOf("Вставить ингредиент в шаг 2", "Таймер для шага 2", "Фото для шага 2", "Убрать шаг 2", "Действия с шагом 2"), labels(1))
+        assertEquals(listOf("Вставить ингредиент в шаг 2", "Таймер для шага 2", "Фото или видео для шага 2", "Убрать шаг 2", "Действия с шагом 2"), labels(1))
     }
 
     // The timer's form and the photograph show under the row only when the step has them; the timer icon opens the

@@ -1,6 +1,7 @@
 package app.recipefork.app.dictionary
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -104,5 +105,75 @@ class DictionarySeedingTest {
         val read = DictionarySnapshot.read(context)
         assertTrue(read.tags.isNotEmpty())
         assertTrue(read.version.isNotBlank())
+    }
+
+    // DOM-011, CAT-009: the divisibility, the factors and the removal of an entry reach the device as the server gives them.
+    @Test
+    fun anEntryKeepsItsDivisibilityFactorsAndRemovalOnTheDevice() = runBlocking {
+        val chicken = IngredientEntryDto(1, "курица", "chicken", divisible = true, factors = mapOf("g" to 1.0, "pc" to 1500.0))
+        val wings = IngredientEntryDto(2, "крылышки", "chicken wings", 1, divisible = false, factors = mapOf("g" to 1.0, "pc" to 80.0))
+        val goose = IngredientEntryDto(3, "гусь", "goose", removed = true)
+        shipped = DictionariesDto("s1", listOf(chicken, wings, goose), emptyList())
+        assertTrue(seeding.seedIfNeeded())
+        assertEquals(listOf(chicken, wings, goose), dao.ingredients().map { it.toDto() })
+        assertEquals(
+            IngredientEntryEntity(2, "крылышки", "chicken wings", 1, false, mapOf("g" to 1.0, "pc" to 80.0), false),
+            dao.ingredients()[1],
+        )
+    }
+
+    // FLOW-001 (7), DOM-009 (5): replacing the held copy keeps a removed entry, so every recipe naming it keeps its name —
+    // whether the new copy carries it marked removed or no longer carries it at all.
+    @Test
+    fun replacingTheDictionaryKeepsRemovedEntries() = runBlocking {
+        seeding.seedIfNeeded()
+        val marked = DictionariesDto(
+            "server-1",
+            listOf(IngredientEntryDto(1, "курица", "chicken", removed = true), IngredientEntryDto(2, "крылышки", "chicken wings", 1)),
+            emptyList(),
+        )
+        refreshFromServer(marked)
+        assertEquals(listOf(1L to true, 2L to false), dao.ingredients().map { it.id to it.removed })
+
+        refreshFromServer(DictionariesDto("server-2", listOf(IngredientEntryDto(1, "курица", "chicken", removed = true)), emptyList()))
+        assertEquals(
+            listOf(IngredientEntryEntity(1, "курица", "chicken", null, removed = true), IngredientEntryEntity(2, "крылышки", "chicken wings", 1, removed = true)),
+            dao.ingredients(),
+        )
+        // An entry back upstream is offered again.
+        refreshFromServer(DictionariesDto("server-3", listOf(IngredientEntryDto(2, "крылышки", "chicken wings", 1)), emptyList()))
+        assertEquals(listOf(1L to true, 2L to false), dao.ingredients().map { it.id to it.removed })
+    }
+
+    // AppDatabase version 2: a device holding the version-1 store has it wiped, not migrated, and the dictionaries are
+    // seeded again on their next read — even though the snapshot it was seeded from has not changed.
+    @Test
+    fun aVersionOneStoreIsWipedAndTheDictionariesAreSeededAgain() = runBlocking {
+        val name = "app-database-v1-test.db"
+        val file = context.getDatabasePath(name)
+        file.parentFile?.mkdirs()
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { v1 ->
+            v1.execSQL("create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, parentId integer)")
+            v1.execSQL("create table tag (id integer not null primary key, labelRu text not null, labelEn text not null)")
+            v1.execSQL("create table dictionary_version (id integer not null primary key, version text not null)")
+            v1.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null)")
+            v1.execSQL("insert into dictionary_version values (0, 's1')")
+            v1.version = 1
+        }
+        seeded.version = "s1"
+        shipped = DictionariesDto("s1", listOf(IngredientEntryDto(1, "курица", "chicken", divisible = true, factors = mapOf("pc" to 1500.0))), emptyList())
+
+        val opened = AppDatabase.open(context, name)
+        try {
+            val dao = opened.dictionaryDao()
+            assertNull(dao.version())
+            val catalog = DictionaryCatalog(dao, DictionarySeeding(dao, seeded) { shipped })
+            assertEquals(listOf(IngredientEntryEntity(1, "курица", "chicken", null, true, mapOf("pc" to 1500.0))), catalog.ingredients())
+            assertEquals("s1", dao.version())
+            assertEquals(AppDatabase.VERSION, opened.openHelper.readableDatabase.version)
+        } finally {
+            opened.close()
+            context.deleteDatabase(name)
+        }
     }
 }

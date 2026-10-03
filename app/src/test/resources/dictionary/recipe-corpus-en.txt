@@ -1,0 +1,457 @@
+# Ingredient lines of common home recipes in English, as a cook writes them in a recipe list (T-124).
+# Written for the corpus test before the dictionary sources were read.
+# "@ <recipe>" opens a recipe; every other line is "<ingredient line> | <intended meaning, loosely>".
+# A line may hold several names separated by commas ("salt, pepper to taste"); the test splits them.
+
+@ Buttermilk pancakes
+all-purpose flour | wheat flour
+granulated sugar | sugar
+baking powder | baking powder
+baking soda | baking soda
+kosher salt | salt
+buttermilk | buttermilk
+large eggs | eggs
+unsalted butter, melted | butter
+maple syrup | maple syrup
+
+@ Classic chili con carne
+ground beef | ground beef
+yellow onion | onion
+garlic cloves | garlic
+chili powder | chili powder
+ground cumin | cumin
+kidney beans | kidney beans
+diced tomatoes | canned tomatoes
+tomato paste | tomato paste
+jalapeño | jalapeno
+cheddar cheese | cheddar
+sour cream | sour cream
+
+@ Mac and cheese
+elbow macaroni | macaroni
+sharp cheddar | cheddar
+whole milk | milk
+butter | butter
+flour | flour
+dry mustard | mustard powder
+breadcrumbs | breadcrumbs
+
+@ Fudgy brownies
+semisweet chocolate | chocolate
+unsalted butter | butter
+brown sugar | brown sugar
+eggs | eggs
+cocoa powder | cocoa
+vanilla extract | vanilla extract
+walnuts | walnuts
+
+@ Banana bread
+ripe bananas | bananas
+all-purpose flour | flour
+baking soda | baking soda
+sugar | sugar
+butter | butter
+eggs | eggs
+cinnamon | cinnamon
+
+@ Chocolate chip cookies
+unsalted butter | butter
+light brown sugar | brown sugar
+white sugar | sugar
+eggs | eggs
+vanilla | vanilla
+flour | flour
+baking soda | baking soda
+chocolate chips | chocolate chips
+sea salt | salt
+
+@ Caesar salad
+romaine lettuce | romaine
+parmesan cheese | parmesan
+anchovy fillets | anchovies
+garlic | garlic
+dijon mustard | mustard
+lemon juice | lemon juice
+extra virgin olive oil | olive oil
+croutons | croutons
+
+@ Meatloaf
+ground beef | ground beef
+breadcrumbs | breadcrumbs
+milk | milk
+ketchup | ketchup
+worcestershire sauce | worcestershire
+
+@ Beef stew
+beef chuck | beef chuck
+carrots | carrots
+celery | celery
+potatoes | potatoes
+beef broth | beef broth
+red wine | red wine
+thyme | thyme
+bay leaves | bay leaves
+
+@ Chicken noodle soup
+chicken breasts | chicken breast
+egg noodles | egg noodles
+chicken stock | chicken broth
+carrots | carrot
+celery stalks | celery
+fresh parsley | parsley
+
+@ Apple pie
+apples | apples
+granny smith apples | apples
+pie crust | pie crust
+cinnamon | cinnamon
+nutmeg | nutmeg
+lemon juice | lemon juice
+cornstarch | cornstarch
+
+@ Pumpkin pie
+pumpkin puree | pumpkin
+evaporated milk | evaporated milk
+ground ginger | ginger
+ground cloves | cloves
+
+@ Spaghetti and meatballs
+spaghetti | spaghetti
+ground pork | ground pork
+marinara sauce | marinara
+grated parmesan | parmesan
+fresh basil | basil
+
+@ Guacamole
+avocados | avocado
+lime juice | lime juice
+red onion | red onion
+cilantro | cilantro
+jalapeño pepper | jalapeno
+roma tomatoes | tomato
+
+@ Tacos
+corn tortillas | tortillas
+ground beef | beef
+taco seasoning | taco seasoning
+shredded lettuce | lettuce
+salsa | salsa
+monterey jack | monterey jack
+
+@ Fried chicken
+chicken thighs | chicken thigh
+chicken drumsticks | drumsticks
+buttermilk | buttermilk
+paprika | paprika
+garlic powder | garlic powder
+onion powder | onion powder
+cayenne pepper | cayenne
+peanut oil | peanut oil
+
+@ Coleslaw
+green cabbage | cabbage
+carrot | carrot
+mayonnaise | mayonnaise
+apple cider vinegar | cider vinegar
+celery seed | celery seed
+
+@ Potato salad
+russet potatoes | potatoes
+hard-boiled eggs | eggs
+celery | celery
+yellow mustard | mustard
+dill pickles | pickles
+mayo | mayonnaise
+
+@ Cornbread
+cornmeal | cornmeal
+flour | flour
+buttermilk | buttermilk
+honey | honey
+
+@ Biscuits and gravy
+self-rising flour | self-rising flour
+cold butter | butter
+breakfast sausage | sausage
+whole milk | milk
+black pepper | black pepper
+
+@ Clam chowder
+clams | clams
+bacon | bacon
+potatoes | potatoes
+heavy cream | heavy cream
+onion | onion
+
+@ Grilled cheese
+white bread | bread
+american cheese | american cheese
+butter | butter
+
+@ BLT sandwich
+bacon | bacon
+lettuce | lettuce
+tomato | tomato
+sourdough bread | sourdough
+
+@ Pot roast
+chuck roast | beef chuck
+onions | onions
+carrots | carrots
+beef stock | beef broth
+rosemary | rosemary
+
+@ Shrimp scampi
+shrimp | shrimp
+linguine | linguine
+white wine | white wine
+red pepper flakes | red pepper flakes
+lemon | lemon
+
+@ Chicken parmesan
+chicken cutlets | chicken breast
+panko | panko
+mozzarella | mozzarella
+tomato sauce | tomato sauce
+
+@ Lasagna
+lasagna noodles | lasagna
+ricotta cheese | ricotta
+mozzarella cheese | mozzarella
+italian sausage | italian sausage
+egg | egg
+
+@ Fettuccine Alfredo
+fettuccine | fettuccine
+heavy whipping cream | heavy cream
+parmigiano reggiano | parmesan
+nutmeg | nutmeg
+
+@ Stir-fry beef and broccoli
+flank steak | flank steak
+broccoli florets | broccoli
+soy sauce | soy sauce
+oyster sauce | oyster sauce
+fresh ginger | ginger
+sesame oil | sesame oil
+green onions | scallions
+cornstarch | cornstarch
+
+@ Chicken fried rice
+cooked rice | rice
+frozen peas and carrots | peas, carrots
+eggs | eggs
+scallions | scallions
+soy sauce | soy sauce
+
+@ Teriyaki salmon
+salmon fillets | salmon
+honey | honey
+rice vinegar | rice vinegar
+sesame seeds | sesame seeds
+
+@ Pad thai
+rice noodles | rice noodles
+fish sauce | fish sauce
+tamarind paste | tamarind
+bean sprouts | bean sprouts
+roasted peanuts | peanuts
+
+@ Chicken curry
+boneless chicken thighs | chicken thigh
+coconut milk | coconut milk
+curry powder | curry powder
+garam masala | garam masala
+basmati rice | basmati rice
+
+@ Hummus
+canned chickpeas | chickpeas
+tahini | tahini
+lemon | lemon
+garlic | garlic
+
+@ Greek salad
+cucumber | cucumber
+cherry tomatoes | cherry tomatoes
+kalamata olives | olives
+feta cheese | feta
+red wine vinegar | red wine vinegar
+dried oregano | oregano
+
+@ French toast
+brioche | brioche
+eggs | eggs
+milk | milk
+cinnamon | cinnamon
+powdered sugar | powdered sugar
+
+@ Blueberry muffins
+blueberries | blueberries
+flour | flour
+sugar | sugar
+vegetable oil | vegetable oil
+plain yogurt | yogurt
+
+@ Cinnamon rolls
+active dry yeast | yeast
+bread flour | bread flour
+ground cinnamon | cinnamon
+cream cheese | cream cheese
+confectioners' sugar | powdered sugar
+
+@ Carrot cake
+carrots | carrots
+pecans | pecans
+crushed pineapple | pineapple
+cream cheese | cream cheese
+
+@ Cheesecake
+graham crackers | graham crackers
+cream cheese | cream cheese
+sugar | sugar
+sour cream | sour cream
+lemon zest | lemon zest
+
+@ Lemon bars
+lemons | lemons
+eggs | eggs
+powdered sugar | powdered sugar
+
+@ Pecan pie
+pecans | pecans
+corn syrup | corn syrup
+dark brown sugar | brown sugar
+eggs | eggs
+
+@ Sugar cookies
+butter | butter
+sugar | sugar
+egg | egg
+almond extract | almond extract
+sprinkles | sprinkles
+
+@ Peanut butter cookies
+peanut butter | peanut butter
+sugar | sugar
+egg | egg
+
+@ Oatmeal raisin cookies
+old-fashioned oats | rolled oats
+raisins | raisins
+brown sugar | brown sugar
+
+@ Waffles
+flour | flour
+milk | milk
+eggs | eggs
+melted butter | butter
+
+@ Scrambled eggs
+eggs | eggs
+heavy cream | cream
+chives | chives
+
+@ Omelette
+eggs | eggs
+bell pepper | bell pepper
+ham | ham
+swiss cheese | swiss cheese
+mushrooms | mushrooms
+
+@ Roast turkey
+whole turkey | turkey
+sage | sage
+butter | butter
+chicken broth | chicken broth
+
+@ Mashed potatoes
+yukon gold potatoes | potatoes
+butter | butter
+half-and-half | half-and-half
+salt and pepper | salt, pepper
+
+@ Green bean casserole
+green beans | green beans
+cream of mushroom soup | cream of mushroom soup
+fried onions | fried onions
+
+@ Sloppy joes
+ground beef | ground beef
+hamburger buns | buns
+ketchup | ketchup
+brown sugar | brown sugar
+
+@ Burgers
+ground chuck | ground beef
+burger buns | buns
+cheddar slices | cheddar
+pickles | pickles
+red onion | onion
+
+@ Baked salmon
+salmon | salmon
+lemon | lemon
+dill | dill
+garlic | garlic
+
+@ Ratatouille
+eggplant | eggplant
+zucchini | zucchini
+yellow squash | squash
+red bell pepper | bell pepper
+herbes de provence | herbes de provence
+
+@ Tomato soup
+canned whole tomatoes | canned tomatoes
+onion | onion
+heavy cream | cream
+basil | basil
+
+@ French onion soup
+yellow onions | onions
+beef broth | beef broth
+gruyère | gruyere
+baguette | baguette
+dry sherry | sherry
+
+@ Quiche Lorraine
+pie dough | pie crust
+bacon | bacon
+eggs | eggs
+crème fraîche | creme fraiche
+gruyere | gruyere
+
+@ Tiramisu
+mascarpone | mascarpone
+ladyfingers | ladyfingers
+espresso | espresso
+cocoa powder | cocoa
+marsala wine | marsala
+
+@ Paella
+bomba rice | rice
+chorizo | chorizo
+saffron threads | saffron
+shrimp | shrimp
+mussels | mussels
+smoked paprika | smoked paprika
+
+@ Chicken enchiladas
+flour tortillas | tortillas
+shredded chicken | chicken
+enchilada sauce | enchilada sauce
+monterey jack cheese | monterey jack
+jalapeno | jalapeno
+
+@ Lemon cake
+lemon | lemon
+eggs | eggs
+sugar | sugar
+neutral oil | vegetable oil
+matsoni | matsoni
+flour | flour
+baking powder | baking powder
+baking soda | baking soda
+salt | salt
+powdered sugar | powdered sugar
+lemon juice | lemon juice

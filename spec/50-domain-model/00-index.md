@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-29
+updated: 2026-10-03
 ids: []
 ---
 
@@ -35,8 +35,9 @@ already kept in. What is displayed is governed by the rounding grid in section
 `scaling-rules`, not by the unit the author chose.
 
 `household` quantities are never converted to mass: a tablespoon of flour and a
-tablespoon of honey do not weigh the same, and the product holds no ingredient
-weight table. `piece` quantities may be held internally in grams so that scaling
+tablespoon of honey do not weigh the same, and the product displays no ingredient
+weight and scales with none. The dictionary's comparison factors are invisible and
+only order the ingredient filter (DOM-011). `piece` quantities may be held internally in grams so that scaling
 stays smooth, while being displayed in pieces.
 
 ## Entities
@@ -70,7 +71,7 @@ the content of every account signed in on it, each apart from the others
 | `parent` | Recipe identity or none | The direct parent this recipe was forked from, held by its identity, which need not be held on the device or on the server (FLOW-007, FLOW-065). Fixed at creation. Only the direct parent is held; no chain root, no descendant list (GOAL-003). |
 | `sent` | never, sent, or sent with changes not sent | What FLOW-005 marks. Held on the device; the server holds only what was sent (FLOW-059). |
 | `stated_author` | nickname as text, or none | Only on a recipe imported from a file: the author's nickname the file states, shown as not verified (FLOW-064). |
-| `stated_parent` | title and nickname as text, or none | Only on a recipe imported from a file: the title and author's nickname its file states for its parent (FLOW-065). |
+| `stated_parent` | title and nickname as text, or none | On a recipe imported from a file, the title and author's nickname its file states for its parent (FLOW-065); on a fork of such a found recipe, the found parent's title and the author's nickname stated in its file, so the fork can still name its parent once the found recipe is gone (FLOW-065). None elsewhere. |
 | `title` | text | |
 | `description` | text | |
 | `tags` | set of Tag | Chosen from the fixed dictionary. |
@@ -109,11 +110,17 @@ presentation choice and is not specified here.
 | `entry_id` | identifier | |
 | `label` | text | Localised; see `localization`. |
 | `parent` | IngredientEntry or none | The broader entry this one belongs to, e.g. `крылышки` under `курица`. An entry that is itself a parent has none: the dictionary is two levels deep at most (DOM-010). |
-| `divisible` | boolean | `piece` divisibility for every ingredient of this entry. The author does not override it (`scaling-rules`). |
+| `divisible` | boolean or unset | `piece` divisibility for every ingredient of this entry. The author does not override it (`scaling-rules`). Unset where the product owner has not decided it; then the author answers for that ingredient exactly as for free text (FLOW-001). Every entry carrying a factor for `шт` carries it set. |
 | `comparison_factors` | unit → positive number | What one of that unit counts for on this entry's own comparison scale. Absent for a unit the product owner has not filled in. Used for ordering only, never displayed, never scaled with (DOM-011). |
+| `removed` | boolean | Set when the product owner withdraws the entry. A removed entry is never deleted: it stays resolvable in every recipe that names it (DOM-009) and is not offered for new use. |
 
 The ingredient dictionary is maintained by the product owner, exactly as the tag
-dictionary is. A user cannot create an entry. It replaces the separate dictionary
+dictionary is. A user cannot create an entry. An entry's `entry_id` is permanent:
+it is never renumbered and never given to another entry, and an entry is withdrawn
+by marking it `removed`, never by deleting it. What the dictionary holds beyond
+labels and the hierarchy is divisibility and the invisible comparison factors;
+no weight is ever displayed or used in scaling. See
+[ADR — an entry may not know its divisibility](../decisions/20261003-an-entry-may-not-know-its-divisibility.md). It replaces the separate dictionary
 of indivisible ingredients the earlier draft of `scaling-rules` described: that
 dictionary held divisibility keyed by an ingredient name, and this one holds the
 same flag on the entry the name now refers to.
@@ -137,8 +144,8 @@ DOM-011 is what keeps it from ever becoming anything else.
 | Field | Type | Notes |
 |---|---|---|
 | `position` | integer | Order within the recipe. |
-| `text` | text | May contain ingredient references. It is also what names the step's timer (FLOW-016). |
-| `ingredient_references` | list | Each points at an Ingredient of the same recipe and at a position in `text`. |
+| `text` | text or none | May contain ingredient references. It is also what names the step's timer (FLOW-016). A step holds text, media, or both (DOM-006). |
+| `ingredient_references` | list | Each points at an Ingredient of the same recipe and at a position in `text`, and holds either the whole ingredient or a part of it: a quantity in the ingredient's own unit, on that unit type's grid, above zero (FLOW-031, DOM-007). |
 | `timer` | Timer or none | At most one (DOM-013). |
 
 A step has no title. What identifies it to a reader is its own text, and that is
@@ -176,7 +183,7 @@ media per account are in [`media`](../90-media.md), MEDIA-001 to MEDIA-010.
 | Field | Type | Notes |
 |---|---|---|
 | `tag_id` | identifier | |
-| `facet` | `cuisine` or `dish_type` | |
+| `facet` | family | The family the tag belongs to — such as cuisine, meal, diet, method or appliance, occasion (DOM-020). Which families exist is the product owner's. |
 | `label` | text | Localised; see `localization`. |
 
 Tags come from a fixed dictionary maintained by the product owner. A user cannot
@@ -223,4 +230,4 @@ split and never will.
 | Part | What is in it | Requirements |
 |---|---|---|
 | [10-invariants.md](10-invariants.md) | Invariants over the entities: nickname, quantity, household measure, parent, media ownership, the submission minimum, step references, tags, the authored serving count; and what is deliberately not modelled yet | DOM-001–DOM-008, DOM-015 |
-| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, the twelve units, the values a quantity may hold, and how a typed number is read | DOM-009–DOM-014, DOM-016–DOM-019 |
+| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, the twelve units, the values a quantity may hold, how a typed number is read, and what the dictionaries hold | DOM-009–DOM-014, DOM-016–DOM-020 |

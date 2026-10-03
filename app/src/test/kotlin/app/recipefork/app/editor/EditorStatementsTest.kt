@@ -86,7 +86,7 @@ class EditorStatementsTest {
         compose.waitForIdle()
     }
 
-    private fun text(notice: PhotoNotice) = context.getString(notice.text)
+    private fun text(notice: PhotoNotice) = notice.said(context.resources)
 
     private fun tell(notice: PhotoNotice) = compose.runOnIdle { attaching.tell(notice) }
 

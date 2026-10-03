@@ -111,6 +111,8 @@ class ListPlaceTest {
         compose.onNodeWithTag(LibraryTags.FILTER_ADD).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.FILTER_BY_TAGS), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.FILTER_BY_TAGS).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_FIELD), PATIENCE_MS)
+        compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement("ital")
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.tagChoice(italian.id)), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.tagChoice(italian.id)).performClick()
         compose.onNodeWithTag(LibraryTags.TAG_CHOOSER_DONE).performClick()
