@@ -24,9 +24,10 @@ object ReferenceSpacing {
     /**
      * A reference to the ingredient at [ingredientPosition] put at [offset] of [step]'s text, a space typed on each side
      * where it stands against a word. Where another reference already sits at [offset], [afterExisting] says on which
-     * side of it the new one goes; that side is against a word, so the two always end up at two offsets.
+     * side of it the new one goes; that side is against a word, so the two always end up at two offsets. A [share]
+     * makes it a reference to that part of the ingredient; none, to its whole.
      */
-    fun insert(step: Step, ingredientPosition: Int, offset: Int, afterExisting: Boolean): Insertion {
+    fun insert(step: Step, ingredientPosition: Int, offset: Int, afterExisting: Boolean, share: IngredientShare? = null): Insertion {
         val text = step.text
         val at = offset.coerceIn(0, text.length)
         val there = step.ingredientReferences.any { it.textOffset == at }
@@ -34,7 +35,7 @@ object ReferenceSpacing {
         val after = if (there && !afterExisting) true else spaceAfter(text.getOrNull(at))
         val added = (if (before) 1 else 0) + (if (after) 1 else 0)
         val spaced = text.substring(0, at) + (if (before) " " else "") + (if (after) " " else "") + text.substring(at)
-        val new = IngredientReference(ingredientPosition, at + if (before) 1 else 0)
+        val new = IngredientReference(ingredientPosition, at + if (before) 1 else 0, share)
         val moved = step.ingredientReferences.map {
             if (it.textOffset > at || (it.textOffset == at && !afterExisting)) it.copy(textOffset = it.textOffset + added) else it
         }

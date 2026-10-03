@@ -1,5 +1,6 @@
 package app.recipefork.core.timer
 
+import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepRun
 import app.recipefork.core.recipe.StepText
@@ -84,10 +85,11 @@ object TimerName {
     fun of(step: Step): String? = step.timer?.let { it.label ?: derived(step.text) }
 
     /**
-     * The name [step]'s timer announces itself by, each of its references read as [quantity] gives it (FLOW-016 (8));
+     * The name [step]'s timer announces itself by, each of its references — a part as its part — read as [quantity]
+     * gives it, as the card shows it (FLOW-016 (8));
      * null where the step carries no timer.
      */
-    fun of(step: Step, quantity: (ingredientPosition: Int) -> String?): String? =
+    fun of(step: Step, quantity: ReferenceQuantity): String? =
         step.timer?.let { it.label ?: derived(StepText.runs(step, quantity)) }
 
     /**
@@ -98,7 +100,8 @@ object TimerName {
     fun source(step: Step): String? {
         val timer = step.timer ?: return null
         if (timer.label != null) return null
-        return StepText.render(step) { REFERENCE_MARK }
+        // A part is part of what the name reads; the scale it is read at is not.
+        return StepText.render(step) { reference -> REFERENCE_MARK + reference.share?.let { "${it.amount} ${it.unit}" }.orEmpty() }
     }
 
     /**

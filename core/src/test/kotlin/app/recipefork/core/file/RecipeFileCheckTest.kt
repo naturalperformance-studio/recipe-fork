@@ -2,6 +2,7 @@ package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityUnit
@@ -117,6 +118,27 @@ class RecipeFileCheckTest {
         refused(row(2) { it.copy(freeTextName = null, qualifier = "fine") })
         assertEquals(emptyList(), RecipeFileCheck.problems(row(2) { it.copy(freeTextName = null) }))
         assertEquals(emptyList(), RecipeFileCheck.problems(row(2) { it.copy(freeTextName = " ") }))
+    }
+
+    // A part of an ingredient is checked like any quantity: above zero, on its grid, of its ingredient's unit type.
+    // Parts are not checked against the whole: one larger than it, or several adding up beyond it, pass.
+    @Test
+    fun aPartOfAnIngredient() {
+        fun step(vararg references: IngredientReference) = valid.copy(steps = listOf(Step(0, "Fry the beet and", references.toList()), valid.steps[1]))
+        fun part(position: Int, amount: Rational, unit: QuantityUnit, offset: Int = 0) =
+            IngredientReference(position, offset, IngredientShare(amount, unit))
+        assertEquals(emptyList(), RecipeFileCheck.problems(step(part(0, Rational.of(500), QuantityUnit.GRAM))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(step(part(1, Rational.of(3, 2), QuantityUnit.PIECE))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(step(part(2, Rational.of(2), QuantityUnit.TEASPOON))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(step(part(1, Rational.of(2), QuantityUnit.PIECE), part(1, Rational.of(2), QuantityUnit.PIECE, 4))))
+        refused(step(part(0, Rational.ZERO, QuantityUnit.GRAM)))
+        refused(step(part(0, Rational.of(-5), QuantityUnit.GRAM)))
+        refused(step(part(0, Rational.of(1, 2), QuantityUnit.GRAM)))
+        refused(step(part(1, Rational.of(1, 3), QuantityUnit.PIECE)))
+        refused(step(part(2, Rational.of(1, 5), QuantityUnit.TEASPOON)))
+        refused(step(part(0, Rational.of(2), QuantityUnit.PIECE)))
+        refused(step(part(3, Rational.of(1), QuantityUnit.PINCH)))
+        refused(step(part(3, Rational.of(1), QuantityUnit.TO_TASTE)))
     }
 
     @Test

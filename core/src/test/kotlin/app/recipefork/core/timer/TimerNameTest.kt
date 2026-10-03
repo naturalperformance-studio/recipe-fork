@@ -110,7 +110,7 @@ class TimerNameTest {
 
 class TimerNameWithReferencesTest {
     private val quantities = mapOf(0 to "200 г", 1 to "по вкусу")
-    private fun name(step: Step) = TimerName.of(step) { quantities[it] }
+    private fun name(step: Step) = TimerName.of(step) { quantities[it.ingredientPosition] }
 
     // FLOW-016 (8): a reference within the first 60 characters reads as the screen shows it.
     @Test

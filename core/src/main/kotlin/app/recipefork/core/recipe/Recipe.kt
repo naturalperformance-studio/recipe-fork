@@ -67,6 +67,8 @@ data class IngredientReference(
     val ingredientPosition: Int,
     /** Where in the step's text the reference sits. */
     val textOffset: Int,
+    /** The part of the ingredient the reference reads instead of its whole quantity; null for the whole. */
+    val share: IngredientShare? = null,
 )
 
 data class Step(
