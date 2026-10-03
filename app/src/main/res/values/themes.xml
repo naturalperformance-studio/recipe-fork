@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The application's window theme: the platform's light one without an action bar, the Compose interface drawing
+         everything itself. The window is drawn edge to edge (MainActivity), so the system bars' icons are dark, on the
+         light surface (AppTheme) that shows through them, from the window's very first frame. -->
+    <style name="Theme.RecipeFork" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>
