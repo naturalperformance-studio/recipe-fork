@@ -9,7 +9,9 @@ import android.media.MediaPlayer
 import android.provider.Settings
 import android.view.Surface
 import android.view.TextureView
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.aspectRatio
@@ -34,7 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -246,6 +250,10 @@ internal fun animationsOff(context: Context): Boolean =
  * nothing offers sound. With the system's animations off it does not start by itself but shows its first frame, with
  * the control offering to play. [description] names it for the screen reader as the author's video (A11Y-001); a clip
  * that cannot be played shows [unavailable] instead, and is tried again when it next comes into view.
+ *
+ * The editor shows a step's clip by this same box, player and control, with [autoplay] off — it never starts by
+ * itself there, only when the author plays it — and [poster], the clip's first frame read beforehand, drawn under the
+ * picture and setting the box's proportions until the player has read the clip's own; [overlay] is drawn over the clip.
  */
 @Composable
 internal fun StepVideo(
@@ -257,6 +265,9 @@ internal fun StepVideo(
     videoTag: String,
     controlTag: String,
     modifier: Modifier = Modifier,
+    autoplay: Boolean = true,
+    poster: ImageBitmap? = null,
+    overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     val players = LocalClipPlayers.current
     val context = LocalContext.current
@@ -295,8 +306,9 @@ internal fun StepVideo(
             if (ready === made) ready = null
         }
     }
-    // The reader's own choice, kept across a turn of the phone; it starts by itself only with animations on.
-    var wanted by rememberSaveable(file.path) { mutableStateOf(!animationsOff(context)) }
+    // The reader's own choice, kept across a turn of the phone; it starts by itself only with animations on, and only
+    // where it is to start by itself at all.
+    var wanted by rememberSaveable(file.path) { mutableStateOf(autoplay && !animationsOff(context)) }
     var resumed by remember { mutableStateOf(false) }
     LifecycleResumeEffect(Unit) {
         resumed = true
@@ -321,7 +333,7 @@ internal fun StepVideo(
             unavailable()
             return@Column
         }
-        val shown = size
+        val shown = size ?: poster?.let { IntSize(it.width, it.height) }
         val toggle = { wanted = !wanted }
         Box(
             Modifier
@@ -335,6 +347,7 @@ internal fun StepVideo(
                 }
                 .testTag(videoTag),
         ) {
+            if (poster != null) Image(poster, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             if (current != null) {
                 AndroidView(
                     factory = { ClipView(it) },
@@ -353,6 +366,7 @@ internal fun StepVideo(
                 onClick = toggle,
                 modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).testTag(controlTag),
             )
+            overlay()
         }
     }
 }

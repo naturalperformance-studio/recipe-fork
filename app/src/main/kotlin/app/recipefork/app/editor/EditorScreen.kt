@@ -565,6 +565,8 @@ object EditorTags {
     fun stepClipChoose(position: Int) = "editor-step-$position-clip-choose"
     fun stepClipImage(position: Int) = "editor-step-$position-clip-image"
     fun stepClipMark(position: Int) = "editor-step-$position-clip-mark"
+    /** The round control that plays and pauses a step's clip in place. */
+    fun stepClipControl(position: Int) = "editor-step-$position-clip-control"
     fun stepClipConverting(position: Int) = "editor-step-$position-clip-converting"
     fun stepClipCancel(position: Int) = "editor-step-$position-clip-cancel"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
