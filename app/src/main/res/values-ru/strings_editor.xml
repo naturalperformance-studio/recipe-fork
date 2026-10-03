@@ -35,6 +35,7 @@
     <string name="editor_ingredient_free_text_offer">Добавить «%1$s» своими словами</string>
     <string name="editor_ingredient_free_text_action">Добавить %1$s своими словами, не из словаря</string>
     <string name="editor_ingredient_free_text_warning">Этого ингредиента нет в словаре: фильтры не найдут рецепт по нему, а после публикации это уже нельзя будет изменить.</string>
+    <string name="editor_ingredient_free_text_warning_serverless">Этого ингредиента нет в словаре: фильтры не найдут рецепт по нему.</string>
     <string name="editor_ingredient_divisible_question">Можно ли разделить одну штуку пополам?</string>
     <string name="editor_ingredient_divisible_yes">Да, можно половину</string>
     <string name="editor_ingredient_divisible_no">Нет, только целые</string>

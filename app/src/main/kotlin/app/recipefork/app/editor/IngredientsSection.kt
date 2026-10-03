@@ -72,6 +72,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.foundation.background
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
+import app.recipefork.app.Mode
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientOffer
@@ -169,7 +170,7 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
  * Rows are named from the ingredient dictionary of [ingredients] or in the author's own words (DOM-009).
  */
 @Composable
-internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: IngredientSource, scroll: EditorScroll) {
+internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: IngredientSource, scroll: EditorScroll, mode: Mode = Mode.Standard) {
     val editable = recipe.state.editable
     val language = numberLanguage(LocalConfiguration.current)
     var dictionary by remember(ingredients) { mutableStateOf<List<IngredientEntryEntity>?>(null) }
@@ -194,7 +195,7 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
             // What the screen holds for a row — focus, an open offer, a typed value — stays with it when rows before
             // it are inserted, moved or deleted.
             key(editor.ingredientKey(position)) {
-                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag)
+                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag, mode)
                 else ReadOnlyIngredient(position, row, language, dictionary)
             }
         }
@@ -243,6 +244,7 @@ private fun IngredientRow(
     language: InterfaceLanguage,
     dictionary: List<IngredientEntryEntity>?,
     drag: RowDrag,
+    mode: Mode,
 ) {
     val problem = QuantityInput.problem(row)
     // The name, the quantity and the unit each take the height of the tallest of them, so the row's inputs are even.
@@ -272,7 +274,7 @@ private fun IngredientRow(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                        IngredientNameField(position, row, editor, language, dictionary, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME))
+                        IngredientNameField(position, row, editor, language, dictionary, mode, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME))
                         if (!under) Row(Modifier.padding(top = 8.dp)) { RowControls(position, count, editor) }
                     }
                     // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
@@ -370,12 +372,15 @@ private val QUANTITY_LABEL_ROOM = 40.dp
 
 /**
  * The free-text warning (FLOW-022 (2)) as an icon beside the name: its shape says there is something to know, its
- * full text is what the screen reader reads on reaching it, and a tap or a long press shows that text in a tooltip.
+ * full text is what the screen reader reads on reaching it, and a tap or a long press shows that text in a tooltip. A
+ * build without the server says nothing of publication in it (FLOW-062 (1)).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FreeTextWarning(position: Int) {
-    val text = stringResource(R.string.editor_ingredient_free_text_warning)
+private fun FreeTextWarning(position: Int, mode: Mode) {
+    val text = stringResource(
+        if (mode == Mode.Serverless) R.string.editor_ingredient_free_text_warning_serverless else R.string.editor_ingredient_free_text_warning,
+    )
     val state = rememberTooltipState(isPersistent = true)
     val scope = rememberCoroutineScope()
     TooltipBox(
@@ -409,6 +414,7 @@ private fun IngredientNameField(
     editor: RecipeEditor,
     language: InterfaceLanguage,
     dictionary: List<IngredientEntryEntity>?,
+    mode: Mode,
     modifier: Modifier,
     fieldModifier: Modifier,
 ) {
@@ -428,7 +434,7 @@ private fun IngredientNameField(
             label = { Text(stringResource(R.string.editor_ingredient_name)) },
             // Only a name in the author's own words warns; an entry picked in its place takes the warning away (FLOW-022 (3)).
             trailingIcon = if (row.dictionaryEntry == null && !row.freeTextName.isNullOrBlank()) {
-                { FreeTextWarning(position) }
+                { FreeTextWarning(position, mode) }
             } else {
                 null
             },

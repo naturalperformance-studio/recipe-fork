@@ -386,11 +386,11 @@ private fun OwnEntry(
         if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onExport))
         if (row.state in DELETABLE) add(EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), onDelete))
     }
-    EntryWithActions(row.recipeId, row.title, actions) { modifier -> EntryText(row, cover, onOpen, modifier) }
+    EntryWithActions(row.recipeId, row.title, actions) { modifier -> EntryText(row, mode, cover, onOpen, modifier) }
 }
 
 @Composable
-private fun EntryText(row: OwnRecipeRow, cover: EntryCover, onOpen: () -> Unit, modifier: Modifier) {
+private fun EntryText(row: OwnRecipeRow, mode: Mode, cover: EntryCover, onOpen: () -> Unit, modifier: Modifier) {
     Row(
         modifier
             .heightIn(min = 48.dp)
@@ -401,17 +401,18 @@ private fun EntryText(row: OwnRecipeRow, cover: EntryCover, onOpen: () -> Unit, 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         cover(row.coverId, LibraryTags.cover(row.recipeId))
-        Column(Modifier.weight(1f)) { EntryLines(row) }
+        Column(Modifier.weight(1f)) { EntryLines(row, mode) }
     }
 }
 
 @Composable
-private fun EntryLines(row: OwnRecipeRow) {
+private fun EntryLines(row: OwnRecipeRow, mode: Mode) {
     EntryTitle(row.recipeId, row.title)
     // The state is named in words, never carried by colour alone (A11Y-008).
-    Text(stringResource(stateLabel(row.state)), style = MaterialTheme.typography.labelLarge)
-    // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005).
-    Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
+    Text(stringResource(stateLabel(row.state, mode)), style = MaterialTheme.typography.labelLarge)
+    // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005); a build without the
+    // server sends nothing, so it shows none (FLOW-062 (1)).
+    if (mode == Mode.Standard) Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
 }
 
 /** An entry's title, which tells the entry's menu where its first line stands ([TitleLine]). */
@@ -826,14 +827,17 @@ fun removeFound(files: RecipeImport, timers: CardTimers, id: RecipeId) {
     }
 }
 
-/** The marker of FLOW-036: `local` and `private` are both a draft. */
+/**
+ * The marker of FLOW-036: `local` and `private` are both a draft. In [Mode.Serverless] a recipe keeps the last state
+ * the device knew (FLOW-062 (5)), worded with nothing of publication.
+ */
 @StringRes
-fun stateLabel(state: RecipeState): Int = when (state) {
+fun stateLabel(state: RecipeState, mode: Mode = Mode.Standard): Int = when (state) {
     RecipeState.LOCAL, RecipeState.PRIVATE -> R.string.library_state_draft
     RecipeState.PENDING -> R.string.library_state_pending
     RecipeState.REJECTED -> R.string.library_state_rejected
     RecipeState.LINK_SHARED -> R.string.library_state_link_shared
-    RecipeState.PUBLISHED -> R.string.library_state_published
+    RecipeState.PUBLISHED -> if (mode == Mode.Serverless) R.string.library_state_published_serverless else R.string.library_state_published
     RecipeState.REPORTED_HIDDEN -> R.string.library_state_hidden
     RecipeState.REMOVED -> R.string.library_state_removed
 }
