@@ -31,6 +31,7 @@
 8424	перец печёный	roasted red peppers		true	g=1 pc=50
 8425	умэбоси	umeboshi		false	g=1 pc=10
 8427	патиссоны маринованные	pickled pattypan squash	8400	true	g=1 pc=30
+8426	рассол огуречный	pickle brine			g=1 ml=1.03 tbsp=15 cup=250		рассол	pickle juice
 
 # Pickled and canned mushrooms (8440-8449).
 8440	грибы маринованные	marinated mushrooms			g=1 cup=150
@@ -67,7 +68,7 @@
 8476	кокосовое молоко	coconut milk		true	g=1 ml=0.98 pc=400 tbsp=15 cup=240
 8477	кокосовые сливки	coconut cream			g=1 ml=1 tbsp=15 cup=250
 8478	кокосовое молоко лёгкое	light coconut milk		true	g=1 ml=0.98 pc=400 tbsp=15 cup=240
-8479	ананасы консервированные	canned pineapple		true	g=1 pc=580 cup=245
+8479	ананасы консервированные	canned pineapple		true	g=1 pc=580 cup=245			crushed pineapple
 8480	персики консервированные	canned peaches		true	g=1 pc=820 cup=250
 8481	абрикосы консервированные	canned apricots		true	g=1 pc=820 cup=250
 8482	груши консервированные	canned pears		true	g=1 pc=820 cup=250

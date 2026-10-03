@@ -1,5 +1,5 @@
 {
-  "version": "8005ed9b7efbb2563d0066ae92f83b8ed7bd3b120902050011926bb44419fc1f",
+  "version": "92ed1fea598d32fa473c92ce5a024981554ca21cbd1d04fe010e4953cbdc74a8",
   "ingredients": [
     {
       "id": 1,
@@ -20,7 +20,11 @@
       "factors": {
         "g": 1.0,
         "pc": 80.0
-      }
+      },
+      "synonymsRu": [
+        "куриные крылья",
+        "куриные крылышки"
+      ]
     },
     {
       "id": 3,
@@ -177,6 +181,16 @@
       }
     },
     {
+      "id": 1012,
+      "labelRu": "картофельное пюре",
+      "labelEn": "mashed potatoes",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 13.0,
+        "cup": 210.0
+      }
+    },
+    {
       "id": 1020,
       "labelRu": "батат",
       "labelEn": "sweet potato",
@@ -207,7 +221,10 @@
         "g": 1.0,
         "pc": 80.0,
         "cup": 120.0
-      }
+      },
+      "synonymsRu": [
+        "морковка"
+      ]
     },
     {
       "id": 1031,
@@ -415,7 +432,10 @@
       "factors": {
         "g": 1.0,
         "pc": 60.0
-      }
+      },
+      "synonymsRu": [
+        "корень петрушки"
+      ]
     },
     {
       "id": 1058,
@@ -652,7 +672,11 @@
         "pc": 15.0,
         "tbsp": 6.0,
         "cup": 100.0
-      }
+      },
+      "synonymsEn": [
+        "green onion",
+        "spring onion"
+      ]
     },
     {
       "id": 1108,
@@ -1125,7 +1149,10 @@
         "g": 1.0,
         "pc": 70.0,
         "cup": 180.0
-      }
+      },
+      "synonymsEn": [
+        "roma tomato"
+      ]
     },
     {
       "id": 1303,
@@ -1336,7 +1363,13 @@
         "g": 1.0,
         "pc": 150.0,
         "cup": 150.0
-      }
+      },
+      "synonymsRu": [
+        "сладкий перец"
+      ],
+      "synonymsEn": [
+        "sweet pepper"
+      ]
     },
     {
       "id": 1331,
@@ -1450,7 +1483,13 @@
         "g": 1.0,
         "pc": 15.0,
         "tsp": 3.0
-      }
+      },
+      "synonymsRu": [
+        "острый перец"
+      ],
+      "synonymsEn": [
+        "hot pepper"
+      ]
     },
     {
       "id": 1341,
@@ -2547,7 +2586,13 @@
         "tsp": 1.0,
         "tbsp": 3.0,
         "cup": 40.0
-      }
+      },
+      "synonymsRu": [
+        "укроп"
+      ],
+      "synonymsEn": [
+        "dill"
+      ]
     },
     {
       "id": 1702,
@@ -2561,7 +2606,13 @@
         "tsp": 1.0,
         "tbsp": 4.0,
         "cup": 60.0
-      }
+      },
+      "synonymsRu": [
+        "петрушка"
+      ],
+      "synonymsEn": [
+        "parsley"
+      ]
     },
     {
       "id": 1703,
@@ -2603,7 +2654,13 @@
         "tsp": 1.0,
         "tbsp": 3.0,
         "cup": 40.0
-      }
+      },
+      "synonymsRu": [
+        "кинза"
+      ],
+      "synonymsEn": [
+        "cilantro"
+      ]
     },
     {
       "id": 1706,
@@ -2616,7 +2673,13 @@
         "pc": 30.0,
         "tbsp": 3.0,
         "cup": 40.0
-      }
+      },
+      "synonymsRu": [
+        "базилик"
+      ],
+      "synonymsEn": [
+        "basil"
+      ]
     },
     {
       "id": 1707,
@@ -2666,7 +2729,13 @@
         "pc": 30.0,
         "tbsp": 1.5,
         "cup": 25.0
-      }
+      },
+      "synonymsRu": [
+        "мята"
+      ],
+      "synonymsEn": [
+        "mint"
+      ]
     },
     {
       "id": 1711,
@@ -2781,7 +2850,13 @@
         "g": 1.0,
         "tsp": 0.6,
         "tbsp": 1.7
-      }
+      },
+      "synonymsRu": [
+        "розмарин"
+      ],
+      "synonymsEn": [
+        "rosemary"
+      ]
     },
     {
       "id": 1721,
@@ -2792,7 +2867,13 @@
         "g": 1.0,
         "tsp": 0.8,
         "tbsp": 2.4
-      }
+      },
+      "synonymsRu": [
+        "тимьян"
+      ],
+      "synonymsEn": [
+        "thyme"
+      ]
     },
     {
       "id": 1722,
@@ -2802,7 +2883,13 @@
       "factors": {
         "g": 1.0,
         "tbsp": 2.0
-      }
+      },
+      "synonymsRu": [
+        "шалфей"
+      ],
+      "synonymsEn": [
+        "sage"
+      ]
     },
     {
       "id": 1723,
@@ -5777,7 +5864,10 @@
         "g": 1.0,
         "tbsp": 8.0,
         "cup": 100.0
-      }
+      },
+      "synonymsRu": [
+        "грецкий орех"
+      ]
     },
     {
       "id": 2502,
@@ -6654,6 +6744,18 @@
       }
     },
     {
+      "id": 3131,
+      "labelRu": "говяжьи ноги",
+      "labelEn": "beef feet",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      },
+      "synonymsRu": [
+        "говяжьи ножки"
+      ]
+    },
+    {
       "id": 3132,
       "labelRu": "сирлойн",
       "labelEn": "sirloin steak",
@@ -7298,7 +7400,10 @@
       "parentId": 4,
       "factors": {
         "g": 1.0
-      }
+      },
+      "synonymsEn": [
+        "ground chuck"
+      ]
     },
     {
       "id": 3452,
@@ -7392,7 +7497,10 @@
       "factors": {
         "g": 1.0,
         "pc": 350.0
-      }
+      },
+      "synonymsEn": [
+        "chicken cutlet"
+      ]
     },
     {
       "id": 3503,
@@ -8512,6 +8620,17 @@
       }
     },
     {
+      "id": 3833,
+      "labelRu": "итальянские колбаски",
+      "labelEn": "Italian sausage",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
       "id": 3834,
       "labelRu": "сосиски для хот-догов",
       "labelEn": "hot dog sausages",
@@ -8786,7 +8905,10 @@
       "labelEn": "smoked ribs",
       "factors": {
         "g": 1.0
-      }
+      },
+      "synonymsRu": [
+        "копчёные рёбра"
+      ]
     },
     {
       "id": 3890,
@@ -9956,7 +10078,11 @@
       "factors": {
         "g": 1.0,
         "pc": 300.0
-      }
+      },
+      "synonymsRu": [
+        "сельдь солёная",
+        "сельдь слабосолёная"
+      ]
     },
     {
       "id": 4157,
@@ -10684,7 +10810,10 @@
       "factors": {
         "g": 1.0,
         "pc": 50.0
-      }
+      },
+      "synonymsEn": [
+        "hard-boiled egg"
+      ]
     },
     {
       "id": 4407,
@@ -10893,7 +11022,10 @@
         "tsp": 7.0,
         "tbsp": 20.0,
         "cup": 325.0
-      }
+      },
+      "synonymsRu": [
+        "сгущёнка"
+      ]
     },
     {
       "id": 4462,
@@ -11697,7 +11829,10 @@
         "tsp": 5.0,
         "tbsp": 14.0,
         "cup": 227.0
-      }
+      },
+      "synonymsRu": [
+        "масло"
+      ]
     },
     {
       "id": 4601,
@@ -12157,7 +12292,13 @@
         "tsp": 2.0,
         "tbsp": 5.0,
         "cup": 90.0
-      }
+      },
+      "synonymsRu": [
+        "пармиджано реджано"
+      ],
+      "synonymsEn": [
+        "Parmigiano Reggiano"
+      ]
     },
     {
       "id": 4733,
@@ -12347,7 +12488,10 @@
         "g": 1.0,
         "tbsp": 7.0,
         "cup": 100.0
-      }
+      },
+      "synonymsEn": [
+        "Swiss cheese"
+      ]
     },
     {
       "id": 4751,
@@ -12652,7 +12796,8 @@
         "tsp": 2.0,
         "tbsp": 5.0,
         "cup": 90.0
-      }
+      },
+      "removed": true
     },
     {
       "id": 5000,
@@ -13536,7 +13681,10 @@
         "g": 1.0,
         "tbsp": 13.0,
         "cup": 210.0
-      }
+      },
+      "synonymsRu": [
+        "гречневая крупа"
+      ]
     },
     {
       "id": 5201,
@@ -14345,7 +14493,13 @@
         "tsp": 2.0,
         "tbsp": 6.0,
         "cup": 90.0
-      }
+      },
+      "synonymsRu": [
+        "овсянка"
+      ],
+      "synonymsEn": [
+        "old-fashioned oats"
+      ]
     },
     {
       "id": 5351,
@@ -14563,7 +14717,10 @@
       "labelEn": "pasta",
       "factors": {
         "g": 1.0
-      }
+      },
+      "synonymsRu": [
+        "паста"
+      ]
     },
     {
       "id": 5401,
@@ -15908,7 +16065,10 @@
       "parentId": 5800,
       "factors": {
         "g": 1.0
-      }
+      },
+      "synonymsEn": [
+        "pie dough"
+      ]
     },
     {
       "id": 5806,
@@ -16429,7 +16589,10 @@
         "g": 1.0,
         "tbsp": 12.0,
         "cup": 200.0
-      }
+      },
+      "synonymsEn": [
+        "kidney beans"
+      ]
     },
     {
       "id": 5903,
@@ -17355,7 +17518,10 @@
         "tbsp": 12.0,
         "cup": 200.0,
         "pinch": 0.5
-      }
+      },
+      "synonymsEn": [
+        "white sugar"
+      ]
     },
     {
       "id": 6102,
@@ -20438,7 +20604,13 @@
         "tsp": 2.3,
         "tbsp": 7.0,
         "pinch": 0.2
-      }
+      },
+      "synonymsRu": [
+        "перец"
+      ],
+      "synonymsEn": [
+        "pepper"
+      ]
     },
     {
       "id": 7101,
@@ -20463,7 +20635,10 @@
         "pc": 0.06,
         "tsp": 3.0,
         "tbsp": 9.0
-      }
+      },
+      "synonymsRu": [
+        "перец горошком"
+      ]
     },
     {
       "id": 7103,
@@ -20607,7 +20782,10 @@
         "tsp": 2.5,
         "tbsp": 7.5,
         "pinch": 0.2
-      }
+      },
+      "synonymsRu": [
+        "красный перец"
+      ]
     },
     {
       "id": 7141,
@@ -21126,7 +21304,11 @@
         "g": 1.0,
         "tsp": 2.5,
         "tbsp": 7.5
-      }
+      },
+      "synonymsEn": [
+        "dry mustard",
+        "ground mustard"
+      ]
     },
     {
       "id": 7231,
@@ -22741,7 +22923,10 @@
         "tsp": 5.0,
         "tbsp": 14.0,
         "cup": 230.0
-      }
+      },
+      "synonymsEn": [
+        "mayo"
+      ]
     },
     {
       "id": 8120,
@@ -23956,6 +24141,23 @@
       }
     },
     {
+      "id": 8426,
+      "labelRu": "рассол огуречный",
+      "labelEn": "pickle brine",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tbsp": 15.0,
+        "cup": 250.0
+      },
+      "synonymsRu": [
+        "рассол"
+      ],
+      "synonymsEn": [
+        "pickle juice"
+      ]
+    },
+    {
       "id": 8427,
       "labelRu": "патиссоны маринованные",
       "labelEn": "pickled pattypan squash",
@@ -24272,7 +24474,10 @@
         "g": 1.0,
         "pc": 580.0,
         "cup": 245.0
-      }
+      },
+      "synonymsEn": [
+        "crushed pineapple"
+      ]
     },
     {
       "id": 8480,
@@ -25050,7 +25255,10 @@
         "ml": 1.0,
         "tbsp": 15.0,
         "cup": 250.0
-      }
+      },
+      "synonymsEn": [
+        "chicken broth"
+      ]
     },
     {
       "id": 8602,
@@ -25062,7 +25270,10 @@
         "ml": 1.0,
         "tbsp": 15.0,
         "cup": 250.0
-      }
+      },
+      "synonymsEn": [
+        "beef broth"
+      ]
     },
     {
       "id": 8603,
@@ -25074,7 +25285,10 @@
         "ml": 1.0,
         "tbsp": 15.0,
         "cup": 250.0
-      }
+      },
+      "synonymsEn": [
+        "vegetable broth"
+      ]
     },
     {
       "id": 8604,
@@ -25404,7 +25618,10 @@
         "ml": 1.0,
         "tbsp": 15.0,
         "cup": 250.0
-      }
+      },
+      "synonymsEn": [
+        "dry sherry"
+      ]
     },
     {
       "id": 8712,

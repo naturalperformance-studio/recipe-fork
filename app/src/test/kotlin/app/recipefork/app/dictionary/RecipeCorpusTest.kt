@@ -6,7 +6,6 @@ import app.recipefork.core.scaling.InterfaceLanguage.RUSSIAN
 import app.recipefork.core.search.WordPrefix
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -42,7 +41,7 @@ class RecipeCorpusTest {
         }
     }
 
-    // The honest rate is printed with every miss; it may only rise. T-131 fills the dictionary up to RATE.
+    // The honest rate is printed with every miss; it may only rise.
     @Test
     fun theRussianCorpusIsMeasuredAgainstTheEntryMeant() {
         val rate = measure("Russian", russian, RUSSIAN)
@@ -55,14 +54,12 @@ class RecipeCorpusTest {
         assertTrue("English: ${percent(rate)} fell below ${percent(FLOOR_EN)}", rate >= FLOOR_EN)
     }
 
-    @Ignore("T-131 fills the dictionary's gaps and enables the threshold")
     @Test
     fun theRussianCorpusFindsTheEntryMeantForAlmostEveryName() {
         val rate = measure("Russian", russian, RUSSIAN)
         assertTrue("Russian: ${percent(rate)}", rate >= RATE)
     }
 
-    @Ignore("T-131 fills the dictionary's gaps and enables the threshold")
     @Test
     fun theEnglishCorpusFindsTheEntryMeantForAlmostEveryName() {
         val rate = measure("English", english, ENGLISH)
@@ -88,6 +85,33 @@ class RecipeCorpusTest {
             "eggs" to 4400L, "onions" to 1100L, "bay leaves" to 7251L, "lemons" to 2000L, "carrots" to 1030L,
             "mozzarella cheese" to 4735L, "cheddar cheese" to 4749L, "potatoes" to 1000L,
         ).forEach { (typed, id) -> assertEquals(typed, id, IngredientOffer.of(typed, dictionary, ENGLISH).entries.firstOrNull()?.id) }
+    }
+
+    // T-131: the word a cook writes lands on the entry meant — the plain entry, not a look-alike or a kind of it.
+    @Test
+    fun theWordACookWritesLandsOnThePlainEntry() {
+        mapOf(
+            "куриные крылья" to 2L, "овсянка" to 5350L, "морковка" to 1030L, "грецкий орех" to 2501L, "сгущёнка" to 4461L,
+            "перец" to 7100L, "масло" to 4600L, "базилик" to 1706L, "укроп" to 1701L, "петрушка" to 1702L, "кинза" to 1705L,
+            "мята" to 1710L, "паста" to 5400L, "огуречный рассол" to 8426L, "говяжьи ноги" to 3131L,
+        ).forEach { (typed, id) -> assertEquals(typed, id, IngredientOffer.of(typed, dictionary, RUSSIAN).entries.firstOrNull()?.id) }
+        mapOf(
+            "roma tomatoes" to 1302L, "swiss cheese" to 4750L, "chicken broth" to 8601L, "beef broth" to 8602L,
+            "pepper" to 7100L, "basil" to 1706L, "cilantro" to 1705L, "rosemary" to 1720L, "sage" to 1722L, "thyme" to 1721L,
+            "dill" to 1701L, "green onions" to 1107L, "italian sausage" to 3833L,
+        ).forEach { (typed, id) -> assertEquals(typed, id, IngredientOffer.of(typed, dictionary, ENGLISH).entries.firstOrNull()?.id) }
+    }
+
+    // Scenario 6 of T-131: пармиджано is one entry, the Parmesan; the duplicate is removed and offered no more.
+    @Test
+    fun parmigianoIsOneEntryTheParmesan() {
+        assertTrue("4792 is removed", byId.getValue(4792).removed)
+        listOf("пармиджано" to RUSSIAN, "пармиджано реджано" to RUSSIAN, "parmigiano" to ENGLISH, "Parmigiano Reggiano" to ENGLISH)
+            .forEach { (typed, language) ->
+                val offer = IngredientOffer.of(typed, dictionary, language)
+                assertEquals(typed, listOf(4732L), offer.entries.map { it.id })
+            }
+        assertEquals(4732L, IngredientOffer.of("пармиджано реджано", dictionary, RUSSIAN).exact?.id)
     }
 
     // The test's own reading of the corpus.

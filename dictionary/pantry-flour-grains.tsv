@@ -85,7 +85,7 @@
 5173	зародыши пшеницы	wheat germ			g=1 tsp=2 tbsp=7 cup=110
 
 # крупы и зерно
-5200	гречка	buckwheat			g=1 tbsp=13 cup=210
+5200	гречка	buckwheat			g=1 tbsp=13 cup=210		гречневая крупа
 5201	гречка ядрица	whole buckwheat groats	5200		g=1 tbsp=13 cup=210
 5202	гречка продел	broken buckwheat groats	5200		g=1 tbsp=12 cup=200
 5203	гречка зелёная	green buckwheat	5200		g=1 tbsp=12 cup=200
@@ -164,7 +164,7 @@
 5324	смесь риса	rice blend	5300		g=1 tbsp=12 cup=200
 
 # овсяные хлопья, хлопья, мюсли
-5350	овсяные хлопья	rolled oats			g=1 tsp=2 tbsp=6 cup=90
+5350	овсяные хлопья	rolled oats			g=1 tsp=2 tbsp=6 cup=90		овсянка	old-fashioned oats
 5351	геркулес	thick rolled oats	5350		g=1 tsp=2 tbsp=6 cup=90
 5352	овсяные хлопья быстрого приготовления	quick oats	5350		g=1 tsp=2 tbsp=6 cup=85
 5354	овсяные хлопья мелкие	fine oat flakes	5350		g=1 tsp=2 tbsp=6 cup=90
