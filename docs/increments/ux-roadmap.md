@@ -18,7 +18,7 @@ The root cause behind many findings: no Scaffold, TopAppBar, FAB or M3 buttons/c
 23. Blank loading states on book and card (FLOW-043 asks to show loading). S.
 27. List entries are hand-built rows, no `animateItem()`; "Draft" louder than the title's secondary text. S.
 
-## U2 — Cooking with busy hands (the card)
+## U2 — Cooking with busy hands (the card) → v0.17 (planned 2026-10-04; 9 left out, FLOW-014)
 7. Running timers vanish once scrolled past (`timer/StepTimer.kt:232-296`) → a docked bar of running timers. M.
 8. Timer controls look like links → tonal buttons with an icon, 56 dp. S.
 9. The screen may sleep during a long untouched timer (`card/KeepScreenAwake.kt`) → stay on while a timer of the recipe runs (FLOW-014 sync). S.
