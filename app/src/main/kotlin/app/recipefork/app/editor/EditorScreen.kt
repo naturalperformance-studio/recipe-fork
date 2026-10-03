@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -73,7 +74,7 @@ fun rememberEditorEnvironment(): EditorEnvironment {
         val container = (context as RecipeForkApplication).container
         val dao = container.database.dictionaryDao()
         val seeding = DictionarySeeding(dao, PreferencesSeededVersion(context)) { DictionarySnapshot.read(context) }
-        EditorEnvironment(container.activeBook, DictionaryCatalog(dao, seeding))
+        EditorEnvironment(container.activeBook, DictionaryCatalog(dao, seeding), dragHandleSide = container.dragHandleSide)
     }
 }
 
@@ -100,6 +101,7 @@ fun EditorScreen(
     var dictionary by remember { mutableStateOf<List<TagEntity>?>(null) }
     LaunchedEffect(environment) { withContext(Dispatchers.Main.immediate) { dictionary = environment.tags.tags() } }
     val recipe by editor.recipe.collectAsState()
+    val handleRight by environment.dragHandleSide.right.collectAsState()
     val scrolled = rememberScrollState()
     val scroll = remember(scrolled) { EditorScroll(scrolled) }
     BackHandler(onBack = onClose)
@@ -136,8 +138,10 @@ fun EditorScreen(
             CoverSection(shown, editor, recipes.bookName(), saving)
             Tags(shown, editor, dictionary)
             ServingCount(shown, editor)
-            Ingredients(shown, editor, environment.ingredients, scroll)
-            Steps(shown, editor, environment.ingredients, scroll, recipes.bookName(), saving)
+            CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
+                Ingredients(shown, editor, environment.ingredients, scroll)
+                Steps(shown, editor, environment.ingredients, scroll, recipes.bookName(), saving)
+            }
             Description(shown, editor)
         }
     }

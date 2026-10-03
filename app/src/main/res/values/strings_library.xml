@@ -54,6 +54,8 @@
     <string name="library_usual_more_action">Raise the usual serving count</string>
     <string name="library_usual_set">Set</string>
     <string name="library_usual_clear">Not set</string>
+    <!-- The drag column of the editor's steps and ingredients on the right of each block, for a left hand. -->
+    <string name="library_drag_handle_right">Drag handle on the right</string>
     <!-- FLOW-035 (4): the search field at the top of each view, and the result that holds nothing. -->
     <string name="library_search">Search by title or ingredient</string>
     <string name="library_search_clear">Clear the search</string>

@@ -43,6 +43,7 @@
     <string name="library_usual_more_action">Увеличить обычное число порций</string>
     <string name="library_usual_set">Задать</string>
     <string name="library_usual_clear">Не задавать</string>
+    <string name="library_drag_handle_right">Ручка перетаскивания справа</string>
     <!-- FLOW-035 (4): поле поиска над каждым видом и результат, в котором ничего нет. -->
     <string name="library_search">Поиск по названию или ингредиенту</string>
     <string name="library_search_clear">Очистить поиск</string>
