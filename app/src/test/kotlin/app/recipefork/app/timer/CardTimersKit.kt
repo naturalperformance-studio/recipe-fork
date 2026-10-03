@@ -9,6 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -56,6 +58,9 @@ abstract class CardTimersKit {
     protected val usual = HeldUsualServings()
     private var open by mutableStateOf<RecipeId?>(null)
 
+    /** The font scale the card is shown at. */
+    protected open val fontScale: Float = 1f
+
     protected val now: Instant = Instant.parse("2026-10-02T12:00:00Z")
     protected val beansText = "Simmer the beans with the onion and the bay leaf until they are soft through and through"
     protected val soup = Recipe.create(now, owner = null).copy(
@@ -74,7 +79,8 @@ abstract class CardTimersKit {
         runBlocking { recipes.save(soup) }
         val environment = CardEnvironment(usual) { emptyList() }
         compose.setContent {
-            CompositionLocalProvider(LocalCardTimers provides timers.card) {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalCardTimers provides timers.card, LocalDensity provides Density(density.density, fontScale)) {
                 MaterialTheme {
                     val id = open
                     if (id == null) {

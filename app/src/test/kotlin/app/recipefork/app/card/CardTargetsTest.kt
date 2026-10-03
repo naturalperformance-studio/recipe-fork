@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -31,10 +33,14 @@ import app.recipefork.core.recipe.fork
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 
@@ -45,6 +51,7 @@ import kotlin.time.Duration.Companion.minutes
  * Each is measured by name, and then every interactive element on the screen is measured against the same figure.
  */
 @RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class CardTargetsTest {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
@@ -86,15 +93,45 @@ class CardTargetsTest {
     }
 
     @Test
-    fun everyControlOfTheCardIsAtLeast56dp() {
+    fun everyControlOfTheCardIsAtLeast56dp() = sweep(fontScale = 1f)
+
+    // A11Y-004 with A11Y-003 (2): at twice the font scale on a narrow phone the bar wraps rather than squeezing an action.
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp")
+    fun everyControlIsAtLeast56dpAndWholeInRussianAt320dpAndTwiceTheFontScale() = sweep(fontScale = 2f)
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun everyControlIsAtLeast56dpAndWholeInRussianAt360dpAndTwiceTheFontScale() = sweep(fontScale = 2f)
+
+    @Test
+    @Config(qualifiers = "en-w320dp-h640dp")
+    fun everyControlIsAtLeast56dpAndWholeInEnglishAt320dpAndTwiceTheFontScale() = sweep(fontScale = 2f)
+
+    private fun sweep(fontScale: Float) {
         val recipe = fork()
         compose.setContent {
-            CompositionLocalProvider(LocalCardTimers provides timers.card) {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalCardTimers provides timers.card, LocalDensity provides Density(density.density, fontScale)) {
                 MaterialTheme { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
             }
         }
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().size == 1 }
+        // Each of the bar's actions whole: its label on one line, all of it on screen.
+        listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT).forEach { tag ->
+            compose.assertWhole(tag)
+            compose.textLayoutsWithin(tag).forEach { assertEquals("$tag at $fontScale", 1, it.lineCount) }
+        }
+        if (fontScale == 1f) {
+            // Where they fit, one line: back at the start, fork then edit at the end.
+            val (back, fork, edit) = listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT)
+                .map { compose.onNodeWithTag(it).fetchSemanticsNode().boundsInRoot }
+            val bar = compose.onNodeWithTag(CardTags.BAR).fetchSemanticsNode().boundsInRoot
+            assertEquals(back.top, fork.top, 0.5f)
+            assertEquals(back.top, edit.top, 0.5f)
+            assertTrue(back.right <= fork.left && fork.right <= edit.left && bar.right - edit.right < 9f * bar.width / 360f + 1f)
+        }
         listOf(
             CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.PROVENANCE,
             CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE, CardTags.ingredient(0), TimerTags.start(0),

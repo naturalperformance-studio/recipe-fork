@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -137,12 +138,16 @@ fun CardScreen(
     }
 }
 
-/** The screen's bar: back on one side, the recipe's actions on the other — fork on any recipe shown, edit beside it. */
+/**
+ * The screen's bar: back on one side, the recipe's actions on the other — fork on any recipe shown, edit beside it.
+ * Where they do not fit on one line — a large font, a narrow screen — the recipe's actions wrap below back, and edit
+ * below fork, each action whole and never squeezed (A11Y-003 (2), A11Y-004).
+ */
 @Composable
 private fun TopBar(shown: Boolean, editable: Boolean, onBack: () -> Unit, onFork: () -> Unit, onEdit: () -> Unit) {
-    Row(
+    FlowRow(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp).testTag(CardTags.BAR),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         BarAction(
             text = stringResource(R.string.card_back),
@@ -150,22 +155,23 @@ private fun TopBar(shown: Boolean, editable: Boolean, onBack: () -> Unit, onFork
             onClick = onBack,
             modifier = Modifier.testTag(CardTags.BACK),
         )
-        Spacer(Modifier.weight(1f))
         if (shown) {
-            BarAction(
-                text = stringResource(R.string.card_fork),
-                action = stringResource(R.string.card_fork_action),
-                onClick = onFork,
-                modifier = Modifier.testTag(CardTags.FORK),
-            )
-        }
-        if (editable) {
-            BarAction(
-                text = stringResource(R.string.card_edit),
-                action = stringResource(R.string.card_edit_action),
-                onClick = onEdit,
-                modifier = Modifier.testTag(CardTags.EDIT),
-            )
+            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
+                BarAction(
+                    text = stringResource(R.string.card_fork),
+                    action = stringResource(R.string.card_fork_action),
+                    onClick = onFork,
+                    modifier = Modifier.testTag(CardTags.FORK),
+                )
+                if (editable) {
+                    BarAction(
+                        text = stringResource(R.string.card_edit),
+                        action = stringResource(R.string.card_edit_action),
+                        onClick = onEdit,
+                        modifier = Modifier.testTag(CardTags.EDIT),
+                    )
+                }
+            }
         }
     }
 }

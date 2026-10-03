@@ -3,7 +3,7 @@ package app.recipefork.app.timer
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -247,10 +247,13 @@ fun StepTimer(
         finished -> stringResource(R.string.timer_finished)
         else -> remainingText(held.remaining(now))
     }
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Row(
+    // The control first, then its actions; where they do not fit beside it — a long name, a large font, a narrow
+    // screen — the actions wrap under it, and the status under the name, each whole (A11Y-004).
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        FlowRow(
             Modifier
                 .weight(1f)
+                .align(Alignment.CenterVertically)
                 .heightIn(min = CardTarget)
                 .clickable(
                     onClickLabel = stringResource(R.string.timer_start_action),
@@ -259,18 +262,18 @@ fun StepTimer(
                 )
                 .testTag(TimerTags.start(step.position)),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 name,
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.align(Alignment.CenterVertically),
             )
             Text(
                 status,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.testTag(TimerTags.status(step.position)),
+                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.status(step.position)),
             )
         }
         if (finished && timers.rings(step)) {
@@ -278,7 +281,7 @@ fun StepTimer(
                 text = stringResource(R.string.timer_stop),
                 action = stringResource(R.string.timer_stop_action),
                 onClick = { timers.stopRinging(step) },
-                modifier = Modifier.testTag(TimerTags.stop(step.position)),
+                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.stop(step.position)),
             )
         }
         if (held != null) {
@@ -286,7 +289,7 @@ fun StepTimer(
                 text = stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel),
                 action = stringResource(if (finished) R.string.timer_clear_action else R.string.timer_cancel_action),
                 onClick = { timers.cancel(step) },
-                modifier = Modifier.testTag(TimerTags.cancel(step.position)),
+                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.cancel(step.position)),
             )
         }
     }

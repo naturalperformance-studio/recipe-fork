@@ -3,7 +3,11 @@ package app.recipefork.app.card
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -94,11 +98,20 @@ class CardStepTextSizeTest {
         book.close()
     }
 
-    private fun open(fontScale: Float) {
+    private var fontScale by mutableFloatStateOf(1f)
+
+    /** The typography of the theme the card is shown in — the app's, `MainActivity`'s `MaterialTheme` — as it read. */
+    private var theme: Typography? = null
+
+    private fun open(scale: Float) {
+        fontScale = scale
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
-                MaterialTheme { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
+                MaterialTheme {
+                    theme = MaterialTheme.typography
+                    CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {})
+                }
             }
         }
         compose.awaitCard()
@@ -120,7 +133,7 @@ class CardStepTextSizeTest {
 
     @Test
     fun aStepReadsLargerThanTheListAndTheRestOfTheCard() {
-        open(fontScale = 1f)
+        open(scale = 1f)
         val step = stepLayout().layoutInput.style.fontSize
         assertTrue("the step is set at $step", step.value >= 18f)
         val others = mapOf(
@@ -133,13 +146,24 @@ class CardStepTextSizeTest {
             assertTrue("$part shows text", sizes.isNotEmpty())
             sizes.forEach { assertTrue("$part at $it is smaller than the step at $step", it.value < step.value) }
         }
-        // And larger than body text anywhere else in the product, which is set no larger than bodyLarge.
-        assertTrue(step.value > androidx.compose.material3.Typography().bodyLarge.fontSize.value)
+        // And larger than body text anywhere else in the product: the theme's body styles.
+        val typography = theme!!
+        listOf(typography.bodyLarge, typography.bodyMedium, typography.bodySmall).forEach {
+            assertTrue("the theme's body text at ${it.fontSize} is smaller than the step at $step", it.fontSize.value < step.value)
+        }
     }
 
     @Test
     fun atTwiceTheFontScaleOnANarrowPhoneTheStepWrapsWholeAndKeepsItsReference() {
-        open(fontScale = 2f)
+        open(scale = 1f)
+        val single = stepLayout().let { it.getLineBottom(0) - it.getLineTop(0) }
+        compose.runOnIdle { fontScale = 2f }
+        compose.waitForIdle()
+        val scaled = stepLayout()
+        val double = scaled.getLineBottom(0) - scaled.getLineTop(0)
+        // The platform scales large text less than linearly (Android 14's non-linear font scaling), so a line at 2.0
+        // is not quite twice its height at 1.0; it is laid out well beyond it all the same.
+        assertTrue("a line of the step grows with the font scale ($single px at 1.0, $double px at 2.0)", double / single >= 1.6f)
         compose.onNodeWithTag(CardTags.SERVINGS_MORE).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.SERVINGS).single() == "Servings: 5" }
         compose.onNodeWithTag(CardTags.step(0)).performScrollTo()
