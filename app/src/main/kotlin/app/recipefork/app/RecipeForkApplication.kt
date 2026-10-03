@@ -30,18 +30,31 @@ open class RecipeForkApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        AppLanguage.applyToApplication(this)
+        startLanguage()
         container = AppContainer(this, MainActivity.MODE)
-        // The channels exist before any timer is started, so that the timers' one can be read and turned off alone.
-        TimerChannels.create(this)
         container.start(scope)
         if (sweepsMedia) mediaSweep = container.sweepMedia(scope)
         scope.launch { PhotoSources.clearLeftovers(this@RecipeForkApplication) }
     }
 
-    /** A change of the device's configuration resets the application's resources to it; the reader's language is kept. */
+    /**
+     * What a starting process does for the interface language (L10N-002): a choice an earlier Android kept moves to the
+     * platform, the application's resources take the choice, and the timers' channels are named in it. The channels
+     * exist before any timer is started, so that the timers' one can be read and turned off alone.
+     */
+    internal fun startLanguage() {
+        AppLanguage.moveIntoPlatform(this)
+        AppLanguage.applyToApplication(this)
+        TimerChannels.create(this)
+    }
+
+    /**
+     * A change of the configuration — the device's language, or the application's own in the system's settings —
+     * resets the application's resources; the reader's language is kept and the timers' channels renamed in it.
+     */
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         AppLanguage.applyToApplication(this)
+        TimerChannels.create(this)
     }
 }

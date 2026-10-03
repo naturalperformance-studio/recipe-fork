@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
 import android.os.LocaleList
+import app.recipefork.app.timer.TimerChannels
 import app.recipefork.core.recipe.RecipeLanguage
 import java.util.Locale
 
@@ -57,8 +58,36 @@ object AppLanguage {
             }.commit()
         }
         applyToApplication(activity.application)
+        // The timers' channels are named in the language taken now, not at the next start: in system settings too.
+        TimerChannels.create(localized(activity.application, choice))
         activity.recreate()
     }
+
+    /**
+     * On Android 13 and later, a choice an earlier Android kept in the preferences file — the device was upgraded
+     * since — moves to the platform once, unless the platform already holds one, which then stands.
+     */
+    fun moveIntoPlatform(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val preferences = preferences(context)
+        val kept = LanguageChoice.of(preferences.all[LANGUAGE_KEY] as? String ?: return)
+        val manager = context.getSystemService(LocaleManager::class.java)
+        if (manager.applicationLocales.isEmpty) kept.locale?.let { manager.applicationLocales = LocaleList(it) }
+        preferences.edit().remove(LANGUAGE_KEY).commit()
+    }
+
+    /** [context] as it reads in the language [choice] puts in force, before the platform's resources follow it. */
+    fun localized(context: Context, choice: LanguageChoice): Context {
+        val locales = choice.locale?.let { LocaleList(it) } ?: deviceLocales(context)
+        return context.createConfigurationContext(Configuration(context.resources.configuration).apply { setLocales(locales) })
+    }
+
+    private fun deviceLocales(context: Context): LocaleList =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.getSystemService(LocaleManager::class.java).systemLocales
+        } else {
+            Resources.getSystem().configuration.locales
+        }
 
     /** The configuration an Activity created over [base] lays over its own, or null while the device's language stands. */
     fun overrideFor(base: Context): Configuration? =
@@ -72,7 +101,7 @@ object AppLanguage {
     fun applyToApplication(application: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return
         val resources = application.resources
-        val locales = chosen(application).locale?.let { LocaleList(it) } ?: Resources.getSystem().configuration.locales
+        val locales = chosen(application).locale?.let { LocaleList(it) } ?: deviceLocales(application)
         if (resources.configuration.locales == locales) return
         resources.updateConfiguration(Configuration(resources.configuration).apply { setLocales(locales) }, resources.displayMetrics)
     }

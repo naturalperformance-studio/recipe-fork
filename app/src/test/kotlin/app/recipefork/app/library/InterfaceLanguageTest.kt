@@ -2,6 +2,9 @@ package app.recipefork.app.library
 
 import android.app.Activity
 import android.app.LocaleManager
+import android.app.NotificationManager
+import android.content.Context
+import android.content.res.Configuration
 import android.os.LocaleList
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -36,6 +39,7 @@ import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -93,6 +97,11 @@ class InterfaceLanguageTest {
         scenario?.close()
         launch()
     }
+
+    private fun platform(): LocaleManager = app.getSystemService(LocaleManager::class.java)
+
+    private fun channelNames(): Set<String> =
+        app.getSystemService(NotificationManager::class.java).notificationChannels.map { it.name.toString() }.toSet()
 
     private fun activity(): Activity {
         var current: Activity? = null
@@ -190,6 +199,8 @@ class InterfaceLanguageTest {
         choose(LanguageChoice.RUSSIAN)
         awaitTitle("Моя книга рецептов")
         assertEquals(LanguageChoice.RUSSIAN, AppLanguage.chosen(app))
+        // Kept where it outlives the process: the platform's per-app language.
+        assertEquals(LocaleList.forLanguageTags("ru"), platform().applicationLocales)
         assertEquals("ru", activity().resources.configuration.locales[0].language)
         assertTheScreenReadsInItsLanguage(setOf("Борщ"))
 
@@ -222,6 +233,7 @@ class InterfaceLanguageTest {
         choose(LanguageChoice.DEVICE)
         awaitTitle("My recipe book")
         assertEquals(LanguageChoice.DEVICE, AppLanguage.chosen(app))
+        assertTrue(platform().applicationLocales.isEmpty)
         restart()
         awaitTitle("My recipe book")
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
@@ -252,6 +264,51 @@ class InterfaceLanguageTest {
         assertEquals("ru", activity().resources.configuration.locales[0].language)
         restart()
         awaitTitle("Моя книга рецептов")
+    }
+
+    // A language set behind the application's back — in the system's per-app settings, which deliver a configuration
+    // change and do not relaunch the Activity — is followed at once, over an earlier choice made in the application.
+    @Test
+    fun aChoiceMadeInTheSystemSettingsIsFollowedAtOnce() {
+        launch()
+        choose(LanguageChoice.RUSSIAN)
+        awaitTitle("Моя книга рецептов")
+        listOf(LocaleList.forLanguageTags("en") to "My recipe book", LocaleList.forLanguageTags("ru") to "Моя книга рецептов",
+            LocaleList.getEmptyLocaleList() to "My recipe book").forEach { (locales, title) ->
+            platform().applicationLocales = locales
+            scenario!!.onActivity { it.onConfigurationChanged(Configuration(it.resources.configuration)) }
+            awaitTitle(title)
+        }
+    }
+
+    // The timers' channels are renamed in the language taken at once, so the system's settings show them in it.
+    @Test
+    fun theTimersChannelsFollowTheChoiceAtOnce() {
+        launch()
+        awaitTitle("My recipe book")
+        assertEquals(setOf("Timer ended", "Running timers"), channelNames())
+        choose(LanguageChoice.RUSSIAN)
+        awaitTitle("Моя книга рецептов")
+        assertEquals(setOf("Таймер закончился", "Идущие таймеры"), channelNames())
+        choose(LanguageChoice.DEVICE)
+        awaitTitle("My recipe book")
+        assertEquals(setOf("Timer ended", "Running timers"), channelNames())
+    }
+
+    // Upgraded from Android 12, a choice the preferences file kept moves to the platform once; one the platform
+    // already holds stands.
+    @Test
+    fun aChoiceKeptBeforeAndroid13MovesToThePlatformOnce() {
+        val preferences = app.getSharedPreferences("reading", Context.MODE_PRIVATE)
+        preferences.edit().putString("interface-language", "ru").commit()
+        AppLanguage.moveIntoPlatform(app)
+        assertEquals(LocaleList.forLanguageTags("ru"), platform().applicationLocales)
+        assertFalse(preferences.contains("interface-language"))
+        preferences.edit().putString("interface-language", "ru").commit()
+        platform().applicationLocales = LocaleList.forLanguageTags("en")
+        AppLanguage.moveIntoPlatform(app)
+        assertEquals(LocaleList.forLanguageTags("en"), platform().applicationLocales)
+        assertFalse(preferences.contains("interface-language"))
     }
 
     // The system's per-app language settings (Android 13 and later) list the same two languages the interface speaks.
