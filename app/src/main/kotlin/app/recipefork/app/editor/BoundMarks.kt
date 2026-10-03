@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +40,8 @@ import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.scaling.QuantityText
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * The mark of a part the author left below DOM-006's minimum or over a limit of DOM-012 (FLOW-028), if [part] carries
@@ -73,7 +77,7 @@ internal fun BoundMark(editor: RecipeEditor, part: RecipePart, tag: String, gap:
  * edge of the screen. The modifier goes on the mark.
  */
 @Composable
-private fun keepingTheFocusedFieldInPlace(gap: Dp): Modifier {
+internal fun keepingTheFocusedFieldInPlace(gap: Dp): Modifier {
     val scroll = LocalEditorScroll.current
     val gapPx = with(LocalDensity.current) { gap.toPx() }
     val placed = remember { mutableStateOf<LayoutCoordinates?>(null) }
@@ -88,6 +92,44 @@ private fun keepingTheFocusedFieldInPlace(gap: Dp): Modifier {
         }
     }
     return Modifier.onPlaced { placed.value = it }
+}
+
+/**
+ * Something shown above the field the author is in that goes away — a hint — would pull that field up by its height;
+ * once the editor is laid out without it, the editor scrolls back by as much. Its [modifier] goes on the thing, and
+ * [went] is called as it is taken away.
+ */
+internal class Going(private val scroll: EditorScroll?, private val scope: CoroutineScope) {
+    private var top = 0f
+    private var height = 0
+
+    val modifier: Modifier = Modifier.onGloballyPositioned {
+        top = it.positionInRoot().y
+        height = it.size.height
+    }
+
+    fun went() {
+        val scroll = scroll ?: return
+        val stood = top
+        val tall = height
+        if (tall == 0) return
+        height = 0
+        scope.launch {
+            // Once the frame it went in has been laid out, focus moved included.
+            withFrameNanos {}
+            withFrameNanos {}
+            val focused = scroll.focused?.takeIf { it.isAttached } ?: return@launch
+            if (stood <= focused.positionInRoot().y) scroll.state.dispatchRawDelta(-tall.toFloat())
+        }
+    }
+}
+
+/** A [Going] in the editor the composition is in. */
+@Composable
+internal fun rememberGoing(): Going {
+    val scroll = LocalEditorScroll.current
+    val scope = rememberCoroutineScope()
+    return remember(scroll, scope) { Going(scroll, scope) }
 }
 
 /** What the mark of [part] says while it stands at [bound]. */

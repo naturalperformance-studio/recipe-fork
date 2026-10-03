@@ -115,6 +115,9 @@ fun EditorScreen(
     // The row keys outlive the activity being recreated, as the state the rows saved under them does.
     val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
     val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    // Not saved: what the editor holds for this session alone — the references offered once (GUIDE-008) among it —
+    // starts again after the activity is recreated or the process restored, which is intended, nothing of a hint
+    // being kept (GUIDE-005).
     val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys) }
     // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
     // touched from a database thread.
@@ -542,6 +545,8 @@ object EditorTags {
     fun stepHandleIcon(position: Int) = "editor-step-$position-handle-icon"
     fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"
     fun stepInsert(position: Int) = "editor-step-$position-insert-ingredient"
+    /** The note offering references under the first step as it is begun (GUIDE-008). */
+    fun stepReferencesOffered(position: Int) = "editor-step-$position-references-offered"
     fun stepPhoto(position: Int) = "editor-step-$position-photo"
     fun stepPhotoTake(position: Int) = "editor-step-$position-photo-take"
     fun stepPhotoChoose(position: Int) = "editor-step-$position-photo-choose"
@@ -557,6 +562,11 @@ object EditorTags {
     fun timerMinutes(position: Int) = "editor-step-$position-timer-minutes"
     fun timerName(position: Int) = "editor-step-$position-timer-name"
     fun timerNameFollows(position: Int) = "editor-step-$position-timer-name-follows"
+    /** What a step's unnamed timer will announce itself by, shown once the step is left (GUIDE-006). */
+    fun timerNotification(position: Int) = "editor-step-$position-timer-notification"
+    fun timerNotificationText(position: Int) = "editor-step-$position-timer-notification-text"
+    fun timerNotificationFollows(position: Int) = "editor-step-$position-timer-notification-follows"
+    fun timerNotificationName(position: Int) = "editor-step-$position-timer-notification-name"
     fun timerDuration(position: Int) = "editor-step-$position-timer-duration"
     /** The tooltip a block's action tagged [action] shows on a long press. */
     fun tooltip(action: String) = "$action-tooltip"
