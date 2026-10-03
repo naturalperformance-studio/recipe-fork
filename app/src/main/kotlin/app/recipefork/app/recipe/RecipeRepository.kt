@@ -57,15 +57,17 @@ open class RecipeRepository(
     fun marked(): Flow<List<MarkedRecipeRow>> = book.open.flatMapLatest { it.database.favourites().marked() }
 
     /**
-     * The own recipes of the active book as their view lists them for each of [params] (FLOW-035): searched by title
-     * and ingredient, with the ingredient names of [dictionary], filtered by ingredient and tags, and ordered. Worked out where the book's queries
+     * The own recipes of the active book as their view lists them for each of [params] (FLOW-035): searched by title,
+     * description and ingredient, with the ingredient names of [dictionary], filtered by ingredient, tags and language, and ordered. Worked out where the book's queries
      * run, never on the main thread.
      */
     fun ownListed(
         params: Flow<ListingParams>,
         dictionary: suspend () -> List<IngredientEntryEntity>,
     ): Flow<Listed<OwnRecipeRow>> =
-        listed(params, { it.recipes().own() }) { BookSearch(dictionary, OwnRecipeRow::recipeId, OwnRecipeRow::title) }
+        listed(params, { it.recipes().own() }) {
+            BookSearch(dictionary, OwnRecipeRow::recipeId, OwnRecipeRow::title, OwnRecipeRow::language, OwnRecipeRow::description)
+        }
 
     /** What is marked in the active book as its view lists it for each of [params], as [ownListed] does. */
     fun markedListed(
@@ -73,7 +75,10 @@ open class RecipeRepository(
         dictionary: suspend () -> List<IngredientEntryEntity>,
     ): Flow<Listed<MarkedRecipeRow>> =
         listed(params, { it.favourites().marked() }) {
-            BookSearch(dictionary, MarkedRecipeRow::recipeId, MarkedRecipeRow::title)
+            BookSearch(
+                dictionary, MarkedRecipeRow::recipeId, MarkedRecipeRow::title,
+                MarkedRecipeRow::language, MarkedRecipeRow::description,
+            )
         }
 
     private fun <R> listed(

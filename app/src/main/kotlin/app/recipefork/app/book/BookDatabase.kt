@@ -93,7 +93,7 @@ abstract class BookRecipeDao {
      */
     @Query(
         "select r.recipe_id as recipe_id, r.title as title, r.state as state, r.sent as sent, " +
-            "$COVER_OF_R as cover_id from recipe r " +
+            "$COVER_OF_R as cover_id, r.language as language, r.description as description from recipe r " +
             "where r.recipe_id not in (select recipe_id from favourite) " +
             "order by r.content_changed_at desc, r.recipe_id limit :limit",
     )
@@ -291,7 +291,8 @@ interface FavouriteDao {
      */
     @Query(
         "select f.recipe_id as recipe_id, coalesce(r.title, f.title) as title, r.stated_author as stated_author, " +
-            "r.recipe_id is not null as held, $COVER_OF_R as cover_id " +
+            "r.recipe_id is not null as held, $COVER_OF_R as cover_id, r.language as language, " +
+            "coalesce(r.description, '') as description " +
             "from favourite f left join recipe r on r.recipe_id = f.recipe_id " +
             "order by f.added_at desc, f.recipe_id",
     )

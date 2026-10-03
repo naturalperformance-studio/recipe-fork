@@ -84,5 +84,13 @@
     <string name="library_filter_tags_none">The tag dictionary holds no tags yet.</string>
     <string name="library_filter_done">Done</string>
     <string name="library_filter_cancel">Cancel</string>
+    <!-- The filter by a recipe's declared language (L10N-005). -->
+    <string name="library_filter_language">Language</string>
+    <string name="library_filter_language_title">Filter by language</string>
+    <string name="library_filter_language_hint">Recipes written in it are listed.</string>
+    <string name="library_filter_language_ru">Russian</string>
+    <string name="library_filter_language_en">English</string>
+    <string name="library_filter_language_none">Not given</string>
+    <string name="library_filter_language_none_chip">Language not given</string>
     <string name="library_nothing_matches">No recipe matches the filters</string>
 </resources>
