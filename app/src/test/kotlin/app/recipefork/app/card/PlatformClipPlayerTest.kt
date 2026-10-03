@@ -10,6 +10,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.coroutines.runBlocking
+import android.graphics.SurfaceTexture
+import android.view.Surface
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowMediaPlayer
@@ -44,7 +47,7 @@ class PlatformClipPlayerTest {
     @Test
     fun aClipPlaysMutedAndLoopingWithoutAudioFocus() {
         ShadowMediaPlayer.addMediaInfo(source, ShadowMediaPlayer.MediaInfo(4_000, 0))
-        player.open(file, listener)
+        runBlocking { player.open(file, listener) }
         idle()
         assertEquals(listOf("ready"), heard)
         assertEquals(0f, shadowOf(media).leftVolume)
@@ -70,7 +73,7 @@ class PlatformClipPlayerTest {
     @Test
     fun aClipAskedToPlayEarlyPlaysOnceRead() {
         ShadowMediaPlayer.addMediaInfo(source, ShadowMediaPlayer.MediaInfo(4_000, 0))
-        player.open(file, listener)
+        runBlocking { player.open(file, listener) }
         player.play()
         idle()
         assertEquals(ShadowMediaPlayer.State.STARTED, shadowOf(media).state)
@@ -80,7 +83,7 @@ class PlatformClipPlayerTest {
     @Test
     fun aFileThatCannotBeOpenedIsUnplayable() {
         ShadowMediaPlayer.addException(source, IOException("not a clip"))
-        player.open(file, listener)
+        runBlocking { player.open(file, listener) }
         idle()
         assertEquals(listOf("failed"), heard)
         player.play()
@@ -91,11 +94,31 @@ class PlatformClipPlayerTest {
     @Test
     fun aClipThatFailsWhilePlayingIsUnplayable() {
         ShadowMediaPlayer.addMediaInfo(source, ShadowMediaPlayer.MediaInfo(4_000, 0))
-        player.open(file, listener)
+        runBlocking { player.open(file, listener) }
         idle()
         player.play()
         shadowOf(media).invokeErrorListener(MediaPlayer.MEDIA_ERROR_UNKNOWN, 0)
         assertEquals(listOf("ready", "failed"), heard)
         player.release()
+    }
+
+    // Read before there was a surface, a paused clip draws its frame once one arrives (animations off).
+    @Test
+    fun aPausedClipDrawsItsFrameWhenTheSurfaceArrives() {
+        ShadowMediaPlayer.addMediaInfo(source, ShadowMediaPlayer.MediaInfo(4_000, 0))
+        runBlocking { player.open(file, listener) }
+        idle()
+        var seeks = 0
+        media.setOnSeekCompleteListener { seeks++ }
+        val surface = Surface(SurfaceTexture(0))
+        player.surface(surface)
+        idle()
+        assertEquals(1, seeks)
+        // The same surface again draws nothing anew; a playing clip draws itself.
+        player.surface(surface)
+        idle()
+        assertEquals(1, seeks)
+        player.release()
+        surface.release()
     }
 }

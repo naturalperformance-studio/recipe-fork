@@ -7,7 +7,9 @@ import android.media.MediaPlayer
 import android.provider.Settings
 import android.view.Surface
 import android.view.TextureView
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -16,7 +18,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import java.io.File
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withContext
 
 /**
  * Plays one clip, always without sound (MEDIA-004): it never raises its volume above zero and never asks the system
@@ -45,8 +50,11 @@ import java.io.File
  * started. The card's own player is [PlatformClipPlayer]; the tests provide one of their own through [LocalClipPlayers].
  */
 internal interface ClipPlayer {
-    /** Starts reading [file]; [listener] hears once whether it can be shown, and later if it stops being playable. */
-    fun open(file: File, listener: Listener)
+    /**
+     * Starts reading [file], opening it off the main thread; [listener] hears once whether it can be shown, and later
+     * if it stops being playable.
+     */
+    suspend fun open(file: File, listener: Listener)
 
     /** Where the picture is drawn; null while there is nowhere to draw it. */
     fun surface(surface: Surface?)
@@ -82,8 +90,9 @@ internal class PlatformClipPlayer(private val player: MediaPlayer = MediaPlayer(
     private var prepared = false
     private var playing = false
     private var released = false
+    private var hasSurface = false
 
-    override fun open(file: File, listener: ClipPlayer.Listener) {
+    override suspend fun open(file: File, listener: ClipPlayer.Listener) {
         try {
             player.setVolume(0f, 0f)
             player.isLooping = true
@@ -99,8 +108,12 @@ internal class PlatformClipPlayer(private val player: MediaPlayer = MediaPlayer(
                 if (!released) listener.failed()
                 true
             }
-            player.setDataSource(file.path)
+            // Reading the file is the disc's work, not the main thread's; the player is let go of only once it is done.
+            withContext(Dispatchers.IO) { player.setDataSource(file.path) }
+            if (released) return
             player.prepareAsync()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // A file the framework cannot open is one it cannot play, never a crash.
             listener.failed()
@@ -111,6 +124,10 @@ internal class PlatformClipPlayer(private val player: MediaPlayer = MediaPlayer(
         if (released) return
         try {
             player.setSurface(surface)
+            val arrived = surface != null && !hasSurface
+            hasSurface = surface != null
+            // Read before there was anywhere to draw, a paused clip draws its frame now rather than staying blank.
+            if (arrived && prepared && !player.isPlaying) player.seekTo(player.currentPosition)
         } catch (e: IllegalStateException) {
             // A player that failed has no picture to draw.
         }
@@ -138,11 +155,13 @@ internal fun animationsOff(context: Context): Boolean =
     Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 
 /**
- * A step's clip on the card: muted and looping while it is on screen and the card is in front, paused once scrolled
- * off or once the card leaves, and let go of when the card is gone (MEDIA-004). A 56 dp control under it pauses and
- * plays it again (A11Y-007, WCAG 2.2.2); nothing offers sound. With the system's animations off it does not start by
- * itself but shows its first frame, with the control offering to play. [description] names it for the screen reader
- * as the author's video (A11Y-001); a clip that cannot be played shows [unavailable] instead.
+ * A step's clip on the card: muted and looping while it is on screen and the card is in front, paused once the card
+ * leaves (MEDIA-004). It holds a player only while on screen — one is made as it comes into view and let go of as it
+ * leaves, or as the card goes — so a recipe of many clips holds no more players than the screen shows. A 56 dp control
+ * under it pauses and plays it again (A11Y-007, WCAG 2.2.2), and that choice holds across its leaving and coming back;
+ * nothing offers sound. With the system's animations off it does not start by itself but shows its first frame, with
+ * the control offering to play. [description] names it for the screen reader as the author's video (A11Y-001); a clip
+ * that cannot be played shows [unavailable] instead, and is tried again when it next comes into view.
  */
 @Composable
 internal fun StepVideo(
@@ -157,59 +176,90 @@ internal fun StepVideo(
 ) {
     val players = LocalClipPlayers.current
     val context = LocalContext.current
+    // The clip's size, once a player has read it, kept while it is away so that its space does not jump.
     var size by remember(file) { mutableStateOf<IntSize?>(null) }
     var failed by remember(file) { mutableStateOf(false) }
-    val player = remember(file, players) { players.create() }
-    DisposableEffect(player) {
-        player.open(
-            file,
-            object : ClipPlayer.Listener {
-                override fun ready(width: Int, height: Int) {
-                    size = IntSize(width, height)
-                }
+    var visible by remember { mutableStateOf(false) }
+    var player by remember(file) { mutableStateOf<ClipPlayer?>(null) }
+    var ready by remember(file) { mutableStateOf<ClipPlayer?>(null) }
+    // The state as this composition saw it, not as it may stand once the effect runs.
+    val inView = visible
+    LaunchedEffect(file, players, inView) {
+        if (!inView) return@LaunchedEffect
+        val made = players.create()
+        failed = false
+        player = made
+        try {
+            made.open(
+                file,
+                object : ClipPlayer.Listener {
+                    override fun ready(width: Int, height: Int) {
+                        if (player !== made) return
+                        size = IntSize(width, height)
+                        ready = made
+                    }
 
-                override fun failed() {
-                    failed = true
-                }
-            },
-        )
-        onDispose { player.release() }
+                    override fun failed() {
+                        if (player === made) failed = true
+                    }
+                },
+            )
+            awaitCancellation()
+        } finally {
+            made.release()
+            if (player === made) player = null
+            if (ready === made) ready = null
+        }
     }
     // The reader's own choice, kept across a turn of the phone; it starts by itself only with animations on.
     var wanted by rememberSaveable(file.path) { mutableStateOf(!animationsOff(context)) }
-    var visible by remember { mutableStateOf(false) }
     var resumed by remember { mutableStateOf(false) }
-    LifecycleResumeEffect(player) {
+    LifecycleResumeEffect(Unit) {
         resumed = true
         onPauseOrDispose { resumed = false }
     }
-    val playing = wanted && visible && resumed && size != null && !failed
-    LaunchedEffect(player, playing) { if (playing) player.play() else player.pause() }
-
-    if (failed) {
-        unavailable()
-        return
+    val current = player
+    val playing = wanted && visible && resumed && current != null && ready === current && !failed
+    LaunchedEffect(current, playing) {
+        // A player already let go of, as its clip left the screen, is asked nothing more.
+        if (current == null || player !== current) return@LaunchedEffect
+        if (playing) current.play() else current.pause()
     }
-    val shown = size
-    val ratio = if (shown == null || shown.width <= 0 || shown.height <= 0) 16f / 9f else maxOf(shown.width.toFloat() / shown.height, 1f)
-    Column(modifier.fillMaxWidth()) {
-        AndroidView(
-            factory = { ClipView(it, player) },
-            update = { it.videoSize = shown },
-            modifier = Modifier
+
+    Column(
+        modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
+            // Clipped by the card's scrolling: nothing of it left in view is off screen.
+            val bounds = coordinates.boundsInWindow()
+            visible = bounds.width > 0f && bounds.height > 0f
+        },
+    ) {
+        if (failed) {
+            unavailable()
+            return@Column
+        }
+        val shown = size
+        val ratio = if (shown == null || shown.width <= 0 || shown.height <= 0) 16f / 9f else maxOf(shown.width.toFloat() / shown.height, 1f)
+        Box(
+            Modifier
                 .fillMaxWidth()
                 .aspectRatio(ratio)
-                .onGloballyPositioned { coordinates ->
-                    // Clipped by the card's scrolling: nothing of it left in view is off screen.
-                    val bounds = coordinates.boundsInWindow()
-                    visible = bounds.width > 0f && bounds.height > 0f
-                }
                 .semantics {
                     contentDescription = description
                     role = Role.Image
                 }
                 .testTag(videoTag),
-        )
+        ) {
+            if (current != null) {
+                AndroidView(
+                    factory = { ClipView(it) },
+                    update = {
+                        it.player = current
+                        it.videoSize = shown
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
         val action = if (wanted) pauseAction else playAction
         OutlinedButton(
             onClick = { wanted = !wanted },
@@ -228,8 +278,16 @@ internal fun StepVideo(
  * The surface a clip is drawn on: filling its width, a landscape clip shown whole and a taller one cropped to a square
  * about its centre, as a photograph is.
  */
-private class ClipView(context: Context, private val player: ClipPlayer) : TextureView(context), TextureView.SurfaceTextureListener {
+private class ClipView(context: Context) : TextureView(context), TextureView.SurfaceTextureListener {
     private var surface: Surface? = null
+
+    /** The player drawing here; a new one is given the surface at once, if there is one. */
+    var player: ClipPlayer? = null
+        set(value) {
+            if (value === field) return
+            field = value
+            surface?.let { value?.surface(it) }
+        }
 
     var videoSize: IntSize? = null
         set(value) {
@@ -256,13 +314,13 @@ private class ClipView(context: Context, private val player: ClipPlayer) : Textu
     }
 
     override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
-        surface = Surface(texture).also { player.surface(it) }
+        surface = Surface(texture).also { player?.surface(it) }
     }
 
     override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) = Unit
 
     override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {
-        player.surface(null)
+        player?.surface(null)
         surface?.release()
         surface = null
         return true

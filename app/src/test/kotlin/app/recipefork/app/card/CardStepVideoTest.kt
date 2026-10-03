@@ -62,7 +62,7 @@ internal class FakeClipPlayer(private val fails: Boolean) : ClipPlayer {
     var released = false
     private var listener: ClipPlayer.Listener? = null
 
-    override fun open(file: File, listener: ClipPlayer.Listener) {
+    override suspend fun open(file: File, listener: ClipPlayer.Listener) {
         this.file = file
         this.listener = listener
         if (fails) listener.failed() else listener.ready(1280, 720)
@@ -158,9 +158,13 @@ class CardStepVideoTest {
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
-    private fun player() = players.made.single()
+    /** The player made last: the one the clip holds, or held last. */
+    private fun player() = players.made.last()
 
-    private fun awaitPlaying(playing: Boolean) = compose.waitUntil(PATIENCE_MS) { players.made.singleOrNull()?.playing == playing }
+    /** Waits until a live player plays the clip, or until none plays it. */
+    private fun awaitPlaying(playing: Boolean) = compose.waitUntil(PATIENCE_MS) {
+        if (playing) players.made.lastOrNull()?.let { !it.released && it.playing } == true else players.made.none { it.playing }
+    }
 
     private fun textOf(tag: String) =
         compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
@@ -242,8 +246,8 @@ class CardStepVideoTest {
         // The card goes: a change of state the test makes is seen once the composition is next idle.
         shown = false
         compose.waitForIdle()
-        compose.waitUntil(PATIENCE_MS) { player().released }
-        assertFalse(player().playing)
+        compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
+        assertFalse(players.made.any { it.playing })
         assertFalse(exists(CardTags.stepVideo(1)))
     }
 
@@ -303,7 +307,7 @@ class CardStepVideoTest {
         // The card goes: a change of state the test makes is seen once the composition is next idle.
         shown = false
         compose.waitForIdle()
-        compose.waitUntil(PATIENCE_MS) { player().released }
+        compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
     }
 
     // Layout holds at 360 dp and twice the font size: the control is the card's target and inside the card, the line
@@ -360,6 +364,65 @@ class CardStepVideoTest {
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepVideo(1)), PATIENCE_MS)
         awaitPlaying(true)
         assertEquals(store.file(BookName.Pool, imported.stepMedia(1)!!.mediaId), player().file)
+    }
+
+    private fun onScreen(tag: String): Boolean {
+        // Bounds clipped by the card's scrolling: nothing of it left means off screen.
+        return compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().any { node ->
+            node.boundsInWindow.let { it.height > 0f && it.width > 0f }
+        }
+    }
+
+    private fun live() = players.made.filterNot { it.released }.map { it.file!!.name }.toSet()
+
+    /** The clips any part of which — the picture or its control — is on screen. */
+    private fun visibleClips(count: Int) =
+        (0 until count).filter { onScreen(CardTags.stepVideo(it)) || onScreen(CardTags.stepVideoControl(it)) }.map { "c$it" }.toSet()
+
+    // MEDIA-004: only the clips on screen hold a player; one scrolled off lets its player go, one scrolled in gets one.
+    @Test
+    fun onlyTheClipsOnScreenHoldAPlayer() {
+        val count = 8
+        show(steps(count, *(0 until count).map { clip("c$it", it) }.toTypedArray()))
+        compose.waitUntil(PATIENCE_MS) { live().isNotEmpty() && live() == visibleClips(count) }
+        val first = live()
+        assertTrue("c0" in first)
+        assertTrue(first.size < count)
+
+        compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.stepVideoControl(count - 1)))
+        compose.waitUntil(PATIENCE_MS) {  live().isNotEmpty() && live() == visibleClips(count) }
+        assertTrue("c${count - 1}" in live())
+        assertTrue("c0" !in live())
+        assertTrue(players.made.filter { it.file!!.name == "c0" }.all { it.released })
+
+        compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.stepVideo(0)))
+        compose.waitUntil(PATIENCE_MS) { "c0" in live() && live() == visibleClips(count) }
+    }
+
+    // A clip that failed is tried again when it next comes into view, and the reader's pause holds across.
+    @Test
+    fun aClipThatFailedIsTriedAgainWhenItComesBackIntoView() {
+        players.fails = true
+        show(steps(30, clip("c1", 0)))
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepMediaUnavailable(0)), PATIENCE_MS)
+        players.fails = false
+        compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.step(29)))
+        compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
+        compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.step(0)))
+        compose.waitUntil(PATIENCE_MS) { players.made.lastOrNull()?.let { !it.released && it.playing } == true }
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepVideoControl(0)), PATIENCE_MS)
+
+        // Paused by the reader, scrolled away and back: still paused.
+        compose.onNodeWithTag(CardTags.stepVideoControl(0)).performClick()
+        compose.waitUntil(PATIENCE_MS) { players.made.last().playing.not() }
+        compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.step(29)))
+        compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
+        val made = players.made.size
+        compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.stepVideo(0)))
+        compose.waitUntil(PATIENCE_MS) { players.made.size > made && !players.made.last().released }
+        compose.waitForIdle()
+        assertFalse(players.made.last().playing)
+        assertEquals("Play video", controlText(0))
     }
 
     // A frozen recipe shows its clip as any other.
