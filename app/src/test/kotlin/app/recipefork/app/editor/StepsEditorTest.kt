@@ -407,7 +407,7 @@ class StepsEditorTest {
                 assertEquals("$state", listOf("Описание", "Тонкие блины.\nНа молоке."), compose.textsOf(EditorTags.DESCRIPTION))
                 assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
                 val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-                assertEquals("$state", listOf(EditorTags.BACK), actions.map { it.config[SemanticsProperties.TestTag] })
+                assertEquals("$state", listOf(EditorTags.BACK, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
                 compose.onNodeWithTag(EditorTags.STEP_ADD).assertDoesNotExist()
                 compose.onNodeWithTag(EditorTags.stepRemove(0)).assertDoesNotExist()
                 assertEquals("$state", recipe, stored(recipe.id))
