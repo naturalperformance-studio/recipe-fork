@@ -26,6 +26,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,6 +37,7 @@ import java.util.Locale
 val FLAGGED_ENTRIES = listOf(
     IngredientEntryEntity(10, "курица", "chicken", null, divisible = true),
     IngredientEntryEntity(11, "крылышки", "chicken wings", 10, divisible = false),
+    IngredientEntryEntity(12, "курица копчёная", "smoked chicken", 10, divisible = false),
     IngredientEntryEntity(30, "мясо", "meat", null),
 )
 
@@ -124,6 +126,41 @@ class EntryRowsCarryTest {
             assertEquals(listOf(11L, null, null), read.ingredients.map { it.dictionaryEntry })
             assertEquals(listOf("острые", null, null), read.ingredients.map { it.qualifier })
             assertEquals("крылыш острые", read.ingredients[2].freeTextName)
+            // Another entry picked is another name: the qualifier goes.
+            val picked = written(recipes) {
+                addIngredient()
+                setIngredientEntry(0, 11)
+                setIngredientQualifier(0, ", острые")
+                assertEquals("острые", recipe.value!!.ingredients.single().qualifier)
+                setIngredientEntry(0, 10)
+            }
+            assertEquals(10L to null, picked.ingredients.single().let { it.dictionaryEntry to it.qualifier })
+        } finally {
+            database.close()
+        }
+    }
+
+    // An unchanged qualifier is no change: nothing written, the recipe's change time untouched.
+    @Test
+    fun anUnchangedQualifierChangesNothing() = runBlocking {
+        val database = BookDatabase.open(context, book)
+        try {
+            val recipes = RecipeRepository(ActiveBook(book, database))
+            val recipe = Recipe.create(now, null)
+            recipes.save(recipe)
+            var clock = now
+            val editor = RecipeEditor(recipes, recipe.id, { clock }, CoroutineScope(Dispatchers.Unconfined))
+            editor.load()
+            editor.addIngredient()
+            editor.setIngredientEntry(0, 11)
+            editor.setIngredientQualifier(0, "острые")
+            val before = editor.recipe.value
+            clock = now.plusSeconds(60)
+            editor.setIngredientQualifier(0, " острые ")
+            assertSame(before, editor.recipe.value)
+            // Every write is in the book before it is closed.
+            RecipeEditor(recipes, recipe.id, { now }, CoroutineScope(Dispatchers.Unconfined)).load()
+            assertEquals(now, recipes.get(recipe.id)!!.contentChangedAt)
         } finally {
             database.close()
         }

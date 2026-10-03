@@ -610,11 +610,15 @@ class RecipeEditor(
 
     /**
      * The words the author typed after the label of the row's entry, which narrow it ("крылышки острые"): kept beside
-     * the entry, trimmed; none holds no qualifier (DOM-009). A row in the author's own words takes none; returns false.
+     * the entry without the spaces and commas that separate them from the label; none holds no qualifier (DOM-009).
+     * A row in the author's own words takes none; returns false. The qualifier the row already holds changes nothing.
      */
     fun setIngredientQualifier(position: Int, qualifier: String?): Boolean {
-        if (current.value?.ingredients?.getOrNull(position)?.dictionaryEntry == null) return false
-        return editIngredient(position) { it.copy(qualifier = qualifier?.trim()?.ifEmpty { null }) }
+        val row = current.value?.ingredients?.getOrNull(position) ?: return false
+        if (row.dictionaryEntry == null) return false
+        val held = qualifier?.trim { it.isWhitespace() || it == ',' }?.ifEmpty { null }
+        if (held == row.qualifier) return true
+        return editIngredient(position) { it.copy(qualifier = held) }
     }
 
     companion object {

@@ -423,14 +423,22 @@ internal data class Qualified(val qualifier: String?)
 
 /**
  * What [text] typed into the field of a row named by the entry labelled [label] keeps of it (DOM-009): the label alone
- * keeps the entry with no qualifier; the label, a space and words keeps it with those words as its qualifier; null
- * once the label itself is edited, which makes the row the author's own words.
+ * keeps the entry with no qualifier; the label, then a space or a comma and words, keeps it with those words — without
+ * the separators — as its qualifier; null once the label itself is edited, which makes the row the author's own words.
  */
-internal fun qualifierTyped(text: String, label: String): Qualified? = when {
-    text == label -> Qualified(null)
-    text.startsWith("$label ") -> Qualified(text.substring(label.length).trim().ifEmpty { null })
-    else -> null
+internal fun qualifierTyped(text: String, label: String): Qualified? {
+    if (!text.startsWith(label)) return null
+    val rest = text.substring(label.length)
+    if (rest.isNotEmpty() && !rest.first().let { it.isWhitespace() || it == ',' }) return null
+    return Qualified(rest.trim { it.isWhitespace() || it == ',' }.ifEmpty { null })
 }
+
+/**
+ * The offerable entry, other than the one [row] names, whose label in either language is exactly [text] as FLOW-057
+ * folds it: a qualifier is no substitute for the entry that is named whole (FLOW-023 (3), FLOW-057 (7)).
+ */
+private fun otherEntryNamed(text: String, row: Ingredient, dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): IngredientEntryEntity? =
+    dictionary?.let { IngredientOffer.of(text, it, language).exact }?.takeIf { it.id != row.dictionaryEntry }
 
 /**
  * The row's ingredient. What the author types is held as their own words at once, so leaving the editor loses
@@ -465,8 +473,14 @@ private fun IngredientNameField(
         OutlinedTextField(
             value = shown,
             onValueChange = { text ->
-                val kept = held().entryLabelIn(dictionary, language)?.let { qualifierTyped(text, it) }
-                if (kept != null) {
+                val latest = held()
+                val kept = latest.entryLabelIn(dictionary, language)?.let { qualifierTyped(text, it) }
+                val other = if (kept != null) otherEntryNamed(text, latest, dictionary, language) else null
+                if (other != null) {
+                    // "chicken" typed on to "chicken wings" names chicken wings, not chicken qualified by "wings".
+                    typed = text
+                    editor.setIngredientEntry(position, other.id)
+                } else if (kept != null) {
                     typed = text
                     editor.setIngredientQualifier(position, kept.qualifier)
                 } else {
@@ -493,9 +507,13 @@ private fun IngredientNameField(
                         offering = false
                         typed = null
                         val latest = held()
-                        val typed = latest.freeTextName
-                        if (latest.dictionaryEntry == null && typed != null && dictionary != null) {
-                            IngredientOffer.of(typed, dictionary, language).exact?.let { editor.setIngredientEntry(position, it.id) }
+                        val written = latest.freeTextName
+                        if (latest.dictionaryEntry == null && written != null && dictionary != null) {
+                            IngredientOffer.of(written, dictionary, language).exact?.let { editor.setIngredientEntry(position, it.id) }
+                        } else if (latest.qualifier != null) {
+                            // A label and a qualifier that together are another entry's label name that entry.
+                            otherEntryNamed(latest.fieldNameIn(dictionary, language), latest, dictionary, language)
+                                ?.let { editor.setIngredientEntry(position, it.id) }
                         }
                     }
                     focused = state.isFocused

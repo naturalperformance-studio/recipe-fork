@@ -15,6 +15,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
@@ -40,6 +41,7 @@ import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
@@ -120,8 +122,9 @@ class EntryRowEditorTest {
         return RecipeId(requireNotNull(session.editing.value))
     }
 
-    private fun openSeeded(vararg rows: Ingredient, fontScale: Float = 1f): RecipeId {
-        val recipe = Recipe.create(created, null).copy(title = "Крылья", servings = 2, ingredients = rows.toList())
+    private fun openSeeded(vararg rows: Ingredient, fontScale: Float = 1f, state: RecipeState? = null): RecipeId {
+        var recipe = Recipe.create(created, null).copy(title = "Крылья", servings = 2, ingredients = rows.toList())
+        if (state != null) recipe = recipe.inState(state)
         runBlocking { recipes.save(recipe) }
         show(fontScale)
         compose.runOnIdle { opened.value = recipe.id }
@@ -231,8 +234,13 @@ class EntryRowEditorTest {
     @Config(qualifiers = "en")
     fun aDraftOffItsEntrysGridIsMarked() {
         val id = openSeeded(Ingredient(0, 11, null, null, UnitType.PIECE, QuantityUnit.PIECE, Rational.of(3, 2), divisible = true))
+        val seeded = stored(id)
         compose.waitUntil(PATIENCE_MS) { errorText(0) == string(R.string.editor_quantity_accepts_whole_pieces) }
         assertFalse(exists(EditorTags.divisibility(0)))
+        // Opening writes nothing: the row keeps what it held until the author changes something.
+        compose.waitForIdle()
+        assertEquals(seeded, stored(id))
+        assertEquals(true, row(id).divisible)
         // The next change has the row hold its entry's flag.
         quantity(0, "1.5")
         compose.waitUntil(PATIENCE_MS) { row(id).divisible == false }
@@ -263,6 +271,63 @@ class EntryRowEditorTest {
         compose.awaitCard()
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.ingredient(0)), PATIENCE_MS)
         compose.waitUntil(PATIENCE_MS) { "крылышки, острые" in compose.textsOf(CardTags.ingredient(0)) }
+    }
+
+    // FLOW-023 (3, 11), FLOW-057 (7): typed past an entry's label, a text that is exactly another entry's label names
+    // that entry — no qualifier — and takes its grid: "chicken" made "chicken wings" holds whole pieces only.
+    @Test
+    @Config(qualifiers = "en")
+    fun anotherEntrysWholeLabelNamesThatEntry() {
+        val id = openSeeded(Ingredient(0, 10, null, null, UnitType.PIECE, QuantityUnit.PIECE, null, divisible = true))
+        compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "chicken" }
+        type(0, "chicken wings")
+        quantity(0, "1.5")
+        val held = row(id)
+        assertEquals(11L, held.dictionaryEntry)
+        assertNull(held.qualifier)
+        assertEquals(false, held.divisible)
+        compose.waitUntil(PATIENCE_MS) { errorText(0) == string(R.string.editor_quantity_accepts_whole_pieces) }
+        assertEquals("chicken wings", fieldText(EditorTags.ingredientName(0)))
+    }
+
+    // The same in Russian, the label matched as FLOW-057 folds it (`ё` as `е`).
+    @Test
+    @Config(qualifiers = "ru")
+    fun anotherEntrysWholeLabelNamesThatEntryInRussian() {
+        val id = openSeeded(Ingredient(0, 10, null, null, UnitType.PIECE, QuantityUnit.PIECE, null, divisible = true))
+        compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "курица" }
+        type(0, "курица копченая")
+        quantity(0, "1,5")
+        val held = row(id)
+        assertEquals(12L, held.dictionaryEntry)
+        assertNull(held.qualifier)
+        assertEquals(false, held.divisible)
+        compose.waitUntil(PATIENCE_MS) { errorText(0) == string(R.string.editor_quantity_accepts_whole_pieces) }
+        // Left, the field reads the entry's own label.
+        compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "курица копчёная" }
+    }
+
+    // DOM-009: a comma or spaces after the label separate the qualifier and are not kept in it.
+    @Test
+    @Config(qualifiers = "ru")
+    fun separatorsAfterTheLabelAreNotKept() {
+        val id = openSeeded(Ingredient(0, 11, null, null, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(500)))
+        compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "крылышки" }
+        type(0, "крылышки , острые")
+        assertEquals(11L to "острые", row(id).let { it.dictionaryEntry to it.qualifier })
+        type(0, "крылышки, острые")
+        assertEquals(11L to "острые", row(id).let { it.dictionaryEntry to it.qualifier })
+        assertEquals("крылышки, острые", fieldText(EditorTags.ingredientName(0)))
+        assertFalse(exists(EditorTags.ingredientWarning(0)))
+    }
+
+    // DOM-009: a frozen recipe's row reads as the field does, the entry's label then its qualifier.
+    @Test
+    @Config(qualifiers = "ru")
+    fun aFrozenRowShowsTheLabelAndTheQualifier() {
+        openSeeded(Ingredient(0, 11, "острые", null, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(500)), state = RecipeState.PUBLISHED)
+        compose.waitUntil(PATIENCE_MS) { "крылышки острые" in compose.textsOf(EditorTags.ingredient(0)) }
     }
 
     // FLOW-023 (4), DOM-009: an edit inside the label makes the row the author's own words, the qualifier dropped.
