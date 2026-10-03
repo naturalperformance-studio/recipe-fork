@@ -12,7 +12,7 @@
 3507	малое куриное филе	chicken tenders	1	false	g=1 pc=40
 3508	цыплёнок	spring chicken	1	true	g=1 pc=700
 3509	цыплёнок-корнишон	poussin	1	true	g=1 pc=450
-3510	курица суповая	boiling hen	1	true	g=1 pc=1800
+3510	курица суповая	stewing hen	1	true	g=1 pc=1800
 3511	курица копчёная	smoked chicken	1	true	g=1 pc=1200
 3512	курица гриль	rotisserie chicken	1	true	g=1 pc=1200
 3513	куриная грудка копчёная	smoked chicken breast	1	true	g=1 pc=300
@@ -21,7 +21,6 @@
 3516	куриные лапки	chicken feet	1	false	g=1 pc=40
 3517	куриная кожа	chicken skin	1		g=1
 3518	курица домашняя	free-range chicken	1	true	g=1 pc=1800
-3519	куриные ножки	chicken legs	1	false	g=1 pc=250
 
 # индейка
 3600	индейка	turkey		true	g=1 pc=5000
@@ -45,15 +44,15 @@
 3640	гусь	goose		true	g=1 pc=4000
 3641	гусиная грудка	goose breast	3640	true	g=1 pc=500
 3642	гусиные ножки	goose legs	3640	false	g=1 pc=500
-3660	перепёлка	quail		false	g=1 pc=180
+3660	перепёлка	quail		true	g=1 pc=180
 3670	цесарка	guinea fowl		true	g=1 pc=1200
-3680	голубь	pigeon		false	g=1 pc=400
+3680	голубь	pigeon		true	g=1 pc=400
 3690	страусятина	ostrich meat			g=1
 
 # печень
 3700	печень	liver			g=1
 3701	говяжья печень	beef liver	3700		g=1
-3702	телячья печень	calf's liver	3700		g=1
+3702	телячья печень	calf liver	3700		g=1
 3703	свиная печень	pork liver	3700		g=1
 3704	куриная печень	chicken liver	3700		g=1
 3705	печень индейки	turkey liver	3700		g=1
@@ -62,7 +61,7 @@
 3708	фуа-гра	foie gras	3700		g=1
 3709	печень трески	cod liver	3700		g=1
 3710	кроличья печень	rabbit liver	3700		g=1
-3711	баранья печень	lamb's liver	3700		g=1
+3711	баранья печень	lamb liver	3700		g=1
 
 # other offal
 3720	сердце	heart			g=1
@@ -81,13 +80,13 @@
 3742	свиные почки	pork kidneys	3740		g=1
 3743	бараньи почки	lamb kidneys	3740		g=1
 3744	телячьи почки	veal kidneys	3740		g=1
-3750	желудки	gizzards			g=1
+3750	желудки	stomachs			g=1
 3751	куриные желудки	chicken gizzards	3750		g=1
 3752	желудки индейки	turkey gizzards	3750		g=1
 3753	утиные желудки	duck gizzards	3750		g=1
 3754	рубец	tripe	3750		g=1
-3755	свиной желудок	pig's stomach	3750		g=1
-3760	лёгкое	lungs			g=1
+3755	свиной желудок	pork stomach	3750		g=1
+3760	лёгкие	lungs			g=1
 3761	мозги	brains			g=1
 3762	вымя	udder			g=1
 3763	костный мозг	bone marrow			g=1
@@ -96,3 +95,4 @@
 3766	гусиные потроха	goose giblets	3764		g=1
 3767	кишки свиные	hog casings			g=1
 3769	куриные хрящи	chicken cartilage			g=1
+3712	печёнка	liver (colloquial)	3700		g=1

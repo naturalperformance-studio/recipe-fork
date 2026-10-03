@@ -20,43 +20,43 @@
 # молоко
 4450	молоко	milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4451	молоко цельное	whole milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4452	молоко обезжиренное	skimmed milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4452	молоко обезжиренное	skim milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4453	молоко 1,5%	milk 1.5%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4454	молоко 2,5%	milk 2.5%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4455	молоко 3,2%	milk 3.2%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4456	молоко топлёное	baked milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4457	молоко козье	goat's milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4457	молоко козье	goat milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4458	молоко безлактозное	lactose-free milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4459	молоко сухое	milk powder	4450		g=1 tsp=3 tbsp=8 cup=120
-4460	молоко сухое обезжиренное	skimmed milk powder	4450		g=1 tsp=3 tbsp=8 cup=120
+4459	молоко сухое	powdered milk	4450		g=1 tsp=3 tbsp=8 cup=120
+4460	молоко сухое обезжиренное	nonfat dry milk	4450		g=1 tsp=3 tbsp=8 cup=120
 4461	сгущённое молоко	sweetened condensed milk	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325
 4462	варёная сгущёнка	boiled condensed milk	4450		g=1 ml=1.35 tsp=7 tbsp=20 cup=340
 4463	сгущённое молоко без сахара	evaporated milk	4450		g=1 ml=1.07 tsp=5 tbsp=16 cup=265
 4464	молоко 6%	milk 6%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4465	молоко овечье	sheep's milk	4450		g=1 ml=1.04 tsp=5 tbsp=15 cup=260
+4465	молоко овечье	sheep milk	4450		g=1 ml=1.04 tsp=5 tbsp=15 cup=260
 4466	молоко домашнее	farm milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4467	сгущёнка с какао	condensed milk with cocoa	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325
 
 # сливки
 4480	сливки	cream			g=1 ml=1 tsp=5 tbsp=15 cup=250
-4481	сливки 10%	cream 10%	4480		g=1 ml=1.01 tsp=5 tbsp=15 cup=253
-4482	сливки 20%	cream 20%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
-4483	сливки 33%	cream 33%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
-4484	сливки 35%	cream 35%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
+4481	сливки 10%	light cream 10%	4480		g=1 ml=1.01 tsp=5 tbsp=15 cup=253
+4482	сливки 20%	light cream 20%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
+4483	сливки 33%	heavy cream 33%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
+4484	сливки 35%	heavy cream 35%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
 4485	сливки для взбивания	whipping cream	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
-4486	двойные сливки	double cream	4480		g=1 ml=0.98 tsp=5 tbsp=15 cup=245
+4486	двойные сливки	extra-heavy cream	4480		g=1 ml=0.98 tsp=5 tbsp=15 cup=245
 4487	взбитые сливки	whipped cream	4480		g=1 tbsp=4 cup=60
 4488	сливки сухие	powdered cream	4480		g=1 tsp=3 tbsp=7
-4489	сливки 22%	cream 22%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
+4489	сливки 22%	light cream 22%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
 
 # сметана
-4500	сметана	sour cream			g=1 ml=1.02 tsp=6 tbsp=18 cup=245
-4501	сметана 10%	sour cream 10%	4500		g=1 ml=1.02 tsp=6 tbsp=18 cup=245
-4502	сметана 15%	sour cream 15%	4500		g=1 ml=1.02 tsp=6 tbsp=18 cup=245
-4503	сметана 20%	sour cream 20%	4500		g=1 ml=1.02 tsp=6 tbsp=18 cup=245
-4504	сметана 25%	sour cream 25%	4500		g=1 ml=1.01 tsp=6 tbsp=18 cup=245
-4505	сметана 30%	sour cream 30%	4500		g=1 ml=1 tsp=6 tbsp=18 cup=240
-4506	сметана домашняя	farm sour cream	4500		g=1 ml=1 tsp=6 tbsp=18 cup=240
+4500	сметана	sour cream			g=1 ml=1.02 tsp=5 tbsp=16 cup=245
+4501	сметана 10%	sour cream 10%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
+4502	сметана 15%	sour cream 15%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
+4503	сметана 20%	sour cream 20%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
+4504	сметана 25%	sour cream 25%	4500		g=1 ml=1.01 tsp=5 tbsp=16 cup=245
+4505	сметана 30%	sour cream 30%	4500		g=1 ml=1 tsp=5 tbsp=16 cup=240
+4506	сметана домашняя	farm sour cream	4500		g=1 ml=1 tsp=5 tbsp=16 cup=240
 4507	крем-фреш	crème fraîche	4500		g=1 ml=1 tsp=5 tbsp=15 cup=240
 
 # кефир и кисломолочное
@@ -82,13 +82,13 @@
 # йогурт
 4560	йогурт	yogurt			g=1 ml=1.03 tsp=5 tbsp=16 cup=250
 4561	йогурт натуральный	plain yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250
-4562	греческий йогурт	Greek yogurt	4560		g=1 tsp=6 tbsp=18 cup=280
+4562	греческий йогурт	Greek yogurt	4560		g=1 tsp=6 tbsp=17 cup=280
 4563	йогурт питьевой	drinking yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4564	йогурт фруктовый	fruit yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255
 4565	йогурт обезжиренный	fat-free yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250
-4566	лабне	labneh	4560		g=1 tsp=6 tbsp=18 cup=280
-4567	сузьма	suzma	4560		g=1 tsp=6 tbsp=18 cup=280
-4568	скир	skyr	4560		g=1 tsp=6 tbsp=18 cup=280
+4566	лабне	labneh	4560		g=1 tsp=6 tbsp=17 cup=280
+4567	сузьма	suzma	4560		g=1 tsp=6 tbsp=17 cup=280
+4568	скир	skyr	4560		g=1 tsp=6 tbsp=17 cup=280
 4569	йогурт ванильный	vanilla yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255
 
 # творог
@@ -100,7 +100,7 @@
 4585	творог 18%	quark 18%	4580		g=1 tsp=6 tbsp=17 cup=230
 4586	творог зернистый	cottage cheese	4580		g=1 tsp=6 tbsp=17 cup=225
 4587	творог домашний	farm quark	4580		g=1 tsp=6 tbsp=17 cup=230
-4588	творожная масса	sweet curd spread	4580		g=1 tsp=7 tbsp=20 cup=250
+4588	творожная масса	sweet curd spread	4580		g=1 tsp=6 tbsp=18 cup=250
 4589	творожный сырок	glazed curd snack	4580	false	g=1 pc=45
 4590	творог мягкий	soft quark	4580		g=1 tsp=6 tbsp=17 cup=240
 
@@ -108,8 +108,7 @@
 4600	масло сливочное	butter			g=1 tsp=5 tbsp=14 cup=227
 4601	масло сливочное несолёное	unsalted butter	4600		g=1 tsp=5 tbsp=14 cup=227
 4602	масло сливочное солёное	salted butter	4600		g=1 tsp=5 tbsp=14 cup=227
-4603	масло топлёное	clarified butter	4600		g=1 ml=0.91 tsp=4.5 tbsp=13 cup=225
-4604	гхи	ghee	4600		g=1 ml=0.91 tsp=4.5 tbsp=13 cup=225
+4603	масло топлёное	ghee	4600		g=1 ml=0.91 tsp=4.5 tbsp=13 cup=225
 4605	масло сливочное 82,5%	butter 82.5%	4600		g=1 tsp=5 tbsp=14 cup=227
 4606	масло сливочное 72,5%	butter 72.5%	4600		g=1 tsp=5 tbsp=14 cup=227
 4607	масло шоколадное	chocolate butter	4600		g=1 tsp=5 tbsp=14
@@ -127,24 +126,23 @@
 4700	сыр	cheese			g=1 tbsp=7 cup=100
 4701	сыр твёрдый	hard cheese	4700		g=1 tbsp=7 cup=100
 4702	сыр полутвёрдый	semi-hard cheese	4700		g=1 tbsp=7 cup=100
-4703	сыр мягкий	soft cheese	4700		g=1
+4703	сыр мягкий	fresh soft cheese	4700		g=1
 4704	сыр плавленый	processed cheese	4700		g=1 tsp=5 tbsp=15
 4705	плавленый сырок	processed cheese bar	4700	true	g=1 pc=90
 4706	сыр копчёный	smoked cheese	4700		g=1
 4707	сыр рассольный	brined cheese	4700		g=1
 4708	сыр тёртый	grated cheese	4700		g=1 tbsp=7 cup=100
 4709	сливочный сыр	cream cheese	4700		g=1 tsp=5 tbsp=15 cup=230
-4710	творожный сыр	curd cheese	4700		g=1 tsp=5 tbsp=15 cup=230
+4710	творожный сыр	cream cheese spread	4700		g=1 tsp=5 tbsp=15 cup=230
 4711	сыр тостовый	cheese slices	4700	false	g=1 pc=20
 4712	сыр колбасный	smoked processed cheese	4700		g=1
 4713	сыр с голубой плесенью	blue cheese	4700		g=1 cup=135
 4714	сыр с белой плесенью	bloomy-rind cheese	4700		g=1
-4715	козий сыр	goat's cheese	4700		g=1
-4716	овечий сыр	sheep's cheese	4700		g=1
+4715	козий сыр	goat cheese	4700		g=1
+4716	овечий сыр	sheep milk cheese	4700		g=1
 4717	сыр российский	Rossiysky cheese	4700		g=1 tbsp=7 cup=100
 4718	сыр голландский	Dutch cheese	4700		g=1 tbsp=7 cup=100
 4719	сыр пошехонский	Poshekhonsky cheese	4700		g=1 tbsp=7 cup=100
-4720	сыр косичка	braided string cheese	4700		g=1
 4721	сулугуни	suluguni	4700		g=1 tbsp=7 cup=100
 4722	сулугуни копчёный	smoked suluguni	4700		g=1
 4723	имеретинский сыр	Imeretian cheese	4700		g=1
@@ -198,11 +196,10 @@
 4776	сыр мраморный	marble cheese	4700		g=1 tbsp=7 cup=100
 4777	сыр лёгкий	reduced-fat cheese	4700		g=1 tbsp=7 cup=100
 4779	эпуас	Époisses	4700		g=1
-4780	шевр	chèvre	4700		g=1
 4783	сыр гриль	grilling cheese	4700		g=1
 4785	сыр-спагетти	string cheese	4700		g=1
 4787	мюнстер	Munster	4700		g=1
-4788	пармиджано-реджано	Parmigiano Reggiano	4700		g=1 tsp=2 tbsp=5 cup=90
 4789	пекорино романо	Pecorino Romano	4700		g=1 tsp=2 tbsp=5 cup=90
 4790	бофор	Beaufort	4700		g=1
 4791	лимбургский сыр	Limburger	4700		g=1
+4491	девонширские сливки	clotted cream	4480		g=1 tsp=5 tbsp=15 cup=240

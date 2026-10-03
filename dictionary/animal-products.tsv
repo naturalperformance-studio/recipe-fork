@@ -14,8 +14,8 @@
 3808	пепперони	pepperoni	3800		g=1
 3809	чорисо	chorizo	3800		g=1
 3810	сервелат	cervelat	3800		g=1
-3811	ливерная колбаса	liver sausage	3800		g=1
-3812	кровяная колбаса	black pudding	3800		g=1
+3811	ливерная колбаса	liverwurst	3800		g=1
+3812	кровяная колбаса	blood sausage	3800		g=1
 3813	охотничьи колбаски	hunter's sausages	3800	false	g=1 pc=50
 3814	суджук	sujuk	3800		g=1
 3815	казы	kazy	3800		g=1
@@ -34,11 +34,10 @@
 3830	сосиски	frankfurters		false	g=1 pc=50
 3831	сосиски молочные	milk frankfurters	3830	false	g=1 pc=50
 3832	сосиски куриные	chicken frankfurters	3830	false	g=1 pc=50
-3833	сосиски венские	Vienna sausages	3830	false	g=1 pc=50
 3834	сосиски для хот-догов	hot dog sausages	3830	false	g=1 pc=60
 3835	мини-сосиски	cocktail sausages	3830	false	g=1 pc=15
 3836	сосиски с сыром	cheese frankfurters	3830	false	g=1 pc=50
-3840	сардельки	wieners		false	g=1 pc=100
+3840	сардельки	thick sausages		false	g=1 pc=100
 
 # ветчина
 3850	ветчина	ham			g=1
@@ -49,8 +48,8 @@
 3855	пармская ветчина	Parma ham	3850		g=1
 3856	ветчина из индейки	turkey ham	3850		g=1
 3857	ветчина куриная	chicken ham	3850		g=1
-3858	окорок копчёный	smoked gammon	3850		g=1
-3859	окорок варёный	boiled gammon	3850		g=1
+3858	окорок копчёный	smoked bone-in ham	3850		g=1
+3859	окорок варёный	boiled bone-in ham	3850		g=1
 
 # бекон
 3870	бекон	bacon		true	g=1 pc=15
@@ -64,15 +63,15 @@
 3880	грудинка копчёная	smoked pork belly			g=1
 3881	корейка копчёная	smoked pork loin			g=1
 3882	шейка копчёная	smoked pork neck			g=1
-3883	буженина	boiled pork			g=1
+3883	буженина	cold roast pork			g=1
 3884	бастурма	basturma			g=1
 3885	свиной балык	pork balyk			g=1
 3887	вяленое мясо	jerky			g=1
 3888	рёбрышки копчёные	smoked ribs			g=1
-3890	зельц	brawn			g=1
+3890	зельц	head cheese			g=1
 3891	шкварки	pork cracklings			g=1
 3892	брезаола	bresaola			g=1
-3826	копчёные колбаски	smoked sausages	3800	false	g=1 pc=50
+3826	копчёные колбаски	small smoked sausages	3800	false	g=1 pc=50
 
 # паштет, тушёнка, other ready meat
 3900	паштет	pâté			g=1
@@ -85,3 +84,14 @@
 3912	тушёнка свиная	canned stewed pork	3910		g=1
 3913	тушёнка куриная	canned stewed chicken	3910		g=1
 3920	фрикадельки	meatballs		false	g=1 pc=15
+
+# added in fix round 1
+3827	свиные колбаски	pork sausages	3800	false	g=1 pc=60
+3828	колбаски для завтрака	breakfast sausages	3800	false	g=1 pc=30
+3829	чиполата	chipolatas	3800	false	g=1 pc=30
+3876	канадский бекон	Canadian bacon	3870	true	g=1 pc=25
+3877	бекон кубиками	lardons	3870		g=1
+3940	сало	salo			g=1
+3941	шпик	cured fatback	3940		g=1
+3942	сало солёное	salted salo	3940		g=1
+3943	сало копчёное	smoked salo	3940		g=1

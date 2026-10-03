@@ -52,7 +52,6 @@
 3128	солонина	corned beef	5		g=1
 3129	ростбиф	roast beef	5		g=1
 3130	говяжья пашина	beef flank	5		g=1
-3131	бифштекс	beefsteak	5	true	g=1 pc=200
 
 # телятина — cuts
 3150	телятина	veal			g=1
@@ -75,19 +74,19 @@
 3206	свиная грудинка	pork belly	3200		g=1
 3207	свиные рёбрышки	pork ribs	3200		g=1
 3208	свиная рулька	pork knuckle	3200	true	g=1 pc=1000
-3209	свиные ножки	pig's trotters	3200	false	g=1 pc=400
+3209	свиные ножки	pig feet	3200	false	g=1 pc=400
 3210	свиная отбивная	pork chop	3200	true	g=1 pc=200
 3211	свиной стейк	pork steak	3200	true	g=1 pc=250
 3212	свиная мякоть	boneless pork	3200		g=1
 3213	свиная щековина	pork jowl	3200		g=1
-3214	свиные уши	pig's ears	3200	false	g=1 pc=200
+3214	свиные уши	pig ears	3200	false	g=1 pc=200
 3215	свиная шкурка	pork rind	3200		g=1
 3216	эскалоп	escalope	3200	true	g=1 pc=120
 3217	карбонад	boneless pork loin	3200		g=1
 3218	молочный поросёнок	suckling pig	3200	true	g=1 pc=5000
 3219	свинина на кости	bone-in pork	3200		g=1
 3220	свиные медальоны	pork medallions	3200	false	g=1 pc=80
-3221	свиные хвосты	pig's tails	3200		g=1
+3221	свиные хвосты	pig tails	3200		g=1
 
 # баранина — cuts
 3300	баранина	lamb			g=1
@@ -116,7 +115,7 @@
 3421	оленина	venison	3420		g=1
 3422	лосятина	elk meat	3420		g=1
 3423	кабанятина	wild boar	3420		g=1
-3424	косуля	roe deer	3420		g=1
+3424	мясо косули	roe deer meat	3420		g=1
 3425	заяц	hare	3420	true	g=1 pc=3000
 3426	фазан	pheasant	3420	true	g=1 pc=1000
 3427	куропатка	partridge	3420	true	g=1 pc=400
@@ -125,13 +124,18 @@
 3430	медвежатина	bear meat	3420		g=1
 
 # фарш — kinds
-3451	фарш говяжий	beef mince	4		g=1
-3452	фарш свиной	pork mince	4		g=1
-3453	фарш куриный	chicken mince	4		g=1
-3454	фарш из индейки	turkey mince	4		g=1
-3455	фарш бараний	lamb mince	4		g=1
-3456	фарш смешанный	mixed mince	4		g=1
-3457	фарш телячий	veal mince	4		g=1
-3458	фарш рыбный	fish mince	4		g=1
-3459	фарш из кролика	rabbit mince	4		g=1
-3460	фарш свино-говяжий	pork and beef mince	4		g=1
+3451	фарш говяжий	ground beef	4		g=1
+3452	фарш свиной	ground pork	4		g=1
+3453	фарш куриный	ground chicken	4		g=1
+3454	фарш из индейки	ground turkey	4		g=1
+3455	фарш бараний	ground lamb	4		g=1
+3457	фарш телячий	ground veal	4		g=1
+3458	фарш рыбный	ground fish	4		g=1
+3459	фарш из кролика	ground rabbit	4		g=1
+3460	фарш свино-говяжий	ground pork and beef	4		g=1
+
+# added in fix round 1
+3132	сирлойн	sirloin steak	5	true	g=1 pc=300
+3133	ромштекс	rump steak	5	true	g=1 pc=200
+3134	говядина для тушения	beef stew meat	5		g=1
+3222	стейк из свиной шеи	pork neck steak	3200	true	g=1 pc=250
