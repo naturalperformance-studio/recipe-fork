@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -38,27 +40,51 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.app.card.StepVideo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * A step's clip in the editor: its first frame, read off the main thread, with a play mark over it so that it is not
- * taken for a photograph — or, until the frame is read or where it cannot be, a plain frame with the mark. The screen
- * reader calls it the author's video of the step, as the card does (A11Y-001), and never describes it; [working]
- * while another item offered is being prepared.
+ * A step's clip in the editor, watched in place (MEDIA-004): the card's own box, player and round control
+ * ([StepVideo]), showing the clip's first frame — read off the main thread — until the author plays it. It never starts
+ * by itself here; a tap on the control or on the clip plays it, muted and looping, and another pauses it. It holds a
+ * player only while it is on screen, as the card's clip does. The screen reader calls it the author's video of the
+ * step, as the card does (A11Y-001), and never describes it; [working] while another item offered is being prepared.
+ * A clip the device cannot play is shown by its first frame alone, with a play mark so that it is not taken for a
+ * photograph.
  */
 @Composable
 internal fun StepClipFrame(position: Int, file: File, working: Boolean = false) {
     val frame by produceState<ImageBitmap?>(null, file) { value = withContext(Dispatchers.IO) { firstFrame(file) } }
     val said = stringResource(R.string.media_step_clip_description, position + 1)
+    val indicator: @Composable BoxScope.() -> Unit = {
+        if (working) PhotoWorking(Modifier.align(Alignment.TopEnd).padding(8.dp).testTag(EditorTags.stepPhotoWorking(position)))
+    }
+    StepVideo(
+        file,
+        description = said,
+        playAction = stringResource(R.string.card_video_play),
+        pauseAction = stringResource(R.string.card_video_pause),
+        unavailable = { StillClipFrame(position, frame, said, indicator) },
+        videoTag = EditorTags.stepClipImage(position),
+        controlTag = EditorTags.stepClipControl(position),
+        modifier = Modifier.padding(vertical = 4.dp).background(MaterialTheme.colorScheme.surfaceVariant),
+        autoplay = false,
+        poster = frame,
+        overlay = indicator,
+    )
+}
+
+/** A clip that cannot be played, shown by its first [frame] — or a plain frame — with a play mark over it. */
+@Composable
+private fun StillClipFrame(position: Int, frame: ImageBitmap?, said: String, overlay: @Composable BoxScope.() -> Unit) {
     val ratio = frame?.let { maxOf(it.width.toFloat() / it.height, 1f) } ?: PLACEHOLDER_RATIO
     Box(
         Modifier
-            .padding(vertical = 4.dp)
             .fillMaxWidth()
             .aspectRatio(ratio)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clipToBounds()
             .semantics {
                 contentDescription = said
                 role = Role.Image
@@ -77,9 +103,7 @@ internal fun StepClipFrame(position: Int, file: File, working: Boolean = false) 
         ) {
             Icon(painterResource(R.drawable.ic_clip_mark), contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
-        if (working) {
-            PhotoWorking(Modifier.align(Alignment.TopEnd).padding(8.dp).testTag(EditorTags.stepPhotoWorking(position)))
-        }
+        overlay()
     }
 }
 
