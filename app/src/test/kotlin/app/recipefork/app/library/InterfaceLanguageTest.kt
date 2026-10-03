@@ -24,6 +24,7 @@ import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.data.LanguageChoice
+import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
@@ -222,7 +223,9 @@ class InterfaceLanguageTest {
         compose.onNode(hasText("итальянская") and hasAnyAncestor(hasTestTag(EditorTags.chosen(10))), useUnmergedTree = true)
             .assertExists()
         compose.onNodeWithTag(EditorTags.LANGUAGE).performScrollTo()
-        assertTheScreenReadsInItsLanguage(setOf("Борщ", "Варить."), setOf("итальянская", "грузинская"))
+        // The editor offers every shipped tag, each by its Russian label.
+        val shippedTags = DictionarySnapshot.parse(File("src/main/assets/${DictionarySnapshot.ASSET}").readText()).tags
+        assertTheScreenReadsInItsLanguage(setOf("Борщ", "Варить."), shippedTags.map { it.labelRu })
 
         // After a restart the application opens in Russian again.
         restart()

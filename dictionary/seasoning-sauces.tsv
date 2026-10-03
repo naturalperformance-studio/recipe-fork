@@ -1,0 +1,153 @@
+# Seasoning: sauces and condiments, pastes, vinegars.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 7000-8999
+
+# Soy sauce and Asian sauces and pastes (8000-8099). ml is density; spoons are level.
+8000	соевый соус	soy sauce			g=1 ml=1.17 tsp=6 tbsp=18 cup=290
+8001	соевый соус тёмный	dark soy sauce	8000		g=1 ml=1.2 tsp=6 tbsp=18
+8002	соевый соус светлый	light soy sauce	8000		g=1 ml=1.15 tsp=6 tbsp=17
+8003	соевый соус низкосолевой	low-sodium soy sauce	8000		g=1 ml=1.15 tsp=6 tbsp=17
+8004	соевый соус сладкий	sweet soy sauce	8000		g=1 ml=1.25 tsp=6 tbsp=19
+8005	тамари	tamari	8000		g=1 ml=1.17 tsp=6 tbsp=18
+8010	рыбный соус	fish sauce			g=1 ml=1.2 tsp=6 tbsp=18
+8011	устричный соус	oyster sauce			g=1 tsp=6 tbsp=18
+8012	соус хойсин	hoisin sauce			g=1 tsp=5 tbsp=16
+8013	соус терияки	teriyaki sauce			g=1 ml=1.15 tsp=6 tbsp=18
+8014	соус унаги	unagi sauce			g=1 tsp=6 tbsp=18
+8015	соус понзу	ponzu			g=1 ml=1.1 tsp=5 tbsp=16
+8016	соус из чёрных бобов	black bean sauce			g=1 tsp=6 tbsp=18
+8017	соус для вока	stir-fry sauce			g=1 ml=1.15 tsp=6 tbsp=17
+8018	соус сладкий чили	sweet chili sauce			g=1 ml=1.25 tsp=6 tbsp=19
+8019	соус кисло-сладкий	sweet and sour sauce			g=1 tsp=6 tbsp=18
+8020	шрирача	sriracha			g=1 tsp=6 tbsp=17
+8021	гочуджан	gochujang			g=1 tsp=6 tbsp=19
+8022	доэнджан	doenjang			g=1 tsp=6 tbsp=18
+8023	доубаньцзян	doubanjiang			g=1 tsp=6 tbsp=18
+8024	самбал	sambal oelek			g=1 tsp=6 tbsp=17
+8025	мисо	miso			g=1 tsp=6 tbsp=17
+8026	мисо белая	white miso	8025		g=1 tsp=6 tbsp=17
+8027	мисо красная	red miso	8025		g=1 tsp=6 tbsp=17
+8030	паста карри	curry paste			g=1 tsp=5 tbsp=16
+8031	паста карри красная	red curry paste	8030		g=1 tsp=5 tbsp=16
+8032	паста карри зелёная	green curry paste	8030		g=1 tsp=5 tbsp=16
+8033	паста карри жёлтая	yellow curry paste	8030		g=1 tsp=5 tbsp=16
+8034	паста карри масаман	massaman curry paste	8030		g=1 tsp=5 tbsp=16
+8035	паста том ям	tom yum paste			g=1 tsp=5 tbsp=16
+8036	креветочная паста	shrimp paste			g=1 tsp=6 tbsp=18
+8037	соус арахисовый	peanut sauce			g=1 tsp=6 tbsp=17
+8038	соус кунжутный	sesame dressing			g=1 ml=1.1 tsp=5 tbsp=16
+8039	васаби	wasabi			g=1 tsp=5 tbsp=15
+8040	васаби порошок	wasabi powder			g=1 tsp=2.5
+8041	имбирь маринованный	pickled ginger			g=1 tbsp=10
+8042	паста чили	chili paste			g=1 tsp=6 tbsp=17
+
+# Tomato products and table sauces (8100-8199).
+8100	томатная паста	tomato paste			g=1 tsp=5 tbsp=16
+8101	томатное пюре	tomato puree			g=1 ml=1.05 tbsp=16 cup=260
+8102	пассата	passata			g=1 ml=1.03 tbsp=15 cup=255
+8103	кетчуп	ketchup			g=1 ml=1.15 tsp=6 tbsp=17 cup=285
+8104	кетчуп острый	hot ketchup	8103		g=1 ml=1.15 tsp=6 tbsp=17
+8106	соус томатный	tomato sauce			g=1 ml=1.05 tbsp=16 cup=260
+8107	соус маринара	marinara sauce			g=1 ml=1.05 tbsp=16 cup=260
+8108	соус для пиццы	pizza sauce			g=1 ml=1.05 tbsp=16 cup=260
+8109	соус краснодарский	Krasnodar tomato sauce			g=1 tsp=6 tbsp=17
+8110	соус барбекю	barbecue sauce			g=1 ml=1.15 tsp=6 tbsp=17 cup=285
+8111	соус шашлычный	kebab sauce			g=1 tsp=6 tbsp=17
+8112	сальса	salsa			g=1 tbsp=16 cup=260
+8113	сальса верде	salsa verde	8112		g=1 tbsp=16 cup=260
+8114	сальса пико де гальо	pico de gallo	8112		g=1 tbsp=12 cup=180
+8115	соус энчилада	enchilada sauce			g=1 ml=1.05 tbsp=16 cup=260
+8116	соус чили	chili sauce			g=1 tsp=6 tbsp=17
+8117	острый соус	hot sauce			g=1 ml=1 tsp=5 tbsp=15
+8118	вустерширский соус	Worcestershire sauce			g=1 ml=1.1 tsp=6 tbsp=17
+8119	майонез	mayonnaise			g=1 tsp=5 tbsp=14 cup=230
+8120	майонез лёгкий	light mayonnaise	8119		g=1 tsp=5 tbsp=15 cup=240
+8121	майонез постный	vegan mayonnaise	8119		g=1 tsp=5 tbsp=14 cup=230
+8122	майонез японский	Japanese mayonnaise	8119		g=1 tsp=5 tbsp=14
+8150	майонез провансаль	Provencal mayonnaise	8119		g=1 tsp=5 tbsp=14 cup=230
+8123	айоли	aioli			g=1 tsp=5 tbsp=14
+8124	соус тартар	tartar sauce			g=1 tsp=5 tbsp=14
+8125	соус цезарь	Caesar dressing			g=1 tsp=5 tbsp=15
+8126	соус ранч	ranch dressing			g=1 tsp=5 tbsp=15
+8127	соус тысяча островов	Thousand Island dressing			g=1 tsp=5 tbsp=15
+8128	соус для бургеров	burger sauce			g=1 tsp=5 tbsp=15
+8129	соус сырный	cheese sauce			g=1 tbsp=16 cup=260
+8130	соус чесночный	garlic sauce			g=1 tsp=5 tbsp=15
+8131	соус бешамель	bechamel sauce			g=1 tbsp=16 cup=260
+8132	соус альфредо	Alfredo sauce			g=1 tbsp=16 cup=260
+8133	соус голландский	hollandaise sauce			g=1 tbsp=15
+8134	заправка для салата	salad dressing			g=1 ml=1 tsp=5 tbsp=15
+8151	итальянская заправка	Italian dressing	8134		g=1 ml=1 tsp=5 tbsp=15
+8152	соус винегрет	vinaigrette	8134		g=1 ml=0.95 tsp=5 tbsp=14
+8135	соус медово-горчичный	honey mustard dressing			g=1 tsp=6 tbsp=17
+8136	дзадзики	tzatziki			g=1 tbsp=16 cup=250
+8137	чимичурри	chimichurri			g=1 tsp=5 tbsp=15
+8138	соус моле	mole sauce			g=1 tbsp=16
+8139	соус клюквенный	cranberry sauce			g=1 tbsp=18 cup=280
+8140	соус брусничный	lingonberry sauce			g=1 tbsp=18 cup=280
+8141	соус грибной	mushroom sauce			g=1 tbsp=16 cup=260
+8142	соус демиглас	demi-glace			g=1 tbsp=17
+8144	соус карри	curry sauce			g=1 tbsp=16 cup=260
+8145	бальзамический крем	balsamic glaze			g=1 ml=1.3 tsp=6 tbsp=20
+8146	наршараб	pomegranate molasses			g=1 ml=1.3 tsp=7 tbsp=20
+8147	гуакамоле	guacamole			g=1 tbsp=15 cup=240
+8148	тапенада	tapenade			g=1 tsp=5 tbsp=15
+8149	соус сациви	satsivi sauce			g=1 tbsp=16
+
+# Mustard, horseradish, Caucasian sauces, pesto, spreads and pastes (8200-8299).
+8200	горчица	mustard			g=1 tsp=5 tbsp=15
+8201	горчица русская	hot Russian mustard	8200		g=1 tsp=5 tbsp=15
+8202	горчица дижонская	Dijon mustard	8200		g=1 tsp=5 tbsp=15
+8203	горчица зернистая	whole grain mustard	8200		g=1 tsp=5 tbsp=15
+8204	горчица медовая	honey mustard	8200		g=1 tsp=6 tbsp=17
+8205	горчица жёлтая	yellow mustard	8200		g=1 tsp=5 tbsp=15
+8206	горчица баварская	Bavarian sweet mustard	8200		g=1 tsp=6 tbsp=17
+8210	хрен	prepared horseradish			g=1 tsp=5 tbsp=15
+8211	хрен со свёклой	horseradish with beets	8210		g=1 tsp=5 tbsp=15
+8212	хреновина	khrenovina			g=1 tsp=5 tbsp=15
+8220	аджика	adjika			g=1 tsp=5 tbsp=15
+8221	аджика красная	red adjika	8220		g=1 tsp=5 tbsp=15
+8222	аджика зелёная	green adjika	8220		g=1 tsp=5 tbsp=15
+8223	аджика абхазская	Abkhazian adjika	8220		g=1 tsp=5 tbsp=15
+8225	ткемали	tkemali			g=1 ml=1.1 tsp=6 tbsp=17
+8226	ткемали красный	red tkemali	8225		g=1 ml=1.1 tsp=6 tbsp=17
+8227	ткемали зелёный	green tkemali	8225		g=1 ml=1.1 tsp=6 tbsp=17
+8228	сацебели	satsebeli			g=1 ml=1.05 tsp=5 tbsp=16
+8230	песто	pesto			g=1 tsp=5 tbsp=15 cup=240
+8231	песто россо	red pesto	8230		g=1 tsp=5 tbsp=15 cup=240
+8232	песто из рукколы	arugula pesto	8230		g=1 tsp=5 tbsp=15
+8235	харисса	harissa			g=1 tsp=5 tbsp=16
+8236	тахини	tahini			g=1 tsp=5 tbsp=15 cup=240
+8237	хумус	hummus			g=1 tbsp=15 cup=245
+8238	урбеч	urbech			g=1 tsp=6 tbsp=16
+8239	миндальная паста	almond butter			g=1 tsp=5 tbsp=16 cup=250
+8240	паста из кешью	cashew butter			g=1 tsp=5 tbsp=16 cup=250
+8241	паста из фундука	hazelnut butter			g=1 tsp=5 tbsp=16
+8242	фисташковая паста	pistachio paste			g=1 tsp=5 tbsp=16
+8243	кокосовая паста	coconut butter			g=1 tsp=5 tbsp=15
+8244	анчоусная паста	anchovy paste			g=1 tsp=5 tbsp=15
+8245	паста из вяленых томатов	sun-dried tomato paste			g=1 tsp=5 tbsp=15
+8246	чесночная паста	garlic paste			g=1 tsp=5 tbsp=15
+8247	имбирная паста	ginger paste			g=1 tsp=5 tbsp=15
+8248	жидкий дым	liquid smoke			g=1 ml=1 tsp=5
+
+# Vinegars (8300-8399).
+8300	уксус	vinegar			g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8301	уксус столовый	white vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8302	уксус столовый 9%	white vinegar 9%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8303	уксус столовый 6%	white vinegar 6%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8304	уксусная эссенция	vinegar essence 70%	8300		g=1 ml=1.07 tsp=5.4 tbsp=16
+8305	уксус яблочный	apple cider vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8306	уксус винный	wine vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8307	уксус винный белый	white wine vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8308	уксус винный красный	red wine vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8309	уксус бальзамический	balsamic vinegar	8300		g=1 ml=1.06 tsp=5 tbsp=16 cup=265
+8310	уксус бальзамический белый	white balsamic vinegar	8300		g=1 ml=1.06 tsp=5 tbsp=16
+8311	уксус рисовый	rice vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8312	уксус хересный	sherry vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15
+8313	уксус солодовый	malt vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15
+8314	уксус чёрный китайский	Chinese black vinegar	8300		g=1 ml=1.05 tsp=5 tbsp=16
+8315	уксус малиновый	raspberry vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15
+8316	уксус виноградный	grape vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8317	уксус кокосовый	coconut vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15
+8318	уксус шампанский	champagne vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15

@@ -124,7 +124,8 @@ class CleanInstallTagsTest {
         compose.waitUntil(PATIENCE_MS) { offeredTags().isNotEmpty() }
 
         assertEquals(withAConnection, offeredTags())
-        assertEquals(served.tags.map { it.labelEn }.sorted(), offeredTags())
+        // The editor lists the offers by label, case ignored.
+        assertEquals(served.tags.map { it.labelEn }.sortedBy { it.lowercase() }, offeredTags())
         assertEquals(served.version, runBlocking { clean.database.dictionaryDao().version() })
     }
 }

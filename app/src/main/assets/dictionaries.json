@@ -1,5 +1,5 @@
 {
-  "version": "9bb940344f0db28adcb19bd895a8d3b45838e0ca387de612e57dd927bfd2c69f",
+  "version": "76f2a74b181d4274eddf8651b6222c90df40e4755e7a6f4773975228056f2812",
   "ingredients": [
     {
       "id": 1,
@@ -20175,6 +20175,6639 @@
         "tsp": 5.0,
         "tbsp": 14.0
       }
+    },
+    {
+      "id": 7000,
+      "labelRu": "соль",
+      "labelEn": "salt",
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "pinch": 0.5
+      }
+    },
+    {
+      "id": 7001,
+      "labelRu": "соль каменная",
+      "labelEn": "rock salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0,
+        "pinch": 0.5
+      }
+    },
+    {
+      "id": 7002,
+      "labelRu": "соль мелкая",
+      "labelEn": "fine salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "pinch": 0.5
+      }
+    },
+    {
+      "id": 7003,
+      "labelRu": "соль крупная",
+      "labelEn": "coarse salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0,
+        "pinch": 0.5
+      }
+    },
+    {
+      "id": 7004,
+      "labelRu": "соль йодированная",
+      "labelEn": "iodized salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "pinch": 0.5
+      }
+    },
+    {
+      "id": 7005,
+      "labelRu": "соль морская",
+      "labelEn": "sea salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0,
+        "pinch": 0.5
+      }
+    },
+    {
+      "id": 7006,
+      "labelRu": "соль морская крупная",
+      "labelEn": "coarse sea salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0,
+        "pinch": 0.5
+      }
+    },
+    {
+      "id": 7007,
+      "labelRu": "соль кошерная",
+      "labelEn": "kosher salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 4.0,
+        "tbsp": 12.0,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7008,
+      "labelRu": "соль гималайская",
+      "labelEn": "pink Himalayan salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0,
+        "pinch": 0.5
+      }
+    },
+    {
+      "id": 7009,
+      "labelRu": "флёр де сель",
+      "labelEn": "fleur de sel",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 4.0,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7010,
+      "labelRu": "соль копчёная",
+      "labelEn": "smoked salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "pinch": 0.4
+      }
+    },
+    {
+      "id": 7011,
+      "labelRu": "соль гималайская чёрная",
+      "labelEn": "kala namak",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "pinch": 0.4
+      }
+    },
+    {
+      "id": 7012,
+      "labelRu": "соль четверговая",
+      "labelEn": "Russian black salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "pinch": 0.4
+      }
+    },
+    {
+      "id": 7013,
+      "labelRu": "соль сванская",
+      "labelEn": "Svan salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "pinch": 0.4
+      }
+    },
+    {
+      "id": 7014,
+      "labelRu": "соль с травами",
+      "labelEn": "herb salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "pinch": 0.4
+      }
+    },
+    {
+      "id": 7015,
+      "labelRu": "соль чесночная",
+      "labelEn": "garlic salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 4.0,
+        "tbsp": 12.0,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7016,
+      "labelRu": "соль нитритная",
+      "labelEn": "curing salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 7017,
+      "labelRu": "соль хлопьями",
+      "labelEn": "flaky salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7018,
+      "labelRu": "соль сельдерейная",
+      "labelEn": "celery salt",
+      "parentId": 7000,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "pinch": 0.4
+      }
+    },
+    {
+      "id": 7100,
+      "labelRu": "перец чёрный",
+      "labelEn": "black pepper",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.3,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7101,
+      "labelRu": "перец чёрный молотый",
+      "labelEn": "ground black pepper",
+      "parentId": 7100,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.3,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7102,
+      "labelRu": "перец чёрный горошком",
+      "labelEn": "black peppercorns",
+      "parentId": 7100,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.06,
+        "tsp": 3.0,
+        "tbsp": 9.0
+      }
+    },
+    {
+      "id": 7103,
+      "labelRu": "перец чёрный крупного помола",
+      "labelEn": "coarsely ground black pepper",
+      "parentId": 7100,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.3,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7110,
+      "labelRu": "перец белый",
+      "labelEn": "white pepper",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.4,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7111,
+      "labelRu": "перец белый молотый",
+      "labelEn": "ground white pepper",
+      "parentId": 7110,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.4,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7112,
+      "labelRu": "перец белый горошком",
+      "labelEn": "white peppercorns",
+      "parentId": 7110,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.06,
+        "tsp": 3.0,
+        "tbsp": 9.0
+      }
+    },
+    {
+      "id": 7120,
+      "labelRu": "перец душистый",
+      "labelEn": "allspice",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.9,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7121,
+      "labelRu": "перец душистый горошком",
+      "labelEn": "allspice berries",
+      "parentId": 7120,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.2,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7122,
+      "labelRu": "перец душистый молотый",
+      "labelEn": "ground allspice",
+      "parentId": 7120,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.9,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7130,
+      "labelRu": "перец розовый",
+      "labelEn": "pink peppercorns",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.5,
+        "tbsp": 4.5
+      }
+    },
+    {
+      "id": 7131,
+      "labelRu": "смесь перцев",
+      "labelEn": "mixed peppercorns",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0
+      }
+    },
+    {
+      "id": 7132,
+      "labelRu": "перец сычуаньский",
+      "labelEn": "Sichuan peppercorns",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.5,
+        "tbsp": 4.5,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7133,
+      "labelRu": "перец длинный",
+      "labelEn": "long pepper",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 7134,
+      "labelRu": "перец кубеба",
+      "labelEn": "cubeb pepper",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 7140,
+      "labelRu": "перец красный молотый",
+      "labelEn": "ground red chili pepper",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7141,
+      "labelRu": "перец кайенский",
+      "labelEn": "cayenne pepper",
+      "parentId": 7140,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.8,
+        "tbsp": 5.3,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7142,
+      "labelRu": "хлопья чили",
+      "labelEn": "red pepper flakes",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.8,
+        "tbsp": 5.4,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7143,
+      "labelRu": "перец чили сушёный",
+      "labelEn": "dried chili pepper",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.5
+      }
+    },
+    {
+      "id": 7144,
+      "labelRu": "чипотле молотый",
+      "labelEn": "ground chipotle",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.3,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7145,
+      "labelRu": "чипотле в соусе адобо",
+      "labelEn": "chipotles in adobo",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 7146,
+      "labelRu": "анчо сушёный",
+      "labelEn": "dried ancho chile",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 14.0
+      }
+    },
+    {
+      "id": 7147,
+      "labelRu": "гочугару",
+      "labelEn": "gochugaru",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7148,
+      "labelRu": "перец алеппо",
+      "labelEn": "Aleppo pepper",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7149,
+      "labelRu": "перец эспелет",
+      "labelEn": "Espelette pepper",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7150,
+      "labelRu": "паприка",
+      "labelEn": "paprika",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.3,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7151,
+      "labelRu": "паприка сладкая",
+      "labelEn": "sweet paprika",
+      "parentId": 7150,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.3,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7152,
+      "labelRu": "паприка копчёная",
+      "labelEn": "smoked paprika",
+      "parentId": 7150,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.3,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7153,
+      "labelRu": "паприка острая",
+      "labelEn": "hot paprika",
+      "parentId": 7150,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.3,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7154,
+      "labelRu": "паприка хлопьями",
+      "labelEn": "paprika flakes",
+      "parentId": 7150,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.5,
+        "tbsp": 4.5
+      }
+    },
+    {
+      "id": 7155,
+      "labelRu": "перец гуахильо сушёный",
+      "labelEn": "dried guajillo chile",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0
+      }
+    },
+    {
+      "id": 7156,
+      "labelRu": "перец кашмирский",
+      "labelEn": "Kashmiri chili powder",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7157,
+      "labelRu": "перец чили молотый",
+      "labelEn": "ground chili",
+      "parentId": 7140,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7200,
+      "labelRu": "специи",
+      "labelEn": "spices",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7201,
+      "labelRu": "кориандр",
+      "labelEn": "coriander",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.8,
+        "tbsp": 5.4,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7202,
+      "labelRu": "кориандр молотый",
+      "labelEn": "ground coriander",
+      "parentId": 7201,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.8,
+        "tbsp": 5.4,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7203,
+      "labelRu": "кориандр в зёрнах",
+      "labelEn": "coriander seeds",
+      "parentId": 7201,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.8,
+        "tbsp": 5.4
+      }
+    },
+    {
+      "id": 7205,
+      "labelRu": "зира",
+      "labelEn": "cumin",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.1,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7206,
+      "labelRu": "зира молотая",
+      "labelEn": "ground cumin",
+      "parentId": 7205,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.1,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7207,
+      "labelRu": "зира в зёрнах",
+      "labelEn": "cumin seeds",
+      "parentId": 7205,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.1,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7208,
+      "labelRu": "зира чёрная",
+      "labelEn": "black cumin",
+      "parentId": 7205,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7209,
+      "labelRu": "тмин",
+      "labelEn": "caraway seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.1,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7210,
+      "labelRu": "куркума",
+      "labelEn": "turmeric",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7211,
+      "labelRu": "имбирь молотый",
+      "labelEn": "ground ginger",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.8,
+        "tbsp": 5.4,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7212,
+      "labelRu": "корица",
+      "labelEn": "cinnamon",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.6,
+        "tbsp": 7.8,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7213,
+      "labelRu": "корица молотая",
+      "labelEn": "ground cinnamon",
+      "parentId": 7212,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.6,
+        "tbsp": 7.8,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7214,
+      "labelRu": "палочка корицы",
+      "labelEn": "cinnamon stick",
+      "parentId": 7212,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.0
+      }
+    },
+    {
+      "id": 7215,
+      "labelRu": "корица цейлонская",
+      "labelEn": "Ceylon cinnamon",
+      "parentId": 7212,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.6,
+        "tbsp": 7.8,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7216,
+      "labelRu": "гвоздика",
+      "labelEn": "cloves",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.1,
+        "tsp": 2.1,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7217,
+      "labelRu": "гвоздика молотая",
+      "labelEn": "ground cloves",
+      "parentId": 7216,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.1,
+        "tbsp": 6.5,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7218,
+      "labelRu": "мускатный орех",
+      "labelEn": "nutmeg",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0,
+        "tsp": 2.2,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7219,
+      "labelRu": "мускатный орех молотый",
+      "labelEn": "ground nutmeg",
+      "parentId": 7218,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.2,
+        "tbsp": 7.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7220,
+      "labelRu": "мускатный цвет",
+      "labelEn": "mace",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.7,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7221,
+      "labelRu": "кардамон",
+      "labelEn": "cardamom",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7222,
+      "labelRu": "кардамон молотый",
+      "labelEn": "ground cardamom",
+      "parentId": 7221,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7223,
+      "labelRu": "коробочка кардамона",
+      "labelEn": "cardamom pod",
+      "parentId": 7221,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.15
+      }
+    },
+    {
+      "id": 7224,
+      "labelRu": "кардамон чёрный",
+      "labelEn": "black cardamom",
+      "parentId": 7221,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0
+      }
+    },
+    {
+      "id": 7225,
+      "labelRu": "бадьян",
+      "labelEn": "star anise",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 7226,
+      "labelRu": "анис",
+      "labelEn": "anise seed",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.1,
+        "tbsp": 6.3
+      }
+    },
+    {
+      "id": 7227,
+      "labelRu": "семена фенхеля",
+      "labelEn": "fennel seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7228,
+      "labelRu": "семена горчицы",
+      "labelEn": "mustard seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.3,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 7229,
+      "labelRu": "семена горчицы чёрные",
+      "labelEn": "black mustard seeds",
+      "parentId": 7228,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.3,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 7230,
+      "labelRu": "горчица сухая (порошок)",
+      "labelEn": "mustard powder",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7231,
+      "labelRu": "пажитник",
+      "labelEn": "fenugreek seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.7,
+        "tbsp": 11.0
+      }
+    },
+    {
+      "id": 7232,
+      "labelRu": "уцхо-сунели",
+      "labelEn": "blue fenugreek",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7233,
+      "labelRu": "шафран",
+      "labelEn": "saffron",
+      "factors": {
+        "g": 1.0,
+        "pinch": 0.05
+      }
+    },
+    {
+      "id": 7234,
+      "labelRu": "имеретинский шафран",
+      "labelEn": "Imeretian saffron",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.2,
+        "tbsp": 3.6,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7235,
+      "labelRu": "сумах",
+      "labelEn": "sumac",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7236,
+      "labelRu": "ягоды можжевельника",
+      "labelEn": "juniper berries",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.1,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 7237,
+      "labelRu": "калинджи",
+      "labelEn": "nigella seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7238,
+      "labelRu": "ажгон",
+      "labelEn": "ajwain",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 7239,
+      "labelRu": "асафетида",
+      "labelEn": "asafetida",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7240,
+      "labelRu": "амчур",
+      "labelEn": "amchur",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 7241,
+      "labelRu": "семена укропа",
+      "labelEn": "dill seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.1,
+        "tbsp": 6.3
+      }
+    },
+    {
+      "id": 7242,
+      "labelRu": "семена сельдерея",
+      "labelEn": "celery seeds",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7243,
+      "labelRu": "галангал молотый",
+      "labelEn": "ground galangal",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 7244,
+      "labelRu": "чеснок сушёный",
+      "labelEn": "dried garlic",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.1,
+        "tbsp": 9.3,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7245,
+      "labelRu": "чеснок гранулированный",
+      "labelEn": "granulated garlic",
+      "parentId": 7244,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.1,
+        "tbsp": 9.3
+      }
+    },
+    {
+      "id": 7246,
+      "labelRu": "лук сушёный",
+      "labelEn": "dried minced onion",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7247,
+      "labelRu": "луковый порошок",
+      "labelEn": "onion powder",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.4,
+        "tbsp": 7.2,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7248,
+      "labelRu": "лук жареный",
+      "labelEn": "crispy fried onions",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 4.0,
+        "cup": 60.0
+      }
+    },
+    {
+      "id": 7249,
+      "labelRu": "цедра лимона сушёная",
+      "labelEn": "dried lemon peel",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7250,
+      "labelRu": "цедра апельсина сушёная",
+      "labelEn": "dried orange peel",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7251,
+      "labelRu": "лавровый лист",
+      "labelEn": "bay leaf",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.2
+      }
+    },
+    {
+      "id": 7252,
+      "labelRu": "лавровый лист молотый",
+      "labelEn": "ground bay leaf",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.8,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7253,
+      "labelRu": "листья кафир-лайма сушёные",
+      "labelEn": "dried makrut lime leaves",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 0.1
+      }
+    },
+    {
+      "id": 7254,
+      "labelRu": "лемонграсс сушёный",
+      "labelEn": "dried lemongrass",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 7255,
+      "labelRu": "барбарис",
+      "labelEn": "barberries",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7256,
+      "labelRu": "тамаринд",
+      "labelEn": "tamarind",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 7257,
+      "labelRu": "паста тамаринда",
+      "labelEn": "tamarind paste",
+      "parentId": 7256,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 7260,
+      "labelRu": "глутамат натрия",
+      "labelEn": "MSG",
+      "factors": {
+        "g": 1.0,
+        "tsp": 4.0,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7261,
+      "labelRu": "лимонная кислота",
+      "labelEn": "citric acid",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7263,
+      "labelRu": "чеснок сушёный хлопьями",
+      "labelEn": "dried garlic flakes",
+      "parentId": 7244,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.5,
+        "tbsp": 4.5
+      }
+    },
+    {
+      "id": 7264,
+      "labelRu": "имбирь сушёный ломтиками",
+      "labelEn": "dried ginger slices",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 7265,
+      "labelRu": "хрен сушёный",
+      "labelEn": "horseradish powder",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 7266,
+      "labelRu": "чесночный порошок",
+      "labelEn": "garlic powder",
+      "parentId": 7244,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.1,
+        "tbsp": 9.3,
+        "pinch": 0.3
+      }
+    },
+    {
+      "id": 7400,
+      "labelRu": "приправа",
+      "labelEn": "seasoning",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7401,
+      "labelRu": "хмели-сунели",
+      "labelEn": "khmeli suneli",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.5,
+        "tbsp": 4.5,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7402,
+      "labelRu": "карри",
+      "labelEn": "curry powder",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.3,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7403,
+      "labelRu": "гарам масала",
+      "labelEn": "garam masala",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0,
+        "pinch": 0.2
+      }
+    },
+    {
+      "id": 7404,
+      "labelRu": "приправа для плова",
+      "labelEn": "plov seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7405,
+      "labelRu": "итальянские травы",
+      "labelEn": "Italian seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7406,
+      "labelRu": "прованские травы",
+      "labelEn": "herbes de Provence",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7407,
+      "labelRu": "пять специй",
+      "labelEn": "Chinese five-spice",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7408,
+      "labelRu": "заатар",
+      "labelEn": "za'atar",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7409,
+      "labelRu": "рас-эль-ханут",
+      "labelEn": "ras el hanout",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7410,
+      "labelRu": "бахарат",
+      "labelEn": "baharat",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7411,
+      "labelRu": "бербере",
+      "labelEn": "berbere",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7412,
+      "labelRu": "дукка",
+      "labelEn": "dukkah",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7413,
+      "labelRu": "тандури масала",
+      "labelEn": "tandoori masala",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7414,
+      "labelRu": "чат масала",
+      "labelEn": "chaat masala",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 7415,
+      "labelRu": "приправа чили",
+      "labelEn": "chili powder",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.7,
+        "tbsp": 8.0
+      }
+    },
+    {
+      "id": 7416,
+      "labelRu": "каджунская приправа",
+      "labelEn": "Cajun seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7417,
+      "labelRu": "приправа для тако",
+      "labelEn": "taco seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.8,
+        "tbsp": 8.5
+      }
+    },
+    {
+      "id": 7418,
+      "labelRu": "лимонный перец",
+      "labelEn": "lemon pepper",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7419,
+      "labelRu": "приправа для курицы",
+      "labelEn": "poultry seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7420,
+      "labelRu": "приправа для рыбы",
+      "labelEn": "seafood seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7421,
+      "labelRu": "приправа для мяса",
+      "labelEn": "meat seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7422,
+      "labelRu": "приправа для шашлыка",
+      "labelEn": "kebab seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7423,
+      "labelRu": "приправа для картофеля",
+      "labelEn": "potato seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7424,
+      "labelRu": "приправа для корейской моркови",
+      "labelEn": "Korean carrot seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0
+      }
+    },
+    {
+      "id": 7425,
+      "labelRu": "приправа универсальная",
+      "labelEn": "all-purpose seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 4.0,
+        "tbsp": 12.0
+      }
+    },
+    {
+      "id": 7426,
+      "labelRu": "приправа для гриля",
+      "labelEn": "grill seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0
+      }
+    },
+    {
+      "id": 7427,
+      "labelRu": "приправа для глинтвейна",
+      "labelEn": "mulled wine spices",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 7428,
+      "labelRu": "приправа для пряников",
+      "labelEn": "gingerbread spice",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7429,
+      "labelRu": "приправа для тыквенного пирога",
+      "labelEn": "pumpkin pie spice",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.7,
+        "tbsp": 5.0
+      }
+    },
+    {
+      "id": 7430,
+      "labelRu": "аджика сухая",
+      "labelEn": "dry adjika",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 4.0,
+        "tbsp": 12.0
+      }
+    },
+    {
+      "id": 7431,
+      "labelRu": "приправа для фарша",
+      "labelEn": "ground meat seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7432,
+      "labelRu": "приправа для супа",
+      "labelEn": "soup seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0
+      }
+    },
+    {
+      "id": 7433,
+      "labelRu": "приправа для свинины",
+      "labelEn": "pork seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7434,
+      "labelRu": "приправа для засолки",
+      "labelEn": "pickling spice",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7436,
+      "labelRu": "самбар масала",
+      "labelEn": "sambar powder",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 7437,
+      "labelRu": "шичими тогараши",
+      "labelEn": "shichimi togarashi",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 7438,
+      "labelRu": "фурикакэ",
+      "labelEn": "furikake",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7440,
+      "labelRu": "приправа ранч",
+      "labelEn": "ranch seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7441,
+      "labelRu": "смесь для лукового супа",
+      "labelEn": "onion soup mix",
+      "parentId": 7400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 28.0,
+        "tbsp": 8.0
+      }
+    },
+    {
+      "id": 7500,
+      "labelRu": "травы сушёные",
+      "labelEn": "dried herbs",
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7501,
+      "labelRu": "базилик сушёный",
+      "labelEn": "dried basil",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.7,
+        "tbsp": 2.1,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7502,
+      "labelRu": "орегано сушёный",
+      "labelEn": "dried oregano",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7503,
+      "labelRu": "укроп сушёный",
+      "labelEn": "dried dill",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7504,
+      "labelRu": "петрушка сушёная",
+      "labelEn": "dried parsley",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.5,
+        "tbsp": 1.5,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7505,
+      "labelRu": "тимьян (чабрец) сушёный",
+      "labelEn": "dried thyme",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7506,
+      "labelRu": "розмарин сушёный",
+      "labelEn": "dried rosemary",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.2,
+        "tbsp": 3.6,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7507,
+      "labelRu": "майоран сушёный",
+      "labelEn": "dried marjoram",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.6,
+        "tbsp": 1.8,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7508,
+      "labelRu": "шалфей сушёный",
+      "labelEn": "dried sage",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.7,
+        "tbsp": 2.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7509,
+      "labelRu": "эстрагон сушёный",
+      "labelEn": "dried tarragon",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.6,
+        "tbsp": 1.8,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7510,
+      "labelRu": "мята сушёная",
+      "labelEn": "dried mint",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.5,
+        "tbsp": 1.5,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7511,
+      "labelRu": "чабер сушёный",
+      "labelEn": "dried savory",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.4,
+        "tbsp": 4.0,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7512,
+      "labelRu": "кинза сушёная",
+      "labelEn": "dried cilantro",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.6,
+        "tbsp": 1.8,
+        "pinch": 0.1
+      }
+    },
+    {
+      "id": 7514,
+      "labelRu": "мелисса сушёная",
+      "labelEn": "dried lemon balm",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.5,
+        "tbsp": 1.5
+      }
+    },
+    {
+      "id": 7515,
+      "labelRu": "шнитт-лук сушёный",
+      "labelEn": "dried chives",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.3,
+        "tbsp": 1.0
+      }
+    },
+    {
+      "id": 7516,
+      "labelRu": "кервель сушёный",
+      "labelEn": "dried chervil",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.6,
+        "tbsp": 1.8
+      }
+    },
+    {
+      "id": 7517,
+      "labelRu": "любисток сушёный",
+      "labelEn": "dried lovage",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.6,
+        "tbsp": 1.8
+      }
+    },
+    {
+      "id": 7518,
+      "labelRu": "сельдерей сушёный",
+      "labelEn": "dried celery leaves",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.6,
+        "tbsp": 1.8
+      }
+    },
+    {
+      "id": 7519,
+      "labelRu": "пажитник сушёный",
+      "labelEn": "dried fenugreek leaves",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.6,
+        "tbsp": 1.8
+      }
+    },
+    {
+      "id": 7520,
+      "labelRu": "овощи сушёные",
+      "labelEn": "dried vegetable mix",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.5,
+        "tbsp": 4.5
+      }
+    },
+    {
+      "id": 7521,
+      "labelRu": "сушёная зелень для супа",
+      "labelEn": "dried soup herbs",
+      "parentId": 7500,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 8000,
+      "labelRu": "соевый соус",
+      "labelEn": "soy sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.17,
+        "tsp": 6.0,
+        "tbsp": 18.0,
+        "cup": 290.0
+      }
+    },
+    {
+      "id": 8001,
+      "labelRu": "соевый соус тёмный",
+      "labelEn": "dark soy sauce",
+      "parentId": 8000,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.2,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8002,
+      "labelRu": "соевый соус светлый",
+      "labelEn": "light soy sauce",
+      "parentId": 8000,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.15,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8003,
+      "labelRu": "соевый соус низкосолевой",
+      "labelEn": "low-sodium soy sauce",
+      "parentId": 8000,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.15,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8004,
+      "labelRu": "соевый соус сладкий",
+      "labelEn": "sweet soy sauce",
+      "parentId": 8000,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.25,
+        "tsp": 6.0,
+        "tbsp": 19.0
+      }
+    },
+    {
+      "id": 8005,
+      "labelRu": "тамари",
+      "labelEn": "tamari",
+      "parentId": 8000,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.17,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8010,
+      "labelRu": "рыбный соус",
+      "labelEn": "fish sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.2,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8011,
+      "labelRu": "устричный соус",
+      "labelEn": "oyster sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8012,
+      "labelRu": "соус хойсин",
+      "labelEn": "hoisin sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8013,
+      "labelRu": "соус терияки",
+      "labelEn": "teriyaki sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.15,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8014,
+      "labelRu": "соус унаги",
+      "labelEn": "unagi sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8015,
+      "labelRu": "соус понзу",
+      "labelEn": "ponzu",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.1,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8016,
+      "labelRu": "соус из чёрных бобов",
+      "labelEn": "black bean sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8017,
+      "labelRu": "соус для вока",
+      "labelEn": "stir-fry sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.15,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8018,
+      "labelRu": "соус сладкий чили",
+      "labelEn": "sweet chili sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.25,
+        "tsp": 6.0,
+        "tbsp": 19.0
+      }
+    },
+    {
+      "id": 8019,
+      "labelRu": "соус кисло-сладкий",
+      "labelEn": "sweet and sour sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8020,
+      "labelRu": "шрирача",
+      "labelEn": "sriracha",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8021,
+      "labelRu": "гочуджан",
+      "labelEn": "gochujang",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 19.0
+      }
+    },
+    {
+      "id": 8022,
+      "labelRu": "доэнджан",
+      "labelEn": "doenjang",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8023,
+      "labelRu": "доубаньцзян",
+      "labelEn": "doubanjiang",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8024,
+      "labelRu": "самбал",
+      "labelEn": "sambal oelek",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8025,
+      "labelRu": "мисо",
+      "labelEn": "miso",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8026,
+      "labelRu": "мисо белая",
+      "labelEn": "white miso",
+      "parentId": 8025,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8027,
+      "labelRu": "мисо красная",
+      "labelEn": "red miso",
+      "parentId": 8025,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8030,
+      "labelRu": "паста карри",
+      "labelEn": "curry paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8031,
+      "labelRu": "паста карри красная",
+      "labelEn": "red curry paste",
+      "parentId": 8030,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8032,
+      "labelRu": "паста карри зелёная",
+      "labelEn": "green curry paste",
+      "parentId": 8030,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8033,
+      "labelRu": "паста карри жёлтая",
+      "labelEn": "yellow curry paste",
+      "parentId": 8030,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8034,
+      "labelRu": "паста карри масаман",
+      "labelEn": "massaman curry paste",
+      "parentId": 8030,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8035,
+      "labelRu": "паста том ям",
+      "labelEn": "tom yum paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8036,
+      "labelRu": "креветочная паста",
+      "labelEn": "shrimp paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8037,
+      "labelRu": "соус арахисовый",
+      "labelEn": "peanut sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8038,
+      "labelRu": "соус кунжутный",
+      "labelEn": "sesame dressing",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.1,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8039,
+      "labelRu": "васаби",
+      "labelEn": "wasabi",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8040,
+      "labelRu": "васаби порошок",
+      "labelEn": "wasabi powder",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 8041,
+      "labelRu": "имбирь маринованный",
+      "labelEn": "pickled ginger",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 8042,
+      "labelRu": "паста чили",
+      "labelEn": "chili paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8100,
+      "labelRu": "томатная паста",
+      "labelEn": "tomato paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8101,
+      "labelRu": "томатное пюре",
+      "labelEn": "tomato puree",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8102,
+      "labelRu": "пассата",
+      "labelEn": "passata",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 8103,
+      "labelRu": "кетчуп",
+      "labelEn": "ketchup",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.15,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 285.0
+      }
+    },
+    {
+      "id": 8104,
+      "labelRu": "кетчуп острый",
+      "labelEn": "hot ketchup",
+      "parentId": 8103,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.15,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8106,
+      "labelRu": "соус томатный",
+      "labelEn": "tomato sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8107,
+      "labelRu": "соус маринара",
+      "labelEn": "marinara sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8108,
+      "labelRu": "соус для пиццы",
+      "labelEn": "pizza sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8109,
+      "labelRu": "соус краснодарский",
+      "labelEn": "Krasnodar tomato sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8110,
+      "labelRu": "соус барбекю",
+      "labelEn": "barbecue sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.15,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 285.0
+      }
+    },
+    {
+      "id": 8111,
+      "labelRu": "соус шашлычный",
+      "labelEn": "kebab sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8112,
+      "labelRu": "сальса",
+      "labelEn": "salsa",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8113,
+      "labelRu": "сальса верде",
+      "labelEn": "salsa verde",
+      "parentId": 8112,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8114,
+      "labelRu": "сальса пико де гальо",
+      "labelEn": "pico de gallo",
+      "parentId": 8112,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 12.0,
+        "cup": 180.0
+      }
+    },
+    {
+      "id": 8115,
+      "labelRu": "соус энчилада",
+      "labelEn": "enchilada sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8116,
+      "labelRu": "соус чили",
+      "labelEn": "chili sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8117,
+      "labelRu": "острый соус",
+      "labelEn": "hot sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8118,
+      "labelRu": "вустерширский соус",
+      "labelEn": "Worcestershire sauce",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.1,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8119,
+      "labelRu": "майонез",
+      "labelEn": "mayonnaise",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 8120,
+      "labelRu": "майонез лёгкий",
+      "labelEn": "light mayonnaise",
+      "parentId": 8119,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8121,
+      "labelRu": "майонез постный",
+      "labelEn": "vegan mayonnaise",
+      "parentId": 8119,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 8122,
+      "labelRu": "майонез японский",
+      "labelEn": "Japanese mayonnaise",
+      "parentId": 8119,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8123,
+      "labelRu": "айоли",
+      "labelEn": "aioli",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8124,
+      "labelRu": "соус тартар",
+      "labelEn": "tartar sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8125,
+      "labelRu": "соус цезарь",
+      "labelEn": "Caesar dressing",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8126,
+      "labelRu": "соус ранч",
+      "labelEn": "ranch dressing",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8127,
+      "labelRu": "соус тысяча островов",
+      "labelEn": "Thousand Island dressing",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8128,
+      "labelRu": "соус для бургеров",
+      "labelEn": "burger sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8129,
+      "labelRu": "соус сырный",
+      "labelEn": "cheese sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8130,
+      "labelRu": "соус чесночный",
+      "labelEn": "garlic sauce",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8131,
+      "labelRu": "соус бешамель",
+      "labelEn": "bechamel sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8132,
+      "labelRu": "соус альфредо",
+      "labelEn": "Alfredo sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8133,
+      "labelRu": "соус голландский",
+      "labelEn": "hollandaise sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8134,
+      "labelRu": "заправка для салата",
+      "labelEn": "salad dressing",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8135,
+      "labelRu": "соус медово-горчичный",
+      "labelEn": "honey mustard dressing",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8136,
+      "labelRu": "дзадзики",
+      "labelEn": "tzatziki",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8137,
+      "labelRu": "чимичурри",
+      "labelEn": "chimichurri",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8138,
+      "labelRu": "соус моле",
+      "labelEn": "mole sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8139,
+      "labelRu": "соус клюквенный",
+      "labelEn": "cranberry sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 18.0,
+        "cup": 280.0
+      }
+    },
+    {
+      "id": 8140,
+      "labelRu": "соус брусничный",
+      "labelEn": "lingonberry sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 18.0,
+        "cup": 280.0
+      }
+    },
+    {
+      "id": 8141,
+      "labelRu": "соус грибной",
+      "labelEn": "mushroom sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8142,
+      "labelRu": "соус демиглас",
+      "labelEn": "demi-glace",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8144,
+      "labelRu": "соус карри",
+      "labelEn": "curry sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8145,
+      "labelRu": "бальзамический крем",
+      "labelEn": "balsamic glaze",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.3,
+        "tsp": 6.0,
+        "tbsp": 20.0
+      }
+    },
+    {
+      "id": 8146,
+      "labelRu": "наршараб",
+      "labelEn": "pomegranate molasses",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.3,
+        "tsp": 7.0,
+        "tbsp": 20.0
+      }
+    },
+    {
+      "id": 8147,
+      "labelRu": "гуакамоле",
+      "labelEn": "guacamole",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8148,
+      "labelRu": "тапенада",
+      "labelEn": "tapenade",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8149,
+      "labelRu": "соус сациви",
+      "labelEn": "satsivi sauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8150,
+      "labelRu": "майонез провансаль",
+      "labelEn": "Provencal mayonnaise",
+      "parentId": 8119,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 8151,
+      "labelRu": "итальянская заправка",
+      "labelEn": "Italian dressing",
+      "parentId": 8134,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8152,
+      "labelRu": "соус винегрет",
+      "labelEn": "vinaigrette",
+      "parentId": 8134,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 5.0,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8200,
+      "labelRu": "горчица",
+      "labelEn": "mustard",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8201,
+      "labelRu": "горчица русская",
+      "labelEn": "hot Russian mustard",
+      "parentId": 8200,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8202,
+      "labelRu": "горчица дижонская",
+      "labelEn": "Dijon mustard",
+      "parentId": 8200,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8203,
+      "labelRu": "горчица зернистая",
+      "labelEn": "whole grain mustard",
+      "parentId": 8200,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8204,
+      "labelRu": "горчица медовая",
+      "labelEn": "honey mustard",
+      "parentId": 8200,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8205,
+      "labelRu": "горчица жёлтая",
+      "labelEn": "yellow mustard",
+      "parentId": 8200,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8206,
+      "labelRu": "горчица баварская",
+      "labelEn": "Bavarian sweet mustard",
+      "parentId": 8200,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8210,
+      "labelRu": "хрен",
+      "labelEn": "prepared horseradish",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8211,
+      "labelRu": "хрен со свёклой",
+      "labelEn": "horseradish with beets",
+      "parentId": 8210,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8212,
+      "labelRu": "хреновина",
+      "labelEn": "khrenovina",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8220,
+      "labelRu": "аджика",
+      "labelEn": "adjika",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8221,
+      "labelRu": "аджика красная",
+      "labelEn": "red adjika",
+      "parentId": 8220,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8222,
+      "labelRu": "аджика зелёная",
+      "labelEn": "green adjika",
+      "parentId": 8220,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8223,
+      "labelRu": "аджика абхазская",
+      "labelEn": "Abkhazian adjika",
+      "parentId": 8220,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8225,
+      "labelRu": "ткемали",
+      "labelEn": "tkemali",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.1,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8226,
+      "labelRu": "ткемали красный",
+      "labelEn": "red tkemali",
+      "parentId": 8225,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.1,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8227,
+      "labelRu": "ткемали зелёный",
+      "labelEn": "green tkemali",
+      "parentId": 8225,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.1,
+        "tsp": 6.0,
+        "tbsp": 17.0
+      }
+    },
+    {
+      "id": 8228,
+      "labelRu": "сацебели",
+      "labelEn": "satsebeli",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8230,
+      "labelRu": "песто",
+      "labelEn": "pesto",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8231,
+      "labelRu": "песто россо",
+      "labelEn": "red pesto",
+      "parentId": 8230,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8232,
+      "labelRu": "песто из рукколы",
+      "labelEn": "arugula pesto",
+      "parentId": 8230,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8235,
+      "labelRu": "харисса",
+      "labelEn": "harissa",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8236,
+      "labelRu": "тахини",
+      "labelEn": "tahini",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8237,
+      "labelRu": "хумус",
+      "labelEn": "hummus",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 15.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 8238,
+      "labelRu": "урбеч",
+      "labelEn": "urbech",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8239,
+      "labelRu": "миндальная паста",
+      "labelEn": "almond butter",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8240,
+      "labelRu": "паста из кешью",
+      "labelEn": "cashew butter",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8241,
+      "labelRu": "паста из фундука",
+      "labelEn": "hazelnut butter",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8242,
+      "labelRu": "фисташковая паста",
+      "labelEn": "pistachio paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8243,
+      "labelRu": "кокосовая паста",
+      "labelEn": "coconut butter",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8244,
+      "labelRu": "анчоусная паста",
+      "labelEn": "anchovy paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8245,
+      "labelRu": "паста из вяленых томатов",
+      "labelEn": "sun-dried tomato paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8246,
+      "labelRu": "чесночная паста",
+      "labelEn": "garlic paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8247,
+      "labelRu": "имбирная паста",
+      "labelEn": "ginger paste",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8248,
+      "labelRu": "жидкий дым",
+      "labelEn": "liquid smoke",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0
+      }
+    },
+    {
+      "id": 8300,
+      "labelRu": "уксус",
+      "labelEn": "vinegar",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8301,
+      "labelRu": "уксус столовый",
+      "labelEn": "white vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8302,
+      "labelRu": "уксус столовый 9%",
+      "labelEn": "white vinegar 9%",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8303,
+      "labelRu": "уксус столовый 6%",
+      "labelEn": "white vinegar 6%",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8304,
+      "labelRu": "уксусная эссенция",
+      "labelEn": "vinegar essence 70%",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.07,
+        "tsp": 5.4,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8305,
+      "labelRu": "уксус яблочный",
+      "labelEn": "apple cider vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8306,
+      "labelRu": "уксус винный",
+      "labelEn": "wine vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8307,
+      "labelRu": "уксус винный белый",
+      "labelEn": "white wine vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8308,
+      "labelRu": "уксус винный красный",
+      "labelEn": "red wine vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8309,
+      "labelRu": "уксус бальзамический",
+      "labelEn": "balsamic vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.06,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 265.0
+      }
+    },
+    {
+      "id": 8310,
+      "labelRu": "уксус бальзамический белый",
+      "labelEn": "white balsamic vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.06,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8311,
+      "labelRu": "уксус рисовый",
+      "labelEn": "rice vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8312,
+      "labelRu": "уксус хересный",
+      "labelEn": "sherry vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8313,
+      "labelRu": "уксус солодовый",
+      "labelEn": "malt vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8314,
+      "labelRu": "уксус чёрный китайский",
+      "labelEn": "Chinese black vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tsp": 5.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8315,
+      "labelRu": "уксус малиновый",
+      "labelEn": "raspberry vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8316,
+      "labelRu": "уксус виноградный",
+      "labelEn": "grape vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8317,
+      "labelRu": "уксус кокосовый",
+      "labelEn": "coconut vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8318,
+      "labelRu": "уксус шампанский",
+      "labelEn": "champagne vinegar",
+      "parentId": 8300,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8400,
+      "labelRu": "соленья",
+      "labelEn": "pickled vegetables",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8401,
+      "labelRu": "огурец солёный",
+      "labelEn": "salt-brined pickle",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 70.0
+      }
+    },
+    {
+      "id": 8402,
+      "labelRu": "огурец маринованный",
+      "labelEn": "dill pickle",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 8403,
+      "labelRu": "огурец малосольный",
+      "labelEn": "half-sour pickle",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 70.0
+      }
+    },
+    {
+      "id": 8404,
+      "labelRu": "корнишоны",
+      "labelEn": "cornichons",
+      "parentId": 8400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 8.0
+      }
+    },
+    {
+      "id": 8405,
+      "labelRu": "помидор солёный",
+      "labelEn": "brined tomato",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 8406,
+      "labelRu": "помидор маринованный",
+      "labelEn": "pickled tomato",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 8407,
+      "labelRu": "капуста квашеная",
+      "labelEn": "sauerkraut",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8408,
+      "labelRu": "капуста маринованная",
+      "labelEn": "pickled cabbage",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8409,
+      "labelRu": "перец маринованный",
+      "labelEn": "pickled peppers",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 8410,
+      "labelRu": "халапеньо маринованный",
+      "labelEn": "pickled jalapenos",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 9.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 8411,
+      "labelRu": "пепперончини",
+      "labelEn": "pepperoncini",
+      "parentId": 8400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 8412,
+      "labelRu": "чеснок маринованный",
+      "labelEn": "pickled garlic",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 8413,
+      "labelRu": "черемша маринованная",
+      "labelEn": "pickled wild garlic",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8414,
+      "labelRu": "лук маринованный",
+      "labelEn": "pickled onions",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0
+      }
+    },
+    {
+      "id": 8415,
+      "labelRu": "свёкла маринованная",
+      "labelEn": "pickled beets",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "cup": 170.0
+      }
+    },
+    {
+      "id": 8416,
+      "labelRu": "яблоки мочёные",
+      "labelEn": "brined apples",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 8417,
+      "labelRu": "лимон консервированный",
+      "labelEn": "preserved lemon",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 8418,
+      "labelRu": "кимчи",
+      "labelEn": "kimchi",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8419,
+      "labelRu": "морковь по-корейски",
+      "labelEn": "Korean-style carrot salad",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 8420,
+      "labelRu": "каперсы",
+      "labelEn": "capers",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 9.0
+      }
+    },
+    {
+      "id": 8421,
+      "labelRu": "каперсовые ягоды",
+      "labelEn": "caperberries",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 4.0
+      }
+    },
+    {
+      "id": 8422,
+      "labelRu": "помидоры вяленые",
+      "labelEn": "sun-dried tomatoes",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0,
+        "tbsp": 8.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 8423,
+      "labelRu": "артишоки маринованные",
+      "labelEn": "marinated artichoke hearts",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 8424,
+      "labelRu": "перец печёный",
+      "labelEn": "roasted red peppers",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 8425,
+      "labelRu": "умэбоси",
+      "labelEn": "umeboshi",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 8427,
+      "labelRu": "патиссоны маринованные",
+      "labelEn": "pickled pattypan squash",
+      "parentId": 8400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 8429,
+      "labelRu": "релиш огуречный",
+      "labelEn": "sweet pickle relish",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8440,
+      "labelRu": "грибы маринованные",
+      "labelEn": "marinated mushrooms",
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8441,
+      "labelRu": "опята маринованные",
+      "labelEn": "pickled honey mushrooms",
+      "parentId": 8440,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8442,
+      "labelRu": "шампиньоны маринованные",
+      "labelEn": "marinated button mushrooms",
+      "parentId": 8440,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8443,
+      "labelRu": "маслята маринованные",
+      "labelEn": "pickled slippery jacks",
+      "parentId": 8440,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8444,
+      "labelRu": "лисички маринованные",
+      "labelEn": "pickled chanterelles",
+      "parentId": 8440,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8445,
+      "labelRu": "грибы солёные",
+      "labelEn": "salted mushrooms",
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8446,
+      "labelRu": "грузди солёные",
+      "labelEn": "salted milk caps",
+      "parentId": 8445,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8447,
+      "labelRu": "рыжики солёные",
+      "labelEn": "salted saffron milk caps",
+      "parentId": 8445,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8448,
+      "labelRu": "шампиньоны консервированные",
+      "labelEn": "canned button mushrooms",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 8450,
+      "labelRu": "оливки",
+      "labelEn": "olives",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 4.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 8451,
+      "labelRu": "оливки зелёные",
+      "labelEn": "green olives",
+      "parentId": 8450,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 4.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 8452,
+      "labelRu": "маслины",
+      "labelEn": "black olives",
+      "parentId": 8450,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.5,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 8453,
+      "labelRu": "оливки без косточек",
+      "labelEn": "pitted olives",
+      "parentId": 8450,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.5,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 8454,
+      "labelRu": "оливки фаршированные",
+      "labelEn": "stuffed olives",
+      "parentId": 8450,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 8455,
+      "labelRu": "оливки каламата",
+      "labelEn": "Kalamata olives",
+      "parentId": 8450,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0,
+        "cup": 140.0
+      }
+    },
+    {
+      "id": 8456,
+      "labelRu": "оливки кастельветрано",
+      "labelEn": "Castelvetrano olives",
+      "parentId": 8450,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0
+      }
+    },
+    {
+      "id": 8457,
+      "labelRu": "маслины вяленые",
+      "labelEn": "dry-cured black olives",
+      "parentId": 8450,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.0
+      }
+    },
+    {
+      "id": 8470,
+      "labelRu": "кукуруза консервированная",
+      "labelEn": "canned corn",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 340.0,
+        "cup": 165.0
+      }
+    },
+    {
+      "id": 8471,
+      "labelRu": "горошек зелёный консервированный",
+      "labelEn": "canned peas",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "cup": 160.0
+      }
+    },
+    {
+      "id": 8472,
+      "labelRu": "фасоль в томатном соусе",
+      "labelEn": "beans in tomato sauce",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8473,
+      "labelRu": "томаты в собственном соку",
+      "labelEn": "canned whole tomatoes",
+      "parentId": 8503,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8474,
+      "labelRu": "томаты резаные консервированные",
+      "labelEn": "canned diced tomatoes",
+      "parentId": 8503,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8475,
+      "labelRu": "томаты черри консервированные",
+      "labelEn": "canned cherry tomatoes",
+      "parentId": 8503,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 8476,
+      "labelRu": "кокосовое молоко",
+      "labelEn": "coconut milk",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.98,
+        "pc": 400.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8477,
+      "labelRu": "кокосовые сливки",
+      "labelEn": "coconut cream",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8478,
+      "labelRu": "кокосовое молоко лёгкое",
+      "labelEn": "light coconut milk",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.98,
+        "pc": 400.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8479,
+      "labelRu": "ананасы консервированные",
+      "labelEn": "canned pineapple",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 580.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 8480,
+      "labelRu": "персики консервированные",
+      "labelEn": "canned peaches",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 820.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8481,
+      "labelRu": "абрикосы консервированные",
+      "labelEn": "canned apricots",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 820.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8482,
+      "labelRu": "груши консервированные",
+      "labelEn": "canned pears",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 820.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8483,
+      "labelRu": "вишня консервированная",
+      "labelEn": "canned cherries",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 425.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8484,
+      "labelRu": "мандарины консервированные",
+      "labelEn": "canned mandarin oranges",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 310.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8485,
+      "labelRu": "фруктовый коктейль консервированный",
+      "labelEn": "canned fruit cocktail",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 425.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8486,
+      "labelRu": "бамбуковые побеги",
+      "labelEn": "bamboo shoots",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 225.0
+      }
+    },
+    {
+      "id": 8487,
+      "labelRu": "водяной каштан",
+      "labelEn": "water chestnuts",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 225.0
+      }
+    },
+    {
+      "id": 8488,
+      "labelRu": "пальмовая сердцевина",
+      "labelEn": "hearts of palm",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 8489,
+      "labelRu": "тыквенное пюре",
+      "labelEn": "pumpkin puree",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 425.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 8490,
+      "labelRu": "яблочное пюре",
+      "labelEn": "applesauce",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 8491,
+      "labelRu": "лечо",
+      "labelEn": "lecho",
+      "factors": {
+        "g": 1.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8492,
+      "labelRu": "икра кабачковая",
+      "labelEn": "zucchini spread",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8493,
+      "labelRu": "икра баклажанная",
+      "labelEn": "eggplant spread",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8494,
+      "labelRu": "свёкла консервированная",
+      "labelEn": "canned beets",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 425.0
+      }
+    },
+    {
+      "id": 8495,
+      "labelRu": "морковь консервированная",
+      "labelEn": "canned carrots",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 8496,
+      "labelRu": "фасоль стручковая консервированная",
+      "labelEn": "canned green beans",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 8497,
+      "labelRu": "кукуруза сливочная",
+      "labelEn": "cream-style corn",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 425.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 8498,
+      "labelRu": "шпинат консервированный",
+      "labelEn": "canned spinach",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 8501,
+      "labelRu": "ананасы кольцами",
+      "labelEn": "canned pineapple rings",
+      "parentId": 8479,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 8503,
+      "labelRu": "томаты консервированные",
+      "labelEn": "canned tomatoes",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8504,
+      "labelRu": "томаты протёртые",
+      "labelEn": "crushed tomatoes",
+      "parentId": 8503,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "tbsp": 15.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 8505,
+      "labelRu": "перец чили зелёный консервированный",
+      "labelEn": "diced green chiles",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 113.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8506,
+      "labelRu": "вишня мараскино",
+      "labelEn": "maraschino cherries",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0
+      }
+    },
+    {
+      "id": 8520,
+      "labelRu": "водоросли",
+      "labelEn": "seaweed",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8521,
+      "labelRu": "нори",
+      "labelEn": "nori",
+      "parentId": 8520,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 3.0
+      }
+    },
+    {
+      "id": 8522,
+      "labelRu": "морская капуста",
+      "labelEn": "seaweed salad",
+      "parentId": 8520,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8523,
+      "labelRu": "вакаме",
+      "labelEn": "wakame",
+      "parentId": 8520,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 2.0
+      }
+    },
+    {
+      "id": 8524,
+      "labelRu": "комбу",
+      "labelEn": "kombu",
+      "parentId": 8520,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8525,
+      "labelRu": "чука",
+      "labelEn": "chuka salad",
+      "parentId": 8520,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8526,
+      "labelRu": "ламинария сушёная",
+      "labelEn": "dried kelp",
+      "parentId": 8520,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8527,
+      "labelRu": "хидзики",
+      "labelEn": "hijiki",
+      "parentId": 8520,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 3.0
+      }
+    },
+    {
+      "id": 8528,
+      "labelRu": "нори хлопьями",
+      "labelEn": "nori flakes",
+      "parentId": 8520,
+      "factors": {
+        "g": 1.0,
+        "tsp": 0.5,
+        "tbsp": 1.5
+      }
+    },
+    {
+      "id": 8540,
+      "labelRu": "варенье",
+      "labelEn": "preserves",
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8541,
+      "labelRu": "варенье клубничное",
+      "labelEn": "strawberry preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8542,
+      "labelRu": "варенье малиновое",
+      "labelEn": "raspberry preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8543,
+      "labelRu": "варенье вишнёвое",
+      "labelEn": "cherry preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8544,
+      "labelRu": "варенье абрикосовое",
+      "labelEn": "apricot preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8545,
+      "labelRu": "варенье смородиновое",
+      "labelEn": "black currant preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8546,
+      "labelRu": "варенье черничное",
+      "labelEn": "blueberry preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8547,
+      "labelRu": "варенье из инжира",
+      "labelEn": "fig preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8548,
+      "labelRu": "варенье из грецких орехов",
+      "labelEn": "green walnut preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0
+      }
+    },
+    {
+      "id": 8549,
+      "labelRu": "варенье из шишек",
+      "labelEn": "pine cone preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0
+      }
+    },
+    {
+      "id": 8550,
+      "labelRu": "варенье из крыжовника",
+      "labelEn": "gooseberry preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8551,
+      "labelRu": "варенье брусничное",
+      "labelEn": "lingonberry preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8552,
+      "labelRu": "варенье яблочное",
+      "labelEn": "apple preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8553,
+      "labelRu": "варенье сливовое",
+      "labelEn": "plum preserves",
+      "parentId": 8540,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8560,
+      "labelRu": "джем",
+      "labelEn": "jam",
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8561,
+      "labelRu": "джем абрикосовый",
+      "labelEn": "apricot jam",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8562,
+      "labelRu": "джем клубничный",
+      "labelEn": "strawberry jam",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8563,
+      "labelRu": "джем малиновый",
+      "labelEn": "raspberry jam",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8564,
+      "labelRu": "джем вишнёвый",
+      "labelEn": "cherry jam",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8565,
+      "labelRu": "джем апельсиновый",
+      "labelEn": "orange marmalade",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8566,
+      "labelRu": "джем черносмородиновый",
+      "labelEn": "black currant jam",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8567,
+      "labelRu": "джем черничный",
+      "labelEn": "blueberry jam",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8568,
+      "labelRu": "джем персиковый",
+      "labelEn": "peach jam",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8569,
+      "labelRu": "джем из инжира",
+      "labelEn": "fig jam",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0
+      }
+    },
+    {
+      "id": 8570,
+      "labelRu": "желе из красной смородины",
+      "labelEn": "red currant jelly",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0
+      }
+    },
+    {
+      "id": 8571,
+      "labelRu": "желе виноградное",
+      "labelEn": "grape jelly",
+      "parentId": 8560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8575,
+      "labelRu": "повидло",
+      "labelEn": "fruit butter",
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8576,
+      "labelRu": "повидло яблочное",
+      "labelEn": "apple butter",
+      "parentId": 8575,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8577,
+      "labelRu": "повидло сливовое",
+      "labelEn": "plum butter",
+      "parentId": 8575,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8578,
+      "labelRu": "повидло абрикосовое",
+      "labelEn": "apricot butter",
+      "parentId": 8575,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8580,
+      "labelRu": "конфитюр",
+      "labelEn": "fruit spread",
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 320.0
+      }
+    },
+    {
+      "id": 8581,
+      "labelRu": "конфитюр из ягод",
+      "labelEn": "berry fruit spread",
+      "parentId": 8580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 7.0,
+        "tbsp": 20.0
+      }
+    },
+    {
+      "id": 8585,
+      "labelRu": "лимонный курд",
+      "labelEn": "lemon curd",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0,
+        "cup": 290.0
+      }
+    },
+    {
+      "id": 8586,
+      "labelRu": "айвовый мармелад",
+      "labelEn": "quince paste",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8587,
+      "labelRu": "розовая вода",
+      "labelEn": "rose water",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8588,
+      "labelRu": "вода апельсиновых цветов",
+      "labelEn": "orange blossom water",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8600,
+      "labelRu": "бульон",
+      "labelEn": "stock",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8601,
+      "labelRu": "бульон куриный",
+      "labelEn": "chicken stock",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8602,
+      "labelRu": "бульон говяжий",
+      "labelEn": "beef stock",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8603,
+      "labelRu": "бульон овощной",
+      "labelEn": "vegetable stock",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8604,
+      "labelRu": "бульон рыбный",
+      "labelEn": "fish stock",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8605,
+      "labelRu": "бульон грибной",
+      "labelEn": "mushroom stock",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8606,
+      "labelRu": "бульон костный",
+      "labelEn": "bone broth",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8607,
+      "labelRu": "бульон мясной",
+      "labelEn": "meat stock",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8608,
+      "labelRu": "бульон сухой",
+      "labelEn": "bouillon powder",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 4.0,
+        "tbsp": 12.0
+      }
+    },
+    {
+      "id": 8609,
+      "labelRu": "даши",
+      "labelEn": "dashi",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8610,
+      "labelRu": "бульон из индейки",
+      "labelEn": "turkey stock",
+      "parentId": 8600,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8620,
+      "labelRu": "бульонный кубик",
+      "labelEn": "bouillon cube",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 8621,
+      "labelRu": "бульонный кубик куриный",
+      "labelEn": "chicken bouillon cube",
+      "parentId": 8620,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 8622,
+      "labelRu": "бульонный кубик говяжий",
+      "labelEn": "beef bouillon cube",
+      "parentId": 8620,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 8623,
+      "labelRu": "бульонный кубик овощной",
+      "labelEn": "vegetable bouillon cube",
+      "parentId": 8620,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 8624,
+      "labelRu": "бульонный кубик грибной",
+      "labelEn": "mushroom bouillon cube",
+      "parentId": 8620,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 8625,
+      "labelRu": "бульонный кубик рыбный",
+      "labelEn": "fish bouillon cube",
+      "parentId": 8620,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 8630,
+      "labelRu": "даши порошок",
+      "labelEn": "dashi powder",
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0
+      }
+    },
+    {
+      "id": 8631,
+      "labelRu": "концентрат бульона",
+      "labelEn": "bouillon base",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 8632,
+      "labelRu": "крем-суп грибной концентрированный",
+      "labelEn": "condensed cream of mushroom soup",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 8633,
+      "labelRu": "крем-суп куриный концентрированный",
+      "labelEn": "condensed cream of chicken soup",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 8700,
+      "labelRu": "вино",
+      "labelEn": "wine",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8701,
+      "labelRu": "вино белое",
+      "labelEn": "white wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8702,
+      "labelRu": "вино белое сухое",
+      "labelEn": "dry white wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8703,
+      "labelRu": "вино красное",
+      "labelEn": "red wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8704,
+      "labelRu": "вино красное сухое",
+      "labelEn": "dry red wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8705,
+      "labelRu": "вино розовое",
+      "labelEn": "rose wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8706,
+      "labelRu": "вино полусладкое",
+      "labelEn": "semi-sweet wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tbsp": 15.0,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8707,
+      "labelRu": "вино десертное",
+      "labelEn": "dessert wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8708,
+      "labelRu": "вино игристое",
+      "labelEn": "sparkling wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8709,
+      "labelRu": "шампанское",
+      "labelEn": "Champagne",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8710,
+      "labelRu": "просекко",
+      "labelEn": "prosecco",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8711,
+      "labelRu": "херес",
+      "labelEn": "sherry",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8712,
+      "labelRu": "портвейн",
+      "labelEn": "port",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 8713,
+      "labelRu": "марсала",
+      "labelEn": "Marsala",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 8714,
+      "labelRu": "мадера",
+      "labelEn": "Madeira",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 8715,
+      "labelRu": "кагор",
+      "labelEn": "Kagor wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8716,
+      "labelRu": "вермут",
+      "labelEn": "vermouth",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8717,
+      "labelRu": "вино шаосин",
+      "labelEn": "Shaoxing wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8718,
+      "labelRu": "вино для глинтвейна",
+      "labelEn": "mulled wine",
+      "parentId": 8700,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 8720,
+      "labelRu": "мирин",
+      "labelEn": "mirin",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8721,
+      "labelRu": "саке",
+      "labelEn": "sake",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 8725,
+      "labelRu": "пиво",
+      "labelEn": "beer",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8726,
+      "labelRu": "пиво светлое",
+      "labelEn": "lager",
+      "parentId": 8725,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8727,
+      "labelRu": "пиво тёмное",
+      "labelEn": "dark beer",
+      "parentId": 8725,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8728,
+      "labelRu": "пиво безалкогольное",
+      "labelEn": "non-alcoholic beer",
+      "parentId": 8725,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8729,
+      "labelRu": "эль",
+      "labelEn": "ale",
+      "parentId": 8725,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8730,
+      "labelRu": "стаут",
+      "labelEn": "stout",
+      "parentId": 8725,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8731,
+      "labelRu": "сидр",
+      "labelEn": "hard cider",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8735,
+      "labelRu": "коньяк",
+      "labelEn": "cognac",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8736,
+      "labelRu": "бренди",
+      "labelEn": "brandy",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8737,
+      "labelRu": "ром",
+      "labelEn": "rum",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8738,
+      "labelRu": "ром тёмный",
+      "labelEn": "dark rum",
+      "parentId": 8737,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8739,
+      "labelRu": "ром белый",
+      "labelEn": "white rum",
+      "parentId": 8737,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8740,
+      "labelRu": "водка",
+      "labelEn": "vodka",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8741,
+      "labelRu": "виски",
+      "labelEn": "whiskey",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8742,
+      "labelRu": "бурбон",
+      "labelEn": "bourbon",
+      "parentId": 8741,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8743,
+      "labelRu": "джин",
+      "labelEn": "gin",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8744,
+      "labelRu": "текила",
+      "labelEn": "tequila",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8745,
+      "labelRu": "кальвадос",
+      "labelEn": "Calvados",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8746,
+      "labelRu": "чача",
+      "labelEn": "chacha",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8747,
+      "labelRu": "граппа",
+      "labelEn": "grappa",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8748,
+      "labelRu": "кирш",
+      "labelEn": "kirsch",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8749,
+      "labelRu": "спирт",
+      "labelEn": "grain alcohol",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.81,
+        "tsp": 4.0,
+        "tbsp": 12.0
+      }
+    },
+    {
+      "id": 8750,
+      "labelRu": "ликёр",
+      "labelEn": "liqueur",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.08,
+        "tsp": 5.4,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8751,
+      "labelRu": "ликёр апельсиновый",
+      "labelEn": "orange liqueur",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.06,
+        "tsp": 5.3,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8752,
+      "labelRu": "ликёр кофейный",
+      "labelEn": "coffee liqueur",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.1,
+        "tsp": 5.5,
+        "tbsp": 16.5
+      }
+    },
+    {
+      "id": 8753,
+      "labelRu": "ликёр сливочный",
+      "labelEn": "Irish cream liqueur",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.06,
+        "tsp": 5.3,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8754,
+      "labelRu": "амаретто",
+      "labelEn": "amaretto",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.08,
+        "tsp": 5.4,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8755,
+      "labelRu": "ликёр вишнёвый",
+      "labelEn": "cherry liqueur",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.08,
+        "tsp": 5.4,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8756,
+      "labelRu": "ликёр кокосовый",
+      "labelEn": "coconut liqueur",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.06,
+        "tsp": 5.3,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8757,
+      "labelRu": "ликёр ореховый",
+      "labelEn": "hazelnut liqueur",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.08,
+        "tsp": 5.4,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8758,
+      "labelRu": "ликёр мятный",
+      "labelEn": "creme de menthe",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.08,
+        "tsp": 5.4,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8759,
+      "labelRu": "ликёр лимонный",
+      "labelEn": "limoncello",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.08,
+        "tsp": 5.4,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8760,
+      "labelRu": "самбука",
+      "labelEn": "sambuca",
+      "parentId": 8750,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.08,
+        "tsp": 5.4,
+        "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8761,
+      "labelRu": "абсент",
+      "labelEn": "absinthe",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.93,
+        "tsp": 4.7,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 8762,
+      "labelRu": "биттер",
+      "labelEn": "bitters",
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 4.7
+      }
+    },
+    {
+      "id": 8800,
+      "labelRu": "вода",
+      "labelEn": "water",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8801,
+      "labelRu": "вода минеральная",
+      "labelEn": "mineral water",
+      "parentId": 8800,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8802,
+      "labelRu": "вода газированная",
+      "labelEn": "sparkling water",
+      "parentId": 8800,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8803,
+      "labelRu": "вода ледяная",
+      "labelEn": "ice water",
+      "parentId": 8800,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8804,
+      "labelRu": "кипяток",
+      "labelEn": "boiling water",
+      "parentId": 8800,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8805,
+      "labelRu": "вода тёплая",
+      "labelEn": "warm water",
+      "parentId": 8800,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8806,
+      "labelRu": "вода кипячёная",
+      "labelEn": "boiled water",
+      "parentId": 8800,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8807,
+      "labelRu": "содовая",
+      "labelEn": "club soda",
+      "parentId": 8800,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8808,
+      "labelRu": "тоник",
+      "labelEn": "tonic water",
+      "parentId": 8800,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 8810,
+      "labelRu": "лёд",
+      "labelEn": "ice",
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8811,
+      "labelRu": "кубик льда",
+      "labelEn": "ice cube",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 25.0
+      }
+    },
+    {
+      "id": 8812,
+      "labelRu": "лёд колотый",
+      "labelEn": "crushed ice",
+      "parentId": 8810,
+      "factors": {
+        "g": 1.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 8820,
+      "labelRu": "кофе",
+      "labelEn": "coffee",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8821,
+      "labelRu": "кофе молотый",
+      "labelEn": "ground coffee",
+      "parentId": 8820,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 8822,
+      "labelRu": "кофе растворимый",
+      "labelEn": "instant coffee",
+      "parentId": 8820,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 5.0
+      }
+    },
+    {
+      "id": 8823,
+      "labelRu": "кофе в зёрнах",
+      "labelEn": "coffee beans",
+      "parentId": 8820,
+      "factors": {
+        "g": 1.0,
+        "cup": 85.0
+      }
+    },
+    {
+      "id": 8824,
+      "labelRu": "эспрессо",
+      "labelEn": "espresso",
+      "parentId": 8820,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8825,
+      "labelRu": "кофе сваренный",
+      "labelEn": "brewed coffee",
+      "parentId": 8820,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8826,
+      "labelRu": "кофе без кофеина",
+      "labelEn": "decaf coffee",
+      "parentId": 8820,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8827,
+      "labelRu": "цикорий",
+      "labelEn": "chicory",
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 8830,
+      "labelRu": "чай",
+      "labelEn": "tea",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8831,
+      "labelRu": "чай чёрный",
+      "labelEn": "black tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 8832,
+      "labelRu": "чай зелёный",
+      "labelEn": "green tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 8833,
+      "labelRu": "пакетик чая",
+      "labelEn": "tea bag",
+      "parentId": 8830,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 2.0
+      }
+    },
+    {
+      "id": 8834,
+      "labelRu": "чай заваренный",
+      "labelEn": "brewed tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8835,
+      "labelRu": "матча",
+      "labelEn": "matcha",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 6.0
+      }
+    },
+    {
+      "id": 8836,
+      "labelRu": "каркаде",
+      "labelEn": "hibiscus tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.5,
+        "tbsp": 4.5
+      }
+    },
+    {
+      "id": 8837,
+      "labelRu": "чай эрл грей",
+      "labelEn": "Earl Grey tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 8838,
+      "labelRu": "ройбуш",
+      "labelEn": "rooibos",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 8839,
+      "labelRu": "чай улун",
+      "labelEn": "oolong tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 8840,
+      "labelRu": "чай пуэр",
+      "labelEn": "pu-erh tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 8841,
+      "labelRu": "иван-чай",
+      "labelEn": "fireweed tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0
+      }
+    },
+    {
+      "id": 8842,
+      "labelRu": "ромашковый чай",
+      "labelEn": "chamomile tea",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 1.0
+      }
+    },
+    {
+      "id": 8843,
+      "labelRu": "чай масала",
+      "labelEn": "masala chai",
+      "parentId": 8830,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5
+      }
+    },
+    {
+      "id": 8850,
+      "labelRu": "сок",
+      "labelEn": "juice",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8851,
+      "labelRu": "сок томатный",
+      "labelEn": "tomato juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 8852,
+      "labelRu": "сок яблочный",
+      "labelEn": "apple juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8853,
+      "labelRu": "сок гранатовый",
+      "labelEn": "pomegranate juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 262.0
+      }
+    },
+    {
+      "id": 8854,
+      "labelRu": "сок виноградный",
+      "labelEn": "grape juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.06,
+        "tbsp": 16.0,
+        "cup": 265.0
+      }
+    },
+    {
+      "id": 8855,
+      "labelRu": "сок вишнёвый",
+      "labelEn": "cherry juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 262.0
+      }
+    },
+    {
+      "id": 8856,
+      "labelRu": "сок ананасовый",
+      "labelEn": "pineapple juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 262.0
+      }
+    },
+    {
+      "id": 8857,
+      "labelRu": "сок грейпфрутовый",
+      "labelEn": "grapefruit juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8858,
+      "labelRu": "сок клюквенный",
+      "labelEn": "cranberry juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8859,
+      "labelRu": "сок морковный",
+      "labelEn": "carrot juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8860,
+      "labelRu": "сок мультифрукт",
+      "labelEn": "mixed fruit juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8861,
+      "labelRu": "сок персиковый",
+      "labelEn": "peach nectar",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 262.0
+      }
+    },
+    {
+      "id": 8862,
+      "labelRu": "сок манговый",
+      "labelEn": "mango nectar",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tbsp": 16.0,
+        "cup": 262.0
+      }
+    },
+    {
+      "id": 8863,
+      "labelRu": "сок свекольный",
+      "labelEn": "beet juice",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tbsp": 16.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8864,
+      "labelRu": "сок берёзовый",
+      "labelEn": "birch sap",
+      "parentId": 8850,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 8870,
+      "labelRu": "квас",
+      "labelEn": "kvass",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 8871,
+      "labelRu": "морс",
+      "labelEn": "berry drink",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 8872,
+      "labelRu": "лимонад",
+      "labelEn": "lemonade",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8873,
+      "labelRu": "кола",
+      "labelEn": "cola",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8874,
+      "labelRu": "кокосовая вода",
+      "labelEn": "coconut water",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 8875,
+      "labelRu": "кисель",
+      "labelEn": "kissel",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "cup": 262.0
+      }
+    },
+    {
+      "id": 8876,
+      "labelRu": "компот",
+      "labelEn": "compote drink",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 8877,
+      "labelRu": "газировка сладкая",
+      "labelEn": "soda",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8878,
+      "labelRu": "имбирный эль",
+      "labelEn": "ginger ale",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 8879,
+      "labelRu": "холодный чай",
+      "labelEn": "iced tea",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 8900,
+      "labelRu": "зефир",
+      "labelEn": "zefir",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 35.0
+      }
+    },
+    {
+      "id": 8901,
+      "labelRu": "маршмеллоу",
+      "labelEn": "marshmallows",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 7.0,
+        "cup": 50.0
+      }
+    },
+    {
+      "id": 8902,
+      "labelRu": "маршмеллоу мини",
+      "labelEn": "mini marshmallows",
+      "parentId": 8901,
+      "factors": {
+        "g": 1.0,
+        "cup": 50.0
+      }
+    },
+    {
+      "id": 8903,
+      "labelRu": "безе",
+      "labelEn": "meringues",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0
+      }
+    },
+    {
+      "id": 8904,
+      "labelRu": "мармелад",
+      "labelEn": "fruit jelly candies",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8905,
+      "labelRu": "мармелад жевательный",
+      "labelEn": "gummy candies",
+      "parentId": 8904,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8906,
+      "labelRu": "халва",
+      "labelEn": "halva",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8907,
+      "labelRu": "халва подсолнечная",
+      "labelEn": "sunflower halva",
+      "parentId": 8906,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8908,
+      "labelRu": "халва тахинная",
+      "labelEn": "tahini halva",
+      "parentId": 8906,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8909,
+      "labelRu": "пряники",
+      "labelEn": "spice cookies",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 35.0
+      }
+    },
+    {
+      "id": 8910,
+      "labelRu": "пряник тульский",
+      "labelEn": "Tula gingerbread",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 140.0
+      }
+    },
+    {
+      "id": 8911,
+      "labelRu": "вафли",
+      "labelEn": "wafer cookies",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 8912,
+      "labelRu": "карамель",
+      "labelEn": "caramels",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0
+      }
+    },
+    {
+      "id": 8913,
+      "labelRu": "ирис",
+      "labelEn": "toffee",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 6.0
+      }
+    },
+    {
+      "id": 8914,
+      "labelRu": "конфеты",
+      "labelEn": "candies",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8915,
+      "labelRu": "конфеты шоколадные",
+      "labelEn": "chocolate candies",
+      "parentId": 8914,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 12.0
+      }
+    },
+    {
+      "id": 8916,
+      "labelRu": "леденцы",
+      "labelEn": "hard candies",
+      "parentId": 8914,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 4.0
+      }
+    },
+    {
+      "id": 8917,
+      "labelRu": "нуга",
+      "labelEn": "nougat",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8918,
+      "labelRu": "пастила",
+      "labelEn": "pastila",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8919,
+      "labelRu": "рахат-лукум",
+      "labelEn": "Turkish delight",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8920,
+      "labelRu": "козинаки",
+      "labelEn": "seed brittle",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8921,
+      "labelRu": "чурчхела",
+      "labelEn": "churchkhela",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 8923,
+      "labelRu": "грильяж",
+      "labelEn": "nut brittle",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8924,
+      "labelRu": "трюфели шоколадные",
+      "labelEn": "chocolate truffles",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 12.0
+      }
+    },
+    {
+      "id": 8925,
+      "labelRu": "конфеты вафельные",
+      "labelEn": "wafer candies",
+      "parentId": 8914,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 18.0
+      }
+    },
+    {
+      "id": 8926,
+      "labelRu": "драже",
+      "labelEn": "candy-coated chocolates",
+      "parentId": 8914,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 8927,
+      "labelRu": "батончик шоколадный",
+      "labelEn": "candy bar",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 8940,
+      "labelRu": "чипсы",
+      "labelEn": "potato chips",
+      "factors": {
+        "g": 1.0,
+        "cup": 30.0
+      }
+    },
+    {
+      "id": 8941,
+      "labelRu": "чипсы кукурузные",
+      "labelEn": "tortilla chips",
+      "parentId": 8940,
+      "factors": {
+        "g": 1.0,
+        "cup": 30.0
+      }
+    },
+    {
+      "id": 8942,
+      "labelRu": "кукурузные палочки",
+      "labelEn": "corn puffs",
+      "factors": {
+        "g": 1.0,
+        "cup": 20.0
+      }
+    },
+    {
+      "id": 8943,
+      "labelRu": "попкорн",
+      "labelEn": "popcorn",
+      "factors": {
+        "g": 1.0,
+        "cup": 10.0
+      }
     }
   ],
   "tags": [
@@ -20187,6 +26820,1461 @@
       "id": 11,
       "labelRu": "грузинская",
       "labelEn": "Georgian"
+    },
+    {
+      "id": 100,
+      "labelRu": "русская",
+      "labelEn": "Russian"
+    },
+    {
+      "id": 101,
+      "labelRu": "украинская",
+      "labelEn": "Ukrainian"
+    },
+    {
+      "id": 102,
+      "labelRu": "белорусская",
+      "labelEn": "Belarusian"
+    },
+    {
+      "id": 103,
+      "labelRu": "советская",
+      "labelEn": "Soviet"
+    },
+    {
+      "id": 104,
+      "labelRu": "кавказская",
+      "labelEn": "Caucasian"
+    },
+    {
+      "id": 105,
+      "labelRu": "армянская",
+      "labelEn": "Armenian"
+    },
+    {
+      "id": 106,
+      "labelRu": "азербайджанская",
+      "labelEn": "Azerbaijani"
+    },
+    {
+      "id": 108,
+      "labelRu": "осетинская",
+      "labelEn": "Ossetian"
+    },
+    {
+      "id": 111,
+      "labelRu": "татарская",
+      "labelEn": "Tatar"
+    },
+    {
+      "id": 112,
+      "labelRu": "крымскотатарская",
+      "labelEn": "Crimean Tatar"
+    },
+    {
+      "id": 114,
+      "labelRu": "сибирская",
+      "labelEn": "Siberian"
+    },
+    {
+      "id": 120,
+      "labelRu": "среднеазиатская",
+      "labelEn": "Central Asian"
+    },
+    {
+      "id": 121,
+      "labelRu": "узбекская",
+      "labelEn": "Uzbek"
+    },
+    {
+      "id": 122,
+      "labelRu": "казахская",
+      "labelEn": "Kazakh"
+    },
+    {
+      "id": 126,
+      "labelRu": "уйгурская",
+      "labelEn": "Uyghur"
+    },
+    {
+      "id": 128,
+      "labelRu": "молдавская",
+      "labelEn": "Moldovan"
+    },
+    {
+      "id": 130,
+      "labelRu": "европейская",
+      "labelEn": "European"
+    },
+    {
+      "id": 131,
+      "labelRu": "восточноевропейская",
+      "labelEn": "Eastern European"
+    },
+    {
+      "id": 132,
+      "labelRu": "польская",
+      "labelEn": "Polish"
+    },
+    {
+      "id": 133,
+      "labelRu": "чешская",
+      "labelEn": "Czech"
+    },
+    {
+      "id": 135,
+      "labelRu": "венгерская",
+      "labelEn": "Hungarian"
+    },
+    {
+      "id": 137,
+      "labelRu": "болгарская",
+      "labelEn": "Bulgarian"
+    },
+    {
+      "id": 138,
+      "labelRu": "сербская",
+      "labelEn": "Serbian"
+    },
+    {
+      "id": 139,
+      "labelRu": "балканская",
+      "labelEn": "Balkan"
+    },
+    {
+      "id": 141,
+      "labelRu": "немецкая",
+      "labelEn": "German"
+    },
+    {
+      "id": 142,
+      "labelRu": "австрийская",
+      "labelEn": "Austrian"
+    },
+    {
+      "id": 143,
+      "labelRu": "швейцарская",
+      "labelEn": "Swiss"
+    },
+    {
+      "id": 144,
+      "labelRu": "французская",
+      "labelEn": "French"
+    },
+    {
+      "id": 147,
+      "labelRu": "британская",
+      "labelEn": "British"
+    },
+    {
+      "id": 149,
+      "labelRu": "ирландская",
+      "labelEn": "Irish"
+    },
+    {
+      "id": 151,
+      "labelRu": "скандинавская",
+      "labelEn": "Scandinavian"
+    },
+    {
+      "id": 152,
+      "labelRu": "шведская",
+      "labelEn": "Swedish"
+    },
+    {
+      "id": 154,
+      "labelRu": "финская",
+      "labelEn": "Finnish"
+    },
+    {
+      "id": 156,
+      "labelRu": "прибалтийская",
+      "labelEn": "Baltic"
+    },
+    {
+      "id": 160,
+      "labelRu": "средиземноморская",
+      "labelEn": "Mediterranean"
+    },
+    {
+      "id": 161,
+      "labelRu": "испанская",
+      "labelEn": "Spanish"
+    },
+    {
+      "id": 164,
+      "labelRu": "португальская",
+      "labelEn": "Portuguese"
+    },
+    {
+      "id": 165,
+      "labelRu": "греческая",
+      "labelEn": "Greek"
+    },
+    {
+      "id": 168,
+      "labelRu": "еврейская",
+      "labelEn": "Jewish"
+    },
+    {
+      "id": 180,
+      "labelRu": "ближневосточная",
+      "labelEn": "Middle Eastern"
+    },
+    {
+      "id": 181,
+      "labelRu": "турецкая",
+      "labelEn": "Turkish"
+    },
+    {
+      "id": 182,
+      "labelRu": "ливанская",
+      "labelEn": "Lebanese"
+    },
+    {
+      "id": 183,
+      "labelRu": "израильская",
+      "labelEn": "Israeli"
+    },
+    {
+      "id": 185,
+      "labelRu": "персидская",
+      "labelEn": "Persian"
+    },
+    {
+      "id": 190,
+      "labelRu": "африканская",
+      "labelEn": "African"
+    },
+    {
+      "id": 191,
+      "labelRu": "североафриканская",
+      "labelEn": "North African"
+    },
+    {
+      "id": 192,
+      "labelRu": "марокканская",
+      "labelEn": "Moroccan"
+    },
+    {
+      "id": 195,
+      "labelRu": "эфиопская",
+      "labelEn": "Ethiopian"
+    },
+    {
+      "id": 200,
+      "labelRu": "азиатская",
+      "labelEn": "Asian"
+    },
+    {
+      "id": 201,
+      "labelRu": "паназиатская",
+      "labelEn": "Pan-Asian"
+    },
+    {
+      "id": 202,
+      "labelRu": "китайская",
+      "labelEn": "Chinese"
+    },
+    {
+      "id": 203,
+      "labelRu": "сычуаньская",
+      "labelEn": "Sichuan"
+    },
+    {
+      "id": 206,
+      "labelRu": "японская",
+      "labelEn": "Japanese"
+    },
+    {
+      "id": 207,
+      "labelRu": "корейская",
+      "labelEn": "Korean"
+    },
+    {
+      "id": 208,
+      "labelRu": "тайская",
+      "labelEn": "Thai"
+    },
+    {
+      "id": 209,
+      "labelRu": "вьетнамская",
+      "labelEn": "Vietnamese"
+    },
+    {
+      "id": 210,
+      "labelRu": "индонезийская",
+      "labelEn": "Indonesian"
+    },
+    {
+      "id": 211,
+      "labelRu": "малайзийская",
+      "labelEn": "Malaysian"
+    },
+    {
+      "id": 212,
+      "labelRu": "сингапурская",
+      "labelEn": "Singaporean"
+    },
+    {
+      "id": 213,
+      "labelRu": "филиппинская",
+      "labelEn": "Filipino"
+    },
+    {
+      "id": 217,
+      "labelRu": "индийская",
+      "labelEn": "Indian"
+    },
+    {
+      "id": 223,
+      "labelRu": "гавайская",
+      "labelEn": "Hawaiian"
+    },
+    {
+      "id": 230,
+      "labelRu": "американская",
+      "labelEn": "American"
+    },
+    {
+      "id": 231,
+      "labelRu": "каджунская",
+      "labelEn": "Cajun"
+    },
+    {
+      "id": 232,
+      "labelRu": "техасско-мексиканская",
+      "labelEn": "Tex-Mex"
+    },
+    {
+      "id": 233,
+      "labelRu": "канадская",
+      "labelEn": "Canadian"
+    },
+    {
+      "id": 234,
+      "labelRu": "мексиканская",
+      "labelEn": "Mexican"
+    },
+    {
+      "id": 235,
+      "labelRu": "латиноамериканская",
+      "labelEn": "Latin American"
+    },
+    {
+      "id": 236,
+      "labelRu": "бразильская",
+      "labelEn": "Brazilian"
+    },
+    {
+      "id": 237,
+      "labelRu": "аргентинская",
+      "labelEn": "Argentine"
+    },
+    {
+      "id": 238,
+      "labelRu": "перуанская",
+      "labelEn": "Peruvian"
+    },
+    {
+      "id": 242,
+      "labelRu": "кубинская",
+      "labelEn": "Cuban"
+    },
+    {
+      "id": 243,
+      "labelRu": "карибская",
+      "labelEn": "Caribbean"
+    },
+    {
+      "id": 250,
+      "labelRu": "австралийская",
+      "labelEn": "Australian"
+    },
+    {
+      "id": 251,
+      "labelRu": "фьюжн",
+      "labelEn": "fusion"
+    },
+    {
+      "id": 300,
+      "labelRu": "завтрак",
+      "labelEn": "breakfast"
+    },
+    {
+      "id": 301,
+      "labelRu": "бранч",
+      "labelEn": "brunch"
+    },
+    {
+      "id": 302,
+      "labelRu": "обед",
+      "labelEn": "lunch"
+    },
+    {
+      "id": 303,
+      "labelRu": "ужин",
+      "labelEn": "dinner"
+    },
+    {
+      "id": 304,
+      "labelRu": "полдник",
+      "labelEn": "afternoon snack"
+    },
+    {
+      "id": 305,
+      "labelRu": "перекус",
+      "labelEn": "snack"
+    },
+    {
+      "id": 306,
+      "labelRu": "закуска",
+      "labelEn": "appetizer"
+    },
+    {
+      "id": 307,
+      "labelRu": "холодная закуска",
+      "labelEn": "cold appetizer"
+    },
+    {
+      "id": 308,
+      "labelRu": "горячая закуска",
+      "labelEn": "hot appetizer"
+    },
+    {
+      "id": 309,
+      "labelRu": "суп",
+      "labelEn": "soup"
+    },
+    {
+      "id": 310,
+      "labelRu": "крем-суп",
+      "labelEn": "cream soup"
+    },
+    {
+      "id": 311,
+      "labelRu": "холодный суп",
+      "labelEn": "cold soup"
+    },
+    {
+      "id": 312,
+      "labelRu": "салат",
+      "labelEn": "salad"
+    },
+    {
+      "id": 313,
+      "labelRu": "горячее",
+      "labelEn": "main course"
+    },
+    {
+      "id": 314,
+      "labelRu": "гарнир",
+      "labelEn": "side dish"
+    },
+    {
+      "id": 315,
+      "labelRu": "десерт",
+      "labelEn": "dessert"
+    },
+    {
+      "id": 316,
+      "labelRu": "выпечка",
+      "labelEn": "baking"
+    },
+    {
+      "id": 317,
+      "labelRu": "хлеб",
+      "labelEn": "bread"
+    },
+    {
+      "id": 318,
+      "labelRu": "пирог",
+      "labelEn": "pie"
+    },
+    {
+      "id": 319,
+      "labelRu": "торт",
+      "labelEn": "cake"
+    },
+    {
+      "id": 320,
+      "labelRu": "печенье",
+      "labelEn": "cookies"
+    },
+    {
+      "id": 321,
+      "labelRu": "блины",
+      "labelEn": "crepes"
+    },
+    {
+      "id": 322,
+      "labelRu": "оладьи",
+      "labelEn": "pancakes"
+    },
+    {
+      "id": 323,
+      "labelRu": "каша",
+      "labelEn": "porridge"
+    },
+    {
+      "id": 324,
+      "labelRu": "паста",
+      "labelEn": "pasta"
+    },
+    {
+      "id": 325,
+      "labelRu": "пицца",
+      "labelEn": "pizza"
+    },
+    {
+      "id": 326,
+      "labelRu": "сэндвич",
+      "labelEn": "sandwich"
+    },
+    {
+      "id": 327,
+      "labelRu": "бутерброд",
+      "labelEn": "open-faced sandwich"
+    },
+    {
+      "id": 328,
+      "labelRu": "канапе",
+      "labelEn": "canapes"
+    },
+    {
+      "id": 329,
+      "labelRu": "напиток",
+      "labelEn": "drink"
+    },
+    {
+      "id": 330,
+      "labelRu": "коктейль",
+      "labelEn": "cocktail"
+    },
+    {
+      "id": 331,
+      "labelRu": "смузи",
+      "labelEn": "smoothie"
+    },
+    {
+      "id": 332,
+      "labelRu": "соус",
+      "labelEn": "sauce"
+    },
+    {
+      "id": 334,
+      "labelRu": "заправка",
+      "labelEn": "dressing"
+    },
+    {
+      "id": 335,
+      "labelRu": "намазка",
+      "labelEn": "spread"
+    },
+    {
+      "id": 336,
+      "labelRu": "пельмени и вареники",
+      "labelEn": "dumplings"
+    },
+    {
+      "id": 337,
+      "labelRu": "запеканка",
+      "labelEn": "casserole"
+    },
+    {
+      "id": 338,
+      "labelRu": "рагу",
+      "labelEn": "stew"
+    },
+    {
+      "id": 339,
+      "labelRu": "котлеты",
+      "labelEn": "patties"
+    },
+    {
+      "id": 340,
+      "labelRu": "шашлык",
+      "labelEn": "kebab"
+    },
+    {
+      "id": 341,
+      "labelRu": "плов",
+      "labelEn": "pilaf"
+    },
+    {
+      "id": 342,
+      "labelRu": "выпечка несладкая",
+      "labelEn": "savory pastry"
+    },
+    {
+      "id": 343,
+      "labelRu": "выпечка сладкая",
+      "labelEn": "sweet pastry"
+    },
+    {
+      "id": 345,
+      "labelRu": "мороженое",
+      "labelEn": "ice cream"
+    },
+    {
+      "id": 400,
+      "labelRu": "вегетарианское",
+      "labelEn": "vegetarian"
+    },
+    {
+      "id": 401,
+      "labelRu": "веганское",
+      "labelEn": "vegan"
+    },
+    {
+      "id": 402,
+      "labelRu": "пескетарианское",
+      "labelEn": "pescatarian"
+    },
+    {
+      "id": 403,
+      "labelRu": "без мяса",
+      "labelEn": "meatless"
+    },
+    {
+      "id": 404,
+      "labelRu": "постное",
+      "labelEn": "Lenten"
+    },
+    {
+      "id": 405,
+      "labelRu": "без глютена",
+      "labelEn": "gluten-free"
+    },
+    {
+      "id": 406,
+      "labelRu": "без лактозы",
+      "labelEn": "lactose-free"
+    },
+    {
+      "id": 407,
+      "labelRu": "без молочных продуктов",
+      "labelEn": "dairy-free"
+    },
+    {
+      "id": 408,
+      "labelRu": "без яиц",
+      "labelEn": "egg-free"
+    },
+    {
+      "id": 409,
+      "labelRu": "без орехов",
+      "labelEn": "nut-free"
+    },
+    {
+      "id": 410,
+      "labelRu": "без сахара",
+      "labelEn": "sugar-free"
+    },
+    {
+      "id": 411,
+      "labelRu": "без дрожжей",
+      "labelEn": "yeast-free"
+    },
+    {
+      "id": 412,
+      "labelRu": "низкоуглеводное",
+      "labelEn": "low-carb"
+    },
+    {
+      "id": 413,
+      "labelRu": "кето",
+      "labelEn": "keto"
+    },
+    {
+      "id": 414,
+      "labelRu": "палео",
+      "labelEn": "paleo"
+    },
+    {
+      "id": 415,
+      "labelRu": "высокобелковое",
+      "labelEn": "high-protein"
+    },
+    {
+      "id": 416,
+      "labelRu": "низкокалорийное",
+      "labelEn": "low-calorie"
+    },
+    {
+      "id": 417,
+      "labelRu": "низкожирное",
+      "labelEn": "low-fat"
+    },
+    {
+      "id": 419,
+      "labelRu": "полезное",
+      "labelEn": "healthy"
+    },
+    {
+      "id": 420,
+      "labelRu": "детское",
+      "labelEn": "kid-friendly"
+    },
+    {
+      "id": 421,
+      "labelRu": "для малышей",
+      "labelEn": "baby food"
+    },
+    {
+      "id": 422,
+      "labelRu": "для диабетиков",
+      "labelEn": "diabetic-friendly"
+    },
+    {
+      "id": 423,
+      "labelRu": "халяль",
+      "labelEn": "halal"
+    },
+    {
+      "id": 424,
+      "labelRu": "кошерное",
+      "labelEn": "kosher"
+    },
+    {
+      "id": 425,
+      "labelRu": "сыроедение",
+      "labelEn": "raw food"
+    },
+    {
+      "id": 426,
+      "labelRu": "без соли",
+      "labelEn": "salt-free"
+    },
+    {
+      "id": 450,
+      "labelRu": "духовка",
+      "labelEn": "oven"
+    },
+    {
+      "id": 451,
+      "labelRu": "аэрогриль",
+      "labelEn": "air fryer"
+    },
+    {
+      "id": 452,
+      "labelRu": "мультиварка",
+      "labelEn": "multicooker"
+    },
+    {
+      "id": 453,
+      "labelRu": "скороварка",
+      "labelEn": "pressure cooker"
+    },
+    {
+      "id": 454,
+      "labelRu": "медленноварка",
+      "labelEn": "slow cooker"
+    },
+    {
+      "id": 455,
+      "labelRu": "пароварка",
+      "labelEn": "steamer"
+    },
+    {
+      "id": 456,
+      "labelRu": "микроволновка",
+      "labelEn": "microwave"
+    },
+    {
+      "id": 457,
+      "labelRu": "гриль",
+      "labelEn": "grill"
+    },
+    {
+      "id": 458,
+      "labelRu": "мангал",
+      "labelEn": "charcoal grill"
+    },
+    {
+      "id": 459,
+      "labelRu": "на костре",
+      "labelEn": "campfire"
+    },
+    {
+      "id": 460,
+      "labelRu": "сковорода",
+      "labelEn": "skillet"
+    },
+    {
+      "id": 461,
+      "labelRu": "сковорода-гриль",
+      "labelEn": "grill pan"
+    },
+    {
+      "id": 462,
+      "labelRu": "вок",
+      "labelEn": "wok"
+    },
+    {
+      "id": 463,
+      "labelRu": "казан",
+      "labelEn": "kazan"
+    },
+    {
+      "id": 464,
+      "labelRu": "горшочки",
+      "labelEn": "clay pots"
+    },
+    {
+      "id": 465,
+      "labelRu": "тандыр",
+      "labelEn": "tandoor"
+    },
+    {
+      "id": 466,
+      "labelRu": "коптильня",
+      "labelEn": "smoker"
+    },
+    {
+      "id": 467,
+      "labelRu": "су-вид",
+      "labelEn": "sous vide"
+    },
+    {
+      "id": 468,
+      "labelRu": "хлебопечка",
+      "labelEn": "bread machine"
+    },
+    {
+      "id": 469,
+      "labelRu": "вафельница",
+      "labelEn": "waffle maker"
+    },
+    {
+      "id": 470,
+      "labelRu": "блендер",
+      "labelEn": "blender"
+    },
+    {
+      "id": 471,
+      "labelRu": "кухонный комбайн",
+      "labelEn": "food processor"
+    },
+    {
+      "id": 472,
+      "labelRu": "фритюрница",
+      "labelEn": "deep fryer"
+    },
+    {
+      "id": 473,
+      "labelRu": "дегидратор",
+      "labelEn": "dehydrator"
+    },
+    {
+      "id": 475,
+      "labelRu": "мороженица",
+      "labelEn": "ice cream maker"
+    },
+    {
+      "id": 476,
+      "labelRu": "рукав для запекания",
+      "labelEn": "roasting bag"
+    },
+    {
+      "id": 479,
+      "labelRu": "печь для пиццы",
+      "labelEn": "pizza oven"
+    },
+    {
+      "id": 480,
+      "labelRu": "чугунная кастрюля",
+      "labelEn": "Dutch oven"
+    },
+    {
+      "id": 500,
+      "labelRu": "без варки",
+      "labelEn": "no-cook"
+    },
+    {
+      "id": 501,
+      "labelRu": "без выпечки",
+      "labelEn": "no-bake"
+    },
+    {
+      "id": 502,
+      "labelRu": "без духовки",
+      "labelEn": "no-oven"
+    },
+    {
+      "id": 503,
+      "labelRu": "варка",
+      "labelEn": "boiling"
+    },
+    {
+      "id": 504,
+      "labelRu": "жарка",
+      "labelEn": "frying"
+    },
+    {
+      "id": 505,
+      "labelRu": "во фритюре",
+      "labelEn": "deep-fried"
+    },
+    {
+      "id": 506,
+      "labelRu": "тушение",
+      "labelEn": "braising"
+    },
+    {
+      "id": 507,
+      "labelRu": "запекание",
+      "labelEn": "roasting"
+    },
+    {
+      "id": 508,
+      "labelRu": "на пару",
+      "labelEn": "steamed"
+    },
+    {
+      "id": 509,
+      "labelRu": "томление",
+      "labelEn": "slow-cooked"
+    },
+    {
+      "id": 510,
+      "labelRu": "копчение",
+      "labelEn": "smoking"
+    },
+    {
+      "id": 512,
+      "labelRu": "маринование",
+      "labelEn": "marinating"
+    },
+    {
+      "id": 513,
+      "labelRu": "засолка",
+      "labelEn": "brining"
+    },
+    {
+      "id": 514,
+      "labelRu": "ферментация",
+      "labelEn": "fermentation"
+    },
+    {
+      "id": 515,
+      "labelRu": "заготовки",
+      "labelEn": "canning"
+    },
+    {
+      "id": 517,
+      "labelRu": "сушка",
+      "labelEn": "dehydrating"
+    },
+    {
+      "id": 518,
+      "labelRu": "конфи",
+      "labelEn": "confit"
+    },
+    {
+      "id": 519,
+      "labelRu": "в одной кастрюле",
+      "labelEn": "one-pot"
+    },
+    {
+      "id": 520,
+      "labelRu": "на одной сковороде",
+      "labelEn": "one-pan"
+    },
+    {
+      "id": 521,
+      "labelRu": "на противне",
+      "labelEn": "sheet-pan"
+    },
+    {
+      "id": 522,
+      "labelRu": "без замеса",
+      "labelEn": "no-knead"
+    },
+    {
+      "id": 523,
+      "labelRu": "закваска",
+      "labelEn": "sourdough"
+    },
+    {
+      "id": 524,
+      "labelRu": "дрожжевое тесто",
+      "labelEn": "yeast dough"
+    },
+    {
+      "id": 525,
+      "labelRu": "слоёное тесто",
+      "labelEn": "puff pastry"
+    },
+    {
+      "id": 600,
+      "labelRu": "праздничное",
+      "labelEn": "festive"
+    },
+    {
+      "id": 601,
+      "labelRu": "новогоднее",
+      "labelEn": "New Year's"
+    },
+    {
+      "id": 602,
+      "labelRu": "рождественское",
+      "labelEn": "Christmas"
+    },
+    {
+      "id": 603,
+      "labelRu": "пасхальное",
+      "labelEn": "Easter"
+    },
+    {
+      "id": 604,
+      "labelRu": "Масленица",
+      "labelEn": "Maslenitsa"
+    },
+    {
+      "id": 605,
+      "labelRu": "день рождения",
+      "labelEn": "birthday"
+    },
+    {
+      "id": 606,
+      "labelRu": "детский праздник",
+      "labelEn": "kids' party"
+    },
+    {
+      "id": 607,
+      "labelRu": "8 марта",
+      "labelEn": "International Women's Day"
+    },
+    {
+      "id": 608,
+      "labelRu": "23 февраля",
+      "labelEn": "Defender of the Fatherland Day"
+    },
+    {
+      "id": 609,
+      "labelRu": "День святого Валентина",
+      "labelEn": "Valentine's Day"
+    },
+    {
+      "id": 610,
+      "labelRu": "Хеллоуин",
+      "labelEn": "Halloween"
+    },
+    {
+      "id": 611,
+      "labelRu": "День благодарения",
+      "labelEn": "Thanksgiving"
+    },
+    {
+      "id": 612,
+      "labelRu": "Рамадан",
+      "labelEn": "Ramadan"
+    },
+    {
+      "id": 613,
+      "labelRu": "свадьба",
+      "labelEn": "wedding"
+    },
+    {
+      "id": 614,
+      "labelRu": "пикник",
+      "labelEn": "picnic"
+    },
+    {
+      "id": 615,
+      "labelRu": "на компанию",
+      "labelEn": "for a crowd"
+    },
+    {
+      "id": 616,
+      "labelRu": "вечеринка",
+      "labelEn": "party"
+    },
+    {
+      "id": 617,
+      "labelRu": "фуршет",
+      "labelEn": "buffet"
+    },
+    {
+      "id": 618,
+      "labelRu": "романтический ужин",
+      "labelEn": "romantic dinner"
+    },
+    {
+      "id": 620,
+      "labelRu": "семейное",
+      "labelEn": "family"
+    },
+    {
+      "id": 621,
+      "labelRu": "воскресное",
+      "labelEn": "Sunday"
+    },
+    {
+      "id": 622,
+      "labelRu": "ланчбокс",
+      "labelEn": "lunchbox"
+    },
+    {
+      "id": 623,
+      "labelRu": "в дорогу",
+      "labelEn": "on the go"
+    },
+    {
+      "id": 624,
+      "labelRu": "на дачу",
+      "labelEn": "dacha"
+    },
+    {
+      "id": 625,
+      "labelRu": "летнее",
+      "labelEn": "summer"
+    },
+    {
+      "id": 626,
+      "labelRu": "зимнее",
+      "labelEn": "winter"
+    },
+    {
+      "id": 627,
+      "labelRu": "весеннее",
+      "labelEn": "spring"
+    },
+    {
+      "id": 628,
+      "labelRu": "осеннее",
+      "labelEn": "fall"
+    },
+    {
+      "id": 629,
+      "labelRu": "на каждый день",
+      "labelEn": "everyday"
+    },
+    {
+      "id": 631,
+      "labelRu": "Курбан-байрам",
+      "labelEn": "Eid al-Adha"
+    },
+    {
+      "id": 632,
+      "labelRu": "Песах",
+      "labelEn": "Passover"
+    },
+    {
+      "id": 633,
+      "labelRu": "Ханука",
+      "labelEn": "Hanukkah"
+    },
+    {
+      "id": 700,
+      "labelRu": "быстро",
+      "labelEn": "quick"
+    },
+    {
+      "id": 701,
+      "labelRu": "до 15 минут",
+      "labelEn": "under 15 minutes"
+    },
+    {
+      "id": 702,
+      "labelRu": "до 30 минут",
+      "labelEn": "under 30 minutes"
+    },
+    {
+      "id": 703,
+      "labelRu": "до часа",
+      "labelEn": "under 1 hour"
+    },
+    {
+      "id": 705,
+      "labelRu": "на выходные",
+      "labelEn": "weekend project"
+    },
+    {
+      "id": 706,
+      "labelRu": "просто",
+      "labelEn": "easy"
+    },
+    {
+      "id": 708,
+      "labelRu": "бюджетно",
+      "labelEn": "budget-friendly"
+    },
+    {
+      "id": 709,
+      "labelRu": "мало ингредиентов",
+      "labelEn": "few ingredients"
+    },
+    {
+      "id": 710,
+      "labelRu": "из остатков",
+      "labelEn": "leftovers"
+    },
+    {
+      "id": 711,
+      "labelRu": "на неделю",
+      "labelEn": "meal prep"
+    },
+    {
+      "id": 712,
+      "labelRu": "можно заранее",
+      "labelEn": "make-ahead"
+    },
+    {
+      "id": 713,
+      "labelRu": "для заморозки",
+      "labelEn": "freezer-friendly"
+    },
+    {
+      "id": 714,
+      "labelRu": "острое",
+      "labelEn": "spicy"
+    },
+    {
+      "id": 715,
+      "labelRu": "сладкое",
+      "labelEn": "sweet"
+    },
+    {
+      "id": 716,
+      "labelRu": "кисло-сладкое",
+      "labelEn": "sweet and sour"
+    },
+    {
+      "id": 717,
+      "labelRu": "сытное",
+      "labelEn": "hearty"
+    },
+    {
+      "id": 719,
+      "labelRu": "согревающее",
+      "labelEn": "warming"
+    },
+    {
+      "id": 720,
+      "labelRu": "освежающее",
+      "labelEn": "refreshing"
+    },
+    {
+      "id": 721,
+      "labelRu": "хрустящее",
+      "labelEn": "crispy"
+    },
+    {
+      "id": 722,
+      "labelRu": "сочное",
+      "labelEn": "juicy"
+    },
+    {
+      "id": 723,
+      "labelRu": "домашнее",
+      "labelEn": "homemade"
+    },
+    {
+      "id": 724,
+      "labelRu": "классическое",
+      "labelEn": "classic"
+    },
+    {
+      "id": 725,
+      "labelRu": "традиционное",
+      "labelEn": "traditional"
+    },
+    {
+      "id": 726,
+      "labelRu": "бабушкино",
+      "labelEn": "grandma's"
+    },
+    {
+      "id": 727,
+      "labelRu": "из детства",
+      "labelEn": "nostalgic"
+    },
+    {
+      "id": 728,
+      "labelRu": "ресторанное",
+      "labelEn": "restaurant-style"
+    },
+    {
+      "id": 729,
+      "labelRu": "уличная еда",
+      "labelEn": "street food"
+    },
+    {
+      "id": 730,
+      "labelRu": "комфортная еда",
+      "labelEn": "comfort food"
+    },
+    {
+      "id": 731,
+      "labelRu": "сезонное",
+      "labelEn": "seasonal"
+    },
+    {
+      "id": 732,
+      "labelRu": "эффектная подача",
+      "labelEn": "showstopper"
+    },
+    {
+      "id": 734,
+      "labelRu": "порционное",
+      "labelEn": "individual portions"
+    },
+    {
+      "id": 800,
+      "labelRu": "мясо",
+      "labelEn": "meat"
+    },
+    {
+      "id": 801,
+      "labelRu": "говядина",
+      "labelEn": "beef"
+    },
+    {
+      "id": 802,
+      "labelRu": "свинина",
+      "labelEn": "pork"
+    },
+    {
+      "id": 803,
+      "labelRu": "баранина",
+      "labelEn": "lamb"
+    },
+    {
+      "id": 804,
+      "labelRu": "птица",
+      "labelEn": "poultry"
+    },
+    {
+      "id": 805,
+      "labelRu": "курица",
+      "labelEn": "chicken"
+    },
+    {
+      "id": 806,
+      "labelRu": "индейка",
+      "labelEn": "turkey"
+    },
+    {
+      "id": 808,
+      "labelRu": "фарш",
+      "labelEn": "ground meat"
+    },
+    {
+      "id": 809,
+      "labelRu": "субпродукты",
+      "labelEn": "offal"
+    },
+    {
+      "id": 810,
+      "labelRu": "рыба",
+      "labelEn": "fish"
+    },
+    {
+      "id": 811,
+      "labelRu": "морепродукты",
+      "labelEn": "seafood"
+    },
+    {
+      "id": 812,
+      "labelRu": "овощи",
+      "labelEn": "vegetables"
+    },
+    {
+      "id": 813,
+      "labelRu": "картофель",
+      "labelEn": "potatoes"
+    },
+    {
+      "id": 814,
+      "labelRu": "грибы",
+      "labelEn": "mushrooms"
+    },
+    {
+      "id": 815,
+      "labelRu": "крупы",
+      "labelEn": "grains"
+    },
+    {
+      "id": 816,
+      "labelRu": "рис",
+      "labelEn": "rice"
+    },
+    {
+      "id": 817,
+      "labelRu": "бобовые",
+      "labelEn": "legumes"
+    },
+    {
+      "id": 818,
+      "labelRu": "яйца",
+      "labelEn": "eggs"
+    },
+    {
+      "id": 819,
+      "labelRu": "творог",
+      "labelEn": "quark"
+    },
+    {
+      "id": 820,
+      "labelRu": "сыр",
+      "labelEn": "cheese"
+    },
+    {
+      "id": 821,
+      "labelRu": "фрукты",
+      "labelEn": "fruit"
+    },
+    {
+      "id": 822,
+      "labelRu": "ягоды",
+      "labelEn": "berries"
+    },
+    {
+      "id": 823,
+      "labelRu": "орехи",
+      "labelEn": "nuts"
+    },
+    {
+      "id": 824,
+      "labelRu": "шоколад",
+      "labelEn": "chocolate"
+    },
+    {
+      "id": 825,
+      "labelRu": "тыква",
+      "labelEn": "pumpkin"
+    },
+    {
+      "id": 826,
+      "labelRu": "кабачки",
+      "labelEn": "zucchini"
+    },
+    {
+      "id": 827,
+      "labelRu": "баклажаны",
+      "labelEn": "eggplant"
+    },
+    {
+      "id": 828,
+      "labelRu": "капуста",
+      "labelEn": "cabbage"
+    },
+    {
+      "id": 829,
+      "labelRu": "лапша",
+      "labelEn": "noodles"
+    },
+    {
+      "id": 831,
+      "labelRu": "тофу",
+      "labelEn": "tofu"
+    },
+    {
+      "id": 832,
+      "labelRu": "молочные продукты",
+      "labelEn": "dairy"
     }
   ]
 }
