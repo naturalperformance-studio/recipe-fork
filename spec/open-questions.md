@@ -1,11 +1,11 @@
 ---
 slug: OQ
 status: open
-updated: 2026-10-02
+updated: 2026-10-03
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
-  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037, OQ-038, OQ-039]
+  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037, OQ-038, OQ-039, OQ-040]
 open_before_mvp: [OQ-016, OQ-029, OQ-030]
 ---
 
@@ -545,3 +545,14 @@ Proposal: check the policy, with its source and date, when an increment prepares
 the first store release; if Play refuses, the fallback is to be chosen then, and
 FLOW-013 (1, 2, 14) is what it has to keep.
 Touches: FLOW-013. Raised at the sync of v0.2, 2026-10-02.
+
+### OQ-040 — Files and the book survive an update, from the first public release (later)
+Unresolved: on 2026-10-03 (v0.8) the user decided that, for now, a change to the
+stored format needs neither backward compatibility nor a migration of the book:
+the only user is the product owner and the device holds test records. Nothing in
+the vision says when that ends. FLOW-064 already refuses only a file written by a
+later version, which presumes an older file stays readable.
+Proposal: before any public release, a recipe file written by an earlier version
+of the application imports, and the book survives an application update with
+nothing lost. Until then, the user's decision stands.
+Touches: FLOW-063, FLOW-064, FLOW-051. Raised at the sync of v0.3–v0.14, 2026-10-03.

@@ -1,6 +1,6 @@
 # Divisibility belongs to the ingredient, not to the recipe
 
-**Status:** accepted
+**Status:** accepted; narrowed by [20261003-an-entry-may-not-know-its-divisibility](20261003-an-entry-may-not-know-its-divisibility.md) — an entry may carry no flag, and then the author answers
 
 **Context:** the ingredient dictionary carries a `divisible` flag per entry, which
 decides whether a `piece` quantity rounds to whole pieces or to halves

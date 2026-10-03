@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-28
+updated: 2026-10-03
 ids: [FLOW-009, FLOW-010, FLOW-011, FLOW-060, FLOW-012, FLOW-058, FLOW-051, FLOW-052]
 ---
 
@@ -122,8 +122,10 @@ user decision of that date
 ### FLOW-060 — Media the device can fetch again is deleted on request
 
 The system shall offer, beside the setting of FLOW-011, an action that deletes
-from the device the held media of every favourite and of every sent own recipe,
-and that deletes no media the device holds as its only copy.
+from the device the held media of every favourite and of every sent own recipe in
+the recipe book in use — the active account's, or the pool's — and that deletes
+no media the device holds as its only copy and none of another book on the device,
+which AUTH-026 and AUTH-027 keep apart.
 
 **Acceptance criteria**
 - Given held media, when the action is used, then the media of every favourite
@@ -135,6 +137,8 @@ and that deletes no media the device holds as its only copy.
   connection, then its media is shown from the server as FLOW-011 (2) shows it
   with the setting off; the setting itself is unchanged and holds media for
   recipes added afterwards.
+- Given two recipe books on the device, when the action is used in one, then the
+  media held for the other is untouched.
 - Given serverless mode (FLOW-061), when the action is chosen, then it states
   first that the deleted media cannot be fetched again, and deletes nothing until
   the person confirms.
@@ -144,7 +148,9 @@ use the action and inspect what is left; open a cleared recipe with a connection
 repeat in serverless mode.
 **Source:** user decision, 2026-09-28: the setting stays and an action to clear
 media from the device is added beside it. What is cleared is what can be fetched
-again, since the product owner called it clearing a cache.
+again, since the product owner called it clearing a cache. Amended 2026-10-03
+(sync v0.3–v0.14): the action acts on the book in use, as AUTH-026 and AUTH-027
+keep each book apart — req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### FLOW-012 — Leaving the application does not lose the recipe being read
 

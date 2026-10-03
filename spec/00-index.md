@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
-> **Vision** — 27 sections closed · 0 open · 1 n/a. Open questions: 0 next, 39 later.
-> Synced through: v0.2. Last updated 2026-10-02.
+> **Vision** — 27 sections closed · 0 open · 1 n/a. Open questions: 0 next, 40 later.
+> Synced through: v0.14 (v0.12 at demo, v0.13 and v0.14 still being built when read). Last updated 2026-10-03.
 > Since 2026-10-02 this specification is the product vision, not a contract: the product is built in
 > increments planned by `/team-lead` (`docs/increments/`), and releases are whatever increments have
 > shipped. MVP-001 is superseded (see `220-mvp-boundary.md`). The history of the earlier gate process
@@ -25,12 +25,16 @@ Where the shipped build still differs from this vision and the vision stands.
 `/team-lead` closes them in the increments that touch the area; `/req-forge --sync`
 removes them when a shipped increment does.
 
-- FLOW-017 (6, 7) — the card opens at the authored count every time; neither the
-  usual count nor a count held for the session is built (v0.1). Comes with the
-  usual-count increment.
-- FLOW-001 (2) — a `piece` ingredient picked from the dictionary still asks for
-  divisibility, because the shipped dictionary carries none (v0.1). The
-  dictionary is to carry divisibility.
+- FLOW-001 (2) — a `piece` ingredient naming a dictionary entry with a divisibility
+  flag is no longer asked (v0.12, at demo); until the dictionary of v0.14 ships,
+  most entries still carry no flag and so still ask, which the vision now allows
+  ([ADR](decisions/20261003-an-entry-may-not-know-its-divisibility.md)). Removed
+  when v0.12 ships.
+- MEDIA-004 (6) — an animated image attached to a step stays a still photo instead
+  of becoming a clip (v0.13). The vision stands; conversion is on `later.md`.
+- FLOW-064 — the importer accepts a photo up to 1 MiB, more than the
+  1,000,000 bytes the device's own processing allows (MEDIA-002) (v0.4). The two
+  limits are to match.
 
 ## Sections
 
@@ -49,7 +53,7 @@ removes them when a shipped increment does.
 | [70-flows/](70-flows/00-index.md) | FLOW | closed | User flows and screens, each with its empty, loading, error and offline behaviour: the device first and sending to the server, including a sending the server already holds, which changes nothing unless it already made a fork, an unanswered sending, which keeps its mark, and a recipe the server no longer holds, which is sent as new, an edit sent after an unanswered sending, which is made from what that sending stored, the recipe book and the device, serverless mode and recipe files, cooking on one scrolling card with no step to advance through, the editor, the catalogue and the favourites section including where a draft is deleted and what the author is told first, the private link, the author's screen a nickname leads to — where an author is reported, blocked and banned — and the moderator's queue. |
 | [75-author-guidance.md](75-author-guidance.md) | GUIDE | closed | What the editor tells its author before they can find out the hard way: the statement before an irreversible submission, the checklist of good practice, and the hints that fire on the author's own action. The product teaches here because it inspects nowhere. |
 | [80-scaling-rules/](80-scaling-rules/00-index.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, how the two combine and what releasing a fixing restores; the exact values every unit type may display — kilograms to the gram, mixed numbers above one — the nearest-value rule with ties going up, a derived marker on every quantity at any scale but the authored one; and what a reader may fix, in which unit. |
-| [90-media.md](90-media.md) | MEDIA | closed | What a recipe may carry, what the device does to a file before it leaves — re-encoding, stripping every metadata field but orientation, silencing and shortening a video — what the author is told about it, the 150 MB an account may hold sent and unpublished, and when a stored file is finally deleted. |
+| [90-media.md](90-media.md) | MEDIA | closed | What a recipe may carry, the 4:3 frame every photo is cropped to by its author, how a step's clip plays, what the device does to a file before it leaves — re-encoding, stripping every metadata field but orientation, silencing and shortening a video — what the author is told about it, the 150 MB an account may hold sent and unpublished, and when a stored file is finally deleted. |
 | [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, what a rejection produces, and what a moderator is told when the submission they just decided had already been withdrawn or its owner had deleted their account; and that the role is not suspended by ownership — a moderator decides their own submission and acts on their own published recipe, because otherwise two states have no exit at a launch with one person in the role. |
 | [110-catalogue.md](110-catalogue.md) | CAT | closed | Public catalogue, search, filters, favourites and the search inside favourites; what a catalogue entry shows, including the fork marker and fork count; what `newest` orders by — the moment the catalogue got the recipe — and the one chain that makes all four orderings total, so that endless scrolling neither repeats a recipe nor skips one. |
 | [120-ratings.md](120-ratings.md) | RATE | closed | The binary like and dislike over its life: who may give one and on what, the two counts a reader sees, what `highest rated` and `most rated` compute, and why favouriting is not approval. |
@@ -60,7 +64,7 @@ removes them when a shipped increment does.
 | [170-abuse.md](170-abuse.md) | ABUSE | closed | Flooding, mass publication, and what a single moderator can absorb; reports about an author collapse onto one queue entry with a count, because the product holds nothing that would tell two anonymous reporters apart; and the one address by which somebody who is not a user of this product claims rights over what is in it. |
 | [180-analytics.md](180-analytics.md) | ANL | closed | What can be known about the product without tracking anyone: the figures countable from stored state, reach taken from the distribution channel, an anonymous count of starts, and the three numbers a published recipe keeps for its own author — openings, additions to favourites and forks made by others, the last also totalled for the product owner — labelled with what they actually count and where they undercount. |
 | [190-legal.md](190-legal.md) | LEG | closed | What publishing grants and what it does not: an irrevocable licence to the product, because permanence cannot rest on a permission that can be withdrawn; a licence to every user over the steps alone, so forking rests on a grant and not only on what copyright excludes; media and description that stay the author's. Terms accepted at account creation and again when they change, where refusing costs authorship and never costs reading. Sixteen years declared and nothing verified. The name is OQ-016 and the law the first release answers to is OQ-029; both are release prerequisites in MVP-003 and neither changes a sentence here. Distribution is limited to a country list the Russian Federation is not on, while access is limited to nobody. |
-| [200-accessibility.md](200-accessibility.md) | A11Y | closed | A fixed list of commitments with thresholds instead of a conformance claim: contrast, 48 dp targets and 56 on the cooking card, the device font scale to 200 per cent, the screen reader working on every screen including the editor so that authorship is not closed to anyone, an alternative to every drag, the cooking card built for busy hands, and nothing carried by colour alone. |
+| [200-accessibility.md](200-accessibility.md) | A11Y | closed | A fixed list of commitments with thresholds instead of a conformance claim: contrast, 48 dp targets and 56 on the cooking card, the device font scale to 200 per cent, the screen reader working on every screen including the editor so that authorship is not closed to anyone, an alternative to every drag and a drag handle on either side, the cooking card built for busy hands, motion that can be paused, a light and a dark theme, and nothing carried by colour alone. |
 | [210-observability.md](210-observability.md) | OBS | closed | The fourteen signals the product watches, each naming the decision that asked for it, the thresholds at which one becomes a decision, the moderator's screen they live on, and the one outbound channel that carries an alert — numbers only, one way. |
 | [220-mvp-boundary.md](220-mvp-boundary.md) | MVP | closed | The boundary, taking no decision of its own: the first release is every closed section less the sixteen things decided against, the nine prerequisites that produce a record rather than a requirement, and what the launch actually looks like — an empty catalogue, one author, and that same person holding the moderator role, with the four requirements that shape changes the reading of. |
 | — | MIG | n/a | Migration: the product launches from scratch — no existing data, users or predecessor system to migrate from. Moving a user between devices by its key is an authentication requirement, not a migration. |
@@ -87,7 +91,7 @@ removes them when a shipped increment does.
 | [20260920-ingredient-dictionary.md](decisions/20260920-ingredient-dictionary.md) | accepted | An ingredient names a dictionary entry with an optional qualifier; free text is accepted with a warning and is never filterable. |
 | [20260920-comparison-factors.md](decisions/20260920-comparison-factors.md) | accepted | The dictionary gains one level and every entry carries invisible comparison factors; ordering is total. |
 | [20260920-quality-sorted-by-readers.md](decisions/20260920-quality-sorted-by-readers.md) | accepted | The product checks nothing about a recipe's craft; readers' ratings sort quality and a moderator never rejects for it. |
-| [20260920-divisibility-belongs-to-the-ingredient.md](decisions/20260920-divisibility-belongs-to-the-ingredient.md) | accepted | The dictionary entry decides `piece` divisibility; the author never overrides it, and only free text asks. |
+| [20260920-divisibility-belongs-to-the-ingredient.md](decisions/20260920-divisibility-belongs-to-the-ingredient.md) | accepted; narrowed by 20261003-an-entry-may-not-know-its-divisibility | The dictionary entry decides `piece` divisibility; the author never overrides it, and only free text asks. |
 | [20260920-timer-named-by-its-step.md](decisions/20260920-timer-named-by-its-step.md) | accepted | A timer's name derives from its step's text and the author may override it; a step carries one timer. |
 | [20260920-the-editor-teaches-without-inspecting.md](decisions/20260920-the-editor-teaches-without-inspecting.md) | accepted | An unsuppressible statement before submission, a read-only checklist, and hints triggered by the author's action — never by reading the recipe. |
 | [20260920-two-counts-ordered-by-net-score.md](decisions/20260920-two-counts-ordered-by-net-score.md) | accepted | The reader sees two counts; `highest rated` orders by likes minus dislikes, with a tie chain that makes the order total. |
@@ -162,6 +166,11 @@ removes them when a shipped increment does.
 | [20261002-one-fixed-ingredient-at-a-time.md](decisions/20261002-one-fixed-ingredient-at-a-time.md) | accepted, changes SCALE-006 | Fixing another ingredient releases the first; no shortfall is shown. |
 | [20261002-a-timer-rings-like-an-alarm.md](decisions/20261002-a-timer-rings-like-an-alarm.md) | accepted, adds FLOW-013 (14–16) | Timers stay the application's own and ring like an alarm until stopped, silent after 2 minutes; not handed to the clock application. |
 | [20261002-the-owner-sees-their-own-parent.md](decisions/20261002-the-owner-sees-their-own-parent.md) | accepted, narrows 20260920-provenance-follows-publication, changes FORK-005 (5) | The owner sees the never-published parent of their own fork in their own recipe book; no one else does. |
+| [20261003-the-book-searches-its-own-way.md](decisions/20261003-the-book-searches-its-own-way.md) | accepted, narrows L10N-006, L10N-007, FLOW-035 | The device's book searches title, description and ingredient names by the beginning of a word; the catalogue keeps L10N-006/007. |
+| [20261003-an-entry-may-not-know-its-divisibility.md](decisions/20261003-an-entry-may-not-know-its-divisibility.md) | accepted, narrows 20260920-divisibility-belongs-to-the-ingredient | An entry may carry no divisibility flag, and then the author answers; an entry with a piece factor always carries one. |
+| [20261003-a-reference-to-part-of-an-ingredient.md](decisions/20261003-a-reference-to-part-of-an-ingredient.md) | accepted, changes FLOW-031, FLOW-032, DOM-007, SCALE-007 | A step may reference part of an ingredient, typed in its unit, scaled and rounded on its own. |
+| [20261003-photos-are-cropped-to-four-by-three.md](decisions/20261003-photos-are-cropped-to-four-by-three.md) | accepted, changes MEDIA-002 | Every photo is a 4:3 landscape frame the author places after taking or choosing it. |
+| [20261003-the-serverless-dictionary-ships-with-the-app.md](decisions/20261003-the-serverless-dictionary-ships-with-the-app.md) | accepted, adds a serverless variant to DOM-014 | In serverless mode the dictionaries live in the product's source and change with an application update. |
 
 ## C4 context
 

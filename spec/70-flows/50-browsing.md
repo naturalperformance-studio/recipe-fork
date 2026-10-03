@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-29
+updated: 2026-10-03
 ids: [FLOW-033, FLOW-034, FLOW-035, FLOW-036, FLOW-037, FLOW-038, FLOW-039,
   FLOW-040, FLOW-041, FLOW-042, FLOW-043]
 ---
@@ -12,8 +12,9 @@ Two sections, not one. The catalogue is where a reader meets recipes other
 people wrote. The favourites section — named "My recipe book" in the interface
 (FLOW-034) — is where a reader keeps what they took with them and where an author
 finds what they wrote themselves. The rules the
-two share — orderings, filters, what an entry shows — were decided in
-[`catalogue`](../110-catalogue.md) and are referenced here, never restated.
+two share — the filters and what an entry shows — were decided in
+[`catalogue`](../110-catalogue.md) and are referenced here, never restated; the
+book's text query and its orderings are its own (FLOW-035, FLOW-039).
 
 ### FLOW-033 — The reader's own recipes are a filter of the catalogue, off by default
 
@@ -107,12 +108,15 @@ and the author's own work is not discovery, so it lives beside favourites rather
 than in the catalogue. Two views rather than two sections, because a state of a
 recipe is not a reason for a screen.
 
-### FLOW-035 — Both views are searched, filtered and ordered exactly as the catalogue is
+### FLOW-035 — Both views are filtered as the catalogue is, and searched the book's own way
 
-The system shall offer in both views of the favourites section the orderings of
-CAT-001 that FLOW-039 leaves available to that view and the filters of CAT-002
-and CAT-006, and shall give each of them the same meaning it has in the
-catalogue.
+The system shall offer in both views of the recipe book the orderings of FLOW-039,
+the ingredient filter of CAT-002 and CAT-006 and the tag filter of CAT-010 with the
+meaning each has in the catalogue, and a text query of the book's own, which
+matches a recipe when every word of the query begins a word of its title, of its
+description or of one of its ingredients' names — both labels of a dictionary
+entry, its qualifier, or free text — compared as FLOW-057 compares: letter case
+ignored, `ё` and `е` one letter.
 
 **Acceptance criteria**
 - Given the view of the account's own recipes, when the reader filters by an
@@ -126,11 +130,37 @@ catalogue.
   and reaches no recipe outside it.
 - Given the catalogue and a view of the favourites section, when the same filter
   is applied to both, then a reader needs to learn the filter once.
+- Given a recipe `Плов` whose only mention of chicken is the dictionary ingredient
+  `курица`, when the reader queries `кур` or `плов кур` in the view holding it, then
+  it is found; the same query in the catalogue does not find it by the ingredient
+  (L10N-006).
+- Given a query word that appears only in a step's text, when it is run, then the
+  recipe is not found.
+- Given a recipe titled `блины`, when the reader queries `блинов`, then it is not
+  found, because the book matches the beginning of a word and does not analyse it
+  as the catalogue does (L10N-007).
+- Given an ingredient filter in force, when the reader chooses another ingredient,
+  then it replaces the first: at most one ingredient filter applies at a time, and
+  it includes the entries below it in the dictionary (CAT-006).
+- Given tags chosen in the tag filter, when the view is shown, then a recipe stays
+  only if it carries every chosen tag (CAT-010).
+- Given a query, an ingredient filter and a tag filter together, when the view is
+  shown, then a recipe must satisfy all three to be listed.
+- Given a dictionary entry marked removed, when the ingredient filter offers
+  entries, then it offers that entry only while a recipe in the view names it.
 
 **Verification:** run the same ingredient filter and each ordering in the
-catalogue, in the marked view and in the own-recipes view, and compare behaviour.
+catalogue, in the marked view and in the own-recipes view, and compare behaviour;
+run the queries above against a seeded book.
 **Source:** user decision, 2026-09-20. One mechanism, three places; the reader
-learns it once.
+learns it once. Amended 2026-10-03 (sync v0.3–v0.14): the filters stay one mechanism, but the
+book's text query is its own: it reaches ingredients and matches the beginning of
+a word. L10N-006 left ingredients out for the cost of a server index (CON-002),
+which a search on the device does not pay, and the user approved "`кур` finds a
+recipe with chicken only among its ingredients" at the v0.8 demo. The tag filter,
+the one-ingredient rule and the removed entry were added at the same time. See
+[ADR — the book searches its own way](../decisions/20261003-the-book-searches-its-own-way.md).
+— req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### FLOW-036 — An own recipe carries its state on its entry, not in a screen of its own
 
@@ -226,32 +256,42 @@ from their own recipes in the same kitchen as from anyone else's (GOAL-001).
 
 ### FLOW-039 — What `newest` means for a recipe that was never published
 
-The system shall order the own-recipes view under `newest` by the time each
-recipe was last changed, and shall offer in that view neither `highest rated` nor
-`most rated`.
+The system shall offer in both views of the recipe book the orderings `newest`,
+`oldest` and `by title`, and `most forked` where there is a server; shall order
+under `newest` by the time each recipe was last changed, under `oldest` by the
+exact reverse, and under `by title` alphabetically with a recipe that has no title
+last; shall order by `newest` for a reader who has not chosen; and shall offer
+`highest rated` and `most rated` in the view of marked recipes where there is a
+server, and in the own-recipes view never.
 
 **Acceptance criteria**
 - Given a draft created a month ago and edited today and a recipe published
   yesterday, when the own-recipes view is ordered by `newest`, then the draft is
-  first.
+  first; ordered by `oldest`, it is last.
 - Given a published recipe, when it is ordered in that view, then the time used
   is the last time its content changed, which for a frozen recipe is the last
   edit before it became externally visible (ST-003).
-- Given the own-recipes view, when the reader opens the list of orderings, then
-  `newest` and `most forked` are offered and the two rating orderings are absent.
-- Given the catalogue or the view of marked recipes, when the reader opens the
-  list of orderings, then all four of CAT-001 are offered, because every recipe
-  there is published.
+- Given either view of the recipe book, when the reader opens the list of
+  orderings, then `newest`, `oldest` and `by title` are offered, and `most forked`
+  is offered where there is a server and not in serverless mode.
+- Given a server, when the reader opens the list of orderings in the view of
+  marked recipes, then the two rating orderings are offered as well, because every
+  recipe there is published; in the own-recipes view they are absent.
+- Given the catalogue, when the reader opens the list of orderings, then all four
+  of CAT-001 are offered, because every recipe there is published.
 - Given a draft that has never been edited since it was created, when it is
   ordered, then its creation is the change the ordering uses.
 
 **Verification:** build an account with a freshly edited old draft, a new draft
-and a published recipe, order the view by `newest`, and open the ordering list in
-all three places.
+and a published recipe, order the view by each ordering, and open the ordering
+list in the catalogue and in both views, with a server and in serverless mode.
 **Source:** user decision, 2026-09-20. An author looking for a draft is looking
 for what they last touched, not for what they first started; an unpublished
 recipe has no rating and no publication date, so the orderings that need one are
-not offered rather than shown empty.
+not offered rather than shown empty. Amended 2026-10-03 (sync v0.3–v0.14): the book gains `oldest` and `by title`,
+`most forked` and, in the marked view, the rating orderings stay only where a
+server counts them — req-forge proposal from the sync of
+v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### FLOW-040 — An own recipe is not marked as a favourite
 

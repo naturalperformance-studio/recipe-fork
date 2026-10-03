@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-10-02
+updated: 2026-10-03
 ids: []
 ---
 
@@ -93,13 +93,16 @@ removal happened before the fork existed (ST-004, MOD-008).
 
 ## What a recipe is made of
 
-**Step** — one instruction, holding its text, at most one timer (DOM-013) and
-any ingredient references. A step has no title: what identifies it is its own
+**Step** — one instruction, holding text, media or both — never neither (DOM-006)
+— at most one timer (DOM-013) and any ingredient references. A step has no title: what identifies it is its own
 text (`domain-model`).
 
 **Ingredient reference** — a marker inside a step's text pointing at an
-ingredient of the same recipe. It renders as the quantity and unit at the
-reader's current scale and never as the ingredient's name (DOM-007, FLOW-032).
+ingredient of the same recipe, either the whole of it or a **part**: a quantity
+the author typed in the ingredient's own unit (FLOW-031). It renders as the
+quantity and unit at the reader's current scale and never as the ingredient's
+name; a whole reference equals the list line, a part is scaled and rounded on its
+own (DOM-007, FLOW-032, SCALE-007).
 
 **Timer** — a duration of hours and minutes, at most 99:59, attached inside one
 step (FLOW-027). A step carries at most one (DOM-013).
@@ -120,8 +123,9 @@ and removing a video's audio track. The author is always told it happened
 server across recipes it sent and has not published. Publishing a recipe frees
 what it holds; a recipe never sent counts nothing (MEDIA-010).
 
-**Tag** — a label from a fixed dictionary the product owner maintains, in one of
-two facets, `cuisine` or `dish_type`. A user cannot create one (DOM-008).
+**Tag** — a label from a fixed dictionary the product owner maintains, grouped by
+family — such as cuisine, meal, diet, method or appliance, occasion. A user
+cannot create one (DOM-008, DOM-020).
 
 **Submission minimum** — title, at least one ingredient, at least one step, a
 serving count and a declared language. Below it a recipe cannot be submitted
@@ -142,15 +146,19 @@ FLOW-023).
 
 **Divisible / indivisible** — whether a `piece` quantity may show halves or only
 whole pieces. It comes from the ingredient's dictionary entry and the author
-does not override it; only a free-text ingredient has its divisibility set by
-hand, because it has no entry (`scaling-rules`, FLOW-001).
+does not override it; a free-text ingredient, which has no entry, and one whose
+entry leaves divisibility unset have it set by hand (`scaling-rules`, FLOW-001).
 
 **Ingredient dictionary** — the list of ingredients the product owner maintains,
-at most two levels deep. A user cannot add an entry (DOM-009, DOM-010).
+at most two levels deep, holding divisibility and invisible comparison factors
+and no displayed weight. A user cannot add an entry (DOM-009, DOM-010, DOM-020).
+In serverless mode it ships with the application (DOM-014).
 
 **Entry** — one item of that dictionary. A **leaf** entry has a parent entry
 (`крылышки` under `курица`); a **parent entry** has none and is usable in a
 recipe on its own. The editor offers leaves before parents (DOM-010, FLOW-023).
+An entry's identifier is permanent; a **removed** entry is withdrawn, not deleted:
+it still names the recipes that hold it and is not offered for new use (DOM-009).
 
 **Qualifier** — the author's own words narrowing an entry, typed as the tail of
 the ingredient's own field so the row reads `филе без кожи`. It is not a fourth

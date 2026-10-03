@@ -1,7 +1,7 @@
 ---
 slug: L10N
 status: closed
-updated: 2026-09-29
+updated: 2026-10-03
 ids: [L10N-001, L10N-002, L10N-003, L10N-004, L10N-005, L10N-006, L10N-007,
   L10N-008, L10N-009]
 ---
@@ -150,8 +150,13 @@ recipe's own words are the marker.
 
 ### L10N-006 — A text query looks at the title and the description
 
-Where a reader runs a text query, the system shall match it against a recipe's
-title and its description, and against nothing else.
+Where a reader runs a text query in the server's catalogue, the system shall
+match it against a recipe's title and its description, and against nothing else.
+
+The device's own recipe book searches its own way — a recipe's title, its
+description and its ingredient names, matched by the beginning of a word — as
+FLOW-035 and [ADR — the book searches its own way](decisions/20261003-the-book-searches-its-own-way.md)
+decide; this requirement and L10N-007 do not govern it.
 
 **Acceptance criteria**
 - Given a query matching a word in a recipe's title, when it is run, then that
@@ -164,7 +169,7 @@ title and its description, and against nothing else.
   recipe is not in the results, because ingredients are reached by the filter of
   CAT-006 and not by words.
 - Given a query, when it is run inside the favourites section or the own-recipes
-  view, then it searches the same two fields there (FLOW-035).
+  view on the device, then this requirement does not apply and FLOW-035 governs.
 
 **Verification:** build four recipes carrying the query word in the title, in the
 description, in a step and in an ingredient, and run one query.
@@ -174,12 +179,17 @@ thousand characters against a title of 120 and a description of 2 000 (DOM-012) 
 so an index over it costs more than the rest of the product's text together,
 which is money under CON-002; and it is the text least likely to identify a
 recipe, since a query would find every recipe that says "stir until smooth".
+Amended 2026-10-03 (sync v0.3–v0.14): scoped to the server's catalogue; the
+device's recipe book searches its own way — req-forge proposal from the sync of
+v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### L10N-007 — A match is on the word, not on the letters
 
-The system shall match a query word to a word of the searched text when both
-reduce to the same form under the analysis of the recipe's declared language,
-and shall treat letter case as insignificant.
+In a text query of the server's catalogue (L10N-006), the system shall match a
+query word to a word of the searched text when both reduce to the same form under
+the analysis of the recipe's declared language, and shall treat letter case as
+insignificant. The device's recipe book matches by the beginning of a word
+instead (L10N-006, FLOW-035).
 
 **Acceptance criteria**
 - Given a recipe declared Russian whose title holds `блины`, when the reader
@@ -203,7 +213,9 @@ beginning of a word. The cheaper rule was rejected on how people actually type:
 a reader searching for pancakes types `рецепт блинов`, and a prefix rule finds
 nothing. The cost accepted in exchange is the false match named in the last
 criterion — `коса` and `косить` reduce alike — which is a wrong result in a list,
-not a wrong recipe.
+not a wrong recipe. Amended 2026-10-03 (sync v0.3–v0.14): scoped to the server's
+catalogue — req-forge proposal from the sync of v0.3–v0.14, accepted by the user,
+2026-10-03.
 
 ### L10N-008 — The product is metric and no language changes that
 

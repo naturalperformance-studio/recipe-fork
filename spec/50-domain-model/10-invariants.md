@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-09-28
+updated: 2026-10-03
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007, DOM-008, DOM-015]
 ---
 
@@ -60,7 +60,9 @@ not display a mass or volume equivalent for it.
 **Verification:** manual UI check on a recipe using household units.
 **Source:** user decision, 2026-09-20. The product holds no ingredient weight
 table, and inventing one per ingredient would be a separate product with its own
-moderation burden.
+moderation burden. The dictionary's comparison factors are approximate masses
+but are never displayed and never used in scaling; they only order the
+ingredient filter (DOM-011), so this requirement stands.
 
 ### DOM-004 — A parent reference is fixed and shallow
 
@@ -102,6 +104,9 @@ If a recipe lacks a title, at least one ingredient, at least one step, a serving
 count, or a declared language, then the system shall reject its submission for
 moderation.
 
+A step holds text, media, or both; a step with neither does not exist, and so does
+not count towards the minimum.
+
 **Acceptance criteria**
 - Given a recipe missing any one of those five, when the user submits it for
   publication or requests a private link, then the submission is rejected and
@@ -112,33 +117,46 @@ moderation.
   is already set from the author's interface language (L10N-004, FLOW-024), so
   this part of the minimum is the one an author cannot reach by omission and can
   only reach by clearing it.
+- Given a step holding only a photo or a video and no text, when the recipe is
+  stored or submitted, then it is a step; given a step left with neither text nor
+  media, when the recipe is stored, then that step is not kept.
 
 **Verification:** validation test over each of the five omissions.
 **Source:** user decision, 2026-09-20; the declared language added 2026-09-21
 with L10N-004, which made it a condition of submission and pointed at FLOW-028
 for the warning, while this requirement — the one that defines the minimum and
-the one FLOW-028 and GUIDE-001 both defer to — still listed four parts. Media is
+the one FLOW-028 and GUIDE-001 both defer to — still listed four parts; amended
+2026-10-03 (sync v0.3–v0.14): a step is text, media or both, never neither
+(req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03). Media is
 deliberately not required: a mandatory photo would add a manual media review and
 storage cost (CON-002) to every publication.
 
 ### DOM-007 — Step ingredient references resolve within the recipe
 
 The system shall resolve every ingredient reference in a step to an ingredient
-of the same recipe.
+of the same recipe, whether the reference stands for the whole ingredient or for
+a part of it (FLOW-031).
 
 **Acceptance criteria**
-- Given a step containing a reference, when the step is displayed, then the
-  referenced quantity equals the quantity shown for that ingredient in the
-  ingredient list at the current scale.
+- Given a step containing a reference to a whole ingredient, when the step is
+  displayed, then the referenced quantity equals the quantity shown for that
+  ingredient in the ingredient list at the current scale.
+- Given a step containing a reference to a part of an ingredient, when the step
+  is displayed, then it shows the part scaled by the same factor as the list and
+  rounded on its own by the grid of the ingredient's unit type, with its own
+  derived marker; it is not taken from the list line (SCALE-007, FLOW-032).
 - Given an ingredient that a step references, when the author deletes that
   ingredient before the recipe becomes externally visible, then the reference is
   removed from the step text in the same action.
 
-**Verification:** manual check of a scaled recipe, comparing every referenced
-quantity in the steps against the ingredient list.
+**Verification:** manual check of a scaled recipe, comparing every whole
+reference in the steps against the ingredient list and every part against its
+authored value times the factor, rounded by the grid.
 **Source:** draft section 3.5; user decision, 2026-09-20 (moved from "desirable"
 into the MVP, because otherwise every scaled recipe contradicts itself between
-its list and its steps).
+its list and its steps); amended 2026-10-03 (sync v0.3–v0.14): a reference may
+stand for a part of the ingredient (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03, asked by the user, v0.9). See
+[ADR — a reference to part of an ingredient](../decisions/20261003-a-reference-to-part-of-an-ingredient.md).
 
 ### DOM-008 — Tags come from the dictionary only
 

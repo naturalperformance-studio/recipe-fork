@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-09-28
+updated: 2026-10-03
 ids: [FLOW-053, FLOW-054, FLOW-055]
 ---
 
@@ -38,6 +38,8 @@ confirmation.
   the recipe keeps its state and everything it holds.
 - Given the confirmation, when the owner gives it, then the entry leaves the view
   and, if the view is now empty, FLOW-042 states so and offers to write a recipe.
+- Given a timer of that recipe running or ringing, when the deletion is done, then
+  the timer ends and announces nothing further.
 - Given the recipe card screen of an own recipe, when it is looked at, then it
   carries no deletion control, neither in the recipe nor in the screen's bar,
   because a recipe's state is managed on its entry in the list (FLOW-036); the
@@ -62,6 +64,7 @@ bar (SD-031); it now names the bar and keeps deletion off it.
 **Changed 2026-09-28:** a recipe never sent is deleted on the device alone, with or
 without a connection, and frees no allowance, since recipes reach the server only
 when sent (user decision of that date).
+Amended 2026-10-03 (sync v0.3–v0.14): deleting a recipe ends its timers — req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### FLOW-054 — The private link is shown, copied, revoked and reissued in one place
 

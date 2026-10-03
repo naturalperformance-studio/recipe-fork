@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-01
+updated: 2026-10-03
 ids: []
 ---
 
@@ -10,7 +10,8 @@ ids: []
 This section holds screens, the four states each one must answer for — empty,
 loading, error, offline — and the paths between them. The rules a screen obeys
 stay where they were decided and are referenced by identifier: search and
-filters in `catalogue`, rating and favourites in `ratings`, reporting and
+filters in `catalogue` (the recipe book's own text query and orderings in
+FLOW-035 and FLOW-039), rating and favourites in `ratings`, reporting and
 blocking in `abuse`, what a moderator checks in `moderation`, recalculation in
 `scaling-rules`. Nothing decided elsewhere is restated here.
 

@@ -1,9 +1,10 @@
 ---
 slug: MEDIA
 status: closed
-updated: 2026-09-28
-ids: [MEDIA-001, MEDIA-002, MEDIA-003, MEDIA-004, MEDIA-005, MEDIA-006,
-  MEDIA-007, MEDIA-008, MEDIA-009, MEDIA-010, MEDIA-011, MEDIA-012, MEDIA-013]
+updated: 2026-10-03
+ids: [MEDIA-001, MEDIA-002, MEDIA-014, MEDIA-003, MEDIA-004, MEDIA-005, MEDIA-006,
+  MEDIA-007, MEDIA-008, MEDIA-009, MEDIA-015, MEDIA-010, MEDIA-011, MEDIA-012,
+  MEDIA-013]
 ---
 
 # Media
@@ -58,8 +59,9 @@ picture whose job is to show the finished dish.
 
 ### MEDIA-002 — Every photograph is re-encoded on the device
 
-When a photograph is added, the system shall re-encode it on the device before
-upload to at most 1 MB and at most 1600 pixels on its longer edge.
+When a photograph is added, the system shall re-encode the frame the author
+placed (MEDIA-014) on the device before upload to at most 1 MB and at most 1600
+pixels on its longer edge. A megabyte here is 1,000,000 bytes.
 
 **Acceptance criteria**
 - Given a 12 MB photograph from a phone camera, when it is added, then what is
@@ -69,12 +71,42 @@ upload to at most 1 MB and at most 1600 pixels on its longer edge.
 - Given a photograph whose longer edge is under 1600 pixels, when it is
   re-encoded, then it is not enlarged.
 - Given the re-encoded file, when it is displayed on the recipe card, then it
-  fills the intended area without visible loss on a phone screen.
+  fills the intended area without visible loss on a phone screen; what the
+  author's crop (MEDIA-014) left out is the author's choice and not a loss.
+- Given a re-encoded file of 1,000,000 bytes, when it is checked, then it is
+  within the limit; one of 1,000,001 bytes is not.
 
 **Verification:** add photographs of several sizes and inspect what is uploaded.
 **Source:** user decision, 2026-09-20: 1600 pixels covers any phone screen with
 room to spare, and halving the limit from the alternative doubles what the
-storage budget holds.
+storage budget holds; amended 2026-10-03 (sync v0.3–v0.14): what is re-encoded
+is the author's 4:3 crop, a crop is not loss, and 1 MB is 1,000,000 bytes — req-forge
+proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
+
+### MEDIA-014 — Every photograph is a 4:3 landscape frame the author places
+
+When a photograph is taken or chosen — for the cover or for a step, from the
+camera or from the gallery — the system shall let the author place a 4:3
+landscape frame over it before it is attached, and shall store only that frame.
+
+**Acceptance criteria**
+- Given a photograph just taken or chosen, when it is offered, then the author
+  places the frame over it, and nothing is attached until the author confirms;
+  cancelling attaches nothing.
+- Given any stored photograph, cover or step, when its proportions are read, then
+  it is 4:3 landscape, whatever the orientation it was shot in.
+- Given a source at least 1600 pixels wide in the frame's direction, when the
+  author narrows the frame, then it cannot become narrower than 1600 source
+  pixels; given a smaller source, the frame can be no wider than the source allows
+  and is not enlarged (MEDIA-002).
+- Given a photograph taken sideways or upside down, when it is framed, then it is
+  framed the right way up (MEDIA-003).
+
+**Verification:** take and choose photographs of several sizes and orientations
+for a cover and a step, frame each, and inspect the stored proportions and width.
+**Source:** req-forge proposal from the sync of v0.3–v0.14, accepted by the user,
+2026-10-03 (user decision, v0.6: the 4:3 landscape frame; asked by the user at the
+v0.6 demo: the crop after the shot, built in v0.8). See [ADR — photos are cropped to 4:3](decisions/20261003-photos-are-cropped-to-four-by-three.md).
 
 ### MEDIA-003 — Nothing but the picture is uploaded
 
@@ -163,6 +195,9 @@ unchanged.
 **Acceptance criteria**
 - Given a photograph that cannot be brought under 1 MB at 1600 pixels, when it is
   added, then it is refused with a statement and nothing is attached.
+- Given a photograph that would fit only at an encoding quality below the floor
+  the product sets, when it is added, then it is refused rather than degraded
+  below that floor.
 - Given a video that cannot be brought under 6 MB within 15 seconds, when it is
   added, then it is refused with a statement and nothing is attached.
 - Given such a refusal, when the author returns to the recipe, then the media the
@@ -171,7 +206,9 @@ unchanged.
 **Verification:** attempt to add files engineered to resist compression.
 **Source:** user decision, 2026-09-20: compressing further without limit would
 publish a picture nobody can read, so there is a floor under quality and it is
-the author who is told about it.
+the author who is told about it; amended 2026-10-03 (sync v0.3–v0.14): the floor
+is stated as a rule, its value is the team's — req-forge proposal from the sync of
+v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### MEDIA-007 — Duration is checked before anything else
 
@@ -223,6 +260,29 @@ existing item.
 recipe holds.
 **Source:** user decision, 2026-09-20; MEDIA-001 allows one item per place, so an
 addition can only mean a replacement.
+
+## How a clip plays
+
+### MEDIA-015 — A step's clip plays silently in a loop while it is seen
+
+While a step's video is on screen, the system shall play it muted and in a loop,
+shall pause it when it leaves the screen, and shall offer a control that pauses
+and resumes it.
+
+**Acceptance criteria**
+- Given a step with a video, when it scrolls onto the screen, then the video plays
+  without sound and starts again when it ends.
+- Given that video, when it scrolls off the screen, then it pauses.
+- Given a playing video, when the pause control is used, then it stops, and used
+  again, it resumes.
+- Given the device's system animations turned off, when a step with a video comes
+  on screen, then it does not start by itself and waits for the play control
+  (A11Y-009).
+
+**Verification:** scroll a recipe with step videos on and off screen, pause and
+resume one, then repeat with the system's animations turned off.
+**Source:** req-forge proposal from the sync of v0.3–v0.14, accepted by the user,
+2026-10-03 (built in v0.13). The size of its box and how it is cropped are the team's.
 
 ## What it costs
 
