@@ -38,10 +38,19 @@ object WordPrefix {
     fun holdsEvery(words: List<String>, sought: List<String>): Boolean = holdsEvery(Words(words), sought)
 
     /** Whether, for every word [sought] (already [fold]ed and split), one of [text]'s words begins with it or is it in another form. */
-    fun holdsEvery(text: Words, sought: List<String>): Boolean = sought.all { word ->
-        text.words.any { it.startsWith(word) } || Inflection.forms(word).let { forms ->
+    fun holdsEvery(text: Words, sought: List<String>): Boolean = holdsEvery(text, Sought(sought))
+
+    /** [holdsEvery] for a query matched against many texts, its words' forms worked out once. */
+    fun holdsEvery(text: Words, sought: Sought): Boolean = sought.words.indices.all { i ->
+        val word = sought.words[i]
+        text.words.any { it.startsWith(word) } || sought.forms[i].let { forms ->
             forms.any { it in text.forms } || forms.any { form -> text.forms.any { Inflection.akin(form, it) } }
         }
+    }
+
+    /** The words of a query, already [fold]ed and split, with the [Inflection] forms of each. */
+    class Sought(val words: List<String>) {
+        val forms: List<Set<String>> = words.map { Inflection.forms(it) }
     }
 
     /** The words of a text and the [Inflection] forms of each, worked out once for many queries. */
@@ -168,6 +177,7 @@ class SearchIndex<T>(private val items: List<T>, names: (T) -> List<String>) {
     fun search(query: String): List<T> {
         val sought = WordPrefix.words(query)
         if (sought.isEmpty()) return items
-        return indexed.filter { (_, words) -> WordPrefix.holdsEvery(words, sought) }.map { it.first }
+        val matcher = WordPrefix.Sought(sought)
+        return indexed.filter { (_, words) -> WordPrefix.holdsEvery(words, matcher) }.map { it.first }
     }
 }

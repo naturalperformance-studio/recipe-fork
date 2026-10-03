@@ -120,9 +120,9 @@ The tags file — `id, labelRu, labelEn`:
   order (so `лук-порей` and `лук порей`, `crème fraîche` and `creme fraiche`, `масло сливочное` and `сливочное масло`
   are the same label: the field takes a label typed with its words in another order as an exact match);
 - a blank synonym (an empty item between `;`, or one with no letter or digit) or one with spaces around it;
-- a synonym that, as the search folds it, is its own entry's label, any live entry's label, or another synonym in the
-  same language (in this entry or another) — a synonym must lead to one entry only; a removed entry's synonyms are
-  checked against its own label only;
+- a synonym that, as the search folds it, is its own entry's label, any live entry's label in the same language, or
+  another synonym in the same language (in this entry or another) — a synonym must lead to one entry only; a removed
+  entry's synonyms are checked against its own label only;
 - a `parentId` that names no entry, names the entry itself, or names an entry that has a parent;
 - a removed entry that is still the parent of a live entry;
 - an unknown factor unit, a factor that is not a finite number above zero, a unit given twice;

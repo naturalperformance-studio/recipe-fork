@@ -192,7 +192,7 @@ class CapsBenchTest {
     fun theIngredientOfferOverTheShippedDictionaryPerKeystrokeIsWithinItsCeiling() {
         // As a device that never held another dictionary holds it.
         val dictionary = SHIPPED.ingredients.map(IngredientEntryEntity::of)
-        val words = listOf("лук репчатый", "сливочное масло", "яйца", "мука пшеничная", "солёные огурцы", "chicken breast", "eggs", "all-purpose flour", "creme fraiche", "к")
+        val words = listOf("лук репчатый", "сливочное масло", "яйца", "мука пшеничная", "солёные огурцы", "chicken breast", "eggs", "all-purpose flour", "creme fraiche", "картошка", "icing sugar", "к")
         val typed = words.flatMap { word -> (1..word.length).map { word.take(it) } }
         val languages = listOf(InterfaceLanguage.RUSSIAN, InterfaceLanguage.ENGLISH)
         repeat(2) { typed.forEach { text -> languages.forEach { IngredientOffer.of(text, dictionary, it) } } }
@@ -267,7 +267,10 @@ class CapsBenchTest {
         /** The dictionary the application ships; unit tests of `:app` run with the module directory as the working directory. */
         val SHIPPED: DictionariesDto by lazy { DictionarySnapshot.parse(File("src/main/assets/${DictionarySnapshot.ASSET}").readText()) }
 
-        /** 5 000 entries of two words each, in tens: a parent and the nine leaves under it; and 100 tags. */
+        /**
+         * 5 000 entries of two words each and a synonym in each language, in tens: a parent and the nine leaves under it;
+         * and 100 tags.
+         */
         val DICTIONARY = DictionariesDto(
             version = "bench-5000",
             ingredients = (1..ENTRIES.toLong()).map { id ->
@@ -277,6 +280,8 @@ class CapsBenchTest {
                     labelRu = "${word(n, RU)} ${word(n * 7 + 3, RU)}",
                     labelEn = "${word(n, EN)} ${word(n * 7 + 3, EN)}",
                     parentId = if (id % 10 == 1L) null else id - (id - 1) % 10,
+                    synonymsRu = listOf(word(n * 3 + 1, RU)),
+                    synonymsEn = listOf(word(n * 3 + 1, EN)),
                 )
             },
             tags = (1..100L).map { TagDto(id = 10_000 + it, labelRu = word(it.toInt(), RU), labelEn = word(it.toInt(), EN)) },

@@ -332,4 +332,25 @@ class DictionaryBuildTest {
         // The same word in the other language is not the same synonym.
         built(ingredients("1000\tкартофель\tpotato\t\t\t\t\tspud", "1001\tбатат\tsweet potato\t\t\t\t\t\tspud"))
     }
+
+    // A removed entry is offered to nobody: its synonyms are exempt from the cross checks — another entry's label or
+    // synonym may be the same — and checked against its own label only.
+    @Test
+    fun aRemovedEntrysSynonymIsExemptFromTheCrossChecks() {
+        // The same as a live entry's label.
+        built(ingredients("1000\tманная крупа\tsemolina", "1001\tманка старая\told semolina\t\t\t\tremoved\tманная крупа"))
+        // The same as a live entry's synonym, whichever stands first.
+        built(ingredients("1000\tкартофель\tpotato\t\t\t\t\tкартошка", "1001\tкартофель старый\told potato\t\t\t\tremoved\tкартошка"))
+        built(ingredients("1000\tкартофель старый\told potato\t\t\t\tremoved\tкартошка", "1001\tкартофель\tpotato\t\t\t\t\tкартошка"))
+        // The same as another removed entry's synonym.
+        built(
+            ingredients(
+                "1000\tгусь\tgoose\t\t\t\tremoved\t\tgander",
+                "1001\tгусь домашний\tdomestic goose\t\t\t\tremoved\t\tgander",
+            ),
+        )
+        // Its own label still is not its synonym.
+        refused(build(ingredients("1000\tгусь\tgoose\t\t\t\tremoved\tгусь")), "produce.tsv:3", "is the entry's own label")
+    }
 }
+

@@ -526,6 +526,8 @@ private fun IngredientNameField(
                     val label = entry.label(language)
                     OfferedChoice(
                         text = label,
+                        synonym = offer.synonyms[entry.id],
+                        synonymTag = IngredientNameTags.synonym(position, entry.id),
                         action = stringResource(R.string.editor_ingredient_pick_action, label),
                         onClick = {
                             editor.setIngredientEntry(position, entry.id)
@@ -552,18 +554,38 @@ private fun IngredientNameField(
     }
 }
 
-/** One choice of the ingredient field's offer: a line at least 48 dp tall whose click says what it does (A11Y-003, A11Y-005). */
+/**
+ * One choice of the ingredient field's offer: a line at least 48 dp tall whose click says what it does (A11Y-003,
+ * A11Y-005) — with the [synonym] the entry was found by, if any, beside it in a muted style: «картофель · картошка».
+ */
 @Composable
-private fun OfferedChoice(text: String, action: String, onClick: () -> Unit, modifier: Modifier) {
-    Text(
-        text,
-        style = MaterialTheme.typography.bodyLarge,
-        modifier = modifier
+private fun OfferedChoice(
+    text: String,
+    action: String,
+    onClick: () -> Unit,
+    modifier: Modifier,
+    synonym: String? = null,
+    synonymTag: String = "",
+) {
+    Row(
+        modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
-    )
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f, fill = synonym == null))
+        if (synonym != null) {
+            Text(
+                " · $synonym",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                modifier = Modifier.weight(1f, fill = false).testTag(synonymTag),
+            )
+        }
+    }
 }
 
 /** The test tags of the ingredient field's offer (FLOW-057). */
@@ -571,6 +593,7 @@ object IngredientNameTags {
     fun offer(position: Int) = "editor-ingredient-$position-offer"
     fun entry(position: Int, entryId: Long) = "editor-ingredient-$position-offer-$entryId"
     fun freeText(position: Int) = "editor-ingredient-$position-offer-free-text"
+    fun synonym(position: Int, entryId: Long) = "editor-ingredient-$position-offer-$entryId-synonym"
 }
 
 /**

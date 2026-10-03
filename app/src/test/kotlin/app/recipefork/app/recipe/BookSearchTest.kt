@@ -240,4 +240,26 @@ class BookSearchTest {
         assertEquals(listOf("H"), found("лука моркови"))
         assertEquals(listOf("B"), found("lemons"))
     }
+
+    // T-129, FLOW-035: a query finds a recipe by a synonym of its ingredient's entry, in either language and form; the
+    // ingredient filter is unaffected by synonyms.
+    @Test
+    fun aQueryFindsARecipeByASynonymOfItsIngredient() = runBlocking {
+        val potato = IngredientEntryEntity(10, "картофель", "potato", null, synonymsRu = listOf("картошка"), synonymsEn = listOf("spud"))
+        val search = BookSearch<String>({ dictionary + potato }, { it }, { it })
+        val rows = listOf("Пюре", "Бульон", "Драники")
+        val lines = listOf(
+            line("Пюре", potato, 500),
+            line("Бульон", broth, 900),
+            line("Драники", null, 400, free = "картошка тёртая"),
+        )
+        suspend fun found(query: String) = search.listed(rows, lines, emptyList(), params(query)).rows
+        assertEquals(listOf("Пюре", "Драники"), found("картошка"))
+        assertEquals(listOf("Пюре", "Драники"), found("картошку"))
+        assertEquals(listOf("Пюре"), found("spud"))
+        assertEquals(listOf("Пюре"), found("картофель"))
+        assertEquals(listOf("Пюре"), search.listed(rows, lines, emptyList(), params(filters = BookFilters(potato.id))).rows)
+        assertEquals(listOf("Пюре"), search.listed(rows, lines, emptyList(), params("картошка", BookFilters(potato.id))).rows)
+    }
 }
+
