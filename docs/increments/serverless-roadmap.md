@@ -14,7 +14,7 @@ A11Y-007 / A11Y-003 (2) (56 dp card controls, larger step text) · L10N-002 (cho
 ## D — Step video and media housekeeping  → v0.13 (built 2026-10-03, at demo)
 MEDIA-004/007 short silent step video within the file format · FLOW-060 (4) delete held media.
 
-## E — Fill the dictionary  → last
+## E — Fill the dictionary  → v0.14 (started 2026-10-03)
 A hand-made dictionary of a few thousand ingredients in families plus a real tag dictionary, with divisibility and factors, a generator that computes the version digest, and a recorded departure from DOM-014 (the dictionary maintained in the repository while there is no server). Ids 1–5, 10, 11 stay as they are.
 
 ## F — Interface polish, a series  → after E (asked by the user 2026-10-03)
