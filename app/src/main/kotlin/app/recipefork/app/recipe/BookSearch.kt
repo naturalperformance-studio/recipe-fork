@@ -89,7 +89,8 @@ data class Listed<R>(
  * Finds, filters and orders the rows of one view of the book (FLOW-035). A query finds a recipe in which each of its
  * words begins a word of the title, of the description or of any of its ingredients' names, wherever each stands
  * ([WordPrefix]); an
- * ingredient is named by its dictionary entry's label in either language with its qualifier, or by its free text.
+ * ingredient is named by its dictionary entry's label or any of its synonyms, in either language, with its qualifier,
+ * or by its free text: "картошка" finds a recipe holding картофель.
  * A filter by tags keeps the recipes carrying every one of them; a filter by an ingredient entry keeps the recipes
  * holding it or an entry below it (CAT-006), the most of it per serving first (CAT-002, CAT-007), in the order chosen
  * for the view among recipes of equal or no comparable quantity. A filter by language keeps the recipes declaring it, or
@@ -174,7 +175,8 @@ class BookSearch<R>(
     private fun namesOf(row: IngredientLineRow, entries: Map<Long, IngredientEntryEntity>): List<String> {
         val entry = row.dictionaryEntry?.let(entries::get)
         val qualifier = row.qualifier?.takeIf { it.isNotBlank() }
-        return listOfNotNull(entry?.labelRu, entry?.labelEn, row.freeTextName)
+        val synonyms = entry?.let { it.synonymsRu + it.synonymsEn }.orEmpty()
+        return (listOfNotNull(entry?.labelRu, entry?.labelEn) + synonyms + listOfNotNull(row.freeTextName))
             .map { name -> listOfNotNull(name, qualifier).joinToString(" ") }
             .ifEmpty { listOfNotNull(qualifier) }
     }

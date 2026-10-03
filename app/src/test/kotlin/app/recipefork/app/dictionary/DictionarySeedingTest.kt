@@ -163,20 +163,35 @@ class DictionarySeedingTest {
         assertEquals(listOf(1L to true, 2L to false), dao.ingredients().map { it.id to it.removed })
     }
 
-    // AppDatabase version 2: a device holding the version-1 store has it wiped, not migrated, and the dictionaries are
+    // AppDatabase version 3: a device holding an earlier store has it wiped, not migrated, and the dictionaries are
     // seeded again on their next read — even though the snapshot it was seeded from has not changed.
     @Test
-    fun aVersionOneStoreIsWipedAndTheDictionariesAreSeededAgain() = runBlocking {
-        val name = "app-database-v1-test.db"
+    fun aVersionOneStoreIsWipedAndTheDictionariesAreSeededAgain() = wipedAndSeededAgain(1) { v1 ->
+        v1.execSQL("create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, parentId integer)")
+        v1.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null)")
+    }
+
+    // T-128 gave the entry its synonyms in version 3: a version-2 store — divisibility, factors and removal, no
+    // synonyms — is wiped and seeded again, its entries now holding their synonyms.
+    @Test
+    fun aVersionTwoStoreIsWipedAndTheDictionariesAreSeededAgainWithSynonyms() = wipedAndSeededAgain(2) { v2 ->
+        v2.execSQL(
+            "create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, " +
+                "parentId integer, divisible integer, factors text not null, removed integer not null)",
+        )
+        v2.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null, 1, '{\"pc\":1500.0}', 0)")
+    }
+
+    private fun wipedAndSeededAgain(version: Int, entries: (SQLiteDatabase) -> Unit) = runBlocking {
+        val name = "app-database-v$version-test.db"
         val file = context.getDatabasePath(name)
         file.parentFile?.mkdirs()
-        SQLiteDatabase.openOrCreateDatabase(file, null).use { v1 ->
-            v1.execSQL("create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, parentId integer)")
-            v1.execSQL("create table tag (id integer not null primary key, labelRu text not null, labelEn text not null)")
-            v1.execSQL("create table dictionary_version (id integer not null primary key, version text not null)")
-            v1.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null)")
-            v1.execSQL("insert into dictionary_version values (0, 's1')")
-            v1.version = 1
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { old ->
+            entries(old)
+            old.execSQL("create table tag (id integer not null primary key, labelRu text not null, labelEn text not null)")
+            old.execSQL("create table dictionary_version (id integer not null primary key, version text not null)")
+            old.execSQL("insert into dictionary_version values (0, 's1')")
+            old.version = version
         }
         seeded.version = "s1"
         shipped = DictionariesDto(
@@ -195,6 +210,7 @@ class DictionarySeedingTest {
                 catalog.ingredients(),
             )
             assertEquals("s1", dao.version())
+            assertEquals(3, AppDatabase.VERSION)
             assertEquals(AppDatabase.VERSION, opened.openHelper.readableDatabase.version)
         } finally {
             opened.close()

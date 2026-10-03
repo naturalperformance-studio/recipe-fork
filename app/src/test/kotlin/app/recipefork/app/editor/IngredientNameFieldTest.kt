@@ -4,12 +4,15 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -17,6 +20,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -190,6 +194,44 @@ class IngredientNameFieldTest {
         // Nothing typed offers nothing.
         type(0, "")
         assertEquals(emptyList<String>(), choices(0))
+    }
+
+    private fun textColor(tag: String, text: String): Color {
+        val results = mutableListOf<TextLayoutResult>()
+        compose.onNode(hasAnyAncestor(hasTestTag(tag)) and hasText(text), useUnmergedTree = true)
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(results) }
+        return results.single().layoutInput.style.color
+    }
+
+    // T-129, FLOW-023: an entry found by a synonym shows its label with the synonym beside it, muted; one found by its
+    // label shows the label alone; choosing it names the row by the entry.
+    @Test
+    @Config(qualifiers = "ru")
+    fun anEntryFoundByASynonymShowsItMutedBesideItsLabel() {
+        val potato = IngredientEntryDto(30, "картофель", "potato", synonymsRu = listOf("картошка"))
+        runBlocking {
+            device.database.dictionaryDao().replace(TEST_INGREDIENTS.copy(version = "test-synonyms-1", ingredients = TEST_INGREDIENTS.ingredients + potato))
+        }
+        val id = writeANewRecipe()
+        addIngredient(0)
+        type(0, "картошка")
+        val entry = IngredientNameTags.entry(0, 30)
+        val synonym = IngredientNameTags.synonym(0, 30)
+        assertEquals(listOf(entry), choices(0))
+        assertEquals("картофель · картошка", shownText(entry))
+        compose.onNodeWithTag(synonym, useUnmergedTree = true).assertTextEquals(" · картошка")
+        val label = textColor(entry, "картофель")
+        val muted = textColor(entry, " · картошка")
+        assertTrue("$muted is not muted beside $label", muted != label && muted.alpha > 0f)
+        // Found by its label, the entry shows the label alone.
+        type(0, "карто")
+        assertEquals("картофель", shownText(entry))
+        assertTrue(compose.onAllNodes(hasTestTag(synonym), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        type(0, "картошку")
+        pick(entry)
+        assertEquals(30L, stored(id).ingredients.single().dictionaryEntry)
+        assertNull(stored(id).ingredients.single().freeTextName)
+        assertEquals("картофель", fieldText(EditorTags.ingredientName(0)))
     }
 
     // FLOW-057 (5), L10N-003: matched in either language, shown in the interface language.

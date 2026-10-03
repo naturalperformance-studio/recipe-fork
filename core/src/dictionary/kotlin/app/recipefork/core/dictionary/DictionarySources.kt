@@ -258,7 +258,7 @@ object DictionaryBuild {
 
     /**
      * A synonym finds its entry, so it must find that entry alone: as the search folds it, it is neither its own entry's
-     * label, nor any live entry's label, nor another synonym in its language. A removed entry is offered to nobody, so
+     * label, nor any live entry's label in its language, nor another synonym in its language. A removed entry is offered to nobody, so
      * its synonyms are checked against its own label only.
      */
     private fun synonyms(rows: List<Row<IngredientEntryDto>>, errors: MutableList<String>) {
