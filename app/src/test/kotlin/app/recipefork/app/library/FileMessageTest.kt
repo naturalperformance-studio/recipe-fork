@@ -91,8 +91,8 @@ class FileMessageTest {
     // Each import outcome and a failed export has a message of its own, in English and in Russian.
     @Test
     fun everyOutcomeHasAMessageOfItsOwn() {
-        assertEquals(8, everyMessage.map { it.kind }.toSet().size)
-        assertEquals(8, everyMessage.map { it.text(context.resources) }.toSet().size)
+        assertEquals(9, everyMessage.map { it.kind }.toSet().size)
+        assertEquals(9, everyMessage.map { it.text(context.resources) }.toSet().size)
     }
 
     // The longest message of all, at 360 dp and twice the font size, is laid out whole: no line cut short or ellipsized,

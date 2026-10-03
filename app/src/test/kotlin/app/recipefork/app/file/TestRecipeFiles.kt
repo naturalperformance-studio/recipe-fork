@@ -1,5 +1,6 @@
 package app.recipefork.app.file
 
+import app.recipefork.app.media.ClipDuration
 import app.recipefork.core.file.FileParent
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
@@ -21,6 +22,7 @@ import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /** Recipe files for the importer's tests: well made, and made wrong in each of the ways an importer must refuse. */
 object TestRecipeFiles {
@@ -78,6 +80,9 @@ object TestRecipeFiles {
         zip(RecipeFile.DOCUMENT to document(content), RecipeFile.MEDIA_DIRECTORY to ByteArray(0), *media)
 
     fun jpeg(size: Int = 1_000) = ByteArray(size).also { byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()).copyInto(it) }
+
+    /** A clip's duration as a device reads it, for a clip MEDIA-007 accepts. */
+    val SHORT_CLIP = ClipDuration { 10.seconds }
 
     fun mp4(size: Int = 1_000) = ByteArray(size).also {
         byteArrayOf(0, 0, 0, 0x20).copyInto(it)

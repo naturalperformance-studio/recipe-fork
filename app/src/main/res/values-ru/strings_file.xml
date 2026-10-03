@@ -11,6 +11,7 @@
     <string name="file_import_later">Файл рецепта создан более новой версией приложения. Обновите приложение, чтобы открыть его; ничего не добавлено</string>
     <string name="file_import_damaged">Файл рецепта повреждён, ничего не добавлено</string>
     <string name="file_import_breaks_rules">Рецепт в файле нарушает правила, которые соблюдает каждый рецепт, ничего не добавлено</string>
+    <string name="file_import_clip_too_long">Видео в этом файле рецепта длиннее %1$d секунд, ничего не добавлено</string>
     <string name="file_stated_author">Автор: %1$s (указан в файле, не проверен)</string>
     <string name="file_message_ok">ОК</string>
 </resources>
