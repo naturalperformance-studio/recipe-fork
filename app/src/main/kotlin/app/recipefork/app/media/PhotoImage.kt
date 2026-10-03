@@ -65,21 +65,20 @@ fun decodeForDisplay(file: File, width: Int): ImageBitmap? = try {
 }
 
 /**
- * [file] decoded as a thumbnail whose shorter side is [size] pixels — enough for a [size]-pixel square cropped about
- * its centre: read down by a power of two, never whole, then scaled to that size. A smaller photograph is kept as it
- * is. Null if unreadable.
+ * [file] decoded to fill a [width] by [height] frame, cropped about its centre: read down by a power of two, never
+ * whole, then scaled until it just covers the frame, and cut to it. A photograph too small to cover the frame is kept
+ * as it is. Null if unreadable.
  */
-fun decodeThumbnail(file: File, size: Int): ImageBitmap? = try {
+fun decodeFilling(file: File, width: Int, height: Int): ImageBitmap? = try {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     BitmapFactory.decodeFile(file.path, bounds)
-    val shorter = minOf(bounds.outWidth, bounds.outHeight)
-    if (shorter <= 0) {
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
         null
     } else {
         var sample = 1
-        while (shorter / (sample * 2) >= size) sample *= 2
+        while (bounds.outWidth / (sample * 2) >= width && bounds.outHeight / (sample * 2) >= height) sample *= 2
         BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample })
-            ?.let { scaledToShorterSide(it, size) }
+            ?.let { croppedToFill(it, width, height) }
             ?.asImageBitmap()
     }
 } catch (e: OutOfMemoryError) {
@@ -88,13 +87,15 @@ fun decodeThumbnail(file: File, size: Int): ImageBitmap? = try {
     null
 }
 
-/** [bitmap] scaled down so that its shorter side is [size] pixels, or itself where it is no larger. */
-private fun scaledToShorterSide(bitmap: Bitmap, size: Int): Bitmap {
-    val shorter = minOf(bitmap.width, bitmap.height)
-    if (shorter <= size) return bitmap
-    val width = (bitmap.width.toLong() * size / shorter).toInt().coerceAtLeast(1)
-    val height = (bitmap.height.toLong() * size / shorter).toInt().coerceAtLeast(1)
-    val scaled = Bitmap.createScaledBitmap(bitmap, width, height, true)
+/** [bitmap] scaled down until it just covers [width] by [height] and cut to it about its centre; itself if smaller. */
+private fun croppedToFill(bitmap: Bitmap, width: Int, height: Int): Bitmap {
+    val scale = maxOf(width.toDouble() / bitmap.width, height.toDouble() / bitmap.height)
+    if (scale >= 1.0) return bitmap
+    val scaledWidth = Math.round(bitmap.width * scale).toInt().coerceAtLeast(width)
+    val scaledHeight = Math.round(bitmap.height * scale).toInt().coerceAtLeast(height)
+    val scaled = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
     if (scaled !== bitmap) bitmap.recycle()
-    return scaled
+    val cropped = Bitmap.createBitmap(scaled, (scaledWidth - width) / 2, (scaledHeight - height) / 2, width, height)
+    if (cropped !== scaled) scaled.recycle()
+    return cropped
 }

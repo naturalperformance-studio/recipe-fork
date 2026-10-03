@@ -69,7 +69,8 @@ data class ListingParams(
 /**
  * What a view lists for [params]: the [rows] found, in order; [viewIsEmpty] when the view holds nothing at all; the
  * [languages] its recipes are written in, whatever narrows it, in the order of [BookLanguage]; the dictionary entries
- * its recipes' ingredients [hold], whatever narrows it — what keeps an entry removed upstream offered by the filter.
+ * its recipes' ingredients [hold], whatever narrows it — what keeps an entry removed upstream offered by the filter;
+ * the tags each recipe of the view [carries], by the recipe's identity, which its entry shows.
  */
 data class Listed<R>(
     val rows: List<R>,
@@ -77,6 +78,7 @@ data class Listed<R>(
     val params: ListingParams,
     val languages: List<BookLanguage> = emptyList(),
     val hold: Set<Long> = emptySet(),
+    val carries: Map<String, List<Long>> = emptyMap(),
 ) {
     /** Whether a query was searched: one with a word in it. A query of none lists the whole view. */
     val searched: Boolean get() = WordPrefix.words(params.query).isNotEmpty()
@@ -121,8 +123,8 @@ class BookSearch<R>(
         var found = if (WordPrefix.words(params.query).isEmpty()) rows else index(rows, lines).search(params.query)
         val filters = params.filters
         filters.language?.let { chosen -> found = found.filter { BookLanguage.of(language(it)) == chosen } }
+        val carried = tags.groupBy({ it.recipeId }, { it.tagId })
         if (filters.tags.isNotEmpty()) {
-            val carried = tags.groupBy({ it.recipeId }, { it.tagId })
             found = found.filter { row -> carried[id(row)].orEmpty().containsAll(filters.tags) }
         }
         found = found.inOrder(params.order, params.locale, title)
@@ -130,7 +132,7 @@ class BookSearch<R>(
         val languages = rows.mapTo(HashSet()) { BookLanguage.of(language(it)) }
         val inView = rows.mapTo(HashSet()) { id(it) }
         val hold = lines.filter { it.recipeId in inView }.mapNotNullTo(HashSet()) { it.dictionaryEntry }
-        return Listed(found, rows.isEmpty(), params, BookLanguage.entries.filter { it in languages }, hold)
+        return Listed(found, rows.isEmpty(), params, BookLanguage.entries.filter { it in languages }, hold, carried)
     }
 
     /**
