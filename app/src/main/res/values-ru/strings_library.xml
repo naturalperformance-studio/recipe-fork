@@ -7,8 +7,10 @@
     <string name="library_view_own_action">Показать рецепты, написанные в этой книге</string>
     <string name="library_state_draft">Черновик</string>
     <string name="library_state_pending">Ждёт проверки</string>
+    <string name="library_state_pending_serverless">Пока не открыт всем</string>
     <string name="library_state_rejected">Отклонён</string>
     <string name="library_state_link_shared">Открыт по закрытой ссылке</string>
+    <string name="library_state_link_shared_serverless">Открыт тем, с кем вы им поделились</string>
     <string name="library_state_published">Опубликован</string>
     <string name="library_state_published_serverless">Открыт всем</string>
     <string name="library_state_hidden">Скрыт</string>

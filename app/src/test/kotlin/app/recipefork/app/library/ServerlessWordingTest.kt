@@ -2,7 +2,6 @@ package app.recipefork.app.library
 
 import android.content.Context
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -30,6 +29,7 @@ import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.TestRecipeFiles
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.AppTheme
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
@@ -208,7 +208,7 @@ class ServerlessWordingTest {
     private fun show(mode: Mode) {
         val editor = EditorEnvironment(active, device.catalog(context), mode = mode, clock = { now })
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, mode, editor = editor, card = card, files = importer) } }
+        compose.setContent { AppTheme { LibraryScreen(session, recipes, mode, editor = editor, card = card, files = importer) } }
         compose.waitForIdle()
     }
 
@@ -236,15 +236,22 @@ class ServerlessWordingTest {
     }
 
     private companion object {
-        /** The words — and the stems of words — that speak of sending, the server, publication or an account. */
+        /**
+         * The words — and the stems of words — that speak of sending, the server, publication, review or a private
+         * link, or an account.
+         */
         val WORDS = listOf(
-            "send", "sent", "server", "publish", "account", "moderat",
-            "отправ", "сервер", "публик", "аккаунт", "модерац",
+            "send", "sent", "server", "publish", "account", "moderat", "review", "link",
+            "отправ", "сервер", "публик", "аккаунт", "модерац", "проверк",
+            // A private link; a reference in a step is a link (ссылка) of another kind, and is not about the server.
+            "закрытой ссылк",
         )
 
         /** The strings only the standard build shows. */
         val STANDARD_ONLY = setOf(
             "library_state_published",
+            "library_state_pending",
+            "library_state_link_shared",
             "library_sent_never",
             "library_sent_sent",
             "library_sent_with_changes",

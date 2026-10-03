@@ -829,14 +829,14 @@ fun removeFound(files: RecipeImport, timers: CardTimers, id: RecipeId) {
 
 /**
  * The marker of FLOW-036: `local` and `private` are both a draft. In [Mode.Serverless] a recipe keeps the last state
- * the device knew (FLOW-062 (5)), worded with nothing of publication.
+ * the device knew (FLOW-062 (5)), worded with nothing of publication, review or a private link.
  */
 @StringRes
-fun stateLabel(state: RecipeState, mode: Mode = Mode.Standard): Int = when (state) {
+fun stateLabel(state: RecipeState, mode: Mode): Int = when (state) {
     RecipeState.LOCAL, RecipeState.PRIVATE -> R.string.library_state_draft
-    RecipeState.PENDING -> R.string.library_state_pending
+    RecipeState.PENDING -> if (mode == Mode.Serverless) R.string.library_state_pending_serverless else R.string.library_state_pending
     RecipeState.REJECTED -> R.string.library_state_rejected
-    RecipeState.LINK_SHARED -> R.string.library_state_link_shared
+    RecipeState.LINK_SHARED -> if (mode == Mode.Serverless) R.string.library_state_link_shared_serverless else R.string.library_state_link_shared
     RecipeState.PUBLISHED -> if (mode == Mode.Serverless) R.string.library_state_published_serverless else R.string.library_state_published
     RecipeState.REPORTED_HIDDEN -> R.string.library_state_hidden
     RecipeState.REMOVED -> R.string.library_state_removed

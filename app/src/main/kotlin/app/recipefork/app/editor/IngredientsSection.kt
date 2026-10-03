@@ -170,7 +170,7 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
  * Rows are named from the ingredient dictionary of [ingredients] or in the author's own words (DOM-009).
  */
 @Composable
-internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: IngredientSource, scroll: EditorScroll, mode: Mode = Mode.Standard) {
+internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: IngredientSource, scroll: EditorScroll, mode: Mode) {
     val editable = recipe.state.editable
     val language = numberLanguage(LocalConfiguration.current)
     var dictionary by remember(ingredients) { mutableStateOf<List<IngredientEntryEntity>?>(null) }
