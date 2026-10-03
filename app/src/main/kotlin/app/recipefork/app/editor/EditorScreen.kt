@@ -66,6 +66,7 @@ import app.recipefork.app.dictionary.DictionarySeeding
 import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.PreferencesSeededVersion
 import app.recipefork.app.dictionary.TagEntity
+import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
@@ -116,6 +117,8 @@ fun EditorScreen(
     val scrolled = rememberScrollState()
     val scroll = remember(scrolled) { EditorScroll(scrolled) }
     BackHandler(onBack = onClose)
+    val context = LocalContext.current
+    val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
     val host = remember { SnackbarHostState() }
     val statementScope = rememberCoroutineScope()
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
@@ -152,12 +155,12 @@ fun EditorScreen(
                 }
                 TitleAndLanguage(shown, editor)
                 CompositionLocalProvider(LocalEditorStatements provides statements) {
-                    CoverSection(shown, editor, recipes.bookName(), saving)
+                    CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
                     ServingCount(shown, editor)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll)
-                        Steps(shown, editor, environment.ingredients, scroll, recipes.bookName(), saving)
+                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving)
                     }
                     Description(shown, editor)
                 }

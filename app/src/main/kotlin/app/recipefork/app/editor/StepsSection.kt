@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.recipefork.app.R
+import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.book.BookName
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.core.recipe.Media
@@ -65,8 +66,8 @@ internal val ROW_SPACING = 12.dp
  * deleted. They accept input whatever else the recipe holds or lacks (FLOW-024 (2)), and no text is ever cut short.
  */
 @Composable
-internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource, scroll: EditorScroll, book: BookName, saving: CoroutineScope) {
-    val photos = rememberStepPhotos(book, saving)
+internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource, scroll: EditorScroll, store: PhotoStore, book: BookName, saving: CoroutineScope) {
+    val photos = rememberStepPhotos(store, book, saving)
     val editable = recipe.state.editable
     val steps = recipe.steps.sortedBy { it.position }
     val language = numberLanguage(LocalConfiguration.current)

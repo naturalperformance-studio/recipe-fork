@@ -6,24 +6,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.background
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.book.BookName
@@ -47,9 +38,7 @@ fun CoverAttaching(editor: RecipeEditor, store: PhotoStore, book: BookName, scop
  * removable. A frozen recipe shows its cover and nothing to change it; a frozen one without a cover shows nothing.
  */
 @Composable
-internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, book: BookName, saving: CoroutineScope) {
-    val context = LocalContext.current
-    val store = remember(context) { PhotoStore(context.applicationContext.filesDir) }
+internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStore, book: BookName, saving: CoroutineScope) {
     val attaching = remember(editor, store, book, saving) { CoverAttaching(editor, store, book, saving) }
     SaysPhotoNotices(attaching)
     val working by attaching.working
@@ -99,38 +88,6 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, book: BookName, 
                 }
             }
         }
-    }
-}
-
-/** Says at the bottom of the editor what [attaching] tells the author, once each. */
-@Composable
-internal fun SaysPhotoNotices(attaching: PhotoAttaching) {
-    val statements = LocalEditorStatements.current
-    val statement by attaching.statement
-    val text = statement?.let { stringResource(it.notice.text) }
-    LaunchedEffect(statement) {
-        val told = statement ?: return@LaunchedEffect
-        statements?.say(text.orEmpty())
-        attaching.stated(told)
-    }
-}
-
-/**
- * That a photograph is being prepared for a place: a small indicator on its photograph, or where it will show — no
- * text under it. The screen reader names it.
- */
-@Composable
-internal fun PhotoWorking(modifier: Modifier = Modifier) {
-    val said = stringResource(R.string.media_working)
-    Box(
-        modifier
-            .size(36.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surface)
-            .semantics { contentDescription = said },
-        contentAlignment = Alignment.Center,
-    ) {
-        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp)
     }
 }
 

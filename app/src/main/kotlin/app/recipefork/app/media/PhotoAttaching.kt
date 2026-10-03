@@ -6,9 +6,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import app.recipefork.app.book.BookName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Attaches a photograph to one place of a recipe — its cover, or one of its steps: re-encoded and kept in [book] by
@@ -18,7 +18,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * to a step since deleted — leaves nothing behind. What the author is told is [statement] until it has been said,
  * and [notice] after; [removed] is what they are told once the photograph is taken off. While a photograph is being
  * prepared, [working] holds. The work runs in [scope], which outlives the screen, so a photograph taken is not lost by
- * leaving.
+ * leaving. Held by the screen and not across its recreation, it is let go when the phone is turned mid-preparation:
+ * the photograph is still attached, but the indicator is gone and "attached" is not said — accepted; it is never said
+ * twice.
  */
 class PhotoAttaching(
     private val store: PhotoStore,
@@ -33,7 +35,7 @@ class PhotoAttaching(
 
     private val last = mutableStateOf<Statement?>(null)
     private val pending = mutableStateOf<Statement?>(null)
-    private val inFlight = AtomicInteger()
+    // Written only from the work's own coroutines, on [scope]'s dispatcher, so no write from another thread lands last.
     private val preparing = mutableIntStateOf(0)
 
     /** What the author was told last, said or not. */
@@ -58,31 +60,33 @@ class PhotoAttaching(
     }
 
     fun attach(offer: PhotoOffer): Job {
-        preparing.intValue = inFlight.incrementAndGet()
         val done = PhotoWork.begin()
-        val job = scope.launch {
-            val outcome = try {
-                store.add(book, offer.open)
-            } finally {
-                offer.release()
-            }
-            val told = when (outcome) {
-                is PhotoOutcome.Refused -> PhotoNotice.of(outcome.refusal)
-                is PhotoOutcome.Stored -> {
-                    if (set(outcome.mediaId) { replaced -> replaced?.let { store.delete(book, it) } }) {
-                        PhotoNotice.PROCESSED
-                    } else {
-                        store.delete(book, outcome.mediaId)
-                        null
+        // Started whatever happens to the scope meanwhile, so that what it counts in is always counted out.
+        val job = scope.launch(start = CoroutineStart.ATOMIC) {
+            preparing.intValue += 1
+            try {
+                val outcome = try {
+                    store.add(book, offer.open)
+                } finally {
+                    offer.release()
+                }
+                val told = when (outcome) {
+                    is PhotoOutcome.Refused -> PhotoNotice.of(outcome.refusal)
+                    is PhotoOutcome.Stored -> {
+                        if (set(outcome.mediaId) { replaced -> replaced?.let { store.delete(book, it) } }) {
+                            PhotoNotice.PROCESSED
+                        } else {
+                            store.delete(book, outcome.mediaId)
+                            null
+                        }
                     }
                 }
+                told?.let(::tell)
+            } finally {
+                preparing.intValue -= 1
             }
-            told?.let(::tell)
         }
-        job.invokeOnCompletion {
-            preparing.intValue = inFlight.decrementAndGet()
-            done()
-        }
+        job.invokeOnCompletion { done() }
         return job
     }
 

@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -34,10 +33,8 @@ import kotlinx.coroutines.CoroutineScope
 internal class StepPhotos(val store: PhotoStore, val book: BookName, val saving: CoroutineScope)
 
 @Composable
-internal fun rememberStepPhotos(book: BookName, saving: CoroutineScope): StepPhotos {
-    val context = LocalContext.current
-    return remember(context, book, saving) { StepPhotos(PhotoStore(context.applicationContext.filesDir), book, saving) }
-}
+internal fun rememberStepPhotos(store: PhotoStore, book: BookName, saving: CoroutineScope): StepPhotos =
+    remember(store, book, saving) { StepPhotos(store, book, saving) }
 
 /**
  * Attaches a photograph to the step whose key is [key], wherever that step stands once the photograph is ready; a step
