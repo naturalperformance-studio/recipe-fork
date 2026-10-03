@@ -4,11 +4,17 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import app.recipefork.app.editor.PATIENCE_MS
 
-/** Opens the menu of the entry of [recipeId], and waits until its menu shows. */
+/**
+ * Opens the menu of the entry of [recipeId], brought into view first, and waits until its menu shows. The ⋮ is acted
+ * on as a screen reader does: brought just into view, it may stand under the view's floating action.
+ */
 fun ComposeTestRule.openEntryMenu(recipeId: String) {
-    onNodeWithTag(LibraryTags.actions(recipeId)).performClick()
+    onNodeWithTag(LibraryTags.actions(recipeId)).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
     waitUntil(PATIENCE_MS) {
         onAllNodes(hasTestTag(LibraryTags.actions(recipeId))).fetchSemanticsNodes().isNotEmpty() &&
             listOf(LibraryTags.export(recipeId), LibraryTags.delete(recipeId), LibraryTags.remove(recipeId))

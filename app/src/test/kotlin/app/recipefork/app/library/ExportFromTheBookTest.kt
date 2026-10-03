@@ -241,8 +241,8 @@ class ExportFromTheBookTest {
         assertTrue(exists(LibraryTags.delete(recipe.id.value)))
     }
 
-    // The entry stays readable on a 360 dp-wide phone at font scale 2.0: the title keeps the list's width less the
-    // entry's padding and the ⋮ beside it, the ⋮ stands at the end of the title line within the list, and each item of
+    // The entry stays readable on a 360 dp-wide phone at font scale 2.0: the title keeps the card's width less its
+    // padding and the ⋮ beside it, the ⋮ stands at the end of the title line within the card, and each item of
     // its menu is laid out whole.
     @Test
     @Config(qualifiers = "en-w360dp-h640dp")
@@ -261,14 +261,14 @@ class ExportFromTheBookTest {
         val entry = compose.onNodeWithTag(LibraryTags.entry(id)).fetchSemanticsNode().boundsInRoot
         val menu = compose.onNodeWithTag(LibraryTags.actions(id)).fetchSemanticsNode().boundsInRoot
         val dp = { v: Float -> with(compose.density) { v.dp.toPx() } }
-        assertEquals("the entry takes the list's width less the ⋮", list.width - dp(48f + 4f), entry.width, 1f)
-        assertTrue("the ⋮ lies within the list, after the entry: $menu", menu.left >= entry.right && menu.right <= list.right)
+        assertEquals("the card takes the list's width less its margins", list.width - dp(32f), entry.width, 1f)
+        assertEquals("the ⋮ stands at the card's end: $menu", entry.right - dp(4f), menu.right, 1f)
         val titleNode = compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode()
         val titleLayout = layoutOf(titleNode.config)
         assertEquals(title, titleLayout.layoutInput.text.text)
         val room = titleLayout.layoutInput.constraints.maxWidth
-        assertTrue("the title has the entry's width less its padding ($room px of ${entry.width} px)",
-            room + 0.5f >= entry.width - dp(32f))
+        assertTrue("the title has the card's width less its padding and the ⋮ ($room px of ${entry.width} px)",
+            room + 0.5f >= entry.width - dp(16f + 52f))
         assertTrue("each word of the title fits its line", titleLayout.lineCount <= 3)
         assertTrue("the title does not reach under the ⋮", titleNode.boundsInRoot.right <= menu.left)
         val firstLine = titleNode.boundsInRoot.top + (titleLayout.getLineTop(0) + titleLayout.getLineBottom(0)) / 2

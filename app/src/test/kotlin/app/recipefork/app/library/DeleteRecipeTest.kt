@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
@@ -14,6 +15,8 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -236,19 +239,21 @@ class DeleteRecipeTest {
         show()
         all.forEach { recipe ->
             bringIntoView(recipe)
-            val list = compose.onNodeWithTag(LibraryTags.OWN_LIST).fetchSemanticsNode().boundsInRoot
             val entry = compose.onNodeWithTag(LibraryTags.entry(recipe.id.value)).fetchSemanticsNode().boundsInRoot
+            // The room the title has: the card's width less its padding, and less the ⋮ when there is one.
+            val room = titleRoom(recipe.id.value)
+            val whole = entry.width - with(compose.density) { 32.dp.toPx() }
             assertFalse("${recipe.state} shows its offer outside a menu", exists(LibraryTags.delete(recipe.id.value)))
             if (recipe.state in setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECTED)) {
                 assertTrue("${recipe.state} has no menu", exists(LibraryTags.actions(recipe.id.value)))
-                assertTrue(entry.width < list.width)
+                assertTrue("${recipe.state} keeps room for its menu", room < whole - 1f)
                 compose.openEntryMenu(recipe.id.value)
                 assertTrue("${recipe.state} offers no deletion", exists(LibraryTags.delete(recipe.id.value)))
                 assertEquals(listOf("Delete"), compose.textsOf(LibraryTags.delete(recipe.id.value)))
                 compose.closeEntryMenu(recipe.id.value)
             } else {
                 assertFalse("${recipe.state} has a menu", exists(LibraryTags.actions(recipe.id.value)))
-                assertEquals("${recipe.state} reserves space", list.width, entry.width, 0.5f)
+                assertEquals("${recipe.state} reserves space", whole, room, 1f)
             }
         }
         // A11Y-003, A11Y-005: the offer is large enough and says what it does.
@@ -445,4 +450,12 @@ class DeleteRecipeTest {
             Media("m-${recipe.id.value}", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE),
         ),
     )
+
+    /** The width the title of [recipeId]'s entry is laid out in. */
+    private fun titleRoom(recipeId: String): Float {
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithTag(LibraryTags.entryTitle(recipeId), useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+        return layouts.single().layoutInput.constraints.maxWidth.toFloat()
+    }
 }
