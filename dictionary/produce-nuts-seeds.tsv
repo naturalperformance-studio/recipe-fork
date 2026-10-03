@@ -1,0 +1,56 @@
+# Produce: nuts and seeds.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 1000-2999
+
+# Nuts (2500-2599)
+2500	орехи	nuts			g=1 tbsp=9 cup=140
+2501	грецкие орехи	walnuts	2500		g=1 tbsp=8 cup=100
+2502	фундук	hazelnuts	2500		g=1 tbsp=9 cup=135
+2503	фундук жареный	roasted hazelnuts	2500		g=1 tbsp=9 cup=135
+2504	фундук молотый	ground hazelnuts	2500		g=1 tbsp=6 cup=90
+2505	кешью	cashews	2500		g=1 tbsp=9 cup=140
+2506	фисташки	pistachios	2500		g=1 tbsp=8 cup=125
+2507	фисташки очищенные	shelled pistachios	2500		g=1 tbsp=8 cup=125
+2508	кедровые орехи	pine nuts	2500		g=1 tsp=3 tbsp=9 cup=135
+2509	пекан	pecans	2500		g=1 tbsp=7 cup=100
+2510	макадамия	macadamia nuts	2500		g=1 tbsp=9 cup=135
+2511	бразильский орех	Brazil nuts	2500	false	g=1 pc=5 cup=135
+2512	каштаны	chestnuts	2500	false	g=1 pc=10
+2513	ореховая смесь	mixed nuts	2500		g=1 cup=140
+2520	миндаль	almonds			g=1 tbsp=9 cup=145
+2521	миндаль бланшированный	blanched almonds	2520		g=1 tbsp=9 cup=145
+2522	миндальные лепестки	flaked almonds	2520		g=1 tbsp=6 cup=90
+2523	миндаль молотый	ground almonds	2520		g=1 tbsp=7 cup=100
+2524	миндаль жареный	roasted almonds	2520		g=1 tbsp=9 cup=145
+2530	арахис	peanuts			g=1 tbsp=9 cup=145
+2531	арахис жареный	roasted peanuts	2530		g=1 tbsp=9 cup=145
+2532	арахис солёный	salted peanuts	2530		g=1 tbsp=9 cup=145
+2533	арахис сырой	raw peanuts	2530		g=1 tbsp=9 cup=145
+# Seeds (2600-2699)
+2600	семена	seeds			g=1 tsp=3 tbsp=9 cup=140
+2601	семечки подсолнечника	sunflower seeds	2600		g=1 tsp=3 tbsp=9 cup=140
+2602	семечки подсолнечника жареные	roasted sunflower seeds	2600		g=1 tsp=3 tbsp=9 cup=140
+2603	тыквенные семечки	pumpkin seeds	2600		g=1 tsp=3 tbsp=9 cup=130
+2604	тыквенные семечки жареные	roasted pumpkin seeds	2600		g=1 tsp=3 tbsp=9 cup=130
+2605	семена льна	flaxseeds	2600		g=1 tsp=3 tbsp=10 cup=170
+2606	семена льна молотые	ground flaxseed	2600		g=1 tsp=2 tbsp=7 cup=110
+2607	семена чиа	chia seeds	2600		g=1 tsp=4 tbsp=12 cup=170
+2608	мак	poppy seeds	2600		g=1 tsp=3 tbsp=9 cup=140
+2609	семена конопли	hemp seeds	2600		g=1 tsp=3 tbsp=10 cup=160
+2610	кунжут	sesame seeds			g=1 tsp=3 tbsp=9 cup=145
+2611	кунжут белый	white sesame seeds	2610		g=1 tsp=3 tbsp=9 cup=145
+2612	кунжут чёрный	black sesame seeds	2610		g=1 tsp=3 tbsp=9 cup=145
+2613	кунжут жареный	toasted sesame seeds	2610		g=1 tsp=3 tbsp=9 cup=145
+2514	кешью жареный	roasted cashews	2500		g=1 tbsp=9 cup=140
+2515	фисташки солёные	salted pistachios	2500		g=1 tbsp=8 cup=125
+2516	каштаны жареные	roasted chestnuts	2500	false	g=1 pc=8
+2525	миндаль рубленый	chopped almonds	2520		g=1 tbsp=8 cup=120
+2614	лён золотой	golden flaxseed	2600		g=1 tsp=3 tbsp=10 cup=170
+2615	семена базилика	basil seeds	2600		g=1 tsp=3 tbsp=10
+2517	грецкие орехи жареные	toasted walnuts	2500		g=1 tbsp=8 cup=100
+2518	грецкие орехи молотые	ground walnuts	2500		g=1 tbsp=6 cup=80
+2519	кешью сырой	raw cashews	2500		g=1 tbsp=9 cup=140
+2526	фисташки молотые	ground pistachios	2500		g=1 tbsp=7 cup=100
+2616	лён коричневый	brown flaxseed	2600		g=1 tsp=3 tbsp=10 cup=170
+2527	миндаль соломка	slivered almonds	2520		g=1 tbsp=7 cup=110
+2528	фундук бланшированный	blanched hazelnuts	2500		g=1 tbsp=9 cup=135

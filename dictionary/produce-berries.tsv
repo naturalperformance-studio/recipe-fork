@@ -1,0 +1,50 @@
+# Produce: berries, fresh and frozen.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 1000-2999
+
+# Berries, fresh and frozen (2300-2399)
+2300	ягоды	berries			g=1 cup=145
+2301	ягоды замороженные	frozen berries	2300		g=1 cup=140
+2302	крыжовник	gooseberries	2300		g=1 cup=150
+2303	земляника	wild strawberries	2300		g=1 cup=145
+2304	голубика	highbush blueberries	2300		g=1 tbsp=9 cup=145
+2305	морошка	cloudberries	2300		g=1 cup=140
+2306	жимолость	haskap berries	2300		g=1 cup=145
+2307	шелковица	mulberries	2300		g=1 cup=140
+2308	ирга	serviceberries	2300		g=1 cup=145
+2309	рябина	rowan berries	2300		g=1 cup=130
+2310	черноплодная рябина	chokeberries	2300		g=1 cup=140
+2311	калина	viburnum berries	2300		g=1 cup=130
+2312	кизил	cornelian cherries	2300		g=1 cup=145
+2313	шиповник	rose hips	2300		g=1
+2314	бузина	elderberries	2300		g=1 cup=145
+2315	боярышник	hawthorn berries	2300		g=1
+2320	клубника	strawberries		false	g=1 pc=15 cup=150
+2321	клубника замороженная	frozen strawberries	2320	false	g=1 pc=15 cup=150
+2325	малина	raspberries			g=1 cup=125
+2326	малина замороженная	frozen raspberries	2325		g=1 cup=125
+2330	черника	blueberries			g=1 tbsp=9 cup=145
+2331	черника замороженная	frozen blueberries	2330		g=1 tbsp=9 cup=145
+2335	ежевика	blackberries			g=1 cup=145
+2336	ежевика замороженная	frozen blackberries	2335		g=1 cup=145
+2340	вишня	sour cherries			g=1 cup=155
+2341	вишня замороженная	frozen sour cherries	2340		g=1 cup=155
+2345	черешня	cherries		false	g=1 pc=8 cup=155
+2346	черешня замороженная	frozen cherries	2345	false	g=1 pc=8 cup=155
+2350	смородина	currants			g=1 tbsp=8 cup=112
+2351	смородина чёрная	blackcurrants	2350		g=1 tbsp=8 cup=112
+2352	смородина красная	redcurrants	2350		g=1 tbsp=8 cup=112
+2353	смородина белая	white currants	2350		g=1 tbsp=8 cup=112
+2354	смородина замороженная	frozen currants	2350		g=1 tbsp=8 cup=112
+2360	клюква	cranberries			g=1 tbsp=7 cup=100
+2361	клюква замороженная	frozen cranberries	2360		g=1 tbsp=7 cup=100
+2365	брусника	lingonberries			g=1 tbsp=8 cup=120
+2366	брусника замороженная	frozen lingonberries	2365		g=1 tbsp=8 cup=120
+2370	облепиха	sea buckthorn			g=1 tbsp=8 cup=120
+2371	облепиха замороженная	frozen sea buckthorn	2370		g=1 tbsp=8 cup=120
+2316	голубика замороженная	frozen highbush blueberries	2300		g=1 tbsp=9 cup=145
+2342	вишня без косточек	pitted sour cherries	2340		g=1 cup=155
+2347	черешня жёлтая	yellow cherries	2345	false	g=1 pc=8 cup=155
+2317	княженика	arctic raspberries	2300		g=1 cup=125
+2318	костяника	stone brambles	2300		g=1
+2327	малина жёлтая	golden raspberries	2325		g=1 cup=125
