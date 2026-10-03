@@ -119,22 +119,30 @@ class LibrarySessionTest {
         compose.onNodeWithTag(CardTags.BACK).performClick()
         compose.waitForIdle()
         assertView(LibraryView.OWN)
-        compose.onNodeWithTag(LibraryTags.OWN_LIST).assertExists()
+        // The list is laid out once it is read from the device.
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.OWN_LIST)).fetchSemanticsNodes().size == 1 }
     }
 
-    // FLOW-058 (3): removed from the recent applications, the task starts anew with nothing to restore.
+    // FLOW-058 (3): removed from the recent applications, the task starts anew with nothing to restore; the book opens
+    // on the view last left, which the device keeps (the owner's decision over FLOW-034 (6)).
     @Test
-    fun removalFromRecentsStartsANewSessionOnTheMarkedRecipes() {
+    fun removalFromRecentsStartsANewSessionOnTheViewLastLeft() {
         val activity = launch()
         chooseOwn()
         activity.closeTask()
+        val again = launch()
+        assertView(LibraryView.OWN)
+        // And the view left is followed again: back on the marked recipes, the next new session opens on them.
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
+        compose.waitForIdle()
+        again.closeTask()
         launch()
         assertView(LibraryView.MARKED)
     }
 
-    // FLOW-058 (4): after a restart of the device the application starts with nothing to restore.
+    // FLOW-058 (4): after a restart of the device the application starts with nothing to restore, on the view last left.
     @Test
-    fun aDeviceRestartStartsANewSession() {
+    fun aDeviceRestartStartsANewSessionOnTheViewLastLeft() {
         val activity = launch()
         chooseOwn()
         val saved = Bundle()
@@ -142,7 +150,7 @@ class LibrarySessionTest {
         activity.destroy()
         // A restart keeps no task, so the platform hands the new Activity no saved state.
         launch(saved = null)
-        assertView(LibraryView.MARKED)
+        assertView(LibraryView.OWN)
     }
 
     /** In the own-recipes view of a book holding a recipe, types [query] and orders the view by title. */

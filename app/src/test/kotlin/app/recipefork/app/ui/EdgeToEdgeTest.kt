@@ -5,6 +5,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -15,6 +17,12 @@ import app.recipefork.app.card.CardTags
 import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
+import app.recipefork.app.library.LibraryView
+import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.editor.PATIENCE_MS
+import app.recipefork.core.recipe.Recipe
+import kotlinx.coroutines.runBlocking
+import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -76,14 +84,30 @@ class EdgeToEdgeTest {
         return root
     }
 
+    /**
+     * The book's top bar stands below the status bar; its list runs under the navigation bar, to the window's bottom,
+     * its last entry kept clear of the bar by the list's own padding; its action stands above the navigation bar.
+     */
     @Test
     fun theLibraryKeepsClearOfTheBars() {
+        val container = (compose.activity.application as RecipeForkApplication).container
+        val recipe = Recipe.create(Instant.parse("2026-10-04T12:00:00Z"), null).copy(title = "Soup")
+        runBlocking { container.recipes.save(recipe) }
+        compose.runOnUiThread { session.choose(LibraryView.OWN) }
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onAllNodesWithTag(LibraryTags.entry(recipe.id.value)).fetchSemanticsNodes().isNotEmpty()
+        }
         applyInsets(top = STATUS, bottom = NAVIGATION)
         val root = assertRootUnderTheBars()
         assertTrue("title below the status bar", bounds(LibraryTags.TITLE).top >= STATUS)
-        val list = listOf(LibraryTags.MARKED_LIST, LibraryTags.OWN_LIST)
-            .first { compose.onAllNodesWithTag(it).fetchSemanticsNodes().isNotEmpty() }
-        assertEquals(root.bottom - NAVIGATION, bounds(list).bottom)
+        assertEquals("the list runs under the navigation bar", root.bottom, bounds(LibraryTags.OWN_LIST).bottom)
+        assertTrue("the action above the navigation bar", bounds(LibraryTags.NEW).bottom <= root.bottom - NAVIGATION)
+        // Scrolled to its end, the list's last entry stands clear of the navigation bar and of the action.
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }
+        compose.waitForIdle()
+        val entry = bounds(LibraryTags.entry(recipe.id.value))
+        assertTrue("the entry above the navigation bar", entry.bottom <= root.bottom - NAVIGATION)
+        assertTrue("the entry above the action", entry.bottom <= bounds(LibraryTags.NEW).top)
     }
 
     @Test

@@ -63,7 +63,7 @@ open class RecipeRepository(
      * description and ingredient, with the ingredient names of [dictionary], filtered by ingredient, tags and language, and ordered. Worked out where the book's queries
      * run, never on the main thread.
      */
-    fun ownListed(
+    open fun ownListed(
         params: Flow<ListingParams>,
         dictionary: suspend () -> List<IngredientEntryEntity>,
     ): Flow<Listed<OwnRecipeRow>> =
@@ -72,7 +72,7 @@ open class RecipeRepository(
         }
 
     /** What is marked in the active book as its view lists it for each of [params], as [ownListed] does. */
-    fun markedListed(
+    open fun markedListed(
         params: Flow<ListingParams>,
         dictionary: suspend () -> List<IngredientEntryEntity>,
     ): Flow<Listed<MarkedRecipeRow>> =

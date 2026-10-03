@@ -5,6 +5,7 @@
     <string name="library_view_own">Написанные здесь</string>
     <string name="library_view_marked_action">Показать рецепты, отмеченные в этой книге</string>
     <string name="library_view_own_action">Показать рецепты, написанные в этой книге</string>
+    <string name="library_opening">Рецепты открываются</string>
     <string name="library_state_draft">Черновик</string>
     <string name="library_state_pending">Ждёт проверки</string>
     <string name="library_state_pending_serverless">Пока не открыт всем</string>

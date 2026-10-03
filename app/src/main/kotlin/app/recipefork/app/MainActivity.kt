@@ -15,7 +15,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import app.recipefork.app.card.LocalStepToShow
 import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.file.ImportOutcome
@@ -34,7 +37,13 @@ import java.util.Locale
 
 /** The single Activity; its task is the reader's session (FLOW-058). */
 class MainActivity : ComponentActivity() {
-    private val librarySession: LibrarySession by viewModels()
+    private val librarySession: LibrarySession by viewModels {
+        viewModelFactory {
+            initializer {
+                LibrarySession(createSavedStateHandle(), (application as RecipeForkApplication).container.lastBookView)
+            }
+        }
+    }
 
     /** The interface language the reader chose is laid over the device's before anything reads it (L10N-002). */
     override fun attachBaseContext(newBase: Context) {
