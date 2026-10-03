@@ -1,11 +1,18 @@
 package app.recipefork.app
 
 import android.Manifest
+import android.app.Activity
+import android.app.Instrumentation
 import android.app.NotificationManager
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.ExifInterface
+import android.net.Uri
+import android.provider.MediaStore
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -20,7 +27,6 @@ import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.importSafely
 import app.recipefork.app.media.PhotoOutcome
 import app.recipefork.app.media.PhotoStore
-import app.recipefork.app.media.camera.CameraXAccess
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.TimerChannels
 import app.recipefork.app.timer.TimerKey
@@ -38,20 +44,20 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.FileInputStream
 import java.time.Instant
 import kotlin.time.Duration
@@ -61,8 +67,8 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * The smoke test of the build the owner installs by hand (scripts/device-test-release.sh runs it against the minified
  * serverless release): every part R8 could break by removing what is reached reflectively — Room, kotlinx.serialization
- * with the recipe file's document, CameraX, the timers' service and receivers, Compose — is gone through once on a
- * real device. It runs against the debug build too, where it proves the test itself.
+ * with the recipe file's document, the camera's capture provider, the timers' service and receivers, Compose — is gone
+ * through once on a real device. It runs against the debug build too, where it proves the test itself.
  */
 @RunWith(AndroidJUnit4::class)
 class ReleaseSmokeTest {
@@ -71,7 +77,8 @@ class ReleaseSmokeTest {
     private val container = application.container
     private val store = PhotoStore(application.filesDir)
     private val otherBook = BookName.OfAccount("release-smoke")
-    private val now = Instant.parse("2026-10-03T12:00:00Z")
+    // Earlier than the device clock, by which the editor dates the cover it takes.
+    private val now = Instant.now().minusSeconds(3600)
     private var recipe: Recipe? = null
 
     private fun shell(command: String) {
@@ -82,7 +89,6 @@ class ReleaseSmokeTest {
     fun setUp() {
         shell("input keyevent KEYCODE_WAKEUP")
         shell("wm dismiss-keyguard")
-        instrumentation.uiAutomation.grantRuntimePermission(application.packageName, Manifest.permission.CAMERA)
     }
 
     @After
@@ -198,10 +204,8 @@ class ReleaseSmokeTest {
             awaitShown("Servings: 4")
             awaitShown("Cover photo of “${written.title}”")
             assertEquals(Lifecycle.State.RESUMED, scenario.state)
-            // The camera takes a picture through CameraX, for the application's own screen.
-            lateinit var activity: MainActivity
-            scenario.onActivity { activity = it }
-            takeAPicture(activity)
+            // The phone's camera application takes a new cover for it, cropped and stored without its metadata.
+            takeACover(written)
         } finally {
             scenario.close()
         }
@@ -237,20 +241,82 @@ class ReleaseSmokeTest {
         assertTrue(runBlocking { container.timers.all.first() }.none { it.key == timer.key && !it.announced })
     }
 
-    /** Opens the back camera for [activity] through CameraX and takes a picture: a JPEG comes back. */
-    private fun takeAPicture(activity: MainActivity) = runBlocking {
-        val camera = withContext(Dispatchers.Main) { CameraXAccess.open(activity, activity) }
-        assertNotNull("the device has a back camera", camera)
+    /**
+     * A JPEG as a phone's camera writes one: [width] x [height] in one colour, tagged with place and device, its pixels
+     * stored a quarter turned with EXIF saying so.
+     */
+    private fun cameraShot(width: Int, height: Int): ByteArray {
+        val file = File(application.cacheDir, "smoke-shot.jpg")
+        file.writeBytes(jpeg(width, height, Color.GREEN))
+        ExifInterface(file.path).apply {
+            setAttribute(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_ROTATE_90.toString())
+            setAttribute(ExifInterface.TAG_GPS_LATITUDE, "55/1,45/1,2100/100")
+            setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, "N")
+            setAttribute(ExifInterface.TAG_MAKE, "PhoneMaker")
+            setAttribute(ExifInterface.TAG_MODEL, "Phone 12 Pro")
+            saveAttributes()
+        }
+        return file.readBytes().also { file.delete() }
+    }
+
+    /**
+     * From the card, the editor's "Take a photo" launches the phone's camera application through the shrunk build's
+     * capture provider. The device's camera application is there to answer; the test stands in for it, as its shutter
+     * cannot be pressed from here, writing the shot through the address it is handed. The shot is cropped — Done — and
+     * becomes the recipe's cover, holding no metadata, the shot's own file deleted.
+     */
+    private fun takeACover(written: Recipe) {
+        // No CAMERA permission is declared: declared and not granted, it would make the platform refuse the camera.
+        val requested = application.packageManager.getPackageInfo(application.packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions.orEmpty().toList()
+        assertFalse(Manifest.permission.CAMERA in requested)
+        var launched: Intent? = null
+        val camera = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult? {
+                if (intent.action != MediaStore.ACTION_IMAGE_CAPTURE) return null
+                launched = intent
+                @Suppress("DEPRECATION")
+                val output = intent.getParcelableExtra<Uri>(MediaStore.EXTRA_OUTPUT)!!
+                application.contentResolver.openOutputStream(output)!!.use { it.write(cameraShot(1200, 1600)) }
+                return Instrumentation.ActivityResult(Activity.RESULT_OK, null)
+            }
+        }
+        instrumentation.addMonitor(camera)
         try {
-            val jpeg = withTimeout(60_000) { camera!!.takePicture() }.jpeg
-            assertTrue(jpeg.size > 2 && jpeg[0] == 0xFF.toByte() && jpeg[1] == 0xD8.toByte())
+            click(EDIT)
+            awaitShown(TAKE_A_PHOTO)
+            click(TAKE_A_PHOTO)
+            // The crop, in a window of its own, shows the shot under its frame: its Done is the one on screen.
+            awaitShown(CROP_FRAME)
+            val intent = launched!!
+            assertNotNull("a camera application answers", application.packageManager.resolveActivity(Intent(intent.action), 0))
+            @Suppress("DEPRECATION")
+            val output = intent.getParcelableExtra<Uri>(MediaStore.EXTRA_OUTPUT)!!
+            assertEquals(application.packageName + ".capture", output.authority)
+            assertEquals(output, intent.clipData!!.getItemAt(0).uri)
+            assertTrue(intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0)
+            click(CROP_DONE)
+            fun coverOf(recipe: Recipe?) = recipe?.media?.firstOrNull { it.attachment == MediaAttachment.Cover }
+            val before = coverOf(written)!!.mediaId
+            awaitUntil(30.seconds) { coverOf(runBlocking { container.recipes.get(written.id) })?.mediaId.let { it != null && it != before } }
+            val cover = coverOf(runBlocking { container.recipes.get(written.id) })!!
+            val exif = ExifInterface(store.file(BookName.Pool, cover.mediaId).path)
+            listOf(ExifInterface.TAG_GPS_LATITUDE, ExifInterface.TAG_MAKE, ExifInterface.TAG_MODEL).forEach { assertNull(it, exif.getAttribute(it)) }
+            // Stored upright: no turn left for a viewer to apply.
+            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
+            assertTrue("orientation $orientation", orientation == ExifInterface.ORIENTATION_UNDEFINED || orientation == ExifInterface.ORIENTATION_NORMAL)
+            awaitUntil(10.seconds) { File(application.cacheDir, "capture").list().orEmpty().isEmpty() }
         } finally {
-            withContext(Dispatchers.Main) { camera!!.close() }
+            instrumentation.removeMonitor(camera)
         }
     }
 
     private companion object {
         /** The library's tab of the recipes written on this device. */
         const val WRITTEN_HERE = "Written here"
+        const val EDIT = "Edit"
+        const val TAKE_A_PHOTO = "Take a photo"
+        const val CROP_FRAME = "Crop frame: drag the photo to move it, pinch to zoom"
+        const val CROP_DONE = "Done"
     }
 }
