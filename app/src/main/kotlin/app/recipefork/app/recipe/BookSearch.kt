@@ -6,7 +6,7 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.scaling.MeasuredLine
 import app.recipefork.core.scaling.QuantityPerServing
-import app.recipefork.core.scaling.mostPerServingFirst
+import app.recipefork.core.scaling.byQuantityPerServing
 import app.recipefork.core.search.BookOrder
 import app.recipefork.core.search.SearchIndex
 import app.recipefork.core.search.WordPrefix
@@ -132,13 +132,21 @@ class BookSearch<R>(
         return Listed(found, rows.isEmpty(), params, BookLanguage.entries.filter { it in languages }, hold)
     }
 
-    /** Of [rows], in their order, those holding [entry] or an entry below it, the most of it per serving first. */
+    /**
+     * Of [rows], in their order, those holding [entry] or an entry below it, the most of it per serving first: each
+     * matched line through its own entry's comparison factors (CAT-007, CAT-009), which order and are never shown
+     * (DOM-011).
+     */
     private suspend fun byIngredient(rows: List<R>, lines: List<IngredientLineRow>, entry: Long): List<R> {
-        val family = ingredientFamily(entry, entries().orEmpty().mapValues { it.value.parentId })
+        val entries = entries().orEmpty()
+        val family = ingredientFamily(entry, entries.mapValues { it.value.parentId })
         val matched = lines.filter { it.dictionaryEntry in family }.groupBy { it.recipeId }
-        return rows.filter { id(it) in matched }.mostPerServingFirst { row ->
+        return rows.filter { id(it) in matched }.byQuantityPerServing { row ->
             val held = matched.getValue(id(row))
-            QuantityPerServing.of(held.map { MeasuredLine(it.unitType, it.unit, it.quantity) }, held.first().servings)
+            val measured = held.map { line ->
+                MeasuredLine(line.unitType, line.unit, line.quantity, entries[line.dictionaryEntry]?.factors.orEmpty())
+            }
+            QuantityPerServing.of(measured, held.first().servings)
         }
     }
 
