@@ -44,7 +44,8 @@ import androidx.compose.ui.zIndex
 import app.recipefork.app.R
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.book.BookName
-import app.recipefork.app.media.stepPhoto
+import app.recipefork.app.media.ClipStore
+import app.recipefork.app.media.stepMedia
 import app.recipefork.core.recipe.Media
 import kotlinx.coroutines.CoroutineScope
 import app.recipefork.app.dictionary.IngredientEntryEntity
@@ -69,8 +70,20 @@ internal val ROW_SPACING = 12.dp
  * deleted. They accept input whatever else the recipe holds or lacks (FLOW-024 (2)), and no text is ever cut short.
  */
 @Composable
-internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource, scroll: EditorScroll, store: PhotoStore, book: BookName, saving: CoroutineScope) {
-    val photos = rememberStepPhotos(store, book, saving)
+internal fun Steps(
+    recipe: Recipe,
+    editor: RecipeEditor,
+    source: IngredientSource,
+    scroll: EditorScroll,
+    store: PhotoStore,
+    book: BookName,
+    saving: CoroutineScope,
+    clips: ClipStore? = null,
+    work: StepMediaWork? = null,
+) {
+    val photos = rememberStepPhotos(store, book, saving, clips, work)
+    // What each step's media work tells is said here, so that a step deleted while its clip converts still says it.
+    work?.all?.forEach { (stepKey, attaching) -> key(stepKey) { SaysPhotoNotices(attaching) } }
     val editable = recipe.state.editable
     val steps = recipe.steps.sortedBy { it.position }
     val language = numberLanguage(LocalConfiguration.current)
@@ -101,8 +114,8 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSourc
             // What the screen holds for a step — focus, a timer being attached — stays with it when steps before it
             // are inserted, moved or deleted.
             key(editor.stepKey(position)) {
-                if (editable) StepRow(position, steps.size, step, recipe.stepPhoto(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos)
-                else ReadOnlyStep(position, step, recipe.stepPhoto(position), recipe.ingredients, language, photos)
+                if (editable) StepRow(position, steps.size, step, recipe.stepMedia(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos)
+                else ReadOnlyStep(position, step, recipe.stepMedia(position), recipe.ingredients, language, photos)
             }
         }
         if (editable) {
@@ -123,8 +136,8 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSourc
 /**
  * One step: its number in the field's label, its text over as many lines as it takes with its ingredient references in
  * it, its removal, its menu of inserting and moving (FLOW-025), the control that inserts a reference (FLOW-031), the
- * control that attaches its timer (FLOW-027) and its photograph (FLOW-026 (2)). Removing the step deletes its
- * photograph's file once the book no longer holds it.
+ * control that attaches its timer (FLOW-027) and its photograph or clip (FLOW-026 (2)). Removing the step deletes its
+ * item's file once the book no longer holds it.
  */
 @Composable
 private fun StepRow(
@@ -480,7 +493,7 @@ private fun ReadOnlyStep(position: Int, step: Step, photo: Media?, ingredients: 
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.testTag(EditorTags.stepText(position)),
             )
-            if (photo != null) StepPhotoImage(position, photo, photos)
+            if (photo != null) StepMediaShown(position, photo, photos)
             val timer = step.timer ?: return@Column
             Text(
                 stringResource(R.string.editor_timer_read_only, durationText(timer.duration)),

@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -36,6 +37,7 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -91,6 +93,7 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
     container.dictionaries,
     dragHandleSide = container.dragHandleSide,
     mode = container.mode,
+    clipStore = container::clipStore,
 )
 
 /**
@@ -107,8 +110,12 @@ fun EditorScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // The steps' media work outlives the screen — the activity recreated, or the editor left and opened again —
+    // while a clip converts (FLOW-026); the steps' keys are kept with it, so the work reaches the step it was for.
+    val mediaWork = rememberStepMediaWork(recipeId)
     // The row keys outlive the activity being recreated, as the state the rows saved under them does.
-    val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { mediaWork.stepKeys ?: RowKeys() }
+    remember(mediaWork, stepKeys) { mediaWork.stepKeys = stepKeys }
     val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
     // Not saved: what the editor holds for this session alone — the references offered once (GUIDE-008) among it —
     // starts again after the activity is recreated or the process restored, which is intended, nothing of a hint
@@ -126,6 +133,12 @@ fun EditorScreen(
     BackHandler(onBack = onClose)
     val context = LocalContext.current
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
+    val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
+    remember(mediaWork, editor) { mediaWork.show(editor) }
+    val activity = LocalActivity.current
+    DisposableEffect(mediaWork) {
+        onDispose { if (activity?.isChangingConfigurations != true) mediaWork.left() }
+    }
     val host = remember { SnackbarHostState() }
     val statementScope = rememberCoroutineScope()
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
@@ -178,7 +191,7 @@ fun EditorScreen(
                     ServingCount(shown, editor)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode)
-                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving)
+                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork)
                     }
                     Description(shown, editor)
                 }
@@ -548,6 +561,12 @@ object EditorTags {
     fun stepPhotoRemove(position: Int) = "editor-step-$position-photo-remove"
     fun stepPhotoImage(position: Int) = "editor-step-$position-photo-image"
     fun stepPhotoWorking(position: Int) = "editor-step-$position-photo-working"
+    fun stepClipRecord(position: Int) = "editor-step-$position-clip-record"
+    fun stepClipChoose(position: Int) = "editor-step-$position-clip-choose"
+    fun stepClipImage(position: Int) = "editor-step-$position-clip-image"
+    fun stepClipMark(position: Int) = "editor-step-$position-clip-mark"
+    fun stepClipConverting(position: Int) = "editor-step-$position-clip-converting"
+    fun stepClipCancel(position: Int) = "editor-step-$position-clip-cancel"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
     fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
     fun timerAttach(position: Int) = "editor-step-$position-timer"

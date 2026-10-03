@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.runtime.saveable.Saver
 import app.recipefork.app.Mode
@@ -11,7 +12,10 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
+import app.recipefork.app.media.ClipStore
+import app.recipefork.app.media.ClipTransformer
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepMedia
 import app.recipefork.app.media.stepPhoto
@@ -64,6 +68,8 @@ class EditorEnvironment(
     val dragHandleSide: DragHandleSide = HeldDragHandleSide(),
     /** Where the editor keeps photographs, given the application's files directory; replaced in a test to hold one back. */
     val photoStore: (File) -> PhotoStore = { PhotoStore(it) },
+    /** Where the editor converts and keeps steps' clips, given the application's context; replaced in a test. */
+    val clipStore: (Context) -> ClipStore = { ClipStore(it.filesDir, ClipTransformer(it), RetrieverClipSourceDuration(it)) },
     /** What the release is built as (FLOW-061): the editor says nothing of publication where nothing can be published. */
     val mode: Mode = Mode.Standard,
     val clock: () -> Instant = Instant::now,

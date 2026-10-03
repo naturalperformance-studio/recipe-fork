@@ -28,11 +28,8 @@ import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.importSafely
 import app.recipefork.app.media.ClipOutcome
-import app.recipefork.app.media.ClipStore
-import app.recipefork.app.media.ClipTransformer
 import app.recipefork.app.media.PhotoOutcome
 import app.recipefork.app.media.PhotoStore
-import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.media.TestClips
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.TimerChannels
@@ -267,13 +264,14 @@ class ReleaseSmokeTest {
         return file.readBytes().also { file.delete() }
     }
 
-    // The clip converter (MEDIA-004) as R8 leaves it: Media3 Transformer reading a picked clip by its content address,
+    // The clip converter (MEDIA-004) as R8 leaves it, reached as the editor reaches it: Media3 Transformer reading a picked clip by its content address,
     // its codecs and its own muxer, in the minified build.
     @Test
     fun theBuildConvertsAClip() = runBlocking {
         val source = TestClips.write(File(TestClips.directory(application), "release-smoke.mp4"), 640, 360, seconds = 2, location = 1f to 2f)
         try {
-            val clips = ClipStore(application.filesDir, ClipTransformer(application), RetrieverClipSourceDuration(application))
+            // The converter as the application wires it for the editor's steps.
+            val clips = container.clipStore(application)
             val outcome = clips.add(otherBook, TestClips.uri(application, source))
             check(outcome is ClipOutcome.Stored) { "$outcome" }
             val extractor = MediaExtractor()

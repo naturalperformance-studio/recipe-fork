@@ -18,13 +18,31 @@
     <string name="media_unavailable">No app to choose a photo was found on this phone.</string>
     <string name="media_removed">Cover photo removed.</string>
     <!-- A step's photograph, offered at the step (FLOW-026 (2)) and shown there on the card. -->
-    <string name="media_step_photo_label">Photo for step %1$d</string>
-    <string name="media_step_photo_action">Add, change or remove the photo of step %1$d</string>
+    <string name="media_step_photo_label">Photo or clip for step %1$d</string>
+    <string name="media_step_photo_action">Add, change or remove the photo or clip of step %1$d</string>
     <string name="media_step_take">Take a photo</string>
-    <string name="media_step_choose">Choose from gallery</string>
+    <string name="media_step_choose">Choose a photo</string>
     <string name="media_step_remove">Remove photo</string>
     <string name="media_step_description">Photo of step %1$d</string>
     <string name="media_step_removed">Step photo removed.</string>
+    <!-- A step's clip, offered at the step beside its photo (FLOW-026), converted on the phone (MEDIA-004 to MEDIA-008). -->
+    <string name="media_step_clip_record">Record a clip</string>
+    <string name="media_step_clip_choose">Choose a clip</string>
+    <string name="media_step_clip_remove">Remove clip</string>
+    <string name="media_step_clip_description">Video of step %1$d</string>
+    <string name="media_step_clip_removed">Step clip removed.</string>
+    <string name="media_clip_converting">Converting the clip…</string>
+    <string name="media_clip_cancel">Cancel</string>
+    <string name="media_clip_cancel_action">Cancel converting the clip of step %1$d</string>
+    <string name="media_clip_processed">Clip attached. It was converted on this phone to at most %1$d pixels and %2$d MB, and its sound was removed.</string>
+    <string name="media_clip_refused_too_long">This clip is longer than %1$d seconds, so nothing was attached.</string>
+    <string name="media_clip_refused_unreadable">This file could not be read or converted as a clip, so nothing was attached.</string>
+    <string name="media_clip_refused_too_large">This clip could not be made smaller than %1$d MB, so nothing was attached.</string>
+    <string name="media_clip_refused_not_stored">The clip could not be saved on this phone, so nothing was attached.</string>
+    <string name="media_clip_not_attached">The clip could not be attached to its step, so it was not kept.</string>
+    <string name="media_clip_unavailable">No app to choose a clip was found on this phone.</string>
+    <string name="media_clip_camera_none">No camera app was found on this phone, so no clip can be recorded here. You can choose one instead.</string>
+    <string name="media_clip_camera_failed">The camera could not be opened, so no clip was recorded. You can choose one instead.</string>
     <!-- The phone's own camera application (FLOW-026), when it cannot take the photo: the gallery is offered instead. -->
     <string name="media_camera_none">No camera app was found on this phone, so no photo can be taken here. You can choose one from the gallery instead.</string>
     <string name="media_camera_failed">The camera could not be opened, so no photo was taken. You can choose one from the gallery instead.</string>

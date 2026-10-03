@@ -26,7 +26,7 @@ import app.recipefork.app.media.PhotoAttaching
 internal fun SaysPhotoNotices(attaching: PhotoAttaching) {
     val statements = LocalEditorStatements.current
     val statement by attaching.statement
-    val text = statement?.let { stringResource(it.notice.text) }
+    val text = statement?.let { stringResource(it.notice.text, *it.notice.args.toTypedArray()) }
     LaunchedEffect(statement) {
         val told = statement ?: return@LaunchedEffect
         statements?.say(text.orEmpty())
