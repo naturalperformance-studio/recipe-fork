@@ -13,11 +13,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Locale
 
-/** FLOW-035, CAT-002, CAT-006, CAT-007: what a view lists under a query, its filters and its order. */
+/** FLOW-035, CAT-002, CAT-006, CAT-007, CAT-009: what a view lists under a query, its filters and its order. */
 class BookSearchTest {
-    private val chicken = IngredientEntryEntity(1, "курица", "chicken", null)
-    private val wings = IngredientEntryEntity(2, "крылышки", "chicken wings", 1)
-    private val thigh = IngredientEntryEntity(3, "филе бедра", "thigh fillet", 1)
+    private val chicken = IngredientEntryEntity(1, "курица", "chicken", null, factors = mapOf("g" to 1.0, "pc" to 1500.0))
+    private val wings = IngredientEntryEntity(2, "крылышки", "chicken wings", 1, factors = mapOf("g" to 1.0, "pc" to 80.0))
+    private val thigh = IngredientEntryEntity(3, "филе бедра", "thigh fillet", 1, factors = mapOf("g" to 1.0))
     private val broth = IngredientEntryEntity(4, "бульон", "broth", null)
     private val dictionary = listOf(chicken, wings, thigh, broth)
 
@@ -79,6 +79,38 @@ class BookSearchTest {
         )
         // Without the filter, the chosen order applies again.
         assertEquals(rows.reversed(), search.listed(rows, lines, emptyList(), params(order = BookOrder.OLDEST)).rows)
+    }
+
+    // CAT-007, CAT-009: lines in grams and in pieces are each converted by their own entry's factors and summed; a line
+    // in a unit its entry has no factor for contributes nothing; a recipe of nothing comparable follows every other.
+    @Test
+    fun anIngredientFilterComparesUnitsThroughTheEntriesFactors() = runBlocking {
+        val rows = listOf("A 8 wings", "B 500 g", "taste", "C 1 carcass", "thigh pieces", "mixed")
+        val lines = listOf(
+            line("A 8 wings", wings, 8, unit = QuantityUnit.PIECE),
+            line("B 500 g", chicken, 500),
+            line("taste", chicken, null),
+            line("C 1 carcass", chicken, 1, unit = QuantityUnit.PIECE),
+            line("thigh pieces", thigh, 3, unit = QuantityUnit.PIECE),
+            // 320 g of chicken and 8 wings for 4 servings: 80 + 160 = 240; the thigh pieces contribute nothing.
+            line("mixed", chicken, 320),
+            line("mixed", wings, 8, unit = QuantityUnit.PIECE),
+            line("mixed", thigh, 5, unit = QuantityUnit.PIECE),
+        )
+        val search = search()
+        val filtered = BookFilters(ingredient = 1)
+        assertEquals(
+            listOf("C 1 carcass", "mixed", "A 8 wings", "B 500 g", "taste", "thigh pieces"),
+            search.listed(rows, lines, emptyList(), params(filters = filtered)).rows,
+        )
+        assertEquals(
+            listOf("C 1 carcass", "mixed", "A 8 wings", "B 500 g", "thigh pieces", "taste"),
+            search.listed(rows, lines, emptyList(), params(filters = filtered, order = BookOrder.OLDEST)).rows,
+        )
+        // The filter still matches as before — a leaf counts only its own lines, 160 each here, equal ones in the chosen
+        // order — and combines with the query.
+        assertEquals(listOf("A 8 wings", "mixed"), search.listed(rows, lines, emptyList(), params(filters = BookFilters(2))).rows)
+        assertEquals(listOf("mixed", "A 8 wings"), search.listed(rows, lines, emptyList(), params("wings", filtered)).rows)
     }
 
     // A filter by tags keeps the recipes carrying every one of them, and combines with the query.
