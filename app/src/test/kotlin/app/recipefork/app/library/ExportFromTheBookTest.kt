@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -111,7 +112,7 @@ class ExportFromTheBookTest {
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale ?: density.fontScale)) {
-                MaterialTheme { LibraryScreen(session, recipes, mode) }
+                MaterialTheme { AppNavHost(session, recipes, mode) }
             }
         }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()

@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.os.Looper
 import androidx.compose.material3.MaterialTheme
@@ -105,7 +106,7 @@ class LibrarySearchTest {
 
     private fun show(view: LibraryView, mode: Mode = Mode.Standard) {
         session.choose(view)
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, mode, card = card) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, mode, card = card) } }
         compose.waitForIdle()
     }
 

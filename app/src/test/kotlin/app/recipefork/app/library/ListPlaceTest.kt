@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -85,7 +86,7 @@ class ListPlaceTest {
     private fun show(view: LibraryView): StateRestorationTester {
         session.choose(view)
         val tester = StateRestorationTester(compose)
-        tester.setContent { MaterialTheme { LibraryScreen(session, recipes, card = card, editor = editor) } }
+        tester.setContent { MaterialTheme { AppNavHost(session, recipes, card = card, editor = editor) } }
         compose.waitForIdle()
         return tester
     }

@@ -1,6 +1,5 @@
 package app.recipefork.app.card
 
-import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -93,6 +92,9 @@ private sealed interface CardContent {
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
  * provenance, which opens its parent's card, the other. It opens each time at the reader's usual count, or at the
  * authored count while none is set (FLOW-017).
+ *
+ * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
+ * leaves the card for the destination beneath it.
  */
 @Composable
 fun CardScreen(
@@ -128,8 +130,6 @@ fun CardScreen(
         }
         entries = read.associateBy { it.id }
     }
-    BackHandler(onBack = onBack)
-
     Column(modifier.fillMaxSize().safeDrawingPadding().testTag(CardTags.SCREEN)) {
         val shown = content
         TopBar(

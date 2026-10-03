@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -107,7 +108,7 @@ class ExportAfterTheCardTest {
     }
 
     private fun show() {
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, Mode.Serverless) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, Mode.Serverless) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.entry(pilaf.id.value)) }
     }

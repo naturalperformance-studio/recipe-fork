@@ -1,7 +1,6 @@
 package app.recipefork.app.editor
 
 import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -102,6 +101,10 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
 /**
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
  * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
+ *
+ * [onClose] is the bar's back action. What is entered is written as it is typed, so leaving holds nothing back: the
+ * system's back, and its predictive gesture, are the navigation host's, which leaves the editor for the destination
+ * beneath it.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -133,7 +136,6 @@ fun EditorScreen(
     val handleRight by environment.dragHandleSide.right.collectAsState()
     val scrolled = rememberScrollState()
     val scroll = remember(scrolled) { EditorScroll(scrolled) }
-    BackHandler(onBack = onClose)
     val context = LocalContext.current
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
     val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
