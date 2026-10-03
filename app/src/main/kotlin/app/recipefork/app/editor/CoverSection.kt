@@ -52,6 +52,8 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStor
     )
     Column(Modifier.fillMaxWidth().testTag(CoverTags.COVER), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (editable) Text(stringResource(R.string.media_cover), style = MaterialTheme.typography.labelLarge)
+        // The cover and the steps' photos stay with the author when someone else forks the recipe (FLOW-030 (2, 3)).
+        ForkNote(R.string.editor_photos_stay, Modifier.testTag(CoverTags.PHOTOS_STAY))
         if (cover != null) {
             Box(Modifier.fillMaxWidth()) {
                 PhotoImage(
@@ -101,4 +103,5 @@ object CoverTags {
     const val CHOOSE = "editor-cover-choose"
     const val REMOVE = "editor-cover-remove"
     const val WORKING = "editor-cover-working"
+    const val PHOTOS_STAY = "editor-cover-photos-stay"
 }

@@ -201,6 +201,16 @@ abstract class BookRecipeDao {
     @Query("select exists(select 1 from favourite where recipe_id = :id)")
     abstract suspend fun isMarked(id: String): Boolean
 
+    /**
+     * A fork of [parent] the book holds whose content has not changed since it was made — its content time is still
+     * its creation time (FLOW-015) — the newest such one first; null when every fork of it was changed, or none is held.
+     */
+    @Query(
+        """select recipe_id from recipe where parent = :parent and content_changed_at = created_at
+           and recipe_id not in (select recipe_id from favourite) order by created_at desc, recipe_id limit 1""",
+    )
+    abstract suspend fun unchangedForkOf(parent: String): String?
+
     @Insert
     protected abstract suspend fun insertFavourite(favourite: FavouriteEntity)
 

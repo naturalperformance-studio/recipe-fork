@@ -334,7 +334,7 @@ class EditorScreenTest {
         // A tag that is not in the dictionary: nothing is offered, and the statement says so.
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextReplacement("Mexican")
         assertEquals(emptyList<String>(), offeredTags())
-        compose.onNodeWithTag(EditorTags.NO_MATCH).assertIsDisplayed()
+        compose.onNodeWithTag(EditorTags.NO_MATCH).performScrollTo().assertIsDisplayed()
         // The keyboard's action commits nothing, and nothing on the screen offers to add the text as a tag.
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performImeAction()
         compose.waitForIdle()

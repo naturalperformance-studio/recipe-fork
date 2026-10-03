@@ -159,7 +159,8 @@ class ForkFromTheCardTest {
         assertEquals(listOf(forkId.value, original.id.value), listed)
     }
 
-    // Forking twice makes two forks, both of the same original.
+    // Forking twice makes two forks, both of the same original: the first, unchanged, is offered, and another is
+    // asked for (FLOW-015 (2)).
     @Test
     fun forkingAgainMakesAnotherFork() {
         val original = original(RecipeState.LOCAL).also { runBlocking { recipes.save(it) } }
@@ -175,7 +176,8 @@ class ForkFromTheCardTest {
         compose.runOnIdle { session.openCard(original.id.value) }
         compose.awaitCard()
         compose.onNodeWithTag(CardTags.FORK).performClick()
-        compose.waitForIdle()
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.FORK_HELD), PATIENCE_MS)
+        compose.onNodeWithTag(CardTags.FORK_HELD_ANOTHER).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         val second = requireNotNull(session.editing.value)
         assertNotEquals(first, second)

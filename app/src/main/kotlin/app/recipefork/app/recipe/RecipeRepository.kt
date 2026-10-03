@@ -121,6 +121,14 @@ open class RecipeRepository(
         return true
     }
 
+    /**
+     * A fork of [parent] in the active book that nothing has changed since it was made (FLOW-015): every edit of
+     * content moves its content time past its creation (FLOW-039), so an unchanged fork is one whose two times are
+     * equal. Null when the book holds no such fork.
+     */
+    suspend fun unchangedForkOf(parent: RecipeId): RecipeId? =
+        book.database.recipes().unchangedForkOf(parent.value)?.let(::RecipeId)
+
     open suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
 
     /**

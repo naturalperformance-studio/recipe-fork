@@ -14,7 +14,7 @@ import java.time.Instant
 /**
  * Forks the recipe [parent] of the active book at [at] and writes the fork to that same book — the active
  * account's, or the pool's when none is active (FORK-001 (7), AUTH-026). Returns the fork's identity, or null when
- * the book no longer holds the parent. Forking again always makes another fork.
+ * the book no longer holds the parent. This always makes another fork; [forkUnlessHeld] first offers one held.
  *
  * Every recipe written in the book is the owner's own (FORK-007); a found recipe — one the book marks, imported from a
  * file — is someone else's, and its fork carries neither its description nor its media (FORK-002, FLOW-065 (2)).
@@ -47,4 +47,29 @@ suspend fun forkRecipe(
         throw e
     }
     return fork.id
+}
+
+/** What asking to fork a recipe came to (FLOW-015). */
+sealed interface ForkAsked {
+    /** The book holds [fork], a fork of the recipe nothing has changed since it was made; no fork was made. */
+    data class Held(val fork: RecipeId) : ForkAsked
+
+    /** The fork [fork] was made. */
+    data class Made(val fork: RecipeId) : ForkAsked
+}
+
+/**
+ * Forks [parent] as [forkRecipe] does, unless the book holds a fork of it that nothing has changed since it was made
+ * — then that fork is returned and none is made, so that the person is told it exists and can open it or ask for
+ * another (FLOW-015). Whether that fork was ever sent does not matter. Null when the book no longer holds the parent.
+ */
+suspend fun forkUnlessHeld(
+    recipes: RecipeRepository,
+    book: ActiveBook,
+    parent: RecipeId,
+    at: Instant,
+    store: PhotoStore? = recipes.filesDirectory?.let { PhotoStore(it) },
+): ForkAsked? {
+    recipes.unchangedForkOf(parent)?.let { return ForkAsked.Held(it) }
+    return forkRecipe(recipes, book, parent, at, store)?.let(ForkAsked::Made)
 }
