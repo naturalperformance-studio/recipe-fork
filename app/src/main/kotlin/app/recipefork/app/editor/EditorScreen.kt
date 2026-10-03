@@ -126,12 +126,20 @@ fun EditorScreen(
 
     Box(modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
-            ActionText(
-                text = stringResource(R.string.editor_back),
-                action = stringResource(R.string.editor_back_action),
-                onClick = onClose,
-                modifier = Modifier.padding(horizontal = 8.dp).testTag(EditorTags.BACK),
-            )
+            // The top: "Done", and beside it the checklist, there whatever the recipe holds and whatever its state (GUIDE-003).
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ActionText(
+                    text = stringResource(R.string.editor_back),
+                    action = stringResource(R.string.editor_back_action),
+                    onClick = onClose,
+                    modifier = Modifier.testTag(EditorTags.BACK),
+                )
+                ChecklistControl()
+            }
             HorizontalDivider()
             val shown = recipe ?: return@Column
             Column(
