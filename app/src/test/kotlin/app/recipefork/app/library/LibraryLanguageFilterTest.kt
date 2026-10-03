@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -98,7 +99,7 @@ class LibraryLanguageFilterTest {
 
     private fun show(view: LibraryView) {
         session.choose(view)
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, card = card, editor = editor) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, card = card, editor = editor) } }
         compose.waitForIdle()
     }
 

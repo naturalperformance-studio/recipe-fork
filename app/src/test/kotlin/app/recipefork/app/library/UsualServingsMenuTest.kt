@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -84,7 +85,7 @@ class UsualServingsMenuTest {
     private fun show() {
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
         val card = CardEnvironment(usual) { device.database.dictionaryDao().ingredients() }
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, editor = editor, card = card) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) } }
         compose.waitForIdle()
     }
 

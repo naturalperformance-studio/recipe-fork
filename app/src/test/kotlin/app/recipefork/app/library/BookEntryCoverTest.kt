@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.os.Looper
 import androidx.activity.ComponentActivity
@@ -127,7 +128,7 @@ class BookEntryCoverTest {
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale ?: density.fontScale)) {
-                MaterialTheme { LibraryScreen(session, recipes, mode, thumbnails = thumbnails) }
+                MaterialTheme { AppNavHost(session, recipes, mode, thumbnails = thumbnails) }
             }
         }
         compose.onNodeWithTag(LibraryTags.tab(view)).performClick()

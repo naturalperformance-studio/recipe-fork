@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +32,6 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.card.awaitCard
-import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -106,7 +106,7 @@ class EntryRowEditorTest {
                     // The card reads the same dictionary as the editor.
                     val id = opened.value
                     if (id != null) EditorScreen(id, recipes, environment, session.viewModelScope, onClose = { opened.value = null })
-                    else LibraryScreen(session, recipes, editor = environment, card = card)
+                    else AppNavHost(session, recipes, editor = environment, card = card)
                 }
             }
         }

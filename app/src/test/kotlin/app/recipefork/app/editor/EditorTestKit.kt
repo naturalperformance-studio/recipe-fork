@@ -1,5 +1,7 @@
 package app.recipefork.app.editor
 
+import androidx.activity.compose.BackHandler
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.compose.runtime.Composable
@@ -24,7 +26,6 @@ import app.recipefork.app.dictionary.DictionaryCatalog
 import app.recipefork.app.dictionary.DictionarySeeding
 import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.SeededVersion
-import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.api.DictionariesDto
@@ -105,9 +106,11 @@ fun LibraryOrEditor(
 ) {
     val id = opened.value
     if (id != null) {
+        // The system back is the navigation host's in the application; here, with no host, the fixture takes it.
+        BackHandler { opened.value = null }
         EditorScreen(id, recipes, environment, session.viewModelScope, onClose = { opened.value = null })
     } else {
-        LibraryScreen(session, recipes, editor = environment)
+        AppNavHost(session, recipes, editor = environment)
     }
 }
 

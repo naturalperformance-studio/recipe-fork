@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -177,7 +178,7 @@ class DeleteRecipeTest {
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
         compose.setContent {
             CompositionLocalProvider(LocalCardTimers provides cardTimers) {
-                MaterialTheme { LibraryScreen(session, recipes, editor = editor, card = card) }
+                MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) }
             }
         }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()

@@ -300,15 +300,14 @@ class CardScreenTest {
         }
     }
 
-    // The bar's back action.
+    // The bar's back action. The system back is the navigation host's: it leaves the card for the book
+    // (OwnEntryOpensCardTest, PredictiveBackTest).
     @Test
     fun theBackActionLeavesTheCard() {
         val recipe = save(fullRecipe())
         show(recipe.id)
         compose.onNodeWithTag(CardTags.BACK).performClick()
         assertEquals(1, backs)
-        compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
-        assertEquals(2, backs)
     }
 
     // A recipe the book no longer holds: a short message and the back action, never a crash.

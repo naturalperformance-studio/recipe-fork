@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -87,7 +88,7 @@ class EntryMenuTest {
         runBlocking { book.database.favourites().put(FavouriteEntity(id, title, now)) }
 
     private fun show(view: LibraryView, mode: Mode) {
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, mode) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, mode) } }
         compose.onNodeWithTag(LibraryTags.tab(view)).performClick()
         compose.waitForIdle()
     }

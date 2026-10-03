@@ -59,19 +59,12 @@ import app.recipefork.app.R
 import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
-import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.IngredientEntries
-import app.recipefork.app.card.ForkAsked
-import app.recipefork.app.card.HeldForkDialog
-import app.recipefork.app.card.forkRecipe
-import app.recipefork.app.card.forkUnlessHeld
-import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.EditorEnvironment
-import app.recipefork.app.editor.EditorScreen
 import app.recipefork.app.editor.interfaceLanguage
 import app.recipefork.app.editor.newRecipe
 import app.recipefork.app.editor.rememberEditorEnvironment
@@ -79,7 +72,6 @@ import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.FileMessage
-import app.recipefork.app.file.FileMessageDialog
 import app.recipefork.app.file.message
 import app.recipefork.app.file.importSafely
 import app.recipefork.app.recipe.BookFilters
@@ -104,11 +96,9 @@ const val OWN_PAGE = 30
 
 /**
  * "My recipe book": the marked recipes and the recipes written in the active book (FLOW-034), and the editor on
- * a new recipe written from it (FLOW-042). An own recipe's entry opens its card (FLOW-029 (1)); the card's edit
- * action opens the editor on it, and leaving the editor shows that card again. The card's fork action writes a fork
- * and opens the editor on it, so that leaving it shows the fork's card; a fork's provenance opens its parent's card
- * in place of the fork's. In [Mode.Serverless] every own recipe's entry offers its export to a file (FLOW-063); in
- * [Mode.Standard] no export exists (FLOW-062 (8)).
+ * a new recipe written from it (FLOW-042). An own recipe's entry opens its card (FLOW-029 (1)); the card and the editor
+ * are destinations of their own, above the book (AppNavHost), which keeps its place beneath them. In [Mode.Serverless]
+ * every own recipe's entry offers its export to a file (FLOW-063); in [Mode.Standard] no export exists (FLOW-062 (8)).
  *
  * The view of marked recipes lists the found recipes the book holds (FLOW-064 (1)), each opening its card and offering
  * its removal (FLOW-064 (6)); in [Mode.Serverless] it offers the import of a recipe file through the system's document
@@ -118,9 +108,6 @@ const val OWN_PAGE = 30
  * The book's menu, beside its title, holds the serving count the reader usually cooks for (FLOW-017), which every
  * card opens at, the side the editor's drag column stands on, and the clearing of the media the device need not keep
  * (FLOW-060), stated first and done only once confirmed.
- *
- * What became of a file — an import's outcome, a failed export — is said in a dialog over whatever is shown, until it
- * is closed.
  */
 @Composable
 fun LibraryScreen(
@@ -135,58 +122,6 @@ fun LibraryScreen(
     usualServings: UsualServings = card.usualServings,
     dragHandleSide: DragHandleSide = editor.dragHandleSide,
 ) {
-    val message by session.message.collectAsState()
-    message?.let { FileMessageDialog(it, onDone = session::told) }
-    val editing by session.editing.collectAsState()
-    editing?.let { id ->
-        EditorScreen(RecipeId(id), recipes, editor, session.viewModelScope, onClose = session::closeEditor, modifier = modifier)
-        return
-    }
-    val viewing by session.viewing.collectAsState()
-    viewing?.let { id ->
-        // One fork per tap: a second tap while the first is being written adds none.
-        var forking by remember(id) { mutableStateOf(false) }
-        // An unchanged fork the book already holds, offered in place of a new one (FLOW-015).
-        var held by rememberSaveable(id) { mutableStateOf<String?>(null) }
-        fun fork(another: Boolean) {
-            if (forking) return
-            forking = true
-            session.viewModelScope.launch {
-                // The editor opens on the fork; leaving it shows the fork's card (FLOW-029 (1)).
-                // The guard stays up once a fork is written: a tap landing before the editor replaces the
-                // card must not write a second one. Only a fork that was not written lets the card try again.
-                val parent = RecipeId(id)
-                val asked = if (another) {
-                    forkRecipe(recipes, editor.book, parent, editor.clock())?.let(ForkAsked::Made)
-                } else {
-                    forkUnlessHeld(recipes, editor.book, parent, editor.clock())
-                }
-                when (asked) {
-                    is ForkAsked.Made -> session.openEditor(asked.fork.value)
-                    is ForkAsked.Held -> { held = asked.fork.value; forking = false }
-                    null -> forking = false
-                }
-            }
-        }
-        held?.let { offered ->
-            HeldForkDialog(
-                onOpen = { held = null; session.openEditor(offered) },
-                onAnother = { held = null; fork(another = true) },
-                onDismiss = { held = null },
-            )
-        }
-        CardScreen(
-            RecipeId(id), recipes, card,
-            onBack = session::closeCard,
-            onEdit = { session.openEditor(id) },
-            // The screen stays on while the card is shown, and is left to the device once it is not (FLOW-014).
-            modifier = modifier.keepScreenAwake(),
-            onFork = { fork(another = false) },
-            onOpenParent = { parent -> session.openCard(parent.value) },
-            session = session.cards,
-        )
-        return
-    }
     val view by session.view.collectAsState()
     val timers = rememberCardTimers()
     // The clearing of saved media (FLOW-060): asked about first, or said to have nothing to clear.

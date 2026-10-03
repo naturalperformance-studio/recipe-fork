@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +24,6 @@ import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
-import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
@@ -90,7 +90,7 @@ class ForkHeldOfferTest {
     private fun show() {
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, editor = editor, card = card) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) } }
     }
 
     private fun count() = runBlocking { recipes.count() }

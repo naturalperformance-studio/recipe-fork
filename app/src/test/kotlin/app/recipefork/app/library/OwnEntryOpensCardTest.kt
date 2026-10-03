@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -91,7 +92,7 @@ class OwnEntryOpensCardTest {
     private fun show() {
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, editor = editor, card = card) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
     }
@@ -250,7 +251,7 @@ class OwnEntryOpensCardTest {
         session.openCard("gone-from-this-book")
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, editor = editor, card = card) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) } }
         compose.awaitCard()
         assertEquals(listOf("This recipe is no longer in this recipe book."), compose.textsOf(CardTags.MISSING))
         compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()

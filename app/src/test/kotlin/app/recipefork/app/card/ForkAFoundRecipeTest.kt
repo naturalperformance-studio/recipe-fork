@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +25,6 @@ import app.recipefork.app.editor.textsOf
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.TestRecipeFiles
-import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.chooseEntryAction
@@ -102,7 +102,7 @@ class ForkAFoundRecipeTest {
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
         compose.setContent {
-            MaterialTheme { LibraryScreen(session, recipes, Mode.Serverless, editor = editor, card = card, files = importer) }
+            MaterialTheme { AppNavHost(session, recipes, Mode.Serverless, editor = editor, card = card, files = importer) }
         }
         compose.waitForIdle()
     }

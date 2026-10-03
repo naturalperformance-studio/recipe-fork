@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.compose.material3.MaterialTheme
@@ -170,7 +171,7 @@ class LibraryScreenTest {
         database.favourites().put(FavouriteEntity("marked-$title", title, now))
     }
 
-    private fun show() = compose.setContent { MaterialTheme { LibraryScreen(session, recipes) } }
+    private fun show() = compose.setContent { MaterialTheme { AppNavHost(session, recipes) } }
 
     private fun openOwn() {
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
@@ -269,7 +270,7 @@ class LibraryScreenTest {
         // A book with a recipe written in it, so that the own view is its list (an empty one says so: FLOW-042).
         own("Soup", RecipeState.LOCAL)
         var inSection by mutableStateOf(true)
-        compose.setContent { MaterialTheme { if (inSection) LibraryScreen(session, recipes) } }
+        compose.setContent { MaterialTheme { if (inSection) AppNavHost(session, recipes) } }
         openOwn()
         inSection = false
         compose.waitForIdle()
