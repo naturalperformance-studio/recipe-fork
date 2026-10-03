@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -24,6 +25,7 @@ import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.dictionary.label
 import app.recipefork.app.editor.numberLanguage
 import app.recipefork.app.recipe.BookFilters
+import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.Listed
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
@@ -113,7 +115,7 @@ private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lower
 /**
  * The header above a view's list: its search field (FLOW-035 (4)) and, at its end, the control that adds a filter
  * (FLOW-035, CAT-002, CAT-006) and the choice of the view's order (FLOW-035 (3)); under them, while any filter is on,
- * the row of the view's filters. It never scrolls with the list, and is no taller for filters while none is on.
+ * the row of the view's filters. The [languages] of the view's recipes are what its language filter offers (L10N-005). It never scrolls with the list, and is no taller for filters while none is on.
  */
 @Composable
 internal fun ListHeader(
@@ -123,6 +125,7 @@ internal fun ListHeader(
     filters: BookFilters,
     onFilters: (BookFilters) -> Unit,
     choices: FilterChoices,
+    languages: List<BookLanguage>,
     modifier: Modifier = Modifier,
 ) {
     val focus = LocalFocusManager.current
@@ -147,7 +150,7 @@ internal fun ListHeader(
                 keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
                 modifier = Modifier.weight(1f).testTag(LibraryTags.SEARCH),
             )
-            AddFilter(filters, onFilters, choices)
+            AddFilter(filters, onFilters, choices, languages)
             OrderChoice(order, onOrder)
         }
         if (filters.any) FilterRow(filters, onFilters, choices)
@@ -260,21 +263,26 @@ internal fun rememberFilterChoices(ingredients: IngredientEntries, tags: TagSour
     remember(ingredients, tags) { FilterChoices(ingredients, tags) }
 
 /** Which chooser of a filter is open. */
-private enum class Chooser { INGREDIENT, TAGS }
+private enum class Chooser { INGREDIENT, TAGS, LANGUAGE }
 
 /**
  * The control that adds a filter, beside the search field: a button named for the screen reader and in a tooltip, that
- * opens the menu of the two kinds — an ingredient and tags — and then the chooser of the kind picked.
+ * opens the menu of the three kinds — an ingredient, tags and a language — and then the chooser of the kind picked.
  */
 @Composable
-private fun AddFilter(filters: BookFilters, onFilters: (BookFilters) -> Unit, choices: FilterChoices) {
+private fun AddFilter(
+    filters: BookFilters,
+    onFilters: (BookFilters) -> Unit,
+    choices: FilterChoices,
+    languages: List<BookLanguage>,
+) {
     var expanded by remember { mutableStateOf(false) }
     var choosing by rememberSaveable { mutableStateOf<Chooser?>(null) }
     LaunchedEffect(choosing) {
         when (choosing) {
             Chooser.INGREDIENT -> choices.readIngredients()
             Chooser.TAGS -> choices.readTags()
-            null -> Unit
+            Chooser.LANGUAGE, null -> Unit
         }
     }
     Box {
@@ -302,6 +310,14 @@ private fun AddFilter(filters: BookFilters, onFilters: (BookFilters) -> Unit, ch
                 },
                 modifier = Modifier.testTag(LibraryTags.FILTER_BY_TAGS),
             )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.library_filter_language)) },
+                onClick = {
+                    expanded = false
+                    choosing = Chooser.LANGUAGE
+                },
+                modifier = Modifier.testTag(LibraryTags.FILTER_BY_LANGUAGE),
+            )
         }
     }
     when (choosing) {
@@ -314,12 +330,21 @@ private fun AddFilter(filters: BookFilters, onFilters: (BookFilters) -> Unit, ch
             onDismiss = { choosing = null },
         )
         Chooser.TAGS -> TagChooser(choices.tags, filters, onFilters, onDismiss = { choosing = null })
+        Chooser.LANGUAGE -> LanguageChooser(
+            languages,
+            filters.language,
+            onPick = {
+                choosing = null
+                onFilters(filters.copy(language = it))
+            },
+            onDismiss = { choosing = null },
+        )
         null -> Unit
     }
 }
 
 /**
- * The filters on, under the search field, while any is: a chip for each — the ingredient, then each tag — which
+ * The filters on, under the search field, while any is: a chip for each — the ingredient, each tag, then the language — which
  * removes it when tapped, and the one control that clears them all.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -345,6 +370,12 @@ private fun FilterRow(filters: BookFilters, onFilters: (BookFilters) -> Unit, ch
             val name = choices.tags?.firstOrNull { it.id == id }?.label(language)
                 ?: stringResource(R.string.library_filter_unknown_tag)
             FilterChipOn(name, LibraryTags.tagFilter(id)) { onFilters(filters.toggled(id)) }
+        }
+        filters.language?.let { chosen ->
+            val name = stringResource(
+                if (chosen == BookLanguage.NOT_GIVEN) R.string.library_filter_language_none_chip else languageLabel(chosen),
+            )
+            FilterChipOn(name, LibraryTags.LANGUAGE_FILTER) { onFilters(filters.copy(language = null)) }
         }
         TextButton(
             onClick = { onFilters(BookFilters()) },
@@ -464,6 +495,55 @@ private fun TagChooser(
             }
         },
     )
+}
+
+/**
+ * The choice of the language to filter by (L10N-005): each language the view's recipes are written in, named in the
+ * interface language, and "not given" when some declare none; picking one keeps the recipes written in it.
+ */
+@Composable
+private fun LanguageChooser(
+    languages: List<BookLanguage>,
+    chosen: BookLanguage?,
+    onPick: (BookLanguage) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(LibraryTags.LANGUAGE_CHOOSER),
+        title = { Text(stringResource(R.string.library_filter_language_title)) },
+        text = {
+            Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                Text(stringResource(R.string.library_filter_language_hint), style = MaterialTheme.typography.bodyMedium)
+                languages.forEach { language ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .selectable(selected = language == chosen, role = Role.RadioButton) { onPick(language) }
+                            .testTag(LibraryTags.languageChoice(language)),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = language == chosen, onClick = null)
+                        Text(stringResource(languageLabel(language)), modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.library_filter_cancel))
+            }
+        },
+    )
+}
+
+@StringRes
+private fun languageLabel(language: BookLanguage): Int = when (language) {
+    BookLanguage.RU -> R.string.library_filter_language_ru
+    BookLanguage.EN -> R.string.library_filter_language_en
+    BookLanguage.NOT_GIVEN -> R.string.library_filter_language_none
 }
 
 /** The label of this tag in the interface [language]. */

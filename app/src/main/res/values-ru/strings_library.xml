@@ -72,5 +72,13 @@
     <string name="library_filter_tags_none">В словаре тегов пока нет ни одного тега.</string>
     <string name="library_filter_done">Готово</string>
     <string name="library_filter_cancel">Отмена</string>
+    <!-- The filter by a recipe's declared language (L10N-005). -->
+    <string name="library_filter_language">Язык</string>
+    <string name="library_filter_language_title">Фильтр по языку</string>
+    <string name="library_filter_language_hint">Покажутся рецепты, написанные на нём.</string>
+    <string name="library_filter_language_ru">Русский</string>
+    <string name="library_filter_language_en">Английский</string>
+    <string name="library_filter_language_none">Не указан</string>
+    <string name="library_filter_language_none_chip">Язык не указан</string>
     <string name="library_nothing_matches">Ни один рецепт не подходит под фильтры</string>
 </resources>

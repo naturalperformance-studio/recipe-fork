@@ -16,7 +16,9 @@ import app.recipefork.app.card.awaitCard
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.search.BookOrder
 import kotlinx.coroutines.runBlocking
 import java.time.Instant
@@ -226,6 +228,34 @@ class LibrarySessionTest {
         chooseOwn()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
         assertEquals(false, tagFilterShown())
+    }
+
+    // L10N-005, FLOW-058 (2): a view's language filter survives the end of the process.
+    @Test
+    fun theProcessEndedWhileAwayKeepsTheLanguageFilter() {
+        val activity = launch()
+        runBlocking {
+            container.recipes.save(
+                Recipe.create(Instant.parse("2026-10-01T12:00:00Z"), null).copy(title = "Pie", language = RecipeLanguage.EN),
+            )
+        }
+        chooseOwn()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.FILTER_ADD).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_BY_LANGUAGE)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.FILTER_BY_LANGUAGE).performClick()
+        val english = LibraryTags.languageChoice(BookLanguage.EN)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(english)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(english).performClick()
+        fun chipShown() = compose.onAllNodes(hasTestTag(LibraryTags.LANGUAGE_FILTER)).fetchSemanticsNodes().size == 1
+        compose.waitUntil(PATIENCE_MS) { chipShown() }
+        val saved = Bundle()
+        activity.pause().stop().saveInstanceState(saved)
+        activity.destroy()
+        launch(saved)
+        assertView(LibraryView.OWN)
+        compose.waitUntil(PATIENCE_MS) { chipShown() }
+        assertEquals(listOf("English"), compose.textsOf(LibraryTags.LANGUAGE_FILTER))
     }
 
     private companion object {

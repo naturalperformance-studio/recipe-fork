@@ -4,6 +4,7 @@ import app.recipefork.app.book.IngredientLineRow
 import app.recipefork.app.book.RecipeTagEntity
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.search.BookOrder
@@ -107,5 +108,63 @@ class BookSearchTest {
         assertEquals(listOf("Soup"), search.listed(rows, lines, emptyList(), params("крыл")).rows)
         // Once read, the dictionary and the index are kept.
         assertEquals(2, reads)
+    }
+
+    private class Row(val title: String, val language: RecipeLanguage? = null, val description: String = "")
+
+    private fun rowSearch() = BookSearch<Row>({ dictionary }, { it.title }, { it.title }, { it.language }, { it.description })
+
+    private fun BookSearch<Row>.titles(rows: List<Row>, params: ListingParams) =
+        runBlocking { listed(rows, emptyList(), emptyList(), params).rows.map { it.title } }
+
+    // L10N-005: a filter by language keeps the recipes declaring it, or declaring none for "not given"; it combines with
+    // the query, the order and the other filters; the view's languages are offered whatever narrows it.
+    @Test
+    fun aLanguageFilterKeepsTheRecipesWrittenInIt() = runBlocking {
+        val rows = listOf(
+            Row("Borscht", RecipeLanguage.EN),
+            Row("Борщ", RecipeLanguage.RU),
+            Row("Beef stew", RecipeLanguage.EN),
+            Row("Blini"),
+        )
+        val tags = listOf(RecipeTagEntity("Beef stew", 10), RecipeTagEntity("Борщ", 10))
+        val search = rowSearch()
+        fun listed(params: ListingParams) = runBlocking { search.listed(rows, emptyList(), tags, params) }
+        assertEquals(listOf("Borscht", "Beef stew"), search.titles(rows, params(filters = BookFilters(language = BookLanguage.EN))))
+        assertEquals(listOf("Борщ"), search.titles(rows, params(filters = BookFilters(language = BookLanguage.RU))))
+        assertEquals(listOf("Blini"), search.titles(rows, params(filters = BookFilters(language = BookLanguage.NOT_GIVEN))))
+        // With the query, the order and a tag filter.
+        assertEquals(listOf("Borscht"), search.titles(rows, params("bor", BookFilters(language = BookLanguage.EN))))
+        assertEquals(
+            listOf("Beef stew", "Borscht"),
+            search.titles(rows, params(filters = BookFilters(language = BookLanguage.EN), order = BookOrder.TITLE)),
+        )
+        assertEquals(
+            listOf("Beef stew"),
+            listed(params(filters = BookFilters(tags = setOf(10), language = BookLanguage.EN))).rows.map { it.title },
+        )
+        // The languages present in the view, in a fixed order, whatever the filter keeps.
+        val all = listOf(BookLanguage.RU, BookLanguage.EN, BookLanguage.NOT_GIVEN)
+        assertEquals(all, listed(params()).languages)
+        assertEquals(all, listed(params("zzz", BookFilters(language = BookLanguage.RU))).languages)
+        assertEquals(listOf(BookLanguage.EN), runBlocking { search.listed(rows.take(1), emptyList(), emptyList(), params()) }.languages)
+        assertEquals(true, BookFilters(language = BookLanguage.NOT_GIVEN).any)
+    }
+
+    // L10N-006: a query finds a word beginning in the description, with case and ё/е folded, as in the title.
+    @Test
+    fun aQueryFindsAWordBeginningInTheDescription() = runBlocking {
+        val rows = listOf(
+            Row("Пирог", description = "Бабушкин рецепт с ЁЖЕВИКОЙ из сада"),
+            Row("Torte", description = "A rich chocolate layer cake"),
+            Row("Суп", description = "Лёгкий и быстрый"),
+        )
+        val search = rowSearch()
+        assertEquals(listOf("Пирог"), search.titles(rows, params("ежевик")))
+        assertEquals(listOf("Пирог"), search.titles(rows, params("пирог бабушк")))
+        assertEquals(listOf("Torte"), search.titles(rows, params("CHOC")))
+        assertEquals(listOf("Суп"), search.titles(rows, params("легк")))
+        // A word inside another word is no beginning of one.
+        assertEquals(emptyList<String>(), search.titles(rows, params("colate")))
     }
 }

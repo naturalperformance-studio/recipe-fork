@@ -83,6 +83,7 @@ import app.recipefork.app.file.FileMessageDialog
 import app.recipefork.app.file.message
 import app.recipefork.app.file.importSafely
 import app.recipefork.app.recipe.BookFilters
+import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.ListingParams
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.dictionary.TagSource
@@ -303,7 +304,7 @@ private fun OwnList(
             HorizontalDivider()
             ListHeader(
                 search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
-                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices,
+                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages,
             )
             HorizontalDivider()
         }
@@ -663,7 +664,7 @@ private fun MarkedList(
         if (shown != null && (!shown.viewIsEmpty || shown.narrowed)) {
             ListHeader(
                 search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
-                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices,
+                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages,
             )
             HorizontalDivider()
         }
@@ -883,6 +884,12 @@ object LibraryTags {
     const val FILTER_ADD = "library-filter-add"
     const val FILTER_BY_INGREDIENT = "library-filter-by-ingredient"
     const val FILTER_BY_TAGS = "library-filter-by-tags"
+    const val FILTER_BY_LANGUAGE = "library-filter-by-language"
+    /** The chooser of the language filter, and each language it offers (L10N-005). */
+    const val LANGUAGE_CHOOSER = "library-language-chooser"
+    fun languageChoice(language: BookLanguage) = "library-language-choice-${language.name}"
+    /** The chip of the language filter in force; tapping it removes the filter. */
+    const val LANGUAGE_FILTER = "library-language-filter"
     const val FILTERS_CLEAR = "library-filters-clear"
     /** The chip of the ingredient filter in force; tapping it removes the filter. */
     const val INGREDIENT_FILTER = "library-ingredient-filter"

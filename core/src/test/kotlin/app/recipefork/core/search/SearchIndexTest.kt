@@ -6,9 +6,10 @@ import kotlin.test.assertTrue
 
 /** FLOW-035 (4) with the word-prefix match of FLOW-057: what a query of the recipe book finds. */
 class SearchIndexTest {
-    private class Entry(val title: String, val ingredients: List<String> = emptyList())
+    private class Entry(val title: String, val ingredients: List<String> = emptyList(), val description: String = "")
 
-    private fun index(vararg entries: Entry) = SearchIndex(entries.toList()) { listOf(it.title) + it.ingredients }
+    private fun index(vararg entries: Entry) =
+        SearchIndex(entries.toList()) { listOf(it.title, it.description) + it.ingredients }
 
     private fun SearchIndex<Entry>.titles(query: String) = search(query).map { it.title }
 
@@ -52,6 +53,20 @@ class SearchIndexTest {
         assertEquals(emptyList(), index.titles("плов молоко"))
     }
 
+    // L10N-006: a word beginning in the description finds the recipe, case and ё folded, alone or with the title's.
+    @Test
+    fun aQueryFindsAWordBeginningInTheDescription() {
+        val index = index(
+            Entry("Пирог", description = "Бабушкин рецепт с ЁЖЕВИКОЙ"),
+            Entry("Cake", description = "Rich, dark chocolate"),
+            Entry("Суп"),
+        )
+        assertEquals(listOf("Пирог"), index.titles("ежев"))
+        assertEquals(listOf("Пирог"), index.titles("пир бабушк"))
+        assertEquals(listOf("Cake"), index.titles("CHOCO"))
+        assertEquals(emptyList(), index.titles("ocolate"))
+    }
+
     @Test
     fun aQueryOfNoWordFindsEverythingInItsOrder() {
         val index = index(Entry("B"), Entry("A"))
@@ -59,24 +74,34 @@ class SearchIndexTest {
         assertEquals(listOf("B", "A"), index.titles("  ,. "))
     }
 
-    // The book's search stays quick: 500 recipes of 10 ingredients, each named in two languages and as free text.
+    // The book's search stays quick: 500 recipes of 10 ingredients, each named in two languages and as free text, each
+    // with a description of about 500 characters (L10N-006).
     // One query, the index built, takes well under the 50 ms bound on the test machine (a frame is 16 ms; the query
     // runs off the main thread, so this bounds how soon the list answers a keystroke, not the frame rate).
     @Test
     fun oneQueryOverFiveHundredRecipesOfTenIngredientsStaysUnderFiftyMilliseconds() {
         val words = listOf("курица", "рис", "свекла", "морковь", "лук", "чеснок", "масло", "соль", "перец", "мука")
         val english = listOf("chicken", "rice", "beetroot", "carrot", "onion", "garlic", "butter", "salt", "pepper", "flour")
+        val prose = listOf(
+            "Бабушкин", "рецепт", "который", "готовили", "по", "воскресеньям", "летом", "на", "даче", "с", "ёжевикой",
+            "и", "свежей", "зеленью", "a", "family", "favourite", "simmered", "slowly", "until", "tender", "served", "warm",
+        )
         val entries = (0 until 500).map { i ->
+            val description = generateSequence(i) { it + 7 }.map { prose[it % prose.size] + (it % 13) }
+                .runningFold("") { text, word -> if (text.isEmpty()) word else "$text $word" }
+                .first { it.length >= 500 }
             Entry(
                 "Рецепт номер $i ${words[i % 10]}",
                 (0 until 10).flatMap { j ->
                     val k = (i + j) % 10
                     listOf("${words[k]} отборн$j", "${english[k]} choice$j", "домашний продукт $i-$j")
                 },
+                description,
             )
         }
-        val index = SearchIndex(entries) { listOf(it.title) + it.ingredients }
-        val queries = listOf("кур", "ре но", "chick cho", "домаш прод", "zzz", "ё", "морковь отборн9")
+        assertTrue(entries.all { it.description.length in 500..520 })
+        val index = SearchIndex(entries) { listOf(it.title, it.description) + it.ingredients }
+        val queries = listOf("кур", "ре но", "chick cho", "домаш прод", "zzz", "ё", "морковь отборн9", "ежевик simmer", "воскр12")
         // Warmed up first, so that the bound is on the query, not on the JIT.
         repeat(20) { queries.forEach { index.search(it) } }
         val times = (0 until 21).map { n ->
@@ -87,5 +112,6 @@ class SearchIndexTest {
         val median = times[times.size / 2]
         assertTrue(median < 50.0, "one query took $median ms (all: $times)")
         assertTrue(index.search("кур").size == 500)
+        assertTrue(index.search("ежевик").isNotEmpty())
     }
 }
