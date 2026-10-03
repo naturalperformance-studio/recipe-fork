@@ -19,6 +19,7 @@ import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -128,6 +129,13 @@ class ExportFromTheBookTest {
             } catch (e: AssertionError) {
                 false
             }
+        }
+        // The list scrolls on until the entry stands clear of the view's action, which floats over the list's end.
+        val action = compose.onNodeWithTag(LibraryTags.NEW).fetchSemanticsNode().boundsInRoot.top
+        val overlap = compose.onNodeWithTag(entry).fetchSemanticsNode().boundsInRoot.bottom - action
+        if (overlap > 0) {
+            compose.onNodeWithTag(LibraryTags.OWN_LIST).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, overlap) }
+            compose.waitForIdle()
         }
     }
 

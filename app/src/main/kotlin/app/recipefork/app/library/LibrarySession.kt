@@ -8,6 +8,8 @@ import app.recipefork.app.card.CardSession
 import app.recipefork.app.card.HeldScale
 import app.recipefork.app.card.StepToShow
 import app.recipefork.app.card.TextCardSession
+import app.recipefork.app.data.HeldLastBookView
+import app.recipefork.app.data.LastBookView
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.search.BookOrder
@@ -27,13 +29,25 @@ enum class LibraryView { MARKED, OWN }
  * It lives as long as the Activity's task: it survives leaving the section, the home action and a
  * configuration change in memory, and the end of the process through saved state. A task started anew — after
  * the application was removed from the recent applications, or after a restart of the device — has no saved
- * state, so a new session opens on the marked recipes (FLOW-034 (6)).
+ * state, so a new session opens on the view last shown, which the device keeps in [lastView]; the first one ever
+ * opens on the marked recipes (FLOW-034 (6), as the owner decided: the book opens where it was left).
  */
-class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
+class LibrarySession(
+    private val saved: SavedStateHandle,
+    private val lastView: LastBookView = HeldLastBookView(),
+) : ViewModel() {
+    init {
+        if (!saved.contains(VIEW_KEY)) saved[VIEW_KEY] = lastView.read() ?: LibraryView.MARKED
+    }
+
     val view: StateFlow<LibraryView> = saved.getStateFlow(VIEW_KEY, LibraryView.MARKED)
 
-    fun choose(view: LibraryView) {
+    fun choose(view: LibraryView) = show(view)
+
+    /** Shows [view], and keeps it on the device as the view last shown. */
+    private fun show(view: LibraryView) {
         saved[VIEW_KEY] = view
+        lastView.keep(view)
     }
 
     /**
@@ -98,7 +112,7 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
      */
     fun closeCard() {
         saved[VIEWING_KEY] = null
-        saved[VIEW_KEY] = saved.get<LibraryView>(CARD_FROM_KEY) ?: LibraryView.OWN
+        show(saved.get<LibraryView>(CARD_FROM_KEY) ?: LibraryView.OWN)
     }
 
     /**
@@ -115,7 +129,7 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         forgetShown(id)
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
-        saved[VIEW_KEY] = LibraryView.MARKED
+        show(LibraryView.MARKED)
     }
 
     /**
