@@ -67,6 +67,7 @@ import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 /**
  * What the card has of its recipe: nothing yet, the recipe, word that the book no longer holds it, or word that it
@@ -105,12 +106,14 @@ fun CardScreen(
     session: CardSession = remember { TextCardSession.inMemory() },
 ) {
     // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
-    // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)).
+    // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
+    // until it is read.
     var attempt by remember(recipeId, recipes) { mutableIntStateOf(0) }
     val content by remember(recipeId, recipes, attempt) {
         recipes.observe(recipeId)
             .map<Recipe?, CardContent> { recipe -> recipe?.let(CardContent::Shown) ?: CardContent.Missing }
-            .catch { failure -> if (failure is CancellationException) throw failure else emit(CardContent.Unreadable) }
+            .onStart { emit(CardContent.Loading) }
+            .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(CardContent.Unreadable) else throw failure }
     }.collectAsState(initial = CardContent.Loading)
     var entries by remember(environment) { mutableStateOf<Map<Long, IngredientEntryEntity>?>(null) }
     LaunchedEffect(environment) {

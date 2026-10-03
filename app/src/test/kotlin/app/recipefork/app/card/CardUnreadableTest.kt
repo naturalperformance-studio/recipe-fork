@@ -2,7 +2,6 @@ package app.recipefork.app.card
 
 import android.content.Context
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -20,9 +19,11 @@ import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
+import app.recipefork.app.ui.AppTheme
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -58,12 +59,17 @@ class CardUnreadableTest {
     private val failing = AtomicInteger(0)
     private val reads = AtomicInteger(0)
 
+    /** Held shut, a read waits on it before it fails or reads, so the card can be seen while it loads. */
+    @Volatile
+    private var gate: CompletableDeferred<Unit>? = null
+
     /** The book's recipes, whose reads fail — as a corrupt row or a refusing storage would — while [failing] lasts. */
     private val recipes = object : RecipeRepository(active) {
         override fun observe(id: RecipeId): Flow<Recipe?> {
             val real = super.observe(id)
             return flow {
                 reads.incrementAndGet()
+                gate?.await()
                 if (failing.getAndUpdate { (it - 1).coerceAtLeast(0) } > 0) throw IOException("the row does not read back")
                 emitAll(real)
             }
@@ -87,7 +93,7 @@ class CardUnreadableTest {
 
     private fun show(id: RecipeId) {
         compose.setContent {
-            MaterialTheme { CardScreen(id, recipes, environment, onBack = {}, onEdit = {}) }
+            AppTheme { CardScreen(id, recipes, environment, onBack = {}, onEdit = {}) }
         }
         compose.awaitCard()
     }
@@ -114,10 +120,19 @@ class CardUnreadableTest {
         AccessibilityChecks.assertInteractiveElementsLabelled(compose)
         LocalizationChecks.assertScreenTextFromResources(compose, context)
 
-        // The second read fails as well: the card says so again, and offers the next try.
+        // While the second read runs, the card is loading: the failure and its offer are gone.
+        val held = CompletableDeferred<Unit>().also { gate = it }
         compose.onNodeWithTag(CardTags.RETRY).performClick()
         compose.waitUntil(PATIENCE_MS) { reads.get() == 2 }
         compose.waitForIdle()
+        compose.onNodeWithTag(CardTags.UNREADABLE).assertDoesNotExist()
+        compose.onNodeWithTag(CardTags.MISSING).assertDoesNotExist()
+        compose.onNodeWithTag(CardTags.CONTENT).assertDoesNotExist()
+        gate = null
+        held.complete(Unit)
+
+        // The second read fails as well: the card says so again, and offers the next try.
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.UNREADABLE)).fetchSemanticsNodes().size == 1 }
         assertEquals(listOf(message, retry), unreadableTexts())
 
         // The third read succeeds, and the card opens on the recipe.
