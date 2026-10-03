@@ -1,6 +1,10 @@
 # Animal: meat, poultry, offal, fish, seafood, eggs, dairy and cheese.
 # Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
 # Ids 1-5 are the entries shipped before the sources existed.
+# This file: the legacy entries, red meat and its cuts, game, mince. The family continues in animal-*.tsv:
+#   3000-3099 мясо's kinds · 3100-3199 beef, veal · 3200-3299 pork · 3300-3399 lamb · 3400-3449 other meat, game
+#   3450-3499 mince · 3500-3699 poultry · 3700-3799 offal · 3800-3999 meat products
+#   4000-4199 fish · 4200-4299 seafood · 4300-4399 roe · 4400-4449 eggs · 4450-4699 dairy · 4700-4999 cheese
 @range 3000-4999
 @range 1-5
 
@@ -9,3 +13,125 @@
 3	мясо	meat			g=1
 4	фарш	mince			g=1
 5	говядина	beef			g=1
+
+# мясо — generic meat, by how it is sold
+3001	мясо на кости	meat on the bone	3		g=1
+3002	мясо без кости	boneless meat	3		g=1
+3003	мясо для шашлыка	kebab meat	3		g=1
+3004	мясо для гуляша	stewing meat	3		g=1
+3005	суповой набор	soup bones	3		g=1
+
+# говядина — cuts
+3101	говяжья вырезка	beef tenderloin	5		g=1
+3102	говяжья мякоть	boneless beef	5		g=1
+3103	говяжья лопатка	beef shoulder	5		g=1
+3104	говяжья шея	beef neck	5		g=1
+3105	говяжья грудинка	beef brisket	5		g=1
+3106	говяжья голяшка	beef shank	5		g=1
+3107	говяжьи рёбра	beef ribs	5		g=1
+3108	говяжьи щёки	beef cheeks	5		g=1
+3109	бычий хвост	oxtail	5		g=1
+3110	огузок	beef rump	5		g=1
+3111	толстый край	beef rib eye roll	5		g=1
+3112	тонкий край	beef striploin	5		g=1
+3113	говяжья корейка	beef loin	5		g=1
+3114	говяжий окорок	beef round	5		g=1
+3115	рибай	ribeye steak	5	true	g=1 pc=350
+3116	стриплойн	New York strip steak	5	true	g=1 pc=300
+3117	тибон	T-bone steak	5	true	g=1 pc=500
+3118	филе-миньон	filet mignon	5	true	g=1 pc=200
+3119	стейк говяжий	beef steak	5	true	g=1 pc=250
+3120	антрекот	entrecote	5	true	g=1 pc=250
+3121	флэнк-стейк	flank steak	5	true	g=1 pc=500
+3122	шорт-рибс	short ribs	5		g=1
+3123	оссобуко	osso buco	5	false	g=1 pc=350
+3124	говядина на кости	bone-in beef	5		g=1
+3125	мраморная говядина	marbled beef	5		g=1
+3126	говяжьи кости	beef bones	5		g=1
+3127	мозговая кость	marrow bone	5	false	g=1 pc=300
+3128	солонина	corned beef	5		g=1
+3129	ростбиф	roast beef	5		g=1
+3130	говяжья пашина	beef flank	5		g=1
+3131	бифштекс	beefsteak	5	true	g=1 pc=200
+
+# телятина — cuts
+3150	телятина	veal			g=1
+3151	телячья вырезка	veal tenderloin	3150		g=1
+3152	телячья корейка	veal loin	3150		g=1
+3153	телячья лопатка	veal shoulder	3150		g=1
+3154	телячья голяшка	veal shank	3150		g=1
+3155	телячьи рёбрышки	veal ribs	3150		g=1
+3156	телячья отбивная	veal chop	3150	true	g=1 pc=200
+3157	телячья мякоть	boneless veal	3150		g=1
+3158	телячья грудинка	veal breast	3150		g=1
+
+# свинина — cuts
+3200	свинина	pork			g=1
+3201	свиная вырезка	pork tenderloin	3200	true	g=1 pc=500
+3202	свиная шея	pork neck	3200		g=1
+3203	свиная корейка	pork loin	3200		g=1
+3204	свиная лопатка	pork shoulder	3200		g=1
+3205	свиной окорок	pork leg	3200		g=1
+3206	свиная грудинка	pork belly	3200		g=1
+3207	свиные рёбрышки	pork ribs	3200		g=1
+3208	свиная рулька	pork knuckle	3200	true	g=1 pc=1000
+3209	свиные ножки	pig's trotters	3200	false	g=1 pc=400
+3210	свиная отбивная	pork chop	3200	true	g=1 pc=200
+3211	свиной стейк	pork steak	3200	true	g=1 pc=250
+3212	свиная мякоть	boneless pork	3200		g=1
+3213	свиная щековина	pork jowl	3200		g=1
+3214	свиные уши	pig's ears	3200	false	g=1 pc=200
+3215	свиная шкурка	pork rind	3200		g=1
+3216	эскалоп	escalope	3200	true	g=1 pc=120
+3217	карбонад	boneless pork loin	3200		g=1
+3218	молочный поросёнок	suckling pig	3200	true	g=1 pc=5000
+3219	свинина на кости	bone-in pork	3200		g=1
+3220	свиные медальоны	pork medallions	3200	false	g=1 pc=80
+3221	свиные хвосты	pig's tails	3200		g=1
+
+# баранина — cuts
+3300	баранина	lamb			g=1
+3301	ягнятина	young lamb	3300		g=1
+3302	баранья нога	leg of lamb	3300	true	g=1 pc=2000
+3303	баранья лопатка	lamb shoulder	3300		g=1
+3304	бараньи рёбрышки	lamb ribs	3300		g=1
+3305	каре ягнёнка	rack of lamb	3300	true	g=1 pc=600
+3306	баранья корейка	lamb loin	3300		g=1
+3307	баранья шея	lamb neck	3300		g=1
+3308	баранья мякоть	boneless lamb	3300		g=1
+3309	баранина на кости	bone-in lamb	3300		g=1
+3310	курдюк	lamb tail fat	3300		g=1
+3311	баранья отбивная	lamb chop	3300	false	g=1 pc=100
+3312	баранья голяшка	lamb shank	3300	false	g=1 pc=400
+3313	баранья грудинка	lamb breast	3300		g=1
+
+# other meat and game
+3400	козлятина	goat meat			g=1
+3401	конина	horse meat			g=1
+3410	кролик	rabbit		true	g=1 pc=1500
+3411	ножки кролика	rabbit legs	3410	false	g=1 pc=200
+3412	филе кролика	rabbit fillet	3410		g=1
+3413	спинка кролика	rabbit saddle	3410		g=1
+3420	дичь	game			g=1
+3421	оленина	venison	3420		g=1
+3422	лосятина	elk meat	3420		g=1
+3423	кабанятина	wild boar	3420		g=1
+3424	косуля	roe deer	3420		g=1
+3425	заяц	hare	3420	true	g=1 pc=3000
+3426	фазан	pheasant	3420	true	g=1 pc=1000
+3427	куропатка	partridge	3420	true	g=1 pc=400
+3428	рябчик	hazel grouse	3420	true	g=1 pc=350
+3429	дикая утка	wild duck	3420	true	g=1 pc=1000
+3430	медвежатина	bear meat	3420		g=1
+
+# фарш — kinds
+3451	фарш говяжий	beef mince	4		g=1
+3452	фарш свиной	pork mince	4		g=1
+3453	фарш куриный	chicken mince	4		g=1
+3454	фарш из индейки	turkey mince	4		g=1
+3455	фарш бараний	lamb mince	4		g=1
+3456	фарш смешанный	mixed mince	4		g=1
+3457	фарш телячий	veal mince	4		g=1
+3458	фарш рыбный	fish mince	4		g=1
+3459	фарш из кролика	rabbit mince	4		g=1
+3460	фарш свино-говяжий	pork and beef mince	4		g=1

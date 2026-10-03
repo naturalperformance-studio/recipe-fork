@@ -1,0 +1,98 @@
+# Animal: poultry and its parts (3500-3699), offal (3700-3799). Kinds of курица (legacy id 1) live here too.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 3000-4999
+
+# курица — parts and kinds
+3501	куриное филе	chicken breast fillet	1	true	g=1 pc=200
+3502	куриная грудка	chicken breast	1	true	g=1 pc=350
+3503	куриные бёдра	chicken thighs	1	false	g=1 pc=150
+3504	филе куриного бедра	boneless chicken thighs	1	true	g=1 pc=100
+3505	куриные голени	chicken drumsticks	1	false	g=1 pc=110
+3506	куриные окорочка	chicken leg quarters	1	false	g=1 pc=300
+3507	малое куриное филе	chicken tenders	1	false	g=1 pc=40
+3508	цыплёнок	spring chicken	1	true	g=1 pc=700
+3509	цыплёнок-корнишон	poussin	1	true	g=1 pc=450
+3510	курица суповая	boiling hen	1	true	g=1 pc=1800
+3511	курица копчёная	smoked chicken	1	true	g=1 pc=1200
+3512	курица гриль	rotisserie chicken	1	true	g=1 pc=1200
+3513	куриная грудка копчёная	smoked chicken breast	1	true	g=1 pc=300
+3514	куриные шейки	chicken necks	1	false	g=1 pc=40
+3515	куриные спинки	chicken backs	1	false	g=1 pc=150
+3516	куриные лапки	chicken feet	1	false	g=1 pc=40
+3517	куриная кожа	chicken skin	1		g=1
+3518	курица домашняя	free-range chicken	1	true	g=1 pc=1800
+3519	куриные ножки	chicken legs	1	false	g=1 pc=250
+
+# индейка
+3600	индейка	turkey		true	g=1 pc=5000
+3601	филе индейки	turkey breast fillet	3600		g=1
+3602	грудка индейки	turkey breast	3600		g=1
+3603	бедро индейки	turkey thigh	3600	true	g=1 pc=800
+3604	филе бедра индейки	boneless turkey thigh	3600		g=1
+3605	голень индейки	turkey drumstick	3600	true	g=1 pc=900
+3606	крыло индейки	turkey wing	3600	false	g=1 pc=400
+3607	стейк индейки	turkey steak	3600	true	g=1 pc=200
+3608	шея индейки	turkey neck	3600		g=1
+3609	индейка копчёная	smoked turkey	3600		g=1
+
+# утка, гусь, other birds
+3620	утка	duck		true	g=1 pc=2000
+3621	утиная грудка	duck breast	3620	true	g=1 pc=350
+3622	утиные ножки	duck legs	3620	false	g=1 pc=300
+3623	утиные крылья	duck wings	3620	false	g=1 pc=100
+3624	утка копчёная	smoked duck	3620		g=1
+3625	мускусная утка	Muscovy duck	3620	true	g=1 pc=2500
+3640	гусь	goose		true	g=1 pc=4000
+3641	гусиная грудка	goose breast	3640	true	g=1 pc=500
+3642	гусиные ножки	goose legs	3640	false	g=1 pc=500
+3660	перепёлка	quail		false	g=1 pc=180
+3670	цесарка	guinea fowl		true	g=1 pc=1200
+3680	голубь	pigeon		false	g=1 pc=400
+3690	страусятина	ostrich meat			g=1
+
+# печень
+3700	печень	liver			g=1
+3701	говяжья печень	beef liver	3700		g=1
+3702	телячья печень	calf's liver	3700		g=1
+3703	свиная печень	pork liver	3700		g=1
+3704	куриная печень	chicken liver	3700		g=1
+3705	печень индейки	turkey liver	3700		g=1
+3706	утиная печень	duck liver	3700		g=1
+3707	гусиная печень	goose liver	3700		g=1
+3708	фуа-гра	foie gras	3700		g=1
+3709	печень трески	cod liver	3700		g=1
+3710	кроличья печень	rabbit liver	3700		g=1
+3711	баранья печень	lamb's liver	3700		g=1
+
+# other offal
+3720	сердце	heart			g=1
+3721	говяжье сердце	beef heart	3720		g=1
+3722	свиное сердце	pork heart	3720		g=1
+3723	куриные сердечки	chicken hearts	3720		g=1
+3724	сердечки индейки	turkey hearts	3720		g=1
+3725	баранье сердце	lamb heart	3720		g=1
+3730	язык	tongue			g=1
+3731	говяжий язык	beef tongue	3730	true	g=1 pc=1200
+3732	свиной язык	pork tongue	3730	true	g=1 pc=300
+3733	телячий язык	veal tongue	3730	true	g=1 pc=600
+3734	бараний язык	lamb tongue	3730	false	g=1 pc=150
+3740	почки	kidneys			g=1
+3741	говяжьи почки	beef kidneys	3740		g=1
+3742	свиные почки	pork kidneys	3740		g=1
+3743	бараньи почки	lamb kidneys	3740		g=1
+3744	телячьи почки	veal kidneys	3740		g=1
+3750	желудки	gizzards			g=1
+3751	куриные желудки	chicken gizzards	3750		g=1
+3752	желудки индейки	turkey gizzards	3750		g=1
+3753	утиные желудки	duck gizzards	3750		g=1
+3754	рубец	tripe	3750		g=1
+3755	свиной желудок	pig's stomach	3750		g=1
+3760	лёгкое	lungs			g=1
+3761	мозги	brains			g=1
+3762	вымя	udder			g=1
+3763	костный мозг	bone marrow			g=1
+3764	потроха	giblets			g=1
+3765	куриные потроха	chicken giblets	3764		g=1
+3766	гусиные потроха	goose giblets	3764		g=1
+3767	кишки свиные	hog casings			g=1
+3769	куриные хрящи	chicken cartilage			g=1

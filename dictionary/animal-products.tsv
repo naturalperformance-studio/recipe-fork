@@ -1,0 +1,87 @@
+# Animal: meat products — sausages, ham, bacon, smoked and cured meats, pâté, canned meat (3800-3999).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 3000-4999
+
+# колбаса
+3800	колбаса	sausage			g=1
+3801	колбаса варёная	cooked sausage	3800		g=1
+3802	докторская колбаса	Doktorskaya sausage	3800		g=1
+3803	колбаса копчёная	smoked sausage	3800		g=1
+3804	колбаса сырокопчёная	dry-cured sausage	3800		g=1
+3805	колбаса полукопчёная	semi-smoked sausage	3800		g=1
+3806	колбаса варёно-копчёная	cooked smoked sausage	3800		g=1
+3807	салями	salami	3800		g=1
+3808	пепперони	pepperoni	3800		g=1
+3809	чорисо	chorizo	3800		g=1
+3810	сервелат	cervelat	3800		g=1
+3811	ливерная колбаса	liver sausage	3800		g=1
+3812	кровяная колбаса	black pudding	3800		g=1
+3813	охотничьи колбаски	hunter's sausages	3800	false	g=1 pc=50
+3814	суджук	sujuk	3800		g=1
+3815	казы	kazy	3800		g=1
+3816	мортаделла	mortadella	3800		g=1
+3817	купаты	kupaty	3800	false	g=1 pc=100
+3818	колбаски для гриля	grilling sausages	3800	false	g=1 pc=100
+3819	баварские колбаски	Bavarian sausages	3800	false	g=1 pc=80
+3820	колбаса молочная	milk sausage	3800		g=1
+3821	колбаса куриная	chicken sausage	3800		g=1
+3822	фуэт	fuet	3800		g=1
+3823	колбаса краковская	Krakowska sausage	3800		g=1
+3824	колбаса домашняя	homemade sausage	3800		g=1
+3825	чевапчичи	ćevapi	3800	false	g=1 pc=40
+
+# сосиски, сардельки
+3830	сосиски	frankfurters		false	g=1 pc=50
+3831	сосиски молочные	milk frankfurters	3830	false	g=1 pc=50
+3832	сосиски куриные	chicken frankfurters	3830	false	g=1 pc=50
+3833	сосиски венские	Vienna sausages	3830	false	g=1 pc=50
+3834	сосиски для хот-догов	hot dog sausages	3830	false	g=1 pc=60
+3835	мини-сосиски	cocktail sausages	3830	false	g=1 pc=15
+3836	сосиски с сыром	cheese frankfurters	3830	false	g=1 pc=50
+3840	сардельки	wieners		false	g=1 pc=100
+
+# ветчина
+3850	ветчина	ham			g=1
+3851	ветчина варёная	cooked ham	3850		g=1
+3852	ветчина копчёная	smoked ham	3850		g=1
+3853	хамон	jamón	3850		g=1
+3854	прошутто	prosciutto	3850		g=1
+3855	пармская ветчина	Parma ham	3850		g=1
+3856	ветчина из индейки	turkey ham	3850		g=1
+3857	ветчина куриная	chicken ham	3850		g=1
+3858	окорок копчёный	smoked gammon	3850		g=1
+3859	окорок варёный	boiled gammon	3850		g=1
+
+# бекон
+3870	бекон	bacon		true	g=1 pc=15
+3871	панчетта	pancetta	3870		g=1
+3872	гуанчале	guanciale	3870		g=1
+3873	бекон из индейки	turkey bacon	3870	true	g=1 pc=15
+3874	бекон сырокопчёный	dry-cured bacon	3870	true	g=1 pc=15
+3875	бекон варёно-копчёный	cooked smoked bacon	3870	true	g=1 pc=15
+
+# smoked and cured meats, standing alone
+3880	грудинка копчёная	smoked pork belly			g=1
+3881	корейка копчёная	smoked pork loin			g=1
+3882	шейка копчёная	smoked pork neck			g=1
+3883	буженина	boiled pork			g=1
+3884	бастурма	basturma			g=1
+3885	свиной балык	pork balyk			g=1
+3887	вяленое мясо	jerky			g=1
+3888	рёбрышки копчёные	smoked ribs			g=1
+3890	зельц	brawn			g=1
+3891	шкварки	pork cracklings			g=1
+3892	брезаола	bresaola			g=1
+3826	копчёные колбаски	smoked sausages	3800	false	g=1 pc=50
+
+# паштет, тушёнка, other ready meat
+3900	паштет	pâté			g=1
+3901	паштет печёночный	liver pâté	3900		g=1
+3902	паштет из куриной печени	chicken liver pâté	3900		g=1
+3903	паштет из утки	duck pâté	3900		g=1
+3904	паштет из гусиной печени	goose liver pâté	3900		g=1
+3910	тушёнка	canned stewed meat			g=1
+3911	тушёнка говяжья	canned stewed beef	3910		g=1
+3912	тушёнка свиная	canned stewed pork	3910		g=1
+3913	тушёнка куриная	canned stewed chicken	3910		g=1
+3920	фрикадельки	meatballs		false	g=1 pc=15
