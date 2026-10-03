@@ -1,0 +1,7 @@
+# Tags: cuisines, meal and course, diet, method and appliance, occasion and season, characteristics.
+# Columns, tab-separated: id, labelRu, labelEn (dictionary/README.md). Ids 10-11 are the tags shipped before the sources existed.
+@range 100-999
+@range 10-11
+
+10	итальянская	Italian
+11	грузинская	Georgian

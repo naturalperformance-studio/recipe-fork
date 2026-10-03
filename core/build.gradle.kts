@@ -16,8 +16,15 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
+// The dictionary generator (scripts/dictionary-build.sh): its own source set, so nothing of it ships in the APK,
+// built on main's DTOs and Json so that what it writes is encoded exactly as the application encodes it.
+val dictionary: SourceSet by sourceSets.creating
+configurations[dictionary.implementationConfigurationName].extendsFrom(configurations.implementation.get())
+
 dependencies {
     api(libs.kotlinx.serialization.json)
+    dictionary.implementationConfigurationName(sourceSets.main.get().output)
+    testImplementation(dictionary.output)
 
     testImplementation(platform(libs.junit5.bom))
     testImplementation(libs.junit5.jupiter)
@@ -27,4 +34,19 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // ShippedDictionaryTest builds the sources and compares the shipped asset: both are inputs of the suite.
+    val root = rootProject.layout.projectDirectory
+    inputs.dir(root.dir("dictionary")).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("dictionarySources")
+    inputs.file(root.file("app/src/main/assets/dictionaries.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("dictionaryAsset")
+}
+
+// Validates the sources under dictionary/ and writes app/src/main/assets/dictionaries.json (dictionary/README.md).
+tasks.register<JavaExec>("buildDictionary") {
+    group = "build"
+    description = "Validates dictionary/*.tsv and writes the shipped app/src/main/assets/dictionaries.json."
+    classpath = dictionary.runtimeClasspath
+    mainClass.set("app.recipefork.core.dictionary.DictionaryBuildKt")
+    workingDir = rootProject.layout.projectDirectory.asFile
+    args("dictionary", "app/src/main/assets/dictionaries.json")
 }

@@ -1,0 +1,11 @@
+# Animal: meat, poultry, offal, fish, seafood, eggs, dairy and cheese.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Ids 1-5 are the entries shipped before the sources existed.
+@range 3000-4999
+@range 1-5
+
+1	курица	chicken		true	g=1 pc=1500
+2	крылышки	chicken wings	1	false	g=1 pc=80
+3	мясо	meat			g=1
+4	фарш	mince			g=1
+5	говядина	beef			g=1

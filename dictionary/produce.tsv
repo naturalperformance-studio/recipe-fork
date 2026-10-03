@@ -1,0 +1,3 @@
+# Produce: vegetables, mushrooms, fresh herbs, fruit, berries, nuts and seeds.
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+@range 1000-2999
