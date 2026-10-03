@@ -189,8 +189,8 @@ private fun StepRow(
                         },
                     )
                 }
-                // Below the row, only what the step has: its timer, and its photograph with what is told about it.
-                if (step.timer != null || timerOpen || stating || photo != null || photoControl.attaching.notice.value != null) {
+                // Below the row, only what the step has: its timer, and its photograph, or that one is being prepared.
+                if (step.timer != null || timerOpen || stating || photo != null || photoControl.attaching.working.value) {
                     Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         StepTimer(position, step, ingredients, language, editor, stating, timerOpen) { timerOpen = it }
                         StepPhotoShown(position, photo, photos, photoControl)

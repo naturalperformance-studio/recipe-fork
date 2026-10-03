@@ -1,20 +1,28 @@
 package app.recipefork.app.editor
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
@@ -43,23 +51,29 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, book: BookName, 
     val context = LocalContext.current
     val store = remember(context) { PhotoStore(context.applicationContext.filesDir) }
     val attaching = remember(editor, store, book, saving) { CoverAttaching(editor, store, book, saving) }
-    val notice by attaching.notice
+    SaysPhotoNotices(attaching)
+    val working by attaching.working
     val cover = recipe.cover
     val editable = recipe.state.editable
     if (!editable && cover == null) return
     val sources = rememberPhotoSources(
         key = COVER_KEY,
         onPhoto = { attaching.attach(it) },
-        onUnavailable = { attaching.notice.value = PhotoNotice.UNAVAILABLE },
+        onUnavailable = { attaching.tell(PhotoNotice.UNAVAILABLE) },
     )
     Column(Modifier.fillMaxWidth().testTag(CoverTags.COVER), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (editable) Text(stringResource(R.string.media_cover), style = MaterialTheme.typography.labelLarge)
-        cover?.let {
-            PhotoImage(
-                store.file(book, it.mediaId),
-                stringResource(R.string.media_cover_description, recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }),
-                Modifier.testTag(CoverTags.IMAGE),
-            )
+        if (cover != null) {
+            Box(Modifier.fillMaxWidth()) {
+                PhotoImage(
+                    store.file(book, cover.mediaId),
+                    stringResource(R.string.media_cover_description, recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }),
+                    Modifier.testTag(CoverTags.IMAGE),
+                )
+                if (working) PhotoWorking(Modifier.align(Alignment.TopEnd).padding(8.dp).testTag(CoverTags.WORKING))
+            }
+        } else if (working) {
+            PhotoWorking(Modifier.testTag(CoverTags.WORKING))
         }
         if (editable) {
             FlowRow(Modifier.fillMaxWidth()) {
@@ -85,13 +99,38 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, book: BookName, 
                 }
             }
         }
-        notice?.let {
-            Text(
-                stringResource(it.text),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag(CoverTags.NOTICE),
-            )
-        }
+    }
+}
+
+/** Says at the bottom of the editor what [attaching] tells the author, once each. */
+@Composable
+internal fun SaysPhotoNotices(attaching: PhotoAttaching) {
+    val statements = LocalEditorStatements.current
+    val statement by attaching.statement
+    val text = statement?.let { stringResource(it.notice.text) }
+    LaunchedEffect(statement) {
+        val told = statement ?: return@LaunchedEffect
+        statements?.say(text.orEmpty())
+        attaching.stated(told)
+    }
+}
+
+/**
+ * That a photograph is being prepared for a place: a small indicator on its photograph, or where it will show — no
+ * text under it. The screen reader names it.
+ */
+@Composable
+internal fun PhotoWorking(modifier: Modifier = Modifier) {
+    val said = stringResource(R.string.media_working)
+    Box(
+        modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surface)
+            .semantics { contentDescription = said },
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp)
     }
 }
 
@@ -104,5 +143,5 @@ object CoverTags {
     const val TAKE = "editor-cover-take"
     const val CHOOSE = "editor-cover-choose"
     const val REMOVE = "editor-cover-remove"
-    const val NOTICE = "editor-cover-notice"
+    const val WORKING = "editor-cover-working"
 }

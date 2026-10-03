@@ -30,6 +30,8 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -37,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -70,6 +73,7 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -112,7 +116,9 @@ fun EditorScreen(
     val scrolled = rememberScrollState()
     val scroll = remember(scrolled) { EditorScroll(scrolled) }
     BackHandler(onBack = onClose)
-    val statements = remember { SnackbarHostState() }
+    val host = remember { SnackbarHostState() }
+    val statementScope = rememberCoroutineScope()
+    val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
     PartsMadeWholeStatement(editor, statements)
 
     Box(modifier.fillMaxSize()) {
@@ -145,32 +151,61 @@ fun EditorScreen(
                     )
                 }
                 TitleAndLanguage(shown, editor)
-                CoverSection(shown, editor, recipes.bookName(), saving)
-                Tags(shown, editor, dictionary)
-                ServingCount(shown, editor)
-                CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
-                    Ingredients(shown, editor, environment.ingredients, scroll)
-                    Steps(shown, editor, environment.ingredients, scroll, recipes.bookName(), saving)
+                CompositionLocalProvider(LocalEditorStatements provides statements) {
+                    CoverSection(shown, editor, recipes.bookName(), saving)
+                    Tags(shown, editor, dictionary)
+                    ServingCount(shown, editor)
+                    CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
+                        Ingredients(shown, editor, environment.ingredients, scroll)
+                        Steps(shown, editor, environment.ingredients, scroll, recipes.bookName(), saving)
+                    }
+                    Description(shown, editor)
                 }
-                Description(shown, editor)
             }
         }
-        SnackbarHost(statements, Modifier.align(Alignment.BottomCenter).imePadding()) { data ->
+        EditorStatementHost(host, Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+/**
+ * Where the editor's statements show: at the bottom, above the keyboard where it is open, each wrapped to its whole
+ * text, read by the screen reader as it comes (the host's live region), gone by itself or swiped away either way.
+ */
+@Composable
+internal fun EditorStatementHost(host: SnackbarHostState, modifier: Modifier = Modifier) {
+    SnackbarHost(host, modifier.imePadding()) { data ->
+        val swipe = rememberSwipeToDismissBoxState()
+        SwipeToDismissBox(swipe, backgroundContent = {}, onDismiss = { data.dismiss() }) {
             Snackbar(data, modifier = Modifier.testTag(EditorTags.STATEMENT))
         }
     }
 }
 
+/**
+ * What the editor says at its bottom, above the keyboard where it is open: one statement at a time, each going by
+ * itself after a while or swiped away; a new one replaces the one shown. The screen reader reads each as it comes.
+ */
+internal class EditorStatements(private val host: SnackbarHostState, private val scope: CoroutineScope) {
+    private var shown: Job? = null
+
+    fun say(text: String) {
+        shown?.cancel()
+        shown = scope.launch { host.showSnackbar(text, duration = SnackbarDuration.Long) }
+    }
+}
+
+/** The statements of the editor the composition is in; outside one, nothing is said. */
+internal val LocalEditorStatements = staticCompositionLocalOf<EditorStatements?> { null }
+
 /** Says once that a row's change of unit made the steps' parts of it whole again. */
 @Composable
-private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: SnackbarHostState) {
+private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: EditorStatements) {
     val statement by editor.partsMadeWhole.collectAsState()
     val text = statement?.let { stringResource(R.string.editor_parts_made_whole, it.ingredientPosition + 1) }
     // Shown outside the effect, which ends as soon as the statement is marked as stated.
-    val scope = rememberCoroutineScope()
     LaunchedEffect(statement) {
         val shown = statement ?: return@LaunchedEffect
-        scope.launch { statements.showSnackbar(text.orEmpty(), duration = SnackbarDuration.Long) }
+        statements.say(text.orEmpty())
         editor.partsMadeWholeStated(shown)
     }
 }
@@ -455,7 +490,7 @@ object EditorTags {
     fun stepPhotoChoose(position: Int) = "editor-step-$position-photo-choose"
     fun stepPhotoRemove(position: Int) = "editor-step-$position-photo-remove"
     fun stepPhotoImage(position: Int) = "editor-step-$position-photo-image"
-    fun stepPhotoNotice(position: Int) = "editor-step-$position-photo-notice"
+    fun stepPhotoWorking(position: Int) = "editor-step-$position-photo-working"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
     fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
     fun timerAttach(position: Int) = "editor-step-$position-timer"
