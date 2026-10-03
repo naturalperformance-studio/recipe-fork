@@ -74,12 +74,18 @@ object IngredientShares {
     /**
      * [share] of [ingredient] at [factor], through the same scaling and rounding grid as the whole (SCALE-003): its
      * own value scaled and rounded on its own, never taken from the whole's line. Null where it cannot be read so: a
-     * share not above zero, or a `piece` row whose divisibility is not given.
+     * share not above zero, or a `piece` row whose divisibility is not given. A `piece` part is rounded on the grid of
+     * [divisible], the row's own unless a reader gives the one it reads the row with ([effectiveDivisible]).
      */
-    fun display(share: IngredientShare, ingredient: Ingredient, factor: ScaleFactor): DisplayedQuantity? {
+    fun display(
+        share: IngredientShare,
+        ingredient: Ingredient,
+        factor: ScaleFactor,
+        divisible: Boolean? = ingredient.divisible,
+    ): DisplayedQuantity? {
         if (!share.unit.type.carriesQuantity || share.amount.signum() <= 0) return null
-        val divisible = if (share.unit.type == UnitType.PIECE) ingredient.divisible ?: return null else null
-        return runCatching { Scaling.display(AuthoredQuantity(share.unit, share.amount, divisible), factor) }.getOrNull()
+        val pieceDivisible = if (share.unit.type == UnitType.PIECE) divisible ?: return null else null
+        return runCatching { Scaling.display(AuthoredQuantity(share.unit, share.amount, pieceDivisible), factor) }.getOrNull()
     }
 
     private fun inBase(amount: Rational, unit: QuantityUnit): Rational = unit.baseMultiple?.let { amount * Rational.of(it) } ?: amount

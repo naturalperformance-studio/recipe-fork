@@ -1,7 +1,9 @@
 package app.recipefork.core.scaling
 
+import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.recipe.effectiveDivisible
 
 /**
  * The exact ratio every displayed quantity is computed from (SCALE-001, SCALE-003). It is never
@@ -89,6 +91,32 @@ data class DisplayedQuantity(
 )
 
 object Scaling {
+
+    /**
+     * What scaling reads of [row], whose dictionary entry carries [entryDivisible] (null when it names none or the
+     * entry sets none), or null where the row is incomplete or off its grid and so is shown unscaled: a unit that
+     * carries a quantity with none, or none above zero; a `piece` whose divisibility neither the entry nor the row
+     * gives; a value its grid does not hold; anything [AuthoredQuantity] refuses.
+     *
+     * A `piece` is read with its effective divisibility ([effectiveDivisible]). A value the grid the row was written
+     * on holds, but the entry's grid no longer does, is kept as written (DOM-018): [display] shows it as it is at a
+     * factor of 1 and computes every other value from it, rounded on the entry's grid.
+     */
+    fun authored(row: Ingredient, entryDivisible: Boolean?): AuthoredQuantity? {
+        val unit = row.unit ?: if (row.unitType == UnitType.TASTE_UNMEASURED) QuantityUnit.TO_TASTE else null
+        if (unit == null) return null
+        val divisible = effectiveDivisible(row, entryDivisible)
+        val quantity = if (unit.type.carriesQuantity) row.quantity ?: return null else null
+        if (quantity != null) {
+            if (quantity.signum() <= 0) return null
+            val inUnit = unit.baseMultiple?.let { quantity * Rational.of(it) } ?: quantity
+            val grid = runCatching { RoundingGrid.of(unit, divisible) }.getOrNull() ?: return null
+            val written = row.divisible?.let { RoundingGrid.of(unit, it) } ?: grid
+            // Only a value on its grid is the author's number; anything else is not scaled from.
+            if (!grid.holds(inUnit) && !written.holds(inUnit)) return null
+        }
+        return runCatching { AuthoredQuantity(unit, quantity, divisible) }.getOrNull()
+    }
 
     /**
      * The quantity displayed for [ingredient] at [factor], computed from the authored quantity

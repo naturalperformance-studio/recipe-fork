@@ -18,6 +18,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
+import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShares
@@ -59,11 +60,20 @@ internal class CardReferences(
         /** No references read: a card whose list is not known. */
         val NONE = CardReferences(emptyMap())
 
-        /** The references to [ordered] as their lines [list] show them in [language], the two in the same order. */
-        fun of(ordered: List<Ingredient>, list: IngredientList, language: InterfaceLanguage): CardReferences {
+        /**
+         * The references to [ordered] as their lines [list] show them in [language], the two in the same order; a
+         * `piece` part is rounded by its row's effective divisibility, read from [entries] as the list reads it.
+         */
+        fun of(
+            ordered: List<Ingredient>,
+            list: IngredientList,
+            language: InterfaceLanguage,
+            entries: Map<Long, IngredientEntryEntity>,
+        ): CardReferences {
             val pairs = ordered.zip(list.lines)
+            val scalable = ordered.associate { it.position to scalableQuantity(it, entries) }
             val quantities = pairs.associate { (ingredient, line) ->
-                val unfinished = ingredient.quantity == null && scalableQuantity(ingredient) == null
+                val unfinished = ingredient.quantity == null && scalable[ingredient.position] == null
                 ingredient.position to if (unfinished || line.quantity == null) {
                     ReferenceText.authored(ingredient, language)
                 } else {
@@ -81,9 +91,11 @@ internal class CardReferences(
                     share == null || ingredient == null || line == null -> null
                     !IngredientShares.fits(share, ingredient.unit) -> null
                     // A row the list cannot scale shows its part as the editor writes it.
-                    scalableQuantity(ingredient)?.quantity == null || line.quantity == null ->
+                    scalable[reference.ingredientPosition]?.quantity == null || line.quantity == null ->
                         ReferenceText.authored(ingredient, share, language) to Rounding.NONE
-                    else -> IngredientShares.display(share, ingredient, list.factor)?.let { shown ->
+                    else -> IngredientShares.display(
+                        share, ingredient, list.factor, scalable.getValue(reference.ingredientPosition)?.divisible,
+                    )?.let { shown ->
                         runCatching { QuantityText.of(shown, language) }.getOrNull()
                             ?.let { it to if (shown.derived) shown.rounding else Rounding.NONE }
                     } ?: (ReferenceText.authored(ingredient, share, language) to Rounding.NONE)
