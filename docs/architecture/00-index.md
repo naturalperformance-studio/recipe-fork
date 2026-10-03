@@ -9,7 +9,7 @@ Decisions the team lead owns: how the product in `spec/` is built. What it does 
 | Language | Kotlin 2.4 on JDK 21 (toolchain); Android bytecode targets Java 17 |
 | Build | Gradle 9.8 (wrapper), Kotlin DSL, version catalog `gradle/libs.versions.toml` |
 | Client | Android, Jetpack Compose + Material 3, AGP 9.4; `minSdk` 29, `compileSdk` 37.2, `targetSdk` 37 |
-| Client storage and work | Room, WorkManager, Media3 Transformer, Play Integrity, CameraX (added by the tasks that need them) |
+| Client storage and work | Room, WorkManager, Media3 Transformer, Play Integrity (added by the tasks that need them) |
 | Server | Ktor 3.6 (Netty), kotlinx.serialization, JSON under `/api/v1` |
 | Store | PostgreSQL 16, Flyway SQL migrations, JDBC via HikariCP, no ORM |
 | Media | Cloudflare R2 over the S3 API (put, get, delete), reached only by the server |
@@ -79,4 +79,5 @@ Increments, their tasks and decision logs: [`docs/increments/`](../increments/).
 | [decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md](decisions/20260928-sign-in-secrets-lapse-and-retired-keys-remove-the-account.md) | Hashed 256-bit keys; a sign-in secret lapses after six months and is renewed silently; retired keys remove the account from other devices. |
 | [decisions/20260928-dictionaries-ship-with-the-application.md](decisions/20260928-dictionaries-ship-with-the-application.md) | A snapshot of both dictionaries in the APK seeds a clean install; the server refreshes it. |
 | [decisions/20260928-recipe-file-is-a-zip.md](decisions/20260928-recipe-file-is-a-zip.md) | A recipe file is a ZIP of a versioned `recipe.json` and its media, streamed at import. |
-| [decisions/20261002-in-app-camera-with-camerax.md](decisions/20261002-in-app-camera-with-camerax.md) | The camera is the app's own, on CameraX: the whole frame is taken, then cropped to 4:3 (camera and gallery); the camera permission is asked on the first shot. |
+| [decisions/20261002-in-app-camera-with-camerax.md](decisions/20261002-in-app-camera-with-camerax.md) | Superseded by the phone's own camera ADR of 2026-10-03. |
+| [decisions/20261003-the-phones-own-camera-then-a-crop.md](decisions/20261003-the-phones-own-camera-then-a-crop.md) | Photos come from the phone's camera app by intent, then the app's 4:3 crop; no camera permission, no CameraX. |

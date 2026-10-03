@@ -18,10 +18,10 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -45,6 +45,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
@@ -52,9 +53,9 @@ import org.robolectric.annotation.Config
  * of the block and moves up or down scrolls the editor — the block is never picked up, and nothing is reordered.
  */
 @OptIn(ExperimentalTestApi::class)
-@RunWith(AndroidJUnit4::class)
+@RunWith(ParameterizedRobolectricTestRunner::class)
 @Config(qualifiers = "ru-w360dp-h640dp")
-class BlockScrollTest {
+class BlockScrollTest(private val handleRight: Boolean) {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
@@ -97,7 +98,7 @@ class BlockScrollTest {
     private fun open(): RecipeId {
         val recipe = recipe()
         runBlocking { recipes.save(recipe) }
-        val environment = EditorEnvironment(active, device.catalog(context)) { created.plusSeconds(60) }
+        val environment = EditorEnvironment(active, device.catalog(context), dragHandleSide = HeldDragHandleSide(handleRight)) { created.plusSeconds(60) }
         compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
@@ -199,5 +200,12 @@ class BlockScrollTest {
         assertTrue("the block is picked up and follows the finger", abs(bounds(next).top - bounds(block).top - gap) > px(20f))
         compose.onNodeWithTag(column, useUnmergedTree = true).performTouchInput { up() }
         compose.waitForIdle()
+    }
+
+    companion object {
+        /** Every test runs with the drag column on the left, as by default, and on the right, for a left hand. */
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "handle on the right: {0}")
+        fun sides(): List<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
     }
 }

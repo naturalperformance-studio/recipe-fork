@@ -23,10 +23,10 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.TestPhotos
@@ -59,20 +59,21 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
  * Each step as one bounded block, as an ingredient is, on a 360 dp phone at font scale 1.0 and 2.0: every part of a
  * step — its text, the control that inserts an ingredient, its timer, its photograph, its removal and its menu — inside its block,
- * blocks apart from each other with an outline drawn round each, a tinted column down the left edge of each block with
- * the handle icon at its centre, the inputs beside it at one left edge; a step dragged from anywhere in its column
+ * blocks apart from each other with an outline drawn round each, a tinted column down the left edge of each block —
+ * or the right edge, with the handle on the right — with the handle icon at its centre, the inputs beside it at one left edge; a step dragged from anywhere in its column
  * moving; a frozen recipe's steps as blocks, with no column.
  */
 @OptIn(ExperimentalTestApi::class)
-@RunWith(AndroidJUnit4::class)
+@RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class StepBlocksTest {
+class StepBlocksTest(private val handleRight: Boolean) {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
@@ -126,7 +127,7 @@ class StepBlocksTest {
         )
         if (state != null) recipe = recipe.inState(state)
         runBlocking { recipes.save(recipe) }
-        val environment = EditorEnvironment(active, device.catalog(context)) { created.plusSeconds(60) }
+        val environment = EditorEnvironment(active, device.catalog(context), dragHandleSide = HeldDragHandleSide(handleRight)) { created.plusSeconds(60) }
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
@@ -234,16 +235,26 @@ class StepBlocksTest {
             }
             val column = bounds(EditorTags.stepHandle(position))
             val icon = bounds(EditorTags.stepHandleIcon(position))
-            assertEquals("step $position: the column starts at the block's left edge", block.left, column.left, 0.5f)
+            if (handleRight) {
+                assertEquals("step $position: the column ends at the block's right edge", block.right, column.right, 0.5f)
+            } else {
+                assertEquals("step $position: the column starts at the block's left edge", block.left, column.left, 0.5f)
+            }
             assertEquals("step $position: the column starts at the block's top", block.top, column.top, 0.5f)
             assertEquals("step $position: the column ends at the block's bottom", block.bottom, column.bottom, 0.5f)
             assertEquals("step $position: the column is ${column.width / compose.density.density} dp wide", px(48f), column.width, 0.5f)
             assertEquals("step $position: the icon is centred across the column", column.center.x, icon.center.x, 1f)
             assertEquals("step $position: the icon is centred down the column", column.center.y, icon.center.y, 1f)
-            // One left edge, right of the column: nothing that drags stands among the inputs.
+            // One left edge, beside the column: nothing that drags stands among the inputs.
             val starts = lineStarts(position).map { bounds(it).left }
             starts.forEach { assertEquals("step $position: its lines start at one left edge", starts.first(), it, 0.5f) }
-            assertTrue("step $position: its inputs are right of the column", starts.first() >= column.right - 0.5f)
+            val inputs = parts(position) - setOf(EditorTags.stepHandle(position), EditorTags.stepHandleIcon(position))
+            inputs.forEach {
+                val b = bounds(it)
+                if (handleRight) assertTrue("step $position: $it is left of the column", b.right <= column.left + 0.5f)
+                else assertTrue("step $position: $it is right of the column", b.left >= column.right - 0.5f)
+            }
+            if (handleRight) assertTrue("step $position: its lines start by the block's left edge", starts.first() - block.left <= px(16f))
             assertTrue(block.right <= screen.right + 0.5f)
         }
         // The timer's fields are there for the step that has one, and the photograph for the step that carries one.
@@ -316,5 +327,12 @@ class StepBlocksTest {
         val block = bounds(EditorTags.step(PHOTO_STEP))
         assertTrue(photo.left >= block.left - 0.5f && photo.right <= block.right + 0.5f && photo.top >= block.top - 0.5f && photo.bottom <= block.bottom + 0.5f)
         assertSeparateOutlinedBlocks(steps().size)
+    }
+
+    companion object {
+        /** Every test runs with the drag column on the left, as by default, and on the right, for a left hand. */
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "handle on the right: {0}")
+        fun sides(): List<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
     }
 }

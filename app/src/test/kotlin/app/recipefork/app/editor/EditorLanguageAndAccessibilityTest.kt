@@ -163,7 +163,7 @@ class EditorLanguageAndAccessibilityTest {
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextReplacement("")
 
         // The declared language cleared.
-        compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).performClick()
+        compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).performScrollTo().performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.LANGUAGE_CLEAR), PATIENCE_MS)
         checkTheScreen(expectInteractive = 5)
 

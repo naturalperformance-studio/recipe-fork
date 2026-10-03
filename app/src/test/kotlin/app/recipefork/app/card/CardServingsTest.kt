@@ -202,7 +202,7 @@ class CardServingsTest {
         assertEquals(authored, quantities())
     }
 
-    // A11Y-003 (1), A11Y-005 (1): both actions are 48 dp and say what they do, in English and Russian.
+    // A11Y-003 (1), A11Y-005 (1): both actions are the card's 56 dp and say what they do, in English and Russian.
     @Test
     fun bothActionsAreLargeEnoughAndSayWhatTheyDo() = announced(
         "Fewer servings", "Recalculate the recipe for fewer servings",
@@ -223,8 +223,8 @@ class CardServingsTest {
             .forEach { (tag, words) ->
                 val node = compose.onNodeWithTag(tag).fetchSemanticsNode()
                 val density = node.layoutInfo.density.density
-                assertEquals(48f, node.size.width / density, 0.5f)
-                assertEquals(48f, node.size.height / density, 0.5f)
+                assertEquals(56f, node.size.width / density, 0.5f)
+                assertEquals(56f, node.size.height / density, 0.5f)
                 assertEquals(listOf(words.first), node.config[SemanticsProperties.ContentDescription])
                 assertEquals(words.second, AccessibilityChecks.clickActionLabel(node))
             }

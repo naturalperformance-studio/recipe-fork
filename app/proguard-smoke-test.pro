@@ -4,7 +4,7 @@
 # classes; R8 would otherwise remove or inline those members out from under it.
 #
 # Nothing here keeps what R8 could break for the application by itself — the Room implementations, the serializers,
-# the components of the manifest, CameraX's providers, Compose — and the application's classes are still renamed
+# the components of the manifest, the capture provider, Compose — and the application's classes are still renamed
 # (allowobfuscation), so a lookup by name that the release rules miss fails here as it would on the phone.
 
 # The test runner traces through androidx.tracing and waits through androidx.concurrent.futures.
@@ -17,7 +17,7 @@
 -keep class kotlinx.coroutines.** { *; }
 
 # The application's surface the smoke test drives: the container, the book, photographs, export and import, timers,
-# the camera, and the recipe it writes.
+# and the recipe it writes.
 -keep,allowobfuscation class app.recipefork.app.RecipeForkApplication { *; }
 -keep,allowobfuscation class app.recipefork.app.AppContainer { *; }
 -keep,allowobfuscation class app.recipefork.app.book.BookName, app.recipefork.app.book.BookName$* { *; }
@@ -32,10 +32,9 @@
 -keep,allowobfuscation class app.recipefork.app.file.ImportOutcome, app.recipefork.app.file.ImportOutcome$* { *; }
 -keep,allowobfuscation class app.recipefork.app.timer.RunningTimers, app.recipefork.app.timer.RunningTimer { *; }
 -keep,allowobfuscation class app.recipefork.app.timer.TimerKey, app.recipefork.app.timer.TimerRinging { *; }
--keep,allowobfuscation class app.recipefork.app.media.camera.CameraXAccess, app.recipefork.app.media.camera.OpenCamera, app.recipefork.app.media.camera.Shot { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Recipe, app.recipefork.core.recipe.Recipe$Companion { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.RecipeId, app.recipefork.core.recipe.RecipeId$Companion { *; }
--keep,allowobfuscation class app.recipefork.core.recipe.Ingredient, app.recipefork.core.recipe.IngredientReference { *; }
+-keep,allowobfuscation class app.recipefork.core.recipe.Ingredient, app.recipefork.core.recipe.IngredientReference, app.recipefork.core.recipe.IngredientShare { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Step, app.recipefork.core.recipe.Timer { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Media, app.recipefork.core.recipe.MediaAttachment, app.recipefork.core.recipe.MediaAttachment$* { *; }
 -keep,allowobfuscation class app.recipefork.core.scaling.Rational, app.recipefork.core.scaling.Rational$Companion { *; }

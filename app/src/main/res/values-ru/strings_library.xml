@@ -7,9 +7,12 @@
     <string name="library_view_own_action">Показать рецепты, написанные в этой книге</string>
     <string name="library_state_draft">Черновик</string>
     <string name="library_state_pending">Ждёт проверки</string>
+    <string name="library_state_pending_serverless">Пока не открыт всем</string>
     <string name="library_state_rejected">Отклонён</string>
     <string name="library_state_link_shared">Открыт по закрытой ссылке</string>
+    <string name="library_state_link_shared_serverless">Открыт тем, с кем вы им поделились</string>
     <string name="library_state_published">Опубликован</string>
+    <string name="library_state_published_serverless">Открыт всем</string>
     <string name="library_state_hidden">Скрыт</string>
     <string name="library_state_removed">Удалён</string>
     <string name="library_sent_never">Не отправлен: хранится только на этом устройстве и пропадёт вместе с ним</string>
@@ -43,6 +46,7 @@
     <string name="library_usual_more_action">Увеличить обычное число порций</string>
     <string name="library_usual_set">Задать</string>
     <string name="library_usual_clear">Не задавать</string>
+    <string name="library_drag_handle_right">Ручка перетаскивания справа</string>
     <!-- FLOW-035 (4): поле поиска над каждым видом и результат, в котором ничего нет. -->
     <string name="library_search">Поиск по названию или ингредиенту</string>
     <string name="library_search_clear">Очистить поиск</string>
@@ -71,5 +75,13 @@
     <string name="library_filter_tags_none">В словаре тегов пока нет ни одного тега.</string>
     <string name="library_filter_done">Готово</string>
     <string name="library_filter_cancel">Отмена</string>
+    <!-- The filter by a recipe's declared language (L10N-005). -->
+    <string name="library_filter_language">Язык</string>
+    <string name="library_filter_language_title">Фильтр по языку</string>
+    <string name="library_filter_language_hint">Покажутся рецепты, написанные на нём.</string>
+    <string name="library_filter_language_ru">Русский</string>
+    <string name="library_filter_language_en">Английский</string>
+    <string name="library_filter_language_none">Не указан</string>
+    <string name="library_filter_language_none_chip">Язык не указан</string>
     <string name="library_nothing_matches">Ни один рецепт не подходит под фильтры</string>
 </resources>

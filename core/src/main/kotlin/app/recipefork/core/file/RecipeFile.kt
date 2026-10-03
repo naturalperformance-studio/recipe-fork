@@ -2,6 +2,7 @@ package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityUnit
@@ -105,7 +106,13 @@ object RecipeFile {
     private fun Step.toDocument() = DocumentStep(
         position = position,
         text = text,
-        references = ingredientReferences.map { DocumentReference(it.ingredientPosition, it.textOffset) },
+        references = ingredientReferences.map { reference ->
+            DocumentReference(
+                reference.ingredientPosition,
+                reference.textOffset,
+                reference.share?.let { DocumentShare(fractionOf(it.amount), Names.unit.nameOf(it.unit)) },
+            )
+        },
         timer = timer?.let { DocumentTimer(it.duration.inWholeMinutes, it.label) },
     )
 
@@ -144,7 +151,13 @@ object RecipeFile {
     private fun DocumentStep.toStep() = Step(
         position = position,
         text = text,
-        ingredientReferences = references.map { IngredientReference(it.ingredientPosition, it.textOffset) },
+        ingredientReferences = references.map { reference ->
+            IngredientReference(
+                reference.ingredientPosition,
+                reference.textOffset,
+                reference.share?.let { IngredientShare(rationalOf(it.quantity), Names.unit.valueOf(it.unit)) },
+            )
+        },
         timer = timer?.let { Timer(it.minutes.minutes, it.label) },
     )
 

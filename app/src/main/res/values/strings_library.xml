@@ -9,9 +9,15 @@
     <!-- FLOW-036: the state on an own recipe's entry; local and private are both drafts. -->
     <string name="library_state_draft">Draft</string>
     <string name="library_state_pending">Awaiting review</string>
+    <!-- The same, in a build without the server (FLOW-062 (1)). -->
+    <string name="library_state_pending_serverless">Not yet open to everyone</string>
     <string name="library_state_rejected">Rejected</string>
     <string name="library_state_link_shared">Shared by private link</string>
+    <!-- The same, in a build without the server (FLOW-062 (1)). -->
+    <string name="library_state_link_shared_serverless">Open to those you shared it with</string>
     <string name="library_state_published">Published</string>
+    <!-- The same, in a build without the server, where nothing is published (FLOW-062 (1)). -->
+    <string name="library_state_published_serverless">Open to everyone</string>
     <string name="library_state_hidden">Hidden</string>
     <string name="library_state_removed">Removed</string>
     <!-- FLOW-005: the three sending marks. -->
@@ -54,6 +60,8 @@
     <string name="library_usual_more_action">Raise the usual serving count</string>
     <string name="library_usual_set">Set</string>
     <string name="library_usual_clear">Not set</string>
+    <!-- The drag column of the editor's steps and ingredients on the right of each block, for a left hand. -->
+    <string name="library_drag_handle_right">Drag handle on the right</string>
     <!-- FLOW-035 (4): the search field at the top of each view, and the result that holds nothing. -->
     <string name="library_search">Search by title or ingredient</string>
     <string name="library_search_clear">Clear the search</string>
@@ -82,5 +90,13 @@
     <string name="library_filter_tags_none">The tag dictionary holds no tags yet.</string>
     <string name="library_filter_done">Done</string>
     <string name="library_filter_cancel">Cancel</string>
+    <!-- The filter by a recipe's declared language (L10N-005). -->
+    <string name="library_filter_language">Language</string>
+    <string name="library_filter_language_title">Filter by language</string>
+    <string name="library_filter_language_hint">Recipes written in it are listed.</string>
+    <string name="library_filter_language_ru">Russian</string>
+    <string name="library_filter_language_en">English</string>
+    <string name="library_filter_language_none">Not given</string>
+    <string name="library_filter_language_none_chip">Language not given</string>
     <string name="library_nothing_matches">No recipe matches the filters</string>
 </resources>

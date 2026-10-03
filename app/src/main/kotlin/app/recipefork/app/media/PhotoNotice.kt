@@ -3,11 +3,11 @@ package app.recipefork.app.media
 import androidx.annotation.StringRes
 import app.recipefork.app.R
 
-/** What the author is told about a photograph they offered (MEDIA-005, MEDIA-006, MEDIA-008). */
+/**
+ * What the author is told about a photograph they offered (MEDIA-005, MEDIA-006, MEDIA-008): said at the bottom of the
+ * editor, and gone by itself. That one is being prepared is shown on the place it is for, not told.
+ */
 enum class PhotoNotice(@StringRes val text: Int) {
-    /** It is being processed. */
-    WORKING(R.string.media_working),
-
     /** It was attached, re-encoded and stripped of its data (MEDIA-005). */
     PROCESSED(R.string.media_processed),
 

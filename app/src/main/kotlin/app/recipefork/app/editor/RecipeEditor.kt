@@ -2,25 +2,33 @@ package app.recipefork.app.editor
 
 import android.content.res.Configuration
 import androidx.compose.runtime.saveable.Saver
+import app.recipefork.app.Mode
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
+import app.recipefork.app.data.DragHandleSide
+import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
+import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
+import app.recipefork.core.recipe.Bound
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShares
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
+import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.ReferenceSpacing
 import app.recipefork.core.recipe.ServingCountInput
 import app.recipefork.core.recipe.ServingCountReading
@@ -37,15 +45,25 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
+import java.io.File
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-/** What the editor needs beyond the recipes of the active book: the book itself, the dictionaries and a clock. */
+/**
+ * What the editor needs beyond the recipes of the active book: the book itself, the dictionaries, the side of the drag
+ * column and a clock.
+ */
 class EditorEnvironment(
     val book: ActiveBook,
     val tags: TagSource,
     /** The ingredient dictionary the ingredient field offers from (FLOW-057); the catalog that holds the tags holds it. */
     val ingredients: IngredientSource = tags as? IngredientSource ?: IngredientSource { emptyList() },
+    /** Which side of a block its drag column stands on (the left unless set otherwise). */
+    val dragHandleSide: DragHandleSide = HeldDragHandleSide(),
+    /** Where the editor keeps photographs, given the application's files directory; replaced in a test to hold one back. */
+    val photoStore: (File) -> PhotoStore = { PhotoStore(it) },
+    /** What the release is built as (FLOW-061): the editor says nothing of publication where nothing can be published. */
+    val mode: Mode = Mode.Standard,
     val clock: () -> Instant = Instant::now,
 )
 
@@ -212,8 +230,8 @@ class RecipeEditor(
     }
 
     /**
-     * The name the author gives the step's timer, kept in full however long (DOM-012 is enforced at submission, not
-     * while typing). An empty name gives none, and the name follows the step's text again (FLOW-027 (7), FLOW-016).
+     * The name the author gives the step's timer, kept in full however long (DOM-012 is enforced at submission and
+     * marked on leaving the field, never while typing — FLOW-028). An empty name gives none, and the name follows the step's text again (FLOW-027 (7), FLOW-016).
      */
     fun setTimerLabel(position: Int, label: String): Boolean {
         if (current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timer == null) return false
@@ -246,6 +264,21 @@ class RecipeEditor(
      */
     fun noteAction() {
         stating.value = null
+    }
+
+    /** Whether the references of GUIDE-008 were offered in this editing session. */
+    private var referencesOffered = false
+
+    /**
+     * The author begins the step at [position]. Returns whether to offer references (GUIDE-008): once an editing
+     * session, where it is the first step of an editable recipe holding an ingredient. No step's text is read to decide.
+     */
+    fun beginStep(position: Int): Boolean {
+        if (position != 0 || referencesOffered) return false
+        val recipe = current.value ?: return false
+        if (!recipe.state.editable || recipe.ingredients.isEmpty()) return false
+        referencesOffered = true
+        return true
     }
 
     /**
@@ -322,7 +355,45 @@ class RecipeEditor(
     /** What the author typed into the row's quantity field, kept whether or not the field holds it (DOM-017 (6)). */
     fun setIngredientQuantity(position: Int, typed: String) = editIngredient(position) { it.withTypedQuantity(typed) }
 
-    fun setIngredientUnit(position: Int, unit: QuantityUnit) = editIngredient(position) { it.withUnit(unit) }
+    /**
+     * The row's unit. A step's part of the row is kept while it still reads in the new unit — the same unit, or another
+     * `exact` unit of its dimension; otherwise every part of the row becomes a reference to its whole again, which
+     * [partsMadeWhole] states once. A change of the row's quantity never touches its parts.
+     */
+    fun setIngredientUnit(position: Int, unit: QuantityUnit): Boolean {
+        var madeWhole = false
+        val changed = edit { recipe ->
+            if (position !in recipe.ingredients.indices) return@edit recipe
+            val row = recipe.ingredients[position].withUnit(unit)
+            val steps = recipe.steps.map { step ->
+                step.copy(
+                    ingredientReferences = step.ingredientReferences.map { reference ->
+                        val share = reference.share
+                        if (reference.ingredientPosition == position && share != null && !IngredientShares.fits(share, row.unit)) {
+                            madeWhole = true
+                            reference.copy(share = null)
+                        } else {
+                            reference
+                        }
+                    },
+                )
+            }
+            recipe.copy(ingredients = recipe.ingredients.mapIndexed { i, it -> if (i == position) row else it }, steps = steps)
+        }
+        if (changed && madeWhole) wholeAgain.value = PartsMadeWhole(position, ++statements)
+        return changed
+    }
+
+    private val wholeAgain = MutableStateFlow<PartsMadeWhole?>(null)
+    private var statements = 0L
+
+    /** The last change of a row's unit that made its parts whole again, until the screen has stated it; null for none. */
+    val partsMadeWhole: StateFlow<PartsMadeWhole?> = wholeAgain.asStateFlow()
+
+    /** The screen has stated [statement]. */
+    fun partsMadeWholeStated(statement: PartsMadeWhole) {
+        wholeAgain.compareAndSet(statement, null)
+    }
 
     /** A `piece` row's divisibility, which the author is asked for (FLOW-022 (5)). */
     fun setIngredientDivisible(position: Int, divisible: Boolean) = editIngredient(position) { row ->
@@ -414,6 +485,59 @@ class RecipeEditor(
         return edit({ it.copy(media = it.media.filter { m -> m.mediaId != removed }) }) { written(removed) }
     }
 
+    // The minimum and the limits, marked on leaving a part (FLOW-028).
+
+    /** The parts the author left outside their bound, a step's by the step's key so the mark stays with the step. */
+    private val left = MutableStateFlow<Set<Left>>(emptySet())
+    private val marked = MutableStateFlow<Map<RecipePart, Bound>>(emptyMap())
+
+    /**
+     * Every part the author has left below DOM-006's minimum or over a limit of DOM-012 and has not completed since, with
+     * how it stands; a step's parts at the step's position now. A part never left is not here. Nothing is refused.
+     */
+    val marks: StateFlow<Map<RecipePart, Bound>> = marked.asStateFlow()
+
+    /**
+     * The author left [part]. It is marked if it is outside its bound, until it is completed; a step's part is held by
+     * the key of the step now at its position, as [leaveStep] holds it.
+     */
+    fun leave(part: RecipePart) = hold(
+        when (part) {
+            is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timerName = false)
+            is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timerName = true)
+            else -> Left.Whole(part)
+        },
+    )
+
+    /** The author left the text of the step whose [stepKey] is [key], or, [timerName], the name of its timer. */
+    fun leaveStep(key: Long, timerName: Boolean = false) = hold(Left.OfStep(key, timerName))
+
+    private fun hold(part: Left) {
+        val recipe = current.value ?: return
+        if (!recipe.state.editable || bound(part, recipe) == null) return
+        left.value = left.value + part
+        remark(recipe)
+    }
+
+    /** What is marked once [recipe] stands as it does: a part completed loses its mark and must be left again to regain it. */
+    private fun remark(recipe: Recipe) {
+        left.value = left.value.filterTo(mutableSetOf()) { bound(it, recipe) != null }
+        marked.value = left.value.mapNotNull { part -> part.at()?.let { at -> RecipeBounds.of(recipe, at)?.let { at to it } } }.toMap()
+    }
+
+    private fun bound(part: Left, recipe: Recipe): Bound? = part.at()?.let { RecipeBounds.of(recipe, it) }
+
+    /** The part [this] is at now; null for a step deleted since. */
+    private fun Left.at(): RecipePart? = when (this) {
+        is Left.Whole -> part
+        is Left.OfStep -> stepPosition(key)?.let { if (timerName) RecipePart.TimerName(it) else RecipePart.StepText(it) }
+    }
+
+    private sealed interface Left {
+        data class Whole(val part: RecipePart) : Left
+        data class OfStep(val key: Long, val timerName: Boolean) : Left
+    }
+
     /** Where the step whose [stepKey] is [key] stands now; null once it is deleted. */
     fun stepPosition(key: Long): Int? = stepKeys.positionOf(key)?.takeIf { it < (current.value?.steps?.size ?: 0) }
 
@@ -427,6 +551,7 @@ class RecipeEditor(
         noteAction()
         val next = recipe.edited(clock(), change)
         current.value = next
+        if (left.value.isNotEmpty()) remark(next)
         // Launched in order and queued on a fair lock, so the book receives the changes in the order made.
         saving.launch {
             writes.withLock { recipes.save(next) }
@@ -474,6 +599,9 @@ class RecipeEditor(
         private val writes = Mutex()
     }
 }
+
+/** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
+data class PartsMadeWhole(val ingredientPosition: Int, val serial: Long)
 
 /**
  * Keys for the rows of one list, each staying with its row while rows are inserted, moved or deleted around it. A

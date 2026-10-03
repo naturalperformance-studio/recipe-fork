@@ -3,6 +3,7 @@ package app.recipefork.core.timer
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepRun
+import app.recipefork.core.recipe.StepText
 import app.recipefork.core.recipe.Timer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,7 +35,7 @@ class TimerNameTest {
     }
 
     @Test
-    fun `a 61-character step whose 60th character ends a word keeps those 60, then the ellipsis`() {
+    fun `a step over 60 characters whose 60th character ends a word keeps those 60, then the ellipsis`() {
         val first = "word ".repeat(11) + "abcde" // 60 characters, ending in a whole word
         assertEquals(60, first.length)
         assertEquals("$first…", TimerName.derived("$first z"))
@@ -110,7 +111,7 @@ class TimerNameTest {
 
 class TimerNameWithReferencesTest {
     private val quantities = mapOf(0 to "200 г", 1 to "по вкусу")
-    private fun name(step: Step) = TimerName.of(step) { quantities[it] }
+    private fun name(step: Step) = TimerName.of(step) { quantities[it.ingredientPosition] }
 
     // FLOW-016 (8): a reference within the first 60 characters reads as the screen shows it.
     @Test
@@ -210,5 +211,77 @@ class TimerNameHoldsTest {
         val plain = Step(0, "Bring the water to the boil", timer = Timer(10.minutes))
         assertTrue(TimerName.holds(plain, "Bring the water to the boil", null))
         assertFalse(TimerName.holds(plain, "Bring the water", null))
+    }
+}
+
+/** What decides whether the editor shows a step's notification when the author leaves it (GUIDE-006). */
+class TimerNameReadingTest {
+    private val quantities = mapOf(0 to "200 г")
+    private fun reading(step: Step) = TimerName.reading(StepText.runs(step) { quantities[it.ingredientPosition] })
+    private fun reading(text: String) = TimerName.reading(listOf(StepRun.Typed(text)))
+
+    @Test
+    fun `59 and 60 characters with no reference are neither cut nor may be`() {
+        listOf(59, 60).forEach { length ->
+            val text = "a".repeat(10) + " " + "b".repeat(length - 11)
+            assertEquals(length, text.length)
+            val read = reading(text)
+            assertEquals(TimerName.Reading(text, cut = false, referenceInOpening = false, referenceShown = false), read)
+            assertFalse(read.mayBeCut)
+        }
+    }
+
+    @Test
+    fun `61 characters with no reference are cut`() {
+        val text = "a".repeat(10) + " " + "b".repeat(50)
+        assertEquals(61, text.length)
+        val read = reading(text)
+        assertTrue(read.cut)
+        assertTrue(read.mayBeCut)
+        assertFalse(read.referenceInOpening)
+        assertEquals("a".repeat(10) + TimerName.ELLIPSIS, read.name)
+        assertTrue(read.name.endsWith(TimerName.ELLIPSIS))
+    }
+
+    @Test
+    fun `over 60 characters is cut, and the name is the derived one`() {
+        val text = "Bake the chicken in the oven at 190 degrees until the skin is golden and crisp"
+        val read = reading(text)
+        assertTrue(read.cut && read.mayBeCut)
+        assertEquals(TimerName.derived(text), read.name)
+        assertFalse(read.referenceShown)
+        val twoHundred = "word ".repeat(40).trimEnd()
+        assertTrue(reading(twoHundred).mayBeCut)
+        assertEquals(TimerName.derived(twoHundred), reading(twoHundred).name)
+    }
+
+    @Test
+    fun `a short step opening with a reference may be cut at a reader's larger count`() {
+        val text = " муки всыпать и хорошенько перемешать до гладкости" // 55 characters rendered
+        val step = Step(0, text, listOf(IngredientReference(0, 0)), Timer(5.minutes))
+        val read = reading(step)
+        assertEquals(55, read.name.length)
+        assertFalse(read.cut)
+        assertTrue(read.referenceInOpening && read.referenceShown && read.mayBeCut)
+    }
+
+    @Test
+    fun `a reference beyond the first 60 characters of a long step is neither in the opening nor shown`() {
+        val before = "word ".repeat(14) // 70 characters
+        val step = Step(0, "$before муки", listOf(IngredientReference(0, before.length)), Timer(5.minutes))
+        val read = reading(step)
+        assertTrue(read.cut)
+        assertFalse(read.referenceInOpening)
+        assertFalse(read.referenceShown)
+    }
+
+    @Test
+    fun `a reference across the cut is in the opening but not in the name shown`() {
+        val before = "a".repeat(10) + " " + "b".repeat(45) + " " // 57 characters, then "200 г" across the cut
+        val step = Step(0, "$before муки", listOf(IngredientReference(0, before.length)), Timer(5.minutes))
+        val read = reading(step)
+        assertEquals(before.trimEnd() + TimerName.ELLIPSIS, read.name)
+        assertTrue(read.referenceInOpening)
+        assertFalse(read.referenceShown)
     }
 }

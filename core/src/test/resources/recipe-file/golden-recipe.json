@@ -85,7 +85,11 @@
                 "references": [
                     {
                         "ingredient_position": 3,
-                        "text_offset": 14
+                        "text_offset": 14,
+                        "share": {
+                            "quantity": "1/4",
+                            "unit": "tablespoon"
+                        }
                     },
                     {
                         "ingredient_position": 1,

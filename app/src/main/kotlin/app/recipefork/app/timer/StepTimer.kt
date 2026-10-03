@@ -3,7 +3,7 @@ package app.recipefork.app.timer
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -31,7 +31,9 @@ import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.book.BookName
+import app.recipefork.app.card.CardTarget
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.timer.TimerName
 import kotlinx.coroutines.CoroutineScope
@@ -231,7 +233,7 @@ internal data class Restart(val step: Step, val name: String)
 fun StepTimer(
     step: Step,
     timers: RecipeTimers,
-    quantity: (ingredientPosition: Int) -> String?,
+    quantity: ReferenceQuantity,
     modifier: Modifier = Modifier,
 ) {
     val timer = step.timer ?: return
@@ -245,11 +247,14 @@ fun StepTimer(
         finished -> stringResource(R.string.timer_finished)
         else -> remainingText(held.remaining(now))
     }
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Row(
+    // The control first, then its actions; where they do not fit beside it — a long name, a large font, a narrow
+    // screen — the actions wrap under it, and the status under the name, each whole (A11Y-004).
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        FlowRow(
             Modifier
                 .weight(1f)
-                .heightIn(min = 48.dp)
+                .align(Alignment.CenterVertically)
+                .heightIn(min = CardTarget)
                 .clickable(
                     onClickLabel = stringResource(R.string.timer_start_action),
                     role = Role.Button,
@@ -257,18 +262,18 @@ fun StepTimer(
                 )
                 .testTag(TimerTags.start(step.position)),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 name,
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.align(Alignment.CenterVertically),
             )
             Text(
                 status,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.testTag(TimerTags.status(step.position)),
+                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.status(step.position)),
             )
         }
         if (finished && timers.rings(step)) {
@@ -276,7 +281,7 @@ fun StepTimer(
                 text = stringResource(R.string.timer_stop),
                 action = stringResource(R.string.timer_stop_action),
                 onClick = { timers.stopRinging(step) },
-                modifier = Modifier.testTag(TimerTags.stop(step.position)),
+                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.stop(step.position)),
             )
         }
         if (held != null) {
@@ -284,7 +289,7 @@ fun StepTimer(
                 text = stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel),
                 action = stringResource(if (finished) R.string.timer_clear_action else R.string.timer_cancel_action),
                 onClick = { timers.cancel(step) },
-                modifier = Modifier.testTag(TimerTags.cancel(step.position)),
+                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.cancel(step.position)),
             )
         }
     }
@@ -313,26 +318,26 @@ fun RestartQuestion(timers: RecipeTimers) {
         confirmButton = {
             TextButton(
                 onClick = timers::confirmRestart,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(TimerTags.RESTART_CONFIRM),
+                modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(TimerTags.RESTART_CONFIRM),
             ) { Text(stringResource(R.string.timer_restart_confirm)) }
         },
         dismissButton = {
             TextButton(
                 onClick = timers::declineRestart,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(TimerTags.RESTART_DECLINE),
+                modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(TimerTags.RESTART_DECLINE),
             ) { Text(stringResource(R.string.timer_restart_decline)) }
         },
         modifier = Modifier.testTag(TimerTags.RESTART_QUESTION),
     )
 }
 
-/** An action beside a started timer, at least 48 by 48 dp (A11Y-003), announced as what it does (A11Y-005). */
+/** An action beside a started timer, at least the card's [CardTarget] square (A11Y-003, A11Y-007), announced as what it does (A11Y-005). */
 @Composable
 private fun TimerAction(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .heightIn(min = 48.dp)
-            .widthIn(min = 48.dp)
+            .heightIn(min = CardTarget)
+            .widthIn(min = CardTarget)
             .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,

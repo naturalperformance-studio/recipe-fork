@@ -7,20 +7,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.book.BookName
@@ -37,10 +33,8 @@ import kotlinx.coroutines.CoroutineScope
 internal class StepPhotos(val store: PhotoStore, val book: BookName, val saving: CoroutineScope)
 
 @Composable
-internal fun rememberStepPhotos(book: BookName, saving: CoroutineScope): StepPhotos {
-    val context = LocalContext.current
-    return remember(context, book, saving) { StepPhotos(PhotoStore(context.applicationContext.filesDir), book, saving) }
-}
+internal fun rememberStepPhotos(store: PhotoStore, book: BookName, saving: CoroutineScope): StepPhotos =
+    remember(store, book, saving) { StepPhotos(store, book, saving) }
 
 /**
  * Attaches a photograph to the step whose key is [key], wherever that step stands once the photograph is ready; a step
@@ -62,8 +56,9 @@ internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photo
     val sources = rememberPhotoSources(
         key = STEP_KEY + key,
         onPhoto = { attaching.attach(it) },
-        onUnavailable = { attaching.notice.value = PhotoNotice.UNAVAILABLE },
+        onUnavailable = { attaching.tell(PhotoNotice.UNAVAILABLE) },
     )
+    SaysPhotoNotices(attaching)
     return StepPhotoControl(attaching, sources)
 }
 
@@ -114,34 +109,34 @@ internal fun StepPhotoAction(position: Int, photo: Media?, control: StepPhotoCon
 }
 
 /**
- * Under the step's row of actions, only when there is something to show: its photograph, and what the author is told
- * about the last one offered, as the cover tells it.
+ * Under the step's row of actions, only when there is something to show: its photograph, with a small indicator on it
+ * while one offered is being prepared — or the indicator alone, where the step has none yet. What the author is told
+ * about it is said at the bottom of the editor, not here.
  */
 @Composable
 internal fun StepPhotoShown(position: Int, photo: Media?, photos: StepPhotos, control: StepPhotoControl) {
-    val notice by control.attaching.notice
-    if (photo != null) StepPhotoImage(position, photo, photos)
-    notice?.let {
-        Text(
-            stringResource(it.text),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .padding(horizontal = 12.dp)
-                .semantics { liveRegion = LiveRegionMode.Polite }
-                .testTag(EditorTags.stepPhotoNotice(position)),
-        )
+    val working by control.attaching.working
+    if (photo != null) {
+        StepPhotoImage(position, photo, photos, working)
+    } else if (working) {
+        PhotoWorking(Modifier.padding(horizontal = 12.dp, vertical = 4.dp).testTag(EditorTags.stepPhotoWorking(position)))
     }
 }
 
-/** The step's photograph, named for the screen reader by the step's number. */
+/** The step's photograph, named for the screen reader by the step's number; [working] while another is prepared. */
 @Composable
-internal fun StepPhotoImage(position: Int, photo: Media, photos: StepPhotos) {
+internal fun StepPhotoImage(position: Int, photo: Media, photos: StepPhotos, working: Boolean = false) {
     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        PhotoImage(
-            photos.store.file(photos.book, photo.mediaId),
-            stringResource(R.string.media_step_description, position + 1),
-            Modifier.testTag(EditorTags.stepPhotoImage(position)),
-        )
+        Box(Modifier.fillMaxWidth()) {
+            PhotoImage(
+                photos.store.file(photos.book, photo.mediaId),
+                stringResource(R.string.media_step_description, position + 1),
+                Modifier.testTag(EditorTags.stepPhotoImage(position)),
+            )
+            if (working) {
+                PhotoWorking(Modifier.align(Alignment.TopEnd).padding(8.dp).testTag(EditorTags.stepPhotoWorking(position)))
+            }
+        }
     }
 }
 

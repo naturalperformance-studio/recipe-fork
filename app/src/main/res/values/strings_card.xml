@@ -7,6 +7,10 @@
     <string name="card_edit_action">Open this recipe in the editor</string>
     <string name="card_fork">Fork</string>
     <string name="card_fork_action">Make an editable copy of this recipe</string>
+    <!-- Forking a recipe of which the book holds a fork nothing has changed since it was made (FLOW-015). -->
+    <string name="card_fork_held">You already have a fork of this recipe, unchanged since you made it.</string>
+    <string name="card_fork_held_open">Open it</string>
+    <string name="card_fork_held_another">Make another</string>
     <!-- A fork's provenance area (FORK-003, FORK-004): its one direct parent. -->
     <string name="card_parent">Forked from “%1$s”</string>
     <string name="card_parent_open_action">Open the recipe this one was forked from</string>
@@ -40,6 +44,9 @@
     <string name="card_unnamed_ingredient">Unnamed ingredient</string>
     <!-- The recipe is no longer in the active book. -->
     <string name="card_missing">This recipe is no longer in this recipe book.</string>
+    <!-- FLOW-020 (3): the recipe could not be read from the device; it is not said to be gone. -->
+    <string name="card_unreadable">This recipe could not be loaded.</string>
+    <string name="card_retry">Try again</string>
     <!-- The serving count while a fixed ingredient sets the scale (SCALE-002, SCALE-008): computed, so approximate. -->
     <string name="card_servings_approximate">Servings: ≈%1$s</string>
     <!-- Fixing the amount the reader has of one ingredient (SCALE-002, SCALE-006, SCALE-018). -->

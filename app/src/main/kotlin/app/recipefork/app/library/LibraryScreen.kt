@@ -61,9 +61,13 @@ import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.IngredientEntries
+import app.recipefork.app.card.ForkAsked
+import app.recipefork.app.card.HeldForkDialog
 import app.recipefork.app.card.forkRecipe
+import app.recipefork.app.card.forkUnlessHeld
 import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
+import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.EditorEnvironment
@@ -79,6 +83,7 @@ import app.recipefork.app.file.FileMessageDialog
 import app.recipefork.app.file.message
 import app.recipefork.app.file.importSafely
 import app.recipefork.app.recipe.BookFilters
+import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.ListingParams
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.dictionary.TagSource
@@ -111,7 +116,7 @@ const val OWN_PAGE = 30
  * line; the list's header and its entries stay apart.
  *
  * The book's menu, beside its title, holds the serving count the reader usually cooks for (FLOW-017), which every
- * card opens at.
+ * card opens at, and the side the editor's drag column stands on.
  *
  * What became of a file — an import's outcome, a failed export — is said in a dialog over whatever is shown, until it
  * is closed.
@@ -127,6 +132,7 @@ fun LibraryScreen(
     files: RecipeImport = rememberRecipeImport(recipes),
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
     usualServings: UsualServings = card.usualServings,
+    dragHandleSide: DragHandleSide = editor.dragHandleSide,
 ) {
     val message by session.message.collectAsState()
     message?.let { FileMessageDialog(it, onDone = session::told) }
@@ -139,24 +145,42 @@ fun LibraryScreen(
     viewing?.let { id ->
         // One fork per tap: a second tap while the first is being written adds none.
         var forking by remember(id) { mutableStateOf(false) }
+        // An unchanged fork the book already holds, offered in place of a new one (FLOW-015).
+        var held by rememberSaveable(id) { mutableStateOf<String?>(null) }
+        fun fork(another: Boolean) {
+            if (forking) return
+            forking = true
+            session.viewModelScope.launch {
+                // The editor opens on the fork; leaving it shows the fork's card (FLOW-029 (1)).
+                // The guard stays up once a fork is written: a tap landing before the editor replaces the
+                // card must not write a second one. Only a fork that was not written lets the card try again.
+                val parent = RecipeId(id)
+                val asked = if (another) {
+                    forkRecipe(recipes, editor.book, parent, editor.clock())?.let(ForkAsked::Made)
+                } else {
+                    forkUnlessHeld(recipes, editor.book, parent, editor.clock())
+                }
+                when (asked) {
+                    is ForkAsked.Made -> session.openEditor(asked.fork.value)
+                    is ForkAsked.Held -> { held = asked.fork.value; forking = false }
+                    null -> forking = false
+                }
+            }
+        }
+        held?.let { offered ->
+            HeldForkDialog(
+                onOpen = { held = null; session.openEditor(offered) },
+                onAnother = { held = null; fork(another = true) },
+                onDismiss = { held = null },
+            )
+        }
         CardScreen(
             RecipeId(id), recipes, card,
             onBack = session::closeCard,
             onEdit = { session.openEditor(id) },
             // The screen stays on while the card is shown, and is left to the device once it is not (FLOW-014).
             modifier = modifier.keepScreenAwake(),
-            onFork = {
-                if (!forking) {
-                    forking = true
-                    session.viewModelScope.launch {
-                        // The editor opens on the fork; leaving it shows the fork's card (FLOW-029 (1)).
-                        // The guard stays up once a fork is written: a tap landing before the editor replaces the
-                        // card must not write a second one. Only a fork that was not written lets the card try again.
-                        val fork = forkRecipe(recipes, editor.book, RecipeId(id), editor.clock())
-                        if (fork != null) session.openEditor(fork.value) else forking = false
-                    }
-                }
-            },
+            onFork = { fork(another = false) },
             onOpenParent = { parent -> session.openCard(parent.value) },
             session = session.cards,
         )
@@ -172,7 +196,7 @@ fun LibraryScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.weight(1f).padding(16.dp).semantics { heading() }.testTag(LibraryTags.TITLE),
             )
-            BookMenu(usualServings, Modifier.padding(end = 8.dp))
+            BookMenu(usualServings, dragHandleSide, Modifier.padding(end = 8.dp))
         }
         // The switch sits above the list and never scrolls with it (FLOW-034 (1)).
         Row(Modifier.fillMaxWidth().selectableGroup().testTag(LibraryTags.SWITCH)) {
@@ -280,7 +304,7 @@ private fun OwnList(
             HorizontalDivider()
             ListHeader(
                 search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
-                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices,
+                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages,
             )
             HorizontalDivider()
         }
@@ -363,11 +387,11 @@ private fun OwnEntry(
         if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onExport))
         if (row.state in DELETABLE) add(EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), onDelete))
     }
-    EntryWithActions(row.recipeId, row.title, actions) { modifier -> EntryText(row, cover, onOpen, modifier) }
+    EntryWithActions(row.recipeId, row.title, actions) { modifier -> EntryText(row, mode, cover, onOpen, modifier) }
 }
 
 @Composable
-private fun EntryText(row: OwnRecipeRow, cover: EntryCover, onOpen: () -> Unit, modifier: Modifier) {
+private fun EntryText(row: OwnRecipeRow, mode: Mode, cover: EntryCover, onOpen: () -> Unit, modifier: Modifier) {
     Row(
         modifier
             .heightIn(min = 48.dp)
@@ -378,17 +402,18 @@ private fun EntryText(row: OwnRecipeRow, cover: EntryCover, onOpen: () -> Unit, 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         cover(row.coverId, LibraryTags.cover(row.recipeId))
-        Column(Modifier.weight(1f)) { EntryLines(row) }
+        Column(Modifier.weight(1f)) { EntryLines(row, mode) }
     }
 }
 
 @Composable
-private fun EntryLines(row: OwnRecipeRow) {
+private fun EntryLines(row: OwnRecipeRow, mode: Mode) {
     EntryTitle(row.recipeId, row.title)
     // The state is named in words, never carried by colour alone (A11Y-008).
-    Text(stringResource(stateLabel(row.state)), style = MaterialTheme.typography.labelLarge)
-    // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005).
-    Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
+    Text(stringResource(stateLabel(row.state, mode)), style = MaterialTheme.typography.labelLarge)
+    // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005); a build without the
+    // server sends nothing, so it shows none (FLOW-062 (1)).
+    if (mode == Mode.Standard) Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
 }
 
 /** An entry's title, which tells the entry's menu where its first line stands ([TitleLine]). */
@@ -640,7 +665,7 @@ private fun MarkedList(
         if (shown != null && (!shown.viewIsEmpty || shown.narrowed)) {
             ListHeader(
                 search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
-                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices,
+                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages,
             )
             HorizontalDivider()
         }
@@ -803,14 +828,17 @@ fun removeFound(files: RecipeImport, timers: CardTimers, id: RecipeId) {
     }
 }
 
-/** The marker of FLOW-036: `local` and `private` are both a draft. */
+/**
+ * The marker of FLOW-036: `local` and `private` are both a draft. In [Mode.Serverless] a recipe keeps the last state
+ * the device knew (FLOW-062 (5)), worded with nothing of publication, review or a private link.
+ */
 @StringRes
-fun stateLabel(state: RecipeState): Int = when (state) {
+fun stateLabel(state: RecipeState, mode: Mode): Int = when (state) {
     RecipeState.LOCAL, RecipeState.PRIVATE -> R.string.library_state_draft
-    RecipeState.PENDING -> R.string.library_state_pending
+    RecipeState.PENDING -> if (mode == Mode.Serverless) R.string.library_state_pending_serverless else R.string.library_state_pending
     RecipeState.REJECTED -> R.string.library_state_rejected
-    RecipeState.LINK_SHARED -> R.string.library_state_link_shared
-    RecipeState.PUBLISHED -> R.string.library_state_published
+    RecipeState.LINK_SHARED -> if (mode == Mode.Serverless) R.string.library_state_link_shared_serverless else R.string.library_state_link_shared
+    RecipeState.PUBLISHED -> if (mode == Mode.Serverless) R.string.library_state_published_serverless else R.string.library_state_published
     RecipeState.REPORTED_HIDDEN -> R.string.library_state_hidden
     RecipeState.REMOVED -> R.string.library_state_removed
 }
@@ -834,6 +862,7 @@ object LibraryTags {
     const val USUAL_MORE = "library-usual-more"
     const val USUAL_SET = "library-usual-set"
     const val USUAL_CLEAR = "library-usual-clear"
+    const val HANDLE_RIGHT = "library-handle-right"
     const val SWITCH = "library-switch"
     const val OWN_LIST = "library-own"
     const val MARKED_LIST = "library-marked"
@@ -859,6 +888,12 @@ object LibraryTags {
     const val FILTER_ADD = "library-filter-add"
     const val FILTER_BY_INGREDIENT = "library-filter-by-ingredient"
     const val FILTER_BY_TAGS = "library-filter-by-tags"
+    const val FILTER_BY_LANGUAGE = "library-filter-by-language"
+    /** The chooser of the language filter, and each language it offers (L10N-005). */
+    const val LANGUAGE_CHOOSER = "library-language-chooser"
+    fun languageChoice(language: BookLanguage) = "library-language-choice-${language.name}"
+    /** The chip of the language filter in force; tapping it removes the filter. */
+    const val LANGUAGE_FILTER = "library-language-filter"
     const val FILTERS_CLEAR = "library-filters-clear"
     /** The chip of the ingredient filter in force; tapping it removes the filter. */
     const val INGREDIENT_FILTER = "library-ingredient-filter"

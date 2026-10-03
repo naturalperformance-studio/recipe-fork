@@ -5,11 +5,13 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -29,13 +31,17 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,12 +65,18 @@ import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
-/** What the card has of its recipe: nothing yet, the recipe, or word that the book no longer holds it. */
+/**
+ * What the card has of its recipe: nothing yet, the recipe, word that the book no longer holds it, or word that it
+ * could not be read from the device.
+ */
 private sealed interface CardContent {
     data object Loading : CardContent
     data object Missing : CardContent
+    data object Unreadable : CardContent
     data class Shown(val recipe: Recipe) : CardContent
 }
 
@@ -93,8 +105,15 @@ fun CardScreen(
     onOpenParent: (RecipeId) -> Unit = {},
     session: CardSession = remember { TextCardSession.inMemory() },
 ) {
-    val content by remember(recipeId, recipes) {
-        recipes.observe(recipeId).map { recipe -> recipe?.let(CardContent::Shown) ?: CardContent.Missing }
+    // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
+    // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
+    // until it is read.
+    var attempt by remember(recipeId, recipes) { mutableIntStateOf(0) }
+    val content by remember(recipeId, recipes, attempt) {
+        recipes.observe(recipeId)
+            .map<Recipe?, CardContent> { recipe -> recipe?.let(CardContent::Shown) ?: CardContent.Missing }
+            .onStart { emit(CardContent.Loading) }
+            .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(CardContent.Unreadable) else throw failure }
     }.collectAsState(initial = CardContent.Loading)
     var entries by remember(environment) { mutableStateOf<Map<Long, IngredientEntryEntity>?>(null) }
     LaunchedEffect(environment) {
@@ -127,6 +146,7 @@ fun CardScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
             )
+            CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
             is CardContent.Shown -> entries?.let {
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
                 RecipeContent(shown.recipe, it, recipes, environment.usualServings.count.value, session, onOpenParent)
@@ -135,12 +155,29 @@ fun CardScreen(
     }
 }
 
-/** The screen's bar: back on one side, the recipe's actions on the other — fork on any recipe shown, edit beside it. */
+/** The word that the recipe could not be read from the device, and the offer to read it again (FLOW-020 (3)). */
+@Composable
+private fun Unreadable(onRetry: () -> Unit) {
+    Column(Modifier.padding(16.dp).testTag(CardTags.UNREADABLE)) {
+        Text(stringResource(R.string.card_unreadable), style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(8.dp))
+        Button(
+            onClick = onRetry,
+            modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.RETRY),
+        ) { Text(stringResource(R.string.card_retry)) }
+    }
+}
+
+/**
+ * The screen's bar: back on one side, the recipe's actions on the other — fork on any recipe shown, edit beside it.
+ * Where they do not fit on one line — a large font, a narrow screen — the recipe's actions wrap below back, and edit
+ * below fork, each action whole and never squeezed (A11Y-003 (2), A11Y-004).
+ */
 @Composable
 private fun TopBar(shown: Boolean, editable: Boolean, onBack: () -> Unit, onFork: () -> Unit, onEdit: () -> Unit) {
-    Row(
+    FlowRow(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp).testTag(CardTags.BAR),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         BarAction(
             text = stringResource(R.string.card_back),
@@ -148,22 +185,23 @@ private fun TopBar(shown: Boolean, editable: Boolean, onBack: () -> Unit, onFork
             onClick = onBack,
             modifier = Modifier.testTag(CardTags.BACK),
         )
-        Spacer(Modifier.weight(1f))
         if (shown) {
-            BarAction(
-                text = stringResource(R.string.card_fork),
-                action = stringResource(R.string.card_fork_action),
-                onClick = onFork,
-                modifier = Modifier.testTag(CardTags.FORK),
-            )
-        }
-        if (editable) {
-            BarAction(
-                text = stringResource(R.string.card_edit),
-                action = stringResource(R.string.card_edit_action),
-                onClick = onEdit,
-                modifier = Modifier.testTag(CardTags.EDIT),
-            )
+            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
+                BarAction(
+                    text = stringResource(R.string.card_fork),
+                    action = stringResource(R.string.card_fork_action),
+                    onClick = onFork,
+                    modifier = Modifier.testTag(CardTags.FORK),
+                )
+                if (editable) {
+                    BarAction(
+                        text = stringResource(R.string.card_edit),
+                        action = stringResource(R.string.card_edit_action),
+                        onClick = onEdit,
+                        modifier = Modifier.testTag(CardTags.EDIT),
+                    )
+                }
+            }
         }
     }
 }
@@ -327,7 +365,7 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
         is ParentContent.Held -> Box(
             Modifier
                 .fillMaxWidth()
-                .heightIn(min = 48.dp)
+                .heightIn(min = CardTarget)
                 .clickable(
                     onClickLabel = stringResource(R.string.card_parent_open_action),
                     role = Role.Button,
@@ -403,7 +441,7 @@ private fun ServingsControl(
 }
 
 /**
- * A − or + action, 48 by 48 dp (A11Y-003): the screen reader names it by [name] rather than by its glyph, and
+ * A − or + action, the card's [CardTarget] square (A11Y-003, A11Y-007): the screen reader names it by [name] rather than by its glyph, and
  * announces its click as [action] (A11Y-005).
  */
 @Composable
@@ -417,7 +455,7 @@ private fun StepAction(
 ) {
     Box(
         modifier
-            .size(48.dp)
+            .size(CardTarget)
             .clickable(enabled = enabled, onClickLabel = action, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = name },
         contentAlignment = Alignment.Center,
@@ -435,15 +473,15 @@ private const val MINUS = "\u2212"
 private const val PLUS = "+"
 
 /**
- * An action of the bar, at least 48 by 48 dp (A11Y-003), whose click the screen reader announces as what it
+ * An action of the bar, at least the card's [CardTarget] square (A11Y-003, A11Y-007), whose click the screen reader announces as what it
  * does — [action] — beside the visible [text] (A11Y-005).
  */
 @Composable
 private fun BarAction(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .heightIn(min = 48.dp)
-            .widthIn(min = 48.dp)
+            .heightIn(min = CardTarget)
+            .widthIn(min = CardTarget)
             .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
@@ -452,7 +490,33 @@ private fun BarAction(text: String, action: String, onClick: () -> Unit, modifie
     }
 }
 
+/**
+ * Said when the reader forks a recipe of which they already hold an unchanged fork (FLOW-015): they may open that
+ * fork, or make another anyway; dismissing it makes nothing.
+ */
+@Composable
+fun HeldForkDialog(onOpen: () -> Unit, onAnother: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(CardTags.FORK_HELD),
+        text = { Text(stringResource(R.string.card_fork_held)) },
+        confirmButton = {
+            TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(CardTags.FORK_HELD_OPEN)) {
+                Text(stringResource(R.string.card_fork_held_open))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onAnother, modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(CardTags.FORK_HELD_ANOTHER)) {
+                Text(stringResource(R.string.card_fork_held_another))
+            }
+        },
+    )
+}
+
 object CardTags {
+    const val FORK_HELD = "card-fork-held"
+    const val FORK_HELD_OPEN = "card-fork-held-open"
+    const val FORK_HELD_ANOTHER = "card-fork-held-another"
     const val SCREEN = "card"
     const val BAR = "card-bar"
     const val BACK = "card-back"
@@ -461,6 +525,8 @@ object CardTags {
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
     const val MISSING = "card-missing"
+    const val UNREADABLE = "card-unreadable"
+    const val RETRY = "card-retry"
     const val CONTENT = "card-content"
     const val TITLE = "card-title"
     const val COVER = "card-cover"

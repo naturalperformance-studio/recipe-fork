@@ -2,7 +2,7 @@
 # The device test of the build the owner installs by hand: the minified, resource-shrunk serverless release
 # (app/build.gradle.kts, release) on a headless emulator at API 29 (QUAL-005), as scripts/device-test.sh boots it.
 # Runs ReleaseSmokeTest against it — its test APK mapped by R8 onto the shrunk application — so a class R8 removed
-# from under Room, kotlinx.serialization, CameraX, the timers' service and receivers or Compose fails here, not on
+# from under Room, kotlinx.serialization, the capture provider, the timers' service and receivers or Compose fails here, not on
 # the phone. Any extra arguments go to Gradle.
 set -euo pipefail
 cd "$(dirname "$0")/.."

@@ -12,13 +12,22 @@ sealed interface StepRun {
 
     data class Typed(override val text: String) : StepRun
 
-    /** The reference to the ingredient at [ingredientPosition], reading [text] (FLOW-032). */
-    data class Reference(val ingredientPosition: Int, override val text: String) : StepRun
+    /**
+     * The reference to the ingredient at [ingredientPosition], reading [text] (FLOW-032): its whole quantity, or the
+     * part [share] of it.
+     */
+    data class Reference(val ingredientPosition: Int, override val text: String, val share: IngredientShare? = null) : StepRun
 }
 
 /**
+ * What a reference reads as: the text a screen gives [IngredientReference] — its ingredient's whole quantity or the
+ * reference's part of it — or null for a reference to no ingredient of the recipe.
+ */
+typealias ReferenceQuantity = (reference: IngredientReference) -> String?
+
+/**
  * A step's text with its ingredient references in place (FLOW-032). The step's own text never holds a quantity: a
- * reference sits at an offset in it and reads as whatever a quantity formatter gives for its ingredient — the
+ * reference sits at an offset in it and reads as whatever a quantity formatter gives for it — the
  * authored quantity in the editor ([ReferenceText.authored]), the scaled one on the card. One rendering for every
  * screen, so a step reads the same wherever it is shown at the same scale (SCALE-007, DOM-007).
  */
@@ -28,15 +37,15 @@ object StepText {
      * [quantity] gives it. A reference [quantity] gives nothing for — one to no ingredient of the recipe — is left
      * out, and the text around it reads as typed. An offset beyond the text places the reference at its end.
      */
-    fun runs(step: Step, quantity: (ingredientPosition: Int) -> String?): List<StepRun> {
+    fun runs(step: Step, quantity: ReferenceQuantity): List<StepRun> {
         val text = step.text
         val runs = mutableListOf<StepRun>()
         var at = 0
         for (reference in step.ingredientReferences.sortedBy { it.textOffset }) {
-            val shown = quantity(reference.ingredientPosition) ?: continue
+            val shown = quantity(reference) ?: continue
             val offset = reference.textOffset.coerceIn(at, text.length)
             if (offset > at) runs += StepRun.Typed(text.substring(at, offset))
-            runs += StepRun.Reference(reference.ingredientPosition, shown)
+            runs += StepRun.Reference(reference.ingredientPosition, shown, reference.share)
             at = offset
         }
         if (at < text.length) runs += StepRun.Typed(text.substring(at))
@@ -44,7 +53,7 @@ object StepText {
     }
 
     /** [step] as one string, each reference read as [quantity] gives it. */
-    fun render(step: Step, quantity: (ingredientPosition: Int) -> String?): String =
+    fun render(step: Step, quantity: ReferenceQuantity): String =
         runs(step, quantity).joinToString("") { it.text }
 }
 
@@ -70,7 +79,22 @@ object ReferenceText {
         return if (unit == null) quantity else "$quantity $unit"
     }
 
+    /**
+     * The part [share] of [ingredient] at the authored scale in [language], written as the whole is ("2 шт", "1,5 кг");
+     * a value the grid does not hold reads as the quantity field writes it. A share that no longer fits the row's unit
+     * ([IngredientShares.fits]) reads as the whole.
+     */
+    fun authored(ingredient: Ingredient, share: IngredientShare?, language: InterfaceLanguage): String {
+        if (share == null || !IngredientShares.fits(share, ingredient.unit)) return authored(ingredient, language)
+        IngredientShares.display(share, ingredient, ScaleFactor.ONE)?.let { shown ->
+            runCatching { QuantityText.of(shown, language) }.getOrNull()?.let { return it }
+        }
+        return "${QuantityInput.write(share.amount, share.unit, language)} ${UnitLabels.of(share.unit, language)}"
+    }
+
     /** The authored-scale formatter for the references of a recipe holding [ingredients]: null for no such row. */
-    fun authored(ingredients: List<Ingredient>, language: InterfaceLanguage): (Int) -> String? =
-        { position -> ingredients.firstOrNull { it.position == position }?.let { authored(it, language) } }
+    fun authored(ingredients: List<Ingredient>, language: InterfaceLanguage): ReferenceQuantity =
+        { reference ->
+            ingredients.firstOrNull { it.position == reference.ingredientPosition }?.let { authored(it, reference.share, language) }
+        }
 }

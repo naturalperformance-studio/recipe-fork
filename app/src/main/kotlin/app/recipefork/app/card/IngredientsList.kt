@@ -137,7 +137,7 @@ private fun RecalculatedLegend() {
 private fun IngredientRow(line: IngredientLine, position: Int, place: Modifier, onOpen: () -> Unit) {
     val tappable = if (line.fixing != null) {
         Modifier
-            .heightIn(min = 48.dp)
+            .heightIn(min = CardTarget)
             .clickable(onClickLabel = stringResource(R.string.card_fix_action), role = Role.Button, onClick = onOpen)
     } else {
         Modifier

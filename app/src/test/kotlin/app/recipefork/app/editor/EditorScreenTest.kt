@@ -289,11 +289,12 @@ class EditorScreenTest {
             // What it holds is shown…
             assertTrue("$state", "Beetroot salad" in compose.textsOf(EditorTags.TITLE))
             compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.chosen(11)), PATIENCE_MS)
-            // …and nothing on the screen changes it: no field takes text, and the only action is to leave.
+            // …and nothing on the screen changes it: no field takes text, and the only actions are to leave and to
+            // read the checklist (GUIDE-003).
             val setText = compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes()
             assertEquals("$state", 0, setText.size)
             val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            assertEquals("$state", listOf(EditorTags.BACK), actions.map { it.config[SemanticsProperties.TestTag] })
+            assertEquals("$state", listOf(EditorTags.BACK, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
             compose.onNodeWithTag(EditorTags.remove(11)).assertDoesNotExist()
             compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).assertDoesNotExist()
             compose.onNodeWithTag(EditorTags.TAG_SEARCH).assertDoesNotExist()
@@ -334,7 +335,7 @@ class EditorScreenTest {
         // A tag that is not in the dictionary: nothing is offered, and the statement says so.
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextReplacement("Mexican")
         assertEquals(emptyList<String>(), offeredTags())
-        compose.onNodeWithTag(EditorTags.NO_MATCH).assertIsDisplayed()
+        compose.onNodeWithTag(EditorTags.NO_MATCH).performScrollTo().assertIsDisplayed()
         // The keyboard's action commits nothing, and nothing on the screen offers to add the text as a tag.
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performImeAction()
         compose.waitForIdle()

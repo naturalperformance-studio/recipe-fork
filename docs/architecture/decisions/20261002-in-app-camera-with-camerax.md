@@ -1,6 +1,6 @@
 # The app's own camera is built with CameraX
 
-**Status:** accepted
+**Status:** superseded by `20261003-the-phones-own-camera-then-a-crop.md`
 **Date:** 2026-10-02
 **Requirements:** FLOW-026, MEDIA-002, MEDIA-003
 

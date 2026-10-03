@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- L10N-002: the interface language, chosen in the book's menu. Each language is named in itself. -->
+    <string name="language_menu">Language</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_device">As on the device</string>
+    <string name="language_cancel">Cancel</string>
+</resources>

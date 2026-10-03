@@ -2,6 +2,7 @@ package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityUnit
@@ -222,5 +223,28 @@ class RecipeFileTest {
             RecipeFile.encode(RecipeFileContent.of(recipe(), null, null)).replace("\"gram\"", "\"furlong\""),
             RecipeFile.encode(RecipeFileContent.of(recipe(), null, null)).replace("\"3/2\"", "\"3/0\""),
         ).forEach { text -> assertFailsWith<UnreadableRecipeFile>(text) { RecipeFile.decode(text) } }
+    }
+
+    // A step's part of an ingredient is carried in the document — an exact fraction in a unit named as a row's is —
+    // and reads back; the format stays at version 1. A part in a unit the format does not name does not parse.
+    @Test
+    fun aPartOfAnIngredientIsWrittenAndReadBack() {
+        val parted = recipe().copy(
+            steps = listOf(
+                Step(0, "Fry the onion until golden", listOf(IngredientReference(0, 9, IngredientShare(Rational.of(100), QuantityUnit.GRAM))), Timer(12.minutes)),
+                Step(1, "Simmer with the salt", listOf(IngredientReference(3, 12), IngredientReference(1, 0, IngredientShare(Rational.of(1, 2), QuantityUnit.PIECE)))),
+            ),
+        )
+        val content = RecipeFileContent.of(parted, null, null)
+        val written = RecipeFile.encode(content)
+        assertEquals(content, RecipeFile.decode(written))
+        val references = parse(content)["recipe"]!!.jsonObject["steps"]!!.jsonArray[1].jsonObject["references"]!!.jsonArray
+        assertNull(references[0].jsonObject["share"])
+        val share = references[1].jsonObject["share"]!!.jsonObject
+        assertEquals("1/2", share["quantity"]!!.jsonPrimitive.content)
+        assertEquals("piece", share["unit"]!!.jsonPrimitive.content)
+        assertEquals(1, parse(content)["format_version"]!!.jsonPrimitive.int)
+        assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(written.replace("\"piece\"\n", "\"furlong\"\n")) }
+        assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(written.replace("\"1/2\"", "\"1/0\"")) }
     }
 }

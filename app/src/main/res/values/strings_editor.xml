@@ -43,6 +43,8 @@
     <string name="editor_ingredient_free_text_action">Add %1$s in your own words, not from the dictionary</string>
     <!-- An ingredient in the author's own words (FLOW-022): both statements, always together. -->
     <string name="editor_ingredient_free_text_warning">Not from the ingredient dictionary: filters will not find this recipe by this ingredient, and once the recipe is published this cannot be changed.</string>
+    <!-- The same, in a build without the server, where nothing is published (FLOW-062 (1)). -->
+    <string name="editor_ingredient_free_text_warning_serverless">Not from the ingredient dictionary: filters will not find this recipe by this ingredient.</string>
     <!-- A piece ingredient in the author's own words carries no divisibility, so the author is asked (FLOW-022). -->
     <string name="editor_ingredient_divisible_question">Can one piece be halved?</string>
     <string name="editor_ingredient_divisible_yes">Yes, halves are fine</string>
@@ -82,10 +84,25 @@
     <string name="editor_step_insert_ingredient_action">Insert an ingredient\'s quantity into step %1$d</string>
     <string name="editor_step_insert_ingredient_none">No ingredients in this recipe yet</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
+    <!-- A part of an ingredient in a step: offered beside the whole, entered in the ingredient's own unit. -->
+    <string name="editor_step_offered_part">%1$s — part…</string>
+    <string name="editor_part_title">Part of %1$s</string>
+    <string name="editor_part_field">How much, %1$s</string>
+    <string name="editor_part_of_whole">Out of %1$s in the list.</string>
+    <string name="editor_part_more_than_whole">More than the %1$s in the list.</string>
+    <string name="editor_part_insert">Insert</string>
+    <string name="editor_part_cancel">Cancel</string>
+    <!-- A part larger than its ingredient's quantity, after the quantity was changed: marked, not refused. -->
+    <string name="editor_step_part_more_than_whole">The part %1$s is more than the %2$s in the list.</string>
+    <!-- A change of an ingredient's unit made the steps' parts of it whole references again; said once. -->
+    <string name="editor_parts_made_whole">Ingredient %1$d changed its unit: the steps now use all of it where they used a part.</string>
     <!-- The description, after the steps: one optional field (FLOW-024). -->
     <string name="editor_description">Description</string>
     <string name="editor_description_optional">Description (optional)</string>
     <string name="editor_description_none">No description</string>
+    <!-- What a fork takes and what stays with the author (FLOW-030, FORK-001, FORK-002, FORK-007): one line at the top
+         of the editor. It says what a fork does, never that it can be prevented. -->
+    <string name="editor_fork_takes">A fork takes the title, tags, servings, ingredients and steps; the description and photos stay with you unless the fork is your own.</string>
     <!-- A step's timer: hours and whole minutes, one per step, named by its step unless the author names it (FLOW-027, GUIDE-007). -->
     <string name="editor_timer_label">Timer for step %1$d</string>
     <string name="editor_timer_action">Add a timer to step %1$d</string>
@@ -105,4 +122,43 @@
     <string name="editor_row_insert_below">Insert below</string>
     <string name="editor_row_move_up">Move up</string>
     <string name="editor_row_move_down">Move down</string>
+    <!-- A part left below the minimum or over a limit (FLOW-028): a warning that refuses nothing; the recipe states its own bounds. -->
+    <string name="editor_mark_warning">Warning</string>
+    <string name="editor_mark_title_missing">A recipe needs a title.</string>
+    <string name="editor_mark_language_missing">A recipe needs a language.</string>
+    <string name="editor_mark_servings_missing">A recipe needs a serving count.</string>
+    <string name="editor_mark_ingredients_missing">A recipe needs at least one ingredient.</string>
+    <string name="editor_mark_steps_missing">A recipe needs at least one step.</string>
+    <string name="editor_mark_characters_over">Over the limit of %1$s characters: %2$s now. Kept in full.</string>
+    <string name="editor_mark_ingredients_over">More than %1$s ingredients: %2$s now.</string>
+    <string name="editor_mark_steps_over">More than %1$s steps: %2$s now.</string>
+    <!-- The checklist: fixed advice on writing a recipe, opened from the editor's top and only read (GUIDE-003, GUIDE-004). -->
+    <string name="editor_checklist">Checklist</string>
+    <string name="editor_checklist_action">Open the checklist</string>
+    <string name="editor_checklist_tooltip">Advice on writing a recipe</string>
+    <string name="editor_checklist_close">Close</string>
+    <string name="editor_checklist_1_title">A step that carries a timer opens with what it is waiting for.</string>
+    <!-- %1$d is the number of a step's characters a timer's notification carries (TimerName.LENGTH). -->
+    <string name="editor_checklist_1_text">The notification carries the step\'s first %1$d characters, so “chicken into the oven for 30 minutes” announces itself and “slice the onion into half rings, fry… and into the oven” does not. Where the opening cannot be the point of the wait, the timer can be named by hand instead.</string>
+    <string name="editor_checklist_2_title">One action, one step.</string>
+    <string name="editor_checklist_2_text">Steps are not joined together: two waits in sequence are two steps, and a step carries one timer.</string>
+    <string name="editor_checklist_3_title">A photograph or a clip belongs at the step it shows.</string>
+    <string name="editor_checklist_3_text">It is worth attaching at the best quality the camera gives, because it is what the reader checks their own pan against.</string>
+    <string name="editor_checklist_4_title">Quantities inside a step go in as references, not as typed numbers.</string>
+    <string name="editor_checklist_4_text">A reference follows the reader\'s serving count; a typed number does not, so a reader cooking a double portion reads 400 g in the list and 200 g in the step.</string>
+    <string name="editor_checklist_5_title">An ingredient is picked from the suggestions wherever one fits.</string>
+    <string name="editor_checklist_5_text">What is typed as free text is never found by an ingredient filter, and after publication that cannot be changed.</string>
+    <!-- The same, in a build without the server, where nothing is published (FLOW-061). -->
+    <string name="editor_checklist_5_text_serverless">What is typed as free text is never found by an ingredient filter.</string>
+    <string name="editor_checklist_6_title">The method goes in the steps, not in the description.</string>
+    <string name="editor_checklist_6_text">When somebody else forks the recipe, they carry the ingredients and the steps away and leave the description behind, so a method written in the description is a method nobody can build on.</string>
+    <string name="editor_checklist_7_title">The serving count is the number you actually cooked for.</string>
+    <string name="editor_checklist_7_text">Every quantity a reader ever sees is computed from it.</string>
+    <!-- Under the first step of a recipe holding ingredients, once an editing session, while it is begun (GUIDE-008). -->
+    <string name="editor_references_offered">A quantity can go into a step as a reference: type @ or use the step\'s insert-ingredient icon. A reference follows the reader\'s serving count; a number typed by hand does not.</string>
+    <!-- Under a long step's unnamed timer once the author leaves the step: what its notification will say (GUIDE-006). -->
+    <string name="editor_timer_notification">The timer\'s notification will say: “%1$s”</string>
+    <string name="editor_timer_notification_follows">The quantities in it follow the reader\'s serving count, so the reader\'s notification may read and be cut differently.</string>
+    <string name="editor_timer_notification_name">Name the timer</string>
+    <string name="editor_timer_notification_name_action">Name the timer of step %1$d</string>
 </resources>

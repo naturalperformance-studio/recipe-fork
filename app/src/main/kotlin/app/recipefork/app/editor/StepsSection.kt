@@ -26,6 +26,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
@@ -40,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.recipefork.app.R
+import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.book.BookName
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.core.recipe.Media
@@ -48,6 +51,7 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepRun
@@ -65,8 +69,8 @@ internal val ROW_SPACING = 12.dp
  * deleted. They accept input whatever else the recipe holds or lacks (FLOW-024 (2)), and no text is ever cut short.
  */
 @Composable
-internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource, scroll: EditorScroll, book: BookName, saving: CoroutineScope) {
-    val photos = rememberStepPhotos(book, saving)
+internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSource, scroll: EditorScroll, store: PhotoStore, book: BookName, saving: CoroutineScope) {
+    val photos = rememberStepPhotos(store, book, saving)
     val editable = recipe.state.editable
     val steps = recipe.steps.sortedBy { it.position }
     val language = numberLanguage(LocalConfiguration.current)
@@ -83,6 +87,8 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSourc
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
+        // Under the heading: the steps left with none, or more than the limit (FLOW-028).
+        BoundMark(editor, RecipePart.Steps, EditorTags.STEPS_MARK, gap = ROW_SPACING)
         if (!editable && steps.isEmpty()) {
             Text(
                 stringResource(R.string.editor_steps_none),
@@ -103,7 +109,11 @@ internal fun Steps(recipe: Recipe, editor: RecipeEditor, source: IngredientSourc
             ActionText(
                 text = stringResource(R.string.editor_step_add),
                 action = stringResource(R.string.editor_step_add_action),
-                onClick = { editor.addStep() },
+                onClick = {
+                    editor.addStep()
+                    // The author has moved on from the ingredients to the steps (FLOW-028 (1)).
+                    editor.leave(RecipePart.Ingredients)
+                },
                 modifier = Modifier.testTag(EditorTags.STEP_ADD),
             )
         }
@@ -131,9 +141,17 @@ private fun StepRow(
     photos: StepPhotos,
 ) {
     val field = remember { StepFieldState() }
+    val key = editor.stepKey(position)
     val photoControl = rememberStepPhotoControl(position, editor, photos)
     // Opened by the timer's control before any duration is held: a timer of no duration is no timer, and is not stored.
     var timerOpen by rememberSaveable { mutableStateOf(false) }
+    // Left with an unnamed timer whose notification is or may be cut: what it will say shows until the step is
+    // entered again (GUIDE-006). Nothing of it is stored.
+    var leftCut by remember { mutableStateOf(false) }
+    val timerName = remember { FocusRequester() }
+    // References offered under the first step while it is first written in this editing session (GUIDE-008).
+    var offering by remember { mutableStateOf(false) }
+    val offerGoing = rememberGoing()
     // One bounded block per step, as an ingredient's, so where one step ends and the next begins is plain; dragged, it
     // moves whole.
     OutlinedCard(
@@ -142,7 +160,8 @@ private fun StepRow(
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.step(position)),
     ) {
-        // Dragged by the column down its left edge; everything of the step stands beside it, at one left edge.
+        // Dragged by the column down its left edge — or its right, for a left hand; everything of the step stands beside
+        // it, at one left edge.
         DragColumnBlock(drag, position, count, EditorTags.stepHandle(position), EditorTags.stepHandleIcon(position)) {
             Column(Modifier.fillMaxWidth().padding(STEP_PADDING)) {
                 // The text across the whole block; under it, one row of the step's actions as icons.
@@ -153,8 +172,42 @@ private fun StepRow(
                     language = language,
                     editor = editor,
                     state = field,
-                    modifier = Modifier.fillMaxWidth().testTag(EditorTags.stepText(position)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // Coming into a step moves the author on from the ingredients; leaving it marks it (FLOW-028).
+                        .then(
+                            leaving(
+                                onEnter = {
+                                    editor.leave(RecipePart.Ingredients)
+                                    leftCut = false
+                                    // Beginning the first step offers references, whatever the step says (GUIDE-008).
+                                    if (editor.beginStep(position)) offering = true
+                                },
+                            ) {
+                                if (offering) offerGoing.went()
+                                offering = false
+                                editor.leaveStep(key)
+                                val left = editor.recipe.value
+                                leftCut = left?.steps?.sortedBy { it.position }?.getOrNull(position)
+                                    ?.let { cutNotification(it, left.ingredients, language) } != null
+                            },
+                        )
+                        .testTag(EditorTags.stepText(position)),
                 )
+                // Under the field the author is in, so it moves nothing they are typing into.
+                if (offering) {
+                    Text(
+                        stringResource(R.string.editor_references_offered),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .then(offerGoing.modifier)
+                            .padding(horizontal = 12.dp, vertical = 4.dp)
+                            .semantics { liveRegion = LiveRegionMode.Polite }
+                            .testTag(EditorTags.stepReferencesOffered(position)),
+                    )
+                }
+                // The step's own slot for what its text needs, right under the text and above its actions.
+                BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = 0.dp)
                 BlockActions {
                     InsertIngredient(position, ingredients, dictionary, language, editor, field)
                     BlockAction(
@@ -188,10 +241,14 @@ private fun StepRow(
                         },
                     )
                 }
-                // Below the row, only what the step has: its timer, and its photograph with what is told about it.
-                if (step.timer != null || timerOpen || stating || photo != null || photoControl.attaching.notice.value != null) {
+                // Below the row, only what the step has: its timer, and its photograph, or that one is being prepared.
+                if (step.timer != null || timerOpen || stating || photo != null || photoControl.attaching.working.value) {
                     Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        StepTimer(position, step, ingredients, language, editor, stating, timerOpen) { timerOpen = it }
+                        StepTimer(
+                            position, step, ingredients, language, editor, stating, timerOpen,
+                            left = leftCut,
+                            name = timerName,
+                        ) { timerOpen = it }
                         StepPhotoShown(position, photo, photos, photoControl)
                     }
                 }
@@ -218,6 +275,8 @@ private fun StepTimer(
     editor: RecipeEditor,
     stating: Boolean,
     open: Boolean,
+    left: Boolean,
+    name: FocusRequester,
     onOpen: (Boolean) -> Unit,
 ) {
     val timer = step.timer
@@ -289,16 +348,75 @@ private fun StepTimer(
             }
         }
     }
-    if (timer != null) TimerNameField(position, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor) { given = it }
+    if (timer != null) {
+        TimerNameField(position, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor, name) { given = it }
+        BoundMark(editor, RecipePart.TimerName(position), EditorTags.timerNameMark(position), gap = 0.dp)
+        // Under the name, so that it neither moves the name field nor goes from above it once the timer is named.
+        if (left) cutNotification(step, ingredients, language)?.let { reading -> TimerNotification(position, reading) { name.requestFocus() } }
+    }
+}
+
+/**
+ * What the notification of [step]'s timer will say at the authored count, where its timer is unnamed and the
+ * notification is cut, or may be at a reader's larger count (GUIDE-006); null otherwise.
+ */
+internal fun cutNotification(step: Step, ingredients: List<Ingredient>, language: InterfaceLanguage): TimerName.Reading? {
+    val timer = step.timer ?: return null
+    if (timer.label != null) return null
+    return TimerName.reading(StepText.runs(step, ReferenceText.authored(ingredients, language))).takeIf { it.mayBeCut }
+}
+
+/**
+ * What a step's unnamed timer will announce itself by, shown once the author leaves the step (GUIDE-006): the
+ * notification's text as it will read, that quantities in it follow the reader's count where one is shown, and the
+ * offer to name the timer, which takes the author to its name field. It refuses nothing and asks no rewrite.
+ */
+@Composable
+private fun TimerNotification(position: Int, reading: TimerName.Reading, onName: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            // Appearing above the field the author went on to, it keeps that field where it is.
+            .then(keepingTheFocusedFieldInPlace(0.dp))
+            .padding(top = 8.dp)
+            .testTag(EditorTags.timerNotification(position)),
+    ) {
+        // Read by the screen reader as it appears.
+        Text(
+            stringResource(R.string.editor_timer_notification, reading.name),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .padding(horizontal = 12.dp)
+                .semantics { liveRegion = LiveRegionMode.Polite }
+                .testTag(EditorTags.timerNotificationText(position)),
+        )
+        if (reading.referenceShown) {
+            Text(
+                stringResource(R.string.editor_timer_notification_follows),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .semantics { liveRegion = LiveRegionMode.Polite }
+                    .testTag(EditorTags.timerNotificationFollows(position)),
+            )
+        }
+        ActionText(
+            text = stringResource(R.string.editor_timer_notification_name),
+            action = stringResource(R.string.editor_timer_notification_name_action, position + 1),
+            onClick = onName,
+            modifier = Modifier.testTag(EditorTags.timerNotificationName(position)),
+        )
+    }
 }
 
 /**
  * The name the timer will announce itself by (FLOW-027 (5–7)): with none given, the one derived from the step, shown
  * filled in and following the step's text; a correction is held as written, whatever the step says afterwards, and
- * however long (DOM-012 is not enforced while typing); an emptied field gives the name back to the step.
+ * however long (DOM-012 is not enforced while typing, only marked on leaving the field — FLOW-028); an emptied field
+ * gives the name back to the step.
  */
 @Composable
-private fun TimerNameField(position: Int, step: List<StepRun>, timer: Timer, editor: RecipeEditor, onGiven: (String?) -> Unit) {
+private fun TimerNameField(position: Int, step: List<StepRun>, timer: Timer, editor: RecipeEditor, requester: FocusRequester, onGiven: (String?) -> Unit) {
     // A reference reads here as the editor shows it (FLOW-016 (8), at the authored scale).
     val shown = timer.label ?: TimerName.derived(step)
     // While the author is in the field it shows what they typed, so that emptying it does not refill it at once.
@@ -324,8 +442,10 @@ private fun TimerNameField(position: Int, step: List<StepRun>, timer: Timer, edi
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         modifier = Modifier
             .fillMaxWidth()
+            .focusRequester(requester)
             .onFocusChanged {
                 if (it.isFocused && !focused) typed = shown
+                if (!it.isFocused && focused) editor.leaveStep(editor.stepKey(position), timerName = true)
                 focused = it.isFocused
             }
             .testTag(EditorTags.timerName(position)),
@@ -390,11 +510,25 @@ internal fun Description(recipe: Recipe, editor: RecipeEditor) {
         }
         return
     }
-    OutlinedTextField(
-        value = recipe.description,
-        onValueChange = { editor.setDescription(it) },
-        label = { Text(stringResource(R.string.editor_description_optional)) },
-        minLines = 3,
-        modifier = Modifier.fillMaxWidth().testTag(EditorTags.DESCRIPTION),
-    )
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedTextField(
+            value = recipe.description,
+            onValueChange = { editor.setDescription(it) },
+            label = { Text(stringResource(R.string.editor_description_optional)) },
+            minLines = 3,
+            modifier = Modifier
+                .fillMaxWidth()
+                // The description comes after the ingredients and the steps: reaching it moves the author on from both.
+                .then(
+                    leaving(
+                        onEnter = {
+                            editor.leave(RecipePart.Ingredients)
+                            editor.leave(RecipePart.Steps)
+                        },
+                    ) { editor.leave(RecipePart.Description) },
+                )
+                .testTag(EditorTags.DESCRIPTION),
+        )
+        BoundMark(editor, RecipePart.Description, EditorTags.DESCRIPTION_MARK, gap = 4.dp)
+    }
 }

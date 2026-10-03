@@ -5,11 +5,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +48,8 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
@@ -53,9 +60,14 @@ import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
+import app.recipefork.core.recipe.IngredientShares
+import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.ReferenceSpacing
 import app.recipefork.core.recipe.ReferenceText
+import app.recipefork.core.recipe.ShareReading
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.scaling.UnitLabels
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.flow.first
 
@@ -73,7 +85,7 @@ internal data class StepEdit(val content: StepContent, val cursor: Int, val remo
  * gives it, at the offset it sits at. A reference is one unit of the shown text — the cursor never stands inside one,
  * and an edit that touches any of its characters removes all of it and nothing of the typed text around it.
  */
-internal class StepDisplay(val content: StepContent, private val quantity: (Int) -> String?) {
+internal class StepDisplay(val content: StepContent, private val quantity: ReferenceQuantity) {
     val text: String
     val references: List<ShownReference>
 
@@ -82,7 +94,7 @@ internal class StepDisplay(val content: StepContent, private val quantity: (Int)
         val references = mutableListOf<ShownReference>()
         var at = 0
         for (reference in content.references.sortedBy { it.textOffset }) {
-            val reads = quantity(reference.ingredientPosition) ?: continue
+            val reads = quantity(reference) ?: continue
             val offset = reference.textOffset.coerceIn(at, content.text.length)
             shown.append(content.text, at, offset)
             references += ShownReference(shown.length, shown.length + reads.length, reference.copy(textOffset = offset))
@@ -159,15 +171,16 @@ internal class StepDisplay(val content: StepContent, private val quantity: (Int)
     fun splits(range: TextRange): Boolean = inside(range.min) != null || inside(range.max) != null
 
     /**
-     * A reference to the ingredient at [ingredientPosition] put at the shown position [at], spaced from a word on
-     * either side ([ReferenceSpacing.insert]), and the cursor after it and any space typed after it. Next to another
-     * reference at that offset of the text, the new one goes on the side of it the cursor stands, a space between.
+     * A reference to the ingredient at [ingredientPosition] — to its whole, or to the part [share] of it — put at the
+     * shown position [at], spaced from a word on either side ([ReferenceSpacing.insert]), and the cursor after it and
+     * any space typed after it. Next to another reference at that offset of the text, the new one goes on the side of
+     * it the cursor stands, a space between.
      */
-    fun insert(at: Int, ingredientPosition: Int): StepEdit {
+    fun insert(at: Int, ingredientPosition: Int, share: IngredientShare? = null): StepEdit {
         val p = inside(at)?.end ?: at
         val offset = typed(p)
         val there = references.firstOrNull { it.reference.textOffset == offset }
-        val inserted = ReferenceSpacing.insert(Step(0, content.text, content.references), ingredientPosition, offset, afterExisting = there != null && there.end <= p)
+        val inserted = ReferenceSpacing.insert(Step(0, content.text, content.references), ingredientPosition, offset, afterExisting = there != null && there.end <= p, share = share)
         val spaced = StepContent(inserted.step.text, inserted.step.ingredientReferences)
         val end = StepDisplay(spaced, quantity).references.first { it.reference == inserted.reference }.end
         return StepEdit(spaced, end + if (inserted.spaceAfter) 1 else 0, false)
@@ -197,17 +210,22 @@ internal class StepDisplay(val content: StepContent, private val quantity: (Int)
         return if (selection.reversed) TextRange(high, low) else TextRange(low, high)
     }
 
-    /** The shown text with each reference set apart from the typed text by weight and an underline, not colour alone. */
-    fun styled(highlight: Color): AnnotatedString = buildAnnotatedString {
-        append(text)
-        references.forEach {
-            addStyle(
-                SpanStyle(fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline, background = highlight),
-                it.start,
-                it.end,
-            )
+    /**
+     * The shown text with each reference set apart from the typed text by weight and an underline, not colour alone; a
+     * part of an ingredient as a whole is. A reference [marked] — a part more than its whole — is tinted [warning].
+     */
+    fun styled(highlight: Color, warning: Color = highlight, marked: (IngredientReference) -> Boolean = { false }): AnnotatedString =
+        buildAnnotatedString {
+            append(text)
+            references.forEach {
+                val background = if (marked(it.reference)) warning else highlight
+                addStyle(
+                    SpanStyle(fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline, background = background),
+                    it.start,
+                    it.end,
+                )
+            }
         }
-    }
 
     companion object {
         /** [step] as the editor shows it: each reference at the authored scale (FLOW-032 (5)). */
@@ -410,6 +428,14 @@ internal fun StepTextField(
     }
     val display = current()
     val highlight = MaterialTheme.colorScheme.secondaryContainer
+    val warning = MaterialTheme.colorScheme.errorContainer
+    // Parts more than their ingredient's quantity as it stands: marked, never refused (the author may change either).
+    val rows = editor.recipe.value?.ingredients ?: ingredients
+    val oversized = display.references.mapNotNull { shown ->
+        val share = shown.reference.share ?: return@mapNotNull null
+        val row = rows.firstOrNull { it.position == shown.reference.ingredientPosition } ?: return@mapNotNull null
+        if (IngredientShares.exceeds(share, row)) shown.reference to (display.text.substring(shown.start, shown.end) to ReferenceText.authored(row, language)) else null
+    }.toMap()
     state.version // Read, so that every edit redraws the field.
     SideEffect { state.redrawn() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -428,7 +454,7 @@ internal fun StepTextField(
     val shown = state.shown(display)
     val transformation = VisualTransformation { text ->
         // The shown text is the field's own text: only its style changes, so every offset maps to itself.
-        if (text.text == display.text) TransformedText(display.styled(highlight), OffsetMapping.Identity)
+        if (text.text == display.text) TransformedText(display.styled(highlight, warning) { it in oversized }, OffsetMapping.Identity)
         else TransformedText(text, OffsetMapping.Identity)
     }
     // An outlined field as dense as its touch target allows (A11Y-003), so that a one-line step takes little height: no
@@ -473,6 +499,14 @@ internal fun StepTextField(
                         modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(name) },
                     )
                 },
+                supportingText = if (oversized.isEmpty()) null else {
+                    {
+                        Text(
+                            oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
+                            modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
+                        )
+                    }
+                },
                 colors = colors,
                 contentPadding = DENSE_FIELD_PADDING,
                 container = { OutlinedTextFieldDefaults.Container(enabled = true, isError = false, interactionSource = interaction, colors = colors) },
@@ -491,6 +525,9 @@ private val DENSE_FIELD_PADDING = PaddingValues(start = 12.dp, end = 16.dp, top 
  * puts its reference at the cursor, or in place of the typed [TRIGGER], spaced from the words around it; dismissing the
  * offer leaves the text as typed. Either way the author types on: choosing, or dismissing the offer [TRIGGER] opened,
  * gives the step's field its focus and the keyboard back, the cursor after the reference and any space typed after it.
+ *
+ * Each row holding a quantity is offered a second time, as a part of it ([IngredientShares.offered]): choosing that
+ * asks for the part in the row's own unit ([PartDialog]), and the reference then reads that part instead of the whole.
  */
 @Composable
 internal fun InsertIngredient(
@@ -501,6 +538,7 @@ internal fun InsertIngredient(
     editor: RecipeEditor,
     state: StepFieldState,
 ) {
+    var asking by remember { mutableStateOf<AskedPart?>(null) }
     Box {
         BlockAction(
             icon = R.drawable.ic_insert_ingredient,
@@ -540,18 +578,119 @@ internal fun InsertIngredient(
                     },
                     modifier = Modifier.testTag(EditorTags.stepOffer(position, row)),
                 )
+                if (IngredientShares.offered(ingredient)) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.editor_step_offered_part, name)) },
+                        onClick = {
+                            // The menu goes; where the `@` stands is kept for the part's insertion.
+                            asking = AskedPart(row, name, state.trigger)
+                            state.offering = false
+                        },
+                        modifier = Modifier.testTag(EditorTags.stepOfferPart(position, row)),
+                    )
+                }
             }
         }
     }
+    asking?.let { asked ->
+        val ingredient = ingredients.getOrNull(asked.row)
+        if (ingredient == null) {
+            asking = null
+            return@let
+        }
+        PartDialog(
+            name = asked.name,
+            ingredient = ingredient,
+            language = language,
+            onInsert = { share ->
+                asking = null
+                state.trigger = asked.trigger
+                choose(position, asked.row, language, editor, state, share)
+                state.refocus = true
+                state.close()
+            },
+            onDismiss = {
+                asking = null
+                // Dismissing the part the author's typing asked for returns them to their typing.
+                if (asked.trigger != null) state.refocus = true
+                state.close()
+            },
+        )
+    }
 }
 
-/** The reference to the row at [row] put where the offer was opened from: in place of the typed `@`, or at the cursor. */
+/** A part being asked for: of the row at [row], named [name], for the offer opened at [trigger] (or at the cursor). */
+private data class AskedPart(val row: Int, val name: String, val trigger: Int?)
+
+/**
+ * Asks for a part of [ingredient], named [name], in its own unit: typed and read like its quantity field (DOM-019),
+ * held only on its unit type's grid and above zero (DOM-017), and no more than its quantity. Until it is, the field
+ * says what it accepts and nothing is inserted.
+ */
+@Composable
+private fun PartDialog(
+    name: String,
+    ingredient: Ingredient,
+    language: InterfaceLanguage,
+    onInsert: (IngredientShare) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var typed by remember { mutableStateOf("") }
+    val reading = IngredientShares.read(typed, ingredient)
+    val unit = ingredient.unit?.let { UnitLabels.of(it, language) }.orEmpty()
+    val whole = ReferenceText.authored(ingredient, language)
+    val focus = remember { FocusRequester() }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(EditorTags.PART_DIALOG),
+        title = { Text(stringResource(R.string.editor_part_title, name)) },
+        text = {
+            OutlinedTextField(
+                value = typed,
+                onValueChange = { typed = it },
+                label = { Text(stringResource(R.string.editor_part_field, unit)) },
+                singleLine = true,
+                isError = reading is ShareReading.Refused || reading is ShareReading.MoreThanWhole,
+                supportingText = {
+                    val message = when (reading) {
+                        is ShareReading.Refused -> stringResource(problemMessage(reading.problem))
+                        ShareReading.MoreThanWhole -> stringResource(R.string.editor_part_more_than_whole, whole)
+                        else -> stringResource(R.string.editor_part_of_whole, whole)
+                    }
+                    Text(message, modifier = Modifier.testTag(EditorTags.PART_PROBLEM))
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { (reading as? ShareReading.Accepted)?.let { onInsert(it.share) } }),
+                modifier = Modifier.focusRequester(focus).testTag(EditorTags.PART_FIELD),
+            )
+            LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { (reading as? ShareReading.Accepted)?.let { onInsert(it.share) } },
+                enabled = reading is ShareReading.Accepted,
+                modifier = Modifier.testTag(EditorTags.PART_INSERT),
+            ) { Text(stringResource(R.string.editor_part_insert)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.testTag(EditorTags.PART_CANCEL)) {
+                Text(stringResource(R.string.editor_part_cancel))
+            }
+        },
+    )
+}
+
+/**
+ * The reference to the row at [row] — its whole, or the part [share] of it — put where the offer was opened from: in
+ * place of the typed `@`, or at the cursor.
+ */
 private fun choose(
     position: Int,
     row: Int,
     language: InterfaceLanguage,
     editor: RecipeEditor,
     state: StepFieldState,
+    share: IngredientShare? = null,
 ) {
     val recipe = editor.recipe.value ?: return
     val step = recipe.steps.sortedBy { it.position }.getOrNull(position) ?: return
@@ -566,7 +705,7 @@ private fun choose(
         display = StepDisplay(removed.content, ReferenceText.authored(recipe.ingredients, language))
         at = removed.cursor
     }
-    val inserted = display.insert(at, row)
+    val inserted = display.insert(at, row, share)
     editor.setStepText(position, inserted.content.text, inserted.content.references)
     state.selection = TextRange(inserted.cursor)
     state.composition = null

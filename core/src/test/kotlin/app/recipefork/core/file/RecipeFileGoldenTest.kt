@@ -2,6 +2,7 @@ package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityUnit
@@ -38,7 +39,11 @@ class RecipeFileGoldenTest {
         ),
         steps = listOf(
             Step(0, "Fry the beet until soft", listOf(IngredientReference(0, 8)), Timer(12.minutes, "Beet")),
-            Step(1, "Simmer with the salt and onions", listOf(IngredientReference(3, 14), IngredientReference(1, 0)), Timer(95.minutes)),
+            Step(
+                1, "Simmer with the salt and onions",
+                listOf(IngredientReference(3, 14, IngredientShare(Rational.of(1, 4), QuantityUnit.TABLESPOON)), IngredientReference(1, 0)),
+                Timer(95.minutes),
+            ),
             Step(2, "Season and serve"),
         ),
         author = "anna",

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the capture provider shares: the files the phone's camera application writes its shots into (FLOW-026). -->
+<paths>
+    <cache-path name="capture" path="capture/" />
+</paths>

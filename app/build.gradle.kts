@@ -48,6 +48,7 @@ android {
         create("releaseSmoke") {
             initWith(getByName("release"))
             proguardFile("proguard-smoke-test.pro")
+            testProguardFile("proguard-smoke-test-apk.pro")
             matchingFallbacks += "release"
         }
     }
@@ -96,10 +97,6 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.camerax.core)
-    implementation(libs.camerax.camera2)
-    implementation(libs.camerax.lifecycle)
-    implementation(libs.camerax.view)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)

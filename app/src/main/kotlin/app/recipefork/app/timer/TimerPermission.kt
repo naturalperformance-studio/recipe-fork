@@ -4,6 +4,7 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,8 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.app.card.CardTarget
 
 /**
  * After each timer the card starts — never before, and never at launch (FLOW-013 (8)) — a look at whether it will be
@@ -69,13 +70,13 @@ private fun Explanation(state: NotificationState, access: NotificationAccess, on
                     onDone()
                     access.openSettings(context, state)
                 },
-                modifier = Modifier.heightIn(min = 48.dp).testTag(TimerTags.UNHEARD_SETTINGS),
+                modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(TimerTags.UNHEARD_SETTINGS),
             ) { Text(stringResource(R.string.timer_unheard_settings)) }
         },
         dismissButton = {
             TextButton(
                 onClick = onDone,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(TimerTags.UNHEARD_DISMISS),
+                modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(TimerTags.UNHEARD_DISMISS),
             ) { Text(stringResource(R.string.timer_unheard_dismiss)) }
         },
         modifier = Modifier.testTag(TimerTags.UNHEARD),

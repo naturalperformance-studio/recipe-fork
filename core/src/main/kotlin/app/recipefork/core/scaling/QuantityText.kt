@@ -104,6 +104,9 @@ object QuantityText {
         return if (whole.signum() == 0) glyph else "${grouped(whole, language)}$glyph"
     }
 
+    /** A whole number — a count, a limit — grouped by three digits as L10N-009 states. */
+    fun whole(number: Long, language: InterfaceLanguage): String = grouped(BigInteger.valueOf(number), language)
+
     private fun grouped(number: BigInteger, language: InterfaceLanguage): String {
         val digits = number.abs().toString()
         val out = StringBuilder()

@@ -1,19 +1,21 @@
 package app.recipefork.app
 
+import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewModelScope
 import app.recipefork.app.card.LocalStepToShow
+import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeFileIntents
 import app.recipefork.app.file.RecipeImport
@@ -24,11 +26,33 @@ import app.recipefork.app.timer.TimerIntents
 import app.recipefork.app.timer.TimerKey
 import app.recipefork.app.timer.TimerService
 import app.recipefork.app.ui.AppNavHost
+import app.recipefork.app.ui.AppTheme
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /** The single Activity; its task is the reader's session (FLOW-058). */
 class MainActivity : ComponentActivity() {
     private val librarySession: LibrarySession by viewModels()
+
+    /** The interface language the reader chose is laid over the device's before anything reads it (L10N-002). */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase)
+        val override = AppLanguage.overrideFor(newBase)
+        applied = override?.locales?.get(0)
+        override?.let(::applyOverrideConfiguration)
+    }
+
+    /** The language laid over the device's as this Activity was created, or null where the device's stood. */
+    private var applied: Locale? = null
+
+    /**
+     * The Activity handles a change of locale itself (the manifest's configChanges), so a choice made behind its back —
+     * in the system's per-app language settings — is followed here: it shows itself again in the language now chosen.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (AppLanguage.chosen(this).locale != applied) recreate()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +61,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) follow(intent)
         setContent {
             CompositionLocalProvider(LocalStepToShow provides librarySession.stepToShow) {
-                MaterialTheme {
+                AppTheme {
                     Surface(modifier = Modifier.fillMaxSize().testTag(ROOT_TAG)) {
                         AppNavHost(librarySession, container.recipes, container.mode, Modifier.safeDrawingPadding())
                     }

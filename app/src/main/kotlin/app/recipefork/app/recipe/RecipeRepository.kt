@@ -18,6 +18,7 @@ import app.recipefork.app.book.StepReferenceEntity
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.Recipe
@@ -56,15 +57,17 @@ open class RecipeRepository(
     fun marked(): Flow<List<MarkedRecipeRow>> = book.open.flatMapLatest { it.database.favourites().marked() }
 
     /**
-     * The own recipes of the active book as their view lists them for each of [params] (FLOW-035): searched by title
-     * and ingredient, with the ingredient names of [dictionary], filtered by ingredient and tags, and ordered. Worked out where the book's queries
+     * The own recipes of the active book as their view lists them for each of [params] (FLOW-035): searched by title,
+     * description and ingredient, with the ingredient names of [dictionary], filtered by ingredient, tags and language, and ordered. Worked out where the book's queries
      * run, never on the main thread.
      */
     fun ownListed(
         params: Flow<ListingParams>,
         dictionary: suspend () -> List<IngredientEntryEntity>,
     ): Flow<Listed<OwnRecipeRow>> =
-        listed(params, { it.recipes().own() }) { BookSearch(dictionary, OwnRecipeRow::recipeId, OwnRecipeRow::title) }
+        listed(params, { it.recipes().own() }) {
+            BookSearch(dictionary, OwnRecipeRow::recipeId, OwnRecipeRow::title, OwnRecipeRow::language, OwnRecipeRow::description)
+        }
 
     /** What is marked in the active book as its view lists it for each of [params], as [ownListed] does. */
     fun markedListed(
@@ -72,7 +75,10 @@ open class RecipeRepository(
         dictionary: suspend () -> List<IngredientEntryEntity>,
     ): Flow<Listed<MarkedRecipeRow>> =
         listed(params, { it.favourites().marked() }) {
-            BookSearch(dictionary, MarkedRecipeRow::recipeId, MarkedRecipeRow::title)
+            BookSearch(
+                dictionary, MarkedRecipeRow::recipeId, MarkedRecipeRow::title,
+                MarkedRecipeRow::language, MarkedRecipeRow::description,
+            )
         }
 
     private fun <R> listed(
@@ -120,6 +126,14 @@ open class RecipeRepository(
         return true
     }
 
+    /**
+     * A fork of [parent] in the active book that nothing has changed since it was made (FLOW-015): every edit of
+     * content moves its content time past its creation (FLOW-039), so an unchanged fork is one whose two times are
+     * equal. Null when the book holds no such fork.
+     */
+    suspend fun unchangedForkOf(parent: RecipeId): RecipeId? =
+        book.database.recipes().unchangedForkOf(parent.value)?.let(::RecipeId)
+
     open suspend fun save(recipe: Recipe) = book.database.recipes().put(recipe.toRows())
 
     /**
@@ -152,9 +166,11 @@ open class RecipeRepository(
 
     /**
      * The recipe [id] of the active book as it is now and after every later write to it; null while the book
-     * holds no such recipe. A screen that shows it never shows a version older than the last write.
+     * holds no such recipe. A screen that shows it never shows a version older than the last write. A read that fails —
+     * a row that does not read back, storage that refuses — ends the flow with its failure; open, so that a test can
+     * make it fail.
      */
-    fun observe(id: RecipeId): Flow<Recipe?> = book.open.flatMapLatest { open ->
+    open fun observe(id: RecipeId): Flow<Recipe?> = book.open.flatMapLatest { open ->
         open.database.invalidationTracker.createFlow(*RECIPE_TABLES)
             .map { open.database.recipes().get(id.value)?.toRecipe() }
     }
@@ -194,7 +210,9 @@ internal fun Recipe.toRows(): RecipeRows {
         },
         steps = steps.map { StepEntity(id, it.position, it.text, it.timer?.duration?.inWholeMinutes, it.timer?.label) },
         references = steps.flatMap { step ->
-            step.ingredientReferences.map { StepReferenceEntity(id, step.position, it.textOffset, it.ingredientPosition) }
+            step.ingredientReferences.map {
+                StepReferenceEntity(id, step.position, it.textOffset, it.ingredientPosition, it.share?.amount, it.share?.unit)
+            }
         },
         media = media.mapIndexed { index, it ->
             MediaEntity(
@@ -231,7 +249,10 @@ internal fun RecipeRows.toRecipe(): Recipe {
                 position = step.position,
                 text = step.text,
                 ingredientReferences = references[step.position].orEmpty()
-                    .map { IngredientReference(it.ingredientPosition, it.textOffset) },
+                    .map { reference ->
+                        val share = reference.share?.let { amount -> reference.shareUnit?.let { IngredientShare(amount, it) } }
+                        IngredientReference(reference.ingredientPosition, reference.textOffset, share)
+                    },
                 timer = step.timerMinutes?.let { Timer(it.minutes, step.timerLabel) },
             )
         },

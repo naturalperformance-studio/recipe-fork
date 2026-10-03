@@ -18,6 +18,7 @@ import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -77,7 +78,8 @@ class RecipeExportTest {
         ),
         steps = listOf(
             Step(0, "Fry the tomatoes", listOf(IngredientReference(0, 8)), Timer(12.minutes, "Tomatoes")),
-            Step(1, "Add the eggs", listOf(IngredientReference(1, 4)), Timer(3.minutes)),
+            // A part of an ingredient travels in the file.
+            Step(1, "Add the eggs", listOf(IngredientReference(1, 4, IngredientShare(Rational.of(1, 2), QuantityUnit.PIECE))), Timer(3.minutes)),
         ),
     )
 

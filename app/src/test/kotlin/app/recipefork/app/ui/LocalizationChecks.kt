@@ -334,7 +334,7 @@ object LocalizationChecks {
     }
 
     /** Every text, description and click-action label on [screen], as the screen reader can reach them. */
-    private fun shownText(screen: SemanticsNodeInteractionsProvider): List<String> =
+    fun shownText(screen: SemanticsNodeInteractionsProvider): List<String> =
         screen.onAllNodes(isRoot().not() or isRoot(), useUnmergedTree = true).fetchSemanticsNodes()
             .flatMap { node ->
                 node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } +

@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.Flow
         RecipeEntity::class, IngredientEntity::class, StepEntity::class, StepReferenceEntity::class,
         MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -40,6 +40,13 @@ abstract class BookDatabase : RoomDatabase() {
             object : Migration(1, 2) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("alter table ingredient add column entered_quantity text")
+                }
+            },
+            // 2 → 3: a step's reference may read a part of its ingredient.
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table step_reference add column share text")
+                    db.execSQL("alter table step_reference add column share_unit text")
                 }
             },
         )
@@ -86,7 +93,7 @@ abstract class BookRecipeDao {
      */
     @Query(
         "select r.recipe_id as recipe_id, r.title as title, r.state as state, r.sent as sent, " +
-            "$COVER_OF_R as cover_id from recipe r " +
+            "$COVER_OF_R as cover_id, r.language as language, r.description as description from recipe r " +
             "where r.recipe_id not in (select recipe_id from favourite) " +
             "order by r.content_changed_at desc, r.recipe_id limit :limit",
     )
@@ -194,6 +201,16 @@ abstract class BookRecipeDao {
     @Query("select exists(select 1 from favourite where recipe_id = :id)")
     abstract suspend fun isMarked(id: String): Boolean
 
+    /**
+     * A fork of [parent] the book holds whose content has not changed since it was made — its content time is still
+     * its creation time (FLOW-015) — the newest such one first; null when every fork of it was changed, or none is held.
+     */
+    @Query(
+        """select recipe_id from recipe where parent = :parent and content_changed_at = created_at
+           and recipe_id not in (select recipe_id from favourite) order by created_at desc, recipe_id limit 1""",
+    )
+    abstract suspend fun unchangedForkOf(parent: String): String?
+
     @Insert
     protected abstract suspend fun insertFavourite(favourite: FavouriteEntity)
 
@@ -274,7 +291,8 @@ interface FavouriteDao {
      */
     @Query(
         "select f.recipe_id as recipe_id, coalesce(r.title, f.title) as title, r.stated_author as stated_author, " +
-            "r.recipe_id is not null as held, $COVER_OF_R as cover_id " +
+            "r.recipe_id is not null as held, $COVER_OF_R as cover_id, r.language as language, " +
+            "coalesce(r.description, '') as description " +
             "from favourite f left join recipe r on r.recipe_id = f.recipe_id " +
             "order by f.added_at desc, f.recipe_id",
     )

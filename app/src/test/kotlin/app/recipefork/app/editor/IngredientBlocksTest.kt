@@ -35,11 +35,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -63,21 +63,22 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
  * Each ingredient row as one bounded block on a 360 dp phone, at font scale 1.0 and 2.0: every part of a row inside
  * its block, blocks apart from each other with an outline drawn round each, a tinted column down the left edge of each
- * block with the handle icon at its centre, the inputs beside it at one left edge and of one height, and the name's text
+ * block — or the right edge, with the handle on the right — with the handle icon at its centre, the inputs beside it at one left edge and of one height, and the name's text
  * with room to be read; the free-text warning as an icon beside the name whose text the screen reader reads and a tap
  * or a long press shows; a row dragged from anywhere in its column moving whole; a frozen recipe's rows as blocks,
  * with no column.
  */
 @OptIn(ExperimentalTestApi::class)
-@RunWith(AndroidJUnit4::class)
+@RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class IngredientBlocksTest {
+class IngredientBlocksTest(private val handleRight: Boolean) {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
@@ -118,7 +119,7 @@ class IngredientBlocksTest {
         var recipe = Recipe.create(created, null).copy(title = "Pancakes", servings = 4, ingredients = ingredients)
         if (state != null) recipe = recipe.inState(state)
         runBlocking { recipes.save(recipe) }
-        val environment = EditorEnvironment(active, device.catalog(context)) { created.plusSeconds(60) }
+        val environment = EditorEnvironment(active, device.catalog(context), dragHandleSide = HeldDragHandleSide(handleRight)) { created.plusSeconds(60) }
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
@@ -218,14 +219,23 @@ class IngredientBlocksTest {
             val unit = bounds(EditorTags.ingredientUnit(position))
             val below = if (exists(EditorTags.ingredientQuantity(position))) bounds(EditorTags.ingredientQuantity(position)) else unit
             // The column runs down the block's left edge, its full height, 48 dp wide and no wider, the icon at its centre.
-            assertEquals("row $position: the column starts at the block's left edge", block.left, column.left, 0.5f)
+            if (handleRight) {
+                assertEquals("row $position: the column ends at the block's right edge", block.right, column.right, 0.5f)
+            } else {
+                assertEquals("row $position: the column starts at the block's left edge", block.left, column.left, 0.5f)
+            }
             assertEquals("row $position: the column starts at the block's top", block.top, column.top, 0.5f)
             assertEquals("row $position: the column ends at the block's bottom", block.bottom, column.bottom, 0.5f)
             assertEquals("row $position: the column is ${column.width / compose.density.density} dp wide", px(48f), column.width, 0.5f)
             assertEquals("row $position: the icon is centred across the column", column.center.x, icon.center.x, 1f)
             assertEquals("row $position: the icon is centred down the column", column.center.y, icon.center.y, 1f)
-            // Nothing that drags stands among the inputs: they are all right of the column.
-            listOf(name, unit, below).forEach { assertTrue("row $position: the inputs are right of the column", it.left >= column.right - 0.5f) }
+            // Nothing that drags stands among the inputs: every other part of the row is beside the column.
+            (parts(position) - setOf(EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position))).forEach {
+                val b = bounds(it)
+                if (handleRight) assertTrue("row $position: $it is left of the column", b.right <= column.left + 0.5f)
+                else assertTrue("row $position: $it is right of the column", b.left >= column.right - 0.5f)
+            }
+            if (handleRight) assertTrue("row $position: the inputs start by the block's left edge", name.left - block.left <= px(16f))
             // One left edge: the name starts the first line, the quantity (or the unit, with no quantity) the second.
             assertEquals("row $position: the name and the field below it share their left edge", name.left, below.left, 0.5f)
             assertTrue("row $position: the quantity and unit are below the name", below.top >= name.bottom - 0.5f)
@@ -576,7 +586,8 @@ class IngredientBlocksTest {
             assertTrue("row $position: remove, then the menu", menu.left >= remove.right - 0.5f)
             if (fontScale == 2f) {
                 // The name has the whole line: it reaches the block's right edge, and the icons are under the inputs.
-                assertTrue("row $position: the name reaches the block's right edge", block.right - name.right <= px(4f) + 0.5f)
+                val end = if (handleRight) bounds(EditorTags.ingredientHandle(position)).left else block.right
+                assertTrue("row $position: the name reaches ${if (handleRight) "the column" else "the block's right edge"}", end - name.right <= px(4f) + 0.5f)
                 assertTrue("row $position: the icons are under the unit", remove.top >= unit.bottom - 0.5f)
                 if (exists(EditorTags.ingredientQuantity(position))) assertTrue(remove.top >= bounds(EditorTags.ingredientQuantity(position)).bottom - 0.5f)
                 assertEquals("row $position: the icons start at the inputs' left edge", name.left, remove.left, 0.5f)
@@ -652,5 +663,12 @@ class IngredientBlocksTest {
             val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(position)))
             assertEquals(0, compose.onAllNodes(inRow and AccessibilityChecks.isInteractive, useUnmergedTree = true).fetchSemanticsNodes().size)
         }
+    }
+
+    companion object {
+        /** Every test runs with the drag column on the left, as by default, and on the right, for a left hand. */
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "handle on the right: {0}")
+        fun sides(): List<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
     }
 }

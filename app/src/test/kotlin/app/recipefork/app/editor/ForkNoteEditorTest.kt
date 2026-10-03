@@ -1,0 +1,132 @@
+package app.recipefork.app.editor
+
+import android.content.Context
+import androidx.activity.ComponentActivity
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.book.ActiveBook
+import app.recipefork.app.book.BookName
+import app.recipefork.app.book.TestBook
+import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeState
+import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.fork
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import java.time.Instant
+
+/**
+ * FLOW-030: one line at the top of the editor says which parts a fork takes — the title, tags, servings, ingredients
+ * and steps — and that the description and the photos stay with the author unless the fork is the author's own (FORK-001, FORK-002, FORK-007). It says what a fork does, never that forking can be prevented,
+ * and it is the same on a recipe that was forked as on one that never was.
+ */
+@OptIn(ExperimentalTestApi::class)
+@RunWith(AndroidJUnit4::class)
+class ForkNoteEditorTest {
+    @get:Rule
+    val compose = createAndroidComposeRule<ComponentActivity>()
+
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val book = TestBook(context)
+    private val device = TestDevice(context)
+    private val active = ActiveBook(BookName.Pool, book.database)
+    private val recipes = RecipeRepository(active)
+    private val saving = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val created = Instant.parse("2026-09-20T09:00:00Z")
+    private val now = Instant.parse("2026-10-02T12:00:00Z")
+
+    @Before
+    fun setUp() {
+        compose.registerIdlingResource(book.idling)
+        compose.registerIdlingResource(device.idling)
+    }
+
+    @After
+    fun close() {
+        saving.cancel()
+        compose.unregisterIdlingResource(book.idling)
+        compose.unregisterIdlingResource(device.idling)
+        book.close()
+        device.close()
+    }
+
+    private val recipe = Recipe.create(created, null).copy(
+        title = "Borscht",
+        description = "My grandmother's way.",
+        servings = 4,
+        steps = listOf(Step(0, "Boil everything.")),
+    ).inState(RecipeState.LOCAL)
+
+    private fun open(shown: Recipe) {
+        val environment = EditorEnvironment(active, device.catalog(context)) { now }
+        compose.setContent { MaterialTheme { EditorScreen(shown.id, recipes, environment, saving, onClose = {}) } }
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
+    }
+
+    private fun notes(): List<String> = compose.textsOf(EditorTags.FORK_TAKES)
+
+    // One line names the five parts a fork takes (1), the description and photos staying with the author (2), and
+    // the author's own fork carrying them too (3).
+    private val english = listOf(
+        "A fork takes the title, tags, servings, ingredients and steps; the description and photos stay with you " +
+            "unless the fork is your own.",
+    )
+
+    // FLOW-030 (1–4): what a fork takes, what stays, that the author's own forks keep it, and nothing of prevention.
+    @Test
+    fun theEditorSaysWhatAForkTakesAndWhatStaysWithTheAuthor() {
+        runBlocking { recipes.save(recipe) }
+        open(recipe)
+        assertEquals(english, notes())
+        // It is one line, near the top: above the title.
+        val line = compose.onNodeWithTag(EditorTags.FORK_TAKES).fetchSemanticsNode().positionInRoot.y
+        val title = compose.onNodeWithTag(EditorTags.TITLE).fetchSemanticsNode().positionInRoot.y
+        assertTrue(line < title)
+        notes().forEach { assertFalse(it, it.contains("prevent", ignoreCase = true) || it.contains("cannot", ignoreCase = true)) }
+    }
+
+    // FLOW-030 (5): a recipe that was forked reads the same marking.
+    @Test
+    fun theMarkingIsTheSameOnceTheRecipeWasForked() {
+        val fork = recipe.fork(now, null, byAuthor = true)
+        runBlocking {
+            recipes.save(recipe)
+            recipes.save(fork)
+        }
+        open(recipe)
+        assertEquals(english, notes())
+    }
+
+    // FLOW-030 in the interface's other language.
+    @Test
+    @Config(qualifiers = "ru")
+    fun theMarkingIsSaidInRussian() {
+        runBlocking { recipes.save(recipe) }
+        open(recipe)
+        assertEquals(
+            listOf(
+                "Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание и фото остаются у вас, " +
+                    "если только версия не ваша собственная.",
+            ),
+            notes(),
+        )
+    }
+}

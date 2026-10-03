@@ -83,6 +83,9 @@ data class StepReferenceEntity(
     @ColumnInfo(name = "step_position") val stepPosition: Int,
     @ColumnInfo(name = "text_offset") val textOffset: Int,
     @ColumnInfo(name = "ingredient_position") val ingredientPosition: Int,
+    /** The part of the ingredient the reference reads, in [shareUnit]; null for the whole. Added in version 3. */
+    val share: Rational? = null,
+    @ColumnInfo(name = "share_unit") val shareUnit: QuantityUnit? = null,
 )
 
 @Entity(
@@ -134,6 +137,10 @@ data class MarkedRecipeRow(
     val held: Boolean,
     /** The media identity of the cover the book holds of it, if any (MEDIA-001). */
     @ColumnInfo(name = "cover_id") val coverId: String? = null,
+    /** The language the content the book holds declares (L10N-004); null for none, or no content held. */
+    val language: RecipeLanguage? = null,
+    /** The description of the content the book holds, searched as the title is (L10N-006); empty for none. */
+    val description: String = "",
 )
 
 /** What an entry of the own-recipes view shows. */
@@ -144,6 +151,10 @@ data class OwnRecipeRow(
     val sent: SentStatus,
     /** The media identity of the recipe's cover, if it holds one (MEDIA-001). */
     @ColumnInfo(name = "cover_id") val coverId: String? = null,
+    /** The language the recipe declares (L10N-004); null for none. */
+    val language: RecipeLanguage? = null,
+    /** The recipe's description, searched as the title is (L10N-006). */
+    val description: String = "",
 )
 
 /**

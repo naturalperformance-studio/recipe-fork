@@ -10,6 +10,7 @@ import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
@@ -128,5 +129,21 @@ class CardTimerReferencesTest : CardTimersKit() {
         runBlocking { recipes.save(bread.copy(steps = listOf(bread.steps.single().copy(text = "Fold  flour")))) }
         awaitHeld { it.isEmpty() }
         assertEquals(listOf(breadKey), timers.announcements.cancelled)
+    }
+
+    // FLOW-016 (8): a step's part of an ingredient reads in a derived name as the card shows it — the part, scaled.
+    @Test
+    fun aTimerNamedFromAPartReadsThePartAsTheCardShowsIt() {
+        val part = IngredientReference(0, 6, IngredientShare(Rational.of(50), QuantityUnit.GRAM))
+        val parted = bread.copy(steps = listOf(bread.steps.single().copy(ingredientReferences = listOf(part))))
+        runBlocking { recipes.save(parted) }
+        show(parted)
+        compose.waitUntil(PATIENCE_MS) { shown(TimerTags.start(0)) }
+        assertEquals("Knead 50 g flour", controlName())
+        more(4)
+        assertEquals("Knead 100 g flour", controlName())
+        start(0)
+        awaitHeld { it.size == 1 }
+        assertEquals("Knead 100 g flour", held().single().name)
     }
 }

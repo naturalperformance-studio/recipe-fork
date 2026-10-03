@@ -35,6 +35,7 @@
     <string name="editor_ingredient_free_text_offer">Добавить «%1$s» своими словами</string>
     <string name="editor_ingredient_free_text_action">Добавить %1$s своими словами, не из словаря</string>
     <string name="editor_ingredient_free_text_warning">Этого ингредиента нет в словаре: фильтры не найдут рецепт по нему, а после публикации это уже нельзя будет изменить.</string>
+    <string name="editor_ingredient_free_text_warning_serverless">Этого ингредиента нет в словаре: фильтры не найдут рецепт по нему.</string>
     <string name="editor_ingredient_divisible_question">Можно ли разделить одну штуку пополам?</string>
     <string name="editor_ingredient_divisible_yes">Да, можно половину</string>
     <string name="editor_ingredient_divisible_no">Нет, только целые</string>
@@ -72,6 +73,7 @@
     <string name="editor_description">Описание</string>
     <string name="editor_description_optional">Описание (необязательно)</string>
     <string name="editor_description_none">Описания нет</string>
+    <string name="editor_fork_takes">Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание и фото остаются у вас, если только версия не ваша собственная.</string>
     <string name="editor_timer_label">Таймер для шага %1$d</string>
     <string name="editor_timer_action">Добавить таймер к шагу %1$d</string>
     <string name="editor_timer_remove_action">Убрать таймер шага %1$d</string>
@@ -89,4 +91,51 @@
     <string name="editor_row_insert_below">Вставить ниже</string>
     <string name="editor_row_move_up">Переместить вверх</string>
     <string name="editor_row_move_down">Переместить вниз</string>
+    <!-- Часть ингредиента в шаге: предлагается рядом с целым, вводится в единице ингредиента. -->
+    <string name="editor_step_offered_part">%1$s — часть…</string>
+    <string name="editor_part_title">Часть: %1$s</string>
+    <string name="editor_part_field">Сколько, %1$s</string>
+    <string name="editor_part_of_whole">Из %1$s по списку.</string>
+    <string name="editor_part_more_than_whole">Больше, чем %1$s по списку.</string>
+    <string name="editor_part_insert">Вставить</string>
+    <string name="editor_part_cancel">Отмена</string>
+    <string name="editor_step_part_more_than_whole">Часть %1$s больше, чем %2$s по списку.</string>
+    <string name="editor_parts_made_whole">У ингредиента %1$d сменилась единица: где шаги брали его часть, теперь берут целиком.</string>
+    <!-- Часть ниже минимума или сверх лимита (FLOW-028): предупреждение, ничего не запрещает; рецепт называет свои границы. -->
+    <string name="editor_mark_warning">Предупреждение</string>
+    <string name="editor_mark_title_missing">У рецепта должно быть название.</string>
+    <string name="editor_mark_language_missing">У рецепта должен быть указан язык.</string>
+    <string name="editor_mark_servings_missing">У рецепта должно быть число порций.</string>
+    <string name="editor_mark_ingredients_missing">У рецепта должен быть хотя бы один ингредиент.</string>
+    <string name="editor_mark_steps_missing">У рецепта должен быть хотя бы один шаг.</string>
+    <string name="editor_mark_characters_over">Больше лимита в %1$s символов: сейчас %2$s. Текст сохранён целиком.</string>
+    <string name="editor_mark_ingredients_over">Больше %1$s ингредиентов: сейчас %2$s.</string>
+    <string name="editor_mark_steps_over">Больше %1$s шагов: сейчас %2$s.</string>
+    <!-- Чек-лист: неизменные советы, как написать рецепт; открывается сверху редактора и только читается (GUIDE-003, GUIDE-004). -->
+    <string name="editor_checklist">Чек-лист</string>
+    <string name="editor_checklist_action">Открыть чек-лист</string>
+    <string name="editor_checklist_tooltip">Советы, как написать рецепт</string>
+    <string name="editor_checklist_close">Закрыть</string>
+    <string name="editor_checklist_1_title">Шаг с таймером начинается с того, чего он ждёт.</string>
+    <!-- %1$d — сколько символов шага несёт уведомление таймера (TimerName.LENGTH). -->
+    <string name="editor_checklist_1_text">Уведомление несёт первые %1$d символов шага, поэтому «курица в духовку на 30 минут» говорит сама за себя, а «нарежьте лук полукольцами, обжарьте… и в духовку» — нет. Если начало шага не может сказать, чего ждёт таймер, таймеру можно дать имя вручную.</string>
+    <string name="editor_checklist_2_title">Одно действие — один шаг.</string>
+    <string name="editor_checklist_2_text">Шаги не объединяются: два ожидания подряд — это два шага, и у шага один таймер.</string>
+    <string name="editor_checklist_3_title">Фото или видео — у того шага, который они показывают.</string>
+    <string name="editor_checklist_3_text">Их стоит прикладывать в лучшем качестве, какое даёт камера: по ним читатель сверяет свою сковороду.</string>
+    <string name="editor_checklist_4_title">Количества внутри шага вставляются ссылками, а не набираются числами.</string>
+    <string name="editor_checklist_4_text">Ссылка следует за числом порций читателя, а набранное число — нет: читатель, готовящий двойную порцию, увидит 400 г в списке и 200 г в шаге.</string>
+    <string name="editor_checklist_5_title">Ингредиент выбирается из подсказок везде, где подсказка подходит.</string>
+    <string name="editor_checklist_5_text">Ингредиент, набранный своими словами, никогда не найдётся фильтром по ингредиентам, и после публикации этого уже не изменить.</string>
+    <!-- То же в сборке без сервера, где ничего не публикуется (FLOW-061). -->
+    <string name="editor_checklist_5_text_serverless">Ингредиент, набранный своими словами, никогда не найдётся фильтром по ингредиентам.</string>
+    <string name="editor_checklist_6_title">Способ приготовления — в шагах, а не в описании.</string>
+    <string name="editor_checklist_6_text">Когда рецепт форкает кто-то другой, он забирает ингредиенты и шаги, а описание оставляет, поэтому способ, записанный в описании, — способ, на котором никто не сможет строить дальше.</string>
+    <string name="editor_checklist_7_title">Число порций — то, на сколько вы на самом деле готовили.</string>
+    <string name="editor_checklist_7_text">Из него рассчитывается каждое количество, которое когда-либо увидит читатель.</string>
+    <string name="editor_references_offered">Количество можно вставить в шаг ссылкой: наберите @ или нажмите в шаге значок вставки ингредиента. Ссылка следует за числом порций читателя, а число, набранное вручную, — нет.</string>
+    <string name="editor_timer_notification">Уведомление таймера скажет: «%1$s»</string>
+    <string name="editor_timer_notification_follows">Количества в нём следуют за числом порций читателя, поэтому у читателя уведомление может звучать и обрезаться иначе.</string>
+    <string name="editor_timer_notification_name">Назвать таймер</string>
+    <string name="editor_timer_notification_name_action">Назвать таймер шага %1$d</string>
 </resources>
