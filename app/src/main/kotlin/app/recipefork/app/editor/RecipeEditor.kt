@@ -13,6 +13,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShares
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
@@ -322,7 +323,45 @@ class RecipeEditor(
     /** What the author typed into the row's quantity field, kept whether or not the field holds it (DOM-017 (6)). */
     fun setIngredientQuantity(position: Int, typed: String) = editIngredient(position) { it.withTypedQuantity(typed) }
 
-    fun setIngredientUnit(position: Int, unit: QuantityUnit) = editIngredient(position) { it.withUnit(unit) }
+    /**
+     * The row's unit. A step's part of the row is kept while it still reads in the new unit — the same unit, or another
+     * `exact` unit of its dimension; otherwise every part of the row becomes a reference to its whole again, which
+     * [partsMadeWhole] states once. A change of the row's quantity never touches its parts.
+     */
+    fun setIngredientUnit(position: Int, unit: QuantityUnit): Boolean {
+        var madeWhole = false
+        val changed = edit { recipe ->
+            if (position !in recipe.ingredients.indices) return@edit recipe
+            val row = recipe.ingredients[position].withUnit(unit)
+            val steps = recipe.steps.map { step ->
+                step.copy(
+                    ingredientReferences = step.ingredientReferences.map { reference ->
+                        val share = reference.share
+                        if (reference.ingredientPosition == position && share != null && !IngredientShares.fits(share, row.unit)) {
+                            madeWhole = true
+                            reference.copy(share = null)
+                        } else {
+                            reference
+                        }
+                    },
+                )
+            }
+            recipe.copy(ingredients = recipe.ingredients.mapIndexed { i, it -> if (i == position) row else it }, steps = steps)
+        }
+        if (changed && madeWhole) wholeAgain.value = PartsMadeWhole(position, ++statements)
+        return changed
+    }
+
+    private val wholeAgain = MutableStateFlow<PartsMadeWhole?>(null)
+    private var statements = 0L
+
+    /** The last change of a row's unit that made its parts whole again, until the screen has stated it; null for none. */
+    val partsMadeWhole: StateFlow<PartsMadeWhole?> = wholeAgain.asStateFlow()
+
+    /** The screen has stated [statement]. */
+    fun partsMadeWholeStated(statement: PartsMadeWhole) {
+        wholeAgain.compareAndSet(statement, null)
+    }
 
     /** A `piece` row's divisibility, which the author is asked for (FLOW-022 (5)). */
     fun setIngredientDivisible(position: Int, divisible: Boolean) = editIngredient(position) { row ->
@@ -474,6 +513,9 @@ class RecipeEditor(
         private val writes = Mutex()
     }
 }
+
+/** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
+data class PartsMadeWhole(val ingredientPosition: Int, val serial: Long)
 
 /**
  * Keys for the rows of one list, each staying with its row while rows are inserted, moved or deleted around it. A

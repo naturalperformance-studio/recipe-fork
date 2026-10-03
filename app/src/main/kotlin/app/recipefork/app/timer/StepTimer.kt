@@ -32,6 +32,7 @@ import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.book.BookName
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.timer.TimerName
 import kotlinx.coroutines.CoroutineScope
@@ -231,7 +232,7 @@ internal data class Restart(val step: Step, val name: String)
 fun StepTimer(
     step: Step,
     timers: RecipeTimers,
-    quantity: (ingredientPosition: Int) -> String?,
+    quantity: ReferenceQuantity,
     modifier: Modifier = Modifier,
 ) {
     val timer = step.timer ?: return

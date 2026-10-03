@@ -15,6 +15,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.FileMedia
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityUnit
@@ -200,6 +201,22 @@ class RecipeImportTest {
         val twoAtOnePlace = content.copy(steps = content.steps.map { if (it.position == 0) it.copy(ingredientReferences = listOf(IngredientReference(0, 9), IngredientReference(1, 9))) else it })
         val longTimer = content.copy(steps = content.steps.map { if (it.position == 0) it.copy(timer = Timer((100 * 60).minutes)) else it })
         listOf(wrongUnit, noValue, tooLong, missingIngredient, twoAtOnePlace, longTimer).forEach { assertRefused(Refusal.BREAKS_RULES, file(it)) }
+    }
+
+    // A step's part of an ingredient is validated like any quantity: on its grid, above zero, of its row's unit type.
+    @Test
+    fun aPartOffItsGridOrNotAboveZeroIsRefused() {
+        val content = soup()
+        fun parted(share: IngredientShare) =
+            content.copy(steps = content.steps.map { if (it.position == 1) it.copy(ingredientReferences = listOf(IngredientReference(0, 18, share))) else it })
+        listOf(
+            IngredientShare(Rational.of(1, 2), QuantityUnit.GRAM),
+            IngredientShare(Rational.ZERO, QuantityUnit.GRAM),
+            IngredientShare(Rational.of(-100), QuantityUnit.GRAM),
+            IngredientShare(Rational.of(1), QuantityUnit.TEASPOON),
+        ).forEach { assertRefused(Refusal.BREAKS_RULES, file(parted(it))) }
+        // A part larger than the whole is no rule broken: the book marks it, nothing refuses it.
+        assertTrue(import(file(parted(IngredientShare(Rational.of(300), QuantityUnit.GRAM)))) is ImportOutcome.Added)
     }
 
     // FLOW-063 (1), FLOW-024 (6): a friend's draft — a row still being written, a row off its grid — is imported, its

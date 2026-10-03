@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.Flow
         RecipeEntity::class, IngredientEntity::class, StepEntity::class, StepReferenceEntity::class,
         MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -40,6 +40,13 @@ abstract class BookDatabase : RoomDatabase() {
             object : Migration(1, 2) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("alter table ingredient add column entered_quantity text")
+                }
+            },
+            // 2 → 3: a step's reference may read a part of its ingredient.
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table step_reference add column share text")
+                    db.execSQL("alter table step_reference add column share_unit text")
                 }
             },
         )
