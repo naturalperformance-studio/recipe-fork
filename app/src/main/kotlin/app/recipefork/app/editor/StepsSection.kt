@@ -79,8 +79,9 @@ internal fun Steps(
     book: BookName,
     saving: CoroutineScope,
     clips: ClipStore? = null,
+    work: StepMediaWork? = null,
 ) {
-    val photos = rememberStepPhotos(store, book, saving, clips)
+    val photos = rememberStepPhotos(store, book, saving, clips, work)
     val editable = recipe.state.editable
     val steps = recipe.steps.sortedBy { it.position }
     val language = numberLanguage(LocalConfiguration.current)

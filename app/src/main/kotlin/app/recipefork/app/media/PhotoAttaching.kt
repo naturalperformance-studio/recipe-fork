@@ -27,7 +27,9 @@ import kotlinx.coroutines.withContext
  *
  * A place that takes clips — a step, never the cover — is given [clips] and [setClip]: a clip offered is converted by
  * [clips] (MEDIA-004) and handed to [setClip] as a photograph is to [set], replacing whatever item the place held.
- * While one is being converted, [converting] holds, and [cancelClip] stops it, leaving nothing of it behind.
+ * While one is being converted, [converting] holds, and [cancelClip] stops it, leaving nothing of it behind. The last
+ * item offered wins: a photograph offered stops a clip still being converted there. What is prepared waits for
+ * [ready] before it is placed.
  */
 class PhotoAttaching(
     private val store: PhotoStore,
@@ -38,6 +40,7 @@ class PhotoAttaching(
     private val unset: (written: suspend (removed: String) -> Unit) -> Boolean,
     private val clips: ClipStore? = null,
     private val setClip: (mediaId: String, written: suspend (replaced: String?) -> Unit) -> Boolean = { _, _ -> false },
+    private val ready: suspend () -> Unit = {},
 ) {
     /** One thing to tell the author: each told is a statement of its own, even where its [notice] is the last one's. */
     class Statement(val notice: PhotoNotice)
@@ -74,6 +77,7 @@ class PhotoAttaching(
     }
 
     fun attach(offer: PhotoOffer): Job = work {
+        clipJob?.cancel()
         val outcome = try {
             store.add(book, offer.open)
         } finally {
@@ -117,11 +121,14 @@ class PhotoAttaching(
         mediaId: String,
         place: (mediaId: String, written: suspend (replaced: String?) -> Unit) -> Boolean,
         told: PhotoNotice,
-    ): PhotoNotice? = if (place(mediaId) { replaced -> replaced?.let { store.delete(book, it) } }) {
-        told
-    } else {
-        store.delete(book, mediaId)
-        null
+    ): PhotoNotice? {
+        ready()
+        return if (place(mediaId) { replaced -> replaced?.let { store.delete(book, it) } }) {
+            told
+        } else {
+            store.delete(book, mediaId)
+            null
+        }
     }
 
     /** Runs [prepare] in [scope], counted while it runs, and tells the author what it gives back. */

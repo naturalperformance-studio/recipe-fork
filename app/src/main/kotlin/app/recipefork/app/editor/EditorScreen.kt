@@ -128,6 +128,8 @@ fun EditorScreen(
     val context = LocalContext.current
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
     val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
+    // The steps' media work outlives the activity being recreated mid-conversion (FLOW-026).
+    val mediaWork = rememberStepMediaWork(recipeId, editor)
     val host = remember { SnackbarHostState() }
     val statementScope = rememberCoroutineScope()
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
@@ -180,7 +182,7 @@ fun EditorScreen(
                     ServingCount(shown, editor)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode)
-                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips)
+                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork)
                     }
                     Description(shown, editor)
                 }

@@ -178,6 +178,31 @@ class StepClipOnDiskTest {
         assertFalse(capture.exists())
     }
 
+    // The last item offered wins: a photograph offered while a clip is converted at the step stops the clip, and the
+    // step holds the photograph alone.
+    @Test
+    fun aPhotoOfferedWhileAClipConvertsStopsTheClip() = runBlocking {
+        val recipe = recipe("Boil.")
+        val editor = opened(recipe)
+        val attaching = editor.at(0)
+        gate = CompletableDeferred()
+        val (offer, capture) = recorded("overtaken.mp4")
+        val clip = attaching.attachClip(offer)
+        assertTrue(attaching.converting.value)
+
+        attaching.attach(photo("later.jpg")).join()
+        clip.join()
+
+        assertTrue(clip.isCancelled)
+        assertFalse(attaching.converting.value)
+        assertEquals(PhotoNotice.PROCESSED, attaching.notice.value)
+        val read = reopened(recipe)
+        assertEquals(MediaKind.PHOTO, read.stepMedia(0)!!.kind)
+        assertEquals(1, read.media.size)
+        assertEquals(listOf(read.stepMedia(0)!!.mediaId), held())
+        assertFalse(capture.exists())
+    }
+
     // MEDIA-008: a clip that cannot be kept on the device attaches nothing and says so.
     @Test
     fun aClipThatCannotBeKeptIsRefused() = runBlocking {

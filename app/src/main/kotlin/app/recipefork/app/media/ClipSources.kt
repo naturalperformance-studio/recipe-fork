@@ -86,7 +86,9 @@ fun rememberClipSources(key: String, onClip: (ClipOffer) -> Unit, onUnavailable:
             recorded == null -> file?.delete()
             file != null && file.length() > 0 -> deliver(ClipOffer(Uri.fromFile(file), release = { file.delete() }))
             recorded.returned != null -> {
-                // A camera application that kept the clip where it chose, and said where.
+                // A camera application that kept the clip where it chose, and said where. Should it not have granted
+                // this application the reading of that address, reading it fails and the author is told the clip
+                // could not be read (MEDIA-008); nothing is attached and nothing is lost.
                 file?.delete()
                 deliver(ClipOffer(recorded.returned, release = {}))
             }
@@ -94,7 +96,7 @@ fun rememberClipSources(key: String, onClip: (ClipOffer) -> Unit, onUnavailable:
         }
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) deliver(ClipOffer(uri, release = {}))
+        if (uri != null) deliver(ClipOffer(uri, release = holdReading(context, uri)))
     }
     fun record() {
         dropClip()
@@ -123,4 +125,30 @@ fun rememberClipSources(key: String, onClip: (ClipOffer) -> Unit, onUnavailable:
         }
     }
     return remember(context, camera, picker, clipPath) { ClipSources(record = ::record, choose = ::pick) }
+}
+
+/**
+ * Keeps the reading of the picked [uri] past the activity that picked it, where the picker lets it be kept — the
+ * documents picker some phones fall back on grants it to the activity alone, and turning the phone mid-conversion
+ * would end it. Gives back what lets it go once the clip is done with. Where it cannot be kept, a reading cut short
+ * is told as a clip that could not be read (MEDIA-008).
+ */
+private fun holdReading(context: Context, uri: Uri): () -> Unit {
+    val resolver = context.applicationContext.contentResolver
+    val held = try {
+        resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        true
+    } catch (e: RuntimeException) {
+        // A picker that grants no lasting reading (SecurityException), or an address that takes none.
+        false
+    }
+    return {
+        if (held) {
+            try {
+                resolver.releasePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (e: RuntimeException) {
+                // Already let go.
+            }
+        }
+    }
 }

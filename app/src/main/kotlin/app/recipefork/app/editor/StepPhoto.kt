@@ -37,23 +37,46 @@ import kotlinx.coroutines.CoroutineScope
  * Where the steps' photographs and clips are kept — [clips] converts the clips, where clips are offered — and the
  * scope their work runs in, which outlives the screen.
  */
-internal class StepPhotos(val store: PhotoStore, val book: BookName, val saving: CoroutineScope, val clips: ClipStore? = null)
+internal class StepPhotos(
+    val store: PhotoStore,
+    val book: BookName,
+    val saving: CoroutineScope,
+    val clips: ClipStore? = null,
+    /** Where each step's work is held past the activity being recreated; none, and it is the screen's alone. */
+    val work: StepMediaWork? = null,
+)
 
 @Composable
-internal fun rememberStepPhotos(store: PhotoStore, book: BookName, saving: CoroutineScope, clips: ClipStore? = null): StepPhotos =
-    remember(store, book, saving, clips) { StepPhotos(store, book, saving, clips) }
+internal fun rememberStepPhotos(store: PhotoStore, book: BookName, saving: CoroutineScope, clips: ClipStore? = null, work: StepMediaWork? = null): StepPhotos =
+    remember(store, book, saving, clips, work) { StepPhotos(store, book, saving, clips, work) }
 
 /**
  * Attaches a photograph or a clip to the step whose key is [key], wherever that step stands once it is ready; a step
  * deleted meanwhile takes none, and nothing of it is kept. Either replaces whatever item the step held (MEDIA-001).
  */
-internal fun StepPhotoAttaching(editor: RecipeEditor, photos: StepPhotos, key: Long): PhotoAttaching = PhotoAttaching(
-    photos.store, photos.book, photos.saving, PhotoNotice.STEP_REMOVED,
-    set = { mediaId, written -> editor.stepPosition(key)?.let { editor.setStepMedia(it, mediaId, MediaKind.PHOTO, written) } ?: false },
-    unset = { written -> editor.stepPosition(key)?.let { editor.removeStepMedia(it, written) } ?: false },
-    clips = photos.clips,
-    setClip = { mediaId, written -> editor.stepPosition(key)?.let { editor.setStepMedia(it, mediaId, MediaKind.VIDEO, written) } ?: false },
-)
+internal fun StepPhotoAttaching(editor: RecipeEditor, photos: StepPhotos, key: Long): PhotoAttaching =
+    StepPhotoAttaching({ editor }, photos, key)
+
+/** As above, placing through whichever editor [editor] gives when the item is ready, once [ready] has returned. */
+internal fun StepPhotoAttaching(
+    editor: () -> RecipeEditor?,
+    photos: StepPhotos,
+    key: Long,
+    ready: suspend () -> Unit = {},
+): PhotoAttaching {
+    fun place(kind: MediaKind, mediaId: String, written: suspend (String?) -> Unit): Boolean {
+        val shown = editor() ?: return false
+        return shown.stepPosition(key)?.let { shown.setStepMedia(it, mediaId, kind, written) } ?: false
+    }
+    return PhotoAttaching(
+        photos.store, photos.book, photos.saving, PhotoNotice.STEP_REMOVED,
+        set = { mediaId, written -> place(MediaKind.PHOTO, mediaId, written) },
+        unset = { written -> editor()?.let { shown -> shown.stepPosition(key)?.let { shown.removeStepMedia(it, written) } } ?: false },
+        clips = photos.clips,
+        setClip = { mediaId, written -> place(MediaKind.VIDEO, mediaId, written) },
+        ready = ready,
+    )
+}
 
 /**
  * The media work of one editable step: attaching what the camera or the gallery gives — a photograph or a clip — and
@@ -64,7 +87,7 @@ internal class StepPhotoControl(val attaching: PhotoAttaching, val sources: Phot
 @Composable
 internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photos: StepPhotos): StepPhotoControl {
     val key = editor.stepKey(position)
-    val attaching = remember(editor, photos, key) { StepPhotoAttaching(editor, photos, key) }
+    val attaching = remember(editor, photos, key) { photos.work?.attaching(key, photos) ?: StepPhotoAttaching(editor, photos, key) }
     val sources = rememberPhotoSources(
         key = STEP_KEY + key,
         onPhoto = { attaching.attach(it) },
