@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -42,8 +44,8 @@ import java.time.Instant
 
 /**
  * A step's photograph on the card (FLOW-026 (2)): at its step, under its text and before the next step, named for the
- * screen reader by the step's number as the card shows it; a photograph that cannot be read shows nothing; a frozen
- * recipe shows its own.
+ * screen reader by the step's number as the card shows it; a photograph the device does not hold, or cannot read, says
+ * it is unavailable (FLOW-061); a frozen recipe shows its own.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -133,26 +135,49 @@ class CardStepPhotoTest {
         assertEquals(listOf("Фото шага 3"), compose.descriptionOf(CardTags.stepPhoto(2)))
     }
 
+    private fun unavailableLine(position: Int) = compose.onNodeWithTag(CardTags.stepMediaUnavailable(position), useUnmergedTree = true)
+        .fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
+
+    // FLOW-061: a photograph whose file is gone says it is unavailable, rather than showing nothing.
     @Test
-    fun aStepPhotoWhoseFileCannotBeReadShowsNothing() {
+    fun aStepPhotoWhoseFileIsGoneSaysItIsUnavailable() {
         val gone = Media("gone", null, MediaKind.PHOTO, MediaAttachment.ToStep(1), MediaVisibility.PRIVATE)
         show(threeSteps(gone))
-        compose.waitForIdle()
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepMediaUnavailable(1)), PATIENCE_MS)
+        assertEquals("The photo of step 2 is unavailable on this phone.", unavailableLine(1))
         assertFalse(exists(CardTags.stepPhoto(1)))
         assertTrue(exists(CardTags.step(1)))
     }
 
-    // A step that holds nothing but a photograph whose file is gone shows nothing, so it is left out — never shown as
-    // a bare number — and the steps after it are numbered without it.
+    // A file that is there but cannot be read as a picture says the same.
     @Test
-    fun aStepThatIsOnlyAPhotoWhoseFileIsGoneIsLeftOut() {
+    fun aStepPhotoThatCannotBeReadSaysItIsUnavailable() {
+        store.file(BookName.Pool, "broken").apply { parentFile!!.mkdirs() }.writeBytes(ByteArray(100) { 7 })
+        show(threeSteps(Media("broken", null, MediaKind.PHOTO, MediaAttachment.ToStep(2), MediaVisibility.PRIVATE)))
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepMediaUnavailable(2)), PATIENCE_MS)
+        assertEquals("The photo of step 3 is unavailable on this phone.", unavailableLine(2))
+    }
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun theUnavailableLineIsInTheInterfaceLanguage() {
+        show(threeSteps(Media("gone", null, MediaKind.PHOTO, MediaAttachment.ToStep(0), MediaVisibility.PRIVATE)))
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepMediaUnavailable(0)), PATIENCE_MS)
+        assertEquals("Фото шага 1 недоступно на этом телефоне.", unavailableLine(0))
+    }
+
+    // A step that holds nothing but a photograph whose file is gone is still a step: it is numbered and says its
+    // photograph is unavailable (FLOW-061), never left out in silence.
+    @Test
+    fun aStepThatIsOnlyAPhotoWhoseFileIsGoneSaysItIsUnavailable() {
         val gone = Media("gone", null, MediaKind.PHOTO, MediaAttachment.ToStep(0), MediaVisibility.PRIVATE)
         val recipe = threeSteps(gone, photo("p1", 1)).let { it.copy(steps = listOf(Step(0, ""), it.steps[1], it.steps[2])) }
         show(recipe)
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepPhoto(1)), PATIENCE_MS)
-        assertFalse(exists(CardTags.step(0)))
+        assertTrue(exists(CardTags.step(0)))
         assertFalse(exists(CardTags.stepPhoto(0)))
-        assertEquals(listOf("Photo of step 1"), compose.descriptionOf(CardTags.stepPhoto(1)))
+        assertEquals("The photo of step 1 is unavailable on this phone.", unavailableLine(0))
+        assertEquals(listOf("Photo of step 2"), compose.descriptionOf(CardTags.stepPhoto(1)))
     }
 
     @Test
