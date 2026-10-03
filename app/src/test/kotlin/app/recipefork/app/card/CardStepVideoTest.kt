@@ -55,8 +55,11 @@ import org.robolectric.annotation.Config
 import java.io.File
 import java.time.Instant
 
-/** A player that plays nothing and remembers what the card asked of it. */
-internal class FakeClipPlayer(private val fails: Boolean) : ClipPlayer {
+/**
+ * A player that plays nothing and remembers what the card asked of it; it reports a clip of [width] by [height]
+ * pixels turned by [rotation] degrees.
+ */
+internal class FakeClipPlayer(private val fails: Boolean, private val width: Int = 1280, private val height: Int = 720, private val rotation: Int = 0) : ClipPlayer {
     var file: File? = null
     var playing = false
     var released = false
@@ -65,7 +68,7 @@ internal class FakeClipPlayer(private val fails: Boolean) : ClipPlayer {
     override suspend fun open(file: File, listener: ClipPlayer.Listener) {
         this.file = file
         this.listener = listener
-        if (fails) listener.failed() else listener.ready(1280, 720)
+        if (fails) listener.failed() else listener.ready(width, height, rotation)
     }
 
     override fun surface(surface: Surface?) = Unit
@@ -89,9 +92,9 @@ internal class FakeClipPlayer(private val fails: Boolean) : ClipPlayer {
     fun breaks() = listener!!.failed()
 }
 
-internal class FakeClipPlayers(var fails: Boolean = false) : ClipPlayers {
+internal class FakeClipPlayers(var fails: Boolean = false, var width: Int = 1280, var height: Int = 720, var rotation: Int = 0) : ClipPlayers {
     val made = mutableListOf<FakeClipPlayer>()
-    override fun create(): ClipPlayer = FakeClipPlayer(fails).also { made += it }
+    override fun create(): ClipPlayer = FakeClipPlayer(fails, width, height, rotation).also { made += it }
 }
 
 /**
@@ -169,9 +172,10 @@ class CardStepVideoTest {
     private fun textOf(tag: String) =
         compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
 
+    /** The control's accessible name: an icon button, named by its description. */
     private fun controlText(position: Int) =
         compose.onNodeWithTag(CardTags.stepVideoControl(position)).fetchSemanticsNode().let { node ->
-            node.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
+            node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString()
         }
 
     // MEDIA-004, A11Y-001: at its step, it plays and loops (the player loops), named as the author's video.
