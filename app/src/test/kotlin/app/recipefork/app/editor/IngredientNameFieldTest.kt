@@ -369,7 +369,7 @@ class IngredientNameFieldTest {
 
     private fun theOpenOffer(typed: String, content: Set<String>) {
         writeANewRecipe()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.offered(10)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
         addIngredient(0)
         type(0, typed)
         assertTrue(choices(0).size >= 3)

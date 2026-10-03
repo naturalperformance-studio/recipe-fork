@@ -169,11 +169,20 @@ class LibraryFilterTest {
         compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.INGREDIENT_CHOOSER) }
     }
 
-    /** Turns each of [tags] on or off in the tag chooser. */
+    /**
+     * Turns each of [tags] on or off in the tag chooser: a chosen tag stands there checked; another is found by
+     * typing its label.
+     */
     private fun toggleTags(vararg tags: TagEntity) {
         click(LibraryTags.FILTER_ADD)
         click(LibraryTags.FILTER_BY_TAGS)
-        tags.forEach { click(LibraryTags.tagChoice(it.id)) }
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_FIELD), PATIENCE_MS)
+        tags.forEach {
+            if (!exists(LibraryTags.tagChoice(it.id))) {
+                compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement(it.labelEn)
+            }
+            click(LibraryTags.tagChoice(it.id))
+        }
         click(LibraryTags.TAG_CHOOSER_DONE)
         compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.TAG_CHOOSER) }
     }

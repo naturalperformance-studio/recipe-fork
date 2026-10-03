@@ -67,6 +67,8 @@ import app.recipefork.app.AppContainer
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.dictionary.TagEntity
+import app.recipefork.app.dictionary.TagOffer
+import app.recipefork.app.dictionary.label
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit
@@ -371,11 +373,10 @@ private fun TagSearch(recipe: Recipe, editor: RecipeEditor, dictionary: List<Tag
         keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
         modifier = Modifier.fillMaxWidth().testTag(EditorTags.TAG_SEARCH),
     )
-    val sought = query.trim()
-    val offered = dictionary.filter { it.id !in recipe.tags }.map { it to label(it) }
-        .filter { (_, shown) -> shown.contains(sought, ignoreCase = true) }
-        .sortedBy { (_, shown) -> shown.lowercase() }
-    if (offered.isEmpty() && sought.isNotEmpty()) {
+    // Hundreds of tags are searched, never listed: nothing is offered until a word is typed.
+    val language = numberLanguage(LocalConfiguration.current)
+    val offered = TagOffer.of(query, dictionary, language, excluded = recipe.tags).map { it to it.label(language) }
+    if (offered.isEmpty() && query.isNotBlank()) {
         Text(
             stringResource(R.string.editor_tag_no_match),
             style = MaterialTheme.typography.bodyMedium,

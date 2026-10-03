@@ -81,6 +81,8 @@
     <string name="library_filter_tags_title">Фильтр по тегам</string>
     <string name="library_filter_tags_hint">Покажутся рецепты со всеми выбранными тегами.</string>
     <string name="library_filter_tags_none">В словаре тегов пока нет ни одного тега.</string>
+    <string name="library_filter_tags_field">Найти тег</string>
+    <string name="library_filter_tags_no_match">В словаре нет подходящего тега.</string>
     <string name="library_filter_done">Готово</string>
     <string name="library_filter_cancel">Отмена</string>
     <!-- The filter by a recipe's declared language (L10N-005). -->

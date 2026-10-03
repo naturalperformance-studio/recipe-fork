@@ -141,16 +141,19 @@ class EditorLanguageAndAccessibilityTest {
         checkTheScreen(expectInteractive = 3)
         assertAnnounces(LibraryTags.WRITE, w.write)
 
-        // The editor on a new recipe, with the tag editor offering the dictionary.
+        // The editor on a new recipe, with the tag search over the dictionary: nothing is offered until typed.
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.offered(10)), PATIENCE_MS)
-        checkTheScreen(expectInteractive = 7) // back, title, language, clear, search, three offered tags
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
+        checkTheScreen(expectInteractive = 5) // back, title, language, clear, search
         assertAnnounces(EditorTags.BACK, w.back)
         val language = compose.onNodeWithTag(EditorTags.LANGUAGE).fetchSemanticsNode()
         val change = AccessibilityChecks.clickActionLabel(language)
         assertEquals(if (w === english) w.toRussian else w.toEnglish, change)
         assertNotEquals(change, AccessibilityChecks.announcedLabel(language))
         assertAnnounces(EditorTags.LANGUAGE_CLEAR, w.clear)
+        compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextInput("ital")
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.offered(10)), PATIENCE_MS)
+        checkTheScreen(expectInteractive = 6) // back, title, language, clear, search, the offered tag
         assertAnnounces(EditorTags.offered(10), w.addItalian)
 
         // A tag chosen, and a search that matches nothing.

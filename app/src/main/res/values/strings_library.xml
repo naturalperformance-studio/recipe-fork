@@ -98,6 +98,8 @@
     <string name="library_filter_tags_title">Filter by tags</string>
     <string name="library_filter_tags_hint">Recipes carrying every chosen tag are listed.</string>
     <string name="library_filter_tags_none">The tag dictionary holds no tags yet.</string>
+    <string name="library_filter_tags_field">Find a tag</string>
+    <string name="library_filter_tags_no_match">No tag in the dictionary matches this.</string>
     <string name="library_filter_done">Done</string>
     <string name="library_filter_cancel">Cancel</string>
     <!-- The filter by a recipe's declared language (L10N-005). -->
