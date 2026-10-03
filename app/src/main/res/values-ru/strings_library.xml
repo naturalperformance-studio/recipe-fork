@@ -47,6 +47,14 @@
     <string name="library_usual_set">Задать</string>
     <string name="library_usual_clear">Не задавать</string>
     <string name="library_drag_handle_right">Ручка перетаскивания справа</string>
+    <string name="library_clear_media">Очистить сохранённые фото и видео</string>
+    <string name="library_clear_media_title">Очистить сохранённые фото и видео?</string>
+    <string name="library_clear_media_statement_serverless">Фотографии и видео найденных рецептов удалятся с этого устройства, и получить их снова будет нельзя. Текст каждого рецепта останется, а ваши черновики сохранят свои фотографии и видео.</string>
+    <string name="library_clear_media_statement">Фотографии и видео найденных рецептов и рецептов, которые вы отправили, удалятся с этого устройства. Они загрузятся снова, когда рецепт откроют при подключении к сети. Текст каждого рецепта останется, а неотправленные рецепты сохранят свои фотографии и видео.</string>
+    <string name="library_clear_media_confirm">Очистить</string>
+    <string name="library_clear_media_decline">Отмена</string>
+    <string name="library_clear_media_nothing">Сохранённых фото и видео, которые можно очистить, нет.</string>
+    <string name="library_clear_media_ok">ОК</string>
     <!-- FLOW-035 (4): поле поиска над каждым видом и результат, в котором ничего нет. -->
     <string name="library_search">Поиск по названию или ингредиенту</string>
     <string name="library_search_clear">Очистить поиск</string>

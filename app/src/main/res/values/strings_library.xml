@@ -62,6 +62,16 @@
     <string name="library_usual_clear">Not set</string>
     <!-- The drag column of the editor's steps and ingredients on the right of each block, for a left hand. -->
     <string name="library_drag_handle_right">Drag handle on the right</string>
+    <!-- FLOW-060: clearing from the book's menu the media the device need not keep, and the statement shown first. -->
+    <string name="library_clear_media">Clear saved media</string>
+    <string name="library_clear_media_title">Clear saved media?</string>
+    <!-- In a build without the server the cleared media cannot be fetched again (FLOW-060 (4), FLOW-062 (1)). -->
+    <string name="library_clear_media_statement_serverless">The photographs and video of found recipes are deleted from this device and cannot be fetched again. Every recipe keeps its text, and your drafts keep their photographs and video.</string>
+    <string name="library_clear_media_statement">The photographs and video of found recipes and of the recipes you sent are deleted from this device. They are fetched again when a recipe is opened with a connection. Every recipe keeps its text, and recipes not sent keep their photographs and video.</string>
+    <string name="library_clear_media_confirm">Clear</string>
+    <string name="library_clear_media_decline">Cancel</string>
+    <string name="library_clear_media_nothing">There is no saved media to clear.</string>
+    <string name="library_clear_media_ok">OK</string>
     <!-- FLOW-035 (4): the search field at the top of each view, and the result that holds nothing. -->
     <string name="library_search">Search by title or ingredient</string>
     <string name="library_search_clear">Clear the search</string>
