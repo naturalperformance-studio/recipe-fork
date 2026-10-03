@@ -324,13 +324,28 @@ class BoundMarksEditorTest {
         assertTrue(compose.onNodeWithTag(EditorTags.TITLE).fetchSemanticsNode().config.getOrElseNullable(SemanticsProperties.Error) { null } == null)
     }
 
+    // A mark states the recipe's own minimum or limit and nothing more: a build without submission has none to name.
+    @Test
+    fun noMarkSpeaksOfSubmitting() {
+        val marks = listOf(
+            string(R.string.editor_mark_title_missing), string(R.string.editor_mark_language_missing),
+            string(R.string.editor_mark_servings_missing), string(R.string.editor_mark_ingredients_missing),
+            string(R.string.editor_mark_steps_missing), string(R.string.editor_mark_characters_over, 2_000, 2_140),
+            string(R.string.editor_mark_ingredients_over, 50, 53), string(R.string.editor_mark_steps_over, 50, 53),
+        )
+        marks.forEach { assertTrue(it, !it.contains("submit", ignoreCase = true)) }
+        assertEquals("A recipe needs at least one ingredient.", marks[3])
+        assertEquals("Over the limit of 2000 characters: 2140 now. Kept in full.", marks[5])
+        assertEquals("More than 50 steps: 53 now.", marks[7])
+    }
+
     // L10N: the marks are in the interface language.
     @Config(qualifiers = "ru")
     @Test
     fun theMarksSpeakRussian() {
         writeANewRecipe()
         addStep()
-        awaitMark(EditorTags.INGREDIENTS_MARK, "Чтобы отправить рецепт, нужен хотя бы один ингредиент.")
+        awaitMark(EditorTags.INGREDIENTS_MARK, "У рецепта должен быть хотя бы один ингредиент.")
         assertEquals(listOf("Предупреждение"), compose.descriptionOf(EditorTags.INGREDIENTS_MARK))
     }
 }

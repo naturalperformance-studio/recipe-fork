@@ -99,14 +99,14 @@
     <string name="editor_part_cancel">Отмена</string>
     <string name="editor_step_part_more_than_whole">Часть %1$s больше, чем %2$s по списку.</string>
     <string name="editor_parts_made_whole">У ингредиента %1$d сменилась единица: где шаги брали его часть, теперь берут целиком.</string>
-    <!-- Часть ниже минимума или сверх лимита (FLOW-028): предупреждение, ничего не запрещает; решает отправка. -->
+    <!-- Часть ниже минимума или сверх лимита (FLOW-028): предупреждение, ничего не запрещает; рецепт называет свои границы. -->
     <string name="editor_mark_warning">Предупреждение</string>
-    <string name="editor_mark_title_missing">Чтобы отправить рецепт, нужно название.</string>
-    <string name="editor_mark_language_missing">Чтобы отправить рецепт, нужно указать язык.</string>
-    <string name="editor_mark_servings_missing">Чтобы отправить рецепт, нужно число порций.</string>
-    <string name="editor_mark_ingredients_missing">Чтобы отправить рецепт, нужен хотя бы один ингредиент.</string>
-    <string name="editor_mark_steps_missing">Чтобы отправить рецепт, нужен хотя бы один шаг.</string>
-    <string name="editor_mark_characters_over">Больше лимита в %1$d символов: сейчас %2$d. Текст сохранён целиком — сократите его перед отправкой.</string>
-    <string name="editor_mark_ingredients_over">Больше %1$d ингредиентов: сейчас %2$d. Уберите лишние перед отправкой.</string>
-    <string name="editor_mark_steps_over">Больше %1$d шагов: сейчас %2$d. Уберите лишние перед отправкой.</string>
+    <string name="editor_mark_title_missing">У рецепта должно быть название.</string>
+    <string name="editor_mark_language_missing">У рецепта должен быть указан язык.</string>
+    <string name="editor_mark_servings_missing">У рецепта должно быть число порций.</string>
+    <string name="editor_mark_ingredients_missing">У рецепта должен быть хотя бы один ингредиент.</string>
+    <string name="editor_mark_steps_missing">У рецепта должен быть хотя бы один шаг.</string>
+    <string name="editor_mark_characters_over">Больше лимита в %1$d символов: сейчас %2$d. Текст сохранён целиком.</string>
+    <string name="editor_mark_ingredients_over">Больше %1$d ингредиентов: сейчас %2$d.</string>
+    <string name="editor_mark_steps_over">Больше %1$d шагов: сейчас %2$d.</string>
 </resources>
