@@ -1,6 +1,6 @@
 # Pantry: flour (5000-5099), starches and thickening flours (5100-5149), bran and fiber (5150-5199),
 # grains and groats (5200-5299), rice (5300-5349), oats, flakes and cereals (5350-5399).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
 # Spoon and cup factors are grams per level measure; a cup is 250 ml.
 @range 5000-6999
 
@@ -101,7 +101,7 @@
 5220	пшеничная крупа	wheat groats			g=1 tbsp=12 cup=200
 5221	крупа артек	fine wheat groats	5220		g=1 tbsp=12 cup=200
 5222	крупа полтавская	coarse wheat groats	5220		g=1 tbsp=12 cup=200
-5225	манная крупа	semolina			g=1 tsp=4 tbsp=12 cup=200
+5225	манная крупа	semolina			g=1 tsp=4 tbsp=12 cup=200		манка
 5226	манная крупа из твёрдых сортов	durum semolina	5225		g=1 tsp=4 tbsp=12 cup=200
 5230	кукурузная крупа	corn grits			g=1 tbsp=11 cup=180
 5231	полента	polenta	5230		g=1 tbsp=11 cup=170

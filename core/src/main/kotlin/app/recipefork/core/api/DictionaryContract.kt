@@ -41,7 +41,9 @@ data class DictionariesDto(
  * ingredient.md); null while the dictionary does not say, and the author is then asked as for free text. [factors]
  * are its comparison factors (DOM-011, CAT-009): per unit code of [FACTOR_UNITS], a positive number on a scale shared by
  * its family; they only order, and nothing ever shows them. A [removed] entry is offered to nobody, yet stays so
- * that every recipe already naming it keeps its name (DOM-009, FLOW-001).
+ * that every recipe already naming it keeps its name (DOM-009, FLOW-001). [synonymsRu] and [synonymsEn] are the other
+ * words cooks write for it in each language (картошка for картофель, icing sugar for powdered sugar): the field and
+ * the book's search may find the entry by them, while its labels stay what it is shown as.
  *
  * Every field after [labelEn] has a default, which the encoding omits, so an entry that sets none of them encodes
  * exactly as before they existed, and the version digest of an unchanged dictionary stays what it was.
@@ -55,6 +57,8 @@ data class IngredientEntryDto(
     val divisible: Boolean? = null,
     val factors: Map<String, Double> = emptyMap(),
     val removed: Boolean = false,
+    val synonymsRu: List<String> = emptyList(),
+    val synonymsEn: List<String> = emptyList(),
 ) {
     companion object {
         /**

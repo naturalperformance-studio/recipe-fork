@@ -41,6 +41,18 @@ class ShippedDictionaryTest {
     }
 
     @Test
+    fun theWordsCooksWriteLeadToTheirEntries() {
+        val byLabel = built().dictionaries.ingredients.associateBy { it.labelRu }
+        fun synonyms(label: String) = byLabel.getValue(label).let { it.synonymsRu to it.synonymsEn }
+        assertEquals(listOf("картошка") to emptyList(), synonyms("картофель"))
+        assertEquals(listOf("томат") to emptyList(), synonyms("помидор"))
+        assertEquals(listOf("манка") to emptyList(), synonyms("манная крупа"))
+        assertEquals(listOf("курдючный жир") to emptyList(), synonyms("курдюк"))
+        assertEquals(emptyList<String>() to listOf("confectioners' sugar", "icing sugar"), synonyms("сахарная пудра"))
+        assertEquals(listOf("булочка для гамбургера") to listOf("hamburger bun"), synonyms("булочка для бургера"))
+    }
+
+    @Test
     fun theVersionIsTheDigestOfTheContent() {
         val dictionaries = built().dictionaries
         assertEquals(dictionaries.digest(), dictionaries.version)
