@@ -187,4 +187,49 @@ class LibrarySessionTest {
         chooseOwn()
         assertOwnSearch("", "Newest first")
     }
+    /** In the own-recipes view of a book holding a recipe tagged with the shipped tag 10, filters by that tag. */
+    private fun filterOwnByTag() {
+        runBlocking {
+            container.recipes.save(
+                Recipe.create(Instant.parse("2026-10-01T12:00:00Z"), null).copy(title = "Lasagne", tags = setOf(ITALIAN)),
+            )
+        }
+        chooseOwn()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.FILTER_ADD).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_BY_TAGS)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.FILTER_BY_TAGS).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.tagChoice(ITALIAN))).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.tagChoice(ITALIAN)).performClick()
+        compose.onNodeWithTag(LibraryTags.TAG_CHOOSER_DONE).performClick()
+        compose.waitForIdle()
+    }
+
+    private fun tagFilterShown(): Boolean =
+        compose.onAllNodes(hasTestTag(LibraryTags.tagFilter(ITALIAN))).fetchSemanticsNodes().size == 1
+
+    // FLOW-035, FLOW-058 (2): a view's filters survive the end of the process, and a new session starts with none.
+    @Test
+    fun theProcessEndedWhileAwayKeepsTheFilters() {
+        val activity = launch()
+        filterOwnByTag()
+        compose.waitUntil(PATIENCE_MS) { tagFilterShown() }
+        val saved = Bundle()
+        activity.pause().stop().saveInstanceState(saved)
+        // The process dies: the Activity and every object in memory are gone, only the saved state remains.
+        activity.destroy()
+        val restored = launch(saved)
+        assertView(LibraryView.OWN)
+        compose.waitUntil(PATIENCE_MS) { tagFilterShown() }
+        restored.closeTask()
+        launch()
+        chooseOwn()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
+        assertEquals(false, tagFilterShown())
+    }
+
+    private companion object {
+        /** A tag of the shipped dictionary. */
+        const val ITALIAN = 10L
+    }
 }

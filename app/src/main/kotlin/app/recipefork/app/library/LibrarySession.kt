@@ -8,6 +8,7 @@ import app.recipefork.app.card.CardSession
 import app.recipefork.app.card.HeldScale
 import app.recipefork.app.card.StepToShow
 import app.recipefork.app.card.TextCardSession
+import app.recipefork.app.recipe.BookFilters
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.search.BookOrder
 import app.recipefork.app.file.FileMessage
@@ -50,6 +51,16 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
 
     fun orderBy(view: LibraryView, order: BookOrder) {
         saved[ORDER_KEY + view.name] = order
+    }
+
+    /**
+     * The filters [view] is narrowed by (FLOW-035): each view keeps its own, kept like the query, and none in a new
+     * session.
+     */
+    fun filters(view: LibraryView): StateFlow<BookFilters> = saved.getStateFlow(FILTERS_KEY + view.name, BookFilters())
+
+    fun filter(view: LibraryView, filters: BookFilters) {
+        saved[FILTERS_KEY + view.name] = filters
     }
 
     /**
@@ -199,6 +210,7 @@ class LibrarySession(private val saved: SavedStateHandle) : ViewModel() {
         const val CARDS_KEY = "library."
         const val QUERY_KEY = "library.query."
         const val ORDER_KEY = "library.order."
+        const val FILTERS_KEY = "library.filters."
         const val CARDS_ORDER_KEY = "library.cards"
         const val MAX_CARDS = 50
         const val STEP_KEY = "library.step"
