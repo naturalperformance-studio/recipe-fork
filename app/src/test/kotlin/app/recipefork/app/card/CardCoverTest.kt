@@ -3,6 +3,8 @@ package app.recipefork.app.card
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -40,8 +42,9 @@ import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
 
 /**
- * The cover on the card: at the top, above the title, with a text alternative; a recipe without one — or whose cover
- * cannot be read — shows nothing in its place; a frozen or found recipe shows its own.
+ * The cover on the card: at the top, above the title, with a text alternative; a recipe without one shows nothing in
+ * its place, one whose cover the device does not hold or cannot read says it is unavailable (FLOW-061); a frozen or
+ * found recipe shows its own.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -130,12 +133,36 @@ class CardCoverTest {
         assertTrue(title.top - content.top < 40f)
     }
 
+    private fun unavailableLine() = compose.onNodeWithTag(CardTags.COVER_UNAVAILABLE, useUnmergedTree = true)
+        .fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
+
+    // FLOW-061: a cover whose file is gone says it is unavailable, above the title, rather than showing nothing.
     @Test
-    fun aCoverWhoseFileCannotBeReadShowsNothing() {
+    fun aCoverWhoseFileIsGoneSaysItIsUnavailable() {
         val gone = Media("gone", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)
         show(Recipe.create(now, null).copy(title = "Borscht", media = listOf(gone)))
-        compose.waitForIdle()
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.COVER_UNAVAILABLE), PATIENCE_MS)
         assertFalse(exists(CardTags.COVER))
+        assertEquals("The cover photo is unavailable on this phone.", unavailableLine())
+        val line = compose.onNodeWithTag(CardTags.COVER_UNAVAILABLE, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue(line.bottom <= compose.onNodeWithTag(CardTags.TITLE).fetchSemanticsNode().boundsInRoot.top)
+    }
+
+    @Test
+    fun aCoverThatCannotBeReadSaysItIsUnavailable() {
+        store.file(BookName.Pool, "broken").apply { parentFile!!.mkdirs() }.writeBytes(ByteArray(100) { 7 })
+        show(Recipe.create(now, null).copy(title = "Borscht", media = listOf(Media("broken", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE))))
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.COVER_UNAVAILABLE), PATIENCE_MS)
+        assertFalse(exists(CardTags.COVER))
+    }
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun theUnavailableLineIsInTheInterfaceLanguage() {
+        val gone = Media("gone", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)
+        show(Recipe.create(now, null).copy(title = "Борщ", media = listOf(gone)))
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.COVER_UNAVAILABLE), PATIENCE_MS)
+        assertEquals("Фото обложки недоступно на этом телефоне.", unavailableLine())
     }
 
     // A frozen recipe — published, or found in a file — shows its cover, read-only like the rest of it.

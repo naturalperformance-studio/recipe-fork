@@ -287,7 +287,7 @@ private fun RecipeContent(
                 onFix = { change(scale.fix(it)) },
                 onRelease = { change(scale.release(it)) },
             )
-            StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepPhotosOnCard(recipe, recipes.bookName()))
+            StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()))
             if (recipe.description.isNotBlank()) {
                 Text(
                     recipe.description,
@@ -530,6 +530,7 @@ object CardTags {
     const val CONTENT = "card-content"
     const val TITLE = "card-title"
     const val COVER = "card-cover"
+    const val COVER_UNAVAILABLE = "card-cover-unavailable"
     const val SERVINGS = "card-servings"
     const val SERVINGS_FEWER = "card-servings-fewer"
     const val SERVINGS_MORE = "card-servings-more"
@@ -547,4 +548,7 @@ object CardTags {
     fun ingredient(position: Int) = "card-ingredient-$position"
     fun step(position: Int) = "card-step-$position"
     fun stepPhoto(position: Int) = "card-step-$position-photo"
+    fun stepVideo(position: Int) = "card-step-$position-video"
+    fun stepVideoControl(position: Int) = "card-step-$position-video-control"
+    fun stepMediaUnavailable(position: Int) = "card-step-$position-media-unavailable"
 }
