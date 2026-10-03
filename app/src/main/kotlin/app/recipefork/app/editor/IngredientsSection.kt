@@ -248,7 +248,8 @@ private fun IngredientRow(
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.ingredient(position)),
     ) {
-        // The block is dragged by the column down its left edge, so nothing that drags stands among the inputs.
+        // The block is dragged by the column down its left edge — or its right, for a left hand — so nothing that drags
+        // stands among the inputs.
         DragColumnBlock(drag, position, count, EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position)) {
             // The name takes the first line up to the row's two action icons, so the block is no taller than its two
             // lines of inputs; the quantity and the unit start the line below at the same left edge.

@@ -21,10 +21,10 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.card.backThroughTheCard
@@ -53,6 +53,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
@@ -63,8 +64,8 @@ import kotlin.time.Duration.Companion.minutes
  * (A11Y-006) and the screen reader does not see it; a frozen recipe has none.
  */
 @OptIn(ExperimentalTestApi::class)
-@RunWith(AndroidJUnit4::class)
-class RowDragEditorTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+class RowDragEditorTest(private val handleRight: Boolean) {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
@@ -96,7 +97,7 @@ class RowDragEditorTest {
     private fun show() {
         if (shown) return
         shown = true
-        val environment = EditorEnvironment(active, device.catalog(context)) { created.plusSeconds(60) }
+        val environment = EditorEnvironment(active, device.catalog(context), dragHandleSide = HeldDragHandleSide(handleRight)) { created.plusSeconds(60) }
         compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
@@ -397,5 +398,12 @@ class RowDragEditorTest {
                 assertEquals("$state", recipe, stored(recipe.id))
                 closeDirectly()
             }
+    }
+
+    companion object {
+        /** Every test runs with the drag column on the left, as by default, and on the right, for a left hand. */
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "handle on the right: {0}")
+        fun sides(): List<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
     }
 }

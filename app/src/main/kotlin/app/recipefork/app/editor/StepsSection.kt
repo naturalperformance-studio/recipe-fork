@@ -142,7 +142,8 @@ private fun StepRow(
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.step(position)),
     ) {
-        // Dragged by the column down its left edge; everything of the step stands beside it, at one left edge.
+        // Dragged by the column down its left edge — or its right, for a left hand; everything of the step stands beside
+        // it, at one left edge.
         DragColumnBlock(drag, position, count, EditorTags.stepHandle(position), EditorTags.stepHandleIcon(position)) {
             Column(Modifier.fillMaxWidth().padding(STEP_PADDING)) {
                 // The text across the whole block; under it, one row of the step's actions as icons.

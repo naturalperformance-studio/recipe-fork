@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -217,12 +218,16 @@ internal fun rememberRowDrag(scroll: EditorScroll, spacing: Dp, onDrop: (from: I
     return drag
 }
 
-/** How wide the drag column at a block's left edge is: a 48 dp touch target and no wider (A11Y-003). */
+/** How wide the drag column at a block's edge is: a 48 dp touch target and no wider (A11Y-003). */
 internal val DRAG_COLUMN_WIDTH = 48.dp
 
+/** Whether the drag column stands at a block's right edge, for a left hand, instead of its left; the left by default. */
+internal val LocalDragColumnOnRight = staticCompositionLocalOf { false }
+
 /**
- * A row's block with the column it is dragged by down its left edge, the full height of the block, and [content]
- * beside it (FLOW-025). Without a [drag] — a frozen recipe — the block is [content] alone, with no column.
+ * A row's block with the column it is dragged by down its left edge — or its right edge, where [LocalDragColumnOnRight]
+ * says so — the full height of the block, and [content] beside it (FLOW-025). Without a [drag] — a frozen recipe —
+ * the block is [content] alone, with no column.
  */
 @Composable
 internal fun DragColumnBlock(
@@ -237,6 +242,7 @@ internal fun DragColumnBlock(
         content()
         return
     }
+    val onRight = LocalDragColumnOnRight.current
     Layout(
         contents = listOf({ DragColumn(drag, position, count, tag, iconTag) }, content),
     ) { (column, body), constraints ->
@@ -248,9 +254,17 @@ internal fun DragColumnBlock(
         val height = maxOf(placedBody.maxOfOrNull { it.height } ?: 0, DRAG_COLUMN_WIDTH.roundToPx(), constraints.minHeight)
             .let { if (constraints.hasBoundedHeight) it.coerceAtMost(constraints.maxHeight) else it }
         val placedColumn = column.map { it.measure(Constraints.fixed(width, height)) }
-        layout(width + (placedBody.maxOfOrNull { it.width } ?: 0), height) {
-            placedColumn.forEach { it.placeRelative(0, 0) }
-            placedBody.forEach { it.placeRelative(width, 0) }
+        val bodyWidth = placedBody.maxOfOrNull { it.width } ?: 0
+        layout(width + bodyWidth, height) {
+            // The content keeps one left edge either way: beside the column, or at the block's own left edge. On the
+            // right means the physical right, whatever the layout direction; by default the column takes the start.
+            if (onRight) {
+                placedColumn.forEach { it.place(bodyWidth, 0) }
+                placedBody.forEach { it.place(0, 0) }
+            } else {
+                placedColumn.forEach { it.placeRelative(0, 0) }
+                placedBody.forEach { it.placeRelative(width, 0) }
+            }
         }
     }
 }
