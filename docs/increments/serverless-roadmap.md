@@ -17,6 +17,11 @@ MEDIA-004/007 short silent step video within the file format · FLOW-060 (4) del
 ## E — Fill the dictionary  → last
 A hand-made dictionary of a few thousand ingredients in families plus a real tag dictionary, with divisibility and factors, a generator that computes the version digest, and a recorded departure from DOM-014 (the dictionary maintained in the repository while there is no server). Ids 1–5, 10, 11 stay as they are.
 
+## F — Interface polish, a series  → after E (asked by the user 2026-10-03)
+The user's words: "после наполнения словаря серию релизов с улучшениями UI/UX. Тебе нужно будет изучить Best Practices для каждого элемента и сценария и подогнать UI/UX под современные стандарты. Отдельно хотел бы, чтобы цвета в приложении настраивались через тему, чтобы если я захотел поменять цвета в UI, мне не пришлось бы лезть в код. За одно можно добавить и тёмную тему".
+- F1 — the theme first: every colour (and the type and shape scale) comes from one theme definition the user can edit without touching Kotlin; a dark theme beside the light one; ContrastTest (A11Y-002) extended to both. Where the definition lives (a resource/JSON file in the repo vs. a choice inside the app) is to be settled with the user at planning.
+- F2… — a review of every screen and scenario against current Material 3 / Android guidance (research per element: lists, menus, dialogs, text fields, chips, snackbars, the card, the editor, empty and error states, motion, haptics, edge-to-edge, predictive back), sliced into increments the user can touch one by one.
+
 ## Rules for a large dictionary file (`app/src/main/assets/dictionaries.json`)
 - `version` is the lowercase hex SHA-256 of the compact JSON of `DictionariesDto(version="", …)` (field order version, ingredients, tags; ingredient `id, labelRu, labelEn[, parentId]`; tag `id, labelRu, labelEn`) — checked by `ShippedSnapshotTest`; generate it, never type it.
 - Both labels non-blank; ids unique; a `parentId` names a top-level entry (two levels).
