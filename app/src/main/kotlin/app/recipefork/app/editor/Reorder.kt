@@ -222,7 +222,7 @@ internal fun rememberRowDrag(scroll: EditorScroll, spacing: Dp, onDrop: (from: I
 internal val DRAG_COLUMN_WIDTH = 48.dp
 
 /** Whether the drag column stands at a block's right edge, for a left hand, instead of its left; the left by default. */
-val LocalDragColumnOnRight = staticCompositionLocalOf { false }
+internal val LocalDragColumnOnRight = staticCompositionLocalOf { false }
 
 /**
  * A row's block with the column it is dragged by down its left edge — or its right edge, where [LocalDragColumnOnRight]
@@ -256,9 +256,15 @@ internal fun DragColumnBlock(
         val placedColumn = column.map { it.measure(Constraints.fixed(width, height)) }
         val bodyWidth = placedBody.maxOfOrNull { it.width } ?: 0
         layout(width + bodyWidth, height) {
-            // The content keeps one left edge either way: beside the column, or at the block's own left edge.
-            placedColumn.forEach { it.placeRelative(if (onRight) bodyWidth else 0, 0) }
-            placedBody.forEach { it.placeRelative(if (onRight) 0 else width, 0) }
+            // The content keeps one left edge either way: beside the column, or at the block's own left edge. On the
+            // right means the physical right, whatever the layout direction; by default the column takes the start.
+            if (onRight) {
+                placedColumn.forEach { it.place(bodyWidth, 0) }
+                placedBody.forEach { it.place(0, 0) }
+            } else {
+                placedColumn.forEach { it.placeRelative(0, 0) }
+                placedBody.forEach { it.placeRelative(width, 0) }
+            }
         }
     }
 }

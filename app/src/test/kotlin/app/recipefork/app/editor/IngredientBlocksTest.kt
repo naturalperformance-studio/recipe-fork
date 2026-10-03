@@ -587,7 +587,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
             if (fontScale == 2f) {
                 // The name has the whole line: it reaches the block's right edge, and the icons are under the inputs.
                 val end = if (handleRight) bounds(EditorTags.ingredientHandle(position)).left else block.right
-                assertTrue("row $position: the name reaches the block's right edge", end - name.right <= px(4f) + 0.5f)
+                assertTrue("row $position: the name reaches ${if (handleRight) "the column" else "the block's right edge"}", end - name.right <= px(4f) + 0.5f)
                 assertTrue("row $position: the icons are under the unit", remove.top >= unit.bottom - 0.5f)
                 if (exists(EditorTags.ingredientQuantity(position))) assertTrue(remove.top >= bounds(EditorTags.ingredientQuantity(position)).bottom - 0.5f)
                 assertEquals("row $position: the icons start at the inputs' left edge", name.left, remove.left, 0.5f)

@@ -208,7 +208,7 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
             // The text's field from just beside the column to just inside the block's other edge.
             val (start, end) = if (handleRight) block.left to column.left else column.right to block.right
             assertTrue("step $position: the text starts by the column", text.left - start in 0f..(12f * compose.density.density))
-            assertTrue("step $position: the text reaches the block's right edge", end - text.right in 0f..(8f * compose.density.density))
+            assertTrue("step $position: the text reaches the block's other edge (${if (handleRight) "the column" else "the right edge"})", end - text.right in 0f..(8f * compose.density.density))
             val controls = actions(position).map { bounds(it) }
             controls.forEachIndexed { i, b ->
                 assertEquals("step $position: ${actions(position)[i]} is 48 dp wide", 48f, dp(b.width), 0.5f)
