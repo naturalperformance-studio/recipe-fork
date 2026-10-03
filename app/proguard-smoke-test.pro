@@ -16,8 +16,8 @@
 -keep class kotlin.** { *; }
 -keep class kotlinx.coroutines.** { *; }
 
-# The application's surface the smoke test drives: the container, the book, photographs, export and import, timers,
-# and the recipe it writes.
+# The application's surface the smoke test drives: the container, the book, photographs, clips, export and import,
+# timers, and the recipe it writes.
 -keep,allowobfuscation class app.recipefork.app.RecipeForkApplication { *; }
 -keep,allowobfuscation class app.recipefork.app.AppContainer { *; }
 -keep,allowobfuscation class app.recipefork.app.book.BookName, app.recipefork.app.book.BookName$* { *; }
@@ -27,6 +27,10 @@
 -keep,allowobfuscation class app.recipefork.app.recipe.RecipeRepository { *; }
 -keep,allowobfuscation class app.recipefork.app.media.PhotoStore { *; }
 -keep,allowobfuscation class app.recipefork.app.media.PhotoOutcome, app.recipefork.app.media.PhotoOutcome$* { *; }
+-keep,allowobfuscation class app.recipefork.app.media.ClipStore, app.recipefork.app.media.ClipTransformer { *; }
+-keep,allowobfuscation class app.recipefork.app.media.ClipConverter, app.recipefork.app.media.ClipSourceDuration { *; }
+-keep,allowobfuscation class app.recipefork.app.media.RetrieverClipSourceDuration { *; }
+-keep,allowobfuscation class app.recipefork.app.media.ClipOutcome, app.recipefork.app.media.ClipOutcome$* { *; }
 -keep,allowobfuscation class app.recipefork.app.file.RecipeExport { *; }
 -keep,allowobfuscation class app.recipefork.app.file.RecipeImport, app.recipefork.app.file.RecipeImportKt { *; }
 -keep,allowobfuscation class app.recipefork.app.file.ImportOutcome, app.recipefork.app.file.ImportOutcome$* { *; }
