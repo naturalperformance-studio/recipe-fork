@@ -134,6 +134,29 @@ class HeldForkTest {
         assertEquals(never.id, held())
     }
 
+    // FLOW-015 (4): of several unchanged forks, the newest is offered.
+    @Test
+    fun ofSeveralUnchangedForksTheNewestIsOffered() {
+        save(parent)
+        fork(Instant.parse("2026-10-02T12:01:00Z"))
+        val newest = fork(Instant.parse("2026-10-02T12:03:00Z"))
+        fork(Instant.parse("2026-10-02T12:02:00Z"))
+        assertEquals(newest.id, held())
+    }
+
+    // A found recipe — imported from a file — that is someone's unchanged fork of this recipe is not the reader's fork.
+    @Test
+    fun aFoundRecipeIsNotOfferedAsTheReadersFork() {
+        save(parent)
+        val found = parent.fork(forked, null, byAuthor = false)
+        assertEquals(found.createdAt, found.contentChangedAt)
+        assertTrue(runBlocking { recipes.addFound(found, forked) })
+        assertNull(held())
+        val asked = runBlocking { forkUnlessHeld(recipes, active, parent.id, again, store = null) }
+        assertTrue(asked is ForkAsked.Made)
+        assertEquals(3, runBlocking { recipes.count() })
+    }
+
     // A fork of another recipe is no fork of this one.
     @Test
     fun aForkOfAnotherRecipeIsNotOffered() {

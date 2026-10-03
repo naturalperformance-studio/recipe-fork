@@ -163,10 +163,7 @@ fun EditorScreen(
                         Ingredients(shown, editor, environment.ingredients, scroll)
                         Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving)
                     }
-                    Column {
-                        Description(shown, editor)
-                        ForkNote(R.string.editor_description_stays, Modifier.testTag(EditorTags.DESCRIPTION_STAYS))
-                    }
+                    Description(shown, editor)
                 }
             }
         }
@@ -448,11 +445,11 @@ internal fun RowMenu(
 }
 
 /**
- * A quiet line saying what a fork does with a part of the recipe (FLOW-030): the same for every recipe, forked or
- * not, and never a promise that forking can be prevented (FORK-002).
+ * A quiet line saying what a fork takes and what stays with the author unless the fork is their own (FLOW-030): the
+ * same for every recipe, forked or not, and never a promise that forking can be prevented (FORK-002).
  */
 @Composable
-internal fun ForkNote(@StringRes text: Int, modifier: Modifier = Modifier) {
+private fun ForkNote(@StringRes text: Int, modifier: Modifier = Modifier) {
     Text(
         stringResource(text),
         style = MaterialTheme.typography.bodySmall,
@@ -462,10 +459,8 @@ internal fun ForkNote(@StringRes text: Int, modifier: Modifier = Modifier) {
 }
 
 object EditorTags {
-    /** The line at the top naming what a fork takes (FLOW-030 (1)). */
+    /** The line at the top saying what a fork takes and what stays with the author (FLOW-030). */
     const val FORK_TAKES = "editor-fork-takes"
-    /** The note under the description: it stays with the author, and the author's own forks keep it (FLOW-030 (2, 3)). */
-    const val DESCRIPTION_STAYS = "editor-description-stays"
     const val SCREEN = "editor"
     const val BACK = "editor-back"
     const val FORM = "editor-form"

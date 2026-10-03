@@ -72,9 +72,7 @@
     <string name="editor_description">Описание</string>
     <string name="editor_description_optional">Описание (необязательно)</string>
     <string name="editor_description_none">Описания нет</string>
-    <string name="editor_fork_takes">Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги.</string>
-    <string name="editor_description_stays">Остаётся у вас, когда кто-то другой делает свою версию рецепта; ваши собственные версии его сохраняют.</string>
-    <string name="editor_photos_stay">Фото остаются у вас, когда кто-то другой делает свою версию рецепта; ваши собственные версии их сохраняют.</string>
+    <string name="editor_fork_takes">Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание и фото остаются у вас, если только версия не ваша собственная.</string>
     <string name="editor_timer_label">Таймер для шага %1$d</string>
     <string name="editor_timer_action">Добавить таймер к шагу %1$d</string>
     <string name="editor_timer_remove_action">Убрать таймер шага %1$d</string>

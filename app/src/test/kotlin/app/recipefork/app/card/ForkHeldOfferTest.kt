@@ -41,6 +41,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDialog
 import java.time.Instant
 
 /**
@@ -121,6 +122,21 @@ class ForkHeldOfferTest {
         compose.onNodeWithTag(CardTags.FORK_HELD_OPEN).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         assertEquals(held.id.value, session.editing.value)
+        assertEquals(2, count())
+    }
+
+    // FLOW-015 (1): dismissing the offer makes nothing and leaves the card.
+    @Test
+    fun dismissingTheOfferMakesNoFork() {
+        heldFork()
+        forkAndAwaitOffer()
+        compose.runOnUiThread {
+            @Suppress("DEPRECATION")
+            ShadowDialog.getLatestDialog().onBackPressed()
+        }
+        compose.waitUntilDoesNotExist(hasTestTag(CardTags.FORK_HELD), PATIENCE_MS)
+        compose.onNodeWithTag(CardTags.SCREEN).assertExists()
+        assertEquals(null, session.editing.value)
         assertEquals(2, count())
     }
 
