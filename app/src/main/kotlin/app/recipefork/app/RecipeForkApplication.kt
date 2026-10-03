@@ -1,6 +1,8 @@
 package app.recipefork.app
 
 import android.app.Application
+import android.content.res.Configuration
+import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.timer.TimerChannels
 import kotlinx.coroutines.CoroutineScope
@@ -28,11 +30,18 @@ open class RecipeForkApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        AppLanguage.applyToApplication(this)
         container = AppContainer(this, MainActivity.MODE)
         // The channels exist before any timer is started, so that the timers' one can be read and turned off alone.
         TimerChannels.create(this)
         container.start(scope)
         if (sweepsMedia) mediaSweep = container.sweepMedia(scope)
         scope.launch { PhotoSources.clearLeftovers(this@RecipeForkApplication) }
+    }
+
+    /** A change of the device's configuration resets the application's resources to it; the reader's language is kept. */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        AppLanguage.applyToApplication(this)
     }
 }

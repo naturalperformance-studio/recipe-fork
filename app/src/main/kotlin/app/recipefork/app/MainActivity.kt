@@ -1,5 +1,6 @@
 package app.recipefork.app
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewModelScope
 import app.recipefork.app.card.LocalStepToShow
+import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeFileIntents
 import app.recipefork.app.file.RecipeImport
@@ -29,6 +31,12 @@ import kotlinx.coroutines.launch
 /** The single Activity; its task is the reader's session (FLOW-058). */
 class MainActivity : ComponentActivity() {
     private val librarySession: LibrarySession by viewModels()
+
+    /** The interface language the reader chose is laid over the device's before anything reads it (L10N-002). */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase)
+        AppLanguage.overrideFor(newBase)?.let(::applyOverrideConfiguration)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
