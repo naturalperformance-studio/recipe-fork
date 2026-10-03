@@ -115,7 +115,9 @@ private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lower
 /**
  * The header above a view's list: its search field (FLOW-035 (4)) and, at its end, the control that adds a filter
  * (FLOW-035, CAT-002, CAT-006) and the choice of the view's order (FLOW-035 (3)); under them, while any filter is on,
- * the row of the view's filters. The [languages] of the view's recipes are what its language filter offers (L10N-005). It never scrolls with the list, and is no taller for filters while none is on.
+ * the row of the view's filters. The [languages] of the view's recipes are what its language filter offers (L10N-005);
+ * the entries they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)). It never
+ * scrolls with the list, and is no taller for filters while none is on.
  */
 @Composable
 internal fun ListHeader(
@@ -126,6 +128,7 @@ internal fun ListHeader(
     onFilters: (BookFilters) -> Unit,
     choices: FilterChoices,
     languages: List<BookLanguage>,
+    hold: Set<Long> = emptySet(),
     modifier: Modifier = Modifier,
 ) {
     val focus = LocalFocusManager.current
@@ -150,7 +153,7 @@ internal fun ListHeader(
                 keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
                 modifier = Modifier.weight(1f).testTag(LibraryTags.SEARCH),
             )
-            AddFilter(filters, onFilters, choices, languages)
+            AddFilter(filters, onFilters, choices, languages, hold)
             OrderChoice(order, onOrder)
         }
         if (filters.any) FilterRow(filters, onFilters, choices)
@@ -275,6 +278,7 @@ private fun AddFilter(
     onFilters: (BookFilters) -> Unit,
     choices: FilterChoices,
     languages: List<BookLanguage>,
+    hold: Set<Long>,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var choosing by rememberSaveable { mutableStateOf<Chooser?>(null) }
@@ -323,6 +327,7 @@ private fun AddFilter(
     when (choosing) {
         Chooser.INGREDIENT -> IngredientChooser(
             choices.ingredients,
+            hold,
             onPick = {
                 choosing = null
                 onFilters(filters.copy(ingredient = it))
@@ -404,13 +409,19 @@ private fun FilterChipOn(name: String, tag: String, onRemove: () -> Unit) {
 
 /**
  * The choice of the ingredient to filter by: its field offers the dictionary's entries as the editor's ingredient field
- * does (FLOW-057), and picking one filters by it. Free text is never offered: it names no entry (CAT-006).
+ * does (FLOW-057), and picking one filters by it. Free text is never offered: it names no entry (CAT-006). An entry
+ * removed upstream is offered only while a recipe of the view [hold]s it (FLOW-001 (7)).
  */
 @Composable
-private fun IngredientChooser(dictionary: List<IngredientEntryEntity>?, onPick: (Long) -> Unit, onDismiss: () -> Unit) {
+private fun IngredientChooser(
+    dictionary: List<IngredientEntryEntity>?,
+    hold: Set<Long>,
+    onPick: (Long) -> Unit,
+    onDismiss: () -> Unit,
+) {
     var typed by rememberSaveable { mutableStateOf("") }
     val language = numberLanguage(LocalConfiguration.current)
-    val offered = dictionary?.let { IngredientOffer.of(typed, it, language).entries }.orEmpty()
+    val offered = dictionary?.let { IngredientOffer.of(typed, it, language, stillHeld = hold).entries }.orEmpty()
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(LibraryTags.INGREDIENT_CHOOSER),

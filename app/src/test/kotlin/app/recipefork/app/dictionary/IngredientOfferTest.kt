@@ -24,8 +24,12 @@ class IngredientOfferTest {
     /** The test dictionary with no entry for coconut milk. */
     private val dictionary = listOf(milk, chicken, wings, fillet, turmeric, blackberry, beetroot)
 
-    private fun offer(typed: String, from: List<IngredientEntryEntity> = dictionary, language: InterfaceLanguage = RUSSIAN) =
-        IngredientOffer.of(typed, from, language)
+    private fun offer(
+        typed: String,
+        from: List<IngredientEntryEntity> = dictionary,
+        language: InterfaceLanguage = RUSSIAN,
+        stillHeld: Set<Long> = emptySet(),
+    ) = IngredientOffer.of(typed, from, language, stillHeld)
 
     private fun offered(typed: String, from: List<IngredientEntryEntity> = dictionary, language: InterfaceLanguage = RUSSIAN) =
         offer(typed, from, language).entries.map { it.label(language) }
@@ -151,5 +155,25 @@ class IngredientOfferTest {
         // A leaf whose parent is not matched is offered on its own, placed by its own label.
         assertEquals(listOf(fillet), offer("фил", all).entries)
         assertNotNull(offer("wings", all).entries.singleOrNull { it == wings })
+    }
+
+    // FLOW-001 (7), DOM-009 (5): an entry removed upstream is no longer offered, nor matched exactly when the name field
+    // is left; the typed text is then offered as free text. The library's filter may keep one it still holds.
+    @Test
+    fun aRemovedEntryIsNeitherOfferedNorMatchedExactly() {
+        val removedWings = wings.copy(removed = true)
+        val removedChicken = chicken.copy(removed = true)
+        val held = listOf(milk, removedChicken, removedWings, fillet)
+
+        assertEquals(emptyList<IngredientEntryEntity>(), offer("крылышки", held).entries)
+        assertNull(offer("крылышки", held).exact)
+        assertEquals("крылышки", offer("крылышки", held).freeText)
+        assertNull(offer("chicken", held, language = ENGLISH).exact)
+        // A live leaf of a removed parent is still offered, standing on its own.
+        assertEquals(listOf(fillet), offer("фил", held).entries)
+
+        val kept = offer("крылышки", held, stillHeld = setOf(removedWings.id))
+        assertEquals(listOf(removedWings), kept.entries)
+        assertEquals(removedWings, kept.exact)
     }
 }

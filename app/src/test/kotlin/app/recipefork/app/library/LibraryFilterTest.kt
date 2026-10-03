@@ -66,11 +66,13 @@ class LibraryFilterTest {
     private val wings = IngredientEntryEntity(2, "крылышки", "chicken wings", 1)
     private val thigh = IngredientEntryEntity(3, "филе бедра", "thigh fillet", 1)
     private val broth = IngredientEntryEntity(4, "бульон", "broth", null)
+    /** An entry the product owner removed upstream (FLOW-001 (7), DOM-009 (5)). */
+    private val goose = IngredientEntryEntity(5, "гусь", "goose", null, removed = true)
     private val italian = TagEntity(10, "итальянская", "Italian")
     private val georgian = TagEntity(11, "грузинская", "Georgian")
     private val quick = TagEntity(12, "быстро", "Quick")
 
-    private val card = CardEnvironment(ingredients = IngredientEntries { listOf(chicken, wings, thigh, broth) })
+    private val card = CardEnvironment(ingredients = IngredientEntries { listOf(chicken, wings, thigh, broth, goose) })
     private val editor = EditorEnvironment(
         active,
         object : TagSource {
@@ -316,5 +318,46 @@ class LibraryFilterTest {
         assertListed("Чахохбили", "Пицца")
         assertEquals(BookFilters(tags = setOf(georgian.id)), session.filters(LibraryView.OWN).value)
         assertEquals(BookFilters(ingredient = chicken.id), session.filters(LibraryView.MARKED).value)
+    }
+
+    /** Opens the ingredient chooser and types [typed] into its field. */
+    private fun openChooser(typed: String) {
+        click(LibraryTags.FILTER_ADD)
+        click(LibraryTags.FILTER_BY_INGREDIENT)
+        retype(typed)
+    }
+
+    private fun retype(typed: String) {
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.INGREDIENT_FIELD), PATIENCE_MS)
+        compose.onNodeWithTag(LibraryTags.INGREDIENT_FIELD).performTextReplacement(typed)
+        compose.waitForIdle()
+    }
+
+    // FLOW-001 (7), DOM-009 (5): an entry removed upstream is offered by the filter only while a recipe in the view holds
+    // it, and a recipe holding it is still found by its name.
+    @Test
+    fun aRemovedEntryIsOfferedOnlyWhileARecipeInTheViewHoldsIt() {
+        own("Гусь с яблоками", grams(0, goose, 900), minutesAgo = 1)
+        own("Курица целиком", grams(0, chicken, 200), minutesAgo = 2)
+        found("Щи", grams(0, broth, 300), minutesAgo = 1)
+        show(LibraryView.OWN)
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("goose")
+        assertListed("Гусь с яблоками")
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("")
+        openChooser("гус")
+        click(LibraryTags.ingredientChoice(goose.id))
+        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.INGREDIENT_CHOOSER) }
+        assertChip(LibraryTags.INGREDIENT_FILTER, "goose")
+        assertListed("Гусь с яблоками")
+        // No recipe of the found view holds it: there it is not offered, though the dictionary is read.
+        choose(LibraryView.MARKED)
+        assertListed("Щи")
+        openChooser("бул")
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.ingredientChoice(broth.id)), PATIENCE_MS)
+        retype("гус")
+        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.ingredientChoice(broth.id)) }
+        assertEquals(false, exists(LibraryTags.ingredientChoice(goose.id)))
+        retype("goose")
+        assertEquals(false, exists(LibraryTags.ingredientChoice(goose.id)))
     }
 }
