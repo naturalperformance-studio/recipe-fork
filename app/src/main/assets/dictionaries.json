@@ -1,5 +1,5 @@
 {
-  "version": "07ccf9ce955f045132d2a92eccdf69ae29c53b5b5d3a947edb5cbb85aeed03a3",
+  "version": "8c42dce7d74be3b09311901dc2af5df9d3b6df31ee209a06bd722cbb2e6c4983",
   "ingredients": [
     {
       "id": 1,
@@ -42,6 +42,6325 @@
       "id": 5,
       "labelRu": "говядина",
       "labelEn": "beef",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3001,
+      "labelRu": "мясо на кости",
+      "labelEn": "meat on the bone",
+      "parentId": 3,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3002,
+      "labelRu": "мясо без кости",
+      "labelEn": "boneless meat",
+      "parentId": 3,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3003,
+      "labelRu": "мясо для шашлыка",
+      "labelEn": "kebab meat",
+      "parentId": 3,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3004,
+      "labelRu": "мясо для гуляша",
+      "labelEn": "stewing meat",
+      "parentId": 3,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3005,
+      "labelRu": "суповой набор",
+      "labelEn": "soup bones",
+      "parentId": 3,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3101,
+      "labelRu": "говяжья вырезка",
+      "labelEn": "beef tenderloin",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3102,
+      "labelRu": "говяжья мякоть",
+      "labelEn": "boneless beef",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3103,
+      "labelRu": "говяжья лопатка",
+      "labelEn": "beef shoulder",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3104,
+      "labelRu": "говяжья шея",
+      "labelEn": "beef neck",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3105,
+      "labelRu": "говяжья грудинка",
+      "labelEn": "beef brisket",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3106,
+      "labelRu": "говяжья голяшка",
+      "labelEn": "beef shank",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3107,
+      "labelRu": "говяжьи рёбра",
+      "labelEn": "beef ribs",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3108,
+      "labelRu": "говяжьи щёки",
+      "labelEn": "beef cheeks",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3109,
+      "labelRu": "бычий хвост",
+      "labelEn": "oxtail",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3110,
+      "labelRu": "огузок",
+      "labelEn": "beef rump",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3111,
+      "labelRu": "толстый край",
+      "labelEn": "beef rib eye roll",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3112,
+      "labelRu": "тонкий край",
+      "labelEn": "beef striploin",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3113,
+      "labelRu": "говяжья корейка",
+      "labelEn": "beef loin",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3114,
+      "labelRu": "говяжий окорок",
+      "labelEn": "beef round",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3115,
+      "labelRu": "рибай",
+      "labelEn": "ribeye steak",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 3116,
+      "labelRu": "стриплойн",
+      "labelEn": "New York strip steak",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 3117,
+      "labelRu": "тибон",
+      "labelEn": "T-bone steak",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0
+      }
+    },
+    {
+      "id": 3118,
+      "labelRu": "филе-миньон",
+      "labelEn": "filet mignon",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 3119,
+      "labelRu": "стейк говяжий",
+      "labelEn": "beef steak",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 3120,
+      "labelRu": "антрекот",
+      "labelEn": "entrecote",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 3121,
+      "labelRu": "флэнк-стейк",
+      "labelEn": "flank steak",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0
+      }
+    },
+    {
+      "id": 3122,
+      "labelRu": "шорт-рибс",
+      "labelEn": "short ribs",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3123,
+      "labelRu": "оссобуко",
+      "labelEn": "osso buco",
+      "parentId": 5,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 3124,
+      "labelRu": "говядина на кости",
+      "labelEn": "bone-in beef",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3125,
+      "labelRu": "мраморная говядина",
+      "labelEn": "marbled beef",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3126,
+      "labelRu": "говяжьи кости",
+      "labelEn": "beef bones",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3127,
+      "labelRu": "мозговая кость",
+      "labelEn": "marrow bone",
+      "parentId": 5,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 3128,
+      "labelRu": "солонина",
+      "labelEn": "corned beef",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3129,
+      "labelRu": "ростбиф",
+      "labelEn": "roast beef",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3130,
+      "labelRu": "говяжья пашина",
+      "labelEn": "beef flank",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3132,
+      "labelRu": "сирлойн",
+      "labelEn": "sirloin steak",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 3133,
+      "labelRu": "ромштекс",
+      "labelEn": "rump steak",
+      "parentId": 5,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 3134,
+      "labelRu": "говядина для тушения",
+      "labelEn": "beef stew meat",
+      "parentId": 5,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3150,
+      "labelRu": "телятина",
+      "labelEn": "veal",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3151,
+      "labelRu": "телячья вырезка",
+      "labelEn": "veal tenderloin",
+      "parentId": 3150,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3152,
+      "labelRu": "телячья корейка",
+      "labelEn": "veal loin",
+      "parentId": 3150,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3153,
+      "labelRu": "телячья лопатка",
+      "labelEn": "veal shoulder",
+      "parentId": 3150,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3154,
+      "labelRu": "телячья голяшка",
+      "labelEn": "veal shank",
+      "parentId": 3150,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3155,
+      "labelRu": "телячьи рёбрышки",
+      "labelEn": "veal ribs",
+      "parentId": 3150,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3156,
+      "labelRu": "телячья отбивная",
+      "labelEn": "veal chop",
+      "parentId": 3150,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 3157,
+      "labelRu": "телячья мякоть",
+      "labelEn": "boneless veal",
+      "parentId": 3150,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3158,
+      "labelRu": "телячья грудинка",
+      "labelEn": "veal breast",
+      "parentId": 3150,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3200,
+      "labelRu": "свинина",
+      "labelEn": "pork",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3201,
+      "labelRu": "свиная вырезка",
+      "labelEn": "pork tenderloin",
+      "parentId": 3200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0
+      }
+    },
+    {
+      "id": 3202,
+      "labelRu": "свиная шея",
+      "labelEn": "pork neck",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3203,
+      "labelRu": "свиная корейка",
+      "labelEn": "pork loin",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3204,
+      "labelRu": "свиная лопатка",
+      "labelEn": "pork shoulder",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3205,
+      "labelRu": "свиной окорок",
+      "labelEn": "pork leg",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3206,
+      "labelRu": "свиная грудинка",
+      "labelEn": "pork belly",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3207,
+      "labelRu": "свиные рёбрышки",
+      "labelEn": "pork ribs",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3208,
+      "labelRu": "свиная рулька",
+      "labelEn": "pork knuckle",
+      "parentId": 3200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0
+      }
+    },
+    {
+      "id": 3209,
+      "labelRu": "свиные ножки",
+      "labelEn": "pig feet",
+      "parentId": 3200,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 3210,
+      "labelRu": "свиная отбивная",
+      "labelEn": "pork chop",
+      "parentId": 3200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 3211,
+      "labelRu": "свиной стейк",
+      "labelEn": "pork steak",
+      "parentId": 3200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 3212,
+      "labelRu": "свиная мякоть",
+      "labelEn": "boneless pork",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3213,
+      "labelRu": "свиная щековина",
+      "labelEn": "pork jowl",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3214,
+      "labelRu": "свиные уши",
+      "labelEn": "pig ears",
+      "parentId": 3200,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 3215,
+      "labelRu": "свиная шкурка",
+      "labelEn": "pork rind",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3216,
+      "labelRu": "эскалоп",
+      "labelEn": "escalope",
+      "parentId": 3200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 3217,
+      "labelRu": "карбонад",
+      "labelEn": "boneless pork loin",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3218,
+      "labelRu": "молочный поросёнок",
+      "labelEn": "suckling pig",
+      "parentId": 3200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 5000.0
+      }
+    },
+    {
+      "id": 3219,
+      "labelRu": "свинина на кости",
+      "labelEn": "bone-in pork",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3220,
+      "labelRu": "свиные медальоны",
+      "labelEn": "pork medallions",
+      "parentId": 3200,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 3221,
+      "labelRu": "свиные хвосты",
+      "labelEn": "pig tails",
+      "parentId": 3200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3222,
+      "labelRu": "стейк из свиной шеи",
+      "labelEn": "pork neck steak",
+      "parentId": 3200,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 3300,
+      "labelRu": "баранина",
+      "labelEn": "lamb",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3301,
+      "labelRu": "ягнятина",
+      "labelEn": "young lamb",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3302,
+      "labelRu": "баранья нога",
+      "labelEn": "leg of lamb",
+      "parentId": 3300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 2000.0
+      }
+    },
+    {
+      "id": 3303,
+      "labelRu": "баранья лопатка",
+      "labelEn": "lamb shoulder",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3304,
+      "labelRu": "бараньи рёбрышки",
+      "labelEn": "lamb ribs",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3305,
+      "labelRu": "каре ягнёнка",
+      "labelEn": "rack of lamb",
+      "parentId": 3300,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 600.0
+      }
+    },
+    {
+      "id": 3306,
+      "labelRu": "баранья корейка",
+      "labelEn": "lamb loin",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3307,
+      "labelRu": "баранья шея",
+      "labelEn": "lamb neck",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3308,
+      "labelRu": "баранья мякоть",
+      "labelEn": "boneless lamb",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3309,
+      "labelRu": "баранина на кости",
+      "labelEn": "bone-in lamb",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3310,
+      "labelRu": "курдюк",
+      "labelEn": "lamb tail fat",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3311,
+      "labelRu": "баранья отбивная",
+      "labelEn": "lamb chop",
+      "parentId": 3300,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 3312,
+      "labelRu": "баранья голяшка",
+      "labelEn": "lamb shank",
+      "parentId": 3300,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 3313,
+      "labelRu": "баранья грудинка",
+      "labelEn": "lamb breast",
+      "parentId": 3300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3400,
+      "labelRu": "козлятина",
+      "labelEn": "goat meat",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3401,
+      "labelRu": "конина",
+      "labelEn": "horse meat",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3410,
+      "labelRu": "кролик",
+      "labelEn": "rabbit",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0
+      }
+    },
+    {
+      "id": 3411,
+      "labelRu": "ножки кролика",
+      "labelEn": "rabbit legs",
+      "parentId": 3410,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 3412,
+      "labelRu": "филе кролика",
+      "labelEn": "rabbit fillet",
+      "parentId": 3410,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3413,
+      "labelRu": "спинка кролика",
+      "labelEn": "rabbit saddle",
+      "parentId": 3410,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3420,
+      "labelRu": "дичь",
+      "labelEn": "game",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3421,
+      "labelRu": "оленина",
+      "labelEn": "venison",
+      "parentId": 3420,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3422,
+      "labelRu": "лосятина",
+      "labelEn": "elk meat",
+      "parentId": 3420,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3423,
+      "labelRu": "кабанятина",
+      "labelEn": "wild boar",
+      "parentId": 3420,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3424,
+      "labelRu": "мясо косули",
+      "labelEn": "roe deer meat",
+      "parentId": 3420,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3425,
+      "labelRu": "заяц",
+      "labelEn": "hare",
+      "parentId": 3420,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 3000.0
+      }
+    },
+    {
+      "id": 3426,
+      "labelRu": "фазан",
+      "labelEn": "pheasant",
+      "parentId": 3420,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0
+      }
+    },
+    {
+      "id": 3427,
+      "labelRu": "куропатка",
+      "labelEn": "partridge",
+      "parentId": 3420,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 3428,
+      "labelRu": "рябчик",
+      "labelEn": "hazel grouse",
+      "parentId": 3420,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 3429,
+      "labelRu": "дикая утка",
+      "labelEn": "wild duck",
+      "parentId": 3420,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1000.0
+      }
+    },
+    {
+      "id": 3430,
+      "labelRu": "медвежатина",
+      "labelEn": "bear meat",
+      "parentId": 3420,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3451,
+      "labelRu": "фарш говяжий",
+      "labelEn": "ground beef",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3452,
+      "labelRu": "фарш свиной",
+      "labelEn": "ground pork",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3453,
+      "labelRu": "фарш куриный",
+      "labelEn": "ground chicken",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3454,
+      "labelRu": "фарш из индейки",
+      "labelEn": "ground turkey",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3455,
+      "labelRu": "фарш бараний",
+      "labelEn": "ground lamb",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3457,
+      "labelRu": "фарш телячий",
+      "labelEn": "ground veal",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3458,
+      "labelRu": "фарш рыбный",
+      "labelEn": "ground fish",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3459,
+      "labelRu": "фарш из кролика",
+      "labelEn": "ground rabbit",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3460,
+      "labelRu": "фарш свино-говяжий",
+      "labelEn": "ground pork and beef",
+      "parentId": 4,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3501,
+      "labelRu": "куриное филе",
+      "labelEn": "chicken breast fillet",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 3502,
+      "labelRu": "куриная грудка",
+      "labelEn": "chicken breast",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 3503,
+      "labelRu": "куриные бёдра",
+      "labelEn": "chicken thighs",
+      "parentId": 1,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 3504,
+      "labelRu": "филе куриного бедра",
+      "labelEn": "boneless chicken thighs",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 3505,
+      "labelRu": "куриные голени",
+      "labelEn": "chicken drumsticks",
+      "parentId": 1,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 110.0
+      }
+    },
+    {
+      "id": 3506,
+      "labelRu": "куриные окорочка",
+      "labelEn": "chicken leg quarters",
+      "parentId": 1,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 3507,
+      "labelRu": "малое куриное филе",
+      "labelEn": "chicken tenders",
+      "parentId": 1,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 3508,
+      "labelRu": "цыплёнок",
+      "labelEn": "spring chicken",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 700.0
+      }
+    },
+    {
+      "id": 3509,
+      "labelRu": "цыплёнок-корнишон",
+      "labelEn": "poussin",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 450.0
+      }
+    },
+    {
+      "id": 3510,
+      "labelRu": "курица суповая",
+      "labelEn": "stewing hen",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1800.0
+      }
+    },
+    {
+      "id": 3511,
+      "labelRu": "курица копчёная",
+      "labelEn": "smoked chicken",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1200.0
+      }
+    },
+    {
+      "id": 3512,
+      "labelRu": "курица гриль",
+      "labelEn": "rotisserie chicken",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1200.0
+      }
+    },
+    {
+      "id": 3513,
+      "labelRu": "куриная грудка копчёная",
+      "labelEn": "smoked chicken breast",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 3514,
+      "labelRu": "куриные шейки",
+      "labelEn": "chicken necks",
+      "parentId": 1,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 3515,
+      "labelRu": "куриные спинки",
+      "labelEn": "chicken backs",
+      "parentId": 1,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 3516,
+      "labelRu": "куриные лапки",
+      "labelEn": "chicken feet",
+      "parentId": 1,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 3517,
+      "labelRu": "куриная кожа",
+      "labelEn": "chicken skin",
+      "parentId": 1,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3518,
+      "labelRu": "курица домашняя",
+      "labelEn": "free-range chicken",
+      "parentId": 1,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1800.0
+      }
+    },
+    {
+      "id": 3600,
+      "labelRu": "индейка",
+      "labelEn": "turkey",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 5000.0
+      }
+    },
+    {
+      "id": 3601,
+      "labelRu": "филе индейки",
+      "labelEn": "turkey breast fillet",
+      "parentId": 3600,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3602,
+      "labelRu": "грудка индейки",
+      "labelEn": "turkey breast",
+      "parentId": 3600,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3603,
+      "labelRu": "бедро индейки",
+      "labelEn": "turkey thigh",
+      "parentId": 3600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 800.0
+      }
+    },
+    {
+      "id": 3604,
+      "labelRu": "филе бедра индейки",
+      "labelEn": "boneless turkey thigh",
+      "parentId": 3600,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3605,
+      "labelRu": "голень индейки",
+      "labelEn": "turkey drumstick",
+      "parentId": 3600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 900.0
+      }
+    },
+    {
+      "id": 3606,
+      "labelRu": "крыло индейки",
+      "labelEn": "turkey wing",
+      "parentId": 3600,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 3607,
+      "labelRu": "стейк индейки",
+      "labelEn": "turkey steak",
+      "parentId": 3600,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 3608,
+      "labelRu": "шея индейки",
+      "labelEn": "turkey neck",
+      "parentId": 3600,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3609,
+      "labelRu": "индейка копчёная",
+      "labelEn": "smoked turkey",
+      "parentId": 3600,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3620,
+      "labelRu": "утка",
+      "labelEn": "duck",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 2000.0
+      }
+    },
+    {
+      "id": 3621,
+      "labelRu": "утиная грудка",
+      "labelEn": "duck breast",
+      "parentId": 3620,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 3622,
+      "labelRu": "утиные ножки",
+      "labelEn": "duck legs",
+      "parentId": 3620,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 3623,
+      "labelRu": "утиные крылья",
+      "labelEn": "duck wings",
+      "parentId": 3620,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 3624,
+      "labelRu": "утка копчёная",
+      "labelEn": "smoked duck",
+      "parentId": 3620,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3625,
+      "labelRu": "мускусная утка",
+      "labelEn": "Muscovy duck",
+      "parentId": 3620,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 2500.0
+      }
+    },
+    {
+      "id": 3640,
+      "labelRu": "гусь",
+      "labelEn": "goose",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 4000.0
+      }
+    },
+    {
+      "id": 3641,
+      "labelRu": "гусиная грудка",
+      "labelEn": "goose breast",
+      "parentId": 3640,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0
+      }
+    },
+    {
+      "id": 3642,
+      "labelRu": "гусиные ножки",
+      "labelEn": "goose legs",
+      "parentId": 3640,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0
+      }
+    },
+    {
+      "id": 3660,
+      "labelRu": "перепёлка",
+      "labelEn": "quail",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 180.0
+      }
+    },
+    {
+      "id": 3670,
+      "labelRu": "цесарка",
+      "labelEn": "guinea fowl",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1200.0
+      }
+    },
+    {
+      "id": 3680,
+      "labelRu": "голубь",
+      "labelEn": "pigeon",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 3690,
+      "labelRu": "страусятина",
+      "labelEn": "ostrich meat",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3700,
+      "labelRu": "печень",
+      "labelEn": "liver",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3701,
+      "labelRu": "говяжья печень",
+      "labelEn": "beef liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3702,
+      "labelRu": "телячья печень",
+      "labelEn": "calf liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3703,
+      "labelRu": "свиная печень",
+      "labelEn": "pork liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3704,
+      "labelRu": "куриная печень",
+      "labelEn": "chicken liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3705,
+      "labelRu": "печень индейки",
+      "labelEn": "turkey liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3706,
+      "labelRu": "утиная печень",
+      "labelEn": "duck liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3707,
+      "labelRu": "гусиная печень",
+      "labelEn": "goose liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3708,
+      "labelRu": "фуа-гра",
+      "labelEn": "foie gras",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3709,
+      "labelRu": "печень трески",
+      "labelEn": "cod liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3710,
+      "labelRu": "кроличья печень",
+      "labelEn": "rabbit liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3711,
+      "labelRu": "баранья печень",
+      "labelEn": "lamb liver",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3712,
+      "labelRu": "печёнка",
+      "labelEn": "liver (colloquial)",
+      "parentId": 3700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3720,
+      "labelRu": "сердце",
+      "labelEn": "heart",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3721,
+      "labelRu": "говяжье сердце",
+      "labelEn": "beef heart",
+      "parentId": 3720,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3722,
+      "labelRu": "свиное сердце",
+      "labelEn": "pork heart",
+      "parentId": 3720,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3723,
+      "labelRu": "куриные сердечки",
+      "labelEn": "chicken hearts",
+      "parentId": 3720,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3724,
+      "labelRu": "сердечки индейки",
+      "labelEn": "turkey hearts",
+      "parentId": 3720,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3725,
+      "labelRu": "баранье сердце",
+      "labelEn": "lamb heart",
+      "parentId": 3720,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3730,
+      "labelRu": "язык",
+      "labelEn": "tongue",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3731,
+      "labelRu": "говяжий язык",
+      "labelEn": "beef tongue",
+      "parentId": 3730,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1200.0
+      }
+    },
+    {
+      "id": 3732,
+      "labelRu": "свиной язык",
+      "labelEn": "pork tongue",
+      "parentId": 3730,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 3733,
+      "labelRu": "телячий язык",
+      "labelEn": "veal tongue",
+      "parentId": 3730,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 600.0
+      }
+    },
+    {
+      "id": 3734,
+      "labelRu": "бараний язык",
+      "labelEn": "lamb tongue",
+      "parentId": 3730,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 3740,
+      "labelRu": "почки",
+      "labelEn": "kidneys",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3741,
+      "labelRu": "говяжьи почки",
+      "labelEn": "beef kidneys",
+      "parentId": 3740,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3742,
+      "labelRu": "свиные почки",
+      "labelEn": "pork kidneys",
+      "parentId": 3740,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3743,
+      "labelRu": "бараньи почки",
+      "labelEn": "lamb kidneys",
+      "parentId": 3740,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3744,
+      "labelRu": "телячьи почки",
+      "labelEn": "veal kidneys",
+      "parentId": 3740,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3750,
+      "labelRu": "желудки",
+      "labelEn": "stomachs",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3751,
+      "labelRu": "куриные желудки",
+      "labelEn": "chicken gizzards",
+      "parentId": 3750,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3752,
+      "labelRu": "желудки индейки",
+      "labelEn": "turkey gizzards",
+      "parentId": 3750,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3753,
+      "labelRu": "утиные желудки",
+      "labelEn": "duck gizzards",
+      "parentId": 3750,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3754,
+      "labelRu": "рубец",
+      "labelEn": "tripe",
+      "parentId": 3750,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3755,
+      "labelRu": "свиной желудок",
+      "labelEn": "pork stomach",
+      "parentId": 3750,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3760,
+      "labelRu": "лёгкие",
+      "labelEn": "lungs",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3761,
+      "labelRu": "мозги",
+      "labelEn": "brains",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3762,
+      "labelRu": "вымя",
+      "labelEn": "udder",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3763,
+      "labelRu": "костный мозг",
+      "labelEn": "bone marrow",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3764,
+      "labelRu": "потроха",
+      "labelEn": "giblets",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3765,
+      "labelRu": "куриные потроха",
+      "labelEn": "chicken giblets",
+      "parentId": 3764,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3766,
+      "labelRu": "гусиные потроха",
+      "labelEn": "goose giblets",
+      "parentId": 3764,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3767,
+      "labelRu": "кишки свиные",
+      "labelEn": "hog casings",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3769,
+      "labelRu": "куриные хрящи",
+      "labelEn": "chicken cartilage",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3800,
+      "labelRu": "колбаса",
+      "labelEn": "sausage",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3801,
+      "labelRu": "колбаса варёная",
+      "labelEn": "cooked sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3802,
+      "labelRu": "докторская колбаса",
+      "labelEn": "Doktorskaya sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3803,
+      "labelRu": "колбаса копчёная",
+      "labelEn": "smoked sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3804,
+      "labelRu": "колбаса сырокопчёная",
+      "labelEn": "dry-cured sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3805,
+      "labelRu": "колбаса полукопчёная",
+      "labelEn": "semi-smoked sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3806,
+      "labelRu": "колбаса варёно-копчёная",
+      "labelEn": "cooked smoked sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3807,
+      "labelRu": "салями",
+      "labelEn": "salami",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3808,
+      "labelRu": "пепперони",
+      "labelEn": "pepperoni",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3809,
+      "labelRu": "чорисо",
+      "labelEn": "chorizo",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3810,
+      "labelRu": "сервелат",
+      "labelEn": "cervelat",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3811,
+      "labelRu": "ливерная колбаса",
+      "labelEn": "liverwurst",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3812,
+      "labelRu": "кровяная колбаса",
+      "labelEn": "blood sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3813,
+      "labelRu": "охотничьи колбаски",
+      "labelEn": "hunter's sausages",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 3814,
+      "labelRu": "суджук",
+      "labelEn": "sujuk",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3815,
+      "labelRu": "казы",
+      "labelEn": "kazy",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3816,
+      "labelRu": "мортаделла",
+      "labelEn": "mortadella",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3817,
+      "labelRu": "купаты",
+      "labelEn": "kupaty",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 3818,
+      "labelRu": "колбаски для гриля",
+      "labelEn": "grilling sausages",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 3819,
+      "labelRu": "баварские колбаски",
+      "labelEn": "Bavarian sausages",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 3820,
+      "labelRu": "колбаса молочная",
+      "labelEn": "milk sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3821,
+      "labelRu": "колбаса куриная",
+      "labelEn": "chicken sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3822,
+      "labelRu": "фуэт",
+      "labelEn": "fuet",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3823,
+      "labelRu": "колбаса краковская",
+      "labelEn": "Krakowska sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3824,
+      "labelRu": "колбаса домашняя",
+      "labelEn": "homemade sausage",
+      "parentId": 3800,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3825,
+      "labelRu": "чевапчичи",
+      "labelEn": "ćevapi",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 40.0
+      }
+    },
+    {
+      "id": 3826,
+      "labelRu": "копчёные колбаски",
+      "labelEn": "small smoked sausages",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 3827,
+      "labelRu": "свиные колбаски",
+      "labelEn": "pork sausages",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 3828,
+      "labelRu": "колбаски для завтрака",
+      "labelEn": "breakfast sausages",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 3829,
+      "labelRu": "чиполата",
+      "labelEn": "chipolatas",
+      "parentId": 3800,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 3830,
+      "labelRu": "сосиски",
+      "labelEn": "frankfurters",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 3831,
+      "labelRu": "сосиски молочные",
+      "labelEn": "milk frankfurters",
+      "parentId": 3830,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 3832,
+      "labelRu": "сосиски куриные",
+      "labelEn": "chicken frankfurters",
+      "parentId": 3830,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 3834,
+      "labelRu": "сосиски для хот-догов",
+      "labelEn": "hot dog sausages",
+      "parentId": 3830,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 3835,
+      "labelRu": "мини-сосиски",
+      "labelEn": "cocktail sausages",
+      "parentId": 3830,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 3836,
+      "labelRu": "сосиски с сыром",
+      "labelEn": "cheese frankfurters",
+      "parentId": 3830,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 3840,
+      "labelRu": "сардельки",
+      "labelEn": "thick sausages",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 100.0
+      }
+    },
+    {
+      "id": 3850,
+      "labelRu": "ветчина",
+      "labelEn": "ham",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3851,
+      "labelRu": "ветчина варёная",
+      "labelEn": "cooked ham",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3852,
+      "labelRu": "ветчина копчёная",
+      "labelEn": "smoked ham",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3853,
+      "labelRu": "хамон",
+      "labelEn": "jamón",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3854,
+      "labelRu": "прошутто",
+      "labelEn": "prosciutto",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3855,
+      "labelRu": "пармская ветчина",
+      "labelEn": "Parma ham",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3856,
+      "labelRu": "ветчина из индейки",
+      "labelEn": "turkey ham",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3857,
+      "labelRu": "ветчина куриная",
+      "labelEn": "chicken ham",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3858,
+      "labelRu": "окорок копчёный",
+      "labelEn": "smoked bone-in ham",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3859,
+      "labelRu": "окорок варёный",
+      "labelEn": "boiled bone-in ham",
+      "parentId": 3850,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3870,
+      "labelRu": "бекон",
+      "labelEn": "bacon",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 3871,
+      "labelRu": "панчетта",
+      "labelEn": "pancetta",
+      "parentId": 3870,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3872,
+      "labelRu": "гуанчале",
+      "labelEn": "guanciale",
+      "parentId": 3870,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3873,
+      "labelRu": "бекон из индейки",
+      "labelEn": "turkey bacon",
+      "parentId": 3870,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 3874,
+      "labelRu": "бекон сырокопчёный",
+      "labelEn": "dry-cured bacon",
+      "parentId": 3870,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 3875,
+      "labelRu": "бекон варёно-копчёный",
+      "labelEn": "cooked smoked bacon",
+      "parentId": 3870,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 3876,
+      "labelRu": "канадский бекон",
+      "labelEn": "Canadian bacon",
+      "parentId": 3870,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 25.0
+      }
+    },
+    {
+      "id": 3877,
+      "labelRu": "бекон кубиками",
+      "labelEn": "lardons",
+      "parentId": 3870,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3880,
+      "labelRu": "грудинка копчёная",
+      "labelEn": "smoked pork belly",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3881,
+      "labelRu": "корейка копчёная",
+      "labelEn": "smoked pork loin",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3882,
+      "labelRu": "шейка копчёная",
+      "labelEn": "smoked pork neck",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3883,
+      "labelRu": "буженина",
+      "labelEn": "cold roast pork",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3884,
+      "labelRu": "бастурма",
+      "labelEn": "basturma",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3885,
+      "labelRu": "свиной балык",
+      "labelEn": "pork balyk",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3887,
+      "labelRu": "вяленое мясо",
+      "labelEn": "jerky",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3888,
+      "labelRu": "рёбрышки копчёные",
+      "labelEn": "smoked ribs",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3890,
+      "labelRu": "зельц",
+      "labelEn": "head cheese",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3891,
+      "labelRu": "шкварки",
+      "labelEn": "pork cracklings",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3892,
+      "labelRu": "брезаола",
+      "labelEn": "bresaola",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3900,
+      "labelRu": "паштет",
+      "labelEn": "pâté",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3901,
+      "labelRu": "паштет печёночный",
+      "labelEn": "liver pâté",
+      "parentId": 3900,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3902,
+      "labelRu": "паштет из куриной печени",
+      "labelEn": "chicken liver pâté",
+      "parentId": 3900,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3903,
+      "labelRu": "паштет из утки",
+      "labelEn": "duck pâté",
+      "parentId": 3900,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3904,
+      "labelRu": "паштет из гусиной печени",
+      "labelEn": "goose liver pâté",
+      "parentId": 3900,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3910,
+      "labelRu": "тушёнка",
+      "labelEn": "canned stewed meat",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3911,
+      "labelRu": "тушёнка говяжья",
+      "labelEn": "canned stewed beef",
+      "parentId": 3910,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3912,
+      "labelRu": "тушёнка свиная",
+      "labelEn": "canned stewed pork",
+      "parentId": 3910,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3913,
+      "labelRu": "тушёнка куриная",
+      "labelEn": "canned stewed chicken",
+      "parentId": 3910,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3920,
+      "labelRu": "фрикадельки",
+      "labelEn": "meatballs",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 3940,
+      "labelRu": "сало",
+      "labelEn": "salo",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3941,
+      "labelRu": "шпик",
+      "labelEn": "cured fatback",
+      "parentId": 3940,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3942,
+      "labelRu": "сало солёное",
+      "labelEn": "salted salo",
+      "parentId": 3940,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 3943,
+      "labelRu": "сало копчёное",
+      "labelEn": "smoked salo",
+      "parentId": 3940,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4000,
+      "labelRu": "рыба",
+      "labelEn": "fish",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4001,
+      "labelRu": "белая рыба",
+      "labelEn": "white fish",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4002,
+      "labelRu": "красная рыба",
+      "labelEn": "salmon-type fish",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4003,
+      "labelRu": "филе рыбы",
+      "labelEn": "fish fillet",
+      "parentId": 4000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4004,
+      "labelRu": "рыба копчёная",
+      "labelEn": "smoked fish",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4005,
+      "labelRu": "рыба солёная",
+      "labelEn": "salted fish",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4006,
+      "labelRu": "рыба вяленая",
+      "labelEn": "dried salted fish",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4007,
+      "labelRu": "рыбные консервы",
+      "labelEn": "canned fish",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4008,
+      "labelRu": "рыбный суповой набор",
+      "labelEn": "fish soup set",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4009,
+      "labelRu": "рыба морская",
+      "labelEn": "sea fish",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4010,
+      "labelRu": "рыба речная",
+      "labelEn": "freshwater fish",
+      "parentId": 4000,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4011,
+      "labelRu": "стейк рыбы",
+      "labelEn": "fish steak",
+      "parentId": 4000,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4020,
+      "labelRu": "лосось",
+      "labelEn": "salmon",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4021,
+      "labelRu": "филе лосося",
+      "labelEn": "salmon fillet",
+      "parentId": 4020,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4022,
+      "labelRu": "стейк лосося",
+      "labelEn": "salmon steak",
+      "parentId": 4020,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 4023,
+      "labelRu": "лосось слабосолёный",
+      "labelEn": "lightly salted salmon",
+      "parentId": 4020,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4024,
+      "labelRu": "лосось копчёный",
+      "labelEn": "smoked salmon",
+      "parentId": 4020,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4025,
+      "labelRu": "брюшки лосося",
+      "labelEn": "salmon bellies",
+      "parentId": 4020,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4026,
+      "labelRu": "лосось консервированный",
+      "labelEn": "canned salmon",
+      "parentId": 4020,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4030,
+      "labelRu": "сёмга",
+      "labelEn": "Atlantic salmon",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4040,
+      "labelRu": "форель",
+      "labelEn": "trout",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 4041,
+      "labelRu": "филе форели",
+      "labelEn": "trout fillet",
+      "parentId": 4040,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4042,
+      "labelRu": "стейк форели",
+      "labelEn": "trout steak",
+      "parentId": 4040,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4043,
+      "labelRu": "форель слабосолёная",
+      "labelEn": "lightly salted trout",
+      "parentId": 4040,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4044,
+      "labelRu": "форель копчёная",
+      "labelEn": "smoked trout",
+      "parentId": 4040,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4045,
+      "labelRu": "форель радужная",
+      "labelEn": "rainbow trout",
+      "parentId": 4040,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 4050,
+      "labelRu": "горбуша",
+      "labelEn": "pink salmon",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0
+      }
+    },
+    {
+      "id": 4051,
+      "labelRu": "филе горбуши",
+      "labelEn": "pink salmon fillet",
+      "parentId": 4050,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 450.0
+      }
+    },
+    {
+      "id": 4052,
+      "labelRu": "горбуша консервированная",
+      "labelEn": "canned pink salmon",
+      "parentId": 4050,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4053,
+      "labelRu": "горбуша копчёная",
+      "labelEn": "smoked pink salmon",
+      "parentId": 4050,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4055,
+      "labelRu": "кета",
+      "labelEn": "chum salmon",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4056,
+      "labelRu": "филе кеты",
+      "labelEn": "chum salmon fillet",
+      "parentId": 4055,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 600.0
+      }
+    },
+    {
+      "id": 4057,
+      "labelRu": "нерка",
+      "labelEn": "sockeye salmon",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4058,
+      "labelRu": "кижуч",
+      "labelEn": "coho salmon",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4059,
+      "labelRu": "чавыча",
+      "labelEn": "chinook salmon",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4060,
+      "labelRu": "голец",
+      "labelEn": "char",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4065,
+      "labelRu": "треска",
+      "labelEn": "cod",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4066,
+      "labelRu": "филе трески",
+      "labelEn": "cod fillet",
+      "parentId": 4065,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4067,
+      "labelRu": "треска солёная",
+      "labelEn": "salt cod",
+      "parentId": 4065,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4068,
+      "labelRu": "стейк трески",
+      "labelEn": "cod steak",
+      "parentId": 4065,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4070,
+      "labelRu": "минтай",
+      "labelEn": "Alaska pollock",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 4071,
+      "labelRu": "филе минтая",
+      "labelEn": "Alaska pollock fillet",
+      "parentId": 4070,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4075,
+      "labelRu": "хек",
+      "labelEn": "hake",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 4076,
+      "labelRu": "филе хека",
+      "labelEn": "hake fillet",
+      "parentId": 4075,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4080,
+      "labelRu": "пикша",
+      "labelEn": "haddock",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4081,
+      "labelRu": "филе пикши",
+      "labelEn": "haddock fillet",
+      "parentId": 4080,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4082,
+      "labelRu": "пикша копчёная",
+      "labelEn": "smoked haddock",
+      "parentId": 4080,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4083,
+      "labelRu": "сайда",
+      "labelEn": "Atlantic pollock",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4084,
+      "labelRu": "путассу",
+      "labelEn": "blue whiting",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4085,
+      "labelRu": "навага",
+      "labelEn": "saffron cod",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4086,
+      "labelRu": "макрурус",
+      "labelEn": "grenadier",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4087,
+      "labelRu": "ледяная рыба",
+      "labelEn": "icefish",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 4088,
+      "labelRu": "нототения",
+      "labelEn": "notothenia",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4089,
+      "labelRu": "зубатка",
+      "labelEn": "wolffish",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4090,
+      "labelRu": "палтус",
+      "labelEn": "halibut",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4091,
+      "labelRu": "филе палтуса",
+      "labelEn": "halibut fillet",
+      "parentId": 4090,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4092,
+      "labelRu": "палтус копчёный",
+      "labelEn": "smoked halibut",
+      "parentId": 4090,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4093,
+      "labelRu": "камбала",
+      "labelEn": "flounder",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 500.0
+      }
+    },
+    {
+      "id": 4094,
+      "labelRu": "морской язык",
+      "labelEn": "sole",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 4095,
+      "labelRu": "тюрбо",
+      "labelEn": "turbot",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4096,
+      "labelRu": "окунь морской",
+      "labelEn": "ocean perch",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 4097,
+      "labelRu": "филе морского окуня",
+      "labelEn": "ocean perch fillet",
+      "parentId": 4096,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4098,
+      "labelRu": "дорадо",
+      "labelEn": "sea bream",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 4099,
+      "labelRu": "филе дорадо",
+      "labelEn": "sea bream fillet",
+      "parentId": 4098,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 4100,
+      "labelRu": "сибас",
+      "labelEn": "sea bass",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 4101,
+      "labelRu": "филе сибаса",
+      "labelEn": "sea bass fillet",
+      "parentId": 4100,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 4102,
+      "labelRu": "тилапия",
+      "labelEn": "tilapia",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4103,
+      "labelRu": "филе тилапии",
+      "labelEn": "tilapia fillet",
+      "parentId": 4102,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 4104,
+      "labelRu": "пангасиус",
+      "labelEn": "pangasius",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4105,
+      "labelRu": "филе пангасиуса",
+      "labelEn": "pangasius fillet",
+      "parentId": 4104,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 4106,
+      "labelRu": "масляная рыба",
+      "labelEn": "escolar",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4107,
+      "labelRu": "меч-рыба",
+      "labelEn": "swordfish",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4108,
+      "labelRu": "кефаль",
+      "labelEn": "grey mullet",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0
+      }
+    },
+    {
+      "id": 4109,
+      "labelRu": "барабулька",
+      "labelEn": "red mullet",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 4110,
+      "labelRu": "ставрида",
+      "labelEn": "horse mackerel",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4111,
+      "labelRu": "лемонема",
+      "labelEn": "lemonema",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4112,
+      "labelRu": "сайра",
+      "labelEn": "saury",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4113,
+      "labelRu": "сайра консервированная",
+      "labelEn": "canned saury",
+      "parentId": 4112,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4120,
+      "labelRu": "судак",
+      "labelEn": "zander",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1200.0
+      }
+    },
+    {
+      "id": 4121,
+      "labelRu": "филе судака",
+      "labelEn": "zander fillet",
+      "parentId": 4120,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 4122,
+      "labelRu": "щука",
+      "labelEn": "pike",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0
+      }
+    },
+    {
+      "id": 4123,
+      "labelRu": "окунь",
+      "labelEn": "perch",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 4124,
+      "labelRu": "карп",
+      "labelEn": "carp",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0
+      }
+    },
+    {
+      "id": 4125,
+      "labelRu": "сазан",
+      "labelEn": "wild carp",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0
+      }
+    },
+    {
+      "id": 4126,
+      "labelRu": "толстолобик",
+      "labelEn": "silver carp",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4127,
+      "labelRu": "белый амур",
+      "labelEn": "grass carp",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4128,
+      "labelRu": "карась",
+      "labelEn": "crucian carp",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 4129,
+      "labelRu": "лещ",
+      "labelEn": "bream",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 800.0
+      }
+    },
+    {
+      "id": 4130,
+      "labelRu": "сом",
+      "labelEn": "catfish",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4131,
+      "labelRu": "налим",
+      "labelEn": "burbot",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4132,
+      "labelRu": "сиг",
+      "labelEn": "common whitefish",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4133,
+      "labelRu": "муксун",
+      "labelEn": "muksun",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4134,
+      "labelRu": "омуль",
+      "labelEn": "omul",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4135,
+      "labelRu": "нельма",
+      "labelEn": "nelma",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4136,
+      "labelRu": "хариус",
+      "labelEn": "grayling",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4137,
+      "labelRu": "вобла",
+      "labelEn": "vobla",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4138,
+      "labelRu": "чехонь",
+      "labelEn": "sabre carp",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4139,
+      "labelRu": "осётр",
+      "labelEn": "sturgeon",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4140,
+      "labelRu": "стерлядь",
+      "labelEn": "sterlet",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4141,
+      "labelRu": "угорь",
+      "labelEn": "eel",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4142,
+      "labelRu": "угорь копчёный",
+      "labelEn": "smoked eel",
+      "parentId": 4141,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4143,
+      "labelRu": "линь",
+      "labelEn": "tench",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4150,
+      "labelRu": "скумбрия",
+      "labelEn": "mackerel",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 350.0
+      }
+    },
+    {
+      "id": 4151,
+      "labelRu": "скумбрия копчёная",
+      "labelEn": "smoked mackerel",
+      "parentId": 4150,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 4152,
+      "labelRu": "скумбрия солёная",
+      "labelEn": "salted mackerel",
+      "parentId": 4150,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 4153,
+      "labelRu": "филе скумбрии",
+      "labelEn": "mackerel fillet",
+      "parentId": 4150,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 120.0
+      }
+    },
+    {
+      "id": 4154,
+      "labelRu": "скумбрия консервированная",
+      "labelEn": "canned mackerel",
+      "parentId": 4150,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4155,
+      "labelRu": "сельдь",
+      "labelEn": "herring",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 4156,
+      "labelRu": "селёдка",
+      "labelEn": "salted herring",
+      "parentId": 4155,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 4157,
+      "labelRu": "филе сельди",
+      "labelEn": "herring fillet",
+      "parentId": 4155,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4158,
+      "labelRu": "сельдь копчёная",
+      "labelEn": "kippers",
+      "parentId": 4155,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4159,
+      "labelRu": "сельдь пряного посола",
+      "labelEn": "spiced herring",
+      "parentId": 4155,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4160,
+      "labelRu": "иваси",
+      "labelEn": "Pacific sardine",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4161,
+      "labelRu": "тунец",
+      "labelEn": "tuna",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4162,
+      "labelRu": "стейк тунца",
+      "labelEn": "tuna steak",
+      "parentId": 4161,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 200.0
+      }
+    },
+    {
+      "id": 4163,
+      "labelRu": "тунец консервированный",
+      "labelEn": "canned tuna",
+      "parentId": 4161,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4164,
+      "labelRu": "сардина",
+      "labelEn": "sardine",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 60.0
+      }
+    },
+    {
+      "id": 4165,
+      "labelRu": "сардины консервированные",
+      "labelEn": "canned sardines",
+      "parentId": 4164,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4166,
+      "labelRu": "шпроты",
+      "labelEn": "smoked sprats in oil",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4167,
+      "labelRu": "килька",
+      "labelEn": "sprat",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4168,
+      "labelRu": "килька в томате",
+      "labelEn": "sprats in tomato sauce",
+      "parentId": 4167,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4169,
+      "labelRu": "анчоусы",
+      "labelEn": "anchovies",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 4.0
+      }
+    },
+    {
+      "id": 4170,
+      "labelRu": "хамса",
+      "labelEn": "Black Sea anchovy",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4171,
+      "labelRu": "мойва",
+      "labelEn": "capelin",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 4172,
+      "labelRu": "корюшка",
+      "labelEn": "smelt",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 4173,
+      "labelRu": "тюлька",
+      "labelEn": "Caspian sprat",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4174,
+      "labelRu": "салака",
+      "labelEn": "Baltic herring",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4175,
+      "labelRu": "бычки в томате",
+      "labelEn": "gobies in tomato sauce",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4176,
+      "labelRu": "крабовые палочки",
+      "labelEn": "crab sticks",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 17.0
+      }
+    },
+    {
+      "id": 4177,
+      "labelRu": "сурими",
+      "labelEn": "surimi",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4200,
+      "labelRu": "морепродукты",
+      "labelEn": "seafood",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4201,
+      "labelRu": "морской коктейль",
+      "labelEn": "seafood mix",
+      "parentId": 4200,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4210,
+      "labelRu": "креветки",
+      "labelEn": "shrimp",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 12.0
+      }
+    },
+    {
+      "id": 4211,
+      "labelRu": "креветки тигровые",
+      "labelEn": "tiger shrimp",
+      "parentId": 4210,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 25.0
+      }
+    },
+    {
+      "id": 4212,
+      "labelRu": "креветки королевские",
+      "labelEn": "jumbo shrimp",
+      "parentId": 4210,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0
+      }
+    },
+    {
+      "id": 4213,
+      "labelRu": "креветки коктейльные",
+      "labelEn": "cocktail shrimp",
+      "parentId": 4210,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0
+      }
+    },
+    {
+      "id": 4214,
+      "labelRu": "креветки очищенные",
+      "labelEn": "peeled shrimp",
+      "parentId": 4210,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 4215,
+      "labelRu": "креветки варёно-мороженые",
+      "labelEn": "cooked frozen shrimp",
+      "parentId": 4210,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 12.0
+      }
+    },
+    {
+      "id": 4216,
+      "labelRu": "креветки аргентинские",
+      "labelEn": "Argentine red shrimp",
+      "parentId": 4210,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 4217,
+      "labelRu": "лангустины",
+      "labelEn": "langoustines",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 4220,
+      "labelRu": "кальмар",
+      "labelEn": "squid",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 4221,
+      "labelRu": "кольца кальмара",
+      "labelEn": "squid rings",
+      "parentId": 4220,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4222,
+      "labelRu": "филе кальмара",
+      "labelEn": "squid fillet",
+      "parentId": 4220,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4223,
+      "labelRu": "щупальца кальмара",
+      "labelEn": "squid tentacles",
+      "parentId": 4220,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4224,
+      "labelRu": "кальмар сушёный",
+      "labelEn": "dried squid",
+      "parentId": 4220,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4230,
+      "labelRu": "осьминог",
+      "labelEn": "octopus",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4231,
+      "labelRu": "осьминоги мини",
+      "labelEn": "baby octopus",
+      "parentId": 4230,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 30.0
+      }
+    },
+    {
+      "id": 4232,
+      "labelRu": "каракатица",
+      "labelEn": "cuttlefish",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 4235,
+      "labelRu": "мидии",
+      "labelEn": "mussels",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0
+      }
+    },
+    {
+      "id": 4237,
+      "labelRu": "мясо мидий",
+      "labelEn": "mussel meat",
+      "parentId": 4235,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4238,
+      "labelRu": "мидии в половинках раковин",
+      "labelEn": "half-shell mussels",
+      "parentId": 4235,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 15.0
+      }
+    },
+    {
+      "id": 4240,
+      "labelRu": "гребешки",
+      "labelEn": "scallops",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 25.0
+      }
+    },
+    {
+      "id": 4243,
+      "labelRu": "устрицы",
+      "labelEn": "oysters",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 4245,
+      "labelRu": "вонголе",
+      "labelEn": "clams",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 4250,
+      "labelRu": "краб",
+      "labelEn": "crab",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4251,
+      "labelRu": "крабовое мясо",
+      "labelEn": "crab meat",
+      "parentId": 4250,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4252,
+      "labelRu": "камчатский краб",
+      "labelEn": "king crab",
+      "parentId": 4250,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4253,
+      "labelRu": "фаланги краба",
+      "labelEn": "crab legs",
+      "parentId": 4250,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4255,
+      "labelRu": "омар",
+      "labelEn": "lobster",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 600.0
+      }
+    },
+    {
+      "id": 4256,
+      "labelRu": "лангуст",
+      "labelEn": "spiny lobster",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 600.0
+      }
+    },
+    {
+      "id": 4257,
+      "labelRu": "раки",
+      "labelEn": "crayfish",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 4258,
+      "labelRu": "раковые шейки",
+      "labelEn": "crayfish tails",
+      "parentId": 4257,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4260,
+      "labelRu": "трепанг",
+      "labelEn": "sea cucumber",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4261,
+      "labelRu": "морской ёж",
+      "labelEn": "sea urchin",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4262,
+      "labelRu": "рапаны",
+      "labelEn": "rapana whelks",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4300,
+      "labelRu": "икра",
+      "labelEn": "roe",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4301,
+      "labelRu": "красная икра",
+      "labelEn": "salmon roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 4302,
+      "labelRu": "чёрная икра",
+      "labelEn": "black caviar",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 4303,
+      "labelRu": "щучья икра",
+      "labelEn": "pike roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4304,
+      "labelRu": "икра мойвы",
+      "labelEn": "capelin roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 4305,
+      "labelRu": "икра летучей рыбы",
+      "labelEn": "flying fish roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 4306,
+      "labelRu": "икра минтая",
+      "labelEn": "pollock roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4307,
+      "labelRu": "икра трески",
+      "labelEn": "cod roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4308,
+      "labelRu": "икра горбуши",
+      "labelEn": "pink salmon roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 4309,
+      "labelRu": "икра форели",
+      "labelEn": "trout roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0
+      }
+    },
+    {
+      "id": 4310,
+      "labelRu": "икра сельди",
+      "labelEn": "herring roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4311,
+      "labelRu": "икра судака",
+      "labelEn": "zander roe",
+      "parentId": 4300,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4320,
+      "labelRu": "молоки",
+      "labelEn": "milt",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4400,
+      "labelRu": "яйцо",
+      "labelEn": "egg",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 55.0
+      }
+    },
+    {
+      "id": 4401,
+      "labelRu": "яйцо перепелиное",
+      "labelEn": "quail egg",
+      "parentId": 4400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 4402,
+      "labelRu": "яичный желток",
+      "labelEn": "egg yolk",
+      "parentId": 4400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 18.0
+      }
+    },
+    {
+      "id": 4403,
+      "labelRu": "яичный белок",
+      "labelEn": "egg white",
+      "parentId": 4400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 33.0,
+        "ml": 1.04,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 4404,
+      "labelRu": "яйцо утиное",
+      "labelEn": "duck egg",
+      "parentId": 4400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 70.0
+      }
+    },
+    {
+      "id": 4405,
+      "labelRu": "яйцо гусиное",
+      "labelEn": "goose egg",
+      "parentId": 4400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4406,
+      "labelRu": "яйцо варёное",
+      "labelEn": "boiled egg",
+      "parentId": 4400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 50.0
+      }
+    },
+    {
+      "id": 4407,
+      "labelRu": "яйцо крупное",
+      "labelEn": "large egg",
+      "parentId": 4400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 65.0
+      }
+    },
+    {
+      "id": 4408,
+      "labelRu": "яичный порошок",
+      "labelEn": "egg powder",
+      "parentId": 4400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 8.0
+      }
+    },
+    {
+      "id": 4409,
+      "labelRu": "меланж",
+      "labelEn": "liquid egg",
+      "parentId": 4400,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4410,
+      "labelRu": "яйцо индюшиное",
+      "labelEn": "turkey egg",
+      "parentId": 4400,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 80.0
+      }
+    },
+    {
+      "id": 4411,
+      "labelRu": "яйцо страусиное",
+      "labelEn": "ostrich egg",
+      "parentId": 4400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 1500.0
+      }
+    },
+    {
+      "id": 4450,
+      "labelRu": "молоко",
+      "labelEn": "milk",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4451,
+      "labelRu": "молоко цельное",
+      "labelEn": "whole milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4452,
+      "labelRu": "молоко обезжиренное",
+      "labelEn": "skim milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4453,
+      "labelRu": "молоко 1,5%",
+      "labelEn": "milk 1.5%",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4454,
+      "labelRu": "молоко 2,5%",
+      "labelEn": "milk 2.5%",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4455,
+      "labelRu": "молоко 3,2%",
+      "labelEn": "milk 3.2%",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4456,
+      "labelRu": "молоко топлёное",
+      "labelEn": "baked milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4457,
+      "labelRu": "молоко козье",
+      "labelEn": "goat milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4458,
+      "labelRu": "молоко безлактозное",
+      "labelEn": "lactose-free milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4459,
+      "labelRu": "молоко сухое",
+      "labelEn": "powdered milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 8.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 4460,
+      "labelRu": "молоко сухое обезжиренное",
+      "labelEn": "nonfat dry milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 8.0,
+        "cup": 120.0
+      }
+    },
+    {
+      "id": 4461,
+      "labelRu": "сгущённое молоко",
+      "labelEn": "sweetened condensed milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.3,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 325.0
+      }
+    },
+    {
+      "id": 4462,
+      "labelRu": "варёная сгущёнка",
+      "labelEn": "boiled condensed milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.35,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 340.0
+      }
+    },
+    {
+      "id": 4463,
+      "labelRu": "сгущённое молоко без сахара",
+      "labelEn": "evaporated milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.07,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 265.0
+      }
+    },
+    {
+      "id": 4464,
+      "labelRu": "молоко 6%",
+      "labelEn": "milk 6%",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4465,
+      "labelRu": "молоко овечье",
+      "labelEn": "sheep milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.04,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 260.0
+      }
+    },
+    {
+      "id": 4466,
+      "labelRu": "молоко домашнее",
+      "labelEn": "farm milk",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4467,
+      "labelRu": "сгущёнка с какао",
+      "labelEn": "condensed milk with cocoa",
+      "parentId": 4450,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.3,
+        "tsp": 7.0,
+        "tbsp": 20.0,
+        "cup": 325.0
+      }
+    },
+    {
+      "id": 4480,
+      "labelRu": "сливки",
+      "labelEn": "cream",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 4481,
+      "labelRu": "сливки 10%",
+      "labelEn": "light cream 10%",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 253.0
+      }
+    },
+    {
+      "id": 4482,
+      "labelRu": "сливки 20%",
+      "labelEn": "light cream 20%",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 4483,
+      "labelRu": "сливки 33%",
+      "labelEn": "heavy cream 33%",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 4484,
+      "labelRu": "сливки 35%",
+      "labelEn": "heavy cream 35%",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 4485,
+      "labelRu": "сливки для взбивания",
+      "labelEn": "whipping cream",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.99,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 248.0
+      }
+    },
+    {
+      "id": 4486,
+      "labelRu": "двойные сливки",
+      "labelEn": "extra-heavy cream",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.98,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 4487,
+      "labelRu": "взбитые сливки",
+      "labelEn": "whipped cream",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 4.0,
+        "cup": 60.0
+      }
+    },
+    {
+      "id": 4488,
+      "labelRu": "сливки сухие",
+      "labelEn": "powdered cream",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.0,
+        "tbsp": 7.0
+      }
+    },
+    {
+      "id": 4489,
+      "labelRu": "сливки 22%",
+      "labelEn": "light cream 22%",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 4491,
+      "labelRu": "девонширские сливки",
+      "labelEn": "clotted cream",
+      "parentId": 4480,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 4500,
+      "labelRu": "сметана",
+      "labelEn": "sour cream",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 4501,
+      "labelRu": "сметана 10%",
+      "labelEn": "sour cream 10%",
+      "parentId": 4500,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 4502,
+      "labelRu": "сметана 15%",
+      "labelEn": "sour cream 15%",
+      "parentId": 4500,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 4503,
+      "labelRu": "сметана 20%",
+      "labelEn": "sour cream 20%",
+      "parentId": 4500,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 4504,
+      "labelRu": "сметана 25%",
+      "labelEn": "sour cream 25%",
+      "parentId": 4500,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 4505,
+      "labelRu": "сметана 30%",
+      "labelEn": "sour cream 30%",
+      "parentId": 4500,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 4506,
+      "labelRu": "сметана домашняя",
+      "labelEn": "farm sour cream",
+      "parentId": 4500,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 4507,
+      "labelRu": "крем-фреш",
+      "labelEn": "crème fraîche",
+      "parentId": 4500,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 4520,
+      "labelRu": "кефир",
+      "labelEn": "kefir",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4521,
+      "labelRu": "кефир 1%",
+      "labelEn": "kefir 1%",
+      "parentId": 4520,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4522,
+      "labelRu": "кефир 2,5%",
+      "labelEn": "kefir 2.5%",
+      "parentId": 4520,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4523,
+      "labelRu": "кефир 3,2%",
+      "labelEn": "kefir 3.2%",
+      "parentId": 4520,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4524,
+      "labelRu": "кефир обезжиренный",
+      "labelEn": "fat-free kefir",
+      "parentId": 4520,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4530,
+      "labelRu": "ряженка",
+      "labelEn": "ryazhenka",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4531,
+      "labelRu": "простокваша",
+      "labelEn": "prostokvasha",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4532,
+      "labelRu": "варенец",
+      "labelEn": "varenets",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4533,
+      "labelRu": "мацони",
+      "labelEn": "matsoni",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 4534,
+      "labelRu": "айран",
+      "labelEn": "ayran",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 4535,
+      "labelRu": "тан",
+      "labelEn": "tan",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 4536,
+      "labelRu": "катык",
+      "labelEn": "katyk",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 4537,
+      "labelRu": "ацидофилин",
+      "labelEn": "acidophilus milk",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4538,
+      "labelRu": "пахта",
+      "labelEn": "buttermilk",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4539,
+      "labelRu": "сыворотка",
+      "labelEn": "whey",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.02,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 4540,
+      "labelRu": "кумыс",
+      "labelEn": "kumis",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.01,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 252.0
+      }
+    },
+    {
+      "id": 4541,
+      "labelRu": "снежок",
+      "labelEn": "snezhok",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 262.0
+      }
+    },
+    {
+      "id": 4542,
+      "labelRu": "бифидок",
+      "labelEn": "bifidok",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4560,
+      "labelRu": "йогурт",
+      "labelEn": "yogurt",
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 4561,
+      "labelRu": "йогурт натуральный",
+      "labelEn": "plain yogurt",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 4562,
+      "labelRu": "греческий йогурт",
+      "labelEn": "Greek yogurt",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 280.0
+      }
+    },
+    {
+      "id": 4563,
+      "labelRu": "йогурт питьевой",
+      "labelEn": "drinking yogurt",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 258.0
+      }
+    },
+    {
+      "id": 4564,
+      "labelRu": "йогурт фруктовый",
+      "labelEn": "fruit yogurt",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 4565,
+      "labelRu": "йогурт обезжиренный",
+      "labelEn": "fat-free yogurt",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.03,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 4566,
+      "labelRu": "лабне",
+      "labelEn": "labneh",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 280.0
+      }
+    },
+    {
+      "id": 4567,
+      "labelRu": "сузьма",
+      "labelEn": "suzma",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 280.0
+      }
+    },
+    {
+      "id": 4568,
+      "labelRu": "скир",
+      "labelEn": "skyr",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 280.0
+      }
+    },
+    {
+      "id": 4569,
+      "labelRu": "йогурт ванильный",
+      "labelEn": "vanilla yogurt",
+      "parentId": 4560,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.05,
+        "tsp": 5.0,
+        "tbsp": 16.0,
+        "cup": 255.0
+      }
+    },
+    {
+      "id": 4580,
+      "labelRu": "творог",
+      "labelEn": "quark",
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4581,
+      "labelRu": "творог обезжиренный",
+      "labelEn": "fat-free quark",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4582,
+      "labelRu": "творог 2%",
+      "labelEn": "quark 2%",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4583,
+      "labelRu": "творог 5%",
+      "labelEn": "quark 5%",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4584,
+      "labelRu": "творог 9%",
+      "labelEn": "quark 9%",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4585,
+      "labelRu": "творог 18%",
+      "labelEn": "quark 18%",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4586,
+      "labelRu": "творог зернистый",
+      "labelEn": "cottage cheese",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 225.0
+      }
+    },
+    {
+      "id": 4587,
+      "labelRu": "творог домашний",
+      "labelEn": "farm quark",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4588,
+      "labelRu": "творожная масса",
+      "labelEn": "sweet curd spread",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 18.0,
+        "cup": 250.0
+      }
+    },
+    {
+      "id": 4589,
+      "labelRu": "творожный сырок",
+      "labelEn": "glazed curd snack",
+      "parentId": 4580,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 45.0
+      }
+    },
+    {
+      "id": 4590,
+      "labelRu": "творог мягкий",
+      "labelEn": "soft quark",
+      "parentId": 4580,
+      "factors": {
+        "g": 1.0,
+        "tsp": 6.0,
+        "tbsp": 17.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 4600,
+      "labelRu": "масло сливочное",
+      "labelEn": "butter",
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 227.0
+      }
+    },
+    {
+      "id": 4601,
+      "labelRu": "масло сливочное несолёное",
+      "labelEn": "unsalted butter",
+      "parentId": 4600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 227.0
+      }
+    },
+    {
+      "id": 4602,
+      "labelRu": "масло сливочное солёное",
+      "labelEn": "salted butter",
+      "parentId": 4600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 227.0
+      }
+    },
+    {
+      "id": 4603,
+      "labelRu": "масло топлёное",
+      "labelEn": "ghee",
+      "parentId": 4600,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.91,
+        "tsp": 4.5,
+        "tbsp": 13.0,
+        "cup": 225.0
+      }
+    },
+    {
+      "id": 4605,
+      "labelRu": "масло сливочное 82,5%",
+      "labelEn": "butter 82.5%",
+      "parentId": 4600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 227.0
+      }
+    },
+    {
+      "id": 4606,
+      "labelRu": "масло сливочное 72,5%",
+      "labelEn": "butter 72.5%",
+      "parentId": 4600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 227.0
+      }
+    },
+    {
+      "id": 4607,
+      "labelRu": "масло шоколадное",
+      "labelEn": "chocolate butter",
+      "parentId": 4600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0
+      }
+    },
+    {
+      "id": 4608,
+      "labelRu": "масло крестьянское",
+      "labelEn": "farmer's butter",
+      "parentId": 4600,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 227.0
+      }
+    },
+    {
+      "id": 4650,
+      "labelRu": "мороженое",
+      "labelEn": "ice cream",
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4651,
+      "labelRu": "пломбир",
+      "labelEn": "plombir ice cream",
+      "parentId": 4650,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4652,
+      "labelRu": "мороженое ванильное",
+      "labelEn": "vanilla ice cream",
+      "parentId": 4650,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4653,
+      "labelRu": "мороженое сливочное",
+      "labelEn": "dairy ice cream",
+      "parentId": 4650,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4654,
+      "labelRu": "мороженое шоколадное",
+      "labelEn": "chocolate ice cream",
+      "parentId": 4650,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4655,
+      "labelRu": "мороженое крем-брюле",
+      "labelEn": "crème brûlée ice cream",
+      "parentId": 4650,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4700,
+      "labelRu": "сыр",
+      "labelEn": "cheese",
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4701,
+      "labelRu": "сыр твёрдый",
+      "labelEn": "hard cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4702,
+      "labelRu": "сыр полутвёрдый",
+      "labelEn": "semi-hard cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4703,
+      "labelRu": "сыр мягкий",
+      "labelEn": "fresh soft cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4704,
+      "labelRu": "сыр плавленый",
+      "labelEn": "processed cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 4705,
+      "labelRu": "плавленый сырок",
+      "labelEn": "processed cheese bar",
+      "parentId": 4700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 90.0
+      }
+    },
+    {
+      "id": 4706,
+      "labelRu": "сыр копчёный",
+      "labelEn": "smoked cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4707,
+      "labelRu": "сыр рассольный",
+      "labelEn": "brined cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4708,
+      "labelRu": "сыр тёртый",
+      "labelEn": "grated cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4709,
+      "labelRu": "сливочный сыр",
+      "labelEn": "cream cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4710,
+      "labelRu": "творожный сыр",
+      "labelEn": "cream cheese spread",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 4711,
+      "labelRu": "сыр тостовый",
+      "labelEn": "cheese slices",
+      "parentId": 4700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 20.0
+      }
+    },
+    {
+      "id": 4712,
+      "labelRu": "сыр колбасный",
+      "labelEn": "smoked processed cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4713,
+      "labelRu": "сыр с голубой плесенью",
+      "labelEn": "blue cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 4714,
+      "labelRu": "сыр с белой плесенью",
+      "labelEn": "bloomy-rind cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4715,
+      "labelRu": "козий сыр",
+      "labelEn": "goat cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4716,
+      "labelRu": "овечий сыр",
+      "labelEn": "sheep milk cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4717,
+      "labelRu": "сыр российский",
+      "labelEn": "Rossiysky cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4718,
+      "labelRu": "сыр голландский",
+      "labelEn": "Dutch cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4719,
+      "labelRu": "сыр пошехонский",
+      "labelEn": "Poshekhonsky cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4721,
+      "labelRu": "сулугуни",
+      "labelEn": "suluguni",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4722,
+      "labelRu": "сулугуни копчёный",
+      "labelEn": "smoked suluguni",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4723,
+      "labelRu": "имеретинский сыр",
+      "labelEn": "Imeretian cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4724,
+      "labelRu": "адыгейский сыр",
+      "labelEn": "Adyghe cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4725,
+      "labelRu": "брынза",
+      "labelEn": "brynza",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 4726,
+      "labelRu": "фета",
+      "labelEn": "feta",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 10.0,
+        "cup": 150.0
+      }
+    },
+    {
+      "id": 4727,
+      "labelRu": "чечил",
+      "labelEn": "chechil",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4728,
+      "labelRu": "осетинский сыр",
+      "labelEn": "Ossetian cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4729,
+      "labelRu": "чанах",
+      "labelEn": "chanakh",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4730,
+      "labelRu": "панир",
+      "labelEn": "paneer",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4731,
+      "labelRu": "халуми",
+      "labelEn": "halloumi",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4732,
+      "labelRu": "пармезан",
+      "labelEn": "Parmesan",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 5.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 4733,
+      "labelRu": "грана падано",
+      "labelEn": "Grana Padano",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 5.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 4734,
+      "labelRu": "пекорино",
+      "labelEn": "Pecorino",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 5.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 4735,
+      "labelRu": "моцарелла",
+      "labelEn": "mozzarella",
+      "parentId": 4700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 125.0
+      }
+    },
+    {
+      "id": 4736,
+      "labelRu": "моцарелла для пиццы",
+      "labelEn": "pizza mozzarella",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 110.0
+      }
+    },
+    {
+      "id": 4737,
+      "labelRu": "мини-моцарелла",
+      "labelEn": "mini mozzarella balls",
+      "parentId": 4700,
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 10.0
+      }
+    },
+    {
+      "id": 4738,
+      "labelRu": "буррата",
+      "labelEn": "burrata",
+      "parentId": 4700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 150.0
+      }
+    },
+    {
+      "id": 4739,
+      "labelRu": "страчателла",
+      "labelEn": "stracciatella",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 4740,
+      "labelRu": "рикотта",
+      "labelEn": "ricotta",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 4741,
+      "labelRu": "маскарпоне",
+      "labelEn": "mascarpone",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 4742,
+      "labelRu": "скаморца",
+      "labelEn": "scamorza",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4743,
+      "labelRu": "проволоне",
+      "labelEn": "provolone",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4744,
+      "labelRu": "качокавалло",
+      "labelEn": "caciocavallo",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4745,
+      "labelRu": "горгонзола",
+      "labelEn": "Gorgonzola",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 4746,
+      "labelRu": "таледжо",
+      "labelEn": "Taleggio",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4747,
+      "labelRu": "фонтина",
+      "labelEn": "Fontina",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4748,
+      "labelRu": "азиаго",
+      "labelEn": "Asiago",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4749,
+      "labelRu": "чеддер",
+      "labelEn": "cheddar",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 113.0
+      }
+    },
+    {
+      "id": 4750,
+      "labelRu": "эмменталь",
+      "labelEn": "Emmental",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4751,
+      "labelRu": "грюйер",
+      "labelEn": "Gruyère",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4752,
+      "labelRu": "гауда",
+      "labelEn": "Gouda",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4753,
+      "labelRu": "эдам",
+      "labelEn": "Edam",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4754,
+      "labelRu": "маасдам",
+      "labelEn": "Maasdam",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4755,
+      "labelRu": "тильзитер",
+      "labelEn": "Tilsiter",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4756,
+      "labelRu": "бри",
+      "labelEn": "Brie",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4757,
+      "labelRu": "камамбер",
+      "labelEn": "Camembert",
+      "parentId": 4700,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 250.0
+      }
+    },
+    {
+      "id": 4758,
+      "labelRu": "рокфор",
+      "labelEn": "Roquefort",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 4759,
+      "labelRu": "стилтон",
+      "labelEn": "Stilton",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "cup": 135.0
+      }
+    },
+    {
+      "id": 4760,
+      "labelRu": "манчего",
+      "labelEn": "Manchego",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4761,
+      "labelRu": "комте",
+      "labelEn": "Comté",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4762,
+      "labelRu": "раклет",
+      "labelEn": "raclette cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4763,
+      "labelRu": "монтерей джек",
+      "labelEn": "Monterey Jack",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 113.0
+      }
+    },
+    {
+      "id": 4765,
+      "labelRu": "кесо фреско",
+      "labelEn": "queso fresco",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4766,
+      "labelRu": "пармезан тёртый",
+      "labelEn": "grated Parmesan",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 5.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 4768,
+      "labelRu": "сыр шавли",
+      "labelEn": "Shavli cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4769,
+      "labelRu": "сыр с травами",
+      "labelEn": "herb cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4772,
+      "labelRu": "рикотта салата",
+      "labelEn": "ricotta salata",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4773,
+      "labelRu": "сыр для фондю",
+      "labelEn": "fondue cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4774,
+      "labelRu": "кашкавал",
+      "labelEn": "kashkaval",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4776,
+      "labelRu": "сыр мраморный",
+      "labelEn": "marble cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4777,
+      "labelRu": "сыр лёгкий",
+      "labelEn": "reduced-fat cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tbsp": 7.0,
+        "cup": 100.0
+      }
+    },
+    {
+      "id": 4779,
+      "labelRu": "эпуас",
+      "labelEn": "Époisses",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4783,
+      "labelRu": "сыр гриль",
+      "labelEn": "grilling cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4785,
+      "labelRu": "сыр-спагетти",
+      "labelEn": "string cheese",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4787,
+      "labelRu": "мюнстер",
+      "labelEn": "Munster",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4789,
+      "labelRu": "пекорино романо",
+      "labelEn": "Pecorino Romano",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 5.0,
+        "cup": 90.0
+      }
+    },
+    {
+      "id": 4790,
+      "labelRu": "бофор",
+      "labelEn": "Beaufort",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0
+      }
+    },
+    {
+      "id": 4791,
+      "labelRu": "лимбургский сыр",
+      "labelEn": "Limburger",
+      "parentId": 4700,
       "factors": {
         "g": 1.0
       }
