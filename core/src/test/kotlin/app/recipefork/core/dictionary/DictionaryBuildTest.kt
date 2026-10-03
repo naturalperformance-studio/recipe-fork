@@ -20,7 +20,7 @@ class DictionaryBuildTest {
         vararg files: SourceFile,
         tagFile: SourceFile = tags,
         previous: DictionariesDto? = null,
-    ): BuildResult = DictionaryBuild.build(files.toList(), tagFile, previous, "dictionaries.json")
+    ): BuildResult = DictionaryBuild.build(files.toList() + tagFile, previous?.let { Baseline("dictionaries.json", it) })
 
     private fun built(vararg files: SourceFile, tagFile: SourceFile = tags, previous: DictionariesDto? = null) =
         when (val result = build(*files, tagFile = tagFile, previous = previous)) {
@@ -48,7 +48,7 @@ class DictionaryBuildTest {
             result.dictionaries.ingredients[1],
         )
         assertEquals(listOf(TagDto(10, "итальянская", "Italian")), result.dictionaries.tags)
-        assertEquals(DictionaryBuild.versionOf(result.dictionaries), result.dictionaries.version)
+        assertEquals(result.dictionaries.digest(), result.dictionaries.version)
         assertEquals(result.dictionaries, DictionaryBuild.parseSnapshot(result.text))
         assertTrue(result.text.endsWith("}\n"))
     }
@@ -57,8 +57,8 @@ class DictionaryBuildTest {
     fun refusesADuplicateId() {
         refused(build(ingredients("1000\tлук\tonion", "1000\tчеснок\tgarlic")), "produce.tsv:4", "duplicate id 1000")
         refused(
-            build(ingredients("1000\tлук\tonion"), SourceFile("fruit.tsv", "@range 1000-2999\n1000\tяблоко\tapple\n")),
-            "fruit.tsv:2",
+            build(ingredients("1000\tлук\tonion"), SourceFile("produce-fruit.tsv", "@range 1000-2999\n1000\tяблоко\tapple\n")),
+            "produce-fruit.tsv:2",
             "duplicate id 1000 (also at produce.tsv:3)",
         )
         refused(
@@ -81,8 +81,58 @@ class DictionaryBuildTest {
 
     @Test
     fun refusesARangeAFileMayNotDeclareAndAFileWithoutARange() {
-        refused(build(ingredients("10\tлук\tonion", range = "@range 1-100")), "produce.tsv:2", "is not one this kind")
+        refused(build(ingredients("10\tлук\tonion", range = "@range 1-100")), "produce.tsv:2", "is not one a 'produce' file")
         refused(build(SourceFile("produce.tsv", "1000\tлук\tonion\n")), "produce.tsv:1", "declares no id range")
+    }
+
+    @Test
+    fun aFileMayDeclareOnlyTheRangesOfTheFamilyItsNameBeginsWith() {
+        // A split file keeps its family's range and cannot claim another's.
+        built(SourceFile("dictionary/produce-fruit.tsv", "@range 1000-2999\n1500\tяблоко\tapple\n"))
+        built(SourceFile("dictionary/animal-fish.tsv", "@range 3000-4999\n@range 1-5\n3500\tкарп\tcarp\n"))
+        built(SourceFile("seasoning-sauces.tsv", "@range 7000-8999\n7000\tкетчуп\tketchup\n"))
+        refused(
+            build(SourceFile("dictionary/produce-fruit.tsv", "@range 3000-4999\n3500\tяблоко\tapple\n")),
+            "dictionary/produce-fruit.tsv:1",
+            "range 3000-4999 is not one a 'produce' file may declare (1000-2999)",
+        )
+        refused(build(SourceFile("pantry.tsv", "@range 1-5\n1\tмука\tflour\n")), "pantry.tsv:1", "is not one a 'pantry' file")
+        refused(build(SourceFile("produce.tsv", "@range 1-5\n1\tлук\tonion\n")), "produce.tsv:1", "is not one a 'produce' file")
+        refused(
+            build(tagFile = SourceFile("tags-cuisine.tsv", "@range 1000-2999\n1000\tзавтрак\tbreakfast\n")),
+            "tags-cuisine.tsv:1",
+            "is not one a 'tags' file",
+        )
+        refused(build(SourceFile("misc.tsv", "@range 1000-2999\n1000\tлук\tonion\n")), "misc.tsv:1", "begins with no family")
+        // A tags* file holds tags: three columns.
+        refused(
+            build(tagFile = SourceFile("tags.tsv", "@range 100-999\n100\tзавтрак\tbreakfast\t\ttrue\n")),
+            "tags.tsv:2",
+            "5 columns, at most 3",
+        )
+    }
+
+    @Test
+    fun refusesAReusedIdWhoseLabelsBothChanged() {
+        val previous = DictionariesDto(
+            "v",
+            listOf(IngredientEntryDto(1000, "лук", "onion")),
+            listOf(TagDto(10, "итальянская", "Italian")),
+        )
+        refused(
+            build(ingredients("1000\tчеснок\tgarlic"), previous = previous),
+            "produce.tsv:3",
+            "id 1000 was shipped as 'лук' / 'onion'",
+        )
+        refused(
+            build(ingredients("1000\tлук\tonion"), tagFile = SourceFile("tags.tsv", "@range 10-11\n10\tгрузинская\tGeorgian\n"), previous = previous),
+            "tags.tsv:2",
+            "id 10 was shipped as 'итальянская' / 'Italian'",
+        )
+        // One label corrected, the other kept (or changed only as the search folds it): the same thing.
+        built(ingredients("1000\tлук репчатый\tonion"), previous = previous)
+        built(ingredients("1000\tлук\tyellow onion"), previous = previous)
+        built(ingredients("1000\tЛук\tbulb onion"), previous = previous)
     }
 
     @Test

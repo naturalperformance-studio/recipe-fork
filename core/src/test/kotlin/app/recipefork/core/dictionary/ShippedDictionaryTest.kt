@@ -5,6 +5,7 @@ import app.recipefork.core.api.TagDto
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -15,12 +16,18 @@ import kotlin.test.fail
 class ShippedDictionaryTest {
     /** Unit tests of `:core` run with the module directory as the working directory. */
     private val root = File("..")
-    private val sources = File(root, "dictionary")
-    private val asset = File(root, "app/src/main/assets/dictionaries.json")
+    private val sources = File(root, SOURCES)
+    private val asset = File(root, ASSET)
 
-    private fun built(): BuildResult.Built = when (val result = buildFrom(sources, asset, root)) {
+    /** Built as scripts/dictionary-build.sh builds, against the snapshot committed in git, never the working-tree file. */
+    private fun built(): BuildResult.Built = when (val result = buildFrom(root)) {
         is BuildResult.Built -> result
         is BuildResult.Refused -> fail("the sources are refused:\n" + result.errors.joinToString("\n"))
+    }
+
+    @Test
+    fun theBaselineIsTheCommittedSnapshot() {
+        assertIs<BaselineRead.Found>(gitBaseline(root))
     }
 
     @Test
@@ -36,7 +43,7 @@ class ShippedDictionaryTest {
     @Test
     fun theVersionIsTheDigestOfTheContent() {
         val dictionaries = built().dictionaries
-        assertEquals(DictionaryBuild.versionOf(dictionaries), dictionaries.version)
+        assertEquals(dictionaries.digest(), dictionaries.version)
     }
 
     @Test
@@ -81,6 +88,8 @@ class ShippedDictionaryTest {
             "scripts/dictionary-build.sh", "1000–2999", "3000–4999", "5000–6999", "7000–8999", "100–999",
             "**Labels.**", "**Families, two levels.**", "**What a piece is.**", "**Divisibility.**",
             "**Factors, one scale.**", "**Ids.**", "**No brands**",
+            "### The baseline", "merge base", "--first-build", "### Merging", "./gradlew testAll",
         ).forEach { assertTrue(it in readme, "README.md lacks $it") }
+        assertTrue("$ASSET merge=binary" in File(root, ".gitattributes").readText(), ".gitattributes")
     }
 }

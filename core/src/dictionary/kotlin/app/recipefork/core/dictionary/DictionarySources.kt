@@ -6,15 +6,35 @@ import app.recipefork.core.api.TagDto
 import app.recipefork.core.search.WordPrefix
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import java.security.MessageDigest
 
-/** One source file of the dictionary: its [name] as messages show it, and its [text]. */
+/** One source file of the dictionary: its [name] as messages show it (its file name decides its family), and its [text]. */
 class SourceFile(val name: String, val text: String)
+
+/** The snapshot already shipped, named [name] in messages: its ids are permanent and keep naming what they named. */
+class Baseline(val name: String, val dictionaries: DictionariesDto)
 
 /** What a build gives: the dictionaries and the asset's exact text, or every refusal found. */
 sealed interface BuildResult {
     class Built(val dictionaries: DictionariesDto, val text: String) : BuildResult
     class Refused(val errors: List<String>) : BuildResult
+}
+
+/**
+ * A family of source files: those whose file name begins with [prefix]. They hold tags when [tags] is true, ingredients
+ * otherwise, and may declare only the id [ranges].
+ */
+enum class Family(val prefix: String, val tags: Boolean, val ranges: List<LongRange>) {
+    PRODUCE("produce", false, listOf(1000L..2999L)),
+    ANIMAL("animal", false, listOf(3000L..4999L, 1L..5L)),
+    PANTRY("pantry", false, listOf(5000L..6999L)),
+    SEASONING("seasoning", false, listOf(7000L..8999L)),
+    TAGS("tags", true, listOf(100L..999L, 10L..11L)),
+    ;
+
+    companion object {
+        /** The family of the file [name] (a path or a bare file name), or null when its name begins with none. */
+        fun of(name: String): Family? = name.substringAfterLast('/').let { file -> entries.firstOrNull { file.startsWith(it.prefix) } }
+    }
 }
 
 /**
@@ -25,17 +45,8 @@ sealed interface BuildResult {
  * trailing empty columns left out; a tag line is `id, labelRu, labelEn`.
  */
 object DictionaryBuild {
-    /** The ranges an ingredient file may declare: produce, animal, pantry, seasoning and the rest, and the legacy ids. */
-    val INGREDIENT_RANGES: List<LongRange> = listOf(1000L..2999L, 3000L..4999L, 5000L..6999L, 7000L..8999L, 1L..5L)
-
-    /** The ranges the tags file may declare: the tags, and the legacy ids. */
-    val TAG_RANGES: List<LongRange> = listOf(100L..999L, 10L..11L)
-
     private const val INGREDIENT_COLUMNS = 7
     private const val TAG_COLUMNS = 3
-
-    /** The encoding of the version digest: the compact JSON the server and the application compute it over. */
-    private val compact = Json
 
     @OptIn(ExperimentalSerializationApi::class)
     private val pretty = Json {
@@ -43,48 +54,48 @@ object DictionaryBuild {
         prettyPrintIndent = "  "
     }
 
-    /** The lowercase hex SHA-256 of the compact encoding of [dictionaries] with an empty version. */
-    fun versionOf(dictionaries: DictionariesDto): String {
-        val content = compact.encodeToString(DictionariesDto.serializer(), dictionaries.copy(version = ""))
-        val digest = MessageDigest.getInstance("SHA-256").digest(content.toByteArray(Charsets.UTF_8))
-        return digest.joinToString("") { "%02x".format(it) }
-    }
-
     /** Reads a shipped snapshot as the application does. */
     fun parseSnapshot(text: String): DictionariesDto =
         Json { ignoreUnknownKeys = true }.decodeFromString(DictionariesDto.serializer(), text)
 
     /**
-     * Builds the dictionaries from [ingredientFiles] and [tagFile], checking them against [previous] — the snapshot
-     * shipped so far, whose ids are permanent, named [previousName] in messages — when there is one.
+     * Builds the dictionaries from [files], each read as its [Family] says, checking them against [baseline] — the
+     * snapshot shipped so far — when there is one.
      */
-    fun build(
-        ingredientFiles: List<SourceFile>,
-        tagFile: SourceFile,
-        previous: DictionariesDto?,
-        previousName: String = "the previous snapshot",
-    ): BuildResult {
+    fun build(files: List<SourceFile>, baseline: Baseline?): BuildResult {
         val errors = mutableListOf<String>()
-        val ingredients = ingredientFiles.flatMap { parseFile(it, INGREDIENT_RANGES, INGREDIENT_COLUMNS, errors, ::ingredientRow) }
-        val tags = parseFile(tagFile, TAG_RANGES, TAG_COLUMNS, errors, ::tagRow)
+        val ingredients = mutableListOf<Row<IngredientEntryDto>>()
+        val tags = mutableListOf<Row<TagDto>>()
+        files.forEach { file ->
+            val family = Family.of(file.name)
+            when {
+                family == null -> errors += "${file.name}:1: the file name begins with no family " +
+                    "(${Family.entries.joinToString { it.prefix }})"
+                family.tags -> tags += parseFile(file, family, TAG_COLUMNS, errors, ::tagRow)
+                else -> ingredients += parseFile(file, family, INGREDIENT_COLUMNS, errors, ::ingredientRow)
+            }
+        }
 
         uniqueIds(ingredients, errors)
         uniqueIds(tags, errors)
         uniqueLabels(ingredients.filterNot { it.value.removed }, errors)
         uniqueLabels(tags, errors)
         parents(ingredients, errors)
-        if (previous != null) {
-            kept(previousName, "ingredient", previous.ingredients.map { it.id }, ingredients, errors)
-            kept(previousName, "tag", previous.tags.map { it.id }, tags, errors)
+        if (baseline != null) {
+            val shippedIngredients = baseline.dictionaries.ingredients.associate { it.id to listOf(it.labelRu, it.labelEn) }
+            val shippedTags = baseline.dictionaries.tags.associate { it.id to listOf(it.labelRu, it.labelEn) }
+            kept(baseline.name, "ingredient", shippedIngredients.keys, ingredients, errors)
+            kept(baseline.name, "tag", shippedTags.keys, tags, errors)
+            notReused(baseline.name, shippedIngredients, ingredients, errors)
+            notReused(baseline.name, shippedTags, tags, errors)
         }
         if (errors.isNotEmpty()) return BuildResult.Refused(errors)
 
-        val unversioned = DictionariesDto(
+        val dictionaries = DictionariesDto(
             version = "",
             ingredients = ingredients.map { it.value }.sortedBy { it.id },
             tags = tags.map { it.value }.sortedBy { it.id },
-        )
-        val dictionaries = unversioned.copy(version = versionOf(unversioned))
+        ).versioned()
         return BuildResult.Built(dictionaries, pretty.encodeToString(DictionariesDto.serializer(), dictionaries) + "\n")
     }
 
@@ -93,7 +104,7 @@ object DictionaryBuild {
 
     private fun <T> parseFile(
         file: SourceFile,
-        allowed: List<LongRange>,
+        family: Family,
         columns: Int,
         errors: MutableList<String>,
         row: (at: String, cells: List<String>, errors: MutableList<String>) -> Row<T>?,
@@ -110,8 +121,8 @@ object DictionaryBuild {
                         ?.let { it.groupValues[1].toLong()..it.groupValues[2].toLong() }
                     when {
                         range == null -> errors += "$at: unknown directive '$line' (expected '@range FIRST-LAST')"
-                        range !in allowed -> errors += "$at: range ${range.first}-${range.last} is not one this kind of " +
-                            "file may declare (${allowed.joinToString { "${it.first}-${it.last}" }})"
+                        range !in family.ranges -> errors += "$at: range ${range.first}-${range.last} is not one a " +
+                            "'${family.prefix}' file may declare (${family.ranges.joinToString { "${it.first}-${it.last}" }})"
                         else -> ranges += range
                     }
                 }
@@ -244,7 +255,24 @@ object DictionaryBuild {
         }
     }
 
-    private fun kept(previousName: String, kind: String, shipped: List<Long>, rows: List<Row<*>>, errors: MutableList<String>) {
+    private fun notReused(
+        baselineName: String,
+        shipped: Map<Long, List<String>>,
+        rows: List<Row<*>>,
+        errors: MutableList<String>,
+    ) {
+        rows.forEach { row ->
+            val before = shipped[row.id] ?: return@forEach
+            // One label corrected is the same thing named better; both changed is another thing under an old id.
+            val changed = before.indices.all { WordPrefix.words(before[it]) != WordPrefix.words(row.labels[it]) }
+            if (changed) {
+                errors += "${row.at}: id ${row.id} was shipped as '${before[0]}' / '${before[1]}' ($baselineName); " +
+                    "both labels changed, so the id would name something else — give the new entry a new id"
+            }
+        }
+    }
+
+    private fun kept(previousName: String, kind: String, shipped: Set<Long>, rows: List<Row<*>>, errors: MutableList<String>) {
         val held = rows.map { it.id }.toSet()
         shipped.filterNot { it in held }.forEach {
             errors += "$previousName: $kind id $it was shipped and is missing from the sources " +

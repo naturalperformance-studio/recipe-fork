@@ -1,13 +1,11 @@
 package app.recipefork.app.dictionary
 
-import app.recipefork.core.api.DictionariesDto
 import app.recipefork.core.api.IngredientEntryDto
-import kotlinx.serialization.json.Json
+import app.recipefork.core.api.TagDto
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
-import java.security.MessageDigest
 
 /**
  * The committed `assets/dictionaries.json` against the store's rules (decisions/20260928-dictionaries-ship-with-the-
@@ -43,22 +41,21 @@ class ShippedSnapshotTest {
     }
 
     @Test
-    fun theDemoEntriesCarryTheirDivisibilityAndFactors() {
-        val byLabel = snapshot.ingredients.associateBy { it.labelRu }
-        fun entry(label: String) = byLabel.getValue(label)
-        assertEquals(listOf(1L, 2L, 3L, 4L, 5L), snapshot.ingredients.map { it.id })
-        assertEquals(1L, entry("курица").id)
-        assertEquals(true, entry("курица").divisible)
-        assertEquals(mapOf("g" to 1.0, "pc" to 1500.0), entry("курица").factors)
-        assertEquals(2L, entry("крылышки").id)
-        assertEquals(1L, entry("крылышки").parentId)
-        assertEquals(false, entry("крылышки").divisible)
-        assertEquals(mapOf("g" to 1.0, "pc" to 80.0), entry("крылышки").factors)
-        listOf("мясо", "фарш", "говядина").forEach {
-            assertEquals(it, null, entry(it).divisible)
-            assertEquals(it, mapOf("g" to 1.0), entry(it).factors)
-        }
-        assertTrue(snapshot.ingredients.none { it.removed })
+    fun theLegacyEntriesAndTagsArePresentAndUnchanged() {
+        // Ids 1-5 and 10, 11 were shipped before the dictionary had sources; any other entry may stand beside them.
+        val byId = snapshot.ingredients.associateBy { it.id }
+        assertEquals(
+            listOf(
+                IngredientEntryDto(1, "курица", "chicken", null, true, mapOf("g" to 1.0, "pc" to 1500.0)),
+                IngredientEntryDto(2, "крылышки", "chicken wings", 1, false, mapOf("g" to 1.0, "pc" to 80.0)),
+                IngredientEntryDto(3, "мясо", "meat", factors = mapOf("g" to 1.0)),
+                IngredientEntryDto(4, "фарш", "mince", factors = mapOf("g" to 1.0)),
+                IngredientEntryDto(5, "говядина", "beef", factors = mapOf("g" to 1.0)),
+            ),
+            (1L..5L).map { byId[it] },
+        )
+        val tags = snapshot.tags.associateBy { it.id }
+        assertEquals(listOf(TagDto(10, "итальянская", "Italian"), TagDto(11, "грузинская", "Georgian")), listOf(tags[10], tags[11]))
     }
 
     @Test
@@ -76,8 +73,6 @@ class ShippedSnapshotTest {
     @Test
     fun theVersionIsTheOneTheServerGivesThisContent() {
         // As the server computes it (DictionaryRoutes): a digest of the content with an empty version.
-        val content = Json.encodeToString(DictionariesDto.serializer(), snapshot.copy(version = ""))
-        val digest = MessageDigest.getInstance("SHA-256").digest(content.toByteArray(Charsets.UTF_8))
-        assertEquals(digest.joinToString("") { "%02x".format(it) }, snapshot.version)
+        assertEquals(snapshot.digest(), snapshot.version)
     }
 }

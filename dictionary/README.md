@@ -11,11 +11,37 @@ shipped file is byte for byte what they build.
 scripts/dictionary-build.sh
 ```
 
-(or `./gradlew :core:buildDictionary`). It reads every `*.tsv` here, validates them against the previous snapshot
-(the asset as it is now), and writes the asset with its `version` — the lowercase hex SHA-256 of the compact JSON of
-the dictionaries with an empty version, encoded by the application's own DTOs. On any problem it prints each one as
+(or `./gradlew :core:buildDictionary`). It reads every `*.tsv` here, validates them, and writes the asset with its
+`version` — the lowercase hex SHA-256 of the compact JSON of the dictionaries with an empty version
+(`DictionariesDto.digest()`, the same code the server and the application use). On any problem it prints each one as
 `file:line: what is wrong`, exits with 1 and leaves the asset as it was. Commit the sources and the regenerated asset
 together.
+
+### The baseline
+
+Ids are permanent, so the sources are checked against the snapshot **already shipped**: the asset as committed in git,
+never the file in the working tree (deleting or regenerating that one changes nothing). The commit is the merge base
+of `HEAD` and `develop` when a `develop` branch exists — what develop has shipped — else `HEAD`. A task branch may
+therefore still renumber or drop ids it added itself; once develop has them, they stay. Messages about the baseline name
+it as `app/src/main/assets/dictionaries.json@<commit>`.
+
+When no baseline can be read (not a git checkout, no commit, the asset never committed) the build is refused.
+`scripts/dictionary-build.sh --first-build` skips the check, and is only for a repository that never shipped a
+dictionary.
+
+### Merging
+
+The asset is generated, so it is never merged by hand. On a conflict in `app/src/main/assets/dictionaries.json`
+(`.gitattributes` marks it `merge=binary`: git keeps our side whole, without conflict markers, and still reports the
+conflict):
+
+1. resolve the conflicts in the sources under `dictionary/` (each family owns its files and its id range, so these are
+   rare);
+2. take either side of the asset (`git checkout --ours app/src/main/assets/dictionaries.json`);
+3. run `scripts/dictionary-build.sh` on the merged sources — it checks them against the merge base and rewrites the
+   asset;
+4. run `./gradlew testAll`;
+5. `git add` the sources and the asset, and commit.
 
 `scripts/dictionary-snapshot.sh` still pulls the dictionaries from a server, should there ever be one again; what it
 writes is then no longer what these sources build, and the test says so.
@@ -30,9 +56,10 @@ writes is then no longer what these sources build, and the test says so.
 | `seasoning-and-other.tsv` | spices, dried herbs, salt, sauces and condiments, vinegars, canned and preserved goods, stocks, drinks and alcohol used in cooking, other | 7000–8999 |
 | `tags.tsv`                | tags: cuisines, meal and course, diet, method and appliance, occasion and season, characteristics  | 100–999, and the legacy 10–11 |
 
-Every file declares its ranges itself with `@range FIRST-LAST` lines (one per range); the generator accepts only the
-ranges in this table and refuses an id outside the file's declared ranges. Any other `*.tsv` here is read as an
-ingredient file too, so a family may be split into several files, each declaring its family's range.
+Every file declares its ranges itself with `@range FIRST-LAST` lines (one per range); the generator refuses an id
+outside the file's declared ranges. A file's name decides its family: a family may be split into several files whose
+names begin with its prefix (`produce-fruit.tsv`, `animal-fish.tsv`, `tags-cuisine.tsv`), and each such file may
+declare only its family's ranges from the table. A `*.tsv` whose name begins with no prefix is refused.
 
 ## Format
 
@@ -73,10 +100,13 @@ The tags file — `id, labelRu, labelEn`:
 
 - a malformed line: an id that is not a positive whole number, a `divisible` other than `true`/`false`/empty, a
   `removed` column other than `removed`/empty, too many columns, an unknown `@` directive, a file without `@range`;
-- a duplicate id (ingredients across all ingredient files; tags within the tags file);
-- an id outside its file's ranges;
+- a duplicate id (ingredients across all ingredient files; tags across all tag files);
+- a file whose name begins with no family, a `@range` its family does not own, an id outside its file's ranges;
 - an id shipped in the previous snapshot that is missing from the sources — ids are permanent: a dropped ingredient
   stays, marked `removed`; a tag is never dropped;
+- a reused id: a shipped id whose labels have **both** changed (as the search folds them) — that is another thing under
+  an old id, and recipes holding the id would change meaning; correcting one label is fine;
+- no baseline at all, unless `--first-build` is given;
 - a blank label (no letter or digit), or a label with spaces around it;
 - two live entries (or two tags) whose labels in one language the search cannot tell apart: compared as the search
   folds them — case ignored, `ё` read as `е`, words being runs of letters and digits (so `лук-порей` and `лук порей`

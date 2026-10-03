@@ -44,9 +44,11 @@ tasks.test {
 // Validates the sources under dictionary/ and writes app/src/main/assets/dictionaries.json (dictionary/README.md).
 tasks.register<JavaExec>("buildDictionary") {
     group = "build"
-    description = "Validates dictionary/*.tsv and writes the shipped app/src/main/assets/dictionaries.json."
+    description = "Validates dictionary/*.tsv against the committed snapshot and writes app/src/main/assets/dictionaries.json."
     classpath = dictionary.runtimeClasspath
     mainClass.set("app.recipefork.core.dictionary.DictionaryBuildKt")
     workingDir = rootProject.layout.projectDirectory.asFile
-    args("dictionary", "app/src/main/assets/dictionaries.json")
+    args(".")
+    // -PfirstBuild: no dictionary was ever shipped, so there is no baseline to check the ids against.
+    if (providers.gradleProperty("firstBuild").isPresent) args("--first-build")
 }
