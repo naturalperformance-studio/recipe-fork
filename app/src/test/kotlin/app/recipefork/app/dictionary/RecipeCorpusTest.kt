@@ -3,9 +3,10 @@ package app.recipefork.app.dictionary
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.InterfaceLanguage.ENGLISH
 import app.recipefork.core.scaling.InterfaceLanguage.RUSSIAN
-import app.recipefork.core.search.Inflection
 import app.recipefork.core.search.WordPrefix
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -13,87 +14,167 @@ import java.io.File
  * The shipped dictionary against ingredient lines of everyday home recipes (T-124): a corpus written for this test,
  * before the dictionary sources were read, as cooks write ingredient names in recipe lists — Russian and English.
  *
- * Each name is run through the ingredient field's real offer ([IngredientOffer]) twice — as typed, and as an author
- * normally cuts it short (its main word alone: "сливки" for "сливки 20%", "eggs" for "large eggs") — and is found
- * when, either way, one of the first [SHOWN] offered entries, or the entry the field takes on leaving it (the exact
- * match), is a sensible match: one whose label, in the interface language, shares the name's main word ([sensible]).
- * Every miss is printed.
+ * Every name of the corpus names the entry the cook means (T-130): its id, or ids where either is meant, or a gap where
+ * the dictionary holds no such entry. A name is run through the ingredient field's real offer ([IngredientOffer])
+ * as written, and as an author normally cuts it short — its main word alone: "сливки" for "сливки 20%", "eggs" for
+ * "large eggs" — and is found only when, either way, the entry meant is among the first [SHOWN] offered; a gap is never
+ * found. The rate is over the corpus's distinct names, each with the entry it means. Every miss, every gap and every
+ * wrong landing — the entry meant found, but another offered first — is printed.
  */
 class RecipeCorpusTest {
     /** Unit tests of `:app` run with the module directory as the working directory. */
     private val dictionary = DictionarySnapshot.parse(File("src/main/assets/${DictionarySnapshot.ASSET}").readText())
         .ingredients.map(IngredientEntryEntity::of)
+    private val byId = dictionary.associateBy { it.id }
+
+    private val russian by lazy { Corpus.read("recipe-corpus-ru.txt") }
+    private val english by lazy { Corpus.read("recipe-corpus-en.txt") }
 
     @Test
-    fun theRussianCorpusFindsASensibleEntryForAlmostEveryName() {
-        val corpus = Corpus.read("recipe-corpus-ru.txt")
-        assertTrue("${corpus.recipes} Russian recipes", corpus.recipes >= 150)
-        assertCovered("Russian", corpus, RUSSIAN)
+    fun everyNameOfTheCorpusMeansALiveEntryOrAGap() {
+        assertTrue("${russian.recipes} Russian recipes", russian.recipes >= 150)
+        assertTrue("${english.recipes} English recipes", english.recipes >= 50)
+        (russian.names + english.names).forEach { name ->
+            name.intended.forEach { id ->
+                val entry = byId[id]
+                assertTrue("\"${name.text}\" means $id, which the dictionary does not hold", entry != null && !entry.removed)
+            }
+        }
+    }
+
+    // The honest rate is printed with every miss; it may only rise. T-131 fills the dictionary up to RATE.
+    @Test
+    fun theRussianCorpusIsMeasuredAgainstTheEntryMeant() {
+        val rate = measure("Russian", russian, RUSSIAN)
+        assertTrue("Russian: ${percent(rate)} fell below ${percent(FLOOR_RU)}", rate >= FLOOR_RU)
     }
 
     @Test
-    fun theEnglishCorpusFindsASensibleEntryForAlmostEveryName() {
-        val corpus = Corpus.read("recipe-corpus-en.txt")
-        assertTrue("${corpus.recipes} English recipes", corpus.recipes >= 50)
-        assertCovered("English", corpus, ENGLISH)
+    fun theEnglishCorpusIsMeasuredAgainstTheEntryMeant() {
+        val rate = measure("English", english, ENGLISH)
+        assertTrue("English: ${percent(rate)} fell below ${percent(FLOOR_EN)}", rate >= FLOOR_EN)
     }
 
-    // The owner's lemon cake, every name of it.
+    @Ignore("T-131 fills the dictionary's gaps and enables the threshold")
+    @Test
+    fun theRussianCorpusFindsTheEntryMeantForAlmostEveryName() {
+        val rate = measure("Russian", russian, RUSSIAN)
+        assertTrue("Russian: ${percent(rate)}", rate >= RATE)
+    }
+
+    @Ignore("T-131 fills the dictionary's gaps and enables the threshold")
+    @Test
+    fun theEnglishCorpusFindsTheEntryMeantForAlmostEveryName() {
+        val rate = measure("English", english, ENGLISH)
+        assertTrue("English: ${percent(rate)}", rate >= RATE)
+    }
+
+    // The owner's lemon cake, every name of it, finds the entry meant among the first offered.
     @Test
     fun theLemonCakeIsCoveredWhole() {
-        listOf(
-            "лимон", "яйца", "сахар", "растительное масло без запаха", "мацони", "мука", "разрыхлитель", "сода", "соль",
-            "сахарная пудра", "лимонный сок",
-        ).forEach { assertTrue(it, finds(it, RUSSIAN)) }
+        val cake = russian.names.filter { it.recipe == "Лимонный кекс" }
+        assertTrue("the lemon cake is in the corpus", cake.size >= 10)
+        cake.forEach { assertTrue(it.text, found(it, RUSSIAN)) }
     }
 
-    // The test's own yardstick, on names it must and must not count.
+    // Scenarios 3 and 5 of T-130: what is typed lands on the entry meant, the plain entry before its kinds.
     @Test
-    fun theYardstickIsTheMainWord() {
-        assertTrue(sensible("лук репчатый", "лук репчатый"))
-        assertTrue(sensible("лук", "лук-порей"))
-        assertTrue(sensible("сливочное масло", "масло сливочное"))
-        assertTrue(sensible("large eggs", "egg"))
-        assertTrue(sensible("unsalted butter", "butter"))
-        // The same word in another form shares it, as the offer reads words.
-        assertTrue(sensible("яйца", "яйцо"))
-        assertTrue(sensible("грецкие орехи", "орех грецкий"))
-        assertTrue(sensible("морковка", "морковь"))
-        assertTrue(!sensible("лук", "чеснок"))
-        assertTrue(!sensible("сливочное масло", "сливки"))
+    fun theWordAsWrittenLandsOnTheEntryMeant() {
+        mapOf(
+            "сыр моцарелла" to 4735L, "сыр чеддер" to 4749L, "яйца" to 4400L, "яйцо" to 4400L, "лука" to 1100L,
+            "сахара" to 6100L, "моркови" to 1030L, "огурцы" to 1320L,
+        ).forEach { (typed, id) -> assertEquals(typed, id, IngredientOffer.of(typed, dictionary, RUSSIAN).entries.firstOrNull()?.id) }
+        mapOf(
+            "eggs" to 4400L, "onions" to 1100L, "bay leaves" to 7251L, "lemons" to 2000L, "carrots" to 1030L,
+            "mozzarella cheese" to 4735L, "cheddar cheese" to 4749L, "potatoes" to 1000L,
+        ).forEach { (typed, id) -> assertEquals(typed, id, IngredientOffer.of(typed, dictionary, ENGLISH).entries.firstOrNull()?.id) }
+    }
+
+    // The test's own reading of the corpus.
+    @Test
+    fun theCorpusIsReadNameByName() {
         assertEquals(listOf("соль", "перец"), names("соль, перец по вкусу"))
         assertEquals(listOf("unsalted butter"), names("unsalted butter, melted"))
         assertEquals(listOf("salt", "pepper"), names("salt and pepper"))
+        assertEquals(listOf("сливки 20%"), names("сливки 20%"))
         assertEquals("сливки", truncation("сливки 20%"))
         assertEquals("eggs", truncation("large eggs"))
         assertEquals("сливочное", truncation("сливочное масло"))
+        assertEquals("сыр", truncation("сыр моцарелла"))
+        val salt = Corpus.parse(listOf("@ Борщ", "соль, перец по вкусу | salt, black pepper | 7000, 7100/7101", "вода | water | gap"))
+        assertEquals(1, salt.recipes)
+        assertEquals(
+            listOf(Name("соль", setOf(7000), "Борщ"), Name("перец", setOf(7100, 7101), "Борщ"), Name("вода", emptySet(), "Борщ")),
+            salt.names,
+        )
     }
 
-    private fun assertEquals(expected: Any?, actual: Any?) = org.junit.Assert.assertEquals(expected, actual)
+    private fun found(name: Name, language: InterfaceLanguage): Boolean = shown(name, language).any { it.id in name.intended }
 
-    private fun assertCovered(name: String, corpus: Corpus, language: InterfaceLanguage) {
-        val misses = corpus.names.filterNot { finds(it, language) }
-        val rate = 1.0 - misses.size.toDouble() / corpus.names.size
-        println("CORPUS $name: ${corpus.recipes} recipes, ${corpus.names.size} names, found ${"%.1f".format(rate * 100)} %")
-        misses.forEach { miss ->
-            val offered = IngredientOffer.of(truncation(miss), dictionary, language).entries.take(SHOWN).map { it.label(language) }
-            println("CORPUS $name miss: \"$miss\" (as \"${truncation(miss)}\" offers $offered)")
+    /** The first offered for [name] as written or, where that misses the entry meant, as cut short ([truncation]). */
+    private fun shown(name: Name, language: InterfaceLanguage): List<IngredientEntryEntity> {
+        val written = IngredientOffer.of(name.text, dictionary, language).entries.take(SHOWN)
+        if (written.any { it.id in name.intended }) return written
+        val cut = truncation(name.text)
+        return if (cut == name.text) written else IngredientOffer.of(cut, dictionary, language).entries.take(SHOWN)
+    }
+
+    /** The rate of [corpus]'s distinct names found, printed with every miss, gap and wrong landing. */
+    private fun measure(title: String, corpus: Corpus, language: InterfaceLanguage): Double {
+        val names = corpus.names.distinctBy { it.text to it.intended }
+        val label = { id: Long -> "${byId[id]?.label(language)} #$id" }
+        var found = 0
+        val report = mutableListOf<String>()
+        names.forEach { name ->
+            val offered = shown(name, language)
+            val shown = offered.map { label(it.id) }
+            val at = offered.indexOfFirst { it.id in name.intended }
+            when {
+                name.intended.isEmpty() -> report += "CORPUS $title gap: \"${name.text}\" offers $shown"
+                at < 0 -> report += "CORPUS $title miss: \"${name.text}\" means ${name.intended.map(label)}, offers $shown"
+                else -> {
+                    found++
+                    if (at > 0) report += "CORPUS $title wrong landing: \"${name.text}\" means ${label(offered[at].id)}, lands on ${shown.first()}"
+                }
+            }
         }
-        assertTrue("$name: ${misses.size} of ${corpus.names.size} names missed: $misses", rate >= RATE)
+        val rate = found.toDouble() / names.size
+        println("CORPUS $title: ${corpus.recipes} recipes, ${names.size} names, found ${percent(rate)}")
+        report.sorted().forEach(::println)
+        return rate
     }
 
-    private fun finds(name: String, language: InterfaceLanguage): Boolean = listOf(name, truncation(name)).distinct().any { typed ->
-        val offer = IngredientOffer.of(typed, dictionary, language)
-        (offer.entries.take(SHOWN) + listOfNotNull(offer.exact)).any { sensible(name, it.label(language)) }
-    }
+    private fun percent(rate: Double) = "%.1f %%".format(rate * 100)
 
-    private class Corpus(val recipes: Int, val names: List<String>) {
+    /** One name of the corpus, in its [recipe], and the ids of the entries meant by it; none for a gap. */
+    data class Name(val text: String, val intended: Set<Long>, val recipe: String)
+
+    private class Corpus(val recipes: Int, val names: List<Name>) {
         companion object {
-            fun read(resource: String): Corpus {
-                val lines = (Corpus::class.java.getResourceAsStream("/dictionary/$resource") ?: error("no $resource"))
-                    .bufferedReader().readLines().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }
-                val recipes = lines.count { it.startsWith("@") }
-                val names = lines.filterNot { it.startsWith("@") }.flatMap { names(it.substringBefore("|")) }.distinct()
+            fun read(resource: String): Corpus = parse(
+                (Corpus::class.java.getResourceAsStream("/dictionary/$resource") ?: error("no $resource")).bufferedReader().readLines(),
+            )
+
+            fun parse(lines: List<String>): Corpus {
+                var recipes = 0
+                var recipe = ""
+                val names = mutableListOf<Name>()
+                lines.map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }.forEach { line ->
+                    if (line.startsWith("@")) {
+                        recipes++
+                        recipe = line.removePrefix("@").trim()
+                        return@forEach
+                    }
+                    val columns = line.split("|").map { it.trim() }
+                    require(columns.size == 3) { "no intended ids: $line" }
+                    val texts = names(columns[0])
+                    val ids = columns[2].split(",").map { it.trim() }
+                    require(texts.size == ids.size) { "${texts.size} names, ${ids.size} ids: $line" }
+                    texts.zip(ids).forEach { (text, id) ->
+                        val intended = if (id == "gap") emptySet() else id.split("/").map { it.trim().toLong() }.toSet()
+                        names += Name(text, intended, recipe)
+                    }
+                }
                 return Corpus(recipes, names)
             }
         }
@@ -102,6 +183,10 @@ class RecipeCorpusTest {
     companion object {
         const val SHOWN = 5
         const val RATE = 0.95
+
+        /** The honest rates measured when T-130 named the entries meant: a floor the rates must not fall below. */
+        const val FLOOR_RU = 0.93
+        const val FLOOR_EN = 0.93
 
         /** Qualifiers a cook writes after a name, not part of it. */
         private val tails = Regex("""\s+(по вкусу|для\s.*|to taste|for\s.*|optional)$""")
@@ -123,30 +208,11 @@ class RecipeCorpusTest {
             "вареная", "консервированный", "консервированная", "консервированные",
         )
 
-        /** The folded first word of [name] that names rather than describes it, or its first word when every one describes. */
-        fun mainWord(name: String): String {
-            val words = WordPrefix.words(name)
-            return words.firstOrNull { it !in descriptors } ?: words.first()
-        }
-
-        /** [name] as an author normally cuts it short: its main word alone, as written. */
+        /** [name] as an author normally cuts it short: its first word that names rather than describes it, as written. */
         fun truncation(name: String): String {
-            val main = mainWord(name)
+            val words = WordPrefix.words(name)
+            val main = words.firstOrNull { it !in descriptors } ?: words.first()
             return name.trim().split(Regex("""[\s,]+""")).firstOrNull { main in WordPrefix.words(it) } ?: name.trim()
-        }
-
-        /**
-         * Whether [label] shares [name]'s main word: the main word is a word-prefix of a word of the label or the other
-         * way round, as the search folds them — or, as the offer reads words, is that word in another form or akin to it
-         * ([Inflection]).
-         */
-        fun sensible(name: String, label: String): Boolean {
-            val main = mainWord(name)
-            val forms = Inflection.forms(main)
-            return WordPrefix.words(label).any { word ->
-                word.startsWith(main) || main.startsWith(word) ||
-                    Inflection.forms(word).any { form -> forms.any { it == form || Inflection.akin(it, form) } }
-            }
         }
     }
 }

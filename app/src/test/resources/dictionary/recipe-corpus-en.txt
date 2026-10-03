@@ -1,457 +1,460 @@
 # Ingredient lines of common home recipes in English, as a cook writes them in a recipe list (T-124).
 # Written for the corpus test before the dictionary sources were read.
-# "@ <recipe>" opens a recipe; every other line is "<ingredient line> | <intended meaning, loosely>".
+# "@ <recipe>" opens a recipe; every other line is "<ingredient line> | <intended meaning, loosely> | <intended ids>".
 # A line may hold several names separated by commas ("salt, pepper to taste"); the test splits them.
+# The intended ids (T-130) name, for each name of the line in turn, the dictionary entry the cook means, e.g.
+# "salt and pepper | salt, pepper | 7000, 7100"; "a/b" where either entry is what is meant (fresh or dried
+# herbs), "gap" where the dictionary holds no entry for it.
 
 @ Buttermilk pancakes
-all-purpose flour | wheat flour
-granulated sugar | sugar
-baking powder | baking powder
-baking soda | baking soda
-kosher salt | salt
-buttermilk | buttermilk
-large eggs | eggs
-unsalted butter, melted | butter
-maple syrup | maple syrup
+all-purpose flour | wheat flour | 5002
+granulated sugar | sugar | 6101/6100
+baking powder | baking powder | 6300
+baking soda | baking soda | 6301
+kosher salt | salt | 7007
+buttermilk | buttermilk | 4538
+large eggs | eggs | 4407/4400
+unsalted butter, melted | butter | 4601
+maple syrup | maple syrup | 6201
 
 @ Classic chili con carne
-ground beef | ground beef
-yellow onion | onion
-garlic cloves | garlic
-chili powder | chili powder
-ground cumin | cumin
-kidney beans | kidney beans
-diced tomatoes | canned tomatoes
-tomato paste | tomato paste
-jalapeño | jalapeno
-cheddar cheese | cheddar
-sour cream | sour cream
+ground beef | ground beef | 3451
+yellow onion | onion | 1101
+garlic cloves | garlic | 1125/1120
+chili powder | chili powder | 7415
+ground cumin | cumin | 7206
+kidney beans | kidney beans | 5902
+diced tomatoes | canned tomatoes | 8474
+tomato paste | tomato paste | 8100
+jalapeño | jalapeno | 1343
+cheddar cheese | cheddar | 4749
+sour cream | sour cream | 4500
 
 @ Mac and cheese
-elbow macaroni | macaroni
-sharp cheddar | cheddar
-whole milk | milk
-butter | butter
-flour | flour
-dry mustard | mustard powder
-breadcrumbs | breadcrumbs
+elbow macaroni | macaroni | 5415
+sharp cheddar | cheddar | 4749
+whole milk | milk | 4451
+butter | butter | 4600
+flour | flour | 5000
+dry mustard | mustard powder | 7230
+breadcrumbs | breadcrumbs | 5750
 
 @ Fudgy brownies
-semisweet chocolate | chocolate
-unsalted butter | butter
-brown sugar | brown sugar
-eggs | eggs
-cocoa powder | cocoa
-vanilla extract | vanilla extract
-walnuts | walnuts
+semisweet chocolate | chocolate | 6505
+unsalted butter | butter | 4601
+brown sugar | brown sugar | 6103
+eggs | eggs | 4400
+cocoa powder | cocoa | 6451
+vanilla extract | vanilla extract | 6353
+walnuts | walnuts | 2501
 
 @ Banana bread
-ripe bananas | bananas
-all-purpose flour | flour
-baking soda | baking soda
-sugar | sugar
-butter | butter
-eggs | eggs
-cinnamon | cinnamon
+ripe bananas | bananas | 2150
+all-purpose flour | flour | 5002
+baking soda | baking soda | 6301
+sugar | sugar | 6100
+butter | butter | 4600
+eggs | eggs | 4400
+cinnamon | cinnamon | 7212
 
 @ Chocolate chip cookies
-unsalted butter | butter
-light brown sugar | brown sugar
-white sugar | sugar
-eggs | eggs
-vanilla | vanilla
-flour | flour
-baking soda | baking soda
-chocolate chips | chocolate chips
-sea salt | salt
+unsalted butter | butter | 4601
+light brown sugar | brown sugar | 6125
+white sugar | sugar | 6100
+eggs | eggs | 4400
+vanilla | vanilla | 6350
+flour | flour | 5000
+baking soda | baking soda | 6301
+chocolate chips | chocolate chips | 6506
+sea salt | salt | 7005
 
 @ Caesar salad
-romaine lettuce | romaine
-parmesan cheese | parmesan
-anchovy fillets | anchovies
-garlic | garlic
-dijon mustard | mustard
-lemon juice | lemon juice
-extra virgin olive oil | olive oil
-croutons | croutons
+romaine lettuce | romaine | 1603
+parmesan cheese | parmesan | 4732
+anchovy fillets | anchovies | 4169
+garlic | garlic | 1120
+dijon mustard | mustard | 8202
+lemon juice | lemon juice | 2050
+extra virgin olive oil | olive oil | 6705
+croutons | croutons | 5771
 
 @ Meatloaf
-ground beef | ground beef
-breadcrumbs | breadcrumbs
-milk | milk
-ketchup | ketchup
-worcestershire sauce | worcestershire
+ground beef | ground beef | 3451
+breadcrumbs | breadcrumbs | 5750
+milk | milk | 4450
+ketchup | ketchup | 8103
+worcestershire sauce | worcestershire | 8118
 
 @ Beef stew
-beef chuck | beef chuck
-carrots | carrots
-celery | celery
-potatoes | potatoes
-beef broth | beef broth
-red wine | red wine
-thyme | thyme
-bay leaves | bay leaves
+beef chuck | beef chuck | 3103
+carrots | carrots | 1030
+celery | celery | 1500
+potatoes | potatoes | 1000
+beef broth | beef broth | 8602
+red wine | red wine | 8703
+thyme | thyme | 1721/7505
+bay leaves | bay leaves | 7251
 
 @ Chicken noodle soup
-chicken breasts | chicken breast
-egg noodles | egg noodles
-chicken stock | chicken broth
-carrots | carrot
-celery stalks | celery
-fresh parsley | parsley
+chicken breasts | chicken breast | 3502
+egg noodles | egg noodles | 5501
+chicken stock | chicken broth | 8601
+carrots | carrot | 1030
+celery stalks | celery | 1502
+fresh parsley | parsley | 1702
 
 @ Apple pie
-apples | apples
-granny smith apples | apples
-pie crust | pie crust
-cinnamon | cinnamon
-nutmeg | nutmeg
-lemon juice | lemon juice
-cornstarch | cornstarch
+apples | apples | 2100
+granny smith apples | apples | 2107
+pie crust | pie crust | 5840
+cinnamon | cinnamon | 7212
+nutmeg | nutmeg | 7218
+lemon juice | lemon juice | 2050
+cornstarch | cornstarch | 5102
 
 @ Pumpkin pie
-pumpkin puree | pumpkin
-evaporated milk | evaporated milk
-ground ginger | ginger
-ground cloves | cloves
+pumpkin puree | pumpkin | 8489
+evaporated milk | evaporated milk | 4463
+ground ginger | ginger | 7211
+ground cloves | cloves | 7217
 
 @ Spaghetti and meatballs
-spaghetti | spaghetti
-ground pork | ground pork
-marinara sauce | marinara
-grated parmesan | parmesan
-fresh basil | basil
+spaghetti | spaghetti | 5401
+ground pork | ground pork | 3452
+marinara sauce | marinara | 8107
+grated parmesan | parmesan | 4766/4732
+fresh basil | basil | 1706
 
 @ Guacamole
-avocados | avocado
-lime juice | lime juice
-red onion | red onion
-cilantro | cilantro
-jalapeño pepper | jalapeno
-roma tomatoes | tomato
+avocados | avocado | 2170
+lime juice | lime juice | 2051
+red onion | red onion | 1102
+cilantro | cilantro | 1705
+jalapeño pepper | jalapeno | 1343
+roma tomatoes | tomato | 1302
 
 @ Tacos
-corn tortillas | tortillas
-ground beef | beef
-taco seasoning | taco seasoning
-shredded lettuce | lettuce
-salsa | salsa
-monterey jack | monterey jack
+corn tortillas | tortillas | 5705
+ground beef | beef | 3451
+taco seasoning | taco seasoning | 7417
+shredded lettuce | lettuce | 1601
+salsa | salsa | 8112
+monterey jack | monterey jack | 4763
 
 @ Fried chicken
-chicken thighs | chicken thigh
-chicken drumsticks | drumsticks
-buttermilk | buttermilk
-paprika | paprika
-garlic powder | garlic powder
-onion powder | onion powder
-cayenne pepper | cayenne
-peanut oil | peanut oil
+chicken thighs | chicken thigh | 3503
+chicken drumsticks | drumsticks | 3505
+buttermilk | buttermilk | 4538
+paprika | paprika | 7150
+garlic powder | garlic powder | 7266
+onion powder | onion powder | 7247
+cayenne pepper | cayenne | 7141
+peanut oil | peanut oil | 6715
 
 @ Coleslaw
-green cabbage | cabbage
-carrot | carrot
-mayonnaise | mayonnaise
-apple cider vinegar | cider vinegar
-celery seed | celery seed
+green cabbage | cabbage | 1201
+carrot | carrot | 1030
+mayonnaise | mayonnaise | 8119
+apple cider vinegar | cider vinegar | 8305
+celery seed | celery seed | 7242
 
 @ Potato salad
-russet potatoes | potatoes
-hard-boiled eggs | eggs
-celery | celery
-yellow mustard | mustard
-dill pickles | pickles
-mayo | mayonnaise
+russet potatoes | potatoes | 1007
+hard-boiled eggs | eggs | 4406
+celery | celery | 1500
+yellow mustard | mustard | 8205
+dill pickles | pickles | 8402
+mayo | mayonnaise | 8119
 
 @ Cornbread
-cornmeal | cornmeal
-flour | flour
-buttermilk | buttermilk
-honey | honey
+cornmeal | cornmeal | 5014
+flour | flour | 5000
+buttermilk | buttermilk | 4538
+honey | honey | 6150
 
 @ Biscuits and gravy
-self-rising flour | self-rising flour
-cold butter | butter
-breakfast sausage | sausage
-whole milk | milk
-black pepper | black pepper
+self-rising flour | self-rising flour | 5007
+cold butter | butter | 4600
+breakfast sausage | sausage | 3828
+whole milk | milk | 4451
+black pepper | black pepper | 7100
 
 @ Clam chowder
-clams | clams
-bacon | bacon
-potatoes | potatoes
-heavy cream | heavy cream
-onion | onion
+clams | clams | 4245
+bacon | bacon | 3870
+potatoes | potatoes | 1000
+heavy cream | heavy cream | 4483/4484
+onion | onion | 1100
 
 @ Grilled cheese
-white bread | bread
-american cheese | american cheese
-butter | butter
+white bread | bread | 5601
+american cheese | american cheese | 4711
+butter | butter | 4600
 
 @ BLT sandwich
-bacon | bacon
-lettuce | lettuce
-tomato | tomato
-sourdough bread | sourdough
+bacon | bacon | 3870
+lettuce | lettuce | 1601
+tomato | tomato | 1300
+sourdough bread | sourdough | 5612
 
 @ Pot roast
-chuck roast | beef chuck
-onions | onions
-carrots | carrots
-beef stock | beef broth
-rosemary | rosemary
+chuck roast | beef chuck | 3103
+onions | onions | 1100
+carrots | carrots | 1030
+beef stock | beef broth | 8602
+rosemary | rosemary | 1720/7506
 
 @ Shrimp scampi
-shrimp | shrimp
-linguine | linguine
-white wine | white wine
-red pepper flakes | red pepper flakes
-lemon | lemon
+shrimp | shrimp | 4210
+linguine | linguine | 5405
+white wine | white wine | 8701
+red pepper flakes | red pepper flakes | 7142
+lemon | lemon | 2000
 
 @ Chicken parmesan
-chicken cutlets | chicken breast
-panko | panko
-mozzarella | mozzarella
-tomato sauce | tomato sauce
+chicken cutlets | chicken breast | 3502
+panko | panko | 5751
+mozzarella | mozzarella | 4735
+tomato sauce | tomato sauce | 8106
 
 @ Lasagna
-lasagna noodles | lasagna
-ricotta cheese | ricotta
-mozzarella cheese | mozzarella
-italian sausage | italian sausage
-egg | egg
+lasagna noodles | lasagna | 5420
+ricotta cheese | ricotta | 4740
+mozzarella cheese | mozzarella | 4735
+italian sausage | italian sausage | gap
+egg | egg | 4400
 
 @ Fettuccine Alfredo
-fettuccine | fettuccine
-heavy whipping cream | heavy cream
-parmigiano reggiano | parmesan
-nutmeg | nutmeg
+fettuccine | fettuccine | 5406
+heavy whipping cream | heavy cream | 4483/4484
+parmigiano reggiano | parmesan | 4792
+nutmeg | nutmeg | 7218
 
 @ Stir-fry beef and broccoli
-flank steak | flank steak
-broccoli florets | broccoli
-soy sauce | soy sauce
-oyster sauce | oyster sauce
-fresh ginger | ginger
-sesame oil | sesame oil
-green onions | scallions
-cornstarch | cornstarch
+flank steak | flank steak | 3121
+broccoli florets | broccoli | 1223
+soy sauce | soy sauce | 8000
+oyster sauce | oyster sauce | 8011
+fresh ginger | ginger | 1060
+sesame oil | sesame oil | 6710
+green onions | scallions | 1107
+cornstarch | cornstarch | 5102
 
 @ Chicken fried rice
-cooked rice | rice
-frozen peas and carrots | peas, carrots
-eggs | eggs
-scallions | scallions
-soy sauce | soy sauce
+cooked rice | rice | 5300
+frozen peas and carrots | peas, carrots | 1411, 1030
+eggs | eggs | 4400
+scallions | scallions | 1107
+soy sauce | soy sauce | 8000
 
 @ Teriyaki salmon
-salmon fillets | salmon
-honey | honey
-rice vinegar | rice vinegar
-sesame seeds | sesame seeds
+salmon fillets | salmon | 4021
+honey | honey | 6150
+rice vinegar | rice vinegar | 8311
+sesame seeds | sesame seeds | 2610
 
 @ Pad thai
-rice noodles | rice noodles
-fish sauce | fish sauce
-tamarind paste | tamarind
-bean sprouts | bean sprouts
-roasted peanuts | peanuts
+rice noodles | rice noodles | 5503
+fish sauce | fish sauce | 8010
+tamarind paste | tamarind | 7257
+bean sprouts | bean sprouts | 1520
+roasted peanuts | peanuts | 2531
 
 @ Chicken curry
-boneless chicken thighs | chicken thigh
-coconut milk | coconut milk
-curry powder | curry powder
-garam masala | garam masala
-basmati rice | basmati rice
+boneless chicken thighs | chicken thigh | 3504
+coconut milk | coconut milk | 8476
+curry powder | curry powder | 7402
+garam masala | garam masala | 7403
+basmati rice | basmati rice | 5304
 
 @ Hummus
-canned chickpeas | chickpeas
-tahini | tahini
-lemon | lemon
-garlic | garlic
+canned chickpeas | chickpeas | 5921
+tahini | tahini | 8236
+lemon | lemon | 2000
+garlic | garlic | 1120
 
 @ Greek salad
-cucumber | cucumber
-cherry tomatoes | cherry tomatoes
-kalamata olives | olives
-feta cheese | feta
-red wine vinegar | red wine vinegar
-dried oregano | oregano
+cucumber | cucumber | 1320
+cherry tomatoes | cherry tomatoes | 1301
+kalamata olives | olives | 8455
+feta cheese | feta | 4726
+red wine vinegar | red wine vinegar | 8308
+dried oregano | oregano | 7502
 
 @ French toast
-brioche | brioche
-eggs | eggs
-milk | milk
-cinnamon | cinnamon
-powdered sugar | powdered sugar
+brioche | brioche | 5616
+eggs | eggs | 4400
+milk | milk | 4450
+cinnamon | cinnamon | 7212
+powdered sugar | powdered sugar | 6110
 
 @ Blueberry muffins
-blueberries | blueberries
-flour | flour
-sugar | sugar
-vegetable oil | vegetable oil
-plain yogurt | yogurt
+blueberries | blueberries | 2304
+flour | flour | 5000
+sugar | sugar | 6100
+vegetable oil | vegetable oil | 6700
+plain yogurt | yogurt | 4561
 
 @ Cinnamon rolls
-active dry yeast | yeast
-bread flour | bread flour
-ground cinnamon | cinnamon
-cream cheese | cream cheese
-confectioners' sugar | powdered sugar
+active dry yeast | yeast | 6313
+bread flour | bread flour | 5005
+ground cinnamon | cinnamon | 7213
+cream cheese | cream cheese | 4709
+confectioners' sugar | powdered sugar | 6110
 
 @ Carrot cake
-carrots | carrots
-pecans | pecans
-crushed pineapple | pineapple
-cream cheese | cream cheese
+carrots | carrots | 1030
+pecans | pecans | 2509
+crushed pineapple | pineapple | 8479
+cream cheese | cream cheese | 4709
 
 @ Cheesecake
-graham crackers | graham crackers
-cream cheese | cream cheese
-sugar | sugar
-sour cream | sour cream
-lemon zest | lemon zest
+graham crackers | graham crackers | 5888
+cream cheese | cream cheese | 4709
+sugar | sugar | 6100
+sour cream | sour cream | 4500
+lemon zest | lemon zest | 2061
 
 @ Lemon bars
-lemons | lemons
-eggs | eggs
-powdered sugar | powdered sugar
+lemons | lemons | 2000
+eggs | eggs | 4400
+powdered sugar | powdered sugar | 6110
 
 @ Pecan pie
-pecans | pecans
-corn syrup | corn syrup
-dark brown sugar | brown sugar
-eggs | eggs
+pecans | pecans | 2509
+corn syrup | corn syrup | 6204
+dark brown sugar | brown sugar | 6104
+eggs | eggs | 4400
 
 @ Sugar cookies
-butter | butter
-sugar | sugar
-egg | egg
-almond extract | almond extract
-sprinkles | sprinkles
+butter | butter | 4600
+sugar | sugar | 6100
+egg | egg | 4400
+almond extract | almond extract | 6375
+sprinkles | sprinkles | 6600
 
 @ Peanut butter cookies
-peanut butter | peanut butter
-sugar | sugar
-egg | egg
+peanut butter | peanut butter | 5960
+sugar | sugar | 6100
+egg | egg | 4400
 
 @ Oatmeal raisin cookies
-old-fashioned oats | rolled oats
-raisins | raisins
-brown sugar | brown sugar
+old-fashioned oats | rolled oats | 5350
+raisins | raisins | 2420
+brown sugar | brown sugar | 6103
 
 @ Waffles
-flour | flour
-milk | milk
-eggs | eggs
-melted butter | butter
+flour | flour | 5000
+milk | milk | 4450
+eggs | eggs | 4400
+melted butter | butter | 4600
 
 @ Scrambled eggs
-eggs | eggs
-heavy cream | cream
-chives | chives
+eggs | eggs | 4400
+heavy cream | cream | 4483/4484
+chives | chives | 1110
 
 @ Omelette
-eggs | eggs
-bell pepper | bell pepper
-ham | ham
-swiss cheese | swiss cheese
-mushrooms | mushrooms
+eggs | eggs | 4400
+bell pepper | bell pepper | 1330
+ham | ham | 3850
+swiss cheese | swiss cheese | 4750
+mushrooms | mushrooms | 1800
 
 @ Roast turkey
-whole turkey | turkey
-sage | sage
-butter | butter
-chicken broth | chicken broth
+whole turkey | turkey | 3600
+sage | sage | 1722/7508
+butter | butter | 4600
+chicken broth | chicken broth | 8601
 
 @ Mashed potatoes
-yukon gold potatoes | potatoes
-butter | butter
-half-and-half | half-and-half
-salt and pepper | salt, pepper
+yukon gold potatoes | potatoes | 1010
+butter | butter | 4600
+half-and-half | half-and-half | 4481
+salt and pepper | salt, pepper | 7000, 7100
 
 @ Green bean casserole
-green beans | green beans
-cream of mushroom soup | cream of mushroom soup
-fried onions | fried onions
+green beans | green beans | 1420
+cream of mushroom soup | cream of mushroom soup | 8632
+fried onions | fried onions | 7248
 
 @ Sloppy joes
-ground beef | ground beef
-hamburger buns | buns
-ketchup | ketchup
-brown sugar | brown sugar
+ground beef | ground beef | 3451
+hamburger buns | buns | 5651
+ketchup | ketchup | 8103
+brown sugar | brown sugar | 6103
 
 @ Burgers
-ground chuck | ground beef
-burger buns | buns
-cheddar slices | cheddar
-pickles | pickles
-red onion | onion
+ground chuck | ground beef | 3451
+burger buns | buns | 5651
+cheddar slices | cheddar | 4749
+pickles | pickles | 8402
+red onion | onion | 1102
 
 @ Baked salmon
-salmon | salmon
-lemon | lemon
-dill | dill
-garlic | garlic
+salmon | salmon | 4020
+lemon | lemon | 2000
+dill | dill | 1701
+garlic | garlic | 1120
 
 @ Ratatouille
-eggplant | eggplant
-zucchini | zucchini
-yellow squash | squash
-red bell pepper | bell pepper
-herbes de provence | herbes de provence
+eggplant | eggplant | 1350
+zucchini | zucchini | 1361
+yellow squash | squash | 1363
+red bell pepper | bell pepper | 1331
+herbes de provence | herbes de provence | 7406
 
 @ Tomato soup
-canned whole tomatoes | canned tomatoes
-onion | onion
-heavy cream | cream
-basil | basil
+canned whole tomatoes | canned tomatoes | 8473
+onion | onion | 1100
+heavy cream | cream | 4483/4484
+basil | basil | 1706
 
 @ French onion soup
-yellow onions | onions
-beef broth | beef broth
-gruyère | gruyere
-baguette | baguette
-dry sherry | sherry
+yellow onions | onions | 1101
+beef broth | beef broth | 8602
+gruyère | gruyere | 4751
+baguette | baguette | 5614
+dry sherry | sherry | 8711
 
 @ Quiche Lorraine
-pie dough | pie crust
-bacon | bacon
-eggs | eggs
-crème fraîche | creme fraiche
-gruyere | gruyere
+pie dough | pie crust | 5805
+bacon | bacon | 3870
+eggs | eggs | 4400
+crème fraîche | creme fraiche | 4507
+gruyere | gruyere | 4751
 
 @ Tiramisu
-mascarpone | mascarpone
-ladyfingers | ladyfingers
-espresso | espresso
-cocoa powder | cocoa
-marsala wine | marsala
+mascarpone | mascarpone | 4741
+ladyfingers | ladyfingers | 5881
+espresso | espresso | 8824
+cocoa powder | cocoa | 6451
+marsala wine | marsala | 8713
 
 @ Paella
-bomba rice | rice
-chorizo | chorizo
-saffron threads | saffron
-shrimp | shrimp
-mussels | mussels
-smoked paprika | smoked paprika
+bomba rice | rice | 5315
+chorizo | chorizo | 3809
+saffron threads | saffron | 7233
+shrimp | shrimp | 4210
+mussels | mussels | 4235
+smoked paprika | smoked paprika | 7152
 
 @ Chicken enchiladas
-flour tortillas | tortillas
-shredded chicken | chicken
-enchilada sauce | enchilada sauce
-monterey jack cheese | monterey jack
-jalapeno | jalapeno
+flour tortillas | tortillas | 5704
+shredded chicken | chicken | 1
+enchilada sauce | enchilada sauce | 8115
+monterey jack cheese | monterey jack | 4763
+jalapeno | jalapeno | 1343
 
 @ Lemon cake
-lemon | lemon
-eggs | eggs
-sugar | sugar
-neutral oil | vegetable oil
-matsoni | matsoni
-flour | flour
-baking powder | baking powder
-baking soda | baking soda
-salt | salt
-powdered sugar | powdered sugar
-lemon juice | lemon juice
+lemon | lemon | 2000
+eggs | eggs | 4400
+sugar | sugar | 6100
+neutral oil | vegetable oil | 6739
+matsoni | matsoni | 4533
+flour | flour | 5000
+baking powder | baking powder | 6300
+baking soda | baking soda | 6301
+salt | salt | 7000
+powdered sugar | powdered sugar | 6110
+lemon juice | lemon juice | 2050

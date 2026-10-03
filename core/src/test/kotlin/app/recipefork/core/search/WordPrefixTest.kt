@@ -64,6 +64,58 @@ class WordPrefixTest {
         assertFalse(holds("молоко", "кокосовое молоко"))
     }
 
+    // T-130: "-ves" plurals of words in "-f" reduce to them; other "-ves" and "greens" keep their own form.
+    @Test
+    fun englishVesPluralsReduceToF() {
+        assertEquals(setOf("leaf"), Inflection.forms("leaves"))
+        assertEquals(setOf("half"), Inflection.forms("halves"))
+        assertEquals(setOf("loaf"), Inflection.forms("loaves"))
+        assertEquals(setOf("greens"), Inflection.forms("greens"))
+        assertEquals(setOf("olive"), Inflection.forms("olives"))
+        assertEquals(setOf("clove"), Inflection.forms("cloves"))
+        assertEquals(setOf("chive"), Inflection.forms("chives"))
+        assertTrue(holds("bay leaf", "bay leaves"))
+        assertTrue(holds("loaf of bread", "loaves"))
+        assertTrue(holds("mixed greens", "greens"))
+        assertFalse(holds("green beans", "greens"))
+    }
+
+    // T-130: the label-stem rule holds for Russian words only, and only for a diminutive or adjective suffix after the stem.
+    @Test
+    fun aWordBuiltOnAStemIsNotTheStem() {
+        assertFalse(holds("butter", "buttermilk"))
+        assertFalse(holds("water", "watermelon"))
+        assertFalse(holds("pepper", "pepperoni"))
+        assertFalse(holds("лимон", "лимонад"))
+        assertFalse(holds("сахар", "сахарин"))
+        assertFalse(holds("сахар коричневый", "сахарин"))
+        // Other forms of the label itself still find it, as do its diminutives and adjectives.
+        assertTrue(holds("лук", "лука"))
+        assertTrue(holds("морковь", "моркови"))
+        assertTrue(holds("сахар", "сахара"))
+        assertTrue(holds("лимон", "лимонный"))
+        assertTrue(holds("картофель", "картофельное"))
+        assertTrue(holds("помидор", "помидорчики"))
+        assertFalse(Inflection.akin("buttermilk", "butter"))
+        assertFalse(Inflection.akin("лимонад", "лимон"))
+        assertTrue(Inflection.akin("редиск", "редис"))
+    }
+
+    // T-130: two words are the same word when they share a form — what the exact match of the offer reads.
+    @Test
+    fun theSameWordInAnotherForm() {
+        assertTrue(Inflection.same("яйца", "яйцо"))
+        assertTrue(Inflection.same("eggs", "egg"))
+        assertTrue(Inflection.same("onions", "onion"))
+        assertTrue(Inflection.same("огурцы", "огурец"))
+        assertTrue(Inflection.same("leaves", "leaf"))
+        assertFalse(Inflection.same("морковка", "морковь"))
+        assertFalse(Inflection.same("greens", "green"))
+        assertFalse(Inflection.same("лимонад", "лимон"))
+        assertFalse(Inflection.same("яйц", "яйцо"))
+        assertFalse(Inflection.same("молок", "молоко"))
+    }
+
     @Test
     fun theFormsOfAWord() {
         assertEquals(setOf("яйц"), Inflection.forms("яйца"))

@@ -199,4 +199,45 @@ class BookSearchTest {
         // A word inside another word is no beginning of one.
         assertEquals(emptyList<String>(), search.titles(rows, params("colate")))
     }
+
+    // T-130: the book's search reads words as the ingredient field does — no compound found by the word it is built
+    // on, "-ves" plurals and other forms found.
+    @Test
+    fun aQueryFindsNoWordBuiltOnIt() = runBlocking {
+        val butter = IngredientEntryEntity(10, "масло сливочное", "butter", null)
+        val lemon = IngredientEntryEntity(11, "лимон", "lemon", null)
+        val pepper = IngredientEntryEntity(12, "перец", "pepper", null)
+        val sugar = IngredientEntryEntity(13, "сахар", "sugar", null)
+        val bayLeaf = IngredientEntryEntity(14, "лавровый лист", "bay leaf", null)
+        val onion = IngredientEntryEntity(15, "лук", "onion", null)
+        val carrot = IngredientEntryEntity(16, "морковь", "carrot", null)
+        val search = BookSearch<String>({ listOf(butter, lemon, pepper, sugar, bayLeaf, onion, carrot) }, { it }, { it })
+        val rows = listOf("A", "B", "C", "D", "E", "F", "G", "H")
+        val lines = listOf(
+            line("A", butter, 100),
+            line("B", lemon, 100),
+            line("C", pepper, null),
+            line("D", sugar, 100),
+            line("E", null, 500, free = "buttermilk"),
+            line("F", null, 500, free = "лимонад"),
+            line("G", null, 100, free = "pepperoni"),
+            line("H", bayLeaf, null),
+            line("H", onion, 100),
+            line("H", carrot, 100),
+        )
+        suspend fun found(query: String) = search.listed(rows, lines, emptyList(), params(query)).rows
+        assertEquals(listOf("E"), found("buttermilk"))
+        assertEquals(listOf("F"), found("лимонад"))
+        assertEquals(listOf("G"), found("pepperoni"))
+        assertEquals(emptyList<String>(), found("сахарин"))
+        assertEquals(emptyList<String>(), found("watermelon"))
+        // The words it is built on still find what holds them.
+        assertEquals(listOf("A", "E"), found("butter"))
+        assertEquals(listOf("B", "F"), found("лимон"))
+        assertEquals(listOf("D"), found("сахара"))
+        // Another form of a word finds it: a "-ves" plural, a Russian case.
+        assertEquals(listOf("H"), found("bay leaves"))
+        assertEquals(listOf("H"), found("лука моркови"))
+        assertEquals(listOf("B"), found("lemons"))
+    }
 }
