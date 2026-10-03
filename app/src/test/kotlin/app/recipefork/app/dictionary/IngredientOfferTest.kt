@@ -176,4 +176,37 @@ class IngredientOfferTest {
         assertEquals(listOf(removedWings), kept.entries)
         assertEquals(removedWings, kept.exact)
     }
+
+    // T-124: diacritics folded, so "jalapeno" finds "jalapeño" and "creme fraiche" "crème fraîche", exactly as well.
+    @Test
+    fun diacriticsAreFolded() {
+        val jalapeno = IngredientEntryEntity(40, "халапеньо", "jalapeño", null)
+        val cremeFraiche = IngredientEntryEntity(41, "крем-фреш", "crème fraîche", null)
+        val withThem = dictionary + jalapeno + cremeFraiche
+        assertEquals(listOf(jalapeno), offer("jalapeno", withThem, ENGLISH).entries)
+        assertEquals(jalapeno, offer("Jalapeno", withThem, ENGLISH).exact)
+        assertEquals(listOf(cremeFraiche), offer("creme fr", withThem, ENGLISH).entries)
+        assertEquals(cremeFraiche, offer("creme fraiche", withThem, ENGLISH).exact)
+        assertNull(offer("creme fraiche", withThem, ENGLISH).freeText)
+    }
+
+    // T-124: a word typed in another grammatical form finds the entry, and the exact match takes the words in any order.
+    @Test
+    fun anotherFormOrAnotherWordOrderFindsTheEntry() {
+        val egg = IngredientEntryEntity(50, "яйцо", "egg", null)
+        val quailEgg = IngredientEntryEntity(51, "яйцо перепелиное", "quail egg", 50)
+        val cucumber = IngredientEntryEntity(52, "огурец", "cucumber", null)
+        val butter = IngredientEntryEntity(53, "масло сливочное", "butter", null)
+        val withThem = dictionary + egg + quailEgg + cucumber + butter
+        assertEquals(listOf(quailEgg, egg), offer("яйца", withThem).entries)
+        assertEquals(listOf(quailEgg, egg), offer("eggs", withThem).entries)
+        assertEquals(listOf(cucumber), offer("огурцы", withThem).entries)
+        // Words in any order are offered, as before, and now also taken as the exact match.
+        assertEquals(listOf(butter), offer("сливочное масло", withThem).entries)
+        assertEquals(butter, offer("сливочное масло", withThem).exact)
+        assertNull(offer("сливочное масло", withThem).freeText)
+        // Another form is offered, never taken as exact: the author picks it.
+        assertNull(offer("яйца", withThem).exact)
+        assertEquals("яйца", offer("яйца", withThem).freeText)
+    }
 }

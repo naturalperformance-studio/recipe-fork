@@ -54,7 +54,7 @@
 # бекон
 3870	бекон	bacon		true	g=1 pc=15
 3871	панчетта	pancetta	3870		g=1
-3872	гуанчале	guanciale	3870		g=1
+3872	гуанчиале	guanciale	3870		g=1
 3873	бекон из индейки	turkey bacon	3870	true	g=1 pc=15
 3874	бекон сырокопчёный	dry-cured bacon	3870	true	g=1 pc=15
 3875	бекон варёно-копчёный	cooked smoked bacon	3870	true	g=1 pc=15

@@ -24,7 +24,7 @@
 # говядина — cuts
 3101	говяжья вырезка	beef tenderloin	5		g=1
 3102	говяжья мякоть	boneless beef	5		g=1
-3103	говяжья лопатка	beef shoulder	5		g=1
+3103	говяжья лопатка	beef chuck	5		g=1
 3104	говяжья шея	beef neck	5		g=1
 3105	говяжья грудинка	beef brisket	5		g=1
 3106	говяжья голяшка	beef shank	5		g=1
@@ -48,7 +48,7 @@
 3124	говядина на кости	bone-in beef	5		g=1
 3125	мраморная говядина	marbled beef	5		g=1
 3126	говяжьи кости	beef bones	5		g=1
-3127	мозговая кость	marrow bone	5	false	g=1 pc=300
+3127	мозговая кость	marrowbone	5	false	g=1 pc=300
 3128	солонина	corned beef	5		g=1
 3129	ростбиф	roast beef	5		g=1
 3130	говяжья пашина	beef flank	5		g=1

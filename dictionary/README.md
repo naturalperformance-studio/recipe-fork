@@ -109,8 +109,9 @@ The tags file — `id, labelRu, labelEn`:
 - no baseline at all, unless `--first-build` is given;
 - a blank label (no letter or digit), or a label with spaces around it;
 - two live entries (or two tags) whose labels in one language the search cannot tell apart: compared as the search
-  folds them — case ignored, `ё` read as `е`, words being runs of letters and digits (so `лук-порей` and `лук порей`
-  are the same label);
+  folds them — case ignored, `ё` read as `е`, Latin diacritics dropped, words being runs of letters and digits, in any
+  order (so `лук-порей` and `лук порей`, `crème fraîche` and `creme fraiche`, `масло сливочное` and `сливочное масло`
+  are the same label: the field takes a label typed with its words in another order as an exact match);
 - a `parentId` that names no entry, names the entry itself, or names an entry that has a parent;
 - a removed entry that is still the parent of a live entry;
 - an unknown factor unit, a factor that is not a finite number above zero, a unit given twice;

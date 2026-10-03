@@ -114,4 +114,13 @@ class SearchIndexTest {
         assertTrue(index.search("кур").size == 500)
         assertTrue(index.search("ежевик").isNotEmpty())
     }
+
+    // T-124: the book's search reads words as the ingredient field does — diacritics folded, other forms found.
+    @Test
+    fun aQueryFindsAWordWithoutItsDiacriticsAndInAnotherForm() {
+        val index = index(Entry("Crème brûlée"), Entry("Борщ", listOf("Свёкла", "Яйцо")), Entry("Пирог с огурцами"))
+        assertEquals(listOf("Crème brûlée"), index.titles("creme brulee"))
+        assertEquals(listOf("Борщ"), index.titles("яйца"))
+        assertEquals(listOf("Пирог с огурцами"), index.titles("огурец"))
+    }
 }

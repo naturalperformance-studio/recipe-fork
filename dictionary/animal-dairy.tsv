@@ -39,7 +39,7 @@
 
 # сливки
 4480	сливки	cream			g=1 ml=1 tsp=5 tbsp=15 cup=250
-4481	сливки 10%	light cream 10%	4480		g=1 ml=1.01 tsp=5 tbsp=15 cup=253
+4481	сливки 10%	half-and-half	4480		g=1 ml=1.01 tsp=5 tbsp=15 cup=253
 4482	сливки 20%	light cream 20%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
 4483	сливки 33%	heavy cream 33%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
 4484	сливки 35%	heavy cream 35%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
@@ -134,7 +134,7 @@
 4708	сыр тёртый	grated cheese	4700		g=1 tbsp=7 cup=100
 4709	сливочный сыр	cream cheese	4700		g=1 tsp=5 tbsp=15 cup=230
 4710	творожный сыр	cream cheese spread	4700		g=1 tsp=5 tbsp=15 cup=230
-4711	сыр тостовый	cheese slices	4700	false	g=1 pc=20
+4711	сыр тостовый	American cheese slices	4700	false	g=1 pc=20
 4712	сыр колбасный	smoked processed cheese	4700		g=1
 4713	сыр с голубой плесенью	blue cheese	4700		g=1 cup=135
 4714	сыр с белой плесенью	bloomy-rind cheese	4700		g=1
@@ -202,4 +202,5 @@
 4789	пекорино романо	Pecorino Romano	4700		g=1 tsp=2 tbsp=5 cup=90
 4790	бофор	Beaufort	4700		g=1
 4791	лимбургский сыр	Limburger	4700		g=1
+4792	пармиджано реджано	Parmigiano Reggiano	4700		g=1 tsp=2 tbsp=5 cup=90
 4491	девонширские сливки	clotted cream	4480		g=1 tsp=5 tbsp=15 cup=240

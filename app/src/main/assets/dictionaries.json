@@ -1,5 +1,5 @@
 {
-  "version": "76f2a74b181d4274eddf8651b6222c90df40e4755e7a6f4773975228056f2812",
+  "version": "43e39910e2e8c754e8bba90adf6257a4d58aacf5733202f6f1d9540700cd01d2",
   "ingredients": [
     {
       "id": 1,
@@ -6380,7 +6380,7 @@
     {
       "id": 3103,
       "labelRu": "говяжья лопатка",
-      "labelEn": "beef shoulder",
+      "labelEn": "beef chuck",
       "parentId": 5,
       "factors": {
         "g": 1.0
@@ -6612,7 +6612,7 @@
     {
       "id": 3127,
       "labelRu": "мозговая кость",
-      "labelEn": "marrow bone",
+      "labelEn": "marrowbone",
       "parentId": 5,
       "divisible": false,
       "factors": {
@@ -8655,7 +8655,7 @@
     },
     {
       "id": 3872,
-      "labelRu": "гуанчале",
+      "labelRu": "гуанчиале",
       "labelEn": "guanciale",
       "parentId": 3870,
       "factors": {
@@ -10979,7 +10979,7 @@
     {
       "id": 4481,
       "labelRu": "сливки 10%",
-      "labelEn": "light cream 10%",
+      "labelEn": "half-and-half",
       "parentId": 4480,
       "factors": {
         "g": 1.0,
@@ -11946,7 +11946,7 @@
     {
       "id": 4711,
       "labelRu": "сыр тостовый",
-      "labelEn": "cheese slices",
+      "labelEn": "American cheese slices",
       "parentId": 4700,
       "divisible": false,
       "factors": {
@@ -12631,6 +12631,18 @@
       "parentId": 4700,
       "factors": {
         "g": 1.0
+      }
+    },
+    {
+      "id": 4792,
+      "labelRu": "пармиджано реджано",
+      "labelEn": "Parmigiano Reggiano",
+      "parentId": 4700,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.0,
+        "tbsp": 5.0,
+        "cup": 90.0
       }
     },
     {
@@ -13618,7 +13630,7 @@
     },
     {
       "id": 5215,
-      "labelRu": "перловка",
+      "labelRu": "перловая крупа",
       "labelEn": "pearl barley",
       "factors": {
         "g": 1.0,

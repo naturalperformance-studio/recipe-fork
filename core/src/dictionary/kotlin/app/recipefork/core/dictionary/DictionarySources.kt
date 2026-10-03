@@ -229,8 +229,9 @@ object DictionaryBuild {
         listOf("labelRu", "labelEn").forEachIndexed { language, name ->
             val first = HashMap<List<String>, Row<*>>()
             rows.forEach { row ->
-                // Folded and split as the search reads them: labels the search cannot tell apart are the same label.
-                val earlier = first.putIfAbsent(WordPrefix.words(row.labels[language]), row)
+                // Folded and split as the search reads them, in any order as its exact match takes them: labels the
+                // search cannot tell apart are the same label ("масло сливочное" and "сливочное масло", "creme" and "crème").
+                val earlier = first.putIfAbsent(WordPrefix.words(row.labels[language]).sorted(), row)
                 if (earlier != null) {
                     errors += "${row.at}: $name '${row.labels[language]}' is the same, as the search reads it, as " +
                         "'${earlier.labels[language]}' at ${earlier.at}"

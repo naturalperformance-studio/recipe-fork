@@ -3,6 +3,7 @@ package app.recipefork.app.perf
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.hasTestTag
@@ -18,6 +19,7 @@ import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.dictionary.DictionarySnapshot
+import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientOffer
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.TestDevice
@@ -53,6 +55,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.time.Instant
 import java.util.Locale
 
@@ -95,22 +98,8 @@ class CapsBenchTest {
     fun aRecipeAtTheCapsOpensAndRecalculatesWithinTheThresholds() {
         val held = (0 until WARM_UP + RUNS).map { capsRecipe(it) }
         runBlocking { held.forEach { recipes.save(it) } }
-        val shown = mutableStateOf<RecipeId?>(null)
-        compose.setContent {
-            MaterialTheme {
-                shown.value?.let { id -> key(id) { CardScreen(id, recipes, environment, onBack = {}, onEdit = {}) } }
-            }
-        }
-
-        val opens = held.map { recipe ->
-            shown.value = null
-            compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.SCREEN)).fetchSemanticsNodes().isEmpty() }
-            timed {
-                shown.value = recipe.id
-                compose.waitUntil(PATIENCE_MS) { shown(CardTags.ingredient(CAP - 1)) && shown(CardTags.step(CAP - 1)) }
-            }
-        }.drop(WARM_UP)
-        assertWithin("card open (50 ingredients, 50 steps, 5 000-entry dictionary)", opens, OPEN_MS)
+        val shown = showCards()
+        assertWithin("card open (50 ingredients, 50 steps, 5 000-entry dictionary)", opens(held, shown), OPEN_MS)
 
         val recalculations = (0 until WARM_UP + RUNS).map { run ->
             val servings = compose.textsOf(CardTags.SERVINGS).single()
@@ -124,6 +113,38 @@ class CapsBenchTest {
         }.drop(WARM_UP)
         assertWithin("recalculation (servings change, 50 ingredients)", recalculations, RECALCULATION_MS)
     }
+
+    // QUAL-002 with the dictionary the application ships (T-124): a card of 50 of its entries opens within 1 s.
+    @Test
+    fun aRecipeOfTheShippedDictionaryOpensWithinTheThreshold() {
+        // The bench's own dictionary is held removed beside it, as a device holds what is no longer shipped.
+        runBlocking { dao.replace(SHIPPED) }
+        val ids = SHIPPED.ingredients.filterNot { it.removed }.map { it.id }
+        assertEquals(ids.size, runBlocking { dao.ingredients() }.count { !it.removed })
+        val held = (0 until WARM_UP + RUNS).map { capsRecipe(it, ids) }
+        runBlocking { held.forEach { recipes.save(it) } }
+        assertWithin("card open (50 ingredients, 50 steps, shipped dictionary)", opens(held, showCards()), OPEN_MS)
+    }
+
+    private fun showCards(): MutableState<RecipeId?> {
+        val shown = mutableStateOf<RecipeId?>(null)
+        compose.setContent {
+            MaterialTheme {
+                shown.value?.let { id -> key(id) { CardScreen(id, recipes, environment, onBack = {}, onEdit = {}) } }
+            }
+        }
+        return shown
+    }
+
+    /** How long each of [held] takes to open in full, after the warm-up runs. */
+    private fun opens(held: List<Recipe>, shown: MutableState<RecipeId?>): List<Long> = held.map { recipe ->
+        shown.value = null
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.SCREEN)).fetchSemanticsNodes().isEmpty() }
+        timed {
+            shown.value = recipe.id
+            compose.waitUntil(PATIENCE_MS) { shown(CardTags.ingredient(CAP - 1)) && shown(CardTags.step(CAP - 1)) }
+        }
+    }.drop(WARM_UP)
 
     // QUAL-002: show the results of a search, 2 s — over a book that holds more than a screen of recipes at the caps.
     @Test
@@ -166,6 +187,20 @@ class CapsBenchTest {
         assertWithin("ingredient offer per keystroke (5 000 entries)", offers, OFFER_MS)
     }
 
+    // FLOW-057 with the dictionary the application ships (T-124): what cooks type, keystroke by keystroke, within 50 ms.
+    @Test
+    fun theIngredientOfferOverTheShippedDictionaryPerKeystrokeIsWithinItsCeiling() {
+        // As a device that never held another dictionary holds it.
+        val dictionary = SHIPPED.ingredients.map(IngredientEntryEntity::of)
+        val words = listOf("лук репчатый", "сливочное масло", "яйца", "мука пшеничная", "солёные огурцы", "chicken breast", "eggs", "all-purpose flour", "creme fraiche", "к")
+        val typed = words.flatMap { word -> (1..word.length).map { word.take(it) } }
+        val languages = listOf(InterfaceLanguage.RUSSIAN, InterfaceLanguage.ENGLISH)
+        repeat(2) { typed.forEach { text -> languages.forEach { IngredientOffer.of(text, dictionary, it) } } }
+        val offers = typed.flatMap { text -> languages.map { language -> timed { IngredientOffer.of(text, dictionary, language) } } }
+        println("BENCH ingredient offer per keystroke over the shipped dictionary (${dictionary.size} entries), slowest: ${offers.max()} ms")
+        assertWithin("ingredient offer per keystroke (shipped dictionary)", offers, OFFER_MS)
+    }
+
     // The one cost the shipped dictionary has at its size: parsed and written into the device's copy, once.
     @Test
     fun theDictionaryAtItsSizeIsParsedAndSeededWithinItsCeiling() = runBlocking {
@@ -191,11 +226,11 @@ class CapsBenchTest {
     }
 
     /** A recipe at DOM-012's caps: 50 ingredients of the dictionary in three kinds of unit, 50 steps of some length. */
-    private fun capsRecipe(n: Int): Recipe = Recipe.create(now, null).copy(
+    private fun capsRecipe(n: Int, ids: List<Long>? = null): Recipe = Recipe.create(now, null).copy(
         title = "Caps $n ${word(n * 13 + 5, EN)} soup",
         servings = 4,
         ingredients = (0 until CAP).map { i ->
-            val entry = ((n * CAP + i) * 97L % ENTRIES) + 1
+            val entry = if (ids == null) ((n * CAP + i) * 97L % ENTRIES) + 1 else ids[(n * CAP + i) * 97 % ids.size]
             when (i % 3) {
                 0 -> Ingredient(i, entry, unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(100L + i * 10))
                 1 -> Ingredient(i, entry, unitType = UnitType.PIECE, unit = QuantityUnit.PIECE, quantity = Rational.of(3), divisible = i % 2 == 0)
@@ -228,6 +263,9 @@ class CapsBenchTest {
             var rest = n
             return (0 until 3).joinToString("") { syllables[rest % syllables.size].also { rest /= syllables.size } }
         }
+
+        /** The dictionary the application ships; unit tests of `:app` run with the module directory as the working directory. */
+        val SHIPPED: DictionariesDto by lazy { DictionarySnapshot.parse(File("src/main/assets/${DictionarySnapshot.ASSET}").readText()) }
 
         /** 5 000 entries of two words each, in tens: a parent and the nine leaves under it; and 100 tags. */
         val DICTIONARY = DictionariesDto(
