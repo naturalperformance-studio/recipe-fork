@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Drawn edge to edge, each screen keeping its own content clear of the system bars; the interface is light
-        // whatever the system's mode (AppTheme), so the bars' icons are dark on it.
+        // whatever the system's mode (AppTheme), so the bars' icons are dark on it. A dark theme will change these styles.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(NAVIGATION_SCRIM, NAVIGATION_SCRIM),

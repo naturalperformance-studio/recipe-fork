@@ -36,8 +36,11 @@ class CropEdgeToEdgeTest {
             decor.dispatchApplyWindowInsets(insets.toWindowInsets())
         }
         compose.waitForIdle()
-        // The content — whose black ground fills it — spans the whole window: the window pads nothing itself, so the
-        // only room kept from the bars is the content's own, exactly theirs.
+        // The black ground spans the whole window, under the bars: the window pads nothing itself.
+        val ground = compose.onNodeWithTag(CropTags.GROUND).fetchSemanticsNode().boundsInWindow
+        assertEquals(0f, ground.top)
+        assertEquals(decor.height.toFloat(), ground.bottom)
+        // The title and controls keep exactly the bars' room from them.
         val content = compose.onNodeWithTag(CropTags.SCREEN).fetchSemanticsNode().boundsInWindow
         assertEquals(STATUS.toFloat(), content.top)
         assertEquals((decor.height - NAVIGATION).toFloat(), content.bottom)
