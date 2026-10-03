@@ -44,10 +44,10 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
+import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -69,6 +69,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
@@ -78,8 +79,8 @@ import org.robolectric.annotation.Config
  * step has them; a one-line step a fraction of its v0.5 height; at double font scale every control whole and 48 dp.
  */
 @OptIn(ExperimentalTestApi::class)
-@RunWith(AndroidJUnit4::class)
-class StepBlockCompactTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+class StepBlockCompactTest(private val handleRight: Boolean) {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
@@ -119,7 +120,7 @@ class StepBlockCompactTest {
         )
         if (state != null) recipe = recipe.inState(state)
         runBlocking { recipes.save(recipe) }
-        val environment = EditorEnvironment(active, device.catalog(context)) { created.plusSeconds(60) }
+        val environment = EditorEnvironment(active, device.catalog(context), dragHandleSide = HeldDragHandleSide(handleRight)) { created.plusSeconds(60) }
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
@@ -204,9 +205,10 @@ class StepBlockCompactTest {
             val block = bounds(EditorTags.step(position))
             val column = bounds(EditorTags.stepHandle(position))
             val text = bounds(EditorTags.stepText(position))
-            // The text's field from just right of the column to just inside the block's right edge.
-            assertTrue("step $position: the text starts by the column", text.left - column.right in 0f..(12f * compose.density.density))
-            assertTrue("step $position: the text reaches the block's right edge", block.right - text.right in 0f..(8f * compose.density.density))
+            // The text's field from just beside the column to just inside the block's other edge.
+            val (start, end) = if (handleRight) block.left to column.left else column.right to block.right
+            assertTrue("step $position: the text starts by the column", text.left - start in 0f..(12f * compose.density.density))
+            assertTrue("step $position: the text reaches the block's right edge", end - text.right in 0f..(8f * compose.density.density))
             val controls = actions(position).map { bounds(it) }
             controls.forEachIndexed { i, b ->
                 assertEquals("step $position: ${actions(position)[i]} is 48 dp wide", 48f, dp(b.width), 0.5f)
@@ -286,8 +288,13 @@ class StepBlockCompactTest {
         }
     }
 
-    private companion object {
-        const val V05_BLOCK = "v05-step-block"
+    companion object {
+        private const val V05_BLOCK = "v05-step-block"
+
+        /** Every test runs with the drag column on the left, as by default, and on the right, for a left hand. */
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "handle on the right: {0}")
+        fun sides(): List<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
     }
 }
 

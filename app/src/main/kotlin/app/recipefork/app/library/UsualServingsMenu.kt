@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -29,9 +30,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.interfaceLanguage
@@ -45,13 +50,15 @@ private val FIRST_CHOICE: Rational = Rational.of(2)
 
 /**
  * The book's menu, beside its title: it offers the serving count the reader usually cooks for (FLOW-017), showing the
- * count held or that none is. Choosing it opens [UsualServingsDialog].
+ * count held or that none is — choosing it opens [UsualServingsDialog] — and, as a checked item, the editor's drag
+ * column on the right of each block, for a left hand.
  */
 @Composable
-internal fun BookMenu(usual: UsualServings, modifier: Modifier = Modifier) {
+internal fun BookMenu(usual: UsualServings, handleSide: DragHandleSide, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
     var choosing by rememberSaveable { mutableStateOf(false) }
     val held by usual.count.collectAsState()
+    val handleRight by handleSide.right.collectAsState()
     val language = servingsLanguage()
     Box(modifier) {
         BlockAction(
@@ -75,6 +82,20 @@ internal fun BookMenu(usual: UsualServings, modifier: Modifier = Modifier) {
                     choosing = true
                 },
                 modifier = Modifier.testTag(LibraryTags.USUAL),
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.library_drag_handle_right)) },
+                trailingIcon = { Checkbox(checked = handleRight, onCheckedChange = null, modifier = Modifier.clearAndSetSemantics {}) },
+                onClick = {
+                    expanded = false
+                    handleSide.set(!handleRight)
+                },
+                modifier = Modifier
+                    .semantics {
+                        role = Role.Checkbox
+                        toggleableState = ToggleableState(handleRight)
+                    }
+                    .testTag(LibraryTags.HANDLE_RIGHT),
             )
         }
     }

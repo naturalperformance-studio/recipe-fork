@@ -64,6 +64,7 @@ import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
+import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.EditorEnvironment
@@ -111,7 +112,7 @@ const val OWN_PAGE = 30
  * line; the list's header and its entries stay apart.
  *
  * The book's menu, beside its title, holds the serving count the reader usually cooks for (FLOW-017), which every
- * card opens at.
+ * card opens at, and the side the editor's drag column stands on.
  *
  * What became of a file — an import's outcome, a failed export — is said in a dialog over whatever is shown, until it
  * is closed.
@@ -127,6 +128,7 @@ fun LibraryScreen(
     files: RecipeImport = rememberRecipeImport(recipes),
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
     usualServings: UsualServings = card.usualServings,
+    dragHandleSide: DragHandleSide = editor.dragHandleSide,
 ) {
     val message by session.message.collectAsState()
     message?.let { FileMessageDialog(it, onDone = session::told) }
@@ -172,7 +174,7 @@ fun LibraryScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.weight(1f).padding(16.dp).semantics { heading() }.testTag(LibraryTags.TITLE),
             )
-            BookMenu(usualServings, Modifier.padding(end = 8.dp))
+            BookMenu(usualServings, dragHandleSide, Modifier.padding(end = 8.dp))
         }
         // The switch sits above the list and never scrolls with it (FLOW-034 (1)).
         Row(Modifier.fillMaxWidth().selectableGroup().testTag(LibraryTags.SWITCH)) {
@@ -834,6 +836,7 @@ object LibraryTags {
     const val USUAL_MORE = "library-usual-more"
     const val USUAL_SET = "library-usual-set"
     const val USUAL_CLEAR = "library-usual-clear"
+    const val HANDLE_RIGHT = "library-handle-right"
     const val SWITCH = "library-switch"
     const val OWN_LIST = "library-own"
     const val MARKED_LIST = "library-marked"

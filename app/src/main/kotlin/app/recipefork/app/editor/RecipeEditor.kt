@@ -4,6 +4,8 @@ import android.content.res.Configuration
 import androidx.compose.runtime.saveable.Saver
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
+import app.recipefork.app.data.DragHandleSide
+import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
@@ -40,12 +42,17 @@ import java.time.Instant
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-/** What the editor needs beyond the recipes of the active book: the book itself, the dictionaries and a clock. */
+/**
+ * What the editor needs beyond the recipes of the active book: the book itself, the dictionaries, the side of the drag
+ * column and a clock.
+ */
 class EditorEnvironment(
     val book: ActiveBook,
     val tags: TagSource,
     /** The ingredient dictionary the ingredient field offers from (FLOW-057); the catalog that holds the tags holds it. */
     val ingredients: IngredientSource = tags as? IngredientSource ?: IngredientSource { emptyList() },
+    /** Which side of a block its drag column stands on (the left unless set otherwise). */
+    val dragHandleSide: DragHandleSide = HeldDragHandleSide(),
     val clock: () -> Instant = Instant::now,
 )
 

@@ -6,7 +6,9 @@ import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
 import app.recipefork.app.data.AndroidConnectivity
 import app.recipefork.app.data.AppDatabase
+import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.Network
+import app.recipefork.app.data.PreferencesDragHandleSide
 import app.recipefork.app.data.PreferencesUsualServings
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.dictionary.DictionaryRepository
@@ -54,6 +56,9 @@ class AppContainer(
 
     /** The serving count the reader usually cooks for, one for the device and kept across restarts (FLOW-017). */
     val usualServings: UsualServings = PreferencesUsualServings(context)
+
+    /** Which side of the editor's blocks their drag column stands on, one for the device and kept across restarts. */
+    val dragHandleSide: DragHandleSide = PreferencesDragHandleSide(context)
 
     /**
      * Keeps the held dictionaries in step with the server while a connection is available (FLOW-001); none in
