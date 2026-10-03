@@ -1,4 +1,4 @@
-# Pantry: flour (5000-5099), starches and thickening flours (5100-5149), bran and fibre (5150-5199),
+# Pantry: flour (5000-5099), starches and thickening flours (5100-5149), bran and fiber (5150-5199),
 # grains and groats (5200-5299), rice (5300-5349), oats, flakes and cereals (5350-5399).
 # Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
 # Spoon and cup factors are grams per level measure; a cup is 250 ml.
@@ -8,19 +8,18 @@
 5000	мука	flour			g=1 tsp=3 tbsp=10 cup=130
 5001	мука пшеничная	wheat flour	5000		g=1 tsp=3 tbsp=10 cup=130
 5002	мука пшеничная высшего сорта	all-purpose flour	5000		g=1 tsp=3 tbsp=10 cup=130
-5003	мука пшеничная первого сорта	first-grade wheat flour	5000		g=1 tsp=3 tbsp=10 cup=130
+5003	мука пшеничная первого сорта	all-purpose flour, first grade	5000		g=1 tsp=3 tbsp=10 cup=130
 5004	мука цельнозерновая	whole wheat flour	5000		g=1 tsp=3 tbsp=9 cup=125
 5005	мука хлебопекарная	bread flour	5000		g=1 tsp=3 tbsp=10 cup=135
 5006	мука 00	00 flour	5000		g=1 tsp=3 tbsp=10 cup=130
 5007	мука самоподнимающаяся	self-rising flour	5000		g=1 tsp=3 tbsp=10 cup=130
-5008	мука семола	semolina flour	5000		g=1 tsp=4 tbsp=11 cup=170
 5009	мука ржаная	rye flour	5000		g=1 tsp=3 tbsp=9 cup=120
 5010	мука ржаная обдирная	medium rye flour	5000		g=1 tsp=3 tbsp=9 cup=120
 5011	мука полбяная	spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120
 5012	мука ячменная	barley flour	5000		g=1 tsp=3 tbsp=9 cup=120
 5013	мука гречневая	buckwheat flour	5000		g=1 tsp=3 tbsp=9 cup=130
 5014	мука кукурузная	cornmeal	5000		g=1 tsp=3 tbsp=10 cup=140
-5015	мука кукурузная нишстамализованная	masa harina	5000		g=1 tsp=3 tbsp=8 cup=120
+5015	маса харина	masa harina	5000		g=1 tsp=3 tbsp=8 cup=120
 5016	мука рисовая	rice flour	5000		g=1 tsp=3 tbsp=10 cup=160
 5017	мука рисовая клейкая	glutinous rice flour	5000		g=1 tsp=3 tbsp=10 cup=160
 5018	мука овсяная	oat flour	5000		g=1 tsp=2 tbsp=6 cup=100
@@ -43,7 +42,7 @@
 5035	мука блинная	pancake mix	5000		g=1 tsp=3 tbsp=10 cup=130
 5036	мука для темпуры	tempura flour	5000		g=1 tsp=3 tbsp=9 cup=130
 5037	мука пшеничная второго сорта	second-grade wheat flour	5000		g=1 tsp=3 tbsp=10 cup=130
-5038	мука из твёрдых сортов пшеницы	durum wheat flour	5000		g=1 tsp=4 tbsp=11 cup=165
+5038	мука из твёрдых сортов пшеницы (семола)	durum wheat flour	5000		g=1 tsp=4 tbsp=11 cup=165
 5039	мука для пиццы	pizza flour	5000		g=1 tsp=3 tbsp=10 cup=130
 5040	мука кондитерская	cake flour	5000		g=1 tsp=3 tbsp=9 cup=125
 5041	мука ржаная цельнозерновая	whole grain rye flour	5000		g=1 tsp=3 tbsp=9 cup=120
@@ -91,7 +90,7 @@
 5202	гречка продел	broken buckwheat groats	5200		g=1 tbsp=12 cup=200
 5203	гречка зелёная	green buckwheat	5200		g=1 tbsp=12 cup=200
 5204	гречка жареная	kasha	5200		g=1 tbsp=13 cup=210
-5205	гречка в пакетиках	boil-in-bag buckwheat	5200	true	g=1 pc=80 cup=210
+5205	гречка в пакетиках	boil-in-bag buckwheat	5200	false	g=1 pc=80 cup=210
 5206	гречка дроблёная	cracked buckwheat	5200		g=1 tbsp=12 cup=200
 5210	пшено	millet			g=1 tbsp=13 cup=220
 5211	пшено шлифованное	polished millet	5210		g=1 tbsp=13 cup=220
@@ -127,7 +126,6 @@
 5257	камут	kamut	5255		g=1 tbsp=12 cup=200
 5258	фрике	freekeh			g=1 tbsp=11 cup=180
 5260	пшеница	wheat berries			g=1 tbsp=12 cup=200
-5261	пшеница пророщенная	sprouted wheat	5260		g=1 tbsp=8 cup=130
 5262	рожь	rye berries			g=1 tbsp=12 cup=200
 5263	овёс	oat groats			g=1 tbsp=11 cup=180
 5264	амарант	amaranth			g=1 tbsp=12 cup=200
@@ -135,7 +133,7 @@
 5266	сорго	sorghum			g=1 tbsp=12 cup=200
 5267	теф	teff			g=1 tbsp=12 cup=200
 5268	чумиза	foxtail millet			g=1 tbsp=13 cup=210
-5269	овсяная крупа	steel-cut oats			g=1 tbsp=11 cup=180
+5269	овсяная крупа дроблёная	steel-cut oats			g=1 tbsp=11 cup=180
 5270	толокно	toasted oat flour			g=1 tsp=2 tbsp=7 cup=100
 
 # рис
@@ -156,20 +154,19 @@
 5314	рис девзира	devzira rice	5300		g=1 tbsp=13 cup=210
 5315	рис бомба	bomba rice	5300		g=1 tbsp=13 cup=220
 5316	рис дроблёный	broken rice	5300		g=1 tbsp=13 cup=220
-5317	рис в пакетиках	boil-in-bag rice	5300	true	g=1 pc=80 cup=210
+5317	рис в пакетиках	boil-in-bag rice	5300	false	g=1 pc=80 cup=210
 5318	рис белый	white rice	5300		g=1 tbsp=13 cup=210
 5319	рис среднезёрный	medium-grain rice	5300		g=1 tbsp=13 cup=210
 5320	рис для плова	rice for pilaf	5300		g=1 tbsp=13 cup=210
 5321	рис для ризотто	risotto rice	5300		g=1 tbsp=13 cup=220
-5322	рис виало	vialone nano rice	5300		g=1 tbsp=13 cup=220
+5322	рис виалоне нано	vialone nano rice	5300		g=1 tbsp=13 cup=220
 5323	рис воздушный	puffed rice	5300		g=1 tbsp=1 cup=30
 5324	смесь риса	rice blend	5300		g=1 tbsp=12 cup=200
 
 # овсяные хлопья, хлопья, мюсли
 5350	овсяные хлопья	rolled oats			g=1 tsp=2 tbsp=6 cup=90
-5351	геркулес	old-fashioned oats	5350		g=1 tsp=2 tbsp=6 cup=90
+5351	геркулес	thick rolled oats	5350		g=1 tsp=2 tbsp=6 cup=90
 5352	овсяные хлопья быстрого приготовления	quick oats	5350		g=1 tsp=2 tbsp=6 cup=85
-5353	овсяные хлопья цельнозерновые	whole grain oat flakes	5350		g=1 tsp=2 tbsp=6 cup=90
 5354	овсяные хлопья мелкие	fine oat flakes	5350		g=1 tsp=2 tbsp=6 cup=90
 5355	овсяные хлопья без глютена	gluten-free oats	5350		g=1 tsp=2 tbsp=6 cup=90
 5356	овсянка быстрого приготовления в пакетиках	instant oatmeal packets	5350	true	g=1 pc=40

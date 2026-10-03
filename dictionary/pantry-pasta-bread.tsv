@@ -14,10 +14,10 @@
 5406	феттучине	fettuccine	5400		g=1
 5407	тальятелле	tagliatelle	5400		g=1
 5408	папарделле	pappardelle	5400		g=1
-5409	пенне	penne	5400		g=1
+5409	пенне (перья)	penne	5400		g=1
 5410	ригатони	rigatoni	5400		g=1
-5411	фузилли	fusilli	5400		g=1
-5412	фарфалле	farfalle	5400		g=1
+5411	фузилли (спиральки)	fusilli	5400		g=1
+5412	фарфалле (бантики)	farfalle	5400		g=1
 5413	конкильоне	conchiglioni	5400	false	g=1 pc=10
 5414	ракушки	pasta shells	5400		g=1
 5415	рожки	elbow macaroni	5400		g=1
@@ -31,7 +31,6 @@
 5423	орекьетте	orecchiette	5400		g=1
 5424	казаречче	casarecce	5400		g=1
 5425	джемелли	gemelli	5400		g=1
-5426	ротини	rotini	5400		g=1
 5427	каватаппи	cavatappi	5400		g=1
 5428	дитали	ditali	5400		g=1
 5429	макароны цельнозерновые	whole wheat pasta	5400		g=1
@@ -42,9 +41,6 @@
 5434	макароны из нута	chickpea pasta	5400		g=1
 5435	паста свежая	fresh pasta	5400		g=1
 5436	спагетти цельнозерновые	whole wheat spaghetti	5400		g=1
-5437	перья	penne rigate	5400		g=1
-5438	спиральки	pasta spirals	5400		g=1
-5439	бантики	pasta bows	5400		g=1
 5440	трубочки	macaroni tubes	5400		g=1
 5441	гнёзда тальятелле	tagliatelle nests	5400	true	g=1 pc=45
 5442	равиоли	ravioli	5400		g=1
@@ -53,14 +49,13 @@
 5445	аньолотти	agnolotti	5400		g=1
 5446	макароны чернильные	squid ink pasta	5400		g=1
 5447	ньокки	gnocchi			g=1
-5518	лапша для лагмана	lagman noodles	5500		g=1
 
 # лапша, рисовая бумага
 5500	лапша	noodles			g=1
 5501	лапша яичная	egg noodles	5500		g=1
 5502	лапша домашняя	homemade-style noodles	5500		g=1
 5503	лапша рисовая	rice noodles	5500		g=1
-5504	лапша гречневая	soba noodles	5500		g=1
+5504	лапша соба	soba noodles	5500		g=1
 5505	удон	udon	5500		g=1
 5506	лапша рамен	ramen noodles	5500		g=1
 5507	фунчоза	glass noodles	5500		g=1
@@ -72,6 +67,7 @@
 5513	лапша ширатаки	shirataki noodles	5500		g=1
 5515	сомэн	somen	5500		g=1
 5516	лапша китайская яичная	chow mein noodles	5500		g=1
+5518	лапша для лагмана	lagman noodles	5500		g=1
 5550	рисовая бумага	rice paper		false	g=1 pc=10
 5551	листы для спринг-роллов	spring roll wrappers		false	g=1 pc=15
 5552	тесто для вонтонов	wonton wrappers		false	g=1 pc=8
@@ -91,7 +87,7 @@
 5610	хлеб чёрствый	stale bread	5600		g=1
 5611	хлеб ржано-пшеничный	wheat and rye bread	5600		g=1
 5612	хлеб на закваске	sourdough bread	5600		g=1
-5613	батон	white loaf	5600	true	g=1 pc=400
+5613	батон	white bread loaf	5600	true	g=1 pc=400
 5614	багет	baguette	5600	true	g=1 pc=250
 5615	чиабатта	ciabatta	5600	true	g=1 pc=270
 5616	бриошь	brioche	5600		g=1
@@ -106,7 +102,7 @@
 5626	хлеб японский молочный	Japanese milk bread	5600		g=1
 5640	ломтик хлеба	slice of bread		false	g=1 pc=30
 5641	хлебцы	crispbread		false	g=1 pc=10
-5642	гриссини	grissini		false	g=1 pc=5
+5642	гриссини	breadsticks		false	g=1 pc=5
 5650	булочка	bread roll		false	g=1 pc=60
 5651	булочка для бургера	burger bun	5650	false	g=1 pc=70
 5652	булочка для хот-дога	hot dog bun	5650	false	g=1 pc=50
@@ -146,7 +142,7 @@
 5771	сухарики	croutons			g=1 cup=30
 5772	сухари ванильные	vanilla rusks	5770		g=1
 5773	сушки	sushki		false	g=1 pc=8
-5774	баранки	bagel rings		false	g=1 pc=30
+5774	баранки	baranki		false	g=1 pc=20
 
 # тесто, полуфабрикаты, коржи, печенье
 5800	тесто	dough			g=1
@@ -166,9 +162,9 @@
 5814	тесто брик	brick pastry	5800	false	g=1 pc=15
 5830	основа для пиццы	pizza base		true	g=1 pc=200
 5831	тарталетки	tartlet shells		false	g=1 pc=10
-5832	волованы	vol-au-vent cases		false	g=1 pc=8
+5832	волованы	puff pastry shells		false	g=1 pc=8
 5833	коржи бисквитные	sponge cake layers		true	g=1 pc=150
-5834	коржи вафельные	wafer sheets		false	g=1 pc=15
+5834	коржи вафельные	wafer sheets		false	g=1 pc=22
 5835	коржи песочные	shortcake layers		true	g=1 pc=150
 5836	корзиночки вафельные	wafer cups		false	g=1 pc=5
 5837	рожки вафельные	ice cream cones		false	g=1 pc=12
@@ -193,6 +189,18 @@
 5885	печенье шоколадное	chocolate cookies	5880	false	g=1 pc=12
 5886	амаретти	amaretti	5880	false	g=1 pc=8
 5887	крекер	crackers			g=1
-5888	крекер грэм	graham crackers	5887	false	g=1 pc=8
+5888	крекер грэм	graham crackers	5887	false	g=1 pc=15 cup=120
 5889	крекер солёный	saltines	5887	false	g=1 pc=4
 5890	печенье имбирное	gingerbread cookies	5880	false	g=1 pc=12
+
+# more pantry staples: wrappers, matzo, ready crusts and doughs, mixes, chips
+5554	листы для яичных роллов	egg roll wrappers		false	g=1 pc=30
+5644	маца	matzo		false	g=1 pc=30
+5755	мука из мацы	matzo meal	5750		g=1 tsp=3 tbsp=8 cup=120
+5815	тесто для круассанов охлаждённое	refrigerated crescent dough	5800		g=1
+5816	тесто для булочек охлаждённое	refrigerated biscuit dough	5800		g=1
+5840	основа для пирога	pie crust		false	g=1 pc=200
+5841	корзина для пирога замороженная	frozen pie shell		false	g=1 pc=200
+5862	блины готовые	ready-made crepes		false	g=1 pc=50
+5893	печенье шоколадное с начинкой	chocolate sandwich cookies	5880	false	g=1 pc=11
+5894	крошка крекера грэм	graham cracker crumbs	5887		g=1 tbsp=8 cup=120

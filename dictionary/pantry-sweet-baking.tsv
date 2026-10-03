@@ -1,6 +1,6 @@
 # Pantry: sugar (6100-6149), honey (6150-6199), syrups and treacle (6200-6249), sweeteners (6250-6299), leavening and
 # yeast (6300-6349), vanilla and essences (6350-6399), gelling agents and thickeners (6400-6449), cocoa (6450-6499),
-# chocolate (6500-6599), decoration and colouring (6600-6699).
+# chocolate (6500-6599), decoration and coloring (6600-6699).
 # Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
 # A sachet's pc is the usual retail sachet (baking powder 10 g, vanilla sugar 10 g, dry yeast 11 g, gelatin 10 g).
 @range 5000-6999
@@ -18,15 +18,11 @@
 6109	сахар рафинад	sugar cubes	6100	false	g=1 pc=5
 6110	сахарная пудра	powdered sugar	6100		g=1 tsp=3 tbsp=8 cup=130 pinch=0.5
 6111	ванильный сахар	vanilla sugar	6100	true	g=1 pc=10 tsp=4 tbsp=12
-6112	сахар желирующий	jam sugar	6100		g=1 tsp=4 tbsp=12 cup=200
+6112	сахар желирующий	gelling sugar	6100		g=1 tsp=4 tbsp=12 cup=200
 6113	сахар жемчужный	pearl sugar	6100		g=1 tsp=4 tbsp=12
-6114	сахар крупнокристаллический	coarse sugar	6100		g=1 tsp=4 tbsp=13 cup=210
-6115	сахар мелкий	caster sugar	6100		g=1 tsp=4 tbsp=12 cup=210 pinch=0.5
+6115	сахар мелкий	superfine sugar	6100		g=1 tsp=4 tbsp=12 cup=210 pinch=0.5
 6116	сахар нерафинированный	unrefined sugar	6100		g=1 tsp=4 tbsp=12 cup=200
 6117	сахар коричневый рафинад	brown sugar cubes	6100	false	g=1 pc=5
-6118	сахар тростниковый нерафинированный	raw cane sugar	6100		g=1 tsp=4 tbsp=12 cup=200
-6119	сахар виноградный	dextrose	6100		g=1 tsp=3 tbsp=10 cup=170
-6120	сахар инвертный	invert sugar	6100		g=1 ml=1.4 tsp=7 tbsp=21
 6121	сахар ванилиновый	vanillin sugar	6100	true	g=1 pc=10 tsp=4 tbsp=12
 6122	сахарная пудра нетающая	non-melting powdered sugar	6100		g=1 tsp=3 tbsp=8 cup=130
 6123	сахар джаггери	jaggery	6100		g=1 tsp=4 tbsp=12
@@ -36,8 +32,8 @@
 
 # мёд
 6150	мёд	honey			g=1 ml=1.4 tsp=7 tbsp=21 cup=350
-6151	мёд жидкий	runny honey	6150		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
-6152	мёд засахаренный	set honey	6150		g=1 tsp=8 tbsp=24
+6151	мёд жидкий	liquid honey	6150		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
+6152	мёд засахаренный	crystallized honey	6150		g=1 tsp=8 tbsp=24
 6153	мёд цветочный	wildflower honey	6150		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
 6154	мёд гречишный	buckwheat honey	6150		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
 6155	мёд липовый	linden honey	6150		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
@@ -70,12 +66,10 @@
 6216	сироп вишнёвый	cherry syrup	6200		g=1 ml=1.3 tsp=6 tbsp=19 cup=320
 6217	сироп мятный	mint syrup	6200		g=1 ml=1.3 tsp=6 tbsp=19 cup=320
 6218	сироп ореховый	hazelnut syrup	6200		g=1 ml=1.3 tsp=6 tbsp=19 cup=320
-6219	сироп солодовый	barley malt syrup	6200		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
 6220	сироп без сахара	sugar-free syrup	6200		g=1 ml=1.1 tsp=5 tbsp=16 cup=275
-6230	патока	treacle			g=1 ml=1.4 tsp=7 tbsp=21 cup=350
+6230	патока	molasses			g=1 ml=1.4 tsp=7 tbsp=21 cup=350
 6231	патока светлая	golden syrup	6230		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
-6232	патока тёмная	black treacle	6230		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
-6233	меласса	molasses	6230		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
+6232	патока чёрная	blackstrap molasses	6230		g=1 ml=1.4 tsp=7 tbsp=21 cup=350
 
 # сахарозаменители
 6250	сахарозаменитель	sweetener			g=1 tsp=4 tbsp=12
@@ -99,16 +93,15 @@
 6310	дрожжи	yeast			g=1
 6311	дрожжи сухие	dry yeast	6310	true	g=1 pc=11 tsp=3 tbsp=9
 6312	дрожжи сухие быстродействующие	instant yeast	6310	true	g=1 pc=11 tsp=3 tbsp=9
-6313	дрожжи сухие активные	active dry yeast	6310		g=1 tsp=3 tbsp=9
-6314	дрожжи прессованные	fresh yeast	6310		g=1
+6313	дрожжи сухие активные	active dry yeast	6310	true	g=1 pc=7 tsp=3 tbsp=9
+6314	дрожжи прессованные	fresh yeast	6310	true	g=1 pc=100
 6315	дрожжи пищевые	nutritional yeast	6310		g=1 tsp=2 tbsp=5 cup=60
 6316	дрожжи пивные	brewer's yeast	6310		g=1 tsp=2 tbsp=6
 6317	дрожжи для пиццы	pizza yeast	6310	true	g=1 pc=11 tsp=3 tbsp=9
-6320	закваска	sourdough starter			g=1 tbsp=20 cup=250
-6321	закваска ржаная	rye sourdough starter	6320		g=1 tbsp=20 cup=250
-6322	закваска пшеничная	wheat sourdough starter	6320		g=1 tbsp=20 cup=250
+6320	закваска	sourdough starter			g=1 tbsp=15 cup=240
+6321	закваска ржаная	rye sourdough starter	6320		g=1 tbsp=15 cup=240
+6322	закваска пшеничная	wheat sourdough starter	6320		g=1 tbsp=15 cup=240
 6323	закваска сухая	dried sourdough starter	6320		g=1 tsp=3 tbsp=9
-6324	левен	levain	6320		g=1 tbsp=20 cup=250
 6325	улучшитель хлебопекарный	bread improver			g=1 tsp=3
 
 # ваниль, эссенции
@@ -118,15 +111,14 @@
 6353	ванильный экстракт	vanilla extract	6350		g=1 ml=0.95 tsp=5 tbsp=14
 6354	ванильная паста	vanilla bean paste	6350		g=1 tsp=6 tbsp=18
 6355	ваниль молотая	ground vanilla	6350		g=1 tsp=2 pinch=0.1
-6356	ванильная эссенция	vanilla essence	6350		g=1 ml=1.0 tsp=5
-6370	эссенция	flavoring essence			g=1 ml=1.0 tsp=5
-6371	эссенция ромовая	rum essence	6370		g=1 ml=1.0 tsp=5
-6372	эссенция миндальная	almond essence	6370		g=1 ml=1.0 tsp=5
-6373	эссенция апельсиновая	orange essence	6370		g=1 ml=1.0 tsp=5
-6374	эссенция лимонная	lemon essence	6370		g=1 ml=1.0 tsp=5
+6356	ванильная эссенция	imitation vanilla	6350		g=1 ml=1.0 tsp=5
+6370	эссенция	flavor extract			g=1 ml=1.0 tsp=5
+6371	эссенция ромовая	rum flavoring	6370		g=1 ml=1.0 tsp=5
+6373	эссенция апельсиновая	orange extract	6370		g=1 ml=1.0 tsp=5
+6374	эссенция лимонная	lemon extract	6370		g=1 ml=1.0 tsp=5
 6375	экстракт миндальный	almond extract	6370		g=1 ml=0.95 tsp=5
 6376	ароматизатор пищевой	food flavoring	6370		g=1 ml=1.0 tsp=5
-6377	эссенция кофейная	coffee essence	6370		g=1 ml=1.0 tsp=5
+6377	эссенция кофейная	coffee extract	6370		g=1 ml=1.0 tsp=5
 6378	экстракт мятный	peppermint extract	6370		g=1 ml=0.95 tsp=5
 
 # желирующие и загустители
@@ -165,7 +157,7 @@
 6502	шоколад горький	bittersweet chocolate	6500	true	g=1 pc=100
 6503	шоколад молочный	milk chocolate	6500	true	g=1 pc=100
 6504	шоколад белый	white chocolate	6500	true	g=1 pc=100
-6505	шоколад кондитерский	baking chocolate	6500	true	g=1 pc=100
+6505	шоколад полусладкий	semisweet chocolate	6500	true	g=1 pc=100
 6506	шоколадные капли	chocolate chips	6500		g=1 tbsp=11 cup=180
 6507	кувертюр	couverture chocolate	6500		g=1
 6508	шоколад рубиновый	ruby chocolate	6500	true	g=1 pc=100
@@ -205,14 +197,25 @@
 6641	мастика шоколадная	chocolate fondant	6640		g=1
 6642	мастика цветочная	flower paste	6640		g=1
 6643	марципан	marzipan			g=1
-6644	сахарная помадка	fondant icing			g=1 tbsp=18
+6644	сахарная помадка	poured fondant			g=1 tbsp=18
 6645	айсинг	royal icing mix			g=1 tbsp=8
 6646	топпинг	dessert topping			g=1 ml=1.3 tsp=6 tbsp=19
 6647	топпинг карамельный	caramel topping	6646		g=1 ml=1.3 tsp=6 tbsp=19
-6648	топпинг шоколадный	chocolate topping	6646		g=1 ml=1.3 tsp=6 tbsp=19
 6649	топпинг клубничный	strawberry topping	6646		g=1 ml=1.3 tsp=6 tbsp=19
 6650	гель зеркальный	mirror glaze			g=1
 6651	нейтральный гель	neutral glaze			g=1 tbsp=15
 6652	нонпарель	nonpareils	6600		g=1 tsp=5 tbsp=14
 6653	бусины кондитерские	dragées	6600		g=1 tsp=5 tbsp=14
 6654	вафельные картинки	edible image	6600	false	g=1 pc=5
+
+# more pantry staples: wrappers, matzo, ready crusts and doughs, mixes, chips
+6125	сахар коричневый светлый	light brown sugar	6100		g=1 tsp=4 tbsp=13 cup=220 pinch=0.5
+6222	сироп для блинов	pancake syrup	6200		g=1 ml=1.3 tsp=7 tbsp=20 cup=330
+6520	шоколад кусочками	chocolate chunks	6500		g=1 tbsp=10 cup=170
+6521	капли ирисковые	butterscotch chips	6500		g=1 tbsp=11 cup=180
+6522	капли арахисовые	peanut butter chips	6500		g=1 tbsp=11 cup=180
+# готовые смеси для выпечки
+6680	смесь для выпечки	baking mix			g=1
+6681	смесь для торта	cake mix	6680		g=1
+6682	смесь для брауни	brownie mix	6680		g=1
+6683	смесь для маффинов	muffin mix	6680		g=1

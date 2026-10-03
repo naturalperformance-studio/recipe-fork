@@ -41,7 +41,6 @@
 6735	масло хлопковое	cottonseed oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6736	масло сафлоровое	safflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6739	масло растительное без запаха	neutral oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
-6740	масло для жарки	frying oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6741	масло подсолнечное высокоолеиновое	high-oleic sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6742	масло кокосовое нерафинированное	virgin coconut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6760	спрей для жарки	cooking spray			g=1
@@ -49,7 +48,6 @@
 # жиры
 6800	жир	fat			g=1 tsp=4 tbsp=13 cup=205
 6801	смалец	lard	6800		g=1 tsp=4 tbsp=13 cup=205
-6802	жир свиной	pork drippings	6800		g=1 tsp=4 tbsp=13 cup=205
 6803	жир утиный	duck fat	6800		g=1 tsp=4 tbsp=13 cup=205
 6804	жир гусиный	goose fat	6800		g=1 tsp=4 tbsp=13 cup=205
 6805	жир говяжий	beef tallow	6800		g=1 tsp=4 tbsp=13 cup=205
@@ -66,5 +64,4 @@
 6824	маргарин мягкий	soft margarine	6820		g=1 tsp=5 tbsp=14 cup=230
 6830	спред	spread			g=1 tsp=5 tbsp=14
 6831	спред сливочно-растительный	butter blend spread	6830		g=1 tsp=5 tbsp=14
-6832	масло растительно-сливочное	butter-vegetable oil blend	6830		g=1 tsp=5 tbsp=14
 6833	масло веганское	vegan butter	6830	true	g=1 pc=200 tsp=5 tbsp=14

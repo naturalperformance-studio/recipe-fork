@@ -1,6 +1,6 @@
 # Pantry: dried and canned legumes (5900-5999), tofu and soy products (6000-6049), plant milks and creams (6050-6099).
 # Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
-# A canned legume's pc is one standard 400 g can.
+# A canned legume's pc is the whole can (400 g net); its cup is drained legumes, about 170 g.
 @range 5000-6999
 
 # фасоль
@@ -14,21 +14,21 @@
 5907	фасоль каннеллини	cannellini beans	5900		g=1 tbsp=12 cup=200
 5908	фасоль пёстрая	borlotti beans	5900		g=1 tbsp=12 cup=200
 5909	фасоль чёрный глаз	black-eyed peas	5900		g=1 tbsp=12 cup=200
-5910	фасоль консервированная	canned beans	5900	true	g=1 pc=400 cup=250
-5911	фасоль красная консервированная	canned red kidney beans	5900	true	g=1 pc=400 cup=250
-5912	фасоль белая консервированная	canned white beans	5900	true	g=1 pc=400 cup=250
-5913	фасоль чёрная консервированная	canned black beans	5900	true	g=1 pc=400 cup=250
+5910	фасоль консервированная	canned beans	5900	true	g=1 pc=400 cup=170
+5911	фасоль красная консервированная	canned red kidney beans	5900	true	g=1 pc=400 cup=170
+5912	фасоль белая консервированная	canned white beans	5900	true	g=1 pc=400 cup=170
+5913	фасоль чёрная консервированная	canned black beans	5900	true	g=1 pc=400 cup=170
 5914	фасоль мелкая белая	navy beans	5900		g=1 tbsp=13 cup=210
-5915	фасоль крупная белая	butter beans	5900		g=1 tbsp=11 cup=190
+5915	фасоль крупная белая	gigante beans	5900		g=1 tbsp=11 cup=190
 5916	бобы	fava beans			g=1 tbsp=11 cup=190
 5917	бобы сушёные	dried fava beans	5916		g=1 tbsp=11 cup=190
-5918	бобы консервированные	canned fava beans	5916	true	g=1 pc=400 cup=250
+5918	бобы консервированные	canned fava beans	5916	true	g=1 pc=400 cup=170
 
 # нут, чечевица, горох, маш, соя
 5920	нут	chickpeas			g=1 tbsp=12 cup=200
-5921	нут консервированный	canned chickpeas	5920	true	g=1 pc=400 cup=250
+5921	нут консервированный	canned chickpeas	5920	true	g=1 pc=400 cup=170
 5922	нут чёрный	black chickpeas	5920		g=1 tbsp=12 cup=200
-5923	нут дробленый	split chickpeas	5920		g=1 tbsp=13 cup=210
+5923	нут дроблёный	split chickpeas	5920		g=1 tbsp=13 cup=210
 5924	нут пророщенный	sprouted chickpeas	5920		g=1 tbsp=8 cup=140
 5930	чечевица	lentils			g=1 tbsp=12 cup=200
 5931	чечевица красная	red lentils	5930		g=1 tbsp=12 cup=200
@@ -37,13 +37,12 @@
 5934	чечевица чёрная	black beluga lentils	5930		g=1 tbsp=13 cup=210
 5935	чечевица жёлтая	yellow lentils	5930		g=1 tbsp=12 cup=200
 5936	чечевица пюи	Puy lentils	5930		g=1 tbsp=13 cup=210
-5937	чечевица консервированная	canned lentils	5930	true	g=1 pc=400 cup=250
+5937	чечевица консервированная	canned lentils	5930	true	g=1 pc=400 cup=170
 5938	чечевица пророщенная	sprouted lentils	5930		g=1 tbsp=6 cup=100
 5940	горох	dried peas			g=1 tbsp=13 cup=220
 5941	горох колотый	split peas	5940		g=1 tbsp=14 cup=230
 5942	горох целый	whole dried peas	5940		g=1 tbsp=13 cup=210
 5943	горох зелёный сушёный	green split peas	5940		g=1 tbsp=14 cup=230
-5944	горох жёлтый	yellow split peas	5940		g=1 tbsp=14 cup=230
 5950	маш	mung beans			g=1 tbsp=13 cup=210
 5951	маш колотый	split mung beans	5950		g=1 tbsp=13 cup=210
 5955	соевые бобы	soybeans			g=1 tbsp=12 cup=190
@@ -64,7 +63,7 @@
 6011	соевое мясо	textured soy protein			g=1 cup=90
 6012	соевый фарш	soy crumbles	6011		g=1 cup=90
 6013	соевый гуляш	soy chunks	6011		g=1 cup=80
-6014	соевая спаржа	dried tofu skin			g=1
+6014	соевая спаржа	dried bean curd sticks			g=1
 6015	юба	yuba			g=1
 6016	сейтан	seitan			g=1
 6017	окара	okara			g=1 tbsp=15 cup=200
