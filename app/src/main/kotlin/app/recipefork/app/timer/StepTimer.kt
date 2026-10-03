@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.book.BookName
+import app.recipefork.app.card.CardTarget
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
@@ -250,7 +251,7 @@ fun StepTimer(
         Row(
             Modifier
                 .weight(1f)
-                .heightIn(min = 48.dp)
+                .heightIn(min = CardTarget)
                 .clickable(
                     onClickLabel = stringResource(R.string.timer_start_action),
                     role = Role.Button,
@@ -314,26 +315,26 @@ fun RestartQuestion(timers: RecipeTimers) {
         confirmButton = {
             TextButton(
                 onClick = timers::confirmRestart,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(TimerTags.RESTART_CONFIRM),
+                modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(TimerTags.RESTART_CONFIRM),
             ) { Text(stringResource(R.string.timer_restart_confirm)) }
         },
         dismissButton = {
             TextButton(
                 onClick = timers::declineRestart,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(TimerTags.RESTART_DECLINE),
+                modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(TimerTags.RESTART_DECLINE),
             ) { Text(stringResource(R.string.timer_restart_decline)) }
         },
         modifier = Modifier.testTag(TimerTags.RESTART_QUESTION),
     )
 }
 
-/** An action beside a started timer, at least 48 by 48 dp (A11Y-003), announced as what it does (A11Y-005). */
+/** An action beside a started timer, at least the card's [CardTarget] square (A11Y-003, A11Y-007), announced as what it does (A11Y-005). */
 @Composable
 private fun TimerAction(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .heightIn(min = 48.dp)
-            .widthIn(min = 48.dp)
+            .heightIn(min = CardTarget)
+            .widthIn(min = CardTarget)
             .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,

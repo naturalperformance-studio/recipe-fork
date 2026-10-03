@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -110,7 +109,7 @@ internal fun StepsList(
 private fun StepRow(number: Int, step: Step, references: CardReferences, timers: RecipeTimers, photos: StepPhotosOnCard, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(CardTags.step(step.position))) {
-            Text("$number.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.widthIn(min = 32.dp))
+            Text("$number.", style = stepTextStyle, modifier = Modifier.widthIn(min = 32.dp))
             StepText(step, references, Modifier.weight(1f))
         }
         photos.of(step.position)?.let { file ->

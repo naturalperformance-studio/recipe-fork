@@ -3,15 +3,20 @@ package app.recipefork.app.card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.getTextLayoutResult
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
@@ -122,16 +127,29 @@ internal fun StepText(step: Step, references: CardReferences, modifier: Modifier
     }
     val spoken = runs.withIndex().joinToString("") { (index, run) -> marks[index]?.second ?: run.text }
     val tag = StepTags.text(step.position)
+    // The text as laid out stays reachable — by the screen reader for its bounds, by a test for its size — though the
+    // node's own text is replaced by what is spoken.
+    val laidOut = remember { arrayOfNulls<TextLayoutResult>(1) }
     Text(
         shown,
-        style = MaterialTheme.typography.bodyLarge,
+        style = stepTextStyle,
+        onTextLayout = { laidOut[0] = it },
         modifier = modifier.clearAndSetSemantics {
             text = AnnotatedString(spoken)
             shownText = shown.text
             testTag = tag
+            getTextLayoutResult { results -> laidOut[0]?.let { results += it } != null }
         },
     )
 }
+
+/**
+ * How a step reads on the card: larger than the ingredient list and than body text anywhere else in the product, so
+ * it can be read at arm's length (A11Y-007); it follows the font scale like any text (A11Y-004). The step's number
+ * is set the same.
+ */
+internal val stepTextStyle: TextStyle
+    @Composable get() = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 26.sp)
 
 /** A narrow space that never breaks, so the arrow stays on its quantity's line. */
 private const val ARROW_GAP = "\u202F"
