@@ -174,6 +174,8 @@ class RecipeFileCheckTest {
         refused(valid.copy(media = listOf(cover.copy(kind = MediaKind.VIDEO))))
         refused(valid.copy(media = listOf(cover.copy(attachment = MediaAttachment.ToStep(7)))))
         refused(valid.copy(media = valid.media + valid.media[1].copy(mediaId = "m-3", entry = "media/m-3.mp4")))
+        // A photograph and a clip on one step are two items there, whatever their kinds (MEDIA-001).
+        refused(valid.copy(media = valid.media + FileMedia("m-3", MediaKind.PHOTO, MediaAttachment.ToStep(1), "media/m-3.jpg")))
         refused(valid.copy(media = valid.media + valid.media[1].copy(attachment = MediaAttachment.ToStep(0), entry = "media/m-3.mp4")))
         refused(valid.copy(media = valid.media + valid.media[1].copy(mediaId = "m-3", attachment = MediaAttachment.ToStep(0))))
         listOf("m-1.jpg", "/media/m-1.jpg", "media/../m-1.jpg", "media/a/m-1.jpg", "media/", "media\\m-1.jpg", "other/m-1.jpg")

@@ -4,9 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import app.recipefork.app.book.BookName
+import app.recipefork.app.media.ClipDuration
+import app.recipefork.app.media.RetrieverClipDuration
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.Media
+import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -47,6 +50,7 @@ class RecipeImport(
     private val filesDirectory: File,
     private val clock: () -> Instant = Instant::now,
     private val limits: ArchiveLimits = ArchiveLimits(),
+    private val clipDuration: ClipDuration = RetrieverClipDuration,
 ) {
     suspend fun import(open: () -> InputStream): ImportOutcome {
         val recipes = recipes.inOpenBook()
@@ -74,6 +78,11 @@ class RecipeImport(
                 val media = Media(UUID.randomUUID().toString(), null, item.kind, item.attachment, MediaVisibility.PRIVATE)
                 File(directory, media.mediaId).also { written += media to it }
             }, limits, alive)
+            // MEDIA-007: a clip is held to its length before the recipe is believed, each read from its file once written.
+            written.filter { (media, _) -> media.kind == MediaKind.VIDEO }.forEach { (_, file) ->
+                alive()
+                RecipeArchiveReader.checkClip(file, clipDuration::of)
+            }
             val at = clock()
             val recipe = foundRecipe(content, written.map { it.first }, at)
             if (!recipes.addFound(recipe, at)) {

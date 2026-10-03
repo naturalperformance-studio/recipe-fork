@@ -13,6 +13,7 @@ import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.cover
+import app.recipefork.app.media.stepMedia
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
@@ -486,24 +487,35 @@ class RecipeEditor(
         }
     }
 
-    // A step's photograph (FLOW-026 (2), MEDIA-001, MEDIA-009).
+    // A step's item, a photograph or a clip (FLOW-026 (2), MEDIA-001, MEDIA-009).
 
-    /** The photograph of the step at [position], if it carries one. */
+    /** The photograph of the step at [position], if the item it carries is one. */
     fun stepPhoto(position: Int): Media? = current.value?.stepPhoto(position)
 
+    /** The item of the step at [position], a photograph or a clip, if it carries one. */
+    fun stepMedia(position: Int): Media? = current.value?.stepMedia(position)
+
     /**
-     * Makes the photograph [mediaId] the one of the step at [position]. A step carries one photograph, so it replaces
-     * any the step carried (MEDIA-001, MEDIA-009); once the change is in the book, [written] is given the identity of
-     * the photograph replaced, or null, whose file is then the caller's to delete. Returns whether it was set: a frozen
-     * recipe takes none, and a step that is not there carries none.
+     * Makes the photograph [mediaId] the item of the step at [position], replacing whatever item the step carried,
+     * as [setStepMedia] does.
      */
-    fun setStepPhoto(position: Int, mediaId: String, written: suspend (replaced: String?) -> Unit = {}): Boolean {
+    fun setStepPhoto(position: Int, mediaId: String, written: suspend (replaced: String?) -> Unit = {}): Boolean =
+        setStepMedia(position, mediaId, MediaKind.PHOTO, written)
+
+    /**
+     * Makes [mediaId], of [kind], the item of the step at [position]. A step carries one item of either kind, so it
+     * replaces any the step carried — a photograph a clip, a clip a photograph (MEDIA-001, MEDIA-009); once the change
+     * is in the book, [written] is given the identity of the item replaced, or null, whose file is then the caller's
+     * to delete (MEDIA-012). Returns whether it was set: a frozen recipe takes none, and a step that is not there
+     * carries none.
+     */
+    fun setStepMedia(position: Int, mediaId: String, kind: MediaKind, written: suspend (replaced: String?) -> Unit = {}): Boolean {
         val recipe = current.value ?: return false
         if (position !in recipe.steps.indices) return false
         val at = MediaAttachment.ToStep(position)
-        val replaced = stepPhoto(position)?.mediaId
-        val photo = Media(mediaId, null, MediaKind.PHOTO, at, MediaVisibility.PRIVATE)
-        return edit({ it.copy(media = it.media.filter { m -> !(m.kind == MediaKind.PHOTO && m.attachment == at) } + photo) }) {
+        val replaced = stepMedia(position)?.mediaId
+        val item = Media(mediaId, null, kind, at, MediaVisibility.PRIVATE)
+        return edit({ it.copy(media = it.media.filter { m -> m.attachment != at } + item) }) {
             written(replaced)
         }
     }
@@ -514,6 +526,16 @@ class RecipeEditor(
      */
     fun removeStepPhoto(position: Int, written: suspend (removed: String) -> Unit = {}): Boolean {
         val removed = stepPhoto(position)?.mediaId ?: return false
+        return edit({ it.copy(media = it.media.filter { m -> m.mediaId != removed }) }) { written(removed) }
+    }
+
+    /**
+     * Takes the item, a photograph or a clip, off the step at [position]; once the change is in the book, [written] is
+     * given its identity, whose file is then the caller's to delete. Returns whether the step carried one and was
+     * editable.
+     */
+    fun removeStepMedia(position: Int, written: suspend (removed: String) -> Unit = {}): Boolean {
+        val removed = stepMedia(position)?.mediaId ?: return false
         return edit({ it.copy(media = it.media.filter { m -> m.mediaId != removed }) }) { written(removed) }
     }
 
