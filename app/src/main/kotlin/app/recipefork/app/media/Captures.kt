@@ -9,20 +9,25 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
 /**
- * The files the phone's own camera application writes its shots into (FLOW-026): one new file per shot in a cache
- * directory of their own, shared with the camera application through [CaptureProvider] for that shot alone, and
- * deleted once the shot has been cropped, cancelled or retaken. What a process ended mid-way leaves is cleared at the
- * application's next start, once a day old.
+ * The files the phone's own camera application writes its shots and its clips into (FLOW-026): one new file per shot
+ * or clip in a cache directory of their own, shared with the camera application through [CaptureProvider] for that
+ * one alone, and deleted once the shot has been cropped, cancelled or retaken, or the clip converted, refused or
+ * cancelled. What a process ended mid-way leaves is cleared at the application's next start, once a day old.
  */
 internal object Captures {
     /** The directory the shots are written into; [CaptureProvider] shares nothing else. */
     fun directory(context: Context) = File(context.cacheDir, DIRECTORY)
 
     /** A new, empty file for one shot. Throws [IOException] where none can be made. */
-    fun create(context: Context): File {
+    fun create(context: Context): File = create(context, "shot-", ".jpg")
+
+    /** A new, empty file for one clip the camera records (FLOW-026), shared and cleared as a shot is. */
+    fun createClip(context: Context): File = create(context, "clip-", ".mp4")
+
+    private fun create(context: Context, prefix: String, suffix: String): File {
         val directory = directory(context)
-        if (!directory.isDirectory && !directory.mkdirs()) throw IOException("no directory for the shot")
-        return File.createTempFile("shot-", ".jpg", directory)
+        if (!directory.isDirectory && !directory.mkdirs()) throw IOException("no directory for the capture")
+        return File.createTempFile(prefix, suffix, directory)
     }
 
     /** The content address of [file] the camera application writes the shot through. */

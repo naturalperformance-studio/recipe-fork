@@ -17,7 +17,12 @@ import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySeeding
 import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.DictionarySync
+import app.recipefork.app.media.ClipConverter
+import app.recipefork.app.media.ClipSourceDuration
+import app.recipefork.app.media.ClipStore
+import app.recipefork.app.media.ClipTransformer
 import app.recipefork.app.media.MediaSweep
+import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.AndroidRingTimeouts
 import app.recipefork.app.timer.AndroidRingingSound
@@ -96,6 +101,15 @@ class AppContainer(
     /** The pool is the only recipe book so far (AUTH-026). */
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))
     val recipes = RecipeRepository(activeBook, context.filesDir)
+
+    /** Converts a step's clip on the device (MEDIA-004), one for the application. */
+    val clipConverter: ClipConverter = ClipTransformer(context)
+
+    /** Reads how long a clip offered to a step lasts, before it is converted (MEDIA-007). */
+    val clipDuration: ClipSourceDuration = RetrieverClipSourceDuration(context)
+
+    /** Where steps' clips are converted and kept, in the books under [context]'s files directory. */
+    fun clipStore(context: Context): ClipStore = ClipStore(context.filesDir, clipConverter, clipDuration)
 
     /** Clears each book's media directory of files no recipe holds, once as the book is opened. */
     val mediaSweep = MediaSweep(context.filesDir)

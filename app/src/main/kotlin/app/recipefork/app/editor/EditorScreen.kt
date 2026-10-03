@@ -91,6 +91,7 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
     container.dictionaries,
     dragHandleSide = container.dragHandleSide,
     mode = container.mode,
+    clipStore = container::clipStore,
 )
 
 /**
@@ -126,6 +127,7 @@ fun EditorScreen(
     BackHandler(onBack = onClose)
     val context = LocalContext.current
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
+    val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
     val host = remember { SnackbarHostState() }
     val statementScope = rememberCoroutineScope()
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
@@ -178,7 +180,7 @@ fun EditorScreen(
                     ServingCount(shown, editor)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode)
-                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving)
+                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips)
                     }
                     Description(shown, editor)
                 }
@@ -548,6 +550,12 @@ object EditorTags {
     fun stepPhotoRemove(position: Int) = "editor-step-$position-photo-remove"
     fun stepPhotoImage(position: Int) = "editor-step-$position-photo-image"
     fun stepPhotoWorking(position: Int) = "editor-step-$position-photo-working"
+    fun stepClipRecord(position: Int) = "editor-step-$position-clip-record"
+    fun stepClipChoose(position: Int) = "editor-step-$position-clip-choose"
+    fun stepClipImage(position: Int) = "editor-step-$position-clip-image"
+    fun stepClipMark(position: Int) = "editor-step-$position-clip-mark"
+    fun stepClipConverting(position: Int) = "editor-step-$position-clip-converting"
+    fun stepClipCancel(position: Int) = "editor-step-$position-clip-cancel"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
     fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
     fun timerAttach(position: Int) = "editor-step-$position-timer"

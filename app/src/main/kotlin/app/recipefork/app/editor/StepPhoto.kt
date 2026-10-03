@@ -20,34 +20,46 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.book.BookName
+import app.recipefork.app.media.ClipSources
+import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.PhotoAttaching
 import app.recipefork.app.media.PhotoImage
 import app.recipefork.app.media.PhotoNotice
 import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.rememberClipSources
 import app.recipefork.app.media.rememberPhotoSources
 import app.recipefork.core.recipe.Media
+import app.recipefork.core.recipe.MediaKind
 import kotlinx.coroutines.CoroutineScope
 
-/** Where the steps' photographs are kept, and the scope their work runs in, which outlives the screen. */
-internal class StepPhotos(val store: PhotoStore, val book: BookName, val saving: CoroutineScope)
+/**
+ * Where the steps' photographs and clips are kept — [clips] converts the clips, where clips are offered — and the
+ * scope their work runs in, which outlives the screen.
+ */
+internal class StepPhotos(val store: PhotoStore, val book: BookName, val saving: CoroutineScope, val clips: ClipStore? = null)
 
 @Composable
-internal fun rememberStepPhotos(store: PhotoStore, book: BookName, saving: CoroutineScope): StepPhotos =
-    remember(store, book, saving) { StepPhotos(store, book, saving) }
+internal fun rememberStepPhotos(store: PhotoStore, book: BookName, saving: CoroutineScope, clips: ClipStore? = null): StepPhotos =
+    remember(store, book, saving, clips) { StepPhotos(store, book, saving, clips) }
 
 /**
- * Attaches a photograph to the step whose key is [key], wherever that step stands once the photograph is ready; a step
- * deleted meanwhile takes none, and nothing of it is kept.
+ * Attaches a photograph or a clip to the step whose key is [key], wherever that step stands once it is ready; a step
+ * deleted meanwhile takes none, and nothing of it is kept. Either replaces whatever item the step held (MEDIA-001).
  */
 internal fun StepPhotoAttaching(editor: RecipeEditor, photos: StepPhotos, key: Long): PhotoAttaching = PhotoAttaching(
     photos.store, photos.book, photos.saving, PhotoNotice.STEP_REMOVED,
-    set = { mediaId, written -> editor.stepPosition(key)?.let { editor.setStepPhoto(it, mediaId, written) } ?: false },
-    unset = { written -> editor.stepPosition(key)?.let { editor.removeStepPhoto(it, written) } ?: false },
+    set = { mediaId, written -> editor.stepPosition(key)?.let { editor.setStepMedia(it, mediaId, MediaKind.PHOTO, written) } ?: false },
+    unset = { written -> editor.stepPosition(key)?.let { editor.removeStepMedia(it, written) } ?: false },
+    clips = photos.clips,
+    setClip = { mediaId, written -> editor.stepPosition(key)?.let { editor.setStepMedia(it, mediaId, MediaKind.VIDEO, written) } ?: false },
 )
 
-/** The photograph work of one editable step: attaching what the camera or the gallery gives, and their launchers. */
-internal class StepPhotoControl(val attaching: PhotoAttaching, val sources: PhotoSources)
+/**
+ * The media work of one editable step: attaching what the camera or the gallery gives — a photograph or a clip — and
+ * their launchers.
+ */
+internal class StepPhotoControl(val attaching: PhotoAttaching, val sources: PhotoSources, val clipSources: ClipSources)
 
 @Composable
 internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photos: StepPhotos): StepPhotoControl {
@@ -58,16 +70,22 @@ internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photo
         onPhoto = { attaching.attach(it) },
         onUnavailable = { attaching.tell(PhotoNotice.UNAVAILABLE) },
     )
+    val clipSources = rememberClipSources(
+        key = STEP_CLIP_KEY + key,
+        onClip = { attaching.attachClip(it) },
+        onUnavailable = { attaching.tell(it) },
+    )
     SaysPhotoNotices(attaching)
-    return StepPhotoControl(attaching, sources)
+    return StepPhotoControl(attaching, sources, clipSources)
 }
 
 /**
- * The photograph control of the editable step at [position] (FLOW-026 (2)), an icon in the step's row of actions: it
- * opens taking one with the camera, choosing one from the gallery and — once the step carries one — removing it.
+ * The media control of the editable step at [position] (FLOW-026 (2)), an icon in the step's row of actions: it opens
+ * one menu of taking a photograph with the camera, choosing one from the gallery, recording a clip with the camera,
+ * choosing one from the gallery and — once the step carries an item, [media] — removing it.
  */
 @Composable
-internal fun StepPhotoAction(position: Int, photo: Media?, control: StepPhotoControl) {
+internal fun StepPhotoAction(position: Int, media: Media?, control: StepPhotoControl) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         BlockAction(
@@ -78,48 +96,56 @@ internal fun StepPhotoAction(position: Int, photo: Media?, control: StepPhotoCon
             onClick = { expanded = !expanded },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.media_step_take)) },
+            @Composable
+            fun item(text: Int, tag: String, onClick: () -> Unit) = DropdownMenuItem(
+                text = { Text(stringResource(text)) },
                 onClick = {
                     expanded = false
-                    control.sources.takePhoto()
+                    onClick()
                 },
-                modifier = Modifier.testTag(EditorTags.stepPhotoTake(position)),
+                modifier = Modifier.testTag(tag),
             )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.media_step_choose)) },
-                onClick = {
-                    expanded = false
-                    control.sources.choosePhoto()
-                },
-                modifier = Modifier.testTag(EditorTags.stepPhotoChoose(position)),
-            )
-            if (photo != null) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.media_step_remove)) },
-                    onClick = {
-                        expanded = false
-                        control.attaching.remove()
-                    },
-                    modifier = Modifier.testTag(EditorTags.stepPhotoRemove(position)),
-                )
+            item(R.string.media_step_take, EditorTags.stepPhotoTake(position)) { control.sources.takePhoto() }
+            item(R.string.media_step_choose, EditorTags.stepPhotoChoose(position)) { control.sources.choosePhoto() }
+            item(R.string.media_step_clip_record, EditorTags.stepClipRecord(position)) { control.clipSources.recordClip() }
+            item(R.string.media_step_clip_choose, EditorTags.stepClipChoose(position)) { control.clipSources.chooseClip() }
+            when (media?.kind) {
+                null -> Unit
+                MediaKind.VIDEO -> item(R.string.media_step_clip_remove, EditorTags.stepPhotoRemove(position)) {
+                    control.attaching.remove(PhotoNotice.STEP_CLIP_REMOVED)
+                }
+                else -> item(R.string.media_step_remove, EditorTags.stepPhotoRemove(position)) { control.attaching.remove() }
             }
         }
     }
 }
 
 /**
- * Under the step's row of actions, only when there is something to show: its photograph, with a small indicator on it
- * while one offered is being prepared — or the indicator alone, where the step has none yet. What the author is told
- * about it is said at the bottom of the editor, not here.
+ * Under the step's row of actions, only when there is something to show: its photograph or its clip's first frame,
+ * with a small indicator on it while a photograph offered is being prepared — or the indicator alone, where the step
+ * has none yet — and, while a clip is being converted, that it is, with its cancel. What the author is told about it
+ * is said at the bottom of the editor, not here.
  */
 @Composable
-internal fun StepPhotoShown(position: Int, photo: Media?, photos: StepPhotos, control: StepPhotoControl) {
+internal fun StepPhotoShown(position: Int, media: Media?, photos: StepPhotos, control: StepPhotoControl) {
     val working by control.attaching.working
-    if (photo != null) {
-        StepPhotoImage(position, photo, photos, working)
-    } else if (working) {
+    val converting by control.attaching.converting
+    val indicator = working && !converting
+    if (media != null) {
+        StepMediaShown(position, media, photos, indicator)
+    } else if (indicator) {
         PhotoWorking(Modifier.padding(horizontal = 12.dp, vertical = 4.dp).testTag(EditorTags.stepPhotoWorking(position)))
+    }
+    if (converting) ClipConverting(position, onCancel = control.attaching::cancelClip)
+}
+
+/** The step's item as it is shown: its photograph, or its clip's first frame with the clip's mark. */
+@Composable
+internal fun StepMediaShown(position: Int, media: Media, photos: StepPhotos, working: Boolean = false) {
+    if (media.kind == MediaKind.VIDEO) {
+        StepClipFrame(position, photos.store.file(photos.book, media.mediaId), working)
+    } else {
+        StepPhotoImage(position, media, photos, working)
     }
 }
 
@@ -142,3 +168,6 @@ internal fun StepPhotoImage(position: Int, photo: Media, photos: StepPhotos, wor
 
 /** The prefix of the key a step's camera file is saved under while the camera is in front; the step's key follows. */
 private const val STEP_KEY = "editor.step."
+
+/** As [STEP_KEY], for the file a step's clip is recorded into. */
+private const val STEP_CLIP_KEY = "editor.step.clip."
