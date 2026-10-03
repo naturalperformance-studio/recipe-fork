@@ -99,12 +99,6 @@ class IngredientShareTest {
         assertFalse(IngredientShares.fits(grams, QuantityUnit.PIECE))
         assertFalse(IngredientShares.fits(grams, null))
         assertFalse(IngredientShares.fits(IngredientShare(Rational.ONE, QuantityUnit.TEASPOON), QuantityUnit.TABLESPOON))
-        val step = Step(0, "Добавьте ", listOf(IngredientReference(0, 9, IngredientShare(Rational.of(2), QuantityUnit.PIECE))))
-        assertEquals(
-            listOf(step.copy(ingredientReferences = listOf(IngredientReference(0, 9)))),
-            IngredientShares.madeWhole(listOf(step), 0),
-        )
-        assertNull(IngredientShares.madeWhole(listOf(step), 1))
     }
 
     // The editor reads the authored part, written as the list writes a quantity.
@@ -144,6 +138,23 @@ class IngredientShareTest {
         assertEquals(Rational.of(1), part.value)
         assertEquals(Rounding.UP, part.rounding)
         assertNull(IngredientShares.display(two, garlic.copy(divisible = null), ScaleFactor.ONE))
+    }
+
+    // SCALE-005: a part whose scaled value falls below its grid's floor is held at the floor and reads as rounded up,
+    // though the whole it belongs to is still above its own floor.
+    @Test
+    fun `a part below its grid's floor is held at the floor`() {
+        val quarter = ScaleFactor.of(Rational.of(1, 4))
+        val part = IngredientShares.display(IngredientShare(Rational.of(2), QuantityUnit.GRAM), flour, quarter)!!
+        assertEquals(Rational.of(1), part.value)
+        assertTrue(part.heldAtFloor)
+        assertEquals(Rounding.UP, part.rounding)
+        val whole = IngredientShares.display(IngredientShare(Rational.of(3, 2), QuantityUnit.KILOGRAM), flour, quarter)!!
+        assertFalse(whole.heldAtFloor)
+        val clove = IngredientShares.display(IngredientShare(Rational.of(1), QuantityUnit.PIECE), garlic, ScaleFactor.of(Rational.of(1, 4)))!!
+        assertEquals(Rational.of(1), clove.value)
+        assertTrue(clove.heldAtFloor)
+        assertEquals(Rounding.UP, clove.rounding)
     }
 
     // FLOW-016 (8): a derived timer name reads a part as the screen shows it; what it was read from tells a part apart.

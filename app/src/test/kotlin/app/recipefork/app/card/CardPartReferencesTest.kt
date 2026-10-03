@@ -3,11 +3,13 @@ package app.recipefork.app.card
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
@@ -144,5 +146,37 @@ class CardPartReferencesTest {
         val unscaled = CardReferences.of(listOf(unfinished), ingredientList(listOf(unfinished), emptyMap(), InterfaceLanguage.ENGLISH, 4, Rational.of(8)), InterfaceLanguage.ENGLISH)
         assertEquals("2 pc", unscaled.quantity(half(0)))
         assertEquals(Rounding.NONE, unscaled.rounding(half(0)))
+    }
+
+    // SCALE-002: while an ingredient is fixed, a part is scaled by the factor the fixing sets, not the count's: 400 g
+    // of flour fixed at 200 g makes a 100 g part read 50 g, and a part of another row follows the same factor.
+    @Test
+    fun aPartFollowsTheFactorAFixingSets() {
+        val flour = Ingredient(0, null, freeTextName = "Flour", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(400))
+        val cloves = garlic.copy(position = 1)
+        val bread = Recipe.create(now, null).copy(
+            title = "Bread",
+            servings = 4,
+            ingredients = listOf(flour, cloves),
+            steps = listOf(
+                Step(0, "Dust with ", listOf(IngredientReference(0, 10, IngredientShare(Rational.of(100), QuantityUnit.GRAM)))),
+                Step(1, "Rub with ", listOf(IngredientReference(1, 9, IngredientShare(Rational.of(2), QuantityUnit.PIECE)))),
+            ),
+        )
+        runBlocking { recipes.save(bread) }
+        compose.setContent { MaterialTheme { CardScreen(bread.id, recipes, environment, onBack = {}, onEdit = {}) } }
+        compose.awaitCard()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.step(1))).fetchSemanticsNodes().size == 1 }
+        assertEquals("Dust with 100 g", shown(0))
+        assertEquals("Rub with 2 pc", shown(1))
+        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("200")
+        compose.waitForIdle()
+        compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().assertIsEnabled().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isEmpty() }
+        assertEquals("Servings: ≈2", servings())
+        assertEquals("Dust with 50 g", shown(0))
+        assertEquals("Rub with 1 pc", shown(1))
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
@@ -100,7 +101,12 @@ class PartReferencesEditorTest {
 
     private fun open(id: RecipeId) {
         val environment = EditorEnvironment(active, device.catalog(context)) { created.plusSeconds(60) }
-        compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
+        compose.setContent {
+            MaterialTheme {
+                warning = MaterialTheme.colorScheme.errorContainer
+                LibraryOrEditor(session, recipes, environment, opened)
+            }
+        }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
         compose.runOnIdle { opened.value = id }
@@ -130,6 +136,16 @@ class PartReferencesEditorTest {
         node(tag).config[SemanticsActions.GetTextLayoutResult].action!!.invoke(results)
         return results.single().layoutInput.text
     }
+
+    private var warning: Color? = null
+
+    /** The background of the step's shown character at [at], as laid out. */
+    private fun background(at: Int): Color? =
+        laidOut(EditorTags.stepText(0)).spanStyles.filter { it.start <= at && at < it.end }.map { it.item.background }
+            .firstOrNull { it != Color.Unspecified }
+
+    private fun bold(at: Int): Boolean = laidOut(EditorTags.stepText(0)).spanStyles
+        .any { it.start <= at && at < it.end && it.item.fontWeight == FontWeight.Bold && it.item.textDecoration == TextDecoration.Underline }
 
     private fun placeCursor(position: Int, at: Int) {
         compose.onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextInputSelection(TextRange(at))
@@ -246,13 +262,18 @@ class PartReferencesEditorTest {
         open(recipe.id)
         assertEquals("В маринад: 2 шт", stepShown(0))
         assertTrue(!exists(EditorTags.stepPartWarning(0)))
+        assertTrue(background(11) != null && background(11) != warning)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("1")
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPartWarning(0)) }
         assertEquals("В маринад: 2 шт", stepShown(0))
         assertEquals("Часть 2 шт больше, чем 1 шт по списку.", textOf(EditorTags.stepPartWarning(0)))
+        // The reference itself is tinted as a warning, still bold and underlined like any reference.
+        compose.waitUntil(PATIENCE_MS) { background(11) == warning }
+        assertTrue(bold(11))
         assertEquals(listOf(IngredientReference(0, 11, two)), stored(recipe.id).steps[0].ingredientReferences)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("6")
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPartWarning(0)) }
+        compose.waitUntil(PATIENCE_MS) { background(11) != warning }
         assertEquals("В маринад: 2 шт", stepShown(0))
         assertEquals(listOf(IngredientReference(0, 11, two)), stored(recipe.id).steps[0].ingredientReferences)
     }

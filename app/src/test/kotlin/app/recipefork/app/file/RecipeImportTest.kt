@@ -214,6 +214,9 @@ class RecipeImportTest {
             IngredientShare(Rational.ZERO, QuantityUnit.GRAM),
             IngredientShare(Rational.of(-100), QuantityUnit.GRAM),
             IngredientShare(Rational.of(1), QuantityUnit.TEASPOON),
+            // In a unit of the row's type that the row can never read: it would read as the whole.
+            IngredientShare(Rational.of(100), QuantityUnit.MILLILITRE),
+            IngredientShare(Rational.of(1), QuantityUnit.LITRE),
         ).forEach { assertRefused(Refusal.BREAKS_RULES, file(parted(it))) }
         // A part larger than the whole is no rule broken: the book marks it, nothing refuses it.
         assertTrue(import(file(parted(IngredientShare(Rational.of(300), QuantityUnit.GRAM)))) is ImportOutcome.Added)

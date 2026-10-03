@@ -49,7 +49,7 @@ object IngredientShares {
             QuantityReading.NotANumber -> return ShareReading.Refused(QuantityProblem.NotAccepted(accepts))
             is QuantityReading.Value -> reading.value
         }
-        if (value.signum() <= 0 || !QuantityInput.holds(value, unit, ingredient.divisible)) {
+        if (!QuantityInput.holds(value, unit, ingredient.divisible)) {
             return ShareReading.Refused(QuantityProblem.NotAccepted(accepts))
         }
         val share = IngredientShare(value, unit)
@@ -80,14 +80,6 @@ object IngredientShares {
         if (!share.unit.type.carriesQuantity || share.amount.signum() <= 0) return null
         val divisible = if (share.unit.type == UnitType.PIECE) ingredient.divisible ?: return null else null
         return runCatching { Scaling.display(AuthoredQuantity(share.unit, share.amount, divisible), factor) }.getOrNull()
-    }
-
-    /** Every reference of [steps] to the row at [position] read as the whole again; null where none was a part. */
-    fun madeWhole(steps: List<Step>, position: Int): List<Step>? {
-        if (steps.none { step -> step.ingredientReferences.any { it.ingredientPosition == position && it.share != null } }) return null
-        return steps.map { step ->
-            step.copy(ingredientReferences = step.ingredientReferences.map { if (it.ingredientPosition == position) it.copy(share = null) else it })
-        }
     }
 
     private fun inBase(amount: Rational, unit: QuantityUnit): Rational = unit.baseMultiple?.let { amount * Rational.of(it) } ?: amount

@@ -139,6 +139,13 @@ class RecipeFileCheckTest {
         refused(step(part(0, Rational.of(2), QuantityUnit.PIECE)))
         refused(step(part(3, Rational.of(1), QuantityUnit.PINCH)))
         refused(step(part(3, Rational.of(1), QuantityUnit.TO_TASTE)))
+        // A part its row can never read: another dimension, another household unit. A part in grams of a row in
+        // kilograms reads, as the editor keeps it.
+        refused(step(part(0, Rational.of(1), QuantityUnit.LITRE)))
+        refused(step(part(0, Rational.of(500), QuantityUnit.MILLILITRE)))
+        refused(step(part(2, Rational.of(1, 2), QuantityUnit.TABLESPOON)))
+        refused(step(part(2, Rational.of(1), QuantityUnit.CUP)))
+        assertEquals(emptyList(), RecipeFileCheck.problems(step(part(0, Rational.of(1), QuantityUnit.KILOGRAM))))
     }
 
     @Test
