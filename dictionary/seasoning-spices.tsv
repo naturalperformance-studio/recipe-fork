@@ -1,5 +1,5 @@
 # Seasoning: salt, pepper, dried spices, spice blends, dried herbs.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
 @range 7000-8999
 
 # Salt (7000-7099). Level measures: fine salt tsp 7 g, coarse and flaky salts lighter.
@@ -24,9 +24,9 @@
 7018	соль сельдерейная	celery salt	7000		g=1 tsp=5 pinch=0.4
 
 # Pepper and chili (7100-7199). Peppercorns and allspice berries are counted (pc) and never halved.
-7100	перец чёрный	black pepper			g=1 tsp=2.3 tbsp=7 pinch=0.2
+7100	перец чёрный	black pepper			g=1 tsp=2.3 tbsp=7 pinch=0.2		перец	pepper
 7101	перец чёрный молотый	ground black pepper	7100		g=1 tsp=2.3 tbsp=7 pinch=0.2
-7102	перец чёрный горошком	black peppercorns	7100	false	g=1 pc=0.06 tsp=3 tbsp=9
+7102	перец чёрный горошком	black peppercorns	7100	false	g=1 pc=0.06 tsp=3 tbsp=9		перец горошком
 7103	перец чёрный крупного помола	coarsely ground black pepper	7100		g=1 tsp=2.3 tbsp=7 pinch=0.2
 7110	перец белый	white pepper			g=1 tsp=2.4 tbsp=7 pinch=0.2
 7111	перец белый молотый	ground white pepper	7110		g=1 tsp=2.4 tbsp=7 pinch=0.2
@@ -39,7 +39,7 @@
 7132	перец сычуаньский	Sichuan peppercorns			g=1 tsp=1.5 tbsp=4.5 pinch=0.1
 7133	перец длинный	long pepper			g=1 tsp=2
 7134	перец кубеба	cubeb pepper			g=1 tsp=2
-7140	перец красный молотый	ground red chili pepper			g=1 tsp=2.5 tbsp=7.5 pinch=0.2
+7140	перец красный молотый	ground red chili pepper			g=1 tsp=2.5 tbsp=7.5 pinch=0.2		красный перец
 7141	перец кайенский	cayenne pepper	7140		g=1 tsp=1.8 tbsp=5.3 pinch=0.2
 7157	перец чили молотый	ground chili	7140		g=1 tsp=2.5 tbsp=7.5 pinch=0.2
 7142	хлопья чили	red pepper flakes			g=1 tsp=1.8 tbsp=5.4 pinch=0.1
@@ -88,7 +88,7 @@
 7227	семена фенхеля	fennel seeds			g=1 tsp=2 tbsp=6
 7228	семена горчицы	mustard seeds			g=1 tsp=3.3 tbsp=10
 7229	семена горчицы чёрные	black mustard seeds	7228		g=1 tsp=3.3 tbsp=10
-7230	горчица сухая (порошок)	mustard powder			g=1 tsp=2.5 tbsp=7.5
+7230	горчица сухая (порошок)	mustard powder			g=1 tsp=2.5 tbsp=7.5			dry mustard;ground mustard
 7231	пажитник	fenugreek seeds			g=1 tsp=3.7 tbsp=11
 7232	уцхо-сунели	blue fenugreek			g=1 tsp=2 tbsp=6 pinch=0.2
 7233	шафран	saffron			g=1 pinch=0.05

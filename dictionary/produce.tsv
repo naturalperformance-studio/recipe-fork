@@ -1,9 +1,9 @@
 # Produce: vegetables, roots, onions and garlic, cabbages, tomatoes and peppers, squash, corn and peas, leafy greens and salads.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
 @range 1000-2999
 
 # Potatoes and roots (1000-1099)
-1000	картофель	potato		true	g=1 pc=150
+1000	картофель	potato		true	g=1 pc=150		картошка
 1001	картофель молодой	new potatoes	1000	true	g=1 pc=50
 1002	картофель мелкий	baby potatoes	1000	true	g=1 pc=30
 1003	картофель красный	red potato	1000	true	g=1 pc=150
@@ -15,7 +15,7 @@
 1009	картофельные дольки замороженные	frozen potato wedges	1000		g=1
 1020	батат	sweet potato		true	g=1 pc=250 cup=135
 1021	батат фиолетовый	purple sweet potato	1020	true	g=1 pc=250
-1030	морковь	carrot		true	g=1 pc=80 cup=120
+1030	морковь	carrot		true	g=1 pc=80 cup=120		морковка
 1031	морковь молодая	young carrots	1030	true	g=1 pc=40
 1032	морковь мини	baby carrots	1030	false	g=1 pc=10 cup=130
 1033	морковь фиолетовая	purple carrot	1030	true	g=1 pc=80
@@ -31,7 +31,7 @@
 1054	репа	turnip		true	g=1 pc=200 cup=130
 1055	брюква	rutabaga		true	g=1 pc=500 cup=140
 1056	пастернак	parsnip		true	g=1 pc=150 cup=135
-1057	петрушка корневая	parsley root		true	g=1 pc=60
+1057	петрушка корневая	parsley root		true	g=1 pc=60		корень петрушки
 1058	сельдерей корневой	celeriac		true	g=1 pc=600 cup=155
 1059	топинамбур	Jerusalem artichoke		true	g=1 pc=50 cup=150
 1060	имбирь	ginger			g=1 tsp=2 tbsp=6
@@ -53,7 +53,7 @@
 1104	лук сладкий	sweet onion	1100	true	g=1 pc=250 tbsp=10 cup=160
 1105	лук-шалот	shallot	1100	true	g=1 pc=30 tbsp=10
 1106	лук-порей	leek	1100	true	g=1 pc=250 cup=90
-1107	лук зелёный	scallion	1100	true	g=1 pc=15 tbsp=6 cup=100
+1107	лук зелёный	scallion	1100	true	g=1 pc=15 tbsp=6 cup=100			green onion;spring onion
 1108	лук жемчужный	pearl onions	1100	false	g=1 pc=10
 1109	лук-батун	Welsh onion	1100	true	g=1 pc=20 tbsp=6
 1110	шнитт-лук	chives	1100		g=1 tsp=1 tbsp=3 cup=50
@@ -86,9 +86,9 @@
 1240	брюссельская капуста	Brussels sprouts		false	g=1 pc=15 cup=90
 1241	брюссельская капуста замороженная	frozen Brussels sprouts	1240	false	g=1 pc=15 cup=90
 # Tomatoes, cucumbers, peppers, eggplant (1300-1399)
-1300	помидор	tomato		true	g=1 pc=120 cup=180
+1300	помидор	tomato		true	g=1 pc=120 cup=180		томат
 1301	помидор черри	cherry tomato	1300	false	g=1 pc=15 cup=150
-1302	помидор сливка	plum tomato	1300	true	g=1 pc=70 cup=180
+1302	помидор сливка	plum tomato	1300	true	g=1 pc=70 cup=180			roma tomato
 1303	помидор бычье сердце	beefsteak tomato	1300	true	g=1 pc=300
 1304	помидор розовый	pink tomato	1300	true	g=1 pc=200
 1305	помидор жёлтый	yellow tomato	1300	true	g=1 pc=120
@@ -101,7 +101,7 @@
 1321	огурец длинноплодный	English cucumber	1320	true	g=1 pc=300 cup=120
 1322	огурец короткоплодный	mini cucumber	1320	true	g=1 pc=80
 1323	огурец для засолки	pickling cucumber	1320	true	g=1 pc=80
-1330	перец болгарский	bell pepper		true	g=1 pc=150 cup=150
+1330	перец болгарский	bell pepper		true	g=1 pc=150 cup=150		сладкий перец	sweet pepper
 1331	перец болгарский красный	red bell pepper	1330	true	g=1 pc=160 cup=150
 1332	перец болгарский жёлтый	yellow bell pepper	1330	true	g=1 pc=160 cup=150
 1333	перец болгарский зелёный	green bell pepper	1330	true	g=1 pc=140 cup=150
@@ -111,7 +111,7 @@
 1337	перец падрон	padrón pepper	1330	false	g=1 pc=8
 1338	перец шишито	shishito pepper	1330	false	g=1 pc=6
 1339	перец банановый	banana pepper	1330	true	g=1 pc=50
-1340	перец чили	chili pepper		true	g=1 pc=15 tsp=3
+1340	перец чили	chili pepper		true	g=1 pc=15 tsp=3		острый перец	hot pepper
 1341	перец чили красный	red chili	1340	true	g=1 pc=15 tsp=3
 1342	перец чили зелёный	green chili	1340	true	g=1 pc=10 tsp=3
 1343	халапеньо	jalapeño	1340	true	g=1 pc=15 tsp=3
@@ -207,6 +207,7 @@
 1643	виноградный лист	grape leaf		false	g=1 pc=3
 1010	картофель юкон голд	Yukon Gold potato	1000	true	g=1 pc=170
 1011	картофель фингерлинг	fingerling potatoes	1000	false	g=1 pc=40
+1012	картофельное пюре	mashed potatoes			g=1 tbsp=13 cup=210
 1112	лук ялтинский	Crimean red onion	1100	true	g=1 pc=150 tbsp=10 cup=160
 1113	лук чипполини	cipollini onions	1100	false	g=1 pc=30
 1114	лук-порей мини	baby leeks	1100	true	g=1 pc=60

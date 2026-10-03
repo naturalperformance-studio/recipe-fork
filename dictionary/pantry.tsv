@@ -1,5 +1,5 @@
 # Pantry: vegetable oils (6700-6799), fats (6800-6899).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
 # Oils are about 0.92 g per ml; spoon and cup factors are grams per level measure, a cup is 250 ml.
 # Cured pork fat (сало, шпик) is the animal family's; butter and ghee too.
 @range 5000-6999

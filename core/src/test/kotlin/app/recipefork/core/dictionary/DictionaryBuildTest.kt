@@ -242,9 +242,115 @@ class DictionaryBuildTest {
         refused(build(ingredients("лук\tлук\tonion")), "produce.tsv:3", "is not a positive whole number")
         refused(build(ingredients("1000\tлук\tonion\t\tmaybe")), "produce.tsv:3", "divisible 'maybe'")
         refused(build(ingredients("1000\tлук\tonion\t\t\t\tgone")), "produce.tsv:3", "removed column")
-        refused(build(ingredients("1000\tлук\tonion\t\t\t\t\textra")), "produce.tsv:3", "8 columns")
+        refused(build(ingredients("1000\tлук\tonion\t\t\t\t\t\t\textra")), "produce.tsv:3", "10 columns")
         refused(build(ingredients("@rnage 1000-2999")), "produce.tsv:3", "unknown directive")
         refused(build(ingredients(" 1000\tлук\tonion")), "produce.tsv:3", "is not a positive whole number")
         refused(build(ingredients("1000\t лук\tonion")), "produce.tsv:3", "has spaces around it")
     }
+
+    @Test
+    fun synonymsAreReadPerLanguageWrittenIntoTheAssetAndCoveredByTheVersion() {
+        val plain = built(ingredients("1000\tкартофель\tpotato\t\ttrue\tg=1 pc=150"))
+        val result = built(
+            ingredients(
+                "1000\tкартофель\tpotato\t\ttrue\tg=1 pc=150\t\tкартошка;картоха",
+                "1001\tсахарная пудра\tpowdered sugar\t\t\tg=1\t\t\tconfectioners' sugar;icing sugar",
+            ),
+        )
+        val (potato, sugar) = result.dictionaries.ingredients
+        assertEquals(listOf("картошка", "картоха"), potato.synonymsRu)
+        assertEquals(emptyList(), potato.synonymsEn)
+        assertEquals(emptyList(), sugar.synonymsRu)
+        assertEquals(listOf("confectioners' sugar", "icing sugar"), sugar.synonymsEn)
+        assertTrue(result.text.contains("\"icing sugar\""), result.text)
+        assertEquals(result.dictionaries, DictionaryBuild.parseSnapshot(result.text))
+        assertEquals(result.dictionaries.digest(), result.dictionaries.version)
+        // The version covers the synonyms: the same entry without them has another digest.
+        val potatoAlone = built(ingredients("1000\tкартофель\tpotato\t\ttrue\tg=1 pc=150\t\tкартошка"))
+        assertTrue(potatoAlone.dictionaries.version != plain.dictionaries.version)
+    }
+
+    @Test
+    fun anEntryWithoutSynonymsEncodesAndDigestsAsBefore() {
+        val result = built(ingredients("1000\tкартофель\tpotato\t\ttrue\tg=1 pc=150\t\t\t"))
+        assertTrue("synonyms" !in result.text, result.text)
+        val before = """{"version":"","ingredients":[{"id":1000,"labelRu":"картофель","labelEn":"potato","divisible":true,""" +
+            """"factors":{"g":1.0,"pc":150.0}}],"tags":[{"id":10,"labelRu":"итальянская","labelEn":"Italian"}]}"""
+        val digest = java.security.MessageDigest.getInstance("SHA-256").digest(before.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        assertEquals(digest, result.dictionaries.version)
+        // An asset written before synonyms existed reads with none.
+        val old = DictionaryBuild.parseSnapshot(before)
+        assertEquals(emptyList(), old.ingredients.single().synonymsRu)
+        assertEquals(emptyList(), old.ingredients.single().synonymsEn)
+    }
+
+    @Test
+    fun refusesABlankSynonymOrOneWithSpacesAroundIt() {
+        refused(build(ingredients("1000\tкартофель\tpotato\t\t\t\t\tкартошка;;картоха")), "produce.tsv:3", "synonymsRu holds a blank synonym")
+        refused(build(ingredients("1000\tкартофель\tpotato\t\t\t\t\tкартошка;")), "produce.tsv:3", "synonymsRu holds a blank synonym")
+        refused(build(ingredients("1000\tкартофель\tpotato\t\t\t\t\t\t - ")), "produce.tsv:3", "synonymsEn holds a blank synonym")
+        refused(build(ingredients("1000\tкартофель\tpotato\t\t\t\t\t\tspud; tater")), "produce.tsv:3", "synonymsEn ' tater' has spaces around it")
+    }
+
+    @Test
+    fun refusesASynonymThatIsItsOwnEntrysLabel() {
+        refused(build(ingredients("1000\tкартофель\tpotato\t\t\t\t\tКартофель")), "produce.tsv:3", "synonymsRu 'Картофель' is the entry's own label")
+        refused(build(ingredients("1000\tсахарная пудра\tpowdered sugar\t\t\t\t\t\tsugar powdered")), "produce.tsv:3", "own label")
+        refused(build(ingredients("1000\tгусь\tgoose\t\t\t\tremoved\t\tGoose")), "produce.tsv:3", "synonymsEn 'Goose' is the entry's own label")
+    }
+
+    @Test
+    fun refusesASynonymThatIsAnotherLiveEntrysLabel() {
+        refused(
+            build(ingredients("1000\tпомидор\ttomato\t\t\t\t\tтоматы", "1001\tТоматы\tcanned tomatoes")),
+            "produce.tsv:3",
+            "synonymsRu 'томаты' is the same, as the search reads it, as the label 'Томаты' at produce.tsv:4",
+        )
+        refused(
+            build(ingredients("1000\tпомидор\ttomato", "1001\tтомат\ttomatoes\t\t\t\t\t\ttomato")),
+            "produce.tsv:4",
+            "synonymsEn 'tomato' is the same, as the search reads it, as the label 'tomato' at produce.tsv:3",
+        )
+        // Across files, and a removed entry's label is no longer in the way.
+        refused(
+            build(ingredients("1000\tпомидор\ttomato\t\t\t\t\tманка"), SourceFile("pantry.tsv", "@range 5000-6999\n5000\tманка\tsemolina\n")),
+            "produce.tsv:3",
+            "as the label 'манка' at pantry.tsv:2",
+        )
+        built(ingredients("1000\tпомидор\ttomato\t\t\t\t\tтомат", "1001\tтомат\told tomato\t\t\t\tremoved"))
+    }
+
+    @Test
+    fun refusesASynonymThatIsAnotherEntrysSynonymInTheSameLanguage() {
+        refused(
+            build(ingredients("1000\tсахарная пудра\tpowdered sugar\t\t\t\t\t\ticing sugar", "1001\tсахар\tsugar\t\t\t\t\t\tSugar, icing")),
+            "produce.tsv:4",
+            "synonymsEn 'Sugar, icing' is the same, as the search reads it, as the synonym 'icing sugar' at produce.tsv:3",
+        )
+        refused(build(ingredients("1000\tкартофель\tpotato\t\t\t\t\tкартошка;Картошка")), "produce.tsv:3", "as the synonym 'картошка'")
+        // The same word in the other language is not the same synonym.
+        built(ingredients("1000\tкартофель\tpotato\t\t\t\t\tspud", "1001\tбатат\tsweet potato\t\t\t\t\t\tspud"))
+    }
+
+    // A removed entry is offered to nobody: its synonyms are exempt from the cross checks — another entry's label or
+    // synonym may be the same — and checked against its own label only.
+    @Test
+    fun aRemovedEntrysSynonymIsExemptFromTheCrossChecks() {
+        // The same as a live entry's label.
+        built(ingredients("1000\tманная крупа\tsemolina", "1001\tманка старая\told semolina\t\t\t\tremoved\tманная крупа"))
+        // The same as a live entry's synonym, whichever stands first.
+        built(ingredients("1000\tкартофель\tpotato\t\t\t\t\tкартошка", "1001\tкартофель старый\told potato\t\t\t\tremoved\tкартошка"))
+        built(ingredients("1000\tкартофель старый\told potato\t\t\t\tremoved\tкартошка", "1001\tкартофель\tpotato\t\t\t\t\tкартошка"))
+        // The same as another removed entry's synonym.
+        built(
+            ingredients(
+                "1000\tгусь\tgoose\t\t\t\tremoved\t\tgander",
+                "1001\tгусь домашний\tdomestic goose\t\t\t\tremoved\t\tgander",
+            ),
+        )
+        // Its own label still is not its synonym.
+        refused(build(ingredients("1000\tгусь\tgoose\t\t\t\tremoved\tгусь")), "produce.tsv:3", "is the entry's own label")
+    }
 }
+

@@ -47,7 +47,10 @@ class ShippedSnapshotTest {
         assertEquals(
             listOf(
                 IngredientEntryDto(1, "курица", "chicken", null, true, mapOf("g" to 1.0, "pc" to 1500.0)),
-                IngredientEntryDto(2, "крылышки", "chicken wings", 1, false, mapOf("g" to 1.0, "pc" to 80.0)),
+                IngredientEntryDto(
+                    2, "крылышки", "chicken wings", 1, false, mapOf("g" to 1.0, "pc" to 80.0),
+                    synonymsRu = listOf("куриные крылья", "куриные крылышки"),
+                ),
                 IngredientEntryDto(3, "мясо", "meat", factors = mapOf("g" to 1.0)),
                 IngredientEntryDto(4, "фарш", "mince", factors = mapOf("g" to 1.0)),
                 IngredientEntryDto(5, "говядина", "beef", factors = mapOf("g" to 1.0)),

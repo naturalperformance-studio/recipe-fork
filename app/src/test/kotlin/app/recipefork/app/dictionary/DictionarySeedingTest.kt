@@ -122,6 +122,24 @@ class DictionarySeedingTest {
         )
     }
 
+    // The synonyms of an entry are held on the device and read back with it — seeded from the snapshot or refreshed from
+    // the server; an entry without synonyms holds none.
+    @Test
+    fun anEntryKeepsItsSynonymsOnTheDevice() = runBlocking {
+        val potato = IngredientEntryDto(1, "картофель", "potato", synonymsRu = listOf("картошка"))
+        val sugar = IngredientEntryDto(2, "сахарная пудра", "powdered sugar", synonymsEn = listOf("confectioners' sugar", "icing sugar"))
+        val salt = IngredientEntryDto(3, "соль", "salt")
+        shipped = DictionariesDto("s1", listOf(potato, sugar, salt), emptyList())
+        val catalog = DictionaryCatalog(dao, seeding)
+        assertEquals(listOf(potato, sugar, salt), catalog.ingredients().map { it.toDto() })
+        assertEquals(listOf("confectioners' sugar", "icing sugar"), catalog.ingredients()[1].synonymsEn)
+        assertEquals(emptyList<String>(), catalog.ingredients()[2].synonymsRu)
+
+        val tomato = IngredientEntryDto(4, "помидор", "tomato", synonymsRu = listOf("томат"))
+        refreshFromServer(DictionariesDto("server-1", listOf(potato, tomato), emptyList()))
+        assertEquals(listOf(listOf("картошка"), emptyList(), emptyList(), listOf("томат")), catalog.ingredients().map { it.synonymsRu })
+    }
+
     // FLOW-001 (7), DOM-009 (5): replacing the held copy keeps a removed entry, so every recipe naming it keeps its name —
     // whether the new copy carries it marked removed or no longer carries it at all.
     @Test
@@ -145,31 +163,54 @@ class DictionarySeedingTest {
         assertEquals(listOf(1L to true, 2L to false), dao.ingredients().map { it.id to it.removed })
     }
 
-    // AppDatabase version 2: a device holding the version-1 store has it wiped, not migrated, and the dictionaries are
+    // AppDatabase version 3: a device holding an earlier store has it wiped, not migrated, and the dictionaries are
     // seeded again on their next read — even though the snapshot it was seeded from has not changed.
     @Test
-    fun aVersionOneStoreIsWipedAndTheDictionariesAreSeededAgain() = runBlocking {
-        val name = "app-database-v1-test.db"
+    fun aVersionOneStoreIsWipedAndTheDictionariesAreSeededAgain() = wipedAndSeededAgain(1) { v1 ->
+        v1.execSQL("create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, parentId integer)")
+        v1.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null)")
+    }
+
+    // T-128 gave the entry its synonyms in version 3: a version-2 store — divisibility, factors and removal, no
+    // synonyms — is wiped and seeded again, its entries now holding their synonyms.
+    @Test
+    fun aVersionTwoStoreIsWipedAndTheDictionariesAreSeededAgainWithSynonyms() = wipedAndSeededAgain(2) { v2 ->
+        v2.execSQL(
+            "create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, " +
+                "parentId integer, divisible integer, factors text not null, removed integer not null)",
+        )
+        v2.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null, 1, '{\"pc\":1500.0}', 0)")
+    }
+
+    private fun wipedAndSeededAgain(version: Int, entries: (SQLiteDatabase) -> Unit) = runBlocking {
+        val name = "app-database-v$version-test.db"
         val file = context.getDatabasePath(name)
         file.parentFile?.mkdirs()
-        SQLiteDatabase.openOrCreateDatabase(file, null).use { v1 ->
-            v1.execSQL("create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, parentId integer)")
-            v1.execSQL("create table tag (id integer not null primary key, labelRu text not null, labelEn text not null)")
-            v1.execSQL("create table dictionary_version (id integer not null primary key, version text not null)")
-            v1.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null)")
-            v1.execSQL("insert into dictionary_version values (0, 's1')")
-            v1.version = 1
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { old ->
+            entries(old)
+            old.execSQL("create table tag (id integer not null primary key, labelRu text not null, labelEn text not null)")
+            old.execSQL("create table dictionary_version (id integer not null primary key, version text not null)")
+            old.execSQL("insert into dictionary_version values (0, 's1')")
+            old.version = version
         }
         seeded.version = "s1"
-        shipped = DictionariesDto("s1", listOf(IngredientEntryDto(1, "курица", "chicken", divisible = true, factors = mapOf("pc" to 1500.0))), emptyList())
+        shipped = DictionariesDto(
+            "s1",
+            listOf(IngredientEntryDto(1, "курица", "chicken", divisible = true, factors = mapOf("pc" to 1500.0), synonymsRu = listOf("кура"))),
+            emptyList(),
+        )
 
         val opened = AppDatabase.open(context, name)
         try {
             val dao = opened.dictionaryDao()
             assertNull(dao.version())
             val catalog = DictionaryCatalog(dao, DictionarySeeding(dao, seeded) { shipped })
-            assertEquals(listOf(IngredientEntryEntity(1, "курица", "chicken", null, true, mapOf("pc" to 1500.0))), catalog.ingredients())
+            assertEquals(
+                listOf(IngredientEntryEntity(1, "курица", "chicken", null, true, mapOf("pc" to 1500.0), synonymsRu = listOf("кура"))),
+                catalog.ingredients(),
+            )
             assertEquals("s1", dao.version())
+            assertEquals(3, AppDatabase.VERSION)
             assertEquals(AppDatabase.VERSION, opened.openHelper.readableDatabase.version)
         } finally {
             opened.close()

@@ -41,6 +41,21 @@ class ShippedDictionaryTest {
     }
 
     @Test
+    fun theWordsCooksWriteLeadToTheirEntries() {
+        val byLabel = built().dictionaries.ingredients.associateBy { it.labelRu }
+        fun synonyms(label: String) = byLabel.getValue(label).let { it.synonymsRu to it.synonymsEn }
+        assertEquals(listOf("картошка") to emptyList(), synonyms("картофель"))
+        assertEquals(listOf("томат") to emptyList(), synonyms("помидор"))
+        assertEquals(listOf("манка") to emptyList(), synonyms("манная крупа"))
+        assertEquals(listOf("курдючный жир") to emptyList(), synonyms("курдюк"))
+        assertEquals(emptyList<String>() to listOf("confectioners' sugar", "icing sugar"), synonyms("сахарная пудра"))
+        assertEquals(listOf("булочка для гамбургера") to listOf("hamburger bun"), synonyms("булочка для бургера"))
+        // T-131: the duplicate пармиджано реджано is removed; the word leads to the Parmesan.
+        assertEquals(listOf("пармиджано реджано") to listOf("Parmigiano Reggiano"), synonyms("пармезан"))
+        assertTrue(built().dictionaries.ingredients.single { it.id == 4792L }.removed)
+    }
+
+    @Test
     fun theVersionIsTheDigestOfTheContent() {
         val dictionaries = built().dictionaries
         assertEquals(dictionaries.digest(), dictionaries.version)
@@ -53,7 +68,10 @@ class ShippedDictionaryTest {
         assertEquals(
             listOf(
                 IngredientEntryDto(1, "курица", "chicken", null, true, mapOf("g" to 1.0, "pc" to 1500.0)),
-                IngredientEntryDto(2, "крылышки", "chicken wings", 1, false, mapOf("g" to 1.0, "pc" to 80.0)),
+                IngredientEntryDto(
+                    2, "крылышки", "chicken wings", 1, false, mapOf("g" to 1.0, "pc" to 80.0),
+                    synonymsRu = listOf("куриные крылья", "куриные крылышки"),
+                ),
                 IngredientEntryDto(3, "мясо", "meat", factors = mapOf("g" to 1.0)),
                 IngredientEntryDto(4, "фарш", "mince", factors = mapOf("g" to 1.0)),
                 IngredientEntryDto(5, "говядина", "beef", factors = mapOf("g" to 1.0)),

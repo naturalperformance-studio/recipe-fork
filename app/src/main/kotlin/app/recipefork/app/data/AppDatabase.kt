@@ -14,7 +14,7 @@ import app.recipefork.app.dictionary.TagEntity
 /**
  * The device's local store: its truth until the server has accepted a change.
  *
- * Version 2 gave an ingredient entry its divisibility, factors and removal. A change of version wipes the store
+ * Version 2 gave an ingredient entry its divisibility, factors and removal; version 3 its synonyms. A change of version wipes the store
  * rather than migrating it — what it holds is the dictionaries, which seeding and the next refresh bring back, and
  * the owner's book holds test data only — and the dictionaries are seeded again on their next read.
  */
@@ -28,7 +28,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dictionaryDao(): DictionaryDao
 
     companion object {
-        const val VERSION = 2
+        const val VERSION = 3
         const val NAME = "recipe-fork.db"
 
         fun open(context: Context, name: String = NAME): AppDatabase =

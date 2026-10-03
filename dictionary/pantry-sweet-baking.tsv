@@ -1,13 +1,13 @@
 # Pantry: sugar (6100-6149), honey (6150-6199), syrups and treacle (6200-6249), sweeteners (6250-6299), leavening and
 # yeast (6300-6349), vanilla and essences (6350-6399), gelling agents and thickeners (6400-6449), cocoa (6450-6499),
 # chocolate (6500-6599), decoration and coloring (6600-6699).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
 # A sachet's pc is the usual retail sachet (baking powder 10 g, vanilla sugar 10 g, dry yeast 11 g, gelatin 10 g).
 @range 5000-6999
 
 # сахар
 6100	сахар	sugar			g=1 tsp=4 tbsp=12 cup=200 pinch=0.5
-6101	сахар белый	granulated sugar	6100		g=1 tsp=4 tbsp=12 cup=200 pinch=0.5
+6101	сахар белый	granulated sugar	6100		g=1 tsp=4 tbsp=12 cup=200 pinch=0.5			white sugar
 6102	сахар тростниковый	cane sugar	6100		g=1 tsp=4 tbsp=12 cup=200 pinch=0.5
 6103	сахар коричневый	brown sugar	6100		g=1 tsp=4 tbsp=13 cup=220 pinch=0.5
 6104	сахар коричневый тёмный	dark brown sugar	6100		g=1 tsp=4 tbsp=13 cup=220 pinch=0.5
@@ -16,7 +16,7 @@
 6107	сахар кокосовый	coconut sugar	6100		g=1 tsp=4 tbsp=10 cup=170
 6108	сахар пальмовый	palm sugar	6100		g=1 tsp=4 tbsp=12 cup=200
 6109	сахар рафинад	sugar cubes	6100	false	g=1 pc=5
-6110	сахарная пудра	powdered sugar	6100		g=1 tsp=3 tbsp=8 cup=130 pinch=0.5
+6110	сахарная пудра	powdered sugar	6100		g=1 tsp=3 tbsp=8 cup=130 pinch=0.5			confectioners' sugar;icing sugar
 6111	ванильный сахар	vanilla sugar	6100	true	g=1 pc=10 tsp=4 tbsp=12
 6112	сахар желирующий	gelling sugar	6100		g=1 tsp=4 tbsp=12 cup=200
 6113	сахар жемчужный	pearl sugar	6100		g=1 tsp=4 tbsp=12

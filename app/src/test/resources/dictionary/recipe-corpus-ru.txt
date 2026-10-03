@@ -1,1358 +1,1361 @@
 # Ingredient lines of common home recipes, as a cook writes them in a recipe list (T-124).
 # Written for the corpus test before the dictionary sources were read.
-# "@ <recipe>" opens a recipe; every other line is "<ingredient line> | <intended meaning, loosely>".
+# "@ <recipe>" opens a recipe; every other line is "<ingredient line> | <intended meaning, loosely> | <intended ids>".
 # A line may hold several names separated by commas ("соль, перец по вкусу"); the test splits them.
+# The intended ids (T-130) name, for each name of the line in turn, the dictionary entry the cook means, e.g.
+# "соль, перец по вкусу | salt, black pepper | 7000, 7100"; "a/b" where either entry is what is meant (fresh or dried
+# herbs), "gap" where the dictionary holds no entry for it.
 
 @ Борщ
-говядина на кости | beef on the bone
-свёкла | beet
-капуста белокочанная | white cabbage
-картофель | potato
-морковь | carrot
-лук репчатый | onion
-томатная паста | tomato paste
-чеснок | garlic
-лавровый лист | bay leaf
-уксус | vinegar
-сметана | sour cream
-укроп | dill
-соль, перец по вкусу | salt, black pepper
+говядина на кости | beef on the bone | 3124
+свёкла | beet | 1040
+капуста белокочанная | white cabbage | 1201
+картофель | potato | 1000
+морковь | carrot | 1030
+лук репчатый | onion | 1101
+томатная паста | tomato paste | 8100
+чеснок | garlic | 1120
+лавровый лист | bay leaf | 7251
+уксус | vinegar | 8300
+сметана | sour cream | 4500
+укроп | dill | 1701
+соль, перец по вкусу | salt, black pepper | 7000, 7100
 
 @ Щи из свежей капусты
-свинина | pork
-капуста | cabbage
-картошка | potato
-морковка | carrot
-лук | onion
-помидоры | tomato
-петрушка | parsley
-сметана для подачи | sour cream
+свинина | pork | 3200
+капуста | cabbage | 1200
+картошка | potato | 1000
+морковка | carrot | 1030
+лук | onion | 1100
+помидоры | tomato | 1300
+петрушка | parsley | 1702
+сметана для подачи | sour cream | 4500
 
 @ Кислые щи
-квашеная капуста | sauerkraut
-говяжья грудинка | beef brisket
-сушёные грибы | dried mushrooms
-корень петрушки | parsley root
-лук репчатый | onion
-мука | flour
+квашеная капуста | sauerkraut | 8407
+говяжья грудинка | beef brisket | 3105
+сушёные грибы | dried mushrooms | 1840
+корень петрушки | parsley root | 1057
+лук репчатый | onion | 1101
+мука | flour | 5000
 
 @ Солянка сборная мясная
-копчёная колбаса | smoked sausage
-ветчина | ham
-сосиски | frankfurters
-копчёные рёбрышки | smoked ribs
-солёные огурцы | pickled cucumbers
-огуречный рассол | pickle brine
-маслины | black olives
-каперсы | capers
-лимон | lemon
-томатная паста | tomato paste
+копчёная колбаса | smoked sausage | 3803
+ветчина | ham | 3850
+сосиски | frankfurters | 3830
+копчёные рёбрышки | smoked ribs | 3888
+солёные огурцы | pickled cucumbers | 8401
+огуречный рассол | pickle brine | 8426
+маслины | black olives | 8452
+каперсы | capers | 8420
+лимон | lemon | 2000
+томатная паста | tomato paste | 8100
 
 @ Рассольник
-перловка | pearl barley
-солёные огурцы | pickles
-почки говяжьи | beef kidneys
-картофель | potato
-морковь | carrot
-лук | onion
-рассол | brine
+перловка | pearl barley | 5215
+солёные огурцы | pickles | 8401
+почки говяжьи | beef kidneys | 3741
+картофель | potato | 1000
+морковь | carrot | 1030
+лук | onion | 1100
+рассол | brine | 8426
 
 @ Уха
-судак | pike-perch
-окунь | perch
-сёмга | salmon
-картофель | potato
-лук | onion
-перец горошком | black peppercorns
-лавровый лист | bay leaf
-водка | vodka
-зелень | herbs
+судак | pike-perch | 4120
+окунь | perch | 4123
+сёмга | salmon | 4030
+картофель | potato | 1000
+лук | onion | 1100
+перец горошком | black peppercorns | 7102
+лавровый лист | bay leaf | 7251
+водка | vodka | 8740
+зелень | herbs | 1700
 
 @ Куриный суп с лапшой
-курица | chicken
-куриный бульон | chicken broth
-лапша | noodles
-морковь | carrot
-лук | onion
-зелёный лук | scallion
+курица | chicken | 1
+куриный бульон | chicken broth | 8601
+лапша | noodles | 5500
+морковь | carrot | 1030
+лук | onion | 1100
+зелёный лук | scallion | 1107
 
 @ Гороховый суп
-горох колотый | split peas
-копчёные рёбра | smoked ribs
-бекон | bacon
-картофель | potato
-сухарики | croutons
+горох колотый | split peas | 5941
+копчёные рёбра | smoked ribs | 3888
+бекон | bacon | 3870
+картофель | potato | 1000
+сухарики | croutons | 5771
 
 @ Грибной суп
-шампиньоны | white mushrooms
-белые грибы | porcini
-картофель | potato
-сливки | cream
-сливочное масло | butter
+шампиньоны | white mushrooms | 1801
+белые грибы | porcini | 1807
+картофель | potato | 1000
+сливки | cream | 4480
+сливочное масло | butter | 4600
 
 @ Окрошка на квасе
-квас | kvass
-редиска | radish
-огурцы | cucumber
-варёная колбаса | bologna sausage
-яйца | eggs
-зелёный лук | green onion
-укроп | dill
-горчица | mustard
+квас | kvass | 8870
+редиска | radish | 1050
+огурцы | cucumber | 1320
+варёная колбаса | bologna sausage | 3801
+яйца | eggs | 4400
+зелёный лук | green onion | 1107
+укроп | dill | 1701
+горчица | mustard | 8200
 
 @ Окрошка на кефире
-кефир | kefir
-минеральная вода | mineral water
-говядина отварная | boiled beef
-картофель отварной | boiled potato
+кефир | kefir | 4520
+минеральная вода | mineral water | 8801
+говядина отварная | boiled beef | 5
+картофель отварной | boiled potato | 1000
 
 @ Свекольник
-свёкла с ботвой | beet with greens
-огурец | cucumber
-яйцо | egg
-лимонная кислота | citric acid
+свёкла с ботвой | beet with greens | 1040
+огурец | cucumber | 1320
+яйцо | egg | 4400
+лимонная кислота | citric acid | 7261
 
 @ Харчо
-говядина | beef
-рис | rice
-ткемали | tkemali sauce
-грецкие орехи | walnuts
-хмели-сунели | khmeli suneli
-кинза | cilantro
-острый перец | hot chili pepper
+говядина | beef | 5
+рис | rice | 5300
+ткемали | tkemali sauce | 8225
+грецкие орехи | walnuts | 2501
+хмели-сунели | khmeli suneli | 7401
+кинза | cilantro | 1705
+острый перец | hot chili pepper | 1340
 
 @ Суп-пюре из тыквы
-тыква | pumpkin
-сливки 20% | cream
-имбирь | ginger
-тыквенные семечки | pumpkin seeds
-мускатный орех | nutmeg
+тыква | pumpkin | 1370
+сливки 20% | cream | 4482
+имбирь | ginger | 1060
+тыквенные семечки | pumpkin seeds | 2603
+мускатный орех | nutmeg | 7218
 
 @ Сырный суп
-плавленый сыр | processed cheese
-картофель | potato
-куриное филе | chicken breast
-морковь | carrot
+плавленый сыр | processed cheese | 4704
+картофель | potato | 1000
+куриное филе | chicken breast | 3501
+морковь | carrot | 1030
 
 @ Суп с фрикадельками
-фарш | ground meat
-вермишель | vermicelli
-картофель | potato
-морковь | carrot
-петрушка | parsley
+фарш | ground meat | 4
+вермишель | vermicelli | 5417
+картофель | potato | 1000
+морковь | carrot | 1030
+петрушка | parsley | 1702
 
 @ Чечевичный суп
-красная чечевица | red lentils
-зира | cumin
-куркума | turmeric
-лимон | lemon
-оливковое масло | olive oil
+красная чечевица | red lentils | 5931
+зира | cumin | 7205
+куркума | turmeric | 7210
+лимон | lemon | 2000
+оливковое масло | olive oil | 6704
 
 @ Оливье
-картофель | potato
-морковь | carrot
-яйца куриные | chicken eggs
-докторская колбаса | bologna sausage
-солёные огурцы | pickles
-зелёный горошек консервированный | canned green peas
-майонез | mayonnaise
+картофель | potato | 1000
+морковь | carrot | 1030
+яйца куриные | chicken eggs | 4400
+докторская колбаса | bologna sausage | 3802
+солёные огурцы | pickles | 8401
+зелёный горошек консервированный | canned green peas | 8471
+майонез | mayonnaise | 8119
 
 @ Винегрет
-свёкла | beet
-картофель | potato
-морковь | carrot
-квашеная капуста | sauerkraut
-солёные огурцы | pickles
-фасоль | beans
-растительное масло | vegetable oil
+свёкла | beet | 1040
+картофель | potato | 1000
+морковь | carrot | 1030
+квашеная капуста | sauerkraut | 8407
+солёные огурцы | pickles | 8401
+фасоль | beans | 5900
+растительное масло | vegetable oil | 6700
 
 @ Селёдка под шубой
-сельдь слабосолёная | salted herring
-свёкла | beet
-картофель | potato
-морковь | carrot
-лук | onion
-майонез | mayonnaise
+сельдь слабосолёная | salted herring | 4156
+свёкла | beet | 1040
+картофель | potato | 1000
+морковь | carrot | 1030
+лук | onion | 1100
+майонез | mayonnaise | 8119
 
 @ Цезарь с курицей
-салат романо | romaine lettuce
-куриная грудка | chicken breast
-пармезан | parmesan
-батон | white bread
-чеснок | garlic
-анчоусы | anchovies
-вустерширский соус | worcestershire sauce
-яичный желток | egg yolk
-лимонный сок | lemon juice
+салат романо | romaine lettuce | 1603
+куриная грудка | chicken breast | 3502
+пармезан | parmesan | 4732
+батон | white bread | 5613
+чеснок | garlic | 1120
+анчоусы | anchovies | 4169
+вустерширский соус | worcestershire sauce | 8118
+яичный желток | egg yolk | 4402
+лимонный сок | lemon juice | 2050
 
 @ Греческий салат
-помидоры | tomato
-огурцы | cucumber
-болгарский перец | bell pepper
-красный лук | red onion
-фета | feta
-оливки | olives
-орегано | oregano
-оливковое масло | olive oil
+помидоры | tomato | 1300
+огурцы | cucumber | 1320
+болгарский перец | bell pepper | 1330
+красный лук | red onion | 1102
+фета | feta | 4726
+оливки | olives | 8450
+орегано | oregano | 1723/7502
+оливковое масло | olive oil | 6704
 
 @ Мимоза
-консервированная сайра | canned saury
-рыбные консервы | canned fish
-яйца | eggs
-картофель | potato
-сыр твёрдый | hard cheese
-майонез | mayonnaise
+консервированная сайра | canned saury | 4113
+рыбные консервы | canned fish | 4007
+яйца | eggs | 4400
+картофель | potato | 1000
+сыр твёрдый | hard cheese | 4701
+майонез | mayonnaise | 8119
 
 @ Крабовый салат
-крабовые палочки | crab sticks
-кукуруза консервированная | canned corn
-рис | rice
-яйца | eggs
-огурец | cucumber
+крабовые палочки | crab sticks | 4176
+кукуруза консервированная | canned corn | 8470
+рис | rice | 5300
+яйца | eggs | 4400
+огурец | cucumber | 1320
 
 @ Салат из свежих овощей
-томаты | tomato
-огурцы | cucumber
-редис | radish
-листья салата | lettuce
-сметана | sour cream
+томаты | tomato | 1300
+огурцы | cucumber | 1320
+редис | radish | 1050
+листья салата | lettuce | 1600
+сметана | sour cream | 4500
 
 @ Салат Капрезе
-моцарелла | mozzarella
-помидоры черри | cherry tomatoes
-базилик | basil
-бальзамический уксус | balsamic vinegar
+моцарелла | mozzarella | 4735
+помидоры черри | cherry tomatoes | 1301
+базилик | basil | 1706
+бальзамический уксус | balsamic vinegar | 8309
 
 @ Морковь по-корейски
-морковь | carrot
-кориандр молотый | ground coriander
-уксус 9% | vinegar
-сахар | sugar
-красный перец | red pepper
+морковь | carrot | 1030
+кориандр молотый | ground coriander | 7202
+уксус 9% | vinegar | 8302
+сахар | sugar | 6100
+красный перец | red pepper | 7140
 
 @ Салат Витаминный
-капуста | cabbage
-морковь | carrot
-яблоко | apple
-сахар | sugar
-уксус яблочный | apple cider vinegar
+капуста | cabbage | 1200
+морковь | carrot | 1030
+яблоко | apple | 2100
+сахар | sugar | 6100
+уксус яблочный | apple cider vinegar | 8305
 
 @ Салат Нисуаз
-тунец консервированный | canned tuna
-стручковая фасоль | green beans
-картофель | potato
-яйца | eggs
-маслины | olives
-анчоусы | anchovies
+тунец консервированный | canned tuna | 4163
+стручковая фасоль | green beans | 1420
+картофель | potato | 1000
+яйца | eggs | 4400
+маслины | olives | 8452
+анчоусы | anchovies | 4169
 
 @ Салат с тунцом и авокадо
-авокадо | avocado
-тунец | tuna
-руккола | arugula
-лайм | lime
+авокадо | avocado | 2170
+тунец | tuna | 4161
+руккола | arugula | 1610
+лайм | lime | 2010
 
 @ Котлеты домашние
-фарш свино-говяжий | ground pork and beef
-белый хлеб | white bread
-молоко | milk
-лук | onion
-яйцо | egg
-панировочные сухари | breadcrumbs
-масло растительное для жарки | vegetable oil
+фарш свино-говяжий | ground pork and beef | 3460
+белый хлеб | white bread | 5601
+молоко | milk | 4450
+лук | onion | 1100
+яйцо | egg | 4400
+панировочные сухари | breadcrumbs | 5750
+масло растительное для жарки | vegetable oil | 6700
 
 @ Плов узбекский
-баранина | lamb
-рис девзира | devzira rice
-морковь | carrot
-лук | onion
-чеснок | garlic
-зира | cumin
-барбарис | barberry
-нут | chickpeas
-хлопковое масло | cottonseed oil
-курдючный жир | fat tail
+баранина | lamb | 3300
+рис девзира | devzira rice | 5314
+морковь | carrot | 1030
+лук | onion | 1100
+чеснок | garlic | 1120
+зира | cumin | 7205
+барбарис | barberry | 7255
+нут | chickpeas | 5920
+хлопковое масло | cottonseed oil | 6735
+курдючный жир | fat tail | 3310
 
 @ Голубцы
-капуста | cabbage
-фарш | minced meat
-рис | rice
-морковь | carrot
-лук | onion
-томатный сок | tomato juice
-сметана | sour cream
+капуста | cabbage | 1200
+фарш | minced meat | 4
+рис | rice | 5300
+морковь | carrot | 1030
+лук | onion | 1100
+томатный сок | tomato juice | 8851
+сметана | sour cream | 4500
 
 @ Пельмени
-мука пшеничная | wheat flour
-вода | water
-фарш говяжий | ground beef
-фарш свиной | ground pork
-лук | onion
-соль | salt
-чёрный молотый перец | ground black pepper
+мука пшеничная | wheat flour | 5001
+вода | water | 8800
+фарш говяжий | ground beef | 3451
+фарш свиной | ground pork | 3452
+лук | onion | 1100
+соль | salt | 7000
+чёрный молотый перец | ground black pepper | 7101
 
 @ Вареники с картошкой
-мука | flour
-картофельное пюре | mashed potatoes
-лук жареный | fried onion
-сало | salt pork
+мука | flour | 5000
+картофельное пюре | mashed potatoes | 1012
+лук жареный | fried onion | 7248
+сало | salt pork | 3940
 
 @ Вареники с вишней
-вишня | cherry
-сахар | sugar
-крахмал | starch
+вишня | cherry | 2340
+сахар | sugar | 6100
+крахмал | starch | 5100
 
 @ Гуляш
-говядина | beef
-паприка сладкая | sweet paprika
-лук | onion
-томатная паста | tomato paste
-мука | flour
+говядина | beef | 5
+паприка сладкая | sweet paprika | 7151
+лук | onion | 1100
+томатная паста | tomato paste | 8100
+мука | flour | 5000
 
 @ Бефстроганов
-говяжья вырезка | beef tenderloin
-сметана | sour cream
-лук | onion
-горчица | mustard
-мука | flour
+говяжья вырезка | beef tenderloin | 3101
+сметана | sour cream | 4500
+лук | onion | 1100
+горчица | mustard | 8200
+мука | flour | 5000
 
 @ Жаркое по-домашнему
-свиная шея | pork neck
-картофель | potato
-лук | onion
-морковь | carrot
-чеснок | garlic
+свиная шея | pork neck | 3202
+картофель | potato | 1000
+лук | onion | 1100
+морковь | carrot | 1030
+чеснок | garlic | 1120
 
 @ Курица запечённая
-курица целая | whole chicken
-чеснок | garlic
-розмарин | rosemary
-тимьян | thyme
-лимон | lemon
-сливочное масло | butter
+курица целая | whole chicken | 1
+чеснок | garlic | 1120
+розмарин | rosemary | 1720/7506
+тимьян | thyme | 1721/7505
+лимон | lemon | 2000
+сливочное масло | butter | 4600
 
 @ Куриные окорочка в духовке
-окорочка | chicken leg quarters
-майонез | mayonnaise
-кетчуп | ketchup
-паприка | paprika
+окорочка | chicken leg quarters | 3506
+майонез | mayonnaise | 8119
+кетчуп | ketchup | 8103
+паприка | paprika | 7150
 
 @ Тефтели в томатном соусе
-фарш | ground meat
-рис | rice
-томаты в собственном соку | canned tomatoes
-сметана | sour cream
+фарш | ground meat | 4
+рис | rice | 5300
+томаты в собственном соку | canned tomatoes | 8473
+сметана | sour cream | 4500
 
 @ Макароны по-флотски
-макароны | pasta
-фарш говяжий | ground beef
-лук | onion
-масло сливочное | butter
+макароны | pasta | 5400
+фарш говяжий | ground beef | 3451
+лук | onion | 1100
+масло сливочное | butter | 4600
 
 @ Гречка по-купечески
-гречка | buckwheat
-свинина | pork
-морковь | carrot
-лук | onion
+гречка | buckwheat | 5200
+свинина | pork | 3200
+морковь | carrot | 1030
+лук | onion | 1100
 
 @ Картофельное пюре
-картофель | potato
-молоко | milk
-масло сливочное | butter
-мускатный орех | nutmeg
+картофель | potato | 1000
+молоко | milk | 4450
+масло сливочное | butter | 4600
+мускатный орех | nutmeg | 7218
 
 @ Драники
-картофель | potato
-лук | onion
-яйцо | egg
-мука | flour
-сметана | sour cream
+картофель | potato | 1000
+лук | onion | 1100
+яйцо | egg | 4400
+мука | flour | 5000
+сметана | sour cream | 4500
 
 @ Рыба под маринадом
-минтай | pollock
-треска | cod
-морковь | carrot
-лук | onion
-томатная паста | tomato paste
-гвоздика | cloves
-душистый перец | allspice
+минтай | pollock | 4070
+треска | cod | 4065
+морковь | carrot | 1030
+лук | onion | 1100
+томатная паста | tomato paste | 8100
+гвоздика | cloves | 7216
+душистый перец | allspice | 7120
 
 @ Скумбрия запечённая
-скумбрия | mackerel
-лимон | lemon
-соевый соус | soy sauce
+скумбрия | mackerel | 4150
+лимон | lemon | 2000
+соевый соус | soy sauce | 8000
 
 @ Лосось на сковороде
-филе лосося | salmon fillet
-сливочное масло | butter
-лимон | lemon
-укроп | dill
+филе лосося | salmon fillet | 4021
+сливочное масло | butter | 4600
+лимон | lemon | 2000
+укроп | dill | 1701
 
 @ Печень по-строгановски
-печень говяжья | beef liver
-сметана | sour cream
-лук | onion
+печень говяжья | beef liver | 3701
+сметана | sour cream | 4500
+лук | onion | 1100
 
 @ Куриная печень с луком
-куриная печень | chicken liver
-лук | onion
-сливки | cream
+куриная печень | chicken liver | 3704
+лук | onion | 1100
+сливки | cream | 4480
 
 @ Отбивные
-свиная корейка | pork loin
-яйца | eggs
-мука | flour
-сухари | breadcrumbs
+свиная корейка | pork loin | 3203
+яйца | eggs | 4400
+мука | flour | 5000
+сухари | breadcrumbs | 5750
 
 @ Мясо по-французски
-свинина | pork
-картофель | potato
-лук | onion
-помидоры | tomato
-сыр | cheese
-майонез | mayonnaise
+свинина | pork | 3200
+картофель | potato | 1000
+лук | onion | 1100
+помидоры | tomato | 1300
+сыр | cheese | 4700
+майонез | mayonnaise | 8119
 
 @ Фаршированные перцы
-перец болгарский | bell pepper
-фарш | ground meat
-рис | rice
-томатная паста | tomato paste
+перец болгарский | bell pepper | 1330
+фарш | ground meat | 4
+рис | rice | 5300
+томатная паста | tomato paste | 8100
 
 @ Ленивые голубцы
-капуста | cabbage
-фарш | ground meat
-рис | rice
+капуста | cabbage | 1200
+фарш | ground meat | 4
+рис | rice | 5300
 
 @ Солянка из капусты
-капуста | cabbage
-сосиски | frankfurters
-томатная паста | tomato paste
+капуста | cabbage | 1200
+сосиски | frankfurters | 3830
+томатная паста | tomato paste | 8100
 
 @ Рагу овощное
-кабачки | zucchini
-баклажаны | eggplant
-перец сладкий | bell pepper
-помидоры | tomato
-картофель | potato
+кабачки | zucchini | 1360
+баклажаны | eggplant | 1350
+перец сладкий | bell pepper | 1330
+помидоры | tomato | 1300
+картофель | potato | 1000
 
 @ Овощи на гриле
-цукини | zucchini
-баклажан | eggplant
-шампиньоны | white mushrooms
-кукуруза | corn
+цукини | zucchini | 1361
+баклажан | eggplant | 1350
+шампиньоны | white mushrooms | 1801
+кукуруза | corn | 1400
 
 @ Голубцы с индейкой
-фарш индейки | ground turkey
-капуста савойская | savoy cabbage
-рис бурый | brown rice
+фарш индейки | ground turkey | 3454
+капуста савойская | savoy cabbage | 1203
+рис бурый | brown rice | 5306
 
 @ Индейка тушёная
-филе индейки | turkey breast
-сливки | cream
-лук-порей | leek
+филе индейки | turkey breast | 3601
+сливки | cream | 4480
+лук-порей | leek | 1106
 
 @ Утка с яблоками
-утка | duck
-яблоки | apples
-мёд | honey
-апельсин | orange
+утка | duck | 3620
+яблоки | apples | 2100
+мёд | honey | 6150
+апельсин | orange | 2020
 
 @ Кролик в сметане
-кролик | rabbit
-сметана | sour cream
-лук | onion
+кролик | rabbit | 3410
+сметана | sour cream | 4500
+лук | onion | 1100
 
 @ Холодец
-свиные ножки | pork trotters
-говяжья голяшка | beef shank
-чеснок | garlic
-лавровый лист | bay leaf
-перец горошком | peppercorns
+свиные ножки | pork trotters | 3209
+говяжья голяшка | beef shank | 3106
+чеснок | garlic | 1120
+лавровый лист | bay leaf | 7251
+перец горошком | peppercorns | 7102
 
 @ Заливное из рыбы
-рыба | fish
-желатин | gelatin
+рыба | fish | 4000
+желатин | gelatin | 6400
 
 @ Рыбные котлеты
-филе трески | cod fillet
-хлеб | bread
-лук | onion
-яйцо | egg
+филе трески | cod fillet | 4066
+хлеб | bread | 5600
+лук | onion | 1100
+яйцо | egg | 4400
 
 @ Шашлык из свинины
-свиная шея | pork neck
-лук | onion
-уксус | vinegar
-чёрный перец | black pepper
+свиная шея | pork neck | 3202
+лук | onion | 1100
+уксус | vinegar | 8300
+чёрный перец | black pepper | 7100
 
 @ Пюре из цветной капусты
-цветная капуста | cauliflower
-сливки | cream
+цветная капуста | cauliflower | 1230
+сливки | cream | 4480
 
 @ Брокколи с сыром
-брокколи | broccoli
-сыр | cheese
+брокколи | broccoli | 1220
+сыр | cheese | 4700
 
 @ Запеканка картофельная
-картофель | potato
-фарш | ground meat
-сыр | cheese
-яйца | eggs
+картофель | potato | 1000
+фарш | ground meat | 4
+сыр | cheese | 4700
+яйца | eggs | 4400
 
 @ Каша манная
-манка | semolina
-молоко | milk
-сахар | sugar
-масло | butter
+манка | semolina | 5225
+молоко | milk | 4450
+сахар | sugar | 6100
+масло | butter | 4600
 
 @ Каша овсяная
-овсяные хлопья | rolled oats
-молоко | milk
-соль | salt
-изюм | raisins
+овсяные хлопья | rolled oats | 5350
+молоко | milk | 4450
+соль | salt | 7000
+изюм | raisins | 2420
 
 @ Каша пшённая с тыквой
-пшено | millet
-тыква | pumpkin
-молоко | milk
+пшено | millet | 5210
+тыква | pumpkin | 1370
+молоко | milk | 4450
 
 @ Рисовая каша
-рис круглозёрный | short-grain rice
-молоко | milk
-сахар | sugar
+рис круглозёрный | short-grain rice | 5301
+молоко | milk | 4450
+сахар | sugar | 6100
 
 @ Омлет
-яйца | eggs
-молоко | milk
-масло сливочное | butter
+яйца | eggs | 4400
+молоко | milk | 4450
+масло сливочное | butter | 4600
 
 @ Яичница с беконом
-яйца | eggs
-бекон | bacon
+яйца | eggs | 4400
+бекон | bacon | 3870
 
 @ Шакшука
-яйца | eggs
-томаты | tomatoes
-перец | pepper
-лук | onion
-зира | cumin
-паприка | paprika
+яйца | eggs | 4400
+томаты | tomatoes | 1300
+перец | pepper | 1330
+лук | onion | 1100
+зира | cumin | 7205
+паприка | paprika | 7150
 
 @ Блины
-молоко | milk
-яйца | eggs
-мука | flour
-сахар | sugar
-соль | salt
-растительное масло | vegetable oil
+молоко | milk | 4450
+яйца | eggs | 4400
+мука | flour | 5000
+сахар | sugar | 6100
+соль | salt | 7000
+растительное масло | vegetable oil | 6700
 
 @ Блины на кефире
-кефир | kefir
-кипяток | boiling water
-сода | baking soda
+кефир | kefir | 4520
+кипяток | boiling water | 8804
+сода | baking soda | 6301
 
 @ Сырники
-творог | farmer cheese
-яйцо | egg
-сахар | sugar
-мука | flour
-ванильный сахар | vanilla sugar
+творог | farmer cheese | 4580
+яйцо | egg | 4400
+сахар | sugar | 6100
+мука | flour | 5000
+ванильный сахар | vanilla sugar | 6111
 
 @ Оладьи
-кефир | kefir
-мука | flour
-яйцо | egg
-сахар | sugar
-сода | baking soda
+кефир | kefir | 4520
+мука | flour | 5000
+яйцо | egg | 4400
+сахар | sugar | 6100
+сода | baking soda | 6301
 
 @ Оладьи из кабачков
-кабачок | zucchini
-яйцо | egg
-мука | flour
-чеснок | garlic
+кабачок | zucchini | 1360
+яйцо | egg | 4400
+мука | flour | 5000
+чеснок | garlic | 1120
 
 @ Пирожки с капустой
-мука | flour
-дрожжи сухие | dry yeast
-молоко | milk
-капуста | cabbage
-яйцо | egg
+мука | flour | 5000
+дрожжи сухие | dry yeast | 6311
+молоко | milk | 4450
+капуста | cabbage | 1200
+яйцо | egg | 4400
 
 @ Пирожки с яйцом и луком
-яйца | eggs
-зелёный лук | green onion
-тесто дрожжевое | yeast dough
+яйца | eggs | 4400
+зелёный лук | green onion | 1107
+тесто дрожжевое | yeast dough | 5804
 
 @ Пирог с яблоками
-яблоки | apples
-мука | flour
-сахар | sugar
-масло сливочное | butter
-корица | cinnamon
+яблоки | apples | 2100
+мука | flour | 5000
+сахар | sugar | 6100
+масло сливочное | butter | 4600
+корица | cinnamon | 7212
 
 @ Шарлотка
-яйца | eggs
-сахар | sugar
-мука | flour
-яблоки | apples
-корица | cinnamon
+яйца | eggs | 4400
+сахар | sugar | 6100
+мука | flour | 5000
+яблоки | apples | 2100
+корица | cinnamon | 7212
 
 @ Медовик
-мёд | honey
-сахар | sugar
-яйца | eggs
-сода | baking soda
-мука | flour
-сметана | sour cream
-сгущённое молоко | condensed milk
+мёд | honey | 6150
+сахар | sugar | 6100
+яйца | eggs | 4400
+сода | baking soda | 6301
+мука | flour | 5000
+сметана | sour cream | 4500
+сгущённое молоко | condensed milk | 4461
 
 @ Наполеон
-мука | flour
-масло сливочное | butter
-молоко | milk
-сахар | sugar
-яйца | eggs
-ванилин | vanillin
+мука | flour | 5000
+масло сливочное | butter | 4600
+молоко | milk | 4450
+сахар | sugar | 6100
+яйца | eggs | 4400
+ванилин | vanillin | 6352
 
 @ Торт Прага
-какао-порошок | cocoa powder
-сгущёнка | condensed milk
-шоколад горький | dark chocolate
-абрикосовый джем | apricot jam
+какао-порошок | cocoa powder | 6451
+сгущёнка | condensed milk | 4461
+шоколад горький | dark chocolate | 6502
+абрикосовый джем | apricot jam | 8561
 
 @ Торт Птичье молоко
-агар-агар | agar
-белки | egg whites
-лимонная кислота | citric acid
-шоколад | chocolate
+агар-агар | agar | 6410
+белки | egg whites | 4403
+лимонная кислота | citric acid | 7261
+шоколад | chocolate | 6500
 
 @ Пирог с капустой заливной
-кефир | kefir
-майонез | mayonnaise
-капуста | cabbage
+кефир | kefir | 4520
+майонез | mayonnaise | 8119
+капуста | cabbage | 1200
 
 @ Кулебяка
-слоёное тесто | puff pastry
-рис | rice
-лосось | salmon
-яйца | eggs
+слоёное тесто | puff pastry | 5801
+рис | rice | 5300
+лосось | salmon | 4020
+яйца | eggs | 4400
 
 @ Курник
-курица | chicken
-грибы | mushrooms
-блины | crepes
+курица | chicken | 1
+грибы | mushrooms | 1800
+блины | crepes | 5862
 
 @ Ватрушки
-творог | farmer cheese
-мука | flour
-дрожжи | yeast
-изюм | raisins
+творог | farmer cheese | 4580
+мука | flour | 5000
+дрожжи | yeast | 6310
+изюм | raisins | 2420
 
 @ Пончики
-мука | flour
-дрожжи | yeast
-сахарная пудра | powdered sugar
-масло для фритюра | frying oil
+мука | flour | 5000
+дрожжи | yeast | 6310
+сахарная пудра | powdered sugar | 6110
+масло для фритюра | frying oil | 6700
 
 @ Хворост
-мука | flour
-яйца | eggs
-водка | vodka
-сахарная пудра | powdered sugar
+мука | flour | 5000
+яйца | eggs | 4400
+водка | vodka | 8740
+сахарная пудра | powdered sugar | 6110
 
 @ Кекс
-мука | flour
-сахар | sugar
-масло | butter
-яйца | eggs
-разрыхлитель | baking powder
-изюм | raisins
+мука | flour | 5000
+сахар | sugar | 6100
+масло | butter | 4600
+яйца | eggs | 4400
+разрыхлитель | baking powder | 6300
+изюм | raisins | 2420
 
 @ Творожная запеканка
-творог | cottage cheese
-манная крупа | semolina
-сметана | sour cream
-яйца | eggs
-изюм | raisins
+творог | cottage cheese | 4580
+манная крупа | semolina | 5225
+сметана | sour cream | 4500
+яйца | eggs | 4400
+изюм | raisins | 2420
 
 @ Пасха творожная
-творог | farmer cheese
-сливочное масло | butter
-сметана | sour cream
-цукаты | candied fruit
-курага | dried apricots
+творог | farmer cheese | 4580
+сливочное масло | butter | 4600
+сметана | sour cream | 4500
+цукаты | candied fruit | 2445
+курага | dried apricots | 2430
 
 @ Кулич
-мука | flour
-дрожжи | yeast
-молоко | milk
-яйца | eggs
-изюм | raisins
-кардамон | cardamom
-шафран | saffron
+мука | flour | 5000
+дрожжи | yeast | 6310
+молоко | milk | 4450
+яйца | eggs | 4400
+изюм | raisins | 2420
+кардамон | cardamom | 7221
+шафран | saffron | 7233
 
 @ Печенье песочное
-мука | flour
-масло сливочное | butter
-сахар | sugar
-желток | egg yolk
+мука | flour | 5000
+масло сливочное | butter | 4600
+сахар | sugar | 6100
+желток | egg yolk | 4402
 
 @ Овсяное печенье
-овсяные хлопья | oat flakes
-мука | flour
-сахар | sugar
-масло | butter
-грецкий орех | walnut
+овсяные хлопья | oat flakes | 5350
+мука | flour | 5000
+сахар | sugar | 6100
+масло | butter | 4600
+грецкий орех | walnut | 2501
 
 @ Безе
-яичные белки | egg whites
-сахар | sugar
+яичные белки | egg whites | 4403
+сахар | sugar | 6100
 
 @ Торт Муравейник
-мука | flour
-маргарин | margarine
-сгущёнка варёная | dulce de leche
-мак | poppy seeds
+мука | flour | 5000
+маргарин | margarine | 6820
+сгущёнка варёная | dulce de leche | 4462
+мак | poppy seeds | 2608
 
 @ Пирог с вишней
-вишня замороженная | frozen cherries
-мука | flour
-сахар | sugar
-кукурузный крахмал | cornstarch
+вишня замороженная | frozen cherries | 2341
+мука | flour | 5000
+сахар | sugar | 6100
+кукурузный крахмал | cornstarch | 5102
 
 @ Брусничный морс
-брусника | lingonberry
-клюква | cranberry
-сахар | sugar
-вода | water
+брусника | lingonberry | 2365
+клюква | cranberry | 2360
+сахар | sugar | 6100
+вода | water | 8800
 
 @ Компот из сухофруктов
-сухофрукты | dried fruit
-чернослив | prunes
-курага | dried apricots
-сахар | sugar
+сухофрукты | dried fruit | 2400
+чернослив | prunes | 2435
+курага | dried apricots | 2430
+сахар | sugar | 6100
 
 @ Кисель
-крахмал картофельный | potato starch
-смородина | currant
-сахар | sugar
+крахмал картофельный | potato starch | 5101
+смородина | currant | 2350
+сахар | sugar | 6100
 
 @ Лимонный кекс
-лимон | lemon
-яйца | eggs
-сахар | sugar
-растительное масло без запаха | refined vegetable oil
-мацони | matsoni
-мука | flour
-разрыхлитель | baking powder
-сода | baking soda
-соль | salt
-сахарная пудра | powdered sugar
-лимонный сок | lemon juice
+лимон | lemon | 2000
+яйца | eggs | 4400
+сахар | sugar | 6100
+растительное масло без запаха | refined vegetable oil | 6739
+мацони | matsoni | 4533
+мука | flour | 5000
+разрыхлитель | baking powder | 6300
+сода | baking soda | 6301
+соль | salt | 7000
+сахарная пудра | powdered sugar | 6110
+лимонный сок | lemon juice | 2050
 
 @ Хачапури по-аджарски
-мука | flour
-дрожжи | yeast
-сулугуни | suluguni
-имеретинский сыр | imeruli cheese
-яйца | eggs
-сливочное масло | butter
+мука | flour | 5000
+дрожжи | yeast | 6310
+сулугуни | suluguni | 4721
+имеретинский сыр | imeruli cheese | 4723
+яйца | eggs | 4400
+сливочное масло | butter | 4600
 
 @ Хинкали
-мука | flour
-говядина | beef
-свинина | pork
-кинза | cilantro
-зира | cumin
+мука | flour | 5000
+говядина | beef | 5
+свинина | pork | 3200
+кинза | cilantro | 1705
+зира | cumin | 7205
 
 @ Чахохбили
-курица | chicken
-помидоры | tomatoes
-лук | onion
-кинза | cilantro
-базилик | basil
-хмели-сунели | khmeli suneli
-аджика | adjika
+курица | chicken | 1
+помидоры | tomatoes | 1300
+лук | onion | 1100
+кинза | cilantro | 1705
+базилик | basil | 1706
+хмели-сунели | khmeli suneli | 7401
+аджика | adjika | 8220
 
 @ Сациви
-курица | chicken
-грецкие орехи | walnuts
-уцхо-сунели | blue fenugreek
-шафран имеретинский | marigold
-винный уксус | wine vinegar
+курица | chicken | 1
+грецкие орехи | walnuts | 2501
+уцхо-сунели | blue fenugreek | 7232
+шафран имеретинский | marigold | 7234
+винный уксус | wine vinegar | 8306
 
 @ Пхали
-шпинат | spinach
-грецкие орехи | walnuts
-гранат | pomegranate
-кинза | cilantro
+шпинат | spinach | 1630
+грецкие орехи | walnuts | 2501
+гранат | pomegranate | 2177
+кинза | cilantro | 1705
 
 @ Аджапсандал
-баклажаны | eggplant
-болгарский перец | bell pepper
-помидоры | tomatoes
-кинза | cilantro
-базилик | basil
+баклажаны | eggplant | 1350
+болгарский перец | bell pepper | 1330
+помидоры | tomatoes | 1300
+кинза | cilantro | 1705
+базилик | basil | 1706
 
 @ Лобио
-красная фасоль | red kidney beans
-грецкие орехи | walnuts
-кинза | cilantro
-винный уксус | wine vinegar
+красная фасоль | red kidney beans | 5902
+грецкие орехи | walnuts | 2501
+кинза | cilantro | 1705
+винный уксус | wine vinegar | 8306
 
 @ Шашлык из баранины
-баранина | lamb
-лук | onion
-сумах | sumac
-гранатовый сок | pomegranate juice
+баранина | lamb | 3300
+лук | onion | 1100
+сумах | sumac | 7235
+гранатовый сок | pomegranate juice | 8853
 
 @ Долма
-виноградные листья | grape leaves
-фарш бараний | ground lamb
-рис | rice
-мята | mint
-мацони | matsoni
+виноградные листья | grape leaves | 1643
+фарш бараний | ground lamb | 3455
+рис | rice | 5300
+мята | mint | 1710
+мацони | matsoni | 4533
 
 @ Хаш
-говяжьи ноги | beef feet
-чеснок | garlic
+говяжьи ноги | beef feet | 3131
+чеснок | garlic | 1120
 
 @ Чанахи
-баранина | lamb
-баклажаны | eggplant
-картофель | potato
-помидоры | tomatoes
+баранина | lamb | 3300
+баклажаны | eggplant | 1350
+картофель | potato | 1000
+помидоры | tomatoes | 1300
 
 @ Манты
-мука | flour
-баранина | lamb
-лук | onion
-курдюк | fat tail
+мука | flour | 5000
+баранина | lamb | 3300
+лук | onion | 1100
+курдюк | fat tail | 3310
 
 @ Лагман
-говядина | beef
-лапша | noodles
-редька | daikon
-перец болгарский | bell pepper
-чеснок | garlic
+говядина | beef | 5
+лапша | noodles | 5500
+редька | daikon | 1049
+перец болгарский | bell pepper | 1330
+чеснок | garlic | 1120
 
 @ Самса
-слоёное тесто | puff pastry
-баранина | lamb
-кунжут | sesame seeds
+слоёное тесто | puff pastry | 5801
+баранина | lamb | 3300
+кунжут | sesame seeds | 2610
 
 @ Шурпа
-баранина | lamb
-картофель | potato
-морковь | carrot
-нут | chickpeas
-помидоры | tomatoes
+баранина | lamb | 3300
+картофель | potato | 1000
+морковь | carrot | 1030
+нут | chickpeas | 5920
+помидоры | tomatoes | 1300
 
 @ Ачичук
-помидоры | tomatoes
-лук | onion
-базилик | basil
+помидоры | tomatoes | 1300
+лук | onion | 1100
+базилик | basil | 1706
 
 @ Беляши
-мука | flour
-дрожжи | yeast
-фарш | ground meat
-лук | onion
+мука | flour | 5000
+дрожжи | yeast | 6310
+фарш | ground meat | 4
+лук | onion | 1100
 
 @ Чебуреки
-мука | flour
-фарш бараний | ground lamb
-лук | onion
-масло для жарки | frying oil
+мука | flour | 5000
+фарш бараний | ground lamb | 3455
+лук | onion | 1100
+масло для жарки | frying oil | 6700
 
 @ Спагетти карбонара
-спагетти | spaghetti
-гуанчиале | guanciale
-пекорино романо | pecorino romano
-желтки | egg yolks
-чёрный перец | black pepper
+спагетти | spaghetti | 5401
+гуанчиале | guanciale | 3872
+пекорино романо | pecorino romano | 4789
+желтки | egg yolks | 4402
+чёрный перец | black pepper | 7100
 
 @ Болоньезе
-фарш | ground beef
-томаты в собственном соку | canned tomatoes
-сельдерей | celery
-красное вино | red wine
-пармезан | parmesan
+фарш | ground beef | 4
+томаты в собственном соку | canned tomatoes | 8473
+сельдерей | celery | 1500
+красное вино | red wine | 8703
+пармезан | parmesan | 4732
 
 @ Лазанья
-листы для лазаньи | lasagna noodles
-фарш | ground meat
-соус бешамель | bechamel
-моцарелла | mozzarella
+листы для лазаньи | lasagna noodles | 5420
+фарш | ground meat | 4
+соус бешамель | bechamel | 8131
+моцарелла | mozzarella | 4735
 
 @ Ризотто с грибами
-рис арборио | arborio rice
-белое вино | white wine
-бульон | broth
-пармезан | parmesan
-шампиньоны | mushrooms
+рис арборио | arborio rice | 5310
+белое вино | white wine | 8701
+бульон | broth | 8600
+пармезан | parmesan | 4732
+шампиньоны | mushrooms | 1801
 
 @ Пицца Маргарита
-мука | flour
-дрожжи | yeast
-томатный соус | tomato sauce
-моцарелла | mozzarella
-базилик | basil
+мука | flour | 5000
+дрожжи | yeast | 6310
+томатный соус | tomato sauce | 8106
+моцарелла | mozzarella | 4735
+базилик | basil | 1706
 
 @ Паста с песто
-паста | pasta
-песто | pesto
-кедровые орехи | pine nuts
+паста | pasta | 5400
+песто | pesto | 8230
+кедровые орехи | pine nuts | 2508
 
 @ Тирамису
-маскарпоне | mascarpone
-печенье савоярди | ladyfingers
-кофе эспрессо | espresso
-какао | cocoa
-яйца | eggs
+маскарпоне | mascarpone | 4741
+печенье савоярди | ladyfingers | 5881
+кофе эспрессо | espresso | 8824
+какао | cocoa | 6450
+яйца | eggs | 4400
 
 @ Минестроне
-фасоль белая | white beans
-кабачок | zucchini
-сельдерей | celery
-макароны | pasta
+фасоль белая | white beans | 5901
+кабачок | zucchini | 1360
+сельдерей | celery | 1500
+макароны | pasta | 5400
 
 @ Брускетта
-чиабатта | ciabatta
-помидоры | tomatoes
-чеснок | garlic
-базилик | basil
+чиабатта | ciabatta | 5615
+помидоры | tomatoes | 1300
+чеснок | garlic | 1120
+базилик | basil | 1706
 
 @ Панна котта
-сливки 33% | heavy cream
-желатин | gelatin
-ваниль | vanilla
-ягоды | berries
+сливки 33% | heavy cream | 4483
+желатин | gelatin | 6400
+ваниль | vanilla | 6350
+ягоды | berries | 2300
 
 @ Жареный рис с яйцом
-рис | rice
-яйца | eggs
-соевый соус | soy sauce
-зелёный лук | scallion
-кунжутное масло | sesame oil
+рис | rice | 5300
+яйца | eggs | 4400
+соевый соус | soy sauce | 8000
+зелёный лук | scallion | 1107
+кунжутное масло | sesame oil | 6710
 
 @ Курица терияки
-куриное бедро | chicken thigh
-соус терияки | teriyaki sauce
-кунжут | sesame
+куриное бедро | chicken thigh | 3503
+соус терияки | teriyaki sauce | 8013
+кунжут | sesame | 2610
 
 @ Курица в кисло-сладком соусе
-куриное филе | chicken breast
-ананас | pineapple
-болгарский перец | bell pepper
-рисовый уксус | rice vinegar
-крахмал | starch
+куриное филе | chicken breast | 3501
+ананас | pineapple | 2160
+болгарский перец | bell pepper | 1330
+рисовый уксус | rice vinegar | 8311
+крахмал | starch | 5100
 
 @ Роллы
-рис для суши | sushi rice
-нори | nori
-лосось | salmon
-огурец | cucumber
-сливочный сыр | cream cheese
-васаби | wasabi
-имбирь маринованный | pickled ginger
+рис для суши | sushi rice | 5300
+нори | nori | 8521
+лосось | salmon | 4020
+огурец | cucumber | 1320
+сливочный сыр | cream cheese | 4709
+васаби | wasabi | 8039
+имбирь маринованный | pickled ginger | 8041
 
 @ Удон с курицей
-лапша удон | udon noodles
-курица | chicken
-соевый соус | soy sauce
+лапша удон | udon noodles | 5505
+курица | chicken | 1
+соевый соус | soy sauce | 8000
 
 @ Том ям
-креветки | shrimp
-кокосовое молоко | coconut milk
-лемонграсс | lemongrass
-листья лайма | kaffir lime leaves
-рыбный соус | fish sauce
-паста том ям | tom yum paste
+креветки | shrimp | 4210
+кокосовое молоко | coconut milk | 8476
+лемонграсс | lemongrass | 1730
+листья лайма | kaffir lime leaves | 1731
+рыбный соус | fish sauce | 8010
+паста том ям | tom yum paste | 8035
 
 @ Карри с курицей
-курица | chicken
-паста карри | curry paste
-кокосовое молоко | coconut milk
-картофель | potato
+курица | chicken | 1
+паста карри | curry paste | 8030
+кокосовое молоко | coconut milk | 8476
+картофель | potato | 1000
 
 @ Фунчоза с овощами
-фунчоза | glass noodles
-морковь | carrot
-огурец | cucumber
-соевый соус | soy sauce
+фунчоза | glass noodles | 5507
+морковь | carrot | 1030
+огурец | cucumber | 1320
+соевый соус | soy sauce | 8000
 
 @ Пад тай
-рисовая лапша | rice noodles
-креветки | shrimp
-арахис | peanuts
-ростки фасоли | bean sprouts
-тамаринд | tamarind
+рисовая лапша | rice noodles | 5503
+креветки | shrimp | 4210
+арахис | peanuts | 2530
+ростки фасоли | bean sprouts | 1520
+тамаринд | tamarind | 7256
 
 @ Хумус
-нут | chickpeas
-тахини | tahini
-лимонный сок | lemon juice
-чеснок | garlic
+нут | chickpeas | 5920
+тахини | tahini | 8236
+лимонный сок | lemon juice | 2050
+чеснок | garlic | 1120
 
 @ Фалафель
-нут | chickpeas
-петрушка | parsley
-кинза | cilantro
-кориандр | coriander
+нут | chickpeas | 5920
+петрушка | parsley | 1702
+кинза | cilantro | 1705
+кориандр | coriander | 7201
 
 @ Сырный соус
-сыр чеддер | cheddar
-молоко | milk
-мука | flour
+сыр чеддер | cheddar | 4749
+молоко | milk | 4450
+мука | flour | 5000
 
 @ Тушёная капуста
-капуста | cabbage
-морковь | carrot
-томатная паста | tomato paste
+капуста | cabbage | 1200
+морковь | carrot | 1030
+томатная паста | tomato paste | 8100
 
 @ Икра кабачковая
-кабачки | zucchini
-морковь | carrot
-лук | onion
-томатная паста | tomato paste
+кабачки | zucchini | 1360
+морковь | carrot | 1030
+лук | onion | 1100
+томатная паста | tomato paste | 8100
 
 @ Икра баклажанная
-баклажаны | eggplant
-перец | bell pepper
-помидоры | tomatoes
+баклажаны | eggplant | 1350
+перец | bell pepper | 1330
+помидоры | tomatoes | 1300
 
 @ Лечо
-перец болгарский | bell pepper
-помидоры | tomatoes
-лук | onion
-сахар | sugar
-уксус | vinegar
+перец болгарский | bell pepper | 1330
+помидоры | tomatoes | 1300
+лук | onion | 1100
+сахар | sugar | 6100
+уксус | vinegar | 8300
 
 @ Солёные огурцы
-огурцы | cucumbers
-хрен | horseradish
-листья смородины | currant leaves
-укроп зонтики | dill heads
-чеснок | garlic
-соль крупная | coarse salt
+огурцы | cucumbers | 1320
+хрен | horseradish | 8210
+листья смородины | currant leaves | 1734
+укроп зонтики | dill heads | 1737
+чеснок | garlic | 1120
+соль крупная | coarse salt | 7003
 
 @ Варенье клубничное
-клубника | strawberry
-сахар | sugar
+клубника | strawberry | 2320
+сахар | sugar | 6100
 
 @ Малиновое варенье
-малина | raspberry
-сахар | sugar
+малина | raspberry | 2325
+сахар | sugar | 6100
 
 @ Сельдь под маринадом
-сельдь | herring
-лук | onion
-уксус | vinegar
+сельдь | herring | 4155
+лук | onion | 1100
+уксус | vinegar | 8300
 
 @ Бутерброды со шпротами
-шпроты | sprats
-бородинский хлеб | rye bread
-огурец | cucumber
+шпроты | sprats | 4166
+бородинский хлеб | rye bread | 5603
+огурец | cucumber | 1320
 
 @ Бутерброды с красной икрой
-икра красная | salmon roe
-масло сливочное | butter
-батон | baguette
+икра красная | salmon roe | 4301
+масло сливочное | butter | 4600
+батон | baguette | 5613
 
 @ Жульен
-шампиньоны | mushrooms
-куриное филе | chicken breast
-сливки | cream
-сыр | cheese
+шампиньоны | mushrooms | 1801
+куриное филе | chicken breast | 3501
+сливки | cream | 4480
+сыр | cheese | 4700
 
 @ Грибы маринованные
-опята | honey mushrooms
-уксус | vinegar
-гвоздика | cloves
+опята | honey mushrooms | 1809
+уксус | vinegar | 8300
+гвоздика | cloves | 7216
 
 @ Жареная картошка с грибами
-картофель | potato
-лисички | chanterelles
-лук | onion
+картофель | potato | 1000
+лисички | chanterelles | 1808
+лук | onion | 1100
 
 @ Баклажаны с чесноком
-баклажан | eggplant
-чеснок | garlic
-майонез | mayonnaise
+баклажан | eggplant | 1350
+чеснок | garlic | 1120
+майонез | mayonnaise | 8119
 
 @ Фаршированные шампиньоны
-шампиньоны крупные | large mushrooms
-сыр | cheese
-ветчина | ham
+шампиньоны крупные | large mushrooms | 1801
+сыр | cheese | 4700
+ветчина | ham | 3850
 
 @ Капустные котлеты
-капуста | cabbage
-манка | semolina
-яйцо | egg
+капуста | cabbage | 1200
+манка | semolina | 5225
+яйцо | egg | 4400
 
 @ Гречневая каша с молоком
-гречневая крупа | buckwheat
-молоко | milk
+гречневая крупа | buckwheat | 5200
+молоко | milk | 4450
 
 @ Перловка с тушёнкой
-перловая крупа | pearl barley
-тушёнка | canned stewed meat
+перловая крупа | pearl barley | 5215
+тушёнка | canned stewed meat | 3910
 
 @ Булгур с овощами
-булгур | bulgur
-перец | pepper
-лук | onion
+булгур | bulgur | 5240
+перец | pepper | 1330
+лук | onion | 1100
 
 @ Кускус
-кускус | couscous
-изюм | raisins
-миндаль | almonds
+кускус | couscous | 5245
+изюм | raisins | 2420
+миндаль | almonds | 2520
 
 @ Киноа с овощами
-киноа | quinoa
-авокадо | avocado
-шпинат | spinach
+киноа | quinoa | 5250
+авокадо | avocado | 2170
+шпинат | spinach | 1630
 
 @ Смузи
-банан | banana
-клубника | strawberry
-йогурт | yogurt
-овсянка | oatmeal
+банан | banana | 2150
+клубника | strawberry | 2320
+йогурт | yogurt | 4560
+овсянка | oatmeal | 5350
 
 @ Глинтвейн
-красное сухое вино | dry red wine
-апельсин | orange
-корица | cinnamon
-гвоздика | cloves
-бадьян | star anise
+красное сухое вино | dry red wine | 8704
+апельсин | orange | 2020
+корица | cinnamon | 7212
+гвоздика | cloves | 7216
+бадьян | star anise | 7225
 
 @ Какао на молоке
-какао | cocoa
-молоко | milk
-сахар | sugar
+какао | cocoa | 6450
+молоко | milk | 4450
+сахар | sugar | 6100
 
 @ Горячий шоколад
-шоколад молочный | milk chocolate
-сливки | cream
+шоколад молочный | milk chocolate | 6503
+сливки | cream | 4480
 
 @ Сбитень
-мёд | honey
-имбирь | ginger
-корица | cinnamon
+мёд | honey | 6150
+имбирь | ginger | 1060
+корица | cinnamon | 7212
 
 @ Морс клюквенный
-клюква | cranberries
-сахар | sugar
+клюква | cranberries | 2360
+сахар | sugar | 6100
 
 @ Квас домашний
-ржаной хлеб | rye bread
-сахар | sugar
-дрожжи | yeast
+ржаной хлеб | rye bread | 5602
+сахар | sugar | 6100
+дрожжи | yeast | 6310
 
 @ Компот из яблок
-яблоки | apples
-сахар | sugar
+яблоки | apples | 2100
+сахар | sugar | 6100
 
 @ Котлеты по-киевски
-куриное филе | chicken breast
-сливочное масло | butter
-панировочные сухари | breadcrumbs
-яйца | eggs
+куриное филе | chicken breast | 3501
+сливочное масло | butter | 4600
+панировочные сухари | breadcrumbs | 5750
+яйца | eggs | 4400
 
 @ Зразы картофельные
-картофель | potato
-фарш | ground meat
-мука | flour
+картофель | potato | 1000
+фарш | ground meat | 4
+мука | flour | 5000
 
 @ Курица в сметане
-курица | chicken
-сметана | sour cream
-чеснок | garlic
+курица | chicken | 1
+сметана | sour cream | 4500
+чеснок | garlic | 1120
 
 @ Пирог с рыбой
-рыбные консервы | canned fish
-рис | rice
-лук | onion
-кефир | kefir
+рыбные консервы | canned fish | 4007
+рис | rice | 5300
+лук | onion | 1100
+кефир | kefir | 4520
 
 @ Пирог с курицей и картошкой
-куриное филе | chicken breast
-картофель | potato
-тесто | dough
+куриное филе | chicken breast | 3501
+картофель | potato | 1000
+тесто | dough | 5800
 
 @ Пирог с капустой
-дрожжевое тесто | yeast dough
-капуста | cabbage
-яйца | eggs
+дрожжевое тесто | yeast dough | 5804
+капуста | cabbage | 1200
+яйца | eggs | 4400
 
 @ Вареники с творогом
-творог | farmer cheese
-мука | flour
-яйцо | egg
-сахар | sugar
+творог | farmer cheese | 4580
+мука | flour | 5000
+яйцо | egg | 4400
+сахар | sugar | 6100
 
 @ Ленивые вареники
-творог | farmer cheese
-мука | flour
-яйцо | egg
+творог | farmer cheese | 4580
+мука | flour | 5000
+яйцо | egg | 4400
 
 @ Сельдь с картошкой
-сельдь | herring
-картофель | potato
-лук | onion
-растительное масло | sunflower oil
+сельдь | herring | 4155
+картофель | potato | 1000
+лук | onion | 1100
+растительное масло | sunflower oil | 6700
 
 @ Сало солёное
-сало | salt pork
-чеснок | garlic
-соль | salt
-перец | pepper
+сало | salt pork | 3940
+чеснок | garlic | 1120
+соль | salt | 7000
+перец | pepper | 7100
 
 @ Колбаса домашняя
-свинина | pork
-кишки | sausage casings
-чеснок | garlic
+свинина | pork | 3200
+кишки | sausage casings | 3767
+чеснок | garlic | 1120
 
 @ Тыква запечённая
-тыква | pumpkin
-мёд | honey
-корица | cinnamon
+тыква | pumpkin | 1370
+мёд | honey | 6150
+корица | cinnamon | 7212
 
 @ Морковный торт
-морковь | carrot
-мука | flour
-сахар коричневый | brown sugar
-грецкие орехи | walnuts
-сливочный сыр | cream cheese
+морковь | carrot | 1030
+мука | flour | 5000
+сахар коричневый | brown sugar | 6103
+грецкие орехи | walnuts | 2501
+сливочный сыр | cream cheese | 4709
 
 @ Брауни
-шоколад тёмный | dark chocolate
-масло сливочное | butter
-сахар | sugar
-яйца | eggs
-мука | flour
+шоколад тёмный | dark chocolate | 6501
+масло сливочное | butter | 4600
+сахар | sugar | 6100
+яйца | eggs | 4400
+мука | flour | 5000
 
 @ Пряники
-мёд | honey
-мука ржаная | rye flour
-имбирь молотый | ground ginger
-корица | cinnamon
+мёд | honey | 6150
+мука ржаная | rye flour | 5009
+имбирь молотый | ground ginger | 7211
+корица | cinnamon | 7212
 
 @ Банановый хлеб
-бананы | bananas
-мука | flour
-сахар | sugar
-сода | baking soda
+бананы | bananas | 2150
+мука | flour | 5000
+сахар | sugar | 6100
+сода | baking soda | 6301
 
 @ Чизкейк
-сливочный сыр | cream cheese
-печенье | cookies
-сливочное масло | butter
-сахар | sugar
-сливки | cream
+сливочный сыр | cream cheese | 4709
+печенье | cookies | 5880
+сливочное масло | butter | 4600
+сахар | sugar | 6100
+сливки | cream | 4480
 
 @ Сметанник
-сметана | sour cream
-мука | flour
-сахар | sugar
-разрыхлитель | baking powder
+сметана | sour cream | 4500
+мука | flour | 5000
+сахар | sugar | 6100
+разрыхлитель | baking powder | 6300
 
 @ Зефир
-яблочное пюре | applesauce
-агар-агар | agar
-сахар | sugar
+яблочное пюре | applesauce | 8490
+агар-агар | agar | 6410
+сахар | sugar | 6100
 
 @ Мороженое пломбир
-сливки | cream
-сгущённое молоко | condensed milk
-ванильный экстракт | vanilla extract
+сливки | cream | 4480
+сгущённое молоко | condensed milk | 4461
+ванильный экстракт | vanilla extract | 6353
 
 @ Пирожное картошка
-печенье | cookies
-сгущёнка | condensed milk
-какао | cocoa
-ром | rum
+печенье | cookies | 5880
+сгущёнка | condensed milk | 4461
+какао | cocoa | 6450
+ром | rum | 8737
 
 @ Трубочки с кремом
-слоёное тесто | puff pastry
-сливки | cream
-сахарная пудра | powdered sugar
+слоёное тесто | puff pastry | 5801
+сливки | cream | 4480
+сахарная пудра | powdered sugar | 6110
 
 @ Эклеры
-мука | flour
-масло сливочное | butter
-яйца | eggs
-сливки | cream
+мука | flour | 5000
+масло сливочное | butter | 4600
+яйца | eggs | 4400
+сливки | cream | 4480
 
 @ Гренки сладкие
-батон | white bread
-молоко | milk
-яйца | eggs
-сахар | sugar
+батон | white bread | 5613
+молоко | milk | 4450
+яйца | eggs | 4400
+сахар | sugar | 6100
 
 @ Сельдь в горчичном соусе
-сельдь | herring
-горчица зернистая | whole-grain mustard
-мёд | honey
+сельдь | herring | 4155
+горчица зернистая | whole-grain mustard | 8203
+мёд | honey | 6150
 
 @ Креветки в чесночном соусе
-креветки тигровые | tiger shrimp
-чеснок | garlic
-сливочное масло | butter
-петрушка | parsley
+креветки тигровые | tiger shrimp | 4211
+чеснок | garlic | 1120
+сливочное масло | butter | 4600
+петрушка | parsley | 1702
 
 @ Мидии в сливочном соусе
-мидии | mussels
-сливки | cream
-белое вино | white wine
-чеснок | garlic
+мидии | mussels | 4235
+сливки | cream | 4480
+белое вино | white wine | 8701
+чеснок | garlic | 1120
 
 @ Кальмары жареные
-кальмары | squid
-лук | onion
-сметана | sour cream
+кальмары | squid | 4220
+лук | onion | 1100
+сметана | sour cream | 4500
 
 @ Форель запечённая
-форель | trout
-лимон | lemon
-розмарин | rosemary
+форель | trout | 4040
+лимон | lemon | 2000
+розмарин | rosemary | 1720/7506
 
 @ Котлеты из индейки
-фарш из индейки | ground turkey
-кабачок | zucchini
-овсяные хлопья | oat flakes
+фарш из индейки | ground turkey | 3454
+кабачок | zucchini | 1360
+овсяные хлопья | oat flakes | 5350
 
 @ Куриные крылышки
-куриные крылья | chicken wings
-мёд | honey
-соевый соус | soy sauce
-чеснок | garlic
+куриные крылья | chicken wings | 2
+мёд | honey | 6150
+соевый соус | soy sauce | 8000
+чеснок | garlic | 1120
 
 @ Буженина
-свиной окорок | pork leg
-чеснок | garlic
-горчица | mustard
+свиной окорок | pork leg | 3205
+чеснок | garlic | 1120
+горчица | mustard | 8200
 
 @ Язык отварной
-говяжий язык | beef tongue
-лавровый лист | bay leaf
-хрен | horseradish
+говяжий язык | beef tongue | 3731
+лавровый лист | bay leaf | 7251
+хрен | horseradish | 8210
 
 @ Капуста квашеная
-капуста | cabbage
-морковь | carrot
-соль | salt
-клюква | cranberry
+капуста | cabbage | 1200
+морковь | carrot | 1030
+соль | salt | 7000
+клюква | cranberry | 2360
 
 @ Тыквенные оладьи
-тыква | pumpkin
-кефир | kefir
-мука | flour
+тыква | pumpkin | 1370
+кефир | kefir | 4520
+мука | flour | 5000
 
 @ Пицца домашняя
-мука | flour
-дрожжи | yeast
-колбаса салями | salami
-сыр моцарелла | mozzarella
-кетчуп | ketchup
-грибы | mushrooms
+мука | flour | 5000
+дрожжи | yeast | 6310
+колбаса салями | salami | 3807
+сыр моцарелла | mozzarella | 4735
+кетчуп | ketchup | 8103
+грибы | mushrooms | 1800

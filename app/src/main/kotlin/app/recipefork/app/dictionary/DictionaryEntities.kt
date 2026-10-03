@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import app.recipefork.core.api.IngredientEntryDto
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -11,7 +12,8 @@ import kotlinx.serialization.json.Json
 /**
  * An ingredient dictionary entry as the device holds it (FLOW-001, DOM-010), with its divisibility, its comparison
  * factors (DOM-011, CAT-009 — never shown) and whether it is [removed] upstream: a removed entry is held so that the
- * recipes naming it keep its name (DOM-009), and is offered to nobody.
+ * recipes naming it keep its name (DOM-009), and is offered to nobody. [synonymsRu] and [synonymsEn] are the other
+ * words the entry may be found by in each language.
  */
 @Entity(tableName = "ingredient_entry")
 data class IngredientEntryEntity(
@@ -22,24 +24,40 @@ data class IngredientEntryEntity(
     val divisible: Boolean? = null,
     val factors: Map<String, Double> = emptyMap(),
     val removed: Boolean = false,
+    val synonymsRu: List<String> = emptyList(),
+    val synonymsEn: List<String> = emptyList(),
 ) {
-    fun toDto(): IngredientEntryDto = IngredientEntryDto(id, labelRu, labelEn, parentId, divisible, factors, removed)
+    fun toDto(): IngredientEntryDto =
+        IngredientEntryDto(id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn)
 
     companion object {
         fun of(dto: IngredientEntryDto): IngredientEntryEntity =
-            IngredientEntryEntity(dto.id, dto.labelRu, dto.labelEn, dto.parentId, dto.divisible, dto.factors, dto.removed)
+            IngredientEntryEntity(
+                dto.id, dto.labelRu, dto.labelEn, dto.parentId, dto.divisible, dto.factors, dto.removed,
+                dto.synonymsRu, dto.synonymsEn,
+            )
     }
 }
 
-/** How the device database holds an entry's factors: as the JSON object the dictionary carries them in. */
+/**
+ * How the device database holds an entry's factors and synonyms: as the JSON object and array the dictionary carries
+ * them in.
+ */
 class FactorsConverter {
     private val serializer = MapSerializer(String.serializer(), Double.serializer())
+    private val words = ListSerializer(String.serializer())
 
     @TypeConverter
     fun toText(factors: Map<String, Double>): String = Json.encodeToString(serializer, factors)
 
     @TypeConverter
     fun fromText(text: String): Map<String, Double> = Json.decodeFromString(serializer, text)
+
+    @TypeConverter
+    fun wordsToText(list: List<String>): String = Json.encodeToString(words, list)
+
+    @TypeConverter
+    fun wordsFromText(text: String): List<String> = Json.decodeFromString(words, text)
 }
 
 /** A tag as the device holds it (FLOW-001). */

@@ -1,5 +1,5 @@
 # Animal: fish and its fillets, smoked, salted and canned fish (4000-4199), seafood (4200-4299), roe (4300-4399).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
 @range 3000-4999
 
 # рыба — generic
@@ -119,7 +119,7 @@
 4153	филе скумбрии	mackerel fillet	4150	true	g=1 pc=120
 4154	скумбрия консервированная	canned mackerel	4150		g=1
 4155	сельдь	herring		true	g=1 pc=300
-4156	селёдка	salted herring	4155	true	g=1 pc=300
+4156	селёдка	salted herring	4155	true	g=1 pc=300		сельдь солёная;сельдь слабосолёная
 4157	филе сельди	herring fillet	4155		g=1
 4158	сельдь копчёная	kippers	4155		g=1
 4159	сельдь пряного посола	spiced herring	4155		g=1

@@ -147,8 +147,9 @@ class IngredientOfferTest {
         val all = dictionary + coconutMilk
         assertEquals(listOf("крылышки", "филе", "курица", "куркума"), offered("кур", all))
         // A leaf the typed text also matches on its own stands once, before its parent.
-        val english = offered("chicken", all, ENGLISH)
-        assertEquals(listOf("chicken wings", "fillet", "chicken"), english)
+        assertEquals(listOf("chicken wings", "fillet", "chicken"), offered("chic", all, ENGLISH))
+        // The exact match heads the offer, before its own leaves (T-130).
+        assertEquals(listOf("chicken", "chicken wings", "fillet"), offered("chicken", all, ENGLISH))
         val russian = offer("chick", all, RUSSIAN).entries
         assertEquals(listOf(wings, fillet, chicken), russian)
         assertEquals(russian.distinct(), russian)
@@ -198,15 +199,146 @@ class IngredientOfferTest {
         val cucumber = IngredientEntryEntity(52, "огурец", "cucumber", null)
         val butter = IngredientEntryEntity(53, "масло сливочное", "butter", null)
         val withThem = dictionary + egg + quailEgg + cucumber + butter
-        assertEquals(listOf(quailEgg, egg), offer("яйца", withThem).entries)
-        assertEquals(listOf(quailEgg, egg), offer("eggs", withThem).entries)
+        assertEquals(listOf(quailEgg, egg), offer("яйц", withThem).entries)
+        // A beginning still being typed is no other form: free text stays offered.
+        assertEquals("молок", offer("молок").freeText)
+        assertEquals(listOf(egg, quailEgg), offer("яйца", withThem).entries)
+        assertEquals(listOf(egg, quailEgg), offer("eggs", withThem).entries)
         assertEquals(listOf(cucumber), offer("огурцы", withThem).entries)
         // Words in any order are offered, as before, and now also taken as the exact match.
         assertEquals(listOf(butter), offer("сливочное масло", withThem).entries)
         assertEquals(butter, offer("сливочное масло", withThem).exact)
         assertNull(offer("сливочное масло", withThem).freeText)
-        // Another form is offered, never taken as exact: the author picks it.
-        assertNull(offer("яйца", withThem).exact)
-        assertEquals("яйца", offer("яйца", withThem).freeText)
+    }
+
+    // T-130: a plural or another form of a label is the exact match too, offered first, before the entry's leaves.
+    @Test
+    fun anotherFormOfALabelIsTheExactMatchAndComesFirst() {
+        val egg = IngredientEntryEntity(50, "яйцо", "egg", null)
+        val quailEgg = IngredientEntryEntity(51, "яйцо перепелиное", "quail egg", 50)
+        val boiledEgg = IngredientEntryEntity(52, "яйцо варёное", "boiled egg", 50)
+        val onion = IngredientEntryEntity(60, "лук", "onion", null)
+        val redOnion = IngredientEntryEntity(61, "лук красный", "red onion", 60)
+        val leek = IngredientEntryEntity(62, "лук-порей", "leek", 60)
+        val withThem = dictionary + egg + quailEgg + boiledEgg + onion + redOnion + leek
+        listOf("яйца", "Яйца", "eggs").forEach { typed ->
+            val result = offer(typed, withThem)
+            assertEquals(typed, egg, result.exact)
+            assertEquals(typed, egg, result.entries.first())
+            assertNull(typed, result.freeText)
+        }
+        assertEquals(listOf(egg, boiledEgg, quailEgg), offer("яйца", withThem).entries)
+        assertEquals(onion, offer("onions", withThem, ENGLISH).entries.first())
+        assertEquals(onion, offer("onions", withThem, ENGLISH).exact)
+        assertEquals(onion, offer("лука", withThem).exact)
+        assertEquals("onion", offered("onions", withThem, ENGLISH).first())
+        // The words of a label in another form, in any order, are exact as well: "перепелиные яйца" is "яйцо перепелиное".
+        assertEquals(quailEgg, offer("перепелиные яйца", withThem).exact)
+        assertEquals(quailEgg, offer("quail eggs", withThem).exact)
+        // The label itself, as written, still wins over another entry in another form.
+        assertEquals(egg, offer("яйцо", withThem).exact)
+    }
+
+    // T-130: the words of an entry's parents count as its own, so "сыр моцарелла" lands on моцарелла, a kind of сыр.
+    @Test
+    fun theWordsOfAParentNameItsLeaf() {
+        val cheese = IngredientEntryEntity(70, "сыр", "cheese", null)
+        val adyghe = IngredientEntryEntity(71, "адыгейский сыр", "Adyghe cheese", 70)
+        val mozzarella = IngredientEntryEntity(72, "моцарелла", "mozzarella", 70)
+        val withThem = dictionary + cheese + adyghe + mozzarella
+        assertEquals(mozzarella, offer("сыр моцарелла", withThem).entries.first())
+        assertEquals(mozzarella, offer("сыр моцарелла", withThem).exact)
+        assertEquals(mozzarella, offer("mozzarella cheese", withThem, ENGLISH).entries.first())
+        assertFalse(offer("сыр моцарелла", withThem).entries.contains(adyghe))
+        // The parent alone still brings its leaves before it, each once.
+        assertEquals(listOf(adyghe, mozzarella, cheese), offer("сы", withThem).entries)
+        assertEquals(listOf(cheese, adyghe, mozzarella), offer("сыр", withThem).entries)
+    }
+
+    // T-130: a longer word built on a label is not the label: no butter for "buttermilk", no лимон for "лимонад".
+    @Test
+    fun aWordBuiltOnALabelDoesNotFindIt() {
+        val butter = IngredientEntryEntity(80, "масло сливочное", "butter", null)
+        val water = IngredientEntryEntity(81, "вода", "water", null)
+        val pepper = IngredientEntryEntity(82, "перец", "pepper", null)
+        val lemon = IngredientEntryEntity(83, "лимон", "lemon", null)
+        val sugar = IngredientEntryEntity(84, "сахар", "sugar", null)
+        val carrot = IngredientEntryEntity(85, "морковь", "carrot", null)
+        val withThem = dictionary + butter + water + pepper + lemon + sugar + carrot
+        listOf("buttermilk", "watermelon", "pepperoni", "лимонад", "сахарин").forEach { typed ->
+            assertEquals(typed, emptyList<IngredientEntryEntity>(), offer(typed, withThem).entries)
+        }
+        assertEquals(listOf(carrot), offer("морковка", withThem).entries)
+        assertEquals(listOf(sugar), offer("сахарная", withThem).entries)
+        assertEquals(listOf(lemon), offer("лимоны", withThem).entries)
+    }
+
+    private val potato = IngredientEntryEntity(90, "картофель", "potato", null, synonymsRu = listOf("картошка"))
+    private val tomato = IngredientEntryEntity(91, "помидор", "tomato", null, synonymsRu = listOf("томат"))
+    private val semolina = IngredientEntryEntity(92, "манная крупа", "semolina", null, synonymsRu = listOf("манка"))
+    private val powdered = IngredientEntryEntity(
+        93, "сахарная пудра", "powdered sugar", null, synonymsEn = listOf("confectioners' sugar", "icing sugar"),
+    )
+    private val tomatoPaste = IngredientEntryEntity(94, "томатная паста", "tomato paste", null)
+    private val withSynonyms = dictionary + potato + tomato + semolina + powdered + tomatoPaste
+
+    // T-129, FLOW-023: a synonym typed exactly, or in another form, is an exact match, shown under the entry's label with
+    // the synonym beside it; choosing it names the row by the entry.
+    @Test
+    fun aSynonymTypedFindsItsEntryExactly() {
+        listOf(
+            Triple("картошка", potato, "картошка"),
+            Triple("Картошку", potato, "картошка"),
+            Triple("манка", semolina, "манка"),
+            Triple("томат", tomato, "томат"),
+            Triple("томаты", tomato, "томат"),
+            Triple("icing sugar", powdered, "icing sugar"),
+            Triple("confectioners' sugar", powdered, "confectioners' sugar"),
+            Triple("Confectioners sugar", powdered, "confectioners' sugar"),
+        ).forEach { (typed, entry, synonym) ->
+            val result = offer(typed, withSynonyms)
+            assertEquals(typed, entry, result.exact)
+            assertEquals(typed, entry, result.entries.first())
+            assertNull(typed, result.freeText)
+            assertEquals(typed, synonym, result.synonyms[entry.id])
+        }
+        // The label shown is the interface language's, whichever language the synonym is in.
+        assertEquals("сахарная пудра", offer("icing sugar", withSynonyms).entries.first().label(RUSSIAN))
+        assertEquals("potato", offer("картошка", withSynonyms, ENGLISH).entries.first().label(ENGLISH))
+    }
+
+    // T-129: a synonym begun is matched by the same word-prefix rule as a label; a word built on it is not it.
+    @Test
+    fun aSynonymBegunOffersItsEntry() {
+        assertEquals(listOf(potato), offer("карто", withSynonyms).entries)
+        assertEquals(emptyMap<Long, String>(), offer("карто", withSynonyms).synonyms)
+        assertEquals(listOf(potato), offer("картош", withSynonyms).entries)
+        assertEquals(mapOf(potato.id to "картошка"), offer("картош", withSynonyms).synonyms)
+        assertNull(offer("картош", withSynonyms).exact)
+        assertEquals(listOf(powdered), offer("icing", withSynonyms, ENGLISH).entries)
+        assertEquals(emptyList<IngredientEntryEntity>(), offer("манкать", withSynonyms).entries)
+    }
+
+    // T-129: an entry found by its label and a synonym alike is offered once, its label alone shown.
+    @Test
+    fun anEntryFoundByItsLabelAndASynonymIsOfferedOnceUnderItsLabel() {
+        val sugar = IngredientEntryEntity(95, "сахар", "sugar", null)
+        val result = offer("sugar", withSynonyms + sugar, ENGLISH)
+        assertEquals(listOf(sugar, powdered), result.entries)
+        assertEquals(1, result.entries.count { it == powdered })
+        // "powdered sugar" holds "sugar" as well as its synonyms do: the label wins, and no synonym is shown.
+        assertEquals(emptyMap<Long, String>(), result.synonyms)
+        // "томат" is помидор's synonym and begins томатная паста's label: each offered once, the exact match first.
+        val tomatoes = offer("томат", withSynonyms)
+        assertEquals(listOf(tomato, tomatoPaste), tomatoes.entries)
+        assertEquals(mapOf(tomato.id to "томат"), tomatoes.synonyms)
+    }
+
+    // T-129: a removed entry's synonyms find nothing.
+    @Test
+    fun aRemovedEntrysSynonymFindsNothing() {
+        val removed = potato.copy(removed = true)
+        assertEquals(emptyList<IngredientEntryEntity>(), offer("картошка", dictionary + removed).entries)
+        assertEquals("картошка", offer("картошка", dictionary + removed).freeText)
     }
 }

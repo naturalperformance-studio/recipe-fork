@@ -41,12 +41,13 @@ enum class Family(val prefix: String, val tags: Boolean, val ranges: List<LongRa
  * The dictionary's sources (dictionary/README.md) turned into the shipped `dictionaries.json`.
  *
  * A source is tab-separated text, one entry per line; `#` starts a comment line, and `@range FIRST-LAST` declares an
- * id range the file may use. An ingredient line is `id, labelRu, labelEn, parentId, divisible, factors, removed`,
- * trailing empty columns left out; a tag line is `id, labelRu, labelEn`.
+ * id range the file may use. An ingredient line is `id, labelRu, labelEn, parentId, divisible, factors, removed,
+ * synonymsRu, synonymsEn` — each synonym list `;`-separated — trailing empty columns left out; a tag line is `id, labelRu, labelEn`.
  */
 object DictionaryBuild {
-    private const val INGREDIENT_COLUMNS = 7
+    private const val INGREDIENT_COLUMNS = 9
     private const val TAG_COLUMNS = 3
+    private const val SYNONYM_SEPARATOR = ';'
 
     @OptIn(ExperimentalSerializationApi::class)
     private val pretty = Json {
@@ -80,6 +81,7 @@ object DictionaryBuild {
         uniqueIds(tags, errors)
         uniqueLabels(ingredients.filterNot { it.value.removed }, errors)
         uniqueLabels(tags, errors)
+        synonyms(ingredients, errors)
         parents(ingredients, errors)
         if (baseline != null) {
             val shippedIngredients = baseline.dictionaries.ingredients.associate { it.id to listOf(it.labelRu, it.labelEn) }
@@ -192,12 +194,26 @@ object DictionaryBuild {
             "removed" -> true
             else -> false.also { errors += "$at: '${cells[6]}' in the removed column (expected 'removed' or empty)" }
         }
+        val synonymsRu = synonyms(at, "synonymsRu", cells[7], errors)
+        val synonymsEn = synonyms(at, "synonymsEn", cells[8], errors)
         if ("pc" in factors && divisible == null) {
             errors += "$at: a 'pc' factor needs the divisible flag ('true' or 'false')"
         }
         // A line with a bad cell is still held by its id and labels, so that the checks across lines see it too.
         if (id == null || !labelled) return null
-        return Row(at, id, listOf(cells[1], cells[2]), IngredientEntryDto(id, cells[1], cells[2], parentId, divisible, factors, removed))
+        return Row(at, id, listOf(cells[1], cells[2]), IngredientEntryDto(id, cells[1], cells[2], parentId, divisible, factors, removed, synonymsRu, synonymsEn))
+    }
+
+    /** The `;`-separated synonyms of [cell]; each must hold a letter or digit and have no spaces around it. */
+    private fun synonyms(at: String, name: String, cell: String, errors: MutableList<String>): List<String> {
+        if (cell.isEmpty()) return emptyList()
+        return cell.split(SYNONYM_SEPARATOR).filter { synonym ->
+            when {
+                WordPrefix.words(synonym).isEmpty() -> false.also { errors += "$at: $name holds a blank synonym" }
+                synonym != synonym.trim() -> false.also { errors += "$at: $name '$synonym' has spaces around it" }
+                else -> true
+            }
+        }
     }
 
     private fun factors(at: String, cell: String, errors: MutableList<String>): Map<String, Double> {
@@ -239,6 +255,43 @@ object DictionaryBuild {
             }
         }
     }
+
+    /**
+     * A synonym finds its entry, so it must find that entry alone: as the search folds it, it is neither its own entry's
+     * label, nor any live entry's label in its language, nor another synonym in its language. A removed entry is offered to nobody, so
+     * its synonyms are checked against its own label only.
+     */
+    private fun synonyms(rows: List<Row<IngredientEntryDto>>, errors: MutableList<String>) {
+        val live = rows.filterNot { it.value.removed }
+        listOf("synonymsRu", "synonymsEn").forEachIndexed { language, name ->
+            val labels = HashMap<List<String>, Row<*>>()
+            live.forEach { labels.putIfAbsent(folded(it.labels[language]), it) }
+            val synonyms = HashMap<List<String>, Pair<Row<*>, String>>()
+            rows.forEach { row ->
+                val own = folded(row.labels[language])
+                val list = if (language == 0) row.value.synonymsRu else row.value.synonymsEn
+                list.forEach synonym@{ synonym ->
+                    val key = folded(synonym)
+                    if (key == own) {
+                        errors += "${row.at}: $name '$synonym' is the entry's own label as the search reads it"
+                        return@synonym
+                    }
+                    if (row.value.removed) return@synonym
+                    val label = labels[key]
+                    val earlier = synonyms.putIfAbsent(key, row to synonym)
+                    when {
+                        label != null -> errors += "${row.at}: $name '$synonym' is the same, as the search reads it, " +
+                            "as the label '${label.labels[language]}' at ${label.at}"
+                        earlier != null -> errors += "${row.at}: $name '$synonym' is the same, as the search reads it, " +
+                            "as the synonym '${earlier.second}' at ${earlier.first.at}"
+                    }
+                }
+            }
+        }
+    }
+
+    /** A label or synonym folded and split as the search reads it, its words in any order. */
+    private fun folded(text: String): List<String> = WordPrefix.words(text).sorted()
 
     private fun parents(rows: List<Row<IngredientEntryDto>>, errors: MutableList<String>) {
         val byId = rows.associateBy { it.id }
