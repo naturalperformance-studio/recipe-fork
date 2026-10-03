@@ -2,7 +2,9 @@ package app.recipefork.app.editor
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.onFocusedBoundsChanged
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -72,6 +74,7 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
+import app.recipefork.core.recipe.RecipePart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -99,6 +102,7 @@ fun rememberEditorEnvironment(): EditorEnvironment {
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
  * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EditorScreen(
     recipeId: RecipeId,
@@ -154,6 +158,8 @@ fun EditorScreen(
                     // a scroll is not one.
                     .onEveryTap { editor.noteAction() }
                     .onGloballyPositioned { scroll.viewport = it }
+                    // Where the field the author is in stands, so a mark appearing above it does not push it away.
+                    .onFocusedBoundsChanged { scroll.focused = it }
                     .verticalScroll(scroll.state)
                     .padding(16.dp)
                     .testTag(EditorTags.FORM),
@@ -167,8 +173,8 @@ fun EditorScreen(
                     )
                 }
                 ForkNote(R.string.editor_fork_takes, Modifier.testTag(EditorTags.FORK_TAKES))
-                TitleAndLanguage(shown, editor)
-                CompositionLocalProvider(LocalEditorStatements provides statements) {
+                CompositionLocalProvider(LocalEditorStatements provides statements, LocalEditorScroll provides scroll) {
+                    TitleAndLanguage(shown, editor)
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
                     ServingCount(shown, editor)
@@ -230,24 +236,29 @@ private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: EditorStat
 @Composable
 private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor) {
     val editable = recipe.state.editable
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        if (editable) {
-            OutlinedTextField(
-                value = recipe.title,
-                onValueChange = { editor.setTitle(it) },
-                label = { Text(stringResource(R.string.editor_title)) },
-                singleLine = true,
-                modifier = Modifier.weight(1f).testTag(EditorTags.TITLE),
-            )
-        } else {
-            Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}.testTag(EditorTags.TITLE)) {
-                Text(stringResource(R.string.editor_title), style = MaterialTheme.typography.labelMedium)
-                Text(recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }, style = MaterialTheme.typography.titleLarge)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            if (editable) {
+                OutlinedTextField(
+                    value = recipe.title,
+                    onValueChange = { editor.setTitle(it) },
+                    label = { Text(stringResource(R.string.editor_title)) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f).then(leaving { editor.leave(RecipePart.Title) }).testTag(EditorTags.TITLE),
+                )
+            } else {
+                Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}.testTag(EditorTags.TITLE)) {
+                    Text(stringResource(R.string.editor_title), style = MaterialTheme.typography.labelMedium)
+                    Text(recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }, style = MaterialTheme.typography.titleLarge)
+                }
             }
+            Spacer(Modifier.width(8.dp))
+            // The declared language sits beside the title (FLOW-024): changing it is one action (L10N-004).
+            Language(recipe, editor)
         }
-        Spacer(Modifier.width(8.dp))
-        // The declared language sits beside the title (FLOW-024): changing it is one action (L10N-004).
-        Language(recipe, editor)
+        // Under the title and the language, across the width, what either still needs (FLOW-028).
+        BoundMark(editor, RecipePart.Title, EditorTags.TITLE_MARK, gap = 4.dp)
+        BoundMark(editor, RecipePart.Language, EditorTags.LANGUAGE_MARK, gap = 4.dp)
     }
 }
 
@@ -287,7 +298,11 @@ private fun Language(recipe: Recipe, editor: RecipeEditor) {
             ActionText(
                 text = stringResource(R.string.editor_language_clear),
                 action = stringResource(R.string.editor_language_clear_action),
-                onClick = { editor.setLanguage(null) },
+                // Clearing it is leaving it without a language: the mark of FLOW-028 says what that costs.
+                onClick = {
+                    editor.setLanguage(null)
+                    editor.leave(RecipePart.Language)
+                },
                 modifier = Modifier.testTag(EditorTags.LANGUAGE_CLEAR),
             )
         }
@@ -479,6 +494,15 @@ object EditorTags {
     const val FORM = "editor-form"
     const val FROZEN = "editor-frozen"
     const val TITLE = "editor-title"
+    /** The marks of FLOW-028: a part left below the minimum or over a limit. */
+    const val TITLE_MARK = "editor-title-mark"
+    const val LANGUAGE_MARK = "editor-language-mark"
+    const val SERVINGS_MARK = "editor-servings-mark"
+    const val INGREDIENTS_MARK = "editor-ingredients-mark"
+    const val STEPS_MARK = "editor-steps-mark"
+    const val DESCRIPTION_MARK = "editor-description-mark"
+    fun stepMark(position: Int) = "editor-step-$position-mark"
+    fun timerNameMark(position: Int) = "editor-step-$position-timer-name-mark"
     const val LANGUAGE = "editor-language"
     const val LANGUAGE_CLEAR = "editor-language-clear"
     const val TAGS = "editor-tags"

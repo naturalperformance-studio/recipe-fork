@@ -217,3 +217,14 @@ class UnitLabelsTest {
         assertEquals("to taste", text(AuthoredQuantity(TO_TASTE, null), factor(3), ENGLISH))
     }
 }
+
+/** L10N-009 for a whole count or limit, as the editor's marks print them (FLOW-028). */
+class WholeNumberGroupingTest {
+    @Test
+    fun `a whole number is grouped the interface language's way`() {
+        assertEquals("2,000", QuantityText.whole(2_000, ENGLISH))
+        assertEquals("2 000", QuantityText.whole(2_000, RUSSIAN))
+        assertEquals("120", QuantityText.whole(120, ENGLISH))
+        assertEquals("1,234,567", QuantityText.whole(1_234_567, ENGLISH))
+    }
+}

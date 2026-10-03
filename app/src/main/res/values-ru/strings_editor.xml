@@ -100,6 +100,16 @@
     <string name="editor_part_cancel">Отмена</string>
     <string name="editor_step_part_more_than_whole">Часть %1$s больше, чем %2$s по списку.</string>
     <string name="editor_parts_made_whole">У ингредиента %1$d сменилась единица: где шаги брали его часть, теперь берут целиком.</string>
+    <!-- Часть ниже минимума или сверх лимита (FLOW-028): предупреждение, ничего не запрещает; рецепт называет свои границы. -->
+    <string name="editor_mark_warning">Предупреждение</string>
+    <string name="editor_mark_title_missing">У рецепта должно быть название.</string>
+    <string name="editor_mark_language_missing">У рецепта должен быть указан язык.</string>
+    <string name="editor_mark_servings_missing">У рецепта должно быть число порций.</string>
+    <string name="editor_mark_ingredients_missing">У рецепта должен быть хотя бы один ингредиент.</string>
+    <string name="editor_mark_steps_missing">У рецепта должен быть хотя бы один шаг.</string>
+    <string name="editor_mark_characters_over">Больше лимита в %1$s символов: сейчас %2$s. Текст сохранён целиком.</string>
+    <string name="editor_mark_ingredients_over">Больше %1$s ингредиентов: сейчас %2$s.</string>
+    <string name="editor_mark_steps_over">Больше %1$s шагов: сейчас %2$s.</string>
     <!-- Чек-лист: неизменные советы, как написать рецепт; открывается сверху редактора и только читается (GUIDE-003, GUIDE-004). -->
     <string name="editor_checklist">Чек-лист</string>
     <string name="editor_checklist_action">Открыть чек-лист</string>

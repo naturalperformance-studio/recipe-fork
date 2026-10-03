@@ -120,6 +120,16 @@
     <string name="editor_row_insert_below">Insert below</string>
     <string name="editor_row_move_up">Move up</string>
     <string name="editor_row_move_down">Move down</string>
+    <!-- A part left below the minimum or over a limit (FLOW-028): a warning that refuses nothing; the recipe states its own bounds. -->
+    <string name="editor_mark_warning">Warning</string>
+    <string name="editor_mark_title_missing">A recipe needs a title.</string>
+    <string name="editor_mark_language_missing">A recipe needs a language.</string>
+    <string name="editor_mark_servings_missing">A recipe needs a serving count.</string>
+    <string name="editor_mark_ingredients_missing">A recipe needs at least one ingredient.</string>
+    <string name="editor_mark_steps_missing">A recipe needs at least one step.</string>
+    <string name="editor_mark_characters_over">Over the limit of %1$s characters: %2$s now. Kept in full.</string>
+    <string name="editor_mark_ingredients_over">More than %1$s ingredients: %2$s now.</string>
+    <string name="editor_mark_steps_over">More than %1$s steps: %2$s now.</string>
     <!-- The checklist: fixed advice on writing a recipe, opened from the editor's top and only read (GUIDE-003, GUIDE-004). -->
     <string name="editor_checklist">Checklist</string>
     <string name="editor_checklist_action">Open the checklist</string>

@@ -15,6 +15,7 @@ import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
+import app.recipefork.core.recipe.Bound
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShares
@@ -24,8 +25,10 @@ import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
+import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.ReferenceSpacing
 import app.recipefork.core.recipe.ServingCountInput
 import app.recipefork.core.recipe.ServingCountReading
@@ -227,8 +230,8 @@ class RecipeEditor(
     }
 
     /**
-     * The name the author gives the step's timer, kept in full however long (DOM-012 is enforced at submission, not
-     * while typing). An empty name gives none, and the name follows the step's text again (FLOW-027 (7), FLOW-016).
+     * The name the author gives the step's timer, kept in full however long (DOM-012 is enforced at submission and
+     * marked on leaving the field, never while typing — FLOW-028). An empty name gives none, and the name follows the step's text again (FLOW-027 (7), FLOW-016).
      */
     fun setTimerLabel(position: Int, label: String): Boolean {
         if (current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timer == null) return false
@@ -467,6 +470,59 @@ class RecipeEditor(
         return edit({ it.copy(media = it.media.filter { m -> m.mediaId != removed }) }) { written(removed) }
     }
 
+    // The minimum and the limits, marked on leaving a part (FLOW-028).
+
+    /** The parts the author left outside their bound, a step's by the step's key so the mark stays with the step. */
+    private val left = MutableStateFlow<Set<Left>>(emptySet())
+    private val marked = MutableStateFlow<Map<RecipePart, Bound>>(emptyMap())
+
+    /**
+     * Every part the author has left below DOM-006's minimum or over a limit of DOM-012 and has not completed since, with
+     * how it stands; a step's parts at the step's position now. A part never left is not here. Nothing is refused.
+     */
+    val marks: StateFlow<Map<RecipePart, Bound>> = marked.asStateFlow()
+
+    /**
+     * The author left [part]. It is marked if it is outside its bound, until it is completed; a step's part is held by
+     * the key of the step now at its position, as [leaveStep] holds it.
+     */
+    fun leave(part: RecipePart) = hold(
+        when (part) {
+            is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timerName = false)
+            is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timerName = true)
+            else -> Left.Whole(part)
+        },
+    )
+
+    /** The author left the text of the step whose [stepKey] is [key], or, [timerName], the name of its timer. */
+    fun leaveStep(key: Long, timerName: Boolean = false) = hold(Left.OfStep(key, timerName))
+
+    private fun hold(part: Left) {
+        val recipe = current.value ?: return
+        if (!recipe.state.editable || bound(part, recipe) == null) return
+        left.value = left.value + part
+        remark(recipe)
+    }
+
+    /** What is marked once [recipe] stands as it does: a part completed loses its mark and must be left again to regain it. */
+    private fun remark(recipe: Recipe) {
+        left.value = left.value.filterTo(mutableSetOf()) { bound(it, recipe) != null }
+        marked.value = left.value.mapNotNull { part -> part.at()?.let { at -> RecipeBounds.of(recipe, at)?.let { at to it } } }.toMap()
+    }
+
+    private fun bound(part: Left, recipe: Recipe): Bound? = part.at()?.let { RecipeBounds.of(recipe, it) }
+
+    /** The part [this] is at now; null for a step deleted since. */
+    private fun Left.at(): RecipePart? = when (this) {
+        is Left.Whole -> part
+        is Left.OfStep -> stepPosition(key)?.let { if (timerName) RecipePart.TimerName(it) else RecipePart.StepText(it) }
+    }
+
+    private sealed interface Left {
+        data class Whole(val part: RecipePart) : Left
+        data class OfStep(val key: Long, val timerName: Boolean) : Left
+    }
+
     /** Where the step whose [stepKey] is [key] stands now; null once it is deleted. */
     fun stepPosition(key: Long): Int? = stepKeys.positionOf(key)?.takeIf { it < (current.value?.steps?.size ?: 0) }
 
@@ -480,6 +536,7 @@ class RecipeEditor(
         noteAction()
         val next = recipe.edited(clock(), change)
         current.value = next
+        if (left.value.isNotEmpty()) remark(next)
         // Launched in order and queued on a fair lock, so the book receives the changes in the order made.
         saving.launch {
             writes.withLock { recipes.save(next) }

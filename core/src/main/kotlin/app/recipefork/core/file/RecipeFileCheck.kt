@@ -5,6 +5,7 @@ import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 
@@ -16,12 +17,13 @@ import app.recipefork.core.scaling.Rational
  * takes a recipe in any state (FLOW-063 (1)). An importer believes nothing of a file that has any [problems].
  */
 object RecipeFileCheck {
-    const val MAX_INGREDIENTS = 50
-    const val MAX_STEPS = 50
-    const val MAX_STEP_TEXT = 2_000
-    const val MAX_TITLE = 120
-    const val MAX_DESCRIPTION = 2_000
-    const val MAX_TIMER_NAME = 60
+    // DOM-012, as the editor's warnings read it too (FLOW-028).
+    const val MAX_INGREDIENTS = RecipeBounds.MAX_INGREDIENTS
+    const val MAX_STEPS = RecipeBounds.MAX_STEPS
+    const val MAX_STEP_TEXT = RecipeBounds.MAX_STEP_TEXT
+    const val MAX_TITLE = RecipeBounds.MAX_TITLE
+    const val MAX_DESCRIPTION = RecipeBounds.MAX_DESCRIPTION
+    const val MAX_TIMER_NAME = RecipeBounds.MAX_TIMER_NAME
 
     /** From 1 minute to 99 h 59 min (FLOW-027). */
     private val TIMER_MINUTES = 1L..(99L * 60 + 59)
