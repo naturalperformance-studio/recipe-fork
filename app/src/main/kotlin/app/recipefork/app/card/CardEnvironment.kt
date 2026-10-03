@@ -3,13 +3,11 @@ package app.recipefork.app.card
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import app.recipefork.app.AppContainer
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.data.UsualServings
-import app.recipefork.app.dictionary.DictionarySeeding
-import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.IngredientEntryEntity
-import app.recipefork.app.dictionary.PreferencesSeededVersion
 
 /** The ingredient dictionary as the card reads it: from the device alone, with or without a connection. */
 fun interface IngredientEntries {
@@ -29,13 +27,9 @@ class CardEnvironment(
 @Composable
 fun rememberCardEnvironment(): CardEnvironment {
     val context = LocalContext.current.applicationContext
-    return remember(context) {
-        val container = (context as RecipeForkApplication).container
-        val dao = container.database.dictionaryDao()
-        val seeding = DictionarySeeding(dao, PreferencesSeededVersion(context)) { DictionarySnapshot.read(context) }
-        CardEnvironment(container.usualServings) {
-            seeding.seedIfNeeded()
-            dao.ingredients()
-        }
-    }
+    return remember(context) { cardEnvironmentOf((context as RecipeForkApplication).container) }
 }
+
+/** The card's environment of [container]: its usual servings and the dictionaries it shares with every screen. */
+fun cardEnvironmentOf(container: AppContainer): CardEnvironment =
+    CardEnvironment(container.usualServings) { container.dictionaries.ingredients() }
