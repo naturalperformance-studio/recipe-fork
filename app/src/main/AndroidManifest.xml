@@ -21,12 +21,16 @@
         android:name=".RecipeForkApplication"
         android:allowBackup="false"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
         <activity
             android:name=".MainActivity"
+            android:configChanges="locale|layoutDirection"
             android:exported="true">
+            <!-- The interface language (L10N-002) is applied by the Activity itself, which shows itself again in it
+                 at once; a change of the platform's locale only updates its configuration, never relaunches it. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

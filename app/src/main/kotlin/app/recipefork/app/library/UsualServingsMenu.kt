@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -36,6 +37,7 @@ import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.editor.BlockAction
@@ -51,12 +53,15 @@ private val FIRST_CHOICE: Rational = Rational.of(2)
 /**
  * The book's menu, beside its title: it offers the serving count the reader usually cooks for (FLOW-017), showing the
  * count held or that none is — choosing it opens [UsualServingsDialog] — and, as a checked item, the editor's drag
- * column on the right of each block, for a left hand.
+ * column on the right of each block, for a left hand; and the interface language (L10N-002), which opens
+ * [LanguageDialog] and shows the whole application again in the language taken.
  */
 @Composable
 internal fun BookMenu(usual: UsualServings, handleSide: DragHandleSide, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
     var choosing by rememberSaveable { mutableStateOf(false) }
+    var choosingLanguage by rememberSaveable { mutableStateOf(false) }
+    val activity = LocalActivity.current
     val held by usual.count.collectAsState()
     val handleRight by handleSide.right.collectAsState()
     val language = servingsLanguage()
@@ -97,7 +102,27 @@ internal fun BookMenu(usual: UsualServings, handleSide: DragHandleSide, modifier
                     }
                     .testTag(LibraryTags.HANDLE_RIGHT),
             )
+            if (activity != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.language_menu)) },
+                    onClick = {
+                        expanded = false
+                        choosingLanguage = true
+                    },
+                    modifier = Modifier.testTag(LanguageTags.MENU_ITEM),
+                )
+            }
         }
+    }
+    if (choosingLanguage && activity != null) {
+        LanguageDialog(
+            chosen = remember { AppLanguage.chosen(activity) },
+            onChoose = {
+                choosingLanguage = false
+                AppLanguage.choose(activity, it)
+            },
+            onDismiss = { choosingLanguage = false },
+        )
     }
     if (choosing) {
         UsualServingsDialog(
