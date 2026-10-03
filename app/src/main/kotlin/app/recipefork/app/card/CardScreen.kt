@@ -15,7 +15,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.TopAppBar
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TooltipAnchorPosition
@@ -159,18 +162,14 @@ fun CardScreen(
         }
         entries = read.associateBy { it.id }
     }
-    // The bar draws under the status bar and collapses as the recipe scrolls under it; the content keeps clear of the
-    // other bars, the cutout and the keyboard, its last part above the navigation bar once scrolled to the end.
-    val bar = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // The bar draws under the status bar and stays, its colour changing as the recipe scrolls under it; the content keeps
+    // clear of the other bars, the cutout and the keyboard, its last part above the navigation bar once scrolled to the end.
+    val bar = TopAppBarDefaults.pinnedScrollBehavior()
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
-    // The title is the content's heading; the bar repeats it, collapsed, only once that heading has scrolled out of
-    // view — as when the reader scrolls on, or the card opens at a place further down, which collapses the bar too.
+    // The title is the content's heading; the bar repeats it only once that heading has scrolled out of view — as when
+    // the reader scrolls on, or the card opens at a place further down.
     var titleOut by remember(recipeId) { mutableStateOf(false) }
-    LaunchedEffect(titleOut) {
-        val state = bar.state
-        if (titleOut && state.heightOffsetLimit > -Float.MAX_VALUE / 2) state.heightOffset = state.heightOffsetLimit
-    }
     Scaffold(
         modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection).testTag(CardTags.SCREEN),
         topBar = {
@@ -271,10 +270,13 @@ private fun TopBar(
     onFork: () -> Unit,
     onEdit: () -> Unit,
 ) {
-    MediumTopAppBar(
+    // The last title shown is kept while it fades out, so that it does not vanish before the fade.
+    var last by remember { mutableStateOf(title) }
+    if (title != null) last = title
+    TopAppBar(
         title = {
-            if (title != null) {
-                Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag(CardTags.BAR_TITLE))
+            AnimatedVisibility(visible = title != null, enter = fadeIn(), exit = fadeOut()) {
+                last?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag(CardTags.BAR_TITLE)) }
             }
         },
         modifier = Modifier.testTag(CardTags.BAR),

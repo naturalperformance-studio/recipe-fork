@@ -187,23 +187,24 @@ class CardTopBarTest {
         assertFalse(exists(CardTags.EDIT))
     }
 
-    // Scenario 6: the bar collapses as the recipe scrolls; once the content's heading is out of view the bar shows the
-    // title on one line, ellipsized; it opens again, with no title, as the reader scrolls back to the top.
+    // Scenario 6: the bar is one row that stays as the recipe scrolls — no empty band above the cover; once the content's
+    // heading is out of view the bar shows the title on its one row, ellipsized; it loses the title back at the top.
     @Test
-    fun theBarCollapsesAsTheRecipeScrollsWithTheTitleOnOneLineEllipsized() {
+    fun theBarShowsTheTitleOnceScrolledOnOneLineEllipsized() {
         val long = "Slow-roasted chicken with lemon, garlic, thyme and a crisp potato crust for a long Sunday lunch " +
             "with the whole family, the neighbours, their dog and anyone else who happens to drop by the kitchen " +
             "while it roasts slowly in the oven"
         show(save(title = long).id)
         val expanded = bounds(CardTags.BAR).height
         assertFalse("no title in the bar while the heading is in view", exists(CardTags.BAR_TITLE))
-        compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() }
-        compose.waitUntil(PATIENCE_MS) { bounds(CardTags.BAR).height < expanded - 1f }
-        repeat(3) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
+        // One row: the bar is no taller than back's row and the status bar above it.
+        assertTrue("one row: ${'$'}expanded, back ${'$'}{bounds(CardTags.BACK)}", bounds(CardTags.BAR).bottom - bounds(CardTags.BACK).bottom < bounds(CardTags.BACK).height)
+        repeat(4) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.BAR_TITLE) }
         compose.onNodeWithTag(CardTags.TITLE).assertIsNotDisplayed()
         val collapsed = bounds(CardTags.BAR)
-        // Collapsed: one row, the title beside back on it.
+        assertEquals("the bar keeps its height as the recipe scrolls", expanded, collapsed.height, 1f)
+        // The title beside back on the one row.
         val back = bounds(CardTags.BACK)
         val title = bounds(CardTags.BAR_TITLE)
         assertTrue("the title on the row of back: $title, $back", title.top >= collapsed.top && title.bottom <= collapsed.bottom && title.left >= back.right)
@@ -213,10 +214,9 @@ class CardTopBarTest {
         assertTrue("the long title is longer than its one line", layout.multiParagraph.intrinsics.maxIntrinsicWidth > layout.size.width)
         assertEquals(TextOverflow.Ellipsis, layout.layoutInput.overflow)
         assertEquals(listOf(long), compose.textsOf(CardTags.BAR_TITLE))
-        // Back at the top, the bar opens again, with no title.
+        // Back at the top, the bar loses the title again.
         repeat(6) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeDown() } }
-        compose.waitUntil(PATIENCE_MS) { bounds(CardTags.BAR).height > expanded - 1f }
-        assertFalse(exists(CardTags.BAR_TITLE))
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.BAR_TITLE) }
     }
 
     // A11Y-004 with scenario 6: a title of 120 characters at twice the font scale on a narrow phone reads whole in the
@@ -247,10 +247,9 @@ class CardTopBarTest {
         assertEquals(listOf(long), compose.textsOf(CardTags.BAR_TITLE))
     }
 
-    // A card opened at a place further down — a held place, a timer's step — opens with the bar collapsed and the
-    // title in it.
+    // A card opened at a place further down — a held place, a timer's step — opens with the title in the bar.
     @Test
-    fun aCardOpenedFurtherDownOpensWithTheBarCollapsedAndTheTitleInIt() {
+    fun aCardOpenedFurtherDownOpensWithTheTitleInTheBar() {
         val recipe = save()
         val session = TextCardSession.inMemory()
         var open by mutableStateOf(true)
@@ -258,7 +257,6 @@ class CardTopBarTest {
             AppTheme { if (open) CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}, session = session) }
         }
         compose.awaitCard()
-        val expanded = bounds(CardTags.BAR).height
         repeat(4) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.BAR_TITLE) }
         compose.runOnIdle { open = false }
@@ -266,7 +264,6 @@ class CardTopBarTest {
         compose.runOnIdle { open = true }
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.BAR_TITLE) }
-        compose.waitUntil(PATIENCE_MS) { bounds(CardTags.BAR).height < expanded - 1f }
     }
 
     // The keyboard shrinks the content: a fixing field focused low on the card is brought above it.
