@@ -8,7 +8,7 @@ FLOW-028 (min/max warnings on leaving a field, incl. the 60-character timer name
 ## B — A card for busy hands, in your language  → v0.11 (built 2026-10-03, at demo)
 A11Y-007 / A11Y-003 (2) (56 dp card controls, larger step text) · L10N-002 (choose the interface language) · L10N-005 (filter by a recipe's language) · L10N-006 (the description searched) · FLOW-062 (1) sweep (no sending marks in serverless) · FLOW-020 (3) (a card that cannot be read offers to retry) · A11Y-002 contrast pass.
 
-## C — A dictionary that knows divisibility and comparison  → v0.12 (started 2026-10-03)
+## C — A dictionary that knows divisibility and comparison  → v0.12 (built 2026-10-03, at demo)
 `divisible` and comparison factors in the dictionary (DTO, Room, server V3, snapshot script, ShippedSnapshotTest) · the editor takes divisibility from the entry (FLOW-001 (2), FLOW-023 (11), DOM-018) · the filter orders by factors (FLOW-035 (2)) · removed entries stay resolvable (FLOW-001 (7)) · the qualifier tail (FLOW-023 (4)) · the snapshot parsed once per version, measured at the caps (QUAL-002/003).
 
 ## D — Step video and media housekeeping  → v0.13 (optional)
