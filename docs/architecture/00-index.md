@@ -30,6 +30,15 @@ All commands run from the repository root.
 | Deliver to the phone | `scripts/deliver.sh [notes-file]` | Sends `build/artefact/recipe-fork-debug.apk` (and the notes as a message) to the owner's Telegram chat. Reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` from `~/Projects/.env` (override with `DELIVERY_ENV`); credentials never enter the repository. Run after every hand-test artefact; `DELIVER_APK=recipe-fork-serverless-release.apk` sends the hand-test build: serverless, minified with R8, signed with the debug keystore so it installs over the debug builds. Bot API limit: 50 MB. |
 | Hand-test artefact | `scripts/artefact.sh` | Lands at `build/artefact/`: `recipe-fork-debug.apk`, `recipe-fork-serverless-debug.apk` (built with `-Precipefork.serverless=true`), `recipe-fork-serverless-release.apk` (the same, minified with R8, ~5 MB — the hand-test build) and `server/` (run `docker compose up --build` inside it). `SOURCE_COMMIT` names the commit it was built from. |
 
+## Gradle and the machine's memory
+
+The owner's PC has 31 GB of RAM; each Gradle daemon holds 1–4 GB (plus a Kotlin daemon). On 2026-10-04 idle daemons left by agent runs filled it. Rules for every session, developer and reviewer:
+
+- Use the default Gradle home `~/.gradle`. Never set `GRADLE_USER_HOME` (no `/tmp/*` homes per task or review): a different home starts a new daemon that nothing reuses.
+- Run Gradle commands one at a time per agent; no `--no-daemon` (it starts a fresh JVM every call), no extra parallel Gradle invocations.
+- `gradle.properties` sets `org.gradle.daemon.idletimeout` to 15 minutes, so an idle daemon exits on its own.
+- At the end of a working pass the lead runs `./gradlew --stop`, unless another session is visibly building. Check with `ps -eo pid,rss,etime,args | grep [G]radleDaemon`.
+
 ## Test frameworks
 
 - `:core`, `:server`: JUnit 5 with `kotlin.test`; server tests use a real PostgreSQL via Testcontainers (`postgres:16-alpine`).
