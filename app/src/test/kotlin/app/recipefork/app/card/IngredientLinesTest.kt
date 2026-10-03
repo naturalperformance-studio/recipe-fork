@@ -119,14 +119,14 @@ class IngredientLinesTest {
 
     @Test
     fun theCardDecidesWhatCanBeScaledInOnePlace() {
-        assertEquals(null, scalableQuantity(row("Flour", QuantityUnit.GRAM, null)))
-        assertEquals(null, scalableQuantity(row("Sugar", QuantityUnit.TEASPOON, Rational.of(3, 10))))
-        assertEquals(null, scalableQuantity(row("Eggs", QuantityUnit.PIECE, Rational.of(2), divisible = null)))
-        assertEquals(null, scalableQuantity(row("Eggs", QuantityUnit.PIECE, Rational.of(1, 2), divisible = false)))
-        assertEquals(null, scalableQuantity(row("Butter", QuantityUnit.GRAM, Rational.ZERO)))
-        assertEquals(null, scalableQuantity(row("Yeast", QuantityUnit.GRAM, Rational.of(15, 2))))
-        assertEquals(null, scalableQuantity(row("Oil", null, Rational.of(2), type = UnitType.EXACT)))
-        assertEquals(QuantityUnit.TO_TASTE, scalableQuantity(row("Pepper", null, null))?.unit)
-        assertEquals(Rational.of(500), scalableQuantity(row("Chicken", QuantityUnit.GRAM, Rational.of(500)))?.quantity)
+        assertEquals(null, scalableQuantity(row("Flour", QuantityUnit.GRAM, null), emptyMap()))
+        assertEquals(null, scalableQuantity(row("Sugar", QuantityUnit.TEASPOON, Rational.of(3, 10)), emptyMap()))
+        assertEquals(null, scalableQuantity(row("Eggs", QuantityUnit.PIECE, Rational.of(2), divisible = null), emptyMap()))
+        assertEquals(null, scalableQuantity(row("Eggs", QuantityUnit.PIECE, Rational.of(1, 2), divisible = false), emptyMap()))
+        assertEquals(null, scalableQuantity(row("Butter", QuantityUnit.GRAM, Rational.ZERO), emptyMap()))
+        assertEquals(null, scalableQuantity(row("Yeast", QuantityUnit.GRAM, Rational.of(15, 2)), emptyMap()))
+        assertEquals(null, scalableQuantity(row("Oil", null, Rational.of(2), type = UnitType.EXACT), emptyMap()))
+        assertEquals(QuantityUnit.TO_TASTE, scalableQuantity(row("Pepper", null, null), emptyMap())?.unit)
+        assertEquals(Rational.of(500), scalableQuantity(row("Chicken", QuantityUnit.GRAM, Rational.of(500)), emptyMap())?.quantity)
     }
 }
