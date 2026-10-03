@@ -12,6 +12,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.media.ClipConverter
 import app.recipefork.app.media.ClipOffer
 import app.recipefork.app.media.ClipRefusal
+import app.recipefork.app.media.ClipSources
 import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.PhotoNotice
 import app.recipefork.app.media.PhotoOffer
@@ -190,8 +191,11 @@ class StepClipOnDiskTest {
         val clip = attaching.attachClip(offer)
         assertTrue(attaching.converting.value)
 
-        attaching.attach(photo("later.jpg")).join()
-        clip.join()
+        // Bounded, so that a clip no longer stopped fails here rather than hanging.
+        withTimeout(10_000) {
+            attaching.attach(photo("later.jpg")).join()
+            clip.join()
+        }
 
         assertTrue(clip.isCancelled)
         assertFalse(attaching.converting.value)
@@ -201,6 +205,51 @@ class StepClipOnDiskTest {
         assertEquals(1, read.media.size)
         assertEquals(listOf(read.stepMedia(0)!!.mediaId), held())
         assertFalse(capture.exists())
+    }
+
+    // A clip converted for a step deleted meanwhile is not kept, and the author is told so.
+    @Test
+    fun aClipWhoseStepWasDeletedIsNotKeptAndSaysSo() = runBlocking {
+        val recipe = recipe("Boil.", "Fry.")
+        val editor = opened(recipe)
+        val attaching = editor.at(1)
+        gate = CompletableDeferred()
+        val job = attaching.attachClip(recorded("orphan.mp4").first)
+        assertTrue(editor.removeStep(1))
+
+        gate!!.complete(Unit)
+        withTimeout(10_000) { job.join() }
+
+        assertEquals(PhotoNotice.CLIP_NOT_ATTACHED, attaching.notice.value)
+        assertTrue(reopened(recipe).media.isEmpty())
+        assertEquals(emptyList<String>(), held())
+    }
+
+    // A placing that is never ready — the editor shown never reads the recipe — keeps nothing, and says so.
+    @Test
+    fun aClipNeverReadyToBePlacedIsNotKeptAndSaysSo() = runBlocking {
+        val recipe = recipe("Boil.")
+        val editor = opened(recipe)
+        val attaching = StepPhotoAttaching({ editor }, photos, editor.stepKey(0), ready = { false })
+
+        withTimeout(10_000) { attaching.attachClip(recorded("never.mp4").first).join() }
+
+        assertEquals(PhotoNotice.CLIP_NOT_ATTACHED, attaching.notice.value)
+        assertTrue(reopened(recipe).media.isEmpty())
+        assertEquals(emptyList<String>(), held())
+    }
+
+    // A lasting reading of a picked clip left by a process ended mid-conversion is let go at the next start.
+    @Test
+    fun leftoverReadingsAreLetGo() {
+        val uri = Uri.parse("content://media/external/video/media/42")
+        val resolver = context.contentResolver
+        resolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        assertEquals(1, resolver.persistedUriPermissions.size)
+
+        ClipSources.releaseLeftoverReadings(context)
+
+        assertTrue(resolver.persistedUriPermissions.isEmpty())
     }
 
     // MEDIA-008: a clip that cannot be kept on the device attaches nothing and says so.

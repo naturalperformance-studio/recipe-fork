@@ -35,6 +35,7 @@
     <string name="media_clip_refused_unreadable">Этот файл не удалось прочитать или сжать как видео, поэтому ничего не прикреплено.</string>
     <string name="media_clip_refused_too_large">Это видео не удалось сжать меньше чем до %1$d МБ, поэтому ничего не прикреплено.</string>
     <string name="media_clip_refused_not_stored">Видео не удалось сохранить на этом телефоне, поэтому ничего не прикреплено.</string>
+    <string name="media_clip_not_attached">Видео не удалось прикрепить к его шагу, поэтому оно не сохранено.</string>
     <string name="media_clip_unavailable">На этом телефоне не нашлось приложения, чтобы выбрать видео.</string>
     <string name="media_clip_camera_none">На этом телефоне не нашлось приложения камеры, поэтому снять видео здесь нельзя. Можно выбрать готовое.</string>
     <string name="media_clip_camera_failed">Камеру не удалось открыть, поэтому видео не снято. Можно выбрать готовое.</string>

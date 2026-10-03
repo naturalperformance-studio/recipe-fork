@@ -82,6 +82,8 @@ internal fun Steps(
     work: StepMediaWork? = null,
 ) {
     val photos = rememberStepPhotos(store, book, saving, clips, work)
+    // What each step's media work tells is said here, so that a step deleted while its clip converts still says it.
+    work?.all?.forEach { (stepKey, attaching) -> key(stepKey) { SaysPhotoNotices(attaching) } }
     val editable = recipe.state.editable
     val steps = recipe.steps.sortedBy { it.position }
     val language = numberLanguage(LocalConfiguration.current)

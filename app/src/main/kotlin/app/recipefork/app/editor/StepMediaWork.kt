@@ -1,7 +1,7 @@
 package app.recipefork.app.editor
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.recipefork.app.media.PhotoAttaching
@@ -15,15 +15,22 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * The media work of one recipe's steps, held past the activity being recreated — the phone turned while a clip is
- * converted: each step's [PhotoAttaching] by the step's key, which outlives the recreation too, so that the new screen
- * shows the conversion still running, can cancel it, and says what it ends in once. The work places what it prepared
- * through the editor shown now, once that one has read the recipe, never through one whose screen is gone; left for
- * good, the last editor shown takes it, as before.
+ * The media work of one recipe's steps, held past the screen that began it — the phone turned, or the editor left and
+ * opened again, while a clip is converted: each step's [PhotoAttaching] by the step's key, and the recipe's [stepKeys]
+ * themselves, so that a step keeps its key across both and the work always reaches the step it was offered for. The
+ * new screen shows the conversion still running at that step, can cancel it, and says what it ends in once. The work
+ * places what it prepared through the editor shown now, once that one has read the recipe; left for good, the last
+ * editor shown takes it, as before. Once the editor is left for good with no work running, all of it is let go.
  */
 internal class StepMediaWork : ViewModel() {
     private val editors = MutableStateFlow<RecipeEditor?>(null)
-    private val attachings = HashMap<Long, PhotoAttaching>()
+    private val attachings = mutableStateMapOf<Long, PhotoAttaching>()
+
+    /** The keys of the recipe's steps, given out by the editor and kept here with the work that uses them. */
+    var stepKeys: RowKeys? = null
+
+    /** Every step's attaching, by the step's key — those of steps deleted since among them, until let go. */
+    val all: Map<Long, PhotoAttaching> get() = attachings
 
     /** The editor shown now; the work places through it from now on. */
     fun show(editor: RecipeEditor) {
@@ -35,23 +42,28 @@ internal class StepMediaWork : ViewModel() {
         StepPhotoAttaching({ editors.value }, photos, key, ready = ::shownEditorRead)
     }
 
-    /** Waits until the editor shown now has read the recipe — or gives up, as a recipe gone is never read. */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private suspend fun shownEditorRead() {
-        withTimeoutOrNull(READ_PATIENCE) { editors.filterNotNull().flatMapLatest { it.recipe }.first { it != null } }
+    /** The editor was left for good: with no work running, the work, the keys and the editor are let go. */
+    fun left() {
+        if (attachings.values.any { it.working.value }) return
+        attachings.clear()
+        stepKeys = null
+        editors.value = null
     }
+
+    /** Waits until the editor shown now has read the recipe; false when it never does, as a recipe gone is never read. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun shownEditorRead(): Boolean =
+        withTimeoutOrNull(READ_PATIENCE) { editors.filterNotNull().flatMapLatest { it.recipe }.first { it != null } } != null
 
     private companion object {
         val READ_PATIENCE = 10.seconds
     }
 }
 
-/** The step media work of [recipeId] in the screen's activity, showing [editor] from now on. */
+/** The step media work of [recipeId] in the screen's activity. */
 @Composable
-internal fun rememberStepMediaWork(recipeId: RecipeId, editor: RecipeEditor): StepMediaWork {
-    val work = viewModel(key = WORK_KEY + recipeId.value) { StepMediaWork() }
-    return remember(work, editor) { work.apply { show(editor) } }
-}
+internal fun rememberStepMediaWork(recipeId: RecipeId): StepMediaWork =
+    viewModel(key = WORK_KEY + recipeId.value) { StepMediaWork() }
 
 /** The prefix of the key a recipe's step media work is held under; the recipe's identity follows. */
 private const val WORK_KEY = "step-media-"

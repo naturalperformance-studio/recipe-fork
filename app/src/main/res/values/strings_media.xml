@@ -39,6 +39,7 @@
     <string name="media_clip_refused_unreadable">This file could not be read or converted as a clip, so nothing was attached.</string>
     <string name="media_clip_refused_too_large">This clip could not be made smaller than %1$d MB, so nothing was attached.</string>
     <string name="media_clip_refused_not_stored">The clip could not be saved on this phone, so nothing was attached.</string>
+    <string name="media_clip_not_attached">The clip could not be attached to its step, so it was not kept.</string>
     <string name="media_clip_unavailable">No app to choose a clip was found on this phone.</string>
     <string name="media_clip_camera_none">No camera app was found on this phone, so no clip can be recorded here. You can choose one instead.</string>
     <string name="media_clip_camera_failed">The camera could not be opened, so no clip was recorded. You can choose one instead.</string>

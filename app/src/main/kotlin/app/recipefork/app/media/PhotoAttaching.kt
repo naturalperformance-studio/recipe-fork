@@ -29,7 +29,8 @@ import kotlinx.coroutines.withContext
  * [clips] (MEDIA-004) and handed to [setClip] as a photograph is to [set], replacing whatever item the place held.
  * While one is being converted, [converting] holds, and [cancelClip] stops it, leaving nothing of it behind. The last
  * item offered wins: a photograph offered stops a clip still being converted there. What is prepared waits for
- * [ready] before it is placed.
+ * [ready] before it is placed, and is not placed if it says no. A clip the place does not take — its step deleted
+ * meanwhile, its recipe frozen or gone — is not kept, and the author is told so.
  */
 class PhotoAttaching(
     private val store: PhotoStore,
@@ -40,7 +41,7 @@ class PhotoAttaching(
     private val unset: (written: suspend (removed: String) -> Unit) -> Boolean,
     private val clips: ClipStore? = null,
     private val setClip: (mediaId: String, written: suspend (replaced: String?) -> Unit) -> Boolean = { _, _ -> false },
-    private val ready: suspend () -> Unit = {},
+    private val ready: suspend () -> Boolean = { true },
 ) {
     /** One thing to tell the author: each told is a statement of its own, even where its [notice] is the last one's. */
     class Statement(val notice: PhotoNotice)
@@ -85,7 +86,7 @@ class PhotoAttaching(
         }
         when (outcome) {
             is PhotoOutcome.Refused -> PhotoNotice.of(outcome.refusal)
-            is PhotoOutcome.Stored -> placed(outcome.mediaId, set, PhotoNotice.PROCESSED)
+            is PhotoOutcome.Stored -> placed(outcome.mediaId, set, PhotoNotice.PROCESSED, notPlaced = null)
         }
     }
 
@@ -104,7 +105,7 @@ class PhotoAttaching(
             }
             when (outcome) {
                 is ClipOutcome.Refused -> PhotoNotice.of(outcome.refusal)
-                is ClipOutcome.Stored -> placed(outcome.mediaId, setClip, PhotoNotice.CLIP_PROCESSED)
+                is ClipOutcome.Stored -> placed(outcome.mediaId, setClip, PhotoNotice.CLIP_PROCESSED, PhotoNotice.CLIP_NOT_ATTACHED)
             }
         }
         clipJob = job
@@ -116,18 +117,18 @@ class PhotoAttaching(
         clipJob?.cancel()
     }
 
-    /** Hands [mediaId] to [place]; what was not taken is deleted, and nothing is said of it. */
+    /** Hands [mediaId] to [place] once [ready]; what was not taken is deleted, and [notPlaced] said of it. */
     private suspend fun placed(
         mediaId: String,
         place: (mediaId: String, written: suspend (replaced: String?) -> Unit) -> Boolean,
         told: PhotoNotice,
+        notPlaced: PhotoNotice?,
     ): PhotoNotice? {
-        ready()
-        return if (place(mediaId) { replaced -> replaced?.let { store.delete(book, it) } }) {
+        return if (ready() && place(mediaId) { replaced -> replaced?.let { store.delete(book, it) } }) {
             told
         } else {
             store.delete(book, mediaId)
-            null
+            notPlaced
         }
     }
 

@@ -39,6 +39,23 @@ class ClipSources internal constructor(private val record: () -> Unit, private v
 
     /** Opens the system photo picker, offering videos only; a phone with none says so. */
     fun chooseClip() = choose()
+
+    companion object {
+        /**
+         * Lets go of every lasting reading of a picked clip a process ended mid-conversion left held — this
+         * application holds none for anything else. Called as the application starts, when no clip is being converted.
+         */
+        fun releaseLeftoverReadings(context: Context) {
+            val resolver = context.applicationContext.contentResolver
+            resolver.persistedUriPermissions.toList().forEach { held ->
+                try {
+                    resolver.releasePersistableUriPermission(held.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (e: RuntimeException) {
+                    // Already let go.
+                }
+            }
+        }
+    }
 }
 
 /** What the camera application gave back from recording: [returned] is the address it named, if it named one. */

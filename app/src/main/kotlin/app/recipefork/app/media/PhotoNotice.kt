@@ -46,6 +46,9 @@ enum class PhotoNotice(@StringRes val text: Int, val args: List<Any> = emptyList
     /** The camera application could not be opened to record a clip. */
     CLIP_CAMERA_FAILED(R.string.media_clip_camera_failed),
 
+    /** A clip was converted but its step did not take it — deleted meanwhile, or its recipe frozen or gone. */
+    CLIP_NOT_ATTACHED(R.string.media_clip_not_attached),
+
     /** A step's clip was removed. */
     STEP_CLIP_REMOVED(R.string.media_step_clip_removed),
     ;

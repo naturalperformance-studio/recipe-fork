@@ -3,6 +3,7 @@ package app.recipefork.app
 import android.app.Application
 import android.content.res.Configuration
 import app.recipefork.app.data.AppLanguage
+import app.recipefork.app.media.ClipSources
 import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.timer.TimerChannels
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +35,10 @@ open class RecipeForkApplication : Application() {
         container = AppContainer(this, MainActivity.MODE)
         container.start(scope)
         if (sweepsMedia) mediaSweep = container.sweepMedia(scope)
-        scope.launch { PhotoSources.clearLeftovers(this@RecipeForkApplication) }
+        scope.launch {
+            PhotoSources.clearLeftovers(this@RecipeForkApplication)
+            ClipSources.releaseLeftoverReadings(this@RecipeForkApplication)
+        }
     }
 
     /**

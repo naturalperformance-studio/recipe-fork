@@ -62,7 +62,7 @@ internal fun StepPhotoAttaching(
     editor: () -> RecipeEditor?,
     photos: StepPhotos,
     key: Long,
-    ready: suspend () -> Unit = {},
+    ready: suspend () -> Boolean = { true },
 ): PhotoAttaching {
     fun place(kind: MediaKind, mediaId: String, written: suspend (String?) -> Unit): Boolean {
         val shown = editor() ?: return false
@@ -98,7 +98,8 @@ internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photo
         onClip = { attaching.attachClip(it) },
         onUnavailable = { attaching.tell(it) },
     )
-    SaysPhotoNotices(attaching)
+    // Where the work is held, the steps say what it tells all together — a deleted step's among them.
+    if (photos.work == null) SaysPhotoNotices(attaching)
     return StepPhotoControl(attaching, sources, clipSources)
 }
 
