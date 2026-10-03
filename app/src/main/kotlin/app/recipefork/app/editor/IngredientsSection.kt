@@ -84,6 +84,7 @@ import app.recipefork.core.recipe.QuantityProblem
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeLanguage
+import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
@@ -145,19 +146,22 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
     }
     var refused by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
-    OutlinedTextField(
-        value = recipe.servings?.toString().orEmpty(),
-        onValueChange = { refused = !editor.setServings(it) },
-        label = { Text(stringResource(R.string.editor_servings)) },
-        supportingText = {
-            Text(stringResource(R.string.editor_servings_accepts), modifier = Modifier.testTag(EditorTags.SERVINGS_ACCEPTS))
-        },
-        isError = refused,
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
-        modifier = Modifier.fillMaxWidth().testTag(EditorTags.SERVINGS),
-    )
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedTextField(
+            value = recipe.servings?.toString().orEmpty(),
+            onValueChange = { refused = !editor.setServings(it) },
+            label = { Text(stringResource(R.string.editor_servings)) },
+            supportingText = {
+                Text(stringResource(R.string.editor_servings_accepts), modifier = Modifier.testTag(EditorTags.SERVINGS_ACCEPTS))
+            },
+            isError = refused,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+            modifier = Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Servings) }).testTag(EditorTags.SERVINGS),
+        )
+        BoundMark(editor, RecipePart.Servings, EditorTags.SERVINGS_MARK)
+    }
 }
 
 /**
@@ -184,6 +188,8 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
+        // Under the heading: the list left empty, or longer than the limit (FLOW-028).
+        BoundMark(editor, RecipePart.Ingredients, EditorTags.INGREDIENTS_MARK)
         recipe.ingredients.forEachIndexed { position, row ->
             // What the screen holds for a row — focus, an open offer, a typed value — stays with it when rows before
             // it are inserted, moved or deleted.

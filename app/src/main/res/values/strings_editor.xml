@@ -117,4 +117,14 @@
     <string name="editor_row_insert_below">Insert below</string>
     <string name="editor_row_move_up">Move up</string>
     <string name="editor_row_move_down">Move down</string>
+    <!-- A part left below the minimum or over a limit (FLOW-028): a warning that refuses nothing; submission decides. -->
+    <string name="editor_mark_warning">Warning</string>
+    <string name="editor_mark_title_missing">A title is needed to submit the recipe.</string>
+    <string name="editor_mark_language_missing">A language is needed to submit the recipe.</string>
+    <string name="editor_mark_servings_missing">A serving count is needed to submit the recipe.</string>
+    <string name="editor_mark_ingredients_missing">At least one ingredient is needed to submit the recipe.</string>
+    <string name="editor_mark_steps_missing">At least one step is needed to submit the recipe.</string>
+    <string name="editor_mark_characters_over">Over the limit of %1$d characters: %2$d now. Kept in full — shorten it before submitting.</string>
+    <string name="editor_mark_ingredients_over">More than %1$d ingredients: %2$d now. Remove some before submitting.</string>
+    <string name="editor_mark_steps_over">More than %1$d steps: %2$d now. Remove some before submitting.</string>
 </resources>
