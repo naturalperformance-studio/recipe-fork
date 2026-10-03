@@ -9,6 +9,7 @@ import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
+import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
@@ -40,6 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
+import java.io.File
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -54,6 +56,8 @@ class EditorEnvironment(
     val ingredients: IngredientSource = tags as? IngredientSource ?: IngredientSource { emptyList() },
     /** Which side of a block its drag column stands on (the left unless set otherwise). */
     val dragHandleSide: DragHandleSide = HeldDragHandleSide(),
+    /** Where the editor keeps photographs, given the application's files directory; replaced in a test to hold one back. */
+    val photoStore: (File) -> PhotoStore = { PhotoStore(it) },
     val clock: () -> Instant = Instant::now,
 )
 

@@ -7,9 +7,13 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.IdlingResource
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeRight
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import app.recipefork.app.data.AppDatabase
@@ -136,6 +140,29 @@ const val PATIENCE_MS = 60_000L
 /** Waits until exactly one node carries [tag]. */
 fun ComposeTestRule.awaitTag(tag: String) = waitUntil(PATIENCE_MS) {
     onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().size == 1
+}
+
+/**
+ * Waits until [text] is the one statement said at the bottom of the editor: a single statement shows, and it reads
+ * [text].
+ */
+fun ComposeTestRule.awaitStatement(text: String) = waitUntil(PATIENCE_MS) {
+    val shown = onAllNodes(hasTestTag(EditorTags.STATEMENT), useUnmergedTree = true).fetchSemanticsNodes()
+    shown.size == 1 && onAllNodes(
+        hasText(text) and hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)),
+        useUnmergedTree = true,
+    ).fetchSemanticsNodes().size == 1
+}
+
+/**
+ * Swipes away the statement shown at the bottom of the editor, if one is, as the author would to reach what it covers,
+ * once whatever is being prepared has had its say.
+ */
+fun ComposeTestRule.swipeAwayStatement() {
+    waitForIdle()
+    if (onAllNodes(hasTestTag(EditorTags.STATEMENT), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()) return
+    onNodeWithTag(EditorTags.STATEMENT, useUnmergedTree = true).performTouchInput { swipeRight() }
+    waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(EditorTags.STATEMENT), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
 }
 
 /** The texts of the node tagged [tag], merged as the screen reader reads them, then what a field holds. */

@@ -14,7 +14,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -130,8 +132,14 @@ class StepPhotoEditorTest {
 
     private fun held(): List<String> = store.directory(BookName.Pool).list()?.sorted().orEmpty()
 
-    private fun awaitNotice(position: Int, text: String) = compose.waitUntil(PATIENCE_MS) {
-        exists(EditorTags.stepPhotoNotice(position)) && compose.textsOf(EditorTags.stepPhotoNotice(position)) == listOf(text)
+    /**
+     * Waits until [text] is said at the bottom of the editor, alone there, and checks that nothing of it shows in the
+     * block of the step at [position].
+     */
+    private fun awaitNotice(position: Int, text: String) {
+        compose.awaitStatement(text)
+        compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(EditorTags.step(position))), useUnmergedTree = true)
+            .assertDoesNotExist()
     }
 
     private val activity: ShadowActivity get() = shadowOf(compose.activity)
@@ -143,6 +151,7 @@ class StepPhotoEditorTest {
 
     /** Opens the photo menu of the step at [position] and chooses [item] in it. */
     private fun menu(position: Int, item: String) {
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(item), PATIENCE_MS)
         compose.onNodeWithTag(item).performClick()
@@ -225,8 +234,10 @@ class StepPhotoEditorTest {
         val exif = ExifInterface(store.file(BookName.Pool, photo.mediaId).path)
         TestPhotos.IDENTIFYING.keys.forEach { assertNull(it, exif.getAttribute(it)) }
         assertTrue(TestCamera.left(context).isEmpty())
-        listOf(0, 2).forEach { assertFalse(exists(EditorTags.stepPhotoImage(it)) || exists(EditorTags.stepPhotoNotice(it))) }
-        assertFalse(exists(CoverTags.IMAGE) || exists(CoverTags.NOTICE))
+        listOf(0, 2).forEach { assertFalse(exists(EditorTags.stepPhotoImage(it))) }
+        assertFalse(exists(CoverTags.IMAGE))
+        // Said once, at the bottom of the editor, nowhere in the form.
+        compose.onNode(hasText(processed) and hasAnyAncestor(hasTestTag(EditorTags.FORM)), useUnmergedTree = true).assertDoesNotExist()
     }
 
     // MEDIA-001, MEDIA-009: a second photograph at the step replaces the first, whose file is deleted.
@@ -267,6 +278,7 @@ class StepPhotoEditorTest {
         takePhoto(0)
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(0)) }
 
+        awaitNotice(0, processed)
         menu(0, EditorTags.stepPhotoRemove(0))
 
         compose.waitForIdle()
@@ -282,6 +294,7 @@ class StepPhotoEditorTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(0)) && stored(id).stepPhoto(0) != null }
         val photo = stored(id).stepPhoto(0)!!.mediaId
 
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.stepMenu(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepAction(0, RowAction.MOVE_DOWN)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.stepAction(0, RowAction.MOVE_DOWN)).performClick()
@@ -291,6 +304,7 @@ class StepPhotoEditorTest {
         compose.waitUntil(PATIENCE_MS) { stored(id).steps.single { it.position == 1 }.text == "Boil." }
         assertEquals(photo, stored(id).stepPhoto(1)!!.mediaId)
 
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
 
         compose.waitForIdle()
@@ -312,7 +326,7 @@ class StepPhotoEditorTest {
         assertFalse(exists(CropTags.SCREEN))
         assertTrue(stored(id).media.isEmpty())
         assertTrue(held().isEmpty())
-        assertFalse(exists(EditorTags.stepPhotoNotice(1)))
+        assertFalse(exists(EditorTags.STATEMENT))
     }
 
     // A step's photograph survives leaving the editor: opened again, it is shown at its step.
@@ -327,7 +341,7 @@ class StepPhotoEditorTest {
         compose.runOnIdle { shown = true }
 
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(2)) }
-        assertFalse(exists(EditorTags.stepPhotoNotice(2)))
+        assertFalse(exists(EditorTags.STATEMENT))
     }
 
     // A frozen recipe shows its steps' photographs and offers nothing to change them.

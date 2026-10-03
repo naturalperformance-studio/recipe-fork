@@ -117,8 +117,13 @@ class CoverEditorTest {
 
     private fun held(): List<String> = store.directory(BookName.Pool).list()?.sorted().orEmpty()
 
-    private fun awaitNotice(text: String) = compose.waitUntil(PATIENCE_MS) {
-        exists(CoverTags.NOTICE) && compose.textsOf(CoverTags.NOTICE) == listOf(text)
+    /**
+     * Waits until [text] is said at the bottom of the editor, alone there, and checks that nothing of it shows at the
+     * cover itself.
+     */
+    private fun awaitNotice(text: String) {
+        compose.awaitStatement(text)
+        compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(CoverTags.COVER)), useUnmergedTree = true).assertDoesNotExist()
     }
 
     private val activity: ShadowActivity get() = shadowOf(compose.activity)
@@ -130,6 +135,7 @@ class CoverEditorTest {
 
     /** Launches the phone's camera application from the cover; its intent is given back. */
     private fun openCamera(): Intent {
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(CoverTags.TAKE).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { TestCamera.launched(activity) }
         return TestCamera.take(activity)
@@ -146,6 +152,7 @@ class CoverEditorTest {
 
     /** Picks [file] in the system photo picker. */
     private fun choose(file: File, crop: Boolean = true) {
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(CoverTags.CHOOSE).performScrollTo().performClick()
         val intent = started()
         assertTrue(intent.action, intent.action == MediaStore.ACTION_PICK_IMAGES || intent.action == Intent.ACTION_OPEN_DOCUMENT)
@@ -238,7 +245,7 @@ class CoverEditorTest {
         assertFalse(exists(CropTags.SCREEN))
         assertTrue(stored(id).media.isEmpty())
         assertTrue(held().isEmpty())
-        assertFalse(exists(CoverTags.NOTICE))
+        assertFalse(exists(EditorTags.STATEMENT))
     }
 
     // FLOW-026 (1), MEDIA-009: one picked from the gallery replaces the cover, whose file is deleted.
@@ -285,6 +292,9 @@ class CoverEditorTest {
         takePhoto()
         compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.IMAGE), PATIENCE_MS)
 
+        awaitNotice(processed)
+
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(CoverTags.REMOVE).performScrollTo().performClick()
 
         compose.waitUntil(PATIENCE_MS) { !exists(CoverTags.IMAGE) && stored(id).media.isEmpty() && held().isEmpty() }
@@ -304,7 +314,7 @@ class CoverEditorTest {
         compose.runOnIdle { shown = true }
 
         compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.IMAGE), PATIENCE_MS)
-        assertFalse(exists(CoverTags.NOTICE))
+        assertFalse(exists(EditorTags.STATEMENT))
     }
 
     // A frozen recipe shows its cover and offers nothing to change it.

@@ -1,21 +1,20 @@
 package app.recipefork.app.editor
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.book.BookName
@@ -39,27 +38,31 @@ fun CoverAttaching(editor: RecipeEditor, store: PhotoStore, book: BookName, scop
  * removable. A frozen recipe shows its cover and nothing to change it; a frozen one without a cover shows nothing.
  */
 @Composable
-internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, book: BookName, saving: CoroutineScope) {
-    val context = LocalContext.current
-    val store = remember(context) { PhotoStore(context.applicationContext.filesDir) }
+internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStore, book: BookName, saving: CoroutineScope) {
     val attaching = remember(editor, store, book, saving) { CoverAttaching(editor, store, book, saving) }
-    val notice by attaching.notice
+    SaysPhotoNotices(attaching)
+    val working by attaching.working
     val cover = recipe.cover
     val editable = recipe.state.editable
     if (!editable && cover == null) return
     val sources = rememberPhotoSources(
         key = COVER_KEY,
         onPhoto = { attaching.attach(it) },
-        onUnavailable = { attaching.notice.value = PhotoNotice.UNAVAILABLE },
+        onUnavailable = { attaching.tell(PhotoNotice.UNAVAILABLE) },
     )
     Column(Modifier.fillMaxWidth().testTag(CoverTags.COVER), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (editable) Text(stringResource(R.string.media_cover), style = MaterialTheme.typography.labelLarge)
-        cover?.let {
-            PhotoImage(
-                store.file(book, it.mediaId),
-                stringResource(R.string.media_cover_description, recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }),
-                Modifier.testTag(CoverTags.IMAGE),
-            )
+        if (cover != null) {
+            Box(Modifier.fillMaxWidth()) {
+                PhotoImage(
+                    store.file(book, cover.mediaId),
+                    stringResource(R.string.media_cover_description, recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }),
+                    Modifier.testTag(CoverTags.IMAGE),
+                )
+                if (working) PhotoWorking(Modifier.align(Alignment.TopEnd).padding(8.dp).testTag(CoverTags.WORKING))
+            }
+        } else if (working) {
+            PhotoWorking(Modifier.testTag(CoverTags.WORKING))
         }
         if (editable) {
             FlowRow(Modifier.fillMaxWidth()) {
@@ -85,13 +88,6 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, book: BookName, 
                 }
             }
         }
-        notice?.let {
-            Text(
-                stringResource(it.text),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag(CoverTags.NOTICE),
-            )
-        }
     }
 }
 
@@ -104,5 +100,5 @@ object CoverTags {
     const val TAKE = "editor-cover-take"
     const val CHOOSE = "editor-cover-choose"
     const val REMOVE = "editor-cover-remove"
-    const val NOTICE = "editor-cover-notice"
+    const val WORKING = "editor-cover-working"
 }
