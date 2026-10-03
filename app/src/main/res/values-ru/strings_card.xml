@@ -30,6 +30,9 @@
     <string name="card_proportions_warning">Часть количеств на минимуме — пропорции нарушены.</string>
     <string name="card_unnamed_ingredient">Ингредиент без названия</string>
     <string name="card_missing">Этого рецепта больше нет в этой книге рецептов.</string>
+    <!-- FLOW-020 (3): рецепт не прочитался с устройства; не говорим, что его нет. -->
+    <string name="card_unreadable">Не удалось загрузить этот рецепт.</string>
+    <string name="card_retry">Попробовать ещё раз</string>
     <string name="card_servings_approximate">Порций: ≈%1$s</string>
     <string name="card_fix_action">Указать, сколько у вас есть, и пересчитать рецепт</string>
     <string name="card_fix_amount">Сколько у вас есть</string>

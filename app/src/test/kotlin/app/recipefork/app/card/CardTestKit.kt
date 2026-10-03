@@ -65,9 +65,9 @@ fun SemanticsNodeInteractionsProvider.assertWhole(tag: String) {
     }
 }
 
-/** Waits until the card is open and shows its content or its message. */
+/** Waits until the card is open and shows its content or one of its messages. */
 fun ComposeTestRule.awaitCard() = waitUntil(PATIENCE_MS) {
-    listOf(CardTags.CONTENT, CardTags.MISSING).any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().size == 1 }
+    listOf(CardTags.CONTENT, CardTags.MISSING, CardTags.UNREADABLE).any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().size == 1 }
 }
 
 /**

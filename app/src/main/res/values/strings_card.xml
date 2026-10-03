@@ -44,6 +44,9 @@
     <string name="card_unnamed_ingredient">Unnamed ingredient</string>
     <!-- The recipe is no longer in the active book. -->
     <string name="card_missing">This recipe is no longer in this recipe book.</string>
+    <!-- FLOW-020 (3): the recipe could not be read from the device; it is not said to be gone. -->
+    <string name="card_unreadable">This recipe could not be loaded.</string>
+    <string name="card_retry">Try again</string>
     <!-- The serving count while a fixed ingredient sets the scale (SCALE-002, SCALE-008): computed, so approximate. -->
     <string name="card_servings_approximate">Servings: ≈%1$s</string>
     <!-- Fixing the amount the reader has of one ingredient (SCALE-002, SCALE-006, SCALE-018). -->

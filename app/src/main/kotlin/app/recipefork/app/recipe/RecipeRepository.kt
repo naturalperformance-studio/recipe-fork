@@ -161,9 +161,11 @@ open class RecipeRepository(
 
     /**
      * The recipe [id] of the active book as it is now and after every later write to it; null while the book
-     * holds no such recipe. A screen that shows it never shows a version older than the last write.
+     * holds no such recipe. A screen that shows it never shows a version older than the last write. A read that fails —
+     * a row that does not read back, storage that refuses — ends the flow with its failure; open, so that a test can
+     * make it fail.
      */
-    fun observe(id: RecipeId): Flow<Recipe?> = book.open.flatMapLatest { open ->
+    open fun observe(id: RecipeId): Flow<Recipe?> = book.open.flatMapLatest { open ->
         open.database.invalidationTracker.createFlow(*RECIPE_TABLES)
             .map { open.database.recipes().get(id.value)?.toRecipe() }
     }
