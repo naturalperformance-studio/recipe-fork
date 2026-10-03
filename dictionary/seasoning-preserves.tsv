@@ -5,15 +5,16 @@
 # Pickles and fermented vegetables (8400-8449). A pickle counts as one medium piece; small ones are never halved.
 8400	соленья	pickled vegetables			g=1
 8401	огурец солёный	salt-brined pickle	8400	true	g=1 pc=70
-8402	огурец маринованный	pickle	8400	true	g=1 pc=60
+8402	огурец маринованный	dill pickle	8400	true	g=1 pc=60
 8403	огурец малосольный	half-sour pickle	8400	true	g=1 pc=70
 8404	корнишоны	cornichons	8400	false	g=1 pc=8
+8429	релиш огуречный	sweet pickle relish	8400		g=1 tsp=5 tbsp=15
 8405	помидор солёный	brined tomato	8400	true	g=1 pc=80
 8406	помидор маринованный	pickled tomato	8400	true	g=1 pc=80
 8407	капуста квашеная	sauerkraut	8400		g=1 cup=150
 8408	капуста маринованная	pickled cabbage	8400		g=1 cup=150
 8409	перец маринованный	pickled peppers	8400	true	g=1 pc=40
-8410	халапеньо маринованный	pickled jalapeños	8400		g=1 tbsp=9 cup=140
+8410	халапеньо маринованный	pickled jalapenos	8400		g=1 tbsp=9 cup=140
 8411	пепперончини	pepperoncini	8400	false	g=1 pc=10
 8412	чеснок маринованный	pickled garlic	8400	true	g=1 pc=40
 8413	черемша маринованная	pickled wild garlic	8400		g=1
@@ -54,11 +55,15 @@
 
 # Canned vegetables, fruit and coconut (8470-8519). pc is one standard can (whole contents, as sold); a can may be used in halves.
 8470	кукуруза консервированная	canned corn		true	g=1 pc=340 cup=165
-8471	горошек консервированный	canned peas		true	g=1 pc=400 cup=160
+8471	горошек зелёный консервированный	canned peas		true	g=1 pc=400 cup=160
 8472	фасоль в томатном соусе	beans in tomato sauce		true	g=1 pc=400 cup=260
-8473	томаты в собственном соку	canned whole tomatoes		true	g=1 pc=400 cup=240
-8474	томаты резаные консервированные	canned diced tomatoes		true	g=1 pc=400 cup=240
-8475	томаты черри консервированные	canned cherry tomatoes		true	g=1 pc=400
+8503	томаты консервированные	canned tomatoes		true	g=1 pc=400 cup=240
+8473	томаты в собственном соку	canned whole tomatoes	8503	true	g=1 pc=400 cup=240
+8474	томаты резаные консервированные	canned diced tomatoes	8503	true	g=1 pc=400 cup=240
+8475	томаты черри консервированные	canned cherry tomatoes	8503	true	g=1 pc=400
+8504	томаты протёртые	crushed tomatoes	8503	true	g=1 pc=400 tbsp=15 cup=245
+8505	перец чили зелёный консервированный	diced green chiles		true	g=1 pc=113 tbsp=15
+8506	вишня мараскино	maraschino cherries		false	g=1 pc=5
 8476	кокосовое молоко	coconut milk		true	g=1 ml=0.98 pc=400 tbsp=15 cup=240
 8477	кокосовые сливки	coconut cream			g=1 ml=1 tbsp=15 cup=250
 8478	кокосовое молоко лёгкое	light coconut milk		true	g=1 ml=0.98 pc=400 tbsp=15 cup=240
@@ -72,7 +77,7 @@
 8486	бамбуковые побеги	bamboo shoots		true	g=1 pc=225
 8487	водяной каштан	water chestnuts		true	g=1 pc=225
 8488	пальмовая сердцевина	hearts of palm		true	g=1 pc=400
-8489	тыквенное пюре	pumpkin purée		true	g=1 pc=425 cup=245
+8489	тыквенное пюре	pumpkin puree		true	g=1 pc=425 cup=245
 8490	яблочное пюре	applesauce			g=1 tbsp=16 cup=255
 8491	лечо	lecho			g=1 cup=250
 8492	икра кабачковая	zucchini spread			g=1 tbsp=16
@@ -120,7 +125,7 @@
 8567	джем черничный	blueberry jam	8560		g=1 tsp=7 tbsp=20 cup=320
 8568	джем персиковый	peach jam	8560		g=1 tsp=7 tbsp=20 cup=320
 8569	джем из инжира	fig jam	8560		g=1 tsp=7 tbsp=20
-8570	джем из красной смородины	red currant jelly	8560		g=1 tsp=7 tbsp=20
+8570	желе из красной смородины	red currant jelly	8560		g=1 tsp=7 tbsp=20
 8571	желе виноградное	grape jelly	8560		g=1 tsp=7 tbsp=20 cup=320
 8575	повидло	fruit butter			g=1 tsp=7 tbsp=20 cup=320
 8576	повидло яблочное	apple butter	8575		g=1 tsp=7 tbsp=20 cup=320

@@ -101,19 +101,18 @@
 318	пирог	pie
 319	торт	cake
 320	печенье	cookies
-321	блины	crêpes
+321	блины	crepes
 322	оладьи	pancakes
 323	каша	porridge
 324	паста	pasta
 325	пицца	pizza
 326	сэндвич	sandwich
 327	бутерброд	open-faced sandwich
-328	канапе	canapés
+328	канапе	canapes
 329	напиток	drink
 330	коктейль	cocktail
 331	смузи	smoothie
 332	соус	sauce
-333	маринад	marinade
 334	заправка	dressing
 335	намазка	spread
 336	пельмени и вареники	dumplings
@@ -145,9 +144,8 @@
 415	высокобелковое	high-protein
 416	низкокалорийное	low-calorie
 417	низкожирное	low-fat
-418	диетическое	diet-friendly
 419	полезное	healthy
-420	детское	kids
+420	детское	kid-friendly
 421	для малышей	baby food
 422	для диабетиков	diabetic-friendly
 423	халяль	halal
@@ -208,42 +206,40 @@
 523	закваска	sourdough
 524	дрожжевое тесто	yeast dough
 525	слоёное тесто	puff pastry
-528	заморозка	freezing
 
 # Occasion and season (600-699).
 600	праздничное	festive
 601	новогоднее	New Year's
 602	рождественское	Christmas
 603	пасхальное	Easter
-604	масленица	Maslenitsa
+604	Масленица	Maslenitsa
 605	день рождения	birthday
 606	детский праздник	kids' party
 607	8 марта	International Women's Day
 608	23 февраля	Defender of the Fatherland Day
-609	день святого Валентина	Valentine's Day
-610	хэллоуин	Halloween
-611	день благодарения	Thanksgiving
-612	рамадан	Ramadan
+609	День святого Валентина	Valentine's Day
+610	Хеллоуин	Halloween
+611	День благодарения	Thanksgiving
+612	Рамадан	Ramadan
 613	свадьба	wedding
 614	пикник	picnic
 615	на компанию	for a crowd
 616	вечеринка	party
 617	фуршет	buffet
 618	романтический ужин	romantic dinner
-619	для гостей	for guests
 620	семейное	family
 621	воскресное	Sunday
 622	ланчбокс	lunchbox
 623	в дорогу	on the go
-624	на дачу	summer cottage
+624	на дачу	dacha
 625	летнее	summer
 626	зимнее	winter
 627	весеннее	spring
 628	осеннее	fall
 629	на каждый день	everyday
-631	курбан-байрам	Eid al-Adha
-632	песах	Passover
-633	ханука	Hanukkah
+631	Курбан-байрам	Eid al-Adha
+632	Песах	Passover
+633	Ханука	Hanukkah
 
 # Characteristics (700-799), without difficulty grades.
 700	быстро	quick
@@ -252,8 +248,7 @@
 703	до часа	under 1 hour
 705	на выходные	weekend project
 706	просто	easy
-707	для начинающих	beginner-friendly
-708	бюджетно	budget
+708	бюджетно	budget-friendly
 709	мало ингредиентов	few ingredients
 710	из остатков	leftovers
 711	на неделю	meal prep
@@ -263,7 +258,6 @@
 715	сладкое	sweet
 716	кисло-сладкое	sweet and sour
 717	сытное	hearty
-718	лёгкое	light
 719	согревающее	warming
 720	освежающее	refreshing
 721	хрустящее	crispy
@@ -309,7 +303,6 @@
 826	кабачки	zucchini
 827	баклажаны	eggplant
 828	капуста	cabbage
-829	макароны	noodles
-830	тесто	dough
+829	лапша	noodles
 831	тофу	tofu
-832	молочное	dairy
+832	молочные продукты	dairy

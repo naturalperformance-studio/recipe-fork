@@ -3,17 +3,17 @@
 @range 7000-8999
 
 # Stocks and bouillon (8600-8649). A bouillon cube is counted and may be halved.
-8600	бульон	broth			g=1 ml=1 tbsp=15 cup=250
-8601	бульон куриный	chicken broth	8600		g=1 ml=1 tbsp=15 cup=250
-8602	бульон говяжий	beef broth	8600		g=1 ml=1 tbsp=15 cup=250
-8603	бульон овощной	vegetable broth	8600		g=1 ml=1 tbsp=15 cup=250
+8600	бульон	stock			g=1 ml=1 tbsp=15 cup=250
+8601	бульон куриный	chicken stock	8600		g=1 ml=1 tbsp=15 cup=250
+8602	бульон говяжий	beef stock	8600		g=1 ml=1 tbsp=15 cup=250
+8603	бульон овощной	vegetable stock	8600		g=1 ml=1 tbsp=15 cup=250
 8604	бульон рыбный	fish stock	8600		g=1 ml=1 tbsp=15 cup=250
-8605	бульон грибной	mushroom broth	8600		g=1 ml=1 tbsp=15 cup=250
+8605	бульон грибной	mushroom stock	8600		g=1 ml=1 tbsp=15 cup=250
 8606	бульон костный	bone broth	8600		g=1 ml=1 tbsp=15 cup=250
 8607	бульон мясной	meat stock	8600		g=1 ml=1 tbsp=15 cup=250
 8608	бульон сухой	bouillon powder	8600		g=1 tsp=4 tbsp=12
 8609	даши	dashi	8600		g=1 ml=1 tbsp=15 cup=250
-8610	бульон из индейки	turkey broth	8600		g=1 ml=1 tbsp=15 cup=250
+8610	бульон из индейки	turkey stock	8600		g=1 ml=1 tbsp=15 cup=250
 8620	бульонный кубик	bouillon cube		true	g=1 pc=10
 8621	бульонный кубик куриный	chicken bouillon cube	8620	true	g=1 pc=10
 8622	бульонный кубик говяжий	beef bouillon cube	8620	true	g=1 pc=10
@@ -22,6 +22,8 @@
 8625	бульонный кубик рыбный	fish bouillon cube	8620	true	g=1 pc=10
 8630	даши порошок	dashi powder			g=1 tsp=3
 8631	концентрат бульона	bouillon base			g=1 tsp=6 tbsp=18
+8632	крем-суп грибной концентрированный	condensed cream of mushroom soup		true	g=1 pc=300
+8633	крем-суп куриный концентрированный	condensed cream of chicken soup		true	g=1 pc=300
 
 # Wine, beer and spirits for cooking (8700-8799).
 8700	вино	wine			g=1 ml=0.99 tbsp=15 cup=248
@@ -29,7 +31,7 @@
 8702	вино белое сухое	dry white wine	8700		g=1 ml=0.99 tbsp=15 cup=248
 8703	вино красное	red wine	8700		g=1 ml=0.99 tbsp=15 cup=248
 8704	вино красное сухое	dry red wine	8700		g=1 ml=0.99 tbsp=15 cup=248
-8705	вино розовое	rosé wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8705	вино розовое	rose wine	8700		g=1 ml=0.99 tbsp=15 cup=248
 8706	вино полусладкое	semi-sweet wine	8700		g=1 ml=1.01 tbsp=15 cup=252
 8707	вино десертное	dessert wine	8700		g=1 ml=1.04 tbsp=16 cup=260
 8708	вино игристое	sparkling wine	8700		g=1 ml=0.99 tbsp=15 cup=248
@@ -75,7 +77,7 @@
 8755	ликёр вишнёвый	cherry liqueur	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
 8756	ликёр кокосовый	coconut liqueur	8750		g=1 ml=1.06 tsp=5.3 tbsp=16
 8757	ликёр ореховый	hazelnut liqueur	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
-8758	ликёр мятный	crème de menthe	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
+8758	ликёр мятный	creme de menthe	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
 8759	ликёр лимонный	limoncello	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
 8760	самбука	sambuca	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
 8761	абсент	absinthe			g=1 ml=0.93 tsp=4.7 tbsp=14
@@ -138,7 +140,7 @@
 8874	кокосовая вода	coconut water			g=1 ml=1.02 cup=255
 8875	кисель	kissel			g=1 ml=1.05 cup=262
 8876	компот	compote drink			g=1 ml=1.03 cup=258
-8877	газировка	soda			g=1 ml=1.04 cup=260
+8877	газировка сладкая	soda			g=1 ml=1.04 cup=260
 8878	имбирный эль	ginger ale			g=1 ml=1.04 cup=260
 8879	холодный чай	iced tea			g=1 ml=1.03 cup=258
 
@@ -168,7 +170,7 @@
 8923	грильяж	nut brittle			g=1
 8924	трюфели шоколадные	chocolate truffles		false	g=1 pc=12
 8925	конфеты вафельные	wafer candies	8914	false	g=1 pc=18
-8926	драже	dragées	8914		g=1
+8926	драже	candy-coated chocolates	8914		g=1
 8927	батончик шоколадный	candy bar		true	g=1 pc=50
 8940	чипсы	potato chips			g=1 cup=30
 8941	чипсы кукурузные	tortilla chips	8940		g=1 cup=30

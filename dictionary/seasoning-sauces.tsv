@@ -43,11 +43,10 @@
 
 # Tomato products and table sauces (8100-8199).
 8100	томатная паста	tomato paste			g=1 tsp=5 tbsp=16
-8101	томатное пюре	tomato purée			g=1 ml=1.05 tbsp=16 cup=260
+8101	томатное пюре	tomato puree			g=1 ml=1.05 tbsp=16 cup=260
 8102	пассата	passata			g=1 ml=1.03 tbsp=15 cup=255
 8103	кетчуп	ketchup			g=1 ml=1.15 tsp=6 tbsp=17 cup=285
 8104	кетчуп острый	hot ketchup	8103		g=1 ml=1.15 tsp=6 tbsp=17
-8105	кетчуп шашлычный	kebab ketchup	8103		g=1 ml=1.15 tsp=6 tbsp=17
 8106	соус томатный	tomato sauce			g=1 ml=1.05 tbsp=16 cup=260
 8107	соус маринара	marinara sauce			g=1 ml=1.05 tbsp=16 cup=260
 8108	соус для пиццы	pizza sauce			g=1 ml=1.05 tbsp=16 cup=260
@@ -63,8 +62,9 @@
 8118	вустерширский соус	Worcestershire sauce			g=1 ml=1.1 tsp=6 tbsp=17
 8119	майонез	mayonnaise			g=1 tsp=5 tbsp=14 cup=230
 8120	майонез лёгкий	light mayonnaise	8119		g=1 tsp=5 tbsp=15 cup=240
-8121	майонез постный	egg-free mayonnaise	8119		g=1 tsp=5 tbsp=14 cup=230
+8121	майонез постный	vegan mayonnaise	8119		g=1 tsp=5 tbsp=14 cup=230
 8122	майонез японский	Japanese mayonnaise	8119		g=1 tsp=5 tbsp=14
+8150	майонез провансаль	Provencal mayonnaise	8119		g=1 tsp=5 tbsp=14 cup=230
 8123	айоли	aioli			g=1 tsp=5 tbsp=14
 8124	соус тартар	tartar sauce			g=1 tsp=5 tbsp=14
 8125	соус цезарь	Caesar dressing			g=1 tsp=5 tbsp=15
@@ -73,10 +73,12 @@
 8128	соус для бургеров	burger sauce			g=1 tsp=5 tbsp=15
 8129	соус сырный	cheese sauce			g=1 tbsp=16 cup=260
 8130	соус чесночный	garlic sauce			g=1 tsp=5 tbsp=15
-8131	соус бешамель	béchamel sauce			g=1 tbsp=16 cup=260
+8131	соус бешамель	bechamel sauce			g=1 tbsp=16 cup=260
 8132	соус альфредо	Alfredo sauce			g=1 tbsp=16 cup=260
 8133	соус голландский	hollandaise sauce			g=1 tbsp=15
 8134	заправка для салата	salad dressing			g=1 ml=1 tsp=5 tbsp=15
+8151	итальянская заправка	Italian dressing	8134		g=1 ml=1 tsp=5 tbsp=15
+8152	соус винегрет	vinaigrette	8134		g=1 ml=0.95 tsp=5 tbsp=14
 8135	соус медово-горчичный	honey mustard dressing			g=1 tsp=6 tbsp=17
 8136	дзадзики	tzatziki			g=1 tbsp=16 cup=250
 8137	чимичурри	chimichurri			g=1 tsp=5 tbsp=15
@@ -132,8 +134,8 @@
 # Vinegars (8300-8399).
 8300	уксус	vinegar			g=1 ml=1.01 tsp=5 tbsp=15 cup=250
 8301	уксус столовый	white vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
-8302	уксус 9%	vinegar 9%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
-8303	уксус 6%	vinegar 6%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8302	уксус столовый 9%	white vinegar 9%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+8303	уксус столовый 6%	white vinegar 6%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
 8304	уксусная эссенция	vinegar essence 70%	8300		g=1 ml=1.07 tsp=5.4 tbsp=16
 8305	уксус яблочный	apple cider vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
 8306	уксус винный	wine vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250

@@ -4,7 +4,7 @@
 
 # Salt (7000-7099). Level measures: fine salt tsp 7 g, coarse and flaky salts lighter.
 7000	соль	salt			g=1 tsp=7 tbsp=20 pinch=0.5
-7001	соль поваренная	table salt	7000		g=1 tsp=7 tbsp=20 pinch=0.5
+7001	соль каменная	rock salt	7000		g=1 tsp=6 tbsp=18 pinch=0.5
 7002	соль мелкая	fine salt	7000		g=1 tsp=7 tbsp=20 pinch=0.5
 7003	соль крупная	coarse salt	7000		g=1 tsp=6 tbsp=18 pinch=0.5
 7004	соль йодированная	iodized salt	7000		g=1 tsp=7 tbsp=20 pinch=0.5
@@ -26,26 +26,27 @@
 # Pepper and chili (7100-7199). Peppercorns and allspice berries are counted (pc) and never halved.
 7100	перец чёрный	black pepper			g=1 tsp=2.3 tbsp=7 pinch=0.2
 7101	перец чёрный молотый	ground black pepper	7100		g=1 tsp=2.3 tbsp=7 pinch=0.2
-7102	перец чёрный горошек	black peppercorns	7100	false	g=1 pc=0.06 tsp=3 tbsp=9
+7102	перец чёрный горошком	black peppercorns	7100	false	g=1 pc=0.06 tsp=3 tbsp=9
 7103	перец чёрный крупного помола	coarsely ground black pepper	7100		g=1 tsp=2.3 tbsp=7 pinch=0.2
 7110	перец белый	white pepper			g=1 tsp=2.4 tbsp=7 pinch=0.2
 7111	перец белый молотый	ground white pepper	7110		g=1 tsp=2.4 tbsp=7 pinch=0.2
-7112	перец белый горошек	white peppercorns	7110	false	g=1 pc=0.06 tsp=3 tbsp=9
+7112	перец белый горошком	white peppercorns	7110	false	g=1 pc=0.06 tsp=3 tbsp=9
 7120	перец душистый	allspice			g=1 tsp=1.9 tbsp=6 pinch=0.2
-7121	перец душистый горошек	allspice berries	7120	false	g=1 pc=0.2 tsp=2 tbsp=6
+7121	перец душистый горошком	allspice berries	7120	false	g=1 pc=0.2 tsp=2 tbsp=6
 7122	перец душистый молотый	ground allspice	7120		g=1 tsp=1.9 tbsp=6 pinch=0.2
 7130	перец розовый	pink peppercorns			g=1 tsp=1.5 tbsp=4.5
 7131	смесь перцев	mixed peppercorns			g=1 tsp=3 tbsp=9
 7132	перец сычуаньский	Sichuan peppercorns			g=1 tsp=1.5 tbsp=4.5 pinch=0.1
 7133	перец длинный	long pepper			g=1 tsp=2
 7134	перец кубеба	cubeb pepper			g=1 tsp=2
-7140	перец красный молотый	ground red pepper			g=1 tsp=2.5 tbsp=7.5 pinch=0.2
-7141	перец кайенский	cayenne pepper			g=1 tsp=1.8 tbsp=5.3 pinch=0.2
+7140	перец красный молотый	ground red chili pepper			g=1 tsp=2.5 tbsp=7.5 pinch=0.2
+7141	перец кайенский	cayenne pepper	7140		g=1 tsp=1.8 tbsp=5.3 pinch=0.2
+7157	перец чили молотый	ground chili	7140		g=1 tsp=2.5 tbsp=7.5 pinch=0.2
 7142	хлопья чили	red pepper flakes			g=1 tsp=1.8 tbsp=5.4 pinch=0.1
 7143	перец чили сушёный	dried chili pepper		true	g=1 pc=0.5
 7144	чипотле молотый	ground chipotle			g=1 tsp=2.3 tbsp=7 pinch=0.2
 7145	чипотле в соусе адобо	chipotles in adobo		true	g=1 pc=15 tbsp=15
-7146	анчо сушёный	dried ancho chile		true	g=1 pc=9
+7146	анчо сушёный	dried ancho chile		true	g=1 pc=14
 7147	гочугару	gochugaru			g=1 tsp=2 tbsp=6
 7148	перец алеппо	Aleppo pepper			g=1 tsp=2 tbsp=6
 7149	перец эспелет	Espelette pepper			g=1 tsp=2 pinch=0.2
@@ -87,7 +88,7 @@
 7227	семена фенхеля	fennel seeds			g=1 tsp=2 tbsp=6
 7228	семена горчицы	mustard seeds			g=1 tsp=3.3 tbsp=10
 7229	семена горчицы чёрные	black mustard seeds	7228		g=1 tsp=3.3 tbsp=10
-7230	горчичный порошок	mustard powder			g=1 tsp=2.5 tbsp=7.5
+7230	горчица сухая (порошок)	mustard powder			g=1 tsp=2.5 tbsp=7.5
 7231	пажитник	fenugreek seeds			g=1 tsp=3.7 tbsp=11
 7232	уцхо-сунели	blue fenugreek			g=1 tsp=2 tbsp=6 pinch=0.2
 7233	шафран	saffron			g=1 pinch=0.05
@@ -101,8 +102,9 @@
 7241	семена укропа	dill seeds			g=1 tsp=2.1 tbsp=6.3
 7242	семена сельдерея	celery seeds			g=1 tsp=2 tbsp=6
 7243	галангал молотый	ground galangal			g=1 tsp=2
-7244	чеснок сушёный	garlic powder			g=1 tsp=3.1 tbsp=9.3 pinch=0.3
-7245	чеснок гранулированный	granulated garlic			g=1 tsp=3.1 tbsp=9.3
+7244	чеснок сушёный	dried garlic			g=1 tsp=3.1 tbsp=9.3 pinch=0.3
+7266	чесночный порошок	garlic powder	7244		g=1 tsp=3.1 tbsp=9.3 pinch=0.3
+7245	чеснок гранулированный	granulated garlic	7244		g=1 tsp=3.1 tbsp=9.3
 7246	лук сушёный	dried minced onion			g=1 tsp=2 tbsp=6
 7247	луковый порошок	onion powder			g=1 tsp=2.4 tbsp=7.2 pinch=0.2
 7248	лук жареный	crispy fried onions			g=1 tbsp=4 cup=60
@@ -117,8 +119,8 @@
 7257	паста тамаринда	tamarind paste	7256		g=1 tsp=6 tbsp=18
 7260	глутамат натрия	MSG			g=1 tsp=4 pinch=0.3
 7261	лимонная кислота	citric acid			g=1 tsp=5 pinch=0.3
-7263	чеснок сушёный хлопьями	dried garlic flakes			g=1 tsp=1.5 tbsp=4.5
-7264	имбирь сушёный	dried ginger slices			g=1
+7263	чеснок сушёный хлопьями	dried garlic flakes	7244		g=1 tsp=1.5 tbsp=4.5
+7264	имбирь сушёный ломтиками	dried ginger slices			g=1
 7265	хрен сушёный	horseradish powder			g=1 tsp=2
 
 # Spice blends and seasonings (7400-7499).
@@ -157,9 +159,11 @@
 7432	приправа для супа	soup seasoning	7400		g=1 tsp=3 tbsp=9
 7433	приправа для свинины	pork seasoning	7400		g=1 tsp=2.5 tbsp=7.5
 7434	приправа для засолки	pickling spice	7400		g=1 tsp=2 tbsp=6
+7440	приправа ранч	ranch seasoning	7400		g=1 tsp=2.5 tbsp=7.5
+7441	смесь для лукового супа	onion soup mix	7400	true	g=1 pc=28 tbsp=8
 7436	самбар масала	sambar powder	7400		g=1 tsp=2.5
 7437	шичими тогараши	shichimi togarashi	7400		g=1 tsp=2.5
-7438	фуракакэ	furikake	7400		g=1 tsp=2 tbsp=6
+7438	фурикакэ	furikake	7400		g=1 tsp=2 tbsp=6
 
 # Dried herbs (7500-7599). The fresh herbs are produce («укроп свежий»…); here only what is sold dry.
 7500	травы сушёные	dried herbs			g=1 tsp=1 tbsp=3 pinch=0.1
@@ -167,7 +171,7 @@
 7502	орегано сушёный	dried oregano	7500		g=1 tsp=1 tbsp=3 pinch=0.1
 7503	укроп сушёный	dried dill	7500		g=1 tsp=1 tbsp=3 pinch=0.1
 7504	петрушка сушёная	dried parsley	7500		g=1 tsp=0.5 tbsp=1.5 pinch=0.1
-7505	тимьян сушёный	dried thyme	7500		g=1 tsp=1 tbsp=3 pinch=0.1
+7505	тимьян (чабрец) сушёный	dried thyme	7500		g=1 tsp=1 tbsp=3 pinch=0.1
 7506	розмарин сушёный	dried rosemary	7500		g=1 tsp=1.2 tbsp=3.6 pinch=0.1
 7507	майоран сушёный	dried marjoram	7500		g=1 tsp=0.6 tbsp=1.8 pinch=0.1
 7508	шалфей сушёный	dried sage	7500		g=1 tsp=0.7 tbsp=2 pinch=0.1
@@ -175,9 +179,8 @@
 7510	мята сушёная	dried mint	7500		g=1 tsp=0.5 tbsp=1.5 pinch=0.1
 7511	чабер сушёный	dried savory	7500		g=1 tsp=1.4 tbsp=4 pinch=0.1
 7512	кинза сушёная	dried cilantro	7500		g=1 tsp=0.6 tbsp=1.8 pinch=0.1
-7513	чабрец сушёный	dried wild thyme	7500		g=1 tsp=1 tbsp=3 pinch=0.1
 7514	мелисса сушёная	dried lemon balm	7500		g=1 tsp=0.5 tbsp=1.5
-7515	лук зелёный сушёный	dried chives	7500		g=1 tsp=0.3 tbsp=1
+7515	шнитт-лук сушёный	dried chives	7500		g=1 tsp=0.3 tbsp=1
 7516	кервель сушёный	dried chervil	7500		g=1 tsp=0.6 tbsp=1.8
 7517	любисток сушёный	dried lovage	7500		g=1 tsp=0.6 tbsp=1.8
 7518	сельдерей сушёный	dried celery leaves	7500		g=1 tsp=0.6 tbsp=1.8

@@ -1,5 +1,5 @@
 {
-  "version": "d696995a5a4214ff5d5d9a9e23156b36753c411d1e21e2ff4b497af32eecd7d6",
+  "version": "6e8ffcda9e3d2c2da2145025664fc94d634951b5452e8224d08b751c28379f27",
   "ingredients": [
     {
       "id": 1,
@@ -12646,13 +12646,13 @@
     },
     {
       "id": 7001,
-      "labelRu": "соль поваренная",
-      "labelEn": "table salt",
+      "labelRu": "соль каменная",
+      "labelEn": "rock salt",
       "parentId": 7000,
       "factors": {
         "g": 1.0,
-        "tsp": 7.0,
-        "tbsp": 20.0,
+        "tsp": 6.0,
+        "tbsp": 18.0,
         "pinch": 0.5
       }
     },
@@ -12877,7 +12877,7 @@
     },
     {
       "id": 7102,
-      "labelRu": "перец чёрный горошек",
+      "labelRu": "перец чёрный горошком",
       "labelEn": "black peppercorns",
       "parentId": 7100,
       "divisible": false,
@@ -12925,7 +12925,7 @@
     },
     {
       "id": 7112,
-      "labelRu": "перец белый горошек",
+      "labelRu": "перец белый горошком",
       "labelEn": "white peppercorns",
       "parentId": 7110,
       "divisible": false,
@@ -12949,7 +12949,7 @@
     },
     {
       "id": 7121,
-      "labelRu": "перец душистый горошек",
+      "labelRu": "перец душистый горошком",
       "labelEn": "allspice berries",
       "parentId": 7120,
       "divisible": false,
@@ -13024,7 +13024,7 @@
     {
       "id": 7140,
       "labelRu": "перец красный молотый",
-      "labelEn": "ground red pepper",
+      "labelEn": "ground red chili pepper",
       "factors": {
         "g": 1.0,
         "tsp": 2.5,
@@ -13036,6 +13036,7 @@
       "id": 7141,
       "labelRu": "перец кайенский",
       "labelEn": "cayenne pepper",
+      "parentId": 7140,
       "factors": {
         "g": 1.0,
         "tsp": 1.8,
@@ -13093,7 +13094,7 @@
       "divisible": true,
       "factors": {
         "g": 1.0,
-        "pc": 9.0
+        "pc": 14.0
       }
     },
     {
@@ -13202,6 +13203,18 @@
         "g": 1.0,
         "tsp": 2.5,
         "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7157,
+      "labelRu": "перец чили молотый",
+      "labelEn": "ground chili",
+      "parentId": 7140,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5,
+        "pinch": 0.2
       }
     },
     {
@@ -13530,7 +13543,7 @@
     },
     {
       "id": 7230,
-      "labelRu": "горчичный порошок",
+      "labelRu": "горчица сухая (порошок)",
       "labelEn": "mustard powder",
       "factors": {
         "g": 1.0,
@@ -13670,7 +13683,7 @@
     {
       "id": 7244,
       "labelRu": "чеснок сушёный",
-      "labelEn": "garlic powder",
+      "labelEn": "dried garlic",
       "factors": {
         "g": 1.0,
         "tsp": 3.1,
@@ -13682,6 +13695,7 @@
       "id": 7245,
       "labelRu": "чеснок гранулированный",
       "labelEn": "granulated garlic",
+      "parentId": 7244,
       "factors": {
         "g": 1.0,
         "tsp": 3.1,
@@ -13832,6 +13846,7 @@
       "id": 7263,
       "labelRu": "чеснок сушёный хлопьями",
       "labelEn": "dried garlic flakes",
+      "parentId": 7244,
       "factors": {
         "g": 1.0,
         "tsp": 1.5,
@@ -13840,7 +13855,7 @@
     },
     {
       "id": 7264,
-      "labelRu": "имбирь сушёный",
+      "labelRu": "имбирь сушёный ломтиками",
       "labelEn": "dried ginger slices",
       "factors": {
         "g": 1.0
@@ -13853,6 +13868,18 @@
       "factors": {
         "g": 1.0,
         "tsp": 2.0
+      }
+    },
+    {
+      "id": 7266,
+      "labelRu": "чесночный порошок",
+      "labelEn": "garlic powder",
+      "parentId": 7244,
+      "factors": {
+        "g": 1.0,
+        "tsp": 3.1,
+        "tbsp": 9.3,
+        "pinch": 0.3
       }
     },
     {
@@ -14265,13 +14292,36 @@
     },
     {
       "id": 7438,
-      "labelRu": "фуракакэ",
+      "labelRu": "фурикакэ",
       "labelEn": "furikake",
       "parentId": 7400,
       "factors": {
         "g": 1.0,
         "tsp": 2.0,
         "tbsp": 6.0
+      }
+    },
+    {
+      "id": 7440,
+      "labelRu": "приправа ранч",
+      "labelEn": "ranch seasoning",
+      "parentId": 7400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 2.5,
+        "tbsp": 7.5
+      }
+    },
+    {
+      "id": 7441,
+      "labelRu": "смесь для лукового супа",
+      "labelEn": "onion soup mix",
+      "parentId": 7400,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 28.0,
+        "tbsp": 8.0
       }
     },
     {
@@ -14335,7 +14385,7 @@
     },
     {
       "id": 7505,
-      "labelRu": "тимьян сушёный",
+      "labelRu": "тимьян (чабрец) сушёный",
       "labelEn": "dried thyme",
       "parentId": 7500,
       "factors": {
@@ -14430,18 +14480,6 @@
       }
     },
     {
-      "id": 7513,
-      "labelRu": "чабрец сушёный",
-      "labelEn": "dried wild thyme",
-      "parentId": 7500,
-      "factors": {
-        "g": 1.0,
-        "tsp": 1.0,
-        "tbsp": 3.0,
-        "pinch": 0.1
-      }
-    },
-    {
       "id": 7514,
       "labelRu": "мелисса сушёная",
       "labelEn": "dried lemon balm",
@@ -14454,7 +14492,7 @@
     },
     {
       "id": 7515,
-      "labelRu": "лук зелёный сушёный",
+      "labelRu": "шнитт-лук сушёный",
       "labelEn": "dried chives",
       "parentId": 7500,
       "factors": {
@@ -14934,7 +14972,7 @@
     {
       "id": 8101,
       "labelRu": "томатное пюре",
-      "labelEn": "tomato purée",
+      "labelEn": "tomato puree",
       "factors": {
         "g": 1.0,
         "ml": 1.05,
@@ -14969,18 +15007,6 @@
       "id": 8104,
       "labelRu": "кетчуп острый",
       "labelEn": "hot ketchup",
-      "parentId": 8103,
-      "factors": {
-        "g": 1.0,
-        "ml": 1.15,
-        "tsp": 6.0,
-        "tbsp": 17.0
-      }
-    },
-    {
-      "id": 8105,
-      "labelRu": "кетчуп шашлычный",
-      "labelEn": "kebab ketchup",
       "parentId": 8103,
       "factors": {
         "g": 1.0,
@@ -15155,7 +15181,7 @@
     {
       "id": 8121,
       "labelRu": "майонез постный",
-      "labelEn": "egg-free mayonnaise",
+      "labelEn": "vegan mayonnaise",
       "parentId": 8119,
       "factors": {
         "g": 1.0,
@@ -15258,7 +15284,7 @@
     {
       "id": 8131,
       "labelRu": "соус бешамель",
-      "labelEn": "béchamel sauce",
+      "labelEn": "bechamel sauce",
       "factors": {
         "g": 1.0,
         "tbsp": 16.0,
@@ -15432,6 +15458,42 @@
       "factors": {
         "g": 1.0,
         "tbsp": 16.0
+      }
+    },
+    {
+      "id": 8150,
+      "labelRu": "майонез провансаль",
+      "labelEn": "Provencal mayonnaise",
+      "parentId": 8119,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 14.0,
+        "cup": 230.0
+      }
+    },
+    {
+      "id": 8151,
+      "labelRu": "итальянская заправка",
+      "labelEn": "Italian dressing",
+      "parentId": 8134,
+      "factors": {
+        "g": 1.0,
+        "ml": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8152,
+      "labelRu": "соус винегрет",
+      "labelEn": "vinaigrette",
+      "parentId": 8134,
+      "factors": {
+        "g": 1.0,
+        "ml": 0.95,
+        "tsp": 5.0,
+        "tbsp": 14.0
       }
     },
     {
@@ -15834,8 +15896,8 @@
     },
     {
       "id": 8302,
-      "labelRu": "уксус 9%",
-      "labelEn": "vinegar 9%",
+      "labelRu": "уксус столовый 9%",
+      "labelEn": "white vinegar 9%",
       "parentId": 8300,
       "factors": {
         "g": 1.0,
@@ -15847,8 +15909,8 @@
     },
     {
       "id": 8303,
-      "labelRu": "уксус 6%",
-      "labelEn": "vinegar 6%",
+      "labelRu": "уксус столовый 6%",
+      "labelEn": "white vinegar 6%",
       "parentId": 8300,
       "factors": {
         "g": 1.0,
@@ -16067,7 +16129,7 @@
     {
       "id": 8402,
       "labelRu": "огурец маринованный",
-      "labelEn": "pickle",
+      "labelEn": "dill pickle",
       "parentId": 8400,
       "divisible": true,
       "factors": {
@@ -16153,7 +16215,7 @@
     {
       "id": 8410,
       "labelRu": "халапеньо маринованный",
-      "labelEn": "pickled jalapeños",
+      "labelEn": "pickled jalapenos",
       "parentId": 8400,
       "factors": {
         "g": 1.0,
@@ -16325,6 +16387,17 @@
       "factors": {
         "g": 1.0,
         "pc": 30.0
+      }
+    },
+    {
+      "id": 8429,
+      "labelRu": "релиш огуречный",
+      "labelEn": "sweet pickle relish",
+      "parentId": 8400,
+      "factors": {
+        "g": 1.0,
+        "tsp": 5.0,
+        "tbsp": 15.0
       }
     },
     {
@@ -16521,7 +16594,7 @@
     },
     {
       "id": 8471,
-      "labelRu": "горошек консервированный",
+      "labelRu": "горошек зелёный консервированный",
       "labelEn": "canned peas",
       "divisible": true,
       "factors": {
@@ -16545,6 +16618,7 @@
       "id": 8473,
       "labelRu": "томаты в собственном соку",
       "labelEn": "canned whole tomatoes",
+      "parentId": 8503,
       "divisible": true,
       "factors": {
         "g": 1.0,
@@ -16556,6 +16630,7 @@
       "id": 8474,
       "labelRu": "томаты резаные консервированные",
       "labelEn": "canned diced tomatoes",
+      "parentId": 8503,
       "divisible": true,
       "factors": {
         "g": 1.0,
@@ -16567,6 +16642,7 @@
       "id": 8475,
       "labelRu": "томаты черри консервированные",
       "labelEn": "canned cherry tomatoes",
+      "parentId": 8503,
       "divisible": true,
       "factors": {
         "g": 1.0,
@@ -16720,7 +16796,7 @@
     {
       "id": 8489,
       "labelRu": "тыквенное пюре",
-      "labelEn": "pumpkin purée",
+      "labelEn": "pumpkin puree",
       "divisible": true,
       "factors": {
         "g": 1.0,
@@ -16825,6 +16901,51 @@
       "factors": {
         "g": 1.0,
         "pc": 40.0
+      }
+    },
+    {
+      "id": 8503,
+      "labelRu": "томаты консервированные",
+      "labelEn": "canned tomatoes",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "cup": 240.0
+      }
+    },
+    {
+      "id": 8504,
+      "labelRu": "томаты протёртые",
+      "labelEn": "crushed tomatoes",
+      "parentId": 8503,
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 400.0,
+        "tbsp": 15.0,
+        "cup": 245.0
+      }
+    },
+    {
+      "id": 8505,
+      "labelRu": "перец чили зелёный консервированный",
+      "labelEn": "diced green chiles",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 113.0,
+        "tbsp": 15.0
+      }
+    },
+    {
+      "id": 8506,
+      "labelRu": "вишня мараскино",
+      "labelEn": "maraschino cherries",
+      "divisible": false,
+      "factors": {
+        "g": 1.0,
+        "pc": 5.0
       }
     },
     {
@@ -17200,7 +17321,7 @@
     },
     {
       "id": 8570,
-      "labelRu": "джем из красной смородины",
+      "labelRu": "желе из красной смородины",
       "labelEn": "red currant jelly",
       "parentId": 8560,
       "factors": {
@@ -17334,7 +17455,7 @@
     {
       "id": 8600,
       "labelRu": "бульон",
-      "labelEn": "broth",
+      "labelEn": "stock",
       "factors": {
         "g": 1.0,
         "ml": 1.0,
@@ -17345,7 +17466,7 @@
     {
       "id": 8601,
       "labelRu": "бульон куриный",
-      "labelEn": "chicken broth",
+      "labelEn": "chicken stock",
       "parentId": 8600,
       "factors": {
         "g": 1.0,
@@ -17357,7 +17478,7 @@
     {
       "id": 8602,
       "labelRu": "бульон говяжий",
-      "labelEn": "beef broth",
+      "labelEn": "beef stock",
       "parentId": 8600,
       "factors": {
         "g": 1.0,
@@ -17369,7 +17490,7 @@
     {
       "id": 8603,
       "labelRu": "бульон овощной",
-      "labelEn": "vegetable broth",
+      "labelEn": "vegetable stock",
       "parentId": 8600,
       "factors": {
         "g": 1.0,
@@ -17393,7 +17514,7 @@
     {
       "id": 8605,
       "labelRu": "бульон грибной",
-      "labelEn": "mushroom broth",
+      "labelEn": "mushroom stock",
       "parentId": 8600,
       "factors": {
         "g": 1.0,
@@ -17452,7 +17573,7 @@
     {
       "id": 8610,
       "labelRu": "бульон из индейки",
-      "labelEn": "turkey broth",
+      "labelEn": "turkey stock",
       "parentId": 8600,
       "factors": {
         "g": 1.0,
@@ -17546,6 +17667,26 @@
       }
     },
     {
+      "id": 8632,
+      "labelRu": "крем-суп грибной концентрированный",
+      "labelEn": "condensed cream of mushroom soup",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
+      "id": 8633,
+      "labelRu": "крем-суп куриный концентрированный",
+      "labelEn": "condensed cream of chicken soup",
+      "divisible": true,
+      "factors": {
+        "g": 1.0,
+        "pc": 300.0
+      }
+    },
+    {
       "id": 8700,
       "labelRu": "вино",
       "labelEn": "wine",
@@ -17607,7 +17748,7 @@
     {
       "id": 8705,
       "labelRu": "вино розовое",
-      "labelEn": "rosé wine",
+      "labelEn": "rose wine",
       "parentId": 8700,
       "factors": {
         "g": 1.0,
@@ -18136,7 +18277,7 @@
     {
       "id": 8758,
       "labelRu": "ликёр мятный",
-      "labelEn": "crème de menthe",
+      "labelEn": "creme de menthe",
       "parentId": 8750,
       "factors": {
         "g": 1.0,
@@ -18806,7 +18947,7 @@
     },
     {
       "id": 8877,
-      "labelRu": "газировка",
+      "labelRu": "газировка сладкая",
       "labelEn": "soda",
       "factors": {
         "g": 1.0,
@@ -19072,7 +19213,7 @@
     {
       "id": 8926,
       "labelRu": "драже",
-      "labelEn": "dragées",
+      "labelEn": "candy-coated chocolates",
       "parentId": 8914,
       "factors": {
         "g": 1.0
@@ -19620,7 +19761,7 @@
     {
       "id": 321,
       "labelRu": "блины",
-      "labelEn": "crêpes"
+      "labelEn": "crepes"
     },
     {
       "id": 322,
@@ -19655,7 +19796,7 @@
     {
       "id": 328,
       "labelRu": "канапе",
-      "labelEn": "canapés"
+      "labelEn": "canapes"
     },
     {
       "id": 329,
@@ -19676,11 +19817,6 @@
       "id": 332,
       "labelRu": "соус",
       "labelEn": "sauce"
-    },
-    {
-      "id": 333,
-      "labelRu": "маринад",
-      "labelEn": "marinade"
     },
     {
       "id": 334,
@@ -19828,11 +19964,6 @@
       "labelEn": "low-fat"
     },
     {
-      "id": 418,
-      "labelRu": "диетическое",
-      "labelEn": "diet-friendly"
-    },
-    {
       "id": 419,
       "labelRu": "полезное",
       "labelEn": "healthy"
@@ -19840,7 +19971,7 @@
     {
       "id": 420,
       "labelRu": "детское",
-      "labelEn": "kids"
+      "labelEn": "kid-friendly"
     },
     {
       "id": 421,
@@ -20133,11 +20264,6 @@
       "labelEn": "puff pastry"
     },
     {
-      "id": 528,
-      "labelRu": "заморозка",
-      "labelEn": "freezing"
-    },
-    {
       "id": 600,
       "labelRu": "праздничное",
       "labelEn": "festive"
@@ -20159,7 +20285,7 @@
     },
     {
       "id": 604,
-      "labelRu": "масленица",
+      "labelRu": "Масленица",
       "labelEn": "Maslenitsa"
     },
     {
@@ -20184,22 +20310,22 @@
     },
     {
       "id": 609,
-      "labelRu": "день святого Валентина",
+      "labelRu": "День святого Валентина",
       "labelEn": "Valentine's Day"
     },
     {
       "id": 610,
-      "labelRu": "хэллоуин",
+      "labelRu": "Хеллоуин",
       "labelEn": "Halloween"
     },
     {
       "id": 611,
-      "labelRu": "день благодарения",
+      "labelRu": "День благодарения",
       "labelEn": "Thanksgiving"
     },
     {
       "id": 612,
-      "labelRu": "рамадан",
+      "labelRu": "Рамадан",
       "labelEn": "Ramadan"
     },
     {
@@ -20233,11 +20359,6 @@
       "labelEn": "romantic dinner"
     },
     {
-      "id": 619,
-      "labelRu": "для гостей",
-      "labelEn": "for guests"
-    },
-    {
       "id": 620,
       "labelRu": "семейное",
       "labelEn": "family"
@@ -20260,7 +20381,7 @@
     {
       "id": 624,
       "labelRu": "на дачу",
-      "labelEn": "summer cottage"
+      "labelEn": "dacha"
     },
     {
       "id": 625,
@@ -20289,17 +20410,17 @@
     },
     {
       "id": 631,
-      "labelRu": "курбан-байрам",
+      "labelRu": "Курбан-байрам",
       "labelEn": "Eid al-Adha"
     },
     {
       "id": 632,
-      "labelRu": "песах",
+      "labelRu": "Песах",
       "labelEn": "Passover"
     },
     {
       "id": 633,
-      "labelRu": "ханука",
+      "labelRu": "Ханука",
       "labelEn": "Hanukkah"
     },
     {
@@ -20333,14 +20454,9 @@
       "labelEn": "easy"
     },
     {
-      "id": 707,
-      "labelRu": "для начинающих",
-      "labelEn": "beginner-friendly"
-    },
-    {
       "id": 708,
       "labelRu": "бюджетно",
-      "labelEn": "budget"
+      "labelEn": "budget-friendly"
     },
     {
       "id": 709,
@@ -20386,11 +20502,6 @@
       "id": 717,
       "labelRu": "сытное",
       "labelEn": "hearty"
-    },
-    {
-      "id": 718,
-      "labelRu": "лёгкое",
-      "labelEn": "light"
     },
     {
       "id": 719,
@@ -20609,13 +20720,8 @@
     },
     {
       "id": 829,
-      "labelRu": "макароны",
+      "labelRu": "лапша",
       "labelEn": "noodles"
-    },
-    {
-      "id": 830,
-      "labelRu": "тесто",
-      "labelEn": "dough"
     },
     {
       "id": 831,
@@ -20624,7 +20730,7 @@
     },
     {
       "id": 832,
-      "labelRu": "молочное",
+      "labelRu": "молочные продукты",
       "labelEn": "dairy"
     }
   ]
