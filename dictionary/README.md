@@ -66,8 +66,8 @@ declare only its family's ranges from the table. A `*.tsv` whose name begins wit
 UTF-8 text, one entry per line, columns separated by a single **tab**. A line starting with `#` is a comment; blank
 lines are ignored. Entries may stand in any order; the asset lists them by id.
 
-Ingredient files — `id, labelRu, labelEn, parentId, divisible, factors, removed`; empty trailing columns may be left
-out:
+Ingredient files — `id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn`; empty
+trailing columns may be left out:
 
 | Column      | Value                                                                                                 |
 |-------------|-------------------------------------------------------------------------------------------------------|
@@ -78,6 +78,8 @@ out:
 | `divisible` | empty (not known), `true` (may be used in halves) or `false` (whole pieces only)                      |
 | `factors`   | space-separated `unit=number`, units `g ml pc tsp tbsp cup pinch`, each a finite number above zero     |
 | `removed`   | empty, or `removed` for an entry no longer offered (it keeps naming the recipes that hold it)          |
+| `synonymsRu`| empty, or the other Russian words cooks write for the entry, separated by `;` (`картошка;картоха`)      |
+| `synonymsEn`| likewise in English (`confectioners' sugar;icing sugar`)                                               |
 
 ```
 @range 3000-4999
@@ -86,7 +88,12 @@ out:
 2	крылышки	chicken wings	1	false	g=1 pc=80
 3	мясо	meat			g=1
 3100	куриные окорочка	chicken leg quarters	1	false	g=1 pc=300	removed
+3001	курдюк	lamb tail fat			g=1		курдючный жир;курдючное сало
 ```
+
+A synonym is a word an author types for the entry when it is not the label: the ingredient field and the book's search
+may find the entry by it, while the entry is still shown under its label. An entry without synonyms is written into
+the asset exactly as before they existed, so its digest does not change.
 
 The tags file — `id, labelRu, labelEn`:
 
@@ -112,6 +119,10 @@ The tags file — `id, labelRu, labelEn`:
   folds them — case ignored, `ё` read as `е`, Latin diacritics dropped, words being runs of letters and digits, in any
   order (so `лук-порей` and `лук порей`, `crème fraîche` and `creme fraiche`, `масло сливочное` and `сливочное масло`
   are the same label: the field takes a label typed with its words in another order as an exact match);
+- a blank synonym (an empty item between `;`, or one with no letter or digit) or one with spaces around it;
+- a synonym that, as the search folds it, is its own entry's label, any live entry's label, or another synonym in the
+  same language (in this entry or another) — a synonym must lead to one entry only; a removed entry's synonyms are
+  checked against its own label only;
 - a `parentId` that names no entry, names the entry itself, or names an entry that has a parent;
 - a removed entry that is still the parent of a live entry;
 - an unknown factor unit, a factor that is not a finite number above zero, a unit given twice;
@@ -135,5 +146,7 @@ The tags file — `id, labelRu, labelEn`:
   plausibly use for that ingredient; never guess wildly — use common culinary references.
 - **Ids.** Each family source owns a range (produce 1 000–2 999, animal 3 000–4 999, pantry 5 000–6 999, seasoning
   and the rest 7 000–8 999, tags 100–999; 1–5 and 10–11 stay). Ids are permanent once shipped.
+- **Synonyms.** Only words cooks really write for exactly this entry (картошка, манка, icing sugar) — colloquial or
+  regional names, not kinds of it (a kind is a leaf) and not a vaguer word that would fit several entries.
 - **No brands**, no recipes-as-ingredients ("тесто для пиццы" is fine as a bought product; "соус бешамель" as a sauce
   is fine), no duplicates across families (the generator refuses duplicate labels).

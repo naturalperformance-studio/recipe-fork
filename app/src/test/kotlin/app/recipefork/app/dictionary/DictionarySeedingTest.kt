@@ -122,6 +122,24 @@ class DictionarySeedingTest {
         )
     }
 
+    // The synonyms of an entry are held on the device and read back with it — seeded from the snapshot or refreshed from
+    // the server; an entry without synonyms holds none.
+    @Test
+    fun anEntryKeepsItsSynonymsOnTheDevice() = runBlocking {
+        val potato = IngredientEntryDto(1, "картофель", "potato", synonymsRu = listOf("картошка"))
+        val sugar = IngredientEntryDto(2, "сахарная пудра", "powdered sugar", synonymsEn = listOf("confectioners' sugar", "icing sugar"))
+        val salt = IngredientEntryDto(3, "соль", "salt")
+        shipped = DictionariesDto("s1", listOf(potato, sugar, salt), emptyList())
+        val catalog = DictionaryCatalog(dao, seeding)
+        assertEquals(listOf(potato, sugar, salt), catalog.ingredients().map { it.toDto() })
+        assertEquals(listOf("confectioners' sugar", "icing sugar"), catalog.ingredients()[1].synonymsEn)
+        assertEquals(emptyList<String>(), catalog.ingredients()[2].synonymsRu)
+
+        val tomato = IngredientEntryDto(4, "помидор", "tomato", synonymsRu = listOf("томат"))
+        refreshFromServer(DictionariesDto("server-1", listOf(potato, tomato), emptyList()))
+        assertEquals(listOf(listOf("картошка"), emptyList(), emptyList(), listOf("томат")), catalog.ingredients().map { it.synonymsRu })
+    }
+
     // FLOW-001 (7), DOM-009 (5): replacing the held copy keeps a removed entry, so every recipe naming it keeps its name —
     // whether the new copy carries it marked removed or no longer carries it at all.
     @Test
@@ -161,14 +179,21 @@ class DictionarySeedingTest {
             v1.version = 1
         }
         seeded.version = "s1"
-        shipped = DictionariesDto("s1", listOf(IngredientEntryDto(1, "курица", "chicken", divisible = true, factors = mapOf("pc" to 1500.0))), emptyList())
+        shipped = DictionariesDto(
+            "s1",
+            listOf(IngredientEntryDto(1, "курица", "chicken", divisible = true, factors = mapOf("pc" to 1500.0), synonymsRu = listOf("кура"))),
+            emptyList(),
+        )
 
         val opened = AppDatabase.open(context, name)
         try {
             val dao = opened.dictionaryDao()
             assertNull(dao.version())
             val catalog = DictionaryCatalog(dao, DictionarySeeding(dao, seeded) { shipped })
-            assertEquals(listOf(IngredientEntryEntity(1, "курица", "chicken", null, true, mapOf("pc" to 1500.0))), catalog.ingredients())
+            assertEquals(
+                listOf(IngredientEntryEntity(1, "курица", "chicken", null, true, mapOf("pc" to 1500.0), synonymsRu = listOf("кура"))),
+                catalog.ingredients(),
+            )
             assertEquals("s1", dao.version())
             assertEquals(AppDatabase.VERSION, opened.openHelper.readableDatabase.version)
         } finally {

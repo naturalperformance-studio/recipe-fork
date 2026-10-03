@@ -1,5 +1,5 @@
 # Animal: meat, poultry, offal, fish, seafood, eggs, dairy and cheese.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
 # Ids 1-5 are the entries shipped before the sources existed.
 # This file: the legacy entries, red meat and its cuts, game, mince. The family continues in animal-*.tsv:
 #   3000-3099 мясо's kinds · 3100-3199 beef, veal · 3200-3299 pork · 3300-3399 lamb · 3400-3449 other meat, game
@@ -99,7 +99,7 @@
 3307	баранья шея	lamb neck	3300		g=1
 3308	баранья мякоть	boneless lamb	3300		g=1
 3309	баранина на кости	bone-in lamb	3300		g=1
-3310	курдюк	lamb tail fat	3300		g=1
+3310	курдюк	lamb tail fat	3300		g=1		курдючный жир
 3311	баранья отбивная	lamb chop	3300	false	g=1 pc=100
 3312	баранья голяшка	lamb shank	3300	false	g=1 pc=400
 3313	баранья грудинка	lamb breast	3300		g=1

@@ -1,5 +1,5 @@
 {
-  "version": "43e39910e2e8c754e8bba90adf6257a4d58aacf5733202f6f1d9540700cd01d2",
+  "version": "8005ed9b7efbb2563d0066ae92f83b8ed7bd3b120902050011926bb44419fc1f",
   "ingredients": [
     {
       "id": 1,
@@ -54,7 +54,10 @@
       "factors": {
         "g": 1.0,
         "pc": 150.0
-      }
+      },
+      "synonymsRu": [
+        "картошка"
+      ]
     },
     {
       "id": 1001,
@@ -1095,7 +1098,10 @@
         "g": 1.0,
         "pc": 120.0,
         "cup": 180.0
-      }
+      },
+      "synonymsRu": [
+        "томат"
+      ]
     },
     {
       "id": 1301,
@@ -7086,7 +7092,10 @@
       "parentId": 3300,
       "factors": {
         "g": 1.0
-      }
+      },
+      "synonymsRu": [
+        "курдючный жир"
+      ]
     },
     {
       "id": 3311,
@@ -13699,7 +13708,10 @@
         "tsp": 4.0,
         "tbsp": 12.0,
         "cup": 200.0
-      }
+      },
+      "synonymsRu": [
+        "манка"
+      ]
     },
     {
       "id": 5226,
@@ -15457,7 +15469,13 @@
       "factors": {
         "g": 1.0,
         "pc": 70.0
-      }
+      },
+      "synonymsRu": [
+        "булочка для гамбургера"
+      ],
+      "synonymsEn": [
+        "hamburger bun"
+      ]
     },
     {
       "id": 5652,
@@ -17448,7 +17466,11 @@
         "tbsp": 8.0,
         "cup": 130.0,
         "pinch": 0.5
-      }
+      },
+      "synonymsEn": [
+        "confectioners' sugar",
+        "icing sugar"
+      ]
     },
     {
       "id": 6111,
