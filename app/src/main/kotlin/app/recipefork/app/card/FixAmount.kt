@@ -78,7 +78,7 @@ internal fun FixAmount(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { fix() }),
-                modifier = Modifier.weight(1f).testTag(CardTags.FIX_FIELD),
+                modifier = Modifier.weight(1f).heightIn(min = CardTarget).testTag(CardTags.FIX_FIELD),
             )
             if (offer.units.size == 1) Text(UnitLabels.of(unit, language), style = MaterialTheme.typography.bodyLarge)
         }
@@ -88,8 +88,8 @@ internal fun FixAmount(
                     val selected = choice == unit
                     Box(
                         Modifier
-                            .heightIn(min = 48.dp)
-                            .widthIn(min = 48.dp)
+                            .heightIn(min = CardTarget)
+                            .widthIn(min = CardTarget)
                             .border(
                                 if (selected) 2.dp else 1.dp,
                                 if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
@@ -137,7 +137,7 @@ internal fun FixAmount(
 }
 
 /**
- * One action of the control, at least 48 by 48 dp (A11Y-003), announced by what it does (A11Y-005); the [primary]
+ * One action of the control, at least the card's [CardTarget] square (A11Y-003, A11Y-007), announced by what it does (A11Y-005); the [primary]
  * one is filled.
  */
 @Composable
@@ -155,8 +155,8 @@ private fun FixAction(text: Int, action: Int, enabled: Boolean, onClick: () -> U
     }
     Box(
         Modifier
-            .heightIn(min = 48.dp)
-            .widthIn(min = 48.dp)
+            .heightIn(min = CardTarget)
+            .widthIn(min = CardTarget)
             .then(fill)
             .clip(MaterialTheme.shapes.small)
             .clickable(enabled = enabled, onClickLabel = stringResource(action), role = Role.Button, onClick = onClick)

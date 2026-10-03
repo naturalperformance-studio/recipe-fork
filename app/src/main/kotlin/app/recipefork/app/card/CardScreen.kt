@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -137,12 +138,16 @@ fun CardScreen(
     }
 }
 
-/** The screen's bar: back on one side, the recipe's actions on the other — fork on any recipe shown, edit beside it. */
+/**
+ * The screen's bar: back on one side, the recipe's actions on the other — fork on any recipe shown, edit beside it.
+ * Where they do not fit on one line — a large font, a narrow screen — the recipe's actions wrap below back, and edit
+ * below fork, each action whole and never squeezed (A11Y-003 (2), A11Y-004).
+ */
 @Composable
 private fun TopBar(shown: Boolean, editable: Boolean, onBack: () -> Unit, onFork: () -> Unit, onEdit: () -> Unit) {
-    Row(
+    FlowRow(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp).testTag(CardTags.BAR),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         BarAction(
             text = stringResource(R.string.card_back),
@@ -150,22 +155,23 @@ private fun TopBar(shown: Boolean, editable: Boolean, onBack: () -> Unit, onFork
             onClick = onBack,
             modifier = Modifier.testTag(CardTags.BACK),
         )
-        Spacer(Modifier.weight(1f))
         if (shown) {
-            BarAction(
-                text = stringResource(R.string.card_fork),
-                action = stringResource(R.string.card_fork_action),
-                onClick = onFork,
-                modifier = Modifier.testTag(CardTags.FORK),
-            )
-        }
-        if (editable) {
-            BarAction(
-                text = stringResource(R.string.card_edit),
-                action = stringResource(R.string.card_edit_action),
-                onClick = onEdit,
-                modifier = Modifier.testTag(CardTags.EDIT),
-            )
+            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
+                BarAction(
+                    text = stringResource(R.string.card_fork),
+                    action = stringResource(R.string.card_fork_action),
+                    onClick = onFork,
+                    modifier = Modifier.testTag(CardTags.FORK),
+                )
+                if (editable) {
+                    BarAction(
+                        text = stringResource(R.string.card_edit),
+                        action = stringResource(R.string.card_edit_action),
+                        onClick = onEdit,
+                        modifier = Modifier.testTag(CardTags.EDIT),
+                    )
+                }
+            }
         }
     }
 }
@@ -329,7 +335,7 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
         is ParentContent.Held -> Box(
             Modifier
                 .fillMaxWidth()
-                .heightIn(min = 48.dp)
+                .heightIn(min = CardTarget)
                 .clickable(
                     onClickLabel = stringResource(R.string.card_parent_open_action),
                     role = Role.Button,
@@ -405,7 +411,7 @@ private fun ServingsControl(
 }
 
 /**
- * A − or + action, 48 by 48 dp (A11Y-003): the screen reader names it by [name] rather than by its glyph, and
+ * A − or + action, the card's [CardTarget] square (A11Y-003, A11Y-007): the screen reader names it by [name] rather than by its glyph, and
  * announces its click as [action] (A11Y-005).
  */
 @Composable
@@ -419,7 +425,7 @@ private fun StepAction(
 ) {
     Box(
         modifier
-            .size(48.dp)
+            .size(CardTarget)
             .clickable(enabled = enabled, onClickLabel = action, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = name },
         contentAlignment = Alignment.Center,
@@ -437,15 +443,15 @@ private const val MINUS = "\u2212"
 private const val PLUS = "+"
 
 /**
- * An action of the bar, at least 48 by 48 dp (A11Y-003), whose click the screen reader announces as what it
+ * An action of the bar, at least the card's [CardTarget] square (A11Y-003, A11Y-007), whose click the screen reader announces as what it
  * does — [action] — beside the visible [text] (A11Y-005).
  */
 @Composable
 private fun BarAction(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .heightIn(min = 48.dp)
-            .widthIn(min = 48.dp)
+            .heightIn(min = CardTarget)
+            .widthIn(min = CardTarget)
             .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
@@ -465,12 +471,12 @@ fun HeldForkDialog(onOpen: () -> Unit, onAnother: () -> Unit, onDismiss: () -> U
         modifier = Modifier.testTag(CardTags.FORK_HELD),
         text = { Text(stringResource(R.string.card_fork_held)) },
         confirmButton = {
-            TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = 48.dp).testTag(CardTags.FORK_HELD_OPEN)) {
+            TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(CardTags.FORK_HELD_OPEN)) {
                 Text(stringResource(R.string.card_fork_held_open))
             }
         },
         dismissButton = {
-            TextButton(onClick = onAnother, modifier = Modifier.heightIn(min = 48.dp).testTag(CardTags.FORK_HELD_ANOTHER)) {
+            TextButton(onClick = onAnother, modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(CardTags.FORK_HELD_ANOTHER)) {
                 Text(stringResource(R.string.card_fork_held_another))
             }
         },
