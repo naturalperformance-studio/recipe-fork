@@ -1,0 +1,315 @@
+# Tags: cuisines, meal and course, diet, method and appliance, occasion and season, characteristics, main ingredient.
+# Columns, tab-separated: id, labelRu, labelEn (dictionary/README.md). The legacy tags 10 and 11 stay in tags.tsv.
+@range 100-999
+
+# Cuisines (100-299): feminine adjectives agreeing with «кухня», as the legacy 10 «итальянская».
+100	русская	Russian
+101	украинская	Ukrainian
+102	белорусская	Belarusian
+103	советская	Soviet
+104	кавказская	Caucasian
+105	армянская	Armenian
+106	азербайджанская	Azerbaijani
+108	осетинская	Ossetian
+111	татарская	Tatar
+112	крымскотатарская	Crimean Tatar
+114	сибирская	Siberian
+120	среднеазиатская	Central Asian
+121	узбекская	Uzbek
+122	казахская	Kazakh
+126	уйгурская	Uyghur
+128	молдавская	Moldovan
+130	европейская	European
+131	восточноевропейская	Eastern European
+132	польская	Polish
+133	чешская	Czech
+135	венгерская	Hungarian
+137	болгарская	Bulgarian
+138	сербская	Serbian
+139	балканская	Balkan
+141	немецкая	German
+142	австрийская	Austrian
+143	швейцарская	Swiss
+144	французская	French
+147	британская	British
+149	ирландская	Irish
+151	скандинавская	Scandinavian
+152	шведская	Swedish
+154	финская	Finnish
+156	прибалтийская	Baltic
+160	средиземноморская	Mediterranean
+161	испанская	Spanish
+164	португальская	Portuguese
+165	греческая	Greek
+168	еврейская	Jewish
+180	ближневосточная	Middle Eastern
+181	турецкая	Turkish
+182	ливанская	Lebanese
+183	израильская	Israeli
+185	персидская	Persian
+190	африканская	African
+191	североафриканская	North African
+192	марокканская	Moroccan
+195	эфиопская	Ethiopian
+200	азиатская	Asian
+201	паназиатская	Pan-Asian
+202	китайская	Chinese
+203	сычуаньская	Sichuan
+206	японская	Japanese
+207	корейская	Korean
+208	тайская	Thai
+209	вьетнамская	Vietnamese
+210	индонезийская	Indonesian
+211	малайзийская	Malaysian
+212	сингапурская	Singaporean
+213	филиппинская	Filipino
+217	индийская	Indian
+223	гавайская	Hawaiian
+230	американская	American
+231	каджунская	Cajun
+232	техасско-мексиканская	Tex-Mex
+233	канадская	Canadian
+234	мексиканская	Mexican
+235	латиноамериканская	Latin American
+236	бразильская	Brazilian
+237	аргентинская	Argentine
+238	перуанская	Peruvian
+242	кубинская	Cuban
+243	карибская	Caribbean
+250	австралийская	Australian
+251	фьюжн	fusion
+
+# Meal and course (300-399).
+300	завтрак	breakfast
+301	бранч	brunch
+302	обед	lunch
+303	ужин	dinner
+304	полдник	afternoon snack
+305	перекус	snack
+306	закуска	appetizer
+307	холодная закуска	cold appetizer
+308	горячая закуска	hot appetizer
+309	суп	soup
+310	крем-суп	cream soup
+311	холодный суп	cold soup
+312	салат	salad
+313	горячее	main course
+314	гарнир	side dish
+315	десерт	dessert
+316	выпечка	baking
+317	хлеб	bread
+318	пирог	pie
+319	торт	cake
+320	печенье	cookies
+321	блины	crêpes
+322	оладьи	pancakes
+323	каша	porridge
+324	паста	pasta
+325	пицца	pizza
+326	сэндвич	sandwich
+327	бутерброд	open-faced sandwich
+328	канапе	canapés
+329	напиток	drink
+330	коктейль	cocktail
+331	смузи	smoothie
+332	соус	sauce
+333	маринад	marinade
+334	заправка	dressing
+335	намазка	spread
+336	пельмени и вареники	dumplings
+337	запеканка	casserole
+338	рагу	stew
+339	котлеты	patties
+340	шашлык	kebab
+341	плов	pilaf
+342	выпечка несладкая	savory pastry
+343	выпечка сладкая	sweet pastry
+345	мороженое	ice cream
+
+# Diet (400-449).
+400	вегетарианское	vegetarian
+401	веганское	vegan
+402	пескетарианское	pescatarian
+403	без мяса	meatless
+404	постное	Lenten
+405	без глютена	gluten-free
+406	без лактозы	lactose-free
+407	без молочных продуктов	dairy-free
+408	без яиц	egg-free
+409	без орехов	nut-free
+410	без сахара	sugar-free
+411	без дрожжей	yeast-free
+412	низкоуглеводное	low-carb
+413	кето	keto
+414	палео	paleo
+415	высокобелковое	high-protein
+416	низкокалорийное	low-calorie
+417	низкожирное	low-fat
+418	диетическое	diet-friendly
+419	полезное	healthy
+420	детское	kids
+421	для малышей	baby food
+422	для диабетиков	diabetic-friendly
+423	халяль	halal
+424	кошерное	kosher
+425	сыроедение	raw food
+426	без соли	salt-free
+
+# Method and appliance (450-599).
+450	духовка	oven
+451	аэрогриль	air fryer
+452	мультиварка	multicooker
+453	скороварка	pressure cooker
+454	медленноварка	slow cooker
+455	пароварка	steamer
+456	микроволновка	microwave
+457	гриль	grill
+458	мангал	charcoal grill
+459	на костре	campfire
+460	сковорода	skillet
+461	сковорода-гриль	grill pan
+462	вок	wok
+463	казан	kazan
+464	горшочки	clay pots
+465	тандыр	tandoor
+466	коптильня	smoker
+467	су-вид	sous vide
+468	хлебопечка	bread machine
+469	вафельница	waffle maker
+470	блендер	blender
+471	кухонный комбайн	food processor
+472	фритюрница	deep fryer
+473	дегидратор	dehydrator
+475	мороженица	ice cream maker
+476	рукав для запекания	roasting bag
+479	печь для пиццы	pizza oven
+480	чугунная кастрюля	Dutch oven
+500	без варки	no-cook
+501	без выпечки	no-bake
+502	без духовки	no-oven
+503	варка	boiling
+504	жарка	frying
+505	во фритюре	deep-fried
+506	тушение	braising
+507	запекание	roasting
+508	на пару	steamed
+509	томление	slow-cooked
+510	копчение	smoking
+512	маринование	marinating
+513	засолка	brining
+514	ферментация	fermentation
+515	заготовки	canning
+517	сушка	dehydrating
+518	конфи	confit
+519	в одной кастрюле	one-pot
+520	на одной сковороде	one-pan
+521	на противне	sheet-pan
+522	без замеса	no-knead
+523	закваска	sourdough
+524	дрожжевое тесто	yeast dough
+525	слоёное тесто	puff pastry
+528	заморозка	freezing
+
+# Occasion and season (600-699).
+600	праздничное	festive
+601	новогоднее	New Year's
+602	рождественское	Christmas
+603	пасхальное	Easter
+604	масленица	Maslenitsa
+605	день рождения	birthday
+606	детский праздник	kids' party
+607	8 марта	International Women's Day
+608	23 февраля	Defender of the Fatherland Day
+609	день святого Валентина	Valentine's Day
+610	хэллоуин	Halloween
+611	день благодарения	Thanksgiving
+612	рамадан	Ramadan
+613	свадьба	wedding
+614	пикник	picnic
+615	на компанию	for a crowd
+616	вечеринка	party
+617	фуршет	buffet
+618	романтический ужин	romantic dinner
+619	для гостей	for guests
+620	семейное	family
+621	воскресное	Sunday
+622	ланчбокс	lunchbox
+623	в дорогу	on the go
+624	на дачу	summer cottage
+625	летнее	summer
+626	зимнее	winter
+627	весеннее	spring
+628	осеннее	fall
+629	на каждый день	everyday
+631	курбан-байрам	Eid al-Adha
+632	песах	Passover
+633	ханука	Hanukkah
+
+# Characteristics (700-799), without difficulty grades.
+700	быстро	quick
+701	до 15 минут	under 15 minutes
+702	до 30 минут	under 30 minutes
+703	до часа	under 1 hour
+705	на выходные	weekend project
+706	просто	easy
+707	для начинающих	beginner-friendly
+708	бюджетно	budget
+709	мало ингредиентов	few ingredients
+710	из остатков	leftovers
+711	на неделю	meal prep
+712	можно заранее	make-ahead
+713	для заморозки	freezer-friendly
+714	острое	spicy
+715	сладкое	sweet
+716	кисло-сладкое	sweet and sour
+717	сытное	hearty
+718	лёгкое	light
+719	согревающее	warming
+720	освежающее	refreshing
+721	хрустящее	crispy
+722	сочное	juicy
+723	домашнее	homemade
+724	классическое	classic
+725	традиционное	traditional
+726	бабушкино	grandma's
+727	из детства	nostalgic
+728	ресторанное	restaurant-style
+729	уличная еда	street food
+730	комфортная еда	comfort food
+731	сезонное	seasonal
+732	эффектная подача	showstopper
+734	порционное	individual portions
+
+# Main ingredient (800-899).
+800	мясо	meat
+801	говядина	beef
+802	свинина	pork
+803	баранина	lamb
+804	птица	poultry
+805	курица	chicken
+806	индейка	turkey
+808	фарш	ground meat
+809	субпродукты	offal
+810	рыба	fish
+811	морепродукты	seafood
+812	овощи	vegetables
+813	картофель	potatoes
+814	грибы	mushrooms
+815	крупы	grains
+816	рис	rice
+817	бобовые	legumes
+818	яйца	eggs
+819	творог	quark
+820	сыр	cheese
+821	фрукты	fruit
+822	ягоды	berries
+823	орехи	nuts
+824	шоколад	chocolate
+825	тыква	pumpkin
+826	кабачки	zucchini
+827	баклажаны	eggplant
+828	капуста	cabbage
+829	макароны	noodles
+830	тесто	dough
+831	тофу	tofu
+832	молочное	dairy
