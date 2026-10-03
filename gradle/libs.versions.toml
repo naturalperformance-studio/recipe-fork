@@ -21,6 +21,7 @@ androidxTestRunner = "1.7.0"
 room = "2.8.5"
 ksp = "2.3.12"
 navigation = "2.10.2"
+media3 = "1.11.1"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -56,6 +57,8 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+media3-transformer = { module = "androidx.media3:media3-transformer", version.ref = "media3" }
+media3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
