@@ -91,9 +91,13 @@ class EdgeToEdgeTest {
         compose.runOnUiThread { session.openCard("no-such-recipe") }
         applyInsets(top = STATUS, bottom = NAVIGATION)
         val root = assertRootUnderTheBars()
+        // The card's bar draws under the status bar, its actions below it; what the card says lies under the bar.
         val card = bounds(CardTags.SCREEN)
-        assertEquals(STATUS.toFloat(), card.top)
-        assertEquals(root.bottom - NAVIGATION, card.bottom)
+        assertEquals(0f, card.top)
+        assertEquals(root.bottom, card.bottom)
+        assertEquals(0f, bounds(CardTags.BAR).top)
+        assertTrue("back below the status bar", bounds(CardTags.BACK).top >= STATUS)
+        assertTrue("the message under the bar", bounds(CardTags.MISSING).top >= bounds(CardTags.BAR).bottom)
     }
 
     @Test

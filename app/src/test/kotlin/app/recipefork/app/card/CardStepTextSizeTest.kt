@@ -140,7 +140,6 @@ class CardStepTextSizeTest {
             "the ingredient list" to sizesWithin(CardTags.INGREDIENTS),
             "the serving count" to sizesWithin(CardTags.SERVINGS),
             "the description" to sizesWithin(CardTags.DESCRIPTION),
-            "the bar" to sizesWithin(CardTags.BAR),
         )
         others.forEach { (part, sizes) ->
             assertTrue("$part shows text", sizes.isNotEmpty())

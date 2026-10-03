@@ -1,10 +1,37 @@
 package app.recipefork.app.card
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTooltipState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +40,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -33,7 +59,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -82,11 +107,11 @@ private sealed interface CardContent {
 
 /**
  * The recipe card: the saved recipe exactly as a reader sees it, not an editor with reader styling (FLOW-029 (1)).
- * One scrolling screen (the card intro of `cooking`): the cover, the title, the serving count, the ingredients in
- * order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
+ * One scrolling screen (the card intro of `cooking`): the title in the bar, then the cover, the serving count, the
+ * ingredients in order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
  * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe.
  *
- * The top bar holds the screen's actions, outside the recipe: back to the book, the fork action on every recipe,
+ * The top bar holds the recipe's title and the screen's actions, outside the recipe: back to the book, the fork action on every recipe,
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
  * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
@@ -96,6 +121,7 @@ private sealed interface CardContent {
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardScreen(
     recipeId: RecipeId,
@@ -130,31 +156,75 @@ fun CardScreen(
         }
         entries = read.associateBy { it.id }
     }
-    Column(modifier.fillMaxSize().safeDrawingPadding().testTag(CardTags.SCREEN)) {
-        val shown = content
-        TopBar(
-            shown = shown is CardContent.Shown,
-            editable = shown is CardContent.Shown && shown.recipe.state.editable,
-            onBack = onBack,
-            onFork = onFork,
-            onEdit = onEdit,
-        )
-        HorizontalDivider()
-        when (shown) {
-            CardContent.Loading -> Unit
-            CardContent.Missing -> Text(
-                stringResource(R.string.card_missing),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
+    // The bar draws under the status bar and collapses as the recipe scrolls under it; the content keeps clear of the
+    // other bars, the cutout and the keyboard, its last part above the navigation bar once scrolled to the end.
+    val bar = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val shown = content
+    val recipe = (shown as? CardContent.Shown)?.recipe
+    Scaffold(
+        modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection).testTag(CardTags.SCREEN),
+        topBar = {
+            TopBar(
+                title = recipe?.title?.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                editable = recipe?.state?.editable == true,
+                scrollBehavior = bar,
+                onBack = onBack,
+                onFork = onFork,
+                onEdit = onEdit,
             )
-            CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
-            is CardContent.Shown -> entries?.let {
+        },
+        contentWindowInsets = WindowInsets.safeDrawing,
+    ) { padding ->
+        val bottom = padding.calculateBottomPadding()
+        val direction = LocalLayoutDirection.current
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(
+                    top = padding.calculateTopPadding(),
+                    start = padding.calculateStartPadding(direction),
+                    end = padding.calculateEndPadding(direction),
+                )
+                .consumeWindowInsets(padding),
+        ) {
+            val loaded = entries
+            when {
+                shown == CardContent.Missing -> Text(
+                    stringResource(R.string.card_missing),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
+                )
+                shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
-                RecipeContent(shown.recipe, it, recipes, environment.usualServings.count.value, session, onOpenParent)
+                recipe != null && loaded != null ->
+                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, onOpenParent, bottom)
+                else -> Loading()
             }
         }
     }
 }
+
+/**
+ * Said while the recipe is still being read: nothing for a moment, so that a quick read does not flash, then an
+ * indicator in place of the blank.
+ */
+@Composable
+private fun Loading() {
+    var showing by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(LOADING_INDICATOR_DELAY_MS)
+        showing = true
+    }
+    if (showing) {
+        val said = stringResource(R.string.card_loading)
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(Modifier.semantics { contentDescription = said }.testTag(CardTags.LOADING))
+        }
+    }
+}
+
+/** How long a read may take before the card says it is still reading. */
+internal const val LOADING_INDICATOR_DELAY_MS = 300L
 
 /** The word that the recipe could not be read from the device, and the offer to read it again (FLOW-020 (3)). */
 @Composable
@@ -170,41 +240,64 @@ private fun Unreadable(onRetry: () -> Unit) {
 }
 
 /**
- * The screen's bar: back on one side, the recipe's actions on the other — fork on any recipe shown, edit beside it.
- * Where they do not fit on one line — a large font, a narrow screen — the recipe's actions wrap below back, and edit
- * below fork, each action whole and never squeezed (A11Y-003 (2), A11Y-004).
+ * The screen's bar: back at its start; the recipe's title, large under the actions until the recipe scrolls under it,
+ * then on one line beside them, ellipsized; and the recipe's actions at its end — fork on any recipe shown, edit
+ * beside it while the recipe is editable. Each action is an icon the screen reader names, whose click it announces as
+ * what it does (A11Y-005) and whose name a long press shows in a tooltip.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(shown: Boolean, editable: Boolean, onBack: () -> Unit, onFork: () -> Unit, onEdit: () -> Unit) {
-    FlowRow(
-        Modifier.fillMaxWidth().padding(horizontal = 8.dp).testTag(CardTags.BAR),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        BarAction(
-            text = stringResource(R.string.card_back),
-            action = stringResource(R.string.card_back_action),
-            onClick = onBack,
-            modifier = Modifier.testTag(CardTags.BACK),
-        )
-        if (shown) {
-            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
+private fun TopBar(
+    title: String?,
+    editable: Boolean,
+    scrollBehavior: TopAppBarScrollBehavior,
+    onBack: () -> Unit,
+    onFork: () -> Unit,
+    onEdit: () -> Unit,
+) {
+    MediumTopAppBar(
+        title = {
+            if (title != null) {
+                Text(
+                    title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.semantics { heading() }.testTag(CardTags.TITLE),
+                )
+            }
+        },
+        modifier = Modifier.testTag(CardTags.BAR),
+        navigationIcon = {
+            BarAction(
+                icon = R.drawable.ic_arrow_back,
+                label = stringResource(R.string.card_back),
+                action = stringResource(R.string.card_back_action),
+                tag = CardTags.BACK,
+                onClick = onBack,
+            )
+        },
+        actions = {
+            if (title != null) {
                 BarAction(
-                    text = stringResource(R.string.card_fork),
+                    icon = R.drawable.ic_fork,
+                    label = stringResource(R.string.card_fork),
                     action = stringResource(R.string.card_fork_action),
+                    tag = CardTags.FORK,
                     onClick = onFork,
-                    modifier = Modifier.testTag(CardTags.FORK),
                 )
                 if (editable) {
                     BarAction(
-                        text = stringResource(R.string.card_edit),
+                        icon = R.drawable.ic_edit,
+                        label = stringResource(R.string.card_edit),
                         action = stringResource(R.string.card_edit_action),
+                        tag = CardTags.EDIT,
                         onClick = onEdit,
-                        modifier = Modifier.testTag(CardTags.EDIT),
                     )
                 }
             }
-        }
-    }
+        },
+        scrollBehavior = scrollBehavior,
+    )
 }
 
 @Composable
@@ -215,6 +308,7 @@ private fun RecipeContent(
     usual: Rational?,
     session: CardSession,
     onOpenParent: (RecipeId) -> Unit,
+    bottom: Dp,
 ) {
     val language = when (interfaceLanguage(LocalConfiguration.current)) {
         RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
@@ -234,15 +328,11 @@ private fun RecipeContent(
                 .verticalScroll(scroll)
                 .onGloballyPositioned(places::content)
                 .padding(16.dp)
+                .padding(bottom = bottom)
                 .testTag(CardTags.CONTENT),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
-            Text(
-                recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
-            )
             // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
             recipe.statedAuthor?.let {
                 Text(
@@ -474,20 +564,37 @@ private const val MINUS = "\u2212"
 private const val PLUS = "+"
 
 /**
- * An action of the bar, at least the card's [CardTarget] square (A11Y-003, A11Y-007), whose click the screen reader announces as what it
- * does — [action] — beside the visible [text] (A11Y-005).
+ * An icon button of the bar, the card's [CardTarget] square (A11Y-003, A11Y-007): the screen reader speaks its [label]
+ * and announces its click as [action] (A11Y-005); a long press shows the [label] in a tooltip, so that its meaning is
+ * never left to the icon alone.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BarAction(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .heightIn(min = CardTarget)
-            .widthIn(min = CardTarget)
-            .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
+private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag: String, onClick: () -> Unit) {
+    val tooltip = rememberTooltipState()
+    val scope = rememberCoroutineScope()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Below),
+        tooltip = { PlainTooltip(Modifier.testTag(CardTags.tooltip(tag))) { Text(label) } },
+        state = tooltip,
+        // The long press is the button's own, so that the button stays one element for the screen reader.
+        enableUserInput = false,
     ) {
-        Text(text, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+        Box(
+            Modifier
+                .size(CardTarget)
+                .clip(CircleShape)
+                .combinedClickable(
+                    role = Role.Button,
+                    onClickLabel = action,
+                    onClick = onClick,
+                    onLongClick = { scope.launch { tooltip.show() } },
+                )
+                .testTag(tag),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(painterResource(icon), contentDescription = label)
+        }
     }
 }
 
@@ -521,6 +628,7 @@ object CardTags {
     const val SCREEN = "card"
     const val BAR = "card-bar"
     const val BACK = "card-back"
+    const val LOADING = "card-loading"
     const val EDIT = "card-edit"
     const val FORK = "card-fork"
     const val PROVENANCE = "card-provenance"
@@ -545,6 +653,8 @@ object CardTags {
     const val FIX_CONFIRM = "card-fix-confirm"
     const val FIX_RELEASE = "card-fix-release"
     const val FIX_CANCEL = "card-fix-cancel"
+    /** The tooltip the bar's action tagged [action] shows on a long press. */
+    fun tooltip(action: String) = "$action-tooltip"
     fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
     fun step(position: Int) = "card-step-$position"

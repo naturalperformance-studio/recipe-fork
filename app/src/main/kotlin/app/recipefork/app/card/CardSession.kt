@@ -146,7 +146,7 @@ private fun rationalOf(text: String): Rational? {
 internal data class Place(val top: Int, val height: Int)
 
 /**
- * Where the parts of one card a reader can find their place by — its cover, title and count, each ingredient line,
+ * Where the parts of one card a reader can find their place by — its cover and count, each ingredient line,
  * each step, its description — lie in its scrolling content, measured as they are laid out.
  */
 internal class CardPlaces {
@@ -193,7 +193,6 @@ internal class CardPlaces {
 
     companion object {
         const val COVER_KEY = "cover"
-        const val TITLE_KEY = "title"
         const val SERVINGS_KEY = "servings"
         const val DESCRIPTION_KEY = "description"
         private const val INGREDIENT_KEY = "i"

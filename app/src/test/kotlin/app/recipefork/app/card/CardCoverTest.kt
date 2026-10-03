@@ -96,9 +96,10 @@ class CardCoverTest {
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.COVER), PATIENCE_MS)
         assertEquals(listOf("Cover photo of “Borscht”"), compose.descriptionOf(CardTags.COVER))
         val cover = compose.onNodeWithTag(CardTags.COVER).fetchSemanticsNode().boundsInRoot
-        val title = compose.onNodeWithTag(CardTags.TITLE).fetchSemanticsNode().boundsInRoot
+        val bar = compose.onNodeWithTag(CardTags.BAR).fetchSemanticsNode().boundsInRoot
         val content = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot
-        assertTrue(cover.bottom <= title.top)
+        // At the top of the content, under the bar that holds the title.
+        assertTrue(bar.bottom <= cover.top)
         assertTrue(cover.top - content.top < 100f)
         // A landscape cover fills the width, whole.
         assertEquals(cover.width / cover.height, 1600f / 1200f, 0.02f)
@@ -129,8 +130,8 @@ class CardCoverTest {
         assertFalse(exists(CardTags.COVER))
         val title = compose.onNodeWithTag(CardTags.TITLE).fetchSemanticsNode().boundsInRoot
         val content = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot
-        // The title opens the card, as it did before covers.
-        assertTrue(title.top - content.top < 40f)
+        // The title opens the card, in the bar above the content, as it did before covers.
+        assertTrue(title.bottom <= content.top)
     }
 
     private fun unavailableLine() = compose.onNodeWithTag(CardTags.COVER_UNAVAILABLE, useUnmergedTree = true)
@@ -145,7 +146,9 @@ class CardCoverTest {
         assertFalse(exists(CardTags.COVER))
         assertEquals("The cover photo is unavailable on this phone.", unavailableLine())
         val line = compose.onNodeWithTag(CardTags.COVER_UNAVAILABLE, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-        assertTrue(line.bottom <= compose.onNodeWithTag(CardTags.TITLE).fetchSemanticsNode().boundsInRoot.top)
+        // In the cover's place: at the top of the content, under the bar that holds the title.
+        assertTrue(compose.onNodeWithTag(CardTags.BAR).fetchSemanticsNode().boundsInRoot.bottom <= line.top)
+        assertTrue(line.top - compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.top < 100f)
     }
 
     @Test
