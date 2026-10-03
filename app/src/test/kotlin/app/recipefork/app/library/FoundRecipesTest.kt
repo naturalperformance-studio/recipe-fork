@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -105,7 +106,7 @@ class FoundRecipesTest {
     private fun show(mode: Mode) {
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, mode, editor = editor, card = card, files = importer) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, mode, editor = editor, card = card, files = importer) } }
         compose.waitForIdle()
     }
 

@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
@@ -24,7 +25,6 @@ import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
-import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -90,7 +90,7 @@ class KeepScreenAwakeTest {
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
         compose.setContent {
             CompositionLocalProvider(LocalAwakeClock provides clock) {
-                MaterialTheme { LibraryScreen(session, recipes, editor = editor, card = card) }
+                MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) }
             }
         }
         compose.awaitCard()

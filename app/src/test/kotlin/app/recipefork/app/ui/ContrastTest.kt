@@ -39,12 +39,20 @@ class ContrastTest {
         text("a dialog's text", c.onSurfaceVariant, c.surfaceContainerHigh),
         text("a dialog's buttons", c.primary, c.surfaceContainerHigh),
         text("a menu's items", c.onSurface, c.surfaceContainer),
+        text("the book's top bar — its title and menu — with a list scrolled under it", c.onSurface, c.surfaceContainer),
+        text("the chosen view's tab", c.primary, c.surface),
+        text("a view's tab not chosen", c.onSurfaceVariant, c.surface),
+        text("a view's floating action — its words and icon", c.onPrimaryContainer, c.primaryContainer),
+        text("a book's entry, a card — its title and state", c.onSurface, c.surfaceContainerHighest),
+        text("a book's entry, a card — its tags and sending mark", c.onSurfaceVariant, c.surfaceContainerHighest),
         // Icons that carry meaning and the boundaries of controls.
         graphic("the drag column's handle, on the column's tint", c.onSurfaceVariant, c.surfaceContainerHigh),
         graphic("an outlined field's and a fixing option's boundary", c.outline, c.surface),
         graphic("a focused field's and a chosen option's boundary, the chosen view's bar", c.primary, c.surface),
         graphic("a checkbox's and a radio button's boundary, the free-text warning's icon", c.onSurfaceVariant, c.surface),
         graphic("a filter chip's remove icon", c.onSecondaryContainer, c.secondaryContainer),
+        graphic("an entry's ⋮, on its card", c.onSurface, c.surfaceContainerHighest),
+        graphic("the indicator of a list being read", c.primary, c.surface),
     )
 
     @Test

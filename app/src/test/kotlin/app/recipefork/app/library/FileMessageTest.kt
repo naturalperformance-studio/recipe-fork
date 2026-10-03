@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -69,7 +70,7 @@ class FileMessageTest {
     // The font scale is the device's own, set by the test's configuration: a dialog is a window of its own, and
     // takes its density from the device, not from the screen beneath it.
     private fun show() {
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, Mode.Serverless) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, Mode.Serverless) } }
         compose.waitForIdle()
     }
 

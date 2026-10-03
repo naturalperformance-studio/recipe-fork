@@ -1,8 +1,11 @@
 package app.recipefork.app.editor
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.recipefork.app.media.PhotoAttaching
 import app.recipefork.core.recipe.RecipeId
@@ -60,10 +63,16 @@ internal class StepMediaWork : ViewModel() {
     }
 }
 
-/** The step media work of [recipeId] in the screen's activity. */
+/**
+ * The step media work of [recipeId] in the screen's activity — the activity's, not the editor destination's, which is
+ * let go as the editor is left, while the work outlives it.
+ */
 @Composable
 internal fun rememberStepMediaWork(recipeId: RecipeId): StepMediaWork =
-    viewModel(key = WORK_KEY + recipeId.value) { StepMediaWork() }
+    viewModel(
+        viewModelStoreOwner = LocalActivity.current as? ViewModelStoreOwner ?: checkNotNull(LocalViewModelStoreOwner.current),
+        key = WORK_KEY + recipeId.value,
+    ) { StepMediaWork() }
 
 /** The prefix of the key a recipe's step media work is held under; the recipe's identity follows. */
 private const val WORK_KEY = "step-media-"

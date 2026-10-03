@@ -7,6 +7,10 @@
     <string name="card_edit_action">Open this recipe in the editor</string>
     <string name="card_fork">Fork</string>
     <string name="card_fork_action">Make an editable copy of this recipe</string>
+    <!-- Said for the indicator shown while the recipe is still being read. -->
+    <string name="card_loading">Loading the recipe</string>
+    <!-- A long press on an icon of the card's bar shows its name in a tooltip; the screen reader names that action. -->
+    <string name="card_action_show_name">Show the name</string>
     <!-- Forking a recipe of which the book holds a fork nothing has changed since it was made (FLOW-015). -->
     <string name="card_fork_held">You already have a fork of this recipe, unchanged since you made it.</string>
     <string name="card_fork_held_open">Open it</string>

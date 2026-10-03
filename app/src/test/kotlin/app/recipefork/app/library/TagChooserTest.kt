@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.geometry.Rect
@@ -83,7 +84,7 @@ class TagChooserTest {
             recipes.save(Recipe.create(now.minusSeconds(60), owner = null).copy(title = "Lasagne", tags = setOf(10L)))
         }
         session.choose(LibraryView.OWN)
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, editor = editor) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor) } }
         click(LibraryTags.FILTER_ADD)
         click(LibraryTags.FILTER_BY_TAGS)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_FIELD), PATIENCE_MS)

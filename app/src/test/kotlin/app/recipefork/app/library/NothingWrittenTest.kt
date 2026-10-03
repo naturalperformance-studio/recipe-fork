@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.SemanticsActions
@@ -78,7 +79,7 @@ class NothingWrittenTest {
     private fun show(active: ActiveBook) {
         val recipes = RecipeRepository(active)
         val environment = EditorEnvironment(active, device.catalog(context)) { now }
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, editor = environment) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, editor = environment) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
     }

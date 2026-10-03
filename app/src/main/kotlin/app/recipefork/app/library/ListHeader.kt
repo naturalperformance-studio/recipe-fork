@@ -117,8 +117,8 @@ private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lower
  * The header above a view's list: its search field (FLOW-035 (4)) and, at its end, the control that adds a filter
  * (FLOW-035, CAT-002, CAT-006) and the choice of the view's order (FLOW-035 (3)); under them, while any filter is on,
  * the row of the view's filters. The [languages] of the view's recipes are what its language filter offers (L10N-005);
- * the entries they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)). It never
- * scrolls with the list, and is no taller for filters while none is on.
+ * the entries they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)). It stands at
+ * the top of its view's page, under the tabs, never scrolls with the list, and is no taller for filters while none is on.
  */
 @Composable
 internal fun ListHeader(

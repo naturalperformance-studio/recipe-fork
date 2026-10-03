@@ -21,6 +21,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -50,6 +52,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import app.recipefork.app.R
 import app.recipefork.app.media.PhotoOffer
 import kotlinx.coroutines.Dispatchers
@@ -77,7 +81,24 @@ fun CropScreen(
         onDismissRequest = onCancel,
         properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false, decorFitsSystemWindows = false),
     ) {
+        LightBarIcons()
         CropContent(photo, onDone, onRetake, onCancel, onUnreadable)
+    }
+}
+
+/**
+ * The crop's window takes the application's theme, whose bars carry dark icons for its light surface; on the crop's
+ * black ground they are made light, so that they stay visible.
+ */
+@Composable
+private fun LightBarIcons() {
+    val view = LocalView.current
+    SideEffect {
+        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
     }
 }
 
@@ -102,51 +123,53 @@ private fun CropContent(
     if (load == CropLoad.Unreadable) LaunchedEffect(photo) { unreadable() }
     val ready = load as? CropLoad.Ready
     val box = remember(ready) { ready?.let { mutableStateOf(CropGeometry.initial(it.picture.upright)) } }
-    Column(Modifier.fillMaxSize().background(Color.Black).safeDrawingPadding().testTag(CropTags.SCREEN)) {
-        Text(
-            stringResource(R.string.media_crop_title),
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-        )
-        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            if (ready != null && box != null) {
-                Framing(ready.picture, box)
-            } else {
-                Text(
-                    stringResource(R.string.media_crop_opening),
-                    color = Color.White,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag(CropTags.MESSAGE),
-                )
-            }
-        }
-        Row(
-            Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (photo.retake) {
-                TextButton(onClick = onRetake, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.RETAKE)) {
-                    Text(stringResource(R.string.media_crop_retake), color = Color.White)
-                }
-            } else {
-                TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.CANCEL)) {
-                    Text(stringResource(R.string.media_crop_cancel), color = Color.White)
+    Box(Modifier.fillMaxSize().background(Color.Black).testTag(CropTags.GROUND)) {
+        Column(Modifier.fillMaxSize().safeDrawingPadding().testTag(CropTags.SCREEN)) {
+            Text(
+                stringResource(R.string.media_crop_title),
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+            )
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                if (ready != null && box != null) {
+                    Framing(ready.picture, box)
+                } else {
+                    Text(
+                        stringResource(R.string.media_crop_opening),
+                        color = Color.White,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag(CropTags.MESSAGE),
+                    )
                 }
             }
-            Button(
-                onClick = {
-                    val picture = ready?.picture ?: return@Button
-                    val rect = CropGeometry.pixels(box?.value ?: return@Button, picture.upright)
-                    // Cut as processing first reads it, off the screen's thread and outliving the screen.
-                    val cut = lazy { CropPicture.cut(photo, picture.raw, picture.orientation, rect) }
-                    onDone(PhotoOffer(open = { ByteArrayInputStream(cut.value) }, release = {}))
-                },
-                enabled = ready != null,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
-                modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.DONE),
-            ) { Text(stringResource(R.string.media_crop_done)) }
+            Row(
+                Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (photo.retake) {
+                    TextButton(onClick = onRetake, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.RETAKE)) {
+                        Text(stringResource(R.string.media_crop_retake), color = Color.White)
+                    }
+                } else {
+                    TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.CANCEL)) {
+                        Text(stringResource(R.string.media_crop_cancel), color = Color.White)
+                    }
+                }
+                Button(
+                    onClick = {
+                        val picture = ready?.picture ?: return@Button
+                        val rect = CropGeometry.pixels(box?.value ?: return@Button, picture.upright)
+                        // Cut as processing first reads it, off the screen's thread and outliving the screen.
+                        val cut = lazy { CropPicture.cut(photo, picture.raw, picture.orientation, rect) }
+                        onDone(PhotoOffer(open = { ByteArrayInputStream(cut.value) }, release = {}))
+                    },
+                    enabled = ready != null,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.DONE),
+                ) { Text(stringResource(R.string.media_crop_done)) }
+            }
         }
     }
 }
@@ -198,6 +221,8 @@ private fun Framing(picture: CropPicture, box: MutableState<CropBox>) {
 }
 
 object CropTags {
+    /** The black ground, running under the system bars. */
+    const val GROUND = "crop-ground"
     const val SCREEN = "crop-screen"
     const val FRAME = "crop-frame"
     const val DONE = "crop-done"

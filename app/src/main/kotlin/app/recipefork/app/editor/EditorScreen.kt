@@ -1,7 +1,6 @@
 package app.recipefork.app.editor
 
 import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -101,6 +101,10 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
 /**
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
  * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
+ *
+ * [onClose] is the bar's back action. What is entered is written as it is typed, so leaving holds nothing back: the
+ * system's back, and its predictive gesture, are the navigation host's, which leaves the editor for the destination
+ * beneath it.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -132,7 +136,6 @@ fun EditorScreen(
     val handleRight by environment.dragHandleSide.right.collectAsState()
     val scrolled = rememberScrollState()
     val scroll = remember(scrolled) { EditorScroll(scrolled) }
-    BackHandler(onBack = onClose)
     val context = LocalContext.current
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
     val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
@@ -146,7 +149,7 @@ fun EditorScreen(
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
     PartsMadeWholeStatement(editor, statements)
 
-    Box(modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
             // The top: "Done", and beside it the checklist, there whatever the recipe holds and whatever its state (GUIDE-003).
             Row(

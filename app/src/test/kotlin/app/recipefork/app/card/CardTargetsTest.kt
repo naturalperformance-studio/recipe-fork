@@ -118,10 +118,12 @@ class CardTargetsTest {
         }
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().size == 1 }
-        // Each of the bar's actions whole: its label on one line, all of it on screen.
+        // Each of the bar's actions whole: an icon named for the screen reader, all of it on screen.
         listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT).forEach { tag ->
-            compose.assertWhole(tag)
-            compose.textLayoutsWithin(tag).forEach { assertEquals("$tag at $fontScale", 1, it.lineCount) }
+            val node = compose.onNodeWithTag(tag).fetchSemanticsNode()
+            val screen = compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot
+            assertTrue("$tag at $fontScale lies within the screen", node.boundsInRoot.left >= screen.left - 0.5f && node.boundsInRoot.right <= screen.right + 0.5f)
+            assertTrue("$tag is named", AccessibilityChecks.announcedLabel(node).isNotBlank())
         }
         if (fontScale == 1f) {
             // Where they fit, one line: back at the start, fork then edit at the end.

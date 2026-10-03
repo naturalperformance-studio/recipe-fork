@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -217,7 +218,7 @@ class ServerlessWordingTest {
     private fun show(mode: Mode) {
         val editor = EditorEnvironment(active, device.catalog(context), mode = mode, clock = { now })
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
-        compose.setContent { AppTheme { LibraryScreen(session, recipes, mode, editor = editor, card = card, files = importer) } }
+        compose.setContent { AppTheme { AppNavHost(session, recipes, mode, editor = editor, card = card, files = importer) } }
         compose.waitForIdle()
     }
 

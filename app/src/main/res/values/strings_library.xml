@@ -6,6 +6,8 @@
     <string name="library_view_own">Written here</string>
     <string name="library_view_marked_action">Show the recipes marked in this book</string>
     <string name="library_view_own_action">Show the recipes written in this book</string>
+    <!-- Said by the indicator a view shows while its list is read for longer than a moment. -->
+    <string name="library_opening">Opening the recipes</string>
     <!-- FLOW-036: the state on an own recipe's entry; local and private are both drafts. -->
     <string name="library_state_draft">Draft</string>
     <string name="library_state_pending">Awaiting review</string>

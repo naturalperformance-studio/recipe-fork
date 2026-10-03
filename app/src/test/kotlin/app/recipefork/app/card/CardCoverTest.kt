@@ -100,6 +100,8 @@ class CardCoverTest {
         val content = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot
         assertTrue(cover.bottom <= title.top)
         assertTrue(cover.top - content.top < 100f)
+        // Under the bar.
+        assertTrue(compose.onNodeWithTag(CardTags.BAR).fetchSemanticsNode().boundsInRoot.bottom <= cover.top)
         // A landscape cover fills the width, whole.
         assertEquals(cover.width / cover.height, 1600f / 1200f, 0.02f)
     }

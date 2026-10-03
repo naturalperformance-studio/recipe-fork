@@ -188,6 +188,9 @@ internal class CardPlaces {
         return CardAnchor(key, if (place.height == 0) 0 else (into * 1000L / place.height).toInt())
     }
 
+    /** Where the part [key] lies in the content, once it is laid out. */
+    fun placeOf(key: String): Place? = places[key]
+
     /** The scroll that puts [anchor] first at the top again, once its part is laid out. */
     fun scrollOf(anchor: CardAnchor): Int? = places[anchor.key]?.let { it.top + (it.height * anchor.permille.toLong() / 1000).toInt() }
 

@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -15,6 +16,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -87,7 +90,7 @@ class EntryMenuTest {
         runBlocking { book.database.favourites().put(FavouriteEntity(id, title, now)) }
 
     private fun show(view: LibraryView, mode: Mode) {
-        compose.setContent { MaterialTheme { LibraryScreen(session, recipes, mode) } }
+        compose.setContent { MaterialTheme { AppNavHost(session, recipes, mode) } }
         compose.onNodeWithTag(LibraryTags.tab(view)).performClick()
         compose.waitForIdle()
     }
@@ -110,7 +113,7 @@ class EntryMenuTest {
     private fun items(id: String) = listOf(LibraryTags.export(id), LibraryTags.delete(id), LibraryTags.remove(id))
 
     /**
-     * The entry of [id] carries a menu, 48 dp, beside its text and level with it, and no offer stands outside it; opened,
+     * The entry of [id] carries a menu, 48 dp, at its card's end beside its text, and no offer stands outside it; opened,
      * it holds [expected] in that order, from the top.
      */
     private fun assertMenu(list: String, id: String, expected: List<Pair<String, String>>) {
@@ -121,7 +124,9 @@ class EntryMenuTest {
         val menu = node(LibraryTags.actions(id)).boundsInRoot
         assertEquals(dp(48f), menu.width, 0.5f)
         assertEquals(dp(48f), menu.height, 0.5f)
-        assertTrue("the ⋮ ends the entry's line: $menu, $entry", menu.left >= entry.right)
+        assertEquals("the ⋮ ends the entry's line: $menu, $entry", entry.right - dp(4f), menu.right, 1f)
+        val title = compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue("the title does not reach under the ⋮: $title, $menu", title.right <= menu.left)
         assertTrue("nothing stands under the entry: $menu, $entry", menu.top >= entry.top && menu.bottom <= entry.bottom)
         compose.openEntryMenu(id)
         val shown = items(id).filter(::exists).sortedBy { node(it).boundsInRoot.top }
@@ -136,8 +141,12 @@ class EntryMenuTest {
         bringIntoView(list, id)
         assertFalse("$id has a menu", exists(LibraryTags.actions(id)))
         items(id).forEach { assertFalse(exists(it)) }
-        val width = node(list).boundsInRoot.width
-        assertEquals("the entry takes the whole width", width, node(LibraryTags.entry(id)).boundsInRoot.width, 0.5f)
+        // The title takes the card's whole width less its padding: no room is kept for a ⋮.
+        val width = node(LibraryTags.entry(id)).boundsInRoot.width - dp(32f)
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+        assertEquals("the entry takes the whole width", width, layouts.single().layoutInput.constraints.maxWidth.toFloat(), 1f)
     }
 
     @Test

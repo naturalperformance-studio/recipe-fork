@@ -3,36 +3,53 @@ package app.recipefork.app.library
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,17 +58,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.layout.HorizontalAlignmentLine
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.recipefork.app.Mode
@@ -59,56 +87,49 @@ import app.recipefork.app.R
 import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
-import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.IngredientEntries
-import app.recipefork.app.card.ForkAsked
-import app.recipefork.app.card.HeldForkDialog
-import app.recipefork.app.card.forkRecipe
-import app.recipefork.app.card.forkUnlessHeld
-import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.UsualServings
+import app.recipefork.app.dictionary.TagSource
+import app.recipefork.app.dictionary.label
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.EditorEnvironment
-import app.recipefork.app.editor.EditorScreen
 import app.recipefork.app.editor.interfaceLanguage
 import app.recipefork.app.editor.newRecipe
+import app.recipefork.app.editor.numberLanguage
 import app.recipefork.app.editor.rememberEditorEnvironment
+import app.recipefork.app.file.FileMessage
+import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.RecipeImport
-import app.recipefork.app.file.ImportOutcome
-import app.recipefork.app.file.FileMessage
-import app.recipefork.app.file.FileMessageDialog
-import app.recipefork.app.file.message
 import app.recipefork.app.file.importSafely
+import app.recipefork.app.file.message
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.ListingParams
 import app.recipefork.app.recipe.RecipeRepository
-import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
 import app.recipefork.core.search.BookOrder
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 /** How many own recipes are shown at a time, and more shown near the end (FLOW-041). */
 const val OWN_PAGE = 30
 
 /**
  * "My recipe book": the marked recipes and the recipes written in the active book (FLOW-034), and the editor on
- * a new recipe written from it (FLOW-042). An own recipe's entry opens its card (FLOW-029 (1)); the card's edit
- * action opens the editor on it, and leaving the editor shows that card again. The card's fork action writes a fork
- * and opens the editor on it, so that leaving it shows the fork's card; a fork's provenance opens its parent's card
- * in place of the fork's. In [Mode.Serverless] every own recipe's entry offers its export to a file (FLOW-063); in
- * [Mode.Standard] no export exists (FLOW-062 (8)).
+ * a new recipe written from it (FLOW-042). An own recipe's entry opens its card (FLOW-029 (1)); the card and the editor
+ * are destinations of their own, above the book (AppNavHost), which keeps its place beneath them. In [Mode.Serverless]
+ * every own recipe's entry offers its export to a file (FLOW-063); in [Mode.Standard] no export exists (FLOW-062 (8)).
  *
  * The view of marked recipes lists the found recipes the book holds (FLOW-064 (1)), each opening its card and offering
  * its removal (FLOW-064 (6)); in [Mode.Serverless] it offers the import of a recipe file through the system's document
@@ -119,9 +140,13 @@ const val OWN_PAGE = 30
  * card opens at, the side the editor's drag column stands on, and the clearing of the media the device need not keep
  * (FLOW-060), stated first and done only once confirmed.
  *
- * What became of a file — an import's outcome, a failed export — is said in a dialog over whatever is shown, until it
- * is closed.
+ * The title and the menu stand in a top bar that scrolls away as a list goes down and returns as it goes up; the tabs
+ * of the two views stay beneath it. The views are pages swiped between, the tabs following; each keeps its own place
+ * in its list. A view's action — a new recipe, or the import of a file — floats at the bottom right, shrinking to its
+ * icon while the list goes down. The screen is drawn edge to edge: the bar stands below the status bar, the action
+ * above the navigation bar, and the lists run under the navigation bar, their last entry kept clear of it.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     session: LibrarySession,
@@ -135,58 +160,6 @@ fun LibraryScreen(
     usualServings: UsualServings = card.usualServings,
     dragHandleSide: DragHandleSide = editor.dragHandleSide,
 ) {
-    val message by session.message.collectAsState()
-    message?.let { FileMessageDialog(it, onDone = session::told) }
-    val editing by session.editing.collectAsState()
-    editing?.let { id ->
-        EditorScreen(RecipeId(id), recipes, editor, session.viewModelScope, onClose = session::closeEditor, modifier = modifier)
-        return
-    }
-    val viewing by session.viewing.collectAsState()
-    viewing?.let { id ->
-        // One fork per tap: a second tap while the first is being written adds none.
-        var forking by remember(id) { mutableStateOf(false) }
-        // An unchanged fork the book already holds, offered in place of a new one (FLOW-015).
-        var held by rememberSaveable(id) { mutableStateOf<String?>(null) }
-        fun fork(another: Boolean) {
-            if (forking) return
-            forking = true
-            session.viewModelScope.launch {
-                // The editor opens on the fork; leaving it shows the fork's card (FLOW-029 (1)).
-                // The guard stays up once a fork is written: a tap landing before the editor replaces the
-                // card must not write a second one. Only a fork that was not written lets the card try again.
-                val parent = RecipeId(id)
-                val asked = if (another) {
-                    forkRecipe(recipes, editor.book, parent, editor.clock())?.let(ForkAsked::Made)
-                } else {
-                    forkUnlessHeld(recipes, editor.book, parent, editor.clock())
-                }
-                when (asked) {
-                    is ForkAsked.Made -> session.openEditor(asked.fork.value)
-                    is ForkAsked.Held -> { held = asked.fork.value; forking = false }
-                    null -> forking = false
-                }
-            }
-        }
-        held?.let { offered ->
-            HeldForkDialog(
-                onOpen = { held = null; session.openEditor(offered) },
-                onAnother = { held = null; fork(another = true) },
-                onDismiss = { held = null },
-            )
-        }
-        CardScreen(
-            RecipeId(id), recipes, card,
-            onBack = session::closeCard,
-            onEdit = { session.openEditor(id) },
-            // The screen stays on while the card is shown, and is left to the device once it is not (FLOW-014).
-            modifier = modifier.keepScreenAwake(),
-            onFork = { fork(another = false) },
-            onOpenParent = { parent -> session.openCard(parent.value) },
-            session = session.cards,
-        )
-        return
-    }
     val view by session.view.collectAsState()
     val timers = rememberCardTimers()
     // The clearing of saved media (FLOW-060): asked about first, or said to have nothing to clear.
@@ -203,70 +176,190 @@ fun LibraryScreen(
         ClearingMedia.NOTHING -> NothingToClear(onDone = { clearing = null })
         null -> Unit
     }
-    Column(modifier.fillMaxSize()) {
-        // The book's top area: its title, with the book's menu beside it (FLOW-017), above the switch of views.
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(R.string.library_title),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.weight(1f).padding(16.dp).semantics { heading() }.testTag(LibraryTags.TITLE),
+    // The session holds the view shown; the pager follows it, and tells it the view a swipe settles on.
+    val pager = remember { PagerState(currentPage = view.ordinal) { VIEWS.size } }
+    val focus = LocalFocusManager.current
+    LaunchedEffect(pager) {
+        snapshotFlow { pager.settledPage }.collect { session.choose(VIEWS[it]) }
+    }
+    // A field left focused on the view moved away from would keep its page composed beside the one shown.
+    LaunchedEffect(pager) { snapshotFlow { pager.isScrollInProgress }.collect { if (it) focus.clearFocus() } }
+    LaunchedEffect(view) { if (pager.currentPage != view.ordinal) pager.animateScrollToPage(view.ordinal) }
+    // Each view's place in its list, kept here so that the view's action knows which way its list last moved.
+    val markedList = rememberLazyListState()
+    val ownList = rememberLazyListState()
+    // Whether each view, as it last showed, offers its action at the bottom (its empty state carries its own).
+    val offers = remember { mutableStateMapOf<LibraryView, Boolean>() }
+    val write = rememberWrite(recipes, session, editor)
+    val import = rememberImport(files, session)
+    val bar = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val shown = VIEWS[pager.currentPage]
+    Scaffold(
+        modifier = modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection),
+        topBar = {
+            Column {
+                // The book's title, with the book's menu beside it (FLOW-017); it scrolls away as the list goes down
+                // and returns as it goes up.
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = stringResource(R.string.library_title),
+                            modifier = Modifier.semantics { heading() }.testTag(LibraryTags.TITLE),
+                        )
+                    },
+                    actions = {
+                        BookMenu(
+                            usualServings, dragHandleSide, Modifier.padding(end = 4.dp),
+                            onClearMedia = {
+                                session.viewModelScope.launch {
+                                    clearing = if (recipes.clearableMedia().isEmpty()) ClearingMedia.NOTHING else ClearingMedia.ASKING
+                                }
+                            },
+                        )
+                    },
+                    scrollBehavior = bar,
+                    modifier = Modifier.testTag(LibraryTags.TOP_BAR),
+                )
+                // The switch of views stays above the list and never scrolls with it (FLOW-034 (1)).
+                PrimaryTabRow(selectedTabIndex = pager.currentPage, modifier = Modifier.testTag(LibraryTags.SWITCH)) {
+                    ViewTab(LibraryView.MARKED, shown, R.string.library_view_marked, R.string.library_view_marked_action, session)
+                    ViewTab(LibraryView.OWN, shown, R.string.library_view_own, R.string.library_view_own_action, session)
+                }
+            }
+        },
+        floatingActionButton = {
+            ViewAction(
+                shown, mode, offered = offers[shown] == true,
+                list = if (shown == LibraryView.OWN) ownList else markedList,
+                onWrite = write, onImport = import,
             )
-            BookMenu(
-                usualServings, dragHandleSide, Modifier.padding(end = 8.dp),
-                onClearMedia = {
-                    session.viewModelScope.launch {
-                        clearing = if (recipes.clearableMedia().isEmpty()) ClearingMedia.NOTHING else ClearingMedia.ASKING
-                    }
-                },
-            )
-        }
-        // The switch sits above the list and never scrolls with it (FLOW-034 (1)).
-        Row(Modifier.fillMaxWidth().selectableGroup().testTag(LibraryTags.SWITCH)) {
-            ViewTab(LibraryView.MARKED, view, R.string.library_view_marked, R.string.library_view_marked_action, session)
-            ViewTab(LibraryView.OWN, view, R.string.library_view_own, R.string.library_view_own_action, session)
-        }
-        HorizontalDivider()
-        when (view) {
-            LibraryView.MARKED -> MarkedList(recipes, session, files, timers, mode, thumbnails, card.ingredients, editor.tags)
-            LibraryView.OWN -> OwnList(recipes, session, editor, timers, mode, thumbnails, card.ingredients)
+        },
+    ) { padding ->
+        // The lists run under the navigation bar, their last entry kept clear of it and of the view's action.
+        val bottom = padding.calculateBottomPadding() + ACTION_ROOM
+        val layout = LocalLayoutDirection.current
+        HorizontalPager(
+            state = pager,
+            key = { VIEWS[it].name },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = padding.calculateTopPadding(),
+                    start = padding.calculateStartPadding(layout),
+                    end = padding.calculateEndPadding(layout),
+                )
+                .consumeWindowInsets(padding)
+                .testTag(LibraryTags.PAGER),
+        ) { page ->
+            when (VIEWS[page]) {
+                LibraryView.MARKED -> MarkedList(
+                    recipes, session, files, timers, mode, thumbnails, card.ingredients, editor.tags,
+                    markedList, bottom, import, onOffer = { offers[LibraryView.MARKED] = it },
+                )
+                LibraryView.OWN -> OwnList(
+                    recipes, session, editor, timers, mode, thumbnails, card.ingredients,
+                    ownList, bottom, onOffer = { offers[LibraryView.OWN] = it },
+                )
+            }
         }
     }
 }
 
+/** The views in the order of their tabs and pages: a view's page is its ordinal. */
+private val VIEWS = LibraryView.entries
+
+/** The room kept under a list's last entry for the view's action: the action's height and its margins. */
+private val ACTION_ROOM = 88.dp
+
+/** How long a view waits on its list before it shows that the list is coming, so that a quick one shows no flash. */
+internal const val LOADING_DELAY_MS = 300L
+
 @Composable
-private fun androidx.compose.foundation.layout.RowScope.ViewTab(
+private fun ViewTab(
     tab: LibraryView,
     current: LibraryView,
     @StringRes label: Int,
     @StringRes action: Int,
     session: LibrarySession,
 ) {
-    val selected = tab == current
-    Column(
+    val actionLabel = stringResource(action)
+    Tab(
+        selected = tab == current,
+        onClick = { session.choose(tab) },
+        text = { Text(stringResource(label)) },
         modifier = Modifier
-            .weight(1f)
             .heightIn(min = 48.dp)
-            .semantics { this.selected = selected }
-            .clickable(onClickLabel = stringResource(action), role = Role.Tab) { session.choose(tab) }
+            // The tab announces what choosing it does: which recipes it shows (A11Y-005).
+            .semantics {
+                onClick(label = actionLabel) {
+                    session.choose(tab)
+                    true
+                }
+            }
             .testTag(LibraryTags.tab(tab)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(label),
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            modifier = Modifier.padding(vertical = 12.dp),
-        )
-        Box(
-            Modifier.fillMaxWidth().height(3.dp)
-                .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface),
-        )
+    )
+}
+
+/**
+ * The action of the view shown, at the bottom right: writing a new recipe in the own view (FLOW-042 (5)), importing a
+ * recipe file in the marked view in [Mode.Serverless] (FLOW-064); none in the marked view in [Mode.Standard], nor
+ * while the view's empty state offers its own. It shrinks to its icon while the [list] goes down, and shows its words
+ * again as it goes up or stands at its top.
+ */
+@Composable
+private fun ViewAction(
+    view: LibraryView,
+    mode: Mode,
+    offered: Boolean,
+    list: LazyListState,
+    onWrite: () -> Unit,
+    onImport: () -> Unit,
+) {
+    if (!offered) return
+    val expanded by remember(list) { derivedStateOf { !list.canScrollBackward || !list.lastScrolledForward } }
+    when {
+        view == LibraryView.OWN -> FloatingAction(R.string.library_own_new, R.drawable.ic_new_recipe, LibraryTags.NEW, expanded, onWrite)
+        mode == Mode.Serverless -> FloatingAction(R.string.file_import, R.drawable.ic_import_file, LibraryTags.IMPORT, expanded, onImport)
+    }
+}
+
+@Composable
+private fun FloatingAction(@StringRes label: Int, @DrawableRes icon: Int, tag: String, expanded: Boolean, onClick: () -> Unit) {
+    val words = stringResource(label)
+    ExtendedFloatingActionButton(
+        text = { Text(words) },
+        icon = { Icon(painterResource(icon), contentDescription = null) },
+        onClick = onClick,
+        expanded = expanded,
+        // The action reads its words to the screen reader, shrunk to its icon or not: the button keeps its shown words
+        // from the screen reader, so they are given to the button itself.
+        modifier = Modifier.semantics { text = AnnotatedString(words) }.testTag(tag),
+    )
+}
+
+/**
+ * Shown in place of a view's list while it is read: nothing at first, then, should the reading take longer than
+ * [LOADING_DELAY_MS], a progress indicator, so that a list read quickly shows no flash of it.
+ */
+@Composable
+private fun ListLoading(modifier: Modifier = Modifier) {
+    var showing by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(LOADING_DELAY_MS)
+        showing = true
+    }
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (showing) {
+            val description = stringResource(R.string.library_opening)
+            CircularProgressIndicator(Modifier.semantics { contentDescription = description }.testTag(LibraryTags.LOADING))
+        }
     }
 }
 
 /**
  * Built from the device alone: nothing here waits on or fails for the network (FLOW-043 (5)). Its header searches and
- * orders it (FLOW-035); a book in which nothing is written says so in place of the list and the header.
+ * orders it (FLOW-035); a book in which nothing is written says so in place of the list and the header. A new recipe
+ * is written from the view's action at the bottom ([ViewAction]); the view tells [onOffer] whether it offers it.
  */
 @Composable
 private fun OwnList(
@@ -277,6 +370,9 @@ private fun OwnList(
     mode: Mode,
     thumbnails: CoverThumbnails,
     dictionary: IngredientEntries,
+    listState: LazyListState,
+    bottom: Dp,
+    onOffer: (Boolean) -> Unit,
 ) {
     val search = rememberSearchField(LibraryView.OWN, session)
     val params = rememberListingParams(LibraryView.OWN, session)
@@ -286,9 +382,9 @@ private fun OwnList(
     val order by session.order(LibraryView.OWN).collectAsState()
     val filters by session.filters(LibraryView.OWN).collectAsState()
     val choices = rememberFilterChoices(dictionary, editor.tags)
+    val tagsOf = rememberEntryTags(choices, listed?.carries)
     // A new query, order or filter shows its listing from the beginning (FLOW-041 (4)).
     var limit by rememberSaveable(query, order, filters) { mutableIntStateOf(OWN_PAGE) }
-    val listState = rememberLazyListState()
     val found = listed?.rows
     val loaded = found?.take(limit)
     ScrollToTopOnChange(listed?.params, listState)
@@ -315,38 +411,50 @@ private fun OwnList(
     }
     val export = rememberExport(recipes, session)
     val shown = listed
+    // A book that lists recipes still offers to write one (FLOW-042 (5)), from the view's action.
+    val offered = shown != null && !(shown.viewIsEmpty && !shown.narrowed)
+    SideEffect { onOffer(offered) }
     if (shown != null && shown.viewIsEmpty && !shown.narrowed) {
-        NothingWritten(recipes, session, editor)
+        NothingWritten(recipes, session, editor, Modifier.padding(bottom = bottom))
         return
     }
-    Column(Modifier.fillMaxSize()) {
-        // A book that lists recipes still offers to write one, above the list and never scrolled away (FLOW-042 (5)).
-        if (shown != null) {
-            WriteButton(R.string.library_own_new, LibraryTags.NEW, recipes, session, editor, Modifier.padding(16.dp))
-            HorizontalDivider()
-            ListHeader(
-                search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
-                filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold,
-            )
-            HorizontalDivider()
-        }
-        if (shown != null && shown.narrowed && shown.rows.isEmpty()) {
-            NothingFound(shown, onClearSearch = search::clear, onClearFilters = { session.filter(LibraryView.OWN, BookFilters()) })
-            return@Column
-        }
-        val cover = coverOf(recipes, thumbnails)
-        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST)) {
-            items(loaded.orEmpty(), key = { it.recipeId }) { row ->
-                OwnEntry(
-                    row,
-                    mode,
-                    cover,
-                    onOpen = { session.openCard(row.recipeId, LibraryView.OWN) },
-                    onDelete = { deleting = row.recipeId },
-                    onExport = { export(row.recipeId, row.title) },
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            if (shown != null) {
+                ListHeader(
+                    search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
+                    filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold,
                 )
+                HorizontalDivider()
+            }
+            // While the list is read, no list is laid out: an empty one would bring the view's kept place to its top.
+            if (shown == null) return@Column
+            if (shown.narrowed && shown.rows.isEmpty()) {
+                NothingFound(shown, onClearSearch = search::clear, onClearFilters = { session.filter(LibraryView.OWN, BookFilters()) })
+                return@Column
+            }
+            val cover = coverOf(recipes, thumbnails)
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(top = ENTRY_GAP, bottom = bottom),
+                verticalArrangement = Arrangement.spacedBy(ENTRY_GAP),
+                modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST),
+            ) {
+                items(loaded.orEmpty(), key = { it.recipeId }) { row ->
+                    OwnEntry(
+                        row,
+                        mode,
+                        cover,
+                        tagsOf(row.recipeId),
+                        Modifier.animateItem(),
+                        onOpen = { session.openCard(row.recipeId, LibraryView.OWN) },
+                        onDelete = { deleting = row.recipeId },
+                        onExport = { export(row.recipeId, row.title) },
+                    )
+                }
             }
         }
+        if (shown == null) ListLoading()
     }
 }
 
@@ -355,52 +463,48 @@ private fun OwnList(
  * recipe in that book and opens it in the editor (FLOW-042).
  */
 @Composable
-private fun NothingWritten(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment) {
+private fun NothingWritten(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment, modifier: Modifier = Modifier) {
+    val write = rememberWrite(recipes, session, editor)
     Column(
-        Modifier.fillMaxSize().padding(16.dp).testTag(LibraryTags.OWN_EMPTY),
+        modifier.fillMaxSize().padding(16.dp).testTag(LibraryTags.OWN_EMPTY),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.library_own_empty), style = MaterialTheme.typography.bodyLarge)
-        WriteButton(R.string.library_own_write, LibraryTags.WRITE, recipes, session, editor)
+        Button(onClick = write, modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.WRITE)) {
+            Text(stringResource(R.string.library_own_write))
+        }
     }
 }
 
 /** Writes a new recipe in the active book and opens it in the editor (FLOW-042 (4, 5)); a second tap adds none. */
 @Composable
-private fun WriteButton(
-    @StringRes label: Int,
-    tag: String,
-    recipes: RecipeRepository,
-    session: LibrarySession,
-    editor: EditorEnvironment,
-    modifier: Modifier = Modifier,
-) {
+private fun rememberWrite(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment): () -> Unit {
     val language = interfaceLanguage(LocalConfiguration.current)
     var writing by remember { mutableStateOf(false) }
-    Button(
-        onClick = {
-            if (writing) return@Button
+    return {
+        if (!writing) {
             writing = true
             val recipe = newRecipe(editor, language)
             session.viewModelScope.launch {
                 recipes.save(recipe)
                 session.openEditor(recipe.id.value)
             }
-        },
-        modifier = modifier.heightIn(min = 48.dp).testTag(tag),
-    ) { Text(stringResource(label)) }
+        }
+    }
 }
 
 /**
- * An own recipe's entry; tapping it opens the recipe's card (FLOW-029 (1)). Its actions are in its menu, at the end of
- * its title line: deletion for a recipe its owner may delete (FLOW-053 (1), ST-010), and in [Mode.Serverless] the
- * export of every recipe (FLOW-063). An entry with no action carries no menu, and its text takes the whole width.
+ * An own recipe's entry, a card; tapping it opens the recipe's card (FLOW-029 (1)). Its actions are in its menu, at the
+ * end of its title line: deletion for a recipe its owner may delete (FLOW-053 (1), ST-010), and in [Mode.Serverless]
+ * the export of every recipe (FLOW-063). An entry with no action carries no menu, and its text takes the whole width.
  */
 @Composable
 private fun OwnEntry(
     row: OwnRecipeRow,
     mode: Mode,
     cover: EntryCover,
+    tags: String,
+    modifier: Modifier,
     onOpen: () -> Unit,
     onDelete: () -> Unit,
     onExport: () -> Unit,
@@ -409,34 +513,116 @@ private fun OwnEntry(
         if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onExport))
         if (row.state in DELETABLE) add(EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), onDelete))
     }
-    EntryWithActions(row.recipeId, row.title, actions) { modifier -> EntryText(row, mode, cover, onOpen, modifier) }
-}
-
-@Composable
-private fun EntryText(row: OwnRecipeRow, mode: Mode, cover: EntryCover, onOpen: () -> Unit, modifier: Modifier) {
-    Row(
-        modifier
-            .heightIn(min = 48.dp)
-            .semantics(mergeDescendants = true) {}
-            .clickable(onClickLabel = stringResource(R.string.library_entry_open_action), role = Role.Button, onClick = onOpen)
-            .testTag(LibraryTags.entry(row.recipeId))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        cover(row.coverId, LibraryTags.cover(row.recipeId))
-        Column(Modifier.weight(1f)) { EntryLines(row, mode) }
+    EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier) {
+        EntryTitle(row.recipeId, row.title)
+        EntryTags(row.recipeId, tags)
+        // The state is named in words, never carried by colour alone (A11Y-008).
+        Text(stringResource(stateLabel(row.state, mode)), style = MaterialTheme.typography.labelLarge)
+        // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005); a build without
+        // the server sends nothing, so it shows none (FLOW-062 (1)).
+        if (mode == Mode.Standard) Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
     }
 }
 
+/**
+ * An entry of the book as a card: its cover across the card's width in the 4:3 frame, when it has one, and beneath
+ * it the entry's [lines], the first of them its title. When there are any [actions], their menu stands at the end of
+ * the title's first line, and the text keeps clear of it. [onOpen], when given, opens the recipe.
+ */
 @Composable
-private fun EntryLines(row: OwnRecipeRow, mode: Mode) {
-    EntryTitle(row.recipeId, row.title)
-    // The state is named in words, never carried by colour alone (A11Y-008).
-    Text(stringResource(stateLabel(row.state, mode)), style = MaterialTheme.typography.labelLarge)
-    // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005); a build without the
-    // server sends nothing, so it shows none (FLOW-062 (1)).
-    if (mode == Mode.Standard) Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
+private fun EntryCard(
+    recipeId: String,
+    title: String,
+    coverId: String?,
+    cover: EntryCover,
+    actions: List<EntryAction>,
+    onOpen: (() -> Unit)?,
+    modifier: Modifier,
+    lines: @Composable ColumnScope.() -> Unit,
+) {
+    val open = onOpen?.let {
+        Modifier.clickable(onClickLabel = stringResource(R.string.library_entry_open_action), role = Role.Button, onClick = it)
+    } ?: Modifier
+    Card(modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Layout(
+            content = {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .semantics(mergeDescendants = true) {}
+                        .then(open)
+                        .testTag(LibraryTags.entry(recipeId)),
+                ) {
+                    cover(coverId, LibraryTags.cover(recipeId))
+                    Column(
+                        Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = if (actions.isEmpty()) 16.dp else MENU_ROOM),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        content = lines,
+                    )
+                }
+                if (actions.isNotEmpty()) EntryMenu(recipeId, title, actions)
+            },
+        ) { measurables, constraints ->
+            val entry = measurables[0].measure(constraints)
+            val menu = measurables.getOrNull(1)?.measure(Constraints())
+            layout(entry.width, entry.height) {
+                entry.place(0, 0)
+                if (menu != null) {
+                    // Level with the middle of the title's first line, 4 dp from the card's end.
+                    val line = entry[TitleLine].takeIf { it != AlignmentLine.Unspecified } ?: (entry.height / 2)
+                    menu.place(entry.width - menu.width - 4.dp.roundToPx(), line - menu.height / 2)
+                }
+            }
+        }
+    }
 }
+
+/** The room kept at the end of an entry's text for its ⋮: the ⋮ itself and its margin. */
+private val MENU_ROOM = 52.dp
+
+/** The space between two entries of a list, and above the first. */
+private val ENTRY_GAP = 12.dp
+
+/**
+ * The tags a recipe carries, as its entry shows them: one muted line of their labels in the interface language,
+ * cut short where it does not fit; nothing for a recipe that carries none.
+ */
+@Composable
+private fun EntryTags(recipeId: String, tags: String) {
+    if (tags.isEmpty()) return
+    Text(
+        tags,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.testTag(LibraryTags.entryTags(recipeId)),
+    )
+}
+
+/**
+ * The tags of each recipe of a view as its entry shows them, by the recipe's identity: their labels in the interface
+ * language, as the tag filter names them (L10N-003), in alphabetical order. The tag dictionary is read once a recipe
+ * of the view carries a tag; until it is, the entries show none.
+ */
+@Composable
+private fun rememberEntryTags(choices: FilterChoices, carries: Map<String, List<Long>>?): (String) -> String {
+    val needed = !carries.isNullOrEmpty()
+    LaunchedEffect(choices, needed) { if (needed) choices.readTags() }
+    val language = numberLanguage(LocalConfiguration.current)
+    val dictionary = choices.tags
+    return remember(dictionary, carries, language) {
+        val labels = dictionary.orEmpty().associate { it.id to it.label(language) }
+        val byRecipe = carries.orEmpty().mapValues { (_, ids) ->
+            ids.mapNotNull(labels::get).sortedBy { it.lowercase() }.joinToString(TAG_SEPARATOR)
+        }
+        return@remember { recipeId: String -> byRecipe[recipeId].orEmpty() }
+    }
+}
+
+/** What stands between two tags on an entry's line of tags. */
+private const val TAG_SEPARATOR = " · "
 
 /** An entry's title, which tells the entry's menu where its first line stands ([TitleLine]). */
 @Composable
@@ -465,26 +651,6 @@ private val TitleLine = HorizontalAlignmentLine { a, b -> min(a, b) }
 
 /** One item of an entry's menu: what it reads, its tag, and what choosing it does. */
 private class EntryAction(@StringRes val label: Int, val tag: String, val onClick: () -> Unit)
-
-/**
- * An entry of the book and, when it has any [actions], its menu at the end of its title line; the entry's own
- * [content] takes the rest of the width, or the whole width when there is no action.
- */
-@Composable
-private fun EntryWithActions(
-    recipeId: String,
-    title: String,
-    actions: List<EntryAction>,
-    content: @Composable (Modifier) -> Unit,
-) {
-    Row(Modifier.fillMaxWidth()) {
-        content(Modifier.weight(1f).alignBy(TitleLine))
-        if (actions.isNotEmpty()) {
-            EntryMenu(recipeId, title, actions, Modifier.alignBy { it.measuredHeight / 2 }.padding(end = 4.dp))
-        }
-    }
-    HorizontalDivider()
-}
 
 /**
  * The ⋮ of an entry, 48 by 48 dp (A11Y-003), named for the screen reader by the recipe it acts on (A11Y-005), with
@@ -689,8 +855,9 @@ private fun ScrollToTopOnChange(params: ListingParams?, state: LazyListState) {
 /**
  * The view of marked recipes (FLOW-034 (2)): what the book marks, the found recipes among it. A found recipe's entry
  * opens its card and offers its removal, and in [Mode.Serverless] its export too (FLOW-063 (2)); one stating its author
- * names it, marked as stated and not verified (FLOW-064 (3)). In [Mode.Serverless] the view offers to import a recipe file above the list; with nothing marked it
- * says so, and that offer is the way out of it (FLOW-042). Its header, above the list, searches and orders it (FLOW-035).
+ * names it, marked as stated and not verified (FLOW-064 (3)). In [Mode.Serverless] the view offers to import a recipe
+ * file from its action at the bottom ([ViewAction]); with nothing marked it says so, and the import, offered beneath,
+ * is the way out of it (FLOW-042). Its header, above the list, searches and orders it (FLOW-035).
  */
 @Composable
 private fun MarkedList(
@@ -702,6 +869,10 @@ private fun MarkedList(
     thumbnails: CoverThumbnails,
     dictionary: IngredientEntries,
     tags: TagSource,
+    listState: LazyListState,
+    bottom: Dp,
+    onImport: () -> Unit,
+    onOffer: (Boolean) -> Unit,
 ) {
     val search = rememberSearchField(LibraryView.MARKED, session)
     val params = rememberListingParams(LibraryView.MARKED, session)
@@ -710,7 +881,7 @@ private fun MarkedList(
     val order by session.order(LibraryView.MARKED).collectAsState()
     val filters by session.filters(LibraryView.MARKED).collectAsState()
     val choices = rememberFilterChoices(dictionary, tags)
-    val listState = rememberLazyListState()
+    val tagsOf = rememberEntryTags(choices, listed?.carries)
     ScrollToTopOnChange(listed?.params, listState)
     val marked = listed?.rows
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
@@ -726,55 +897,74 @@ private fun MarkedList(
     }
     val export = rememberExport(recipes, session)
     val shown = listed
-    Column(Modifier.fillMaxSize()) {
-        if (mode == Mode.Serverless && shown != null) {
-            if (shown.viewIsEmpty && !shown.narrowed) {
+    val empty = shown != null && shown.viewIsEmpty && !shown.narrowed
+    val offered = mode == Mode.Serverless && shown != null && !empty
+    SideEffect { onOffer(offered) }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            if (mode == Mode.Serverless && empty) {
                 Text(
                     stringResource(R.string.library_marked_empty),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(16.dp).testTag(LibraryTags.MARKED_EMPTY),
                 )
+                Button(
+                    onClick = onImport,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).heightIn(min = 48.dp).testTag(LibraryTags.IMPORT),
+                ) { Text(stringResource(R.string.file_import)) }
+                HorizontalDivider()
             }
-            ImportButton(files, session, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-            HorizontalDivider()
-        }
-        // An empty view with no query keeps its empty state, with no header to search nothing with.
-        if (shown != null && (!shown.viewIsEmpty || shown.narrowed)) {
-            ListHeader(
-                search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
-                filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold,
-            )
-            HorizontalDivider()
-        }
-        if (shown != null && shown.narrowed && shown.rows.isEmpty()) {
-            NothingFound(shown, onClearSearch = search::clear, onClearFilters = { session.filter(LibraryView.MARKED, BookFilters()) })
-            return@Column
-        }
-        val cover = coverOf(recipes, thumbnails)
-        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST)) {
-            items(marked.orEmpty(), key = { it.recipeId }) { row ->
-                MarkedEntry(
-                    row,
-                    mode,
-                    cover,
-                    onOpen = { session.openCard(row.recipeId, LibraryView.MARKED) },
-                    onRemove = { removing = row.recipeId },
-                    onExport = { export(row.recipeId, row.title) },
+            // An empty view with no query keeps its empty state, with no header to search nothing with.
+            if (shown != null && !empty) {
+                ListHeader(
+                    search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
+                    filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold,
                 )
+                HorizontalDivider()
+            }
+            // While the list is read, no list is laid out: an empty one would bring the view's kept place to its top.
+            if (shown == null) return@Column
+            if (shown.narrowed && shown.rows.isEmpty()) {
+                NothingFound(shown, onClearSearch = search::clear, onClearFilters = { session.filter(LibraryView.MARKED, BookFilters()) })
+                return@Column
+            }
+            val cover = coverOf(recipes, thumbnails)
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(top = ENTRY_GAP, bottom = bottom),
+                verticalArrangement = Arrangement.spacedBy(ENTRY_GAP),
+                modifier = Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST),
+            ) {
+                items(marked.orEmpty(), key = { it.recipeId }) { row ->
+                    MarkedEntry(
+                        row,
+                        mode,
+                        cover,
+                        tagsOf(row.recipeId),
+                        Modifier.animateItem(),
+                        onOpen = { session.openCard(row.recipeId, LibraryView.MARKED) },
+                        onRemove = { removing = row.recipeId },
+                        onExport = { export(row.recipeId, row.title) },
+                    )
+                }
             }
         }
+        if (shown == null) ListLoading()
     }
 }
 
 /**
- * A marked recipe's entry: its title and any stated author; one whose content the book holds opens, and its menu, at
- * the end of its title line, offers its removal, and in [Mode.Serverless] its export as well (FLOW-063 (2)).
+ * A marked recipe's entry, a card: its title, any stated author and its tags; one whose content the book holds opens,
+ * and its menu, at the end of its title line, offers its removal, and in [Mode.Serverless] its export as well
+ * (FLOW-063 (2)).
  */
 @Composable
 private fun MarkedEntry(
     row: MarkedRecipeRow,
     mode: Mode,
     cover: EntryCover,
+    tags: String,
+    modifier: Modifier,
     onOpen: () -> Unit,
     onRemove: () -> Unit,
     onExport: () -> Unit,
@@ -783,43 +973,16 @@ private fun MarkedEntry(
         if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onExport))
         add(EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), onRemove))
     }
-    EntryWithActions(row.recipeId, row.title, actions) { modifier -> MarkedEntryText(row, cover, onOpen, modifier) }
-}
-
-@Composable
-private fun MarkedEntryText(row: MarkedRecipeRow, cover: EntryCover, onOpen: () -> Unit, modifier: Modifier) {
-    val open = if (row.held) {
-        Modifier.clickable(
-            onClickLabel = stringResource(R.string.library_entry_open_action),
-            role = Role.Button,
-            onClick = onOpen,
-        )
-    } else {
-        Modifier
-    }
-    Row(
-        modifier
-            .heightIn(min = 48.dp)
-            .semantics(mergeDescendants = true) {}
-            .then(open)
-            .testTag(LibraryTags.entry(row.recipeId))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        cover(row.coverId, LibraryTags.cover(row.recipeId))
-        Column(Modifier.weight(1f)) { MarkedEntryLines(row) }
-    }
-}
-
-@Composable
-private fun MarkedEntryLines(row: MarkedRecipeRow) {
-    EntryTitle(row.recipeId, row.title)
-    row.statedAuthor?.let {
-        Text(
-            stringResource(R.string.file_stated_author, it),
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
-        )
+    EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier) {
+        EntryTitle(row.recipeId, row.title)
+        row.statedAuthor?.let {
+            Text(
+                stringResource(R.string.file_stated_author, it),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
+            )
+        }
+        EntryTags(row.recipeId, tags)
     }
 }
 
@@ -829,7 +992,7 @@ private fun MarkedEntryLines(row: MarkedRecipeRow) {
  * be. A tap while a file is being read starts no second import.
  */
 @Composable
-private fun ImportButton(files: RecipeImport, session: LibrarySession, modifier: Modifier = Modifier) {
+private fun rememberImport(files: RecipeImport, session: LibrarySession): () -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var importing by remember { mutableStateOf(false) }
@@ -848,15 +1011,12 @@ private fun ImportButton(files: RecipeImport, session: LibrarySession, modifier:
             }
         }
     }
-    Button(
-        onClick = {
-            if (!importing) {
-                importing = true
-                picker.launch(arrayOf(ANY_FILE))
-            }
-        },
-        modifier = modifier.heightIn(min = 48.dp).testTag(LibraryTags.IMPORT),
-    ) { Text(stringResource(R.string.file_import)) }
+    return {
+        if (!importing) {
+            importing = true
+            picker.launch(arrayOf(ANY_FILE))
+        }
+    }
 }
 
 /** Every type: the picker offers any file, and the importer decides what it holds. */
@@ -947,7 +1107,13 @@ object LibraryTags {
     const val CLEAR_MEDIA_DECLINE = "library-clear-media-decline"
     const val CLEAR_MEDIA_NOTHING = "library-clear-media-nothing"
     const val CLEAR_MEDIA_OK = "library-clear-media-ok"
+    /** The book's top bar: its title and its menu, which scrolls away as a list goes down. */
+    const val TOP_BAR = "library-top-bar"
     const val SWITCH = "library-switch"
+    /** The pages of the two views, swiped between. */
+    const val PAGER = "library-pager"
+    /** The indicator a view shows while its list is read for longer than a moment. */
+    const val LOADING = "library-loading"
     const val OWN_LIST = "library-own"
     const val MARKED_LIST = "library-marked"
     const val MARKED_EMPTY = "library-marked-empty"
@@ -1000,6 +1166,8 @@ object LibraryTags {
     fun delete(recipeId: String) = "library-delete-$recipeId"
     fun export(recipeId: String) = "library-export-$recipeId"
     fun entryTitle(recipeId: String) = "library-entry-title-$recipeId"
+    /** The line of the tags an entry's recipe carries. */
+    fun entryTags(recipeId: String) = "library-entry-tags-$recipeId"
     fun statedAuthor(recipeId: String) = "library-stated-author-$recipeId"
     fun remove(recipeId: String) = "library-remove-$recipeId"
     fun cover(recipeId: String) = "library-cover-$recipeId"

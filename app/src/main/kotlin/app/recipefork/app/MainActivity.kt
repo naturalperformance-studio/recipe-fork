@@ -3,17 +3,22 @@ package app.recipefork.app
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import app.recipefork.app.card.LocalStepToShow
 import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.file.ImportOutcome
@@ -32,7 +37,13 @@ import java.util.Locale
 
 /** The single Activity; its task is the reader's session (FLOW-058). */
 class MainActivity : ComponentActivity() {
-    private val librarySession: LibrarySession by viewModels()
+    private val librarySession: LibrarySession by viewModels {
+        viewModelFactory {
+            initializer {
+                LibrarySession(createSavedStateHandle(), (application as RecipeForkApplication).container.lastBookView)
+            }
+        }
+    }
 
     /** The interface language the reader chose is laid over the device's before anything reads it (L10N-002). */
     override fun attachBaseContext(newBase: Context) {
@@ -56,6 +67,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Drawn edge to edge, each screen keeping its own content clear of the system bars; the interface is light
+        // whatever the system's mode (AppTheme), so the bars' icons are dark on it. A dark theme will change these styles.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(NAVIGATION_SCRIM, NAVIGATION_SCRIM),
+        )
         val container = (application as RecipeForkApplication).container
         // A recreated Activity has followed its intent already.
         if (savedInstanceState == null) follow(intent)
@@ -63,7 +80,7 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(LocalStepToShow provides librarySession.stepToShow) {
                 AppTheme {
                     Surface(modifier = Modifier.fillMaxSize().testTag(ROOT_TAG)) {
-                        AppNavHost(librarySession, container.recipes, container.mode, Modifier.safeDrawingPadding())
+                        AppNavHost(librarySession, container.recipes, container.mode)
                     }
                 }
             }
@@ -99,6 +116,9 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val ROOT_TAG = "root"
+
+        /** The scrim behind three-button navigation, where the platform keeps one: the light surface, nearly opaque. */
+        private val NAVIGATION_SCRIM = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 
         /**
          * Follows a recipe file at [uri] handed to the application in [mode]: in [Mode.Serverless] it is imported, the
