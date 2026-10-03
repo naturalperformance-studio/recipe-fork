@@ -61,12 +61,9 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import app.recipefork.app.AppContainer
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
-import app.recipefork.app.dictionary.DictionaryCatalog
-import app.recipefork.app.dictionary.DictionarySeeding
-import app.recipefork.app.dictionary.DictionarySnapshot
-import app.recipefork.app.dictionary.PreferencesSeededVersion
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
@@ -85,18 +82,16 @@ import kotlinx.coroutines.withContext
 @Composable
 fun rememberEditorEnvironment(): EditorEnvironment {
     val context = LocalContext.current.applicationContext
-    return remember(context) {
-        val container = (context as RecipeForkApplication).container
-        val dao = container.database.dictionaryDao()
-        val seeding = DictionarySeeding(dao, PreferencesSeededVersion(context)) { DictionarySnapshot.read(context) }
-        EditorEnvironment(
-            container.activeBook,
-            DictionaryCatalog(dao, seeding),
-            dragHandleSide = container.dragHandleSide,
-            mode = container.mode,
-        )
-    }
+    return remember(context) { editorEnvironmentOf((context as RecipeForkApplication).container) }
 }
+
+/** The editor's environment of [container]: the active book and the dictionaries it shares with every screen. */
+fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvironment(
+    container.activeBook,
+    container.dictionaries,
+    dragHandleSide = container.dragHandleSide,
+    mode = container.mode,
+)
 
 /**
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the

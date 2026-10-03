@@ -9,9 +9,13 @@ import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.Network
 import app.recipefork.app.data.PreferencesDragHandleSide
+import app.recipefork.app.dictionary.PreferencesSeededVersion
 import app.recipefork.app.data.PreferencesUsualServings
 import app.recipefork.app.data.UsualServings
+import app.recipefork.app.dictionary.DictionaryCatalog
 import app.recipefork.app.dictionary.DictionaryRepository
+import app.recipefork.app.dictionary.DictionarySeeding
+import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.DictionarySync
 import app.recipefork.app.media.MediaSweep
 import app.recipefork.app.recipe.RecipeRepository
@@ -25,6 +29,7 @@ import app.recipefork.app.timer.TimerAnnouncer
 import app.recipefork.app.timer.TimerDatabase
 import app.recipefork.app.timer.TimerRinging
 import app.recipefork.app.timer.applicationIsOpen
+import app.recipefork.core.api.DictionariesDto
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import kotlinx.coroutines.CoroutineScope
@@ -42,10 +47,28 @@ enum class Mode { Standard, Serverless }
 class AppContainer(
     context: Context,
     val mode: Mode,
+    /** How the dictionaries the application ships are read; replaced in a test to count the reads. */
+    readSnapshot: (Context) -> DictionariesDto = DictionarySnapshot::read,
     /** How the client of the product's server is made; called in [Mode.Standard] only. */
     httpClientOf: () -> HttpClient = { Network.client(Android.create(), BuildConfig.SERVER_URL) },
 ) {
     val database: AppDatabase = AppDatabase.open(context)
+
+    /**
+     * The held dictionaries as every screen reads them — the editor's tags and ingredients, the card's ingredient
+     * names — one for the application, seeded from the shipped snapshot, whose asset is parsed once per installation.
+     */
+    val dictionaries: DictionaryCatalog = database.dictionaryDao().let { dao ->
+        DictionaryCatalog(
+            dao,
+            DictionarySeeding(
+                dao,
+                PreferencesSeededVersion(context),
+                installed = DictionarySnapshot.installedKey(context),
+                checked = PreferencesSeededVersion(context, PreferencesSeededVersion.CHECKED),
+            ) { readSnapshot(context) },
+        )
+    }
 
     /**
      * The client of the product's server; none at all in [Mode.Serverless], which makes no request to it from the
