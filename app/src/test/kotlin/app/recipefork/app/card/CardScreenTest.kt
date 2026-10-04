@@ -278,7 +278,7 @@ class CardScreenTest {
         RecipeState.entries.filter { it.editable }.forEach { state ->
             val recipe = save(fullRecipe(state))
             show(recipe.id)
-            assertEquals("$state", listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT) + SERVINGS_ACTIONS + FIXING_ROWS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU) + SERVINGS_ACTIONS + FIXING_ROWS, interactiveTags())
             compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.EDIT)).fetchSemanticsNodes()
                 .let { assertEquals("$state", 1, it.size) }
             assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction(), useUnmergedTree = true).fetchSemanticsNodes().size)

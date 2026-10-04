@@ -7,6 +7,8 @@
     <string name="card_edit_action">Open this recipe in the editor</string>
     <string name="card_fork">Fork</string>
     <string name="card_fork_action">Make an editable copy of this recipe</string>
+    <string name="card_menu">More actions</string>
+    <string name="card_menu_action">Show more actions for this recipe</string>
     <!-- Said for the indicator shown while the recipe is still being read. -->
     <string name="card_loading">Loading the recipe</string>
     <!-- A long press on an icon of the card's bar shows its name in a tooltip; the screen reader names that action. -->
