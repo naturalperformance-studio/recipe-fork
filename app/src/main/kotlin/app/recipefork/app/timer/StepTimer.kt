@@ -151,14 +151,18 @@ class RecipeTimers internal constructor(
     }
 
     /** The reader stopped [step]'s timer ringing; it stays finished, and its notification stays, silent. */
-    internal fun stopRinging(step: Step) {
-        card.ringing.stop(key(step))
+    internal fun stopRinging(step: Step) = stopRinging(step.position)
+
+    internal fun stopRinging(position: Int) {
+        card.ringing.stop(TimerKey(book, recipeId, position))
     }
 
     internal fun rings(step: Step): Boolean = key(step) in ringing
 
-    internal fun cancel(step: Step) {
-        card.scope.launch { card.turns.withLock { store.cancel(key(step)) } }
+    internal fun cancel(step: Step) = cancel(step.position)
+
+    internal fun cancel(position: Int) {
+        card.scope.launch { card.turns.withLock { store.cancel(TimerKey(book, recipeId, position)) } }
     }
 
     /**
@@ -254,6 +258,8 @@ fun StepTimer(
             tag = TimerTags.start(step.position),
             onClick = { timers.start(step, current) },
             modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+            // A press on a running timer only asks whether to restart it: the answer confirms, the question does not.
+            confirms = held == null || finished,
         ) {
             FlowRow(
                 Modifier.weight(1f),
@@ -371,4 +377,9 @@ object TimerTags {
     fun cancel(position: Int) = "timer-cancel-$position"
     fun stop(position: Int) = "timer-stop-$position"
     fun tooltip(control: String) = "$control-tooltip"
+    const val BAR = "timer-bar"
+    fun barTimer(position: Int) = "timer-bar-$position"
+    fun barStatus(position: Int) = "timer-bar-status-$position"
+    fun barCancel(position: Int) = "timer-bar-cancel-$position"
+    fun barStop(position: Int) = "timer-bar-stop-$position"
 }

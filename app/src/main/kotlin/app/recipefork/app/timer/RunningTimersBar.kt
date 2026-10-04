@@ -1,0 +1,128 @@
+package app.recipefork.app.timer
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
+import app.recipefork.app.R
+import app.recipefork.app.card.CardTarget
+
+/**
+ * The timers of this recipe the bar at the bottom of the card shows: each running, or ringing once ended, whose step is
+ * not [onScreen] — the soonest to end first, so that one ringing comes before any still running.
+ */
+internal fun RecipeTimers.inBar(onScreen: (stepPosition: Int) -> Boolean): List<RunningTimer> {
+    val now = now
+    val ringing = ringing
+    return held.values
+        .filter { !it.hasEnded(now) || it.key in ringing }
+        .filterNot { onScreen(it.key.stepPosition) }
+        .sortedBy { it.endsAt }
+}
+
+/**
+ * The bar pinned at the bottom of the card while timers of its recipe run out of sight (FLOW-016): one line for each of
+ * [shown] — its name, or its step's [number] where it has none, the time it has left or that it rings, and the control
+ * that cancels it or stops its ringing. Tapping a line brings the card to its step ([onShow]). Never taller than a
+ * third of the screen; more lines scroll within it.
+ */
+@Composable
+internal fun RunningTimersBar(
+    timers: RecipeTimers,
+    shown: List<RunningTimer>,
+    number: (stepPosition: Int) -> Int,
+    onShow: (stepPosition: Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val most = (LocalConfiguration.current.screenHeightDp / 3).dp
+    Surface(
+        modifier.fillMaxWidth().heightIn(max = most).testTag(TimerTags.BAR),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shadowElevation = 3.dp,
+    ) {
+        Column(
+            Modifier
+                .windowInsetsPadding(
+                    WindowInsets.navigationBars.union(WindowInsets.displayCutout)
+                        .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
+                )
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 4.dp),
+        ) {
+            shown.forEach { timer ->
+                val position = timer.key.stepPosition
+                BarLine(
+                    timer = timer,
+                    ringing = timer.key in timers.ringing,
+                    timers = timers,
+                    number = number(position),
+                    onShow = { onShow(position) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers, number: Int, onShow: () -> Unit) {
+    val position = timer.key.stepPosition
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = CardTarget)
+            .clickable(onClickLabel = stringResource(R.string.timer_bar_show_action), role = Role.Button, onClick = onShow)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .testTag(TimerTags.barTimer(position)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            timer.name.ifBlank { stringResource(R.string.timer_bar_step, number) },
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            if (ringing) stringResource(R.string.timer_bar_ringing) else remainingText(timer.remaining(timers.now)),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.testTag(TimerTags.barStatus(position)),
+        )
+        if (ringing) {
+            TimerButton(
+                icon = R.drawable.ic_timer_stop,
+                action = stringResource(R.string.timer_stop_action),
+                tag = TimerTags.barStop(position),
+                onClick = { timers.stopRinging(position) },
+            ) { Text(stringResource(R.string.timer_stop)) }
+        } else {
+            TimerButton(
+                icon = R.drawable.ic_remove_timer,
+                action = stringResource(R.string.timer_cancel_action),
+                tag = TimerTags.barCancel(position),
+                onClick = { timers.cancel(position) },
+            ) { Text(stringResource(R.string.timer_cancel)) }
+        }
+    }
+}

@@ -24,8 +24,9 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * A timer's controls on the card are buttons with an icon and a label, at least 56 dp, each announcing what it does and
- * showing it in a tooltip on a long press; starting, restarting, cancelling, stopping the ringing and clearing each
- * answer with one confirm haptic — and a long press for the tooltip with none, nor does it start the timer.
+ * showing it in a tooltip on a long press; starting, confirming a restart, cancelling, stopping the ringing and clearing
+ * each answer with one confirm haptic — a press that only asks whether to restart, declining it, and a long press for
+ * the tooltip with none, nor does the long press start the timer.
  */
 @RunWith(AndroidJUnit4::class)
 class CardTimerButtonsTest : CardTimersKit() {
@@ -83,34 +84,41 @@ class CardTimerButtonsTest : CardTimersKit() {
         awaitHeld { it.size == 1 }
         confirms(1)
 
-        // Started again while it runs: the press confirms, and so does the restart.
+        // Started again while it runs: the press only asks, and confirms nothing; declining confirms nothing either.
         start(0)
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.RESTART_QUESTION) }
-        confirms(2)
+        confirms(1)
+        compose.onNodeWithTag(TimerTags.RESTART_DECLINE).performClick()
+        compose.waitUntil(PATIENCE_MS) { !shown(TimerTags.RESTART_QUESTION) }
+        confirms(1)
+        // Asked again and confirmed: the restart confirms once.
+        start(0)
+        compose.waitUntil(PATIENCE_MS) { shown(TimerTags.RESTART_QUESTION) }
+        confirms(1)
         compose.onNodeWithTag(TimerTags.RESTART_CONFIRM).performClick()
         compose.waitUntil(PATIENCE_MS) { !shown(TimerTags.RESTART_QUESTION) }
-        confirms(3)
+        confirms(2)
 
         press(TimerTags.cancel(0))
         awaitHeld { it.isEmpty() }
-        confirms(4)
+        confirms(3)
 
         start(0)
         awaitHeld { it.size == 1 }
-        confirms(5)
+        confirms(4)
         pass(10.minutes)
         awaitStatus(0, "Finished")
         compose.runOnIdle { timers.ringing.ring(held().single()) }
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.stop(0)) }
-        confirms(5)
+        confirms(4)
 
         press(TimerTags.stop(0))
         compose.waitUntil(PATIENCE_MS) { !shown(TimerTags.stop(0)) }
-        confirms(6)
+        confirms(5)
 
         press(TimerTags.cancel(0))
         awaitHeld { it.isEmpty() }
-        confirms(7)
+        confirms(6)
         assertTrue(compose.onAllNodes(hasTestTag(TimerTags.cancel(0))).fetchSemanticsNodes().isEmpty())
     }
 }

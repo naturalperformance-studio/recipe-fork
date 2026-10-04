@@ -33,7 +33,8 @@ import app.recipefork.app.ui.rememberHaptics
  * A timer's control — start, stop its ringing, cancel or clear it — wherever a timer is shown: a tonal button at least
  * the card's [CardTarget] tall and wide (A11Y-003, A11Y-007), its [icon] before its [content], its click announced as
  * [action] (A11Y-005), which a long press shows in a tooltip so that its meaning is never left to the icon alone. Each
- * press answers with a confirm haptic, then does [onClick]. The button itself is tagged [tag].
+ * press answers with a confirm haptic — unless it [confirms] nothing, as a press that only asks a question — then does
+ * [onClick]. The button itself is tagged [tag].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,11 +44,12 @@ fun TimerButton(
     tag: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    confirms: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
     val haptics = rememberHaptics()
     val press = {
-        haptics.perform(Haptic.CONFIRM)
+        if (confirms) haptics.perform(Haptic.CONFIRM)
         onClick()
     }
     TooltipBox(
