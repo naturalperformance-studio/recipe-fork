@@ -451,7 +451,7 @@ private fun OwnList(
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     found?.firstOrNull { it.recipeId == deleting }?.let { row ->
         DeleteStatement(
-            row,
+            row.title,
             onConfirm = {
                 deleting = null
                 deleteRecipe(recipes, timers, RecipeId(row.recipeId))
@@ -779,39 +779,6 @@ private fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): Ent
 /** The states in which an own recipe may be deleted by its owner (ST-010); in any other it may not. */
 val DELETABLE = setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECTED)
 
-/**
- * The statement shown before anything is destroyed (FLOW-053 (2)): the recipe goes at once, with its photographs and
- * video, and cannot be brought back. Nothing is deleted until it is confirmed; declining it changes nothing.
- */
-@Composable
-private fun DeleteStatement(row: OwnRecipeRow, onConfirm: () -> Unit, onDecline: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDecline,
-        modifier = Modifier.testTag(LibraryTags.DELETE_STATEMENT),
-        title = {
-            Text(
-                stringResource(
-                    R.string.library_delete_title,
-                    row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                ),
-            )
-        },
-        text = { Text(stringResource(R.string.library_delete_statement)) },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.DELETE_CONFIRM),
-            ) { Text(stringResource(R.string.library_delete_confirm)) }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDecline,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.DELETE_DECLINE),
-            ) { Text(stringResource(R.string.library_delete_decline)) }
-        },
-    )
-}
-
 /** Where the clearing of saved media stands while a dialog of it is shown. */
 private enum class ClearingMedia { ASKING, NOTHING }
 
@@ -821,7 +788,7 @@ private enum class ClearingMedia { ASKING, NOTHING }
  * the server (FLOW-062 (1)); in [Mode.Standard] it says the media is fetched again when needed.
  */
 @Composable
-private fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: () -> Unit) {
+internal fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDecline,
         modifier = Modifier.testTag(LibraryTags.CLEAR_MEDIA_STATEMENT),
@@ -837,10 +804,7 @@ private fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: ()
             )
         },
         confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.CLEAR_MEDIA_CONFIRM),
-            ) { Text(stringResource(R.string.library_clear_media_confirm)) }
+            DestructiveConfirm(R.string.library_clear_media_confirm, LibraryTags.CLEAR_MEDIA_CONFIRM, onClick = onConfirm)
         },
         dismissButton = {
             TextButton(
@@ -941,7 +905,7 @@ private fun MarkedList(
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
     marked?.firstOrNull { it.recipeId == removing }?.let { row ->
         RemoveStatement(
-            row,
+            row.title,
             onConfirm = {
                 removing = null
                 removeFound(files, timers, RecipeId(row.recipeId))
@@ -1081,36 +1045,6 @@ private fun rememberImport(files: RecipeImport, session: LibrarySession): () -> 
 
 /** Every type: the picker offers any file, and the importer decides what it holds. */
 private const val ANY_FILE = "*/*"
-
-/** The statement shown before a found recipe leaves the book with its content (FLOW-009 (4), FLOW-064 (6)). */
-@Composable
-private fun RemoveStatement(row: MarkedRecipeRow, onConfirm: () -> Unit, onDecline: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDecline,
-        modifier = Modifier.testTag(LibraryTags.REMOVE_STATEMENT),
-        title = {
-            Text(
-                stringResource(
-                    R.string.library_remove_title,
-                    row.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                ),
-            )
-        },
-        text = { Text(stringResource(R.string.library_remove_statement)) },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.REMOVE_CONFIRM),
-            ) { Text(stringResource(R.string.library_remove_confirm)) }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDecline,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.REMOVE_DECLINE),
-            ) { Text(stringResource(R.string.library_remove_decline)) }
-        },
-    )
-}
 
 /**
  * Removes the found recipe [id] from the active book with its held content and media (FLOW-064 (6)), and cancels its

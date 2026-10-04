@@ -45,6 +45,7 @@ class ContrastTest {
         text("a dialog's title", c.onSurface, c.surfaceContainerHigh),
         text("a dialog's text", c.onSurfaceVariant, c.surfaceContainerHigh),
         text("a dialog's buttons", c.primary, c.surfaceContainerHigh),
+        text("a destructive confirm in a dialog — Delete, Remove, Clear", c.error, c.surfaceContainerHigh),
         text("a menu's items", c.onSurface, c.surfaceContainer),
         text("the bar of running timers — names and times left", c.onSurface, c.surfaceContainer),
         text("the book's top bar — its title and menu — with a list scrolled under it", c.onSurface, c.surfaceContainer),

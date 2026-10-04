@@ -26,6 +26,7 @@ import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.library.DELETABLE
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Recipe
@@ -127,7 +128,7 @@ class CardForkTest {
             show(recipe.id)
             val bar = compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.FORK)).fetchSemanticsNodes()
             assertEquals("$state", 1, bar.size)
-            val expected = listOf(CardTags.BACK, CardTags.FORK) + listOfNotNull(CardTags.EDIT.takeIf { state.editable }) +
+            val expected = listOf(CardTags.BACK, CardTags.FORK) + listOfNotNull(CardTags.EDIT.takeIf { state.editable }, CardTags.MENU.takeIf { state in DELETABLE }) +
                 listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE)
             assertEquals("$state", expected, interactiveTags())
             val before = forks
@@ -236,7 +237,7 @@ class CardForkTest {
         assertEquals(listOf("Forked from a recipe that is not in this recipe book"), compose.textsOf(CardTags.PROVENANCE))
         val node = compose.onNodeWithTag(CardTags.PROVENANCE).fetchSemanticsNode()
         assertNull(node.config.getOrElseNullable(SemanticsActions.OnClick) { null })
-        assertEquals(listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT), interactiveTags())
+        assertEquals(listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU), interactiveTags())
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         assertEquals(emptyList<RecipeId>(), opened)
     }
