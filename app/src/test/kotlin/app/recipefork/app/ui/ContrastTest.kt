@@ -33,6 +33,7 @@ class ContrastTest {
         text("a reference in a step, on its tint", c.onSurface, c.secondaryContainer),
         text("a reference that exceeds its ingredient, on the warning tint", c.onSurface, c.errorContainer),
         text("a filter chip's label", c.onSecondaryContainer, c.secondaryContainer),
+        text("a tonal button's label and icon — a timer's controls", c.onSecondaryContainer, c.secondaryContainer),
         text("the snackbar's statement and a tooltip's text", c.inverseOnSurface, c.inverseSurface),
         text("the snackbar's action", c.inversePrimary, c.inverseSurface),
         text("a dialog's title", c.onSurface, c.surfaceContainerHigh),
