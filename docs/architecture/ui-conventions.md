@@ -10,7 +10,7 @@ The general rules live in the `android-m3-ui` skill (`~/.claude/skills/android-m
 | Haptics | Only through `ui/Haptics.kt`: `Haptic.CONFIRM` → `Confirm`, `Haptic.TICK` → `VirtualKey` (the owner's phone plays no `SegmentTick`). Tests use the `LocalHaptics` double. |
 | Strings | `res/values/strings_<feature>.xml` and `res/values-ru/strings_<feature>.xml`, both in the same change. |
 | Contrast | `ui/ContrastTest` lists every colour pair the interface draws; a new pair is added there. |
-| Theme | `ui/AppTheme.kt` today; one theme file the owner can edit arrives with v0.20 (F1). Until then, colours only from `MaterialTheme.colorScheme`. |
+| Theme | Every colour role (light and dark), corner size and main type size in `res/values/app_theme.xml` (ADR 20261004), built by `ui/AppTheme.kt`; screens take colours only from `MaterialTheme.colorScheme`. |
 
 ## Patterns already in the code — reuse them
 
