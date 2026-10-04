@@ -13,4 +13,9 @@
         <item quantity="many">%d сохранённых фото или видео</item>
         <item quantity="other">%d сохранённых фото или видео</item>
     </plurals>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_dark">Тёмная</string>
+    <string name="settings_theme_device">Как на устройстве</string>
+    <string name="settings_theme_cancel">Отмена</string>
 </resources>

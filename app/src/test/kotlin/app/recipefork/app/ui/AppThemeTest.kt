@@ -1,6 +1,7 @@
 package app.recipefork.app.ui
 
 import android.content.ContextWrapper
+import android.content.res.Configuration
 import android.content.res.Resources
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.ColorScheme
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
@@ -26,6 +28,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.core.view.WindowCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.R
+import app.recipefork.app.data.ThemeChoice
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -127,6 +130,46 @@ class AppThemeTest {
         compose.waitForIdle()
         assertFalse("the status bar's icons light again, on the dark scheme", bars().isAppearanceLightStatusBars)
         assertFalse("the navigation bar's icons light again, on the dark scheme", bars().isAppearanceLightNavigationBars)
+    }
+
+    // "As on the device" follows the device's dark mode as it changes, its bars with it; light and dark stay put.
+    @Test
+    fun asOnTheDeviceFollowsTheSystemsDarkModeAsItChanges() {
+        val night = mutableStateOf(false)
+        val choice = mutableStateOf(ThemeChoice.DEVICE)
+        var shown: Color? = null
+        compose.setContent {
+            val base = LocalConfiguration.current
+            val configuration = Configuration(base).apply {
+                uiMode = (base.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
+                    (if (night.value) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO)
+            }
+            CompositionLocalProvider(LocalConfiguration provides configuration) {
+                AppTheme(choice.value) { shown = MaterialTheme.colorScheme.surface }
+            }
+        }
+        val light = appColorScheme(resources, dark = false).surface
+        val dark = appColorScheme(resources, dark = true).surface
+        val window = compose.activity.window
+        val bars = { WindowCompat.getInsetsController(window, window.decorView) }
+        fun assertShown(expectDark: Boolean) {
+            compose.waitForIdle()
+            assertEquals(if (expectDark) dark else light, shown)
+            assertEquals("the bars' icons follow", !expectDark, bars().isAppearanceLightStatusBars)
+        }
+        assertShown(expectDark = false)
+        night.value = true
+        assertShown(expectDark = true)
+        night.value = false
+        assertShown(expectDark = false)
+        choice.value = ThemeChoice.DARK
+        assertShown(expectDark = true)
+        night.value = true
+        night.value = false
+        assertShown(expectDark = true)
+        choice.value = ThemeChoice.LIGHT
+        night.value = true
+        assertShown(expectDark = false)
     }
 
     private companion object {

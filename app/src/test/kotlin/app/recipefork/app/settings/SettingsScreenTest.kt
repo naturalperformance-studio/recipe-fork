@@ -22,6 +22,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
@@ -34,7 +35,9 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.data.HeldDragHandleSide
+import app.recipefork.app.data.HeldThemeSetting
 import app.recipefork.app.data.HeldUsualServings
+import app.recipefork.app.data.ThemeChoice
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.editor.EditorEnvironment
@@ -62,7 +65,7 @@ import java.time.Instant
 
 /**
  * Scenario 2 of the increment: the book's top bar opens the settings — a destination with a top bar and back — which
- * list the language, the usual servings, the drag side and the saved media, each showing its value in force; back,
+ * list the language, the theme, the usual servings, the drag side and the saved media, each showing its value in force; back,
  * the system's, the bar's or the predictive gesture, returns to the book where its list was left.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -80,6 +83,7 @@ class SettingsScreenTest {
     private val now = Instant.parse("2026-10-04T12:00:00Z")
     private val usual = HeldUsualServings(Rational.of(3))
     private val side = HeldDragHandleSide(initial = true)
+    private val theme = HeldThemeSetting()
     private val card = CardEnvironment(usual, ingredients = IngredientEntries { emptyList() })
     private val editor = EditorEnvironment(
         active,
@@ -102,7 +106,7 @@ class SettingsScreenTest {
         session.choose(LibraryView.OWN)
         val tester = StateRestorationTester(compose)
         // The session read anew each time the content is: a process ended and restored brings a new one.
-        tester.setContent { MaterialTheme { AppNavHost(session, recipes, card = card, editor = editor) } }
+        tester.setContent { MaterialTheme { AppNavHost(session, recipes, card = card, editor = editor, themeSetting = theme) } }
         compose.waitForIdle()
         return tester
     }
@@ -129,6 +133,7 @@ class SettingsScreenTest {
         openSettings()
         assertEquals(listOf("Settings"), compose.textsOf(SettingsTags.TITLE))
         assertEquals(listOf("Language", "As on the device"), compose.textsOf(SettingsTags.LANGUAGE))
+        assertEquals(listOf("Theme", "As on the device"), compose.textsOf(SettingsTags.THEME))
         assertEquals(listOf("I usually cook for…", "3"), compose.textsOf(SettingsTags.USUAL))
         assertEquals(listOf("Drag handle on the right"), compose.textsOf(SettingsTags.HANDLE_RIGHT))
         assertEquals(
@@ -138,11 +143,11 @@ class SettingsScreenTest {
         compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Nothing to clear" }
         assertEquals("Clear saved media", compose.textsOf(SettingsTags.CLEAR_MEDIA).first())
         // The items in order, top to bottom.
-        val tops = listOf(SettingsTags.LANGUAGE, SettingsTags.USUAL, SettingsTags.HANDLE_RIGHT, SettingsTags.CLEAR_MEDIA)
+        val tops = listOf(SettingsTags.LANGUAGE, SettingsTags.THEME, SettingsTags.USUAL, SettingsTags.HANDLE_RIGHT, SettingsTags.CLEAR_MEDIA)
             .map { compose.onNodeWithTag(it).fetchSemanticsNode().boundsInRoot.top }
         assertEquals(tops.sorted(), tops)
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 5)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 5)
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 6)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 6)
         val back = compose.onNodeWithTag(SettingsTags.BACK).fetchSemanticsNode()
         assertEquals("Back to the book", AccessibilityChecks.clickActionLabel(back))
     }
@@ -159,6 +164,19 @@ class SettingsScreenTest {
         compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.USUAL_DIALOG) }
         assertEquals("4", value(SettingsTags.USUAL))
         assertEquals(Rational.of(4), usual.count.value)
+    }
+
+    // The theme taken in its dialog is shown at once, and held.
+    @Test
+    fun aThemeChosenIsShownAtOnce() {
+        show()
+        openSettings()
+        compose.onNodeWithTag(SettingsTags.THEME).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.THEME_DIALOG) }
+        compose.onNodeWithTag(SettingsTags.theme(ThemeChoice.DARK)).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(SettingsTags.THEME_DIALOG) }
+        assertEquals("Dark", value(SettingsTags.THEME))
+        assertEquals(ThemeChoice.DARK, theme.choice.value)
     }
 
     // L10N: the settings read in Russian, every word from the resources.
