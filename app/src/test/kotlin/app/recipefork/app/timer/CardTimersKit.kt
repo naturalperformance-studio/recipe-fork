@@ -29,6 +29,8 @@ import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.LocalHaptics
+import app.recipefork.app.ui.RecordingHaptics
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
@@ -56,6 +58,9 @@ abstract class CardTimersKit {
 
     /** The reader's usual serving count the cards open at; never set unless a test sets it. */
     protected val usual = HeldUsualServings()
+
+    /** The touch feedback the card gives, recorded. */
+    protected val haptics = RecordingHaptics()
     private var open by mutableStateOf<RecipeId?>(null)
 
     /** The font scale the card is shown at. */
@@ -80,7 +85,11 @@ abstract class CardTimersKit {
         val environment = CardEnvironment(usual) { emptyList() }
         compose.setContent {
             val density = LocalDensity.current
-            CompositionLocalProvider(LocalCardTimers provides timers.card, LocalDensity provides Density(density.density, fontScale)) {
+            CompositionLocalProvider(
+                LocalCardTimers provides timers.card,
+                LocalDensity provides Density(density.density, fontScale),
+                LocalHaptics provides haptics,
+            ) {
                 MaterialTheme {
                     val id = open
                     if (id == null) {

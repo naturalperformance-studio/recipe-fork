@@ -1,12 +1,9 @@
 package app.recipefork.app.timer
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -26,12 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.book.BookName
 import app.recipefork.app.card.CardTarget
+import app.recipefork.app.ui.Haptic
+import app.recipefork.app.ui.rememberHaptics
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
@@ -153,14 +151,18 @@ class RecipeTimers internal constructor(
     }
 
     /** The reader stopped [step]'s timer ringing; it stays finished, and its notification stays, silent. */
-    internal fun stopRinging(step: Step) {
-        card.ringing.stop(key(step))
+    internal fun stopRinging(step: Step) = stopRinging(step.position)
+
+    internal fun stopRinging(position: Int) {
+        card.ringing.stop(TimerKey(book, recipeId, position))
     }
 
     internal fun rings(step: Step): Boolean = key(step) in ringing
 
-    internal fun cancel(step: Step) {
-        card.scope.launch { card.turns.withLock { store.cancel(key(step)) } }
+    internal fun cancel(step: Step) = cancel(step.position)
+
+    internal fun cancel(position: Int) {
+        card.scope.launch { card.turns.withLock { store.cancel(TimerKey(book, recipeId, position)) } }
     }
 
     /**
@@ -223,7 +225,7 @@ fun rememberRecipeTimers(recipeId: RecipeId, title: String): RecipeTimers {
 internal data class Restart(val step: Step, val name: String)
 
 /**
- * A step's timer on the card (FLOW-016): a control named by the timer's name — each reference in a derived one read as
+ * A step's timer on the card (FLOW-016): a [TimerButton] named by the timer's name — each reference in a derived one read as
  * [quantity] gives it, as the step reads now (FLOW-016 (8)), or, while it is held, the name it was started under — that
  * starts it, with its duration beside it; once started, the time remaining instead, counting down by the clock, then that it has finished. A started
  * timer has an action beside it that cancels it, or clears it once finished; while a finished one rings, another
@@ -249,48 +251,50 @@ fun StepTimer(
     }
     // The control first, then its actions; where they do not fit beside it — a long name, a large font, a narrow
     // screen — the actions wrap under it, and the status under the name, each whole (A11Y-004).
-    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        FlowRow(
-            Modifier
-                .weight(1f)
-                .align(Alignment.CenterVertically)
-                .heightIn(min = CardTarget)
-                .clickable(
-                    onClickLabel = stringResource(R.string.timer_start_action),
-                    role = Role.Button,
-                    onClick = { timers.start(step, current) },
-                )
-                .testTag(TimerTags.start(step.position)),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.Center,
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        TimerButton(
+            icon = if (held != null && !finished) R.drawable.ic_step_timer else R.drawable.ic_video_play,
+            action = stringResource(R.string.timer_start_action),
+            tag = TimerTags.start(step.position),
+            onClick = { timers.start(step, current) },
+            modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+            // A press on a running timer only asks whether to restart it: the answer confirms, the question does not.
+            confirms = held == null || finished,
         ) {
-            Text(
-                name,
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.align(Alignment.CenterVertically),
-            )
-            Text(
-                status,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.status(step.position)),
-            )
+            FlowRow(
+                Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                )
+                Text(
+                    status,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.status(step.position)),
+                )
+            }
         }
         if (finished && timers.rings(step)) {
-            TimerAction(
-                text = stringResource(R.string.timer_stop),
+            TimerButton(
+                icon = R.drawable.ic_timer_stop,
                 action = stringResource(R.string.timer_stop_action),
+                tag = TimerTags.stop(step.position),
                 onClick = { timers.stopRinging(step) },
-                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.stop(step.position)),
-            )
+                modifier = Modifier.align(Alignment.CenterVertically),
+            ) { Text(stringResource(R.string.timer_stop)) }
         }
         if (held != null) {
-            TimerAction(
-                text = stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel),
+            TimerButton(
+                icon = R.drawable.ic_remove_timer,
                 action = stringResource(if (finished) R.string.timer_clear_action else R.string.timer_cancel_action),
+                tag = TimerTags.cancel(step.position),
                 onClick = { timers.cancel(step) },
-                modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.cancel(step.position)),
-            )
+                modifier = Modifier.align(Alignment.CenterVertically),
+            ) { Text(stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel)) }
         }
     }
 }
@@ -302,6 +306,7 @@ fun RestartQuestion(timers: RecipeTimers) {
     val step = restart.step
     val timer = step.timer ?: return
     val remaining = timers.held[step.position]?.remaining(timers.now) ?: Duration.ZERO
+    val haptics = rememberHaptics()
     AlertDialog(
         onDismissRequest = timers::declineRestart,
         title = { Text(stringResource(R.string.timer_restart_title)) },
@@ -317,7 +322,10 @@ fun RestartQuestion(timers: RecipeTimers) {
         },
         confirmButton = {
             TextButton(
-                onClick = timers::confirmRestart,
+                onClick = {
+                    haptics.perform(Haptic.CONFIRM)
+                    timers.confirmRestart()
+                },
                 modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(TimerTags.RESTART_CONFIRM),
             ) { Text(stringResource(R.string.timer_restart_confirm)) }
         },
@@ -329,21 +337,6 @@ fun RestartQuestion(timers: RecipeTimers) {
         },
         modifier = Modifier.testTag(TimerTags.RESTART_QUESTION),
     )
-}
-
-/** An action beside a started timer, at least the card's [CardTarget] square (A11Y-003, A11Y-007), announced as what it does (A11Y-005). */
-@Composable
-private fun TimerAction(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .heightIn(min = CardTarget)
-            .widthIn(min = CardTarget)
-            .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-    }
 }
 
 /** A timer's full duration as the author set it: hours and whole minutes. */
@@ -383,4 +376,10 @@ object TimerTags {
     fun status(position: Int) = "timer-status-$position"
     fun cancel(position: Int) = "timer-cancel-$position"
     fun stop(position: Int) = "timer-stop-$position"
+    fun tooltip(control: String) = "$control-tooltip"
+    const val BAR = "timer-bar"
+    fun barTimer(position: Int) = "timer-bar-$position"
+    fun barStatus(position: Int) = "timer-bar-status-$position"
+    fun barCancel(position: Int) = "timer-bar-cancel-$position"
+    fun barStop(position: Int) = "timer-bar-stop-$position"
 }

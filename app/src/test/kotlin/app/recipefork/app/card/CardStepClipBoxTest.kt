@@ -20,7 +20,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -225,7 +224,7 @@ class CardStepClipBoxTest {
         // The box fills the step's media width: from under the step's text to the card's edge, as a photograph's.
         val step = bounds(CardTags.step(1))
         assertEquals(step.right, clip.media.right, 1f)
-        assertEquals(step.left + with(compose.density) { 32.dp.toPx() }, clip.media.left, 1f)
+        assertEquals(step.left + with(compose.density) { StepIndent.toPx() }, clip.media.left, 1f)
     }
 
     private fun controlName() = compose.onNodeWithTag(CardTags.stepVideoControl(1)).fetchSemanticsNode()

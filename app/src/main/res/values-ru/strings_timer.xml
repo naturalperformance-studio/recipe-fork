@@ -24,4 +24,7 @@
     <string name="timer_unheard_timers_off">Уведомления таймеров выключены. Таймер идёт, но его не будет слышно, пока приложение закрыто или экран заблокирован.</string>
     <string name="timer_unheard_settings">Открыть настройки</string>
     <string name="timer_unheard_dismiss">Понятно</string>
+    <string name="timer_bar_show_action">Показать его шаг</string>
+    <string name="timer_bar_ringing">Звенит</string>
+    <string name="timer_bar_step">Шаг %1$d</string>
 </resources>

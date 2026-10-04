@@ -16,7 +16,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
@@ -157,11 +156,11 @@ internal fun StepText(step: Step, references: CardReferences, modifier: Modifier
 
 /**
  * How a step reads on the card: larger than the ingredient list and than body text anywhere else in the product, so
- * it can be read at arm's length (A11Y-007); it follows the font scale like any text (A11Y-004). The step's number
- * is set the same.
+ * it can be read at arm's length (A11Y-007): the theme's title style, a size up from body text; it follows the font
+ * scale like any text (A11Y-004).
  */
 internal val stepTextStyle: TextStyle
-    @Composable get() = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 26.sp)
+    @Composable get() = MaterialTheme.typography.titleLarge
 
 /** A narrow space that never breaks, so the arrow stays on its quantity's line. */
 private const val ARROW_GAP = "\u202F"
