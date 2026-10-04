@@ -256,7 +256,7 @@ class BoundMarksEditorTest {
         assertTrue(!marked(EditorTags.LANGUAGE_MARK))
         compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).performScrollTo().performClick()
         awaitMark(EditorTags.LANGUAGE_MARK, string(R.string.editor_mark_language_missing))
-        compose.onNodeWithTag(EditorTags.LANGUAGE).performScrollTo().performClick()
+        compose.declareLanguage(RecipeLanguage.EN)
         awaitNoMark(EditorTags.LANGUAGE_MARK)
     }
 

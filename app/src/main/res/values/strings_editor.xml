@@ -11,6 +11,9 @@
     <string name="editor_language_ru">Russian</string>
     <string name="editor_language_en">English</string>
     <string name="editor_language_none">Not declared</string>
+    <!-- The segments of the language switch [RU | EN]; the screen reader names the language in full. -->
+    <string name="editor_language_ru_short">RU</string>
+    <string name="editor_language_en_short">EN</string>
     <string name="editor_language_to_ru">Declare the recipe written in Russian</string>
     <string name="editor_language_to_en">Declare the recipe written in English</string>
     <string name="editor_language_clear">Clear</string>
@@ -19,7 +22,6 @@
     <string name="editor_tags">Tags</string>
     <string name="editor_tag_search">Find a tag</string>
     <string name="editor_tag_add_action">Add the tag %1$s</string>
-    <string name="editor_tag_remove">Remove</string>
     <string name="editor_tag_remove_action">Remove the tag %1$s</string>
     <string name="editor_tag_no_match">No tag in the dictionary matches this.</string>
     <!-- The serving count, after the tags (FLOW-024, DOM-015). -->

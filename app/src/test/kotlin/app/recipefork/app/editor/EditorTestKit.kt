@@ -32,6 +32,7 @@ import app.recipefork.core.api.DictionariesDto
 import app.recipefork.core.api.IngredientEntryDto
 import app.recipefork.core.api.TagDto
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.RecipeLanguage
 import org.robolectric.Shadows.shadowOf
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -192,3 +193,14 @@ fun SemanticsNodeInteractionsProvider.textsOf(tag: String): List<String> {
 /** What the screen reader reads for the node tagged [tag] beyond any text: its content description. */
 fun SemanticsNodeInteractionsProvider.descriptionOf(tag: String): List<String> =
     onNodeWithTag(tag).fetchSemanticsNode().config.getOrElse(SemanticsProperties.ContentDescription) { emptyList() }
+
+/** The language the editor's segmented switch shows declared: the one segment selected, or null where neither is. */
+fun SemanticsNodeInteractionsProvider.declaredLanguage(): RecipeLanguage? =
+    RecipeLanguage.entries.filter { language ->
+        onNodeWithTag(EditorTags.language(language)).fetchSemanticsNode().config.getOrElse(SemanticsProperties.Selected) { false }
+    }.also { check(it.size <= 1) { "both languages shown declared" } }.singleOrNull()
+
+/** Taps [language] on the editor's segmented switch, scrolled to first. */
+fun SemanticsNodeInteractionsProvider.declareLanguage(language: RecipeLanguage) {
+    onNodeWithTag(EditorTags.language(language)).performScrollTo().performClick()
+}

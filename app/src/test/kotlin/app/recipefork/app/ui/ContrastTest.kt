@@ -33,6 +33,8 @@ class ContrastTest {
         text("a reference in a step, on its tint", c.onSurface, c.secondaryContainer),
         text("a reference that exceeds its ingredient, on the warning tint", c.onSurface, c.errorContainer),
         text("a filter chip's label", c.onSecondaryContainer, c.secondaryContainer),
+        text("a tag's input chip in the editor, the declared language's segment", c.onSecondaryContainer, c.secondaryContainer),
+        text("an offered tag's suggestion chip, the other language's segment", c.onSurfaceVariant, c.surface),
         text("a tonal button's label and icon — a timer's controls", c.onSecondaryContainer, c.secondaryContainer),
         text("the snackbar's statement and a tooltip's text", c.inverseOnSurface, c.inverseSurface),
         text("the snackbar's action", c.inversePrimary, c.inverseSurface),
@@ -53,6 +55,7 @@ class ContrastTest {
         graphic("a focused field's and a chosen option's boundary, the chosen view's bar", c.primary, c.surface),
         graphic("a checkbox's and a radio button's boundary, the free-text warning's icon", c.onSurfaceVariant, c.surface),
         graphic("a filter chip's remove icon", c.onSecondaryContainer, c.secondaryContainer),
+        graphic("a suggestion chip's and the language switch's boundary", c.outline, c.surface),
         graphic("an entry's ⋮, on its card", c.onSurface, c.surfaceContainerHighest),
         graphic("the indicator of a list being read", c.primary, c.surface),
     )

@@ -8,6 +8,9 @@
     <string name="editor_language_ru">Русский</string>
     <string name="editor_language_en">Английский</string>
     <string name="editor_language_none">Не указан</string>
+    <!-- The segments of the language switch [RU | EN]; the screen reader names the language in full. -->
+    <string name="editor_language_ru_short">РУС</string>
+    <string name="editor_language_en_short">АНГЛ</string>
     <string name="editor_language_to_ru">Указать, что рецепт написан по-русски</string>
     <string name="editor_language_to_en">Указать, что рецепт написан по-английски</string>
     <string name="editor_language_clear">Сбросить</string>
@@ -15,7 +18,6 @@
     <string name="editor_tags">Теги</string>
     <string name="editor_tag_search">Найти тег</string>
     <string name="editor_tag_add_action">Добавить тег %1$s</string>
-    <string name="editor_tag_remove">Убрать</string>
     <string name="editor_tag_remove_action">Убрать тег %1$s</string>
     <string name="editor_tag_no_match">В словаре нет подходящего тега.</string>
     <string name="editor_servings">Порций</string>
