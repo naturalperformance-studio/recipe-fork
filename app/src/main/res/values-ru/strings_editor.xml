@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="editor_back">Готово</string>
+    <string name="editor_back">Назад</string>
+    <!-- The top bar's "Done": what is written is in the book, and a short statement says so. -->
+    <string name="editor_done">Готово</string>
+    <string name="editor_done_action">Сохранить написанное</string>
+    <string name="editor_saved">Сохранено</string>
     <string name="editor_back_action">Показать рецепт</string>
     <string name="editor_title">Название</string>
     <string name="editor_frozen">Этот рецепт нельзя изменить в его нынешнем состоянии.</string>

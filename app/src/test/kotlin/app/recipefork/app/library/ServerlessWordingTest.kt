@@ -14,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.Mode
 import app.recipefork.app.R
+import app.recipefork.app.editor.textsOf
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
@@ -192,11 +193,13 @@ class ServerlessWordingTest {
         assertSaysNothingOfTheServer("the editor on a frozen recipe")
         compose.runOnIdle { session.closeEditor() }
         compose.runOnIdle { session.openEditor(local.id.value) }
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientWarning(0)), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the editor")
-        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientWarningText(0)), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the free-text warning")
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientWarning(0)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
+        // The free-text warning is among what the editor shows, in its name's supporting text.
+        assertSaysNothingOfTheServer("the editor and its free-text warning")
+        assertEquals(
+            listOf(context.getString(R.string.editor_ingredient_free_text_warning_serverless)),
+            compose.textsOf(EditorTags.ingredientWarning(0)),
+        )
         compose.onNodeWithTag(ChecklistTags.CONTROL).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(ChecklistTags.DIALOG), PATIENCE_MS)
         assertSaysNothingOfTheServer("the checklist")

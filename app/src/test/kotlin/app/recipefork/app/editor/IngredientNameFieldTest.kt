@@ -133,7 +133,7 @@ class IngredientNameFieldTest {
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 
-    private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun fieldText(tag: String): String =
         compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
@@ -307,7 +307,7 @@ class IngredientNameFieldTest {
         val words = stored(id).ingredients[1]
         assertNull(words.dictionaryEntry)
         assertEquals("wild garlic", words.freeTextName)
-        assertEquals(string(R.string.editor_ingredient_free_text_warning), compose.descriptionOf(EditorTags.ingredientWarning(1)).single())
+        assertEquals(string(R.string.editor_ingredient_free_text_warning), compose.textsOf(EditorTags.ingredientWarning(1)).single())
         assertEquals(emptyList<String>(), choices(1))
     }
 
@@ -341,20 +341,21 @@ class IngredientNameFieldTest {
         )
         runBlocking { recipes.save(recipe) }
         openDirectly(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientWarning(0)), PATIENCE_MS)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientWarning(0)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
         assertEquals("chiken", fieldText(EditorTags.ingredientName(0)))
         type(0, "chicken w")
         pick(IngredientNameTags.entry(0, 11))
-        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.ingredientWarning(0)), PATIENCE_MS)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientWarning(0)), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
         val row = stored(recipe.id).ingredients.single()
         assertEquals(11L, row.dictionaryEntry)
         assertNull(row.freeTextName)
         assertEquals("chicken wings", fieldText(EditorTags.ingredientName(0)))
-        // Typed over again, the row is the author's words once more and warns again.
+        // Typed over again, the row is the author's words once more and, once left, warns again.
         type(0, "smoked chicken wings")
         assertNull(stored(recipe.id).ingredients.single().dictionaryEntry)
         assertEquals("smoked chicken wings", stored(recipe.id).ingredients.single().freeTextName)
-        assertTrue(exists(EditorTags.ingredientWarning(0)))
+        compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarning(0)) }
     }
 
     // FLOW-023 (11), FLOW-022 (5): these entries give no divisibility, so a picked `piece` row still asks.

@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The editor (FLOW-024). -->
-    <string name="editor_back">Done</string>
+    <string name="editor_back">Back</string>
+    <!-- The top bar's "Done": what is written is in the book, and a short statement says so. -->
+    <string name="editor_done">Done</string>
+    <string name="editor_done_action">Save what is written</string>
+    <string name="editor_saved">Saved</string>
     <string name="editor_back_action">Show the recipe</string>
     <string name="editor_title">Title</string>
     <!-- A recipe outside local, private and rejected is open, not editable (FLOW-002). -->
