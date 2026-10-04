@@ -97,6 +97,10 @@ class CardSessionTest {
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         val entry = LibraryTags.entry(recipe.id.value)
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(entry)).fetchSemanticsNodes().size == 1 }
+        // The list is scrolled to its end, past the room it leaves under the view's floating action, so that every entry
+        // stands clear of it and the tap reaches the entry.
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }
+        compose.waitForIdle()
         compose.onNodeWithTag(entry).performScrollTo().performClick()
         awaitLines()
     }

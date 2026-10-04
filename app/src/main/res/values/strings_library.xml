@@ -84,29 +84,24 @@
     <string name="library_order_newest">Newest first</string>
     <string name="library_order_oldest">Oldest first</string>
     <string name="library_order_title">By title</string>
-    <!-- FLOW-035, CAT-002, CAT-006: the filters under the search field — an ingredient and tags. -->
-    <string name="library_filter_add">Add a filter</string>
-    <string name="library_filter_add_action">Choose a filter for the list</string>
+    <!-- FLOW-035, CAT-002, CAT-006: the quick filters under the search field and the sheet of every filter. -->
+    <string name="library_filter_add">All filters</string>
+    <string name="library_filter_sheet_title">Filters</string>
     <string name="library_filter_ingredient">Ingredient</string>
     <string name="library_filter_tags">Tags</string>
     <string name="library_filter_clear">Clear filters</string>
     <string name="library_filter_remove">Remove the filter</string>
     <string name="library_filter_unknown_ingredient">Unknown ingredient</string>
     <string name="library_filter_unknown_tag">Unknown tag</string>
-    <string name="library_filter_ingredient_title">Filter by ingredient</string>
     <string name="library_filter_ingredient_field">Ingredient</string>
     <string name="library_filter_ingredient_hint">Recipes holding it are listed, the most per serving first.</string>
-    <string name="library_filter_ingredient_pick_action">Filter by “%1$s”</string>
-    <string name="library_filter_tags_title">Filter by tags</string>
     <string name="library_filter_tags_hint">Recipes carrying every chosen tag are listed.</string>
     <string name="library_filter_tags_none">The tag dictionary holds no tags yet.</string>
     <string name="library_filter_tags_field">Find a tag</string>
     <string name="library_filter_tags_no_match">No tag in the dictionary matches this.</string>
     <string name="library_filter_done">Done</string>
-    <string name="library_filter_cancel">Cancel</string>
     <!-- The filter by a recipe's declared language (L10N-005). -->
     <string name="library_filter_language">Language</string>
-    <string name="library_filter_language_title">Filter by language</string>
     <string name="library_filter_language_hint">Recipes written in it are listed.</string>
     <string name="library_filter_language_ru">Russian</string>
     <string name="library_filter_language_en">English</string>
