@@ -85,6 +85,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.recipefork.app.ui.Haptic
+import app.recipefork.app.ui.rememberHaptics
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.interfaceLanguage
@@ -531,6 +533,8 @@ private fun ServingsControl(
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
 ) {
+    // Each step of the count answers with a light tick; at ¼ the fewer action is disabled, so a refused step gives none.
+    val haptics = rememberHaptics()
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
             stringResource(if (approximate) R.string.card_servings_approximate else R.string.card_servings, count),
@@ -542,7 +546,10 @@ private fun ServingsControl(
             name = stringResource(R.string.card_servings_fewer),
             action = stringResource(R.string.card_servings_fewer_action),
             enabled = canDecrease,
-            onClick = onDecrease,
+            onClick = {
+                haptics.perform(Haptic.TICK)
+                onDecrease()
+            },
             modifier = Modifier.testTag(CardTags.SERVINGS_FEWER),
         )
         StepAction(
@@ -550,7 +557,10 @@ private fun ServingsControl(
             name = stringResource(R.string.card_servings_more),
             action = stringResource(R.string.card_servings_more_action),
             enabled = true,
-            onClick = onIncrease,
+            onClick = {
+                haptics.perform(Haptic.TICK)
+                onIncrease()
+            },
             modifier = Modifier.testTag(CardTags.SERVINGS_MORE),
         )
     }

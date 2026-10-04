@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.recipefork.app.R
+import app.recipefork.app.ui.Haptic
+import app.recipefork.app.ui.rememberHaptics
 import kotlinx.coroutines.flow.first
 
 /** How far from the editor's top or bottom edge a dragged row starts scrolling it. */
@@ -82,6 +84,7 @@ class RowDrag internal constructor(
     private val edge: Float,
     private val step: Float,
     private val onDrop: (from: Int, to: Int) -> Unit,
+    private val onPass: () -> Unit,
 ) {
     /** The position of the row being dragged, or null. */
     var dragged by mutableStateOf<Int?>(null)
@@ -161,8 +164,15 @@ class RowDrag internal constructor(
 
     internal fun moveBy(distance: Float, pointerY: Float) {
         if (pointer == null) origin = pointerY - distance
-        offset += distance
+        shift(distance)
         pointer = pointerY
+    }
+
+    /** Moves the dragged row [distance] further; each time that brings it to a new place, [onPass]. */
+    private fun shift(distance: Float) {
+        val before = target
+        offset += distance
+        if (target != before) onPass()
     }
 
     internal fun drop() {
@@ -202,7 +212,7 @@ class RowDrag internal constructor(
             val speed = snapshotFlow { edgeSpeed() }.first { it != 0f }
             withFrameNanos { }
             val consumed = scroll.state.scrollBy(speed)
-            offset += consumed
+            shift(consumed)
             if (consumed == 0f) {
                 val at = pointer
                 snapshotFlow { pointer }.first { it != at }
@@ -211,13 +221,18 @@ class RowDrag internal constructor(
     }
 }
 
-/** A [RowDrag] for one list, held for the screen; [onDrop] makes the move. */
+/** A [RowDrag] for one list, held for the screen; [onDrop] makes the move. A row passing to a new place ticks. */
 @Composable
 internal fun rememberRowDrag(scroll: EditorScroll, spacing: Dp, onDrop: (from: Int, to: Int) -> Unit): RowDrag {
     val density = LocalDensity.current
     val drop by rememberUpdatedState(onDrop)
+    val haptics by rememberUpdatedState(rememberHaptics())
     val drag = remember(scroll, density) {
-        with(density) { RowDrag(scroll, spacing.toPx(), SCROLL_EDGE.toPx(), SCROLL_STEP.toPx()) { from, to -> drop(from, to) } }
+        with(density) {
+            RowDrag(scroll, spacing.toPx(), SCROLL_EDGE.toPx(), SCROLL_STEP.toPx(), { from, to -> drop(from, to) }) {
+                haptics.perform(Haptic.TICK)
+            }
+        }
     }
     val dragging = drag.dragged != null
     LaunchedEffect(drag, dragging) { if (dragging) drag.scrollAlong() }

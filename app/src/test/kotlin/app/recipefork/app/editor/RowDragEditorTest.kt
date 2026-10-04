@@ -3,6 +3,7 @@ package app.recipefork.app.editor
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
@@ -33,6 +34,9 @@ import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
+import app.recipefork.app.ui.Haptic
+import app.recipefork.app.ui.LocalHaptics
+import app.recipefork.app.ui.RecordingHaptics
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.QuantityUnit
@@ -78,6 +82,7 @@ class RowDragEditorTest(private val handleRight: Boolean) {
     private val created = Instant.parse("2026-10-02T12:00:00Z")
     private val opened = mutableStateOf<RecipeId?>(null)
     private var shown = false
+    private val haptics = RecordingHaptics()
 
     @Before
     fun setUp() {
@@ -98,7 +103,9 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         if (shown) return
         shown = true
         val environment = EditorEnvironment(active, device.catalog(context), dragHandleSide = HeldDragHandleSide(handleRight)) { created.plusSeconds(60) }
-        compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
+        compose.setContent {
+            CompositionLocalProvider(LocalHaptics provides haptics) { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
+        }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
     }
@@ -343,6 +350,23 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         }
         assertEquals(named(original), named(byDrag))
         assertEquals(original.steps.associate { it.text to it.timer }, byDrag.steps.associate { it.text to it.timer })
+    }
+
+    // A dragged row ticks once each time it passes to a new place — not with every move of the finger — down and up.
+    @Test
+    @Config(qualifiers = "w411dp-h4000dp")
+    fun aDraggedRowTicksAtEachNewPlace() {
+        val id = seed(referenced()).id
+        openDirectly(id)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(4)), PATIENCE_MS)
+        assertEquals(emptyList<Haptic>(), haptics.all)
+        // Twenty moves of the finger, three places passed.
+        dragStep(0, 3)
+        assertEquals(List(3) { Haptic.TICK }, haptics.all)
+        assertEquals(listOf("Rest.", "Add", "Stir", "Mix", "Bake."), stepTexts().map { it.substringBefore(' ') })
+        dragIngredient(3, 1)
+        assertEquals(List(5) { Haptic.TICK }, haptics.all)
+        assertEquals(listOf("salt", "yeast", "flour", "water"), ingredientNames())
     }
 
     // Dragging against the bottom edge scrolls the editor, so a row travels the whole recipe; against the top, back.

@@ -3,6 +3,7 @@ package app.recipefork.app.card
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,9 @@ import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
+import app.recipefork.app.ui.Haptic
+import app.recipefork.app.ui.LocalHaptics
+import app.recipefork.app.ui.RecordingHaptics
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
@@ -56,6 +60,7 @@ class CardServingsTest {
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
     private val environment = CardEnvironment { device.database.dictionaryDao().ingredients() }
     private val now = Instant.parse("2026-10-01T12:00:00Z")
+    private val haptics = RecordingHaptics()
 
     @Before
     fun setUp() {
@@ -96,8 +101,10 @@ class CardServingsTest {
         if (!composed) {
             composed = true
             compose.setContent {
-                MaterialTheme {
-                    shown?.let { key(it, opened) { CardScreen(it, recipes, environment, onBack = {}, onEdit = {}) } }
+                CompositionLocalProvider(LocalHaptics provides haptics) {
+                    MaterialTheme {
+                        shown?.let { key(it, opened) { CardScreen(it, recipes, environment, onBack = {}, onEdit = {}) } }
+                    }
                 }
             }
         }
@@ -158,6 +165,23 @@ class CardServingsTest {
         compose.onNodeWithTag(CardTags.SERVINGS_FEWER).assertIsEnabled()
         // Never marked approximate, in any form.
         assertFalse(servings().contains("≈") || servings().contains("~"))
+    }
+
+    // Each step of the count, − or +, gives one light tick; a − refused at ¼ gives none.
+    @Test
+    fun eachStepOfTheCountTicksAndARefusedOneDoesNot() {
+        show(save(forFour()).id)
+        assertEquals(emptyList<Haptic>(), haptics.all)
+        more()
+        assertEquals(listOf(Haptic.TICK), haptics.all)
+        fewer()
+        assertEquals(List(2) { Haptic.TICK }, haptics.all)
+        fewer(8)
+        assertEquals("Servings: ¼", servings())
+        assertEquals(List(10) { Haptic.TICK }, haptics.all)
+        fewer()
+        assertEquals("Servings: ¼", servings())
+        assertEquals(List(10) { Haptic.TICK }, haptics.all)
     }
 
     // SCALE-010: no ceiling.
