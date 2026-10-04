@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -23,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.recipefork.app.Mode
+import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.ForkAsked
@@ -32,6 +34,7 @@ import app.recipefork.app.card.forkUnlessHeld
 import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.data.DragHandleSide
+import app.recipefork.app.data.ThemeSetting
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.EditorScreen
@@ -91,6 +94,7 @@ fun AppNavHost(
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
     usualServings: UsualServings = card.usualServings,
     dragHandleSide: DragHandleSide = editor.dragHandleSide,
+    themeSetting: ThemeSetting = rememberThemeSetting(),
     navController: NavHostController = rememberNavController(),
 ) {
     val message by session.message.collectAsState()
@@ -114,7 +118,7 @@ fun AppNavHost(
         }
         composable(Destinations.SETTINGS_ROUTE) {
             SettingsScreen(
-                usualServings, dragHandleSide, recipes, mode, session.viewModelScope,
+                usualServings, dragHandleSide, themeSetting, recipes, mode, session.viewModelScope,
                 onBack = session::closeSettings,
             )
         }
@@ -269,3 +273,10 @@ private const val MOTION_MS = 300
 
 /** The destination beneath moves by this fraction of the width while the one above slides over it. */
 private const val BENEATH_SHIFT = 4
+
+/** The theme the reader chose, from the composition root: the one [MainActivity][app.recipefork.app.MainActivity] shows. */
+@Composable
+fun rememberThemeSetting(): ThemeSetting {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { (context as RecipeForkApplication).container.themeSetting }
+}

@@ -10,6 +10,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.createSavedStateHandle
@@ -63,15 +65,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Drawn edge to edge, each screen keeping its own content clear of the system bars, whose icons follow the
-        // scheme AppTheme shows — light whatever the system's mode, until the reader can choose (AppTheme follows a change).
-        showSystemBarsFor(dark = false)
         val container = (application as RecipeForkApplication).container
+        // Drawn edge to edge, each screen keeping its own content clear of the system bars. The window's background and
+        // the bars' icons follow the scheme the reader chose from the first frame, before any content is composed;
+        // AppTheme follows a change from then on.
+        showSystemBarsFor(dark = container.themeSetting.choice.value.dark(resources.configuration))
         // A recreated Activity has followed its intent already.
         if (savedInstanceState == null) follow(intent)
         setContent {
+            val theme by container.themeSetting.choice.collectAsState()
             CompositionLocalProvider(LocalStepToShow provides librarySession.stepToShow) {
-                AppTheme {
+                AppTheme(theme) {
                     Surface(modifier = Modifier.fillMaxSize().testTag(ROOT_TAG)) {
                         AppNavHost(librarySession, container.recipes, container.mode)
                     }

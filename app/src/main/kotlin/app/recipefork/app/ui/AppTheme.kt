@@ -2,12 +2,14 @@ package app.recipefork.app.ui
 
 import android.content.res.Resources
 import android.graphics.Color as AndroidColor
+import android.graphics.drawable.ColorDrawable
 import android.util.TypedValue
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.DimenRes
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +25,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
+import app.recipefork.app.data.ThemeChoice
+
+/**
+ * The application's theme as the reader [choice] gives it: light, dark, or the device's mode, followed as it changes.
+ */
+@Composable
+fun AppTheme(choice: ThemeChoice, content: @Composable () -> Unit) {
+    AppTheme(dark = choice.dark(isSystemInDarkTheme()), content = content)
+}
 
 /**
  * The application's theme, built from `res/values/app_theme.xml` (ADR 20261004): the light scheme, or the dark one
@@ -42,10 +53,13 @@ fun AppTheme(dark: Boolean = false, content: @Composable () -> Unit) {
 
 /**
  * Draws [this] Activity edge to edge with the system bars' icons readable on the [dark] or light scheme: the status
- * bar transparent, three-button navigation over a nearly opaque scrim of the scheme's lowest surface.
+ * bar transparent, three-button navigation over a nearly opaque scrim of the scheme's lowest surface. The window's
+ * own background is the scheme's surface, so nothing of the other scheme shows before the content is drawn.
  */
 fun ComponentActivity.showSystemBarsFor(dark: Boolean) {
-    val scrim = appColorScheme(resources, dark).surfaceContainerLowest.copy(alpha = NAVIGATION_SCRIM_ALPHA).toArgb()
+    val scheme = appColorScheme(resources, dark)
+    window.setBackgroundDrawable(ColorDrawable(scheme.surface.toArgb()))
+    val scrim = scheme.surfaceContainerLowest.copy(alpha = NAVIGATION_SCRIM_ALPHA).toArgb()
     val transparent = AndroidColor.TRANSPARENT
     enableEdgeToEdge(
         statusBarStyle = if (dark) SystemBarStyle.dark(transparent) else SystemBarStyle.light(transparent, transparent),

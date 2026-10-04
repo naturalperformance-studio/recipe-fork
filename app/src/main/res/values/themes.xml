@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The application's window theme: the platform's light one without an action bar, the Compose interface drawing
-         everything itself. The window is drawn edge to edge (MainActivity), so the system bars' icons are dark, on the
-         light surface (AppTheme) that shows through them, from the window's very first frame. -->
+    <!-- The application's window theme: the platform's one without an action bar, the Compose interface drawing
+         everything itself. Before the application runs — the window the system shows while it starts — it follows the
+         device's mode: this light one, or its dark twin in values-night. From MainActivity's creation on, before the
+         first frame of its own, the window's background and the system bars' icons follow the scheme the reader chose
+         in the settings (light, dark or as on the device), which AppTheme keeps in step with any change. The colours
+         themselves are app_theme.xml's (ADR 20261004). -->
     <style name="Theme.RecipeFork" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/theme_light_surface</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
