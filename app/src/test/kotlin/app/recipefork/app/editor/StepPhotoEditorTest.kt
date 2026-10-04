@@ -306,6 +306,9 @@ class StepPhotoEditorTest {
 
         compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
+        // The photograph's file goes once the deletion can no longer be undone.
+        compose.awaitStatement("Step 2 removed")
+        compose.swipeAwayStatement()
 
         compose.waitForIdle()
         compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 2 && held().isEmpty() }

@@ -155,15 +155,15 @@ class RecipeEditor(
     /**
      * Deletes the step at [position], with its own timer, references and media; the steps after it move up and keep
      * theirs, which point at ingredients, never at steps, so each still resolves to the same ingredient (DOM-007).
-     * Once the change is in the book, [written] is given the identities of the media deleted with the step, whose
-     * files are then the caller's to delete.
+     * The deletion is offered for undoing as [removal]; once it is ended without being undone, [written] is given the
+     * identities of the media deleted with the step, whose files are then the caller's to delete.
      */
     fun removeStep(position: Int, written: suspend (removed: List<String>) -> Unit = {}): Boolean {
         val recipe = current.value ?: return false
+        if (position !in recipe.steps.indices) return false
         val removed = recipe.media.filter { it.attachment == MediaAttachment.ToStep(position) }.map { it.mediaId }
-        return edit({ edited ->
+        val removing = edit { edited ->
             val steps = edited.steps.sortedBy { it.position }
-            if (position !in steps.indices) return@edit edited
             stepKeys.remove(position, steps.size)
             edited.copy(
                 steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) },
@@ -171,7 +171,9 @@ class RecipeEditor(
                     .filter { (it.attachment as? MediaAttachment.ToStep)?.stepPosition != position }
                     .followingSteps { if (it > position) it - 1 else it },
             )
-        }) { if (removed.isNotEmpty()) written(removed) }
+        }
+        if (removing) offered.value = Removal(step = true, position, recipe) { if (removed.isNotEmpty()) written(removed) }
+        return removing
     }
 
     /**
@@ -442,21 +444,57 @@ class RecipeEditor(
     /**
      * Deletes the row at [position]; the rows after it move up. A step's reference to the deleted row is dropped, the
      * text closed up where it stood (single spacing, [ReferenceSpacing.closeUp]), and references to the rows after it
-     * follow them (DOM-007, FLOW-025 (5)).
+     * follow them (DOM-007, FLOW-025 (5)). The deletion is offered for undoing as [removal].
      */
-    fun removeIngredient(position: Int) = edit { recipe ->
-        if (position !in recipe.ingredients.indices) return@edit recipe
-        ingredientKeys.remove(position, recipe.ingredients.size)
-        val rows = recipe.ingredients.filterIndexed { i, _ -> i != position }.mapIndexed { i, row -> row.copy(position = i) }
-        val steps = recipe.steps.map { step ->
-            val left = ReferenceSpacing.withoutReferencesTo(step, position)
-            left.copy(
-                ingredientReferences = left.ingredientReferences.map {
-                    if (it.ingredientPosition > position) it.copy(ingredientPosition = it.ingredientPosition - 1) else it
-                },
-            )
+    fun removeIngredient(position: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (position !in recipe.ingredients.indices) return false
+        val removing = edit { edited ->
+            ingredientKeys.remove(position, edited.ingredients.size)
+            val rows = edited.ingredients.filterIndexed { i, _ -> i != position }.mapIndexed { i, row -> row.copy(position = i) }
+            val steps = edited.steps.map { step ->
+                val left = ReferenceSpacing.withoutReferencesTo(step, position)
+                left.copy(
+                    ingredientReferences = left.ingredientReferences.map {
+                        if (it.ingredientPosition > position) it.copy(ingredientPosition = it.ingredientPosition - 1) else it
+                    },
+                )
+            }
+            edited.copy(ingredients = rows, steps = steps)
         }
-        recipe.copy(ingredients = rows, steps = steps)
+        if (removing) offered.value = Removal(step = false, position, recipe) {}
+        return removing
+    }
+
+    private val offered = MutableStateFlow<Removal?>(null)
+
+    /**
+     * The last row or step deleted, while it can still be undone: until it is undone, ended, or the next change is
+     * made — which ends it — so undoing it puts back exactly the recipe it was taken from; null for none.
+     */
+    val removal: StateFlow<Removal?> = offered.asStateFlow()
+
+    /**
+     * Puts back what [removal] deleted, at its place, with all it held — content, references, timer and media.
+     * Returns whether it was put back: a removal already ended is not.
+     */
+    fun undoRemoval(removal: Removal): Boolean {
+        if (!offered.compareAndSet(removal, null)) return false
+        val now = current.value ?: return false
+        if (removal.step) stepKeys.insert(removal.position, now.steps.size)
+        else ingredientKeys.insert(removal.position, now.ingredients.size)
+        return edit { removal.before }
+    }
+
+    /**
+     * [removal] is no longer offered for undoing — its statement went without Undo, or the editor closed: what it
+     * deleted is gone for good, and the files of its media are handed over to be deleted once the deletion is in the
+     * book. Nothing happens for a removal already undone or ended.
+     */
+    fun endRemoval(removal: Removal) {
+        if (!offered.compareAndSet(removal, null)) return
+        // Behind every write already queued, the deletion itself among them.
+        saving.launch { writes.withLock { removal.ended() } }
     }
 
     private fun editIngredient(position: Int, change: (Ingredient) -> Ingredient) = edit { recipe ->
@@ -609,6 +647,8 @@ class RecipeEditor(
         val recipe = current.value ?: return false
         if (!recipe.state.editable) return false
         noteAction()
+        // Any change ends the removal still offered: undoing it would put back a recipe older than this change.
+        offered.value?.let(::endRemoval)
         val next = recipe.edited(clock()) { withEntryDivisibility(change(it)) }
         current.value = next
         if (left.value.isNotEmpty()) remark(next)
@@ -677,6 +717,17 @@ class RecipeEditor(
         private val writes = Mutex()
     }
 }
+
+/**
+ * A step ([step]) or an ingredient row deleted from [position], offered for undoing; [before] is the recipe it was
+ * deleted from, and [ended] what is done once it is gone for good.
+ */
+class Removal internal constructor(
+    val step: Boolean,
+    val position: Int,
+    internal val before: Recipe,
+    internal val ended: suspend () -> Unit,
+)
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
 data class PartsMadeWhole(val ingredientPosition: Int, val serial: Long)

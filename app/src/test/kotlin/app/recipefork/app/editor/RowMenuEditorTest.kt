@@ -445,7 +445,9 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         assertMarked(0, "2.50")
         assertOffered(1)
         compose.onNodeWithTag(EditorTags.ingredientName(1)).assertIsFocused()
-        // The offer is still that row's: picking from it names that row.
+        // The offer is still that row's: picking from it names that row, once the statement of the deletion, which
+        // covers the bottom of the screen, is swiped away.
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(IngredientNameTags.entry(1, 1)).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf(null, 1L, null), stored(id).ingredients.map { it.dictionaryEntry })

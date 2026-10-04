@@ -138,4 +138,8 @@
     <string name="editor_timer_notification_follows">Количества в нём следуют за числом порций читателя, поэтому у читателя уведомление может звучать и обрезаться иначе.</string>
     <string name="editor_timer_notification_name">Назвать таймер</string>
     <string name="editor_timer_notification_name_action">Назвать таймер шага %1$d</string>
+    <!-- A row or a step deleted, with the action that puts it back. -->
+    <string name="editor_ingredient_removed">Строка ингредиента %1$d убрана</string>
+    <string name="editor_step_removed">Шаг %1$d убран</string>
+    <string name="editor_undo">Вернуть</string>
 </resources>
