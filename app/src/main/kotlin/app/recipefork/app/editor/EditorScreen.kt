@@ -1,9 +1,11 @@
 package app.recipefork.app.editor
 
 import androidx.activity.compose.LocalActivity
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.onFocusedBoundsChanged
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -24,7 +26,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -161,11 +170,14 @@ fun EditorScreen(
 
     Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
-            // The top bar: back, and on its right the checklist, there whatever the recipe holds and whatever its state
-            // (GUIDE-003), then "Done" while the recipe can be changed.
+            // The top bar: back, and on its right what a fork takes (FLOW-030) and the checklist, there whatever the
+            // recipe holds and whatever its state (GUIDE-003), then "Done" while the recipe can be changed.
             EditorBar(
                 done = recipe?.state?.editable == true,
-                checklist = { ChecklistControl(environment.mode) },
+                checklist = {
+                    ForkNoteAction()
+                    ChecklistControl(environment.mode)
+                },
                 onBack = onClose,
                 onDone = {
                     // Leaving the field is what a field's marks wait for (FLOW-028); then, once every change is in
@@ -199,7 +211,6 @@ fun EditorScreen(
                         modifier = Modifier.testTag(EditorTags.FROZEN),
                     )
                 }
-                ForkNote(R.string.editor_fork_takes, Modifier.testTag(EditorTags.FORK_TAKES))
                 CompositionLocalProvider(LocalEditorStatements provides statements, LocalEditorScroll provides scroll) {
                     // The keyboard's Next goes from the title to the serving count, and from there into the rows.
                     val servings = remember { FocusRequester() }
@@ -455,21 +466,88 @@ internal fun RowMenu(
 }
 
 /**
- * A quiet line saying what a fork takes and what stays with the author unless the fork is their own (FLOW-030): the
- * same for every recipe, forked or not, and never a promise that forking can be prevented (FORK-002).
+ * What a fork takes and what stays with the author unless the fork is their own (FLOW-030), behind an info action in
+ * the top bar, so that it takes no room above the form: the same note for every recipe, forked or not, and never a
+ * promise that forking can be prevented (FORK-002). Opening it stores nothing.
  */
 @Composable
-private fun ForkNote(@StringRes text: Int, modifier: Modifier = Modifier) {
-    Text(
-        stringResource(text),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
+private fun ForkNoteAction() {
+    var open by rememberSaveable { mutableStateOf(false) }
+    val label = stringResource(R.string.editor_fork_note)
+    EditorBarAction(
+        icon = R.drawable.ic_info,
+        label = label,
+        action = stringResource(R.string.editor_fork_note_action),
+        tooltip = label,
+        tag = EditorTags.FORK_NOTE,
+        tooltipTag = EditorTags.FORK_NOTE_TOOLTIP,
+        onClick = { open = true },
     )
+    if (open) {
+        AlertDialog(
+            onDismissRequest = { open = false },
+            modifier = Modifier.testTag(EditorTags.FORK_NOTE_DIALOG),
+            title = { Text(label) },
+            text = { Text(stringResource(R.string.editor_fork_takes), Modifier.testTag(EditorTags.FORK_TAKES)) },
+            confirmButton = {
+                TextButton(onClick = { open = false }, modifier = Modifier.testTag(EditorTags.FORK_NOTE_CLOSE)) {
+                    Text(stringResource(R.string.editor_fork_note_close))
+                }
+            },
+        )
+    }
+}
+
+/**
+ * An icon-only action of the editor's top bar, as the card's: 48 dp, named [label] for the screen reader with its click
+ * announced as [action], and whose long press shows [tooltip] — the long press the action's own, so that it stays one
+ * element for the screen reader. Being only an icon, it keeps its width at any font size.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+internal fun EditorBarAction(
+    @DrawableRes icon: Int,
+    label: String,
+    action: String,
+    tooltip: String,
+    tag: String,
+    tooltipTag: String,
+    onClick: () -> Unit,
+) {
+    val state = rememberTooltipState()
+    val scope = rememberCoroutineScope()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Below),
+        tooltip = { PlainTooltip(Modifier.testTag(tooltipTag)) { Text(tooltip) } },
+        state = state,
+        enableUserInput = false,
+    ) {
+        Box(
+            Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .combinedClickable(
+                    role = Role.Button,
+                    onClickLabel = action,
+                    onClick = onClick,
+                    onLongClickLabel = stringResource(R.string.editor_action_show_name),
+                    onLongClick = { scope.launch { state.show() } },
+                )
+                .testTag(tag),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(painterResource(icon), contentDescription = label, tint = MaterialTheme.colorScheme.primary)
+        }
+    }
 }
 
 object EditorTags {
-    /** The line at the top saying what a fork takes and what stays with the author (FLOW-030). */
+    /** The top bar's info action that shows what a fork takes (FLOW-030). */
+    const val FORK_NOTE = "editor-fork-note"
+    const val FORK_NOTE_TOOLTIP = "editor-fork-note-tooltip"
+    const val FORK_NOTE_DIALOG = "editor-fork-note-dialog"
+    const val FORK_NOTE_CLOSE = "editor-fork-note-close"
+    /** The note itself, in the dialog: what a fork takes and what stays with the author (FLOW-030). */
     const val FORK_TAKES = "editor-fork-takes"
     const val SCREEN = "editor"
     const val BAR = "editor-bar"

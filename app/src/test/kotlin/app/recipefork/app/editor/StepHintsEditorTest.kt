@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -129,6 +131,9 @@ class StepHintsEditorTest {
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 
+    private fun bounds(tag: String): Rect =
+        compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+
     private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
     private fun statements(): Int =
@@ -181,6 +186,39 @@ class StepHintsEditorTest {
         compose.onNodeWithTag(EditorTags.stepText(0)).assertIsFocused()
         enter(EditorTags.TITLE)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
+    }
+
+    // The offer is the step field's own supporting text: it stands inside the field, under the line being typed, and
+    // coming takes no height above the field — the field's top and its text stay where they were while the author types.
+    @Test
+    @Config(qualifiers = "w360dp-h640dp")
+    fun theOfferIsTheStepFieldsSupportingTextAndShiftsNothingTyped() {
+        openDirectly(draft(Step(0, ""), Step(1, "")))
+        compose.onNodeWithTag(EditorTags.stepText(0)).performScrollTo()
+        compose.waitForIdle()
+        val heading = bounds(EditorTags.STEPS)
+        val before = bounds(EditorTags.stepText(0))
+        compose.onNodeWithTag(EditorTags.stepText(0)).performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
+        compose.waitForIdle()
+        val offer = bounds(EditorTags.stepReferencesOffered(0))
+        val field = bounds(EditorTags.stepText(0))
+        assertEquals(before.top, field.top, 1f)
+        assertEquals(heading.top, bounds(EditorTags.STEPS).top, 1f)
+        // Inside the field's outline area, below the line the author types into.
+        assertTrue("offer $offer is not under the typed line ${before}", offer.top >= before.bottom - 1f)
+        assertTrue("offer $offer is not inside the field $field", offer.bottom <= field.bottom + 1f && offer.left >= field.left)
+        // Its own node, read politely as it comes, and not merged into the field the author types into.
+        val node = compose.onNodeWithTag(EditorTags.stepReferencesOffered(0)).fetchSemanticsNode()
+        assertEquals(LiveRegionMode.Polite, node.config[SemanticsProperties.LiveRegion])
+        val offerText = string(R.string.editor_references_offered)
+        val fieldNode = compose.onNodeWithTag(EditorTags.stepText(0)).fetchSemanticsNode()
+        assertFalse(fieldNode.config.getOrElse(SemanticsProperties.Text) { emptyList() }.any { it.text == offerText })
+        assertTrue(fieldNode.config.getOrElseNullable(SemanticsProperties.LiveRegion) { null } == null)
+        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("Sift the flour.")
+        compose.waitForIdle()
+        assertTrue(offered(0))
+        assertEquals(before.top, bounds(EditorTags.stepText(0)).top, 1f)
     }
 
     // Said once an editing session: leaving the first step and beginning it again, or beginning another, says nothing.

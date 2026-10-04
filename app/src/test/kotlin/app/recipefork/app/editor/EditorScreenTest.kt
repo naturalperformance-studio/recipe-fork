@@ -297,12 +297,12 @@ class EditorScreenTest {
             // What it holds is shown…
             assertTrue("$state", "Beetroot salad" in compose.textsOf(EditorTags.TITLE))
             compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.chosen(11)), PATIENCE_MS)
-            // …and nothing on the screen changes it: no field takes text, and the only actions are to leave and to
-            // read the checklist (GUIDE-003).
+            // …and nothing on the screen changes it: no field takes text, and the only actions are to leave, to read
+            // what a fork takes (FLOW-030) and to read the checklist (GUIDE-003).
             val setText = compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes()
             assertEquals("$state", 0, setText.size)
             val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            assertEquals("$state", listOf(EditorTags.BACK, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
+            assertEquals("$state", listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
             compose.onNodeWithTag(EditorTags.remove(11)).assertDoesNotExist()
             compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).assertDoesNotExist()
             compose.onNodeWithTag(EditorTags.TAG_SEARCH).assertDoesNotExist()

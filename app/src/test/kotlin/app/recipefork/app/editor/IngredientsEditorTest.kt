@@ -677,7 +677,7 @@ class IngredientsEditorTest {
                 assertEquals("$state", listOf("яйца", "2", "шт"), compose.textsOf(EditorTags.ingredient(3)))
                 assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
                 val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-                assertEquals("$state", listOf(EditorTags.BACK, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
+                assertEquals("$state", listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
                 compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).assertDoesNotExist()
                 compose.onNodeWithTag(EditorTags.ingredientRemove(0)).assertDoesNotExist()
                 compose.onNodeWithTag(EditorTags.divisibility(3)).assertDoesNotExist()
