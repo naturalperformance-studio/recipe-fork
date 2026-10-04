@@ -1,29 +1,31 @@
 package app.recipefork.app.ui
 
+import android.content.Context
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
 /**
  * A11Y-002: the contrast of every pair of the theme's colours the screens draw text, icons and control boundaries in,
- * computed from [AppColors] — the colours MainActivity's theme gives — by the formula of WCAG 2.2. The application has
- * one light presentation, so there is no dark one to measure. A disabled control (drawn at 38 % opacity) is left out,
- * as WCAG leaves out inactive controls.
+ * computed in both schemes AppTheme builds from `app_theme.xml` — the light one and the dark one — by the formula of
+ * WCAG 2.2. A disabled control (drawn at 38 % opacity) is left out, as WCAG leaves out inactive controls.
  */
+@RunWith(AndroidJUnit4::class)
 class ContrastTest {
-    private val c: ColorScheme = AppColors
-
     /** A foreground on a background, where it is drawn, and the ratio it must reach. */
     private data class Pair(val where: String, val foreground: Color, val background: Color, val least: Double)
 
     private fun text(where: String, foreground: Color, background: Color) = Pair(where, foreground, background, TEXT)
     private fun graphic(where: String, foreground: Color, background: Color) = Pair(where, foreground, background, GRAPHIC)
 
-    private val pairs = listOf(
+    private fun pairs(c: ColorScheme) = listOf(
         // Text.
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
         text("muted notes and marks — an entry's sending mark, step notes, ingredient notes, labels, placeholders, the synonym beside an offered entry", c.onSurfaceVariant, c.surface),
@@ -73,11 +75,19 @@ class ContrastTest {
         graphic("the progress of a file being imported or exported, on its track", c.primary, c.surfaceContainerHighest),
     )
 
+    private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }
+        .map { "${it.where}: %.2f:1, less than %.1f:1".format(ratio(it.foreground, it.background), it.least) }
+
+    private val resources = ApplicationProvider.getApplicationContext<Context>().resources
+
     @Test
-    fun everyPairTheScreensUseMeetsItsThreshold() {
-        val failing = pairs.filter { ratio(it.foreground, it.background) < it.least }
-            .map { "${it.where}: %.2f:1, less than %.1f:1".format(ratio(it.foreground, it.background), it.least) }
-        assertEquals(emptyList<String>(), failing)
+    fun everyPairTheScreensUseMeetsItsThresholdInTheLightScheme() {
+        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = false)))
+    }
+
+    @Test
+    fun everyPairTheScreensUseMeetsItsThresholdInTheDarkScheme() {
+        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = true)))
     }
 
     // The formula itself, on the pairs whose ratios are known.

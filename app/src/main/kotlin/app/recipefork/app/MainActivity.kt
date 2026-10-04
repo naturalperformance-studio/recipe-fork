@@ -3,11 +3,8 @@ package app.recipefork.app
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +27,7 @@ import app.recipefork.app.timer.TimerKey
 import app.recipefork.app.timer.TimerService
 import app.recipefork.app.ui.AppNavHost
 import app.recipefork.app.ui.AppTheme
+import app.recipefork.app.ui.showSystemBarsFor
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -65,12 +63,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Drawn edge to edge, each screen keeping its own content clear of the system bars; the interface is light
-        // whatever the system's mode (AppTheme), so the bars' icons are dark on it. A dark theme will change these styles.
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(NAVIGATION_SCRIM, NAVIGATION_SCRIM),
-        )
+        // Drawn edge to edge, each screen keeping its own content clear of the system bars, whose icons follow the
+        // scheme AppTheme shows — light whatever the system's mode, until the reader can choose (AppTheme follows a change).
+        showSystemBarsFor(dark = false)
         val container = (application as RecipeForkApplication).container
         // A recreated Activity has followed its intent already.
         if (savedInstanceState == null) follow(intent)
@@ -114,9 +109,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val ROOT_TAG = "root"
-
-        /** The scrim behind three-button navigation, where the platform keeps one: the light surface, nearly opaque. */
-        private val NAVIGATION_SCRIM = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 
         /**
          * Follows a recipe file at [uri] handed to the application in [mode]: in [Mode.Serverless] it is imported, the
