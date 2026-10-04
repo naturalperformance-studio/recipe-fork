@@ -26,7 +26,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -264,7 +263,7 @@ fun LibraryScreen(
                 )
                 LibraryView.OWN -> OwnList(
                     recipes, session, editor, timers, mode, thumbnails, card.ingredients,
-                    ownList, bottom, notice, onOffer = { offers[LibraryView.OWN] = it },
+                    ownList, bottom, notice, write, onOffer = { offers[LibraryView.OWN] = it },
                 )
             }
         }
@@ -421,6 +420,7 @@ private fun OwnList(
     listState: LazyListState,
     bottom: Dp,
     reveal: String?,
+    onWrite: () -> Unit,
     onOffer: (Boolean) -> Unit,
 ) {
     val search = rememberSearchField(LibraryView.OWN, session)
@@ -465,7 +465,7 @@ private fun OwnList(
     val offered = shown != null && !(shown.viewIsEmpty && !shown.narrowed)
     SideEffect { onOffer(offered) }
     if (shown != null && shown.viewIsEmpty && !shown.narrowed) {
-        NothingWritten(recipes, session, editor, Modifier.padding(bottom = bottom))
+        NothingWritten(onWrite, Modifier.padding(bottom = bottom))
         return
     }
     Box(Modifier.fillMaxSize()) {
@@ -509,21 +509,19 @@ private fun OwnList(
 }
 
 /**
- * The own-recipes view of a book in which nothing has been written: it says so, and its one offer writes a new
- * recipe in that book and opens it in the editor (FLOW-042).
+ * The own-recipes view of a book in which nothing has been written: it says so, and its one offer, the view's own
+ * action, writes a new recipe in that book and opens it in the editor (FLOW-042).
  */
 @Composable
-private fun NothingWritten(recipes: RecipeRepository, session: LibrarySession, editor: EditorEnvironment, modifier: Modifier = Modifier) {
-    val write = rememberWrite(recipes, session, editor)
-    Column(
-        modifier.fillMaxSize().padding(16.dp).testTag(LibraryTags.OWN_EMPTY),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(stringResource(R.string.library_own_empty), style = MaterialTheme.typography.bodyLarge)
-        Button(onClick = write, modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.WRITE)) {
-            Text(stringResource(R.string.library_own_write))
-        }
-    }
+private fun NothingWritten(onWrite: () -> Unit, modifier: Modifier = Modifier) {
+    EmptyState(
+        picture = R.drawable.ic_empty_book,
+        headline = stringResource(R.string.library_own_empty),
+        sentence = stringResource(R.string.library_own_empty_sentence),
+        action = EmptyAction(stringResource(R.string.library_own_new), R.drawable.ic_new_recipe, LibraryTags.WRITE, onWrite),
+        tag = LibraryTags.OWN_EMPTY,
+        modifier = modifier,
+    )
 }
 
 /** Writes a new recipe in the active book and opens it in the editor (FLOW-042 (4, 5)); a second tap adds none. */
@@ -958,17 +956,24 @@ private fun MarkedList(
     SideEffect { onOffer(offered) }
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
-            if (mode == Mode.Serverless && empty) {
-                Text(
-                    stringResource(R.string.library_marked_empty),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(16.dp).testTag(LibraryTags.MARKED_EMPTY),
+            // The empty view's one offer is the view's own action: the import of a recipe file in [Mode.Serverless];
+            // in [Mode.Standard] the view has no action, and its empty state none.
+            if (empty) {
+                val serverless = mode == Mode.Serverless
+                EmptyState(
+                    picture = R.drawable.ic_empty_book,
+                    headline = stringResource(R.string.library_marked_empty),
+                    sentence = stringResource(
+                        if (serverless) R.string.library_marked_empty_sentence_serverless else R.string.library_marked_empty_sentence,
+                    ),
+                    action = if (serverless) {
+                        EmptyAction(stringResource(R.string.file_import), R.drawable.ic_import_file, LibraryTags.IMPORT, onImport)
+                    } else {
+                        null
+                    },
+                    tag = LibraryTags.MARKED_EMPTY,
+                    modifier = Modifier.padding(bottom = bottom),
                 )
-                Button(
-                    onClick = onImport,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).heightIn(min = 48.dp).testTag(LibraryTags.IMPORT),
-                ) { Text(stringResource(R.string.file_import)) }
-                HorizontalDivider()
             }
             // An empty view with no query keeps its empty state, with no header to search nothing with.
             if (shown != null && !empty) {
@@ -1191,6 +1196,7 @@ object LibraryTags {
     const val NOTHING_FOUND = "library-nothing-found"
     const val NOTHING_FOUND_CLEAR = "library-nothing-found-clear"
     const val NOTHING_FOUND_CLEAR_FILTERS = "library-nothing-found-clear-filters"
+    const val NOTHING_FOUND_CLEAR_ALL = "library-nothing-found-clear-all"
     /** The row of a view's filters, under its search field. */
     const val FILTERS = "library-filters"
     /** "All filters" in the row, which opens the sheet of every filter. */
@@ -1218,6 +1224,10 @@ object LibraryTags {
     const val TAG_NO_MATCH = "library-tag-no-match"
     fun tagChoice(tagId: Long) = "library-tag-choice-$tagId"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
+    /** The parts of an empty state tagged [state]: its picture, its headline and its sentence. */
+    fun emptyPicture(state: String) = "$state-picture"
+    fun emptyHeadline(state: String) = "$state-headline"
+    fun emptySentence(state: String) = "$state-sentence"
     const val DELETE_STATEMENT = "library-delete-statement"
     const val DELETE_CONFIRM = "library-delete-confirm"
     const val DELETE_DECLINE = "library-delete-decline"

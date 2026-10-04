@@ -58,6 +58,7 @@ class ContrastTest {
         // Icons that carry meaning and the boundaries of controls.
         graphic("the drag column's handle, on the column's tint", c.onSurfaceVariant, c.surfaceContainerHigh),
         graphic("the empty cover's camera", c.onSurfaceVariant, c.surfaceContainerHigh),
+        graphic("an empty view's picture — the book with nothing in it, a search that found nothing", c.onSurfaceVariant, c.surface),
         graphic("an outlined field's and a fixing option's boundary", c.outline, c.surface),
         graphic("a focused field's and a chosen option's boundary, the chosen view's bar", c.primary, c.surface),
         graphic("a checkbox's and a radio button's boundary, the free-text warning's icon", c.onSurfaceVariant, c.surface),

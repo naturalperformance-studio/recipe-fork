@@ -244,7 +244,7 @@ class FoundRecipesTest {
     fun inServerlessModeTheMarkedViewOffersTheImport() {
         show(Mode.Serverless)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.MARKED_EMPTY), PATIENCE_MS)
-        assertEquals("No recipes are marked in this book yet.", compose.textsOf(LibraryTags.MARKED_EMPTY).single())
+        assertEquals("No marked recipes yet", compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.MARKED_EMPTY)).single())
         assertEquals(listOf("Import a recipe file"), compose.textsOf(LibraryTags.IMPORT))
     }
 

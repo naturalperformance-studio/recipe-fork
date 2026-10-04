@@ -232,7 +232,7 @@ class LibrarySearchTest {
         show(LibraryView.OWN)
         search("  zzz ")
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.NOTHING_FOUND), PATIENCE_MS)
-        assertEquals(listOf(said), compose.textsOf(LibraryTags.NOTHING_FOUND))
+        assertEquals(listOf(said), compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.NOTHING_FOUND)))
         assertEquals(listOf(clear), compose.textsOf(LibraryTags.NOTHING_FOUND_CLEAR))
         assertListed()
         // The book still offers to write a recipe: it is not empty, only the search found nothing.
@@ -247,7 +247,7 @@ class LibrarySearchTest {
         choose(LibraryView.MARKED)
         search("zzz")
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.NOTHING_FOUND), PATIENCE_MS)
-        assertEquals(listOf(said), compose.textsOf(LibraryTags.NOTHING_FOUND))
+        assertEquals(listOf(said), compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.NOTHING_FOUND)))
         assertEquals(listOf(clear), compose.textsOf(LibraryTags.NOTHING_FOUND_CLEAR))
         compose.onNodeWithTag(LibraryTags.SEARCH_CLEAR).performClick()
         compose.waitForIdle()

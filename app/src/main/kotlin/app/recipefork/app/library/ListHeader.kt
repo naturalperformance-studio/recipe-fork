@@ -195,37 +195,34 @@ private fun orderLabel(order: BookOrder): Int = when (order) {
 }
 
 /**
- * A view narrowed to nothing says so — naming the query, when one was searched — and offers to clear the search, and
- * the filters when any is on (FLOW-035 (4)).
+ * A view narrowed to nothing says so — naming the query, when one was searched — and offers one way out of it
+ * (FLOW-035 (4), FLOW-042 (1)): clearing the search, the filters, or both when both are on.
  */
 @Composable
 internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearFilters: () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            if (listed.searched) {
-                stringResource(R.string.library_nothing_found, listed.params.query.trim())
-            } else {
-                stringResource(R.string.library_nothing_matches)
-            },
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.testTag(LibraryTags.NOTHING_FOUND),
-        )
-        if (listed.searched) {
-            TextButton(
-                onClick = onClearSearch,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.NOTHING_FOUND_CLEAR),
-            ) { Text(stringResource(R.string.library_search_clear)) }
+    val searched = listed.searched
+    val filtered = listed.params.filters.any
+    val action = when {
+        searched && filtered -> EmptyAction(
+            stringResource(R.string.library_search_and_filters_clear), null, LibraryTags.NOTHING_FOUND_CLEAR_ALL,
+        ) {
+            onClearFilters()
+            onClearSearch()
         }
-        if (listed.params.filters.any) {
-            TextButton(
-                onClick = onClearFilters,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.NOTHING_FOUND_CLEAR_FILTERS),
-            ) { Text(stringResource(R.string.library_filter_clear)) }
-        }
+        searched -> EmptyAction(stringResource(R.string.library_search_clear), null, LibraryTags.NOTHING_FOUND_CLEAR, onClearSearch)
+        else -> EmptyAction(stringResource(R.string.library_filter_clear), null, LibraryTags.NOTHING_FOUND_CLEAR_FILTERS, onClearFilters)
     }
+    EmptyState(
+        picture = if (searched) R.drawable.ic_search_off else R.drawable.ic_filter,
+        headline = if (searched) {
+            stringResource(R.string.library_nothing_found, listed.params.query.trim())
+        } else {
+            stringResource(R.string.library_nothing_matches)
+        },
+        sentence = null,
+        action = action,
+        tag = LibraryTags.NOTHING_FOUND,
+    )
 }
 
 /**

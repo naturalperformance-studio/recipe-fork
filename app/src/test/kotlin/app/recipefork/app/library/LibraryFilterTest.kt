@@ -289,7 +289,7 @@ class LibraryFilterTest {
         // A choice no recipe satisfies says so, and offers to clear the filters.
         toggleTags(georgian)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.NOTHING_FOUND), PATIENCE_MS)
-        assertEquals(listOf("No recipe matches the filters"), compose.textsOf(LibraryTags.NOTHING_FOUND))
+        assertEquals(listOf("No recipe matches the filters"), compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.NOTHING_FOUND)))
         assertEquals(false, exists(LibraryTags.NOTHING_FOUND_CLEAR))
         click(LibraryTags.NOTHING_FOUND_CLEAR_FILTERS)
         assertListed("Паста", "Пицца на скорую руку", "Хачапури", "Без тегов")
@@ -309,7 +309,7 @@ class LibraryFilterTest {
         assertEquals(listOf("Сбросить фильтры"), compose.textsOf(LibraryTags.FILTERS_CLEAR))
         toggleTags(georgian)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.NOTHING_FOUND), PATIENCE_MS)
-        assertEquals(listOf("Ни один рецепт не подходит под фильтры"), compose.textsOf(LibraryTags.NOTHING_FOUND))
+        assertEquals(listOf("Ни один рецепт не подходит под фильтры"), compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.NOTHING_FOUND)))
     }
 
     // Filters combine with the search and the order; one control clears them all, and the search stays.
