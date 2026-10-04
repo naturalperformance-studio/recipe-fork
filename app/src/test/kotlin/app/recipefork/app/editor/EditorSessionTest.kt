@@ -51,7 +51,7 @@ class EditorSessionTest {
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.FORM)).fetchSemanticsNodes().size == 1 }
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Borscht")
-        compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
+        compose.declareLanguage(RecipeLanguage.RU)
         // The tag editor offers the shipped dictionaries on this fresh installation.
         compose.addTag("ital", 10)
         compose.waitForIdle()
@@ -68,7 +68,7 @@ class EditorSessionTest {
             compose.onAllNodes(hasTestTag(EditorTags.chosen(10))).fetchSemanticsNodes().size == 1
         }
         assertEquals("Borscht", compose.textsOf(EditorTags.TITLE).last())
-        assertEquals(listOf("Language", "Russian"), compose.textsOf(EditorTags.LANGUAGE))
+        assertEquals(RecipeLanguage.RU, compose.declaredLanguage())
         val title = compose.onNodeWithTag(EditorTags.TITLE).fetchSemanticsNode().boundsInRoot
         val language = compose.onNodeWithTag(EditorTags.LANGUAGE).fetchSemanticsNode().boundsInRoot
         val tags = compose.onNodeWithTag(EditorTags.TAGS).fetchSemanticsNode().boundsInRoot

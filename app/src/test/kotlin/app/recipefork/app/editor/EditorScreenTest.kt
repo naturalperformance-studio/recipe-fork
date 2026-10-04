@@ -119,8 +119,6 @@ class EditorScreenTest {
 
     private fun stored(id: RecipeId): Recipe = runBlocking { recipes.get(id) }!!
 
-    private fun languageShown(): List<String> = compose.textsOf(EditorTags.LANGUAGE)
-
     private fun offeredTags(): List<String> =
         compose.onAllNodes(hasAnyAncestor(hasTestTag(EditorTags.OFFERED)) and hasClickAction()).fetchSemanticsNodes()
             .map { node -> node.config[SemanticsProperties.Text].joinToString("") { it.text } }
@@ -142,9 +140,12 @@ class EditorScreenTest {
 
     private fun languageBesideTheTitle(expected: RecipeLanguage, heading: String, name: String, other: String) {
         val id = writeANewRecipe()
+        val otherLanguage = if (expected == RecipeLanguage.EN) RecipeLanguage.RU else RecipeLanguage.EN
         // Already set, before the author does anything: in the book and on the screen.
         assertEquals(expected, stored(id).language)
-        assertEquals(listOf(heading, name), languageShown())
+        compose.onNode(hasText(heading) and hasAnyAncestor(hasTestTag(EditorTags.LANGUAGE))).assertExists()
+        assertEquals(expected, compose.declaredLanguage())
+        assertEquals(listOf(name), compose.descriptionOf(EditorTags.language(expected)))
         // Beside the title: on the same line, to its right, and on screen without scrolling — it cannot be missed.
         val title = bounds(EditorTags.TITLE)
         val language = bounds(EditorTags.LANGUAGE)
@@ -153,13 +154,15 @@ class EditorScreenTest {
         compose.onNodeWithTag(EditorTags.LANGUAGE).assertIsDisplayed()
         compose.onNodeWithTag(EditorTags.TITLE).assertIsDisplayed()
         // One action changes it to the other language, and one more changes it back.
-        compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
+        compose.declareLanguage(otherLanguage)
         compose.waitForIdle()
-        assertEquals(listOf(heading, other), languageShown())
-        assertEquals(if (expected == RecipeLanguage.EN) RecipeLanguage.RU else RecipeLanguage.EN, stored(id).language)
-        compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
+        assertEquals(otherLanguage, compose.declaredLanguage())
+        assertEquals(listOf(other), compose.descriptionOf(EditorTags.language(otherLanguage)))
+        assertEquals(otherLanguage, stored(id).language)
+        compose.declareLanguage(expected)
         compose.waitForIdle()
         assertEquals(expected, stored(id).language)
+        assertEquals(expected, compose.declaredLanguage())
     }
 
     // DOM-006 (3): the declaration is empty only when the author clears it.
@@ -176,12 +179,14 @@ class EditorScreenTest {
         compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).performScrollTo().performClick()
         compose.waitForIdle()
         assertNull(stored(id).language)
-        assertEquals(listOf("Language", "Not declared"), languageShown())
+        // Neither language shows declared.
+        assertNull(compose.declaredLanguage())
         compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).assertDoesNotExist()
-        // And one action declares it again, in the interface language.
-        compose.onNodeWithTag(EditorTags.LANGUAGE).performScrollTo().performClick()
+        // And one action declares it again.
+        compose.declareLanguage(RecipeLanguage.EN)
         compose.waitForIdle()
         assertEquals(RecipeLanguage.EN, stored(id).language)
+        assertEquals(RecipeLanguage.EN, compose.declaredLanguage())
     }
 
     // FLOW-024 (6): the author leaves the editor by its back action and returns to the same recipe, opened directly.
@@ -197,10 +202,10 @@ class EditorScreenTest {
     private fun leaveAndReturn(leave: () -> Unit) {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Borscht")
-        compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
+        compose.declareLanguage(RecipeLanguage.RU)
         compose.addTag("geor", 11)
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextInput("des")
-        compose.onNodeWithTag(EditorTags.offered(12)).performClick()
+        compose.onNodeWithTag(EditorTags.offered(12)).performScrollTo().performClick()
         // Left at once, with the last change just made.
         leave()
         compose.backThroughTheCard()
@@ -211,7 +216,7 @@ class EditorScreenTest {
         openDirectly(id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.chosen(12)), PATIENCE_MS)
         assertEquals(listOf("Title", "Borscht"), compose.textsOf(EditorTags.TITLE).filter { it.isNotBlank() }.distinct())
-        assertEquals(listOf("Language", "Russian"), languageShown())
+        assertEquals(RecipeLanguage.RU, compose.declaredLanguage())
         compose.onNodeWithTag(EditorTags.chosen(11)).assertExists()
         compose.onNodeWithTag(EditorTags.chosen(12)).assertExists()
         // The same order: the title with the language beside it, then the tags.
@@ -248,7 +253,7 @@ class EditorScreenTest {
             val recipe = openOwn(state, sent)
             compose.onNodeWithTag(EditorTags.FROZEN).assertDoesNotExist()
             compose.onNodeWithTag(EditorTags.TITLE).performTextReplacement("Beetroot salad with dill")
-            compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
+            compose.declareLanguage(RecipeLanguage.EN)
             compose.addTag("ital", 10)
             compose.onNodeWithTag(EditorTags.remove(11)).performScrollTo().performClick()
             compose.waitForIdle()

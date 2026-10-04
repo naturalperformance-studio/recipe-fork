@@ -54,13 +54,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -70,8 +67,6 @@ import app.recipefork.app.AppContainer
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.dictionary.TagEntity
-import app.recipefork.app.dictionary.TagOffer
-import app.recipefork.app.dictionary.label
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit
@@ -327,133 +322,6 @@ private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () ->
     }
 }
 
-@Composable
-private fun Language(recipe: Recipe, editor: RecipeEditor) {
-    val editable = recipe.state.editable
-    val language = recipe.language
-    val name = stringResource(
-        when (language) {
-            RecipeLanguage.RU -> R.string.editor_language_ru
-            RecipeLanguage.EN -> R.string.editor_language_en
-            null -> R.string.editor_language_none
-        },
-    )
-    // One action changes it: to the other language, or, where it was cleared, back to the interface language.
-    val next = when (language) {
-        RecipeLanguage.RU -> RecipeLanguage.EN
-        RecipeLanguage.EN -> RecipeLanguage.RU
-        null -> interfaceLanguage(LocalConfiguration.current)
-    }
-    val action = stringResource(if (next == RecipeLanguage.RU) R.string.editor_language_to_ru else R.string.editor_language_to_en)
-    Column(Modifier.widthIn(min = 96.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Column(
-            Modifier
-                .heightIn(min = 56.dp)
-                .widthIn(min = 96.dp)
-                .semantics(mergeDescendants = true) {}
-                .then(if (editable) Modifier.clickable(onClickLabel = action, role = Role.Button) { editor.setLanguage(next) } else Modifier)
-                .testTag(EditorTags.LANGUAGE)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(stringResource(R.string.editor_language), style = MaterialTheme.typography.labelMedium)
-            Text(name, style = MaterialTheme.typography.titleMedium)
-        }
-        if (editable && language != null) {
-            ActionText(
-                text = stringResource(R.string.editor_language_clear),
-                action = stringResource(R.string.editor_language_clear_action),
-                // Clearing it is leaving it without a language: the mark of FLOW-028 says what that costs.
-                onClick = {
-                    editor.setLanguage(null)
-                    editor.leave(RecipePart.Language)
-                },
-                modifier = Modifier.testTag(EditorTags.LANGUAGE_CLEAR),
-            )
-        }
-    }
-}
-
-/** The label of [tag] in the interface language. */
-@Composable
-private fun label(tag: TagEntity): String =
-    if (interfaceLanguage(LocalConfiguration.current) == RecipeLanguage.RU) tag.labelRu else tag.labelEn
-
-/** The tag editor: tags come from the dictionary only, and typed text is never committed (DOM-008). */
-@Composable
-private fun Tags(recipe: Recipe, editor: RecipeEditor, dictionary: List<TagEntity>?) {
-    val editable = recipe.state.editable
-    Column(Modifier.fillMaxWidth().testTag(EditorTags.TAGS), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            stringResource(R.string.editor_tags),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        val known = dictionary.orEmpty().filter { it.id in recipe.tags }
-        known.forEach { tag ->
-            val shown = label(tag)
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(EditorTags.chosen(tag.id)),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(shown, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                if (editable) {
-                    ActionText(
-                        text = stringResource(R.string.editor_tag_remove),
-                        action = stringResource(R.string.editor_tag_remove_action, shown),
-                        onClick = { editor.removeTag(tag.id) },
-                        modifier = Modifier.testTag(EditorTags.remove(tag.id)),
-                    )
-                }
-            }
-        }
-        if (editable && dictionary != null) TagSearch(recipe, editor, dictionary)
-    }
-}
-
-@Composable
-private fun TagSearch(recipe: Recipe, editor: RecipeEditor, dictionary: List<TagEntity>) {
-    var query by rememberSaveable { mutableStateOf("") }
-    val focus = LocalFocusManager.current
-    OutlinedTextField(
-        value = query,
-        onValueChange = { query = it },
-        label = { Text(stringResource(R.string.editor_tag_search)) },
-        singleLine = true,
-        // The keyboard's action closes the keyboard and commits nothing: only an offered entry becomes a tag.
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
-        modifier = Modifier.fillMaxWidth().testTag(EditorTags.TAG_SEARCH),
-    )
-    // Hundreds of tags are searched, never listed: nothing is offered until a word is typed.
-    val language = numberLanguage(LocalConfiguration.current)
-    val offered = TagOffer.of(query, dictionary, language, excluded = recipe.tags).map { it to it.label(language) }
-    if (offered.isEmpty() && query.isNotBlank()) {
-        Text(
-            stringResource(R.string.editor_tag_no_match),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.testTag(EditorTags.NO_MATCH),
-        )
-    }
-    Column(Modifier.fillMaxWidth().testTag(EditorTags.OFFERED)) {
-        offered.forEach { (tag, shown) ->
-            Text(
-                shown,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .clickable(onClickLabel = stringResource(R.string.editor_tag_add_action, shown), role = Role.Button) {
-                        editor.addTag(tag)
-                        query = ""
-                    }
-                    .testTag(EditorTags.offered(tag.id))
-                    .padding(vertical = 12.dp),
-            )
-        }
-    }
-}
-
 /**
  * Calls [onTap] on every touch that lifts without having moved past the touch slop, before whatever it touched
  * handles it, and consumes nothing: a scroll or a drag is not a tap.
@@ -569,6 +437,8 @@ object EditorTags {
     fun timerNameMark(position: Int) = "editor-step-$position-timer-name-mark"
     const val LANGUAGE = "editor-language"
     const val LANGUAGE_CLEAR = "editor-language-clear"
+    /** One option of the language's segmented switch: `editor-language-ru`, `editor-language-en`. */
+    fun language(language: RecipeLanguage) = "editor-language-${language.name.lowercase()}"
     const val TAGS = "editor-tags"
     const val TAG_SEARCH = "editor-tag-search"
     const val OFFERED = "editor-tags-offered"
@@ -576,6 +446,7 @@ object EditorTags {
     fun offered(tagId: Long) = "editor-tag-offered-$tagId"
     fun chosen(tagId: Long) = "editor-tag-chosen-$tagId"
     fun remove(tagId: Long) = "editor-tag-remove-$tagId"
+    fun removeIcon(tagId: Long) = "editor-tag-remove-icon-$tagId"
     const val SERVINGS = "editor-servings"
     const val SERVINGS_ACCEPTS = "editor-servings-accepts"
     const val INGREDIENTS = "editor-ingredients"
