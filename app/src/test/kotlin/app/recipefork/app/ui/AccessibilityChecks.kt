@@ -119,12 +119,30 @@ object AccessibilityChecks {
      * content description — and each click action names what it does, either through that label or through an
      * action label of its own.
      */
-    fun assertInteractiveElementsLabelled(screen: SemanticsNodeInteractionsProvider, expectAtLeast: Int = 1) {
-        val nodes = screen.onAllNodes(isInteractive).fetchSemanticsNodes()
+    fun assertInteractiveElementsLabelled(
+        screen: SemanticsNodeInteractionsProvider,
+        expectAtLeast: Int = 1,
+        except: SemanticsMatcher? = null,
+    ) {
+        val nodes = screen.onAllNodes(isInteractive).fetchSemanticsNodes().filterNot { except?.matches(it) == true }
         assertTrue("expected at least $expectAtLeast interactive elements, found ${nodes.size}", nodes.size >= expectAtLeast)
         nodes.forEach { node ->
             if (announcedLabel(node).isBlank()) fail("interactive element ${node.id} announces nothing: ${node.config}")
         }
+    }
+
+    /**
+     * The pane Material 3's `SnackbarHost` wraps a snackbar in: a live region with a pane title whose one action is the
+     * reader's Dismiss, and no words of its own — the reader reads the snackbar within it as it comes. It is the only
+     * element [assertInteractiveElementsLabelled] may be told to pass over; the snackbar's text and action are checked.
+     */
+    val snackbarPane = SemanticsMatcher("Material 3's snackbar pane: a live region whose one action is Dismiss") { node ->
+        val actions = node.config.filter { (key, value) -> value is AccessibilityAction<*> && key !in notPerformedByTheReader }.map { it.key }
+        actions == listOf(SemanticsActions.Dismiss) &&
+            SemanticsProperties.LiveRegion in node.config &&
+            SemanticsProperties.PaneTitle in node.config &&
+            SemanticsProperties.Text !in node.config &&
+            SemanticsProperties.ContentDescription !in node.config
     }
 
     /** What the screen reader speaks for [node]: its content description or its text. */

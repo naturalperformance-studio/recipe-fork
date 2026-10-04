@@ -10,6 +10,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import app.recipefork.app.editor.PATIENCE_MS
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.text.TextLayoutResult
@@ -25,6 +27,7 @@ import app.recipefork.app.file.FileMessageTags
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.Refusal
 import app.recipefork.app.file.awaitFileMessage
+import app.recipefork.app.file.awaitFileNotice
 import app.recipefork.app.file.closeFileMessage
 import app.recipefork.app.file.message
 import app.recipefork.app.recipe.RecipeRepository
@@ -43,9 +46,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * What became of a file — every import outcome and a failed export — is said whole, in a dialog closed by its OK, and
- * never in a toast that cuts it short: at the narrowest width and the largest text, in either language, with a recipe
- * named by its title, shortened when long.
+ * What became of a file — every import outcome and a failed export — is said whole, never in a toast that cuts it
+ * short: a failure in a dialog closed by its OK, a recipe the file brought in the book's snackbar; at the narrowest
+ * width and the largest text, in either language, with a recipe named by its title, shortened when long.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -97,7 +100,7 @@ class FileMessageTest {
     }
 
     // The longest message of all, at 360 dp and twice the font size, is laid out whole: no line cut short or ellipsized,
-    // nothing clipped by the dialog, and it is read by the screen reader.
+    // nothing clipped by the dialog or the snackbar, and it is read by the screen reader.
     @Test
     @Config(qualifiers = "ru-w360dp-h640dp", fontScale = 2f)
     fun everyMessageIsSaidWholeAtTheNarrowestWidthAndLargestTextInRussian() = saidWhole()
@@ -112,8 +115,13 @@ class FileMessageTest {
         (listOf(longest) + everyMessage).forEach { message ->
             val text = message.text(context.resources)
             compose.runOnIdle { session.tell(message) }
-            compose.awaitFileMessage(text)
-            val node = compose.onAllNodes(hasTestTag(FileMessageTags.TEXT), useUnmergedTree = true).fetchSemanticsNodes().single()
+            // A recipe the file brought is said in the book's snackbar; a failure in its dialog.
+            val node = if (message.isNotice) {
+                compose.awaitFileNotice(text)
+            } else {
+                compose.awaitFileMessage(text)
+                compose.onAllNodes(hasTestTag(FileMessageTags.TEXT), useUnmergedTree = true).fetchSemanticsNodes().single()
+            }
             val layout = layoutOf(node)
             assertEquals(text, layout.layoutInput.text.text)
             assertEquals("measured at twice the font size", 2f, layout.layoutInput.density.fontScale, 0.001f)
@@ -131,11 +139,32 @@ class FileMessageTest {
             val shown = node.boundsInRoot
             assertEquals("“$text” is shown in full height", node.size.height.toFloat(), shown.height, 1f)
             assertEquals("“$text” is shown in full width", node.size.width.toFloat(), shown.width, 1f)
-            assertReadAloud(node, text)
-            AccessibilityChecks.assertTouchTargets(compose)
-            AccessibilityChecks.assertInteractiveElementsLabelled(compose)
-            compose.closeFileMessage()
+            if (message.isNotice) {
+                assertReadAsItComes(node, text)
+                AccessibilityChecks.assertTouchTargets(compose)
+                // Material 3's snackbar pane alone is passed over: its words are the snackbar's, checked above.
+                AccessibilityChecks.assertInteractiveElementsLabelled(compose, except = AccessibilityChecks.snackbarPane)
+                assertEquals(1, compose.onAllNodes(hasText(context.getString(app.recipefork.app.R.string.file_open))).fetchSemanticsNodes().size)
+                compose.runOnIdle { session.told() }
+                compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
+            } else {
+                assertReadAloud(node, text)
+                AccessibilityChecks.assertTouchTargets(compose)
+                AccessibilityChecks.assertInteractiveElementsLabelled(compose)
+                compose.closeFileMessage()
+            }
         }
+    }
+
+    /** The screen reader reads [text] whole from the snackbar as it comes: a text node within a live region or pane. */
+    private fun assertReadAsItComes(node: SemanticsNode, text: String) {
+        assertEquals(listOf(text), node.config.getOrNull(SemanticsProperties.Text)?.map { it.text })
+        assertTrue(SemanticsProperties.InvisibleToUser !in node.config)
+        assertTrue(SemanticsProperties.HideFromAccessibility !in node.config)
+        assertTrue(
+            "“$text” lies in no live region or pane",
+            generateSequence(node) { it.parent }.any { SemanticsProperties.LiveRegion in it.config || SemanticsProperties.PaneTitle in it.config },
+        )
     }
 
     /** The screen reader reads [text] from the dialog: a text node of the dialog's pane, visible to it. */
@@ -180,7 +209,7 @@ class FileMessageTest {
     @Test
     fun aMessageIsShownUntilClosedAndOnlyOnce() {
         show()
-        val message = FileMessage(FileMessage.Kind.ALREADY_IN_BOOK, "Bean soup")
+        val message = FileMessage(FileMessage.Kind.DAMAGED)
         compose.runOnIdle { session.tell(message) }
         compose.awaitFileMessage(message.text(context.resources))
         val saved = SavedStateHandle()

@@ -68,6 +68,7 @@ class ContrastTest {
         graphic("a suggestion chip's and the language switch's boundary", c.outline, c.surface),
         graphic("an entry's ⋮, on its card", c.onSurface, c.surfaceContainerHighest),
         graphic("the indicator of a list being read", c.primary, c.surface),
+        graphic("the progress of a file being imported or exported, on its track", c.primary, c.surfaceContainerHighest),
     )
 
     @Test
