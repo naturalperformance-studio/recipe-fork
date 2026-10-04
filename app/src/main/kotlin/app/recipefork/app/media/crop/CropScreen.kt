@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -65,9 +66,9 @@ import kotlin.math.roundToInt
  * The crop a photograph goes through before it is attached (FLOW-026): a full-screen window with the photograph under
  * a fixed 4:3 landscape frame, which the author drags and pinches to frame it — the frame never leaving the photograph
  * nor getting narrower than [CropGeometry] allows. Done hands the framed part to [onDone], as a photograph to process
- * like any; Retake — for a photograph from the camera — goes back to [onRetake]; Cancel or back leave through
- * [onCancel] with nothing. A picture that cannot be read goes on to [onUnreadable], which hands it over as it is so that
- * processing says why it is refused.
+ * like any; Retake — for a photograph from the camera — goes back to [onRetake]; Cancel — offered for every
+ * photograph, the camera's too — or back leave through [onCancel] with nothing. A picture that cannot be read goes on
+ * to [onUnreadable], which hands it over as it is so that processing says why it is refused.
  */
 @Composable
 fun CropScreen(
@@ -145,16 +146,16 @@ private fun CropContent(
             }
             Row(
                 Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.CANCEL)) {
+                    Text(stringResource(R.string.media_crop_cancel), color = Color.White)
+                }
+                Spacer(Modifier.weight(1f))
                 if (photo.retake) {
                     TextButton(onClick = onRetake, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.RETAKE)) {
                         Text(stringResource(R.string.media_crop_retake), color = Color.White)
-                    }
-                } else {
-                    TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.CANCEL)) {
-                        Text(stringResource(R.string.media_crop_cancel), color = Color.White)
                     }
                 }
                 Button(

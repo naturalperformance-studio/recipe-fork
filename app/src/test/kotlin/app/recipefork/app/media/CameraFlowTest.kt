@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -32,6 +33,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -267,7 +269,7 @@ class CameraFlowTest {
         assertEquals("no persistable grant", 0, intent.flags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
     }
 
-    // FLOW-026 (3): the shot opens the crop — Retake in place of Cancel — and Done hands over the framed part, 4:3
+    // FLOW-026 (3): the shot opens the crop — Retake beside Cancel (T-147) — and Done hands over the framed part, 4:3
     // wide and the right way up as its EXIF says; the shot's file is deleted once the cut has been read from it.
     @Test
     fun theShotOpensTheCropAndDoneHandsTheFrameOverUpright() {
@@ -279,7 +281,7 @@ class CameraFlowTest {
 
         awaitCrop()
         assertTrue(offers.isEmpty())
-        assertTrue("a shot from the camera can be retaken", exists(CropTags.RETAKE) && !exists(CropTags.CANCEL))
+        assertTrue("a shot from the camera can be retaken or cancelled", exists(CropTags.RETAKE) && exists(CropTags.CANCEL))
         val handed = done()
         assertEquals(600, handed.width)
         assertEquals(450, handed.height)
@@ -432,6 +434,25 @@ class CameraFlowTest {
         assertEquals(600, handed.height)
         assertUpright(handed)
         assertTrue(picked.exists())
+    }
+
+    // T-147: the crop after the camera offers Cancel too; it hands nothing over and leaves no file of the shot on disk.
+    @Test
+    fun cancelInTheCamerasCropHandsNothingOverAndLeavesNoFile() {
+        show()
+        val intent = take()
+        val file = TestCamera.file(context, intent)
+        shoot(intent)
+        awaitCrop()
+        assertTrue(file.exists())
+
+        compose.onNodeWithTag(CropTags.CANCEL).assertHeightIsAtLeast(48.dp).performClick()
+
+        compose.waitUntil(PATIENCE_MS) { !exists(CropTags.SCREEN) }
+        compose.waitForIdle()
+        assertTrue(offers.isEmpty())
+        assertFalse(file.exists())
+        assertEquals(emptyList<String>(), TestCamera.left(context))
     }
 
     // Cancel in the gallery's crop hands nothing over.

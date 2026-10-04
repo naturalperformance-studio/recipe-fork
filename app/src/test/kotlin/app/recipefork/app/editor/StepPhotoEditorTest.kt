@@ -29,6 +29,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.SourceSheetTags
 import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.media.TestCamera
 import app.recipefork.app.media.crop.CropTags
@@ -208,6 +209,11 @@ class StepPhotoEditorTest {
         assertTrue(exists(EditorTags.stepPhotoChoose(1)))
         // Nothing to remove yet.
         assertFalse(exists(EditorTags.stepPhotoRemove(1)))
+        // T-147: the step's sources are the cover's sheet component, with the step's own items, titled by the step.
+        val inSheet = hasAnyAncestor(hasTestTag(SourceSheetTags.SHEET))
+        listOf(EditorTags.stepPhotoTake(1), EditorTags.stepPhotoChoose(1), EditorTags.stepClipRecord(1), EditorTags.stepClipChoose(1))
+            .forEach { compose.onNode(hasTestTag(it) and inSheet).assertExists() }
+        compose.onNode(hasText("Photo or clip for step 2") and inSheet).assertExists()
     }
 
     // FLOW-026 (2), MEDIA-005: a photograph taken at a step is that step's — said to be shrunk and stripped, shown in
