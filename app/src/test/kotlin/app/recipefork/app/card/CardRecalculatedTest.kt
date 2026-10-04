@@ -1,5 +1,8 @@
 package app.recipefork.app.card
 
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import app.recipefork.app.ui.assertChangesGradually
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -267,5 +270,24 @@ class CardRecalculatedTest {
         assertEquals("↓", arrows()[1])
         LocalizationChecks.assertScreenTextFromResources(compose, context, content + lines().map { it[1] })
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content + lines().map { it[1] })
+    }
+
+    // T-159: the warning unfolds under the status line and folds away into it, the lines below moving gradually; the
+    // status line keeps its height in every frame.
+    @Test
+    fun theWarningUnfoldsAndFoldsAwayWhileTheStatusLineKeepsItsHeight() {
+        open()
+        fewer(3)
+        awaitWarning(false)
+        fun status() = compose.onNodeWithTag(IngredientTags.STATUS).fetchSemanticsNode().size.height
+        val status = status()
+        fun firstLine(): Float {
+            assertEquals("the status line's height", status, status())
+            return compose.onNodeWithTag(CardTags.ingredient(0)).fetchSemanticsNode().positionInRoot.y
+        }
+        compose.assertChangesGradually("the warning appearing", ::firstLine) { fewer() }
+        assertTrue(warningShown())
+        compose.assertChangesGradually("the warning going", ::firstLine) { more() }
+        assertFalse(warningShown())
     }
 }

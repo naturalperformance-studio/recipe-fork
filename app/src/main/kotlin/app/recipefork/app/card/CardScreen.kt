@@ -244,7 +244,7 @@ fun CardScreen(
             )
         },
         bottomBar = {
-            timersBar?.takeIf { it.shown.isNotEmpty() }?.let {
+            timersBar?.let {
                 RunningTimersBar(it.timers, it.shown, it.number, onShow = { position ->
                     places.placeOf(CardPlaces.step(position))?.let { step -> scope.launch { scroll.animateScrollTo(step.top) } }
                 })
@@ -600,10 +600,13 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
     }
 }
 
+/** The space between a section's heading and its parts. */
+internal val SECTION_GAP = 8.dp
+
 /** One part of the recipe under its heading; the lists of ingredients and of steps are each one. */
 @Composable
 internal fun Section(@StringRes title: Int, tag: String, lines: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(SECTION_GAP)) {
         Text(
             stringResource(title),
             style = MaterialTheme.typography.titleMedium,

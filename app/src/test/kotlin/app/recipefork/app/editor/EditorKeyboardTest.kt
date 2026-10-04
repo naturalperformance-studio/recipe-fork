@@ -33,6 +33,7 @@ import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.assertChangesGradually
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -284,5 +285,34 @@ class EditorKeyboardTest {
         awaitFocused(EditorTags.stepText(1))
         assertFalse(isFocused(EditorTags.stepText(0)))
         compose.waitUntil(PATIENCE_MS) { keyboardShown() }
+    }
+
+    // T-159: a row or step added unfolds into its place — the Add under it moves away from the row before it gradually —
+    // and still takes the focus with the keyboard up; one removed folds away, the Add closing up gradually.
+    @Test
+    fun aRowOrStepAddedUnfoldsWithTheFocusAndOneRemovedFoldsAway() {
+        writeANewRecipe()
+        val parts = listOf(
+            listOf(EditorTags.INGREDIENT_ADD, EditorTags.ingredient(0), EditorTags.ingredientName(0), EditorTags.ingredientName(1), EditorTags.ingredientRemove(1)),
+            listOf(EditorTags.STEP_ADD, EditorTags.step(0), EditorTags.stepText(0), EditorTags.stepText(1), EditorTags.stepRemove(1)),
+        )
+        for ((add, first, firstField, added, remove) in parts) {
+            compose.onNodeWithTag(add).performScrollTo().performClick()
+            awaitFocused(firstField)
+            hideKeyboard()
+            // How far the Add stands below the first row: the room the rows after it take.
+            fun after(): Float = compose.onNodeWithTag(add).fetchSemanticsNode().positionInRoot.y -
+                compose.onNodeWithTag(first).fetchSemanticsNode().let { it.positionInRoot.y + it.size.height }
+            compose.onNodeWithTag(add).performScrollTo()
+            compose.assertChangesGradually("$add: a row added", ::after) { compose.onNodeWithTag(add).performClick() }
+            awaitFocused(added)
+            assertFalse(isFocused(firstField))
+            compose.waitUntil(PATIENCE_MS) { keyboardShown() }
+
+            compose.onNodeWithTag(remove).performScrollTo()
+            compose.assertChangesGradually("$add: a row removed", ::after) { compose.onNodeWithTag(remove).performClick() }
+            // Its Undo put away, so that it covers nothing tapped next.
+            compose.swipeAwayStatement()
+        }
     }
 }

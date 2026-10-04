@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +42,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
 import app.recipefork.app.R
+import app.recipefork.app.ui.Motion
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rounding
@@ -94,32 +96,41 @@ private fun Lines(
     onRelease: (Int) -> Unit,
 ) {
     Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
-        ScaleStatus(list.recalculated)
-        if (!list.holdsProportions) {
-            Text(
-                stringResource(R.string.card_proportions_warning),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { liveRegion = LiveRegionMode.Polite }
-                    .testTag(CardTags.PROPORTIONS),
-            )
+        // The warning unfolds under the status line and folds away into it, the gap above it included, so the lines
+        // below move with it rather than jump; the status line itself keeps its height.
+        Column {
+            ScaleStatus(list.recalculated)
+            AnimatedVisibility(!list.holdsProportions, enter = Motion.open, exit = Motion.close) {
+                Text(
+                    stringResource(R.string.card_proportions_warning),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = SECTION_GAP)
+                        .semantics { liveRegion = LiveRegionMode.Polite }
+                        .testTag(CardTags.PROPORTIONS),
+                )
+            }
         }
         val column = quantityColumn(list.lines)
         list.lines.forEachIndexed { i, line ->
             val position = ordered[i].position
-            IngredientRow(line, position, column, cardPlace(CardPlaces.ingredient(position))) { onOpen(if (open == position) null else position) }
-            val offer = line.fixing
-            if (offer != null && open == position) {
-                key(position) {
-                    FixAmount(
-                        offer = offer,
-                        current = fixings.firstOrNull { it.position == position },
-                        language = language,
-                        onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
-                        onRelease = { onRelease(position); onOpen(null) },
-                        onClose = { onOpen(null) },
-                    )
+            // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
+            Column {
+                IngredientRow(line, position, column, cardPlace(CardPlaces.ingredient(position))) { onOpen(if (open == position) null else position) }
+                val offer = line.fixing
+                if (offer != null) {
+                    key(position) {
+                        FixAmountUnder(
+                            open = open == position,
+                            offer = offer,
+                            current = fixings.firstOrNull { it.position == position },
+                            language = language,
+                            onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
+                            onRelease = { onRelease(position); onOpen(null) },
+                            onClose = { onOpen(null) },
+                        )
+                    }
                 }
             }
         }

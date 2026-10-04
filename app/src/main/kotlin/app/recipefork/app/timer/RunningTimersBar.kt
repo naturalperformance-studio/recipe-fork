@@ -1,5 +1,7 @@
 package app.recipefork.app.timer
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,15 +22,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.card.CardTarget
+import app.recipefork.app.ui.Motion
 
 /**
  * The timers of this recipe the bar at the bottom of the card shows: each running, or ringing once ended, whose step is
@@ -47,7 +52,8 @@ internal fun RecipeTimers.inBar(onScreen: (stepPosition: Int) -> Boolean): List<
  * The bar pinned at the bottom of the card while timers of its recipe run out of sight (FLOW-016): one line for each of
  * [shown] — its name, or its step's [number] where it has none, the time it has left or that it rings, and the control
  * that cancels it or stops its ringing. Tapping a line brings the card to its step ([onShow]). Never taller than a
- * third of the screen; more lines scroll within it.
+ * third of the screen; more lines scroll within it. It rises from the bottom edge as its first line comes and sinks
+ * below it, still showing its last lines, as the last goes; between, it grows and shrinks with its lines.
  */
 @Composable
 internal fun RunningTimersBar(
@@ -58,13 +64,25 @@ internal fun RunningTimersBar(
     modifier: Modifier = Modifier,
 ) {
     val most = (LocalConfiguration.current.screenHeightDp / 3).dp
+    // The lines the bar last showed, which it keeps while it sinks away.
+    val held = remember { arrayOf(shown) }
+    if (shown.isNotEmpty()) held[0] = shown
+    val lines = held[0]
+    AnimatedVisibility(shown.isNotEmpty(), modifier, enter = Motion.rise, exit = Motion.sink) {
+        Bar(timers, lines, number, onShow, most)
+    }
+}
+
+@Composable
+private fun Bar(timers: RecipeTimers, shown: List<RunningTimer>, number: (stepPosition: Int) -> Int, onShow: (stepPosition: Int) -> Unit, most: Dp) {
     Surface(
-        modifier.fillMaxWidth().heightIn(max = most).testTag(TimerTags.BAR),
+        Modifier.fillMaxWidth().heightIn(max = most).testTag(TimerTags.BAR),
         color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = 3.dp,
     ) {
         Column(
             Modifier
+                .animateContentSize(Motion.appearing())
                 .windowInsetsPadding(
                     WindowInsets.navigationBars.union(WindowInsets.displayCutout)
                         .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
