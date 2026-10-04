@@ -95,36 +95,6 @@ internal fun keepingTheFocusedFieldInPlace(gap: Dp): Modifier {
 }
 
 /**
- * Something shown above the field the author is in that goes away — a hint — would pull that field up by its height;
- * once the editor is laid out without it, the editor scrolls back by as much. Its [modifier] goes on the thing, and
- * [went] is called as it is taken away.
- */
-internal class Going(private val scroll: EditorScroll?, private val scope: CoroutineScope) {
-    private var top = 0f
-    private var height = 0
-
-    val modifier: Modifier = Modifier.onGloballyPositioned {
-        top = it.positionInRoot().y
-        height = it.size.height
-    }
-
-    fun went() {
-        val scroll = scroll ?: return
-        val stood = top
-        val tall = height
-        if (tall == 0) return
-        height = 0
-        scope.launch {
-            // Once the frame it went in has been laid out, focus moved included.
-            withFrameNanos {}
-            withFrameNanos {}
-            val focused = scroll.focused?.takeIf { it.isAttached } ?: return@launch
-            if (stood <= focused.positionInRoot().y) scroll.state.dispatchRawDelta(-tall.toFloat())
-        }
-    }
-}
-
-/**
  * Something above the field the author is in that gets shorter — a field whose supporting text goes — would pull that
  * field up by as much; once the editor is laid out shorter, the editor scrolls back by the height it lost. Its
  * [modifier] goes on the thing, and [shrinking] is called as what it loses is taken away.
@@ -159,14 +129,6 @@ internal fun rememberShrinking(): Shrinking {
     val scroll = LocalEditorScroll.current
     val scope = rememberCoroutineScope()
     return remember(scroll, scope) { Shrinking(scroll, scope) }
-}
-
-/** A [Going] in the editor the composition is in. */
-@Composable
-internal fun rememberGoing(): Going {
-    val scroll = LocalEditorScroll.current
-    val scope = rememberCoroutineScope()
-    return remember(scroll, scope) { Going(scroll, scope) }
 }
 
 /** What the mark of [part] says while it stands at [bound]. */

@@ -180,8 +180,8 @@ class ChecklistTest {
 
     private fun dp(value: Float) = value * context.resources.displayMetrics.density
 
-    // GUIDE-003 (1): on a new and empty recipe the control is there at the top, beside "Done": an icon with its label,
-    // 48 dp, announced as what it does, with a tooltip on a long press.
+    // GUIDE-003 (1): on a new and empty recipe the control is there at the top, beside "Done": an icon named for the
+    // screen reader, 48 dp, announced as what it does, with a tooltip on a long press.
     @Test
     fun aNewEmptyRecipeHasTheControlBesideDone() {
         writeANewRecipe()
@@ -194,8 +194,8 @@ class ChecklistTest {
         assertTrue("the checklist is not above the form", control.bottom <= bounds(EditorTags.FORM).top)
         assertTrue("the checklist is lower than 48 dp", control.height >= dp(48f) - 0.5f)
         assertTrue("the checklist is narrower than 48 dp", control.width >= dp(48f) - 0.5f)
-        // Its label shows, and its click is announced as opening the checklist.
-        assertEquals(listOf("Checklist"), compose.textsOf(ChecklistTags.CONTROL))
+        // It is named, and its click is announced as opening the checklist.
+        assertEquals(listOf("Checklist"), compose.descriptionOf(ChecklistTags.CONTROL))
         val node = compose.onNodeWithTag(ChecklistTags.CONTROL).fetchSemanticsNode()
         assertEquals("Open the checklist", AccessibilityChecks.clickActionLabel(node))
         assertEquals(androidx.compose.ui.semantics.Role.Button, node.config[SemanticsProperties.Role])
@@ -246,7 +246,7 @@ class ChecklistTest {
 
     private fun sevenItems(titles: List<String>, length: String) {
         writeANewRecipe()
-        assertEquals(if (titles === russianTitles) "Чек-лист" else "Checklist", compose.textsOf(ChecklistTags.CONTROL).single())
+        assertEquals(if (titles === russianTitles) "Чек-лист" else "Checklist", compose.descriptionOf(ChecklistTags.CONTROL).single())
         openTheChecklist()
         val items = checklistTexts()
         assertEquals(7, items.size)

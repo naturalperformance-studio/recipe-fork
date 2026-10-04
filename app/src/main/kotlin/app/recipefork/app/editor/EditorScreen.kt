@@ -1,9 +1,11 @@
 package app.recipefork.app.editor
 
 import androidx.activity.compose.LocalActivity
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.onFocusedBoundsChanged
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -26,7 +28,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -467,14 +473,21 @@ internal fun RowMenu(
 @Composable
 private fun ForkNoteAction() {
     var open by rememberSaveable { mutableStateOf(false) }
-    IconButton(onClick = { open = true }, modifier = Modifier.size(48.dp).testTag(EditorTags.FORK_NOTE)) {
-        Icon(painterResource(R.drawable.ic_info), contentDescription = stringResource(R.string.editor_fork_note))
-    }
+    val label = stringResource(R.string.editor_fork_note)
+    EditorBarAction(
+        icon = R.drawable.ic_info,
+        label = label,
+        action = stringResource(R.string.editor_fork_note_action),
+        tooltip = label,
+        tag = EditorTags.FORK_NOTE,
+        tooltipTag = EditorTags.FORK_NOTE_TOOLTIP,
+        onClick = { open = true },
+    )
     if (open) {
         AlertDialog(
             onDismissRequest = { open = false },
             modifier = Modifier.testTag(EditorTags.FORK_NOTE_DIALOG),
-            title = { Text(stringResource(R.string.editor_fork_note)) },
+            title = { Text(label) },
             text = { Text(stringResource(R.string.editor_fork_takes), Modifier.testTag(EditorTags.FORK_TAKES)) },
             confirmButton = {
                 TextButton(onClick = { open = false }, modifier = Modifier.testTag(EditorTags.FORK_NOTE_CLOSE)) {
@@ -485,9 +498,53 @@ private fun ForkNoteAction() {
     }
 }
 
+/**
+ * An icon-only action of the editor's top bar, as the card's: 48 dp, named [label] for the screen reader with its click
+ * announced as [action], and whose long press shows [tooltip] — the long press the action's own, so that it stays one
+ * element for the screen reader. Being only an icon, it keeps its width at any font size.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+internal fun EditorBarAction(
+    @DrawableRes icon: Int,
+    label: String,
+    action: String,
+    tooltip: String,
+    tag: String,
+    tooltipTag: String,
+    onClick: () -> Unit,
+) {
+    val state = rememberTooltipState()
+    val scope = rememberCoroutineScope()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Below),
+        tooltip = { PlainTooltip(Modifier.testTag(tooltipTag)) { Text(tooltip) } },
+        state = state,
+        enableUserInput = false,
+    ) {
+        Box(
+            Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .combinedClickable(
+                    role = Role.Button,
+                    onClickLabel = action,
+                    onClick = onClick,
+                    onLongClickLabel = stringResource(R.string.editor_action_show_name),
+                    onLongClick = { scope.launch { state.show() } },
+                )
+                .testTag(tag),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(painterResource(icon), contentDescription = label, tint = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
 object EditorTags {
     /** The top bar's info action that shows what a fork takes (FLOW-030). */
     const val FORK_NOTE = "editor-fork-note"
+    const val FORK_NOTE_TOOLTIP = "editor-fork-note-tooltip"
     const val FORK_NOTE_DIALOG = "editor-fork-note-dialog"
     const val FORK_NOTE_CLOSE = "editor-fork-note-close"
     /** The note itself, in the dialog: what a fork takes and what stays with the author (FLOW-030). */

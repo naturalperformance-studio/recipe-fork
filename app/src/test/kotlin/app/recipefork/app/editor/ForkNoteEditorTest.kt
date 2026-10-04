@@ -6,7 +6,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -131,6 +133,11 @@ class ForkNoteEditorTest {
         val action = bounds(EditorTags.FORK_NOTE)
         assertTrue("$action", action.width >= px(48f) - 0.5f && action.height >= px(48f) - 0.5f)
         assertEquals("What a fork takes", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(EditorTags.FORK_NOTE).fetchSemanticsNode()))
+        // A long press shows its name and opens nothing.
+        compose.onNodeWithTag(EditorTags.FORK_NOTE).performTouchInput { longClick() }
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORK_NOTE_TOOLTIP), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.FORK_NOTE_DIALOG).assertDoesNotExist()
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.FORK_NOTE_TOOLTIP), PATIENCE_MS)
         assertEquals(english, notes())
         compose.onNodeWithTag(EditorTags.FORK_NOTE_CLOSE).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.FORK_NOTE_DIALOG), PATIENCE_MS)

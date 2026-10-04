@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -207,6 +208,13 @@ class StepHintsEditorTest {
         // Inside the field's outline area, below the line the author types into.
         assertTrue("offer $offer is not under the typed line ${before}", offer.top >= before.bottom - 1f)
         assertTrue("offer $offer is not inside the field $field", offer.bottom <= field.bottom + 1f && offer.left >= field.left)
+        // Its own node, read politely as it comes, and not merged into the field the author types into.
+        val node = compose.onNodeWithTag(EditorTags.stepReferencesOffered(0)).fetchSemanticsNode()
+        assertEquals(LiveRegionMode.Polite, node.config[SemanticsProperties.LiveRegion])
+        val offerText = string(R.string.editor_references_offered)
+        val fieldNode = compose.onNodeWithTag(EditorTags.stepText(0)).fetchSemanticsNode()
+        assertFalse(fieldNode.config.getOrElse(SemanticsProperties.Text) { emptyList() }.any { it.text == offerText })
+        assertTrue(fieldNode.config.getOrElseNullable(SemanticsProperties.LiveRegion) { null } == null)
         compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("Sift the flour.")
         compose.waitForIdle()
         assertTrue(offered(0))
