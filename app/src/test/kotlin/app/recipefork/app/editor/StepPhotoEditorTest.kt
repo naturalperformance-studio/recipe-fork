@@ -8,6 +8,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -52,6 +53,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -151,10 +153,11 @@ class StepPhotoEditorTest {
     }
 
     /** Opens the photo menu of the step at [position] and chooses [item] in it. */
-    private fun menu(position: Int, item: String) {
+    private fun menu(position: Int, item: String, shown: () -> Unit = {}) {
         compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(item), PATIENCE_MS)
+        shown()
         compose.onNodeWithTag(item).performClick()
     }
 
@@ -285,7 +288,11 @@ class StepPhotoEditorTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(0)) }
 
         awaitNotice(0, processed)
-        menu(0, EditorTags.stepPhotoRemove(0))
+        menu(0, EditorTags.stepPhotoRemove(0)) {
+            // Scenario 3 (v0.21): the removal says it in the error colour; the camera does not.
+            assertEquals(lightColorScheme().error, compose.textColourOf(EditorTags.stepPhotoRemove(0)))
+            assertNotEquals(lightColorScheme().error, compose.textColourOf(EditorTags.stepPhotoTake(0)))
+        }
 
         compose.waitForIdle()
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPhotoImage(0)) && stored(id).media.isEmpty() && held().isEmpty() }

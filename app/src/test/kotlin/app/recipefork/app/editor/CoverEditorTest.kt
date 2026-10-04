@@ -10,6 +10,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -54,6 +55,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -241,6 +243,9 @@ class CoverEditorTest {
         sheetItem(CoverTags.REMOVE)
 
         assertEquals(listOf("Camera", "Gallery", "Remove cover"), sheetItems())
+        // Scenario 3 (v0.21): the removal says it in the error colour; the sources do not.
+        assertEquals(lightColorScheme().error, compose.textColourOf(CoverTags.REMOVE))
+        assertNotEquals(lightColorScheme().error, compose.textColourOf(CoverTags.TAKE))
         compose.onNode(hasAnyAncestor(hasTestTag(SourceSheetTags.SHEET)) and hasText("Replace or remove the cover photo")).assertExists()
     }
 
