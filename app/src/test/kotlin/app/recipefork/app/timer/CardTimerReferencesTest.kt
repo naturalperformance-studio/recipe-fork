@@ -111,7 +111,7 @@ class CardTimerReferencesTest : CardTimersKit() {
         assertEquals(listOf("Knead 300 g flour"), held().map { it.name })
         assertTrue(breadKey !in timers.announcements.cancelled)
         // Once cleared, a new start takes the name the step reads by now.
-        compose.onNodeWithTag(TimerTags.cancel(0)).performClick()
+        compose.onNodeWithTag(TimerTags.cancel(0)).performScrollTo().performClick()
         awaitHeld { it.isEmpty() }
         compose.waitUntil(PATIENCE_MS) { controlName() == "Knead 200 g flour" }
         start(0)
