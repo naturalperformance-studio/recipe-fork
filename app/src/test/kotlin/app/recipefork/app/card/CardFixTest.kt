@@ -2,6 +2,18 @@ package app.recipefork.app.card
 
 import android.content.Context
 import androidx.activity.ComponentActivity
+import android.text.InputType
+import android.view.View
+import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import androidx.core.view.children
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.performImeAction
+import org.robolectric.Shadows.shadowOf
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assert
@@ -126,6 +138,16 @@ class CardFixTest {
 
     private fun problem() = compose.textsOf(CardTags.FIX_PROBLEM).single()
 
+    private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+
+    /** Picks [unit] from the control's unit drop-down, as the reader does: open it, then tap the unit. */
+    private fun pickUnit(unit: QuantityUnit) {
+        compose.onNodeWithTag(FixTags.UNIT).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.fixUnit(unit)) }
+        compose.onNodeWithTag(CardTags.fixUnit(unit)).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.fixUnit(unit)) }
+    }
+
     private fun more() {
         compose.onNodeWithTag(CardTags.SERVINGS_MORE).performScrollTo().performClick()
         compose.waitForIdle()
@@ -174,8 +196,7 @@ class CardFixTest {
         compose.onNodeWithTag(CardTags.FIX_PROBLEM).assertDoesNotExist()
         compose.onNodeWithTag(CardTags.FIX_CONFIRM).assertIsNotEnabled()
         // Gram reads in kilograms without conversion, with a comma or a point.
-        compose.onNodeWithTag(CardTags.fixUnit(QuantityUnit.MILLILITRE)).assertDoesNotExist()
-        compose.onNodeWithTag(CardTags.fixUnit(QuantityUnit.KILOGRAM)).performScrollTo().performClick()
+        pickUnit(QuantityUnit.KILOGRAM)
         type("0,3")
         confirm()
         assertEquals("300 g", quantity(0))
@@ -281,16 +302,123 @@ class CardFixTest {
         open()
         tap(0)
         type("0,3")
-        compose.onNodeWithTag(CardTags.fixUnit(QuantityUnit.KILOGRAM)).performScrollTo().performClick()
-        compose.waitForIdle()
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 8)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 8)
         val content = setOf(forFour.title, "0,3", "г", "кг", "т") + forFour.ingredients.mapNotNull { it.freeTextName } +
             (0..5).map { quantity(it) }
+        // With the unit drop-down open, its choices too.
+        compose.onNodeWithTag(FixTags.UNIT).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.fixUnit(QuantityUnit.KILOGRAM)) }
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 11)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 11)
+        LocalizationChecks.assertScreenTextFromResources(compose, context, content)
+        LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content)
+        compose.onNodeWithTag(CardTags.fixUnit(QuantityUnit.KILOGRAM)).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.fixUnit(QuantityUnit.KILOGRAM)) }
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 8)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 8)
         LocalizationChecks.assertScreenTextFromResources(compose, context, content)
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content)
         confirm()
         assertEquals("Порций: ≈2", servings())
         assertEquals(listOf("Chicken", "300 г", "зафиксировано"), line(0))
+    }
+
+    /** The view the keyboard types into, once a text field holds the input: what it asks the keyboard for. */
+    private fun keyboardAskedFor(): EditorInfo {
+        fun View.all(): Sequence<View> = sequenceOf(this) + ((this as? ViewGroup)?.children?.flatMap { it.all() } ?: emptySequence())
+        val editor = EditorInfo()
+        compose.runOnUiThread {
+            compose.activity.window.decorView.all().first { it.onCheckIsTextEditor() }.onCreateInputConnection(editor)
+        }
+        return editor
+    }
+
+    private fun keyboardShown(): Boolean =
+        shadowOf(context.getSystemService(InputMethodManager::class.java)).isSoftInputVisible
+
+    // T-139: one tap on the line opens fixing with the amount focused and the number keyboard up.
+    @Test
+    fun oneTapOpensTheAmountWithTheNumberKeyboard() {
+        open()
+        assertFalse(keyboardShown())
+        tap(0)
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onNodeWithTag(CardTags.FIX_FIELD).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Focused) == true
+        }
+        compose.waitUntil(PATIENCE_MS) { keyboardShown() }
+        val input = keyboardAskedFor().inputType
+        assertEquals(InputType.TYPE_CLASS_NUMBER, input and InputType.TYPE_MASK_CLASS)
+        assertTrue(input and InputType.TYPE_NUMBER_FLAG_DECIMAL != 0)
+    }
+
+    // T-139, SCALE-018: the unit is a standard drop-down of exactly the units the row's fixing allows.
+    @Test
+    fun theUnitIsChosenFromADropDownOfTheUnitsAllowed() {
+        open()
+        tap(0)
+        compose.onNodeWithTag(FixTags.UNIT).assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList))
+        assertEquals(listOf("Unit", "g"), compose.textsOf(FixTags.UNIT))
+        // No unit is laid out as a box of its own any more: the choices exist only while the drop-down is open.
+        QuantityUnit.entries.forEach { compose.onNodeWithTag(CardTags.fixUnit(it)).assertDoesNotExist() }
+        compose.onNodeWithTag(FixTags.UNIT).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.fixUnit(QuantityUnit.GRAM)) }
+        val offered = QuantityUnit.entries.filter { exists(CardTags.fixUnit(it)) }
+        assertEquals(listOf(QuantityUnit.GRAM, QuantityUnit.KILOGRAM, QuantityUnit.TONNE), offered)
+        compose.onNodeWithTag(CardTags.fixUnit(QuantityUnit.KILOGRAM)).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.fixUnit(QuantityUnit.GRAM)) }
+        assertEquals(listOf("Unit", "kg"), compose.textsOf(FixTags.UNIT))
+        // A row whose amount reads in one unit only names it, with nothing to choose.
+        compose.onNodeWithTag(CardTags.FIX_CANCEL).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !controlShown() }
+        tap(2)
+        compose.onNodeWithTag(FixTags.UNIT).assertDoesNotExist()
+    }
+
+    // T-139: what the field does not hold is said in its supporting text, the field marked as in error.
+    @Test
+    fun aRefusedAmountIsTheFieldsError() {
+        open()
+        tap(0)
+        compose.onNodeWithTag(CardTags.FIX_FIELD).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Error))
+        type("2,5")
+        compose.onNodeWithTag(CardTags.FIX_FIELD).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Error))
+        compose.onNodeWithTag(CardTags.FIX_PROBLEM, useUnmergedTree = true)
+            .assert(hasAnyAncestor(hasTestTag(CardTags.FIX_FIELD)))
+        type("250")
+        compose.onNodeWithTag(CardTags.FIX_FIELD).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Error))
+        compose.onNodeWithTag(CardTags.FIX_PROBLEM).assertDoesNotExist()
+    }
+
+    // T-139: Done on the keyboard applies as Recalculate does; on an amount refused it applies nothing.
+    @Test
+    fun doneOnTheKeyboardApplies() {
+        open()
+        tap(0)
+        type("2,5")
+        compose.onNodeWithTag(CardTags.FIX_FIELD).performImeAction()
+        compose.waitForIdle()
+        assertTrue(controlShown())
+        assertEquals("Servings: 4", servings())
+        type("300")
+        compose.onNodeWithTag(CardTags.FIX_FIELD).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { !controlShown() }
+        assertEquals("Servings: ≈2", servings())
+        assertEquals(listOf("Chicken", "300 g", "fixed"), line(0))
+    }
+
+    // T-139: cancel leaves the recipe as it was, whatever was typed or chosen, and keeps nothing of it.
+    @Test
+    fun cancelLeavesTheRecipeAsItWas() {
+        open()
+        val before = (0..5).map(::line)
+        tap(0)
+        type("300")
+        pickUnit(QuantityUnit.KILOGRAM)
+        compose.onNodeWithTag(CardTags.FIX_CANCEL).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !controlShown() }
+        assertEquals("Servings: 4", servings())
+        assertEquals(before, (0..5).map(::line))
+        tap(0)
+        assertEquals(listOf("Amount you have", ""), compose.textsOf(CardTags.FIX_FIELD))
+        assertEquals(listOf("Unit", "g"), compose.textsOf(FixTags.UNIT))
     }
 }
