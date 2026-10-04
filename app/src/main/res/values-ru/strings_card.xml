@@ -26,6 +26,7 @@
     <string name="card_steps">Шаги</string>
     <string name="card_quantities_recalculated">Пересчитано · ↑ округлено вверх · ↓ вниз</string>
     <string name="card_quantities_recalculated_spoken">Количества пересчитаны. Стрелка вверх — округлено вверх, стрелка вниз — округлено вниз.</string>
+    <string name="card_quantities_as_authored">Как написал автор</string>
     <string name="card_quantity_rounded_up">округлено вверх, точное значение меньше</string>
     <string name="card_quantity_rounded_down">округлено вниз, точное значение больше</string>
     <string name="card_step_reference_rounded">%1$s (%2$s)</string>

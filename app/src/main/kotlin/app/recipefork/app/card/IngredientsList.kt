@@ -42,9 +42,10 @@ import app.recipefork.core.scaling.Rounding
 
 /**
  * The card's ingredients, in order, at the scale in force — a requested serving count (SCALE-001) or the amount the
- * reader fixed of one ingredient (SCALE-002). Once any quantity is computed at a scale other than the authored one,
- * one line at the top of the section says the quantities are recalculated, with a legend for the arrows (SCALE-004
- * (1), met for the section rather than per line); a quantity rounding moved carries ↑ where the exact value was
+ * reader fixed of one ingredient (SCALE-002). A status line always stands at the top of the section: at the authored
+ * scale it says the quantities are as the author wrote them; once any quantity is computed at another scale, it says
+ * they are recalculated, with a legend for the arrows (SCALE-004 (1), met for the section rather than per line) —
+ * its height that of the taller of the two, so the list never moves between them; a quantity rounding moved carries ↑ where the exact value was
  * lower — a floor-held one included — and ↓ where it was higher, each read aloud in words (SCALE-004, SCALE-005).
  * Once two or more lines are held at their floors, a warning says the quantities no longer hold the authored
  * proportions (SCALE-009). A fixed line says it is fixed. None of it is carried by colour (A11Y-008). With no
@@ -65,7 +66,7 @@ internal fun IngredientsList(
     if (ordered.isEmpty()) return
     var open by remember(ordered) { mutableStateOf<Int?>(null) }
     Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
-        if (list.recalculated) RecalculatedLegend()
+        ScaleStatus(list.recalculated)
         if (!list.holdsProportions) {
             Text(
                 stringResource(R.string.card_proportions_warning),
@@ -103,6 +104,10 @@ internal val IngredientList.recalculated: Boolean get() = lines.any { it.derived
 /** Test tags of the ingredients section's own parts. */
 internal object IngredientTags {
     const val RECALCULATED = "card-recalculated"
+    /** The status line above the list, always present: as authored, or recalculated. */
+    const val STATUS = "card-scale-status"
+    /** The status line's text at the authored scale. */
+    const val AUTHORED = "card-as-authored"
     /** The arrow after the quantity of the line at [position], where rounding moved it. */
     fun rounding(position: Int) = "card-ingredient-$position-rounding"
 }
@@ -116,21 +121,46 @@ private const val SHOWN_TEXT_KEY = "card.shown-text"
 internal var SemanticsPropertyReceiver.shownText by ShownText
 
 /**
- * The one line that says the section's quantities are recalculated and what the arrows mean; read by the screen
- * reader in full words rather than as the arrows.
+ * The status line above the list, always present: "as the author wrote it" at the authored scale, otherwise the line
+ * that says the quantities are recalculated and what the arrows mean, read by the screen reader in full words rather
+ * than as the arrows. It is as high as the taller of the two texts at the width and font scale in force, so changing
+ * between them never moves the list below.
  */
 @Composable
-private fun RecalculatedLegend() {
+private fun ScaleStatus(recalculated: Boolean) {
     val spoken = stringResource(R.string.card_quantities_recalculated_spoken)
     val shown = stringResource(R.string.card_quantities_recalculated)
-    Text(
-        shown,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clearAndSetSemantics { text = AnnotatedString(spoken); shownText = shown; testTag = IngredientTags.RECALCULATED },
-    )
+    val authored = stringResource(R.string.card_quantities_as_authored)
+    val style = MaterialTheme.typography.bodySmall
+    val measurer = rememberTextMeasurer()
+    Layout(
+        content = {
+            if (recalculated) {
+                Text(
+                    shown,
+                    style = style,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clearAndSetSemantics {
+                        text = AnnotatedString(spoken); shownText = shown; testTag = IngredientTags.RECALCULATED
+                    },
+                )
+            } else {
+                Text(
+                    authored,
+                    style = style,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag(IngredientTags.AUTHORED),
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth().testTag(IngredientTags.STATUS),
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val text = measurables.single().measure(Constraints(maxWidth = width))
+        fun heightOf(it: String) = measurer.measure(it, style, constraints = Constraints(maxWidth = width), density = this).size.height
+        val height = maxOf(text.height, heightOf(shown), heightOf(authored))
+        layout(width, height) { text.place(0, 0) }
+    }
 }
 
 /**

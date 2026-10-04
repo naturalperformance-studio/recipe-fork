@@ -37,6 +37,7 @@
          a legend for the arrows; the spoken form is what the screen reader reads instead of the arrows. -->
     <string name="card_quantities_recalculated">Recalculated · ↑ rounded up · ↓ rounded down</string>
     <string name="card_quantities_recalculated_spoken">Quantities are recalculated. An up arrow marks a quantity rounded up, a down arrow one rounded down.</string>
+    <string name="card_quantities_as_authored">As the author wrote it</string>
     <!-- Read aloud for the arrow after a quantity rounding moved (SCALE-004 (2–5), SCALE-005). -->
     <string name="card_quantity_rounded_up">rounded up, exact value was lower</string>
     <string name="card_quantity_rounded_down">rounded down, exact value was higher</string>
