@@ -3,7 +3,11 @@ package app.recipefork.app.editor
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -13,6 +17,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.Step
@@ -34,9 +39,10 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * FLOW-030: one line at the top of the editor says which parts a fork takes — the title, tags, servings, ingredients
- * and steps — and that the description and the photos stay with the author unless the fork is the author's own (FORK-001, FORK-002, FORK-007). It says what a fork does, never that forking can be prevented,
- * and it is the same on a recipe that was forked as on one that never was.
+ * FLOW-030: an info action in the editor's top bar opens the note on which parts a fork takes — the title, tags,
+ * servings, ingredients and steps — and that the description and the photos stay with the author unless the fork is
+ * the author's own (FORK-001, FORK-002, FORK-007). It says what a fork does, never that forking can be prevented, it is
+ * the same on a recipe that was forked as on one that never was, and it takes no room above the form.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -81,7 +87,17 @@ class ForkNoteEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
     }
 
-    private fun notes(): List<String> = compose.textsOf(EditorTags.FORK_TAKES)
+    /** Opens the note from the top bar and reads it. */
+    private fun notes(): List<String> {
+        compose.onNodeWithTag(EditorTags.FORK_NOTE).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORK_TAKES), PATIENCE_MS)
+        return compose.textsOf(EditorTags.FORK_TAKES)
+    }
+
+    private fun bounds(tag: String): Rect =
+        compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+
+    private fun px(dp: Float): Float = dp * compose.density.density
 
     // One line names the five parts a fork takes (1), the description and photos staying with the author (2), and
     // the author's own fork carrying them too (3).
@@ -95,12 +111,30 @@ class ForkNoteEditorTest {
     fun theEditorSaysWhatAForkTakesAndWhatStaysWithTheAuthor() {
         runBlocking { recipes.save(recipe) }
         open(recipe)
+        val read = notes()
+        assertEquals(english, read)
+        read.forEach { assertFalse(it, it.contains("prevent", ignoreCase = true) || it.contains("cannot", ignoreCase = true)) }
+    }
+
+    // The note stands as no block above the form: the form begins with the title, and the note is behind a 48 dp info
+    // action in the top bar, named for what it opens; opening and closing it stores nothing.
+    @Test
+    fun theNoteTakesNoRoomAboveTheForm() {
+        runBlocking { recipes.save(recipe) }
+        val before = runBlocking { recipes.get(recipe.id) }
+        open(recipe)
+        assertTrue(compose.onAllNodes(hasTestTag(EditorTags.FORK_TAKES), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        // Nothing between the form's 16 dp padding and the title.
+        assertEquals(bounds(EditorTags.FORM).top + px(16f), bounds(EditorTags.TITLE).top, 1f)
+        // The action is in the bar, 48 dp, and the screen reader names it.
+        assertEquals(1, compose.onAllNodes(hasTestTag(EditorTags.FORK_NOTE) and hasAnyAncestor(hasTestTag(EditorTags.BAR))).fetchSemanticsNodes().size)
+        val action = bounds(EditorTags.FORK_NOTE)
+        assertTrue("$action", action.width >= px(48f) - 0.5f && action.height >= px(48f) - 0.5f)
+        assertEquals("What a fork takes", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(EditorTags.FORK_NOTE).fetchSemanticsNode()))
         assertEquals(english, notes())
-        // It is one line, near the top: above the title.
-        val line = compose.onNodeWithTag(EditorTags.FORK_TAKES).fetchSemanticsNode().positionInRoot.y
-        val title = compose.onNodeWithTag(EditorTags.TITLE).fetchSemanticsNode().positionInRoot.y
-        assertTrue(line < title)
-        notes().forEach { assertFalse(it, it.contains("prevent", ignoreCase = true) || it.contains("cannot", ignoreCase = true)) }
+        compose.onNodeWithTag(EditorTags.FORK_NOTE_CLOSE).performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.FORK_NOTE_DIALOG), PATIENCE_MS)
+        assertEquals(before, runBlocking { recipes.get(recipe.id) })
     }
 
     // FLOW-030 (5): a recipe that was forked reads the same marking.

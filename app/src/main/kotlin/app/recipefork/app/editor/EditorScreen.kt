@@ -24,7 +24,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -161,11 +164,14 @@ fun EditorScreen(
 
     Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
-            // The top bar: back, and on its right the checklist, there whatever the recipe holds and whatever its state
-            // (GUIDE-003), then "Done" while the recipe can be changed.
+            // The top bar: back, and on its right what a fork takes (FLOW-030) and the checklist, there whatever the
+            // recipe holds and whatever its state (GUIDE-003), then "Done" while the recipe can be changed.
             EditorBar(
                 done = recipe?.state?.editable == true,
-                checklist = { ChecklistControl(environment.mode) },
+                checklist = {
+                    ForkNoteAction()
+                    ChecklistControl(environment.mode)
+                },
                 onBack = onClose,
                 onDone = {
                     // Leaving the field is what a field's marks wait for (FLOW-028); then, once every change is in
@@ -199,7 +205,6 @@ fun EditorScreen(
                         modifier = Modifier.testTag(EditorTags.FROZEN),
                     )
                 }
-                ForkNote(R.string.editor_fork_takes, Modifier.testTag(EditorTags.FORK_TAKES))
                 CompositionLocalProvider(LocalEditorStatements provides statements, LocalEditorScroll provides scroll) {
                     // The keyboard's Next goes from the title to the serving count, and from there into the rows.
                     val servings = remember { FocusRequester() }
@@ -455,21 +460,37 @@ internal fun RowMenu(
 }
 
 /**
- * A quiet line saying what a fork takes and what stays with the author unless the fork is their own (FLOW-030): the
- * same for every recipe, forked or not, and never a promise that forking can be prevented (FORK-002).
+ * What a fork takes and what stays with the author unless the fork is their own (FLOW-030), behind an info action in
+ * the top bar, so that it takes no room above the form: the same note for every recipe, forked or not, and never a
+ * promise that forking can be prevented (FORK-002). Opening it stores nothing.
  */
 @Composable
-private fun ForkNote(@StringRes text: Int, modifier: Modifier = Modifier) {
-    Text(
-        stringResource(text),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
-    )
+private fun ForkNoteAction() {
+    var open by rememberSaveable { mutableStateOf(false) }
+    IconButton(onClick = { open = true }, modifier = Modifier.size(48.dp).testTag(EditorTags.FORK_NOTE)) {
+        Icon(painterResource(R.drawable.ic_info), contentDescription = stringResource(R.string.editor_fork_note))
+    }
+    if (open) {
+        AlertDialog(
+            onDismissRequest = { open = false },
+            modifier = Modifier.testTag(EditorTags.FORK_NOTE_DIALOG),
+            title = { Text(stringResource(R.string.editor_fork_note)) },
+            text = { Text(stringResource(R.string.editor_fork_takes), Modifier.testTag(EditorTags.FORK_TAKES)) },
+            confirmButton = {
+                TextButton(onClick = { open = false }, modifier = Modifier.testTag(EditorTags.FORK_NOTE_CLOSE)) {
+                    Text(stringResource(R.string.editor_fork_note_close))
+                }
+            },
+        )
+    }
 }
 
 object EditorTags {
-    /** The line at the top saying what a fork takes and what stays with the author (FLOW-030). */
+    /** The top bar's info action that shows what a fork takes (FLOW-030). */
+    const val FORK_NOTE = "editor-fork-note"
+    const val FORK_NOTE_DIALOG = "editor-fork-note-dialog"
+    const val FORK_NOTE_CLOSE = "editor-fork-note-close"
+    /** The note itself, in the dialog: what a fork takes and what stays with the author (FLOW-030). */
     const val FORK_TAKES = "editor-fork-takes"
     const val SCREEN = "editor"
     const val BAR = "editor-bar"

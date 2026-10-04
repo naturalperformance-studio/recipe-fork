@@ -170,7 +170,7 @@ private fun StepRow(
     val timerName = remember { FocusRequester() }
     // References offered under the first step while it is first written in this editing session (GUIDE-008).
     var offering by remember { mutableStateOf(false) }
-    val offerGoing = rememberGoing()
+    val offerShrinking = rememberShrinking()
     // One bounded block per step, as an ingredient's, so where one step ends and the next begins is plain; dragged, it
     // moves whole.
     OutlinedCard(
@@ -191,8 +191,22 @@ private fun StepRow(
                     language = language,
                     editor = editor,
                     state = field,
+                    // In the field's own supporting text, under what the author types, so it moves nothing of it.
+                    hint = if (!offering) null else {
+                        {
+                            Text(
+                                stringResource(R.string.editor_references_offered),
+                                modifier = Modifier
+                                    // Its own node, read as it comes, apart from the text being typed.
+                                    .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
+                                    .testTag(EditorTags.stepReferencesOffered(position)),
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
+                        // The field gets shorter as the offer goes from its supporting text.
+                        .then(offerShrinking.modifier)
                         // Coming into a step moves the author on from the ingredients; leaving it marks it (FLOW-028).
                         .then(
                             leaving(
@@ -203,7 +217,7 @@ private fun StepRow(
                                     if (editor.beginStep(position)) offering = true
                                 },
                             ) {
-                                if (offering) offerGoing.went()
+                                if (offering) offerShrinking.shrinking()
                                 offering = false
                                 editor.leaveStep(key)
                                 val left = editor.recipe.value
@@ -213,18 +227,6 @@ private fun StepRow(
                         )
                         .testTag(EditorTags.stepText(position)),
                 )
-                // Under the field the author is in, so it moves nothing they are typing into.
-                if (offering) {
-                    Text(
-                        stringResource(R.string.editor_references_offered),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .then(offerGoing.modifier)
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                            .semantics { liveRegion = LiveRegionMode.Polite }
-                            .testTag(EditorTags.stepReferencesOffered(position)),
-                    )
-                }
                 // The step's own slot for what its text needs, right under the text and above its actions.
                 BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = 0.dp)
                 BlockActions {

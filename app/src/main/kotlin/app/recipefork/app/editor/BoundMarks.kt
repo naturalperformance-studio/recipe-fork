@@ -124,6 +124,43 @@ internal class Going(private val scroll: EditorScroll?, private val scope: Corou
     }
 }
 
+/**
+ * Something above the field the author is in that gets shorter — a field whose supporting text goes — would pull that
+ * field up by as much; once the editor is laid out shorter, the editor scrolls back by the height it lost. Its
+ * [modifier] goes on the thing, and [shrinking] is called as what it loses is taken away.
+ */
+internal class Shrinking(private val scroll: EditorScroll?, private val scope: CoroutineScope) {
+    private var top = 0f
+    private var height = 0
+
+    val modifier: Modifier = Modifier.onGloballyPositioned {
+        top = it.positionInRoot().y
+        height = it.size.height
+    }
+
+    fun shrinking() {
+        val scroll = scroll ?: return
+        val stood = top
+        val tall = height
+        scope.launch {
+            // Once the frame it shrank in has been laid out, focus moved included.
+            withFrameNanos {}
+            withFrameNanos {}
+            val lost = tall - height
+            val focused = scroll.focused?.takeIf { it.isAttached } ?: return@launch
+            if (lost > 0 && stood <= focused.positionInRoot().y) scroll.state.dispatchRawDelta(-lost.toFloat())
+        }
+    }
+}
+
+/** A [Shrinking] in the editor the composition is in. */
+@Composable
+internal fun rememberShrinking(): Shrinking {
+    val scroll = LocalEditorScroll.current
+    val scope = rememberCoroutineScope()
+    return remember(scroll, scope) { Shrinking(scroll, scope) }
+}
+
 /** A [Going] in the editor the composition is in. */
 @Composable
 internal fun rememberGoing(): Going {
