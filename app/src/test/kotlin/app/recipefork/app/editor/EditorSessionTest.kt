@@ -1,6 +1,8 @@
 package app.recipefork.app.editor
 
 import android.os.Bundle
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -69,9 +71,11 @@ class EditorSessionTest {
         }
         assertEquals("Borscht", compose.textsOf(EditorTags.TITLE).last())
         assertEquals(RecipeLanguage.RU, compose.declaredLanguage())
-        val title = compose.onNodeWithTag(EditorTags.TITLE).fetchSemanticsNode().boundsInRoot
-        val language = compose.onNodeWithTag(EditorTags.LANGUAGE).fetchSemanticsNode().boundsInRoot
-        val tags = compose.onNodeWithTag(EditorTags.TAGS).fetchSemanticsNode().boundsInRoot
+        // Unclipped, as the tags may sit below the screen's bottom under the cover's placeholder.
+        fun bounds(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+        val title = bounds(EditorTags.TITLE)
+        val language = bounds(EditorTags.LANGUAGE)
+        val tags = bounds(EditorTags.TAGS)
         assertEquals(true, language.left >= title.right && tags.top >= title.bottom)
         val recipe = stored(id)!!
         assertEquals("Borscht", recipe.title)

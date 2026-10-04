@@ -49,8 +49,11 @@ class ContrastTest {
         text("a view's floating action — its words and icon", c.onPrimaryContainer, c.primaryContainer),
         text("a book's entry, a card — its title and state", c.onSurface, c.surfaceContainerHighest),
         text("a book's entry, a card — its tags and sending mark", c.onSurfaceVariant, c.surfaceContainerHighest),
+        text("a photo source sheet's title and items", c.onSurface, c.surfaceContainerLow),
+        text("the empty cover's label", c.onSurfaceVariant, c.surfaceContainerHigh),
         // Icons that carry meaning and the boundaries of controls.
         graphic("the drag column's handle, on the column's tint", c.onSurfaceVariant, c.surfaceContainerHigh),
+        graphic("the empty cover's camera", c.onSurfaceVariant, c.surfaceContainerHigh),
         graphic("an outlined field's and a fixing option's boundary", c.outline, c.surface),
         graphic("a focused field's and a chosen option's boundary, the chosen view's bar", c.primary, c.surface),
         graphic("a checkbox's and a radio button's boundary, the free-text warning's icon", c.onSurfaceVariant, c.surface),

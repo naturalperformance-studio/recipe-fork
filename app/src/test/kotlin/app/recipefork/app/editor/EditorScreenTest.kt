@@ -6,6 +6,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
@@ -125,7 +127,8 @@ class EditorScreenTest {
 
     private fun hasClickAction() = androidx.compose.ui.test.hasClickAction()
 
-    private fun bounds(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+    /** Unclipped, as the tags may sit below the screen's bottom under the cover's placeholder. */
+    private fun bounds(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
 
     // FLOW-024 (4), L10N-004 (1), DOM-006 (3), in English.
     @Test

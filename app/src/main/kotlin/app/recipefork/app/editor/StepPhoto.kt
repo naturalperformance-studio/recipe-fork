@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +25,8 @@ import app.recipefork.app.media.PhotoImage
 import app.recipefork.app.media.PhotoNotice
 import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.SourceItem
+import app.recipefork.app.media.SourceSheet
 import app.recipefork.app.media.rememberClipSources
 import app.recipefork.app.media.rememberPhotoSources
 import app.recipefork.core.recipe.Media
@@ -105,43 +105,34 @@ internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photo
 
 /**
  * The media control of the editable step at [position] (FLOW-026 (2)), an icon in the step's row of actions: it opens
- * one menu of taking a photograph with the camera, choosing one from the gallery, recording a clip with the camera,
+ * the media sheet ([SourceSheet]) of taking a photograph with the camera, choosing one from the gallery, recording a clip with the camera,
  * choosing one from the gallery and — once the step carries an item, [media] — removing it.
  */
 @Composable
 internal fun StepPhotoAction(position: Int, media: Media?, control: StepPhotoControl) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        BlockAction(
-            icon = R.drawable.ic_step_photo,
-            label = stringResource(R.string.media_step_photo_label, position + 1),
-            tag = EditorTags.stepPhoto(position),
-            action = stringResource(R.string.media_step_photo_action, position + 1),
-            onClick = { expanded = !expanded },
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            @Composable
-            fun item(text: Int, tag: String, onClick: () -> Unit) = DropdownMenuItem(
-                text = { Text(stringResource(text)) },
-                onClick = {
-                    expanded = false
-                    onClick()
-                },
-                modifier = Modifier.testTag(tag),
-            )
-            item(R.string.media_step_take, EditorTags.stepPhotoTake(position)) { control.sources.takePhoto() }
-            item(R.string.media_step_choose, EditorTags.stepPhotoChoose(position)) { control.sources.choosePhoto() }
-            item(R.string.media_step_clip_record, EditorTags.stepClipRecord(position)) { control.clipSources.recordClip() }
-            item(R.string.media_step_clip_choose, EditorTags.stepClipChoose(position)) { control.clipSources.chooseClip() }
-            when (media?.kind) {
-                null -> Unit
-                MediaKind.VIDEO -> item(R.string.media_step_clip_remove, EditorTags.stepPhotoRemove(position)) {
-                    control.attaching.remove(PhotoNotice.STEP_CLIP_REMOVED)
-                }
-                else -> item(R.string.media_step_remove, EditorTags.stepPhotoRemove(position)) { control.attaching.remove() }
+    var sheet by rememberSaveable { mutableStateOf(false) }
+    BlockAction(
+        icon = R.drawable.ic_step_photo,
+        label = stringResource(R.string.media_step_photo_label, position + 1),
+        tag = EditorTags.stepPhoto(position),
+        action = stringResource(R.string.media_step_photo_action, position + 1),
+        onClick = { sheet = true },
+    )
+    if (!sheet) return
+    val items = listOfNotNull(
+        SourceItem(stringResource(R.string.media_step_take), EditorTags.stepPhotoTake(position)) { control.sources.takePhoto() },
+        SourceItem(stringResource(R.string.media_step_choose), EditorTags.stepPhotoChoose(position)) { control.sources.choosePhoto() },
+        SourceItem(stringResource(R.string.media_step_clip_record), EditorTags.stepClipRecord(position)) { control.clipSources.recordClip() },
+        SourceItem(stringResource(R.string.media_step_clip_choose), EditorTags.stepClipChoose(position)) { control.clipSources.chooseClip() },
+        when (media?.kind) {
+            null -> null
+            MediaKind.VIDEO -> SourceItem(stringResource(R.string.media_step_clip_remove), EditorTags.stepPhotoRemove(position)) {
+                control.attaching.remove(PhotoNotice.STEP_CLIP_REMOVED)
             }
-        }
-    }
+            else -> SourceItem(stringResource(R.string.media_step_remove), EditorTags.stepPhotoRemove(position)) { control.attaching.remove() }
+        },
+    )
+    SourceSheet(stringResource(R.string.media_step_photo_label, position + 1), items, onDismiss = { sheet = false })
 }
 
 /**
