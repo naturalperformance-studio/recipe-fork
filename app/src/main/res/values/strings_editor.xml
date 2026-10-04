@@ -161,4 +161,8 @@
     <string name="editor_timer_notification_follows">The quantities in it follow the reader\'s serving count, so the reader\'s notification may read and be cut differently.</string>
     <string name="editor_timer_notification_name">Name the timer</string>
     <string name="editor_timer_notification_name_action">Name the timer of step %1$d</string>
+    <!-- A row or a step deleted, with the action that puts it back. -->
+    <string name="editor_ingredient_removed">Ingredient row %1$d removed</string>
+    <string name="editor_step_removed">Step %1$d removed</string>
+    <string name="editor_undo">Undo</string>
 </resources>

@@ -33,6 +33,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
@@ -78,6 +79,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipePart
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -150,6 +152,7 @@ fun EditorScreen(
     val statementScope = rememberCoroutineScope()
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
     PartsMadeWholeStatement(editor, statements)
+    RemovalStatement(editor, statements)
 
     Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
@@ -236,6 +239,23 @@ internal class EditorStatements(private val host: SnackbarHostState, private val
         shown?.cancel()
         shown = scope.launch { host.showSnackbar(text, duration = SnackbarDuration.Long) }
     }
+
+    /**
+     * Says [text] with the action [action]: [onAction] once the author takes it, [onGone] once the statement goes
+     * without it — by itself, swiped away, replaced by another, or the editor closed. Returns what withdraws it.
+     */
+    fun offer(text: String, action: String, onAction: () -> Unit, onGone: () -> Unit): Job {
+        shown?.cancel()
+        return scope.launch {
+            val result = try {
+                host.showSnackbar(text, actionLabel = action, duration = SnackbarDuration.Long)
+            } catch (gone: CancellationException) {
+                onGone()
+                throw gone
+            }
+            if (result == SnackbarResult.ActionPerformed) onAction() else onGone()
+        }.also { shown = it }
+    }
 }
 
 /** The statements of the editor the composition is in; outside one, nothing is said. */
@@ -251,6 +271,28 @@ private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: EditorStat
         val shown = statement ?: return@LaunchedEffect
         statements.say(text.orEmpty())
         editor.partsMadeWholeStated(shown)
+    }
+}
+
+/**
+ * Says that a row or a step was deleted, with Undo, while the editor still offers to undo it; the statement goes once
+ * the editor stops offering it — the next change made — and the deletion ends for good when it goes without Undo.
+ */
+@Composable
+private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements) {
+    val removal by editor.removal.collectAsState()
+    val text = removal?.let {
+        stringResource(if (it.step) R.string.editor_step_removed else R.string.editor_ingredient_removed, it.position + 1)
+    }
+    val undo = stringResource(R.string.editor_undo)
+    val offered = remember { arrayOfNulls<Job>(1) }
+    LaunchedEffect(removal) {
+        val shown = removal
+        if (shown == null) {
+            offered[0]?.cancel()
+        } else {
+            offered[0] = statements.offer(text.orEmpty(), undo, { editor.undoRemoval(shown) }, { editor.endRemoval(shown) })
+        }
     }
 }
 

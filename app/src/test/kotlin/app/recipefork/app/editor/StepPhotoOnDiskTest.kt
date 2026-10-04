@@ -194,6 +194,8 @@ class StepPhotoOnDiskTest {
         val deleted = mutableListOf<String>()
         val again = opened(reopened(recipe))
         assertTrue(again.removeStep(2) { removed -> deleted += removed; removed.forEach { store.delete(book, it) } })
+        // Its file goes once the deletion can no longer be undone.
+        again.endRemoval(again.removal.value!!)
 
         val read = reopened(recipe)
         assertEquals(mapOf("Wash." to null, "Fry." to null, "Boil." to boil), read.photosByText())
