@@ -22,7 +22,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.sp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.R
@@ -135,7 +134,9 @@ class CardStepTextSizeTest {
     fun aStepReadsLargerThanTheListAndTheRestOfTheCard() {
         open(scale = 1f)
         val step = stepLayout().layoutInput.style.fontSize
-        assertTrue("the step is set at $step", step.value >= 18f)
+        // A size up from the 18 sp it was set at: the theme's title style, not a size of its own.
+        assertEquals(theme!!.titleLarge.fontSize, step)
+        assertTrue("the step is set at $step", step.value > 18f)
         val others = mapOf(
             "the ingredient list" to sizesWithin(CardTags.INGREDIENTS),
             "the serving count" to sizesWithin(CardTags.SERVINGS),
@@ -170,7 +171,7 @@ class CardStepTextSizeTest {
 
         val layout = stepLayout()
         val text = layout.layoutInput.text
-        assertEquals(18.sp, layout.layoutInput.style.fontSize)
+        assertEquals(theme!!.titleLarge.fontSize, layout.layoutInput.style.fontSize)
         assertTrue("it wraps over several lines", layout.lineCount > 1)
         assertFalse("nothing of it is cut off", layout.hasVisualOverflow)
         assertEquals(text.length, layout.getLineEnd(layout.lineCount - 1))
@@ -188,7 +189,7 @@ class CardStepTextSizeTest {
         assertTrue("the rounded reference carries its arrow: ${text.text}", arrow >= 0 && text.text.contains("4 pc"))
         val span = text.spanStyles.singleOrNull { arrow in it.start until it.end }
         assertNotNull("the arrow is styled apart", span)
-        assertTrue("the arrow is smaller than the step", span!!.item.fontSize.value < 18f)
+        assertTrue("the arrow is smaller than the step", span!!.item.fontSize.value < theme!!.titleLarge.fontSize.value)
         val spoken = compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsProperties.Text].joinToString("") { it.text }
         assertTrue("read with its words: $spoken", spoken.contains(context.getString(R.string.card_quantity_rounded_up)))
