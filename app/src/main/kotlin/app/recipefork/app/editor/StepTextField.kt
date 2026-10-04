@@ -49,6 +49,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
@@ -478,6 +479,8 @@ internal fun StepTextField(
         textStyle = LocalTextStyle.current.merge(TextStyle(color = MaterialTheme.colorScheme.onSurface)),
         cursorBrush = SolidColor(colors.cursorColor),
         interactionSource = interaction,
+        // Sentences start with a capital letter; over several lines, the keyboard keeps its new-line key.
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         // No undo: an earlier value of the field would bring a removed reference back as typed text.
         modifier = modifier
             .heightIn(min = 48.dp)
