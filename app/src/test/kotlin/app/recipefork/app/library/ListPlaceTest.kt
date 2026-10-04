@@ -109,14 +109,13 @@ class ListPlaceTest {
         awaitShown(forty[25])
         check(!shown(forty[0])) { "the restored list jumped to its top" }
         // A filter that changes brings it to the top; every recipe carries the tag, so the same forty are listed.
-        compose.onNodeWithTag(LibraryTags.FILTER_ADD).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.FILTER_BY_TAGS), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.FILTER_BY_TAGS).performClick()
+        compose.onNodeWithTag(LibraryTags.FILTER_ADD).scrolledTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_FIELD), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement("ital")
+        compose.onNodeWithTag(LibraryTags.TAG_FIELD).scrolledTo().performTextReplacement("ital")
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.tagChoice(italian.id)), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.tagChoice(italian.id)).performClick()
-        compose.onNodeWithTag(LibraryTags.TAG_CHOOSER_DONE).performClick()
+        compose.onNodeWithTag(LibraryTags.tagChoice(italian.id)).scrolledTo().performClick()
+        compose.onNodeWithTag(LibraryTags.FILTERS_SHEET_DONE).performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.FILTERS_SHEET), PATIENCE_MS)
         awaitShown(forty[0])
         // So does a query or an order.
         compose.onNodeWithTag(list(view)).performScrollToIndex(25)

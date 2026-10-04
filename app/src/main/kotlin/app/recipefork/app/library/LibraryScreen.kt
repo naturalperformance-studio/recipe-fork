@@ -423,7 +423,7 @@ private fun OwnList(
             if (shown != null) {
                 ListHeader(
                     search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
-                    filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold,
+                    filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold, shown.carries,
                 )
                 HorizontalDivider()
             }
@@ -918,7 +918,7 @@ private fun MarkedList(
             if (shown != null && !empty) {
                 ListHeader(
                     search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
-                    filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold,
+                    filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold, shown.carries,
                 )
                 HorizontalDivider()
             }
@@ -1135,11 +1135,15 @@ object LibraryTags {
     const val NOTHING_FOUND_CLEAR_FILTERS = "library-nothing-found-clear-filters"
     /** The row of a view's filters, under its search field. */
     const val FILTERS = "library-filters"
+    /** "All filters" in the row, which opens the sheet of every filter. */
     const val FILTER_ADD = "library-filter-add"
-    const val FILTER_BY_INGREDIENT = "library-filter-by-ingredient"
-    const val FILTER_BY_TAGS = "library-filter-by-tags"
-    const val FILTER_BY_LANGUAGE = "library-filter-by-language"
-    /** The chooser of the language filter, and each language it offers (L10N-005). */
+    /** A quick filter the row offers: a language of the view, or one of the tags its recipes carry most. */
+    fun languageOffer(language: BookLanguage) = "library-language-offer-${language.name}"
+    fun tagOffer(tagId: Long) = "library-tag-offer-$tagId"
+    /** The sheet of every filter, and the control that closes it. */
+    const val FILTERS_SHEET = "library-filters-sheet"
+    const val FILTERS_SHEET_DONE = "library-filters-sheet-done"
+    /** The sheet's section of the language filter, and each language it offers (L10N-005). */
     const val LANGUAGE_CHOOSER = "library-language-chooser"
     fun languageChoice(language: BookLanguage) = "library-language-choice-${language.name}"
     /** The chip of the language filter in force; tapping it removes the filter. */
@@ -1154,7 +1158,6 @@ object LibraryTags {
     const val TAG_CHOOSER = "library-tag-chooser"
     const val TAG_FIELD = "library-tag-field"
     const val TAG_NO_MATCH = "library-tag-no-match"
-    const val TAG_CHOOSER_DONE = "library-tag-chooser-done"
     fun tagChoice(tagId: Long) = "library-tag-choice-$tagId"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
     const val DELETE_STATEMENT = "library-delete-statement"

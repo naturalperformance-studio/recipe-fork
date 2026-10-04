@@ -156,36 +156,39 @@ class LibraryFilterTest {
 
     private fun click(tag: String) {
         compose.waitUntilExactlyOneExists(hasTestTag(tag), PATIENCE_MS)
-        compose.onNodeWithTag(tag).performClick()
+        compose.onNodeWithTag(tag).scrolledTo().performClick()
         compose.waitForIdle()
+    }
+
+    /** Closes the sheet of every filter with its Done. */
+    private fun closeTheSheet() {
+        click(LibraryTags.FILTERS_SHEET_DONE)
+        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.FILTERS_SHEET), PATIENCE_MS)
     }
 
     /** Filters by the entry offered for [typed] with the identity [entry], as the editor's ingredient field offers it. */
     private fun filterByIngredient(typed: String, entry: IngredientEntryEntity) {
         click(LibraryTags.FILTER_ADD)
-        click(LibraryTags.FILTER_BY_INGREDIENT)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.INGREDIENT_FIELD), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.INGREDIENT_FIELD).performTextReplacement(typed)
         click(LibraryTags.ingredientChoice(entry.id))
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.INGREDIENT_CHOOSER) }
+        closeTheSheet()
     }
 
     /**
-     * Turns each of [tags] on or off in the tag chooser: a chosen tag stands there checked; another is found by
+     * Turns each of [tags] on or off in the sheet's tag section: a chosen tag stands there checked; another is found by
      * typing its label.
      */
     private fun toggleTags(vararg tags: TagEntity) {
         click(LibraryTags.FILTER_ADD)
-        click(LibraryTags.FILTER_BY_TAGS)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_FIELD), PATIENCE_MS)
         tags.forEach {
             if (!exists(LibraryTags.tagChoice(it.id))) {
-                compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement(it.labelEn)
+                compose.onNodeWithTag(LibraryTags.TAG_FIELD).scrolledTo().performTextReplacement(it.labelEn)
             }
             click(LibraryTags.tagChoice(it.id))
         }
-        click(LibraryTags.TAG_CHOOSER_DONE)
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.TAG_CHOOSER) }
+        closeTheSheet()
     }
 
     private fun orderBy(order: BookOrder) {
@@ -362,10 +365,9 @@ class LibraryFilterTest {
         assertEquals(BookFilters(ingredient = chicken.id), session.filters(LibraryView.MARKED).value)
     }
 
-    /** Opens the ingredient chooser and types [typed] into its field. */
+    /** Opens the sheet of every filter and types [typed] into its ingredient field. */
     private fun openChooser(typed: String) {
         click(LibraryTags.FILTER_ADD)
-        click(LibraryTags.FILTER_BY_INGREDIENT)
         retype(typed)
     }
 
@@ -388,7 +390,7 @@ class LibraryFilterTest {
         compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("")
         openChooser("гус")
         click(LibraryTags.ingredientChoice(goose.id))
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.INGREDIENT_CHOOSER) }
+        closeTheSheet()
         assertChip(LibraryTags.INGREDIENT_FILTER, "goose")
         assertListed("Гусь с яблоками")
         // No recipe of the found view holds it: there it is not offered, though the dictionary is read.

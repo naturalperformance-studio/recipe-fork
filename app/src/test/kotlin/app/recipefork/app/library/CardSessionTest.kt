@@ -97,7 +97,9 @@ class CardSessionTest {
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         val entry = LibraryTags.entry(recipe.id.value)
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(entry)).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(entry).performScrollTo().performClick()
+        // Scrolled to, the last entry can stand at the screen's foot under the view's floating action; the entry's own
+        // click is what opens the card.
+        compose.onNodeWithTag(entry).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         awaitLines()
     }
 
