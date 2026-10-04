@@ -91,10 +91,10 @@ class NothingWrittenTest {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.OWN_EMPTY), PATIENCE_MS)
         compose.onNode(hasText(statement) and hasAnyAncestor(hasTestTag(LibraryTags.OWN_EMPTY))).assertIsDisplayed()
         assertEquals(listOf(offer), compose.textsOf(LibraryTags.WRITE))
-        // One offer and nothing else to act on in the view below the switch; above it, the book's menu.
+        // One offer and nothing else to act on in the view below the switch; above it, the settings action.
         val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .filter { SemanticsActions.OnClick in it.config }
-            .filterNot { it.config.getOrNull(SemanticsProperties.TestTag) == LibraryTags.MENU }
+            .filterNot { it.config.getOrNull(SemanticsProperties.TestTag) == LibraryTags.SETTINGS }
         assertEquals(3, actions.size) // the two tabs and the offer
     }
 

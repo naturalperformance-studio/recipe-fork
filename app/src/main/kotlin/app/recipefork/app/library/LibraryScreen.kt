@@ -93,8 +93,6 @@ import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.rememberCardEnvironment
-import app.recipefork.app.data.DragHandleSide
-import app.recipefork.app.data.UsualServings
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.dictionary.label
 import app.recipefork.app.editor.BlockAction
@@ -137,12 +135,12 @@ const val OWN_PAGE = 30
  * picker as well, and in [Mode.Standard] no import exists. An entry's actions are in its menu, at the end of its title
  * line; the list's header and its entries stay apart.
  *
- * The book's menu, beside its title, holds the serving count the reader usually cooks for (FLOW-017), which every
- * card opens at, the side the editor's drag column stands on, and the clearing of the media the device need not keep
- * (FLOW-060), stated first and done only once confirmed.
+ * The settings action, beside the book's title, opens the settings ([onOpenSettings]): the interface language, the
+ * serving count the reader usually cooks for (FLOW-017), the side the editor's drag column stands on, and the clearing
+ * of saved media (FLOW-060).
  *
- * The title and the menu stand in a top bar that scrolls away as a list goes down and returns as it goes up; the tabs
- * of the two views stay beneath it. The views are pages swiped between, the tabs following; each keeps its own place
+ * The title and the settings action stand in a top bar that scrolls away as a list goes down and returns as it goes
+ * up; the tabs of the two views stay beneath it. The views are pages swiped between, the tabs following; each keeps its own place
  * in its list. A view's action — a new recipe, or the import of a file — floats at the bottom right, shrinking to its
  * icon while the list goes down. The screen is drawn edge to edge: the bar stands below the status bar, the action
  * above the navigation bar, and the lists run under the navigation bar, their last entry kept clear of it.
@@ -158,25 +156,10 @@ fun LibraryScreen(
     card: CardEnvironment = rememberCardEnvironment(),
     files: RecipeImport = rememberRecipeImport(recipes),
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
-    usualServings: UsualServings = card.usualServings,
-    dragHandleSide: DragHandleSide = editor.dragHandleSide,
+    onOpenSettings: () -> Unit = {},
 ) {
     val view by session.view.collectAsState()
     val timers = rememberCardTimers()
-    // The clearing of saved media (FLOW-060): asked about first, or said to have nothing to clear.
-    var clearing by rememberSaveable { mutableStateOf<ClearingMedia?>(null) }
-    when (clearing) {
-        ClearingMedia.ASKING -> ClearMediaStatement(
-            mode,
-            onConfirm = {
-                clearing = null
-                session.viewModelScope.launch { recipes.clearMedia() }
-            },
-            onDecline = { clearing = null },
-        )
-        ClearingMedia.NOTHING -> NothingToClear(onDone = { clearing = null })
-        null -> Unit
-    }
     // The session holds the view shown; the pager follows it, and tells it the view a swipe settles on.
     val pager = remember { PagerState(currentPage = view.ordinal) { VIEWS.size } }
     val focus = LocalFocusManager.current
@@ -203,7 +186,7 @@ fun LibraryScreen(
         snackbarHost = { SnackbarHost(snackbars, Modifier.testTag(LibraryTags.SNACKBAR)) },
         topBar = {
             Column {
-                // The book's title, with the book's menu beside it (FLOW-017); it scrolls away as the list goes down
+                // The book's title, with the settings action beside it; it scrolls away as the list goes down
                 // and returns as it goes up.
                 TopAppBar(
                     title = {
@@ -213,13 +196,13 @@ fun LibraryScreen(
                         )
                     },
                     actions = {
-                        BookMenu(
-                            usualServings, dragHandleSide, Modifier.padding(end = 4.dp),
-                            onClearMedia = {
-                                session.viewModelScope.launch {
-                                    clearing = if (recipes.clearableMedia().isEmpty()) ClearingMedia.NOTHING else ClearingMedia.ASKING
-                                }
-                            },
+                        BlockAction(
+                            R.drawable.ic_settings,
+                            stringResource(R.string.settings_open),
+                            LibraryTags.SETTINGS,
+                            onClick = onOpenSettings,
+                            modifier = Modifier.padding(end = 4.dp),
+                            action = stringResource(R.string.settings_open_action),
                         )
                     },
                     scrollBehavior = bar,
@@ -780,7 +763,7 @@ private fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): Ent
 val DELETABLE = setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECTED)
 
 /** Where the clearing of saved media stands while a dialog of it is shown. */
-private enum class ClearingMedia { ASKING, NOTHING }
+internal enum class ClearingMedia { ASKING, NOTHING }
 
 /**
  * The statement before saved media is cleared (FLOW-060): nothing is deleted until it is confirmed, and declining it
@@ -817,7 +800,7 @@ internal fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: (
 
 /** Said in place of the statement when the device holds no media the clearing would delete. */
 @Composable
-private fun NothingToClear(onDone: () -> Unit) {
+internal fun NothingToClear(onDone: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDone,
         modifier = Modifier.testTag(LibraryTags.CLEAR_MEDIA_NOTHING),
@@ -1084,24 +1067,21 @@ fun sentLabel(sent: SentStatus): Int = when (sent) {
 
 object LibraryTags {
     const val TITLE = "library-title"
-    const val MENU = "library-menu"
-    const val USUAL = "library-usual"
-    const val USUAL_HELD = "library-usual-held"
+    /** The action beside the title that opens the settings. */
+    const val SETTINGS = "library-settings"
     const val USUAL_DIALOG = "library-usual-dialog"
     const val USUAL_COUNT = "library-usual-count"
     const val USUAL_FEWER = "library-usual-fewer"
     const val USUAL_MORE = "library-usual-more"
     const val USUAL_SET = "library-usual-set"
     const val USUAL_CLEAR = "library-usual-clear"
-    const val HANDLE_RIGHT = "library-handle-right"
-    /** The book menu's clearing of saved media (FLOW-060), its statement and its message of nothing to clear. */
-    const val CLEAR_MEDIA = "library-clear-media"
+    /** The clearing of saved media's statement (FLOW-060) and its message of nothing to clear. */
     const val CLEAR_MEDIA_STATEMENT = "library-clear-media-statement"
     const val CLEAR_MEDIA_CONFIRM = "library-clear-media-confirm"
     const val CLEAR_MEDIA_DECLINE = "library-clear-media-decline"
     const val CLEAR_MEDIA_NOTHING = "library-clear-media-nothing"
     const val CLEAR_MEDIA_OK = "library-clear-media-ok"
-    /** The book's top bar: its title and its menu, which scrolls away as a list goes down. */
+    /** The book's top bar: its title and its settings action, which scrolls away as a list goes down. */
     const val TOP_BAR = "library-top-bar"
     const val SWITCH = "library-switch"
     /** The pages of the two views, swiped between. */

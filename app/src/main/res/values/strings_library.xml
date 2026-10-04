@@ -54,9 +54,7 @@
     <string name="library_remove_statement">The recipe leaves this device with everything the book holds of it.</string>
     <string name="library_remove_confirm">Remove</string>
     <string name="library_remove_decline">Cancel</string>
-    <!-- FLOW-017: the book's menu, and the serving count the reader usually cooks for. -->
-    <string name="library_menu">Book menu</string>
-    <string name="library_menu_action">Open the book menu</string>
+    <!-- FLOW-017: the serving count the reader usually cooks for. -->
     <string name="library_usual_servings">I usually cook for…</string>
     <string name="library_usual_not_set">not set</string>
     <string name="library_usual_count">Servings: %1$s</string>
@@ -68,7 +66,7 @@
     <string name="library_usual_clear">Not set</string>
     <!-- The drag column of the editor's steps and ingredients on the right of each block, for a left hand. -->
     <string name="library_drag_handle_right">Drag handle on the right</string>
-    <!-- FLOW-060: clearing from the book's menu the media the device need not keep, and the statement shown first. -->
+    <!-- FLOW-060: clearing in the settings the media the device need not keep, and the statement shown first. -->
     <string name="library_clear_media">Clear saved media</string>
     <string name="library_clear_media_title">Clear saved media?</string>
     <!-- In a build without the server the cleared media cannot be fetched again (FLOW-060 (4), FLOW-062 (1)). -->

@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -29,6 +30,7 @@ import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Ingredient
@@ -48,7 +50,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * The book's menu offers the serving count the reader usually cooks for (FLOW-017): its values are exactly those a
+ * The settings offer the serving count the reader usually cooks for (FLOW-017): its values are exactly those a
  * requested count may take (SCALE-010, SCALE-011), "not set" among the choices; the choice is kept on the device; and
  * every recipe opened from the book opens at it (scenario 1 of the increment).
  */
@@ -91,14 +93,21 @@ class UsualServingsMenuTest {
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
+    /** Opens the settings, unless they are open already. */
     private fun openMenu() {
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL) }
+        if (exists(SettingsTags.SCREEN)) return
+        compose.onNodeWithTag(LibraryTags.SETTINGS).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL) }
+    }
+
+    private fun leaveSettings() {
+        compose.onNodeWithTag(SettingsTags.BACK).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(SettingsTags.SCREEN) && exists(LibraryTags.SETTINGS) }
     }
 
     private fun openChoice() {
         openMenu()
-        compose.onNodeWithTag(LibraryTags.USUAL).performClick()
+        compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
     }
 
@@ -107,19 +116,19 @@ class UsualServingsMenuTest {
         compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.USUAL_DIALOG) }
     }
 
-    /** What the menu's item shows of the setting: the count held, or that none is. */
-    private fun held() = compose.textsOf(LibraryTags.USUAL).last()
+    /** What the settings' item shows of the setting: the count held, or that none is. */
+    private fun held() = compose.textsOf(SettingsTags.USUAL).last()
     private fun count() = compose.textsOf(LibraryTags.USUAL_COUNT).single()
     private fun fewer() = compose.onNodeWithTag(LibraryTags.USUAL_FEWER).performClick()
     private fun more() = compose.onNodeWithTag(LibraryTags.USUAL_MORE).performClick()
 
-    // FLOW-017 (4): the menu offers the setting, with what it holds — "not set" until it is set, the count after.
+    // FLOW-017 (4): the settings offer it, with what it holds — "not set" until it is set, the count after.
     @Test
     fun theMenuOffersTheUsualCountAndShowsWhatItHolds() {
         show()
         openMenu()
-        assertEquals(listOf("I usually cook for…", "not set"), compose.textsOf(LibraryTags.USUAL))
-        compose.onNodeWithTag(LibraryTags.USUAL).performClick()
+        assertEquals(listOf("I usually cook for…", "not set"), compose.textsOf(SettingsTags.USUAL))
+        compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
         assertEquals("Servings: 2", count())
         choose(LibraryTags.USUAL_SET)
@@ -153,7 +162,7 @@ class UsualServingsMenuTest {
         assertEquals(Rational.of(1, 3), usual.count.value)
         openMenu()
         assertEquals("⅓", held())
-        compose.onNodeWithTag(LibraryTags.USUAL).performClick()
+        compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
         // The choice starts at the count held, and walks up without a ceiling.
         assertEquals("Servings: ⅓", count())
@@ -214,6 +223,7 @@ class UsualServingsMenuTest {
         show()
         openChoice()
         choose(LibraryTags.USUAL_SET)
+        leaveSettings()
         openCard(recipe)
         assertEquals(listOf("Servings: 2"), compose.textsOf(CardTags.SERVINGS))
         compose.waitUntil(PATIENCE_MS) { recalculated() }
@@ -223,7 +233,7 @@ class UsualServingsMenuTest {
         compose.waitUntil(PATIENCE_MS) { !recalculated() }
         assertEquals(listOf("Chicken", "500 g"), compose.textsOf(CardTags.ingredient(0)))
         compose.onNodeWithTag(CardTags.BACK).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.MENU) }
+        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SETTINGS) }
         assertEquals(Rational.of(2), usual.count.value)
         openMenu()
         assertEquals("2", held())
@@ -233,8 +243,8 @@ class UsualServingsMenuTest {
     @Test
     fun theMenuAndTheChoiceAreLargeEnoughAndSayWhatTheyDo() {
         show()
-        val menu = compose.onNodeWithTag(LibraryTags.MENU).fetchSemanticsNode()
-        assertEquals("Open the book menu", AccessibilityChecks.clickActionLabel(menu))
+        val menu = compose.onNodeWithTag(LibraryTags.SETTINGS).fetchSemanticsNode()
+        assertEquals("Open the settings", AccessibilityChecks.clickActionLabel(menu))
         openChoice()
         listOf(
             LibraryTags.USUAL_FEWER to ("Fewer servings" to "Lower the usual serving count"),
@@ -254,10 +264,10 @@ class UsualServingsMenuTest {
     fun theMenuAndTheChoiceReadInRussian() {
         show()
         openMenu()
-        assertEquals(listOf("Обычно готовлю на…", "не задано"), compose.textsOf(LibraryTags.USUAL))
+        assertEquals(listOf("Обычно готовлю на…", "не задано"), compose.textsOf(SettingsTags.USUAL))
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
-        compose.onNodeWithTag(LibraryTags.USUAL).performClick()
+        compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
         assertEquals("Порций: 2", count())
         assertEquals(listOf("Задать"), compose.textsOf(LibraryTags.USUAL_SET))
