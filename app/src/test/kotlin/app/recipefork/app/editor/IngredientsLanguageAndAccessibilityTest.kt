@@ -125,7 +125,7 @@ class IngredientsLanguageAndAccessibilityTest {
         compose.onNodeWithTag(EditorTags.ingredientQuantity(1)).performScrollTo().performTextInput("1 500")
         addIngredient(2)
         chooseUnit(2, QuantityUnit.TO_TASTE)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientError(1)), PATIENCE_MS)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientError(1)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
         // back, title, language, clear, search, three tags, servings, and per row its fields and actions
         checkTheScreen(expectInteractive = 20)
 

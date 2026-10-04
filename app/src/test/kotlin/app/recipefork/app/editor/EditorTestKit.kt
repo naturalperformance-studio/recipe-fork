@@ -183,9 +183,13 @@ fun ComposeTestRule.swipeAwayStatement() {
     waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(EditorTags.STATEMENT), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
 }
 
-/** The texts of the node tagged [tag], merged as the screen reader reads them, then what a field holds. */
+/**
+ * The texts of the node tagged [tag], merged as the screen reader reads them, then what a field holds; a node merged
+ * into a field — its supporting text — is read apart from it.
+ */
 fun SemanticsNodeInteractionsProvider.textsOf(tag: String): List<String> {
-    val config = onNodeWithTag(tag).fetchSemanticsNode().config
+    val merged = onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+    val config = onNodeWithTag(tag, useUnmergedTree = !merged).fetchSemanticsNode().config
     return config.getOrElse(SemanticsProperties.Text) { emptyList() }.map { it.text } +
         listOfNotNull(config.getOrElseNullable(SemanticsProperties.EditableText) { null }?.text)
 }

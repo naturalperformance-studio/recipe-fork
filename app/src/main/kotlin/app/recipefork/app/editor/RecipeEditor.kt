@@ -44,6 +44,7 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.recipe.withUnit
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -658,6 +659,11 @@ class RecipeEditor(
             then()
         }
         return true
+    }
+
+    /** Returns once every change made so far is in the book: queued behind the writes already asked for. */
+    suspend fun written() {
+        saving.async { writes.withLock {} }.await()
     }
 
     /** Applies [change] and writes the result; a recipe in a frozen state is left as it is. */

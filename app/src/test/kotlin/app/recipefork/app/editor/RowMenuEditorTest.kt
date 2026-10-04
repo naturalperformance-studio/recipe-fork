@@ -125,7 +125,7 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
 
     private fun node(tag: String): SemanticsNode = compose.onNodeWithTag(tag).fetchSemanticsNode()
 
-    private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun fieldText(tag: String): String = node(tag).config[SemanticsProperties.EditableText].text
 

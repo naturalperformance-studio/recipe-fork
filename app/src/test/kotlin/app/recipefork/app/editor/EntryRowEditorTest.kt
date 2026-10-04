@@ -138,7 +138,7 @@ class EntryRowEditorTest {
 
     private fun string(id: Int): String = context.getString(id)
 
-    private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun fieldText(tag: String): String =
         compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
@@ -192,7 +192,7 @@ class EntryRowEditorTest {
         assertFalse(exists(EditorTags.divisibility(0)))
         assertEquals(false, row(id).divisible)
         quantity(0, "2")
-        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.ingredientError(0)), PATIENCE_MS)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientError(0)), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
 
         name(1, "кури", 10)
         pieces(1)
@@ -342,7 +342,9 @@ class EntryRowEditorTest {
         assertNull(held.qualifier)
         assertEquals("chicken wing spicy", held.freeTextName)
         assertEquals("chicken wing spicy", fieldText(EditorTags.ingredientName(0)))
-        assertTrue(exists(EditorTags.ingredientWarning(0)))
+        // Left, the row in the author's own words warns.
+        compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarning(0)) }
     }
 
     // The row's layout, both languages: a qualified piece row at 360 dp and font scale 2.0 keeps every input inside its block.

@@ -26,7 +26,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Snackbar
@@ -63,6 +62,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import app.recipefork.app.AppContainer
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
@@ -148,24 +156,27 @@ fun EditorScreen(
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
     PartsMadeWholeStatement(editor, statements)
     RemovalStatement(editor, statements)
+    val focus = LocalFocusManager.current
+    val saved = stringResource(R.string.editor_saved)
 
     Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
-            // The top: "Done", and beside it the checklist, there whatever the recipe holds and whatever its state (GUIDE-003).
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ActionText(
-                    text = stringResource(R.string.editor_back),
-                    action = stringResource(R.string.editor_back_action),
-                    onClick = onClose,
-                    modifier = Modifier.testTag(EditorTags.BACK),
-                )
-                ChecklistControl(environment.mode)
-            }
-            HorizontalDivider()
+            // The top bar: back, and on its right the checklist, there whatever the recipe holds and whatever its state
+            // (GUIDE-003), then "Done" while the recipe can be changed.
+            EditorBar(
+                done = recipe?.state?.editable == true,
+                checklist = { ChecklistControl(environment.mode) },
+                onBack = onClose,
+                onDone = {
+                    // Leaving the field is what a field's marks wait for (FLOW-028); then, once every change is in
+                    // the book, it says so — unless a removal still offers Undo, which "Saved" never replaces.
+                    focus.clearFocus()
+                    statementScope.launch {
+                        editor.written()
+                        if (editor.removal.value == null) statements.say(saved, SnackbarDuration.Short)
+                    }
+                },
+            )
             val shown = recipe ?: return@Column
             Column(
                 Modifier
@@ -230,9 +241,9 @@ internal fun EditorStatementHost(host: SnackbarHostState, modifier: Modifier = M
 internal class EditorStatements(private val host: SnackbarHostState, private val scope: CoroutineScope) {
     private var shown: Job? = null
 
-    fun say(text: String) {
+    fun say(text: String, duration: SnackbarDuration = SnackbarDuration.Long) {
         shown?.cancel()
-        shown = scope.launch { host.showSnackbar(text, duration = SnackbarDuration.Long) }
+        shown = scope.launch { host.showSnackbar(text, duration = duration) }
     }
 
     /**
@@ -289,6 +300,45 @@ private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements)
             offered[0] = statements.offer(text.orEmpty(), undo, { editor.undoRemoval(shown) }, { editor.endRemoval(shown) })
         }
     }
+}
+
+/**
+ * The editor's top app bar, as the book's and the card's: back at its start, announced as showing the recipe; at its
+ * end [checklist] and, where [done], "Done", which says the recipe is saved.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditorBar(done: Boolean, checklist: @Composable () -> Unit, onBack: () -> Unit, onDone: () -> Unit) {
+    TopAppBar(
+        title = {},
+        modifier = Modifier.testTag(EditorTags.BAR),
+        navigationIcon = {
+            val label = stringResource(R.string.editor_back)
+            Box(
+                Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(onClickLabel = stringResource(R.string.editor_back_action), role = Role.Button, onClick = onBack)
+                    .testTag(EditorTags.BACK),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = label)
+            }
+        },
+        actions = {
+            checklist()
+            if (done) {
+                ActionText(
+                    text = stringResource(R.string.editor_done),
+                    action = stringResource(R.string.editor_done_action),
+                    onClick = onDone,
+                    modifier = Modifier.testTag(EditorTags.DONE),
+                )
+            }
+        },
+        // The screen is already inside the safe drawing area.
+        windowInsets = WindowInsets(0),
+    )
 }
 
 @Composable
@@ -422,7 +472,10 @@ object EditorTags {
     /** The line at the top saying what a fork takes and what stays with the author (FLOW-030). */
     const val FORK_TAKES = "editor-fork-takes"
     const val SCREEN = "editor"
+    const val BAR = "editor-bar"
     const val BACK = "editor-back"
+    /** The top bar's "Done": the changes are in the book, and it says "Saved". */
+    const val DONE = "editor-done"
     const val FORM = "editor-form"
     const val FROZEN = "editor-frozen"
     const val TITLE = "editor-title"
@@ -462,7 +515,6 @@ object EditorTags {
     fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
-    fun ingredientWarningText(position: Int) = "editor-ingredient-$position-warning-text"
     fun divisibility(position: Int) = "editor-ingredient-$position-divisibility"
     fun divisible(position: Int, divisible: Boolean) = "editor-ingredient-$position-divisible-$divisible"
     fun unitOption(unit: QuantityUnit) = "editor-unit-${unit.name}"

@@ -22,19 +22,15 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateMapOf
@@ -43,7 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,7 +55,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -95,7 +89,6 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.effectiveDivisible
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
-import kotlinx.coroutines.launch
 
 /** The interface language as numbers are read and written in it (L10N-009). */
 fun numberLanguage(configuration: Configuration): InterfaceLanguage =
@@ -256,8 +249,9 @@ private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: Interfa
 
 /**
  * One row: exactly the ingredient, the quantity and the unit (FLOW-023 (1)) — never a unit type, which follows from
- * the unit (FLOW-023 (7)). Beside them, only what the row calls for: the free-text warning (FLOW-022 (2)), the
- * divisibility question of a `piece` (FLOW-022 (5)) and the mark of a quantity the field does not hold (DOM-017 (6)).
+ * the unit (FLOW-023 (7)). Under them, only what the row calls for: the free-text hint under the name (FLOW-022 (2)),
+ * the divisibility question of a `piece` (FLOW-022 (5)) and, in the quantity's own supporting text, what the field
+ * accepts when it does not hold what was typed (DOM-017 (6)).
  * Beside the ingredient, its removal and its menu of inserting and moving (FLOW-025).
  */
 @Composable
@@ -280,6 +274,9 @@ private fun IngredientRow(
     )
     // The name, the quantity and the unit each take the height of the tallest of them, so the row's inputs are even.
     val heights = remember { EvenHeights() }
+    // What the name's hint and the quantity's error add under their fields, which the others do not take on.
+    val nameUnder = remember { mutableIntStateOf(0) }
+    val quantityUnder = remember { mutableIntStateOf(0) }
     // The keyboard's Next goes name → quantity → unit → the next row's name; the last row's last field says Done.
     val chain = remember { RowChain() }
     chain.last = position == count - 1
@@ -311,12 +308,12 @@ private fun IngredientRow(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                        IngredientNameField(position, row, editor, language, dictionary, mode, chain, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME))
+                        IngredientNameField(position, row, editor, language, dictionary, mode, chain, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME) { nameUnder.intValue }, nameUnder)
                         if (!under) Row(Modifier.padding(top = 8.dp)) { RowControls(position, count, editor) }
                     }
                     // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
                     val quantity = row.unitType != UnitType.TASTE_UNMEASURED
-                    val quantityHeight = heights.of(EvenHeights.Input.QUANTITY)
+                    val quantityHeight = heights.of(EvenHeights.Input.QUANTITY) { quantityUnder.intValue }
                     val unitHeight = heights.of(EvenHeights.Input.UNIT)
                     BoxWithConstraints(Modifier.fillMaxWidth()) {
                         // The quantity's label is never wrapped onto the field above it (A11Y-004): where it does not fit on
@@ -330,24 +327,16 @@ private fun IngredientRow(
                         if (!quantity || besideUnit >= labelWidth + QUANTITY_LABEL_ROOM) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                                 if (quantity) {
-                                    QuantityField(position, row, editor, language, chain, isError = problem != null, Modifier.weight(1f).then(quantityHeight))
+                                    QuantityField(position, row, editor, language, chain, problem, quantityUnder, Modifier.weight(1f).then(quantityHeight))
                                 }
                                 UnitField(position, row, editor, chain, Modifier.width(UNIT_WIDTH).then(unitHeight))
                             }
                         } else {
                             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                QuantityField(position, row, editor, language, chain, isError = problem != null, Modifier.fillMaxWidth().then(quantityHeight))
+                                QuantityField(position, row, editor, language, chain, problem, quantityUnder, Modifier.fillMaxWidth().then(quantityHeight))
                                 UnitField(position, row, editor, chain, Modifier.fillMaxWidth().then(unitHeight))
                             }
                         }
-                    }
-                    if (problem != null) {
-                        Text(
-                            stringResource(problemMessage(problem)),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.testTag(EditorTags.ingredientError(position)),
-                        )
                     }
                     if (under) BlockActions { RowControls(position, count, editor) }
                     // A `piece` row asks for its divisibility unless its entry gives one (FLOW-022 (5), FLOW-023 (11)).
@@ -398,7 +387,7 @@ private val BLOCK_PADDING_ACROSS = 12.dp
 /** The room a name's text keeps beside the row's controls: eight figures, about as wide as a word of eight letters. */
 private const val NAME_ROOM_SAMPLE = "00000000"
 
-/** What a name field takes across besides its text: its start padding and the free-text warning at its end. */
+/** What a name field takes across besides its text: its padding, and room at its end for a 48 dp control. */
 private val NAME_FIELD_FURNITURE = 16.dp + 48.dp
 
 /** How wide the unit select is beside the quantity: room for its longest unit, "по вкусу", and its arrow. */
@@ -408,31 +397,34 @@ private val UNIT_WIDTH = 140.dp
 private val QUANTITY_LABEL_ROOM = 40.dp
 
 /**
- * The free-text warning (FLOW-022 (2)) as an icon beside the name: its shape says there is something to know, its
- * full text is what the screen reader reads on reaching it, and a tap or a long press shows that text in a tooltip. A
- * build without the server says nothing of publication in it (FLOW-062 (1)).
+ * The free-text warning (FLOW-022 (2)) as a hint in the name's supporting text, in its muted colour, never as an error:
+ * the field and the screen reader read it with the name. A build without the server says nothing of publication in it
+ * (FLOW-062 (1)).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FreeTextWarning(position: Int, mode: Mode) {
-    val text = stringResource(
-        if (mode == Mode.Serverless) R.string.editor_ingredient_free_text_warning_serverless else R.string.editor_ingredient_free_text_warning,
+private fun FreeTextHint(position: Int, mode: Mode, under: MutableIntState) {
+    UnderField(
+        stringResource(
+            if (mode == Mode.Serverless) R.string.editor_ingredient_free_text_warning_serverless else R.string.editor_ingredient_free_text_warning,
+        ),
+        under,
+        Modifier.testTag(EditorTags.ingredientWarning(position)),
     )
-    val state = rememberTooltipState(isPersistent = true)
-    val scope = rememberCoroutineScope()
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip(Modifier.testTag(EditorTags.ingredientWarningText(position))) { Text(text) } },
-        state = state,
-    ) {
-        IconButton(
-            onClick = { scope.launch { state.show() } },
-            modifier = Modifier.size(48.dp).testTag(EditorTags.ingredientWarning(position)),
-        ) {
-            Icon(painterResource(R.drawable.ic_warning), contentDescription = text)
-        }
-    }
 }
+
+/**
+ * A field's supporting text, whose height — with the gap Material 3 leaves above it — is told to [under] while it is
+ * shown, so that the row's other inputs are made even with the field and not with what is written under it.
+ */
+@Composable
+private fun UnderField(text: String, under: MutableIntState, modifier: Modifier) {
+    val gap = with(LocalDensity.current) { SUPPORTING_GAP.roundToPx() }
+    DisposableEffect(under) { onDispose { under.intValue = 0 } }
+    Text(text, modifier.onSizeChanged { under.intValue = it.height + gap })
+}
+
+/** The gap Material 3 leaves between an outlined field and its supporting text. */
+private val SUPPORTING_GAP = 4.dp
 
 /** The name a row shows: its entry's label in the interface language (L10N-003), or the author's own words. */
 internal fun Ingredient.nameIn(dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): String =
@@ -490,6 +482,7 @@ private fun IngredientNameField(
     chain: RowChain,
     modifier: Modifier,
     fieldModifier: Modifier,
+    under: MutableIntState,
 ) {
     var offering by remember { mutableStateOf(false) }
     var focused by remember { mutableStateOf(false) }
@@ -501,6 +494,7 @@ private fun IngredientNameField(
     val label = row.entryLabelIn(dictionary, language)
     val shown = typed?.takeIf { label != null && qualifierTyped(it, label) == Qualified(row.qualifier) } ?: row.fieldNameIn(dictionary, language)
     val offer = if (offering && dictionary != null && row.dictionaryEntry == null) IngredientOffer.of(shown, dictionary, language) else null
+    val hinting = !focused && row.dictionaryEntry == null && !row.freeTextName.isNullOrBlank()
     Column(modifier) {
         OutlinedTextField(
             value = shown,
@@ -523,8 +517,9 @@ private fun IngredientNameField(
             },
             label = { Text(stringResource(R.string.editor_ingredient_name)) },
             // Only a name in the author's own words warns; an entry picked in its place takes the warning away (FLOW-022 (3)).
-            trailingIcon = if (row.dictionaryEntry == null && !row.freeTextName.isNullOrBlank()) {
-                { FreeTextWarning(position, mode) }
+            // It comes once the field is left, so it never springs up under a name still being typed.
+            supportingText = if (hinting) {
+                { FreeTextHint(position, mode, under) }
             } else {
                 null
             },
@@ -652,7 +647,8 @@ private fun QuantityField(
     editor: RecipeEditor,
     language: InterfaceLanguage,
     chain: RowChain,
-    isError: Boolean,
+    problem: QuantityProblem?,
+    under: MutableIntState,
     modifier: Modifier,
 ) {
     // Kept across the activity being recreated, under the row's key, so it stays the row's own.
@@ -668,7 +664,9 @@ private fun QuantityField(
             editor.setIngredientQuantity(position, it)
         },
         label = { Text(stringResource(R.string.editor_ingredient_quantity)) },
-        isError = isError,
+        // What the field accepts, said in its own supporting text when it does not hold what was typed (DOM-017 (6)).
+        isError = problem != null,
+        supportingText = problem?.let { { UnderField(stringResource(problemMessage(it)), under, Modifier.testTag(EditorTags.ingredientError(position))) } },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = if (chain.last) ImeAction.Done else ImeAction.Next),
         keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }, onNext = { chain.openUnit(focus) }),
@@ -694,16 +692,21 @@ private class EvenHeights {
     /** For each input, how tall it was when taller than the others; 0 while it was not. */
     private val taller = mutableStateMapOf<Input, Int>()
 
-    /** Lays out the input [key] at least as tall as the tallest of the others. */
+    /**
+     * Lays out the input [key] at least as tall as the tallest of the others; what [under] says is written under its
+     * field — its supporting text — is not counted, neither as its height nor as the others'.
+     */
     @Composable
-    fun of(key: Input): Modifier {
+    fun of(key: Input, under: () -> Int = { 0 }): Modifier {
         DisposableEffect(key) { onDispose { taller.remove(key) } }
         return Modifier.layout { measurable, constraints ->
             val others = taller.filterKeys { it != key }.values.maxOrNull() ?: 0
+            val extra = under()
             val placeable = measurable.measure(
-                constraints.copy(minHeight = others.coerceIn(constraints.minHeight, constraints.maxHeight)),
+                constraints.copy(minHeight = (others + extra).coerceIn(constraints.minHeight, constraints.maxHeight)),
             )
-            val own = if (placeable.height > others) placeable.height else 0
+            val box = placeable.height - extra
+            val own = if (box > others) box else 0
             if (taller[key] != own) taller[key] = own
             layout(placeable.width, placeable.height) { placeable.place(0, 0) }
         }

@@ -159,7 +159,7 @@ class RowKeysRestorationTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientQuantity(2)), PATIENCE_MS)
         assertEquals(listOf("", "salt", "flour"), (0..2).map { fieldText(EditorTags.ingredientName(it)) })
         assertEquals(listOf("", "5", "2.50"), (0..2).map { fieldText(EditorTags.ingredientQuantity(it)) })
-        compose.onNodeWithTag(EditorTags.ingredientError(2)).assertExists()
+        compose.onNodeWithTag(EditorTags.ingredientError(2), useUnmergedTree = true).assertExists()
     }
 
     // A row inserted after the state is restored gets a key no other row holds: what the screen keeps for each row
