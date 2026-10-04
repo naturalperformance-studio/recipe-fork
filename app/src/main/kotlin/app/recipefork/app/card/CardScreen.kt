@@ -14,7 +14,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -49,9 +51,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
 import androidx.compose.foundation.ScrollState
@@ -634,7 +636,7 @@ private fun ServingsControl(
             modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }.testTag(CardTags.SERVINGS),
         )
         StepAction(
-            glyph = MINUS,
+            icon = R.drawable.ic_servings_fewer,
             name = stringResource(R.string.card_servings_fewer),
             action = stringResource(R.string.card_servings_fewer_action),
             enabled = canDecrease,
@@ -645,7 +647,7 @@ private fun ServingsControl(
             modifier = Modifier.testTag(CardTags.SERVINGS_FEWER),
         )
         StepAction(
-            glyph = PLUS,
+            icon = R.drawable.ic_servings_more,
             name = stringResource(R.string.card_servings_more),
             action = stringResource(R.string.card_servings_more_action),
             enabled = true,
@@ -659,36 +661,31 @@ private fun ServingsControl(
 }
 
 /**
- * A − or + action, the card's [CardTarget] square (A11Y-003, A11Y-007): the screen reader names it by [name] rather than by its glyph, and
- * announces its click as [action] (A11Y-005).
+ * A − or + action: a tonal icon button the card's [CardTarget] square (A11Y-003, A11Y-007), its colours and shape the
+ * theme's. The screen reader names it by [name] and announces its click as [action] (A11Y-005).
  */
 @Composable
 private fun StepAction(
-    glyph: String,
+    @DrawableRes icon: Int,
     name: String,
     action: String,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier
+    FilledTonalIconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
             .size(CardTarget)
-            .clickable(enabled = enabled, onClickLabel = action, role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = name },
-        contentAlignment = Alignment.Center,
+            .semantics {
+                contentDescription = name
+                if (enabled) onClick(label = action) { onClick(); true }
+            },
     ) {
-        Text(
-            glyph,
-            color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.clearAndSetSemantics {},
-        )
+        Icon(painterResource(icon), contentDescription = null)
     }
 }
-
-private const val MINUS = "\u2212"
-private const val PLUS = "+"
 
 /**
  * An icon button of the bar, the card's [CardTarget] square (A11Y-003, A11Y-007): the screen reader speaks its [label]
@@ -728,7 +725,7 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 
 /**
  * The card's ⋮, after its other actions: it opens a menu holding the recipe's removal — Delete for an own recipe in a
- * deletable state, Remove for a found one — each item the card's [CardTarget] tall.
+ * deletable state, Remove for a found one — each item the card's [CardTarget] tall, in the theme's error colour.
  */
 @Composable
 private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
@@ -750,6 +747,8 @@ private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
                     expanded = false
                     onRemove()
                 },
+                // Taking a recipe out of the book is destructive: the item says so in the theme's error colour.
+                colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.heightIn(min = CardTarget)
                     .testTag(if (removal == Removal.DELETE) CardTags.DELETE else CardTags.REMOVE),
             )
