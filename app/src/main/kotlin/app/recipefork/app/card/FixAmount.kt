@@ -1,7 +1,6 @@
 package app.recipefork.app.card
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,14 +11,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -51,6 +58,9 @@ import app.recipefork.core.scaling.UnitLabels
  * field reads a number (DOM-019), in one of the units the author's unit reads in without conversion. An amount the
  * control does not hold is answered with what it holds, and fixes nothing; nothing typed changes nothing either —
  * clearing the control is not a release (SCALE-018 (8)). A fixed row offers its release here (SCALE-017).
+ *
+ * The control opens with its amount field focused and the keyboard up; what the field does not hold is said under
+ * it, and the keyboard's Done applies as Recalculate does.
  */
 @Composable
 internal fun FixAmount(
@@ -65,53 +75,48 @@ internal fun FixAmount(
     var text by remember { mutableStateOf(current?.let { QuantityInput.write(it.amount, it.unit, language) }.orEmpty()) }
     val reading = FixedAmount.read(text, unit, offer.divisible)
     val fix = { (reading as? FixedAmountReading.Accepted)?.let { onFix(it.amount, unit) } }
+    val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    // One tap on the line is enough: the amount is ready to type, on the number keyboard.
+    LaunchedEffect(focus) {
+        focus.requestFocus()
+        keyboard?.show()
+    }
     Column(
         Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag(CardTags.FIX),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
                 label = { Text(stringResource(R.string.card_fix_amount)) },
                 isError = reading is FixedAmountReading.Refused,
+                supportingText = (reading as? FixedAmountReading.Refused)?.let { refused ->
+                    {
+                        Text(
+                            stringResource(problemMessage(refused.problem)),
+                            modifier = Modifier
+                                .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
+                                .testTag(CardTags.FIX_PROBLEM),
+                        )
+                    }
+                },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { fix() }),
-                modifier = Modifier.weight(1f).heightIn(min = CardTarget).testTag(CardTags.FIX_FIELD),
+                modifier = Modifier.weight(3f).heightIn(min = CardTarget).focusRequester(focus).testTag(CardTags.FIX_FIELD),
             )
-            if (offer.units.size == 1) Text(UnitLabels.of(unit, language), style = MaterialTheme.typography.bodyLarge)
-        }
-        if (offer.units.size > 1) {
-            Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                offer.units.forEach { choice ->
-                    val selected = choice == unit
-                    Box(
-                        Modifier
-                            .heightIn(min = CardTarget)
-                            .widthIn(min = CardTarget)
-                            .border(
-                                if (selected) 2.dp else 1.dp,
-                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                                MaterialTheme.shapes.small,
-                            )
-                            .selectable(selected = selected, role = Role.RadioButton, onClick = { unit = choice })
-                            .padding(horizontal = 12.dp)
-                            .testTag(CardTags.fixUnit(choice)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(UnitLabels.of(choice, language), style = MaterialTheme.typography.labelLarge)
-                    }
-                }
+            if (offer.units.size == 1) {
+                Text(
+                    UnitLabels.of(unit, language),
+                    style = MaterialTheme.typography.bodyLarge,
+                    // Level with the field's box, below the room its label takes on the outline.
+                    modifier = Modifier.padding(top = 8.dp).heightIn(min = CardTarget).wrapContentHeight(),
+                )
+            } else {
+                UnitMenu(offer.units, unit, language, { unit = it }, Modifier.weight(2f))
             }
-        }
-        (reading as? FixedAmountReading.Refused)?.let {
-            Text(
-                stringResource(problemMessage(it.problem)),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag(CardTags.FIX_PROBLEM),
-            )
         }
         // Release sits on its own line, apart from closing and recalculating; those two wrap as whole buttons when
         // their labels do not fit side by side (a large font, a narrow screen), the primary one always last.
@@ -134,6 +139,56 @@ internal fun FixAmount(
             )
         }
     }
+}
+
+/**
+ * The unit the amount is typed in, chosen from the [units] fixing allows (SCALE-018) in a standard exposed drop-down,
+ * each choice at least the card's [CardTarget] high.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UnitMenu(
+    units: List<QuantityUnit>,
+    unit: QuantityUnit,
+    language: InterfaceLanguage,
+    onPick: (QuantityUnit) -> Unit,
+    modifier: Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }, modifier = modifier) {
+        OutlinedTextField(
+            value = UnitLabels.of(unit, language),
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text(stringResource(R.string.card_fix_unit)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth()
+                .heightIn(min = CardTarget)
+                .testTag(FixTags.UNIT),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            units.forEach { choice ->
+                DropdownMenuItem(
+                    text = { Text(UnitLabels.of(choice, language), style = MaterialTheme.typography.bodyLarge) },
+                    onClick = {
+                        onPick(choice)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.fixUnit(choice)),
+                )
+            }
+        }
+    }
+}
+
+/** Test tags of the fixing control's own parts. */
+internal object FixTags {
+    /** The unit drop-down, where fixing offers more than one unit; its choices are tagged [CardTags.fixUnit]. */
+    const val UNIT = "card-fix-unit"
 }
 
 /**

@@ -144,18 +144,22 @@ class CardTargetsTest {
         // The fixing control, opened from its line, at first and once a fixing is held.
         compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
-        listOf(
-            CardTags.FIX_FIELD, CardTags.fixUnit(QuantityUnit.GRAM), CardTags.fixUnit(QuantityUnit.KILOGRAM),
-            CardTags.FIX_CANCEL, CardTags.FIX_CONFIRM,
-        ).forEach { compose.assertCardTarget(it) }
-        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 13)
+        listOf(CardTags.FIX_FIELD, FixTags.UNIT, CardTags.FIX_CANCEL, CardTags.FIX_CONFIRM).forEach { compose.assertCardTarget(it) }
+        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 12)
+        // The unit drop-down open: each unit it offers is a card target too.
+        compose.onNodeWithTag(FixTags.UNIT).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.fixUnit(QuantityUnit.KILOGRAM))).fetchSemanticsNodes().isNotEmpty() }
+        listOf(QuantityUnit.GRAM, QuantityUnit.KILOGRAM, QuantityUnit.TONNE).forEach { compose.assertCardTarget(CardTags.fixUnit(it)) }
+        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 15)
+        compose.onNodeWithTag(CardTags.fixUnit(QuantityUnit.GRAM)).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.fixUnit(QuantityUnit.GRAM))).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("250")
         compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX_RELEASE)).fetchSemanticsNodes().isNotEmpty() }
         compose.assertCardTarget(CardTags.FIX_RELEASE)
-        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 14)
+        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 13)
     }
 
     @Test

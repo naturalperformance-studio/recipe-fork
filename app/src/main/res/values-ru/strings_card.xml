@@ -38,6 +38,7 @@
     <string name="card_servings_approximate">Порций: ≈%1$s</string>
     <string name="card_fix_action">Указать, сколько у вас есть, и пересчитать рецепт</string>
     <string name="card_fix_amount">Сколько у вас есть</string>
+    <string name="card_fix_unit">Единица</string>
     <string name="card_fix_confirm">Пересчитать</string>
     <string name="card_fix_confirm_action">Пересчитать весь рецепт на это количество</string>
     <string name="card_fix_release">Снять фиксацию</string>

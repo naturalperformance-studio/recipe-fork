@@ -56,6 +56,7 @@
     <!-- Fixing the amount the reader has of one ingredient (SCALE-002, SCALE-006, SCALE-018). -->
     <string name="card_fix_action">Enter the amount you have and recalculate the recipe for it</string>
     <string name="card_fix_amount">Amount you have</string>
+    <string name="card_fix_unit">Unit</string>
     <string name="card_fix_confirm">Recalculate</string>
     <string name="card_fix_confirm_action">Recalculate the whole recipe for this amount</string>
     <string name="card_fix_release">Release</string>
