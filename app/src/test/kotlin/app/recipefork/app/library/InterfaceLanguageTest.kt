@@ -28,6 +28,7 @@ import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Ingredient
@@ -52,7 +53,7 @@ import java.time.Instant
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * Scenario 2 of the increment (L10N-002): the book's menu offers "Language" — English, Русский, "As on the device";
+ * Scenario 2 of the increment (L10N-002): the settings offer "Language" — English, Русский, "As on the device";
  * the choice switches the whole application at once, holds across a restart, and "As on the device" follows the
  * device again. Every screen then reads in the chosen language, its numbers (L10N-009) and its dictionary labels
  * (L10N-003) included, because they are read from the application's configuration, not the system's.
@@ -118,18 +119,36 @@ class InterfaceLanguageTest {
         exists(LibraryTags.TITLE) && compose.textsOf(LibraryTags.TITLE) == listOf(title)
     }
 
+    /** Opens the settings, unless they are open already. */
+    private fun openSettings() {
+        if (exists(SettingsTags.SCREEN)) return
+        await(LibraryTags.SETTINGS)
+        compose.onNodeWithTag(LibraryTags.SETTINGS).performClick()
+        await(SettingsTags.LANGUAGE)
+    }
+
     private fun openLanguages() {
-        await(LibraryTags.MENU)
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        await(LanguageTags.MENU_ITEM)
-        compose.onNodeWithTag(LanguageTags.MENU_ITEM).performClick()
+        openSettings()
+        compose.onNodeWithTag(SettingsTags.LANGUAGE).performScrollTo().performClick()
         await(LanguageTags.DIALOG)
     }
 
+    /** What the settings' language item shows as the choice in force. */
+    private fun shownChoice(): String = compose.textsOf(SettingsTags.value(SettingsTags.LANGUAGE)).single()
+
+    /** Chooses [choice] in the settings — the screen shows itself again in it — and goes back to the book. */
     private fun choose(choice: LanguageChoice) {
         openLanguages()
         compose.onNodeWithTag(LanguageTags.choice(choice)).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(LanguageTags.DIALOG) }
+        leaveSettings()
+    }
+
+    /** Back from the settings, which a language taken shows again in place. */
+    private fun leaveSettings() {
+        await(SettingsTags.BACK)
+        compose.onNodeWithTag(SettingsTags.BACK).performClick()
+        await(LibraryTags.TITLE)
     }
 
     private fun selected(choice: LanguageChoice): Boolean =
@@ -144,15 +163,14 @@ class InterfaceLanguageTest {
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, activity(), content)
     }
 
-    // The menu offers the item; its dialog the three choices, each language named in itself, the one in force marked.
+    // The settings offer the item, showing the choice in force; its dialog the three choices, each language named in
+    // itself, the one in force marked.
     @Test
-    fun theBookMenuOffersTheThreeChoices() {
+    fun theSettingsOfferTheThreeChoices() {
         launch()
-        await(LibraryTags.MENU)
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        await(LanguageTags.MENU_ITEM)
-        assertEquals(listOf("Language"), compose.textsOf(LanguageTags.MENU_ITEM))
-        compose.onNodeWithTag(LanguageTags.MENU_ITEM).performClick()
+        openSettings()
+        assertEquals(listOf("Language", "As on the device"), compose.textsOf(SettingsTags.LANGUAGE))
+        compose.onNodeWithTag(SettingsTags.LANGUAGE).performScrollTo().performClick()
         await(LanguageTags.DIALOG)
         assertEquals(
             listOf(listOf("English"), listOf("Русский"), listOf("As on the device")),
@@ -176,11 +194,9 @@ class InterfaceLanguageTest {
     @Config(qualifiers = "ru-w411dp-h2000dp")
     fun theChoicesReadInRussian() {
         launch()
-        await(LibraryTags.MENU)
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        await(LanguageTags.MENU_ITEM)
-        assertEquals(listOf("Язык"), compose.textsOf(LanguageTags.MENU_ITEM))
-        compose.onNodeWithTag(LanguageTags.MENU_ITEM).performClick()
+        openSettings()
+        assertEquals(listOf("Язык", "Как на устройстве"), compose.textsOf(SettingsTags.LANGUAGE))
+        compose.onNodeWithTag(SettingsTags.LANGUAGE).performScrollTo().performClick()
         await(LanguageTags.DIALOG)
         assertEquals(
             listOf(listOf("English"), listOf("Русский"), listOf("Как на устройстве")),
@@ -260,9 +276,14 @@ class InterfaceLanguageTest {
         awaitTitle("My recipe book")
         assertEquals(LanguageChoice.ENGLISH, AppLanguage.chosen(app))
         assertTheScreenReadsInItsLanguage(emptySet())
+        openSettings()
+        assertEquals("English", shownChoice())
         openLanguages()
         assertTrue("the choice in force is marked", selected(LanguageChoice.ENGLISH))
         compose.onNodeWithTag(LanguageTags.choice(LanguageChoice.DEVICE)).performClick()
+        // The settings show themselves again in the device's language, the choice in force with them.
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.LANGUAGE) && shownChoice() == "Как на устройстве" }
+        leaveSettings()
         awaitTitle("Моя книга рецептов")
         assertEquals("ru", activity().resources.configuration.locales[0].language)
         restart()

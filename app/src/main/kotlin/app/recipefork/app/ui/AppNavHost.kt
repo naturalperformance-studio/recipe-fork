@@ -44,12 +44,14 @@ import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.rememberCoverThumbnails
 import app.recipefork.app.library.rememberRecipeImport
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.settings.SettingsScreen
 import app.recipefork.core.recipe.RecipeId
 import kotlinx.coroutines.launch
 
-/** The application's destinations: the recipe book, a recipe's card, and the editor on a recipe. */
+/** The application's destinations: the recipe book, a recipe's card, the editor on a recipe, and the settings. */
 object Destinations {
     const val LIBRARY_ROUTE = "library"
+    const val SETTINGS_ROUTE = "settings"
 
     /** The argument the card and the editor carry: the identity of their recipe. */
     const val RECIPE_ID_KEY = "recipeId"
@@ -66,7 +68,8 @@ object Destinations {
  * The navigation host: the recipe book is where the application opens; a recipe's card lies above it, and the editor
  * on a recipe above that recipe's card, so that back — the system's, its predictive gesture, or a screen's own back
  * action — goes one destination back: from the editor to the card of the recipe just edited (FLOW-029 (1)), and from
- * the card to the book, which is where it was left.
+ * the card to the book, which is where it was left. The settings lie above the book, opened from its top bar; back
+ * from them returns to the book where it was left. They are the host's alone: the session holds nothing of them.
  *
  * What is open is the [session]'s: its saved state says which card and which editor are open (FLOW-024, FLOW-029), and
  * the back stack follows it. Back taken through the host — a destination left by the system's back — is told to the
@@ -106,7 +109,14 @@ fun AppNavHost(
             LibraryScreen(
                 session, recipes, mode,
                 editor = editor, card = card, files = files, thumbnails = thumbnails,
-                usualServings = usualServings, dragHandleSide = dragHandleSide,
+                onOpenSettings = { navController.navigate(Destinations.SETTINGS_ROUTE) { launchSingleTop = true } },
+            )
+        }
+        composable(Destinations.SETTINGS_ROUTE) {
+            SettingsScreen(
+                usualServings, dragHandleSide, recipes, mode, session.viewModelScope,
+                // Only the settings are left: a second tap on back while they slide away leaves the book in place.
+                onBack = { if (navController.currentDestination?.route == Destinations.SETTINGS_ROUTE) navController.popBackStack() },
             )
         }
         composable(Destinations.CARD_ROUTE, arguments = recipeArgument) { entry ->

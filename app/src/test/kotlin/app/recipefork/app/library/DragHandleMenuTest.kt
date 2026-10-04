@@ -13,6 +13,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -28,6 +29,7 @@ import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Ingredient
@@ -49,7 +51,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * Scenario 4 of the increment: the book's menu offers "Drag handle on the right" as a checked item; on, the editor's
+ * Scenario 4 of the increment: the settings offer "Drag handle on the right" as a switch; on, the editor's
  * steps and ingredients carry their drag column at the block's right edge; off, at the left; the choice is kept on the
  * device.
  */
@@ -92,39 +94,47 @@ class DragHandleMenuTest {
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun openMenu() {
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.HANDLE_RIGHT) }
+        compose.onNodeWithTag(LibraryTags.SETTINGS).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.HANDLE_RIGHT) }
+    }
+
+    private fun leaveSettings() {
+        compose.onNodeWithTag(SettingsTags.BACK).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(SettingsTags.SCREEN) && exists(LibraryTags.SETTINGS) }
     }
 
     private fun toggle() {
         openMenu()
-        compose.onNodeWithTag(LibraryTags.HANDLE_RIGHT).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.HANDLE_RIGHT) }
+        val was = checked()
+        compose.onNodeWithTag(SettingsTags.HANDLE_RIGHT).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { checked() != was }
+        leaveSettings()
     }
 
     private fun checked(): ToggleableState =
-        compose.onNodeWithTag(LibraryTags.HANDLE_RIGHT).fetchSemanticsNode().config[SemanticsProperties.ToggleableState]
+        compose.onNodeWithTag(SettingsTags.HANDLE_RIGHT).fetchSemanticsNode().config[SemanticsProperties.ToggleableState]
 
     private fun bounds(tag: String): Rect =
         compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
 
-    // The menu offers the item, checked while the column is on the right; each choice is kept on the device.
+    // The settings offer the item, switched on while the column is on the right; each choice is kept on the device.
     @Test
-    fun theMenuOffersTheRightHandleAsACheckedItemKeptOnTheDevice() {
+    fun theSettingsOfferTheRightHandleAsASwitchKeptOnTheDevice() {
         show()
         openMenu()
-        assertEquals(listOf("Drag handle on the right"), compose.textsOf(LibraryTags.HANDLE_RIGHT))
-        val item = compose.onNodeWithTag(LibraryTags.HANDLE_RIGHT).fetchSemanticsNode()
-        assertEquals(Role.Checkbox, item.config[SemanticsProperties.Role])
+        assertEquals(listOf("Drag handle on the right"), compose.textsOf(SettingsTags.HANDLE_RIGHT))
+        val item = compose.onNodeWithTag(SettingsTags.HANDLE_RIGHT).fetchSemanticsNode()
+        assertEquals(Role.Switch, item.config[SemanticsProperties.Role])
         assertEquals(ToggleableState.Off, checked())
-        compose.onNodeWithTag(LibraryTags.HANDLE_RIGHT).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.HANDLE_RIGHT) }
+        compose.onNodeWithTag(SettingsTags.HANDLE_RIGHT).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { checked() == ToggleableState.On }
         assertTrue(side.right.value)
         assertTrue("kept across a restart", PreferencesDragHandleSide(context).right.value)
+        leaveSettings()
         openMenu()
         assertEquals(ToggleableState.On, checked())
-        compose.onNodeWithTag(LibraryTags.HANDLE_RIGHT).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.HANDLE_RIGHT) }
+        compose.onNodeWithTag(SettingsTags.HANDLE_RIGHT).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { checked() == ToggleableState.Off }
         assertFalse(side.right.value)
         assertFalse("kept across a restart", PreferencesDragHandleSide(context).right.value)
     }
@@ -144,12 +154,12 @@ class DragHandleMenuTest {
     fun theItemReadsInRussian() {
         show()
         openMenu()
-        assertEquals(listOf("Ручка перетаскивания справа"), compose.textsOf(LibraryTags.HANDLE_RIGHT))
+        assertEquals(listOf("Ручка перетаскивания справа"), compose.textsOf(SettingsTags.HANDLE_RIGHT))
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
     }
 
-    // Scenario 4: switched on in the book's menu, every step's and ingredient's column stands at its block's right
+    // Scenario 4: switched on in the settings, every step's and ingredient's column stands at its block's right
     // edge in the editor; switched off, at its left edge again.
     @Test
     @Config(qualifiers = "en-w360dp-h2000dp")
@@ -184,7 +194,7 @@ class DragHandleMenuTest {
                 session.closeEditor()
                 session.closeCard()
             }
-            compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.MENU) }
+            compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SETTINGS) }
         }
     }
 }

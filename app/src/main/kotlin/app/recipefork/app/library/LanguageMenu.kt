@@ -65,7 +65,6 @@ internal fun LanguageDialog(chosen: LanguageChoice, onChoose: (LanguageChoice) -
 }
 
 object LanguageTags {
-    const val MENU_ITEM = "library-language"
     const val DIALOG = "library-language-dialog"
     const val CANCEL = "library-language-cancel"
     fun choice(choice: LanguageChoice) = "library-language-${choice.name.lowercase()}"

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -25,6 +26,7 @@ import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.settings.SettingsTags
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
@@ -46,7 +48,8 @@ import java.io.File
 import java.time.Instant
 
 /**
- * Scenario 5 of the increment, FLOW-060 (4): "Clear saved media" in the book's menu states first what it deletes —
+ * Scenario 5 of the increment, FLOW-060 (4): "Clear saved media" in the settings shows how much the device holds that
+ * it would clear, and states first what it deletes —
  * in serverless mode that it cannot be fetched again, in the standard build that it is fetched again when needed — and
  * deletes nothing until confirmed; Cancel changes nothing; confirmed, the found recipe's files are gone, with its rows,
  * while a draft keeps its own. With nothing to clear, it says so in place of asking.
@@ -111,6 +114,10 @@ class ClearSavedMediaTest {
         }
         show(mode)
 
+        // The item shows the found recipe's two files as what it would clear.
+        openSettings()
+        awaitValue(context.resources.getQuantityString(R.plurals.settings_media_count, 2, 2))
+
         // Asked, and declined: nothing is deleted.
         chooseClear()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_STATEMENT), PATIENCE_MS)
@@ -127,6 +134,7 @@ class ClearSavedMediaTest {
         compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_CONFIRM).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_STATEMENT), PATIENCE_MS)
         compose.waitUntil(PATIENCE_MS) { onDisk() == listOf("draft-cover") }
+        awaitValue(context.getString(R.string.settings_media_none))
         runBlocking {
             assertEquals(found.media, recipes.get(found.id)!!.media)
             assertEquals(draft.media, recipes.get(draft.id)!!.media)
@@ -150,11 +158,21 @@ class ClearSavedMediaTest {
         assertEquals(listOf("draft-cover"), onDisk())
     }
 
+    private fun openSettings() {
+        if (exists(SettingsTags.SCREEN)) return
+        compose.onNodeWithTag(LibraryTags.SETTINGS).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(SettingsTags.CLEAR_MEDIA), PATIENCE_MS)
+    }
+
+    private fun awaitValue(value: String) = compose.waitUntil(PATIENCE_MS) {
+        compose.onAllNodes(hasTestTag(SettingsTags.value(SettingsTags.CLEAR_MEDIA)) and hasText(value), useUnmergedTree = true)
+            .fetchSemanticsNodes().isNotEmpty()
+    }
+
     private fun chooseClear() {
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA), PATIENCE_MS)
-        assertTrue(exists(LibraryTags.CLEAR_MEDIA))
-        compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA).performClick()
+        openSettings()
+        assertTrue(exists(SettingsTags.CLEAR_MEDIA))
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().performClick()
     }
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
