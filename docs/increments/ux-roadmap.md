@@ -38,7 +38,7 @@ The root cause behind many findings: no Scaffold, TopAppBar, FAB or M3 buttons/c
 19. Errors drawn outside fields → `supportingText` with `isError`. S.
 34. The free-text warning shows mid-typing and reads as an error. S.
 
-## U4 — Media, files and filters
+## U4 — Media, files and filters → v0.19 (planned 2026-10-04, with 17 and the card's recalculation legend)
 18. Photo actions are three text links; inconsistent with step media → placeholder + bottom sheet (Camera / Gallery). S–M.
 21. Filter choosers are AlertDialogs with fields and lists → one Filters bottom sheet. M.
 22. Filtering takes two hops → a quick FilterChip row under search. M.
@@ -47,7 +47,7 @@ The root cause behind many findings: no Scaffold, TopAppBar, FAB or M3 buttons/c
 26. Destructive confirm not marked; delete only from the list's ⋮. S.
 33. The crop screen has no Cancel after the camera. S.
 
-## U5 — Settings and the theme follow-up (with or after F1)
+## U5 — Settings and the theme follow-up (with or after F1) → 28 in v0.20 with F1; 31, 32 and the theme-dependent parts in v0.21 (planned 2026-10-04)
 28. Book settings hidden in the title's ⋮ → a Settings screen with current values (language, usual servings, theme, drag side, storage). M.
 31. Replace hand-built controls with M3 components so every colour and shape comes from the theme. M.
 32. In-screen motion (AnimatedVisibility / AnimatedContent), respecting the animation scale. S.
