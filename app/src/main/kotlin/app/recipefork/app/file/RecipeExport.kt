@@ -55,10 +55,13 @@ object RecipeExport {
             val directory = File(exports, id.value.filter { it.isLetterOrDigit() || it == '-' }.ifEmpty { FALLBACK_NAME })
             if (!directory.mkdirs()) throw IOException("cannot make $directory")
             File(directory, fileName(recipe.title)).also { file ->
-                val total = RecipeFile.encode(content).length + content.media.sumOf { store.file(name, it.mediaId).length() }
+                val document = RecipeFile.encode(content).toByteArray(Charsets.UTF_8).size
+                val total = document + content.media.sumOf { store.file(name, it.mediaId).length() }
                 file.outputStream().buffered().use { out ->
                     RecipeArchive.write(content, counting(out, total.coerceAtLeast(1), progress)) { store.file(name, it.mediaId) }
                 }
+                // The archive compresses what it can, so what is written falls short of the total: written is whole.
+                progress(1f)
             }
         }
         return FileProvider.getUriForFile(context, authority(context), file)

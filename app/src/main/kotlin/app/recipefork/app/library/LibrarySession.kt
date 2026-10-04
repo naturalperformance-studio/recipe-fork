@@ -111,6 +111,7 @@ class LibrarySession(
     val editing: StateFlow<String?> = saved.getStateFlow(EDITING_KEY, null)
 
     fun openEditor(recipeId: String) {
+        closeNotice()
         saved[EDITING_KEY] = recipeId
         // Only an own recipe is edited, so the card shown on leaving the editor returns to the own recipes.
         saved[CARD_FROM_KEY] = LibraryView.OWN
@@ -129,6 +130,7 @@ class LibrarySession(
     val viewing: StateFlow<String?> = saved.getStateFlow(VIEWING_KEY, null)
 
     fun openCard(recipeId: String, from: LibraryView? = null) {
+        closeNotice()
         saved[VIEWING_KEY] = recipeId
         from?.let { saved[CARD_FROM_KEY] = it }
     }
@@ -177,6 +179,7 @@ class LibrarySession(
      * that the step is still shown should the process end before the card is drawn.
      */
     fun showStep(recipeId: String, position: Int) {
+        closeNotice()
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = recipeId
         saved[CARD_FROM_KEY] = null
@@ -202,6 +205,14 @@ class LibrarySession(
     /** The message was closed. */
     fun told() {
         saved[MESSAGE_KEY] = null
+    }
+
+    /**
+     * The book is left for a card or the editor: a recipe a file brought, said in the book's snackbar, is said no more,
+     * so that coming back neither says it again nor brings the list back to it. A failure's dialog stays until closed.
+     */
+    private fun closeNotice() {
+        if (FileMessage.decoded(saved[MESSAGE_KEY])?.isNotice == true) told()
     }
 
     private val working = MutableStateFlow<FileWork?>(null)

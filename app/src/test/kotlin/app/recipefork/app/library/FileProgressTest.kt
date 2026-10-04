@@ -29,6 +29,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.awaitCard
+import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
@@ -197,12 +198,40 @@ class FileProgressTest {
         compose.waitUntil(PATIENCE_MS) {
             exists(fresh) && top(fresh).top >= top(LibraryTags.MARKED_LIST).top - 1f && top(fresh).bottom <= top(LibraryTags.MARKED_LIST).bottom
         }
-        // The snackbar's Open is large enough; it is found by its words below.
         AccessibilityChecks.assertTouchTargets(compose)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, except = AccessibilityChecks.snackbarPane)
         compose.onNode(hasText("Open") and hasAnyAncestor(hasTestTag(LibraryTags.SNACKBAR)), useUnmergedTree = true).performClick()
         compose.awaitCard()
         assertEquals("fresh", session.viewing.value)
         assertNull("the snackbar's message is closed", session.message.value)
+    }
+
+    // Leaving the book for a card while the snackbar says an imported recipe closes it: coming back, it is not said
+    // again, and the list keeps the place it was left at rather than going back to that recipe.
+    @Test
+    fun leavingTheBookClosesTheNoticeAndTheListKeepsItsPlace() {
+        val earlier = found(30)
+        reading.countDown()
+        show()
+        val newest = earlier.last()
+        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.entry(newest.value)) }
+        val text = "“Bean soup” is in your recipe book now"
+        compose.runOnIdle { session.tell(ImportOutcome.Added(newest, "Bean soup").message()) }
+        compose.awaitFileNotice(text)
+        // The person scrolls away from the recipe and opens another one's card.
+        compose.onNodeWithTag(LibraryTags.MARKED_LIST).performScrollToIndex(20)
+        compose.waitForIdle()
+        val other = LibraryTags.entry(earlier[29 - 20].value)
+        val left = top(other)
+        compose.onNodeWithTag(other).performClick()
+        compose.awaitCard()
+        assertNull("the notice is closed once the book is left", session.message.value)
+        compose.backThroughTheCard()
+        compose.waitUntil(PATIENCE_MS) { exists(other) }
+        compose.waitForIdle()
+        assertEquals("not said again", 0, compose.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().size)
+        assertEquals("the list keeps its place", left, top(other))
+        assertTrue("not brought back to the recipe", !exists(LibraryTags.entry(newest.value)) || top(LibraryTags.entry(newest.value)).bottom <= top(LibraryTags.MARKED_LIST).top)
     }
 
     // A failed import still says why, in its dialog with its one way out, and no progress is left showing.
@@ -299,7 +328,7 @@ class FileProgressTest {
         assertTrue("$told", told.last() in 0.9f..1f)
     }
 
-    // The export tells how far it has written the file.
+    // The export tells how far it has written the file, and that it is whole once written.
     @Test
     fun anExportTellsHowFarItHasWritten() {
         val recipe = Recipe.create(now, owner = null).copy(title = "Soup")
@@ -308,6 +337,7 @@ class FileProgressTest {
         assertTrue(runBlocking { RecipeExport.write(context, recipes, recipe.id) { told += it } } != null)
         assertTrue(told.isNotEmpty())
         assertEquals(told.sorted(), told)
-        assertTrue("$told", told.first() > 0f && told.last() <= 1f)
+        assertTrue("$told", told.first() > 0f)
+        assertEquals("the bar is full once the file is written", 1f, told.last())
     }
 }

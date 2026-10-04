@@ -100,7 +100,7 @@ class FileMessageTest {
     }
 
     // The longest message of all, at 360 dp and twice the font size, is laid out whole: no line cut short or ellipsized,
-    // nothing clipped by the dialog, and it is read by the screen reader.
+    // nothing clipped by the dialog or the snackbar, and it is read by the screen reader.
     @Test
     @Config(qualifiers = "ru-w360dp-h640dp", fontScale = 2f)
     fun everyMessageIsSaidWholeAtTheNarrowestWidthAndLargestTextInRussian() = saidWhole()
@@ -115,22 +115,13 @@ class FileMessageTest {
         (listOf(longest) + everyMessage).forEach { message ->
             val text = message.text(context.resources)
             compose.runOnIdle { session.tell(message) }
-            if (message.isNotice) {
-                val node = compose.awaitFileNotice(text)
-                val layout = layoutOf(node)
-                assertEquals(text, layout.layoutInput.text.text)
-                assertFalse("“$text” is cut in height", layout.didOverflowHeight)
-                (0 until layout.lineCount).forEach { line -> assertFalse("line $line of “$text” is ellipsized", layout.isLineEllipsized(line)) }
-                assertEquals("“$text” ends on its last line", text.length, layout.getLineEnd(layout.lineCount - 1))
-                // The snackbar's Open is large enough and says what it does; M3's host reads the rest as it comes.
-                AccessibilityChecks.assertTouchTargets(compose)
-                assertEquals(1, compose.onAllNodes(hasText("Open") or hasText("Открыть"), useUnmergedTree = true).fetchSemanticsNodes().size)
-                compose.runOnIdle { session.told() }
-                compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
-                return@forEach
+            // A recipe the file brought is said in the book's snackbar; a failure in its dialog.
+            val node = if (message.isNotice) {
+                compose.awaitFileNotice(text)
+            } else {
+                compose.awaitFileMessage(text)
+                compose.onAllNodes(hasTestTag(FileMessageTags.TEXT), useUnmergedTree = true).fetchSemanticsNodes().single()
             }
-            compose.awaitFileMessage(text)
-            val node = compose.onAllNodes(hasTestTag(FileMessageTags.TEXT), useUnmergedTree = true).fetchSemanticsNodes().single()
             val layout = layoutOf(node)
             assertEquals(text, layout.layoutInput.text.text)
             assertEquals("measured at twice the font size", 2f, layout.layoutInput.density.fontScale, 0.001f)
@@ -148,11 +139,32 @@ class FileMessageTest {
             val shown = node.boundsInRoot
             assertEquals("“$text” is shown in full height", node.size.height.toFloat(), shown.height, 1f)
             assertEquals("“$text” is shown in full width", node.size.width.toFloat(), shown.width, 1f)
-            assertReadAloud(node, text)
-            AccessibilityChecks.assertTouchTargets(compose)
-            AccessibilityChecks.assertInteractiveElementsLabelled(compose)
-            compose.closeFileMessage()
+            if (message.isNotice) {
+                assertReadAsItComes(node, text)
+                AccessibilityChecks.assertTouchTargets(compose)
+                // Material 3's snackbar pane alone is passed over: its words are the snackbar's, checked above.
+                AccessibilityChecks.assertInteractiveElementsLabelled(compose, except = AccessibilityChecks.snackbarPane)
+                assertEquals(1, compose.onAllNodes(hasText(context.getString(app.recipefork.app.R.string.file_open))).fetchSemanticsNodes().size)
+                compose.runOnIdle { session.told() }
+                compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
+            } else {
+                assertReadAloud(node, text)
+                AccessibilityChecks.assertTouchTargets(compose)
+                AccessibilityChecks.assertInteractiveElementsLabelled(compose)
+                compose.closeFileMessage()
+            }
         }
+    }
+
+    /** The screen reader reads [text] whole from the snackbar as it comes: a text node within a live region or pane. */
+    private fun assertReadAsItComes(node: SemanticsNode, text: String) {
+        assertEquals(listOf(text), node.config.getOrNull(SemanticsProperties.Text)?.map { it.text })
+        assertTrue(SemanticsProperties.InvisibleToUser !in node.config)
+        assertTrue(SemanticsProperties.HideFromAccessibility !in node.config)
+        assertTrue(
+            "“$text” lies in no live region or pane",
+            generateSequence(node) { it.parent }.any { SemanticsProperties.LiveRegion in it.config || SemanticsProperties.PaneTitle in it.config },
+        )
     }
 
     /** The screen reader reads [text] from the dialog: a text node of the dialog's pane, visible to it. */
