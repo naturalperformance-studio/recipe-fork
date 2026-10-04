@@ -65,6 +65,8 @@ Packages: `app.recipefork.core`, `app.recipefork.server`, `app.recipefork.app`. 
 
 Interface strings: one resource file per feature, `res/values/strings_<feature>.xml` beside `res/values-ru/strings_<feature>.xml`. Server migrations: `server/src/main/resources/db/migration/V<n>__<feature>.sql`, numbered in the order tasks merge.
 
+Interface rules: the `android-m3-ui` skill plus [`ui-conventions.md`](ui-conventions.md) — named in every UI task's developer and reviewer packet.
+
 Increments, their tasks and decision logs: [`docs/increments/`](../increments/). The earlier backlog is archived in [`docs/archive/process-v1/`](../archive/process-v1/).
 
 ## Decisions
