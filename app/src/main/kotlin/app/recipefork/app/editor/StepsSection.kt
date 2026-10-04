@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -91,6 +92,7 @@ internal fun Steps(
     LaunchedEffect(source) { dictionary = runCatching { source.ingredients() }.getOrDefault(emptyList()) }
     // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
     val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveStep(from, to) }
+    val focus = remember { RowFocus() }
     Column(
         Modifier.fillMaxWidth().zIndex(if (drag.dragged != null) 1f else 0f).testTag(EditorTags.STEPS),
         verticalArrangement = Arrangement.spacedBy(ROW_SPACING),
@@ -114,7 +116,7 @@ internal fun Steps(
             // What the screen holds for a step — focus, a timer being attached — stays with it when steps before it
             // are inserted, moved or deleted.
             key(editor.stepKey(position)) {
-                if (editable) StepRow(position, steps.size, step, recipe.stepMedia(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos)
+                if (editable) StepRow(position, steps.size, step, recipe.stepMedia(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos, focus)
                 else ReadOnlyStep(position, step, recipe.stepMedia(position), recipe.ingredients, language, photos)
             }
         }
@@ -123,7 +125,9 @@ internal fun Steps(
                 text = stringResource(R.string.editor_step_add),
                 action = stringResource(R.string.editor_step_add_action),
                 onClick = {
-                    editor.addStep()
+                    val added = editor.recipe.value?.steps?.size
+                    // The step added takes the focus in its text, with the keyboard up.
+                    if (editor.addStep() && added != null) focus.ask(added)
                     // The author has moved on from the ingredients to the steps (FLOW-028 (1)).
                     editor.leave(RecipePart.Ingredients)
                 },
@@ -152,8 +156,10 @@ private fun StepRow(
     stating: Boolean,
     drag: RowDrag,
     photos: StepPhotos,
+    focus: RowFocus,
 ) {
     val field = remember { StepFieldState() }
+    focus.TakenBy(position, field.focus)
     val key = editor.stepKey(position)
     val photoControl = rememberStepPhotoControl(position, editor, photos)
     // Opened by the timer's control before any duration is held: a timer of no duration is no timer, and is not stored.
@@ -452,7 +458,7 @@ private fun TimerNameField(position: Int, step: List<StepRun>, timer: Timer, edi
         } else {
             null
         },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
         modifier = Modifier
             .fillMaxWidth()
             .focusRequester(requester)
@@ -529,6 +535,8 @@ internal fun Description(recipe: Recipe, editor: RecipeEditor) {
             onValueChange = { editor.setDescription(it) },
             label = { Text(stringResource(R.string.editor_description_optional)) },
             minLines = 3,
+            // Over several lines, the keyboard keeps its new-line key.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier
                 .fillMaxWidth()
                 // The description comes after the ingredients and the steps: reaching it moves the author on from both.

@@ -62,6 +62,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.AppContainer
 import app.recipefork.app.R
@@ -190,12 +192,15 @@ fun EditorScreen(
                 }
                 ForkNote(R.string.editor_fork_takes, Modifier.testTag(EditorTags.FORK_TAKES))
                 CompositionLocalProvider(LocalEditorStatements provides statements, LocalEditorScroll provides scroll) {
-                    TitleAndLanguage(shown, editor)
+                    // The keyboard's Next goes from the title to the serving count, and from there into the rows.
+                    val servings = remember { FocusRequester() }
+                    val rows = remember { RowFocus() }
+                    TitleAndLanguage(shown, editor) { servings.requestFocus() }
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
-                    ServingCount(shown, editor)
+                    ServingCount(shown, editor, servings, rows)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
-                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode)
+                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows)
                         Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork)
                     }
                     Description(shown, editor)
@@ -250,7 +255,7 @@ private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: EditorStat
 }
 
 @Composable
-private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor) {
+private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () -> Unit) {
     val editable = recipe.state.editable
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
@@ -260,6 +265,8 @@ private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor) {
                     onValueChange = { editor.setTitle(it) },
                     label = { Text(stringResource(R.string.editor_title)) },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { onNext() }),
                     modifier = Modifier.weight(1f).then(leaving { editor.leave(RecipePart.Title) }).testTag(EditorTags.TITLE),
                 )
             } else {
