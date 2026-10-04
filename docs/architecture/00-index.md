@@ -92,3 +92,4 @@ Increments, their tasks and decision logs: [`docs/increments/`](../increments/).
 | [decisions/20260928-recipe-file-is-a-zip.md](decisions/20260928-recipe-file-is-a-zip.md) | A recipe file is a ZIP of a versioned `recipe.json` and its media, streamed at import. |
 | [decisions/20261002-in-app-camera-with-camerax.md](decisions/20261002-in-app-camera-with-camerax.md) | Superseded by the phone's own camera ADR of 2026-10-03. |
 | [decisions/20261003-the-phones-own-camera-then-a-crop.md](decisions/20261003-the-phones-own-camera-then-a-crop.md) | Photos come from the phone's camera app by intent, then the app's 4:3 crop; no camera permission, no CameraX. |
+| [decisions/20261004-the-theme-is-one-resource-file.md](decisions/20261004-the-theme-is-one-resource-file.md) | Every theme value in `res/values/app_theme.xml`, light and dark built explicitly from it; the app's own theme choice. |
