@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,10 @@ abstract class CardTimersKit {
     protected val haptics = RecordingHaptics()
     private var open by mutableStateOf<RecipeId?>(null)
 
+    /** The theme the card is shown in. */
+    @Composable
+    protected open fun Theme(content: @Composable () -> Unit) = MaterialTheme(content = content)
+
     /** The font scale the card is shown at. */
     protected open val fontScale: Float = 1f
 
@@ -90,7 +95,7 @@ abstract class CardTimersKit {
                 LocalDensity provides Density(density.density, fontScale),
                 LocalHaptics provides haptics,
             ) {
-                MaterialTheme {
+                Theme {
                     val id = open
                     if (id == null) {
                         Box(Modifier.testTag(AWAY))

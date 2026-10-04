@@ -2,6 +2,7 @@ package app.recipefork.app.card
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,6 +34,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.offset
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -41,7 +46,7 @@ import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rounding
 
 /**
- * The card's ingredients, in order, at the scale in force — a requested serving count (SCALE-001) or the amount the
+ * The card's ingredients, on a tonal surface of the theme, in order, at the scale in force — a requested serving count (SCALE-001) or the amount the
  * reader fixed of one ingredient (SCALE-002). A status line always stands at the top of the section: at the authored
  * scale it says the quantities are as the author wrote them; once any quantity is computed at another scale, it says
  * they are recalculated, with a legend for the arrows (SCALE-004 (1), met for the section rather than per line) —
@@ -65,6 +70,29 @@ internal fun IngredientsList(
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered) { mutableStateOf<Int?>(null) }
+    // The list stands apart from the steps on a tonal surface of the theme, in its medium corners. The surface reaches
+    // into the card's gutter, so the lines keep the whole width of the content and wrap no sooner (A11Y-004).
+    Surface(
+        Modifier.fillMaxWidth().bleed(SURFACE_BLEED).testTag(IngredientTags.SURFACE),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease) }
+    }
+}
+
+/** The list's heading, status, warning and lines, with the fixing control [open] under its line. */
+@Composable
+private fun Lines(
+    ordered: List<Ingredient>,
+    list: IngredientList,
+    fixings: List<CardFixing>,
+    language: InterfaceLanguage,
+    open: Int?,
+    onOpen: (Int?) -> Unit,
+    onFix: (CardFixing) -> Unit,
+    onRelease: (Int) -> Unit,
+) {
     Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
         ScaleStatus(list.recalculated)
         if (!list.holdsProportions) {
@@ -80,7 +108,7 @@ internal fun IngredientsList(
         val column = quantityColumn(list.lines)
         list.lines.forEachIndexed { i, line ->
             val position = ordered[i].position
-            IngredientRow(line, position, column, cardPlace(CardPlaces.ingredient(position))) { open = if (open == position) null else position }
+            IngredientRow(line, position, column, cardPlace(CardPlaces.ingredient(position))) { onOpen(if (open == position) null else position) }
             val offer = line.fixing
             if (offer != null && open == position) {
                 key(position) {
@@ -88,9 +116,9 @@ internal fun IngredientsList(
                         offer = offer,
                         current = fixings.firstOrNull { it.position == position },
                         language = language,
-                        onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); open = null },
-                        onRelease = { onRelease(position); open = null },
-                        onClose = { open = null },
+                        onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
+                        onRelease = { onRelease(position); onOpen(null) },
+                        onClose = { onOpen(null) },
                     )
                 }
             }
@@ -104,6 +132,8 @@ internal val IngredientList.recalculated: Boolean get() = lines.any { it.derived
 /** Test tags of the ingredients section's own parts. */
 internal object IngredientTags {
     const val RECALCULATED = "card-recalculated"
+    /** The tonal surface the whole section sits on. */
+    const val SURFACE = "card-ingredients-surface"
     /** The status line above the list, always present: as authored, or recalculated. */
     const val STATUS = "card-scale-status"
     /** The status line's text at the authored scale. */
@@ -255,6 +285,19 @@ private fun IngredientRow(line: IngredientLine, position: Int, column: QuantityC
             }
         }
     }
+}
+
+/** How far the tonal surface reaches into the card's gutter on each side; the section's lines start where they would without it. */
+private val SURFACE_BLEED = 8.dp
+
+/** The space above and below the section on its tonal surface. */
+private val SURFACE_PADDING = 12.dp
+
+/** Laid out [by] wider on each side than the room it is given, the room it takes still only that. */
+private fun Modifier.bleed(by: Dp) = layout { measurable, constraints ->
+    val extra = by.roundToPx() * 2
+    val placeable = measurable.measure(constraints.offset(horizontal = extra))
+    layout((placeable.width - extra).coerceAtLeast(0), placeable.height) { placeable.place(-extra / 2, 0) }
 }
 
 /** The space between the quantity column and the names. */
