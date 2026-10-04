@@ -148,7 +148,8 @@ The seven items:
    духовку` does not. Where the opening cannot be the point of the wait, the
    timer can be named by hand instead (FLOW-016).
 2. **One action, one step.** Steps are not joined together; two waits in
-   sequence are two steps, and a step carries one timer (DOM-013).
+   sequence read best as two steps, though a step can carry up to five timers
+   (DOM-024).
 3. **A photograph or a clip belongs at the step it shows,** and is worth
    attaching at the best quality the camera gives, because it is what the reader
    checks their own pan against (FLOW-026).
@@ -281,20 +282,21 @@ whether their own opening survives without counting characters — and the
 correction is offered in the same place, because the author who has just seen the
 problem is the one able to fix it.
 
-### GUIDE-007 — A second timer on a step explains itself
+### GUIDE-007 — A sixth timer on a step explains itself
 
-If the author attaches a timer to a step that already carries one, then the
-system shall state that a step carries one timer and that two waits in sequence
-are written as two steps.
+If the author attaches a timer to a step that already carries five, then the
+system shall state that a step carries at most five timers and that further waits
+are written as further steps.
 
 **Acceptance criteria**
-- Given a step that already carries a timer, when the author chooses the control
-  for attaching a timer on it (FLOW-027), then the statement is shown and no
-  second timer is created (DOM-013).
+- Given a step that already carries five timers, when the author chooses the
+  control for attaching a timer on it (FLOW-027), then the statement is shown and
+  no sixth timer is created (DOM-024).
 - Given that statement, when it is shown, then it names splitting the step as
   what to do instead, so the author is not left with a refusal and no way
   forward.
-- Given a step with no timer, when a timer is attached, then nothing is shown.
+- Given a step with fewer than five timers, when a timer is attached, then
+  nothing is shown.
 - Given the statement, when the author takes their next action in the editor,
   then the statement is gone, the step is unchanged, and the timer it already had
   still holds its duration; the statement has no control that closes it
@@ -307,10 +309,12 @@ are written as two steps.
   not an action in the sense of criterion 4, and the statement stays, so a person
   using the screen reader can reach it and hear it.
 
-**Verification:** choose the timer control on a step that has a timer, confirm
+**Verification:** choose the timer control on a step that has five timers, confirm
 the statement and that the step is untouched, then act elsewhere and confirm the
 statement is gone.
 **Source:** user decision, 2026-09-20.
+**Changed 2026-10-04 (sync v0.15–v0.24):** the limit it explains is five timers,
+not one (DOM-024), by user decision at the planning of v0.24.
 **Correction, 2026-09-27:** criterion 1 answered an attempt FLOW-027 left no path
 to, and criterion 4 closed a statement GUIDE-005 says there is nothing to dismiss
 (SD-005). By user decision of that date the attempt is the timer control kept on a

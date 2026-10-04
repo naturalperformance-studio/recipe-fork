@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: [FLOW-053, FLOW-054, FLOW-055]
 ---
 
@@ -11,46 +11,44 @@ Reached from the listings of [50-browsing.md](50-browsing.md): where an owner
 deletes a recipe and handles its private link, and the screen a nickname leads to.
 Split from `50-browsing.md` on 2026-09-27; no identifier changed.
 
-### FLOW-053 — Deleting a recipe is offered in one place and confirmed against what it costs
+### FLOW-053 — Deleting a recipe is immediate and can be undone for a moment
 
 Where a recipe written in the active recipe book is in `local`, `private` or
-`rejected`, the system shall
-offer to delete it from that recipe's entry in the own-recipes view, shall state
-before anything is destroyed that the deletion is immediate and cannot be undone
-and how much media it frees, and shall delete it only after an explicit
-confirmation.
+`rejected`, the system shall offer to delete it from that recipe's entry in the
+own-recipes view and from its card; shall delete it at once, asking for no
+confirmation; shall then offer to undo the deletion for as long as its notice is
+shown; and shall make the deletion final only when the notice goes.
 
 **Acceptance criteria**
 - Given a recipe in `local`, `private` or `rejected`, when its entry in the
-  own-recipes view is opened, then deletion is offered there; given a recipe in any other
-  state, then no deletion control is present and no space is reserved for one
-  (ST-010).
-- Given the statement, when it is shown, then it says the recipe and its
-  photographs and video go at once and cannot be brought back, and, for a sent
-  recipe, it names the amount of the unpublished allowance the deletion frees
-  (MEDIA-010, MEDIA-011); a recipe in `local` frees none and no amount is named.
-- Given a recipe holding changes not sent (FLOW-005), when the statement is
-  shown, then it says so, exactly as AUTH-013 names such recipes before an account
-  is removed from the device.
-- Given any setting, when it is searched for, then none switches this statement
-  off (GUIDE-001 governs the same pattern).
-- Given the confirmation, when the owner declines it, then nothing is deleted and
-  the recipe keeps its state and everything it holds.
-- Given the confirmation, when the owner gives it, then the entry leaves the view
-  and, if the view is now empty, FLOW-042 states so and offers to write a recipe.
+  own-recipes view or its card is opened, then deletion is offered there; given a
+  recipe in any other state, then no deletion control is present and no space is
+  reserved for one (ST-010).
+- Given deletion asked for, when it is done, then the recipe leaves the view at
+  once, no confirmation is asked, and a notice says the recipe was deleted and
+  offers to undo it; asked for from the card, the card closes to the view it came
+  from.
+- Given that notice, when the owner undoes the deletion, then the recipe returns
+  with everything it held — its photographs and video, its state, its changes not
+  sent.
+- Given that notice, when it goes without undo, then the deletion is final: the
+  recipe's media are deleted from the device, and for a sent recipe the server
+  deletes it then (ST-010) and the unpublished allowance it held is freed
+  (MEDIA-010, MEDIA-011).
+- Given the view now empty, when the recipe leaves it, then FLOW-042 states so
+  and offers to write a recipe.
 - Given a timer of that recipe running or ringing, when the deletion is done, then
-  the timer ends and announces nothing further.
-- Given the recipe card screen of an own recipe, when it is looked at, then it
-  carries no deletion control, neither in the recipe nor in the screen's bar,
-  because a recipe's state is managed on its entry in the list (FLOW-036); the
-  edit action in the bar (FLOW-029) opens the editor and deletes nothing.
+  the timer ends and announces nothing further, and an undo does not restart it.
+- Given an imported recipe, when its card is opened, then removing it is offered
+  there as on its entry.
 - Given no network connection, when deletion of a sent recipe is asked for, then
-  FLOW-003 refuses it before the statement is shown; a recipe in `local` is
+  FLOW-003 refuses it before anything leaves the view; a recipe in `local` is
   deleted with or without a connection.
 
-**Verification:** delete a draft carrying media and unsent changes and read the
-statement; decline once and confirm once; look for the control on a card, on a
-`pending` entry and on a `published` one; attempt it in aeroplane mode.
+**Verification:** delete a draft carrying media and unsent changes from the card
+and undo it; delete it again and let the notice go; look for the control on a
+`pending` entry and on a `published` one; attempt deleting a sent recipe in
+aeroplane mode.
 **Source:** user decision, 2026-09-21, which created the act ST-010 specifies.
 Where the control sits follows FLOW-036: a state is not worth a screen, so
 neither is deleting one recipe. The statement follows the pattern the product
@@ -65,6 +63,13 @@ bar (SD-031); it now names the bar and keeps deletion off it.
 without a connection, and frees no allowance, since recipes reach the server only
 when sent (user decision of that date).
 Amended 2026-10-03 (sync v0.3–v0.14): deleting a recipe ends its timers — req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
+**Changed 2026-10-04 (sync v0.15–v0.24):** deletion is offered on the card as well
+as on the entry (user decision, v0.19), and it asks for no confirmation: it is
+immediate and can be undone while its notice shows, final only when the notice
+goes (user decision at the planning of v0.23). The statement before deletion is
+gone with the confirmation; that a sent recipe reaches the server's deletion only
+when final is a req-forge proposal accepted by the user at the sync of 2026-10-04.
+
 
 ### FLOW-054 — The private link is shown, copied, revoked and reissued in one place
 

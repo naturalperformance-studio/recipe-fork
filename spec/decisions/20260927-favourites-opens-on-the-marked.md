@@ -1,6 +1,6 @@
 # The favourites section opens on the marked recipes, and a device with no account has only them
 
-**Status:** accepted, completes FLOW-034
+**Status:** accepted, completes FLOW-034; opening on the marked recipes at each session superseded 2026-10-04 — the book opens on the view last left (FLOW-034, user decision F-1 of v0.16)
 
 **Context:** The section has two views, and nothing said which one it opens on
 before the reader chooses, or whether a device with no account — which owns

@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: []
 ---
 
@@ -77,7 +77,7 @@ the content of every account signed in on it, each apart from the others
 | `tags` | set of Tag | Chosen from the fixed dictionary. |
 | `language` | one of the languages of L10N-001 | Declared by the author, never detected. Selects the catalogue filter of L10N-005 and the search analysis of L10N-007. Frozen with the rest of the content (L10N-004). |
 | `servings` | whole number, 1 or more | The serving count the author wrote the quantities for (DOM-015). |
-| `ingredients` | ordered list of Ingredient | |
+| `ingredients` | ordered list of Ingredient | May be divided into named groups (DOM-022). |
 | `steps` | ordered list of Step | |
 | `media` | list of Media | |
 | `state` | state value | See `entity-states`. |
@@ -92,6 +92,8 @@ the content of every account signed in on it, each apart from the others
 | `position` | integer | Order within the recipe. |
 | `dictionary_entry` | IngredientEntry or none | The dictionary entry this ingredient is an instance of. Absent exactly when the author matched no entry (DOM-009). What a filter matches (CAT-002). |
 | `qualifier` | text or none | The author's own words narrowing the entry, e.g. `филе бедра` under `курица`. Allowed only where `dictionary_entry` is present. Not matched by a filter. |
+| `group` | text or none | The name of the ingredient group the row sits in, or none (DOM-022). |
+| `note` | text or none | How the ingredient is prepared, at most 60 characters; not scaled, not searched (DOM-023). |
 | `free_text_name` | text or none | The author's own name for an ingredient that matched no entry. Present exactly when `dictionary_entry` is absent (DOM-009). |
 | `unit_type` | unit type | One of the five above. |
 | `unit` | unit | The concrete unit within the type, e.g. `g` within `exact`. Absent for `taste_unmeasured`. |
@@ -109,6 +111,7 @@ presentation choice and is not specified here.
 |---|---|---|
 | `entry_id` | identifier | |
 | `label` | text | Localised; see `localization`. |
+| `synonyms` | per language, list of text | Other words for the same ingredient; they find the entry, never replace its label (DOM-021). |
 | `parent` | IngredientEntry or none | The broader entry this one belongs to, e.g. `крылышки` under `курица`. An entry that is itself a parent has none: the dictionary is two levels deep at most (DOM-010). |
 | `divisible` | boolean or unset | `piece` divisibility for every ingredient of this entry. The author does not override it (`scaling-rules`). Unset where the product owner has not decided it; then the author answers for that ingredient exactly as for free text (FLOW-001). Every entry carrying a factor for `шт` carries it set. |
 | `comparison_factors` | unit → positive number | What one of that unit counts for on this entry's own comparison scale. Absent for a unit the product owner has not filled in. Used for ordering only, never displayed, never scaled with (DOM-011). |
@@ -144,9 +147,9 @@ DOM-011 is what keeps it from ever becoming anything else.
 | Field | Type | Notes |
 |---|---|---|
 | `position` | integer | Order within the recipe. |
-| `text` | text or none | May contain ingredient references. It is also what names the step's timer (FLOW-016). A step holds text, media, or both (DOM-006). |
+| `text` | text or none | May contain ingredient references. It is also what names the step's timers where the author named none (FLOW-016). A step holds text, media, or both (DOM-006). |
 | `ingredient_references` | list | Each points at an Ingredient of the same recipe and at a position in `text`, and holds either the whole ingredient or a part of it: a quantity in the ingredient's own unit, on that unit type's grid, above zero (FLOW-031, DOM-007). |
-| `timer` | Timer or none | At most one (DOM-013). |
+| `timers` | list of Timer | None to five (DOM-024). |
 
 A step has no title. What identifies it to a reader is its own text, and that is
 also what a timer on it is announced by, which is why no separate name exists in
@@ -161,8 +164,8 @@ either entity.
 
 A timer's name is derived from the text of the step it belongs to and is not
 stored, unless the author overrode it, in which case `label` holds what they
-wrote (FLOW-016). A step holds at most one timer (DOM-013), so a derived name is
-never ambiguous. `label` absent is not "no name": it means the name follows the
+wrote (FLOW-016). A step may hold up to five timers (DOM-024); unnamed timers of
+one step are told apart as FLOW-016 requires. `label` absent is not "no name": it means the name follows the
 step.
 
 ### Media
@@ -230,4 +233,5 @@ split and never will.
 | Part | What is in it | Requirements |
 |---|---|---|
 | [10-invariants.md](10-invariants.md) | Invariants over the entities: nickname, quantity, household measure, parent, media ownership, the submission minimum, step references, tags, the authored serving count; and what is deliberately not modelled yet | DOM-001–DOM-008, DOM-015 |
-| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, one timer per step, where the dictionaries are kept, the twelve units, the values a quantity may hold, how a typed number is read, and what the dictionaries hold | DOM-009–DOM-014, DOM-016–DOM-020 |
+| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, where the dictionaries are kept, the twelve units, the values a quantity may hold, how a typed number is read, and what the dictionaries hold | DOM-009–DOM-012, DOM-014, DOM-016–DOM-020 |
+| [30-recipe-additions.md](30-recipe-additions.md) | Synonyms of a dictionary entry, ingredient groups, an ingredient's note, and up to five timers on a step | DOM-021–DOM-024 |

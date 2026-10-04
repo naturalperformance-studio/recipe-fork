@@ -1,6 +1,6 @@
 # The exact label and the order of the offer
 
-**Status:** accepted, completes FLOW-057
+**Status:** superseded in part by [20261004-synonyms-and-the-exact-match-first.md](20261004-synonyms-and-the-exact-match-first.md) — the folding stands; an exact match now comes first, and inflected forms and synonyms count
 
 **Context:** FLOW-057 withholds free text when the typed text is "exactly the
 label" of an offered entry, and did not say how that is compared: whether `Молоко`

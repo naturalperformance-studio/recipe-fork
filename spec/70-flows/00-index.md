@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: []
 ---
 
@@ -27,10 +27,11 @@ identifiers did not change on the split and never will.
 | [15-divergence.md](15-divergence.md) | Two devices that diverge, and a sending the server already holds — including a repeated sending that already made a fork; and a sending after an unanswered one, made from what that one stored | FLOW-008, FLOW-066, FLOW-067 |
 | [20-device-storage.md](20-device-storage.md) | The recipe book and what the device keeps, with and without an account; clearing media the device can fetch again | FLOW-009–FLOW-012, FLOW-058, FLOW-051, FLOW-052, FLOW-060 |
 | [30-cooking.md](30-cooking.md) | Cooking from a recipe | FLOW-013–FLOW-021 |
+| [35-cooking-with-busy-hands.md](35-cooking-with-busy-hands.md) | Marking ingredients and steps done, and the vibration that answers a touch while cooking | FLOW-068, FLOW-069 |
 | [40-editor.md](40-editor.md) | Writing a recipe: the ingredient row and what its field offers, the editor's order, media, warnings, the saved view and what a fork carries | FLOW-022–FLOW-026, FLOW-028–FLOW-030, FLOW-057 |
-| [45-steps-timers-references.md](45-steps-timers-references.md) | A step's timer, and ingredient references in a step's text | FLOW-027, FLOW-031, FLOW-032 |
-| [50-browsing.md](50-browsing.md) | The catalogue and the recipe book ("My recipe book"): its two views, the view it opens on, and what a device with no account sees | FLOW-033–FLOW-043 |
-| [55-own-recipe-and-author.md](55-own-recipe-and-author.md) | Deleting a recipe of one's own, the private link, and the author's screen | FLOW-053–FLOW-055 |
+| [45-steps-timers-references.md](45-steps-timers-references.md) | A step's timers (up to five), and ingredient references in a step's text | FLOW-027, FLOW-031, FLOW-032 |
+| [50-browsing.md](50-browsing.md) | The catalogue and the recipe book ("My recipe book"): its two views, the view it opens on (the one last left), and what a device with no account sees | FLOW-033–FLOW-043 |
+| [55-own-recipe-and-author.md](55-own-recipe-and-author.md) | Deleting a recipe of one's own — from its entry or its card, undone while its notice shows — the private link, and the author's screen | FLOW-053–FLOW-055 |
 | [60-moderator-queue.md](60-moderator-queue.md) | The moderator's queue, and where a publishing ban is applied | FLOW-044–FLOW-050, FLOW-056 |
 | [70-serverless-mode.md](70-serverless-mode.md) | Serverless mode: what a release built for after the server is gone takes away and keeps, exporting and importing recipe files, and forks of imported recipes | FLOW-061–FLOW-065 |
 

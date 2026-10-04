@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: []
 ---
 
@@ -94,7 +94,7 @@ removal happened before the fork existed (ST-004, MOD-008).
 ## What a recipe is made of
 
 **Step** — one instruction, holding text, media or both — never neither (DOM-006)
-— at most one timer (DOM-013) and any ingredient references. A step has no title: what identifies it is its own
+— up to five timers (DOM-024) and any ingredient references. A step has no title: what identifies it is its own
 text (`domain-model`).
 
 **Ingredient reference** — a marker inside a step's text pointing at an
@@ -105,11 +105,15 @@ name; a whole reference equals the list line, a part is scaled and rounded on it
 own (DOM-007, FLOW-032, SCALE-007).
 
 **Timer** — a duration of hours and minutes, at most 99:59, attached inside one
-step (FLOW-027). A step carries at most one (DOM-013).
+step (FLOW-027). A step carries up to five (DOM-024).
 
 **Timer name** — what a timer announces itself by. Derived from the first 60
 characters of its step's text unless the author set a name of their own, in
 which case theirs is used and stops following the step (FLOW-016).
+
+**Done mark** — the reader's mark on an ingredient or step of the card, kept on
+the device per recipe until cleared; never part of the recipe, its file or a fork
+(FLOW-068).
 
 **Cover** — the recipe's own image, attached where the title is written. Optional
 (FLOW-026, DOM-006). Always a photograph, never a video (MEDIA-001).
@@ -162,7 +166,18 @@ it still names the recipes that hold it and is not offered for new use (DOM-009)
 
 **Qualifier** — the author's own words narrowing an entry, typed as the tail of
 the ingredient's own field so the row reads `филе без кожи`. It is not a fourth
-field, and a filter never matches it (DOM-009, FLOW-023, OQ-020).
+field, and a filter never matches it (DOM-009, FLOW-023, OQ-020). It says *what*
+the ingredient is; a note says how to prepare it.
+
+**Synonym** — another word for a dictionary entry, per language (`картошка` for
+`картофель`). It finds the entry in the editor's offer and the book's filter;
+the recipe still reads by the entry's label (DOM-021).
+
+**Ingredient group** — a named heading among a recipe's ingredients ("Dough");
+presentation only, changing nothing in scaling, references or filters (DOM-022).
+
+**Note** — up to 60 characters on an ingredient line saying how it is prepared
+("finely chopped"); not scaled and found by no search (DOM-023).
 
 **Free text** — an ingredient the author named in their own words instead of
 picking an offered entry (FLOW-057). Accepted with a warning, never refused, and never found by an

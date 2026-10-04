@@ -1,6 +1,6 @@
 # A second timer is attempted and explained; every ingredient can be referenced; the notification preview renders at the authored count
 
-**Status:** accepted, corrects FLOW-027, FLOW-031, FLOW-032, GUIDE-006 and GUIDE-007
+**Status:** accepted, corrects FLOW-027, FLOW-031, FLOW-032, GUIDE-006 and GUIDE-007; the attempted second timer became a sixth by [20261004-a-step-may-carry-several-timers.md](20261004-a-step-may-carry-several-timers.md)
 
 **Context:** GUIDE-007 answered an attempt FLOW-027 left no path to, and closed a
 statement GUIDE-005 says there is nothing to dismiss (SD-005). A reference could

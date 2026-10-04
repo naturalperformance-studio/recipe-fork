@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -20,9 +20,10 @@ markings by `scaling-rules`, provenance by FORK-004 and FORK-005, rating and
 favourites by `ratings`, reporting and blocking by `abuse`. What follows is what
 the card itself must do.
 
-The card is one scrolling screen, decided 2026-09-21. There is no current step,
-nothing advances from one step to the next, and nothing records which steps are
-done: the reader scrolls, and what the product restores is the place they had
+The card is one scrolling screen, decided 2026-09-21. There is no current step and
+nothing advances from one step to the next. The reader may mark ingredients and
+steps done (FLOW-068, since 2026-10-04); the marks are the reader's, not the
+recipe's. The reader scrolls, and what the product restores is the place they had
 scrolled to (FLOW-012). A timer that ends leads to its own step (FLOW-013), which
 is the only place the product moves a reader within a recipe. See
 [ADR — the cooking card is one scrolling screen](../decisions/20260921-the-cooking-card-is-one-scrolling-screen.md).
@@ -225,9 +226,12 @@ step's text.
   announcement would use.
 - Given several running timers, when the reader leaves the application and
   returns, then all of them still run by the clock (FLOW-012).
-- Given two timers of one recipe that end up with the same name, whether derived
-  or given, when both end, then the two announcements read alike and the product
-  does nothing to tell them apart.
+- Given two timers of different steps that end up with the same name, whether
+  derived or given, when both end, then the two announcements read alike and the
+  product does nothing to tell them apart.
+- Given two or more timers of one step with no name of their own, when they are
+  shown or announced, then the reader can tell them apart (DOM-024); how is the
+  team's.
 
 **Verification:** start four timers in one recipe — one on a short step, one on a
 step longer than 60 characters, one on a step carrying an ingredient reference,
@@ -244,6 +248,9 @@ number tells the cook nothing about which pan. See
 [ADR — a timer is named by its step](../decisions/20260920-timer-named-by-its-step.md).
 Amended 2026-10-03 (sync v0.3–v0.14): a running timer keeps the name it started
 with, and a timer on a step with no text is named by its author — req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
+Amended 2026-10-04 (sync v0.15–v0.24): a step may carry several timers (DOM-024),
+so unnamed timers of one step are told apart; same names across steps still are
+not — req-forge proposal from that sync, accepted by the user, 2026-10-04.
 **Note:** 60 characters is the product owner's number, set so that the line
 survives a notification without the operating system deciding where to cut it. It
 bounds a name the author types as well (DOM-012). That the first 60 characters
