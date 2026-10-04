@@ -21,11 +21,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.recipefork.app.card.LocalStepToShow
 import app.recipefork.app.data.AppLanguage
-import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeFileIntents
 import app.recipefork.app.file.RecipeImport
-import app.recipefork.app.file.message
-import app.recipefork.app.file.importSafely
+import app.recipefork.app.library.importFile
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.timer.TimerIntents
 import app.recipefork.app.timer.TimerKey
@@ -129,11 +127,7 @@ class MainActivity : ComponentActivity() {
             if (mode != Mode.Serverless) {
                 null
             } else {
-                session.viewModelScope.launch {
-                    val outcome = files.importSafely(context, uri)
-                    session.tell(outcome.message())
-                    if (outcome is ImportOutcome.Added) session.showImported(outcome.id)
-                }
+                session.viewModelScope.launch { session.importFile(context, files, uri) }
             }
 
         /**

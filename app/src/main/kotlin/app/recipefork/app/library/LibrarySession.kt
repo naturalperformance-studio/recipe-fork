@@ -14,11 +14,38 @@ import app.recipefork.app.recipe.BookFilters
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.search.BookOrder
 import app.recipefork.app.file.FileMessage
+import app.recipefork.app.file.ImportOutcome
+import app.recipefork.app.file.RecipeImport
+import app.recipefork.app.file.importSafely
+import app.recipefork.app.file.message
 import app.recipefork.app.timer.TimerStep
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+
+/**
+ * A file being imported or exported, and how far: [done] is the share of it done, or null while it is not known.
+ */
+data class FileWork(val kind: Kind, val done: Float? = null) {
+    enum class Kind { IMPORT, EXPORT }
+}
+
+/**
+ * Imports the file at [uri] (FLOW-064), its progress shown in the book while it is read; the person is told what became
+ * of it, and a recipe now in the book is shown there ([LibrarySession.showImported], [LibrarySession.showHeld]).
+ */
+suspend fun LibrarySession.importFile(context: android.content.Context, files: RecipeImport, uri: android.net.Uri) {
+    val outcome = withProgress(FileWork.Kind.IMPORT) { progress -> files.importSafely(context, uri, progress) }
+    tell(outcome.message())
+    when (outcome) {
+        is ImportOutcome.Added -> showImported(outcome.id)
+        is ImportOutcome.AlreadyInBook -> showHeld()
+        is ImportOutcome.Refused -> Unit
+    }
+}
 
 /** The two views of the recipe book (FLOW-034). */
 enum class LibraryView { MARKED, OWN }
@@ -123,13 +150,25 @@ class LibrarySession(
      * its recipe's identity, and the card of a recipe since deleted or removed — exported, perhaps, after a count or a
      * fixing was set on it — would otherwise reopen the arrival at that count and fixing, as if the file had carried
      * them. It opens as any card does the first time.
+     *
+     * The view's search and filters are cleared, so that the recipe is listed, and the list brought to it.
      */
     fun showImported(id: RecipeId) {
         held.forget(id)
         forgetShown(id)
+        search(LibraryView.MARKED, "")
+        filter(LibraryView.MARKED, BookFilters())
+        showHeld()
+        show(LibraryView.MARKED)
+    }
+
+    /**
+     * A recipe file brought a recipe the book holds already: the book is shown, on the view shown last, in place of
+     * whatever was open — an editor keeps what was entered as it is typed — so that its snackbar offers to open it.
+     */
+    fun showHeld() {
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
-        show(LibraryView.MARKED)
     }
 
     /**
@@ -163,6 +202,29 @@ class LibrarySession(
     /** The message was closed. */
     fun told() {
         saved[MESSAGE_KEY] = null
+    }
+
+    private val working = MutableStateFlow<FileWork?>(null)
+    private var works = 0
+
+    /** The file being imported or exported, while one is; shown in the book in place of nothing. */
+    val work: StateFlow<FileWork?> = working.asStateFlow()
+
+    /**
+     * Does [block], shown meanwhile as a file work of [kind]; what [block] tells its progress of the share done shows,
+     * changing by a hundredth at least.
+     */
+    suspend fun <T> withProgress(kind: FileWork.Kind, block: suspend (progress: (Float) -> Unit) -> T): T {
+        works++
+        working.value = FileWork(kind)
+        try {
+            return block { done ->
+                val shown = working.value?.done
+                if (shown == null || done - shown >= PROGRESS_STEP || (done >= 1f && shown < 1f)) working.value = FileWork(kind, done)
+            }
+        } finally {
+            if (--works == 0) working.value = null
+        }
     }
 
     /** The step the card is to be brought to, until it has been. */
@@ -227,6 +289,7 @@ class LibrarySession(
         const val FILTERS_KEY = "library.filters."
         const val CARDS_ORDER_KEY = "library.cards"
         const val MAX_CARDS = 50
+        const val PROGRESS_STEP = 0.01f
         const val STEP_KEY = "library.step"
         const val MESSAGE_KEY = "library.file_message"
         const val VIEW_KEY = "library.view"

@@ -30,8 +30,8 @@ class FileMessageRecreationTest {
 
     @Test
     fun aMessageSurvivesARotationOnceAndAClosedOneIsGone() {
-        val message = FileMessage(FileMessage.Kind.ALREADY_IN_BOOK, "Bean soup")
-        val text = "“Bean soup” is already in your recipe book, so nothing was added"
+        val message = FileMessage(FileMessage.Kind.DAMAGED)
+        val text = "This recipe file is damaged, so nothing was added"
         compose.runOnIdle { session().tell(message) }
         compose.awaitFileMessage(text)
         compose.activityRule.scenario.recreate()

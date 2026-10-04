@@ -18,11 +18,15 @@ import app.recipefork.core.recipe.VideoLimits
 
 /**
  * What the person is told about a file: what became of one they opened for import (FLOW-064), or that an export
- * failed (FLOW-063). It is said whole, in a dialog closed by its OK, never in a toast that cuts it short; it is kept
- * as plain data so that it outlives a rotation and the end of the process while it is shown.
+ * failed (FLOW-063). A recipe now in the book ([isNotice]) is said in the book's snackbar, which offers to open the
+ * recipe [recipeId]; a failure is said whole, in a dialog closed by its OK. Never in a toast that cuts it short; it is
+ * kept as plain data so that it outlives a rotation and the end of the process while it is shown.
  */
-data class FileMessage(val kind: Kind, val title: String = "") {
+data class FileMessage(val kind: Kind, val title: String = "", val recipeId: String = "") {
     enum class Kind { ADDED, ALREADY_IN_BOOK, CANNOT_OPEN, NOT_A_RECIPE_FILE, LATER_VERSION, DAMAGED, BREAKS_RULES, CLIP_TOO_LONG, EXPORT_FAILED }
+
+    /** Whether the message names a recipe the book holds, said in a snackbar that opens it, rather than a failure. */
+    val isNotice: Boolean get() = kind == Kind.ADDED || kind == Kind.ALREADY_IN_BOOK
 
     /** The message in the language of [resources]; a recipe's title is named, shortened when long. */
     fun text(resources: Resources): String {
@@ -41,7 +45,7 @@ data class FileMessage(val kind: Kind, val title: String = "") {
     }
 
     /** The message as saved state holds it. */
-    fun encoded(): String = kind.name + SEPARATOR + title
+    fun encoded(): String = kind.name + SEPARATOR + recipeId + SEPARATOR + title
 
     companion object {
         /** The longest title named whole in a message; a longer one is cut there and ends in "…". */
@@ -50,8 +54,9 @@ data class FileMessage(val kind: Kind, val title: String = "") {
         private const val SEPARATOR = '\n'
 
         fun decoded(value: String?): FileMessage? {
-            val (kind, title) = value?.split(SEPARATOR, limit = 2)?.takeIf { it.size == 2 } ?: return null
-            return Kind.entries.firstOrNull { it.name == kind }?.let { FileMessage(it, title) }
+            val parts = value?.split(SEPARATOR, limit = 3)?.takeIf { it.size == 3 } ?: return null
+            val (kind, recipeId, title) = parts
+            return Kind.entries.firstOrNull { it.name == kind }?.let { FileMessage(it, title, recipeId) }
         }
 
         /** [title] as a message names it: whole up to [TITLE_LENGTH] characters, and cut there otherwise. */
@@ -68,8 +73,8 @@ data class FileMessage(val kind: Kind, val title: String = "") {
 
 /** What the person is told of [this] outcome. */
 fun ImportOutcome.message(): FileMessage = when (this) {
-    is ImportOutcome.Added -> FileMessage(FileMessage.Kind.ADDED, title)
-    is ImportOutcome.AlreadyInBook -> FileMessage(FileMessage.Kind.ALREADY_IN_BOOK, title)
+    is ImportOutcome.Added -> FileMessage(FileMessage.Kind.ADDED, title, id.value)
+    is ImportOutcome.AlreadyInBook -> FileMessage(FileMessage.Kind.ALREADY_IN_BOOK, title, id.value)
     is ImportOutcome.Refused -> FileMessage(
         when (refusal) {
             Refusal.CANNOT_OPEN -> FileMessage.Kind.CANNOT_OPEN

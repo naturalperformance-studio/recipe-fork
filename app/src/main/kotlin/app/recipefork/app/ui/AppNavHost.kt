@@ -73,8 +73,8 @@ object Destinations {
  * session in turn. The book's list is a destination of its own, kept beneath the card and the editor, so it keeps its
  * place and what it has loaded while they are open.
  *
- * What became of a file — an import's outcome, a failed export — is said in a dialog over whatever is shown, until it
- * is closed.
+ * A file that could not be imported or exported is said in a dialog over whatever is shown, until it is closed; a
+ * recipe a file brought is said in the book's snackbar.
  */
 @Composable
 fun AppNavHost(
@@ -91,7 +91,7 @@ fun AppNavHost(
     navController: NavHostController = rememberNavController(),
 ) {
     val message by session.message.collectAsState()
-    message?.let { FileMessageDialog(it, onDone = session::told) }
+    message?.takeUnless { it.isNotice }?.let { FileMessageDialog(it, onDone = session::told) }
     val recipeArgument = listOf(navArgument(Destinations.RECIPE_ID_KEY) { type = NavType.StringType })
     NavHost(
         navController,

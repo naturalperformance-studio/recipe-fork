@@ -10,6 +10,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import app.recipefork.app.editor.PATIENCE_MS
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.text.TextLayoutResult
@@ -25,6 +27,7 @@ import app.recipefork.app.file.FileMessageTags
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.Refusal
 import app.recipefork.app.file.awaitFileMessage
+import app.recipefork.app.file.awaitFileNotice
 import app.recipefork.app.file.closeFileMessage
 import app.recipefork.app.file.message
 import app.recipefork.app.recipe.RecipeRepository
@@ -43,9 +46,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * What became of a file — every import outcome and a failed export — is said whole, in a dialog closed by its OK, and
- * never in a toast that cuts it short: at the narrowest width and the largest text, in either language, with a recipe
- * named by its title, shortened when long.
+ * What became of a file — every import outcome and a failed export — is said whole, never in a toast that cuts it
+ * short: a failure in a dialog closed by its OK, a recipe the file brought in the book's snackbar; at the narrowest
+ * width and the largest text, in either language, with a recipe named by its title, shortened when long.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -112,6 +115,20 @@ class FileMessageTest {
         (listOf(longest) + everyMessage).forEach { message ->
             val text = message.text(context.resources)
             compose.runOnIdle { session.tell(message) }
+            if (message.isNotice) {
+                val node = compose.awaitFileNotice(text)
+                val layout = layoutOf(node)
+                assertEquals(text, layout.layoutInput.text.text)
+                assertFalse("“$text” is cut in height", layout.didOverflowHeight)
+                (0 until layout.lineCount).forEach { line -> assertFalse("line $line of “$text” is ellipsized", layout.isLineEllipsized(line)) }
+                assertEquals("“$text” ends on its last line", text.length, layout.getLineEnd(layout.lineCount - 1))
+                // The snackbar's Open is large enough and says what it does; M3's host reads the rest as it comes.
+                AccessibilityChecks.assertTouchTargets(compose)
+                assertEquals(1, compose.onAllNodes(hasText("Open") or hasText("Открыть"), useUnmergedTree = true).fetchSemanticsNodes().size)
+                compose.runOnIdle { session.told() }
+                compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
+                return@forEach
+            }
             compose.awaitFileMessage(text)
             val node = compose.onAllNodes(hasTestTag(FileMessageTags.TEXT), useUnmergedTree = true).fetchSemanticsNodes().single()
             val layout = layoutOf(node)
@@ -180,7 +197,7 @@ class FileMessageTest {
     @Test
     fun aMessageIsShownUntilClosedAndOnlyOnce() {
         show()
-        val message = FileMessage(FileMessage.Kind.ALREADY_IN_BOOK, "Bean soup")
+        val message = FileMessage(FileMessage.Kind.DAMAGED)
         compose.runOnIdle { session.tell(message) }
         compose.awaitFileMessage(message.text(context.resources))
         val saved = SavedStateHandle()
