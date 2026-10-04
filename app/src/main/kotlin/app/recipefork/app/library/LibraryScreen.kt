@@ -33,9 +33,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -99,11 +104,8 @@ import app.recipefork.app.editor.newRecipe
 import app.recipefork.app.editor.numberLanguage
 import app.recipefork.app.editor.rememberEditorEnvironment
 import app.recipefork.app.file.FileMessage
-import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.RecipeImport
-import app.recipefork.app.file.importSafely
-import app.recipefork.app.file.message
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.ListingParams
@@ -193,8 +195,12 @@ fun LibraryScreen(
     val import = rememberImport(files, session)
     val bar = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val shown = VIEWS[pager.currentPage]
+    val snackbars = remember { SnackbarHostState() }
+    val notice = rememberFileNotice(session, snackbars)
+    val work by session.work.collectAsState()
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(snackbars, Modifier.testTag(LibraryTags.SNACKBAR)) },
         topBar = {
             Column {
                 // The book's title, with the book's menu beside it (FLOW-017); it scrolls away as the list goes down
@@ -253,15 +259,57 @@ fun LibraryScreen(
             when (VIEWS[page]) {
                 LibraryView.MARKED -> MarkedList(
                     recipes, session, files, timers, mode, thumbnails, card.ingredients, editor.tags,
-                    markedList, bottom, import, onOffer = { offers[LibraryView.MARKED] = it },
+                    markedList, bottom, import, notice, onOffer = { offers[LibraryView.MARKED] = it },
                 )
                 LibraryView.OWN -> OwnList(
                     recipes, session, editor, timers, mode, thumbnails, card.ingredients,
-                    ownList, bottom, write, onOffer = { offers[LibraryView.OWN] = it },
+                    ownList, bottom, notice, write, onOffer = { offers[LibraryView.OWN] = it },
                 )
             }
         }
+        // A file being imported or exported shows its progress over the top of the list, shifting nothing.
+        work?.let { FileProgress(it, Modifier.padding(top = padding.calculateTopPadding())) }
     }
+}
+
+/**
+ * The progress of a file being imported or exported, in place, over the top of the view: how far, where its size is
+ * known, and that it is under way otherwise. The screen reader names what is under way.
+ */
+@Composable
+private fun FileProgress(work: FileWork, modifier: Modifier = Modifier) {
+    val label = stringResource(if (work.kind == FileWork.Kind.IMPORT) R.string.file_importing else R.string.file_exporting)
+    val tagged = modifier.fillMaxWidth().semantics { contentDescription = label }.testTag(LibraryTags.FILE_PROGRESS)
+    val track = MaterialTheme.colorScheme.surfaceContainerHighest
+    val done = work.done
+    if (done == null) LinearProgressIndicator(tagged, trackColor = track) else LinearProgressIndicator({ done }, tagged, trackColor = track)
+}
+
+/**
+ * Says a recipe a file brought — imported now, or held already — in the book's snackbar, whose Open opens its card;
+ * returns that recipe's identity while it is said, so that its list is brought to it. The message is closed once the
+ * snackbar goes; a failure is the dialog's to say (AppNavHost).
+ */
+@Composable
+private fun rememberFileNotice(session: LibrarySession, snackbars: SnackbarHostState): String? {
+    val message by session.message.collectAsState()
+    val notice = message?.takeIf { it.isNotice && it.recipeId.isNotEmpty() }
+    val resources = LocalContext.current.resources
+    val open = stringResource(R.string.file_open)
+    LaunchedEffect(notice) {
+        if (notice == null) return@LaunchedEffect
+        val result = snackbars.showSnackbar(notice.text(resources), actionLabel = open, duration = SnackbarDuration.Long)
+        session.told()
+        if (result == SnackbarResult.ActionPerformed) session.openCard(notice.recipeId, session.view.value)
+    }
+    return notice?.recipeId
+}
+
+/** Brings [list] to the entry of [recipeId] once, when [rows] list it; nothing when they do not. */
+@Composable
+private fun RevealOnNotice(recipeId: String?, rows: List<String>?, list: LazyListState) {
+    val at = if (recipeId == null) -1 else rows?.indexOf(recipeId) ?: -1
+    LaunchedEffect(recipeId, at >= 0) { if (at >= 0) list.animateScrollToItem(at) }
 }
 
 /** The views in the order of their tabs and pages: a view's page is its ordinal. */
@@ -371,6 +419,7 @@ private fun OwnList(
     dictionary: IngredientEntries,
     listState: LazyListState,
     bottom: Dp,
+    reveal: String?,
     onWrite: () -> Unit,
     onOffer: (Boolean) -> Unit,
 ) {
@@ -388,6 +437,7 @@ private fun OwnList(
     val found = listed?.rows
     val loaded = found?.take(limit)
     ScrollToTopOnChange(listed?.params, listState)
+    RevealOnNotice(reveal, loaded?.map { it.recipeId }, listState)
     // Near the end of what is shown, the next recipes are shown (FLOW-041 (5)).
     LaunchedEffect(listState, loaded?.size, limit) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
@@ -684,7 +734,8 @@ private fun EntryMenu(recipeId: String, title: String, actions: List<EntryAction
 /**
  * Exports a recipe of the book, own or found (FLOW-063): its file is written and the system's share and save sheet
  * opens on it. Called with the recipe's identity and the title its entry shows. A tap while a file is being written
- * starts no second one. Export reads the recipe and changes nothing in it. An export that fails says so.
+ * starts no second one; its progress shows meanwhile. Export reads the recipe and changes nothing in it. An export that
+ * fails says so.
  */
 @Composable
 private fun rememberExport(recipes: RecipeRepository, session: LibrarySession): (recipeId: String, title: String) -> Unit {
@@ -698,7 +749,10 @@ private fun rememberExport(recipes: RecipeRepository, session: LibrarySession): 
                 try {
                     val title = entryTitle.ifBlank { context.getString(R.string.common_untitled_recipe) }
                     val sheet = context.getString(R.string.file_export_sheet, title)
-                    if (!RecipeExport.share(context, recipes, RecipeId(recipeId), sheet)) {
+                    val shared = session.withProgress(FileWork.Kind.EXPORT) { progress ->
+                        RecipeExport.share(context, recipes, RecipeId(recipeId), sheet, progress)
+                    }
+                    if (!shared) {
                         session.tell(FileMessage(FileMessage.Kind.EXPORT_FAILED))
                     }
                 } finally {
@@ -870,6 +924,7 @@ private fun MarkedList(
     listState: LazyListState,
     bottom: Dp,
     onImport: () -> Unit,
+    reveal: String?,
     onOffer: (Boolean) -> Unit,
 ) {
     val search = rememberSearchField(LibraryView.MARKED, session)
@@ -882,6 +937,7 @@ private fun MarkedList(
     val tagsOf = rememberEntryTags(choices, listed?.carries)
     ScrollToTopOnChange(listed?.params, listState)
     val marked = listed?.rows
+    RevealOnNotice(reveal, marked?.map { it.recipeId }, listState)
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
     marked?.firstOrNull { it.recipeId == removing }?.let { row ->
         RemoveStatement(
@@ -994,7 +1050,8 @@ private fun MarkedEntry(
 /**
  * Imports a recipe file the person picks with the system's document picker (FLOW-064). Any file may be picked, because
  * a file saved from a messenger rarely carries the product's type; one that is no recipe file is refused and said to
- * be. A tap while a file is being read starts no second import.
+ * be. A tap while a file is being read starts no second import; its progress shows while it is read, and a recipe it
+ * brings is said in the snackbar, its list brought to it.
  */
 @Composable
 private fun rememberImport(files: RecipeImport, session: LibrarySession): () -> Unit {
@@ -1008,9 +1065,7 @@ private fun rememberImport(files: RecipeImport, session: LibrarySession): () -> 
         }
         scope.launch {
             try {
-                val outcome = files.importSafely(context, uri)
-                session.tell(outcome.message())
-                if (outcome is ImportOutcome.Added) session.showImported(outcome.id)
+                session.importFile(context, files, uri)
             } finally {
                 importing = false
             }
@@ -1123,6 +1178,9 @@ object LibraryTags {
     const val MARKED_LIST = "library-marked"
     const val MARKED_EMPTY = "library-marked-empty"
     const val IMPORT = "library-import"
+    /** The progress of a file being imported or exported, and the snackbar that says a recipe a file brought. */
+    const val FILE_PROGRESS = "library-file-progress"
+    const val SNACKBAR = "library-snackbar"
     const val REMOVE_STATEMENT = "library-remove-statement"
     const val REMOVE_CONFIRM = "library-remove-confirm"
     const val REMOVE_DECLINE = "library-remove-decline"

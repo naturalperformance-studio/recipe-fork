@@ -43,6 +43,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
 
 /**
@@ -119,14 +120,15 @@ class EditorTopBarTest {
 
     private fun topBar(back: String, backAction: String, done: String, doneAction: String) {
         open()
-        listOf(EditorTags.BACK, ChecklistTags.CONTROL, EditorTags.DONE).forEach { tag ->
+        listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL, EditorTags.DONE).forEach { tag ->
             assertTrue("$tag is not in the bar", inBar(tag))
             val b = bounds(tag)
             assertTrue("$tag is smaller than 48 dp: $b", b.width >= px(48f) - 0.5f && b.height >= px(48f) - 0.5f)
         }
         assertTrue("the bar is not above the form", bounds(EditorTags.BAR).bottom <= bounds(EditorTags.FORM).top + 0.5f)
         // Back at the start, "Done" last at the end, the checklist before it.
-        assertTrue(bounds(EditorTags.BACK).right <= bounds(ChecklistTags.CONTROL).left)
+        assertTrue(bounds(EditorTags.BACK).right <= bounds(EditorTags.FORK_NOTE).left)
+        assertTrue(bounds(EditorTags.FORK_NOTE).right <= bounds(ChecklistTags.CONTROL).left)
         assertTrue(bounds(ChecklistTags.CONTROL).right <= bounds(EditorTags.DONE).left)
         val backNode = node(EditorTags.BACK)
         assertEquals(back, AccessibilityChecks.announcedLabel(backNode))
@@ -137,6 +139,34 @@ class EditorTopBarTest {
 
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.waitUntil(PATIENCE_MS) { closed == 1 }
+    }
+
+    // At twice the font, in Russian, on a 360 dp phone: back, what a fork takes, the checklist and "Done" stand side by
+    // side without overlapping and within the screen — and so they do once "Done" has said "Saved", which stands on
+    // the screen too.
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "ru-w360dp-h640dp", fontScale = 2.0f)
+    fun theBarFitsAt360DpAndTwiceTheFontInRussian() {
+        assertEquals(2.0f, context.resources.configuration.fontScale, 0.001f)
+        open()
+        barFits()
+        compose.onNodeWithTag(EditorTags.DONE).performClick()
+        compose.awaitStatement("Сохранено")
+        barFits()
+        val statement = bounds(EditorTags.STATEMENT)
+        assertTrue("«Сохранено» runs off the screen: $statement", statement.left >= -0.5f && statement.right <= px(360f) + 0.5f)
+    }
+
+    private fun barFits() {
+        val order = listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL, EditorTags.DONE).map { it to bounds(it) }
+        order.forEach { (tag, b) ->
+            assertTrue("$tag runs off the screen: $b", b.left >= -0.5f && b.right <= px(360f) + 0.5f)
+            assertTrue("$tag is smaller than 48 dp: $b", b.width >= px(48f) - 0.5f && b.height >= px(48f) - 0.5f)
+        }
+        order.zipWithNext().forEach { (a, b) ->
+            assertTrue("${a.first} ${a.second} overlaps ${b.first} ${b.second}", a.second.right <= b.second.left + 0.5f)
+        }
     }
 
     // "Done" leaves the field, waits for what is written to be in the book, then says "Saved" for a moment; the editor

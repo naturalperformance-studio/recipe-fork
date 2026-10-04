@@ -2,6 +2,7 @@ package app.recipefork.app.editor
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.BasicTextField
@@ -420,6 +421,7 @@ internal fun StepTextField(
     editor: RecipeEditor,
     state: StepFieldState,
     modifier: Modifier = Modifier,
+    hint: (@Composable () -> Unit)? = null,
 ) {
     // The newest step and rows, ahead of the screen when the author types faster than it redraws.
     fun current(): StepDisplay {
@@ -502,12 +504,17 @@ internal fun StepTextField(
                         modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(name) },
                     )
                 },
-                supportingText = if (oversized.isEmpty()) null else {
+                supportingText = if (oversized.isEmpty() && hint == null) null else {
                     {
-                        Text(
-                            oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
-                            modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
-                        )
+                        Column {
+                            if (oversized.isNotEmpty()) {
+                                Text(
+                                    oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
+                                    modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
+                                )
+                            }
+                            hint?.invoke()
+                        }
                     }
                 },
                 colors = colors,

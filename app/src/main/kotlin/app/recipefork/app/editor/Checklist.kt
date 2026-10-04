@@ -1,11 +1,8 @@
 package app.recipefork.app.editor
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -13,34 +10,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.Mode
 import app.recipefork.app.R
 import app.recipefork.core.timer.TimerName
-import kotlinx.coroutines.launch
 
 /**
  * One item of the checklist (GUIDE-004): what a good recipe does, said as advice, and why. It names nothing in the
@@ -78,44 +64,23 @@ internal enum class ChecklistItem(
 }
 
 /**
- * The checklist's control at the editor's top (GUIDE-003): an icon with its label, 48 dp high, whose long press shows
- * what it offers in a tooltip. It is there for every recipe in every state, a frozen one too, and opens the checklist
- * in front of the editor, which stays where it was beneath; its wording follows the build's [mode]. Whether it was ever opened is kept nowhere.
+ * The checklist's control at the editor's top (GUIDE-003): an icon-only 48 dp action named "Checklist" for the screen
+ * reader, whose long press shows what it offers in a tooltip. It is there for every recipe in every state, a frozen one
+ * too, and opens the checklist in front of the editor, which stays where it was beneath; its wording follows the
+ * build's [mode]. Whether it was ever opened is kept nowhere.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun ChecklistControl(mode: Mode, modifier: Modifier = Modifier) {
+internal fun ChecklistControl(mode: Mode) {
     var open by rememberSaveable { mutableStateOf(false) }
-    val tooltip = rememberTooltipState()
-    val scope = rememberCoroutineScope()
-    val label = stringResource(R.string.editor_checklist)
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Below),
-        tooltip = { PlainTooltip(Modifier.testTag(ChecklistTags.TOOLTIP)) { Text(stringResource(R.string.editor_checklist_tooltip)) } },
-        state = tooltip,
-        // The long press is the control's own, so that it stays one element for the screen reader.
-        enableUserInput = false,
-        modifier = modifier,
-    ) {
-        Row(
-            Modifier
-                .heightIn(min = 48.dp)
-                .widthIn(min = 48.dp)
-                .combinedClickable(
-                    role = Role.Button,
-                    onClickLabel = stringResource(R.string.editor_checklist_action),
-                    onClick = { open = true },
-                    onLongClick = { scope.launch { tooltip.show() } },
-                )
-                .padding(horizontal = 12.dp)
-                .testTag(ChecklistTags.CONTROL),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(painterResource(R.drawable.ic_checklist), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Text(label, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-        }
-    }
+    EditorBarAction(
+        icon = R.drawable.ic_checklist,
+        label = stringResource(R.string.editor_checklist),
+        action = stringResource(R.string.editor_checklist_action),
+        tooltip = stringResource(R.string.editor_checklist_tooltip),
+        tag = ChecklistTags.CONTROL,
+        tooltipTag = ChecklistTags.TOOLTIP,
+        onClick = { open = true },
+    )
     if (open) Checklist(mode, onClose = { open = false })
 }
 
