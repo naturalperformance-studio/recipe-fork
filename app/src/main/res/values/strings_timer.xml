@@ -28,4 +28,8 @@
     <string name="timer_unheard_timers_off">Timer notifications are turned off. The timer is running, but it won’t be heard while the app is closed or the screen is locked.</string>
     <string name="timer_unheard_settings">Open settings</string>
     <string name="timer_unheard_dismiss">OK</string>
+    <!-- The bar of the recipe's timers running out of sight. -->
+    <string name="timer_bar_show_action">Show its step</string>
+    <string name="timer_bar_ringing">Ringing</string>
+    <string name="timer_bar_step">Step %1$d</string>
 </resources>

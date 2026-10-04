@@ -88,6 +88,12 @@ import androidx.compose.ui.unit.dp
 import app.recipefork.app.ui.Haptic
 import app.recipefork.app.ui.rememberHaptics
 import app.recipefork.app.R
+import app.recipefork.app.timer.RecipeTimers
+import app.recipefork.app.timer.RunningTimer
+import app.recipefork.app.timer.RunningTimersBar
+import app.recipefork.app.timer.inBar
+import app.recipefork.app.timer.rememberRecipeTimers
+import androidx.compose.runtime.derivedStateOf
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.interfaceLanguage
 import app.recipefork.app.recipe.RecipeRepository
@@ -172,6 +178,13 @@ fun CardScreen(
     // The title is the content's heading; the bar repeats it only once that heading has scrolled out of view — as when
     // the reader scrolls on, or the card opens at a place further down.
     var titleOut by remember(recipeId) { mutableStateOf(false) }
+    // The place is restored by the part that was first at the top, not by a scroll in pixels, which a change of text
+    // scale or orientation while away would make point elsewhere (FLOW-012 (5)).
+    val scroll = remember(recipeId) { ScrollState(0) }
+    val places = remember(recipeId) { CardPlaces() }
+    // The recipe's timers running, or ringing, while their step is out of sight: in a bar at the bottom.
+    val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
+    val scope = rememberCoroutineScope()
     Scaffold(
         modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection).testTag(CardTags.SCREEN),
         topBar = {
@@ -185,12 +198,21 @@ fun CardScreen(
                 onEdit = onEdit,
             )
         },
+        bottomBar = {
+            timersBar?.takeIf { it.shown.isNotEmpty() }?.let {
+                RunningTimersBar(it.timers, it.shown, it.number, onShow = { position ->
+                    places.placeOf(CardPlaces.step(position))?.let { step -> scope.launch { scroll.animateScrollTo(step.top) } }
+                })
+            }
+        },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { padding ->
         // The keyboard shrinks the content's viewport, so that a focused field is brought above it; the navigation
         // bar does not: the content runs on under it, padded at its end to scroll clear of it.
+        // The bar of running timers shortens the viewport instead, so that it covers nothing.
         val keyboard = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
-        val bottom = (padding.calculateBottomPadding() - keyboard).coerceAtLeast(0.dp)
+        val barShown = timersBar?.shown?.isNotEmpty() == true
+        val bottom = if (barShown) 0.dp else (padding.calculateBottomPadding() - keyboard).coerceAtLeast(0.dp)
         val direction = LocalLayoutDirection.current
         Box(
             Modifier
@@ -199,7 +221,7 @@ fun CardScreen(
                     top = padding.calculateTopPadding(),
                     start = padding.calculateStartPadding(direction),
                     end = padding.calculateEndPadding(direction),
-                    bottom = keyboard,
+                    bottom = if (barShown) maxOf(keyboard, padding.calculateBottomPadding()) else keyboard,
                 )
                 .consumeWindowInsets(padding),
         ) {
@@ -213,11 +235,37 @@ fun CardScreen(
                 shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
                 recipe != null && loaded != null ->
-                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, onOpenParent, bottom) { titleOut = it }
+                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, onOpenParent, scroll, places, bottom) { titleOut = it }
                 else -> Loading()
             }
         }
     }
+}
+
+/** The recipe's [timers] and those of them [shown] in the bar; [number] is each step's number by its position. */
+private class TimersBar(val timers: RecipeTimers, val shown: List<RunningTimer>, val number: (Int) -> Int)
+
+/**
+ * The timers of [recipe] running, or ringing, whose step is not within the card's viewport of [scroll] — none before
+ * the card is laid out.
+ */
+@Composable
+private fun runningOutOfSight(recipe: Recipe, scroll: ScrollState, places: CardPlaces): TimersBar {
+    val timers = rememberRecipeTimers(recipe.id, recipe.title)
+    val shown by remember(timers, scroll, places) {
+        derivedStateOf {
+            if (scroll.viewportSize == 0) {
+                emptyList()
+            } else {
+                timers.inBar { position ->
+                    val step = places.placeOf(CardPlaces.step(position))
+                    step != null && step.top < scroll.value + scroll.viewportSize && step.top + step.height > scroll.value
+                }
+            }
+        }
+    }
+    val positions = remember(recipe.steps) { recipe.steps.map { it.position }.sorted() }
+    return TimersBar(timers, shown) { position -> positions.indexOf(position) + 1 }
 }
 
 /**
@@ -323,6 +371,8 @@ private fun RecipeContent(
     usual: Rational?,
     session: CardSession,
     onOpenParent: (RecipeId) -> Unit,
+    scroll: ScrollState,
+    places: CardPlaces,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
@@ -330,10 +380,6 @@ private fun RecipeContent(
         RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
         RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
     }
-    // The place is restored by the part that was first at the top, not by a scroll in pixels, which a change of text
-    // scale or orientation while away would make point elsewhere (FLOW-012 (5)).
-    val scroll = remember(recipe.id) { ScrollState(0) }
-    val places = remember(recipe.id) { CardPlaces() }
     // A card brought to a timer's step goes there, not to the place it was left at (FLOW-013 (4)).
     val toStep = LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipe.id.value
     KeptPlace(recipe.id, scroll, places, session, restore = !toStep)
