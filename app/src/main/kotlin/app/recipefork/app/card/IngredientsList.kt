@@ -31,6 +31,10 @@ import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
 import app.recipefork.app.R
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.scaling.InterfaceLanguage
@@ -72,9 +76,10 @@ internal fun IngredientsList(
                     .testTag(CardTags.PROPORTIONS),
             )
         }
+        val column = quantityColumn(list.lines)
         list.lines.forEachIndexed { i, line ->
             val position = ordered[i].position
-            IngredientRow(line, position, cardPlace(CardPlaces.ingredient(position))) { open = if (open == position) null else position }
+            IngredientRow(line, position, column, cardPlace(CardPlaces.ingredient(position))) { open = if (open == position) null else position }
             val offer = line.fixing
             if (offer != null && open == position) {
                 key(position) {
@@ -129,12 +134,44 @@ private fun RecalculatedLegend() {
 }
 
 /**
- * One ingredient: its name, its quantity at the line's end followed by an arrow where rounding moved it, and below
- * them whether it is fixed. Read by the screen reader as one line, the arrow as the words it stands for; a line
- * that offers fixing is one action that opens its control.
+ * The list's quantity column, in pixels: [whole] is the width of its longest quantity with its arrow, laid out on one
+ * line in the list's style at the font scale in force — none where no line carries a quantity; [word] is that of the
+ * longest word of any quantity with the arrow, the least the column narrows to so that a quantity wraps only between
+ * words.
+ */
+private data class QuantityColumn(val whole: Int, val word: Int)
+
+@Composable
+private fun quantityColumn(lines: List<IngredientLine>): QuantityColumn {
+    val measurer = rememberTextMeasurer()
+    val quantityStyle = MaterialTheme.typography.bodyLarge
+    val arrowStyle = MaterialTheme.typography.labelMedium
+    val density = LocalDensity.current
+    return remember(lines, quantityStyle, arrowStyle, density) {
+        fun width(text: String) = measurer.measure(text, quantityStyle, softWrap = false, maxLines = 1).size.width
+        val arrows = lines.map { line ->
+            roundingMark(line.rounding)?.takeIf { line.derived }?.first?.let {
+                measurer.measure(it, arrowStyle, softWrap = false, maxLines = 1).size.width + with(density) { ARROW_GAP.roundToPx() }
+            } ?: 0
+        }
+        // A pixel's slack, so rounding never wraps the longest quantity.
+        val whole = lines.indices.maxOfOrNull { i -> lines[i].quantity?.let { width(it) + arrows[i] + 1 } ?: 0 } ?: 0
+        val word = lines.indices.maxOfOrNull { i ->
+            lines[i].quantity?.split(' ')?.maxOf { width(it) }?.let { it + arrows[i] + 1 } ?: 0
+        } ?: 0
+        QuantityColumn(whole, word)
+    }
+}
+
+/**
+ * One ingredient: its quantity, right-aligned in the list's quantity [column] and followed by an
+ * arrow where rounding moved it, its name beside it, and under the name whether it is fixed. Where the column would take
+ * more than its share of a narrow line or large text, it narrows and the quantity wraps in it; the name wraps, never
+ * cut. Read by the screen reader as one line — the name, then the quantity — the arrow as the words it stands for; a
+ * line that offers fixing is one action that opens its control.
  */
 @Composable
-private fun IngredientRow(line: IngredientLine, position: Int, place: Modifier, onOpen: () -> Unit) {
+private fun IngredientRow(line: IngredientLine, position: Int, column: QuantityColumn, place: Modifier, onOpen: () -> Unit) {
     val tappable = if (line.fixing != null) {
         Modifier
             .heightIn(min = CardTarget)
@@ -146,20 +183,18 @@ private fun IngredientRow(line: IngredientLine, position: Int, place: Modifier, 
         place.fillMaxWidth().then(tappable).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position)),
         verticalArrangement = Arrangement.Center,
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(
-                line.name ?: stringResource(R.string.card_unnamed_ingredient),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f),
-            )
+        val name: @Composable () -> Unit = {
+            Text(line.name ?: stringResource(R.string.card_unnamed_ingredient), style = MaterialTheme.typography.bodyLarge)
+        }
+        val quantity: @Composable () -> Unit = {
             line.quantity?.let { quantity ->
-                Row {
+                Row(Modifier.fillMaxWidth()) {
                     // The arrow is measured first, so a long quantity wraps before it squeezes the arrow away.
                     Text(
                         quantity,
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.End,
-                        modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
+                        modifier = Modifier.weight(1f).alignByBaseline(),
                     )
                     if (line.derived) {
                         roundingMark(line.rounding)?.let { (arrow, spoken) ->
@@ -169,9 +204,37 @@ private fun IngredientRow(line: IngredientLine, position: Int, place: Modifier, 
                 }
             }
         }
-        if (line.fixed) Note(stringResource(R.string.card_quantity_fixed))
+        val note: @Composable () -> Unit = { if (line.fixed) Note(stringResource(R.string.card_quantity_fixed)) }
+        // The quantity stands at the line's start, the name beside it and the fixed note under the name.
+        Layout(contents = listOf(name, quantity, note), modifier = Modifier.fillMaxWidth()) { (names, quantities, notes), constraints ->
+            val gap = if (column.whole > 0) QUANTITY_GAP.roundToPx() else 0
+            val width = constraints.maxWidth
+            val share = maxOf((width * QUANTITY_SHARE).toInt(), column.word)
+            val quantityWidth = minOf(column.whole, share, width)
+            // The quantity takes the column's whole width and sets itself against its end.
+            val shownQuantity = quantities.firstOrNull()?.measure(Constraints.fixedWidth(quantityWidth.coerceAtLeast(0)))
+            val nameConstraints = Constraints(maxWidth = (width - quantityWidth - gap).coerceAtLeast(0))
+            val shownName = names.first().measure(nameConstraints)
+            val shownNote = notes.firstOrNull()?.measure(nameConstraints)
+            val height = maxOf(shownName.height + (shownNote?.height ?: 0), shownQuantity?.height ?: 0)
+            layout(width, height) {
+                // Placed in the order they read: the screen reader takes a line's parts in the order they are placed.
+                shownName.place(quantityWidth + gap, 0)
+                shownQuantity?.place(0, 0)
+                shownNote?.place(quantityWidth + gap, shownName.height)
+            }
+        }
     }
 }
+
+/** The space between the quantity column and the names. */
+private val QUANTITY_GAP = 12.dp
+
+/** The most of a line's width the quantity column takes, unless a word needs more; a longer quantity wraps in it. */
+private const val QUANTITY_SHARE = 0.4f
+
+/** The space before a quantity's arrow. */
+private val ARROW_GAP = 2.dp
 
 /** The arrow after a rounded quantity: small and secondary on screen, the words [spoken] for the screen reader. */
 @Composable
@@ -180,7 +243,7 @@ private fun RowScope.RoundingArrow(arrow: String, spoken: String, tag: String) {
         arrow,
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.alignByBaseline().padding(start = 2.dp).clearAndSetSemantics {
+        modifier = Modifier.alignByBaseline().padding(start = ARROW_GAP).clearAndSetSemantics {
             text = AnnotatedString(spoken)
             shownText = arrow
             testTag = tag
@@ -190,7 +253,7 @@ private fun RowScope.RoundingArrow(arrow: String, spoken: String, tag: String) {
 
 @Composable
 private fun Note(text: String) {
-    Text(text, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
+    Text(text, style = MaterialTheme.typography.bodySmall)
 }
 
 /** The arrow a recalculated quantity carries and the words it is read as, or null where the grid held it exactly. */

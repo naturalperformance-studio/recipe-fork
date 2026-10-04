@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.Text
@@ -17,6 +16,17 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.platform.LocalContext
@@ -104,24 +114,69 @@ internal fun StepsList(
 }
 
 /**
- * One step: its number and its text, read by the screen reader as one line, then its photograph or its clip, named by
- * the step's number, and its timer, if it carries them. An item whose file the device does not hold, or cannot show,
- * says so in its place (FLOW-061).
+ * One step: its number in a filled circle and its text beside it, read by the screen reader as one line that says the
+ * number once — the circle itself is decorative — then its photograph or its clip, named by the step's number, and its
+ * timer, if it carries them, set under the text. Steps after the first stand apart from the one before. An item whose
+ * file the device does not hold, or cannot show, says so in its place (FLOW-061).
  */
 @Composable
 private fun StepRow(number: Int, step: Step, references: CardReferences, timers: RecipeTimers, media: StepMediaOnCard, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(CardTags.step(step.position))) {
-            Text("$number.", style = stepTextStyle, modifier = Modifier.widthIn(min = 32.dp))
+    Column(modifier.fillMaxWidth().padding(top = if (number > 1) StepSpacing else 0.dp)) {
+        Row(
+            Modifier.fillMaxWidth().semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
+                .testTag(CardTags.step(step.position)),
+            horizontalArrangement = Arrangement.spacedBy(StepGap),
+        ) {
+            StepNumber(number, step.position)
             StepText(step, references, Modifier.weight(1f))
         }
         media.of(step.position)?.let { item ->
-            Box(Modifier.fillMaxWidth().padding(start = 32.dp, top = 8.dp)) {
+            Box(Modifier.fillMaxWidth().padding(start = StepIndent, top = 8.dp)) {
                 StepMedia(item, number, step.position)
             }
         }
-        if (step.timer != null) StepTimer(step, timers, references::quantity, Modifier.padding(start = 32.dp))
+        if (step.timer != null) StepTimer(step, timers, references::quantity, Modifier.padding(start = StepIndent))
     }
+}
+
+/** Test tags of a step's parts on the card. */
+internal object StepRowTags {
+    fun number(position: Int) = "card-step-$position-number"
+}
+
+/** The space between one step and the next, beyond the section's own. */
+internal val StepSpacing = 16.dp
+
+/** The gap between a step's number and its text. */
+private val StepGap = 12.dp
+
+/** The least size of a step's circle; it grows with the font scale and stays a circle. */
+internal val StepNumberSize = 32.dp
+
+/** Where a step's photograph, clip and timer start: under its text. */
+internal val StepIndent = StepNumberSize + StepGap
+
+/**
+ * A step's number in a filled circle in the theme's primary colour, as large as the number needs and never less than
+ * [StepNumberSize]. Drawn, not set as text: it is decorative, the step's line says the number.
+ */
+@Composable
+private fun StepNumber(number: Int, position: Int) {
+    val measurer = rememberTextMeasurer()
+    val style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onPrimary)
+    val fill = MaterialTheme.colorScheme.primary
+    val density = LocalDensity.current
+    val shown = remember(number, style, density) { measurer.measure("$number", style, softWrap = false, maxLines = 1) }
+    val side = with(density) { maxOf(StepNumberSize, (maxOf(shown.size.width, shown.size.height)).toDp() + 8.dp) }
+    Box(
+        Modifier
+            .size(side)
+            .clearAndSetSemantics { testTag = StepRowTags.number(position) }
+            .drawBehind {
+                drawCircle(fill)
+                drawText(shown, topLeft = Offset((size.width - shown.size.width) / 2f, (size.height - shown.size.height) / 2f))
+            },
+    )
 }
 
 @Composable
