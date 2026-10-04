@@ -188,9 +188,11 @@ internal fun Ingredients(
     }
     // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
     val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveIngredient(from, to) }
-    Column(
+    val motion = rememberRowMotion()
+    motion.update(recipe.ingredients.indices.map(editor::ingredientKey))
+    RowsColumn(
+        ROW_SPACING,
         Modifier.fillMaxWidth().zIndex(if (drag.dragged != null) 1f else 0f).testTag(EditorTags.INGREDIENTS),
-        verticalArrangement = Arrangement.spacedBy(ROW_SPACING),
     ) {
         Text(
             stringResource(R.string.editor_ingredients),
@@ -202,11 +204,13 @@ internal fun Ingredients(
         recipe.ingredients.forEachIndexed { position, row ->
             // What the screen holds for a row — focus, an open offer, a typed value — stays with it when rows before
             // it are inserted, moved or deleted.
+            motion.LeavingAt(position)
             key(editor.ingredientKey(position)) {
-                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag, mode, rows)
+                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag, mode, rows, motion)
                 else ReadOnlyIngredient(position, row, language, dictionary)
             }
         }
+        motion.LeavingAt(recipe.ingredients.size, last = true)
         if (editable) {
             EditorButton(
                 text = stringResource(R.string.editor_ingredient_add),
@@ -260,6 +264,7 @@ private fun IngredientRow(
     drag: RowDrag,
     mode: Mode,
     rows: RowFocus,
+    motion: RowMotion,
 ) {
     // An entry that gives a divisibility decides it (FLOW-023 (11)): the quantity is checked against its grid even before
     // the row holds it — a draft written before, holding 1½ of an indivisible entry, is marked (DOM-017 (9)).
@@ -282,6 +287,7 @@ private fun IngredientRow(
     OutlinedCard(
         Modifier
             .fillMaxWidth()
+            .then(motion.row(editor.ingredientKey(position)))
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.ingredient(position)),
     ) {

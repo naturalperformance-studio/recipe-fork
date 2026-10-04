@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.ui.assertChangesGradually
 import android.content.Context
 import androidx.activity.ComponentActivity
 import android.text.InputType
@@ -420,5 +421,18 @@ class CardFixTest {
         tap(0)
         assertEquals(listOf("Amount you have", ""), compose.textsOf(CardTags.FIX_FIELD))
         assertEquals(listOf("Unit", "g"), compose.textsOf(FixTags.UNIT))
+    }
+
+    // T-159: the fixing control unfolds under its line and folds away as it closes, the lines below moving gradually.
+    @Test
+    fun theFixingControlUnfoldsAndFoldsAway() {
+        open()
+        fun nextLine() = compose.onNodeWithTag(CardTags.ingredient(1)).fetchSemanticsNode().positionInRoot.y
+        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo()
+        compose.assertChangesGradually("the control opening", ::nextLine) { compose.onNodeWithTag(CardTags.ingredient(0)).performClick() }
+        assertTrue(controlShown())
+        compose.onNodeWithTag(CardTags.FIX_CANCEL).performScrollTo()
+        compose.assertChangesGradually("the control closing", ::nextLine) { compose.onNodeWithTag(CardTags.FIX_CANCEL).performClick() }
+        assertTrue(!controlShown())
     }
 }

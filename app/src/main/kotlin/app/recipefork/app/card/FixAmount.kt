@@ -1,6 +1,8 @@
 package app.recipefork.app.card
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.editor.problemMessage
+import app.recipefork.app.ui.Motion
 import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.scaling.FixedAmount
@@ -51,6 +54,25 @@ import app.recipefork.core.scaling.FixedAmountReading
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.UnitLabels
+
+/**
+ * The fixing control of one ingredient while it is [open] under its line: it unfolds as it opens and folds away as it
+ * closes, the lines below moving with it.
+ */
+@Composable
+internal fun FixAmountUnder(
+    open: Boolean,
+    offer: FixOffer,
+    current: CardFixing?,
+    language: InterfaceLanguage,
+    onFix: (Rational, QuantityUnit) -> Unit,
+    onRelease: () -> Unit,
+    onClose: () -> Unit,
+) {
+    AnimatedVisibility(open, enter = Motion.open, exit = Motion.close) {
+        Box(Modifier.padding(top = SECTION_GAP)) { FixAmount(offer, current, language, onFix, onRelease, onClose) }
+    }
+}
 
 /**
  * The fixing control of one ingredient (SCALE-002, SCALE-018): the amount the reader has, typed as the quantity

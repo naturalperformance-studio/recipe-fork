@@ -12,6 +12,7 @@ import app.recipefork.app.card.assertCardTarget
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.Haptic
+import app.recipefork.app.ui.assertChangesGradually
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
@@ -163,5 +164,22 @@ class RunningTimersBarTest : CardTimersKit() {
         compose.waitUntil(PATIENCE_MS) { !barShown() }
         assertTrue(timers.ringing.ringing.value.isEmpty())
         assertEquals(listOf(Haptic.CONFIRM), haptics.all)
+    }
+
+    // T-159: the bar rises from the bottom edge as a timer comes into it and sinks below it as the last goes.
+    @Test
+    fun theBarRisesAndSinks() {
+        showStew()
+        start(2)
+        awaitHeld { it.size == 1 }
+        scrollToTheEnd()
+        compose.waitUntil(PATIENCE_MS) { barShown() }
+        pass(5.minutes)
+        compose.waitUntil(PATIENCE_MS) { !barShown() }
+        val ended = held().single()
+        fun barTop() = if (barShown()) top(TimerTags.BAR) else compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot.bottom
+        compose.assertChangesGradually("the bar rising", ::barTop) { compose.runOnUiThread { timers.ringing.ring(ended) } }
+        compose.assertChangesGradually("the bar sinking", ::barTop) { compose.onNodeWithTag(TimerTags.barStop(2)).performClick() }
+        compose.waitUntil(PATIENCE_MS) { !barShown() }
     }
 }

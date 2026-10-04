@@ -93,9 +93,11 @@ internal fun Steps(
     // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
     val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveStep(from, to) }
     val focus = remember { RowFocus() }
-    Column(
+    val motion = rememberRowMotion()
+    motion.update(steps.indices.map(editor::stepKey))
+    RowsColumn(
+        ROW_SPACING,
         Modifier.fillMaxWidth().zIndex(if (drag.dragged != null) 1f else 0f).testTag(EditorTags.STEPS),
-        verticalArrangement = Arrangement.spacedBy(ROW_SPACING),
     ) {
         Text(
             stringResource(R.string.editor_steps),
@@ -115,11 +117,13 @@ internal fun Steps(
         steps.forEachIndexed { position, step ->
             // What the screen holds for a step — focus, a timer being attached — stays with it when steps before it
             // are inserted, moved or deleted.
+            motion.LeavingAt(position)
             key(editor.stepKey(position)) {
-                if (editable) StepRow(position, steps.size, step, recipe.stepMedia(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos, focus)
+                if (editable) StepRow(position, steps.size, step, recipe.stepMedia(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos, focus, motion)
                 else ReadOnlyStep(position, step, recipe.stepMedia(position), recipe.ingredients, language, photos)
             }
         }
+        motion.LeavingAt(steps.size, last = true)
         if (editable) {
             EditorButton(
                 text = stringResource(R.string.editor_step_add),
@@ -158,6 +162,7 @@ private fun StepRow(
     drag: RowDrag,
     photos: StepPhotos,
     focus: RowFocus,
+    motion: RowMotion,
 ) {
     val field = remember { StepFieldState() }
     focus.TakenBy(position, field.focus)
@@ -177,6 +182,7 @@ private fun StepRow(
     OutlinedCard(
         Modifier
             .fillMaxWidth()
+            .then(motion.row(key))
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.step(position)),
     ) {
