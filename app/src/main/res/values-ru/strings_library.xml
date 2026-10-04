@@ -19,8 +19,8 @@
     <string name="library_sent_never">Не отправлен: хранится только на этом устройстве и пропадёт вместе с ним</string>
     <string name="library_sent_sent">Отправлен</string>
     <string name="library_sent_with_changes">Отправлен, есть неотправленные изменения</string>
-    <string name="library_own_empty">В этой книге рецептов пока ничего не написано.</string>
-    <string name="library_own_write">Написать рецепт</string>
+    <string name="library_own_empty">Здесь пока ничего не написано</string>
+    <string name="library_own_empty_sentence">Здесь хранятся рецепты, которые вы пишете в этой книге.</string>
     <string name="library_own_new">Новый рецепт</string>
     <string name="library_entry_open_action">Открыть рецепт</string>
     <string name="library_entry_actions">Действия с рецептом «%1$s»</string>
@@ -30,7 +30,9 @@
     <string name="library_delete_statement">Рецепт удалится сразу, вместе с фотографиями и видео, и вернуть его будет нельзя.</string>
     <string name="library_delete_confirm">Удалить</string>
     <string name="library_delete_decline">Отмена</string>
-    <string name="library_marked_empty">В этой книге пока нет отмеченных рецептов.</string>
+    <string name="library_marked_empty">Отмеченных рецептов пока нет</string>
+    <string name="library_marked_empty_sentence">Здесь хранятся рецепты, которые вы отметили.</string>
+    <string name="library_marked_empty_sentence_serverless">Здесь хранятся рецепты, импортированные из файлов.</string>
     <string name="library_entry_remove">Убрать</string>
     <string name="library_remove_title">Убрать «%1$s» из книги?</string>
     <string name="library_remove_statement">Рецепт уйдёт с этого устройства вместе со всем, что книга о нём хранит.</string>
@@ -90,4 +92,5 @@
     <string name="library_filter_language_none">Не указан</string>
     <string name="library_filter_language_none_chip">Язык не указан</string>
     <string name="library_nothing_matches">Ни один рецепт не подходит под фильтры</string>
+    <string name="library_search_and_filters_clear">Очистить поиск и фильтры</string>
 </resources>

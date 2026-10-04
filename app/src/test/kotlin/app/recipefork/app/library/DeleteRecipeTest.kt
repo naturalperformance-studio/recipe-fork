@@ -133,8 +133,8 @@ class DeleteRecipeTest {
         statement = "The recipe goes at once, with its photographs and video, and cannot be brought back.",
         confirm = "Delete",
         decline = "Cancel",
-        empty = "Nothing has been written in this recipe book yet.",
-        write = "Write a recipe",
+        empty = "Nothing written here yet",
+        write = "New recipe",
     )
 
     private val russian = Words(
@@ -144,8 +144,8 @@ class DeleteRecipeTest {
         statement = "Рецепт удалится сразу, вместе с фотографиями и видео, и вернуть его будет нельзя.",
         confirm = "Удалить",
         decline = "Отмена",
-        empty = "В этой книге рецептов пока ничего не написано.",
-        write = "Написать рецепт",
+        empty = "Здесь пока ничего не написано",
+        write = "Новый рецепт",
     )
 
     @Before
