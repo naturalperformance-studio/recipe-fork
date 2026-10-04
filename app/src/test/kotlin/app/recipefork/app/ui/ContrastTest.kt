@@ -57,6 +57,7 @@ class ContrastTest {
         text("a book's entry, a card — its title and state", c.onSurface, c.surfaceContainerHighest),
         text("a book's entry, a card — its tags and sending mark", c.onSurfaceVariant, c.surfaceContainerHighest),
         text("a photo source sheet's title and items", c.onSurface, c.surfaceContainerLow),
+        text("a photo source sheet's removal — the cover, a step's photo or clip", c.error, c.surfaceContainerLow),
         text("the empty cover's label", c.onSurfaceVariant, c.surfaceContainerHigh),
         // Icons that carry meaning and the boundaries of controls.
         graphic("the drag column's handle, on the column's tint", c.onSurfaceVariant, c.surfaceContainerHigh),
@@ -72,6 +73,7 @@ class ContrastTest {
         graphic("a suggestion chip's and the language switch's boundary", c.outline, c.surface),
         graphic("an entry's ⋮, on its card", c.onSurface, c.surfaceContainerHighest),
         graphic("the indicator of a list being read", c.primary, c.surface),
+        graphic("a removal's icon in the editor — an ingredient row, a step, a timer", c.error, c.surface),
         graphic("the progress of a file being imported or exported, on its track", c.primary, c.surfaceContainerHighest),
     )
 

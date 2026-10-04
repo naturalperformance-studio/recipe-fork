@@ -121,7 +121,7 @@ internal fun Steps(
             }
         }
         if (editable) {
-            ActionText(
+            EditorButton(
                 text = stringResource(R.string.editor_step_add),
                 action = stringResource(R.string.editor_step_add_action),
                 onClick = {
@@ -132,6 +132,7 @@ internal fun Steps(
                     editor.leave(RecipePart.Ingredients)
                 },
                 modifier = Modifier.testTag(EditorTags.STEP_ADD),
+                weight = ButtonWeight.TONAL,
             )
         }
     }
@@ -245,6 +246,7 @@ private fun StepRow(
                         tag = EditorTags.stepRemove(position),
                         action = stringResource(R.string.editor_step_remove_action, position + 1),
                         onClick = { editor.removeStep(position) { removed -> removed.forEach { photos.store.delete(photos.book, it) } } },
+                        destructive = true,
                     )
                     RowMenu(
                         position = position,
@@ -365,6 +367,7 @@ private fun StepTimer(
                 Icon(
                     painterResource(R.drawable.ic_remove_timer),
                     contentDescription = stringResource(R.string.editor_timer_remove_action, position + 1),
+                    tint = MaterialTheme.colorScheme.error,
                 )
             }
         }
@@ -421,7 +424,7 @@ private fun TimerNotification(position: Int, reading: TimerName.Reading, onName:
                     .testTag(EditorTags.timerNotificationFollows(position)),
             )
         }
-        ActionText(
+        EditorButton(
             text = stringResource(R.string.editor_timer_notification_name),
             action = stringResource(R.string.editor_timer_notification_name_action, position + 1),
             onClick = onName,

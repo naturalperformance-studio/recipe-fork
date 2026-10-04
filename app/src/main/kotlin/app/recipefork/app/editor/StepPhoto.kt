@@ -126,10 +126,10 @@ internal fun StepPhotoAction(position: Int, media: Media?, control: StepPhotoCon
         SourceItem(stringResource(R.string.media_step_clip_choose), EditorTags.stepClipChoose(position)) { control.clipSources.chooseClip() },
         when (media?.kind) {
             null -> null
-            MediaKind.VIDEO -> SourceItem(stringResource(R.string.media_step_clip_remove), EditorTags.stepPhotoRemove(position)) {
+            MediaKind.VIDEO -> SourceItem(stringResource(R.string.media_step_clip_remove), EditorTags.stepPhotoRemove(position), destructive = true) {
                 control.attaching.remove(PhotoNotice.STEP_CLIP_REMOVED)
             }
-            else -> SourceItem(stringResource(R.string.media_step_remove), EditorTags.stepPhotoRemove(position)) { control.attaching.remove() }
+            else -> SourceItem(stringResource(R.string.media_step_remove), EditorTags.stepPhotoRemove(position), destructive = true) { control.attaching.remove() }
         },
     )
     SourceSheet(stringResource(R.string.media_step_photo_label, position + 1), items, onDismiss = { sheet = false })

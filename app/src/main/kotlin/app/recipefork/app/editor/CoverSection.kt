@@ -93,9 +93,9 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStor
     }
     if (editable && sheet) {
         val items = listOfNotNull(
-            SourceItem(stringResource(R.string.media_cover_take), CoverTags.TAKE, sources::takePhoto),
-            SourceItem(stringResource(R.string.media_cover_choose), CoverTags.CHOOSE, sources::choosePhoto),
-            cover?.let { SourceItem(stringResource(R.string.media_cover_remove), CoverTags.REMOVE, attaching::remove) },
+            SourceItem(stringResource(R.string.media_cover_take), CoverTags.TAKE, onClick = sources::takePhoto),
+            SourceItem(stringResource(R.string.media_cover_choose), CoverTags.CHOOSE, onClick = sources::choosePhoto),
+            cover?.let { SourceItem(stringResource(R.string.media_cover_remove), CoverTags.REMOVE, destructive = true, onClick = attaching::remove) },
         )
         SourceSheet(
             title = stringResource(if (cover == null) R.string.media_cover_add else R.string.media_cover_change),

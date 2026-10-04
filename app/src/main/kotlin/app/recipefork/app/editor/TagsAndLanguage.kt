@@ -100,7 +100,7 @@ internal fun Language(recipe: Recipe, editor: RecipeEditor) {
             }
         }
         if (language != null) {
-            ActionText(
+            EditorButton(
                 text = stringResource(R.string.editor_language_clear),
                 action = stringResource(R.string.editor_language_clear_action),
                 // Clearing it is leaving it without a language: the mark of FLOW-028 says what that costs.

@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,6 +34,7 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -67,6 +68,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.focus.FocusRequester
@@ -339,7 +341,7 @@ private fun EditorBar(done: Boolean, checklist: @Composable () -> Unit, onBack: 
         actions = {
             checklist()
             if (done) {
-                ActionText(
+                EditorButton(
                     text = stringResource(R.string.editor_done),
                     action = stringResource(R.string.editor_done_action),
                     onClick = onDone,
@@ -400,21 +402,29 @@ private fun Modifier.onEveryTap(onTap: () -> Unit): Modifier = pointerInput(Unit
     }
 }
 
+/** How much an [EditorButton] weighs: a text, or a tonal fill for the sections' own Add. */
+internal enum class ButtonWeight { TEXT, TONAL }
+
 /**
- * A text the author taps, at least 48 by 48 dp (A11Y-003), whose click the screen reader announces as what it
- * does — [action] — beside the visible [text] (A11Y-005).
+ * A button of the editor: Material 3's text or filled tonal button by [weight], its corners the theme's
+ * extra-large ones (a pill at a button's height), at least 48 dp high (A11Y-003), its click announced as what
+ * it does — [action] — beside the visible [text] (A11Y-005).
  */
 @Composable
-internal fun ActionText(text: String, action: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .heightIn(min = 48.dp)
-            .widthIn(min = 48.dp)
-            .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+internal fun EditorButton(
+    text: String,
+    action: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    weight: ButtonWeight = ButtonWeight.TEXT,
+) {
+    val shape = MaterialTheme.shapes.extraLarge
+    // Drawn 48 dp high, not the 40 dp Material draws a button at, so the target is the button itself (A11Y-003).
+    val announced = modifier.heightIn(min = 48.dp).semantics { onClick(label = action, action = null) }
+    val label: @Composable RowScope.() -> Unit = { Text(text) }
+    when (weight) {
+        ButtonWeight.TEXT -> TextButton(onClick, announced, shape = shape, content = label)
+        ButtonWeight.TONAL -> FilledTonalButton(onClick, announced, shape = shape, content = label)
     }
 }
 

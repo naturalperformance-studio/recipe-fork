@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -319,12 +320,12 @@ private fun V05StepBlock() {
                             minLines = 2,
                             modifier = Modifier.weight(1f),
                         )
-                        ActionText(t("Remove", "Убрать"), "", {})
+                        TextButton(onClick = {}) { Text(t("Remove", "Убрать")) }
                         IconButton(onClick = {}, modifier = Modifier.size(48.dp)) {}
                     }
-                    ActionText(t("Insert ingredient", "Вставить ингредиент"), "", {})
-                    ActionText(t("Timer", "Таймер"), "", {})
-                    ActionText(t("Photo", "Фото"), "", {})
+                    TextButton(onClick = {}) { Text(t("Insert ingredient", "Вставить ингредиент")) }
+                    TextButton(onClick = {}) { Text(t("Timer", "Таймер")) }
+                    TextButton(onClick = {}) { Text(t("Photo", "Фото")) }
                 }
             }
         }

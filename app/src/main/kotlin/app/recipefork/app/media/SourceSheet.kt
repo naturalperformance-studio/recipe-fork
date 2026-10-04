@@ -21,8 +21,11 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
-/** One row of a [SourceSheet]: what it says, the tag tests find it by, and what a tap on it does. */
-class SourceItem(val text: String, val tag: String, val onClick: () -> Unit)
+/**
+ * One row of a [SourceSheet]: what it says, the tag tests find it by, and what a tap on it does; a [destructive] one —
+ * a removal — says it in the error colour.
+ */
+class SourceItem(val text: String, val tag: String, val destructive: Boolean = false, val onClick: () -> Unit)
 
 /**
  * Where a photograph or a clip comes from — the camera, the gallery — and, for media already attached, its removal:
@@ -48,7 +51,10 @@ fun SourceSheet(title: String, items: List<SourceItem>, onDismiss: () -> Unit) {
             items.forEach { item ->
                 ListItem(
                     headlineContent = { Text(item.text) },
-                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        headlineColor = if (item.destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    ),
                     modifier = Modifier
                         .heightIn(min = 56.dp)
                         .clickable(role = Role.Button) {

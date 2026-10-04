@@ -18,10 +18,11 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
@@ -43,11 +44,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -59,16 +55,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.constrainHeight
-import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.compose.foundation.background
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import app.recipefork.app.Mode
@@ -214,7 +208,7 @@ internal fun Ingredients(
             }
         }
         if (editable) {
-            ActionText(
+            EditorButton(
                 text = stringResource(R.string.editor_ingredient_add),
                 action = stringResource(R.string.editor_ingredient_add_action),
                 // The row added takes the focus in its name, with the keyboard up.
@@ -223,6 +217,7 @@ internal fun Ingredients(
                     if (editor.addIngredient() && added != null) rows.ask(added)
                 },
                 modifier = Modifier.testTag(EditorTags.INGREDIENT_ADD),
+                weight = ButtonWeight.TONAL,
             )
         }
     }
@@ -360,6 +355,7 @@ private fun RowControls(position: Int, count: Int, editor: RecipeEditor) {
         tag = EditorTags.ingredientRemove(position),
         action = remove,
         onClick = { editor.removeIngredient(position) },
+        destructive = true,
     )
     RowMenu(
         position = position,
@@ -717,73 +713,36 @@ private class EvenHeights {
 }
 
 /**
- * The row's unit: exactly the twelve units of DOM-016, by their names in the interface language. It is drawn as the
- * outlined text fields beside it are — its label on its outline, its unit inside.
+ * The row's unit: exactly the twelve units of DOM-016, by their names in the interface language, in Material 3's exposed
+ * drop-down — a read-only outlined field, as the fields beside it are, over the menu of units.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chain: RowChain, modifier: Modifier) {
     var expanded by chain::unitOpen
-    val labelStyle = MaterialTheme.typography.bodySmall
-    // The outline sits where the label's middle is, as an outlined text field's does, and never higher than 8 dp.
-    val outlineTop = maxOf(8.dp, with(LocalDensity.current) { labelStyle.lineHeight.toDp() } / 2)
-    val background = MaterialTheme.colorScheme.surface
-    val outline = MaterialTheme.colorScheme.outline
-    Box(modifier, propagateMinConstraints = true) {
-        Box(
-            Modifier
+    val action = stringResource(R.string.editor_ingredient_unit_action)
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { open ->
+            // Opened by a tap, a unit picked stays where it is.
+            if (open) chain.byNext = false
+            expanded = open
+        },
+        modifier = modifier,
+    ) {
+        OutlinedTextField(
+            value = row.shownUnit?.let { stringResource(unitName(it)) }.orEmpty(),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.editor_ingredient_unit)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
-                .semantics(mergeDescendants = true) {}
-                .clickable(onClickLabel = stringResource(R.string.editor_ingredient_unit_action), role = Role.DropdownList) {
-                    chain.byNext = false
-                    expanded = true
-                }
-                .testTag(EditorTags.ingredientUnit(position))
-                // The outline is drawn behind everything in it, so the label on it cuts it as a text field's does.
-                .drawBehind {
-                    val stroke = 1.dp.toPx()
-                    val top = outlineTop.toPx()
-                    drawRoundRect(
-                        color = outline,
-                        topLeft = Offset(stroke / 2, top + stroke / 2),
-                        size = Size(size.width - stroke, size.height - top - stroke),
-                        cornerRadius = CornerRadius(4.dp.toPx()),
-                        style = Stroke(stroke),
-                    )
-                },
-            propagateMinConstraints = true,
-        ) {
-            Text(
-                stringResource(R.string.editor_ingredient_unit),
-                style = labelStyle,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .layout { measurable, constraints ->
-                        val label = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
-                        layout(constraints.constrainWidth(label.width), constraints.constrainHeight(label.height)) {
-                            label.place(12.dp.roundToPx(), outlineTop.roundToPx() - label.height / 2)
-                        }
-                    }
-                    .background(background)
-                    .padding(horizontal = 4.dp),
-            )
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp + outlineTop)
-                    .padding(top = outlineTop)
-                    .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    row.shownUnit?.let { stringResource(unitName(it)) }.orEmpty(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                .semantics { onClick(label = action, action = null) }
+                .testTag(EditorTags.ingredientUnit(position)),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             QuantityUnit.entries.forEach { unit ->
                 DropdownMenuItem(
                     text = { Text(stringResource(unitName(unit))) },
@@ -794,6 +753,7 @@ private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chai
                         if (chain.byNext) chain.onUnitPicked()
                         chain.byNext = false
                     },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     modifier = Modifier.testTag(EditorTags.unitOption(unit)),
                 )
             }
