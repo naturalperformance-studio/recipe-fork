@@ -116,7 +116,7 @@ internal fun StepsList(
 /**
  * One step: its number in a filled circle and its text beside it, read by the screen reader as one line that says the
  * number once — the circle itself is decorative — then its photograph or its clip, named by the step's number, and its
- * timer, if it carries them, set under the text. Steps after the first stand apart from the one before. An item whose
+ * timer, if it carries them, set under the text, the timer a clear gap below the rest. Steps after the first stand apart from the one before. An item whose
  * file the device does not hold, or cannot show, says so in its place (FLOW-061).
  */
 @Composable
@@ -135,7 +135,7 @@ private fun StepRow(number: Int, step: Step, references: CardReferences, timers:
                 StepMedia(item, number, step.position)
             }
         }
-        if (step.timer != null) StepTimer(step, timers, references::quantity, Modifier.padding(start = StepIndent))
+        if (step.timer != null) StepTimer(step, timers, references::quantity, Modifier.padding(start = StepIndent, top = TimerGap))
     }
 }
 
@@ -152,6 +152,9 @@ private val StepGap = 12.dp
 
 /** The least size of a step's circle; it grows with the font scale and stays a circle. */
 internal val StepNumberSize = 32.dp
+
+/** The gap above a step's timer, setting it clearly apart from the step's text and its media. */
+internal val TimerGap = 12.dp
 
 /** Where a step's photograph, clip and timer start: under its text. */
 internal val StepIndent = StepNumberSize + StepGap
