@@ -23,4 +23,7 @@
     <string name="file_stated_author">Author: %1$s (stated in the file, not verified)</string>
     <!-- Closes the dialog that says what became of a file. -->
     <string name="file_message_ok">OK</string>
+    <string name="file_open">Open</string>
+    <string name="file_importing">Importing the recipe file</string>
+    <string name="file_exporting">Exporting the recipe</string>
 </resources>

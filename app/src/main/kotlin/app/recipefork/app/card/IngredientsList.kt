@@ -1,7 +1,9 @@
 package app.recipefork.app.card
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,19 +35,24 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.offset
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
 import app.recipefork.app.R
+import app.recipefork.app.ui.Motion
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rounding
 
 /**
- * The card's ingredients, in order, at the scale in force — a requested serving count (SCALE-001) or the amount the
- * reader fixed of one ingredient (SCALE-002). Once any quantity is computed at a scale other than the authored one,
- * one line at the top of the section says the quantities are recalculated, with a legend for the arrows (SCALE-004
- * (1), met for the section rather than per line); a quantity rounding moved carries ↑ where the exact value was
+ * The card's ingredients, on a tonal surface of the theme, in order, at the scale in force — a requested serving count (SCALE-001) or the amount the
+ * reader fixed of one ingredient (SCALE-002). A status line always stands at the top of the section: at the authored
+ * scale it says the quantities are as the author wrote them; once any quantity is computed at another scale, it says
+ * they are recalculated, with a legend for the arrows (SCALE-004 (1), met for the section rather than per line) —
+ * its height that of the taller of the two, so the list never moves between them; a quantity rounding moved carries ↑ where the exact value was
  * lower — a floor-held one included — and ↓ where it was higher, each read aloud in words (SCALE-004, SCALE-005).
  * Once two or more lines are held at their floors, a warning says the quantities no longer hold the authored
  * proportions (SCALE-009). A fixed line says it is fixed. None of it is carried by colour (A11Y-008). With no
@@ -64,33 +72,65 @@ internal fun IngredientsList(
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered) { mutableStateOf<Int?>(null) }
+    // The list stands apart from the steps on a tonal surface of the theme, in its medium corners. The surface reaches
+    // into the card's gutter, so the lines keep the whole width of the content and wrap no sooner (A11Y-004).
+    Surface(
+        Modifier.fillMaxWidth().bleed(SURFACE_BLEED).testTag(IngredientTags.SURFACE),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease) }
+    }
+}
+
+/** The list's heading, status, warning and lines, with the fixing control [open] under its line. */
+@Composable
+private fun Lines(
+    ordered: List<Ingredient>,
+    list: IngredientList,
+    fixings: List<CardFixing>,
+    language: InterfaceLanguage,
+    open: Int?,
+    onOpen: (Int?) -> Unit,
+    onFix: (CardFixing) -> Unit,
+    onRelease: (Int) -> Unit,
+) {
     Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
-        if (list.recalculated) RecalculatedLegend()
-        if (!list.holdsProportions) {
-            Text(
-                stringResource(R.string.card_proportions_warning),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { liveRegion = LiveRegionMode.Polite }
-                    .testTag(CardTags.PROPORTIONS),
-            )
+        // The warning unfolds under the status line and folds away into it, the gap above it included, so the lines
+        // below move with it rather than jump; the status line itself keeps its height.
+        Column {
+            ScaleStatus(list.recalculated)
+            AnimatedVisibility(!list.holdsProportions, enter = Motion.open, exit = Motion.close) {
+                Text(
+                    stringResource(R.string.card_proportions_warning),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = SECTION_GAP)
+                        .semantics { liveRegion = LiveRegionMode.Polite }
+                        .testTag(CardTags.PROPORTIONS),
+                )
+            }
         }
         val column = quantityColumn(list.lines)
         list.lines.forEachIndexed { i, line ->
             val position = ordered[i].position
-            IngredientRow(line, position, column, cardPlace(CardPlaces.ingredient(position))) { open = if (open == position) null else position }
-            val offer = line.fixing
-            if (offer != null && open == position) {
-                key(position) {
-                    FixAmount(
-                        offer = offer,
-                        current = fixings.firstOrNull { it.position == position },
-                        language = language,
-                        onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); open = null },
-                        onRelease = { onRelease(position); open = null },
-                        onClose = { open = null },
-                    )
+            // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
+            Column {
+                IngredientRow(line, position, column, cardPlace(CardPlaces.ingredient(position))) { onOpen(if (open == position) null else position) }
+                val offer = line.fixing
+                if (offer != null) {
+                    key(position) {
+                        FixAmountUnder(
+                            open = open == position,
+                            offer = offer,
+                            current = fixings.firstOrNull { it.position == position },
+                            language = language,
+                            onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
+                            onRelease = { onRelease(position); onOpen(null) },
+                            onClose = { onOpen(null) },
+                        )
+                    }
                 }
             }
         }
@@ -103,6 +143,12 @@ internal val IngredientList.recalculated: Boolean get() = lines.any { it.derived
 /** Test tags of the ingredients section's own parts. */
 internal object IngredientTags {
     const val RECALCULATED = "card-recalculated"
+    /** The tonal surface the whole section sits on. */
+    const val SURFACE = "card-ingredients-surface"
+    /** The status line above the list, always present: as authored, or recalculated. */
+    const val STATUS = "card-scale-status"
+    /** The status line's text at the authored scale. */
+    const val AUTHORED = "card-as-authored"
     /** The arrow after the quantity of the line at [position], where rounding moved it. */
     fun rounding(position: Int) = "card-ingredient-$position-rounding"
 }
@@ -116,21 +162,46 @@ private const val SHOWN_TEXT_KEY = "card.shown-text"
 internal var SemanticsPropertyReceiver.shownText by ShownText
 
 /**
- * The one line that says the section's quantities are recalculated and what the arrows mean; read by the screen
- * reader in full words rather than as the arrows.
+ * The status line above the list, always present: "as the author wrote it" at the authored scale, otherwise the line
+ * that says the quantities are recalculated and what the arrows mean, read by the screen reader in full words rather
+ * than as the arrows. It is as high as the taller of the two texts at the width and font scale in force, so changing
+ * between them never moves the list below.
  */
 @Composable
-private fun RecalculatedLegend() {
+private fun ScaleStatus(recalculated: Boolean) {
     val spoken = stringResource(R.string.card_quantities_recalculated_spoken)
     val shown = stringResource(R.string.card_quantities_recalculated)
-    Text(
-        shown,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clearAndSetSemantics { text = AnnotatedString(spoken); shownText = shown; testTag = IngredientTags.RECALCULATED },
-    )
+    val authored = stringResource(R.string.card_quantities_as_authored)
+    val style = MaterialTheme.typography.bodySmall
+    val measurer = rememberTextMeasurer()
+    Layout(
+        content = {
+            if (recalculated) {
+                Text(
+                    shown,
+                    style = style,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clearAndSetSemantics {
+                        text = AnnotatedString(spoken); shownText = shown; testTag = IngredientTags.RECALCULATED
+                    },
+                )
+            } else {
+                Text(
+                    authored,
+                    style = style,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag(IngredientTags.AUTHORED),
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth().testTag(IngredientTags.STATUS),
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val text = measurables.single().measure(Constraints(maxWidth = width))
+        fun heightOf(it: String) = measurer.measure(it, style, constraints = Constraints(maxWidth = width), density = this).size.height
+        val height = maxOf(text.height, heightOf(shown), heightOf(authored))
+        layout(width, height) { text.place(0, 0) }
+    }
 }
 
 /**
@@ -225,6 +296,19 @@ private fun IngredientRow(line: IngredientLine, position: Int, column: QuantityC
             }
         }
     }
+}
+
+/** How far the tonal surface reaches into the card's gutter on each side; the section's lines start where they would without it. */
+private val SURFACE_BLEED = 8.dp
+
+/** The space above and below the section on its tonal surface. */
+private val SURFACE_PADDING = 12.dp
+
+/** Laid out [by] wider on each side than the room it is given, the room it takes still only that. */
+private fun Modifier.bleed(by: Dp) = layout { measurable, constraints ->
+    val extra = by.roundToPx() * 2
+    val placeable = measurable.measure(constraints.offset(horizontal = extra))
+    layout((placeable.width - extra).coerceAtLeast(0), placeable.height) { placeable.place(-extra / 2, 0) }
 }
 
 /** The space between the quantity column and the names. */

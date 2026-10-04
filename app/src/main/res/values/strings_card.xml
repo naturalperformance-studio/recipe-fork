@@ -7,6 +7,8 @@
     <string name="card_edit_action">Open this recipe in the editor</string>
     <string name="card_fork">Fork</string>
     <string name="card_fork_action">Make an editable copy of this recipe</string>
+    <string name="card_menu">More actions</string>
+    <string name="card_menu_action">Show more actions for this recipe</string>
     <!-- Said for the indicator shown while the recipe is still being read. -->
     <string name="card_loading">Loading the recipe</string>
     <!-- A long press on an icon of the card's bar shows its name in a tooltip; the screen reader names that action. -->
@@ -37,6 +39,7 @@
          a legend for the arrows; the spoken form is what the screen reader reads instead of the arrows. -->
     <string name="card_quantities_recalculated">Recalculated · ↑ rounded up · ↓ rounded down</string>
     <string name="card_quantities_recalculated_spoken">Quantities are recalculated. An up arrow marks a quantity rounded up, a down arrow one rounded down.</string>
+    <string name="card_quantities_as_authored">As the author wrote it</string>
     <!-- Read aloud for the arrow after a quantity rounding moved (SCALE-004 (2–5), SCALE-005). -->
     <string name="card_quantity_rounded_up">rounded up, exact value was lower</string>
     <string name="card_quantity_rounded_down">rounded down, exact value was higher</string>

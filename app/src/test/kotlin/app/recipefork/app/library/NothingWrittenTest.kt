@@ -86,15 +86,15 @@ class NothingWrittenTest {
 
     private fun written(book: TestBook) = runBlocking { book.database.recipes().newest(100).first() }
 
-    /** The view states that nothing is written, holds one offer, and the offer reads "Write a recipe". */
+    /** The view states that nothing is written, holds one offer, and the offer reads "New recipe". */
     private fun assertStatesItAndOffersToWrite(statement: String, offer: String) {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.OWN_EMPTY), PATIENCE_MS)
         compose.onNode(hasText(statement) and hasAnyAncestor(hasTestTag(LibraryTags.OWN_EMPTY))).assertIsDisplayed()
         assertEquals(listOf(offer), compose.textsOf(LibraryTags.WRITE))
-        // One offer and nothing else to act on in the view below the switch; above it, the book's menu.
+        // One offer and nothing else to act on in the view below the switch; above it, the settings action.
         val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .filter { SemanticsActions.OnClick in it.config }
-            .filterNot { it.config.getOrNull(SemanticsProperties.TestTag) == LibraryTags.MENU }
+            .filterNot { it.config.getOrNull(SemanticsProperties.TestTag) == LibraryTags.SETTINGS }
         assertEquals(3, actions.size) // the two tabs and the offer
     }
 
@@ -121,7 +121,7 @@ class NothingWrittenTest {
     @Test
     fun thePoolWithNothingWrittenSaysSoAndItsOfferOpensTheEditorOnANewRecipeInThePool() {
         show(ActiveBook(BookName.Pool, pool.database))
-        assertStatesItAndOffersToWrite("Nothing has been written in this recipe book yet.", "Write a recipe")
+        assertStatesItAndOffersToWrite("Nothing written here yet", "New recipe")
         val opened = takeTheOffer()
         assertANewRecipeInThisBook(pool, opened, owner = null)
         assertEquals(emptyList<Any>(), written(account))
@@ -131,7 +131,7 @@ class NothingWrittenTest {
     @Test
     fun anAccountsBookWithNothingWrittenSaysSoAndItsOfferOpensTheEditorOnANewRecipeInThatBook() {
         show(ActiveBook(BookName.OfAccount("account-1"), account.database))
-        assertStatesItAndOffersToWrite("Nothing has been written in this recipe book yet.", "Write a recipe")
+        assertStatesItAndOffersToWrite("Nothing written here yet", "New recipe")
         val opened = takeTheOffer()
         assertANewRecipeInThisBook(account, opened, owner = AccountId("account-1"))
         // Nothing reached the pool, which is not the active book.
@@ -143,7 +143,7 @@ class NothingWrittenTest {
     @Config(qualifiers = "ru")
     fun inRussianTheEmptyViewSaysSoAndOffersToWrite() {
         show(ActiveBook(BookName.Pool, pool.database))
-        assertStatesItAndOffersToWrite("В этой книге рецептов пока ничего не написано.", "Написать рецепт")
+        assertStatesItAndOffersToWrite("Здесь пока ничего не написано", "Новый рецепт")
         val opened = takeTheOffer()
         assertANewRecipeInThisBook(pool, opened, owner = null)
     }

@@ -1,6 +1,7 @@
 package app.recipefork.app.editor
 
 import android.content.Context
+import app.recipefork.core.recipe.RecipeLanguage
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -72,7 +73,7 @@ class EditorLanguageAndAccessibilityTest {
     )
 
     private val english = Actions(
-        write = "Write a recipe",
+        write = "New recipe",
         back = "Show the recipe",
         toRussian = "Declare the recipe written in Russian",
         toEnglish = "Declare the recipe written in English",
@@ -83,7 +84,7 @@ class EditorLanguageAndAccessibilityTest {
     )
 
     private val russian = Actions(
-        write = "Написать рецепт",
+        write = "Новый рецепт",
         back = "Показать рецепт",
         toRussian = "Указать, что рецепт написан по-русски",
         toEnglish = "Указать, что рецепт написан по-английски",
@@ -144,16 +145,18 @@ class EditorLanguageAndAccessibilityTest {
         // The editor on a new recipe, with the tag search over the dictionary: nothing is offered until typed.
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
-        checkTheScreen(expectInteractive = 5) // back, title, language, clear, search
+        checkTheScreen(expectInteractive = 6) // back, title, the language's two segments, clear, search
         assertAnnounces(EditorTags.BACK, w.back)
-        val language = compose.onNodeWithTag(EditorTags.LANGUAGE).fetchSemanticsNode()
-        val change = AccessibilityChecks.clickActionLabel(language)
-        assertEquals(if (w === english) w.toRussian else w.toEnglish, change)
-        assertNotEquals(change, AccessibilityChecks.announcedLabel(language))
+        listOf(RecipeLanguage.RU to w.toRussian, RecipeLanguage.EN to w.toEnglish).forEach { (option, declare) ->
+            val segment = compose.onNodeWithTag(EditorTags.language(option)).fetchSemanticsNode()
+            val change = AccessibilityChecks.clickActionLabel(segment)
+            assertEquals(declare, change)
+            assertNotEquals(change, AccessibilityChecks.announcedLabel(segment))
+        }
         assertAnnounces(EditorTags.LANGUAGE_CLEAR, w.clear)
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextInput("ital")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.offered(10)), PATIENCE_MS)
-        checkTheScreen(expectInteractive = 6) // back, title, language, clear, search, the offered tag
+        checkTheScreen(expectInteractive = 7) // back, title, two segments, clear, search, the offered tag
         assertAnnounces(EditorTags.offered(10), w.addItalian)
 
         // A tag chosen, and a search that matches nothing.
@@ -162,13 +165,13 @@ class EditorLanguageAndAccessibilityTest {
         assertAnnounces(EditorTags.remove(10), w.removeItalian)
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextInput("zzz")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.NO_MATCH), PATIENCE_MS)
-        checkTheScreen(expectInteractive = 6) // back, title, language, clear, remove, search
+        checkTheScreen(expectInteractive = 7) // back, title, two segments, clear, the tag's chip, search
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performTextReplacement("")
 
         // The declared language cleared.
         compose.onNodeWithTag(EditorTags.LANGUAGE_CLEAR).performScrollTo().performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.LANGUAGE_CLEAR), PATIENCE_MS)
-        checkTheScreen(expectInteractive = 5)
+        checkTheScreen(expectInteractive = 6)
 
         // Back in the own view, which lists the recipe.
         val id = requireNotNull(session.editing.value)

@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
@@ -41,7 +43,7 @@ internal fun BlockActions(modifier: Modifier = Modifier, content: @Composable Fl
 /**
  * One action of a block as an icon, 48 by 48 dp (A11Y-003): the screen reader speaks its [label], which names the
  * block (A11Y-005), and a long press shows the same [label] in a tooltip, so its meaning is never left to the icon
- * alone. A click is announced as [action] when given.
+ * alone. A click is announced as [action] when given. A [destructive] action — a removal — is drawn in the error colour.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -52,6 +54,7 @@ internal fun BlockAction(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     action: String? = null,
+    destructive: Boolean = false,
 ) {
     val tooltip = rememberTooltipState()
     val scope = rememberCoroutineScope()
@@ -76,7 +79,7 @@ internal fun BlockAction(
                 .testTag(tag),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(painterResource(icon), contentDescription = label)
+            Icon(painterResource(icon), contentDescription = label, tint = if (destructive) MaterialTheme.colorScheme.error else LocalContentColor.current)
         }
     }
 }

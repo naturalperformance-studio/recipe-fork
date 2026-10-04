@@ -36,7 +36,7 @@ import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.TestRecipeFiles
 import app.recipefork.app.file.awaitFileMessage
-import app.recipefork.app.file.closeFileMessage
+import app.recipefork.app.file.awaitFileNotice
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.file.RecipeFileContent
@@ -244,7 +244,7 @@ class FoundRecipesTest {
     fun inServerlessModeTheMarkedViewOffersTheImport() {
         show(Mode.Serverless)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.MARKED_EMPTY), PATIENCE_MS)
-        assertEquals("No recipes are marked in this book yet.", compose.textsOf(LibraryTags.MARKED_EMPTY).single())
+        assertEquals("No marked recipes yet", compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.MARKED_EMPTY)).single())
         assertEquals(listOf("Import a recipe file"), compose.textsOf(LibraryTags.IMPORT))
     }
 
@@ -282,9 +282,8 @@ class FoundRecipesTest {
         }
         val id = TestRecipeFiles.soup().id
         awaitEntry(id)
-        compose.awaitFileMessage("“Bean soup” is in your recipe book now")
+        compose.awaitFileNotice("“Bean soup” is in your recipe book now")
         assertTrue(!exists(LibraryTags.MARKED_EMPTY))
-        compose.closeFileMessage()
         // A picked file that is no recipe file is refused and said to be; nothing more is listed.
         compose.onNodeWithTag(LibraryTags.IMPORT).performClick()
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }

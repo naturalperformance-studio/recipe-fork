@@ -2,12 +2,11 @@
 <resources>
     <!-- The cover photograph, offered at the title (FLOW-026) and shown at the top of the card. -->
     <string name="media_cover">Cover photo (optional)</string>
-    <string name="media_cover_take">Take a photo</string>
-    <string name="media_cover_take_action">Take the cover photo with the camera</string>
-    <string name="media_cover_choose">Choose from gallery</string>
-    <string name="media_cover_choose_action">Choose the cover photo from the gallery</string>
-    <string name="media_cover_remove">Remove</string>
-    <string name="media_cover_remove_action">Remove the cover photo</string>
+    <string name="media_cover_take">Camera</string>
+    <string name="media_cover_choose">Gallery</string>
+    <string name="media_cover_add">Add a cover photo</string>
+    <string name="media_cover_change">Replace or remove the cover photo</string>
+    <string name="media_cover_remove">Remove cover</string>
     <string name="media_cover_description">Cover photo of “%1$s”</string>
     <!-- What the author is told about a photograph they offered (MEDIA-005, MEDIA-006, MEDIA-008). -->
     <string name="media_working">Preparing the photo…</string>

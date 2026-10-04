@@ -82,7 +82,7 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * FLOW-053: an own recipe in `local`, `private` or `rejected` is deleted from its entry in the own-recipes view, after
  * a statement that it goes at once and cannot be brought back; declining changes nothing, confirming removes it with
- * everything it holds, and its timers with it. Nothing else offers deletion.
+ * everything it holds, and its timers with it. Besides the entry, only the card's ⋮ offers it (RemoveFromTheCardTest).
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -133,8 +133,8 @@ class DeleteRecipeTest {
         statement = "The recipe goes at once, with its photographs and video, and cannot be brought back.",
         confirm = "Delete",
         decline = "Cancel",
-        empty = "Nothing has been written in this recipe book yet.",
-        write = "Write a recipe",
+        empty = "Nothing written here yet",
+        write = "New recipe",
     )
 
     private val russian = Words(
@@ -144,8 +144,8 @@ class DeleteRecipeTest {
         statement = "Рецепт удалится сразу, вместе с фотографиями и видео, и вернуть его будет нельзя.",
         confirm = "Удалить",
         decline = "Отмена",
-        empty = "В этой книге рецептов пока ничего не написано.",
-        write = "Написать рецепт",
+        empty = "Здесь пока ничего не написано",
+        write = "Новый рецепт",
     )
 
     @Before
@@ -261,9 +261,10 @@ class DeleteRecipeTest {
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 3)
     }
 
-    // FLOW-053 (7): the card of a recipe that may be deleted carries no deletion control, in the recipe or its bar.
+    // FLOW-053 (7), v0.19 scenario 5: the card's recipe carries no deletion control; deletion is offered only behind
+    // the bar's ⋮ (RemoveFromTheCardTest), nothing of it shown until that menu opens.
     @Test
-    fun theCardCarriesNoDeletionControl() {
+    fun theCardOffersDeletionOnlyInItsMenu() {
         val recipe = own("Soup")
         show()
         bringIntoView(recipe)
@@ -274,6 +275,8 @@ class DeleteRecipeTest {
             hasContentDescription("Delete", substring = true, ignoreCase = true)
         assertEquals(0, compose.onAllNodes(delete, useUnmergedTree = true).fetchSemanticsNodes().size)
         assertFalse(exists(LibraryTags.delete(recipe.id.value)))
+        compose.onNodeWithTag(CardTags.MENU).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.DELETE), PATIENCE_MS)
     }
 
     // FLOW-053 (2): before anything is destroyed, the statement says the recipe goes at once and cannot be brought

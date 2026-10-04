@@ -6,7 +6,11 @@ import android.content.Context
 import android.net.ConnectivityManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.test.IdlingResource
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasAnyAncestor
@@ -32,6 +36,7 @@ import app.recipefork.core.api.DictionariesDto
 import app.recipefork.core.api.IngredientEntryDto
 import app.recipefork.core.api.TagDto
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.RecipeLanguage
 import org.robolectric.Shadows.shadowOf
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -182,13 +187,36 @@ fun ComposeTestRule.swipeAwayStatement() {
     waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(EditorTags.STATEMENT), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
 }
 
-/** The texts of the node tagged [tag], merged as the screen reader reads them, then what a field holds. */
+/**
+ * The texts of the node tagged [tag], merged as the screen reader reads them, then what a field holds; a node merged
+ * into a field — its supporting text — is read apart from it.
+ */
 fun SemanticsNodeInteractionsProvider.textsOf(tag: String): List<String> {
-    val config = onNodeWithTag(tag).fetchSemanticsNode().config
+    val merged = onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+    val config = onNodeWithTag(tag, useUnmergedTree = !merged).fetchSemanticsNode().config
     return config.getOrElse(SemanticsProperties.Text) { emptyList() }.map { it.text } +
         listOfNotNull(config.getOrElseNullable(SemanticsProperties.EditableText) { null }?.text)
+}
+
+/** The colour the first text inside the node tagged [tag] is drawn in. */
+fun SemanticsNodeInteractionsProvider.textColourOf(tag: String): Color {
+    val layouts = mutableListOf<TextLayoutResult>()
+    onAllNodes(hasAnyAncestor(hasTestTag(tag)) and hasText("", substring = true), useUnmergedTree = true).onFirst().fetchSemanticsNode()
+        .config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+    return layouts.single().layoutInput.style.color
 }
 
 /** What the screen reader reads for the node tagged [tag] beyond any text: its content description. */
 fun SemanticsNodeInteractionsProvider.descriptionOf(tag: String): List<String> =
     onNodeWithTag(tag).fetchSemanticsNode().config.getOrElse(SemanticsProperties.ContentDescription) { emptyList() }
+
+/** The language the editor's segmented switch shows declared: the one segment selected, or null where neither is. */
+fun SemanticsNodeInteractionsProvider.declaredLanguage(): RecipeLanguage? =
+    RecipeLanguage.entries.filter { language ->
+        onNodeWithTag(EditorTags.language(language)).fetchSemanticsNode().config.getOrElse(SemanticsProperties.Selected) { false }
+    }.also { check(it.size <= 1) { "both languages shown declared" } }.singleOrNull()
+
+/** Taps [language] on the editor's segmented switch, scrolled to first. */
+fun SemanticsNodeInteractionsProvider.declareLanguage(language: RecipeLanguage) {
+    onNodeWithTag(EditorTags.language(language)).performScrollTo().performClick()
+}

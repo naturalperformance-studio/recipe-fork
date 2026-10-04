@@ -1,6 +1,8 @@
 package app.recipefork.app.editor
 
 import android.os.Bundle
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -51,7 +53,7 @@ class EditorSessionTest {
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.FORM)).fetchSemanticsNodes().size == 1 }
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Borscht")
-        compose.onNodeWithTag(EditorTags.LANGUAGE).performClick()
+        compose.declareLanguage(RecipeLanguage.RU)
         // The tag editor offers the shipped dictionaries on this fresh installation.
         compose.addTag("ital", 10)
         compose.waitForIdle()
@@ -68,10 +70,12 @@ class EditorSessionTest {
             compose.onAllNodes(hasTestTag(EditorTags.chosen(10))).fetchSemanticsNodes().size == 1
         }
         assertEquals("Borscht", compose.textsOf(EditorTags.TITLE).last())
-        assertEquals(listOf("Language", "Russian"), compose.textsOf(EditorTags.LANGUAGE))
-        val title = compose.onNodeWithTag(EditorTags.TITLE).fetchSemanticsNode().boundsInRoot
-        val language = compose.onNodeWithTag(EditorTags.LANGUAGE).fetchSemanticsNode().boundsInRoot
-        val tags = compose.onNodeWithTag(EditorTags.TAGS).fetchSemanticsNode().boundsInRoot
+        assertEquals(RecipeLanguage.RU, compose.declaredLanguage())
+        // Unclipped, as the tags may sit below the screen's bottom under the cover's placeholder.
+        fun bounds(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+        val title = bounds(EditorTags.TITLE)
+        val language = bounds(EditorTags.LANGUAGE)
+        val tags = bounds(EditorTags.TAGS)
         assertEquals(true, language.left >= title.right && tags.top >= title.bottom)
         val recipe = stored(id)!!
         assertEquals("Borscht", recipe.title)

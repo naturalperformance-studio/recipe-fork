@@ -18,23 +18,20 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateMapOf
@@ -43,34 +40,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.constrainHeight
-import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.compose.foundation.background
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import app.recipefork.app.Mode
@@ -91,7 +83,6 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.effectiveDivisible
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
-import kotlinx.coroutines.launch
 
 /** The interface language as numbers are read and written in it (L10N-009). */
 fun numberLanguage(configuration: Configuration): InterfaceLanguage =
@@ -136,7 +127,7 @@ private val Ingredient.shownUnit: QuantityUnit?
  * typed is not held — the field keeps what it held and says what it accepts (DOM-015).
  */
 @Composable
-internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
+internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: FocusRequester, rows: RowFocus) {
     if (!recipe.state.editable) {
         Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.SERVINGS)) {
             Text(stringResource(R.string.editor_servings), style = MaterialTheme.typography.labelMedium)
@@ -159,9 +150,17 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
             },
             isError = refused,
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
-            modifier = Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Servings) }).testTag(EditorTags.SERVINGS),
+            // Next goes on to the first ingredient row; with none, Done closes the keyboard and adds no row.
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = if (recipe.ingredients.isEmpty()) ImeAction.Done else ImeAction.Next,
+            ),
+            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }, onNext = { rows.ask(0) }),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(requester)
+                .then(leaving { editor.leave(RecipePart.Servings) })
+                .testTag(EditorTags.SERVINGS),
         )
         BoundMark(editor, RecipePart.Servings, EditorTags.SERVINGS_MARK, gap = 4.dp)
     }
@@ -172,7 +171,14 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor) {
  * Rows are named from the ingredient dictionary of [ingredients] or in the author's own words (DOM-009).
  */
 @Composable
-internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: IngredientSource, scroll: EditorScroll, mode: Mode) {
+internal fun Ingredients(
+    recipe: Recipe,
+    editor: RecipeEditor,
+    ingredients: IngredientSource,
+    scroll: EditorScroll,
+    mode: Mode,
+    rows: RowFocus,
+) {
     val editable = recipe.state.editable
     val language = numberLanguage(LocalConfiguration.current)
     var dictionary by remember(ingredients) { mutableStateOf<List<IngredientEntryEntity>?>(null) }
@@ -182,9 +188,11 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
     }
     // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
     val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveIngredient(from, to) }
-    Column(
+    val motion = rememberRowMotion()
+    motion.update(recipe.ingredients.indices.map(editor::ingredientKey))
+    RowsColumn(
+        ROW_SPACING,
         Modifier.fillMaxWidth().zIndex(if (drag.dragged != null) 1f else 0f).testTag(EditorTags.INGREDIENTS),
-        verticalArrangement = Arrangement.spacedBy(ROW_SPACING),
     ) {
         Text(
             stringResource(R.string.editor_ingredients),
@@ -196,17 +204,24 @@ internal fun Ingredients(recipe: Recipe, editor: RecipeEditor, ingredients: Ingr
         recipe.ingredients.forEachIndexed { position, row ->
             // What the screen holds for a row — focus, an open offer, a typed value — stays with it when rows before
             // it are inserted, moved or deleted.
+            motion.LeavingAt(position)
             key(editor.ingredientKey(position)) {
-                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag, mode)
+                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag, mode, rows, motion)
                 else ReadOnlyIngredient(position, row, language, dictionary)
             }
         }
+        motion.LeavingAt(recipe.ingredients.size, last = true)
         if (editable) {
-            ActionText(
+            EditorButton(
                 text = stringResource(R.string.editor_ingredient_add),
                 action = stringResource(R.string.editor_ingredient_add_action),
-                onClick = { editor.addIngredient() },
+                // The row added takes the focus in its name, with the keyboard up.
+                onClick = {
+                    val added = editor.recipe.value?.ingredients?.size
+                    if (editor.addIngredient() && added != null) rows.ask(added)
+                },
                 modifier = Modifier.testTag(EditorTags.INGREDIENT_ADD),
+                weight = ButtonWeight.TONAL,
             )
         }
     }
@@ -233,8 +248,9 @@ private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: Interfa
 
 /**
  * One row: exactly the ingredient, the quantity and the unit (FLOW-023 (1)) — never a unit type, which follows from
- * the unit (FLOW-023 (7)). Beside them, only what the row calls for: the free-text warning (FLOW-022 (2)), the
- * divisibility question of a `piece` (FLOW-022 (5)) and the mark of a quantity the field does not hold (DOM-017 (6)).
+ * the unit (FLOW-023 (7)). Under them, only what the row calls for: the free-text hint under the name (FLOW-022 (2)),
+ * the divisibility question of a `piece` (FLOW-022 (5)) and, in the quantity's own supporting text, what the field
+ * accepts when it does not hold what was typed (DOM-017 (6)).
  * Beside the ingredient, its removal and its menu of inserting and moving (FLOW-025).
  */
 @Composable
@@ -247,6 +263,8 @@ private fun IngredientRow(
     dictionary: List<IngredientEntryEntity>?,
     drag: RowDrag,
     mode: Mode,
+    rows: RowFocus,
+    motion: RowMotion,
 ) {
     // An entry that gives a divisibility decides it (FLOW-023 (11)): the quantity is checked against its grid even before
     // the row holds it — a draft written before, holding 1½ of an indivisible entry, is marked (DOM-017 (9)).
@@ -256,10 +274,20 @@ private fun IngredientRow(
     )
     // The name, the quantity and the unit each take the height of the tallest of them, so the row's inputs are even.
     val heights = remember { EvenHeights() }
+    // What the name's hint and the quantity's error add under their fields, which the others do not take on.
+    val nameUnder = remember { mutableIntStateOf(0) }
+    val quantityUnder = remember { mutableIntStateOf(0) }
+    // The keyboard's Next goes name → quantity → unit → the next row's name; the last row's last field says Done.
+    val chain = remember { RowChain() }
+    chain.last = position == count - 1
+    chain.measured = row.unitType != UnitType.TASTE_UNMEASURED
+    chain.onUnitPicked = { if (position + 1 < count) rows.ask(position + 1) }
+    rows.TakenBy(position, chain.name)
     // One bounded block per row, so where one ingredient ends and the next begins is plain; dragged, it moves whole.
     OutlinedCard(
         Modifier
             .fillMaxWidth()
+            .then(motion.row(editor.ingredientKey(position)))
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.ingredient(position)),
     ) {
@@ -281,12 +309,12 @@ private fun IngredientRow(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                        IngredientNameField(position, row, editor, language, dictionary, mode, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME))
+                        IngredientNameField(position, row, editor, language, dictionary, mode, chain, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME) { nameUnder.intValue }, nameUnder)
                         if (!under) Row(Modifier.padding(top = 8.dp)) { RowControls(position, count, editor) }
                     }
                     // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
                     val quantity = row.unitType != UnitType.TASTE_UNMEASURED
-                    val quantityHeight = heights.of(EvenHeights.Input.QUANTITY)
+                    val quantityHeight = heights.of(EvenHeights.Input.QUANTITY) { quantityUnder.intValue }
                     val unitHeight = heights.of(EvenHeights.Input.UNIT)
                     BoxWithConstraints(Modifier.fillMaxWidth()) {
                         // The quantity's label is never wrapped onto the field above it (A11Y-004): where it does not fit on
@@ -300,24 +328,16 @@ private fun IngredientRow(
                         if (!quantity || besideUnit >= labelWidth + QUANTITY_LABEL_ROOM) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                                 if (quantity) {
-                                    QuantityField(position, row, editor, language, isError = problem != null, Modifier.weight(1f).then(quantityHeight))
+                                    QuantityField(position, row, editor, language, chain, problem, quantityUnder, Modifier.weight(1f).then(quantityHeight))
                                 }
-                                UnitField(position, row, editor, Modifier.width(UNIT_WIDTH).then(unitHeight))
+                                UnitField(position, row, editor, chain, Modifier.width(UNIT_WIDTH).then(unitHeight))
                             }
                         } else {
                             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                QuantityField(position, row, editor, language, isError = problem != null, Modifier.fillMaxWidth().then(quantityHeight))
-                                UnitField(position, row, editor, Modifier.fillMaxWidth().then(unitHeight))
+                                QuantityField(position, row, editor, language, chain, problem, quantityUnder, Modifier.fillMaxWidth().then(quantityHeight))
+                                UnitField(position, row, editor, chain, Modifier.fillMaxWidth().then(unitHeight))
                             }
                         }
-                    }
-                    if (problem != null) {
-                        Text(
-                            stringResource(problemMessage(problem)),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.testTag(EditorTags.ingredientError(position)),
-                        )
                     }
                     if (under) BlockActions { RowControls(position, count, editor) }
                     // A `piece` row asks for its divisibility unless its entry gives one (FLOW-022 (5), FLOW-023 (11)).
@@ -341,6 +361,7 @@ private fun RowControls(position: Int, count: Int, editor: RecipeEditor) {
         tag = EditorTags.ingredientRemove(position),
         action = remove,
         onClick = { editor.removeIngredient(position) },
+        destructive = true,
     )
     RowMenu(
         position = position,
@@ -368,7 +389,7 @@ private val BLOCK_PADDING_ACROSS = 12.dp
 /** The room a name's text keeps beside the row's controls: eight figures, about as wide as a word of eight letters. */
 private const val NAME_ROOM_SAMPLE = "00000000"
 
-/** What a name field takes across besides its text: its start padding and the free-text warning at its end. */
+/** What a name field takes across besides its text: its padding, and room at its end for a 48 dp control. */
 private val NAME_FIELD_FURNITURE = 16.dp + 48.dp
 
 /** How wide the unit select is beside the quantity: room for its longest unit, "по вкусу", and its arrow. */
@@ -378,31 +399,34 @@ private val UNIT_WIDTH = 140.dp
 private val QUANTITY_LABEL_ROOM = 40.dp
 
 /**
- * The free-text warning (FLOW-022 (2)) as an icon beside the name: its shape says there is something to know, its
- * full text is what the screen reader reads on reaching it, and a tap or a long press shows that text in a tooltip. A
- * build without the server says nothing of publication in it (FLOW-062 (1)).
+ * The free-text warning (FLOW-022 (2)) as a hint in the name's supporting text, in its muted colour, never as an error:
+ * the field and the screen reader read it with the name. A build without the server says nothing of publication in it
+ * (FLOW-062 (1)).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FreeTextWarning(position: Int, mode: Mode) {
-    val text = stringResource(
-        if (mode == Mode.Serverless) R.string.editor_ingredient_free_text_warning_serverless else R.string.editor_ingredient_free_text_warning,
+private fun FreeTextHint(position: Int, mode: Mode, under: MutableIntState) {
+    UnderField(
+        stringResource(
+            if (mode == Mode.Serverless) R.string.editor_ingredient_free_text_warning_serverless else R.string.editor_ingredient_free_text_warning,
+        ),
+        under,
+        Modifier.testTag(EditorTags.ingredientWarning(position)),
     )
-    val state = rememberTooltipState(isPersistent = true)
-    val scope = rememberCoroutineScope()
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip(Modifier.testTag(EditorTags.ingredientWarningText(position))) { Text(text) } },
-        state = state,
-    ) {
-        IconButton(
-            onClick = { scope.launch { state.show() } },
-            modifier = Modifier.size(48.dp).testTag(EditorTags.ingredientWarning(position)),
-        ) {
-            Icon(painterResource(R.drawable.ic_warning), contentDescription = text)
-        }
-    }
 }
+
+/**
+ * A field's supporting text, whose height — with the gap Material 3 leaves above it — is told to [under] while it is
+ * shown, so that the row's other inputs are made even with the field and not with what is written under it.
+ */
+@Composable
+private fun UnderField(text: String, under: MutableIntState, modifier: Modifier) {
+    val gap = with(LocalDensity.current) { SUPPORTING_GAP.roundToPx() }
+    DisposableEffect(under) { onDispose { under.intValue = 0 } }
+    Text(text, modifier.onSizeChanged { under.intValue = it.height + gap })
+}
+
+/** The gap Material 3 leaves between an outlined field and its supporting text. */
+private val SUPPORTING_GAP = 4.dp
 
 /** The name a row shows: its entry's label in the interface language (L10N-003), or the author's own words. */
 internal fun Ingredient.nameIn(dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): String =
@@ -457,8 +481,10 @@ private fun IngredientNameField(
     language: InterfaceLanguage,
     dictionary: List<IngredientEntryEntity>?,
     mode: Mode,
+    chain: RowChain,
     modifier: Modifier,
     fieldModifier: Modifier,
+    under: MutableIntState,
 ) {
     var offering by remember { mutableStateOf(false) }
     var focused by remember { mutableStateOf(false) }
@@ -470,6 +496,7 @@ private fun IngredientNameField(
     val label = row.entryLabelIn(dictionary, language)
     val shown = typed?.takeIf { label != null && qualifierTyped(it, label) == Qualified(row.qualifier) } ?: row.fieldNameIn(dictionary, language)
     val offer = if (offering && dictionary != null && row.dictionaryEntry == null) IngredientOffer.of(shown, dictionary, language) else null
+    val hinting = !focused && row.dictionaryEntry == null && !row.freeTextName.isNullOrBlank()
     Column(modifier) {
         OutlinedTextField(
             value = shown,
@@ -492,17 +519,29 @@ private fun IngredientNameField(
             },
             label = { Text(stringResource(R.string.editor_ingredient_name)) },
             // Only a name in the author's own words warns; an entry picked in its place takes the warning away (FLOW-022 (3)).
-            trailingIcon = if (row.dictionaryEntry == null && !row.freeTextName.isNullOrBlank()) {
-                { FreeTextWarning(position, mode) }
+            // It comes once the field is left, so it never springs up under a name still being typed.
+            supportingText = if (hinting) {
+                { FreeTextHint(position, mode, under) }
             } else {
                 null
             },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                // "To taste" withdraws the quantity: on the last row the name is then its last field.
+                imeAction = if (chain.last && !chain.measured) ImeAction.Done else ImeAction.Next,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { focus.clearFocus() },
+                onNext = {
+                    if (chain.measured) chain.quantity.requestFocus()
+                    else chain.openUnit(focus)
+                },
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .then(fieldModifier)
+                .focusRequester(chain.name)
                 .onFocusChanged { state ->
                     if (focused && !state.isFocused) {
                         offering = false
@@ -609,7 +648,9 @@ private fun QuantityField(
     row: Ingredient,
     editor: RecipeEditor,
     language: InterfaceLanguage,
-    isError: Boolean,
+    chain: RowChain,
+    problem: QuantityProblem?,
+    under: MutableIntState,
     modifier: Modifier,
 ) {
     // Kept across the activity being recreated, under the row's key, so it stays the row's own.
@@ -625,11 +666,14 @@ private fun QuantityField(
             editor.setIngredientQuantity(position, it)
         },
         label = { Text(stringResource(R.string.editor_ingredient_quantity)) },
-        isError = isError,
+        // What the field accepts, said in its own supporting text when it does not hold what was typed (DOM-017 (6)).
+        isError = problem != null,
+        supportingText = problem?.let { { UnderField(stringResource(problemMessage(it)), under, Modifier.testTag(EditorTags.ingredientError(position))) } },
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = if (chain.last) ImeAction.Done else ImeAction.Next),
+        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }, onNext = { chain.openUnit(focus) }),
         modifier = modifier
+            .focusRequester(chain.quantity)
             .onFocusChanged { focusState ->
                 val latest = held()
                 if (!focusState.isFocused && latest.quantity != null && QuantityInput.problem(latest) == null) {
@@ -650,16 +694,21 @@ private class EvenHeights {
     /** For each input, how tall it was when taller than the others; 0 while it was not. */
     private val taller = mutableStateMapOf<Input, Int>()
 
-    /** Lays out the input [key] at least as tall as the tallest of the others. */
+    /**
+     * Lays out the input [key] at least as tall as the tallest of the others; what [under] says is written under its
+     * field — its supporting text — is not counted, neither as its height nor as the others'.
+     */
     @Composable
-    fun of(key: Input): Modifier {
+    fun of(key: Input, under: () -> Int = { 0 }): Modifier {
         DisposableEffect(key) { onDispose { taller.remove(key) } }
         return Modifier.layout { measurable, constraints ->
             val others = taller.filterKeys { it != key }.values.maxOrNull() ?: 0
+            val extra = under()
             val placeable = measurable.measure(
-                constraints.copy(minHeight = others.coerceIn(constraints.minHeight, constraints.maxHeight)),
+                constraints.copy(minHeight = (others + extra).coerceIn(constraints.minHeight, constraints.maxHeight)),
             )
-            val own = if (placeable.height > others) placeable.height else 0
+            val box = placeable.height - extra
+            val own = if (box > others) box else 0
             if (taller[key] != own) taller[key] = own
             layout(placeable.width, placeable.height) { placeable.place(0, 0) }
         }
@@ -670,83 +719,82 @@ private class EvenHeights {
 }
 
 /**
- * The row's unit: exactly the twelve units of DOM-016, by their names in the interface language. It is drawn as the
- * outlined text fields beside it are — its label on its outline, its unit inside.
+ * The row's unit: exactly the twelve units of DOM-016, by their names in the interface language, in Material 3's exposed
+ * drop-down — a read-only outlined field, as the fields beside it are, over the menu of units.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, modifier: Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    val labelStyle = MaterialTheme.typography.bodySmall
-    // The outline sits where the label's middle is, as an outlined text field's does, and never higher than 8 dp.
-    val outlineTop = maxOf(8.dp, with(LocalDensity.current) { labelStyle.lineHeight.toDp() } / 2)
-    val background = MaterialTheme.colorScheme.surface
-    val outline = MaterialTheme.colorScheme.outline
-    Box(modifier, propagateMinConstraints = true) {
-        Box(
-            Modifier
+private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chain: RowChain, modifier: Modifier) {
+    var expanded by chain::unitOpen
+    val action = stringResource(R.string.editor_ingredient_unit_action)
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { open ->
+            // Opened by a tap, a unit picked stays where it is.
+            if (open) chain.byNext = false
+            expanded = open
+        },
+        modifier = modifier,
+    ) {
+        OutlinedTextField(
+            value = row.shownUnit?.let { stringResource(unitName(it)) }.orEmpty(),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.editor_ingredient_unit)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
-                .semantics(mergeDescendants = true) {}
-                .clickable(onClickLabel = stringResource(R.string.editor_ingredient_unit_action), role = Role.DropdownList) {
-                    expanded = true
-                }
-                .testTag(EditorTags.ingredientUnit(position))
-                // The outline is drawn behind everything in it, so the label on it cuts it as a text field's does.
-                .drawBehind {
-                    val stroke = 1.dp.toPx()
-                    val top = outlineTop.toPx()
-                    drawRoundRect(
-                        color = outline,
-                        topLeft = Offset(stroke / 2, top + stroke / 2),
-                        size = Size(size.width - stroke, size.height - top - stroke),
-                        cornerRadius = CornerRadius(4.dp.toPx()),
-                        style = Stroke(stroke),
-                    )
-                },
-            propagateMinConstraints = true,
-        ) {
-            Text(
-                stringResource(R.string.editor_ingredient_unit),
-                style = labelStyle,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .layout { measurable, constraints ->
-                        val label = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
-                        layout(constraints.constrainWidth(label.width), constraints.constrainHeight(label.height)) {
-                            label.place(12.dp.roundToPx(), outlineTop.roundToPx() - label.height / 2)
-                        }
-                    }
-                    .background(background)
-                    .padding(horizontal = 4.dp),
-            )
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp + outlineTop)
-                    .padding(top = outlineTop)
-                    .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    row.shownUnit?.let { stringResource(unitName(it)) }.orEmpty(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                .semantics { onClick(label = action, action = null) }
+                .testTag(EditorTags.ingredientUnit(position)),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             QuantityUnit.entries.forEach { unit ->
                 DropdownMenuItem(
                     text = { Text(stringResource(unitName(unit))) },
                     onClick = {
                         editor.setIngredientUnit(position, unit)
                         expanded = false
+                        // Reached by the keyboard's Next, a unit picked goes on to the next row's name.
+                        if (chain.byNext) chain.onUnitPicked()
+                        chain.byNext = false
                     },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     modifier = Modifier.testTag(EditorTags.unitOption(unit)),
                 )
             }
         }
+    }
+}
+
+/**
+ * How the keyboard's Next goes through one ingredient row: the name, the quantity where the row has one, then the unit,
+ * whose menu opens; a unit picked there goes on to the next row's name. The last row's last keyboard field says Done.
+ */
+@Stable
+private class RowChain {
+    val name = FocusRequester()
+    val quantity = FocusRequester()
+
+    /** Whether the row is the list's last. */
+    var last by mutableStateOf(false)
+
+    /** Whether the row has a quantity field: "to taste" withdraws it. */
+    var measured by mutableStateOf(true)
+
+    /** Whether the unit's menu is open. */
+    var unitOpen by mutableStateOf(false)
+
+    /** Whether the open unit menu was reached by the keyboard's Next. */
+    var byNext = false
+
+    var onUnitPicked: () -> Unit = {}
+
+    /** Opens the unit's menu from the field before it: the keyboard goes, as the unit is not typed. */
+    fun openUnit(focus: FocusManager) {
+        focus.clearFocus()
+        byNext = true
+        unitOpen = true
     }
 }
 

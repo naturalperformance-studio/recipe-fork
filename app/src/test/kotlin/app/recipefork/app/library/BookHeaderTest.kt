@@ -9,6 +9,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -319,8 +320,11 @@ class BookHeaderTest {
     fun theMarkedViewImportsFromItsActionInServerlessModeOnly() {
         show(LibraryView.MARKED, Mode.Serverless)
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.MARKED_EMPTY) && exists(LibraryTags.IMPORT) }
-        // The empty state's own offer stands under its statement, at the top.
-        assertTrue(bounds(LibraryTags.IMPORT).top < bounds(LibraryTags.PAGER).center.y)
+        // The empty state's own offer stands under its statement, in the empty state, clear of the action's place at
+        // the bottom.
+        assertTrue(bounds(LibraryTags.IMPORT).top > bounds(LibraryTags.emptyHeadline(LibraryTags.MARKED_EMPTY)).bottom)
+        assertEquals(1, compose.onAllNodes(hasTestTag(LibraryTags.IMPORT) and hasAnyAncestor(hasTestTag(LibraryTags.MARKED_EMPTY))).fetchSemanticsNodes().size)
+        bounds(LibraryTags.PAGER).let { pager -> assertTrue(pager.bottom - bounds(LibraryTags.IMPORT).bottom > pager.height * 0.1f) }
         recipesOf(LibraryView.MARKED, 1)
         compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.MARKED_EMPTY) && exists(LibraryTags.IMPORT) }
         val pager = bounds(LibraryTags.PAGER)

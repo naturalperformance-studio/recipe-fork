@@ -52,9 +52,30 @@ class RecipeImport(
     private val limits: ArchiveLimits = ArchiveLimits(),
     private val clipDuration: ClipDuration = RetrieverClipDuration,
 ) {
-    suspend fun import(open: () -> InputStream): ImportOutcome {
+    /**
+     * Imports the file [open] opens. When its [size] in bytes is known, [progress] is told the share of the work done
+     * as it is read: the file is read twice — the document is checked first, the media written next — so each reading
+     * counts for half.
+     */
+    suspend fun import(size: Long = UNKNOWN_SIZE, progress: (Float) -> Unit = {}, open: () -> InputStream): ImportOutcome {
         val recipes = recipes.inOpenBook()
-        return withContext(Dispatchers.IO) { importInto(recipes, open) }
+        val counted = if (size <= 0) open else counting(open, 2 * size, progress)
+        return withContext(Dispatchers.IO) { importInto(recipes, counted) }
+    }
+
+    /** [open], each stream it opens counting what is read of it into one share of [total] told to [progress]. */
+    private fun counting(open: () -> InputStream, total: Long, progress: (Float) -> Unit): () -> InputStream {
+        var read = 0L
+        return {
+            object : java.io.FilterInputStream(open()) {
+                override fun read(): Int = super.read().also { if (it >= 0) told(1) }
+                override fun read(b: ByteArray, off: Int, len: Int): Int = super.read(b, off, len).also { if (it > 0) told(it) }
+                private fun told(bytes: Int) {
+                    read += bytes
+                    progress((read.toFloat() / total).coerceAtMost(1f))
+                }
+            }
+        }
     }
 
     private suspend fun importInto(recipes: RecipeRepository, open: () -> InputStream): ImportOutcome = coroutineScope {
@@ -103,11 +124,12 @@ class RecipeImport(
      * Opens [uri] through [context]'s content resolver and imports what it holds. A `file:` address into the
      * application's own data is refused unread: no other application has any file of its own there to hand over.
      */
-    suspend fun import(context: Context, uri: Uri): ImportOutcome =
+    suspend fun import(context: Context, uri: Uri, progress: (Float) -> Unit = {}): ImportOutcome =
         if (isPrivateFile(context, uri)) {
             ImportOutcome.Refused(Refusal.CANNOT_OPEN)
         } else {
-            import { context.contentResolver.openInputStream(uri) ?: throw java.io.FileNotFoundException("$uri") }
+            val size = withContext(Dispatchers.IO) { sizeOf(context, uri) }
+            import(size, progress) { context.contentResolver.openInputStream(uri) ?: throw java.io.FileNotFoundException("$uri") }
         }
 
     /**
@@ -117,6 +139,22 @@ class RecipeImport(
     suspend fun remove(id: RecipeId): Boolean = recipes.inOpenBook().removeMarked(id, filesDirectory)
 
     companion object {
+        /** The size of a file whose size is not known. */
+        const val UNKNOWN_SIZE = -1L
+
+        /** The size in bytes of the file at [uri], as its provider or its file system states it, or [UNKNOWN_SIZE]. */
+        fun sizeOf(context: Context, uri: Uri): Long = try {
+            if (uri.scheme == android.content.ContentResolver.SCHEME_FILE) {
+                uri.path?.let { File(it).length() }?.takeIf { it > 0 } ?: UNKNOWN_SIZE
+            } else {
+                context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0).takeIf { it > 0 } else null
+                } ?: UNKNOWN_SIZE
+            }
+        } catch (e: Exception) {
+            UNKNOWN_SIZE
+        }
+
         /**
          * Whether [uri] is a `file:` address inside the application's own data — its files, its cache with the
          * exports, its books' databases — however it is spelt: the path is resolved, links and `..` with it.
@@ -178,8 +216,8 @@ object RecipeFileIntents {
 }
 
 /** Imports [uri], turning any failure of the device into a refusal said to the person rather than a crash. */
-suspend fun RecipeImport.importSafely(context: Context, uri: Uri): ImportOutcome = try {
-    import(context, uri)
+suspend fun RecipeImport.importSafely(context: Context, uri: Uri, progress: (Float) -> Unit = {}): ImportOutcome = try {
+    import(context, uri, progress)
 } catch (e: CancellationException) {
     throw e
 } catch (e: Exception) {

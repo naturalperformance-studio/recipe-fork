@@ -18,7 +18,7 @@ The root cause behind many findings: no Scaffold, TopAppBar, FAB or M3 buttons/c
 23. Blank loading states on book and card (FLOW-043 asks to show loading). S.
 27. List entries are hand-built rows, no `animateItem()`; "Draft" louder than the title's secondary text. S.
 
-## U2 — Cooking with busy hands (the card) → v0.17 (planned 2026-10-04; 9 left out, FLOW-014)
+## U2 — Cooking with busy hands (the card) → v0.17 (shipped 2026-10-04; 9 left out, FLOW-014)
 7. Running timers vanish once scrolled past (`timer/StepTimer.kt:232-296`) → a docked bar of running timers. M.
 8. Timer controls look like links → tonal buttons with an icon, 56 dp. S.
 9. The screen may sleep during a long untouched timer (`card/KeepScreenAwake.kt`) → stay on while a timer of the recipe runs (FLOW-014 sync). S.
@@ -27,7 +27,7 @@ The root cause behind many findings: no Scaffold, TopAppBar, FAB or M3 buttons/c
 29. Step text hierarchy: larger steps, number badges, spacing; reading-size control optional. S/M; type scale waits on the theme.
 30. The ingredient list has no grouping or aligned quantities. S.
 
-## U3 — Writing a recipe fast (the editor)
+## U3 — Writing a recipe fast (the editor) → v0.18 (planned 2026-10-04; 17 left for later)
 11. No sentence capitalisation in title, steps, description, ingredient and timer names. S.
 12. IME Done closes the keyboard after every field → Next chaining name → quantity → unit → next row; new rows focused. M.
 13. Removing an ingredient or step is instant, no undo → snackbar Undo; media deleted after it goes. M.
@@ -38,7 +38,7 @@ The root cause behind many findings: no Scaffold, TopAppBar, FAB or M3 buttons/c
 19. Errors drawn outside fields → `supportingText` with `isError`. S.
 34. The free-text warning shows mid-typing and reads as an error. S.
 
-## U4 — Media, files and filters
+## U4 — Media, files and filters → v0.19 (planned 2026-10-04, with 17 and the card's recalculation legend)
 18. Photo actions are three text links; inconsistent with step media → placeholder + bottom sheet (Camera / Gallery). S–M.
 21. Filter choosers are AlertDialogs with fields and lists → one Filters bottom sheet. M.
 22. Filtering takes two hops → a quick FilterChip row under search. M.
@@ -47,7 +47,7 @@ The root cause behind many findings: no Scaffold, TopAppBar, FAB or M3 buttons/c
 26. Destructive confirm not marked; delete only from the list's ⋮. S.
 33. The crop screen has no Cancel after the camera. S.
 
-## U5 — Settings and the theme follow-up (with or after F1)
+## U5 — Settings and the theme follow-up (with or after F1) → 28 in v0.20 with F1; 31, 32 and the theme-dependent parts in v0.21 (planned 2026-10-04)
 28. Book settings hidden in the title's ⋮ → a Settings screen with current values (language, usual servings, theme, drag side, storage). M.
 31. Replace hand-built controls with M3 components so every colour and shape comes from the theme. M.
 32. In-screen motion (AnimatedVisibility / AnimatedContent), respecting the animation scale. S.

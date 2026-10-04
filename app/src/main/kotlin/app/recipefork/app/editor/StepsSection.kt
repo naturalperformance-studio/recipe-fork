@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -91,9 +92,12 @@ internal fun Steps(
     LaunchedEffect(source) { dictionary = runCatching { source.ingredients() }.getOrDefault(emptyList()) }
     // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
     val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveStep(from, to) }
-    Column(
+    val focus = remember { RowFocus() }
+    val motion = rememberRowMotion()
+    motion.update(steps.indices.map(editor::stepKey))
+    RowsColumn(
+        ROW_SPACING,
         Modifier.fillMaxWidth().zIndex(if (drag.dragged != null) 1f else 0f).testTag(EditorTags.STEPS),
-        verticalArrangement = Arrangement.spacedBy(ROW_SPACING),
     ) {
         Text(
             stringResource(R.string.editor_steps),
@@ -113,21 +117,26 @@ internal fun Steps(
         steps.forEachIndexed { position, step ->
             // What the screen holds for a step — focus, a timer being attached — stays with it when steps before it
             // are inserted, moved or deleted.
+            motion.LeavingAt(position)
             key(editor.stepKey(position)) {
-                if (editable) StepRow(position, steps.size, step, recipe.stepMedia(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos)
+                if (editable) StepRow(position, steps.size, step, recipe.stepMedia(position), recipe.ingredients, dictionary, language, editor, stating == position, drag, photos, focus, motion)
                 else ReadOnlyStep(position, step, recipe.stepMedia(position), recipe.ingredients, language, photos)
             }
         }
+        motion.LeavingAt(steps.size, last = true)
         if (editable) {
-            ActionText(
+            EditorButton(
                 text = stringResource(R.string.editor_step_add),
                 action = stringResource(R.string.editor_step_add_action),
                 onClick = {
-                    editor.addStep()
+                    val added = editor.recipe.value?.steps?.size
+                    // The step added takes the focus in its text, with the keyboard up.
+                    if (editor.addStep() && added != null) focus.ask(added)
                     // The author has moved on from the ingredients to the steps (FLOW-028 (1)).
                     editor.leave(RecipePart.Ingredients)
                 },
                 modifier = Modifier.testTag(EditorTags.STEP_ADD),
+                weight = ButtonWeight.TONAL,
             )
         }
     }
@@ -152,8 +161,11 @@ private fun StepRow(
     stating: Boolean,
     drag: RowDrag,
     photos: StepPhotos,
+    focus: RowFocus,
+    motion: RowMotion,
 ) {
     val field = remember { StepFieldState() }
+    focus.TakenBy(position, field.focus)
     val key = editor.stepKey(position)
     val photoControl = rememberStepPhotoControl(position, editor, photos)
     // Opened by the timer's control before any duration is held: a timer of no duration is no timer, and is not stored.
@@ -164,12 +176,13 @@ private fun StepRow(
     val timerName = remember { FocusRequester() }
     // References offered under the first step while it is first written in this editing session (GUIDE-008).
     var offering by remember { mutableStateOf(false) }
-    val offerGoing = rememberGoing()
+    val offerShrinking = rememberShrinking()
     // One bounded block per step, as an ingredient's, so where one step ends and the next begins is plain; dragged, it
     // moves whole.
     OutlinedCard(
         Modifier
             .fillMaxWidth()
+            .then(motion.row(key))
             .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.step(position)),
     ) {
@@ -185,8 +198,22 @@ private fun StepRow(
                     language = language,
                     editor = editor,
                     state = field,
+                    // In the field's own supporting text, under what the author types, so it moves nothing of it.
+                    hint = if (!offering) null else {
+                        {
+                            Text(
+                                stringResource(R.string.editor_references_offered),
+                                modifier = Modifier
+                                    // Its own node, read as it comes, apart from the text being typed.
+                                    .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
+                                    .testTag(EditorTags.stepReferencesOffered(position)),
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
+                        // The field gets shorter as the offer goes from its supporting text.
+                        .then(offerShrinking.modifier)
                         // Coming into a step moves the author on from the ingredients; leaving it marks it (FLOW-028).
                         .then(
                             leaving(
@@ -197,7 +224,7 @@ private fun StepRow(
                                     if (editor.beginStep(position)) offering = true
                                 },
                             ) {
-                                if (offering) offerGoing.went()
+                                if (offering) offerShrinking.shrinking()
                                 offering = false
                                 editor.leaveStep(key)
                                 val left = editor.recipe.value
@@ -207,18 +234,6 @@ private fun StepRow(
                         )
                         .testTag(EditorTags.stepText(position)),
                 )
-                // Under the field the author is in, so it moves nothing they are typing into.
-                if (offering) {
-                    Text(
-                        stringResource(R.string.editor_references_offered),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .then(offerGoing.modifier)
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                            .semantics { liveRegion = LiveRegionMode.Polite }
-                            .testTag(EditorTags.stepReferencesOffered(position)),
-                    )
-                }
                 // The step's own slot for what its text needs, right under the text and above its actions.
                 BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = 0.dp)
                 BlockActions {
@@ -237,6 +252,7 @@ private fun StepRow(
                         tag = EditorTags.stepRemove(position),
                         action = stringResource(R.string.editor_step_remove_action, position + 1),
                         onClick = { editor.removeStep(position) { removed -> removed.forEach { photos.store.delete(photos.book, it) } } },
+                        destructive = true,
                     )
                     RowMenu(
                         position = position,
@@ -357,6 +373,7 @@ private fun StepTimer(
                 Icon(
                     painterResource(R.drawable.ic_remove_timer),
                     contentDescription = stringResource(R.string.editor_timer_remove_action, position + 1),
+                    tint = MaterialTheme.colorScheme.error,
                 )
             }
         }
@@ -413,7 +430,7 @@ private fun TimerNotification(position: Int, reading: TimerName.Reading, onName:
                     .testTag(EditorTags.timerNotificationFollows(position)),
             )
         }
-        ActionText(
+        EditorButton(
             text = stringResource(R.string.editor_timer_notification_name),
             action = stringResource(R.string.editor_timer_notification_name_action, position + 1),
             onClick = onName,
@@ -452,7 +469,7 @@ private fun TimerNameField(position: Int, step: List<StepRun>, timer: Timer, edi
         } else {
             null
         },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
         modifier = Modifier
             .fillMaxWidth()
             .focusRequester(requester)
@@ -529,6 +546,8 @@ internal fun Description(recipe: Recipe, editor: RecipeEditor) {
             onValueChange = { editor.setDescription(it) },
             label = { Text(stringResource(R.string.editor_description_optional)) },
             minLines = 3,
+            // Over several lines, the keyboard keeps its new-line key.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier
                 .fillMaxWidth()
                 // The description comes after the ingredients and the steps: reaching it moves the author on from both.

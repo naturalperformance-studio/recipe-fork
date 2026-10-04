@@ -35,9 +35,10 @@ object RecipeExport {
     /**
      * Writes the file of the recipe [id] of the active book, with every photograph the device holds for it, and returns
      * its shareable address, or null when the book holds no such recipe. No account exists on the device yet, so no recipe is an account's own and the file names
-     * an author only where the recipe states one (FLOW-063 (3)).
+     * an author only where the recipe states one (FLOW-063 (3)). [progress] is told the share of the file written, of
+     * the size its document and its media make.
      */
-    suspend fun write(context: Context, recipes: RecipeRepository, id: RecipeId): Uri? {
+    suspend fun write(context: Context, recipes: RecipeRepository, id: RecipeId, progress: (Float) -> Unit = {}): Uri? {
         val book = recipes.inOpenBook()
         val recipe = book.get(id) ?: return null
         val parent = recipe.parent?.let { book.get(it) }
@@ -54,12 +55,33 @@ object RecipeExport {
             val directory = File(exports, id.value.filter { it.isLetterOrDigit() || it == '-' }.ifEmpty { FALLBACK_NAME })
             if (!directory.mkdirs()) throw IOException("cannot make $directory")
             File(directory, fileName(recipe.title)).also { file ->
+                val document = RecipeFile.encode(content).toByteArray(Charsets.UTF_8).size
+                val total = document + content.media.sumOf { store.file(name, it.mediaId).length() }
                 file.outputStream().buffered().use { out ->
-                    RecipeArchive.write(content, out) { store.file(name, it.mediaId) }
+                    RecipeArchive.write(content, counting(out, total.coerceAtLeast(1), progress)) { store.file(name, it.mediaId) }
                 }
+                // The archive compresses what it can, so what is written falls short of the total: written is whole.
+                progress(1f)
             }
         }
         return FileProvider.getUriForFile(context, authority(context), file)
+    }
+
+    /** [out], telling [progress] the share of [total] bytes written through it. */
+    private fun counting(out: java.io.OutputStream, total: Long, progress: (Float) -> Unit) = object : java.io.FilterOutputStream(out) {
+        private var written = 0L
+        override fun write(b: Int) {
+            out.write(b)
+            told(1)
+        }
+        override fun write(b: ByteArray, off: Int, len: Int) {
+            out.write(b, off, len)
+            told(len)
+        }
+        private fun told(bytes: Int) {
+            written += bytes
+            progress((written.toFloat() / total).coerceAtMost(1f))
+        }
     }
 
     /**
@@ -72,12 +94,19 @@ object RecipeExport {
         .filter { RecipeFileCheck.isMediaEntry(it.entry) && held(it.mediaId) }
 
     /**
-     * Writes the file of the recipe [id] and opens the share and save sheet on it, headed [sheetTitle]. Returns false
+     * Writes the file of the recipe [id], telling [progress] how far, and opens the share and save sheet on it, headed
+     * [sheetTitle]. Returns false
      * when no file could be written or no sheet opened, so that the person can be told.
      */
-    suspend fun share(context: Context, recipes: RecipeRepository, id: RecipeId, sheetTitle: CharSequence): Boolean =
+    suspend fun share(
+        context: Context,
+        recipes: RecipeRepository,
+        id: RecipeId,
+        sheetTitle: CharSequence,
+        progress: (Float) -> Unit = {},
+    ): Boolean =
         try {
-            val uri = write(context, recipes, id)
+            val uri = write(context, recipes, id, progress)
             if (uri != null) open(context, shareSheet(uri, sheetTitle))
             uri != null
         } catch (e: CancellationException) {

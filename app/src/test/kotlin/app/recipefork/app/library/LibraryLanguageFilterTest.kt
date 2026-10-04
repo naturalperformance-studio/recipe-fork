@@ -124,7 +124,7 @@ class LibraryLanguageFilterTest {
 
     private fun click(tag: String) {
         compose.waitUntilExactlyOneExists(hasTestTag(tag), PATIENCE_MS)
-        compose.onNodeWithTag(tag).performClick()
+        compose.onNodeWithTag(tag).scrolledTo().performClick()
         compose.waitForIdle()
     }
 
@@ -132,10 +132,9 @@ class LibraryLanguageFilterTest {
         it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("library-language-choice-") == true
     }
 
-    /** Opens the language chooser and returns the languages it offers, by their names as shown. */
+    /** Opens the sheet of every filter and returns the languages its language section offers, by their names as shown. */
     private fun openLanguages(): List<String> {
         click(LibraryTags.FILTER_ADD)
-        click(LibraryTags.FILTER_BY_LANGUAGE)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.LANGUAGE_CHOOSER), PATIENCE_MS)
         return compose.onAllNodes(languageChoice, useUnmergedTree = false).fetchSemanticsNodes().map { node ->
             node.config.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }.orEmpty()
@@ -144,7 +143,12 @@ class LibraryLanguageFilterTest {
 
     private fun pickLanguage(language: BookLanguage) {
         click(LibraryTags.languageChoice(language))
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.LANGUAGE_CHOOSER) }
+        closeTheSheet()
+    }
+
+    private fun closeTheSheet() {
+        click(LibraryTags.FILTERS_SHEET_DONE)
+        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.FILTERS_SHEET), PATIENCE_MS)
     }
 
     private fun filterByLanguage(language: BookLanguage) {
@@ -158,7 +162,7 @@ class LibraryLanguageFilterTest {
         assertEquals(name, shown())
     }
 
-    // L10N-005: the menu offers the languages present in the view, named in the interface language, and "Not given";
+    // L10N-005: the sheet offers the languages present in the view, named in the interface language, and "Not given";
     // choosing one keeps the recipes written in it, shown as a chip that removes it when tapped.
     @Test
     fun theLanguageFilterKeepsTheRecipesWrittenInTheLanguageChosen() {
@@ -223,11 +227,10 @@ class LibraryLanguageFilterTest {
         compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("bo")
         assertListed("Bolognese", "Borscht")
         click(LibraryTags.FILTER_ADD)
-        click(LibraryTags.FILTER_BY_TAGS)
         click(LibraryTags.TAG_FIELD)
         compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement("ital")
         click(LibraryTags.tagChoice(italian.id))
-        click(LibraryTags.TAG_CHOOSER_DONE)
+        closeTheSheet()
         compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("bor")
         assertListed("Borscht")
         click(LibraryTags.FILTERS_CLEAR)

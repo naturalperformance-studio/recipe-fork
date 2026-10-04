@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The settings: opened from the book's top bar, one item per setting, each showing its current value. -->
+    <string name="settings_open">Settings</string>
+    <string name="settings_open_action">Open the settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_back_action">Back to the book</string>
+    <!-- The saved media the clearing would delete (FLOW-060), as the item shows it; nothing here names the server. -->
+    <string name="settings_media_counting">Counting…</string>
+    <string name="settings_media_none">Nothing to clear</string>
+    <plurals name="settings_media_count">
+        <item quantity="one">%d saved photo or video</item>
+        <item quantity="other">%d saved photos and videos</item>
+    </plurals>
+    <!-- The theme (ADR 20261004): the light scheme, the dark one, or whichever the device's mode is. -->
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_device">As on the device</string>
+    <string name="settings_theme_cancel">Cancel</string>
+</resources>

@@ -206,15 +206,13 @@ class LibrarySessionTest {
         }
         chooseOwn()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(LibraryTags.FILTER_ADD).performClick()
-        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_BY_TAGS)).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(LibraryTags.FILTER_BY_TAGS).performClick()
+        compose.onNodeWithTag(LibraryTags.FILTER_ADD).scrolledTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.TAG_FIELD)).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement("ital")
+        compose.onNodeWithTag(LibraryTags.TAG_FIELD).scrolledTo().performTextReplacement("ital")
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.tagChoice(ITALIAN))).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(LibraryTags.tagChoice(ITALIAN)).performClick()
-        compose.onNodeWithTag(LibraryTags.TAG_CHOOSER_DONE).performClick()
-        compose.waitForIdle()
+        compose.onNodeWithTag(LibraryTags.tagChoice(ITALIAN)).scrolledTo().performClick()
+        compose.onNodeWithTag(LibraryTags.FILTERS_SHEET_DONE).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTERS_SHEET)).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun tagFilterShown(): Boolean =
@@ -251,12 +249,12 @@ class LibrarySessionTest {
         }
         chooseOwn()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(LibraryTags.FILTER_ADD).performClick()
-        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_BY_LANGUAGE)).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(LibraryTags.FILTER_BY_LANGUAGE).performClick()
+        compose.onNodeWithTag(LibraryTags.FILTER_ADD).scrolledTo().performClick()
         val english = LibraryTags.languageChoice(BookLanguage.EN)
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(english)).fetchSemanticsNodes().size == 1 }
-        compose.onNodeWithTag(english).performClick()
+        compose.onNodeWithTag(english).scrolledTo().performClick()
+        compose.onNodeWithTag(LibraryTags.FILTERS_SHEET_DONE).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTERS_SHEET)).fetchSemanticsNodes().isEmpty() }
         fun chipShown() = compose.onAllNodes(hasTestTag(LibraryTags.LANGUAGE_FILTER)).fetchSemanticsNodes().size == 1
         compose.waitUntil(PATIENCE_MS) { chipShown() }
         val saved = Bundle()

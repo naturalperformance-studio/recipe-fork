@@ -8,6 +8,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -29,6 +30,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.SourceSheetTags
 import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.media.TestCamera
 import app.recipefork.app.media.crop.CropTags
@@ -51,6 +53,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -150,10 +153,11 @@ class StepPhotoEditorTest {
     }
 
     /** Opens the photo menu of the step at [position] and chooses [item] in it. */
-    private fun menu(position: Int, item: String) {
+    private fun menu(position: Int, item: String, shown: () -> Unit = {}) {
         compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(item), PATIENCE_MS)
+        shown()
         compose.onNodeWithTag(item).performClick()
     }
 
@@ -208,6 +212,11 @@ class StepPhotoEditorTest {
         assertTrue(exists(EditorTags.stepPhotoChoose(1)))
         // Nothing to remove yet.
         assertFalse(exists(EditorTags.stepPhotoRemove(1)))
+        // T-147: the step's sources are the cover's sheet component, with the step's own items, titled by the step.
+        val inSheet = hasAnyAncestor(hasTestTag(SourceSheetTags.SHEET))
+        listOf(EditorTags.stepPhotoTake(1), EditorTags.stepPhotoChoose(1), EditorTags.stepClipRecord(1), EditorTags.stepClipChoose(1))
+            .forEach { compose.onNode(hasTestTag(it) and inSheet).assertExists() }
+        compose.onNode(hasText("Photo or clip for step 2") and inSheet).assertExists()
     }
 
     // FLOW-026 (2), MEDIA-005: a photograph taken at a step is that step's — said to be shrunk and stripped, shown in
@@ -279,7 +288,11 @@ class StepPhotoEditorTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(0)) }
 
         awaitNotice(0, processed)
-        menu(0, EditorTags.stepPhotoRemove(0))
+        menu(0, EditorTags.stepPhotoRemove(0)) {
+            // Scenario 3 (v0.21): the removal says it in the error colour; the camera does not.
+            assertEquals(lightColorScheme().error, compose.textColourOf(EditorTags.stepPhotoRemove(0)))
+            assertNotEquals(lightColorScheme().error, compose.textColourOf(EditorTags.stepPhotoTake(0)))
+        }
 
         compose.waitForIdle()
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPhotoImage(0)) && stored(id).media.isEmpty() && held().isEmpty() }
@@ -306,6 +319,9 @@ class StepPhotoEditorTest {
 
         compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
+        // The photograph's file goes once the deletion can no longer be undone.
+        compose.awaitStatement("Step 2 removed")
+        compose.swipeAwayStatement()
 
         compose.waitForIdle()
         compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 2 && held().isEmpty() }

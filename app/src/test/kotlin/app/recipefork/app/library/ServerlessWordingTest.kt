@@ -5,15 +5,18 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.Mode
 import app.recipefork.app.R
+import app.recipefork.app.editor.textsOf
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
@@ -30,6 +33,7 @@ import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.TestRecipeFiles
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.ui.AppTheme
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Ingredient
@@ -150,21 +154,22 @@ class ServerlessWordingTest {
         compose.onNodeWithTag(LibraryTags.REMOVE_DECLINE).performClick()
         compose.waitForIdle()
 
-        // The book's menu.
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.USUAL), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the book's menu")
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.USUAL)).fetchSemanticsNodes().isEmpty() }
+        // The settings, their storage item counted.
+        compose.onNodeWithTag(LibraryTags.SETTINGS).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(SettingsTags.USUAL), PATIENCE_MS)
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onAllNodes(hasText(context.getString(R.string.settings_media_counting))).fetchSemanticsNodes().isEmpty()
+        }
+        assertSaysNothingOfTheServer("the settings")
 
-        // The clearing of saved media from the book's menu, with nothing to clear: what it says in place of asking.
-        compose.onNodeWithTag(LibraryTags.MENU).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA).performClick()
+        // The clearing of saved media from the settings, with nothing to clear: what it says in place of asking.
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
         assertSaysNothingOfTheServer("the message that there is no media to clear")
         compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_OK).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
+        compose.onNodeWithTag(SettingsTags.BACK).performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(SettingsTags.SCREEN), PATIENCE_MS)
 
         // The own view: every entry, the menu of one, and the statement before a deletion.
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
@@ -192,11 +197,13 @@ class ServerlessWordingTest {
         assertSaysNothingOfTheServer("the editor on a frozen recipe")
         compose.runOnIdle { session.closeEditor() }
         compose.runOnIdle { session.openEditor(local.id.value) }
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientWarning(0)), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the editor")
-        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientWarningText(0)), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the free-text warning")
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientWarning(0)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
+        // The free-text warning is among what the editor shows, in its name's supporting text.
+        assertSaysNothingOfTheServer("the editor and its free-text warning")
+        assertEquals(
+            listOf(context.getString(R.string.editor_ingredient_free_text_warning_serverless)),
+            compose.textsOf(EditorTags.ingredientWarning(0)),
+        )
         compose.onNodeWithTag(ChecklistTags.CONTROL).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(ChecklistTags.DIALOG), PATIENCE_MS)
         assertSaysNothingOfTheServer("the checklist")

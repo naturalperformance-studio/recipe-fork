@@ -15,7 +15,6 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -147,6 +146,10 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
 
     private fun string(id: Int): String = context.getString(id)
 
+    /** How much the free-text hint under the name of row [position] adds to its field: the hint and the 4 dp above it. */
+    private fun hintHeight(position: Int): Float =
+        if (exists(EditorTags.ingredientWarning(position))) bounds(EditorTags.ingredientWarning(position)).height + px(4f) else 0f
+
     /** Every part of the editable row at [position] that is on the screen. */
     private fun parts(position: Int): List<String> = listOf(
         EditorTags.ingredientHandle(position),
@@ -269,7 +272,8 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     private fun inputsAreOfOneHeight(fontScale: Float) {
         open(fontScale)
         (0 until rows().size).forEach { position ->
-            val name = bounds(EditorTags.ingredientName(position))
+            // The name's field without the free-text hint under it.
+            val name = bounds(EditorTags.ingredientName(position)).let { it.copy(bottom = it.bottom - hintHeight(position)) }
             val unit = bounds(EditorTags.ingredientUnit(position))
             fun dp(px: Float) = px / compose.density.density
             assertEquals("row $position: the unit (${dp(unit.height)} dp) is as tall as the name (${dp(name.height)} dp)", name.height, unit.height, 0.5f)
@@ -343,61 +347,40 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         }
     }
 
-    // FLOW-022 (2): the warning is an icon beside the name, not a paragraph under the row; the screen reader reads its
-    // full text without anything being opened; a tap shows the text in a tooltip, and so does a long press.
+    // FLOW-022 (2): the warning is a hint in the name field's own supporting text — under the name, inside its field —
+    // never an error and never an icon beside it; the screen reader reads it with the field.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun theFreeTextWarningIsAnIconWithItsTextInATooltipInRussian() = theFreeTextWarningIsAnIcon()
+    fun theFreeTextWarningIsAHintUnderTheNameInRussian() = theFreeTextWarningIsAHint()
 
     @Test
     @Config(qualifiers = "en-w360dp-h4000dp")
-    fun theFreeTextWarningIsAnIconWithItsTextInATooltip() = theFreeTextWarningIsAnIcon()
+    fun theFreeTextWarningIsAHintUnderTheName() = theFreeTextWarningIsAHint()
 
-    private fun theFreeTextWarningIsAnIcon() {
+    private fun theFreeTextWarningIsAHint() {
         open(1f)
         val text = string(R.string.editor_ingredient_free_text_warning)
         // Free text warns; the dictionary entry does not.
         assertEquals(listOf(true, false, true, true), (0..3).map { exists(EditorTags.ingredientWarning(it)) })
         listOf(0, 2, 3).forEach { position ->
-            val icon = node(EditorTags.ingredientWarning(position))
+            val field = node(EditorTags.ingredientName(position))
             val name = bounds(EditorTags.ingredientName(position))
             val b = bounds(EditorTags.ingredientWarning(position))
-            assertTrue("a 48 dp target (${icon.size})", icon.size.width >= px(48f) - 0.5f && icon.size.height >= px(48f) - 0.5f)
-            assertTrue("beside the name, on its line ($b in $name)", b.left >= name.left && b.right <= name.right + 0.5f && b.top < name.bottom && b.bottom > name.top)
-            // The full text, read by the screen reader on the row as it stands — a shape and words, not a colour.
-            assertEquals(listOf(text), compose.descriptionOf(EditorTags.ingredientWarning(position)))
+            assertTrue("inside the name's field, under its text ($b in $name)", b.left >= name.left && b.right <= name.right + 0.5f && b.bottom <= name.bottom + 0.5f && b.top > name.top + px(40f))
+            assertEquals(listOf(text), compose.textsOf(EditorTags.ingredientWarning(position)))
+            // A hint, not an error: the field is not marked as one.
+            assertFalse("row $position is marked as an error", field.config.contains(SemanticsProperties.Error))
+            val read = compose.onNodeWithTag(EditorTags.ingredientName(position)).fetchSemanticsNode().config
+            assertTrue("row $position: the screen reader does not read the hint with the name", text in read.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text })
         }
-        // Nowhere a paragraph: no text on the screen holds the warning.
-        val paragraphs = compose.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true)
-            .fetchSemanticsNodes().filter { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == text } }
-        assertEquals(emptyList<SemanticsNode>(), paragraphs)
-        assertFalse(exists(EditorTags.ingredientWarningText(0)))
-
-        // A tap shows the text.
-        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarningText(0)) }
-        assertTrue(shownTooltip(0).contains(text))
-
-        // A long press shows it too.
-        compose.onNodeWithTag(EditorTags.ingredientWarning(3)).performScrollTo().performTouchInput { longClick() }
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarningText(3)) }
-        assertTrue(shownTooltip(3).contains(text))
-    }
-
-    /** The texts inside the tooltip of the row at [position]. */
-    private fun shownTooltip(position: Int): List<String> {
-        val tooltip = node(EditorTags.ingredientWarningText(position))
-        fun texts(node: SemanticsNode): List<String> =
-            node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + node.children.flatMap(::texts)
-        return texts(tooltip)
     }
 
     /**
-     * The width the name field of row [position] leaves for its text: from where the field's text starts — Material 3
-     * pads it 16 dp from the field's edge — to the warning icon at its end.
+     * The width the name field of row [position] leaves for its text: Material 3 pads it 16 dp from the field's edge at
+     * both ends.
      */
     private fun nameTextWidth(position: Int): Float =
-        bounds(EditorTags.ingredientWarning(position)).left - (bounds(EditorTags.ingredientName(position)).left + px(16f))
+        bounds(EditorTags.ingredientName(position)).width - px(32f)
 
     /** How wide [text] is laid out in the name field's style at [fontScale]. */
     private fun widthOf(text: String, fontScale: Float, style: TextStyle = Typography().bodyLarge): Float {
@@ -405,7 +388,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         return measurer.measure(text, style).size.width.toFloat()
     }
 
-    // Criterion 1 at large text: a free-text name beside its warning icon keeps room for about eight Cyrillic letters
+    // Criterion 1 at large text: a free-text name keeps room for about eight Cyrillic letters
     // on a 360 dp phone at font scale 2.0, so "черемша" reads whole.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
@@ -428,11 +411,11 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
 
     private fun isFocused(tag: String): Boolean = node(tag).config.getOrNull(SemanticsProperties.Focused) == true
 
-    // A free-text name typed letter by letter keeps its focus and its text while the warning icon appears beside it;
-    // tapping the icon neither takes the focus from the field nor gives it to it.
+    // A free-text name typed letter by letter keeps its focus and its text, and the warning does not spring up under it
+    // while it is typed: it comes once the field is left.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun typingAFreeTextNameKeepsFocusAsTheWarningAppears() {
+    fun theFreeTextWarningComesOnceTheNameIsLeft() {
         open(1f, ingredients = rows() + Ingredient(4, null, null, null, UnitType.EXACT, QuantityUnit.GRAM, null))
         val name = EditorTags.ingredientName(4)
         compose.onNodeWithTag(name).performScrollTo().performClick()
@@ -445,22 +428,18 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
             compose.waitForIdle()
             assertEquals(typed, fieldText(name))
             assertTrue("the field keeps the focus after \"$typed\"", isFocused(name))
-            assertTrue("the warning shows after \"$typed\"", exists(EditorTags.ingredientWarning(4)))
+            assertFalse("the warning shows while \"$typed\" is typed", exists(EditorTags.ingredientWarning(4)))
         }
-        // A tap on the icon while the field is focused: the field keeps it, the icon does not take it.
-        compose.onNodeWithTag(EditorTags.ingredientWarning(4)).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarningText(4)) }
-        assertTrue(isFocused(name))
-        assertFalse(isFocused(EditorTags.ingredientWarning(4)))
-        assertEquals("щавель", fieldText(name))
-        // With the focus elsewhere, a tap on the icon does not give it to the field.
+        // Left, the field says it as a hint.
         compose.onNodeWithTag(name).performImeAction()
         compose.waitUntil(PATIENCE_MS) { !isFocused(name) }
-        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarningText(0)) }
-        assertFalse(isFocused(EditorTags.ingredientName(0)))
-        assertFalse(isFocused(name))
-        assertFalse(isFocused(EditorTags.ingredientWarning(0)))
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarning(4)) }
+        assertEquals("щавель", fieldText(name))
+        assertFalse(node(name).config.contains(SemanticsProperties.Error))
+        // Back in the field, it goes again while the author types.
+        compose.onNodeWithTag(name).performClick()
+        compose.waitUntil(PATIENCE_MS) { isFocused(name) }
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.ingredientWarning(4)) }
     }
 
     // FLOW-025: a row dragged from anywhere in its column — its centre, both its ends and both its sides — moves as one
@@ -531,7 +510,8 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
 
     // The block is no taller than it was before its actions became the step's icons: measured at 360 dp and font
     // scale 1.0 on the block as it stood, 144 dp for a row of name, quantity and unit, 284 dp with the divisibility
-    // question. The icons stand on the name's line, so they add no line of their own.
+    // question. The icons stand on the name's line, so they add no line of their own; the free-text hint under a name
+    // is the only thing added since.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theBlockIsNoTallerThanBefore() = blockIsNoTallerThanBefore()
@@ -544,7 +524,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         open(1f)
         val before = listOf(284f, 144f, 144f, 144f)
         (0 until rows().size).forEach { position ->
-            val height = dp(bounds(EditorTags.ingredient(position)).height)
+            val height = dp(bounds(EditorTags.ingredient(position)).height - hintHeight(position))
             assertTrue("row $position is $height dp tall, it was ${before[position]} dp", height <= before[position] + 0.5f)
             val name = bounds(EditorTags.ingredientName(position))
             actions(position).forEach {
@@ -625,21 +605,6 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         // A long press only shows the name: the row is still there, and no menu opened.
         assertTrue(exists(EditorTags.ingredient(3)))
         assertFalse(exists(EditorTags.ingredientAction(3, RowAction.INSERT_ABOVE)))
-    }
-
-    // The free-text warning's tooltip and an icon's tooltip never show at once: a long press on remove while the
-    // warning's text is shown takes the warning's text away.
-    @Test
-    @Config(qualifiers = "en-w360dp-h4000dp")
-    fun anIconsTooltipDismissesTheWarningsTooltip() {
-        open(1f)
-        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarningText(0)) }
-        val remove = EditorTags.ingredientRemove(0)
-        compose.onNodeWithTag(remove).performTouchInput { longClick() }
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(remove)) }
-        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.ingredientWarningText(0)) }
-        assertTrue(exists(EditorTags.ingredient(0)))
     }
 
     @Test

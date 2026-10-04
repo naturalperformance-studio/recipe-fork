@@ -33,12 +33,16 @@ fun rememberHaptics(): Haptics {
     val feedback = LocalHapticFeedback.current
     return remember(provided, feedback) {
         provided ?: Haptics { haptic ->
-            feedback.performHapticFeedback(
-                when (haptic) {
-                    Haptic.CONFIRM -> HapticFeedbackType.Confirm
-                    Haptic.TICK -> HapticFeedbackType.SegmentTick
-                },
-            )
+            feedback.performHapticFeedback(haptic.feedbackType())
         }
     }
+}
+
+/**
+ * The device's feedback each haptic plays. A tick is a virtual-key click: every phone plays it, where the segment tick
+ * is left silent by phones without that effect.
+ */
+internal fun Haptic.feedbackType(): HapticFeedbackType = when (this) {
+    Haptic.CONFIRM -> HapticFeedbackType.Confirm
+    Haptic.TICK -> HapticFeedbackType.VirtualKey
 }

@@ -44,10 +44,11 @@ import java.io.File
 import java.time.Instant
 
 /**
- * FLOW-035: the book's filter by tags over the tag dictionary the application ships. Its hundreds of tags are searched,
- * never listed: the chooser finds a tag by the beginning of a word, and stays within a 360 dp screen at twice the font
- * size — the narrowest and largest the application supports. The font scale is the device's own, set by the test's
- * configuration: a dialog is a window of its own, and takes its density from the device.
+ * FLOW-035: the book's filter by tags over the tag dictionary the application ships, in the sheet of every filter. Its
+ * hundreds of tags are searched, never listed: the sheet's tag section finds a tag by the beginning of a word, and the
+ * sheet stays within a 360 dp screen at twice the font size — the narrowest and largest the application supports. The
+ * font scale is the device's own, set by the test's configuration: a sheet is a window of its own, and takes its density
+ * from the device.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -86,18 +87,17 @@ class TagChooserTest {
         session.choose(LibraryView.OWN)
         compose.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor) } }
         click(LibraryTags.FILTER_ADD)
-        click(LibraryTags.FILTER_BY_TAGS)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_FIELD), PATIENCE_MS)
     }
 
     private fun click(tag: String) {
         compose.waitUntilExactlyOneExists(hasTestTag(tag), PATIENCE_MS)
-        compose.onNodeWithTag(tag).performClick()
+        compose.onNodeWithTag(tag).scrolledTo().performClick()
         compose.waitForIdle()
     }
 
     private fun type(text: String) {
-        compose.onNodeWithTag(LibraryTags.TAG_FIELD).performTextReplacement(text)
+        compose.onNodeWithTag(LibraryTags.TAG_FIELD).scrolledTo().performTextReplacement(text)
         compose.waitForIdle()
     }
 
@@ -124,13 +124,13 @@ class TagChooserTest {
         openTheChooser()
         // Nothing is listed until a word is typed.
         assertEquals(emptyList<Long>(), choices())
-        assertWithinTheScreen(LibraryTags.TAG_CHOOSER)
-        // A beginning many tags share offers at most eight, and the chooser stays on the screen.
+        assertWithinTheScreen(LibraryTags.FILTERS_SHEET)
+        // A beginning many tags share offers at most eight, and the sheet stays on the screen.
         type("с")
         assertEquals(8, choices().size)
-        assertWithinTheScreen(LibraryTags.TAG_CHOOSER)
-        compose.onNodeWithTag(LibraryTags.TAG_CHOOSER_DONE).assertIsDisplayed()
-        assertWithinTheScreen(LibraryTags.TAG_CHOOSER_DONE)
+        assertWithinTheScreen(LibraryTags.FILTERS_SHEET)
+        compose.onNodeWithTag(LibraryTags.FILTERS_SHEET_DONE).assertIsDisplayed()
+        assertWithinTheScreen(LibraryTags.FILTERS_SHEET_DONE)
         // The tag sought is found by the beginning of its word, and picked.
         type(typed)
         assertEquals(listOf(airFryer.id), choices())
@@ -143,13 +143,13 @@ class TagChooserTest {
             .config.getOrNull(SemanticsProperties.ToggleableState)
         assertEquals(ToggleableState.On, state)
         // The chooser's own controls keep their 48 dp (A11Y-003).
-        listOf(LibraryTags.tagChoice(airFryer.id), LibraryTags.TAG_CHOOSER_DONE).forEach { tag ->
+        listOf(LibraryTags.tagChoice(airFryer.id), LibraryTags.FILTERS_SHEET_DONE).forEach { tag ->
             val size = compose.onNodeWithTag(tag).fetchSemanticsNode().size
             val minimum = with(Density(context)) { 48.dp.toPx() } - 1
             assertTrue("$tag is $size", size.height >= minimum && size.width >= minimum)
         }
-        click(LibraryTags.TAG_CHOOSER_DONE)
-        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.TAG_CHOOSER), PATIENCE_MS)
+        click(LibraryTags.FILTERS_SHEET_DONE)
+        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.FILTERS_SHEET), PATIENCE_MS)
         // The chosen tag is shown as a chip, and the view keeps the recipes carrying it.
         compose.onNodeWithTag(LibraryTags.tagFilter(airFryer.id)).assertExists()
         assertEquals(setOf(airFryer.id), session.filters(LibraryView.OWN).value.tags)
@@ -171,7 +171,7 @@ class TagChooserTest {
         type("zzz")
         assertEquals(emptyList<Long>(), choices())
         compose.onNodeWithTag(LibraryTags.TAG_NO_MATCH).assertExists()
-        click(LibraryTags.TAG_CHOOSER_DONE)
+        click(LibraryTags.FILTERS_SHEET_DONE)
         assertEquals(emptySet<Long>(), session.filters(LibraryView.OWN).value.tags)
     }
 }

@@ -1,6 +1,5 @@
 package app.recipefork.app.library
 
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -8,18 +7,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,16 +25,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.toggleableState
-import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
-import app.recipefork.app.data.AppLanguage
-import app.recipefork.app.data.DragHandleSide
-import app.recipefork.app.data.UsualServings
-import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.interfaceLanguage
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.scaling.InterfaceLanguage
@@ -48,110 +35,7 @@ import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
 
 /** The count the choice starts at while no usual count is set. */
-private val FIRST_CHOICE: Rational = Rational.of(2)
-
-/**
- * The book's menu, beside its title: it offers the serving count the reader usually cooks for (FLOW-017), showing the
- * count held or that none is — choosing it opens [UsualServingsDialog] — and, as a checked item, the editor's drag
- * column on the right of each block, for a left hand; and the interface language (L10N-002), which opens
- * [LanguageDialog] and shows the whole application again in the language taken; and, where [onClearMedia] is given,
- * the clearing of the media the device need not keep (FLOW-060).
- */
-@Composable
-internal fun BookMenu(
-    usual: UsualServings,
-    handleSide: DragHandleSide,
-    modifier: Modifier = Modifier,
-    onClearMedia: (() -> Unit)? = null,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    var choosing by rememberSaveable { mutableStateOf(false) }
-    var choosingLanguage by rememberSaveable { mutableStateOf(false) }
-    val activity = LocalActivity.current
-    val held by usual.count.collectAsState()
-    val handleRight by handleSide.right.collectAsState()
-    val language = servingsLanguage()
-    Box(modifier) {
-        BlockAction(
-            R.drawable.ic_row_menu,
-            stringResource(R.string.library_menu),
-            LibraryTags.MENU,
-            onClick = { expanded = !expanded },
-            action = stringResource(R.string.library_menu_action),
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.library_usual_servings)) },
-                trailingIcon = {
-                    Text(
-                        held?.let { RequestedServings.text(it, language) } ?: stringResource(R.string.library_usual_not_set),
-                        modifier = Modifier.testTag(LibraryTags.USUAL_HELD),
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    choosing = true
-                },
-                modifier = Modifier.testTag(LibraryTags.USUAL),
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.library_drag_handle_right)) },
-                trailingIcon = { Checkbox(checked = handleRight, onCheckedChange = null, modifier = Modifier.clearAndSetSemantics {}) },
-                onClick = {
-                    expanded = false
-                    handleSide.set(!handleRight)
-                },
-                modifier = Modifier
-                    .semantics {
-                        role = Role.Checkbox
-                        toggleableState = ToggleableState(handleRight)
-                    }
-                    .testTag(LibraryTags.HANDLE_RIGHT),
-            )
-            if (activity != null) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.language_menu)) },
-                    onClick = {
-                        expanded = false
-                        choosingLanguage = true
-                    },
-                    modifier = Modifier.testTag(LanguageTags.MENU_ITEM),
-                )
-            }
-            if (onClearMedia != null) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.library_clear_media)) },
-                    onClick = {
-                        expanded = false
-                        onClearMedia()
-                    },
-                    modifier = Modifier.testTag(LibraryTags.CLEAR_MEDIA),
-                )
-            }
-        }
-    }
-    if (choosingLanguage && activity != null) {
-        LanguageDialog(
-            chosen = remember { AppLanguage.chosen(activity) },
-            onChoose = {
-                choosingLanguage = false
-                AppLanguage.choose(activity, it)
-            },
-            onDismiss = { choosingLanguage = false },
-        )
-    }
-    if (choosing) {
-        UsualServingsDialog(
-            initial = held ?: FIRST_CHOICE,
-            language = language,
-            onSet = {
-                usual.set(it)
-                choosing = false
-            },
-            onDismiss = { choosing = false },
-        )
-    }
-}
+internal val FIRST_CHOICE: Rational = Rational.of(2)
 
 /**
  * The choice of the usual count: − and + walk exactly the counts a reader can request on a card (SCALE-010,
@@ -159,7 +43,7 @@ internal fun BookMenu(
  * the dialog changes nothing.
  */
 @Composable
-private fun UsualServingsDialog(
+internal fun UsualServingsDialog(
     initial: Rational,
     language: InterfaceLanguage,
     onSet: (Rational?) -> Unit,
@@ -232,7 +116,7 @@ private fun Step(glyph: String, name: String, action: String, enabled: Boolean, 
 }
 
 @Composable
-private fun servingsLanguage(): InterfaceLanguage = when (interfaceLanguage(LocalConfiguration.current)) {
+internal fun servingsLanguage(): InterfaceLanguage = when (interfaceLanguage(LocalConfiguration.current)) {
     RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
     RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
 }

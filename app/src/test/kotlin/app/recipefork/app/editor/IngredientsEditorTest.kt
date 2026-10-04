@@ -134,7 +134,7 @@ class IngredientsEditorTest {
         compose.onNodeWithTag(EditorTags.SERVINGS_ACCEPTS, useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsProperties.Text].single().text
 
-    private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun addIngredient(): Int {
         val position = compose.onAllNodes(hasTestTagStartingWith("editor-ingredient-") and hasTestTagEndingWith("-name"))
@@ -337,7 +337,8 @@ class IngredientsEditorTest {
         assertEquals("salt", back.freeTextName)
     }
 
-    // FLOW-022 (2): the name typed as free text shows the warning icon, which carries both statements.
+    // FLOW-022 (2): the name typed as free text shows the warning, which carries both statements, once the field is
+    // left — not while it is typed — as a hint in the field's supporting text, not as an error.
     @Test
     fun aNameInTheAuthorsOwnWordsShowsTheFreeTextWarning() = freeTextWarning()
 
@@ -348,10 +349,14 @@ class IngredientsEditorTest {
     private fun freeTextWarning() {
         val id = writeANewRecipe()
         addIngredient()
-        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.ingredientWarning(0), useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performTextInput("wild garlic")
         compose.waitForIdle()
-        val warning = compose.descriptionOf(EditorTags.ingredientWarning(0)).single()
+        compose.onNodeWithTag(EditorTags.ingredientWarning(0), useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarning(0)) }
+        val warning = compose.textsOf(EditorTags.ingredientWarning(0)).single()
+        assertFalse(compose.onNodeWithTag(EditorTags.ingredientName(0)).fetchSemanticsNode().config.contains(SemanticsProperties.Error))
         assertEquals(string(R.string.editor_ingredient_free_text_warning), warning)
         val english = context.resources.configuration.locales[0].language == "en"
         // Filters will not find the recipe by it, and publication makes it permanent.
@@ -368,7 +373,7 @@ class IngredientsEditorTest {
         // Cleared, the row names nothing and warns of nothing.
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performTextReplacement("")
         compose.waitForIdle()
-        compose.onNodeWithTag(EditorTags.ingredientWarning(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.ingredientWarning(0), useUnmergedTree = true).assertDoesNotExist()
         assertNull(stored(id).ingredients.single().freeTextName)
     }
 
@@ -413,7 +418,7 @@ class IngredientsEditorTest {
             enterQuantity(0, typed)
             assertEquals(typed, Rational.of(3, 2), stored(id).ingredients.single().quantity)
             assertEquals(typed, "1,5", fieldText(EditorTags.ingredientQuantity(0)))
-            compose.onNodeWithTag(EditorTags.ingredientError(0)).assertDoesNotExist()
+            compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
         }
     }
 
@@ -427,7 +432,7 @@ class IngredientsEditorTest {
             enterQuantity(0, typed)
             assertEquals(typed, Rational.of(3, 2), stored(id).ingredients.single().quantity)
             assertEquals(typed, "1.5", fieldText(EditorTags.ingredientQuantity(0)))
-            compose.onNodeWithTag(EditorTags.ingredientError(0)).assertDoesNotExist()
+            compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
         }
         // Read, and not held: no whole number of grams.
         listOf("1,2345", "1.2345").forEach { typed ->
@@ -447,6 +452,29 @@ class IngredientsEditorTest {
         }
     }
 
+    // A field's error is said in its own supporting text, the field marked as an error — not drawn beside it.
+    @Test
+    fun aQuantityErrorIsInTheFieldsSupportingText() {
+        writeANewRecipe()
+        addIngredient()
+        chooseUnit(0, QuantityUnit.GRAM)
+        enterQuantity(0, "1 500")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientError(0)) }
+        assertTrue(isMarkedAsError(EditorTags.ingredientQuantity(0)))
+        // Inside the quantity field, under its text, and read with it.
+        val error = compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).fetchSemanticsNode()
+        val field = node(EditorTags.ingredientQuantity(0))
+        val e = Rect(error.positionInRoot, error.size.toSize())
+        val f = Rect(field.positionInRoot, field.size.toSize())
+        assertTrue("the error is not inside its field ($e in $f)", e.left >= f.left && e.right <= f.right + 0.5f && e.bottom <= f.bottom + 0.5f)
+        val read = compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).fetchSemanticsNode().config[SemanticsProperties.Text].map { it.text }
+        assertTrue(read.toString(), string(R.string.editor_quantity_separators) in read)
+        // Corrected, the error and the mark go.
+        enterQuantity(0, "1500")
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.ingredientError(0)) }
+        assertFalse(isMarkedAsError(EditorTags.ingredientQuantity(0)))
+    }
+
     // DOM-017 (1–3, 6) through the field: held values are written as the grid writes them; others stay and are
     // marked with the values the field accepts.
     @Test
@@ -463,7 +491,7 @@ class IngredientsEditorTest {
             compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performImeAction()
             compose.waitForIdle()
             assertEquals(typed, written, fieldText(EditorTags.ingredientQuantity(0)))
-            compose.onNodeWithTag(EditorTags.ingredientError(0)).assertDoesNotExist()
+            compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
             assertFalse(isMarkedAsError(EditorTags.ingredientQuantity(0)))
         }
         // 0,33 and 0,3 ч. л. are not held: the value stays, the row is marked naming the fractions accepted.
@@ -476,7 +504,7 @@ class IngredientsEditorTest {
         // 500 г and 7,5 г.
         chooseUnit(0, QuantityUnit.GRAM)
         enterQuantity(0, "500")
-        compose.onNodeWithTag(EditorTags.ingredientError(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
         assertEquals(Rational.of(500), stored(id).ingredients.single().quantity)
         enterQuantity(0, "7,5")
         assertEquals("7,5", fieldText(EditorTags.ingredientQuantity(0)))
@@ -495,12 +523,12 @@ class IngredientsEditorTest {
         listOf("1½" to "1½", "2,5" to "2½", "½" to "½", "3" to "3").forEach { (typed, written) ->
             enterQuantity(0, typed)
             assertEquals(typed, written, fieldText(EditorTags.ingredientQuantity(0)))
-            compose.onNodeWithTag(EditorTags.ingredientError(0)).assertDoesNotExist()
+            compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
         }
         compose.onNodeWithTag(EditorTags.divisible(0, false)).performScrollTo().performClick()
         listOf("3", "1").forEach { typed ->
             enterQuantity(0, typed)
-            compose.onNodeWithTag(EditorTags.ingredientError(0)).assertDoesNotExist()
+            compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
         }
         listOf("2,5", "½").forEach { typed ->
             enterQuantity(0, typed)
@@ -518,7 +546,7 @@ class IngredientsEditorTest {
         addIngredient()
         chooseUnit(0, QuantityUnit.TABLESPOON)
         enterQuantity(0, "½")
-        compose.onNodeWithTag(EditorTags.ingredientError(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
         chooseUnit(0, QuantityUnit.GRAM)
         assertEquals("½", fieldText(EditorTags.ingredientQuantity(0)))
         assertEquals(Rational.of(1, 2), stored(id).ingredients.single().quantity)
@@ -526,13 +554,13 @@ class IngredientsEditorTest {
         assertEquals(string(R.string.editor_quantity_accepts_grams), compose.textsOf(EditorTags.ingredientError(0)).single())
         // A unit whose grid holds it clears the mark.
         chooseUnit(0, QuantityUnit.CUP)
-        compose.onNodeWithTag(EditorTags.ingredientError(0)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
 
         addIngredient()
         chooseUnit(1, QuantityUnit.PIECE)
         compose.onNodeWithTag(EditorTags.divisible(1, true)).performScrollTo().performClick()
         enterQuantity(1, "1½")
-        compose.onNodeWithTag(EditorTags.ingredientError(1)).assertDoesNotExist()
+        compose.onNodeWithTag(EditorTags.ingredientError(1), useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithTag(EditorTags.divisible(1, false)).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals("1½", fieldText(EditorTags.ingredientQuantity(1)))
@@ -649,7 +677,7 @@ class IngredientsEditorTest {
                 assertEquals("$state", listOf("яйца", "2", "шт"), compose.textsOf(EditorTags.ingredient(3)))
                 assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
                 val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-                assertEquals("$state", listOf(EditorTags.BACK, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
+                assertEquals("$state", listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })
                 compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).assertDoesNotExist()
                 compose.onNodeWithTag(EditorTags.ingredientRemove(0)).assertDoesNotExist()
                 compose.onNodeWithTag(EditorTags.divisibility(3)).assertDoesNotExist()

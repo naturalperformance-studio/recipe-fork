@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window theme while the device is in its dark mode: see values/themes.xml. -->
+    <style name="Theme.RecipeFork" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/theme_dark_surface</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

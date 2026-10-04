@@ -8,6 +8,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -442,6 +443,7 @@ class StepClipEditorTest {
         compose.onNodeWithTag(EditorTags.stepPhoto(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoRemove(0)), PATIENCE_MS)
         assertEquals(listOf("Remove clip"), compose.textsOf(EditorTags.stepPhotoRemove(0)))
+        assertEquals(lightColorScheme().error, compose.textColourOf(EditorTags.stepPhotoRemove(0)))
         compose.onNodeWithTag(EditorTags.stepPhotoRemove(0)).performClick()
 
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipImage(0)) && stored(id).media.isEmpty() && held().isEmpty() }

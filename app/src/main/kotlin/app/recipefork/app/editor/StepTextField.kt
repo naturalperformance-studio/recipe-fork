@@ -2,6 +2,7 @@ package app.recipefork.app.editor
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.BasicTextField
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
@@ -419,6 +421,7 @@ internal fun StepTextField(
     editor: RecipeEditor,
     state: StepFieldState,
     modifier: Modifier = Modifier,
+    hint: (@Composable () -> Unit)? = null,
 ) {
     // The newest step and rows, ahead of the screen when the author types faster than it redraws.
     fun current(): StepDisplay {
@@ -478,6 +481,8 @@ internal fun StepTextField(
         textStyle = LocalTextStyle.current.merge(TextStyle(color = MaterialTheme.colorScheme.onSurface)),
         cursorBrush = SolidColor(colors.cursorColor),
         interactionSource = interaction,
+        // Sentences start with a capital letter; over several lines, the keyboard keeps its new-line key.
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         // No undo: an earlier value of the field would bring a removed reference back as typed text.
         modifier = modifier
             .heightIn(min = 48.dp)
@@ -499,12 +504,17 @@ internal fun StepTextField(
                         modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(name) },
                     )
                 },
-                supportingText = if (oversized.isEmpty()) null else {
+                supportingText = if (oversized.isEmpty() && hint == null) null else {
                     {
-                        Text(
-                            oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
-                            modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
-                        )
+                        Column {
+                            if (oversized.isNotEmpty()) {
+                                Text(
+                                    oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
+                                    modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
+                                )
+                            }
+                            hint?.invoke()
+                        }
                     }
                 },
                 colors = colors,

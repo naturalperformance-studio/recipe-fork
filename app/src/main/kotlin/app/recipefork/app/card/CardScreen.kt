@@ -14,7 +14,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -49,9 +51,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
 import androidx.compose.foundation.ScrollState
@@ -64,6 +66,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.saveable.rememberSaveable
+import app.recipefork.app.library.DELETABLE
+import app.recipefork.app.library.DeleteStatement
+import app.recipefork.app.library.RemoveStatement
+import app.recipefork.app.library.deleteRecipe
+import app.recipefork.app.library.rememberRecipeImport
+import app.recipefork.app.library.removeFound
+import app.recipefork.app.timer.rememberCardTimers
 import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
@@ -116,7 +128,27 @@ private sealed interface CardContent {
     data object Loading : CardContent
     data object Missing : CardContent
     data object Unreadable : CardContent
-    data class Shown(val recipe: Recipe) : CardContent
+    /** The recipe, and whether the book holds it as a found one ([RecipeRepository.isMarked]). */
+    data class Shown(val recipe: Recipe, val marked: Boolean) : CardContent
+}
+
+/** How the card's ⋮ takes a recipe out of the book: an own recipe is deleted, a found one removed. */
+private enum class Removal { DELETE, REMOVE }
+
+/** The removal the card offers for [recipe]: deletion in a deletable state (ST-010), removal for a found one. */
+private fun removalOf(recipe: Recipe, marked: Boolean): Removal? = when {
+    marked -> Removal.REMOVE
+    recipe.state in DELETABLE -> Removal.DELETE
+    else -> null
+}
+
+/** Whether the book holds [id] as a found recipe; a book that cannot say is taken to hold it as its own. */
+private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean = try {
+    recipes.isMarked(id)
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    false
 }
 
 /**
@@ -127,7 +159,9 @@ private sealed interface CardContent {
  *
  * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book, the fork action on every recipe,
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
- * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Nothing inside the recipe edits it; the serving count's − and +, which change how
+ * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Its ⋮ holds the
+ * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — after the same statement
+ * the book shows; once it is confirmed the card closes to the book. Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
  * provenance, which opens its parent's card, the other. It opens each time at the reader's usual count, or at the
  * authored count while none is set (FLOW-017).
@@ -154,7 +188,7 @@ fun CardScreen(
     var attempt by remember(recipeId, recipes) { mutableIntStateOf(0) }
     val content by remember(recipeId, recipes, attempt) {
         recipes.observe(recipeId)
-            .map<Recipe?, CardContent> { recipe -> recipe?.let(CardContent::Shown) ?: CardContent.Missing }
+            .map<Recipe?, CardContent> { recipe -> recipe?.let { CardContent.Shown(it, markedIn(recipes, recipeId)) } ?: CardContent.Missing }
             .onStart { emit(CardContent.Loading) }
             .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(CardContent.Unreadable) else throw failure }
     }.collectAsState(initial = CardContent.Loading)
@@ -175,6 +209,15 @@ fun CardScreen(
     val bar = TopAppBarDefaults.pinnedScrollBehavior()
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
+    val removal = (shown as? CardContent.Shown)?.let { removalOf(it.recipe, it.marked) }
+    // The removal being asked about, while it is; once confirmed, the card closes to the book.
+    var removing by rememberSaveable(recipeId.value) { mutableStateOf(false) }
+    if (removing && recipe != null && removal != null) {
+        RemovalStatement(recipe, removal, recipes, onDone = { removed ->
+            removing = false
+            if (removed) onBack()
+        })
+    }
     // The title is the content's heading; the bar repeats it only once that heading has scrolled out of view — as when
     // the reader scrolls on, or the card opens at a place further down.
     var titleOut by remember(recipeId) { mutableStateOf(false) }
@@ -196,10 +239,12 @@ fun CardScreen(
                 onBack = onBack,
                 onFork = onFork,
                 onEdit = onEdit,
+                removal = removal,
+                onRemove = { removing = true },
             )
         },
         bottomBar = {
-            timersBar?.takeIf { it.shown.isNotEmpty() }?.let {
+            timersBar?.let {
                 RunningTimersBar(it.timers, it.shown, it.number, onShow = { position ->
                     places.placeOf(CardPlaces.step(position))?.let { step -> scope.launch { scroll.animateScrollTo(step.top) } }
                 })
@@ -319,6 +364,8 @@ private fun TopBar(
     onBack: () -> Unit,
     onFork: () -> Unit,
     onEdit: () -> Unit,
+    removal: Removal?,
+    onRemove: () -> Unit,
 ) {
     // The last title shown is kept while it fades out, so that it does not vanish before the fade.
     var last by remember { mutableStateOf(title) }
@@ -357,6 +404,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
+                removal?.let { CardMenu(it, onRemove) }
             }
         },
         scrollBehavior = scrollBehavior,
@@ -552,10 +600,13 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
     }
 }
 
+/** The space between a section's heading and its parts. */
+internal val SECTION_GAP = 8.dp
+
 /** One part of the recipe under its heading; the lists of ingredients and of steps are each one. */
 @Composable
 internal fun Section(@StringRes title: Int, tag: String, lines: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(SECTION_GAP)) {
         Text(
             stringResource(title),
             style = MaterialTheme.typography.titleMedium,
@@ -588,7 +639,7 @@ private fun ServingsControl(
             modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }.testTag(CardTags.SERVINGS),
         )
         StepAction(
-            glyph = MINUS,
+            icon = R.drawable.ic_servings_fewer,
             name = stringResource(R.string.card_servings_fewer),
             action = stringResource(R.string.card_servings_fewer_action),
             enabled = canDecrease,
@@ -599,7 +650,7 @@ private fun ServingsControl(
             modifier = Modifier.testTag(CardTags.SERVINGS_FEWER),
         )
         StepAction(
-            glyph = PLUS,
+            icon = R.drawable.ic_servings_more,
             name = stringResource(R.string.card_servings_more),
             action = stringResource(R.string.card_servings_more_action),
             enabled = true,
@@ -613,36 +664,31 @@ private fun ServingsControl(
 }
 
 /**
- * A − or + action, the card's [CardTarget] square (A11Y-003, A11Y-007): the screen reader names it by [name] rather than by its glyph, and
- * announces its click as [action] (A11Y-005).
+ * A − or + action: a tonal icon button the card's [CardTarget] square (A11Y-003, A11Y-007), its colours and shape the
+ * theme's. The screen reader names it by [name] and announces its click as [action] (A11Y-005).
  */
 @Composable
 private fun StepAction(
-    glyph: String,
+    @DrawableRes icon: Int,
     name: String,
     action: String,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier
+    FilledTonalIconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
             .size(CardTarget)
-            .clickable(enabled = enabled, onClickLabel = action, role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = name },
-        contentAlignment = Alignment.Center,
+            .semantics {
+                contentDescription = name
+                if (enabled) onClick(label = action) { onClick(); true }
+            },
     ) {
-        Text(
-            glyph,
-            color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.clearAndSetSemantics {},
-        )
+        Icon(painterResource(icon), contentDescription = null)
     }
 }
-
-private const val MINUS = "\u2212"
-private const val PLUS = "+"
 
 /**
  * An icon button of the bar, the card's [CardTarget] square (A11Y-003, A11Y-007): the screen reader speaks its [label]
@@ -681,6 +727,72 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 }
 
 /**
+ * The card's ⋮, after its other actions: it opens a menu holding the recipe's removal — Delete for an own recipe in a
+ * deletable state, Remove for a found one — each item the card's [CardTarget] tall, in the theme's error colour.
+ */
+@Composable
+private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        BarAction(
+            icon = R.drawable.ic_row_menu,
+            label = stringResource(R.string.card_menu),
+            action = stringResource(R.string.card_menu_action),
+            tag = CardTags.MENU,
+            onClick = { expanded = !expanded },
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = {
+                    Text(stringResource(if (removal == Removal.DELETE) R.string.library_entry_delete else R.string.library_entry_remove))
+                },
+                onClick = {
+                    expanded = false
+                    onRemove()
+                },
+                // Taking a recipe out of the book is destructive: the item says so in the theme's error colour.
+                colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier.heightIn(min = CardTarget)
+                    .testTag(if (removal == Removal.DELETE) CardTags.DELETE else CardTags.REMOVE),
+            )
+        }
+    }
+}
+
+/**
+ * The statement before [recipe] leaves the book from its card, the same the book's entry shows: confirmed, the recipe
+ * is deleted or removed with its media and timers by the book's own path, and [onDone] is told so; declined, nothing
+ * changes.
+ */
+@Composable
+private fun RemovalStatement(recipe: Recipe, removal: Removal, recipes: RecipeRepository, onDone: (removed: Boolean) -> Unit) {
+    val timers = rememberCardTimers()
+    when (removal) {
+        Removal.DELETE -> DeleteStatement(
+            recipe.title,
+            onConfirm = {
+                deleteRecipe(recipes, timers, recipe.id)
+                onDone(true)
+            },
+            onDecline = { onDone(false) },
+            target = CardTarget,
+        )
+        Removal.REMOVE -> {
+            val files = rememberRecipeImport(recipes)
+            RemoveStatement(
+                recipe.title,
+                onConfirm = {
+                    removeFound(files, timers, recipe.id)
+                    onDone(true)
+                },
+                onDecline = { onDone(false) },
+                target = CardTarget,
+            )
+        }
+    }
+}
+
+/**
  * Said when the reader forks a recipe of which they already hold an unchanged fork (FLOW-015): they may open that
  * fork, or make another anyway; dismissing it makes nothing.
  */
@@ -714,6 +826,9 @@ object CardTags {
     const val LOADING = "card-loading"
     const val EDIT = "card-edit"
     const val FORK = "card-fork"
+    const val MENU = "card-menu"
+    const val DELETE = "card-delete"
+    const val REMOVE = "card-remove"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
     const val MISSING = "card-missing"

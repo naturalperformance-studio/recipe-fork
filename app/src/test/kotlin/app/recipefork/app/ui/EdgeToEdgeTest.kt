@@ -121,6 +121,8 @@ class EdgeToEdgeTest {
         assertEquals(root.bottom, card.bottom)
         assertEquals(0f, bounds(CardTags.BAR).top)
         assertTrue("back below the status bar", bounds(CardTags.BACK).top >= STATUS)
+        // The card says it is missing once its read has come back; wait for it rather than for time.
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodesWithTag(CardTags.MISSING).fetchSemanticsNodes().isNotEmpty() }
         assertTrue("the message under the bar", bounds(CardTags.MISSING).top >= bounds(CardTags.BAR).bottom)
     }
 

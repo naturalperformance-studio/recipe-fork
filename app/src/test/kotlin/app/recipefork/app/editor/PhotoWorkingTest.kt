@@ -135,7 +135,10 @@ class PhotoWorkingTest {
     private fun unreadable() = File(incoming, "photo.jpg").apply { writeText("not a photo at all") }
 
     private fun chooseForCover(file: File, crop: Boolean = true) {
-        compose.onNodeWithTag(CoverTags.CHOOSE).performScrollTo().performClick()
+        val opener = if (compose.onAllNodes(hasTestTag(CoverTags.PLACEHOLDER)).fetchSemanticsNodes().isEmpty()) CoverTags.CHANGE else CoverTags.PLACEHOLDER
+        compose.onNodeWithTag(opener).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.CHOOSE), PATIENCE_MS)
+        compose.onNodeWithTag(CoverTags.CHOOSE).performClick()
         pick(file, crop)
     }
 

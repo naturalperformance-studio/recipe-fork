@@ -14,4 +14,7 @@
     <string name="file_import_clip_too_long">Видео в этом файле рецепта длиннее %1$d секунд, ничего не добавлено</string>
     <string name="file_stated_author">Автор: %1$s (указан в файле, не проверен)</string>
     <string name="file_message_ok">ОК</string>
+    <string name="file_open">Открыть</string>
+    <string name="file_importing">Импорт файла рецепта</string>
+    <string name="file_exporting">Экспорт рецепта</string>
 </resources>

@@ -10,10 +10,15 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -21,6 +26,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
@@ -28,6 +34,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.SourceSheetTags
 import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.media.TestCamera
 import app.recipefork.app.media.crop.CropTags
@@ -48,6 +55,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -126,6 +134,19 @@ class CoverEditorTest {
         compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(CoverTags.COVER)), useUnmergedTree = true).assertDoesNotExist()
     }
 
+    /** Opens the cover's sheet — from the placeholder, or from the cover where one is set — and waits for [item]. */
+    private fun sheetItem(item: String) {
+        val opener = if (exists(CoverTags.PLACEHOLDER)) CoverTags.PLACEHOLDER else CoverTags.CHANGE
+        compose.onNodeWithTag(opener).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(item), PATIENCE_MS)
+    }
+
+    /** The texts of the sheet's items, in order. */
+    private fun sheetItems(): List<String> =
+        compose.onAllNodes(hasAnyAncestor(hasTestTag(SourceSheetTags.SHEET)) and hasClickAction()).fetchSemanticsNodes()
+            .map { node -> node.config.getOrElse(SemanticsProperties.Text) { emptyList() }.joinToString { it.text } }
+            .filter { it.isNotEmpty() }
+
     private val activity: ShadowActivity get() = shadowOf(compose.activity)
 
     private fun started(): Intent {
@@ -136,7 +157,8 @@ class CoverEditorTest {
     /** Launches the phone's camera application from the cover; its intent is given back. */
     private fun openCamera(): Intent {
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(CoverTags.TAKE).performScrollTo().performClick()
+        sheetItem(CoverTags.TAKE)
+        compose.onNodeWithTag(CoverTags.TAKE).performClick()
         compose.waitUntil(PATIENCE_MS) { TestCamera.launched(activity) }
         return TestCamera.take(activity)
     }
@@ -153,7 +175,8 @@ class CoverEditorTest {
     /** Picks [file] in the system photo picker. */
     private fun choose(file: File, crop: Boolean = true) {
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(CoverTags.CHOOSE).performScrollTo().performClick()
+        sheetItem(CoverTags.CHOOSE)
+        compose.onNodeWithTag(CoverTags.CHOOSE).performClick()
         val intent = started()
         assertTrue(intent.action, intent.action == MediaStore.ACTION_PICK_IMAGES || intent.action == Intent.ACTION_OPEN_DOCUMENT)
         assertEquals("image/*", intent.type)
@@ -178,13 +201,52 @@ class CoverEditorTest {
 
         compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.COVER), PATIENCE_MS)
         compose.onNode(hasText("Cover photo (optional)") and hasAnyAncestor(hasTestTag(CoverTags.COVER))).assertExists()
-        assertTrue(exists(CoverTags.TAKE) && exists(CoverTags.CHOOSE))
-        assertFalse(exists(CoverTags.REMOVE) || exists(CoverTags.IMAGE))
+        assertFalse(exists(CoverTags.IMAGE) || exists(CoverTags.CHANGE))
         // Directly under the title, before the tags.
-        val title = compose.onNodeWithTag(EditorTags.TITLE).fetchSemanticsNode().boundsInRoot
+        // Unclipped, as the cover's placeholder may run past the bottom of the screen.
+        fun top(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().positionInRoot.y
+        fun bottom(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().let { it.positionInRoot.y + it.size.height }
+        assertTrue(top(CoverTags.COVER) >= bottom(EditorTags.TITLE) && bottom(CoverTags.COVER) <= top(EditorTags.TAGS))
+    }
+
+    // T-147: an empty cover is a placeholder of the cover's own 4:3 size — a camera and a short label — and no text
+    // links; a tap on it opens one bottom sheet of "Camera" and "Gallery", which nothing is launched before an item is tapped.
+    @Test
+    fun anEmptyCoverIsAPlaceholderThatOpensTheSourceSheet() {
+        open(Recipe.create(now, null).copy(title = "Borscht"))
+        compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.PLACEHOLDER), PATIENCE_MS)
+        compose.onNodeWithTag(CoverTags.PLACEHOLDER).assertHasClickAction()
+        compose.onNode(hasTestTag(CoverTags.PLACEHOLDER) and hasText("Add a cover photo")).assertExists()
         val cover = compose.onNodeWithTag(CoverTags.COVER).fetchSemanticsNode().boundsInRoot
-        val tags = compose.onNodeWithTag(EditorTags.TAGS).fetchSemanticsNode().boundsInRoot
-        assertTrue(cover.top >= title.bottom && cover.bottom <= tags.top)
+        val placeholder = compose.onNodeWithTag(CoverTags.PLACEHOLDER).fetchSemanticsNode().boundsInRoot
+        assertEquals(cover.width, placeholder.width, 1f)
+        assertEquals(4f / 3f, placeholder.width / placeholder.height, 0.01f)
+        assertFalse(exists(SourceSheetTags.SHEET) || exists(CoverTags.TAKE) || exists(CoverTags.CHOOSE))
+
+        sheetItem(CoverTags.TAKE)
+
+        assertEquals(listOf("Camera", "Gallery"), sheetItems())
+        compose.onNodeWithTag(CoverTags.TAKE).assertHeightIsAtLeast(48.dp)
+        assertFalse(exists(CoverTags.REMOVE))
+        assertNull(activity.peekNextStartedActivityForResult())
+    }
+
+    // T-147: a cover that is set opens the same sheet, which offers to replace it — camera, gallery — and to remove it.
+    @Test
+    fun aSetCoverOffersReplaceAndRemoveFromTheSameSheet() {
+        open(Recipe.create(now, null))
+        takePhoto()
+        compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.IMAGE), PATIENCE_MS)
+        assertFalse(exists(CoverTags.PLACEHOLDER))
+        compose.swipeAwayStatement()
+
+        sheetItem(CoverTags.REMOVE)
+
+        assertEquals(listOf("Camera", "Gallery", "Remove cover"), sheetItems())
+        // Scenario 3 (v0.21): the removal says it in the error colour; the sources do not.
+        assertEquals(lightColorScheme().error, compose.textColourOf(CoverTags.REMOVE))
+        assertNotEquals(lightColorScheme().error, compose.textColourOf(CoverTags.TAKE))
+        compose.onNode(hasAnyAncestor(hasTestTag(SourceSheetTags.SHEET)) and hasText("Replace or remove the cover photo")).assertExists()
     }
 
     // FLOW-026 (1, 4): neither the camera nor the gallery asks for a permission, and none is declared — CAMERA least of
@@ -229,7 +291,7 @@ class CoverEditorTest {
         val exif = ExifInterface(store.file(BookName.Pool, cover.mediaId).path)
         TestPhotos.IDENTIFYING.keys.forEach { assertNull(it, exif.getAttribute(it)) }
         assertTrue(TestCamera.left(context).isEmpty())
-        assertTrue(exists(CoverTags.REMOVE))
+        assertTrue(exists(CoverTags.CHANGE))
     }
 
     // A camera cancelled without a photograph attaches nothing and keeps nothing.
@@ -282,7 +344,7 @@ class CoverEditorTest {
         awaitNotice("This file could not be read as a photo, so nothing was attached.")
         assertEquals(before, stored(id).cover!!.mediaId)
         assertEquals(listOf(before), held())
-        assertTrue(exists(CoverTags.IMAGE) && exists(CoverTags.TAKE))
+        assertTrue(exists(CoverTags.IMAGE) && exists(CoverTags.CHANGE))
     }
 
     // The cover can be removed; its file is deleted and nothing shows in its place.
@@ -295,11 +357,13 @@ class CoverEditorTest {
         awaitNotice(processed)
 
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(CoverTags.REMOVE).performScrollTo().performClick()
+        sheetItem(CoverTags.REMOVE)
+        compose.onNodeWithTag(CoverTags.REMOVE).performClick()
 
         compose.waitUntil(PATIENCE_MS) { !exists(CoverTags.IMAGE) && stored(id).media.isEmpty() && held().isEmpty() }
         awaitNotice("Cover photo removed.")
         assertFalse(exists(CoverTags.REMOVE))
+        assertTrue(exists(CoverTags.PLACEHOLDER))
     }
 
     // The cover survives leaving the editor: opened again, it is shown.
@@ -327,7 +391,7 @@ class CoverEditorTest {
 
         compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.IMAGE), PATIENCE_MS)
         assertEquals(listOf("Cover photo of “Borscht”"), compose.descriptionOf(CoverTags.IMAGE))
-        listOf(CoverTags.TAKE, CoverTags.CHOOSE, CoverTags.REMOVE).forEach { assertFalse(it, exists(it)) }
+        listOf(CoverTags.PLACEHOLDER, CoverTags.CHANGE, CoverTags.TAKE, CoverTags.CHOOSE, CoverTags.REMOVE).forEach { assertFalse(it, exists(it)) }
     }
 
     @Test
