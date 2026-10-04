@@ -112,6 +112,7 @@ class LibrarySession(
 
     fun openEditor(recipeId: String) {
         closeNotice()
+        saved[SETTINGS_KEY] = false
         saved[EDITING_KEY] = recipeId
         // Only an own recipe is edited, so the card shown on leaving the editor returns to the own recipes.
         saved[CARD_FROM_KEY] = LibraryView.OWN
@@ -131,6 +132,7 @@ class LibrarySession(
 
     fun openCard(recipeId: String, from: LibraryView? = null) {
         closeNotice()
+        saved[SETTINGS_KEY] = false
         saved[VIEWING_KEY] = recipeId
         from?.let { saved[CARD_FROM_KEY] = it }
     }
@@ -142,6 +144,21 @@ class LibrarySession(
     fun closeCard() {
         saved[VIEWING_KEY] = null
         show(saved.get<LibraryView>(CARD_FROM_KEY) ?: LibraryView.OWN)
+    }
+
+    /**
+     * Whether the settings are open, above the book: kept like the card, so that settings open when the screen turns
+     * or the process ends are open again on return. Whatever else the session opens — a card, the editor, the book
+     * after an import — is shown in their place.
+     */
+    val settings: StateFlow<Boolean> = saved.getStateFlow(SETTINGS_KEY, false)
+
+    fun openSettings() {
+        saved[SETTINGS_KEY] = true
+    }
+
+    fun closeSettings() {
+        saved[SETTINGS_KEY] = false
     }
 
     /**
@@ -169,6 +186,7 @@ class LibrarySession(
      * whatever was open — an editor keeps what was entered as it is typed — so that its snackbar offers to open it.
      */
     fun showHeld() {
+        saved[SETTINGS_KEY] = false
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
     }
@@ -180,6 +198,7 @@ class LibrarySession(
      */
     fun showStep(recipeId: String, position: Int) {
         closeNotice()
+        saved[SETTINGS_KEY] = false
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = recipeId
         saved[CARD_FROM_KEY] = null
@@ -302,6 +321,7 @@ class LibrarySession(
         const val MAX_CARDS = 50
         const val PROGRESS_STEP = 0.01f
         const val STEP_KEY = "library.step"
+        const val SETTINGS_KEY = "library.settings"
         const val MESSAGE_KEY = "library.file_message"
         const val VIEW_KEY = "library.view"
         const val EDITING_KEY = "library.editing"

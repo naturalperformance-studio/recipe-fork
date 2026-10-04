@@ -9,6 +9,14 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.ExperimentalTestApi
+import org.junit.Assert.assertFalse
+import app.recipefork.core.recipe.Step
+import app.recipefork.app.file.message
+import app.recipefork.app.file.RecipeImport
+import app.recipefork.app.file.ImportOutcome
+import app.recipefork.app.card.awaitCard
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -67,7 +75,8 @@ class SettingsScreenTest {
     private val book = TestBook(context)
     private val active = ActiveBook(BookName.Pool, book.database)
     private val recipes = RecipeRepository(active)
-    private val session = LibrarySession(SavedStateHandle())
+    private val saved = SavedStateHandle()
+    private var session = LibrarySession(saved)
     private val now = Instant.parse("2026-10-04T12:00:00Z")
     private val usual = HeldUsualServings(Rational.of(3))
     private val side = HeldDragHandleSide(initial = true)
@@ -89,10 +98,13 @@ class SettingsScreenTest {
         book.close()
     }
 
-    private fun show() {
+    private fun show(): StateRestorationTester {
         session.choose(LibraryView.OWN)
-        compose.setContent { MaterialTheme { AppNavHost(session, recipes, card = card, editor = editor) } }
+        val tester = StateRestorationTester(compose)
+        // The session read anew each time the content is: a process ended and restored brings a new one.
+        tester.setContent { MaterialTheme { AppNavHost(session, recipes, card = card, editor = editor) } }
         compose.waitForIdle()
+        return tester
     }
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
@@ -102,7 +114,7 @@ class SettingsScreenTest {
         compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.CLEAR_MEDIA) && !exists(LibraryTags.OWN_LIST) }
     }
 
-    private fun awaitBook() = compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.OWN_LIST) && !exists(SettingsTags.SCREEN) }
+    private fun awaitBook() = compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.PAGER) && !exists(SettingsTags.SCREEN) }
 
     private fun value(item: String): String = compose.textsOf(SettingsTags.value(item)).single()
 
@@ -248,5 +260,83 @@ class SettingsScreenTest {
         }
         awaitBook()
         assertEquals(first, firstShown())
+    }
+
+    /** A found recipe in the book, as an import leaves it. */
+    private fun found(): Recipe = Recipe.create(now, owner = null).copy(title = "Found soup").also {
+        runBlocking { recipes.addFound(it.inState(RecipeImport.FOUND_STATE), now) }
+    }
+
+    private fun awaitBookWithItsSnackbar(list: String) {
+        compose.waitUntil(PATIENCE_MS) { exists(list) && exists(LibraryTags.SNACKBAR) && !exists(SettingsTags.SCREEN) }
+        compose.waitUntilExactlyOneExists(hasAnyAncestor(hasTestTag(LibraryTags.SNACKBAR)) and hasText("Open"), PATIENCE_MS)
+        assertFalse(session.settings.value)
+    }
+
+    // A recipe file imported while the settings are open: the book is shown in their place, its snackbar saying it.
+    @Test
+    fun aFileImportedWhileTheSettingsAreOpenShowsTheBookWithItsSnackbar() {
+        val recipe = found()
+        show()
+        openSettings()
+        compose.runOnIdle {
+            val outcome = ImportOutcome.Added(recipe.id, recipe.title)
+            session.tell(outcome.message())
+            session.showImported(recipe.id)
+        }
+        awaitBookWithItsSnackbar(LibraryTags.MARKED_LIST)
+    }
+
+    // A file bringing a recipe the book holds already, while the settings are open: the book again, with its snackbar.
+    @Test
+    fun aFileTheBookHoldsWhileTheSettingsAreOpenShowsTheBookWithItsSnackbar() {
+        val recipe = found()
+        show()
+        openSettings()
+        compose.runOnIdle {
+            session.tell(ImportOutcome.AlreadyInBook(recipe.id, recipe.title).message())
+            session.showHeld()
+        }
+        awaitBookWithItsSnackbar(LibraryTags.PAGER)
+    }
+
+    // A timer's notification tapped while the settings are open: the card opens in their place, and back from it
+    // returns to the book, not to the settings.
+    @Test
+    fun aTimersNotificationOpensTheCardInPlaceOfTheSettingsAndBackReturnsToTheBook() {
+        val recipe = Recipe.create(now, owner = null).copy(title = "Bread", steps = listOf(Step(0, "Bake.")))
+        runBlocking { recipes.save(recipe) }
+        show()
+        openSettings()
+        compose.runOnIdle { session.showStep(recipe.id.value, 0) }
+        compose.awaitCard()
+        assertFalse(exists(SettingsTags.SCREEN))
+        compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        awaitBook()
+        assertFalse(session.settings.value)
+    }
+
+    // The settings open when the screen turns, or when the process ends, are open again; the back-stack sync leaves
+    // them in place, and back still returns to the book.
+    @Test
+    fun theSettingsComeBackAfterAConfigurationChangeAndTheEndOfTheProcess() {
+        val tester = show()
+        openSettings()
+        tester.emulateSavedInstanceStateRestore()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.SCREEN) }
+        compose.waitForIdle()
+        assertTrue(exists(SettingsTags.SCREEN))
+        assertFalse(exists(LibraryTags.PAGER))
+
+        session = LibrarySession(SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) }))
+        tester.emulateSavedInstanceStateRestore()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.SCREEN) }
+        compose.waitForIdle()
+        assertTrue(exists(SettingsTags.SCREEN))
+        assertTrue(session.settings.value)
+
+        compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        awaitBook()
+        assertFalse(session.settings.value)
     }
 }
