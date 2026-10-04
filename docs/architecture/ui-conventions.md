@@ -14,7 +14,7 @@ The general rules live in the `android-m3-ui` skill (`~/.claude/skills/android-m
 
 ## Patterns already in the code — reuse them
 
-- **Top bars**: the book (`library/LibraryScreen.kt`), the card (`card/CardScreen.kt`, `BarAction` with a long-press tooltip) and the editor (`editor/EditorScreen.kt`) each have an M3 `TopAppBar`. The editor's back arrow leaves for the recipe; its Done saves and says "Saved" without closing.
+- **Top bars**: the book (`library/LibraryScreen.kt`), the card (`card/CardScreen.kt`, `BarAction` with a long-press tooltip) and the editor (`editor/EditorScreen.kt`) each have an M3 `TopAppBar`. The editor's back arrow leaves for the recipe; its Done saves and says "Saved" without closing; the checklist and the fork note are icon-only actions with tooltips. Settings (`settings/SettingsScreen.kt`) is the reference for a screen of `ListItem`s showing current values.
 - **Statements**: one snackbar host per screen. In the editor, `EditorStatements.say` (a statement; the newest replaces) and `EditorStatements.offer` (with an action, e.g. Undo). An open Undo is never replaced by "Saved".
 - **Undo**: removing an ingredient row or a step is undoable (`RecipeEditor.removal`); a removed step's media is deleted only once the removal is final. `MediaSweep` clears files left by process death.
 - **Keyboard**: `editor/RowFocus.kt` and the row chain in `IngredientsSection.kt` — Next walks name → quantity → unit menu → next row; the last typed field shows Done.
