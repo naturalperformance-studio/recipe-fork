@@ -70,7 +70,8 @@ data class ListingParams(
  * What a view lists for [params]: the [rows] found, in order; [viewIsEmpty] when the view holds nothing at all; the
  * [languages] its recipes are written in, whatever narrows it, in the order of [BookLanguage]; the dictionary entries
  * its recipes' ingredients [hold], whatever narrows it — what keeps an entry removed upstream offered by the filter;
- * the tags each recipe of the view [carries], by the recipe's identity, which its entry shows.
+ * the tags each recipe of the view [carries], by the recipe's identity — its recipes only, whatever narrows it — which
+ * its entry shows and from which its most used tags are offered as quick filters.
  */
 data class Listed<R>(
     val rows: List<R>,
@@ -132,7 +133,8 @@ class BookSearch<R>(
         val languages = rows.mapTo(HashSet()) { BookLanguage.of(language(it)) }
         val inView = rows.mapTo(HashSet()) { id(it) }
         val hold = lines.filter { it.recipeId in inView }.mapNotNullTo(HashSet()) { it.dictionaryEntry }
-        return Listed(found, rows.isEmpty(), params, BookLanguage.entries.filter { it in languages }, hold, carried)
+        val carriedInView = carried.filterKeys { it in inView }
+        return Listed(found, rows.isEmpty(), params, BookLanguage.entries.filter { it in languages }, hold, carriedInView)
     }
 
     /**

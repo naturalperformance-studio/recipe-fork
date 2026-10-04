@@ -30,6 +30,7 @@ import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.RecipeRepository
@@ -84,6 +85,11 @@ class QuickFiltersTest {
     private fun own(title: String, language: RecipeLanguage?, tags: Set<Long> = emptySet(), minutesAgo: Long = 0) {
         val recipe = Recipe.create(now.minusSeconds(minutesAgo * 60), owner = null).copy(title = title, language = language, tags = tags)
         runBlocking { recipes.save(recipe) }
+    }
+
+    private fun found(title: String, tags: Set<Long>) {
+        val recipe = Recipe.create(now, owner = null).copy(title = title, tags = tags).inState(RecipeImport.FOUND_STATE)
+        runBlocking { recipes.addFound(recipe, now) }
     }
 
     private fun show() {
@@ -195,6 +201,21 @@ class QuickFiltersTest {
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.FILTERS_SHEET), PATIENCE_MS)
         assertEquals(listOf("Language not given"), compose.textsOf(LibraryTags.LANGUAGE_FILTER))
         assertEquals(BookFilters(language = BookLanguage.NOT_GIVEN), session.filters(LibraryView.OWN).value)
+    }
+
+    // Each view offers the tags its own recipes carry, and none the other view's recipes carry.
+    @Test
+    fun eachViewOffersOnlyTheTagsOfItsOwnRecipes() {
+        own("Borscht", null, tags = setOf(1, 2), minutesAgo = 1)
+        own("Pie", null, tags = setOf(1), minutesAgo = 2)
+        found("Shchi", tags = setOf(5, 6))
+        found("Pilaf", tags = setOf(6))
+        show()
+        compose.waitUntil(PATIENCE_MS) { offers() == listOf(LibraryTags.tagOffer(1), LibraryTags.tagOffer(2)) }
+        click(LibraryTags.tab(LibraryView.MARKED))
+        compose.waitUntil(PATIENCE_MS) { offers() == listOf(LibraryTags.tagOffer(6), LibraryTags.tagOffer(5)) }
+        click(LibraryTags.tab(LibraryView.OWN))
+        compose.waitUntil(PATIENCE_MS) { offers() == listOf(LibraryTags.tagOffer(1), LibraryTags.tagOffer(2)) }
     }
 
     // The most used tags are counted over the view's recipes, each tag once a recipe; ties go to the lower identity.
