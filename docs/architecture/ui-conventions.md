@@ -21,9 +21,9 @@ The general rules live in the `android-m3-ui` skill (`~/.claude/skills/android-m
 - **Choices**: tags are `InputChip`s, offers `SuggestionChip`s, the recipe language a `SingleChoiceSegmentedButtonRow` (`editor/TagsAndLanguage.kt`).
 - **Field messages**: errors in `supportingText` with `isError`; the free-text hint (FLOW-022) is muted supporting text shown once the name is left.
 
-## Hand-built controls still to replace (audit 31, v0.21)
+## Hand-built controls (audit 31)
 
-`ActionText` (editor), `StepAction` and `FixAction` (card), `ViewTab` (book), the timer actions. Do not copy them into new screens; use M3 components.
+All replaced in v0.21 (`ActionText` → `editor/EditorButton`, the card's `StepAction`/`FixAction` → M3 buttons). Removals in menus and sheets take the error colour (`BlockAction`/`SourceItem` tinted). Do not hand-build a control; use M3 components.
 
 ## Exceptions to the skill
 
