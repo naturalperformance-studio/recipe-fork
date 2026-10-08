@@ -15,6 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.TopAppBar
@@ -619,10 +622,11 @@ internal fun Section(@StringRes title: Int, tag: String, lines: @Composable () -
 /**
  * The serving count and the two actions that walk it (SCALE-011): the count as the reader requested it, never
  * marked approximate, or, while a fixed ingredient sets the scale, the count it implies marked as approximate
- * (SCALE-002, SCALE-008); between a fewer and a more action. At ¼ the fewer action is disabled and does nothing.
+ * (SCALE-002, SCALE-008); beside it the fewer and more actions as one connected group [ − | + ]. At ¼ the fewer action
+ * is disabled and does nothing.
  */
 @Composable
-private fun ServingsControl(
+internal fun ServingsControl(
     modifier: Modifier,
     count: String,
     approximate: Boolean,
@@ -638,40 +642,54 @@ private fun ServingsControl(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }.testTag(CardTags.SERVINGS),
         )
-        StepAction(
-            icon = R.drawable.ic_servings_fewer,
-            name = stringResource(R.string.card_servings_fewer),
-            action = stringResource(R.string.card_servings_fewer_action),
-            enabled = canDecrease,
-            onClick = {
-                haptics.perform(Haptic.TICK)
-                onDecrease()
-            },
-            modifier = Modifier.testTag(CardTags.SERVINGS_FEWER),
-        )
-        StepAction(
-            icon = R.drawable.ic_servings_more,
-            name = stringResource(R.string.card_servings_more),
-            action = stringResource(R.string.card_servings_more_action),
-            enabled = true,
-            onClick = {
-                haptics.perform(Haptic.TICK)
-                onIncrease()
-            },
-            modifier = Modifier.testTag(CardTags.SERVINGS_MORE),
-        )
+        Spacer(Modifier.width(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
+            // A fully round outer side is the connected group's shape, at any size; the inner corners are the theme's.
+            val outer = CornerSize(50)
+            val inner = MaterialTheme.shapes.small
+            StepAction(
+                icon = R.drawable.ic_servings_fewer,
+                name = stringResource(R.string.card_servings_fewer),
+                action = stringResource(R.string.card_servings_fewer_action),
+                shape = inner.copy(topStart = outer, bottomStart = outer),
+                enabled = canDecrease,
+                onClick = {
+                    haptics.perform(Haptic.TICK)
+                    onDecrease()
+                },
+                modifier = Modifier.testTag(CardTags.SERVINGS_FEWER),
+            )
+            StepAction(
+                icon = R.drawable.ic_servings_more,
+                name = stringResource(R.string.card_servings_more),
+                action = stringResource(R.string.card_servings_more_action),
+                shape = inner.copy(topEnd = outer, bottomEnd = outer),
+                enabled = true,
+                onClick = {
+                    haptics.perform(Haptic.TICK)
+                    onIncrease()
+                },
+                modifier = Modifier.testTag(CardTags.SERVINGS_MORE),
+            )
+        }
     }
 }
 
+/** The seam between the halves of a connected group: they read as one control, yet each half as its own target. */
+private val CONNECTED_GAP = 2.dp
+
 /**
- * A − or + action: a tonal icon button the card's [CardTarget] square (A11Y-003, A11Y-007), its colours and shape the
- * theme's. The screen reader names it by [name] and announces its click as [action] (A11Y-005).
+ * One half of the − | + group: a tonal icon button the card's [CardTarget] square (A11Y-003, A11Y-007), its colours the
+ * theme's and its [shape] rounded outside and joined to the other half inside. Its one click — by touch or by the
+ * screen reader — is named by [name] and announced as [action] (A11Y-005): the label is merged onto the button's own
+ * click, which stays its only action.
  */
 @Composable
 private fun StepAction(
     @DrawableRes icon: Int,
     name: String,
     action: String,
+    shape: Shape,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -679,11 +697,12 @@ private fun StepAction(
     FilledTonalIconButton(
         onClick = onClick,
         enabled = enabled,
+        shape = shape,
         modifier = modifier
             .size(CardTarget)
             .semantics {
                 contentDescription = name
-                if (enabled) onClick(label = action) { onClick(); true }
+                onClick(label = action, action = null)
             },
     ) {
         Icon(painterResource(icon), contentDescription = null)
