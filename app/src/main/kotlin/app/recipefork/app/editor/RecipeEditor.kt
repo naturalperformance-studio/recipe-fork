@@ -44,6 +44,7 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.recipe.withUnit
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -495,7 +496,7 @@ class RecipeEditor(
     fun endRemoval(removal: Removal) {
         if (!offered.compareAndSet(removal, null)) return
         // Behind every write already queued, the deletion itself among them.
-        saving.launch { writes.withLock { removal.ended() } }
+        saving.launch(start = CoroutineStart.UNDISPATCHED) { writes.withLock { removal.ended() } }
     }
 
     private fun editIngredient(position: Int, change: (Ingredient) -> Ingredient) = edit { recipe ->
@@ -653,8 +654,9 @@ class RecipeEditor(
         val next = recipe.edited(clock()) { withEntryDivisibility(change(it)) }
         current.value = next
         if (left.value.isNotEmpty()) remark(next)
-        // Launched in order and queued on a fair lock, so the book receives the changes in the order made.
-        saving.launch {
+        // Queued on a fair lock before this returns, so the book receives the changes in the order made — started
+        // undispatched, since a dispatcher may run a launch made inside another coroutine of its own after a later one.
+        saving.launch(start = CoroutineStart.UNDISPATCHED) {
             writes.withLock { recipes.save(next) }
             then()
         }
@@ -663,7 +665,7 @@ class RecipeEditor(
 
     /** Returns once every change made so far is in the book: queued behind the writes already asked for. */
     suspend fun written() {
-        saving.async { writes.withLock {} }.await()
+        saving.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock {} }.await()
     }
 
     /** Applies [change] and writes the result; a recipe in a frozen state is left as it is. */
