@@ -59,7 +59,8 @@
             </intent-filter>
             <!-- A messenger declares what type it likes (Telegram: the stored one, else text/plain), so the extension is
                  taken with any type, and with none. A path pattern does not backtrack: each `.*\\.` stops at the next
-                 dot, so a path holding N dots — in its folders or its name — needs the pattern with N of them. -->
+                 dot, so a path holding N dots — in its folders or its name — needs the pattern with N of them. A path
+                 pattern minds case: the extension is taken in lower case and in upper case. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -79,6 +80,18 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -98,6 +111,18 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
             </intent-filter>
             <!-- Shared to the application by the product's own type: imported as if opened. -->
             <intent-filter>

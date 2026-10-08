@@ -14,6 +14,7 @@ import app.recipefork.core.file.RecipeFile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -84,7 +85,7 @@ class OpenedFileInTheAppTest {
         // The first opened again: the book holds it, and says so.
         opened!!.newIntent(handedOn(Intent(Intent.ACTION_VIEW).setDataAndType(first, null)))
         awaitText("“Bean soup” is already in your recipe book, so nothing was added")
-        assert(marked() == 2)
+        assertEquals(2, marked())
     }
 
     @Test
@@ -104,6 +105,20 @@ class OpenedFileInTheAppTest {
             Intent(Intent.ACTION_VIEW).setDataAndType(garbage, "text/plain"),
         )).setup()
         awaitText("This file is not a recipe file, so nothing was added")
-        assert(marked() == 0)
+        assertEquals(0, marked())
+    }
+
+    // Reopened from the recent applications, the task's first intent is given again: its file was imported then, and
+    // is not imported again — only the file opened afterwards is.
+    @Test
+    fun theIntentGivenAgainFromRecentsIsNotFollowed() {
+        val file = fileOf("0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10", "lemon-cake.recipefork")
+        val again = handedOn(Intent(Intent.ACTION_VIEW).setDataAndType(file, "text/plain"))
+            .addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)
+        opened = Robolectric.buildActivity(MainActivity::class.java, again).setup()
+        // Had the reopening been followed, the file opened next would be said to be in the book already.
+        opened!!.newIntent(handedOn(Intent(Intent.ACTION_VIEW).setDataAndType(file, "text/plain")))
+        awaitText("“Bean soup” is in your recipe book now")
+        assertEquals(1, marked())
     }
 }

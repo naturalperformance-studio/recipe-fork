@@ -196,4 +196,62 @@ class RecipeFileRoutingTest {
         assertTrue(opener.flags and ActivityInfo.FLAG_EXCLUDE_FROM_RECENTS != 0)
         assertTrue(opener.taskAffinity.isNullOrEmpty())
     }
+
+    // The extension is taken in upper case too, as some phones and senders spell a file's name.
+    @Test
+    fun anUpperCaseExtensionIsOffered() {
+        for (place in listOf(telegram, telegramEncoded, fileManager, fileAddress)) {
+            for (name in listOf("LEMON-CAKE.RECIPEFORK", "lemon.cake.v2.RECIPEFORK")) {
+                for (type in declared) assertOffered(view(Uri.parse(place + name), type))
+            }
+        }
+        assertNotOffered(view(Uri.parse(fileManager + "PHOTO.JPG"), "image/jpeg"))
+        assertNotOffered(view(Uri.parse(fileManager + "NOTES.BIN"), "application/octet-stream"))
+    }
+
+    // An address the application holds no reading of cannot have its reading granted on: the platform refuses that
+    // start, and the file is handed on bare, so that the import says it cannot be read rather than the application
+    // stopping.
+    @Test
+    fun aFileWhoseReadingCannotBeGrantedOnIsHandedOnBare() {
+        val uri = Uri.parse("content://media/external/downloads/1234")
+        val started = mutableListOf<Intent>()
+        RecipeFileIntents.handOn(context, view(uri, RecipeFile.MIME_TYPE)) { intent ->
+            started += intent
+            if (intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0) throw SecurityException("no grant to pass on")
+        }
+        assertEquals(2, started.size)
+        val bare = started.last()
+        assertEquals(ComponentName(context, MainActivity::class.java), bare.component)
+        assertEquals(uri, bare.data)
+        assertEquals(0, bare.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        assertNull(bare.clipData)
+        assertTrue(bare.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+        assertEquals(uri, RecipeFileIntents.fileOf(bare))
+    }
+
+    // A file whose reading is granted is handed on once, with its grant.
+    @Test
+    fun aGrantedFileIsHandedOnOnce() {
+        val uri = Uri.parse(fileManager + "lemon-cake.recipefork")
+        val started = mutableListOf<Intent>()
+        RecipeFileIntents.handOn(context, view(uri, "text/plain")) { started += it }
+        assertEquals(1, started.size)
+        assertTrue(started.single().flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+        RecipeFileIntents.handOn(context, view(Uri.parse("https://example.com/x.recipefork"), null)) { started += it }
+        assertEquals(1, started.size)
+    }
+
+    // The intent a task was opened with, given again as it is reopened from the recent applications, is not followed:
+    // neither its file nor its timer's card.
+    @Test
+    fun anIntentGivenAgainFromRecentsIsNotFollowed() {
+        val file = view(Uri.parse(fileManager + "lemon-cake.recipefork"), "text/plain")
+        val timer = app.recipefork.app.timer.TimerIntents.open(context, app.recipefork.app.timer.TimerKey("book-pool.db", "r1", 0))
+        assertTrue(MainActivity.follows(file))
+        assertTrue(MainActivity.follows(timer))
+        assertEquals(false, MainActivity.follows(Intent(file).addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)))
+        assertEquals(false, MainActivity.follows(Intent(timer).addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)))
+        assertEquals(false, MainActivity.follows(null))
+    }
 }

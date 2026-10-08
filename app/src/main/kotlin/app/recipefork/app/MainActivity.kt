@@ -99,6 +99,7 @@ class MainActivity : ComponentActivity() {
      * is not; a timer's notification leads to its recipe's card, at its step (FLOW-013 (4)), and stops its ringing.
      */
     private fun follow(intent: Intent?) {
+        if (!follows(intent)) return
         val container = (application as RecipeForkApplication).container
         RecipeFileIntents.fileOf(intent)?.let { uri ->
             openRecipeFile(applicationContext, container.mode, RecipeImport(container.recipes, filesDir), librarySession, uri)
@@ -113,6 +114,13 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val ROOT_TAG = "root"
+
+        /**
+         * Whether [intent] is one to follow: not the intent the task was first opened with, given again as the task is
+         * reopened from the recent applications — its file was imported then, its timer's card shown then.
+         */
+        fun follows(intent: Intent?): Boolean =
+            intent != null && intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == 0
 
         /**
          * Follows a recipe file at [uri] handed to the application in [mode]: in [Mode.Serverless] it is imported, the

@@ -240,6 +240,23 @@ object RecipeFileIntents {
             )
             .also { it.clipData = ClipData.newRawUri(null, uri) }
     }
+
+    /**
+     * Hands the file [intent] opens or shares on to [MainActivity] through [start] ([forward]). An address the
+     * application was handed no reading of cannot have its reading granted on — the platform refuses the start — so it
+     * is handed on bare, and the import says the file cannot be read.
+     */
+    fun handOn(context: Context, intent: Intent?, start: (Intent) -> Unit) {
+        val forward = forward(context, intent) ?: return
+        try {
+            start(forward)
+        } catch (e: SecurityException) {
+            start(Intent(forward).apply {
+                clipData = null
+                removeFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            })
+        }
+    }
 }
 
 /** Imports [uri], turning any failure of the device into a refusal said to the person rather than a crash. */

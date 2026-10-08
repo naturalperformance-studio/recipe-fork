@@ -11,7 +11,10 @@ import android.os.Bundle
 class OpenRecipeFileActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        RecipeFileIntents.forward(this, intent)?.let(::startActivity)
-        finish()
+        try {
+            RecipeFileIntents.handOn(this, intent, ::startActivity)
+        } finally {
+            finish()
+        }
     }
 }
