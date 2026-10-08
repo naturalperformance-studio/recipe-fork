@@ -29,8 +29,14 @@ internal data class DocumentRecipe(
     val tags: List<Long>,
     val servings: Int? = null,
     val ingredients: List<DocumentIngredient>,
+    /** The headings of the ingredient list, in order; added in format 2, absent from format 1. */
+    @SerialName("ingredient_groups") val ingredientGroups: List<DocumentGroup> = emptyList(),
     val steps: List<DocumentStep>,
 )
+
+/** A heading of the ingredient list: its name, and the position of the first ingredient under it. */
+@Serializable
+internal data class DocumentGroup(val name: String, @SerialName("first_ingredient") val firstIngredient: Int)
 
 @Serializable
 internal data class DocumentIngredient(
@@ -44,6 +50,8 @@ internal data class DocumentIngredient(
     @SerialName("piece_weight") val pieceWeight: String? = null,
     val divisible: Boolean? = null,
     @SerialName("entered_quantity") val enteredQuantity: String? = null,
+    /** How the ingredient is prepared; added in format 2, absent for none. */
+    val note: String? = null,
 )
 
 @Serializable

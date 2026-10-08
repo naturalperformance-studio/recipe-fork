@@ -1,6 +1,7 @@
 package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
@@ -31,9 +32,9 @@ class RecipeFileCheckTest {
         language = null,
         servings = 4,
         ingredients = listOf(
-            Ingredient(0, 101, qualifier = "ripe", unitType = UnitType.EXACT, unit = QuantityUnit.KILOGRAM, quantity = Rational.of(3, 2)),
+            Ingredient(0, 101, qualifier = "ripe", unitType = UnitType.EXACT, unit = QuantityUnit.KILOGRAM, quantity = Rational.of(3, 2), note = "finely grated"),
             Ingredient(1, 102, unitType = UnitType.PIECE, unit = QuantityUnit.PIECE, quantity = Rational.of(5, 2), pieceWeight = Rational.of(120), divisible = true),
-            Ingredient(2, null, freeTextName = "salt", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TEASPOON, quantity = Rational.of(1, 3)),
+            Ingredient(2, null, freeTextName = "salt", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TEASPOON, quantity = Rational.of(1, 3), note = "coarse"),
             Ingredient(3, null, freeTextName = "pepper", unitType = UnitType.TASTE_UNMEASURED, unit = null, quantity = null),
             Ingredient(4, 104, unitType = UnitType.TASTE_MEASURED, unit = QuantityUnit.PINCH, quantity = Rational.of(2)),
         ),
@@ -47,10 +48,20 @@ class RecipeFileCheckTest {
             FileMedia("m-1", MediaKind.PHOTO, MediaAttachment.Cover, "media/m-1.jpg"),
             FileMedia("m-2", MediaKind.VIDEO, MediaAttachment.ToStep(1), "media/m-2.mp4"),
         ),
+        ingredientGroups = listOf(IngredientGroup("Soup", 0), IngredientGroup("Seasoning", 2)),
     )
 
     private fun refused(content: RecipeFileContent) =
         assertTrue(RecipeFileCheck.problems(content).isNotEmpty(), "refused: $content")
+
+    /** [content] is refused for the one problem that says [problem], and for nothing else. */
+    private fun refusedFor(problem: String, content: RecipeFileContent) {
+        val problems = RecipeFileCheck.problems(content)
+        assertEquals(1, problems.size, "$problems")
+        assertTrue(problem in problems.single(), "$problems")
+    }
+
+    private fun groups(vararg groups: IngredientGroup) = valid.copy(ingredientGroups = groups.toList())
 
     private fun row(position: Int, change: (Ingredient) -> Ingredient) =
         valid.copy(ingredients = valid.ingredients.map { if (it.position == position) change(it) else it })
@@ -193,13 +204,47 @@ class RecipeFileCheckTest {
     // FLOW-064 (5): a document from a later version is told apart from a damaged one.
     @Test
     fun aLaterFormatIsToldApart() {
-        val later = RecipeFile.encode(valid).replace("\"format_version\": 1", "\"format_version\": 2")
+        val later = RecipeFile.encode(valid).replace("\"format_version\": 2", "\"format_version\": 3")
         val thrown = runCatching { RecipeFile.decode(later) }.exceptionOrNull()
         assertTrue(thrown is LaterRecipeFile, "$thrown")
-        assertEquals(2, thrown.formatVersion)
+        assertEquals(3, thrown.formatVersion)
         val damaged = runCatching { RecipeFile.decode("{") }.exceptionOrNull()
         assertTrue(damaged is UnreadableRecipeFile && damaged !is LaterRecipeFile)
         val huge = RecipeFile.encode(valid).replace("\"3/2\"", "\"${"9".repeat(100_000)}/2\"")
         assertTrue(runCatching { RecipeFile.decode(huge) }.exceptionOrNull() is UnreadableRecipeFile)
+    }
+
+    // DOM-023: a note is at most 60 characters, trimmed and not blank; a free-text row may carry one too.
+    @Test
+    fun theNoteOfDom023() {
+        assertEquals(emptyList(), RecipeFileCheck.problems(row(0) { it.copy(note = "n".repeat(60)) }))
+        assertEquals(emptyList(), RecipeFileCheck.problems(row(3) { it.copy(note = "freshly ground") }))
+        assertEquals(emptyList(), RecipeFileCheck.problems(row(0) { it.copy(note = null) }))
+        refusedFor("note is over 60", row(0) { it.copy(note = "n".repeat(61)) })
+        refusedFor("blank or untrimmed note", row(0) { it.copy(note = " ") })
+        refusedFor("blank or untrimmed note", row(0) { it.copy(note = "") })
+        refusedFor("blank or untrimmed note", row(0) { it.copy(note = " grated") })
+    }
+
+    // DOM-022: a group's name is 1 to 40 characters and not blank.
+    @Test
+    fun theGroupNameOfDom022() {
+        assertEquals(emptyList(), RecipeFileCheck.problems(groups(IngredientGroup("g".repeat(40), 0), IngredientGroup("G", 2))))
+        refusedFor("name is over 40", groups(IngredientGroup("g".repeat(41), 0)))
+        refusedFor("has no name", groups(IngredientGroup("", 0)))
+        refusedFor("has no name", groups(IngredientGroup("  ", 0)))
+    }
+
+    // DOM-022: each heading starts at a row of the list or at its end, the headings in order, at most one at a row.
+    @Test
+    fun theGroupPositionsOfDom022() {
+        val count = valid.ingredients.size
+        assertEquals(emptyList(), RecipeFileCheck.problems(groups(IngredientGroup("Soup", 0), IngredientGroup("Later", count))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(groups()))
+        refusedFor("starts at no ingredient", groups(IngredientGroup("Soup", count + 1)))
+        refusedFor("starts at no ingredient", groups(IngredientGroup("Soup", -1)))
+        refusedFor("starts at no ingredient", valid.copy(ingredients = emptyList(), steps = emptyList(), media = emptyList(), ingredientGroups = listOf(IngredientGroup("Soup", 1))))
+        refusedFor("out of order", groups(IngredientGroup("Seasoning", 2), IngredientGroup("Soup", 0)))
+        refusedFor("two groups start at one ingredient", groups(IngredientGroup("Soup", 1), IngredientGroup("Seasoning", 1)))
     }
 }

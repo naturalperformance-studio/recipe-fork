@@ -39,6 +39,10 @@ object RecipeBounds {
     const val MAX_TITLE = 120
     const val MAX_DESCRIPTION = 2_000
     const val MAX_TIMER_NAME = 60
+    /** An ingredient's note (DOM-023). */
+    const val MAX_NOTE = 60
+    /** The name of an ingredient group (DOM-022). */
+    const val MAX_GROUP_NAME = 40
 
     /** How [part] of [recipe] stands against its bound; null where it is within it, or where the recipe has no such part. */
     fun of(recipe: Recipe, part: RecipePart): Bound? = when (part) {

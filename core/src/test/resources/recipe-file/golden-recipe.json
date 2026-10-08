@@ -1,5 +1,5 @@
 {
-    "format_version": 1,
+    "format_version": 2,
     "recipe": {
         "id": "0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10",
         "title": "Борщ «домашний»",
@@ -17,7 +17,8 @@
                 "qualifier": "ripe",
                 "unit_type": "exact",
                 "unit": "kilogram",
-                "quantity": "3/2"
+                "quantity": "3/2",
+                "note": "finely grated"
             },
             {
                 "position": 1,
@@ -41,7 +42,8 @@
                 "free_text_name": "smoked salt",
                 "unit_type": "household",
                 "unit": "tablespoon",
-                "quantity": "1/2"
+                "quantity": "1/2",
+                "note": "coarse"
             },
             {
                 "position": 4,
@@ -62,6 +64,16 @@
                 "unit_type": "exact",
                 "unit": "cubic_metre",
                 "entered_quantity": "-3"
+            }
+        ],
+        "ingredient_groups": [
+            {
+                "name": "Vegetables",
+                "first_ingredient": 1
+            },
+            {
+                "name": "Seasoning",
+                "first_ingredient": 3
             }
         ],
         "steps": [

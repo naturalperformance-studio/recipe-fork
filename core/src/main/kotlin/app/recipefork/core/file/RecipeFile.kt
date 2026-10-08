@@ -1,6 +1,7 @@
 package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
@@ -32,8 +33,11 @@ class LaterRecipeFile(val formatVersion: Int) :
  * the rules a sending must pass is the importer's to check.
  */
 object RecipeFile {
-    /** The format this application writes, and the latest it reads. */
-    const val FORMAT_VERSION = 1
+    /**
+     * The format this application writes, and the latest it reads. Format 2 added ingredient groups and notes
+     * (DOM-022, DOM-023); a document of format 1 reads as one with neither.
+     */
+    const val FORMAT_VERSION = 2
     const val EXTENSION = "recipefork"
     const val MIME_TYPE = "application/vnd.recipefork.recipe+zip"
     /** The document's entry in the archive. */
@@ -81,6 +85,7 @@ object RecipeFile {
             tags = tags.sorted(),
             servings = servings,
             ingredients = ingredients.map { it.toDocument() },
+            ingredientGroups = ingredientGroups.map { DocumentGroup(it.name, it.firstPosition) },
             steps = steps.map { it.toDocument() },
         ),
         author = author?.let(::DocumentAuthor),
@@ -101,6 +106,7 @@ object RecipeFile {
         pieceWeight = pieceWeight?.let(::fractionOf),
         divisible = divisible,
         enteredQuantity = enteredQuantity,
+        note = note,
     )
 
     private fun Step.toDocument() = DocumentStep(
@@ -124,6 +130,7 @@ object RecipeFile {
         language = recipe.language?.let(::languageOf),
         servings = recipe.servings,
         ingredients = recipe.ingredients.map { it.toIngredient() },
+        ingredientGroups = recipe.ingredientGroups.map { IngredientGroup(it.name, it.firstIngredient) },
         steps = recipe.steps.map { it.toStep() },
         author = author?.nickname,
         parent = parent?.let { FileParent(RecipeId(it.id), it.title, it.nickname) },
@@ -146,6 +153,8 @@ object RecipeFile {
         pieceWeight = pieceWeight?.let(::rationalOf),
         divisible = divisible,
         enteredQuantity = enteredQuantity,
+        // A note is read as the editor takes one: trimmed, and none when blank (DOM-023).
+        note = Ingredient.noteOf(note),
     )
 
     private fun DocumentStep.toStep() = Step(

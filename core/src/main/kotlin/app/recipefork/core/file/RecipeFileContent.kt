@@ -1,6 +1,7 @@
 package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.Recipe
@@ -28,6 +29,8 @@ data class RecipeFileContent(
     val parent: FileParent?,
     /** One entry per media item the archive holds under `media/`; empty while the device holds no media. */
     val media: List<FileMedia> = emptyList(),
+    /** The headings of the ingredient list, in order (DOM-022); empty for a list with no groups. */
+    val ingredientGroups: List<IngredientGroup> = emptyList(),
 ) {
     companion object {
         /**
@@ -56,6 +59,7 @@ data class RecipeFileContent(
                 servings = recipe.servings,
                 ingredients = recipe.ingredients,
                 steps = recipe.steps,
+                ingredientGroups = recipe.ingredientGroups,
                 author = recipe.statedAuthor ?: ownerNickname,
                 parent = parent,
             )
