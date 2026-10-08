@@ -8,12 +8,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
@@ -182,6 +186,28 @@ class CardServingsTest {
         fewer()
         assertEquals("Servings: ¼", servings())
         assertEquals(List(10) { Haptic.TICK }, haptics.all)
+    }
+
+    // Each half has one click: a touch and the screen reader's click are the same action — one step, one tick, under
+    // the half's own label — and the − at ¼ is disabled.
+    @Test
+    fun aTouchAndTheScreenReadersClickAreTheSameOneAction() {
+        show(save(forFour()).id)
+        compose.onNodeWithTag(CardTags.SERVINGS_MORE).performTouchInput { click() }
+        assertEquals("Servings: 5", servings())
+        compose.onNodeWithTag(CardTags.SERVINGS_MORE).performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals("Servings: 6", servings())
+        compose.onNodeWithTag(CardTags.SERVINGS_FEWER).performTouchInput { click() }
+        assertEquals("Servings: 5", servings())
+        compose.onNodeWithTag(CardTags.SERVINGS_FEWER).performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals("Servings: 4", servings())
+        assertEquals(List(4) { Haptic.TICK }, haptics.all)
+        fewer(8)
+        assertEquals("Servings: ¼", servings())
+        // Disabled, which the screen reader announces and acts on no further; a touch does nothing.
+        compose.onNodeWithTag(CardTags.SERVINGS_FEWER).assertIsNotEnabled().performTouchInput { click() }
+        assertEquals("Servings: ¼", servings())
+        assertEquals(List(12) { Haptic.TICK }, haptics.all)
     }
 
     // SCALE-010: no ceiling.

@@ -54,8 +54,8 @@ import java.time.Instant
 
 /**
  * The card's controls and type come from the theme file (ADR 20261004): with `app_theme.xml` edited, the step text
- * takes the edited title size and stays larger than body text (A11Y-007); − and + are tonal icon buttons of the card's
- * 56 dp in the edited tonal colour; the ingredients sit on the edited tonal surface; the fixing control's actions are a
+ * takes the edited title size and stays larger than body text (A11Y-007); − and + are one connected group of tonal
+ * halves, each the card's 56 dp in the edited tonal colour; the ingredients sit on the edited tonal surface; the fixing control's actions are a
  * filled and text buttons in the edited colours; the ⋮'s Delete is in the edited error colour.
  */
 @RunWith(AndroidJUnit4::class)
@@ -143,7 +143,7 @@ class CardThemeTest {
     }
 
     @Test
-    fun fewerAndMoreAreTonalIconButtonsOfTheCardsSizeInTheThemesTone() {
+    fun fewerAndMoreAreOneConnectedTonalGroupOfTheCardsSizeInTheThemesTone() {
         listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE).forEach { tag ->
             val node = compose.onNodeWithTag(tag).performScrollTo().assertIsEnabled().fetchSemanticsNode()
             assertEquals(Role.Button, node.config[SemanticsProperties.Role])
@@ -153,6 +153,22 @@ class CardThemeTest {
             // Above the icon, inside the button's container.
             assertSameColour("$tag's container", scheme.secondaryContainer, colourAt(tag, 0.5f, 0.2f))
         }
+        // Side by side on one line, − first, joined by a seam of at most 2 dp.
+        val fewer = compose.onNodeWithTag(CardTags.SERVINGS_FEWER).fetchSemanticsNode()
+        val more = compose.onNodeWithTag(CardTags.SERVINGS_MORE).fetchSemanticsNode()
+        val density = fewer.layoutInfo.density.density
+        assertEquals(fewer.boundsInRoot.top, more.boundsInRoot.top, 0.5f)
+        val seam = (more.boundsInRoot.left - fewer.boundsInRoot.right) / density
+        assertTrue("the seam is $seam dp", seam >= 0f && seam <= 2.5f)
+        // Connected shapes: each half is rounded on its outer side and nearly square where it meets the other.
+        fun filled(tag: String, x: Float) = colourAt(tag, x, 0.15f).let { colour ->
+            listOf(colour.red to scheme.secondaryContainer.red, colour.green to scheme.secondaryContainer.green, colour.blue to scheme.secondaryContainer.blue)
+                .all { (a, e) -> kotlin.math.abs(a - e) < 2f / 255 }
+        }
+        assertTrue("−'s inner top corner is filled", filled(CardTags.SERVINGS_FEWER, 0.96f))
+        assertTrue("−'s outer top corner is rounded away", !filled(CardTags.SERVINGS_FEWER, 0.04f))
+        assertTrue("+'s inner top corner is filled", filled(CardTags.SERVINGS_MORE, 0.04f))
+        assertTrue("+'s outer top corner is rounded away", !filled(CardTags.SERVINGS_MORE, 0.96f))
     }
 
     @Test
