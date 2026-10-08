@@ -29,10 +29,21 @@ class CropBarFitTest {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
-    private val actions = listOf(CropTags.CANCEL, CropTags.RETAKE, CropTags.DONE)
+    private val cameraActions = listOf(CropTags.CANCEL, CropTags.RETAKE, CropTags.DONE)
+    private val galleryActions = listOf(CropTags.CANCEL, CropTags.DONE)
+    private var actions = cameraActions
 
-    private fun showCameraCrop() {
-        val photo = PhotoToCrop(open = { ByteArrayInputStream(ByteArray(0)) }, orientation = null, retake = true)
+    private fun showCameraCrop() = showCrop(retake = true)
+
+    /** The crop opened on a photo from the gallery: no Retake, only Cancel and Done. */
+    private fun showGalleryCrop() {
+        actions = galleryActions
+        showCrop(retake = false)
+        compose.onNodeWithTag(CropTags.RETAKE).assertDoesNotExist()
+    }
+
+    private fun showCrop(retake: Boolean) {
+        val photo = PhotoToCrop(open = { ByteArrayInputStream(ByteArray(0)) }, orientation = null, retake = retake)
         compose.setContent { AppTheme { CropScreen(photo, onDone = {}, onRetake = {}, onCancel = {}, onUnreadable = {}) } }
         compose.onNodeWithTag(CropTags.DONE).assertExists()
         compose.waitForIdle()
@@ -95,6 +106,33 @@ class CropBarFitTest {
     @Config(qualifiers = "en-w320dp-h640dp")
     fun theActionsKeepOneLineInEnglishAtTheUsualFont() {
         showCameraCrop()
+        assertActionsReadWhole()
+        assertOneLine()
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun theGalleryCropsActionsReadWholeInRussianAtTwiceTheFont() {
+        showGalleryCrop()
+        assertActionsReadWhole()
+        // Two labels this size may share the line or wrap; either way Cancel starts the bar and Done ends its last line.
+        val bar = bounds(CropTags.BAR)
+        assertEquals(bar.left, bounds(CropTags.CANCEL).left, 1f)
+        assertEquals(bar.right, bounds(CropTags.DONE).right, 1f)
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp")
+    fun theGalleryCropKeepsCancelAtTheStartAndDoneAtTheEndInRussianAtTheUsualFont() {
+        showGalleryCrop()
+        assertActionsReadWhole()
+        assertOneLine()
+    }
+
+    @Test
+    @Config(qualifiers = "en-w320dp-h640dp")
+    fun theGalleryCropKeepsCancelAtTheStartAndDoneAtTheEndInEnglishAtTheUsualFont() {
+        showGalleryCrop()
         assertActionsReadWhole()
         assertOneLine()
     }

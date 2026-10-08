@@ -51,6 +51,37 @@ class ExportFileNameTest {
     }
 
     @Test
+    fun aDecomposedShortIIsSpeltLikeTheComposedOne() {
+        val decomposed = "Чаи\u0306 с мёдом"
+        assertEquals("Chay-s-myodom.recipefork", RecipeExport.fileName(decomposed))
+        assertEquals(RecipeExport.fileName("Чай с мёдом"), RecipeExport.fileName(decomposed))
+        assertEquals("Yogurt.recipefork", RecipeExport.fileName("И\u0306огурт"))
+    }
+
+    @Test
+    fun ukrainianAndBelarusianLettersAreSpeltInLatinLetters() {
+        assertEquals("i-yi-ye-g-w.recipefork", RecipeExport.fileName("і ї є ґ ў"))
+        assertEquals("Ii-Yiyi-Yeye-Gg-Ww.recipefork", RecipeExport.fileName("Іі Її Єє Ґґ Ўў"))
+        assertEquals("I-YI-YE-G-W.recipefork", RecipeExport.fileName("І Ї Є Ґ Ў"))
+        assertEquals("Vareniki-z-vishneyu.recipefork", RecipeExport.fileName("Вареники з вишнею"))
+        assertEquals("Yizha-Gazda-Yevropa.recipefork", RecipeExport.fileName("Їжа Ґазда Європа"))
+        assertEquals("Drawniki.recipefork", RecipeExport.fileName("Драўнікі"))
+        // A decomposed ї (і with a combining diaeresis) composes first.
+        assertEquals("Kyiv.recipefork", RecipeExport.fileName("Кі\u0308в"))
+    }
+
+    @Test
+    fun aTitleAllInUpperCaseIsSpeltAllInUpperCase() {
+        assertEquals("BORSHCH.recipefork", RecipeExport.fileName("БОРЩ"))
+        assertEquals("SHCHI-YOZH-2.recipefork", RecipeExport.fileName("ЩИ, ЁЖ №2"))
+        assertEquals("YIZHA.recipefork", RecipeExport.fileName("ЇЖА"))
+        assertEquals("BLT.recipefork", RecipeExport.fileName("BLT"))
+        // Mixed case is spelt as before: only the first letter of a multi-letter spelling is upper case.
+        assertEquals("Borshch-SSSR.recipefork", RecipeExport.fileName("Борщ СССР"))
+        assertEquals("Shchi.recipefork", RecipeExport.fileName("Щи"))
+    }
+
+    @Test
     fun anEnglishTitleKeepsItsWordsJoinedByHyphens() {
         assertEquals("Shakshuka.recipefork", RecipeExport.fileName("Shakshuka"))
         assertEquals("Mom-s-apple-pie-v2.recipefork", RecipeExport.fileName("  Mom's apple pie: v2!  "))

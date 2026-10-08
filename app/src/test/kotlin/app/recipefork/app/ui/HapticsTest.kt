@@ -47,6 +47,7 @@ class HapticsTest {
      * From API 31 the shadow records the segments of the last effect played rather than its effect id. The list is a
      * static of ShadowVibrator, shared by every instance and reset between tests, so a fresh instance reads it.
      */
+    // Relies on Robolectric internals: ShadowVibrator's static vibrationEffectSegments and the hidden VibrationEffect.getSegments().
     private class PlayedSegments : ShadowVibrator() {
         val last: List<Any> get() = vibrationEffectSegments.toList()
     }
@@ -145,9 +146,13 @@ class HapticsTest {
         assertNull(vibrator().audioAttributesFromLastVibration)
     }
 
-    /** The activity, but offering no system service at all: no vibrator, and no vibrator manager. */
+    /**
+     * The activity, but offering no system service at all: no vibrator, and no vibrator manager. It stands for the
+     * application too, since the device's feedback asks the application's context.
+     */
     private fun withoutServices(): Context = object : ContextWrapper(compose.activity) {
         override fun getSystemService(name: String): Any? = null
+        override fun getApplicationContext(): Context = this
     }
 
     @Test
@@ -171,6 +176,30 @@ class HapticsTest {
             VibratorHaptics(withoutServices()).perform(Haptic.CONFIRM)
         }
         assertNull(vibrator().audioAttributesFromLastVibration)
+    }
+
+    /** A screen's context that records each thing asked of it besides its application's context. */
+    private class ScreenContext(activity: Context) : ContextWrapper(activity) {
+        val asked = mutableListOf<String>()
+        override fun getSystemService(name: String): Any? = super.getSystemService(name).also { asked += "service $name" }
+        override fun getContentResolver(): android.content.ContentResolver = super.getContentResolver().also { asked += "content resolver" }
+        override fun getBaseContext(): Context = super.getBaseContext().also { asked += "base context" }
+    }
+
+    @Test
+    @Config(sdk = [29])
+    fun theDevicesFeedbackHoldsTheApplicationsContextNotTheScreens() {
+        val screen = ScreenContext(compose.activity)
+        val haptics = compose.runOnIdle { VibratorHaptics(screen) }
+        val application = shadowOf(compose.activity.application.vibrator()!!)
+        application.setHasVibrator(true)
+        touchFeedback(on = true)
+        perform(haptics, Haptic.TICK)
+        assertEquals(VibrationEffect.EFFECT_TICK, application.effectId)
+        assertEquals(emptyList<String>(), screen.asked)
+        val held = VibratorHaptics::class.java.declaredFields.filter { Context::class.java.isAssignableFrom(it.type) }
+            .map { field -> field.isAccessible = true; field.get(haptics) }
+        assertEquals(listOf(compose.activity.applicationContext), held)
     }
 
     private fun touchFeedback(on: Boolean) = Settings.System.putInt(
