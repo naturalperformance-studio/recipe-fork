@@ -226,6 +226,27 @@ class RemoveFromTheCardTest {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(kept.id.value)), PATIENCE_MS)
     }
 
+    // ST-010: a recipe that stops being deletable while the statement is open takes the statement away, and once it is
+    // deletable again the statement does not come back by itself.
+    @Test
+    fun aRecipeNoLongerDeletableMidStatementIsNotAskedAboutAgain() {
+        val soup = own("Soup")
+        showCard(soup)
+        openMenu()
+        compose.onNodeWithTag(CardTags.DELETE).performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
+
+        runBlocking { recipes.save(soup.copy(sent = SentStatus.SENT).inState(RecipeState.PUBLISHED)) }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
+        assertFalse(exists(LibraryTags.DELETE_STATEMENT))
+
+        runBlocking { recipes.save(soup) }
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.MENU) }
+        compose.waitForIdle()
+        assertFalse("the statement came back unasked", exists(LibraryTags.DELETE_STATEMENT))
+        assertEquals(soup, stored(soup))
+    }
+
     // FLOW-053 (5): declining the statement from the card changes nothing and leaves the card open.
     @Test
     fun decliningOnTheCardChangesNothing() {

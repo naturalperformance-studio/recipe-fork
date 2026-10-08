@@ -215,6 +215,8 @@ fun CardScreen(
     val removal = (shown as? CardContent.Shown)?.let { removalOf(it.recipe, it.marked) }
     // The removal being asked about, while it is; once confirmed, the card closes to the book.
     var removing by rememberSaveable(recipeId.value) { mutableStateOf(false) }
+    // A recipe that stops being removable while asked about drops the question, which is not asked again unbidden.
+    LaunchedEffect(recipe, removal) { if (recipe != null && removal == null) removing = false }
     if (removing && recipe != null && removal != null) {
         RemovalStatement(recipe, removal, recipes, onDone = { removed ->
             removing = false

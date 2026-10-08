@@ -6,9 +6,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
@@ -33,8 +36,14 @@ import kotlin.math.roundToInt
  */
 @Stable
 internal class RowMotion(private val graphics: GraphicsContext) {
-    /** A removed row's picture where the row stood: before the row now at [index]. */
-    class Leaving(val key: Any, val index: Int, val picture: GraphicsLayer, val height: Int)
+    /**
+     * A removed row's picture where the row stood: before the row now at [index], which moves up as rows above it are
+     * removed while it folds. How far it has folded is its own, so it carries on wherever it is shown.
+     */
+    class Leaving(index: Int, val picture: GraphicsLayer, val height: Int) {
+        var index by mutableIntStateOf(index)
+        val shown = Animatable(1f)
+    }
 
     private var known: List<Any>? = null
     private val entering = HashSet<Any>()
@@ -48,13 +57,13 @@ internal class RowMotion(private val graphics: GraphicsContext) {
         known = keys
         if (before == null || before == keys) return
         val now = keys.toHashSet()
-        // A row put back while its picture still folds comes back as itself.
-        leaving.filter { it.key in now }.forEach(::finish)
         val was = before.toHashSet()
+        // Each place counted in the rows that stay above it.
+        leaving.forEach { gone -> gone.index = before.take(gone.index).count { it in now } }
         before.forEachIndexed { at, key ->
             if (key in now) return@forEachIndexed
             val picture = pictures.remove(key) ?: return@forEachIndexed
-            leaving += Leaving(key, before.take(at).count { it in now }, picture, heights.remove(key) ?: 0)
+            leaving += Leaving(before.take(at).count { it in now }, picture, heights.remove(key) ?: 0)
         }
         keys.filterTo(entering) { it !in was }
     }
@@ -93,7 +102,7 @@ internal class RowMotion(private val graphics: GraphicsContext) {
 
     @Composable
     private fun Folding(gone: Leaving) {
-        val shown = remember(gone) { Animatable(1f) }
+        val shown = gone.shown
         LaunchedEffect(gone) {
             shown.animateTo(0f, Motion.going())
             finish(gone)
