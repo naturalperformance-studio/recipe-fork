@@ -1,9 +1,7 @@
 package app.recipefork.app.file
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ActivityScenario
@@ -24,10 +22,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLooper
 import org.robolectric.shadows.ShadowToast
@@ -36,8 +32,7 @@ import java.time.Instant
 
 /**
  * FLOW-064: a recipe file opened from another application — tapped in a messenger or a file manager — reaches the
- * application through `ACTION_VIEW`, by the product's type or by its extension, and is imported in serverless mode
- * only. Each test of the import passes the mode it is about.
+ * application through `ACTION_VIEW` (RecipeFileRoutingTest) and is imported in serverless mode only. Each test of the import passes the mode it is about.
  */
 @RunWith(AndroidJUnit4::class)
 class OpenRecipeFileTest {
@@ -154,34 +149,16 @@ class OpenRecipeFileTest {
         }
     }
 
-    // The manifest routes the file here by the product's type, and by the extension when it comes with a generic type
-    // or none — as a messenger's content address often does — and routes no other file.
-    @Test
-    fun theManifestRoutesRecipeFilesHere() {
-        val packageManager = context.packageManager
-        fun resolves(intent: Intent) = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
-            .any { ComponentName(it.activityInfo.packageName, it.activityInfo.name).className == MainActivity::class.java.name }
-        val content = Uri.parse("content://org.telegram.messenger.provider/media/Telegram/Documents/Bean%20soup.v2.recipefork")
-        val plain = Uri.parse("content://com.android.externalstorage.documents/document/primary%3ADownload%2Fsoup.recipefork")
-        val opaque = Uri.parse("content://com.android.providers.downloads.documents/document/42")
-        assertTrue(resolves(view(opaque, RecipeFile.MIME_TYPE)))
-        assertTrue(resolves(view(content, "application/octet-stream")))
-        assertTrue(resolves(view(content, "application/zip")))
-        assertTrue(resolves(view(Uri.parse("file:///sdcard/Download/soup.recipefork"), null)))
-        assertTrue(resolves(view(Uri.parse("content://files/storage/soup.recipefork"), null)))
-        assertEquals(false, resolves(view(Uri.parse("content://files/storage/photo.jpg"), "application/octet-stream")))
-        assertEquals(false, resolves(view(opaque, "application/octet-stream")))
-        assertEquals(false, resolves(view(opaque, "image/jpeg")))
-        assertTrue(resolves(view(plain, "application/octet-stream")))
-        assertNull(shadowOf(context as android.app.Application).nextStartedActivity)
-    }
-
     // A timer's notification is a view of the application's own address: no file, and nothing is imported from it.
     @Test
     fun aTimersNotificationIsNoFile() {
         val notification = app.recipefork.app.timer.TimerIntents.uriOf(app.recipefork.app.timer.TimerKey("book-pool.db", "r1", 0))
         assertNull(RecipeFileIntents.fileOf(view(notification, null)))
         assertNull(RecipeFileIntents.fileOf(Intent(Intent.ACTION_SEND).setData(fileOf(ByteArray(1)))))
+        val stream = fileOf(ByteArray(1))
+        val shared = Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, stream)
+        assertNull(RecipeFileIntents.fileOf(Intent(shared).setType("image/jpeg")))
+        assertEquals(stream, RecipeFileIntents.fileOf(Intent(shared).setType(RecipeFile.MIME_TYPE)))
         assertNull(RecipeFileIntents.fileOf(null))
     }
 }

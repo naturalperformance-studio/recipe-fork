@@ -29,6 +29,7 @@
             android:name=".MainActivity"
             android:configChanges="locale|layoutDirection"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
             <!-- The interface language (L10N-002) is applied by the Activity itself, which shows itself again in it
                  at once; a change of the platform's locale only updates its configuration, never relaunches it. -->
@@ -36,7 +37,19 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- A recipe file opened from another application (FLOW-064): by the product's own type. -->
+        </activity>
+
+        <!-- A recipe file opened from another application (FLOW-064) arrives here, and is handed on to MainActivity in
+             the application's own task: a messenger starts a view for a result, which would stack MainActivity inside
+             the messenger's task. Nothing but a recipe file is routed here: by the product's own type, whatever the
+             address; by the extension, whatever type the sender declares or none. -->
+        <activity
+            android:name=".file.OpenRecipeFileActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -44,21 +57,28 @@
                 <data android:scheme="file" />
                 <data android:mimeType="application/vnd.recipefork.recipe+zip" />
             </intent-filter>
-            <!-- ... and by its extension, for a messenger or a file manager that hands it with a generic type or none.
-                 A path pattern does not backtrack, so a name holding further dots needs a pattern of its own. -->
+            <!-- A messenger declares what type it likes (Telegram: the stored one, else text/plain), so the extension is
+                 taken with any type, and with none. A path pattern does not backtrack: each `.*\\.` stops at the next
+                 dot, so a path holding N dots — in its folders or its name — needs the pattern with N of them. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="content" />
                 <data android:scheme="file" />
                 <data android:host="*" />
-                <data android:mimeType="application/octet-stream" />
-                <data android:mimeType="application/zip" />
-                <data android:mimeType="application/x-zip-compressed" />
+                <data android:mimeType="*/*" />
                 <data android:pathPattern=".*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\..*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -70,6 +90,20 @@
                 <data android:pathPattern=".*\\..*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\..*\\.recipefork" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork" />
+            </intent-filter>
+            <!-- Shared to the application by the product's own type: imported as if opened. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.recipefork.recipe+zip" />
             </intent-filter>
         </activity>
 

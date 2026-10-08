@@ -25,6 +25,9 @@ open class RecipeForkApplication : Application() {
      */
     protected open val sweepsMedia: Boolean = true
 
+    /** The mode the composition root is built in: the build's; a test's application may be built in the other. */
+    protected open val mode: Mode get() = MainActivity.MODE
+
     /** The sweep of the books' media directories, once started. */
     var mediaSweep: Job? = null
         private set
@@ -32,7 +35,7 @@ open class RecipeForkApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         startLanguage()
-        container = AppContainer(this, MainActivity.MODE)
+        container = AppContainer(this, mode)
         container.start(scope)
         if (sweepsMedia) mediaSweep = container.sweepMedia(scope)
         scope.launch {
