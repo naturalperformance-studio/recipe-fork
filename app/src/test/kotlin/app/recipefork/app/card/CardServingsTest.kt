@@ -10,7 +10,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -42,6 +45,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -188,11 +192,24 @@ class CardServingsTest {
         assertEquals(List(10) { Haptic.TICK }, haptics.all)
     }
 
-    // Each half has one click: a touch and the screen reader's click are the same action — one step, one tick, under
-    // the half's own label — and the − at ¼ is disabled.
+    // Each half has one click: exactly one OnClick action in the half, carrying its label, and a touch and the screen
+    // reader's click are that same action — one step, one tick each — and the − at ¼ is disabled.
     @Test
     fun aTouchAndTheScreenReadersClickAreTheSameOneAction() {
         show(save(forFour()).id)
+        listOf(
+            CardTags.SERVINGS_FEWER to "Recalculate the recipe for fewer servings",
+            CardTags.SERVINGS_MORE to "Recalculate the recipe for more servings",
+        ).forEach { (tag, label) ->
+            val clicks = compose.onAllNodes(
+                (hasTestTag(tag) or hasAnyAncestor(hasTestTag(tag))) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
+            assertEquals("$tag's click actions", 1, clicks.size)
+            val click = clicks.single().config[SemanticsActions.OnClick]
+            assertEquals(label, click.label)
+            assertNotNull("$tag's click acts", click.action)
+        }
         compose.onNodeWithTag(CardTags.SERVINGS_MORE).performTouchInput { click() }
         assertEquals("Servings: 5", servings())
         compose.onNodeWithTag(CardTags.SERVINGS_MORE).performSemanticsAction(SemanticsActions.OnClick)
