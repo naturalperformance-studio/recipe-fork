@@ -43,10 +43,12 @@ fun rememberHaptics(): Haptics {
  * some phones leave the view's haptic feedback silent. From API 33 the system silences touch vibrations itself when
  * touch feedback is off; below it the system only scales them by the touch intensity, so the switch
  * ([Settings.System.HAPTIC_FEEDBACK_ENABLED]) is read here at each play, and off plays nothing. A device without a
- * vibrator (none offered, or one that has none) feels nothing.
+ * vibrator (none offered, or one that has none) feels nothing. Only the application's context is held, so the
+ * feedback never keeps a screen's activity alive.
  */
-class VibratorHaptics(private val context: Context) : Haptics {
-    private val vibrator: Vibrator? = context.vibrator()
+class VibratorHaptics(context: Context) : Haptics {
+    private val context: Context = context.applicationContext
+    private val vibrator: Vibrator? = this.context.vibrator()
 
     override fun perform(haptic: Haptic) {
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
