@@ -4,8 +4,10 @@ import androidx.activity.compose.BackHandler
 import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.net.ConnectivityManager
+import android.os.Looper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -147,6 +149,19 @@ object Connection {
 
 /** How long a wait on a condition may take before it counts as failed: generous, never what passes. */
 const val PATIENCE_MS = 60_000L
+
+/**
+ * Waits until [condition] holds, doing meanwhile what reading a node does: running what was posted to the main thread,
+ * and applying the states written outside a composition so that it recomposes with them. `waitUntil` alone moves only
+ * the composition's clock, so a condition that reads no node — files on disk, a fake player — would never see work
+ * that resumes on the main thread, nor a state written by a lifecycle callback ever composed — under load the main
+ * thread was seen idle with such a state still unapplied. Reading no node, it holds with no screen in front as well.
+ */
+fun ComposeTestRule.waitUntilWithMainThread(condition: () -> Boolean) = waitUntil(PATIENCE_MS) {
+    shadowOf(Looper.getMainLooper()).idle()
+    Snapshot.sendApplyNotifications()
+    condition()
+}
 
 /** Waits until exactly one node carries [tag]. */
 fun ComposeTestRule.awaitTag(tag: String) = waitUntil(PATIENCE_MS) {

@@ -27,6 +27,7 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.descriptionOf
+import app.recipefork.app.editor.waitUntilWithMainThread
 import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeExport
@@ -164,8 +165,11 @@ class CardStepVideoTest {
     /** The player made last: the one the clip holds, or held last. */
     private fun player() = players.made.last()
 
-    /** Waits until a live player plays the clip, or until none plays it. */
-    private fun awaitPlaying(playing: Boolean) = compose.waitUntil(PATIENCE_MS) {
+    /**
+     * Waits until a live player plays the clip, or until none plays it: the players are read, not the screen, so the
+     * main thread is run meanwhile — a change of the activity's state reaches the composition through it.
+     */
+    private fun awaitPlaying(playing: Boolean) = compose.waitUntilWithMainThread {
         if (playing) players.made.lastOrNull()?.let { !it.released && it.playing } == true else players.made.none { it.playing }
     }
 
@@ -250,7 +254,7 @@ class CardStepVideoTest {
         // The card goes: a change of state the test makes is seen once the composition is next idle.
         shown = false
         compose.waitForIdle()
-        compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
+        compose.waitUntilWithMainThread { players.made.all { it.released } }
         assertFalse(players.made.any { it.playing })
         assertFalse(exists(CardTags.stepVideo(1)))
     }
@@ -311,7 +315,7 @@ class CardStepVideoTest {
         // The card goes: a change of state the test makes is seen once the composition is next idle.
         shown = false
         compose.waitForIdle()
-        compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
+        compose.waitUntilWithMainThread { players.made.all { it.released } }
     }
 
     // Layout holds at 360 dp and twice the font size: the control is the card's target and inside the card, the line
@@ -411,19 +415,19 @@ class CardStepVideoTest {
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepMediaUnavailable(0)), PATIENCE_MS)
         players.fails = false
         compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.step(29)))
-        compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
+        compose.waitUntilWithMainThread { players.made.all { it.released } }
         compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.step(0)))
-        compose.waitUntil(PATIENCE_MS) { players.made.lastOrNull()?.let { !it.released && it.playing } == true }
+        compose.waitUntilWithMainThread { players.made.lastOrNull()?.let { !it.released && it.playing } == true }
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.stepVideoControl(0)), PATIENCE_MS)
 
         // Paused by the reader, scrolled away and back: still paused.
         compose.onNodeWithTag(CardTags.stepVideoControl(0)).performClick()
-        compose.waitUntil(PATIENCE_MS) { players.made.last().playing.not() }
+        compose.waitUntilWithMainThread { players.made.last().playing.not() }
         compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.step(29)))
-        compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
+        compose.waitUntilWithMainThread { players.made.all { it.released } }
         val made = players.made.size
         compose.onNodeWithTag(CardTags.CONTENT).performScrollToNode(hasTestTag(CardTags.stepVideo(0)))
-        compose.waitUntil(PATIENCE_MS) { players.made.size > made && !players.made.last().released }
+        compose.waitUntilWithMainThread { players.made.size > made && !players.made.last().released }
         compose.waitForIdle()
         assertFalse(players.made.last().playing)
         assertEquals("Play video", controlText(0))

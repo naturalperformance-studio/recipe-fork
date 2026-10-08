@@ -23,6 +23,7 @@ import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
+import app.recipefork.app.editor.waitUntilWithMainThread
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
@@ -133,7 +134,8 @@ class ClearSavedMediaTest {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_STATEMENT), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_CONFIRM).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_STATEMENT), PATIENCE_MS)
-        compose.waitUntil(PATIENCE_MS) { onDisk() == listOf("draft-cover") }
+        // The disk is read, not the screen: the clearing resumes on the main thread, which is run meanwhile.
+        compose.waitUntilWithMainThread { onDisk() == listOf("draft-cover") }
         awaitValue(context.getString(R.string.settings_media_none))
         runBlocking {
             assertEquals(found.media, recipes.get(found.id)!!.media)
