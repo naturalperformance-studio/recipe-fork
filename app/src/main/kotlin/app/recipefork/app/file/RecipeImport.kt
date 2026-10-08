@@ -198,6 +198,7 @@ class RecipeImport(
                 language = content.language,
                 servings = content.servings,
                 ingredients = content.ingredients,
+                ingredientGroups = content.ingredientGroups,
                 steps = content.steps,
                 media = media,
             ).inState(FOUND_STATE)

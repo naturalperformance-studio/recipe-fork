@@ -7,6 +7,7 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.book.FavouriteEntity
 import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.IngredientEntity
+import app.recipefork.app.book.IngredientGroupEntity
 import app.recipefork.app.book.IngredientLineRow
 import app.recipefork.app.book.MediaEntity
 import app.recipefork.app.book.OwnRecipeRow
@@ -17,6 +18,7 @@ import app.recipefork.app.book.StepEntity
 import app.recipefork.app.book.StepReferenceEntity
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.Media
@@ -205,7 +207,7 @@ open class RecipeRepository(
 
     private companion object {
         /** Every table a recipe's rows live in. */
-        val RECIPE_TABLES = arrayOf("recipe", "ingredient", "step", "step_reference", "media", "recipe_tag")
+        val RECIPE_TABLES = arrayOf("recipe", "ingredient", "ingredient_group", "step", "step_reference", "media", "recipe_tag")
     }
 }
 
@@ -231,7 +233,7 @@ internal fun Recipe.toRows(): RecipeRows {
         ingredients = ingredients.map {
             IngredientEntity(
                 id, it.position, it.dictionaryEntry, it.qualifier, it.freeTextName, it.unitType, it.unit,
-                it.quantity, it.pieceWeight, it.divisible, it.enteredQuantity,
+                it.quantity, it.pieceWeight, it.divisible, it.enteredQuantity, it.note,
             )
         },
         steps = steps.map { StepEntity(id, it.position, it.text, it.timer?.duration?.inWholeMinutes, it.timer?.label) },
@@ -247,6 +249,7 @@ internal fun Recipe.toRows(): RecipeRows {
             )
         },
         tags = tags.map { RecipeTagEntity(id, it) },
+        groups = ingredientGroups.mapIndexed { index, it -> IngredientGroupEntity(id, index, it.name, it.firstPosition) },
     )
 }
 
@@ -267,7 +270,7 @@ internal fun RecipeRows.toRecipe(): Recipe {
         ingredients = ingredients.map {
             Ingredient(
                 it.position, it.dictionaryEntry, it.qualifier, it.freeTextName, it.unitType, it.unit, it.quantity,
-                it.pieceWeight, it.divisible, it.enteredQuantity,
+                it.pieceWeight, it.divisible, it.enteredQuantity, it.note,
             )
         },
         steps = steps.map { step ->
@@ -294,5 +297,6 @@ internal fun RecipeRows.toRecipe(): Recipe {
         safetyFlag = recipe.safetyFlag,
         createdAt = recipe.createdAt,
         contentChangedAt = recipe.contentChangedAt,
+        ingredientGroups = groups.map { IngredientGroup(it.name, it.firstIngredient) },
     )
 }

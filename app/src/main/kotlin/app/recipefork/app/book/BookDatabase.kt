@@ -21,9 +21,9 @@ import kotlinx.coroutines.flow.Flow
 @Database(
     entities = [
         RecipeEntity::class, IngredientEntity::class, StepEntity::class, StepReferenceEntity::class,
-        MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class,
+        MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class, IngredientGroupEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -48,6 +48,18 @@ abstract class BookDatabase : RoomDatabase() {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("alter table step_reference add column share text")
                     db.execSQL("alter table step_reference add column share_unit text")
+                }
+            },
+            // 3 → 4: an ingredient may carry a note (DOM-023), and the ingredient list may fall into groups (DOM-022).
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table ingredient add column note text")
+                    db.execSQL(
+                        "create table if not exists `ingredient_group` (`recipe_id` TEXT NOT NULL, " +
+                            "`position` INTEGER NOT NULL, `name` TEXT NOT NULL, `first_ingredient` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    )
                 }
             },
         )
@@ -81,6 +93,8 @@ data class RecipeRows(
     val references: List<StepReferenceEntity>,
     val media: List<MediaEntity>,
     val tags: List<RecipeTagEntity>,
+    /** The headings of its ingredient list, in order (DOM-022). */
+    val groups: List<IngredientGroupEntity> = emptyList(),
 )
 
 /** SQLite's limit that limits nothing. */
@@ -132,15 +146,18 @@ abstract class BookRecipeDao {
         deleteReferences(id)
         deleteMedia(id)
         deleteTags(id)
+        deleteGroups(id)
         insertIngredients(rows.ingredients)
         insertSteps(rows.steps)
         insertReferences(rows.references)
         insertMedia(rows.media)
         insertTags(rows.tags)
+        insertGroups(rows.groups)
     }
 
     /**
-     * Deletes the recipe and everything it holds — ingredients, steps, references, media and tags — atomically (ST-010).
+     * Deletes the recipe and everything it holds — ingredients and their groups, steps, references, media and tags —
+     * atomically (ST-010).
      * Its parts cascade from its row; they are deleted here as well, so that nothing of it is left whatever the
      * connection's foreign-key setting. Returns whether the book held it.
      */
@@ -151,6 +168,7 @@ abstract class BookRecipeDao {
         deleteReferences(recipeId)
         deleteMedia(recipeId)
         deleteTags(recipeId)
+        deleteGroups(recipeId)
         return deleteRecipe(recipeId) > 0
     }
 
@@ -235,6 +253,7 @@ abstract class BookRecipeDao {
         val recipe = recipe(recipeId) ?: return null
         return RecipeRows(
             recipe, ingredients(recipeId), steps(recipeId), references(recipeId), media(recipeId), tags(recipeId),
+            groups(recipeId),
         )
     }
 
@@ -256,6 +275,9 @@ abstract class BookRecipeDao {
     @Query("select * from recipe_tag where recipe_id = :id order by tag_id")
     protected abstract suspend fun tags(id: String): List<RecipeTagEntity>
 
+    @Query("select * from ingredient_group where recipe_id = :id order by position")
+    protected abstract suspend fun groups(id: String): List<IngredientGroupEntity>
+
     @Upsert
     protected abstract suspend fun upsert(recipe: RecipeEntity)
 
@@ -276,6 +298,12 @@ abstract class BookRecipeDao {
 
     @Query("delete from recipe_tag where recipe_id = :id")
     protected abstract suspend fun deleteTags(id: String)
+
+    @Query("delete from ingredient_group where recipe_id = :id")
+    protected abstract suspend fun deleteGroups(id: String)
+
+    @Insert
+    protected abstract suspend fun insertGroups(rows: List<IngredientGroupEntity>)
 
     @Insert
     protected abstract suspend fun insertIngredients(rows: List<IngredientEntity>)
