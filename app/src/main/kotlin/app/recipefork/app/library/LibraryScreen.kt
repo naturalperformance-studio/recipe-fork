@@ -89,6 +89,7 @@ import app.recipefork.app.R
 import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.card.CardEnvironment
+import app.recipefork.app.card.DoneMarks
 import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.dictionary.TagSource
@@ -240,11 +241,11 @@ fun LibraryScreen(
         ) { page ->
             when (VIEWS[page]) {
                 LibraryView.MARKED -> MarkedList(
-                    recipes, session, files, timers, mode, thumbnails, card.ingredients, editor.tags,
+                    recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags,
                     markedList, bottom, import, notice, onOffer = { offers[LibraryView.MARKED] = it },
                 )
                 LibraryView.OWN -> OwnList(
-                    recipes, session, editor, timers, mode, thumbnails, card.ingredients,
+                    recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients,
                     ownList, bottom, notice, write, onOffer = { offers[LibraryView.OWN] = it },
                 )
             }
@@ -396,6 +397,7 @@ private fun OwnList(
     session: LibrarySession,
     editor: EditorEnvironment,
     timers: CardTimers,
+    marks: DoneMarks,
     mode: Mode,
     thumbnails: CoverThumbnails,
     dictionary: IngredientEntries,
@@ -436,7 +438,7 @@ private fun OwnList(
             row.title,
             onConfirm = {
                 deleting = null
-                deleteRecipe(recipes, timers, RecipeId(row.recipeId))
+                deleteRecipe(recipes, timers, marks, RecipeId(row.recipeId))
             },
             onDecline = { deleting = null },
         )
@@ -763,14 +765,16 @@ val DELETABLE = setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECT
 
 /**
  * Deletes [id] from the active book, on the device alone (FLOW-053 (6, 8)), and cancels its timers, so that none of
- * them announces itself or rings afterwards. It runs where the timers' work runs, which outlives the screen, one turn
- * among the timers' starts and cancels, so that it finishes however soon the view is left.
+ * them announces itself or rings afterwards, and drops its done [marks] (FLOW-068). It runs where the timers' work
+ * runs, which outlives the screen, one turn among the timers' starts and cancels, so that it finishes however soon the
+ * view is left.
  */
-fun deleteRecipe(recipes: RecipeRepository, timers: CardTimers, id: RecipeId) {
+fun deleteRecipe(recipes: RecipeRepository, timers: CardTimers, marks: DoneMarks, id: RecipeId) {
     timers.scope.launch {
         timers.turns.withLock {
             recipes.delete(id)
             timers.store.cancelRecipe(timers.book(), id)
+            marks.clear(timers.book(), id)
         }
     }
 }
@@ -811,6 +815,7 @@ private fun MarkedList(
     session: LibrarySession,
     files: RecipeImport,
     timers: CardTimers,
+    marks: DoneMarks,
     mode: Mode,
     thumbnails: CoverThumbnails,
     dictionary: IngredientEntries,
@@ -838,7 +843,7 @@ private fun MarkedList(
             row.title,
             onConfirm = {
                 removing = null
-                removeFound(files, timers, RecipeId(row.recipeId))
+                removeFound(files, timers, marks, RecipeId(row.recipeId))
             },
             onDecline = { removing = null },
         )
@@ -977,14 +982,16 @@ private fun rememberImport(files: RecipeImport, session: LibrarySession): () -> 
 private const val ANY_FILE = "*/*"
 
 /**
- * Removes the found recipe [id] from the active book with its held content and media (FLOW-064 (6)), and cancels its
- * timers, one turn among the timers' starts and cancels, where the timers' work runs, as [deleteRecipe] does.
+ * Removes the found recipe [id] from the active book with its held content and media (FLOW-064 (6)), cancels its
+ * timers and drops its done [marks] (FLOW-068), one turn among the timers' starts and cancels, where the timers' work
+ * runs, as [deleteRecipe] does.
  */
-fun removeFound(files: RecipeImport, timers: CardTimers, id: RecipeId) {
+fun removeFound(files: RecipeImport, timers: CardTimers, marks: DoneMarks, id: RecipeId) {
     timers.scope.launch {
         timers.turns.withLock {
             files.remove(id)
             timers.store.cancelRecipe(timers.book(), id)
+            marks.clear(timers.book(), id)
         }
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.app.card.DoneMarks
 import app.recipefork.app.data.AndroidConnectivity
 import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.data.DragHandleSide
@@ -97,6 +98,9 @@ class AppContainer(
 
     /** The view of the recipe book last shown, one for the device and kept across restarts: the book opens on it. */
     val lastBookView: LastBookView = PreferencesLastBookView(context)
+
+    /** The reader's done marks on cards, kept on the device per book and recipe across restarts (FLOW-068). */
+    val doneMarks: DoneMarks = DoneMarks.preferences(context)
 
     /**
      * Keeps the held dictionaries in step with the server while a connection is available (FLOW-001); none in

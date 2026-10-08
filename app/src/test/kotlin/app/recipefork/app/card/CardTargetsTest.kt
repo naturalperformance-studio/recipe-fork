@@ -142,8 +142,8 @@ class CardTargetsTest {
         // Back, fork, edit, the provenance, fewer, more, the ingredient line, the timer.
         AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 8)
 
-        // The fixing control, opened from its line, at first and once a fixing is held.
-        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        // The fixing control, opened from its amount, at first and once a fixing is held.
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
         listOf(CardTags.FIX_FIELD, FixTags.UNIT, CardTags.FIX_CANCEL, CardTags.FIX_CONFIRM).forEach { compose.assertCardTarget(it) }
         AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 12)
@@ -157,7 +157,7 @@ class CardTargetsTest {
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("250")
         compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isEmpty() }
-        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX_RELEASE)).fetchSemanticsNodes().isNotEmpty() }
         compose.assertCardTarget(CardTags.FIX_RELEASE)
         AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 13)

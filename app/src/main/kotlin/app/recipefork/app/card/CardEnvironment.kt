@@ -16,10 +16,11 @@ fun interface IngredientEntries {
 
 /**
  * What the card needs beyond the recipes of the active book: the serving count the reader usually cooks for, which a
- * recipe opens at (FLOW-017), and the ingredient dictionary its rows are named from.
+ * recipe opens at (FLOW-017), the reader's done marks (FLOW-068), and the ingredient dictionary its rows are named from.
  */
 class CardEnvironment(
     val usualServings: UsualServings = HeldUsualServings(),
+    val marks: DoneMarks = DoneMarks.inMemory(),
     val ingredients: IngredientEntries,
 )
 
@@ -30,6 +31,9 @@ fun rememberCardEnvironment(): CardEnvironment {
     return remember(context) { cardEnvironmentOf((context as RecipeForkApplication).container) }
 }
 
-/** The card's environment of [container]: its usual servings and the dictionaries it shares with every screen. */
+/**
+ * The card's environment of [container]: its usual servings, the device's done marks and the dictionaries it shares
+ * with every screen.
+ */
 fun cardEnvironmentOf(container: AppContainer): CardEnvironment =
-    CardEnvironment(container.usualServings) { container.dictionaries.ingredients() }
+    CardEnvironment(container.usualServings, container.doneMarks) { container.dictionaries.ingredients() }

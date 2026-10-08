@@ -164,7 +164,8 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
  * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Its ⋮ holds the
  * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — after the same statement
- * the book shows; once it is confirmed the card closes to the book. Nothing inside the recipe edits it; the serving count's − and +, which change how
+ * the book shows; once it is confirmed the card closes to the book; and, while the recipe has done marks, their
+ * clearing (FLOW-068). Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
  * provenance, which opens its parent's card, the other. It opens each time at the reader's usual count, or at the
  * authored count while none is set (FLOW-017).
@@ -218,7 +219,7 @@ fun CardScreen(
     // A recipe that stops being removable while asked about drops the question, which is not asked again unbidden.
     LaunchedEffect(recipe, removal) { if (recipe != null && removal == null) removing = false }
     if (removing && recipe != null && removal != null) {
-        RemovalStatement(recipe, removal, recipes, onDone = { removed ->
+        RemovalStatement(recipe, removal, recipes, environment.marks, onDone = { removed ->
             removing = false
             if (removed) onBack()
         })
@@ -232,6 +233,8 @@ fun CardScreen(
     val places = remember(recipeId) { CardPlaces() }
     // The recipe's timers running, or ringing, while their step is out of sight: in a bar at the bottom.
     val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
+    // The reader's done marks on the recipe's lines and steps, kept on the device (FLOW-068).
+    val marks = recipe?.let { rememberCardMarks(environment.marks, recipes.bookName(), it) }
     val scope = rememberCoroutineScope()
     Scaffold(
         modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection).testTag(CardTags.SCREEN),
@@ -246,6 +249,8 @@ fun CardScreen(
                 onEdit = onEdit,
                 removal = removal,
                 onRemove = { removing = true },
+                marked = marks?.any == true,
+                onClearMarks = { marks?.clear() },
             )
         },
         bottomBar = {
@@ -284,8 +289,8 @@ fun CardScreen(
                 )
                 shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
-                recipe != null && loaded != null ->
-                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, onOpenParent, scroll, places, bottom) { titleOut = it }
+                recipe != null && loaded != null && marks != null ->
+                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, marks, onOpenParent, scroll, places, bottom) { titleOut = it }
                 else -> Loading()
             }
         }
@@ -371,6 +376,8 @@ private fun TopBar(
     onEdit: () -> Unit,
     removal: Removal?,
     onRemove: () -> Unit,
+    marked: Boolean,
+    onClearMarks: () -> Unit,
 ) {
     // The last title shown is kept while it fades out, so that it does not vanish before the fade.
     var last by remember { mutableStateOf(title) }
@@ -409,7 +416,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                removal?.let { CardMenu(it, onRemove) }
+                if (removal != null || marked) CardMenu(removal, onRemove, marked, onClearMarks)
             }
         },
         scrollBehavior = scrollBehavior,
@@ -423,6 +430,7 @@ private fun RecipeContent(
     recipes: RecipeRepository,
     usual: Rational?,
     session: CardSession,
+    marks: CardMarks,
     onOpenParent: (RecipeId) -> Unit,
     scroll: ScrollState,
     places: CardPlaces,
@@ -503,8 +511,9 @@ private fun RecipeContent(
                 language,
                 onFix = { change(scale.fix(it)) },
                 onRelease = { change(scale.release(it)) },
+                marks = marks,
             )
-            StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()))
+            StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()), marks)
             if (recipe.description.isNotBlank()) {
                 Text(
                     recipe.description,
@@ -748,11 +757,13 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 }
 
 /**
- * The card's ⋮, after its other actions: it opens a menu holding the recipe's removal — Delete for an own recipe in a
- * deletable state, Remove for a found one — each item the card's [CardTarget] tall, in the theme's error colour.
+ * The card's ⋮, after its other actions, shown while it holds anything: Clear marks while the recipe has done marks
+ * (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal — Delete for an own recipe
+ * in a deletable state, Remove for a found one — in the theme's error colour. Each item is the card's [CardTarget]
+ * tall.
  */
 @Composable
-private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
+private fun CardMenu(removal: Removal?, onRemove: () -> Unit, marked: Boolean, onClearMarks: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         BarAction(
@@ -763,7 +774,17 @@ private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
             onClick = { expanded = !expanded },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
+            if (marked) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.card_clear_marks)) },
+                    onClick = {
+                        expanded = false
+                        onClearMarks()
+                    },
+                    modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.CLEAR_MARKS),
+                )
+            }
+            if (removal != null) DropdownMenuItem(
                 text = {
                     Text(stringResource(if (removal == Removal.DELETE) R.string.library_entry_delete else R.string.library_entry_remove))
                 },
@@ -786,13 +807,13 @@ private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
  * changes.
  */
 @Composable
-private fun RemovalStatement(recipe: Recipe, removal: Removal, recipes: RecipeRepository, onDone: (removed: Boolean) -> Unit) {
+private fun RemovalStatement(recipe: Recipe, removal: Removal, recipes: RecipeRepository, marks: DoneMarks, onDone: (removed: Boolean) -> Unit) {
     val timers = rememberCardTimers()
     when (removal) {
         Removal.DELETE -> DeleteStatement(
             recipe.title,
             onConfirm = {
-                deleteRecipe(recipes, timers, recipe.id)
+                deleteRecipe(recipes, timers, marks, recipe.id)
                 onDone(true)
             },
             onDecline = { onDone(false) },
@@ -803,7 +824,7 @@ private fun RemovalStatement(recipe: Recipe, removal: Removal, recipes: RecipeRe
             RemoveStatement(
                 recipe.title,
                 onConfirm = {
-                    removeFound(files, timers, recipe.id)
+                    removeFound(files, timers, marks, recipe.id)
                     onDone(true)
                 },
                 onDecline = { onDone(false) },
@@ -850,6 +871,7 @@ object CardTags {
     const val MENU = "card-menu"
     const val DELETE = "card-delete"
     const val REMOVE = "card-remove"
+    const val CLEAR_MARKS = "card-clear-marks"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
     const val MISSING = "card-missing"
@@ -876,6 +898,8 @@ object CardTags {
     fun tooltip(action: String) = "$action-tooltip"
     fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
+    /** The amount of the ingredient line at [position], which opens its fixing control. */
+    fun fixAmount(position: Int) = "card-ingredient-$position-amount"
     fun step(position: Int) = "card-step-$position"
     fun stepPhoto(position: Int) = "card-step-$position-photo"
     fun stepVideo(position: Int) = "card-step-$position-video"
