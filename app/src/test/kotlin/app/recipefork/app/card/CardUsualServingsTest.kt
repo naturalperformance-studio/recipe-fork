@@ -199,7 +199,7 @@ class CardUsualServingsTest {
     fun aFixingReleasedReturnsToTheUsualCount() {
         usual.set(Rational.of(2))
         show(recipe(4).id)
-        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("1000")
         compose.waitForIdle()
@@ -208,7 +208,7 @@ class CardUsualServingsTest {
         // 1 kg of the 500 g chicken: the recipe for 8, whatever count was in force.
         assertEquals("Servings: ≈8", servings())
         assertEquals(listOf("Salt", "2 tsp"), lines()[2].take(2))
-        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag(CardTags.FIX_RELEASE).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isEmpty() }

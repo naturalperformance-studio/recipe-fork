@@ -1,7 +1,16 @@
 package app.recipefork.app.card
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -58,8 +65,9 @@ import app.recipefork.core.scaling.Rounding
  * proportions (SCALE-009). A fixed line says it is fixed. None of it is carried by colour (A11Y-008). With no
  * ingredients the part is left out, heading included (FLOW-019).
  *
- * Tapping a line that carries a quantity opens its fixing control below it ([FixAmount]); a line "to taste", an
- * unfinished one, or one off its grid offers nothing (SCALE-018 (7)).
+ * Tapping a line marks it done, and tapping it again unmarks it ([marks], FLOW-068). Tapping the amount of a line that
+ * carries a quantity opens its fixing control below it ([FixAmount]); a line "to taste", an unfinished one, or one off
+ * its grid offers no fixing (SCALE-018 (7)). Without [marks] a line is not marked.
  */
 @Composable
 internal fun IngredientsList(
@@ -69,6 +77,7 @@ internal fun IngredientsList(
     language: InterfaceLanguage,
     onFix: (CardFixing) -> Unit,
     onRelease: (Int) -> Unit,
+    marks: CardMarks? = null,
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered) { mutableStateOf<Int?>(null) }
@@ -79,7 +88,7 @@ internal fun IngredientsList(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease) }
+        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks) }
     }
 }
 
@@ -94,6 +103,7 @@ private fun Lines(
     onOpen: (Int?) -> Unit,
     onFix: (CardFixing) -> Unit,
     onRelease: (Int) -> Unit,
+    marks: CardMarks?,
 ) {
     Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
         // The warning unfolds under the status line and folds away into it, the gap above it included, so the lines
@@ -117,7 +127,11 @@ private fun Lines(
             val position = ordered[i].position
             // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
             Column {
-                IngredientRow(line, position, column, cardPlace(CardPlaces.ingredient(position))) { onOpen(if (open == position) null else position) }
+                IngredientRow(
+                    line, position, column, cardPlace(CardPlaces.ingredient(position)),
+                    done = marks?.done(MarkedPart.INGREDIENT, position) == true,
+                    onToggle = marks?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                ) { onOpen(if (open == position) null else position) }
                 val offer = line.fixing
                 if (offer != null) {
                     key(position) {
@@ -238,24 +252,36 @@ private fun quantityColumn(lines: List<IngredientLine>): QuantityColumn {
  * One ingredient: its quantity, right-aligned in the list's quantity [column] and followed by an
  * arrow where rounding moved it, its name beside it, and under the name whether it is fixed. Where the column would take
  * more than its share of a narrow line or large text, it narrows and the quantity wraps in it; the name wraps, never
- * cut. Read by the screen reader as one line — the name, then the quantity — the arrow as the words it stands for; a
- * line that offers fixing is one action that opens its control.
+ * cut. Read by the screen reader as one line — the name, then the quantity — the arrow as the words it stands for.
+ *
+ * A tap on the line marks it [done] or unmarks it ([onToggle], FLOW-068); a line marked done is struck through and
+ * muted, and read as done. A line that offers fixing opens its control from its amount — a target of its own, at
+ * least [AMOUNT_TARGET] wide and the line's height, named for what it does — and offers the same to the screen reader
+ * as the line's second action, beside the marking ([onOpen]). A line that answers a tap is the card's [CardTarget] tall.
  */
 @Composable
-private fun IngredientRow(line: IngredientLine, position: Int, column: QuantityColumn, place: Modifier, onOpen: () -> Unit) {
-    val tappable = if (line.fixing != null) {
-        Modifier
-            .heightIn(min = CardTarget)
-            .clickable(onClickLabel = stringResource(R.string.card_fix_action), role = Role.Button, onClick = onOpen)
+private fun IngredientRow(
+    line: IngredientLine,
+    position: Int,
+    column: QuantityColumn,
+    place: Modifier,
+    done: Boolean,
+    onToggle: (() -> Unit)?,
+    onOpen: () -> Unit,
+) {
+    val fixable = line.fixing != null
+    val fixLabel = stringResource(R.string.card_fix_action)
+    val opening by rememberUpdatedState(onOpen)
+    val marking = if (onToggle != null) Modifier.markedDone(done, onToggle) else Modifier
+    val fixing = if (fixable) {
+        Modifier.semantics { customActions = listOf(CustomAccessibilityAction(fixLabel) { opening(); true }) }
     } else {
         Modifier
     }
-    Column(
-        place.fillMaxWidth().then(tappable).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position)),
-        verticalArrangement = Arrangement.Center,
-    ) {
+    val tall = onToggle != null || fixable
+    Column(place.fillMaxWidth().then(marking).then(fixing).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position))) {
         val name: @Composable () -> Unit = {
-            Text(line.name ?: stringResource(R.string.card_unnamed_ingredient), style = MaterialTheme.typography.bodyLarge)
+            Text(line.name ?: stringResource(R.string.card_unnamed_ingredient), style = MaterialTheme.typography.bodyLarge.done(done))
         }
         val quantity: @Composable () -> Unit = {
             line.quantity?.let { quantity ->
@@ -263,7 +289,7 @@ private fun IngredientRow(line: IngredientLine, position: Int, column: QuantityC
                     // The arrow is measured first, so a long quantity wraps before it squeezes the arrow away.
                     Text(
                         quantity,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyLarge.done(done),
                         textAlign = TextAlign.End,
                         modifier = Modifier.weight(1f).alignByBaseline(),
                     )
@@ -275,9 +301,11 @@ private fun IngredientRow(line: IngredientLine, position: Int, column: QuantityC
                 }
             }
         }
-        val note: @Composable () -> Unit = { if (line.fixed) Note(stringResource(R.string.card_quantity_fixed)) }
-        // The quantity stands at the line's start, the name beside it and the fixed note under the name.
-        Layout(contents = listOf(name, quantity, note), modifier = Modifier.fillMaxWidth()) { (names, quantities, notes), constraints ->
+        val note: @Composable () -> Unit = { if (line.fixed) Note(stringResource(R.string.card_quantity_fixed), done) }
+        val amount: @Composable () -> Unit = { if (fixable) AmountTarget(fixLabel, CardTags.fixAmount(position)) { opening() } }
+        // The quantity stands at the line's start, the name beside it and the fixed note under the name; the amount's
+        // target lies over the quantity, as tall as the line.
+        Layout(contents = listOf(name, quantity, note, amount), modifier = Modifier.fillMaxWidth()) { (names, quantities, notes, amounts), constraints ->
             val gap = if (column.whole > 0) QUANTITY_GAP.roundToPx() else 0
             val width = constraints.maxWidth
             val share = maxOf((width * QUANTITY_SHARE).toInt(), column.word)
@@ -287,15 +315,51 @@ private fun IngredientRow(line: IngredientLine, position: Int, column: QuantityC
             val nameConstraints = Constraints(maxWidth = (width - quantityWidth - gap).coerceAtLeast(0))
             val shownName = names.first().measure(nameConstraints)
             val shownNote = notes.firstOrNull()?.measure(nameConstraints)
-            val height = maxOf(shownName.height + (shownNote?.height ?: 0), shownQuantity?.height ?: 0)
+            val content = maxOf(shownName.height + (shownNote?.height ?: 0), shownQuantity?.height ?: 0)
+            val height = if (tall) maxOf(content, CardTarget.roundToPx()) else content
+            val top = (height - content) / 2
+            val amountWidth = maxOf(quantityWidth + gap / 2, AMOUNT_TARGET.roundToPx()).coerceAtMost(width)
+            val shownAmount = amounts.firstOrNull()?.measure(Constraints.fixed(amountWidth, height))
             layout(width, height) {
                 // Placed in the order they read: the screen reader takes a line's parts in the order they are placed.
-                shownName.place(quantityWidth + gap, 0)
-                shownQuantity?.place(0, 0)
-                shownNote?.place(quantityWidth + gap, shownName.height)
+                shownName.place(quantityWidth + gap, top)
+                shownQuantity?.place(0, top)
+                shownNote?.place(quantityWidth + gap, top + shownName.height)
+                // Last, so that it lies over the line and takes the taps on the amount.
+                shownAmount?.place(0, 0)
             }
         }
     }
+}
+
+/** The least width of the target an amount that offers fixing takes, the card's own; it is as tall as its line. */
+private val AMOUNT_TARGET = CardTarget
+
+/**
+ * The target over a line's amount that opens its fixing control ([onOpen]): a tap on it opens the control, not the
+ * line's marking, and shows the theme's ripple; the screen reader finds it as the line's second action, named by
+ * [label], since the line reads as one.
+ */
+@Composable
+private fun AmountTarget(label: String, tag: String, onOpen: () -> Unit) {
+    val open by rememberUpdatedState(onOpen)
+    val presses = remember { MutableInteractionSource() }
+    Box(
+        Modifier
+            .indication(presses, ripple())
+            .pointerInput(presses) {
+                detectTapGestures(
+                    onPress = { offset ->
+                        val press = PressInteraction.Press(offset)
+                        presses.tryEmit(press)
+                        presses.tryEmit(if (tryAwaitRelease()) PressInteraction.Release(press) else PressInteraction.Cancel(press))
+                    },
+                    onTap = { open() },
+                )
+            }
+            .semantics { onClick(label = label) { open(); true } }
+            .testTag(tag),
+    )
 }
 
 /** How far the tonal surface reaches into the card's gutter on each side; the section's lines start where they would without it. */
@@ -336,8 +400,8 @@ private fun RowScope.RoundingArrow(arrow: String, spoken: String, tag: String) {
 }
 
 @Composable
-private fun Note(text: String) {
-    Text(text, style = MaterialTheme.typography.bodySmall)
+private fun Note(text: String, done: Boolean) {
+    Text(text, style = MaterialTheme.typography.bodySmall.done(done))
 }
 
 /** The arrow a recalculated quantity carries and the words it is read as, or null where the grid held it exactly. */

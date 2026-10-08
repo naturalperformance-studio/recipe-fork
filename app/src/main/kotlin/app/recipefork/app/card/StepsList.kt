@@ -3,6 +3,7 @@ package app.recipefork.app.card
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -68,6 +69,9 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  *
  * Each ingredient reference in a step reads as [references] gives it: its line in the list at the scale in force
  * (FLOW-032), and a timer started from the step is named with it as it reads at that moment (FLOW-016 (8)).
+ *
+ * A tap on a step's line — its number and text — marks it done, and a tap again unmarks it ([marks], FLOW-068); its
+ * media and its timer keep their own taps. Without [marks] a step is not marked.
  */
 @Composable
 internal fun StepsList(
@@ -76,6 +80,7 @@ internal fun StepsList(
     title: String = "",
     references: CardReferences = CardReferences.NONE,
     media: StepMediaOnCard = StepMediaOnCard.NONE,
+    marks: CardMarks? = null,
 ) {
     // A step that is only a reference reads as one, and one that is only a photograph or a clip shows it — or says it
     // is unavailable (FLOW-061); one holding nothing that reads or shows is left out.
@@ -106,7 +111,11 @@ internal fun StepsList(
             } else {
                 place
             }
-            StepRow(index + 1, step, references, timers, media, modifier)
+            StepRow(
+                index + 1, step, references, timers, media, modifier,
+                done = marks?.done(MarkedPart.STEP, step.position) == true,
+                onToggle = marks?.let { { it.toggle(MarkedPart.STEP, step.position) } },
+            )
         }
     }
     RestartQuestion(timers)
@@ -118,17 +127,30 @@ internal fun StepsList(
  * number once — the circle itself is decorative — then its photograph or its clip, named by the step's number, and its
  * timer, if it carries them, set under the text, the timer a clear gap below the rest. Steps after the first stand apart from the one before. An item whose
  * file the device does not hold, or cannot show, says so in its place (FLOW-061).
+ *
+ * The number and text are one target, the card's [CardTarget] tall at least, that marks the step [done] or unmarks it
+ * ([onToggle]); a step marked done has its text struck through and muted, and is read as done.
  */
 @Composable
-private fun StepRow(number: Int, step: Step, references: CardReferences, timers: RecipeTimers, media: StepMediaOnCard, modifier: Modifier = Modifier) {
+private fun StepRow(
+    number: Int,
+    step: Step,
+    references: CardReferences,
+    timers: RecipeTimers,
+    media: StepMediaOnCard,
+    modifier: Modifier = Modifier,
+    done: Boolean = false,
+    onToggle: (() -> Unit)? = null,
+) {
     Column(modifier.fillMaxWidth().padding(top = if (number > 1) StepSpacing else 0.dp)) {
+        val marking = if (onToggle != null) Modifier.heightIn(min = CardTarget).markedDone(done, onToggle) else Modifier
         Row(
-            Modifier.fillMaxWidth().semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
+            Modifier.fillMaxWidth().then(marking).semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
                 .testTag(CardTags.step(step.position)),
             horizontalArrangement = Arrangement.spacedBy(StepGap),
         ) {
             StepNumber(number, step.position)
-            StepText(step, references, Modifier.weight(1f))
+            StepText(step, references, Modifier.weight(1f), done)
         }
         media.of(step.position)?.let { item ->
             Box(Modifier.fillMaxWidth().padding(start = StepIndent, top = 8.dp)) {

@@ -183,7 +183,7 @@ class CardThemeTest {
 
     @Test
     fun theFixingActionsAreAFilledAndTextButtonsInTheThemesColours() {
-        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX_FIELD)).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextInput("300")
         compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().assertIsEnabled()

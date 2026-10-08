@@ -76,4 +76,10 @@
     <string name="card_step_photo_unavailable">The photo of step %1$d is unavailable on this phone.</string>
     <string name="card_step_video_unavailable">The video of step %1$d is unavailable on this phone.</string>
     <string name="card_cover_unavailable">The cover photo is unavailable on this phone.</string>
+    <!-- Done marks (FLOW-068): a tap on an ingredient line or a step marks it done, a tap again unmarks it; the screen
+         reader reads a marked one as done and names the tap. Clearing them is in the card's menu. -->
+    <string name="card_mark_done_action">Mark as done</string>
+    <string name="card_mark_not_done_action">Mark as not done</string>
+    <string name="card_marked_done">Done</string>
+    <string name="card_clear_marks">Clear marks</string>
 </resources>

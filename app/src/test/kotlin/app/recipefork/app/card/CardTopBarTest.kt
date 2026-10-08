@@ -280,7 +280,7 @@ class CardTopBarTest {
         compose.runOnUiThread { WindowCompat.setDecorFitsSystemWindows(compose.activity.window, false) }
         show(recipe.id)
         insets(navigation = NAVIGATION)
-        compose.onNodeWithTag(CardTags.ingredient(19)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(19), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.FIX_FIELD) }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performScrollTo().performClick()
         compose.onNodeWithTag(CardTags.FIX_FIELD).assertIsFocused()

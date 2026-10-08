@@ -278,7 +278,7 @@ class CardScreenTest {
         RecipeState.entries.filter { it.editable }.forEach { state ->
             val recipe = save(fullRecipe(state))
             show(recipe.id)
-            assertEquals("$state", listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU) + SERVINGS_ACTIONS + FIXING_ROWS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU) + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
             compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.EDIT)).fetchSemanticsNodes()
                 .let { assertEquals("$state", 1, it.size) }
             assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction(), useUnmergedTree = true).fetchSemanticsNodes().size)
@@ -296,7 +296,7 @@ class CardScreenTest {
             val recipe = save(fullRecipe(state))
             show(recipe.id)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
-            assertEquals("$state", listOf(CardTags.BACK, CardTags.FORK) + SERVINGS_ACTIONS + FIXING_ROWS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.FORK) + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
             assertNothingInTheContentActs()
         }
     }
@@ -378,7 +378,7 @@ class CardScreenTest {
             useUnmergedTree = true,
         ).fetchSemanticsNodes()
             .filter { SemanticsActions.OnClick in it.config || SemanticsActions.SetText in it.config }
-            .filter { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } !in SERVINGS_ACTIONS + FIXING_ROWS }
+            .filter { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } !in SERVINGS_ACTIONS + MARKED_PARTS + FIXING_AMOUNTS }
         assertEquals(emptyList<Any>(), acting.map { it.config })
     }
 
@@ -389,7 +389,10 @@ class CardScreenTest {
         const val PATIENCE = 60_000L
         val SERVINGS_ACTIONS = listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE)
 
-        /** The rows that carry a quantity open their fixing control (SCALE-018); salt, to taste, does not. */
-        val FIXING_ROWS = listOf(0, 1, 2, 4).map(CardTags::ingredient)
+        /** Every ingredient line and every step is marked done with a tap (FLOW-068). */
+        val MARKED_PARTS = (0..4).map(CardTags::ingredient) + (0..2).map(CardTags::step)
+
+        /** The amounts of the rows that carry a quantity open their fixing control (SCALE-018); salt, to taste, does not. */
+        val FIXING_AMOUNTS = listOf(0, 1, 2, 4).map(CardTags::fixAmount)
     }
 }
