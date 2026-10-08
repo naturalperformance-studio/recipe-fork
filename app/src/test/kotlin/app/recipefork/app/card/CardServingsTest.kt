@@ -46,6 +46,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -209,6 +210,12 @@ class CardServingsTest {
             val click = clicks.single().config[SemanticsActions.OnClick]
             assertEquals(label, click.label)
             assertNotNull("$tag's click acts", click.action)
+            // The one action is the button's own click: a click set in the half's semantics would merge into the same
+            // key and replace it with a lambda of this application's.
+            assertTrue(
+                "$tag's click is the button's own, not a semantics click",
+                click.action!!.javaClass.name.startsWith("androidx.compose.foundation."),
+            )
         }
         compose.onNodeWithTag(CardTags.SERVINGS_MORE).performTouchInput { click() }
         assertEquals("Servings: 5", servings())
