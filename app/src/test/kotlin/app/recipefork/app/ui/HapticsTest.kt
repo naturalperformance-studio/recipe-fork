@@ -1,8 +1,11 @@
 package app.recipefork.app.ui
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.media.AudioAttributes
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -20,8 +23,9 @@ import org.robolectric.shadows.ShadowVibrator
 /**
  * The device's feedback each haptic plays. A tick — servings −/+, a dragged row passing to a new place — is the
  * vibrator's predefined tick, a confirmation — a timer button — its click. Both go straight to the device's default
- * vibrator as touch vibrations (touch usage from API 33, sonification audio usage below), so the system's
- * touch-feedback setting still silences them; a device without a vibrator feels nothing.
+ * vibrator as touch vibrations (touch usage from API 33, sonification audio usage below). The system's touch-feedback
+ * switch silences them: from API 33 the system applies it to touch vibrations, below it the app reads it at each play.
+ * A device without a vibrator feels nothing.
  */
 @RunWith(AndroidJUnit4::class)
 class HapticsTest {
@@ -39,7 +43,10 @@ class HapticsTest {
 
     private fun perform(haptics: Haptics, haptic: Haptic) = compose.runOnIdle { haptics.perform(haptic) }
 
-    /** From API 31 the shadow records the segments of the last effect played rather than its effect id. */
+    /**
+     * From API 31 the shadow records the segments of the last effect played rather than its effect id. The list is a
+     * static of ShadowVibrator, shared by every instance and reset between tests, so a fresh instance reads it.
+     */
     private class PlayedSegments : ShadowVibrator() {
         val last: List<Any> get() = vibrationEffectSegments.toList()
     }
@@ -101,6 +108,23 @@ class HapticsTest {
     }
 
     @Test
+    @Config(sdk = [31])
+    fun onApi31TheDefaultVibratorPlaysTheTickAsTouchFeedbackUnlessTheSwitchIsOff() {
+        val haptics = deviceHaptics()
+        vibrator().setHasVibrator(true)
+        touchFeedback(on = false)
+        perform(haptics, Haptic.TICK)
+        assertNull(vibrator().vibrationAttributesFromLastVibration)
+
+        touchFeedback(on = true)
+        perform(haptics, Haptic.TICK)
+        assertEquals(segmentsOf(VibrationEffect.EFFECT_TICK), PlayedSegments().last)
+        // The sonification audio usage reaches the vibrator service as a touch vibration.
+        val attributes = vibrator().vibrationAttributesFromLastVibration as VibrationAttributes
+        assertEquals(VibrationAttributes.USAGE_TOUCH, attributes.usage)
+    }
+
+    @Test
     @Config(sdk = [36])
     fun fromApi33ADeviceWithoutAVibratorFeelsNothing() {
         val haptics = deviceHaptics()
@@ -121,12 +145,57 @@ class HapticsTest {
         assertNull(vibrator().audioAttributesFromLastVibration)
     }
 
+    /** The activity, but offering no system service at all: no vibrator, and no vibrator manager. */
+    private fun withoutServices(): Context = object : ContextWrapper(compose.activity) {
+        override fun getSystemService(name: String): Any? = null
+    }
+
     @Test
-    fun aDeviceOfferingNoVibratorFeelsNothing() {
-        VibratorHaptics(null).perform(Haptic.TICK)
-        VibratorHaptics(null).perform(Haptic.CONFIRM)
+    @Config(sdk = [36])
+    fun fromApi33ADeviceOfferingNoVibratorFeelsNothing() {
+        vibrator().setHasVibrator(true)
+        compose.runOnIdle {
+            VibratorHaptics(withoutServices()).perform(Haptic.TICK)
+            VibratorHaptics(withoutServices()).perform(Haptic.CONFIRM)
+        }
         assertNull(vibrator().vibrationAttributesFromLastVibration)
         assertNull(vibrator().audioAttributesFromLastVibration)
+    }
+
+    @Test
+    @Config(sdk = [29])
+    fun belowApi33ADeviceOfferingNoVibratorFeelsNothing() {
+        vibrator().setHasVibrator(true)
+        compose.runOnIdle {
+            VibratorHaptics(withoutServices()).perform(Haptic.TICK)
+            VibratorHaptics(withoutServices()).perform(Haptic.CONFIRM)
+        }
+        assertNull(vibrator().audioAttributesFromLastVibration)
+    }
+
+    private fun touchFeedback(on: Boolean) = Settings.System.putInt(
+        compose.activity.contentResolver,
+        Settings.System.HAPTIC_FEEDBACK_ENABLED,
+        if (on) 1 else 0,
+    )
+
+    @Test
+    @Config(sdk = [29])
+    fun belowApi33TouchFeedbackOffPlaysNothingAndOnPlaysTheTick() {
+        val haptics = deviceHaptics()
+        vibrator().setHasVibrator(true)
+        touchFeedback(on = false)
+        perform(haptics, Haptic.TICK)
+        perform(haptics, Haptic.CONFIRM)
+        assertNull(vibrator().audioAttributesFromLastVibration)
+
+        touchFeedback(on = true)
+        perform(haptics, Haptic.TICK)
+        assertEquals(VibrationEffect.EFFECT_TICK, vibrator().effectId)
+        assertEquals(
+            AudioAttributes.USAGE_ASSISTANCE_SONIFICATION,
+            vibrator().audioAttributesFromLastVibration!!.usage,
+        )
     }
 
     @Test
