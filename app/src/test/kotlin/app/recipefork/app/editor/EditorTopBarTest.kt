@@ -27,6 +27,8 @@ import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeState
+import app.recipefork.core.recipe.SentStatus
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.CoroutineScope
@@ -82,8 +84,10 @@ class EditorTopBarTest {
     private val flour = Ingredient(0, null, null, "Flour", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(200))
     private val milk = Ingredient(1, null, null, "Milk", UnitType.EXACT, QuantityUnit.MILLILITRE, Rational.of(300))
 
-    private fun open(): Recipe {
-        val recipe = Recipe.create(now, null).copy(title = "Pancakes", ingredients = listOf(flour, milk))
+    private fun open(state: RecipeState = RecipeState.LOCAL): Recipe {
+        val recipe = Recipe.create(now, null)
+            .copy(title = "Pancakes", ingredients = listOf(flour, milk), sent = if (state == RecipeState.LOCAL) SentStatus.NEVER else SentStatus.SENT)
+            .inState(state)
         runBlocking { recipes.save(recipe) }
         val environment = EditorEnvironment(ActiveBook(BookName.Pool, book.database), device.catalog(context)) { now }
         compose.setContent {
@@ -158,8 +162,20 @@ class EditorTopBarTest {
         assertTrue("«Сохранено» runs off the screen: $statement", statement.left >= -0.5f && statement.right <= px(360f) + 0.5f)
     }
 
-    private fun barFits() {
-        val order = listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL, EditorTags.DONE).map { it to bounds(it) }
+    // A frozen recipe's bar — back, what a fork takes and the checklist, with no "Done" — fits there too.
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "ru-w360dp-h640dp", fontScale = 2.0f)
+    fun aFrozenRecipesBarFitsAt360DpAndTwiceTheFontInRussian() {
+        assertEquals(2.0f, context.resources.configuration.fontScale, 0.001f)
+        open(RecipeState.PUBLISHED)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FROZEN), PATIENCE_MS)
+        assertFalse(inBar(EditorTags.DONE))
+        barFits(listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL))
+    }
+
+    private fun barFits(tags: List<String> = listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL, EditorTags.DONE)) {
+        val order = tags.map { it to bounds(it) }
         order.forEach { (tag, b) ->
             assertTrue("$tag runs off the screen: $b", b.left >= -0.5f && b.right <= px(360f) + 0.5f)
             assertTrue("$tag is smaller than 48 dp: $b", b.width >= px(48f) - 0.5f && b.height >= px(48f) - 0.5f)

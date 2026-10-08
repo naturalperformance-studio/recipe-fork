@@ -164,10 +164,10 @@ class ServerlessWordingTest {
 
         // The clearing of saved media from the settings, with nothing to clear: what it says in place of asking.
         compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(SettingsTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
         assertSaysNothingOfTheServer("the message that there is no media to clear")
-        compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_OK).performClick()
-        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA_OK).performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(SettingsTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
         compose.onNodeWithTag(SettingsTags.BACK).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(SettingsTags.SCREEN), PATIENCE_MS)
 

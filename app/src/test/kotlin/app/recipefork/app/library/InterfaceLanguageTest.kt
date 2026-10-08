@@ -28,6 +28,7 @@ import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.settings.LanguageTags
 import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks

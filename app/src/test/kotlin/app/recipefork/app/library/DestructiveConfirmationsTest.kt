@@ -13,6 +13,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.Mode
+import app.recipefork.app.settings.ClearMediaStatement
+import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.ui.appColorScheme
 import app.recipefork.app.ui.AppTheme
 import org.junit.Assert.assertEquals
@@ -48,7 +50,7 @@ class DestructiveConfirmationsTest {
     }
 
     @Test
-    fun clearingSavedMedia() = shows(LibraryTags.CLEAR_MEDIA_CONFIRM, LibraryTags.CLEAR_MEDIA_DECLINE, "Clear") {
+    fun clearingSavedMedia() = shows(SettingsTags.CLEAR_MEDIA_CONFIRM, SettingsTags.CLEAR_MEDIA_DECLINE, "Clear") {
         ClearMediaStatement(Mode.Standard, onConfirm = {}, onDecline = {})
     }
 }

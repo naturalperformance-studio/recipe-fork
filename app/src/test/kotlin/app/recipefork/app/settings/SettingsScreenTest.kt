@@ -158,10 +158,10 @@ class SettingsScreenTest {
         show()
         openSettings()
         compose.onNodeWithTag(SettingsTags.USUAL).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
-        compose.onNodeWithTag(LibraryTags.USUAL_MORE).performClick()
-        compose.onNodeWithTag(LibraryTags.USUAL_SET).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.USUAL_DIALOG) }
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
+        compose.onNodeWithTag(SettingsTags.USUAL_MORE).performClick()
+        compose.onNodeWithTag(SettingsTags.USUAL_SET).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(SettingsTags.USUAL_DIALOG) }
         assertEquals("4", value(SettingsTags.USUAL))
         assertEquals(Rational.of(4), usual.count.value)
     }
