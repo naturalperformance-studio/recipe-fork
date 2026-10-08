@@ -231,11 +231,12 @@ class RecipeExportTest {
         assertFalse(send.hasExtra(Intent.EXTRA_EMAIL))
     }
 
-    // The file's name is the recipe's title with what a file system refuses taken out.
+    // The file's name is the recipe's title made safe: in ASCII (ExportFileNameTest), with what a file system refuses
+    // taken out.
     @Test
     fun theFilesNameIsTheTitleMadeSafe() {
-        assertEquals("Борщ.recipefork", RecipeExport.fileName("Борщ"))
-        assertEquals("a b c.recipefork", RecipeExport.fileName(" a/b:c? "))
+        assertEquals("Borshch.recipefork", RecipeExport.fileName("Борщ"))
+        assertEquals("a-b-c.recipefork", RecipeExport.fileName(" a/b:c? "))
         assertEquals("recipe.recipefork", RecipeExport.fileName(""))
         assertEquals("recipe.recipefork", RecipeExport.fileName("../.."))
         assertEquals(80 + ".recipefork".length, RecipeExport.fileName("x".repeat(200)).length)

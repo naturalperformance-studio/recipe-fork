@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.text.Normalizer
 
 /**
  * Export of a recipe to a file (FLOW-063): the file is written to the application's cache and handed to the
@@ -143,14 +144,27 @@ object RecipeExport {
     }
 
     /**
-     * The file's name: the recipe's title with what a file system or a messenger would refuse taken out, or `recipe`
-     * for a recipe with no title; then the product's extension.
+     * The file's name, in ASCII so that a messenger keeps its extension (Telegram drops it from a Cyrillic name): the
+     * recipe's title with Russian letters spelt in Latin ones and accents taken off, every run of anything but a letter
+     * or a digit made one hyphen, at most [MAX_NAME] characters; `recipe` when nothing of the title is left; then the
+     * product's extension.
      */
     fun fileName(title: String): String {
-        val forbidden = "/\\:*?\"<>|"
-        val cleaned = title.map { if (it in forbidden || it.isISOControl()) ' ' else it }.joinToString("")
-            .replace(Regex("\\s+"), " ").trim().trim('.').take(MAX_NAME).trim()
+        val latin = Normalizer.normalize(title.map { CYRILLIC_IN_LATIN[it] ?: it.toString() }.joinToString(""), Normalizer.Form.NFD)
+        val cleaned = latin.replace(Regex("\\p{M}+"), "").replace(Regex("[^A-Za-z0-9]+"), "-").trim('-').take(MAX_NAME).trimEnd('-')
         return (cleaned.ifEmpty { FALLBACK_NAME }) + "." + RecipeFile.EXTENSION
+    }
+
+    /** Russian letters in Latin ones, as passports and road signs commonly spell them. */
+    private val CYRILLIC_IN_LATIN: Map<Char, String> = run {
+        val lower = mapOf(
+            'а' to "a", 'б' to "b", 'в' to "v", 'г' to "g", 'д' to "d", 'е' to "e", 'ё' to "yo", 'ж' to "zh",
+            'з' to "z", 'и' to "i", 'й' to "y", 'к' to "k", 'л' to "l", 'м' to "m", 'н' to "n", 'о' to "o",
+            'п' to "p", 'р' to "r", 'с' to "s", 'т' to "t", 'у' to "u", 'ф' to "f", 'х' to "kh", 'ц' to "ts",
+            'ч' to "ch", 'ш' to "sh", 'щ' to "shch", 'ъ' to "", 'ы' to "y", 'ь' to "", 'э' to "e", 'ю' to "yu",
+            'я' to "ya",
+        )
+        lower + lower.map { (letter, latin) -> letter.uppercaseChar() to latin.replaceFirstChar { it.uppercaseChar() } }
     }
 
     private const val MAX_NAME = 80
