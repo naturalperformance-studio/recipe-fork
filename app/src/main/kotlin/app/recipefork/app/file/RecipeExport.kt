@@ -2,6 +2,7 @@ package app.recipefork.app.file
 
 import android.app.Activity
 import android.content.ClipData
+import android.content.ComponentName
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -107,7 +108,7 @@ object RecipeExport {
     ): Boolean =
         try {
             val uri = write(context, recipes, id, progress)
-            if (uri != null) open(context, shareSheet(uri, sheetTitle))
+            if (uri != null) open(context, shareSheet(context, uri, sheetTitle))
             uri != null
         } catch (e: CancellationException) {
             throw e
@@ -115,14 +116,18 @@ object RecipeExport {
             false
         }
 
-    /** The sheet that lets the person save or send the file at [uri]; [title] heads it. */
-    fun shareSheet(uri: Uri, title: CharSequence): Intent {
+    /**
+     * The sheet that lets the person save or send the file at [uri]; [title] heads it. The application itself is not
+     * offered in it: the recipe is in its book already.
+     */
+    fun shareSheet(context: Context, uri: Uri, title: CharSequence): Intent {
         val send = Intent(Intent.ACTION_SEND)
             .setType(RecipeFile.MIME_TYPE)
             .putExtra(Intent.EXTRA_STREAM, uri)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         send.clipData = ClipData.newRawUri(null, uri)
         return Intent.createChooser(send, title)
+            .putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, arrayOf(ComponentName(context, OpenRecipeFileActivity::class.java)))
     }
 
     /** Opens [sheet] from [context]; outside an activity, in a task of its own. */

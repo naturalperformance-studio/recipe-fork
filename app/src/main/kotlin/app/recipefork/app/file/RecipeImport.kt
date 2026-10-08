@@ -1,12 +1,15 @@
 package app.recipefork.app.file
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import app.recipefork.app.MainActivity
 import app.recipefork.app.book.BookName
 import app.recipefork.app.media.ClipDuration
 import app.recipefork.app.media.RetrieverClipDuration
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaKind
@@ -206,13 +209,54 @@ class RecipeImport(
 
 /**
  * A recipe file handed to the application by another (FLOW-064): the `content:` or `file:` address an `ACTION_VIEW`
- * intent carries. A timer's notification is a view of the application's own address, and is no file.
+ * intent carries, or the stream an `ACTION_SEND` of the product's type carries. A timer's notification is a view of the
+ * application's own address, and is no file.
  */
 object RecipeFileIntents {
     private val FILE_SCHEMES = setOf(android.content.ContentResolver.SCHEME_CONTENT, android.content.ContentResolver.SCHEME_FILE)
 
-    fun fileOf(intent: Intent?): Uri? =
-        intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data?.takeIf { it.scheme in FILE_SCHEMES }
+    fun fileOf(intent: Intent?): Uri? = when (intent?.action) {
+        Intent.ACTION_VIEW -> intent.data
+        Intent.ACTION_SEND -> intent.takeIf { it.type == RecipeFile.MIME_TYPE }?.let(::streamOf)
+        else -> null
+    }?.takeIf { it.scheme in FILE_SCHEMES }
+
+    @Suppress("DEPRECATION")
+    private fun streamOf(intent: Intent): Uri? = intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
+
+    /**
+     * The intent that hands the file [intent] opens or shares on to [MainActivity], in the application's own task —
+     * the one already open, its screen followed as a newly opened file — with the reading of the file granted on; null
+     * where [intent] holds no file.
+     */
+    fun forward(context: Context, intent: Intent?): Intent? {
+        val uri = fileOf(intent) ?: return null
+        return Intent(context, MainActivity::class.java)
+            .setAction(Intent.ACTION_VIEW)
+            .setDataAndType(uri, intent?.type)
+            .addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+            )
+            .also { it.clipData = ClipData.newRawUri(null, uri) }
+    }
+
+    /**
+     * Hands the file [intent] opens or shares on to [MainActivity] through [start] ([forward]). An address the
+     * application was handed no reading of cannot have its reading granted on — the platform refuses the start — so it
+     * is handed on bare, and the import says the file cannot be read.
+     */
+    fun handOn(context: Context, intent: Intent?, start: (Intent) -> Unit) {
+        val forward = forward(context, intent) ?: return
+        try {
+            start(forward)
+        } catch (e: SecurityException) {
+            start(Intent(forward).apply {
+                clipData = null
+                removeFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            })
+        }
+    }
 }
 
 /** Imports [uri], turning any failure of the device into a refusal said to the person rather than a crash. */

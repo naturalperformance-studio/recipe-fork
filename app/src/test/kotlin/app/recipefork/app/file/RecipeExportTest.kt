@@ -210,7 +210,7 @@ class RecipeExportTest {
     fun theFileIsHandedToTheSystemsShareSheet() {
         val recipe = full("Shakshuka").also(::save)
         val uri = export(recipe)
-        val sheet = RecipeExport.shareSheet(uri, "Export “Shakshuka”")
+        val sheet = RecipeExport.shareSheet(context, uri, "Export “Shakshuka”")
         assertEquals(Intent.ACTION_CHOOSER, sheet.action)
         assertEquals("Export “Shakshuka”", sheet.getCharSequenceExtra(Intent.EXTRA_TITLE).toString())
         @Suppress("DEPRECATION")
@@ -223,6 +223,10 @@ class RecipeExportTest {
         assertEquals(uri, send.clipData!!.getItemAt(0).uri)
         // No address, no recipient: the sheet chooses nothing for the person.
         assertNull(send.`package`)
+        // The application is not offered its own file back.
+        @Suppress("DEPRECATION")
+        val excluded = sheet.getParcelableArrayExtra(Intent.EXTRA_EXCLUDE_COMPONENTS)!!.toList()
+        assertEquals(listOf(android.content.ComponentName(context, OpenRecipeFileActivity::class.java)), excluded)
         assertNull(send.component)
         assertFalse(send.hasExtra(Intent.EXTRA_EMAIL))
     }
@@ -298,7 +302,7 @@ class RecipeExportTest {
     fun theGrantIsReadOnly() {
         val uri = export(full("Soup").also(::save))
         @Suppress("DEPRECATION")
-        val send = RecipeExport.shareSheet(uri, "Export").getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!
+        val send = RecipeExport.shareSheet(context, uri, "Export").getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!
         assertTrue(send.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
         assertEquals(0, send.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
         assertEquals(0, send.flags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
