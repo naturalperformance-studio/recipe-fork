@@ -8,6 +8,7 @@ import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
@@ -127,5 +128,40 @@ class BookDatabaseTest {
         assertEquals("book-pool.db", BookName.Pool.fileName)
         assertTrue(context.getDatabasePath("book-pool.db").exists())
         container.activeBook.database.close()
+    }
+
+    // DOM-022, DOM-023: a recipe's ingredient groups and notes are saved and read back; saved again with others, it
+    // holds those alone; deleted, it leaves none behind.
+    @Test
+    fun groupsAndNotesSurviveTheBook() = runBlocking {
+        val recipe = Recipe.create(now, owner = null).copy(
+            title = "Pie",
+            ingredients = listOf(
+                Ingredient(0, 1, null, null, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(300), note = "sifted"),
+                Ingredient(1, null, null, "butter", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(150), note = "cold"),
+                Ingredient(2, 5, null, null, UnitType.TASTE_UNMEASURED, null, null),
+            ),
+            ingredientGroups = listOf(IngredientGroup("Dough", 0), IngredientGroup("Glaze", 2), IngredientGroup("Later", 3)),
+        )
+        repository.save(recipe)
+        val read = repository.get(recipe.id)!!
+        assertEquals(recipe, read)
+        assertEquals(listOf("sifted", "cold", null), read.ingredients.map { it.note })
+        assertEquals(recipe.ingredientGroups, read.ingredientGroups)
+
+        val regrouped = recipe.copy(
+            ingredients = recipe.ingredients.map { it.copy(note = null) },
+            ingredientGroups = listOf(IngredientGroup("All", 1)),
+        )
+        repository.save(regrouped)
+        assertEquals(regrouped, repository.get(recipe.id))
+
+        repository.save(regrouped.copy(ingredientGroups = emptyList()))
+        assertEquals(emptyList<IngredientGroup>(), repository.get(recipe.id)!!.ingredientGroups)
+
+        repository.save(recipe)
+        assertTrue(repository.delete(recipe.id))
+        repository.save(recipe.copy(ingredientGroups = emptyList()))
+        assertEquals(emptyList<IngredientGroup>(), repository.get(recipe.id)!!.ingredientGroups)
     }
 }

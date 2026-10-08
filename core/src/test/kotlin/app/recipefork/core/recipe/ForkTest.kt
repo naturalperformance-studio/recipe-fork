@@ -224,4 +224,17 @@ class ForkTest {
         val unsigned = parent().copy(statedAuthor = null, title = "")
         assertEquals(StatedParent("", ""), unsigned.fork(now, owner = null, byAuthor = false).statedParent)
     }
+
+    // DOM-022, DOM-023: a fork — the owner's own or anyone else's — keeps the ingredient groups and every note.
+    @Test
+    fun aForkKeepsTheIngredientGroupsAndNotes() {
+        val noted = ingredients.map { if (it.position == 2) it.copy(note = "coarse") else it.copy(note = "note ${it.position}") }
+        val groups = listOf(IngredientGroup("Base", 0), IngredientGroup("Seasoning", 2))
+        val parent = parent().copy(ingredients = noted, ingredientGroups = groups)
+        listOf(true, false).forEach { byAuthor ->
+            val fork = parent.fork(now, owner = null, byAuthor = byAuthor)
+            assertEquals(groups, fork.ingredientGroups, "byAuthor=$byAuthor")
+            assertEquals(noted, fork.ingredients, "byAuthor=$byAuthor")
+        }
+    }
 }

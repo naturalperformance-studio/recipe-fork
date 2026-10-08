@@ -1,6 +1,7 @@
 package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
@@ -105,12 +106,12 @@ class RecipeFileTest {
         assertEquals(content, RecipeFile.decode(RecipeFile.encode(content)))
     }
 
-    // The document carries format_version 1 and the recipe's every field, in plain JSON a reader can check.
+    // The document carries format_version 2 and the recipe's every field, in plain JSON a reader can check.
     @Test
     fun theDocumentCarriesItsVersionAndTheRecipe() {
         val original = recipe()
         val json = parse(RecipeFileContent.of(original, null, null))
-        assertEquals(1, json["format_version"]!!.jsonPrimitive.int)
+        assertEquals(2, json["format_version"]!!.jsonPrimitive.int)
         val r = json["recipe"]!!.jsonObject
         assertEquals(original.id.value, r["id"]!!.jsonPrimitive.content)
         assertEquals("ru", r["language"]!!.jsonPrimitive.content)
@@ -208,9 +209,9 @@ class RecipeFileTest {
     @Test
     fun aLaterFormatIsRefused() {
         val later = RecipeFile.encode(RecipeFileContent.of(recipe(), null, null))
-            .replace("\"format_version\": 1", "\"format_version\": 2")
-        assertTrue("\"format_version\": 2" in later)
-        assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(later) }
+            .replace("\"format_version\": 2", "\"format_version\": 3")
+        assertTrue("\"format_version\": 3" in later)
+        assertEquals(3, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
     }
 
     @Test
@@ -226,7 +227,7 @@ class RecipeFileTest {
     }
 
     // A step's part of an ingredient is carried in the document — an exact fraction in a unit named as a row's is —
-    // and reads back; the format stays at version 1. A part in a unit the format does not name does not parse.
+    // and reads back; the format is version 2. A part in a unit the format does not name does not parse.
     @Test
     fun aPartOfAnIngredientIsWrittenAndReadBack() {
         val parted = recipe().copy(
@@ -243,8 +244,60 @@ class RecipeFileTest {
         val share = references[1].jsonObject["share"]!!.jsonObject
         assertEquals("1/2", share["quantity"]!!.jsonPrimitive.content)
         assertEquals("piece", share["unit"]!!.jsonPrimitive.content)
-        assertEquals(1, parse(content)["format_version"]!!.jsonPrimitive.int)
+        assertEquals(2, parse(content)["format_version"]!!.jsonPrimitive.int)
         assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(written.replace("\"piece\"\n", "\"furlong\"\n")) }
         assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(written.replace("\"1/2\"", "\"1/0\"")) }
+    }
+
+    // DOM-022, DOM-023: a recipe's groups and notes are carried in the document and read back whole.
+    @Test
+    fun groupsAndNotesAreWrittenAndReadBack() {
+        val grouped = recipe().copy(
+            ingredients = ingredients.map {
+                when (it.position) {
+                    0 -> it.copy(note = "finely chopped")
+                    3 -> it.copy(note = "room temperature")
+                    else -> it
+                }
+            },
+            ingredientGroups = listOf(IngredientGroup("Dough", 1), IngredientGroup("Glaze", 4)),
+        )
+        val content = RecipeFileContent.of(grouped, null, null)
+        assertEquals(grouped.ingredientGroups, content.ingredientGroups)
+        assertEquals(grouped.ingredients, content.ingredients)
+        val read = RecipeFile.decode(RecipeFile.encode(content))
+        assertEquals(content, read)
+        assertEquals(grouped.ingredientGroups, read.ingredientGroups)
+        assertEquals("finely chopped", read.ingredients[0].note)
+        assertEquals("room temperature", read.ingredients[3].note)
+        val r = parse(content)["recipe"]!!.jsonObject
+        val groups = r["ingredient_groups"]!!.jsonArray.map { it.jsonObject }
+        assertEquals(listOf("Dough", "Glaze"), groups.map { it["name"]!!.jsonPrimitive.content })
+        assertEquals(listOf(1, 4), groups.map { it["first_ingredient"]!!.jsonPrimitive.int })
+        assertEquals("finely chopped", r["ingredients"]!!.jsonArray[0].jsonObject["note"]!!.jsonPrimitive.content)
+        assertFalse("note" in r["ingredients"]!!.jsonArray[1].jsonObject)
+    }
+
+    // DOM-023: a note is read as the editor takes one, trimmed, and a blank one is none.
+    @Test
+    fun aNoteIsReadTrimmedAndABlankOneIsNone() {
+        val noted = recipe().copy(ingredients = ingredients.map { if (it.position == 0) it.copy(note = "@@") else it })
+        val written = RecipeFile.encode(RecipeFileContent.of(noted, null, null))
+        assertEquals("chopped", RecipeFile.decode(written.replace("\"@@\"", "\"  chopped \"")).ingredients[0].note)
+        assertNull(RecipeFile.decode(written.replace("\"@@\"", "\"   \"")).ingredients[0].note)
+    }
+
+    // DOM-022, DOM-023: a document of format 1 — before groups and notes — still reads, with neither.
+    @Test
+    fun aFormat1DocumentReadsWithNoGroupsAndNoNotes() {
+        val content = RecipeFileContent.of(recipe(), null, null)
+        val format1 = RecipeFile.encode(content)
+            .replace("\"format_version\": 2", "\"format_version\": 1")
+            .replace(Regex(",\\s*\"ingredient_groups\": \\[\\]"), "")
+        assertFalse("ingredient_groups" in format1)
+        val read = RecipeFile.decode(format1)
+        assertEquals(content, read)
+        assertEquals(emptyList(), read.ingredientGroups)
+        assertTrue(read.ingredients.all { it.note == null })
     }
 }

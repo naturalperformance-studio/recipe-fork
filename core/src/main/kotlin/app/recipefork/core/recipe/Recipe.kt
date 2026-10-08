@@ -110,6 +110,12 @@ data class Ingredient(
      * Never present together with [quantity].
      */
     val enteredQuantity: String? = null,
+    /**
+     * How the ingredient is prepared ("finely chopped"), shown after it (DOM-023): trimmed, never blank, at most
+     * [RecipeBounds.MAX_NOTE] characters on a recipe that passes the rules; null for none. It is not scaled, searched
+     * or filtered by, and is no part of what the ingredient is — its [qualifier] is.
+     */
+    val note: String? = null,
 ) {
     /**
      * What scaling reads of this ingredient, or null while the row is incomplete or its quantity lies off its grid
@@ -128,7 +134,23 @@ data class Ingredient(
     /** Named by an entry or by words of the author's own, never both (DOM-009), with a quantity scaling can read. */
     val isComplete: Boolean
         get() = (dictionaryEntry != null) != !freeTextName.isNullOrBlank() && authoredQuantity != null
+
+    companion object {
+        /** The note the author's [typed] text gives a row (DOM-023): trimmed, and none when blank. */
+        fun noteOf(typed: String?): String? = typed?.trim()?.takeIf { it.isNotEmpty() }
+    }
 }
+
+/**
+ * A heading in the ingredient list (DOM-022): the rows from [firstPosition] up to the next heading belong to the group
+ * [name]; rows above the first heading belong to none. A group is presentation only: ingredients keep their positions,
+ * so scaling, references, filters and search read them exactly as without groups.
+ *
+ * On a recipe that passes the rules, [name] is 1 to [RecipeBounds.MAX_GROUP_NAME] characters, not blank, and the
+ * recipe's headings stand in order of [firstPosition], at most one at a position, each from 0 to the ingredient count —
+ * a heading at the count has no rows yet.
+ */
+data class IngredientGroup(val name: String, val firstPosition: Int)
 
 enum class MediaKind { PHOTO, VIDEO }
 
@@ -179,6 +201,8 @@ data class Recipe(
     val safetyFlag: Boolean,
     val createdAt: Instant,
     val contentChangedAt: Instant,
+    /** The headings of the ingredient list, in order (DOM-022); empty for a list with no groups. */
+    val ingredientGroups: List<IngredientGroup> = emptyList(),
 ) {
     init {
         require(servings == null || servings >= 1) { "servings must be 1 or more" }

@@ -26,6 +26,8 @@ object RecipeFileCheck {
     const val MAX_TITLE = RecipeBounds.MAX_TITLE
     const val MAX_DESCRIPTION = RecipeBounds.MAX_DESCRIPTION
     const val MAX_TIMER_NAME = RecipeBounds.MAX_TIMER_NAME
+    const val MAX_NOTE = RecipeBounds.MAX_NOTE
+    const val MAX_GROUP_NAME = RecipeBounds.MAX_GROUP_NAME
 
     /** From 1 minute to 99 h 59 min (FLOW-027). */
     private val TIMER_MINUTES = 1L..(99L * 60 + 59)
@@ -85,7 +87,24 @@ object RecipeFileCheck {
                 check(row.divisible == null && row.pieceWeight == null) { "$at carries what only a piece carries" }
             }
             check(row.pieceWeight == null || row.pieceWeight > Rational.ZERO) { "$at weighs nothing a piece" }
+            // DOM-023: a note is trimmed, not blank, and short.
+            row.note?.let { note ->
+                check(note.isNotBlank() && note == note.trim()) { "$at holds a blank or untrimmed note" }
+                check(note.length <= MAX_NOTE) { "$at's note is over $MAX_NOTE characters" }
+            }
         }
+
+        // DOM-022: each heading named, in order of the row it starts, at most one at a row, each at a row of the list or
+        // at its end, where a heading with no rows yet stands.
+        val groups = content.ingredientGroups
+        groups.forEachIndexed { index, group ->
+            val at = "group $index"
+            check(group.name.isNotBlank()) { "$at has no name" }
+            check(group.name.length <= MAX_GROUP_NAME) { "$at's name is over $MAX_GROUP_NAME characters" }
+            check(group.firstPosition in 0..ingredients.size) { "$at starts at no ingredient" }
+        }
+        check(groups.zipWithNext().none { (a, b) -> a.firstPosition == b.firstPosition }) { "two groups start at one ingredient" }
+        check(groups.zipWithNext().all { (a, b) -> a.firstPosition <= b.firstPosition }) { "groups out of order" }
 
         val steps = content.steps
         check(steps.map { it.position } == steps.indices.toList()) { "step positions out of order" }

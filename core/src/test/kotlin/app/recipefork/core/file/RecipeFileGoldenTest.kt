@@ -1,6 +1,7 @@
 package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
@@ -29,10 +30,10 @@ class RecipeFileGoldenTest {
         language = RecipeLanguage.RU,
         servings = 4,
         ingredients = listOf(
-            Ingredient(0, 101, qualifier = "ripe", unitType = UnitType.EXACT, unit = QuantityUnit.KILOGRAM, quantity = Rational.of(3, 2)),
+            Ingredient(0, 101, qualifier = "ripe", unitType = UnitType.EXACT, unit = QuantityUnit.KILOGRAM, quantity = Rational.of(3, 2), note = "finely grated"),
             Ingredient(1, 102, unitType = UnitType.PIECE, unit = QuantityUnit.PIECE, quantity = Rational.of(5, 2), pieceWeight = Rational.of(120), divisible = true),
             Ingredient(2, 103, unitType = UnitType.PIECE, unit = QuantityUnit.PIECE, quantity = Rational.of(2), divisible = false),
-            Ingredient(3, null, freeTextName = "smoked salt", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TABLESPOON, quantity = Rational.of(1, 2)),
+            Ingredient(3, null, freeTextName = "smoked salt", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TABLESPOON, quantity = Rational.of(1, 2), note = "coarse"),
             Ingredient(4, 104, unitType = UnitType.TASTE_MEASURED, unit = QuantityUnit.PINCH, quantity = Rational.of(2)),
             Ingredient(5, 105, qualifier = "black", unitType = UnitType.TASTE_UNMEASURED, unit = null, quantity = null),
             Ingredient(6, null, freeTextName = "cream", unitType = UnitType.EXACT, unit = QuantityUnit.CUBIC_METRE, quantity = null, enteredQuantity = "-3"),
@@ -52,6 +53,7 @@ class RecipeFileGoldenTest {
             FileMedia("m-1", MediaKind.PHOTO, MediaAttachment.Cover, "media/m-1.jpg"),
             FileMedia("m-2", MediaKind.VIDEO, MediaAttachment.ToStep(1), "media/m-2.mp4"),
         ),
+        ingredientGroups = listOf(IngredientGroup("Vegetables", 1), IngredientGroup("Seasoning", 3)),
     )
 
     private val expected = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe.json")).readText()
@@ -61,4 +63,12 @@ class RecipeFileGoldenTest {
 
     @Test
     fun theCheckedInDocumentReadsBackAsTheRecipe() = assertEquals(golden, RecipeFile.decode(expected))
+
+    // DOM-022, DOM-023: the same recipe as format 1 wrote it, before groups and notes, still reads — with neither.
+    @Test
+    fun theFormat1DocumentReadsBackWithNoGroupsAndNoNotes() {
+        val format1 = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe-v1.json")).readText()
+        val withNeither = golden.copy(ingredientGroups = emptyList(), ingredients = golden.ingredients.map { it.copy(note = null) })
+        assertEquals(withNeither, RecipeFile.decode(format1))
+    }
 }

@@ -57,6 +57,24 @@ data class IngredientEntity(
     val divisible: Boolean?,
     /** What the author typed when it reads as no quantity; added in version 2 (FLOW-024 (6)). */
     @ColumnInfo(name = "entered_quantity") val enteredQuantity: String? = null,
+    /** How the ingredient is prepared (DOM-023); null for none. Added in version 4. */
+    val note: String? = null,
+)
+
+/**
+ * A heading of a recipe's ingredient list (DOM-022), the [position]th of its headings; the rows from [firstIngredient]
+ * up to the next heading belong to it. Added in version 4.
+ */
+@Entity(
+    tableName = "ingredient_group",
+    primaryKeys = ["recipe_id", "position"],
+    foreignKeys = [ForeignKey(RecipeEntity::class, ["recipe_id"], ["recipe_id"], onDelete = CASCADE)],
+)
+data class IngredientGroupEntity(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    val position: Int,
+    val name: String,
+    @ColumnInfo(name = "first_ingredient") val firstIngredient: Int,
 )
 
 @Entity(
