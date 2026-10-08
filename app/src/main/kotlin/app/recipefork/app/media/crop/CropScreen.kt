@@ -7,8 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -144,15 +143,20 @@ private fun CropContent(
                     )
                 }
             }
-            Row(
-                Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            // Cancel at the start, Retake and Done at the end; where a large font leaves no room, they wrap to the
+            // next line, Done always last, rather than squeezing a label.
+            FlowRow(
+                Modifier.fillMaxWidth().padding(16.dp).testTag(CropTags.BAR),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.CANCEL)) {
-                    Text(stringResource(R.string.media_crop_cancel), color = Color.White)
+                // Cancel's slot takes what its line leaves, holding Cancel at the start and the others at the end.
+                Box(Modifier.weight(1f)) {
+                    TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.CANCEL)) {
+                        Text(stringResource(R.string.media_crop_cancel), color = Color.White)
+                    }
                 }
-                Spacer(Modifier.weight(1f))
                 if (photo.retake) {
                     TextButton(onClick = onRetake, modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.RETAKE)) {
                         Text(stringResource(R.string.media_crop_retake), color = Color.White)
@@ -225,6 +229,8 @@ object CropTags {
     /** The black ground, running under the system bars. */
     const val GROUND = "crop-ground"
     const val SCREEN = "crop-screen"
+    /** The row of Cancel, Retake and Done. */
+    const val BAR = "crop-bar"
     const val FRAME = "crop-frame"
     const val DONE = "crop-done"
     const val RETAKE = "crop-retake"

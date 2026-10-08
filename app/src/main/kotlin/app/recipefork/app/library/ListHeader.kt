@@ -103,12 +103,15 @@ internal fun rememberListingParams(view: LibraryView, session: LibrarySession): 
     }
 }
 
+/** The gap between the line of the search field and the row of filter chips under it. */
+internal val FILTER_ROW_GAP = 12.dp
+
 private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lowercase())
 
 /**
  * The header above a view's list: its search field (FLOW-035 (4)) and, at its end, the choice of the view's order
- * (FLOW-035 (3)); under them, the row of quick filters (FLOW-035, CAT-002, CAT-006), whose "All filters" opens the sheet
- * of every filter. The [languages] of the view's recipes are what its language filter offers (L10N-005); the entries
+ * (FLOW-035 (3)); under them, [FILTER_ROW_GAP] apart, the row of quick filters (FLOW-035, CAT-002, CAT-006), whose
+ * "All filters" opens the sheet of every filter. The [languages] of the view's recipes are what its language filter offers (L10N-005); the entries
  * they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)); the tags they [carries]
  * most are offered as quick filters. It stands at the top of its view's page, under the tabs, and never scrolls with
  * the list.
@@ -128,7 +131,10 @@ internal fun ListHeader(
 ) {
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
     val focus = LocalFocusManager.current
-    Column(modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 8.dp).testTag(LibraryTags.HEADER)) {
+    Column(
+        modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 8.dp).testTag(LibraryTags.HEADER),
+        verticalArrangement = Arrangement.spacedBy(FILTER_ROW_GAP),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = search.value,

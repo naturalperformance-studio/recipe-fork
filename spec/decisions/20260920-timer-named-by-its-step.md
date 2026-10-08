@@ -1,6 +1,6 @@
 # A timer is named by its step, and a step carries one timer
 
-**Status:** accepted
+**Status:** superseded in part by [20261004-a-step-may-carry-several-timers.md](20261004-a-step-may-carry-several-timers.md) — the naming by the step stands; one timer per step does not
 
 **Context:** FLOW-016 required a timer to be identified by what it is for, and the
 domain model gave `Timer` an optional `label` for that, falling back to the

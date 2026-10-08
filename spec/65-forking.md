@@ -1,7 +1,7 @@
 ---
 slug: FORK
 status: closed
-updated: 2026-10-02
+updated: 2026-10-04
 ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005, FORK-006, FORK-007,
   FORK-008, FORK-009]
 ---
@@ -28,9 +28,9 @@ reference to the parent.
 **Acceptance criteria**
 - Given a forked recipe, when it is opened, then its ingredients match the
   parent's in dictionary entry, qualifier or free-text name, unit type, unit,
-  quantity, piece weight and divisibility,
+  quantity, piece weight, divisibility, group and note (DOM-022, DOM-023),
   and in order.
-- Given a forked recipe, when its steps are opened, then their text, timer and
+- Given a forked recipe, when its steps are opened, then their text, timers and
   ingredient references match the parent's and resolve within the fork
   (DOM-007).
 - Given a parent whose step carries a timer, when the recipe is forked by

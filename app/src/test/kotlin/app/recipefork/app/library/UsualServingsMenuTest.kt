@@ -108,19 +108,19 @@ class UsualServingsMenuTest {
     private fun openChoice() {
         openMenu()
         compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
     }
 
     private fun choose(tag: String) {
         compose.onNodeWithTag(tag).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.USUAL_DIALOG) }
+        compose.waitUntil(PATIENCE_MS) { !exists(SettingsTags.USUAL_DIALOG) }
     }
 
     /** What the settings' item shows of the setting: the count held, or that none is. */
     private fun held() = compose.textsOf(SettingsTags.USUAL).last()
-    private fun count() = compose.textsOf(LibraryTags.USUAL_COUNT).single()
-    private fun fewer() = compose.onNodeWithTag(LibraryTags.USUAL_FEWER).performClick()
-    private fun more() = compose.onNodeWithTag(LibraryTags.USUAL_MORE).performClick()
+    private fun count() = compose.textsOf(SettingsTags.USUAL_COUNT).single()
+    private fun fewer() = compose.onNodeWithTag(SettingsTags.USUAL_FEWER).performClick()
+    private fun more() = compose.onNodeWithTag(SettingsTags.USUAL_MORE).performClick()
 
     // FLOW-017 (4): the settings offer it, with what it holds — "not set" until it is set, the count after.
     @Test
@@ -129,9 +129,9 @@ class UsualServingsMenuTest {
         openMenu()
         assertEquals(listOf("I usually cook for…", "not set"), compose.textsOf(SettingsTags.USUAL))
         compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
         assertEquals("Servings: 2", count())
-        choose(LibraryTags.USUAL_SET)
+        choose(SettingsTags.USUAL_SET)
         assertEquals(Rational.of(2), usual.count.value)
         openMenu()
         assertEquals("2", held())
@@ -152,26 +152,26 @@ class UsualServingsMenuTest {
             listOf("Servings: 2", "Servings: 1", "Servings: ¾", "Servings: ⅔", "Servings: ½", "Servings: ⅓", "Servings: ¼"),
             walk,
         )
-        compose.onNodeWithTag(LibraryTags.USUAL_FEWER).assertIsNotEnabled()
+        compose.onNodeWithTag(SettingsTags.USUAL_FEWER).assertIsNotEnabled()
         fewer()
         assertEquals("Servings: ¼", count())
         more()
         assertEquals("Servings: ⅓", count())
-        compose.onNodeWithTag(LibraryTags.USUAL_FEWER).assertIsEnabled()
-        choose(LibraryTags.USUAL_SET)
+        compose.onNodeWithTag(SettingsTags.USUAL_FEWER).assertIsEnabled()
+        choose(SettingsTags.USUAL_SET)
         assertEquals(Rational.of(1, 3), usual.count.value)
         openMenu()
         assertEquals("⅓", held())
         compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
         // The choice starts at the count held, and walks up without a ceiling.
         assertEquals("Servings: ⅓", count())
         repeat(15) { more() }
         assertEquals("Servings: 12", count())
-        choose(LibraryTags.USUAL_SET)
+        choose(SettingsTags.USUAL_SET)
         assertEquals(Rational.of(12), usual.count.value)
         openChoice()
-        choose(LibraryTags.USUAL_CLEAR)
+        choose(SettingsTags.USUAL_CLEAR)
         assertNull(usual.count.value)
         openMenu()
         assertEquals("not set", held())
@@ -183,7 +183,7 @@ class UsualServingsMenuTest {
         show()
         openChoice()
         more()
-        choose(LibraryTags.USUAL_SET)
+        choose(SettingsTags.USUAL_SET)
         assertEquals(Rational.of(3), PreferencesUsualServings(context).count.value)
     }
 
@@ -222,7 +222,7 @@ class UsualServingsMenuTest {
         val recipe = forFour()
         show()
         openChoice()
-        choose(LibraryTags.USUAL_SET)
+        choose(SettingsTags.USUAL_SET)
         leaveSettings()
         openCard(recipe)
         assertEquals(listOf("Servings: 2"), compose.textsOf(CardTags.SERVINGS))
@@ -247,8 +247,8 @@ class UsualServingsMenuTest {
         assertEquals("Open the settings", AccessibilityChecks.clickActionLabel(menu))
         openChoice()
         listOf(
-            LibraryTags.USUAL_FEWER to ("Fewer servings" to "Lower the usual serving count"),
-            LibraryTags.USUAL_MORE to ("More servings" to "Raise the usual serving count"),
+            SettingsTags.USUAL_FEWER to ("Fewer servings" to "Lower the usual serving count"),
+            SettingsTags.USUAL_MORE to ("More servings" to "Raise the usual serving count"),
         ).forEach { (tag, words) ->
             val node = compose.onNodeWithTag(tag).fetchSemanticsNode()
             assertEquals(words.second, AccessibilityChecks.clickActionLabel(node))
@@ -268,13 +268,13 @@ class UsualServingsMenuTest {
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
         compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.USUAL_DIALOG) }
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
         assertEquals("Порций: 2", count())
-        assertEquals(listOf("Задать"), compose.textsOf(LibraryTags.USUAL_SET))
-        assertEquals(listOf("Не задавать"), compose.textsOf(LibraryTags.USUAL_CLEAR))
+        assertEquals(listOf("Задать"), compose.textsOf(SettingsTags.USUAL_SET))
+        assertEquals(listOf("Не задавать"), compose.textsOf(SettingsTags.USUAL_CLEAR))
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
-        choose(LibraryTags.USUAL_SET)
+        choose(SettingsTags.USUAL_SET)
         openMenu()
         assertEquals("2", held())
     }

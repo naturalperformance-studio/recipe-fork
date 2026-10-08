@@ -1,7 +1,7 @@
 ---
 slug: ST
 status: closed
-updated: 2026-10-01
+updated: 2026-10-04
 ids: [ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-007, ST-010]
 ---
 
@@ -216,7 +216,7 @@ this act existed — the allowance is freed by publishing or by deleting — and
 without it an author who fills 150 MB with drafts has no way out but publication.
 It stops at external visibility for the same reason everything else does: a
 recipe another person can see is one other recipes may name (ST-001, CON-003).
-**Note:** what the owner is told before the deletion is FLOW-053.
+**Note:** how deletion is offered, undone and made final is FLOW-053.
 **Changed 2026-09-28:** a recipe in `local` is deleted on the device alone, since
 the server never held it (user decision of that date,
 [ADR — the device first](../decisions/20260928-the-device-first.md)).

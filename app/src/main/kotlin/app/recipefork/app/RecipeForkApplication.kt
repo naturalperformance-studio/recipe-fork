@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 open class RecipeForkApplication : Application() {
     lateinit var container: AppContainer
@@ -25,20 +24,34 @@ open class RecipeForkApplication : Application() {
      */
     protected open val sweepsMedia: Boolean = true
 
+    /**
+     * Whether the container's background work — the dictionaries' sync with the product's server — is started; a
+     * test's application, which has no server to reach, starts none, so that no test waits on a connection that never
+     * comes while every test after it runs.
+     */
+    protected open val startsBackgroundWork: Boolean = true
+
+    /** The mode the composition root is built in: the build's; a test's application may be built in the other. */
+    protected open val mode: Mode get() = MainActivity.MODE
+
     /** The sweep of the books' media directories, once started. */
     var mediaSweep: Job? = null
+        private set
+
+    /** The container's background work, as started. */
+    var backgroundWork: List<Job> = emptyList()
         private set
 
     override fun onCreate() {
         super.onCreate()
         startLanguage()
-        container = AppContainer(this, MainActivity.MODE)
-        container.start(scope)
+        // Before any screen exists: a shot or a reading of a clip taken as the process starts — a camera's or a
+        // picker's answer delivered to a process started anew for it — is never cleared or let go of as it is taken.
+        PhotoSources.clearLeftovers(this)
+        ClipSources.releaseLeftoverReadings(this)
+        container = AppContainer(this, mode)
+        if (startsBackgroundWork) backgroundWork = container.start(scope)
         if (sweepsMedia) mediaSweep = container.sweepMedia(scope)
-        scope.launch {
-            PhotoSources.clearLeftovers(this@RecipeForkApplication)
-            ClipSources.releaseLeftoverReadings(this@RecipeForkApplication)
-        }
     }
 
     /**

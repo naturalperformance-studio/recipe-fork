@@ -55,10 +55,10 @@ The root cause behind many findings: no Scaffold, TopAppBar, FAB or M3 buttons/c
 Theme-dependent and best left for after F1: 26 (error tone), 29 (type scale), 30 (tonal surface), 31, the colour parts of 7 and 8, the dark-mode part of 1.
 
 ## Product questions the audit raised (not UX fixes; for the owner, one at a time when they become relevant)
-- Undo instead of a confirmation for deleting a recipe (FLOW-053 says immediate and final).
+- *(→ v0.23)* Undo instead of a confirmation for deleting a recipe (FLOW-053 says immediate and final).
 - A step-by-step cooking mode (rejected by ADR 20260921; a lighter "you are here" highlight fits the ADR).
 - Which view the book opens on (FLOW-034: "Marked", which in serverless holds only imports).
 - A blank new recipe left untouched stays as an "Untitled" draft.
 - A fork carries the parent's title unchanged, so two identical titles sit in the book.
-- Ticking off ingredients / steps while cooking (conflicts with "nothing records progress" unless kept in memory).
+- *(→ v0.23, kept on the device until cleared)* Ticking off ingredients / steps while cooking (conflicts with "nothing records progress" unless kept in memory).
 - Tab names "Marked" / "Written here" in a serverless build.

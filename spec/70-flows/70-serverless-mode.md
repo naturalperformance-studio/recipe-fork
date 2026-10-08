@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: [FLOW-061, FLOW-062, FLOW-063, FLOW-064, FLOW-065]
 ---
 
@@ -94,7 +94,8 @@ the user, 2026-10-03.
 
 Where serverless mode is on, when a person chooses to export a recipe from the
 recipe book, the system shall write a file holding that recipe's identity, title,
-description, declared language, tags, serving count, ingredients, steps, timers and
+description, declared language, tags, serving count, ingredients with their
+groups and notes, steps, timers and
 every media item the device
 holds for it, the nickname of its author, and the identity of its direct parent
 with that parent's title and author's nickname where the device holds them, and

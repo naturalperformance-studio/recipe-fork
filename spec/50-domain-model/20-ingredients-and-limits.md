@@ -1,8 +1,8 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-03
-ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-013, DOM-014, DOM-016, DOM-017,
+updated: 2026-10-04
+ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-014, DOM-016, DOM-017,
   DOM-019, DOM-018, DOM-020]
 ---
 
@@ -146,31 +146,8 @@ functional limits; `quality` holds the measurable thresholds that refer to them.
 Amended 2026-10-03 (sync v0.3–v0.14): a step without text is checked against no
 length limit (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03).
 
-### DOM-013 — A step carries at most one timer
-
-If a step already carries a timer, then the system shall refuse to attach a
-second one to it.
-
-**Acceptance criteria**
-- Given a step with no timer, when a timer is attached to it, then it is
-  accepted.
-- Given a step that already carries a timer, when another is attached, then the
-  attachment is refused and the step still carries exactly one.
-- Given two waits in sequence — thirty minutes covered, then fifteen uncovered —
-  when the author writes them, then they are two steps with one timer each, and
-  nothing in the product joins them back together.
-- Given a step whose timer the author deleted, when a new timer is attached,
-  then it is accepted.
-- Given a recipe whose steps each carry a timer, when the reader starts several
-  of them, then all of them run at once (FLOW-016).
-
-**Verification:** attach a second timer to a step through every path the editor
-offers, and confirm each is refused.
-**Source:** user decision, 2026-09-20. A timer is identified by the text of the
-step it belongs to and by nothing else (FLOW-016), so two timers on one step
-would be two things carrying one name. Two waits in sequence are already two
-steps in a kitchen, which is how a cook says them aloud. See
-[ADR — a timer is named by its step](../decisions/20260920-timer-named-by-its-step.md).
+DOM-013 (a step carries at most one timer) was retired on 2026-10-04 and replaced
+by [DOM-024](30-recipe-additions.md).
 
 ### DOM-014 — Both dictionaries are maintained outside the application
 

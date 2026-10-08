@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: [FLOW-033, FLOW-034, FLOW-035, FLOW-036, FLOW-037, FLOW-038, FLOW-039,
   FLOW-040, FLOW-041, FLOW-042, FLOW-043]
 ---
@@ -78,11 +78,10 @@ them inside the section without leaving it.
   the own-recipes view alone, because FLOW-040 gives it no way into the other,
   whatever position the catalogue filter of FLOW-033 is in.
 - Given a switch between the views, when the reader leaves the section and
-  returns within the same session (FLOW-058), then the view they were in is still
-  in force, as CAT-001 keeps a chosen ordering.
-- Given a session (FLOW-058) in which the reader has not chosen a view, when they
-  open the section, then it opens on the view of marked recipes, whatever the
-  account holds.
+  returns — in the same session or after the application was closed — then it
+  opens on the view they last left, kept on the device.
+- Given a device on which the section has never been opened, when it is opened,
+  then it opens on the view of marked recipes, whatever the account holds.
 - Given no account active, when the section is opened, then both views and the
   switch are there, holding the pool of AUTH-026: what was marked and what was
   written with no account.
@@ -103,6 +102,9 @@ account active has both views, because anyone writes recipes (FLOW-002). By user
 decision of that date: it is the person's own recipe book, where they write
 recipes and paste in the ones they found
 ([ADR — the device first](../decisions/20260928-the-device-first.md)).
+**Changed 2026-10-04 (sync v0.15–v0.24):** the section opens on the view last
+left, kept across sessions, rather than on the marked recipes at each new session
+(user decision F-1 of v0.16, 2026-10-04).
 **Source:** user decision, 2026-09-20: finding one's own recipe must be simple,
 and the author's own work is not discovery, so it lives beside favourites rather
 than in the catalogue. Two views rather than two sections, because a state of a
@@ -188,7 +190,7 @@ for any state.
 - Given any state, when the reader looks for its recipes, then the way to see
   only them is the filter of FLOW-037 and not a separate screen.
 - Given an entry in `local`, `private` or `rejected`, when it is shown, then
-  deletion is offered on it and FLOW-053 governs what the author is told; given an
+  deletion is offered on it and FLOW-053 governs how it is done; given an
   entry in any other state, then it is not offered.
 
 **Verification:** hold one account with a recipe in each of the eight states and

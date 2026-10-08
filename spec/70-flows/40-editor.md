@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: [FLOW-022, FLOW-023, FLOW-057, FLOW-024, FLOW-025, FLOW-026, FLOW-028, FLOW-029, FLOW-030]
 ---
 
@@ -60,7 +60,8 @@ unit type, which follows from the unit chosen.
   ordinary row.
 - Given the ingredient field, when what the author typed matches a parent, then
   its leaves are offered before it (FLOW-057), so that a qualifier is a last resort
-  and not a substitute for picking the right entry.
+  and not a substitute for picking the right entry — unless the author typed the
+  parent's label exactly, which then comes first.
 - Given the author picks the entry `филе` and keeps typing `без кожи`, when the row
   is read, then it reads `филе без кожи`, the ingredient holds that entry and that
   qualifier, and no fourth field has appeared.
@@ -100,17 +101,20 @@ a row that says what they mean (OQ-020).
 ### FLOW-057 — What the ingredient field offers for what the author types
 
 When the author types in the ingredient field, the system shall offer every
-dictionary entry whose label, in either interface language, holds for each typed
-word a word that begins with it, ignoring letter case and treating `ё` and `е` as
+dictionary entry whose label or synonym (DOM-021), in either interface language,
+holds for each typed word a word that begins with it, ignoring letter case and treating `ё` and `е` as
 one letter; shall offer the leaves of every parent so offered before that parent;
 shall order the offer by the rule below; and shall offer adding the typed text as
 free text whenever it is not exactly the label of an offered entry.
 
 "Exactly the label" compares the typed text with an entry's label in either
 interface language after the same folding as the offer — letter case ignored,
-`ё` and `е` one letter — and with spaces before and after the text ignored.
+`ё` and `е` one letter — and with spaces before and after the text ignored. A
+plural or inflected form of the label (`яйца`, `onions`) is the label too; an
+unfinished beginning (`молок`) never is.
 
-The offer is ordered in two groups: first the entries whose label, in either
+An entry whose label is exactly the typed text comes first, before everything
+else, including its own leaves. After it, the offer is ordered in two groups: first the entries whose label, in either
 interface language and after the same folding, begins with the typed text; then
 every other entry offered.
 Within each group entries follow the alphabetical order, in the interface
@@ -147,6 +151,12 @@ on its own is offered once, in that place.
 - Given a parent `курица` with leaves `филе` and `крылышки`, and an entry
   `куркума`, when the author types `кур`, then the offer reads `крылышки`,
   `филе`, `курица`, `куркума`, and no entry appears twice.
+- Given the same dictionary, when the author types `курица`, then `курица` is
+  offered first, before `крылышки` and `филе`.
+- Given an entry `яйцо`, when the author types `яйца` and leaves the field, then
+  the row holds the entry `яйцо`, not free text.
+- Given an entry `картофель` with the synonym `картошка`, when the author types
+  `картошка`, then `картофель` is offered and free text is not.
 
 **Verification:** type each of the inputs above against a seeded dictionary, in
 both interface languages.
@@ -162,6 +172,12 @@ which a whole-word normalisation such as L10N-007's cannot; both languages are
 searched because doing so costs nothing and finds the entry an author names in
 either. Free text stands beside the entries because only the author knows whether
 an offered entry is their ingredient.
+**Changed 2026-10-04 (sync v0.15–v0.24):** synonyms find an entry, an exact
+match comes before the leaves of its own parent, and a plural or inflected form
+of a label is exact — as built in v0.15 and accepted by the user at its demo,
+2026-10-04. See
+[ADR — synonyms, and the exact match first](../decisions/20261004-synonyms-and-the-exact-match-first.md),
+which supersedes the ordering of the 2026-09-27 ADR.
 **Cost, stated:** free text is one choice away even when a fitting entry is
 offered, so more ingredients will be free text and found by no filter, and the
 share of free-text ingredients watched as a signal (OBS-001, OQ-019) now counts

@@ -1,4 +1,4 @@
-package app.recipefork.app.library
+package app.recipefork.app.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -52,7 +52,7 @@ internal fun UsualServingsDialog(
     var count by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(LibraryTags.USUAL_DIALOG),
+        modifier = Modifier.testTag(SettingsTags.USUAL_DIALOG),
         title = { Text(stringResource(R.string.library_usual_servings)) },
         text = {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -60,7 +60,7 @@ internal fun UsualServingsDialog(
                     stringResource(R.string.library_usual_count, RequestedServings.text(count, language)),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }
-                        .testTag(LibraryTags.USUAL_COUNT),
+                        .testTag(SettingsTags.USUAL_COUNT),
                 )
                 Step(
                     glyph = "−",
@@ -68,7 +68,7 @@ internal fun UsualServingsDialog(
                     action = stringResource(R.string.library_usual_fewer_action),
                     enabled = count > RequestedServings.MIN,
                     onClick = { count = RequestedServings.decreased(count) },
-                    tag = LibraryTags.USUAL_FEWER,
+                    tag = SettingsTags.USUAL_FEWER,
                 )
                 Step(
                     glyph = "+",
@@ -76,20 +76,20 @@ internal fun UsualServingsDialog(
                     action = stringResource(R.string.library_usual_more_action),
                     enabled = true,
                     onClick = { count = RequestedServings.increased(count) },
-                    tag = LibraryTags.USUAL_MORE,
+                    tag = SettingsTags.USUAL_MORE,
                 )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = { onSet(count) },
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.USUAL_SET),
+                modifier = Modifier.heightIn(min = 48.dp).testTag(SettingsTags.USUAL_SET),
             ) { Text(stringResource(R.string.library_usual_set)) }
         },
         dismissButton = {
             TextButton(
                 onClick = { onSet(null) },
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.USUAL_CLEAR),
+                modifier = Modifier.heightIn(min = 48.dp).testTag(SettingsTags.USUAL_CLEAR),
             ) { Text(stringResource(R.string.library_usual_clear)) }
         },
     )

@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-03
+updated: 2026-10-04
 ids: [FLOW-027, FLOW-031, FLOW-032]
 ---
 
@@ -9,20 +9,21 @@ ids: [FLOW-027, FLOW-031, FLOW-032]
 
 Split on 2026-09-27 from [40-editor.md](40-editor.md); no identifier changed.
 
-### FLOW-027 — A step carries one timer, attached inside it
+### FLOW-027 — A step carries up to five timers, attached inside it
 
-The system shall let the author attach one timer to a step and enter its duration
-there, shall hold the timer as part of that step, and shall not create a second
-timer on a step that already carries one.
+The system shall let the author attach up to five timers to a step and enter each
+one's duration there, shall hold the timers as part of that step, and shall not
+create a sixth timer on a step that already carries five (DOM-024).
 
 **Acceptance criteria**
 - Given a step reading `в духовку на 190 °C на 30 минут`, when the author attaches
   a timer and enters 30 minutes, then the timer belongs to that step.
-- Given a step that already carries a timer, when the author looks at it, then
-  the control for attaching a timer is still shown, and choosing it creates no
-  second timer and shows the statement of GUIDE-007 (DOM-013).
-- Given two waits in sequence, when the author writes them, then they are two
-  steps with one timer each.
+- Given a step that already carries a timer, when the author chooses the control
+  for attaching a timer, then a further timer is added to the step with its own
+  duration and name.
+- Given a step that already carries five timers, when the author chooses that
+  control, then no sixth timer is created and the statement of GUIDE-007 is
+  shown (DOM-024).
 - Given a timer being attached, when the author is asked for anything, then a
   duration is the only thing required of them.
 - Given a timer with no name of its own, when the author looks at it, then the
@@ -35,9 +36,9 @@ timer on a step that already carries one.
 - Given a name the author is typing, when it passes 60 characters, then FLOW-028
   governs — it is marked on leaving the field and refused at submission
   (DOM-012), never refused while typing.
-- Given a step with a timer, when the step is deleted, then its timer is deleted
-  with it.
-- Given a step with a timer, when the step is moved, then the timer moves with it
+- Given a step with timers, when the step is deleted, then its timers are
+  deleted with it.
+- Given a step with timers, when the step is moved, then the timers move with it
   (FLOW-025).
 - Given a duration the author has not entered, when the recipe is saved, then the
   timer is not stored, because a timer without a duration is not a timer.
@@ -50,9 +51,9 @@ timer on a step that already carries one.
 - Given the duration field, when the author tries to enter more than 99 hours
   and 59 minutes, then the field cannot hold it, and the longest timer a recipe
   can carry is 99 hours 59 minutes.
-- Given an editable step carrying a timer, when the author looks at it, then a
-  control removes the timer in one action, together with any name the author
-  gave it; the step then offers attaching a timer again.
+- Given an editable step carrying timers, when the author looks at it, then
+  each timer has a control that removes it alone in one action, together with
+  any name the author gave it.
 
 **Verification:** attach a timer, try to attach a second through every path the
 editor offers, delete the step, move the step, and save a recipe with an
@@ -73,6 +74,11 @@ that date the control stays, and choosing it on a step that has a timer is the
 attempt GUIDE-007 explains.
 **Changed 2026-10-02:** criterion 15 added by user decision at the v0.2 demo —
 emptying the duration was the only way to remove a timer, and it was not found.
+**Changed 2026-10-04 (sync v0.15–v0.24):** a step carries up to five timers
+instead of one, by user decision at the planning of v0.24; the cap of five is a
+req-forge proposal accepted by the user at the sync. Criteria 2, 3, 9, 10 and 15
+changed accordingly. See
+[ADR — a step may carry several timers](../decisions/20261004-a-step-may-carry-several-timers.md).
 **Note:** what the author is told about the first 60 characters of the step
 mattering is in `author-guidance`, not here — this requirement is what the editor
 accepts, that one is what the editor teaches.

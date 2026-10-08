@@ -3,27 +3,19 @@ package app.recipefork.app.settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,7 +26,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -52,14 +43,6 @@ import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.ThemeChoice
 import app.recipefork.app.data.ThemeSetting
 import app.recipefork.app.data.UsualServings
-import app.recipefork.app.library.ClearMediaStatement
-import app.recipefork.app.library.ClearingMedia
-import app.recipefork.app.library.FIRST_CHOICE
-import app.recipefork.app.library.LanguageDialog
-import app.recipefork.app.library.NothingToClear
-import app.recipefork.app.library.UsualServingsDialog
-import app.recipefork.app.library.label
-import app.recipefork.app.library.servingsLanguage
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.scaling.RequestedServings
 import kotlinx.coroutines.CoroutineScope
@@ -179,36 +162,16 @@ private fun ThemeChoice.label(): Int = when (this) {
 
 /** Light, dark or as on the device, the one in force marked; taking one chooses it, dismissing changes nothing. */
 @Composable
-private fun ThemeDialog(chosen: ThemeChoice, onChoose: (ThemeChoice) -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(SettingsTags.THEME_DIALOG),
-        title = { Text(stringResource(R.string.settings_theme)) },
-        text = {
-            Column(Modifier.selectableGroup()) {
-                ThemeChoice.entries.forEach { choice ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .selectable(selected = choice == chosen, role = Role.RadioButton, onClick = { onChoose(choice) })
-                            .testTag(SettingsTags.theme(choice)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(selected = choice == chosen, onClick = null)
-                        Text(stringResource(choice.label()), modifier = Modifier.padding(start = 16.dp))
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(SettingsTags.THEME_CANCEL),
-            ) { Text(stringResource(R.string.settings_theme_cancel)) }
-        },
-    )
-}
+private fun ThemeDialog(chosen: ThemeChoice, onChoose: (ThemeChoice) -> Unit, onDismiss: () -> Unit) = ChoiceDialog(
+    title = stringResource(R.string.settings_theme),
+    choices = ThemeChoice.entries,
+    chosen = chosen,
+    label = { stringResource(it.label()) },
+    cancel = stringResource(R.string.settings_theme_cancel),
+    tags = ChoiceTags(SettingsTags.THEME_DIALOG, SettingsTags.THEME_CANCEL, SettingsTags::theme),
+    onChoose = onChoose,
+    onDismiss = onDismiss,
+)
 
 /** The usual serving count, or that none is set; it opens [UsualServingsDialog]. */
 @Composable
@@ -311,6 +274,20 @@ object SettingsTags {
     const val USUAL = "settings-usual"
     const val HANDLE_RIGHT = "settings-handle-right"
     const val CLEAR_MEDIA = "settings-clear-media"
+
+    // The dialogs moved here from the book's menu keep their tags' values.
+    const val USUAL_DIALOG = "library-usual-dialog"
+    const val USUAL_COUNT = "library-usual-count"
+    const val USUAL_FEWER = "library-usual-fewer"
+    const val USUAL_MORE = "library-usual-more"
+    const val USUAL_SET = "library-usual-set"
+    const val USUAL_CLEAR = "library-usual-clear"
+    /** The clearing of saved media's statement (FLOW-060) and its message of nothing to clear. */
+    const val CLEAR_MEDIA_STATEMENT = "library-clear-media-statement"
+    const val CLEAR_MEDIA_CONFIRM = "library-clear-media-confirm"
+    const val CLEAR_MEDIA_DECLINE = "library-clear-media-decline"
+    const val CLEAR_MEDIA_NOTHING = "library-clear-media-nothing"
+    const val CLEAR_MEDIA_OK = "library-clear-media-ok"
 
     /** The value in force an item shows. */
     fun value(item: String) = "$item-value"

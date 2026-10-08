@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -43,7 +42,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -108,6 +106,7 @@ import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.ListingParams
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.core.recipe.RecipeId
@@ -762,58 +761,6 @@ private fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): Ent
 /** The states in which an own recipe may be deleted by its owner (ST-010); in any other it may not. */
 val DELETABLE = setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECTED)
 
-/** Where the clearing of saved media stands while a dialog of it is shown. */
-internal enum class ClearingMedia { ASKING, NOTHING }
-
-/**
- * The statement before saved media is cleared (FLOW-060): nothing is deleted until it is confirmed, and declining it
- * changes nothing. In [Mode.Serverless] it says the media cannot be fetched again (FLOW-060 (4)) and names nothing of
- * the server (FLOW-062 (1)); in [Mode.Standard] it says the media is fetched again when needed.
- */
-@Composable
-internal fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDecline,
-        modifier = Modifier.testTag(LibraryTags.CLEAR_MEDIA_STATEMENT),
-        title = { Text(stringResource(R.string.library_clear_media_title)) },
-        text = {
-            Text(
-                stringResource(
-                    when (mode) {
-                        Mode.Serverless -> R.string.library_clear_media_statement_serverless
-                        Mode.Standard -> R.string.library_clear_media_statement
-                    },
-                ),
-            )
-        },
-        confirmButton = {
-            DestructiveConfirm(R.string.library_clear_media_confirm, LibraryTags.CLEAR_MEDIA_CONFIRM, onClick = onConfirm)
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDecline,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.CLEAR_MEDIA_DECLINE),
-            ) { Text(stringResource(R.string.library_clear_media_decline)) }
-        },
-    )
-}
-
-/** Said in place of the statement when the device holds no media the clearing would delete. */
-@Composable
-internal fun NothingToClear(onDone: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDone,
-        modifier = Modifier.testTag(LibraryTags.CLEAR_MEDIA_NOTHING),
-        text = { Text(stringResource(R.string.library_clear_media_nothing)) },
-        confirmButton = {
-            TextButton(
-                onClick = onDone,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.CLEAR_MEDIA_OK),
-            ) { Text(stringResource(R.string.library_clear_media_ok)) }
-        },
-    )
-}
-
 /**
  * Deletes [id] from the active book, on the device alone (FLOW-053 (6, 8)), and cancels its timers, so that none of
  * them announces itself or rings afterwards. It runs where the timers' work runs, which outlives the screen, one turn
@@ -1069,18 +1016,12 @@ object LibraryTags {
     const val TITLE = "library-title"
     /** The action beside the title that opens the settings. */
     const val SETTINGS = "library-settings"
-    const val USUAL_DIALOG = "library-usual-dialog"
-    const val USUAL_COUNT = "library-usual-count"
-    const val USUAL_FEWER = "library-usual-fewer"
-    const val USUAL_MORE = "library-usual-more"
-    const val USUAL_SET = "library-usual-set"
-    const val USUAL_CLEAR = "library-usual-clear"
-    /** The clearing of saved media's statement (FLOW-060) and its message of nothing to clear. */
-    const val CLEAR_MEDIA_STATEMENT = "library-clear-media-statement"
-    const val CLEAR_MEDIA_CONFIRM = "library-clear-media-confirm"
-    const val CLEAR_MEDIA_DECLINE = "library-clear-media-decline"
-    const val CLEAR_MEDIA_NOTHING = "library-clear-media-nothing"
-    const val CLEAR_MEDIA_OK = "library-clear-media-ok"
+    /** The clearing of saved media's dialogs, now the settings' ([SettingsTags]); named here too for older tests. */
+    const val CLEAR_MEDIA_STATEMENT = SettingsTags.CLEAR_MEDIA_STATEMENT
+    const val CLEAR_MEDIA_CONFIRM = SettingsTags.CLEAR_MEDIA_CONFIRM
+    const val CLEAR_MEDIA_DECLINE = SettingsTags.CLEAR_MEDIA_DECLINE
+    const val CLEAR_MEDIA_NOTHING = SettingsTags.CLEAR_MEDIA_NOTHING
+    const val CLEAR_MEDIA_OK = SettingsTags.CLEAR_MEDIA_OK
     /** The book's top bar: its title and its settings action, which scrolls away as a list goes down. */
     const val TOP_BAR = "library-top-bar"
     const val SWITCH = "library-switch"

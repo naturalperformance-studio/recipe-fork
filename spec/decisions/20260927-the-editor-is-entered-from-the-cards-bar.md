@@ -1,6 +1,6 @@
 # The editor is entered from the card's bar
 
-**Status:** accepted, corrects FLOW-029 and FLOW-053
+**Status:** accepted, corrects FLOW-029 and FLOW-053; its last sentence on deletion is superseded — since 2026-10-04 the card's menu offers deletion too (FLOW-053, user decision at v0.19)
 
 **Context:** FLOW-029 (2) had the author "choose to edit" from the saved view,
 while FLOW-029 (3) and FLOW-053 (7) read as forbidding any edit control on the

@@ -2,6 +2,7 @@ package app.recipefork.app.file
 
 import android.app.Activity
 import android.content.ClipData
+import android.content.ComponentName
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -20,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.text.Normalizer
 
 /**
  * Export of a recipe to a file (FLOW-063): the file is written to the application's cache and handed to the
@@ -107,7 +109,7 @@ object RecipeExport {
     ): Boolean =
         try {
             val uri = write(context, recipes, id, progress)
-            if (uri != null) open(context, shareSheet(uri, sheetTitle))
+            if (uri != null) open(context, shareSheet(context, uri, sheetTitle))
             uri != null
         } catch (e: CancellationException) {
             throw e
@@ -115,14 +117,18 @@ object RecipeExport {
             false
         }
 
-    /** The sheet that lets the person save or send the file at [uri]; [title] heads it. */
-    fun shareSheet(uri: Uri, title: CharSequence): Intent {
+    /**
+     * The sheet that lets the person save or send the file at [uri]; [title] heads it. The application itself is not
+     * offered in it: the recipe is in its book already.
+     */
+    fun shareSheet(context: Context, uri: Uri, title: CharSequence): Intent {
         val send = Intent(Intent.ACTION_SEND)
             .setType(RecipeFile.MIME_TYPE)
             .putExtra(Intent.EXTRA_STREAM, uri)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         send.clipData = ClipData.newRawUri(null, uri)
         return Intent.createChooser(send, title)
+            .putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, arrayOf(ComponentName(context, OpenRecipeFileActivity::class.java)))
     }
 
     /** Opens [sheet] from [context]; outside an activity, in a task of its own. */
@@ -138,14 +144,35 @@ object RecipeExport {
     }
 
     /**
-     * The file's name: the recipe's title with what a file system or a messenger would refuse taken out, or `recipe`
-     * for a recipe with no title; then the product's extension.
+     * The file's name, in ASCII so that a messenger keeps its extension (Telegram drops it from a Cyrillic name): the
+     * recipe's title, composed (NFC, so that и with a combining breve is й), with Cyrillic letters spelt in Latin ones
+     * and accents taken off, every run of anything but a letter or a digit made one hyphen, at most [MAX_NAME]
+     * characters; a title whose letters are all upper case is spelt all in upper case; `recipe` when nothing of the
+     * title is left; then the product's extension.
      */
     fun fileName(title: String): String {
-        val forbidden = "/\\:*?\"<>|"
-        val cleaned = title.map { if (it in forbidden || it.isISOControl()) ' ' else it }.joinToString("")
-            .replace(Regex("\\s+"), " ").trim().trim('.').take(MAX_NAME).trim()
+        val composed = Normalizer.normalize(title, Normalizer.Form.NFC)
+        val spelt = composed.map { CYRILLIC_IN_LATIN[it] ?: it.toString() }.joinToString("")
+        val letters = composed.filter { it.isLetter() }
+        val cased = if (letters.isNotEmpty() && letters.all { it.isUpperCase() }) spelt.uppercase() else spelt
+        val latin = Normalizer.normalize(cased, Normalizer.Form.NFD)
+        val cleaned = latin.replace(Regex("\\p{M}+"), "").replace(Regex("[^A-Za-z0-9]+"), "-").trim('-').take(MAX_NAME).trimEnd('-')
         return (cleaned.ifEmpty { FALLBACK_NAME }) + "." + RecipeFile.EXTENSION
+    }
+
+    /**
+     * Russian letters in Latin ones, as passports and road signs commonly spell them, and the Ukrainian and Belarusian
+     * letters Russian lacks.
+     */
+    private val CYRILLIC_IN_LATIN: Map<Char, String> = run {
+        val lower = mapOf(
+            'а' to "a", 'б' to "b", 'в' to "v", 'г' to "g", 'д' to "d", 'е' to "e", 'ё' to "yo", 'ж' to "zh",
+            'з' to "z", 'и' to "i", 'й' to "y", 'к' to "k", 'л' to "l", 'м' to "m", 'н' to "n", 'о' to "o",
+            'п' to "p", 'р' to "r", 'с' to "s", 'т' to "t", 'у' to "u", 'ф' to "f", 'х' to "kh", 'ц' to "ts",
+            'ч' to "ch", 'ш' to "sh", 'щ' to "shch", 'ъ' to "", 'ы' to "y", 'ь' to "", 'э' to "e", 'ю' to "yu",
+            'я' to "ya", 'і' to "i", 'ї' to "yi", 'є' to "ye", 'ґ' to "g", 'ў' to "w",
+        )
+        lower + lower.map { (letter, latin) -> letter.uppercaseChar() to latin.replaceFirstChar { it.uppercaseChar() } }
     }
 
     private const val MAX_NAME = 80

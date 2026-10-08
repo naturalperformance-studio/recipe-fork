@@ -5,7 +5,6 @@ import android.net.ConnectivityManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.take
@@ -25,13 +24,23 @@ class AndroidConnectivityTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val shadow = shadowOf(context.getSystemService(ConnectivityManager::class.java))
 
-        val seen = async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+        // Only the callback this flow registers is told: one registered by anything else is no sign that it is. The
+        // flow is collected on this thread, so the shadow's callbacks are never read while another thread adds one.
+        val others = shadow.networkCallbacks.toSet()
+        val seen = async(start = CoroutineStart.UNDISPATCHED) {
             withTimeout(5_000) { AndroidConnectivity(context).online.take(3).toList() }
         }
-        withTimeout(5_000) { while (shadow.networkCallbacks.isEmpty()) delay(10) }
+        val own = withTimeout(5_000) {
+            var registered = shadow.networkCallbacks - others
+            while (registered.isEmpty()) {
+                delay(10)
+                registered = shadow.networkCallbacks - others
+            }
+            registered.single()
+        }
         val network = ShadowNetwork.newInstance(1)
-        shadow.networkCallbacks.forEach { it.onLost(network) }
-        shadow.networkCallbacks.forEach { it.onAvailable(network) }
+        own.onLost(network)
+        own.onAvailable(network)
 
         assertEquals(listOf(true, false, true), seen.await())
     }

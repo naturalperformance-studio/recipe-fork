@@ -1,7 +1,7 @@
 ---
 slug: RET
 status: closed
-updated: 2026-09-28
+updated: 2026-10-04
 ids: [RET-001, RET-002, RET-003, RET-004, RET-005, RET-006, RET-007, RET-008,
   RET-009, RET-010]
 ---
@@ -272,8 +272,8 @@ The system shall hold no record of what a person read, searched for, or cooked.
 - Given the reader's own device, when its held state is enumerated, then what is
   there serves the reader — the recipe books of the accounts on it and of the
   pool, recipes never sent, favourites, the recipe last open with its scale,
-  its fixed ingredients and the place scrolled to (FLOW-012), the usual serving
-  count — and is sent nowhere.
+  its fixed ingredients and the place scrolled to (FLOW-012), the done marks of
+  FLOW-068, the usual serving count — and is sent nowhere.
 - Given `analytics`, when its measurements are defined, then they obey this
   requirement rather than qualifying it: the counters of ANL-004 and ANL-005 are
   kept against the product and against a recipe, never against a person.
