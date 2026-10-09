@@ -64,4 +64,6 @@
     <string name="card_mark_not_done_action">Снять отметку «готово»</string>
     <string name="card_marked_done">Готово</string>
     <string name="card_clear_marks">Снять отметки</string>
+    <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
+    <string name="card_view_timer">%1$s · %2$s</string>
 </resources>

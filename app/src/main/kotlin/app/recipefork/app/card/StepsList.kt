@@ -72,6 +72,10 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  *
  * A tap on a step's line — its number and text — marks it done, and a tap again unmarks it ([marks], FLOW-068); its
  * media and its timer keep their own taps. Without [marks] a step is not marked.
+ *
+ * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a step is as tall as its text, the steps a
+ * modest [VIEW_STEP_SPACING] apart; its done mark is shown but a tap leaves it as it is; and each timer reads as its name
+ * and duration, or its remaining time while it runs, with nothing that starts it ([ViewTimer]).
  */
 @Composable
 internal fun StepsList(
@@ -81,6 +85,7 @@ internal fun StepsList(
     references: CardReferences = CardReferences.NONE,
     media: StepMediaOnCard = StepMediaOnCard.NONE,
     marks: CardMarks? = null,
+    mode: CardMode = CardMode.COOKING,
 ) {
     // A step that is only a reference reads as one, and one that is only a photograph or a clip shows it — or says it
     // is unavailable (FLOW-061); one holding nothing that reads or shows is left out.
@@ -114,7 +119,8 @@ internal fun StepsList(
             StepRow(
                 index + 1, step, references, timers, media, modifier,
                 done = marks?.done(MarkedPart.STEP, step.position) == true,
-                onToggle = marks?.let { { it.toggle(MarkedPart.STEP, step.position) } },
+                onToggle = marks?.takeIf { mode == CardMode.COOKING }?.let { { it.toggle(MarkedPart.STEP, step.position) } },
+                mode = mode,
             )
         }
     }
@@ -130,6 +136,9 @@ internal fun StepsList(
  *
  * The number and text are one target, the card's [CardTarget] tall at least, that marks the step [done] or unmarks it
  * ([onToggle]); a step marked done has its text struck through and muted, and is read as done.
+ *
+ * In [CardMode.VIEW] the number and text answer no tap and are as tall as they are; a mark is shown and read as done; a
+ * timer is a line of text ([ViewTimer]), closer under the text than in cooking.
  */
 @Composable
 private fun StepRow(
@@ -141,9 +150,12 @@ private fun StepRow(
     modifier: Modifier = Modifier,
     done: Boolean = false,
     onToggle: (() -> Unit)? = null,
+    mode: CardMode = CardMode.COOKING,
 ) {
-    Column(modifier.fillMaxWidth().padding(top = if (number > 1) StepSpacing else 0.dp)) {
-        val marking = if (onToggle != null) Modifier.heightIn(min = CardTarget).markedDone(done, onToggle) else Modifier
+    val cooking = mode == CardMode.COOKING
+    val spacing = if (cooking) StepSpacing else VIEW_STEP_SPACING
+    Column(modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp)) {
+        val marking = if (onToggle != null && cooking) Modifier.heightIn(min = CardTarget).markedDone(done, onToggle) else Modifier.shownDone(done)
         Row(
             Modifier.fillMaxWidth().then(marking).semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
                 .testTag(CardTags.step(step.position)),
@@ -159,8 +171,13 @@ private fun StepRow(
         }
         step.timers.indices.forEach { index ->
             // Each timer on its own line: the first a clear gap below the rest, the others closer under it.
-            val gap = if (index == 0) TimerGap else TimersGap
-            StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
+            if (cooking) {
+                val gap = if (index == 0) TimerGap else TimersGap
+                StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
+            } else {
+                val gap = if (index == 0) VIEW_TIMER_GAP else VIEW_TIMERS_GAP
+                ViewTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
+            }
         }
     }
 }
@@ -172,6 +189,15 @@ internal object StepRowTags {
 
 /** The space between one step and the next, beyond the section's own. */
 internal val StepSpacing = 16.dp
+
+/** The space between one step and the next in [CardMode.VIEW], beyond the section's own: 12 dp in all, half of cooking's. */
+internal val VIEW_STEP_SPACING = 4.dp
+
+/** The gap above a step's first timer line in [CardMode.VIEW]. */
+internal val VIEW_TIMER_GAP = 4.dp
+
+/** The gap between one timer line of a step and the next in [CardMode.VIEW]. */
+internal val VIEW_TIMERS_GAP = 2.dp
 
 /** The gap between a step's number and its text. */
 private val StepGap = 12.dp

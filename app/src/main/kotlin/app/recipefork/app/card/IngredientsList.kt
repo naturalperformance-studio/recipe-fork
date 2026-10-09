@@ -80,6 +80,10 @@ import app.recipefork.core.scaling.Rounding
  * Each of the [groups] stands as a subheading over its lines, a heading for the screen reader; lines above the first
  * heading stand under none, and a heading with no lines yet is not shown (DOM-022). A group is presentation only: the
  * lines, their scaling, fixing, marks and references read exactly as without it.
+ *
+ * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a line is as tall as its text with a
+ * modest space around it, its done mark is shown but a tap leaves it as it is, and no line offers fixing; a fixing
+ * control open as the mode changes closes. The scale, the status line, the warning, groups and notes are as in cooking.
  */
 @Composable
 internal fun IngredientsList(
@@ -92,9 +96,10 @@ internal fun IngredientsList(
     marks: CardMarks? = null,
     groups: List<IngredientGroup> = emptyList(),
     onFixing: (Boolean) -> Unit = {},
+    mode: CardMode = CardMode.COOKING,
 ) {
     if (ordered.isEmpty()) return
-    var open by remember(ordered) { mutableStateOf<Int?>(null) }
+    var open by remember(ordered, mode) { mutableStateOf<Int?>(null) }
     // Whether a fixing control is open, told to the card.
     val fixing = open != null
     val told by rememberUpdatedState(onFixing)
@@ -106,7 +111,7 @@ internal fun IngredientsList(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups) }
+        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode) }
     }
 }
 
@@ -123,7 +128,9 @@ private fun Lines(
     onRelease: (Int) -> Unit,
     marks: CardMarks?,
     groups: List<IngredientGroup>,
+    mode: CardMode,
 ) {
+    val cooking = mode == CardMode.COOKING
     // A small gap under the heading; the status line, the warning and the lines then stand one against the next, so that
     // more lines are in sight as the card opens, and a group's subheading has the same gap above it on the first line
     // as on any other.
@@ -153,9 +160,10 @@ private fun Lines(
                     IngredientRow(
                         line, position, column, cardPlace(CardPlaces.ingredient(position)),
                         done = marks?.done(MarkedPart.INGREDIENT, position) == true,
-                        onToggle = marks?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                        onToggle = marks?.takeIf { cooking }?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                        mode = mode,
                     ) { onOpen(if (open == position) null else position) }
-                    val offer = line.fixing
+                    val offer = line.fixing?.takeIf { cooking }
                     if (offer != null) {
                         key(position) {
                             FixAmountUnder(
@@ -307,6 +315,9 @@ private fun quantityColumn(lines: List<IngredientLine>): QuantityColumn {
  * muted, and read as done. A line that offers fixing opens its control from its amount — a target of its own, at
  * least [AMOUNT_TARGET] wide and the line's height, named for what it does — and offers the same to the screen reader
  * as the line's second action, beside the marking ([onOpen]). A line that answers a tap is the card's [CardTarget] tall.
+ *
+ * In [CardMode.VIEW] the line answers no tap and offers no fixing: it is its text with [VIEW_LINE_PADDING] above and
+ * below, a mark it carries shown and read as done.
  */
 @Composable
 private fun IngredientRow(
@@ -316,18 +327,21 @@ private fun IngredientRow(
     place: Modifier,
     done: Boolean,
     onToggle: (() -> Unit)?,
+    mode: CardMode,
     onOpen: () -> Unit,
 ) {
-    val fixable = line.fixing != null
+    val cooking = mode == CardMode.COOKING
+    val fixable = cooking && line.fixing != null
     val fixLabel = stringResource(R.string.card_fix_action)
     val opening by rememberUpdatedState(onOpen)
-    val marking = if (onToggle != null) Modifier.markedDone(done, onToggle) else Modifier
+    val marking = if (onToggle != null && cooking) Modifier.markedDone(done, onToggle) else Modifier.shownDone(done)
     val fixing = if (fixable) {
         Modifier.semantics { customActions = listOf(CustomAccessibilityAction(fixLabel) { opening(); true }) }
     } else {
         Modifier
     }
-    val tall = onToggle != null || fixable
+    val tall = cooking && (onToggle != null || fixable)
+    val padding = if (cooking) LINE_PADDING else VIEW_LINE_PADDING
     Column(place.fillMaxWidth().then(marking).then(fixing).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position))) {
         val name: @Composable () -> Unit = {
             val named = line.name ?: stringResource(R.string.card_unnamed_ingredient)
@@ -376,7 +390,7 @@ private fun IngredientRow(
             val content = maxOf(shownName.height + (shownFixed?.height ?: 0), shownQuantity?.height ?: 0)
             // A line is its text with a little space above and below it, and never less than the card's target where it
             // answers a tap: one line of text is the target's height exactly, and each line it wraps onto adds no more than itself.
-            val height = maxOf(content + 2 * LINE_PADDING.roundToPx(), if (tall) CardTarget.roundToPx() else 0)
+            val height = maxOf(content + 2 * padding.roundToPx(), if (tall) CardTarget.roundToPx() else 0)
             val top = (height - content) / 2
             // It ends where the name begins at the latest, so a tap on the name always marks the line.
             val amountWidth = maxOf(quantityWidth + gap / 2, AMOUNT_TARGET.roundToPx()).coerceAtMost(minOf(width, quantityWidth + gap))
@@ -395,6 +409,9 @@ private fun IngredientRow(
 
 /** The least space above and below a line's text, so that lines that wrap still read apart from the next. */
 private val LINE_PADDING = 8.dp
+
+/** The space above and below a line's text in [CardMode.VIEW]: compact, yet lines that wrap still read apart. */
+internal val VIEW_LINE_PADDING = 4.dp
 
 /** The least width of the target an amount that offers fixing takes, the card's own; it is as tall as its line. */
 private val AMOUNT_TARGET = CardTarget

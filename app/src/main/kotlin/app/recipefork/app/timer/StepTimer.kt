@@ -242,7 +242,7 @@ internal data class Restart(val step: Step, val index: Int, val name: String)
  * notification and the bar read them; otherwise [current], its name as the step reads now, and its number there.
  */
 @Composable
-private fun shownName(step: Step, index: Int, held: RunningTimer?, current: String): String {
+internal fun shownName(step: Step, index: Int, held: RunningTimer?, current: String): String {
     val name = held?.name ?: current
     val number = if (held != null) held.number else TimerName.number(step, index)
     return number?.let { stringResource(R.string.timer_numbered, name, it) } ?: name
@@ -370,7 +370,7 @@ fun RestartQuestion(timers: RecipeTimers) {
 
 /** A timer's full duration as the author set it: hours and whole minutes. */
 @Composable
-private fun durationText(duration: Duration): String {
+internal fun durationText(duration: Duration): String {
     val hours = duration.inWholeHours.toInt()
     val minutes = (duration.inWholeMinutes % 60).toInt()
     return when {
