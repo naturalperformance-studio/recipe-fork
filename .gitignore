@@ -9,3 +9,8 @@ local.properties
 .kotlin/
 # Secrets for local runs
 deploy/local/.env
+# Signing keys never enter the repository (scripts/play-bundle.sh reads the upload key from outside it)
+*.jks
+*.keystore
+*.p12
+*.pfx

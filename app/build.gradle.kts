@@ -84,8 +84,11 @@ android {
         }
         // The app bundle for Google Play (scripts/play-bundle.sh): the release build, shrunk by the same rules, but
         // signed with the upload key instead of the debug one, and never with the debug one: unsigned without the key.
+        // It is always the serverless build, whatever recipefork.serverless says, and src/play/AndroidManifest.xml
+        // takes the network permissions out of it, since that build never reaches a server.
         create("play") {
             initWith(getByName("release"))
+            buildConfigField("boolean", "SERVERLESS", "true")
             signingConfig = signingConfigs.findByName("upload")
             matchingFallbacks += "release"
         }
