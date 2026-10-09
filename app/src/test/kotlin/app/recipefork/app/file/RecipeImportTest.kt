@@ -403,6 +403,14 @@ class RecipeImportTest {
         assertEquals(listOf("Pot 5 l", "Ladle"), RecipeImport.foundRecipe(content, emptyList(), now).equipment)
     }
 
+    // An item a file holds with spaces around it imports trimmed, as a note does.
+    @Test
+    fun anUntrimmedItemImportsTrimmed() = runBlocking {
+        val content = soup().copy(equipment = listOf("  Pot 5 l ", "Ladle\t"))
+        assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
+        assertEquals(listOf("Pot 5 l", "Ladle"), recipes.get(content.id)!!.equipment)
+    }
+
     // A file of format 3, written before equipment, still imports, with none.
     @Test
     fun aFormat3FileImportsWithNoEquipment() = runBlocking {

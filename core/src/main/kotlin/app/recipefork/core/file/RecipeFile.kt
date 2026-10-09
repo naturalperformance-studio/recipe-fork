@@ -158,8 +158,9 @@ object RecipeFile {
         tags = recipe.tags.toSet(),
         language = recipe.language?.let(::languageOf),
         servings = recipe.servings,
-        // Read as written: an item a file holds blank, untrimmed or too long is the check's to refuse.
-        equipment = recipe.equipment,
+        // Each item is read trimmed, as a note is and as the editor holds one; an item blank or too long once trimmed
+        // is the check's to refuse.
+        equipment = recipe.equipment.map { it.trim() },
         ingredients = recipe.ingredients.map { it.toIngredient() },
         ingredientGroups = recipe.ingredientGroups.map { IngredientGroup(it.name, it.firstIngredient) },
         steps = recipe.steps.map { it.toStep() },
