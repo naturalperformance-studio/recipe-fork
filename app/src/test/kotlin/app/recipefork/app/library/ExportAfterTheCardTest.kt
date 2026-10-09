@@ -141,7 +141,7 @@ class ExportAfterTheCardTest {
     }
 
     private fun fix(position: Int, amount: String) {
-        compose.onNodeWithTag(CardTags.ingredient(position)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(position), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.FIX) }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement(amount)
         compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().performClick()

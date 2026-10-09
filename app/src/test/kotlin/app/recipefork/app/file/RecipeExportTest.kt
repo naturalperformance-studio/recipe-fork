@@ -17,6 +17,7 @@ import app.recipefork.core.file.FileParent
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.QuantityUnit
@@ -113,7 +114,7 @@ class RecipeExportTest {
         assertEquals(listOf("recipe.json", "media/"), entries.keys.toList())
         assertEquals(0, entries.getValue("media/").size)
         val json = entries.getValue("recipe.json").toString(Charsets.UTF_8)
-        assertTrue(json, json.contains("\"format_version\": 1"))
+        assertTrue(json, json.contains("\"format_version\": 3"))
     }
 
     // FLOW-063 (3, 5): the document holds the recipe whole; written with no account, it names no author; with no
@@ -322,6 +323,35 @@ class RecipeExportTest {
             assertFalse(runBlocking { RecipeExport.share(context, recipes, soup.id, "Export") })
         } finally {
             cache.setWritable(true)
+        }
+    }
+
+    // DOM-022, DOM-023: a recipe with groups and notes, exported and imported into another book, keeps them.
+    @Test
+    fun groupsAndNotesSurviveExportAndImport() = runBlocking {
+        val recipe = full("Shakshuka").let { full ->
+            full.copy(
+                ingredients = full.ingredients.map { if (it.position == 1) it else it.copy(note = "note ${it.position}") },
+                ingredientGroups = listOf(IngredientGroup("Sauce", 0), IngredientGroup("Eggs", 1)),
+            )
+        }
+        save(recipe)
+        val uri = export(recipe)
+        val read = content(uri)
+        assertEquals(recipe.ingredientGroups, read.ingredientGroups)
+        assertEquals(recipe.ingredients, read.ingredients)
+        val friendsBook = TestBook(context)
+        try {
+            val friends = RecipeRepository(ActiveBook(BookName.OfAccount("export-test-friend"), friendsBook.database))
+            val outcome = RecipeImport(friends, File(context.cacheDir, "export-test-files"), clock = { now })
+                .import { context.contentResolver.openInputStream(uri)!! }
+            assertEquals(ImportOutcome.Added(recipe.id, "Shakshuka"), outcome)
+            val found = friends.get(recipe.id)!!
+            assertEquals(listOf(IngredientGroup("Sauce", 0), IngredientGroup("Eggs", 1)), found.ingredientGroups)
+            assertEquals(listOf("note 0", null, "note 2"), found.ingredients.map { it.note })
+            assertEquals(recipe.ingredients, found.ingredients)
+        } finally {
+            friendsBook.close()
         }
     }
 }

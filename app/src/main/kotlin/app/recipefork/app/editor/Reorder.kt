@@ -106,28 +106,40 @@ class RowDrag internal constructor(
     private var places: Map<Int, ClosedFloatingPointRange<Float>> = emptyMap()
     private var count = 0
 
-    /** Where the dragged row would land now: past every row whose middle its leading edge has crossed. */
+    /** How many rows, from the one picked up, move as one: a group's heading carries its rows. */
+    private var span by mutableStateOf(1)
+
+    /** Whether the rows picked up may land at a place; the place they were picked up from always may. */
+    private var landing: (Int) -> Boolean = { true }
+
+    /**
+     * Where the dragged rows would land now — the place of the first once taken out: past every row whose middle their
+     * leading edge has crossed, then back to the nearest place they may land at.
+     */
     private val target by derivedStateOf {
         val from = dragged ?: return@derivedStateOf -1
-        val own = places[from] ?: return@derivedStateOf from
+        val first = places[from] ?: return@derivedStateOf from
+        val last = places[from + span - 1] ?: first
         fun middle(row: Int) = places[row]?.let { (it.start + it.endInclusive) / 2 }
         if (offset > 0) {
-            val bottom = own.endInclusive + offset
-            from + (from + 1 until count).count { row -> middle(row)?.let { it < bottom } == true }
+            val bottom = last.endInclusive + offset
+            val passed = from + (from + span until count).count { row -> middle(row)?.let { it < bottom } == true }
+            (passed downTo from).first { it == from || landing(it) }
         } else {
-            val top = own.start + offset
-            from - (0 until from).count { row -> middle(row)?.let { it > top } == true }
+            val top = first.start + offset
+            val passed = from - (0 until from).count { row -> middle(row)?.let { it > top } == true }
+            (passed..from).first { it == from || landing(it) }
         }
     }
 
-    /** How far the row at [position] is drawn from its place: the dragged row with the finger, the rows it passed aside. */
+    /** How far the row at [position] is drawn from its place: the dragged rows with the finger, the rows they passed aside. */
     private fun translationOf(position: Int): Float {
         val from = dragged ?: return 0f
-        if (position == from) return offset
+        if (position in from until from + span) return offset
         val to = target
-        val shift = (places[from]?.let { it.endInclusive - it.start } ?: 0f) + spacing
+        val shift = (places[from]?.let { first -> (places[from + span - 1] ?: first).endInclusive - first.start } ?: 0f) + spacing
         return when (position) {
-            in from + 1..to -> -shift
+            in from + span until to + span -> -shift
             in to until from -> shift
             else -> 0f
         }
@@ -138,7 +150,7 @@ class RowDrag internal constructor(
      * its shadow and its lifted colour taking the row's [shape].
      */
     fun row(position: Int, lifted: Color, shape: Shape = RectangleShape): Modifier {
-        val isDragged = dragged == position
+        val isDragged = dragged?.let { position in it until it + span } == true
         return Modifier
             .onGloballyPositioned { coordinates ->
                 if (dragged == null) {
@@ -155,9 +167,11 @@ class RowDrag internal constructor(
             .then(if (isDragged) Modifier.background(lifted, shape) else Modifier)
     }
 
-    internal fun start(position: Int, rows: Int) {
+    internal fun start(position: Int, rows: Int, carried: Int = 1, mayLand: (Int) -> Boolean = { true }) {
         places = placed.toMap()
         count = rows
+        span = carried
+        landing = mayLand
         offset = 0f
         dragged = position
     }
@@ -178,7 +192,7 @@ class RowDrag internal constructor(
     internal fun drop() {
         val from = dragged ?: return
         val to = target
-        if (to in 0 until count && to != from) onDrop(from, to)
+        if (to in 0..count - span && to != from) onDrop(from, to)
         end()
     }
 
@@ -248,7 +262,8 @@ internal val LocalDragColumnOnRight = staticCompositionLocalOf { false }
 /**
  * A row's block with the column it is dragged by down its left edge — or its right edge, where [LocalDragColumnOnRight]
  * says so — the full height of the block, and [content] beside it (FLOW-025). Without a [drag] — a frozen recipe —
- * the block is [content] alone, with no column.
+ * the block is [content] alone, with no column. A block that stays put in an editable list — a group's only row, a
+ * heading with no rows yet — keeps the column's width, empty, so that every block's content shares one edge.
  */
 @Composable
 internal fun DragColumnBlock(
@@ -257,6 +272,9 @@ internal fun DragColumnBlock(
     count: Int,
     tag: String,
     iconTag: String,
+    carried: Int = 1,
+    mayLand: (Int) -> Boolean = { true },
+    still: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     if (drag == null) {
@@ -265,7 +283,7 @@ internal fun DragColumnBlock(
     }
     val onRight = LocalDragColumnOnRight.current
     Layout(
-        contents = listOf({ DragColumn(drag, position, count, tag, iconTag) }, content),
+        contents = listOf({ if (!still) DragColumn(drag, position, count, tag, iconTag, carried, mayLand) }, content),
     ) { (column, body), constraints ->
         val width = DRAG_COLUMN_WIDTH.roundToPx().coerceAtMost(constraints.maxWidth)
         val rest = (constraints.maxWidth - width).coerceAtLeast(0)
@@ -297,7 +315,7 @@ internal fun DragColumnBlock(
  * "Move down" do what it does (A11Y-006).
  */
 @Composable
-private fun DragColumn(drag: RowDrag, position: Int, count: Int, tag: String, iconTag: String) {
+private fun DragColumn(drag: RowDrag, position: Int, count: Int, tag: String, iconTag: String, carried: Int, mayLand: (Int) -> Boolean) {
     Box(
         Modifier
             .fillMaxSize()
@@ -306,7 +324,7 @@ private fun DragColumn(drag: RowDrag, position: Int, count: Int, tag: String, ic
                 testTag = tag
                 hideFromAccessibility()
             }
-            .rowDragGesture(drag, position, count),
+            .rowDragGesture(drag, position, count, carried, mayLand),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -322,19 +340,21 @@ private fun DragColumn(drag: RowDrag, position: Int, count: Int, tag: String, ic
 }
 
 /**
- * Picks the row at [position] of [count] up once the finger has gone past the touch slop vertically, moves it with the
- * finger and drops it where the finger lifts.
+ * Picks the row at [position] of [count] up — with the rows it [carried], itself counted — once the finger has gone past
+ * the touch slop vertically, moves it with the finger and drops it where the finger lifts, at the nearest place it
+ * [mayLand] at.
  */
-private fun Modifier.rowDragGesture(drag: RowDrag, position: Int, count: Int): Modifier = composed {
+private fun Modifier.rowDragGesture(drag: RowDrag, position: Int, count: Int, carried: Int, mayLand: (Int) -> Boolean): Modifier = composed {
+    val landing by rememberUpdatedState(mayLand)
     val placed = remember { arrayOfNulls<LayoutCoordinates>(1) }
     fun onScreen(local: Offset): Float = placed[0]?.takeIf { it.isAttached }?.localToRoot(local)?.y ?: 0f
     onGloballyPositioned { placed[0] = it }
-        .pointerInput(drag, position, count) {
+        .pointerInput(drag, position, count, carried) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
                 val slop = awaitVerticalTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
                     ?: return@awaitEachGesture
-                drag.start(position, count)
+                drag.start(position, count, carried) { landing(it) }
                 drag.moveBy(slop.position.y - down.position.y, onScreen(slop.position))
                 val dropped = try {
                     verticalDrag(slop.id) { change ->

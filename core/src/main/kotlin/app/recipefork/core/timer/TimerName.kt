@@ -7,7 +7,9 @@ import app.recipefork.core.recipe.StepText
 
 /**
  * The name a timer announces itself by (FLOW-016): the name its author gave it, or else one derived from the text of
- * its own step. A step carries at most one timer (DOM-013), so the derived name is never shared within a step.
+ * its own step. A step carries up to five timers (DOM-024), so the derived name may be shared within a step: an unnamed
+ * timer of a step with several is told apart by its [number], which the screen shows with the name in its own words.
+ * A step with one timer reads as it always did, with no number.
  */
 object TimerName {
     /** How many characters of a step's text a derived name keeps (FLOW-016 (3)). */
@@ -106,40 +108,67 @@ object TimerName {
         val mayBeCut: Boolean get() = cut || referenceInOpening
     }
 
-    /** The name [step]'s timer announces itself by, reading its text as typed; null where the step carries no timer. */
-    fun of(step: Step): String? = step.timer?.let { it.label ?: derived(step.text) }
+    /**
+     * The name the timer at [index] of [step] announces itself by, reading the step's text as typed: its given name, or
+     * else the one derived from the step's text; null where the step carries no timer there.
+     */
+    fun of(step: Step, index: Int): String? = step.timers.getOrNull(index)?.let { it.label ?: derived(step.text) }
 
     /**
-     * The name [step]'s timer announces itself by, each of its references — a part as its part — read as [quantity]
-     * gives it, as the card shows it (FLOW-016 (8));
-     * null where the step carries no timer.
+     * The name the timer at [index] of [step] announces itself by, each of the step's references — a part as its
+     * part — read as [quantity] gives it, as the card shows it (FLOW-016 (8)); null where the step carries no timer
+     * there.
      */
-    fun of(step: Step, quantity: ReferenceQuantity): String? =
-        step.timer?.let { it.label ?: derived(StepText.runs(step, quantity)) }
+    fun of(step: Step, index: Int, quantity: ReferenceQuantity): String? =
+        step.timers.getOrNull(index)?.let { it.label ?: derived(StepText.runs(step, quantity)) }
+
+    /**
+     * What tells the timer at [index] of [step] apart from the step's other timers (DOM-024): its place among them,
+     * from 1, where it has no given name and the step carries more than one timer — its name, derived from the step's
+     * text, is then shared. Null where the author named it, where it is the step's only timer, or where the step
+     * carries no timer there. How the number is shown is the screen's.
+     */
+    fun number(step: Step, index: Int): Int? {
+        val timer = step.timers.getOrNull(index) ?: return null
+        return if (timer.label == null && step.timers.size > 1) index + 1 else null
+    }
 
     /**
      * What a derived name is read from, apart from the scale: [step]'s typed text with a mark where each reference sits.
      * Held with a timer started under a derived name, it tells the step it was started from whatever count or fixing
-     * the reader has chosen since; null where the step carries no timer or one with a given name.
+     * the reader has chosen since; null where the step carries no timer at [index] or one with a given name there.
      */
-    fun source(step: Step): String? {
-        val timer = step.timer ?: return null
+    fun source(step: Step, index: Int): String? {
+        val timer = step.timers.getOrNull(index) ?: return null
         if (timer.label != null) return null
         // A part is part of what the name reads; the scale it is read at is not.
         return StepText.render(step) { reference -> REFERENCE_MARK + reference.share?.let { "${it.amount} ${it.unit}" }.orEmpty() }
     }
 
     /**
-     * Whether a timer held as [name], started from [source] ([TimerName.source] at its start), is still [step]'s own:
-     * its given name, unchanged; or a derived name read from exactly the words and references the step holds now —
-     * whatever the scale it was read at, so a change of count, a fixing or an ingredient's quantity keeps it, while any
-     * change to the author's words drops it. A timer held without a source was named from the step's typed text alone.
+     * Whether a timer held as [name], started from [source] ([TimerName.source] at its start) as the timer at [index]
+     * of its step, is still [step]'s timer there: its given name, unchanged; or a derived name read from exactly the
+     * words and references the step holds now — whatever the scale it was read at, so a change of count, a fixing or
+     * an ingredient's quantity keeps it, while any change to the author's words drops it. A timer held without a source
+     * was named from the step's typed text alone.
      */
-    fun holds(step: Step, name: String, source: String?): Boolean {
-        val timer = step.timer ?: return false
+    fun holds(step: Step, index: Int, name: String, source: String?): Boolean {
+        val timer = step.timers.getOrNull(index) ?: return false
         timer.label?.let { return source == null && it == name }
-        return if (source != null) source(step) == source else of(step) == name
+        return if (source != null) source(step, index) == source else of(step, index) == name
     }
+
+    /** Bridge for code written when a step held one timer: [of] for the step's first timer. */
+    fun of(step: Step): String? = of(step, 0)
+
+    /** Bridge for code written when a step held one timer: [of] for the step's first timer. */
+    fun of(step: Step, quantity: ReferenceQuantity): String? = of(step, 0, quantity)
+
+    /** Bridge for code written when a step held one timer: [source] for the step's first timer. */
+    fun source(step: Step): String? = source(step, 0)
+
+    /** Bridge for code written when a step held one timer: [holds] for the step's first timer. */
+    fun holds(step: Step, name: String, source: String?): Boolean = holds(step, 0, name, source)
 
     /**
      * Whether [codePoint] belongs to the word it stands in: a letter or digit, a hyphen or an apostrophe inside a

@@ -88,6 +88,7 @@ import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.SnackbarAction
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -114,6 +115,8 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
     dragHandleSide = container.dragHandleSide,
     mode = container.mode,
     clipStore = container::clipStore,
+    animatedImages = { container.animatedImages },
+    animationStore = { context, _ -> container.animationStore(context) },
 )
 
 /**
@@ -141,10 +144,11 @@ fun EditorScreen(
     val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { mediaWork.stepKeys ?: RowKeys() }
     remember(mediaWork, stepKeys) { mediaWork.stepKeys = stepKeys }
     val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val groupKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
     // Not saved: what the editor holds for this session alone — the references offered once (GUIDE-008) among it —
     // starts again after the activity is recreated or the process restored, which is intended, nothing of a hint
     // being kept (GUIDE-005).
-    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys) }
+    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys, groupKeys) }
     // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
     // touched from a database thread.
     LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }
@@ -157,6 +161,8 @@ fun EditorScreen(
     val context = LocalContext.current
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
     val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
+    val animated = remember(context, environment) { environment.animatedImages(context.applicationContext) }
+    val animations = remember(context, environment, animated) { environment.animationStore(context.applicationContext, animated) }
     remember(mediaWork, editor) { mediaWork.show(editor) }
     val activity = LocalActivity.current
     DisposableEffect(mediaWork) {
@@ -217,13 +223,14 @@ fun EditorScreen(
                     // The keyboard's Next goes from the title to the serving count, and from there into the rows.
                     val servings = remember { FocusRequester() }
                     val rows = remember { RowFocus() }
+                    val headings = remember { RowFocus() }
                     TitleAndLanguage(shown, editor) { servings.requestFocus() }
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
-                    ServingCount(shown, editor, servings, rows)
+                    ServingCount(shown, editor, servings, rows, headings)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
-                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows)
-                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork)
+                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
+                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork, animated, animations)
                     }
                     Description(shown, editor)
                 }
@@ -242,7 +249,11 @@ internal fun EditorStatementHost(host: SnackbarHostState, modifier: Modifier = M
     SnackbarHost(host, modifier.imePadding()) { data ->
         val swipe = rememberSwipeToDismissBoxState()
         SwipeToDismissBox(swipe, backgroundContent = {}, onDismiss = { data.dismiss() }) {
-            Snackbar(data, modifier = Modifier.testTag(EditorTags.STATEMENT))
+            val label = data.visuals.actionLabel
+            Snackbar(
+                modifier = Modifier.testTag(EditorTags.STATEMENT),
+                action = label?.let { { SnackbarAction(it, data::performAction) } },
+            ) { Text(data.visuals.message) }
         }
     }
 }
@@ -301,7 +312,13 @@ private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: EditorStat
 private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements) {
     val removal by editor.removal.collectAsState()
     val text = removal?.let {
-        stringResource(if (it.step) R.string.editor_step_removed else R.string.editor_ingredient_removed, it.position + 1)
+        val said = when (it.kind) {
+            Removal.Kind.STEP -> R.string.editor_step_removed
+            Removal.Kind.INGREDIENT -> R.string.editor_ingredient_removed
+            Removal.Kind.GROUP -> R.string.editor_group_removed
+            Removal.Kind.TIMER -> if (it.ofSeveral) R.string.editor_timer_removed_numbered else R.string.editor_timer_removed
+        }
+        if (it.ofSeveral) stringResource(said, it.position + 1, it.index + 1) else stringResource(said, it.position + 1)
     }
     val undo = stringResource(R.string.editor_undo)
     val offered = remember { arrayOfNulls<Job>(1) }
@@ -428,12 +445,16 @@ internal fun EditorButton(
     }
 }
 
-/** What a row's menu does to its row (FLOW-025): a new row above or below it, or the row one place up or down. */
+/**
+ * What a row's menu does to its row (FLOW-025): a new row above or below it, or the row one place up or down; for an
+ * ingredient row, also a group's heading above it (DOM-022).
+ */
 enum class RowAction(@StringRes val label: Int) {
     INSERT_ABOVE(R.string.editor_row_insert_above),
     INSERT_BELOW(R.string.editor_row_insert_below),
     MOVE_UP(R.string.editor_row_move_up),
     MOVE_DOWN(R.string.editor_row_move_down),
+    GROUP_ABOVE(R.string.editor_row_group_above),
     ;
 
     /** How a test tag names the action: `insert-above` and so on. */
@@ -442,8 +463,8 @@ enum class RowAction(@StringRes val label: Int) {
 
 /**
  * The menu of the row at [position] of [count] rows: a 48 dp control named for its row by [name] (A11Y-003, A11Y-005)
- * that opens the four actions of FLOW-025 — the first row has no "Move up", the last no "Move down". Each action is
- * one tap, so nothing here is done only by dragging (A11Y-006).
+ * that opens [actions] — by default the four of FLOW-025, the first row with no "Move up", the last with no "Move down".
+ * Each action is one tap, so nothing here is done only by dragging (A11Y-006).
  */
 @Composable
 internal fun RowMenu(
@@ -454,13 +475,15 @@ internal fun RowMenu(
     actionTag: (RowAction) -> String,
     onAction: (RowAction) -> Unit,
     modifier: Modifier = Modifier,
+    actions: List<RowAction> = RowAction.entries.filter {
+        it != RowAction.GROUP_ABOVE && (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1)
+    },
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier) {
         BlockAction(R.drawable.ic_row_menu, name, tag, onClick = { expanded = !expanded })
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            RowAction.entries
-                .filter { (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1) }
+            actions
                 .forEach { action ->
                     DropdownMenuItem(
                         text = { Text(stringResource(action.label)) },
@@ -575,7 +598,7 @@ object EditorTags {
     const val STEPS_MARK = "editor-steps-mark"
     const val DESCRIPTION_MARK = "editor-description-mark"
     fun stepMark(position: Int) = "editor-step-$position-mark"
-    fun timerNameMark(position: Int) = "editor-step-$position-timer-name-mark"
+    fun timerNameMark(position: Int, index: Int = 0) = "${timer(position, index)}-name-mark"
     const val LANGUAGE = "editor-language"
     const val LANGUAGE_CLEAR = "editor-language-clear"
     /** One option of the language's segmented switch: `editor-language-ru`, `editor-language-en`. */
@@ -603,6 +626,16 @@ object EditorTags {
     fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
+    /** "Add group" under the ingredient list, and the parts of the heading at [index] of the groups (DOM-022). */
+    const val GROUP_ADD = "editor-group-add"
+    fun group(index: Int) = "editor-group-$index"
+    fun groupName(index: Int) = "editor-group-$index-name"
+    fun groupMark(index: Int) = "editor-group-$index-mark"
+    fun groupRemove(index: Int) = "editor-group-$index-remove"
+    fun groupMenu(index: Int) = "editor-group-$index-menu"
+    fun groupAction(index: Int, action: RowAction) = "editor-group-$index-${action.tag}"
+    fun groupHandle(index: Int) = "editor-group-$index-handle"
+    fun groupHandleIcon(index: Int) = "editor-group-$index-handle-icon"
     fun divisibility(position: Int) = "editor-ingredient-$position-divisibility"
     fun divisible(position: Int, divisible: Boolean) = "editor-ingredient-$position-divisible-$divisible"
     fun unitOption(unit: QuantityUnit) = "editor-unit-${unit.name}"
@@ -635,19 +668,26 @@ object EditorTags {
     fun stepClipCancel(position: Int) = "editor-step-$position-clip-cancel"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
     fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
+    /** The control that adds a timer to the step at [position], and the statement it makes on a sixth (GUIDE-007). */
     fun timerAttach(position: Int) = "editor-step-$position-timer"
-    fun timerRemove(position: Int) = "editor-step-$position-timer-remove"
     fun timerStatement(position: Int) = "editor-step-$position-timer-statement"
-    fun timerHours(position: Int) = "editor-step-$position-timer-hours"
-    fun timerMinutes(position: Int) = "editor-step-$position-timer-minutes"
-    fun timerName(position: Int) = "editor-step-$position-timer-name"
-    fun timerNameFollows(position: Int) = "editor-step-$position-timer-name-follows"
+    /**
+     * The parts of the timer at [index] of those the step at [position] shows (DOM-024). The first timer's tags read as
+     * they did when a step carried one: `editor-step-0-timer-hours`; the second's `editor-step-0-timer-1-hours`.
+     */
+    fun timer(position: Int, index: Int) = "editor-step-$position-timer${timerPlace(index)}"
+    private fun timerPlace(index: Int) = if (index == 0) "" else "-$index"
+    fun timerRemove(position: Int, index: Int = 0) = "${timer(position, index)}-remove"
+    fun timerHours(position: Int, index: Int = 0) = "${timer(position, index)}-hours"
+    fun timerMinutes(position: Int, index: Int = 0) = "${timer(position, index)}-minutes"
+    fun timerName(position: Int, index: Int = 0) = "${timer(position, index)}-name"
+    fun timerNameFollows(position: Int, index: Int = 0) = "${timer(position, index)}-name-follows"
     /** What a step's unnamed timer will announce itself by, shown once the step is left (GUIDE-006). */
-    fun timerNotification(position: Int) = "editor-step-$position-timer-notification"
-    fun timerNotificationText(position: Int) = "editor-step-$position-timer-notification-text"
-    fun timerNotificationFollows(position: Int) = "editor-step-$position-timer-notification-follows"
-    fun timerNotificationName(position: Int) = "editor-step-$position-timer-notification-name"
-    fun timerDuration(position: Int) = "editor-step-$position-timer-duration"
+    fun timerNotification(position: Int, index: Int = 0) = "${timer(position, index)}-notification"
+    fun timerNotificationText(position: Int, index: Int = 0) = "${timer(position, index)}-notification-text"
+    fun timerNotificationFollows(position: Int, index: Int = 0) = "${timer(position, index)}-notification-follows"
+    fun timerNotificationName(position: Int, index: Int = 0) = "${timer(position, index)}-notification-name"
+    fun timerDuration(position: Int, index: Int = 0) = "${timer(position, index)}-duration"
     /** The tooltip a block's action tagged [action] shows on a long press. */
     fun tooltip(action: String) = "$action-tooltip"
     const val DESCRIPTION = "editor-description"

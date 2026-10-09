@@ -8,6 +8,7 @@ import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
@@ -128,4 +129,73 @@ class BookDatabaseTest {
         assertTrue(context.getDatabasePath("book-pool.db").exists())
         container.activeBook.database.close()
     }
+
+    // DOM-022, DOM-023: a recipe's ingredient groups and notes are saved and read back; saved again with others, it
+    // holds those alone; deleted, it leaves none behind.
+    @Test
+    fun groupsAndNotesSurviveTheBook() = runBlocking {
+        val recipe = Recipe.create(now, owner = null).copy(
+            title = "Pie",
+            ingredients = listOf(
+                Ingredient(0, 1, null, null, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(300), note = "sifted"),
+                Ingredient(1, null, null, "butter", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(150), note = "cold"),
+                Ingredient(2, 5, null, null, UnitType.TASTE_UNMEASURED, null, null),
+            ),
+            ingredientGroups = listOf(IngredientGroup("Dough", 0), IngredientGroup("Glaze", 2), IngredientGroup("Later", 3)),
+        )
+        repository.save(recipe)
+        val read = repository.get(recipe.id)!!
+        assertEquals(recipe, read)
+        assertEquals(listOf("sifted", "cold", null), read.ingredients.map { it.note })
+        assertEquals(recipe.ingredientGroups, read.ingredientGroups)
+
+        val regrouped = recipe.copy(
+            ingredients = recipe.ingredients.map { it.copy(note = null) },
+            ingredientGroups = listOf(IngredientGroup("All", 1)),
+        )
+        repository.save(regrouped)
+        assertEquals(regrouped, repository.get(recipe.id))
+
+        repository.save(regrouped.copy(ingredientGroups = emptyList()))
+        assertEquals(emptyList<IngredientGroup>(), repository.get(recipe.id)!!.ingredientGroups)
+
+        repository.save(recipe)
+        assertTrue(repository.delete(recipe.id))
+        repository.save(recipe.copy(ingredientGroups = emptyList()))
+        assertEquals(emptyList<IngredientGroup>(), repository.get(recipe.id)!!.ingredientGroups)
+    }
+
+    // DOM-024: a step's timers are saved and read back in order, each with its duration and name; saved again with
+    // others, the step holds those alone; deleted, the recipe leaves no timer behind.
+    @Test
+    fun severalTimersOfAStepSurviveTheBook() = runBlocking {
+        val recipe = Recipe.create(now, owner = null).copy(
+            title = "Pasta",
+            steps = listOf(
+                Step(0, "Boil the pasta, meanwhile reduce the sauce", timers = listOf(
+                    Timer(10.minutes), Timer(6.minutes, "Sauce"), Timer(2.minutes), Timer(1.minutes, "Garlic"), Timer((99 * 60 + 59).minutes),
+                )),
+                Step(1, "Drain"),
+                Step(2, "Serve", timer = Timer(1.minutes, "Plates")),
+            ),
+        )
+        repository.save(recipe)
+        val read = repository.get(recipe.id)!!
+        assertEquals(recipe, read)
+        assertEquals(recipe.steps.map { it.timers }, read.steps.map { it.timers })
+
+        val fewer = recipe.copy(steps = recipe.steps.map { step -> if (step.position == 0) step.withoutTimer(1).withoutTimer(0) else step })
+        repository.save(fewer)
+        assertEquals(listOf(Timer(2.minutes), Timer(1.minutes, "Garlic"), Timer((99 * 60 + 59).minutes)), repository.get(recipe.id)!!.steps[0].timers)
+        assertEquals(fewer, repository.get(recipe.id))
+
+        assertTrue(repository.delete(recipe.id))
+        assertEquals(0, timerRows())
+        repository.save(recipe.copy(steps = recipe.steps.map { it.copy(timers = emptyList()) }))
+        assertEquals(emptyList<List<Timer>>(), repository.get(recipe.id)!!.steps.flatMap { it.timers })
+        assertEquals(0, timerRows())
+    }
+
+    private fun timerRows(): Int =
+        database.openHelper.readableDatabase.query("select count(*) from step_timer").use { it.moveToFirst(); it.getInt(0) }
 }

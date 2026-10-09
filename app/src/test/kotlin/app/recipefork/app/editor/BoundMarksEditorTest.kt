@@ -312,6 +312,33 @@ class BoundMarksEditorTest {
         assertEquals(name, stored(id).steps[0].timer!!.label)
     }
 
+    // DOM-024: each of a step's timers has its own name field and its own mark; a mark stays with its timer when one
+    // before it is removed.
+    @Test
+    fun eachTimerNameIsMarkedOnItsOwn() {
+        val id = openDirectly(
+            draft {
+                it.copy(title = "Bread", steps = listOf(Step(0, "Bake.", timers = listOf(Timer(30.minutes), Timer(5.minutes), Timer(2.minutes)))))
+            },
+        )
+        val name = "The bread in the oven on the lowest shelf, with a tray of water beneath it for steam"
+        type(EditorTags.timerName(0, 1), name)
+        enter(EditorTags.TITLE)
+        awaitMark(EditorTags.timerNameMark(0, 1), over(R.string.editor_mark_characters_over, 60, name.length))
+        assertTrue(!marked(EditorTags.timerNameMark(0, 0)) && !marked(EditorTags.timerNameMark(0, 2)))
+        assertEquals(listOf(null, name, null), stored(id).steps[0].timers.map { it.label })
+
+        // The first timer taken off: the long name, now the first, keeps its mark; the others have none.
+        compose.onNodeWithTag(EditorTags.timerRemove(0, 0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { stored(id).steps[0].timers.size == 2 }
+        awaitMark(EditorTags.timerNameMark(0, 0), over(R.string.editor_mark_characters_over, 60, name.length))
+        assertTrue(!marked(EditorTags.timerNameMark(0, 1)))
+
+        // Completed, it loses its mark.
+        type(EditorTags.timerName(0, 0), "Bread")
+        awaitNoMark(EditorTags.timerNameMark(0, 0))
+    }
+
     // The mark is words and an icon, never colour alone, and the screen reader reads it — as it appears, too.
     @Test
     fun aMarkIsWordsAndAnIconTheScreenReaderReads() {

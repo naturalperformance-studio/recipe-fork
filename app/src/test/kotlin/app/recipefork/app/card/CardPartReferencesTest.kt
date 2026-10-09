@@ -169,7 +169,7 @@ class CardPartReferencesTest {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.step(1))).fetchSemanticsNodes().size == 1 }
         assertEquals("Dust with 100 g", shown(0))
         assertEquals("Rub with 2 pc", shown(1))
-        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("200")
         compose.waitForIdle()

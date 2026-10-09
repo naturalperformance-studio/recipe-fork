@@ -26,6 +26,9 @@ object RecipeFileCheck {
     const val MAX_TITLE = RecipeBounds.MAX_TITLE
     const val MAX_DESCRIPTION = RecipeBounds.MAX_DESCRIPTION
     const val MAX_TIMER_NAME = RecipeBounds.MAX_TIMER_NAME
+    const val MAX_TIMERS = RecipeBounds.MAX_TIMERS
+    const val MAX_NOTE = RecipeBounds.MAX_NOTE
+    const val MAX_GROUP_NAME = RecipeBounds.MAX_GROUP_NAME
 
     /** From 1 minute to 99 h 59 min (FLOW-027). */
     private val TIMER_MINUTES = 1L..(99L * 60 + 59)
@@ -85,18 +88,39 @@ object RecipeFileCheck {
                 check(row.divisible == null && row.pieceWeight == null) { "$at carries what only a piece carries" }
             }
             check(row.pieceWeight == null || row.pieceWeight > Rational.ZERO) { "$at weighs nothing a piece" }
+            // DOM-023: a note is trimmed, not blank, and short.
+            row.note?.let { note ->
+                check(note.isNotBlank() && note == note.trim()) { "$at holds a blank or untrimmed note" }
+                check(note.length <= MAX_NOTE) { "$at's note is over $MAX_NOTE characters" }
+            }
         }
+
+        // DOM-022: each heading named, in order of the row it starts, at most one at a row, each at a row of the list or
+        // at its end, where a heading with no rows yet stands.
+        val groups = content.ingredientGroups
+        groups.forEachIndexed { index, group ->
+            val at = "group $index"
+            check(group.name.isNotBlank()) { "$at has no name" }
+            check(group.name.length <= MAX_GROUP_NAME) { "$at's name is over $MAX_GROUP_NAME characters" }
+            check(group.firstPosition in 0..ingredients.size) { "$at starts at no ingredient" }
+        }
+        check(groups.zipWithNext().none { (a, b) -> a.firstPosition == b.firstPosition }) { "two groups start at one ingredient" }
+        check(groups.zipWithNext().all { (a, b) -> a.firstPosition <= b.firstPosition }) { "groups out of order" }
 
         val steps = content.steps
         check(steps.map { it.position } == steps.indices.toList()) { "step positions out of order" }
         steps.forEach { step ->
             val at = "step ${step.position}"
             check(step.text.length <= MAX_STEP_TEXT) { "$at is over $MAX_STEP_TEXT characters" }
-            step.timer?.let { timer ->
+            // DOM-024: up to five timers, each within FLOW-027's range and DOM-012's name limit.
+            check(step.timers.size <= MAX_TIMERS) { "$at has more than $MAX_TIMERS timers" }
+            step.timers.forEachIndexed { index, timer ->
                 check(timer.duration.inWholeMinutes in TIMER_MINUTES && timer.duration.inWholeSeconds % 60 == 0L) {
-                    "$at has a timer out of range"
+                    "$at has timer $index out of range"
                 }
-                check(timer.label == null || timer.label.length <= MAX_TIMER_NAME) { "$at's timer name is over $MAX_TIMER_NAME characters" }
+                check(timer.label == null || timer.label.length <= MAX_TIMER_NAME) {
+                    "$at's timer $index name is over $MAX_TIMER_NAME characters"
+                }
             }
             step.ingredientReferences.forEach { reference ->
                 check(reference.ingredientPosition in ingredients.indices) { "$at refers to no ingredient" }

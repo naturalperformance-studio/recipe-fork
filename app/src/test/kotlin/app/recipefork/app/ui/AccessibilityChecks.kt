@@ -132,6 +132,57 @@ object AccessibilityChecks {
     }
 
     /**
+     * Play's pre-launch "item labels" finding, with A11Y-005 (1): no two interactive elements the reader reaches in one
+     * window — the screen, or a dialog, a sheet or a menu over it — announce the same thing (the same label and the same
+     * click label), unless each acts on a different named thing. Two such elements act on different named things when,
+     * below the nearest layout that holds both, each lies in a part of the screen that names something the other's part
+     * does not: two entries' ⋮ beside their recipes' titles, two timers' fields beside their names. Two that stand
+     * together with nothing to tell them apart — two "Delete" in one menu, two "Back" in one bar — fail.
+     *
+     * The elements are read from the merged tree, as the reader reaches them. Where they lie is read from the layout,
+     * which groups what the screen shows together whether or not a group carries semantics of its own; what names each
+     * part is every text, description and field's content laid out within it, the element itself left out. Material's
+     * snackbar pane is passed over ([snackbarPane]), its snackbar checked.
+     */
+    fun assertDistinctLabels(screen: SemanticsNodeInteractionsProvider) {
+        val merged = screen.onAllNodes(isInteractive).fetchSemanticsNodes().filterNot { snackbarPane.matches(it) }
+        val unmerged = screen.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true).fetchSemanticsNodes()
+        // Each node's layout ancestors, from its window's root down to itself.
+        fun layoutPath(node: SemanticsNode): List<Int> =
+            generateSequence(node.layoutInfo) { it.parentInfo }.map { it.semanticsId }.toList().reversed()
+        val paths = unmerged.associate { it.id to layoutPath(it) }
+        // What names the part of the screen laid out as [part], the element [excluded] and what it holds left out.
+        fun namesWithin(part: Int, excluded: Int): String = unmerged
+            .filter { node -> paths.getValue(node.id).let { part in it && excluded !in it } }
+            .flatMap { listOf(announcedLabel(it), it.config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty()) }
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+
+        val same = merged.filter { announcedLabel(it).isNotBlank() }
+            .groupBy { announcedLabel(it) + " | " + clickActionLabel(it).orEmpty() }
+            .filterValues { it.size > 1 }
+        val failures = same.flatMap { (spoken, nodes) ->
+            nodes.indices.flatMap { i -> (i + 1 until nodes.size).map { j -> nodes[i] to nodes[j] } }
+                .filter { (a, b) ->
+                    val pathA = layoutPath(a)
+                    val pathB = layoutPath(b)
+                    // Elements in different windows are never reached together.
+                    if (pathA.first() != pathB.first()) return@filter false
+                    val shared = pathA.zip(pathB).takeWhile { (x, y) -> x == y }.size
+                    val partA = pathA.getOrNull(shared)
+                    val partB = pathB.getOrNull(shared)
+                    // One inside the other: the reader hears the same thing twice over one place.
+                    if (partA == null || partB == null) return@filter true
+                    val nameA = namesWithin(partA, a.id)
+                    val nameB = namesWithin(partB, b.id)
+                    nameA.isBlank() || nameB.isBlank() || nameA == nameB
+                }
+                .map { (a, b) -> "\"${spoken.removeSuffix(" | ")}\": ${nameOf(a)} and ${nameOf(b)} (nodes ${a.id}, ${b.id})" }
+        }
+        if (failures.isNotEmpty()) fail("interactive elements announcing the same thing with nothing to tell them apart: $failures")
+    }
+
+    /**
      * The pane Material 3's `SnackbarHost` wraps a snackbar in: a live region with a pane title whose one action is the
      * reader's Dismiss, and no words of its own — the reader reads the snackbar within it as it comes. It is the only
      * element [assertInteractiveElementsLabelled] may be told to pass over; the snackbar's text and action are checked.

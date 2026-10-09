@@ -236,15 +236,16 @@ class IngredientsEditorTest {
         addIngredient()
         assertEquals(1, stored(id).ingredients.size)
         val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(0)))
-        // Two fields take text — the ingredient and the quantity — and the third is the unit, chosen from a list.
+        // Two fields take text — the ingredient and the quantity — and the third is the unit, chosen from a list; beside
+        // them, the optional note on how the ingredient is prepared (DOM-023).
         val textFields = compose.onAllNodes(inRow and hasSetTextAction()).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }
-        assertEquals(listOf(EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0)), textFields)
+        assertEquals(listOf(EditorTags.ingredientName(0), IngredientNoteTags.field(0), EditorTags.ingredientQuantity(0)), textFields)
         val actions = compose.onAllNodes(inRow and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }.toSet()
         assertEquals(
             setOf(
-                EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), EditorTags.ingredientUnit(0),
+                EditorTags.ingredientName(0), IngredientNoteTags.field(0), EditorTags.ingredientQuantity(0), EditorTags.ingredientUnit(0),
                 EditorTags.ingredientRemove(0), EditorTags.ingredientMenu(0),
             ),
             actions,

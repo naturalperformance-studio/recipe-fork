@@ -135,7 +135,7 @@ class CardEntryDivisibilityTest {
     @Test
     fun theFixingControlHoldsWholeWingsOnly() {
         open(Recipe.create(now, null).copy(title = "Крылышки", servings = 4, ingredients = listOf(wings(0, Rational.of(8)))))
-        compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("4.5")
         compose.waitForIdle()

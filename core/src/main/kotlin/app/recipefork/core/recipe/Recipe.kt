@@ -71,12 +71,56 @@ data class IngredientReference(
     val share: IngredientShare? = null,
 )
 
+/**
+ * A step of a recipe: its text, the references within it and its timers (DOM-024) — from none to
+ * [RecipeBounds.MAX_TIMERS], in the order the author added them, each with its own duration and name.
+ *
+ * A step may hold more timers than the bound while it is read from a file; [RecipeFileCheck][app.recipefork.core.file.RecipeFileCheck]
+ * refuses such a file. The editor adds a timer through [withTimer], which refuses a sixth.
+ */
 data class Step(
     val position: Int,
     val text: String,
     val ingredientReferences: List<IngredientReference> = emptyList(),
-    val timer: Timer? = null,
-)
+    val timers: List<Timer> = emptyList(),
+) {
+    /**
+     * Bridge from the one-timer step (DOM-013, retired): the step with [timer] as its only timer, or none. For code
+     * written before DOM-024 — the editor, the card and the timer runtime — until they read [timers].
+     */
+    constructor(
+        position: Int,
+        text: String,
+        ingredientReferences: List<IngredientReference> = emptyList(),
+        timer: Timer?,
+    ) : this(position, text, ingredientReferences, listOfNotNull(timer))
+
+    /**
+     * Bridge from the one-timer step (DOM-013, retired): the step's first timer, null for none. For code written
+     * before DOM-024 — the editor, the card and the timer runtime — until they read [timers].
+     */
+    val timer: Timer? get() = timers.firstOrNull()
+
+    /**
+     * Bridge from the one-timer step (DOM-013, retired): this step with [timer] as its only timer, or none — every
+     * other timer it held is dropped. For code written before DOM-024 until it edits [timers].
+     */
+    fun copy(
+        position: Int = this.position,
+        text: String = this.text,
+        ingredientReferences: List<IngredientReference> = this.ingredientReferences,
+        timer: Timer?,
+    ): Step = Step(position, text, ingredientReferences, listOfNotNull(timer))
+
+    /** Whether the step holds fewer timers than [RecipeBounds.MAX_TIMERS], so that one more may be added. */
+    val canAddTimer: Boolean get() = timers.size < RecipeBounds.MAX_TIMERS
+
+    /** This step with [timer] added after its others; null, refused, where it already holds [RecipeBounds.MAX_TIMERS]. */
+    fun withTimer(timer: Timer): Step? = if (canAddTimer) copy(timers = timers + timer) else null
+
+    /** This step without its timer at [index]; the others keep their order. Unchanged where it holds none there. */
+    fun withoutTimer(index: Int): Step = copy(timers = timers.filterIndexed { at, _ -> at != index })
+}
 
 /**
  * An ingredient row as the author wrote it.
@@ -110,6 +154,12 @@ data class Ingredient(
      * Never present together with [quantity].
      */
     val enteredQuantity: String? = null,
+    /**
+     * How the ingredient is prepared ("finely chopped"), shown after it (DOM-023): trimmed, never blank, at most
+     * [RecipeBounds.MAX_NOTE] characters on a recipe that passes the rules; null for none. It is not scaled, searched
+     * or filtered by, and is no part of what the ingredient is — its [qualifier] is.
+     */
+    val note: String? = null,
 ) {
     /**
      * What scaling reads of this ingredient, or null while the row is incomplete or its quantity lies off its grid
@@ -128,7 +178,23 @@ data class Ingredient(
     /** Named by an entry or by words of the author's own, never both (DOM-009), with a quantity scaling can read. */
     val isComplete: Boolean
         get() = (dictionaryEntry != null) != !freeTextName.isNullOrBlank() && authoredQuantity != null
+
+    companion object {
+        /** The note the author's [typed] text gives a row (DOM-023): trimmed, and none when blank. */
+        fun noteOf(typed: String?): String? = typed?.trim()?.takeIf { it.isNotEmpty() }
+    }
 }
+
+/**
+ * A heading in the ingredient list (DOM-022): the rows from [firstPosition] up to the next heading belong to the group
+ * [name]; rows above the first heading belong to none. A group is presentation only: ingredients keep their positions,
+ * so scaling, references, filters and search read them exactly as without groups.
+ *
+ * On a recipe that passes the rules, [name] is 1 to [RecipeBounds.MAX_GROUP_NAME] characters, not blank, and the
+ * recipe's headings stand in order of [firstPosition], at most one at a position, each from 0 to the ingredient count —
+ * a heading at the count has no rows yet.
+ */
+data class IngredientGroup(val name: String, val firstPosition: Int)
 
 enum class MediaKind { PHOTO, VIDEO }
 
@@ -179,6 +245,8 @@ data class Recipe(
     val safetyFlag: Boolean,
     val createdAt: Instant,
     val contentChangedAt: Instant,
+    /** The headings of the ingredient list, in order (DOM-022); empty for a list with no groups. */
+    val ingredientGroups: List<IngredientGroup> = emptyList(),
 ) {
     init {
         require(servings == null || servings >= 1) { "servings must be 1 or more" }

@@ -4,6 +4,7 @@ import android.content.Context
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.app.card.DoneMarks
 import app.recipefork.app.data.AndroidConnectivity
 import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.data.DragHandleSide
@@ -21,11 +22,15 @@ import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySeeding
 import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.DictionarySync
+import app.recipefork.app.media.AnimatedImages
+import app.recipefork.app.media.AnimationClips
 import app.recipefork.app.media.ClipConverter
 import app.recipefork.app.media.ClipSourceDuration
 import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.ClipTransformer
+import app.recipefork.app.media.HeldAnimatedImages
 import app.recipefork.app.media.MediaSweep
+import app.recipefork.app.media.ResolverAnimatedImages
 import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.AndroidRingTimeouts
@@ -98,6 +103,9 @@ class AppContainer(
     /** The view of the recipe book last shown, one for the device and kept across restarts: the book opens on it. */
     val lastBookView: LastBookView = PreferencesLastBookView(context)
 
+    /** The reader's done marks on cards, kept on the device per book and recipe across restarts (FLOW-068). */
+    val doneMarks: DoneMarks = DoneMarks.preferences(context)
+
     /**
      * Keeps the held dictionaries in step with the server while a connection is available (FLOW-001); none in
      * [Mode.Serverless], where the dictionaries stay the snapshot the application ships.
@@ -120,6 +128,18 @@ class AppContainer(
 
     /** Where steps' clips are converted and kept, in the books under [context]'s files directory. */
     fun clipStore(context: Context): ClipStore = ClipStore(context.filesDir, clipConverter, clipDuration)
+
+    /**
+     * Reads whether an image offered to a step is an animated GIF or WebP, to be attached as a clip (scenario 3); the
+     * animation told is kept for [animationStore] to convert, so that it is read once.
+     */
+    val animatedImages: AnimatedImages = HeldAnimatedImages(ResolverAnimatedImages(context))
+
+    /**
+     * Where steps' animated images are turned into clips and kept beside them, refused as a clip is when they last
+     * too long or weigh too much converted (MEDIA-004, MEDIA-006, MEDIA-007).
+     */
+    fun animationStore(context: Context): ClipStore = AnimationClips(animatedImages).let { ClipStore(context.filesDir, it, it) }
 
     /** Clears each book's media directory of files no recipe holds, once as the book is opened. */
     val mediaSweep = MediaSweep(context.filesDir)

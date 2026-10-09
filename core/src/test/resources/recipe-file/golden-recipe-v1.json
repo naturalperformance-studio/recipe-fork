@@ -1,0 +1,131 @@
+{
+    "format_version": 1,
+    "recipe": {
+        "id": "0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10",
+        "title": "Борщ «домашний»",
+        "description": "Serve with sour cream.\nKeeps for two days.",
+        "language": "ru",
+        "tags": [
+            3,
+            12
+        ],
+        "servings": 4,
+        "ingredients": [
+            {
+                "position": 0,
+                "dictionary_entry": 101,
+                "qualifier": "ripe",
+                "unit_type": "exact",
+                "unit": "kilogram",
+                "quantity": "3/2"
+            },
+            {
+                "position": 1,
+                "dictionary_entry": 102,
+                "unit_type": "piece",
+                "unit": "piece",
+                "quantity": "5/2",
+                "piece_weight": "120",
+                "divisible": true
+            },
+            {
+                "position": 2,
+                "dictionary_entry": 103,
+                "unit_type": "piece",
+                "unit": "piece",
+                "quantity": "2",
+                "divisible": false
+            },
+            {
+                "position": 3,
+                "free_text_name": "smoked salt",
+                "unit_type": "household",
+                "unit": "tablespoon",
+                "quantity": "1/2"
+            },
+            {
+                "position": 4,
+                "dictionary_entry": 104,
+                "unit_type": "taste_measured",
+                "unit": "pinch",
+                "quantity": "2"
+            },
+            {
+                "position": 5,
+                "dictionary_entry": 105,
+                "qualifier": "black",
+                "unit_type": "taste_unmeasured"
+            },
+            {
+                "position": 6,
+                "free_text_name": "cream",
+                "unit_type": "exact",
+                "unit": "cubic_metre",
+                "entered_quantity": "-3"
+            }
+        ],
+        "steps": [
+            {
+                "position": 0,
+                "text": "Fry the beet until soft",
+                "references": [
+                    {
+                        "ingredient_position": 0,
+                        "text_offset": 8
+                    }
+                ],
+                "timer": {
+                    "minutes": 12,
+                    "label": "Beet"
+                }
+            },
+            {
+                "position": 1,
+                "text": "Simmer with the salt and onions",
+                "references": [
+                    {
+                        "ingredient_position": 3,
+                        "text_offset": 14,
+                        "share": {
+                            "quantity": "1/4",
+                            "unit": "tablespoon"
+                        }
+                    },
+                    {
+                        "ingredient_position": 1,
+                        "text_offset": 0
+                    }
+                ],
+                "timer": {
+                    "minutes": 95
+                }
+            },
+            {
+                "position": 2,
+                "text": "Season and serve",
+                "references": []
+            }
+        ]
+    },
+    "author": {
+        "nickname": "anna"
+    },
+    "parent": {
+        "id": "7d0e5c4a-2b1f-4e3d-8c6a-1f2e3d4c5b6a",
+        "title": "Борщ",
+        "nickname": "boris"
+    },
+    "media": [
+        {
+            "id": "m-1",
+            "kind": "photo",
+            "entry": "media/m-1.jpg"
+        },
+        {
+            "id": "m-2",
+            "kind": "video",
+            "step": 1,
+            "entry": "media/m-2.mp4"
+        }
+    ]
+}

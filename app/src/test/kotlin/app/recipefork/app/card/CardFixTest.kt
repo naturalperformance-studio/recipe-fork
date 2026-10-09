@@ -10,6 +10,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.core.view.children
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
@@ -59,7 +60,7 @@ import java.time.Instant
 
 /**
  * Scaling from what the reader has of one ingredient, on the card (scenario 5; SCALE-002, SCALE-008, SCALE-016,
- * SCALE-017, SCALE-018): tapping a line opens the fixing control, an accepted amount scales the whole recipe and the
+ * SCALE-017, SCALE-018): tapping a line's amount opens the fixing control, an accepted amount scales the whole recipe and the
  * count reads as approximate, a refused one says what is held, a second fixing releases the first (T-065), and a
  * change of count or a release undoes it.
  */
@@ -117,7 +118,7 @@ class CardFixTest {
     private fun controlShown() = compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty()
 
     private fun tap(position: Int) {
-        compose.onNodeWithTag(CardTags.ingredient(position)).performScrollTo().performClick()
+        compose.onNodeWithTag(CardTags.fixAmount(position), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { controlShown() }
     }
 
@@ -139,7 +140,8 @@ class CardFixTest {
 
     private fun problem() = compose.textsOf(CardTags.FIX_PROBLEM).single()
 
-    private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(tag: String, unmerged: Boolean = false) =
+        compose.onAllNodes(hasTestTag(tag), useUnmergedTree = unmerged).fetchSemanticsNodes().isNotEmpty()
 
     /** Picks [unit] from the control's unit drop-down, as the reader does: open it, then tap the unit. */
     private fun pickUnit(unit: QuantityUnit) {
@@ -168,18 +170,23 @@ class CardFixTest {
         assertEquals(listOf("Pepper", "to taste"), line(4))
     }
 
-    // SCALE-018 (7): a row to taste, or one left unfinished, offers nothing to fix.
+    // SCALE-018 (7): a row to taste, or one left unfinished, offers nothing to fix: no amount to tap, no action to
+    // the screen reader, and a tap on the line marks it (FLOW-068) rather than opening anything.
     @Test
     fun aRowWithoutAQuantityOffersNoFixing() {
         open()
         listOf(4, 5).forEach { position ->
-            compose.onNodeWithTag(CardTags.ingredient(position)).assert(hasClickAction().not())
-            compose.onNodeWithTag(CardTags.ingredient(position)).performClick()
+            assertFalse("row $position", exists(CardTags.fixAmount(position), unmerged = true))
+            compose.onNodeWithTag(CardTags.ingredient(position)).assert(hasCustomActions().not())
+            compose.onNodeWithTag(CardTags.ingredient(position)).performScrollTo().performClick()
             compose.waitForIdle()
             assertFalse("row $position", controlShown())
         }
-        compose.onNodeWithTag(CardTags.ingredient(0)).assert(hasClickAction())
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).assert(hasClickAction())
+        compose.onNodeWithTag(CardTags.ingredient(0)).assert(hasCustomActions())
     }
+
+    private fun hasCustomActions() = SemanticsMatcher.keyIsDefined(SemanticsActions.CustomActions)
 
     // SCALE-018, DOM-019, DOM-017: what the control does not hold it answers with what it holds, and fixes nothing.
     @Test
@@ -429,7 +436,9 @@ class CardFixTest {
         open()
         fun nextLine() = compose.onNodeWithTag(CardTags.ingredient(1)).fetchSemanticsNode().positionInRoot.y
         compose.onNodeWithTag(CardTags.ingredient(0)).performScrollTo()
-        compose.assertChangesGradually("the control opening", ::nextLine) { compose.onNodeWithTag(CardTags.ingredient(0)).performClick() }
+        compose.assertChangesGradually("the control opening", ::nextLine) {
+            compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performClick()
+        }
         assertTrue(controlShown())
         compose.onNodeWithTag(CardTags.FIX_CANCEL).performScrollTo()
         compose.assertChangesGradually("the control closing", ::nextLine) { compose.onNodeWithTag(CardTags.FIX_CANCEL).performClick() }

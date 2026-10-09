@@ -189,16 +189,17 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
     }
 
     // FLOW-025 (1, 2, 6), A11Y-006: every editable step and row carries a 48 dp menu named for its row, with "Insert
-    // above", "Insert below", "Move up" and "Move down" — none to move the first up or the last down.
+    // above", "Insert below", "Move up" and "Move down" — none to move the first up or the last down; an ingredient
+    // row's also puts a group's heading above it (DOM-022).
     @Test
     fun everyRowCarriesAMenuNamedForItsRowInEnglish() = everyRowCarriesAMenuNamedForItsRow(
-        listOf("Insert above", "Insert below", "Move up", "Move down"), "Step 2 actions", "Ingredient row 3 actions",
+        listOf("Insert above", "Insert below", "Move up", "Move down", "Add group above"), "Step 2 actions", "Ingredient row 3 actions",
     )
 
     @Test
     @Config(qualifiers = "ru")
     fun everyRowCarriesAMenuNamedForItsRowInRussian() = everyRowCarriesAMenuNamedForItsRow(
-        listOf("Вставить выше", "Вставить ниже", "Переместить вверх", "Переместить вниз"),
+        listOf("Вставить выше", "Вставить ниже", "Переместить вверх", "Переместить вниз", "Добавить группу выше"),
         "Действия с шагом 2",
         "Действия со строкой ингредиента 3",
     )
@@ -211,15 +212,16 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         assertEquals(listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW), openMenu(EditorTags.stepMenu(0)) { EditorTags.stepAction(0, it) })
         closeMenu(EditorTags.stepMenu(0))
         assertEquals(
-            listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW),
+            listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE),
             openMenu(EditorTags.ingredientMenu(0)) { EditorTags.ingredientAction(0, it) },
         )
         closeMenu(EditorTags.ingredientMenu(0))
         listOf("two", "three").forEach(::addStep)
         listOf("flour", "water").forEach(::addIngredient)
 
-        val all = RowAction.entries
+        val all = RowAction.entries - RowAction.GROUP_ABOVE
         val expected = listOf(all - RowAction.MOVE_UP, all, all - RowAction.MOVE_DOWN)
+        val ingredientExpected = expected.map { it + RowAction.GROUP_ABOVE }
         (0..2).forEach { position ->
             val step = node(EditorTags.stepMenu(position))
             assertEquals(listOf(string(R.string.editor_step_menu_action, position + 1)), step.config[SemanticsProperties.ContentDescription])
@@ -239,14 +241,14 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
             assertEquals(listOf(string(R.string.editor_ingredient_menu_action, position + 1)), row.config[SemanticsProperties.ContentDescription])
             assertEquals(
                 "row $position",
-                expected[position],
+                ingredientExpected[position],
                 openMenu(EditorTags.ingredientMenu(position)) { EditorTags.ingredientAction(position, it) },
             )
             assertEquals(
-                expected[position].map { labels[it.ordinal] },
-                expected[position].map { compose.textsOf(EditorTags.ingredientAction(position, it)).joinToString("") },
+                ingredientExpected[position].map { labels[it.ordinal] },
+                ingredientExpected[position].map { compose.textsOf(EditorTags.ingredientAction(position, it)).joinToString("") },
             )
-            AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = expected[position].size)
+            AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = ingredientExpected[position].size)
             closeMenu(EditorTags.ingredientMenu(position))
         }
         assertEquals(listOf(secondStep), node(EditorTags.stepMenu(1)).config[SemanticsProperties.ContentDescription])

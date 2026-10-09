@@ -140,7 +140,7 @@ internal fun Tags(recipe: Recipe, editor: RecipeEditor, dictionary: List<TagEnti
         )
         val known = dictionary.orEmpty().filter { it.id in recipe.tags }
         if (known.isNotEmpty()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = TAG_GAP, verticalArrangement = TAG_GAP) {
                 known.forEach { tag ->
                     Box(Modifier.testTag(EditorTags.chosen(tag.id))) {
                         if (editable) TagChip(tag.id, label(tag)) { editor.removeTag(tag.id) } else FrozenTag(label(tag))
@@ -207,7 +207,7 @@ private fun TagSearch(recipe: Recipe, editor: RecipeEditor, dictionary: List<Tag
             modifier = Modifier.testTag(EditorTags.NO_MATCH),
         )
     }
-    FlowRow(Modifier.fillMaxWidth().testTag(EditorTags.OFFERED), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(Modifier.fillMaxWidth().testTag(EditorTags.OFFERED), horizontalArrangement = TAG_GAP, verticalArrangement = TAG_GAP) {
         offered.forEach { (tag, shown) ->
             val action = stringResource(R.string.editor_tag_add_action, shown)
             SuggestionChip(
@@ -222,6 +222,9 @@ private fun TagSearch(recipe: Recipe, editor: RecipeEditor, dictionary: List<Tag
         }
     }
 }
+
+/** The gap between tag chips, beside each other and between wrapped lines alike. */
+private val TAG_GAP = Arrangement.spacedBy(8.dp)
 
 /** A chip laid out at least 48 by 48 dp, so that it is a whole touch target (A11Y-003). */
 private fun Modifier.touchTarget(): Modifier = heightIn(min = 48.dp).widthIn(min = 48.dp)

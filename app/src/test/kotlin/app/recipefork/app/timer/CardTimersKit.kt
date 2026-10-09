@@ -124,22 +124,24 @@ abstract class CardTimersKit {
         compose.runOnUiThread { open = null }
     }
 
-    protected fun control(position: Int): SemanticsNodeInteraction =
-        compose.onNodeWithTag(TimerTags.start(position)).performScrollTo()
+    protected fun control(position: Int, index: Int = 0): SemanticsNodeInteraction =
+        compose.onNodeWithTag(TimerTags.start(position, index)).performScrollTo()
 
-    protected fun start(position: Int) {
-        control(position).performClick()
+    protected fun start(position: Int, index: Int = 0) {
+        control(position, index).performClick()
         compose.waitForIdle()
     }
 
-    protected fun statusOf(position: Int): String? = compose.onAllNodes(hasTestTag(TimerTags.status(position)), true)
+    protected fun statusOf(position: Int, index: Int = 0): String? = compose.onAllNodes(hasTestTag(TimerTags.status(position, index)), true)
         .fetchSemanticsNodes().singleOrNull()
         ?.config?.getOrElseNullable(SemanticsProperties.Text) { null }
         ?.joinToString("") { it.text }
 
-    protected fun awaitStatus(position: Int, text: String) {
-        compose.waitUntil(PATIENCE_MS) { statusOf(position) == text }
-        assertEquals(text, statusOf(position))
+    protected fun awaitStatus(position: Int, text: String) = awaitStatus(position, 0, text)
+
+    protected fun awaitStatus(position: Int, index: Int, text: String) {
+        compose.waitUntil(PATIENCE_MS) { statusOf(position, index) == text }
+        assertEquals(text, statusOf(position, index))
     }
 
     protected fun pass(time: Duration) {

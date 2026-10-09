@@ -71,10 +71,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberUpdatedState
 import app.recipefork.app.library.DELETABLE
-import app.recipefork.app.library.DeleteStatement
-import app.recipefork.app.library.RemoveStatement
+import app.recipefork.app.library.PendingRemoval
 import app.recipefork.app.library.deleteRecipe
 import app.recipefork.app.library.rememberRecipeImport
 import app.recipefork.app.library.removeFound
@@ -163,8 +162,10 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book, the fork action on every recipe,
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
  * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Its ⋮ holds the
- * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — after the same statement
- * the book shows; once it is confirmed the card closes to the book. Nothing inside the recipe edits it; the serving count's − and +, which change how
+ * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — which takes it out of the
+ * book at once, asking nothing, and closes the card to the book, which says so with Undo ([onRemoved], FLOW-053); and,
+ * while the recipe has done marks, their
+ * clearing (FLOW-068). Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
  * provenance, which opens its parent's card, the other. It opens each time at the reader's usual count, or at the
  * authored count while none is set (FLOW-017).
@@ -184,6 +185,7 @@ fun CardScreen(
     onFork: () -> Unit = {},
     onOpenParent: (RecipeId) -> Unit = {},
     session: CardSession = remember { TextCardSession.inMemory() },
+    onRemoved: (PendingRemoval) -> Unit = PendingRemoval::finish,
 ) {
     // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
     // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
@@ -213,16 +215,8 @@ fun CardScreen(
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
     val removal = (shown as? CardContent.Shown)?.let { removalOf(it.recipe, it.marked) }
-    // The removal being asked about, while it is; once confirmed, the card closes to the book.
-    var removing by rememberSaveable(recipeId.value) { mutableStateOf(false) }
-    // A recipe that stops being removable while asked about drops the question, which is not asked again unbidden.
-    LaunchedEffect(recipe, removal) { if (recipe != null && removal == null) removing = false }
-    if (removing && recipe != null && removal != null) {
-        RemovalStatement(recipe, removal, recipes, onDone = { removed ->
-            removing = false
-            if (removed) onBack()
-        })
-    }
+    // The recipe leaves the book at once, asking nothing, and the card closes to the book, which says so with Undo.
+    val remove = rememberRemoval(recipes, environment.marks, onRemoved)
     // The title is the content's heading; the bar repeats it only once that heading has scrolled out of view — as when
     // the reader scrolls on, or the card opens at a place further down.
     var titleOut by remember(recipeId) { mutableStateOf(false) }
@@ -232,6 +226,8 @@ fun CardScreen(
     val places = remember(recipeId) { CardPlaces() }
     // The recipe's timers running, or ringing, while their step is out of sight: in a bar at the bottom.
     val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
+    // The reader's done marks on the recipe's lines and steps, kept on the device (FLOW-068).
+    val marks = recipe?.let { rememberCardMarks(environment.marks, recipes.bookName(), it) }
     val scope = rememberCoroutineScope()
     Scaffold(
         modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection).testTag(CardTags.SCREEN),
@@ -245,7 +241,14 @@ fun CardScreen(
                 onFork = onFork,
                 onEdit = onEdit,
                 removal = removal,
-                onRemove = { removing = true },
+                onRemove = {
+                    if (recipe != null && removal != null) {
+                        remove(recipe, removal)
+                        onBack()
+                    }
+                },
+                marked = marks?.any == true,
+                onClearMarks = { marks?.clear() },
             )
         },
         bottomBar = {
@@ -284,8 +287,8 @@ fun CardScreen(
                 )
                 shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
-                recipe != null && loaded != null ->
-                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, onOpenParent, scroll, places, bottom) { titleOut = it }
+                recipe != null && loaded != null && marks != null ->
+                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, marks, onOpenParent, scroll, places, bottom) { titleOut = it }
                 else -> Loading()
             }
         }
@@ -371,6 +374,8 @@ private fun TopBar(
     onEdit: () -> Unit,
     removal: Removal?,
     onRemove: () -> Unit,
+    marked: Boolean,
+    onClearMarks: () -> Unit,
 ) {
     // The last title shown is kept while it fades out, so that it does not vanish before the fade.
     var last by remember { mutableStateOf(title) }
@@ -409,7 +414,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                removal?.let { CardMenu(it, onRemove) }
+                if (removal != null || marked) CardMenu(removal, onRemove, marked, onClearMarks)
             }
         },
         scrollBehavior = scrollBehavior,
@@ -423,6 +428,7 @@ private fun RecipeContent(
     recipes: RecipeRepository,
     usual: Rational?,
     session: CardSession,
+    marks: CardMarks,
     onOpenParent: (RecipeId) -> Unit,
     scroll: ScrollState,
     places: CardPlaces,
@@ -503,8 +509,10 @@ private fun RecipeContent(
                 language,
                 onFix = { change(scale.fix(it)) },
                 onRelease = { change(scale.release(it)) },
+                marks = marks,
+                groups = recipe.ingredientGroups,
             )
-            StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()))
+            StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()), marks)
             if (recipe.description.isNotBlank()) {
                 Text(
                     recipe.description,
@@ -748,11 +756,13 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 }
 
 /**
- * The card's ⋮, after its other actions: it opens a menu holding the recipe's removal — Delete for an own recipe in a
- * deletable state, Remove for a found one — each item the card's [CardTarget] tall, in the theme's error colour.
+ * The card's ⋮, after its other actions, shown while it holds anything: Clear marks while the recipe has done marks
+ * (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal — Delete for an own recipe
+ * in a deletable state, Remove for a found one — in the theme's error colour. Each item is the card's [CardTarget]
+ * tall.
  */
 @Composable
-private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
+private fun CardMenu(removal: Removal?, onRemove: () -> Unit, marked: Boolean, onClearMarks: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         BarAction(
@@ -763,7 +773,17 @@ private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
             onClick = { expanded = !expanded },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
+            if (marked) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.card_clear_marks)) },
+                    onClick = {
+                        expanded = false
+                        onClearMarks()
+                    },
+                    modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.CLEAR_MARKS),
+                )
+            }
+            if (removal != null) DropdownMenuItem(
                 text = {
                     Text(stringResource(if (removal == Removal.DELETE) R.string.library_entry_delete else R.string.library_entry_remove))
                 },
@@ -781,34 +801,24 @@ private fun CardMenu(removal: Removal, onRemove: () -> Unit) {
 }
 
 /**
- * The statement before [recipe] leaves the book from its card, the same the book's entry shows: confirmed, the recipe
- * is deleted or removed with its media and timers by the book's own path, and [onDone] is told so; declined, nothing
- * changes.
+ * Takes a recipe out of the book from its card by the book's own path, asking nothing (FLOW-053): an own one deleted,
+ * a found one removed, with its timers and its done [marks]; [onRemoved] is told of it, to say it with Undo.
  */
 @Composable
-private fun RemovalStatement(recipe: Recipe, removal: Removal, recipes: RecipeRepository, onDone: (removed: Boolean) -> Unit) {
+private fun rememberRemoval(
+    recipes: RecipeRepository,
+    marks: DoneMarks,
+    onRemoved: (PendingRemoval) -> Unit,
+): (Recipe, Removal) -> Unit {
     val timers = rememberCardTimers()
-    when (removal) {
-        Removal.DELETE -> DeleteStatement(
-            recipe.title,
-            onConfirm = {
-                deleteRecipe(recipes, timers, recipe.id)
-                onDone(true)
-            },
-            onDecline = { onDone(false) },
-            target = CardTarget,
-        )
-        Removal.REMOVE -> {
-            val files = rememberRecipeImport(recipes)
-            RemoveStatement(
-                recipe.title,
-                onConfirm = {
-                    removeFound(files, timers, recipe.id)
-                    onDone(true)
-                },
-                onDecline = { onDone(false) },
-                target = CardTarget,
-            )
+    val files = rememberRecipeImport(recipes)
+    val told by rememberUpdatedState(onRemoved)
+    return remember(recipes, marks, timers, files) {
+        { recipe, removal ->
+            when (removal) {
+                Removal.DELETE -> deleteRecipe(recipes, timers, marks, recipe.id) { told(it) }
+                Removal.REMOVE -> removeFound(files, timers, marks, recipe.id) { told(it) }
+            }
         }
     }
 }
@@ -850,6 +860,7 @@ object CardTags {
     const val MENU = "card-menu"
     const val DELETE = "card-delete"
     const val REMOVE = "card-remove"
+    const val CLEAR_MARKS = "card-clear-marks"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
     const val MISSING = "card-missing"
@@ -876,6 +887,8 @@ object CardTags {
     fun tooltip(action: String) = "$action-tooltip"
     fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
+    /** The amount of the ingredient line at [position], which opens its fixing control. */
+    fun fixAmount(position: Int) = "card-ingredient-$position-amount"
     fun step(position: Int) = "card-step-$position"
     fun stepPhoto(position: Int) = "card-step-$position-photo"
     fun stepVideo(position: Int) = "card-step-$position-video"

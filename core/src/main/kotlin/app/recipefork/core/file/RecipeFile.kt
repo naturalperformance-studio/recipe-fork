@@ -1,6 +1,7 @@
 package app.recipefork.core.file
 
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
@@ -32,8 +33,15 @@ class LaterRecipeFile(val formatVersion: Int) :
  * the rules a sending must pass is the importer's to check.
  */
 object RecipeFile {
-    /** The format this application writes, and the latest it reads. */
-    const val FORMAT_VERSION = 1
+    /**
+     * The format this application writes, and the latest it reads. Format 2 added ingredient groups and notes
+     * (DOM-022, DOM-023); a document of format 1 reads as one with neither. Format 3 gives a step a list of `timers`
+     * (DOM-024) where formats 1 and 2 gave it at most one `timer`, which reads as a step with that one timer.
+     */
+    const val FORMAT_VERSION = 3
+
+    /** The last format that wrote a step's one `timer` rather than its list of `timers`. */
+    private const val LAST_ONE_TIMER_FORMAT = 2
     const val EXTENSION = "recipefork"
     const val MIME_TYPE = "application/vnd.recipefork.recipe+zip"
     /** The document's entry in the archive. */
@@ -60,7 +68,7 @@ object RecipeFile {
         if (version > FORMAT_VERSION) throw LaterRecipeFile(version)
         if (version < 1) throw UnreadableRecipeFile("format $version does not exist")
         return try {
-            json.decodeFromString(RecipeDocument.serializer(), text).toContent()
+            json.decodeFromString(RecipeDocument.serializer(), text).also { it.checkTimerShape() }.toContent()
         } catch (e: UnreadableRecipeFile) {
             throw e
         } catch (e: IllegalArgumentException) {
@@ -81,6 +89,7 @@ object RecipeFile {
             tags = tags.sorted(),
             servings = servings,
             ingredients = ingredients.map { it.toDocument() },
+            ingredientGroups = ingredientGroups.map { DocumentGroup(it.name, it.firstPosition) },
             steps = steps.map { it.toDocument() },
         ),
         author = author?.let(::DocumentAuthor),
@@ -101,6 +110,7 @@ object RecipeFile {
         pieceWeight = pieceWeight?.let(::fractionOf),
         divisible = divisible,
         enteredQuantity = enteredQuantity,
+        note = note,
     )
 
     private fun Step.toDocument() = DocumentStep(
@@ -113,8 +123,18 @@ object RecipeFile {
                 reference.share?.let { DocumentShare(fractionOf(it.amount), Names.unit.nameOf(it.unit)) },
             )
         },
-        timer = timer?.let { DocumentTimer(it.duration.inWholeMinutes, it.label) },
+        timers = timers.map { DocumentTimer(it.duration.inWholeMinutes, it.label) },
     )
+
+    /** A step's timers stand as its format writes them: one `timer` up to format 2, a list of `timers` since. */
+    private fun RecipeDocument.checkTimerShape() {
+        val oneTimer = formatVersion <= LAST_ONE_TIMER_FORMAT
+        recipe.steps.forEach { step ->
+            if (if (oneTimer) step.timers.isNotEmpty() else step.timer != null) {
+                throw UnreadableRecipeFile("step ${step.position} holds a timer as format $formatVersion does not write one")
+            }
+        }
+    }
 
     private fun RecipeDocument.toContent() = RecipeFileContent(
         id = RecipeId(recipe.id),
@@ -124,6 +144,7 @@ object RecipeFile {
         language = recipe.language?.let(::languageOf),
         servings = recipe.servings,
         ingredients = recipe.ingredients.map { it.toIngredient() },
+        ingredientGroups = recipe.ingredientGroups.map { IngredientGroup(it.name, it.firstIngredient) },
         steps = recipe.steps.map { it.toStep() },
         author = author?.nickname,
         parent = parent?.let { FileParent(RecipeId(it.id), it.title, it.nickname) },
@@ -146,6 +167,8 @@ object RecipeFile {
         pieceWeight = pieceWeight?.let(::rationalOf),
         divisible = divisible,
         enteredQuantity = enteredQuantity,
+        // A note is read as the editor takes one: trimmed, and none when blank (DOM-023).
+        note = Ingredient.noteOf(note),
     )
 
     private fun DocumentStep.toStep() = Step(
@@ -158,7 +181,8 @@ object RecipeFile {
                 reference.share?.let { IngredientShare(rationalOf(it.quantity), Names.unit.valueOf(it.unit)) },
             )
         },
-        timer = timer?.let { Timer(it.minutes.minutes, it.label) },
+        // Formats 1 and 2 held one timer at most; the shape was checked before.
+        timers = (timers + listOfNotNull(timer)).map { Timer(it.minutes.minutes, it.label) },
     )
 
     private fun languageName(language: RecipeLanguage) = Names.language.nameOf(language)

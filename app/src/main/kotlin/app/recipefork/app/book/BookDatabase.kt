@@ -21,9 +21,10 @@ import kotlinx.coroutines.flow.Flow
 @Database(
     entities = [
         RecipeEntity::class, IngredientEntity::class, StepEntity::class, StepReferenceEntity::class,
-        MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class,
+        MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class, IngredientGroupEntity::class,
+        StepTimerEntity::class,
     ],
-    version = 3,
+    version = 5,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -48,6 +49,41 @@ abstract class BookDatabase : RoomDatabase() {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("alter table step_reference add column share text")
                     db.execSQL("alter table step_reference add column share_unit text")
+                }
+            },
+            // 3 → 4: an ingredient may carry a note (DOM-023), and the ingredient list may fall into groups (DOM-022).
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table ingredient add column note text")
+                    db.execSQL(
+                        "create table if not exists `ingredient_group` (`recipe_id` TEXT NOT NULL, " +
+                            "`position` INTEGER NOT NULL, `name` TEXT NOT NULL, `first_ingredient` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    )
+                }
+            },
+            // 4 → 5: a step carries up to five timers (DOM-024); its one timer moves from its row to the first of them.
+            object : Migration(4, 5) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "create table if not exists `step_timer` (`recipe_id` TEXT NOT NULL, `step_position` INTEGER NOT NULL, " +
+                            "`position` INTEGER NOT NULL, `minutes` INTEGER NOT NULL, `label` TEXT, " +
+                            "PRIMARY KEY(`recipe_id`, `step_position`, `position`), FOREIGN KEY(`recipe_id`) " +
+                            "REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    )
+                    db.execSQL(
+                        "insert into step_timer (recipe_id, step_position, position, minutes, label) " +
+                            "select recipe_id, position, 0, timer_minutes, timer_label from step where timer_minutes is not null",
+                    )
+                    db.execSQL(
+                        "create table `step_new` (`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, `text` TEXT NOT NULL, " +
+                            "PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    )
+                    db.execSQL("insert into step_new (recipe_id, position, text) select recipe_id, position, text from step")
+                    db.execSQL("drop table step")
+                    db.execSQL("alter table step_new rename to step")
                 }
             },
         )
@@ -81,7 +117,14 @@ data class RecipeRows(
     val references: List<StepReferenceEntity>,
     val media: List<MediaEntity>,
     val tags: List<RecipeTagEntity>,
+    /** The headings of its ingredient list, in order (DOM-022). */
+    val groups: List<IngredientGroupEntity> = emptyList(),
+    /** Its steps' timers, by step and then in order (DOM-024). */
+    val timers: List<StepTimerEntity> = emptyList(),
 )
+
+/** A recipe taken out of the book ([BookRecipeDao.take]): its rows, and its mark when it was a found one. */
+data class TakenRows(val rows: RecipeRows, val favourite: FavouriteEntity?)
 
 /** SQLite's limit that limits nothing. */
 private const val NO_LIMIT = -1
@@ -132,15 +175,20 @@ abstract class BookRecipeDao {
         deleteReferences(id)
         deleteMedia(id)
         deleteTags(id)
+        deleteGroups(id)
+        deleteTimers(id)
         insertIngredients(rows.ingredients)
         insertSteps(rows.steps)
         insertReferences(rows.references)
         insertMedia(rows.media)
         insertTags(rows.tags)
+        insertGroups(rows.groups)
+        insertTimers(rows.timers)
     }
 
     /**
-     * Deletes the recipe and everything it holds — ingredients, steps, references, media and tags — atomically (ST-010).
+     * Deletes the recipe and everything it holds — ingredients and their groups, steps and their timers, references,
+     * media and tags — atomically (ST-010).
      * Its parts cascade from its row; they are deleted here as well, so that nothing of it is left whatever the
      * connection's foreign-key setting. Returns whether the book held it.
      */
@@ -151,6 +199,8 @@ abstract class BookRecipeDao {
         deleteReferences(recipeId)
         deleteMedia(recipeId)
         deleteTags(recipeId)
+        deleteGroups(recipeId)
+        deleteTimers(recipeId)
         return deleteRecipe(recipeId) > 0
     }
 
@@ -211,6 +261,37 @@ abstract class BookRecipeDao {
         return media
     }
 
+    /**
+     * Takes the recipe [recipeId] out of the book, atomically: everything it holds, and its mark when the book holds it
+     * as a found one. Returns what was taken, which [putBack] puts back as it was; null when the book held no such
+     * recipe. The files of its media are the caller's.
+     */
+    @Transaction
+    open suspend fun take(recipeId: String): TakenRows? {
+        val rows = get(recipeId) ?: return null
+        val favourite = favourite(recipeId)
+        if (favourite != null) deleteFavourite(recipeId)
+        delete(recipeId)
+        return TakenRows(rows, favourite)
+    }
+
+    /**
+     * Puts back what [take] took, atomically, as it was: the recipe with everything it held, and its mark, under the
+     * same times, so that it is listed where it was. Returns false, writing nothing, when the book holds or marks a
+     * recipe of that identity again.
+     */
+    @Transaction
+    open suspend fun putBack(taken: TakenRows): Boolean {
+        val id = taken.rows.recipe.recipeId
+        if (recipe(id) != null || isMarked(id)) return false
+        put(taken.rows)
+        taken.favourite?.let { insertFavourite(it) }
+        return true
+    }
+
+    @Query("select * from favourite where recipe_id = :id")
+    protected abstract suspend fun favourite(id: String): FavouriteEntity?
+
     @Query("select exists(select 1 from favourite where recipe_id = :id)")
     abstract suspend fun isMarked(id: String): Boolean
 
@@ -235,6 +316,7 @@ abstract class BookRecipeDao {
         val recipe = recipe(recipeId) ?: return null
         return RecipeRows(
             recipe, ingredients(recipeId), steps(recipeId), references(recipeId), media(recipeId), tags(recipeId),
+            groups(recipeId), timers(recipeId),
         )
     }
 
@@ -256,6 +338,12 @@ abstract class BookRecipeDao {
     @Query("select * from recipe_tag where recipe_id = :id order by tag_id")
     protected abstract suspend fun tags(id: String): List<RecipeTagEntity>
 
+    @Query("select * from ingredient_group where recipe_id = :id order by position")
+    protected abstract suspend fun groups(id: String): List<IngredientGroupEntity>
+
+    @Query("select * from step_timer where recipe_id = :id order by step_position, position")
+    protected abstract suspend fun timers(id: String): List<StepTimerEntity>
+
     @Upsert
     protected abstract suspend fun upsert(recipe: RecipeEntity)
 
@@ -276,6 +364,18 @@ abstract class BookRecipeDao {
 
     @Query("delete from recipe_tag where recipe_id = :id")
     protected abstract suspend fun deleteTags(id: String)
+
+    @Query("delete from ingredient_group where recipe_id = :id")
+    protected abstract suspend fun deleteGroups(id: String)
+
+    @Query("delete from step_timer where recipe_id = :id")
+    protected abstract suspend fun deleteTimers(id: String)
+
+    @Insert
+    protected abstract suspend fun insertTimers(rows: List<StepTimerEntity>)
+
+    @Insert
+    protected abstract suspend fun insertGroups(rows: List<IngredientGroupEntity>)
 
     @Insert
     protected abstract suspend fun insertIngredients(rows: List<IngredientEntity>)

@@ -50,10 +50,12 @@ internal fun RecipeTimers.inBar(onScreen: (stepPosition: Int) -> Boolean): List<
 
 /**
  * The bar pinned at the bottom of the card while timers of its recipe run out of sight (FLOW-016): one line for each of
- * [shown] — its name, or its step's [number] where it has none, the time it has left or that it rings, and the control
- * that cancels it or stops its ringing. Tapping a line brings the card to its step ([onShow]). Never taller than a
- * third of the screen; more lines scroll within it. It rises from the bottom edge as its first line comes and sinks
- * below it, still showing its last lines, as the last goes; between, it grows and shrinks with its lines.
+ * [shown], each timer of a step on its own (DOM-024) — its name, or its step's [number] where it has none, followed,
+ * for an unnamed timer of a step with several, by the number it started with, as on the card and its notification;
+ * the time it has left or that it rings, and the control that cancels it or stops its ringing. Tapping a line brings
+ * the card to its step ([onShow]). Never taller than a third of the screen; more lines scroll within it. It rises
+ * from the bottom edge as its first line comes and sinks below it, still showing its last lines, as the last goes;
+ * between, it grows and shrinks with its lines.
  */
 @Composable
 internal fun RunningTimersBar(
@@ -74,7 +76,13 @@ internal fun RunningTimersBar(
 }
 
 @Composable
-private fun Bar(timers: RecipeTimers, shown: List<RunningTimer>, number: (stepPosition: Int) -> Int, onShow: (stepPosition: Int) -> Unit, most: Dp) {
+private fun Bar(
+    timers: RecipeTimers,
+    shown: List<RunningTimer>,
+    number: (stepPosition: Int) -> Int,
+    onShow: (stepPosition: Int) -> Unit,
+    most: Dp,
+) {
     Surface(
         Modifier.fillMaxWidth().heightIn(max = most).testTag(TimerTags.BAR),
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -106,40 +114,47 @@ private fun Bar(timers: RecipeTimers, shown: List<RunningTimer>, number: (stepPo
 
 @Composable
 private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers, number: Int, onShow: () -> Unit) {
-    val position = timer.key.stepPosition
+    val key = timer.key
+    val position = key.stepPosition
+    val index = key.index
     Row(
         Modifier
             .fillMaxWidth()
             .heightIn(min = CardTarget)
-            .clickable(onClickLabel = stringResource(R.string.timer_bar_show_action), role = Role.Button, onClick = onShow)
+            .clickable(
+                onClickLabel = stringResource(R.string.timer_bar_show_action),
+                role = Role.Button,
+                onClick = onShow,
+            )
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .testTag(TimerTags.barTimer(position)),
+            .testTag(TimerTags.barTimer(position, index)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        val name = timer.name.ifBlank { stringResource(R.string.timer_bar_step, number) }
         Text(
-            timer.name.ifBlank { stringResource(R.string.timer_bar_step, number) },
+            timer.number?.let { stringResource(R.string.timer_numbered, name, it) } ?: name,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
         )
         Text(
             if (ringing) stringResource(R.string.timer_bar_ringing) else remainingText(timer.remaining(timers.now)),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.testTag(TimerTags.barStatus(position)),
+            modifier = Modifier.testTag(TimerTags.barStatus(position, index)),
         )
         if (ringing) {
             TimerButton(
                 icon = R.drawable.ic_timer_stop,
                 action = stringResource(R.string.timer_stop_action),
-                tag = TimerTags.barStop(position),
-                onClick = { timers.stopRinging(position) },
+                tag = TimerTags.barStop(position, index),
+                onClick = { timers.stopRinging(key) },
             ) { Text(stringResource(R.string.timer_stop)) }
         } else {
             TimerButton(
                 icon = R.drawable.ic_remove_timer,
                 action = stringResource(R.string.timer_cancel_action),
-                tag = TimerTags.barCancel(position),
-                onClick = { timers.cancel(position) },
+                tag = TimerTags.barCancel(position, index),
+                onClick = { timers.cancel(key) },
             ) { Text(stringResource(R.string.timer_cancel)) }
         }
     }

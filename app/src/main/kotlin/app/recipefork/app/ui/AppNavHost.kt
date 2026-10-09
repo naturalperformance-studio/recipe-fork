@@ -188,6 +188,7 @@ private fun RecipeCard(
         onFork = { fork(another = false) },
         onOpenParent = { parent -> session.openCard(parent.value) },
         session = session.cards,
+        onRemoved = session::removed,
     )
 }
 

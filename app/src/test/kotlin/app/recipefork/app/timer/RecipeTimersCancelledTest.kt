@@ -69,6 +69,29 @@ class RecipeTimersCancelledTest {
         assertEquals(listOf(boil, rise, elsewhere), notices.announced.map { it.key })
     }
 
+    // DOM-024: every timer of each step goes, the ringing one and the running one of the same step alike.
+    @Test
+    fun everyTimerOfEachStepIsCancelled() = runBlocking {
+        val first = TimerKey(BookName.Pool, soup, 1, 0)
+        val second = TimerKey(BookName.Pool, soup, 1, 1)
+        val rise = TimerKey(BookName.Pool, bread, 1, 1)
+        store.start(first, "Boil", "Soup", 10.minutes)
+        store.start(second, "Boil", "Soup", 1.hours)
+        store.start(rise, "Rise", "Bread", 2.hours)
+        clock.advance(10.minutes)
+        announcer.announceEnded(store)
+        assertEquals(setOf(first), ringing.ringing.value)
+
+        store.cancelRecipe(BookName.Pool, soup)
+
+        assertEquals(emptySet<TimerKey>(), ringing.ringing.value)
+        assertTrue(notices.withdrawn.containsAll(listOf(first, second)))
+        assertEquals(listOf(rise), store.all.first().map { it.key })
+        clock.advance(1.hours)
+        announcer.announceEnded(store)
+        assertEquals(listOf(first), notices.announced.map { it.key })
+    }
+
     @Test
     fun aRecipeWithNoTimersCancelsNothing() = runBlocking {
         val rise = store.start(TimerKey(BookName.Pool, bread, 0), "Rise", "Bread", 20.minutes)

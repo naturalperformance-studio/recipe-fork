@@ -12,9 +12,13 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
+import app.recipefork.app.media.AnimatedImages
+import app.recipefork.app.media.AnimationClips
 import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.ClipTransformer
+import app.recipefork.app.media.HeldAnimatedImages
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.ResolverAnimatedImages
 import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepMedia
@@ -23,6 +27,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Bound
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShares
 import app.recipefork.core.recipe.Media
@@ -72,6 +77,15 @@ class EditorEnvironment(
     val photoStore: (File) -> PhotoStore = { PhotoStore(it) },
     /** Where the editor converts and keeps steps' clips, given the application's context; replaced in a test. */
     val clipStore: (Context) -> ClipStore = { ClipStore(it.filesDir, ClipTransformer(it), RetrieverClipSourceDuration(it)) },
+    /** Tells an animated GIF or WebP picked for a step from a still picture (scenario 3); replaced in a test. */
+    val animatedImages: (Context) -> AnimatedImages = { HeldAnimatedImages(ResolverAnimatedImages(it)) },
+    /**
+     * Where the editor turns steps' animations into silent clips and keeps them, given the application's context and
+     * the [animatedImages] that told them apart, so that an animation is read once.
+     */
+    val animationStore: (Context, AnimatedImages) -> ClipStore = { context, images ->
+        AnimationClips(images).let { ClipStore(context.filesDir, it, it) }
+    },
     /** What the release is built as (FLOW-061): the editor says nothing of publication where nothing can be published. */
     val mode: Mode = Mode.Standard,
     val clock: () -> Instant = Instant::now,
@@ -107,6 +121,8 @@ class RecipeEditor(
      */
     private val stepKeys: RowKeys = RowKeys(),
     private val ingredientKeys: RowKeys = RowKeys(),
+    /** As [ingredientKeys], for the headings of the ingredient groups. */
+    private val groupKeys: RowKeys = RowKeys(),
 ) {
     private val current = MutableStateFlow<Recipe?>(null)
 
@@ -174,7 +190,7 @@ class RecipeEditor(
                     .followingSteps { if (it > position) it - 1 else it },
             )
         }
-        if (removing) offered.value = Removal(step = true, position, recipe) { if (removed.isNotEmpty()) written(removed) }
+        if (removing) offered.value = Removal(Removal.Kind.STEP, position, recipe) { if (removed.isNotEmpty()) written(removed) }
         return removing
     }
 
@@ -215,49 +231,104 @@ class RecipeEditor(
     }
 
     /**
-     * The author chose the control that attaches a timer to the step at [position]. A step carries one timer
-     * (DOM-013): where it already carries one, nothing is created and [statement] names the step until the author's
-     * next action (GUIDE-007). Returns whether the step already carried a timer.
+     * The author chose the control that adds a timer to the step at [position], whose block already shows [unheld]
+     * timers that hold no duration yet. A step carries up to [RecipeBounds.MAX_TIMERS] timers (DOM-024): where it
+     * would show more, nothing is added and [statement] names the step until the author's next action (GUIDE-007).
+     * Returns whether the timer was refused.
      */
-    fun attachTimer(position: Int): Boolean {
+    fun attachTimer(position: Int, unheld: Int = 0): Boolean {
         val recipe = current.value ?: return false
         if (!recipe.state.editable) return false
-        val carries = recipe.steps.sortedBy { it.position }.getOrNull(position)?.timer != null
-        stating.value = if (carries) position else null
-        return carries
+        val step = recipe.steps.sortedBy { it.position }.getOrNull(position) ?: return false
+        val full = step.timers.size + unheld >= RecipeBounds.MAX_TIMERS
+        stating.value = if (full) position else null
+        return full
     }
 
     /**
-     * The step's timer as [hours] and whole [minutes], from 0 to 99 and 0 to 59 (FLOW-027 (12)); anything beyond is
-     * not held. 0 h 0 min is no duration, so the step then carries no timer, and nothing is refused (FLOW-027 (11, 13)).
-     * A timer that stays keeps its name; one newly attached takes [label], the name the author gave it before its
-     * duration was cleared, if any. Returns whether the duration was held.
+     * Puts a timer of [hours] and whole [minutes] at [index] of the step at [position]'s timers, from 0 to their
+     * number; the timers from there on keep their order after it. It takes [label], the name the author gave it before
+     * its duration was cleared, if any. 0 h 0 min is no duration and adds nothing (FLOW-027 (11, 13)); nor is a sixth
+     * timer added (DOM-024). Returns whether the timer was added.
      */
-    fun setTimerDuration(position: Int, hours: Int, minutes: Int, label: String? = null): Boolean {
+    fun addTimer(position: Int, index: Int, hours: Int, minutes: Int, label: String? = null): Boolean {
         if (hours !in 0..MAX_HOURS || minutes !in 0..MAX_MINUTES) return false
         val duration = hours.hours + minutes.minutes
+        val step = current.value?.steps?.sortedBy { it.position }?.getOrNull(position) ?: return false
+        if (!duration.isPositive()) {
+            // Typed all the same: the author's next action ends a statement (GUIDE-007).
+            if (editable) noteAction()
+            return false
+        }
+        if (!step.canAddTimer || index !in 0..step.timers.size) return false
+        return editStep(position) { it.copy(timers = it.timers.toMutableList().apply { add(index, Timer(duration, label?.ifEmpty { null })) }) }
+    }
+
+    /**
+     * The duration of the timer at [index] of the step at [position], as [hours] and whole [minutes], from 0 to 99 and
+     * 0 to 59 (FLOW-027 (12)); anything beyond is not held. The timer keeps its name. 0 h 0 min is no duration, so the
+     * step then no longer carries that timer, and nothing is refused (FLOW-027 (11, 13)); its other timers stand as
+     * they were. Returns whether the duration was held.
+     */
+    fun setTimerDuration(position: Int, index: Int, hours: Int, minutes: Int): Boolean {
+        if (hours !in 0..MAX_HOURS || minutes !in 0..MAX_MINUTES) return false
+        if (!editable || timerAt(position, index) == null) return false
+        val duration = hours.hours + minutes.minutes
+        if (!duration.isPositive()) marksWithoutTimer(position, index)
         return editStep(position) { step ->
-            step.copy(timer = if (duration.isPositive()) Timer(duration, step.timer?.label ?: label?.ifEmpty { null }) else null)
+            if (!duration.isPositive()) step.withoutTimer(index)
+            else step.copy(timers = step.timers.mapIndexed { i, timer -> if (i == index) timer.copy(duration = duration) else timer })
         }
     }
 
     /**
-     * The name the author gives the step's timer, kept in full however long (DOM-012 is enforced at submission and
-     * marked on leaving the field, never while typing — FLOW-028). An empty name gives none, and the name follows the step's text again (FLOW-027 (7), FLOW-016).
+     * The name the author gives the timer at [index] of the step at [position], kept in full however long (DOM-012 is
+     * enforced at submission and marked on leaving the field, never while typing — FLOW-028). An empty name gives none,
+     * and the name follows the step's text again (FLOW-027 (7), FLOW-016). The step's other timers stand as they were.
      */
-    fun setTimerLabel(position: Int, label: String): Boolean {
-        if (current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timer == null) return false
-        return editStep(position) { step -> step.copy(timer = step.timer?.copy(label = label.ifEmpty { null })) }
+    fun setTimerLabel(position: Int, index: Int, label: String): Boolean {
+        if (timerAt(position, index) == null) return false
+        return editStep(position) { step ->
+            step.copy(timers = step.timers.mapIndexed { i, timer -> if (i == index) timer.copy(label = label.ifEmpty { null }) else timer })
+        }
     }
 
     /**
-     * Takes the step's timer off, name and all: attached again, it starts from the name derived from the step.
-     * Returns whether the step carried a timer.
+     * Takes the timer at [index] off the step at [position], name and all; the step's other timers keep their order.
+     * The removal is offered for undoing as [removal], which puts the timer back at its place. Returns whether the step
+     * carried a timer there.
      */
-    fun removeTimer(position: Int): Boolean {
-        if (current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timer == null) return false
-        return editStep(position) { it.copy(timer = null) }
+    fun removeTimer(position: Int, index: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (!recipe.state.editable || timerAt(position, index) == null) return false
+        val key = stepKeys.of(position)
+        // The step's timer names as they were left, for an Undo to put back.
+        val marks = left.value.filterTo(mutableSetOf()) { it is Left.OfStep && it.key == key && it.timer != null }
+        marksWithoutTimer(position, index)
+        if (!editStep(position) { it.withoutTimer(index) }) return false
+        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index, marks = marks) {}
+        return true
     }
+
+    /**
+     * The timer at [index] of the step at [position] is going: its name's mark goes with it, and a mark left on a later
+     * timer's name stays with that timer, now one place up.
+     */
+    private fun marksWithoutTimer(position: Int, index: Int) {
+        val key = stepKeys.of(position)
+        left.value = left.value.mapNotNullTo(mutableSetOf()) { part ->
+            val timer = (part as? Left.OfStep)?.timer
+            when {
+                part !is Left.OfStep || part.key != key || timer == null || timer < index -> part
+                timer == index -> null
+                else -> part.copy(timer = timer - 1)
+            }
+        }
+    }
+
+    /** The timer at [index] of the step at [position]; null where it carries none there. */
+    private fun timerAt(position: Int, index: Int): Timer? =
+        current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timers?.getOrNull(index)
 
     private fun editStep(position: Int, change: (Step) -> Step) = edit { recipe ->
         val steps = recipe.steps.sortedBy { it.position }
@@ -302,6 +373,12 @@ class RecipeEditor(
     /** As [stepKey], for the ingredient row at [position]. */
     fun ingredientKey(position: Int): Long = ingredientKeys.of(position)
 
+    /** As [stepKey], for the heading at [index] of the ingredient groups. */
+    fun groupKey(index: Int): Long = groupKeys.of(index)
+
+    /** Where the heading whose [groupKey] is [key] stands now; null once it is gone. */
+    fun groupIndex(key: Long): Int? = groupKeys.positionOf(key)?.takeIf { it < (current.value?.ingredientGroups?.size ?: 0) }
+
     /** The optional description, kept exactly as typed, line breaks included. */
     fun setDescription(description: String) = edit { it.copy(description = description) }
 
@@ -323,9 +400,11 @@ class RecipeEditor(
 
     /**
      * Puts an empty row, exactly like an appended one, at [position], from 0 to the number of rows; the rows from
-     * there on move down, and the references to them follow (DOM-007, FLOW-025 (1, 3)). Returns whether it was put.
+     * there on move down, and the references to them follow (DOM-007, FLOW-025 (1, 3)). Every heading stays over the
+     * rows it had (DOM-022): the new row joins the group of the row it is put above — or, [intoGroupAbove], that of the
+     * row it is put below. Returns whether it was put.
      */
-    fun insertIngredient(position: Int): Boolean {
+    fun insertIngredient(position: Int, intoGroupAbove: Boolean = false): Boolean {
         val count = current.value?.ingredients?.size ?: return false
         if (position !in 0..count) return false
         return edit { recipe ->
@@ -334,26 +413,137 @@ class RecipeEditor(
             recipe.copy(
                 ingredients = rows.mapIndexed { i, row -> row.copy(position = i) },
                 steps = recipe.steps.followingIngredients { if (it >= position) it + 1 else it },
+                ingredientGroups = recipe.ingredientGroups.map { group ->
+                    val below = group.firstPosition > position || group.firstPosition == position && intoGroupAbove
+                    if (below) group.copy(firstPosition = group.firstPosition + 1) else group
+                },
             )
         }
     }
 
     /**
      * Moves the row at [from] to [to]; the rows between close up. Every row keeps what it holds, and every step's
-     * reference still resolves to the same ingredient (DOM-007, FLOW-025 (2, 3)). Returns whether the row moved.
+     * reference still resolves to the same ingredient (DOM-007, FLOW-025 (2, 3)). The row joins the group of the row
+     * whose place it takes; every other row stays in its own (DOM-022). Returns whether the row moved.
      */
     fun moveIngredient(from: Int, to: Int): Boolean {
-        val count = current.value?.ingredients?.size ?: return false
+        val recipe = current.value ?: return false
+        val count = recipe.ingredients.size
         if (from !in 0 until count || to !in 0 until count || from == to) return false
-        return edit { recipe ->
-            val rows = recipe.ingredients.toMutableList().apply { add(to, removeAt(from)) }
-            ingredientKeys.move(from, to, count)
-            recipe.copy(
-                ingredients = rows.mapIndexed { i, row -> row.copy(position = i) },
-                steps = recipe.steps.followingIngredients { moved(it, from, to) },
-            )
+        val items = recipe.listItems
+        val at = items.indexOf(ListItem.Row(from))
+        // Taken out, the row lands at the place of the row at [to]: after it going down, before it — under its
+        // heading, if any — going up.
+        return moveIngredientItem(at, items.indexOf(ListItem.Row(to)))
+    }
+
+    /**
+     * Moves the item at [from] of the ingredient list as the editor shows it ([listItems]) so that it stands at [to]
+     * once taken out: a row alone — past a heading, it leaves its group for the one it now stands in — or a heading with
+     * every row it owns, its group as a whole, to a place a group may land at ([groupLanding]) (DOM-022, FLOW-025). No
+     * move empties a group: the only row of a group stays in it, and a heading with no rows yet stays where it is.
+     * Returns whether anything moved.
+     */
+    fun moveIngredientItem(from: Int, to: Int): Boolean {
+        val recipe = current.value ?: return false
+        val items = recipe.listItems
+        if (from !in items.indices || from == to || !items.movable(from)) return false
+        val span = blockAt(items, from)
+        if (to !in 0..items.size - span) return false
+        if (items[from] is ListItem.Heading && !groupLanding(items, from, span)(to)) return false
+        val moved = items.movedBlock(from, span, to)
+        if (recipe.arranged(moved).headings.size < recipe.ingredientGroups.size) return false
+        return rearrange { moved }
+    }
+
+    /**
+     * Moves the group whose heading is at [index] — heading and rows — past the next group, [down], or the one before:
+     * never above the rows no group owns, nor past a heading with no rows yet. Returns whether it moved.
+     */
+    fun moveGroup(index: Int, down: Boolean): Boolean {
+        val recipe = current.value ?: return false
+        val upper = if (down) index else index - 1
+        if (upper < 0 || upper + 1 >= recipe.ingredientGroups.size || recipe.groupRows(upper + 1).isEmpty()) return false
+        val items = recipe.listItems
+        val first = items.indexOf(ListItem.Heading(upper))
+        val second = items.indexOf(ListItem.Heading(upper + 1))
+        // The lower group's block is put where the upper one's began.
+        return rearrange { items.movedBlock(second, blockAt(items, second), first) }
+    }
+
+    /**
+     * Puts a heading with no name yet above the row at [position] — at the number of rows, after the last, where its
+     * group has no rows yet — so the rows from there to the next heading are its group (DOM-022). Where a heading
+     * already stands there, none is put. Returns whether it was put; the heading is not saved until it is named.
+     */
+    fun addGroup(position: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (position !in 0..recipe.ingredients.size || recipe.ingredientGroups.any { it.firstPosition == position }) return false
+        val index = recipe.ingredientGroups.count { it.firstPosition < position }
+        return edit { edited ->
+            groupKeys.insert(index, edited.ingredientGroups.size)
+            edited.copy(ingredientGroups = edited.ingredientGroups.toMutableList().apply { add(index, IngredientGroup("", position)) })
         }
     }
+
+    /**
+     * The name of the group whose heading is at [index], kept as typed however long (the limit is marked on leaving the
+     * field, never refused — FLOW-028).
+     */
+    fun renameGroup(index: Int, name: String): Boolean {
+        val group = current.value?.ingredientGroups?.getOrNull(index) ?: return false
+        if (group.name == name) return editable
+        return edit { recipe -> recipe.copy(ingredientGroups = recipe.ingredientGroups.mapIndexed { i, it -> if (i == index) it.copy(name = name) else it }) }
+    }
+
+    /**
+     * The author left the name of the heading at [index], which read [entered] when they came to it: it is held
+     * trimmed. A name left blank is no name — the heading takes back [entered], or, never named, goes without a word.
+     */
+    fun settleGroupName(index: Int, entered: String) {
+        val name = current.value?.ingredientGroups?.getOrNull(index)?.name ?: return
+        val settled = name.trim().ifEmpty { entered.trim() }
+        when {
+            settled.isEmpty() -> edit { recipe ->
+                groupKeys.remove(index, recipe.ingredientGroups.size)
+                recipe.copy(ingredientGroups = recipe.ingredientGroups.filterIndexed { i, _ -> i != index })
+            }
+            settled != name -> renameGroup(index, settled)
+        }
+    }
+
+    /**
+     * Takes the heading at [index] away; its rows stay where they are and so belong to the group above, or to none
+     * (DOM-022). The removal is offered for undoing as [removal].
+     */
+    fun removeGroup(index: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (index !in recipe.ingredientGroups.indices) return false
+        val removing = edit { edited ->
+            groupKeys.remove(index, edited.ingredientGroups.size)
+            edited.copy(ingredientGroups = edited.ingredientGroups.filterIndexed { i, _ -> i != index })
+        }
+        if (removing) offered.value = Removal(Removal.Kind.GROUP, index, recipe) {}
+        return removing
+    }
+
+    /**
+     * Applies the ingredient list [arranged] makes of it ([Recipe.arranged]), each row's key and each kept heading's
+     * following it. Returns the headings dropped, by their former index, or null where nothing was changed.
+     */
+    private fun rearrange(prepare: (Recipe) -> Recipe = { it }, arranged: (Recipe) -> List<ListItem>): List<Int>? {
+        var dropped: List<Int>? = null
+        val changed = edit { recipe ->
+            val result = prepare(recipe).arranged(arranged(recipe))
+            ingredientKeys.arrange(result.rows, recipe.ingredients.size)
+            groupKeys.arrange(result.headings, recipe.ingredientGroups.size)
+            dropped = recipe.ingredientGroups.indices.filter { it !in result.headings }
+            result.recipe
+        }
+        return dropped.takeIf { changed }
+    }
+
+    private fun rearrange(arranged: (Recipe) -> List<ListItem>): Boolean = rearrange({ it }, arranged) != null
 
     /** A new row: its unit starts as grams, so it always has a unit and so a unit type (DOM-016); no quantity yet. */
     private fun emptyRow(position: Int) = Ingredient(
@@ -451,27 +641,18 @@ class RecipeEditor(
     fun removeIngredient(position: Int): Boolean {
         val recipe = current.value ?: return false
         if (position !in recipe.ingredients.indices) return false
-        val removing = edit { edited ->
-            ingredientKeys.remove(position, edited.ingredients.size)
-            val rows = edited.ingredients.filterIndexed { i, _ -> i != position }.mapIndexed { i, row -> row.copy(position = i) }
-            val steps = edited.steps.map { step ->
-                val left = ReferenceSpacing.withoutReferencesTo(step, position)
-                left.copy(
-                    ingredientReferences = left.ingredientReferences.map {
-                        if (it.ingredientPosition > position) it.copy(ingredientPosition = it.ingredientPosition - 1) else it
-                    },
-                )
-            }
-            edited.copy(ingredients = rows, steps = steps)
-        }
-        if (removing) offered.value = Removal(step = false, position, recipe) {}
-        return removing
+        // Every heading stays over the rows it had; one whose only row this was goes with it (DOM-022).
+        val dropped = rearrange({ edited -> edited.copy(steps = edited.steps.map { ReferenceSpacing.withoutReferencesTo(it, position) }) }) { edited ->
+            edited.listItems - ListItem.Row(position)
+        } ?: return false
+        offered.value = Removal(Removal.Kind.INGREDIENT, position, recipe, dropped) {}
+        return true
     }
 
     private val offered = MutableStateFlow<Removal?>(null)
 
     /**
-     * The last row or step deleted, while it can still be undone: until it is undone, ended, or the next change is
+     * The last row, step or timer deleted, while it can still be undone: until it is undone, ended, or the next change is
      * made — which ends it — so undoing it puts back exactly the recipe it was taken from; null for none.
      */
     val removal: StateFlow<Removal?> = offered.asStateFlow()
@@ -483,8 +664,17 @@ class RecipeEditor(
     fun undoRemoval(removal: Removal): Boolean {
         if (!offered.compareAndSet(removal, null)) return false
         val now = current.value ?: return false
-        if (removal.step) stepKeys.insert(removal.position, now.steps.size)
-        else ingredientKeys.insert(removal.position, now.ingredients.size)
+        when (removal.kind) {
+            Removal.Kind.STEP -> stepKeys.insert(removal.position, now.steps.size)
+            Removal.Kind.INGREDIENT -> ingredientKeys.insert(removal.position, now.ingredients.size)
+            Removal.Kind.GROUP -> groupKeys.insert(removal.position, now.ingredientGroups.size)
+            // A timer goes back into its step, which kept its key; the step's timer names are marked as they were.
+            Removal.Kind.TIMER -> {
+                val key = stepKeys.of(removal.position)
+                left.value = left.value.filterNotTo(mutableSetOf()) { it is Left.OfStep && it.key == key && it.timer != null } + removal.marks
+            }
+        }
+        removal.headings.forEachIndexed { i, index -> groupKeys.insert(index, now.ingredientGroups.size + i) }
         return edit { removal.before }
     }
 
@@ -603,14 +793,16 @@ class RecipeEditor(
      */
     fun leave(part: RecipePart) = hold(
         when (part) {
-            is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timerName = false)
-            is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timerName = true)
+            is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timer = null)
+            is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timer = part.index)
+            is RecipePart.IngredientNote -> Left.OfIngredient(ingredientKeys.of(part.position))
+            is RecipePart.GroupName -> Left.OfGroup(groupKeys.of(part.index))
             else -> Left.Whole(part)
         },
     )
 
-    /** The author left the text of the step whose [stepKey] is [key], or, [timerName], the name of its timer. */
-    fun leaveStep(key: Long, timerName: Boolean = false) = hold(Left.OfStep(key, timerName))
+    /** The author left the text of the step whose [stepKey] is [key], or, given a [timer], the name of its timer at that index. */
+    fun leaveStep(key: Long, timer: Int? = null) = hold(Left.OfStep(key, timer))
 
     private fun hold(part: Left) {
         val recipe = current.value ?: return
@@ -630,13 +822,24 @@ class RecipeEditor(
     /** The part [this] is at now; null for a step deleted since. */
     private fun Left.at(): RecipePart? = when (this) {
         is Left.Whole -> part
-        is Left.OfStep -> stepPosition(key)?.let { if (timerName) RecipePart.TimerName(it) else RecipePart.StepText(it) }
+        is Left.OfStep -> stepPosition(key)?.let { if (timer != null) RecipePart.TimerName(it, timer) else RecipePart.StepText(it) }
+        is Left.OfIngredient -> ingredientPosition(key)?.let { RecipePart.IngredientNote(it) }
+        is Left.OfGroup -> groupIndex(key)?.let { RecipePart.GroupName(it) }
     }
 
-    private sealed interface Left {
+    internal sealed interface Left {
         data class Whole(val part: RecipePart) : Left
-        data class OfStep(val key: Long, val timerName: Boolean) : Left
+        /** The text of the step whose [stepKey] is [key], or, given a [timer], the name of its timer at that index. */
+        data class OfStep(val key: Long, val timer: Int?) : Left
+        /** The note of the ingredient row whose [ingredientKey] is [key], so the mark stays with the row. */
+        data class OfIngredient(val key: Long) : Left
+        /** The name of the heading whose [groupKey] is [key]. */
+        data class OfGroup(val key: Long) : Left
     }
+
+    /** Where the ingredient row whose [ingredientKey] is [key] stands now; null once it is deleted. */
+    private fun ingredientPosition(key: Long): Int? =
+        ingredientKeys.positionOf(key)?.takeIf { it < (current.value?.ingredients?.size ?: 0) }
 
     /** Where the step whose [stepKey] is [key] stands now; null once it is deleted. */
     fun stepPosition(key: Long): Int? = stepKeys.positionOf(key)?.takeIf { it < (current.value?.steps?.size ?: 0) }
@@ -653,11 +856,12 @@ class RecipeEditor(
         offered.value?.let(::endRemoval)
         val next = recipe.edited(clock()) { withEntryDivisibility(change(it)) }
         current.value = next
-        if (left.value.isNotEmpty()) remark(next)
+        if (left.value.isNotEmpty() || marked.value.isNotEmpty()) remark(next)
         // Queued on a fair lock before this returns, so the book receives the changes in the order made — started
         // undispatched, since a dispatcher may run a launch made inside another coroutine of its own after a later one.
         saving.launch(start = CoroutineStart.UNDISPATCHED) {
-            writes.withLock { recipes.save(next) }
+            // A heading still being named is not saved (DOM-022).
+            writes.withLock { recipes.save(next.withNamedGroups()) }
             then()
         }
         return true
@@ -697,6 +901,18 @@ class RecipeEditor(
         return editIngredient(position) { it.copy(qualifier = held) }
     }
 
+    /**
+     * How the row's ingredient is prepared, as the author [typed] it (DOM-023): any row, an entry or free text, takes
+     * one. It is held trimmed, and blank holds none ([Ingredient.noteOf]); it is kept in full however long — the limit
+     * is marked on leaving the field, never refused (FLOW-028). The note the row already holds changes nothing.
+     */
+    fun setIngredientNote(position: Int, typed: String): Boolean {
+        val row = current.value?.ingredients?.getOrNull(position) ?: return false
+        val note = Ingredient.noteOf(typed)
+        if (note == row.note) return editable
+        return editIngredient(position) { it.copy(note = note) }
+    }
+
     companion object {
         /** Where the row at [position] stands once the row at [from] has moved to [to]. */
         private fun moved(position: Int, from: Int, to: Int): Int = when {
@@ -727,15 +943,27 @@ class RecipeEditor(
 }
 
 /**
- * A step ([step]) or an ingredient row deleted from [position], offered for undoing; [before] is the recipe it was
- * deleted from, and [ended] what is done once it is gone for good.
+ * A step, an ingredient row, a group's heading or a step's timer ([kind]) deleted from [position] — a timer from the
+ * step at [position], at [index] of its timers — offered for undoing; [before] is the recipe it was deleted from,
+ * [headings] the indices of the headings that went with a row — its group left empty — and [ended] what is done once it
+ * is gone for good.
  */
 class Removal internal constructor(
-    val step: Boolean,
+    val kind: Kind,
     val position: Int,
     internal val before: Recipe,
+    internal val headings: List<Int> = emptyList(),
+    val index: Int = 0,
+    /** For a timer, the marks its step's timer names held when it was removed. */
+    internal val marks: Set<RecipeEditor.Left> = emptySet(),
     internal val ended: suspend () -> Unit,
-)
+) {
+    enum class Kind { STEP, INGREDIENT, GROUP, TIMER }
+
+    /** Whether the timer removed was one of several on its step, so that which one is said. */
+    val ofSeveral: Boolean
+        get() = kind == Kind.TIMER && (before.steps.sortedBy { it.position }.getOrNull(position)?.timers?.size ?: 0) > 1
+}
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
 data class PartsMadeWhole(val ingredientPosition: Int, val serial: Long)
@@ -768,6 +996,14 @@ class RowKeys private constructor(private val keys: MutableList<Long>, private v
     fun move(from: Int, to: Int, count: Int) {
         fill(count)
         keys.add(to, keys.removeAt(from))
+    }
+
+    /** The [count] rows now stand in the order [order] gives by their former positions; a row left out of it is gone. */
+    fun arrange(order: List<Int>, count: Int) {
+        fill(count)
+        val was = keys.toList()
+        keys.clear()
+        order.mapTo(keys) { was[it] }
     }
 
     private fun fill(count: Int) {

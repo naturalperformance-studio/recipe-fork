@@ -23,9 +23,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Every statement before data is destroyed — deleting an own recipe (FLOW-053 (2)), removing a found one (FLOW-064
- * (6)), clearing saved media (FLOW-060) — names the action on its confirm button and draws it in the theme's error
- * colour; its decline stays in the ordinary colour of a dialog's buttons.
+ * Every statement before data is destroyed for good — clearing saved media (FLOW-060) — names the action on its
+ * confirm button and draws it in the theme's error colour; its decline stays in the ordinary colour of a dialog's
+ * buttons. Deleting an own recipe or removing a found one asks nothing: it is undone instead (FLOW-053, RecipeUndoTest).
  */
 @RunWith(AndroidJUnit4::class)
 class DestructiveConfirmationsTest {
@@ -37,16 +37,6 @@ class DestructiveConfirmationsTest {
         compose.waitForIdle()
         compose.onNode(hasTestTag(confirm) and hasText(label)).assertExists()
         assertConfirmInErrorColour(compose, confirm, decline)
-    }
-
-    @Test
-    fun deletingAnOwnRecipe() = shows(LibraryTags.DELETE_CONFIRM, LibraryTags.DELETE_DECLINE, "Delete") {
-        DeleteStatement("Soup", onConfirm = {}, onDecline = {})
-    }
-
-    @Test
-    fun removingAFoundRecipe() = shows(LibraryTags.REMOVE_CONFIRM, LibraryTags.REMOVE_DECLINE, "Remove") {
-        RemoveStatement("Soup", onConfirm = {}, onDecline = {})
     }
 
     @Test

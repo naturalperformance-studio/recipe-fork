@@ -57,6 +57,24 @@ data class IngredientEntity(
     val divisible: Boolean?,
     /** What the author typed when it reads as no quantity; added in version 2 (FLOW-024 (6)). */
     @ColumnInfo(name = "entered_quantity") val enteredQuantity: String? = null,
+    /** How the ingredient is prepared (DOM-023); null for none. Added in version 4. */
+    val note: String? = null,
+)
+
+/**
+ * A heading of a recipe's ingredient list (DOM-022), the [position]th of its headings; the rows from [firstIngredient]
+ * up to the next heading belong to it. Added in version 4.
+ */
+@Entity(
+    tableName = "ingredient_group",
+    primaryKeys = ["recipe_id", "position"],
+    foreignKeys = [ForeignKey(RecipeEntity::class, ["recipe_id"], ["recipe_id"], onDelete = CASCADE)],
+)
+data class IngredientGroupEntity(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    val position: Int,
+    val name: String,
+    @ColumnInfo(name = "first_ingredient") val firstIngredient: Int,
 )
 
 @Entity(
@@ -68,9 +86,23 @@ data class StepEntity(
     @ColumnInfo(name = "recipe_id") val recipeId: String,
     val position: Int,
     val text: String,
-    /** The step's timer in whole minutes; null when the step has none (DOM-013). */
-    @ColumnInfo(name = "timer_minutes") val timerMinutes: Long?,
-    @ColumnInfo(name = "timer_label") val timerLabel: String?,
+)
+
+/**
+ * The [position]th timer of the recipe's step at [stepPosition] (DOM-024): its duration in whole [minutes] and its
+ * [label], null for none. Added in version 5, when a step's one timer left its row.
+ */
+@Entity(
+    tableName = "step_timer",
+    primaryKeys = ["recipe_id", "step_position", "position"],
+    foreignKeys = [ForeignKey(RecipeEntity::class, ["recipe_id"], ["recipe_id"], onDelete = CASCADE)],
+)
+data class StepTimerEntity(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    @ColumnInfo(name = "step_position") val stepPosition: Int,
+    val position: Int,
+    val minutes: Long,
+    val label: String?,
 )
 
 @Entity(

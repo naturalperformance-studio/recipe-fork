@@ -14,6 +14,7 @@ import app.recipefork.app.file.TestRecipeFiles.zip
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.FileMedia
 import app.recipefork.core.file.RecipeFile
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
@@ -159,7 +160,8 @@ class RecipeImportTest {
     // FLOW-064 (5): a document of a later format, written by a later version of the application.
     @Test
     fun aLaterFormatIsRefused() {
-        val later = RecipeFile.encode(soup()).replace("\"format_version\": 1", "\"format_version\": 2")
+        val later = RecipeFile.encode(soup()).replace("\"format_version\": 3", "\"format_version\": 4")
+        assertTrue(later.contains("\"format_version\": 4"))
         assertRefused(Refusal.LATER_VERSION, zip(RecipeFile.DOCUMENT to later.toByteArray()))
     }
 
@@ -323,5 +325,72 @@ class RecipeImportTest {
         recipes.save(own)
         assertFalse(importer.remove(own.id))
         assertEquals(own, recipes.get(own.id))
+    }
+
+    // DOM-022, DOM-023: a found recipe keeps the file's ingredient groups and the note of every row.
+    @Test
+    fun aFoundRecipeKeepsItsGroupsAndNotes() = runBlocking {
+        val content = soup().copy(
+            ingredients = soup().ingredients.map { it.copy(note = "note of ${it.freeTextName}") },
+            ingredientGroups = listOf(IngredientGroup("Base", 0), IngredientGroup("Topping", 1)),
+        )
+        assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
+        val found = recipes.get(content.id)!!
+        assertEquals(listOf(IngredientGroup("Base", 0), IngredientGroup("Topping", 1)), found.ingredientGroups)
+        assertEquals(listOf("note of beans", "note of onion"), found.ingredients.map { it.note })
+        assertEquals(content.ingredients, found.ingredients)
+        assertEquals(found, RecipeImport.foundRecipe(content, emptyList(), now))
+    }
+
+    // DOM-022, DOM-023: a file of format 1, written before groups and notes, still imports, with neither.
+    @Test
+    fun aFormat1FileImportsWithNoGroupsAndNoNotes() = runBlocking {
+        val format1 = oneTimerFormat(RecipeFile.encode(soup()), 1)
+            .replace(Regex(",\\s*\"ingredient_groups\": \\[\\]"), "")
+        assertTrue(format1.contains("\"format_version\": 1"))
+        assertFalse(format1.contains("ingredient_groups"))
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(zip(RecipeFile.DOCUMENT to format1.toByteArray())))
+        val found = recipes.get(soup().id)!!
+        assertEquals(emptyList<IngredientGroup>(), found.ingredientGroups)
+        assertEquals(soup().ingredients, found.ingredients)
+        assertTrue(found.ingredients.all { it.note == null })
+        assertEquals(soup().steps, found.steps)
+    }
+
+    // DOM-024: a file of format 2, one `timer` a step, imports each as its step's only timer.
+    @Test
+    fun aFormat2FileImportsEachTimerAsItsStepsOnlyOne() = runBlocking {
+        val format2 = oneTimerFormat(RecipeFile.encode(soup()), 2)
+        assertTrue(format2.contains("\"timer\": {") && !format2.contains("\"timers\""))
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(zip(RecipeFile.DOCUMENT to format2.toByteArray())))
+        assertEquals(listOf(listOf(Timer(10.minutes)), emptyList()), recipes.get(soup().id)!!.steps.map { it.timers })
+    }
+
+    // DOM-024: a file whose step carries several timers imports with every one, in order; a sixth, or a timer past
+    // its bounds after the first, refuses the file.
+    @Test
+    fun aFileWithSeveralTimersOnAStepImportsThemAllAndASixthIsRefused() {
+        val timers = listOf(Timer(10.minutes), Timer(6.minutes, "Sauce"), Timer(2.minutes), Timer(1.minutes, "Garlic"), Timer(3.minutes))
+        fun with(timers: List<Timer>) = soup().copy(steps = soup().steps.map { if (it.position == 0) it.copy(timers = timers) else it })
+        assertRefused(Refusal.BREAKS_RULES, file(with(timers + Timer(4.minutes))))
+        assertRefused(Refusal.BREAKS_RULES, file(with(listOf(Timer(10.minutes), Timer((100 * 60).minutes)))))
+        assertRefused(Refusal.BREAKS_RULES, file(with(listOf(Timer(10.minutes), Timer(5.minutes, "n".repeat(61))))))
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(file(with(timers))))
+        assertEquals(timers, runBlocking { recipes.get(soup().id)!! }.steps[0].timers)
+    }
+
+    /** [document] as format [version] — 1 or 2 — wrote it: each step's list of at most one timer as its one `timer`. */
+    private fun oneTimerFormat(document: String, version: Int): String = document
+        .replace("\"format_version\": ${RecipeFile.FORMAT_VERSION}", "\"format_version\": $version")
+        .replace(Regex(",\\s*\"timers\": \\[\\]"), "")
+        .replace(Regex("\"timers\": \\[\\s*(\\{[^{}\\[\\]]*\\})\\s*\\]"), "\"timer\": $1")
+
+    // DOM-022, DOM-023: a file whose groups or notes break the rules is refused, and adds nothing.
+    @Test
+    fun aFileWhoseGroupsOrNotesBreakTheRulesIsRefused() {
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(ingredients = soup().ingredients.map { it.copy(note = "n".repeat(61)) })))
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(ingredientGroups = listOf(IngredientGroup("g".repeat(41), 0)))))
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(ingredientGroups = listOf(IngredientGroup("A", 1), IngredientGroup("B", 1)))))
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(ingredientGroups = listOf(IngredientGroup("A", 3)))))
     }
 }

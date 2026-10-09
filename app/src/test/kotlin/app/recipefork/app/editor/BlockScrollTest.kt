@@ -127,6 +127,7 @@ class BlockScrollTest(private val handleRight: Boolean) {
         compose.waitForIdle()
         val form = bounds(EditorTags.FORM)
         val start = at(bounds(tag))
+        assertTrue("the point $where ($start) lies in the scrolling form ($form)", form.contains(start))
         val distance = px(160f)
         val up = start.y - distance > form.top + px(8f)
         val move = if (up) -distance else distance
@@ -156,8 +157,10 @@ class BlockScrollTest(private val handleRight: Boolean) {
         assertScrollsFrom("the quantity", EditorTags.ingredientQuantity(1), block, next) { it.center }
         assertScrollsFrom("the quantity's label", EditorTags.ingredientQuantity(1), block, next) { Offset(it.left + px(24f), it.top + px(4f)) }
         assertScrollsFrom("the unit", EditorTags.ingredientUnit(1), block, next) { it.center }
-        // Blank: between the name and the quantity, and below the inputs, inside the block.
-        assertScrollsFrom("the gap below the name", EditorTags.ingredientQuantity(1), block, next) { Offset(it.center.x, it.top - px(2f)) }
+        assertScrollsFrom("the note", IngredientNoteTags.field(1), block, next) { it.center }
+        // Blank: between the name and the note, between the note and the quantity, and below the inputs, inside the block.
+        assertScrollsFrom("the gap below the name", IngredientNoteTags.field(1), block, next) { Offset(it.center.x, it.top - px(2f)) }
+        assertScrollsFrom("the gap below the note", EditorTags.ingredientQuantity(1), block, next) { Offset(it.center.x, it.top - px(2f)) }
         assertScrollsFrom("the blank bottom of the block", block, block, next) { Offset(it.center.x, it.bottom - px(3f)) }
         assertEquals(recipe().ingredients, stored(id).ingredients)
     }

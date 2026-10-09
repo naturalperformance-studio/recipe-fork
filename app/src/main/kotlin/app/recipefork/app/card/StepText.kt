@@ -3,6 +3,7 @@ package app.recipefork.app.card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -113,9 +114,10 @@ internal object StepTags {
 /**
  * A step's text on the card, each reference read as [references] gives it, followed by the list's arrow where rounding
  * moved it (FLOW-032 (3), SCALE-004). The screen reader reads it as one sentence, an arrow as the words it stands for.
+ * A step marked [done] is struck through and muted (FLOW-068).
  */
 @Composable
-internal fun StepText(step: Step, references: CardReferences, modifier: Modifier = Modifier) {
+internal fun StepText(step: Step, references: CardReferences, modifier: Modifier = Modifier, done: Boolean = false) {
     val runs = StepText.runs(step, references::quantity)
     // Each rounded reference, by its run: its arrow, and how the screen reader reads the reference with it.
     val marks = runs.withIndex().filter { it.value is StepRun.Reference }.associate { (index, run) ->
@@ -141,17 +143,20 @@ internal fun StepText(step: Step, references: CardReferences, modifier: Modifier
     // The text as laid out stays reachable — by the screen reader for its bounds, by a test for its size — though the
     // node's own text is replaced by what is spoken.
     val laidOut = remember { arrayOfNulls<TextLayoutResult>(1) }
-    Text(
-        shown,
-        style = stepTextStyle,
-        onTextLayout = { laidOut[0] = it },
-        modifier = modifier.clearAndSetSemantics {
-            text = AnnotatedString(spoken)
-            shownText = shown.text
-            testTag = tag
-            getTextLayoutResult { results -> laidOut[0]?.let { results += it } != null }
-        },
-    )
+    // Laid out anew as it is marked or unmarked, so that what is reachable is the text as it is drawn now.
+    key(done) {
+        Text(
+            shown,
+            style = stepTextStyle.done(done),
+            onTextLayout = { laidOut[0] = it },
+            modifier = modifier.clearAndSetSemantics {
+                text = AnnotatedString(spoken)
+                shownText = shown.text
+                testTag = tag
+                getTextLayoutResult { results -> laidOut[0]?.let { results += it } != null }
+            },
+        )
+    }
 }
 
 /**

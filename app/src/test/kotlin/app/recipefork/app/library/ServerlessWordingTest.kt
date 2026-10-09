@@ -105,7 +105,7 @@ class ServerlessWordingTest {
         assertEquals(STANDARD_ONLY.toSortedSet(), speaking)
         assertEquals(R.string.library_state_published_serverless, stateLabel(RecipeState.PUBLISHED, Mode.Serverless))
         RecipeState.entries.forEach { state ->
-            val name = context.resources.getResourceEntryName(stateLabel(state, Mode.Serverless))
+            val name = stateLabel(state, Mode.Serverless)?.let(context.resources::getResourceEntryName)
             assertTrue("$state reads $name in serverless mode", name !in STANDARD_ONLY)
         }
     }
@@ -132,6 +132,37 @@ class ServerlessWordingTest {
         assertEquals(listOf("Published soup", "Published", "Sent, with changes not sent"), entryTexts(published))
     }
 
+    // Nothing can be published without the server, so an own draft, local or private, names no state there; the entry
+    // closes the gap where the state was, and the screen reader reads it the same, less the state. A recipe once
+    // published keeps its serverless state.
+    @Test
+    fun aServerlessDraftNamesNoState() {
+        val local = own("Local soup", RecipeState.LOCAL, SentStatus.NEVER, 0)
+        val private = own("Private soup", RecipeState.PRIVATE, SentStatus.SENT, 1)
+        val published = own("Published soup", RecipeState.PUBLISHED, SentStatus.SENT, 2)
+        show(Mode.Serverless)
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
+        listOf(local, private, published).forEach(::awaitEntry)
+        assertEquals(listOf("Local soup"), entryTexts(local))
+        assertEquals(listOf("Private soup"), entryTexts(private))
+        assertEquals(listOf("Published soup", context.getString(R.string.library_state_published_serverless)), entryTexts(published))
+        assertTrue("the draft's entry is shorter by the missing line", entryHeight(local) < entryHeight(published))
+        assertEquals(entryHeight(local), entryHeight(private))
+    }
+
+    // The standard build still names both kinds of draft.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h2000dp")
+    fun theStandardBuildStillNamesADraft() {
+        val local = own("Суп", RecipeState.LOCAL, SentStatus.NEVER, 0)
+        val private = own("Борщ", RecipeState.PRIVATE, SentStatus.SENT, 1)
+        show(Mode.Standard)
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
+        listOf(local, private).forEach(::awaitEntry)
+        assertEquals(listOf("Суп", "Черновик"), entryTexts(local).take(2))
+        assertEquals(listOf("Борщ", "Черновик"), entryTexts(private).take(2))
+    }
+
     private fun everyScreen() {
         // An own recipe in every state, with every sending mark, as a device that once had the server may hold them.
         val owned = RecipeState.entries.mapIndexed { i, state ->
@@ -145,14 +176,14 @@ class ServerlessWordingTest {
         val foundId = TestRecipeFiles.soup().id.value
         show(Mode.Serverless)
 
-        // The marked view, a found recipe's menu and the statement before its removal.
+        // The marked view, a found recipe's menu and the notice of its removal, undone.
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(foundId)), PATIENCE_MS)
         assertSaysNothingOfTheServer("the marked view")
         compose.chooseEntryAction(foundId, LibraryTags.remove(foundId))
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.REMOVE_STATEMENT), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the statement before a removal")
-        compose.onNodeWithTag(LibraryTags.REMOVE_DECLINE).performClick()
-        compose.waitForIdle()
+        compose.awaitRemovalNotice(context.getString(R.string.library_recipe_removed), context.getString(R.string.library_undo))
+        assertSaysNothingOfTheServer("the notice of a removal")
+        compose.takeNoticeAction(context.getString(R.string.library_undo))
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(foundId)), PATIENCE_MS)
 
         // The settings, their storage item counted.
         compose.onNodeWithTag(LibraryTags.SETTINGS).performClick()
@@ -171,17 +202,17 @@ class ServerlessWordingTest {
         compose.onNodeWithTag(SettingsTags.BACK).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(SettingsTags.SCREEN), PATIENCE_MS)
 
-        // The own view: every entry, the menu of one, and the statement before a deletion.
+        // The own view: every entry, the menu of one, and the notice of a deletion, undone.
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         owned.forEach { recipe ->
             awaitEntry(recipe)
             assertSaysNothingOfTheServer("the entry of a recipe in ${recipe.state}")
         }
         compose.chooseEntryAction(local.id.value, LibraryTags.delete(local.id.value))
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the statement before a deletion")
-        compose.onNodeWithTag(LibraryTags.DELETE_DECLINE).performClick()
-        compose.waitForIdle()
+        compose.awaitRemovalNotice(context.getString(R.string.library_recipe_deleted), context.getString(R.string.library_undo))
+        assertSaysNothingOfTheServer("the notice of a deletion")
+        compose.takeNoticeAction(context.getString(R.string.library_undo))
+        awaitEntry(local)
 
         // The card of a recipe that was published.
         compose.runOnIdle { session.openCard(frozen.id.value, LibraryView.OWN) }
@@ -244,6 +275,9 @@ class ServerlessWordingTest {
     private fun entryTexts(recipe: Recipe): List<String> =
         compose.onNodeWithTag(LibraryTags.entry(recipe.id.value)).fetchSemanticsNode().config
             .getOrElse(androidx.compose.ui.semantics.SemanticsProperties.Text) { emptyList() }.map { it.text }
+
+    private fun entryHeight(recipe: Recipe): Int =
+        compose.onNodeWithTag(LibraryTags.entry(recipe.id.value)).fetchSemanticsNode().size.height
 
     private fun assertSaysNothingOfTheServer(where: String) {
         compose.waitForIdle()
