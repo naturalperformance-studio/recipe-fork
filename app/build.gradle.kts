@@ -4,6 +4,26 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// The version every build carries, from recipefork.version in gradle.properties (the scheme is described there).
+val appVersionName: String = providers.gradleProperty("recipefork.version").get()
+val appVersionCode: Int = run {
+    val parts = appVersionName.split(".").map { it.toIntOrNull() }
+    require(parts.size in 2..3 && parts.all { it != null && it >= 0 } && parts.drop(1).all { it!! < 1000 }) {
+        "recipefork.version must be MAJOR.MINOR or MAJOR.MINOR.PATCH with MINOR and PATCH below 1000, not $appVersionName"
+    }
+    val (major, minor) = parts.map { it!! }
+    major * 1_000_000 + minor * 1_000 + (parts.getOrNull(2) ?: 0)
+}
+
+// The Play upload key. It never lives in the repository: scripts/play-bundle.sh takes it from ~/Projects/.env or the
+// environment and hands it to Gradle as environment variables. Without them the play bundle is left unsigned.
+val uploadKey: Map<String, String>? = listOf(
+    "RECIPEFORK_UPLOAD_STORE_FILE",
+    "RECIPEFORK_UPLOAD_STORE_PASSWORD",
+    "RECIPEFORK_UPLOAD_KEY_ALIAS",
+    "RECIPEFORK_UPLOAD_KEY_PASSWORD",
+).associateWith { providers.environmentVariable(it).orNull.orEmpty() }.takeIf { key -> key.values.all { it.isNotEmpty() } }
+
 android {
     namespace = "app.recipefork.app"
     compileSdk {
@@ -14,8 +34,8 @@ android {
         applicationId = "app.recipefork.app"
         minSdk = 29 // QUAL-005
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Where the device reaches the product's server. The default is the development machine as the
@@ -28,6 +48,17 @@ android {
         // reads it. Both builds keep one application id, so the serverless one installs over the standard one.
         val serverless = providers.gradleProperty("recipefork.serverless").map { it.toBoolean() }.getOrElse(false)
         buildConfigField("boolean", "SERVERLESS", "$serverless")
+    }
+
+    signingConfigs {
+        if (uploadKey != null) {
+            create("upload") {
+                storeFile = file(uploadKey.getValue("RECIPEFORK_UPLOAD_STORE_FILE"))
+                storePassword = uploadKey.getValue("RECIPEFORK_UPLOAD_STORE_PASSWORD")
+                keyAlias = uploadKey.getValue("RECIPEFORK_UPLOAD_KEY_ALIAS")
+                keyPassword = uploadKey.getValue("RECIPEFORK_UPLOAD_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -49,6 +80,13 @@ android {
             initWith(getByName("release"))
             proguardFile("proguard-smoke-test.pro")
             testProguardFile("proguard-smoke-test-apk.pro")
+            matchingFallbacks += "release"
+        }
+        // The app bundle for Google Play (scripts/play-bundle.sh): the release build, shrunk by the same rules, but
+        // signed with the upload key instead of the debug one, and never with the debug one: unsigned without the key.
+        create("play") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.findByName("upload")
             matchingFallbacks += "release"
         }
     }
