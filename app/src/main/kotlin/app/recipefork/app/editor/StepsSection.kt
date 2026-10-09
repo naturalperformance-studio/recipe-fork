@@ -177,6 +177,8 @@ private fun StepRow(
     val timers = rememberSaveable(saver = TimerRows.Saver) { TimerRows(step.timers.size) }
     val timerRows = timers.shown(step.timers.size)
     SideEffect { timers.settle(step.timers.size) }
+    // A timer the author adds takes the focus in its hours, with the keyboard up.
+    val timerFocus = remember { RowFocus() }
     // Left with an unnamed timer whose notification is or may be cut: what it will say shows until the step is
     // entered again (GUIDE-006). Nothing of it is stored.
     var leftCut by remember { mutableStateOf(false) }
@@ -249,7 +251,7 @@ private fun StepRow(
                         label = stringResource(R.string.editor_timer_label, position + 1),
                         tag = EditorTags.timerAttach(position),
                         action = stringResource(R.string.editor_timer_action, position + 1),
-                        onClick = { if (!editor.attachTimer(position, timers.unheld)) timers.open() },
+                        onClick = { if (!editor.attachTimer(position, timers.unheld)) timerFocus.ask(timers.open()) },
                     )
                     StepPhotoAction(position, photo, photoControl)
                     BlockAction(
@@ -281,7 +283,7 @@ private fun StepRow(
                 // Below the row, only what the step has: its timers, and its photograph, or that one is being prepared.
                 if (timerRows.isNotEmpty() || stating || photo != null || photoControl.attaching.working.value) {
                     Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        StepTimers(position, step, timerRows, timers, ingredients, language, editor, stating, left = leftCut)
+                        StepTimers(position, step, timerRows, timers, timerFocus, ingredients, language, editor, stating, left = leftCut)
                         StepPhotoShown(position, photo, photos, photoControl)
                     }
                 }
@@ -304,6 +306,7 @@ private fun StepTimers(
     step: Step,
     rows: List<TimerRows.Row>,
     timers: TimerRows,
+    focus: RowFocus,
     ingredients: List<Ingredient>,
     language: InterfaceLanguage,
     editor: RecipeEditor,
@@ -326,7 +329,7 @@ private fun StepTimers(
             val index = rows.take(place).count { it.held }
             val timer = if (row.held) step.timers.getOrNull(index) else null
             Column(Modifier.fillMaxWidth().padding(top = if (place > 0) 8.dp else 0.dp)) {
-                StepTimer(position, place, rows.size, index, step, timer, timers, ingredients, language, editor, left)
+                StepTimer(position, place, rows.size, index, step, timer, timers, focus, ingredients, language, editor, left)
             }
         }
     }
@@ -346,6 +349,7 @@ private fun StepTimer(
     step: Step,
     timer: Timer?,
     timers: TimerRows,
+    focus: RowFocus,
     ingredients: List<Ingredient>,
     language: InterfaceLanguage,
     editor: RecipeEditor,
@@ -356,6 +360,8 @@ private fun StepTimer(
     // The name the author gave, kept on screen while the duration is cleared and given back when it is entered again.
     var given by rememberSaveable { mutableStateOf(timer?.label) }
     val name = remember { FocusRequester() }
+    val hoursField = remember { FocusRequester() }
+    focus.TakenBy(place, hoursField)
     // Read as the rows stand when the author types, so the timer edited is this one, wherever the others went.
     fun hold(h: String, m: String) {
         val typedHours = h.toIntOrNull() ?: 0
@@ -383,7 +389,7 @@ private fun StepTimer(
             label = { Text(stringResource(R.string.editor_timer_hours)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-            modifier = Modifier.weight(1f).testTag(EditorTags.timerHours(position, place)),
+            modifier = Modifier.weight(1f).focusRequester(hoursField).testTag(EditorTags.timerHours(position, place)),
         )
         OutlinedTextField(
             value = minutes,
@@ -398,25 +404,27 @@ private fun StepTimer(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             modifier = Modifier.weight(1f).testTag(EditorTags.timerMinutes(position, place)),
         )
-        if (timer != null) {
-            // Takes this timer off, with any name the author gave it; the step's other timers stay. Undo puts it back.
-            IconButton(
-                onClick = {
-                    if (timers.held(place) && editor.removeTimer(position, timers.index(place))) timers.remove(place)
+        // Takes this timer off, with any name the author gave it; the step's other timers stay. Undo puts it back. One
+        // that holds no duration yet is no timer: it is only taken off the screen.
+        IconButton(
+            onClick = {
+                when {
+                    !timers.held(place) -> timers.remove(place)
+                    editor.removeTimer(position, timers.index(place)) -> timers.remove(place)
+                }
+            },
+            // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
+            modifier = Modifier.align(Alignment.CenterVertically).size(48.dp).testTag(EditorTags.timerRemove(position, place)),
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_remove_timer),
+                contentDescription = if (numbered) {
+                    stringResource(R.string.editor_timer_remove_numbered_action, position + 1, place + 1)
+                } else {
+                    stringResource(R.string.editor_timer_remove_action, position + 1)
                 },
-                // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
-                modifier = Modifier.align(Alignment.CenterVertically).size(48.dp).testTag(EditorTags.timerRemove(position, place)),
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_remove_timer),
-                    contentDescription = if (numbered) {
-                        stringResource(R.string.editor_timer_remove_numbered_action, position + 1, place + 1)
-                    } else {
-                        stringResource(R.string.editor_timer_remove_action, position + 1)
-                    },
-                    tint = MaterialTheme.colorScheme.error,
-                )
-            }
+                tint = MaterialTheme.colorScheme.error,
+            )
         }
     }
     if (timer != null) {
@@ -662,9 +670,10 @@ internal class TimerRows private constructor(rows: List<Row>, private var next: 
     /** How many timers are shown that hold no duration yet. */
     val unheld: Int get() = rows.size - heldCount()
 
-    /** Adds a timer that holds no duration yet after the others. */
-    fun open() {
+    /** Adds a timer that holds no duration yet after the others; returns its place. */
+    fun open(): Int {
         rows += Row(next++, held = false)
+        return rows.lastIndex
     }
 
     /** Where the timer at [place] stands among the step's timers — or would, once it holds a duration. */

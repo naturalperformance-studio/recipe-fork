@@ -195,5 +195,6 @@
     <string name="editor_step_removed">Step %1$d removed</string>
     <string name="editor_group_removed">Group heading %1$d removed</string>
     <string name="editor_timer_removed">Timer removed from step %1$d</string>
+    <string name="editor_timer_removed_numbered">Timer %2$d removed from step %1$d</string>
     <string name="editor_undo">Undo</string>
 </resources>

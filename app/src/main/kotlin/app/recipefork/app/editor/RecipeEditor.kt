@@ -288,9 +288,12 @@ class RecipeEditor(
     fun removeTimer(position: Int, index: Int): Boolean {
         val recipe = current.value ?: return false
         if (!recipe.state.editable || timerAt(position, index) == null) return false
+        val key = stepKeys.of(position)
+        // The step's timer names as they were left, for an Undo to put back.
+        val marks = left.value.filterTo(mutableSetOf()) { it is Left.OfStep && it.key == key && it.timer != null }
         marksWithoutTimer(position, index)
         if (!editStep(position) { it.withoutTimer(index) }) return false
-        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index) {}
+        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index, marks = marks) {}
         return true
     }
 
@@ -652,8 +655,11 @@ class RecipeEditor(
             Removal.Kind.STEP -> stepKeys.insert(removal.position, now.steps.size)
             Removal.Kind.INGREDIENT -> ingredientKeys.insert(removal.position, now.ingredients.size)
             Removal.Kind.GROUP -> groupKeys.insert(removal.position, now.ingredientGroups.size)
-            // A timer goes back into its step, which kept its key.
-            Removal.Kind.TIMER -> Unit
+            // A timer goes back into its step, which kept its key; the step's timer names are marked as they were.
+            Removal.Kind.TIMER -> {
+                val key = stepKeys.of(removal.position)
+                left.value = left.value.filterNotTo(mutableSetOf()) { it is Left.OfStep && it.key == key && it.timer != null } + removal.marks
+            }
         }
         removal.headings.forEachIndexed { i, index -> groupKeys.insert(index, now.ingredientGroups.size + i) }
         return edit { removal.before }
@@ -808,7 +814,7 @@ class RecipeEditor(
         is Left.OfGroup -> groupIndex(key)?.let { RecipePart.GroupName(it) }
     }
 
-    private sealed interface Left {
+    internal sealed interface Left {
         data class Whole(val part: RecipePart) : Left
         /** The text of the step whose [stepKey] is [key], or, given a [timer], the name of its timer at that index. */
         data class OfStep(val key: Long, val timer: Int?) : Left
@@ -935,9 +941,15 @@ class Removal internal constructor(
     internal val before: Recipe,
     internal val headings: List<Int> = emptyList(),
     val index: Int = 0,
+    /** For a timer, the marks its step's timer names held when it was removed. */
+    internal val marks: Set<RecipeEditor.Left> = emptySet(),
     internal val ended: suspend () -> Unit,
 ) {
     enum class Kind { STEP, INGREDIENT, GROUP, TIMER }
+
+    /** Whether the timer removed was one of several on its step, so that which one is said. */
+    val ofSeveral: Boolean
+        get() = kind == Kind.TIMER && (before.steps.sortedBy { it.position }.getOrNull(position)?.timers?.size ?: 0) > 1
 }
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */

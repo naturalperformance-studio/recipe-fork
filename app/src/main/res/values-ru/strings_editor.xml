@@ -168,5 +168,6 @@
     <string name="editor_step_removed">Шаг %1$d убран</string>
     <string name="editor_group_removed">Заголовок группы %1$d убран</string>
     <string name="editor_timer_removed">Таймер шага %1$d убран</string>
+    <string name="editor_timer_removed_numbered">Таймер %2$d шага %1$d убран</string>
     <string name="editor_undo">Вернуть</string>
 </resources>

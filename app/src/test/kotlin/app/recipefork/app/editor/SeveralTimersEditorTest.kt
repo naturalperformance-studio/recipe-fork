@@ -15,6 +15,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -201,6 +202,133 @@ class SeveralTimersEditorTest {
         runBlocking { editor.written() }
     }
 
+    // Undo of a timer's removal puts back the marks of the step's timer names as they were: a later timer's moved up
+    // with it, and goes back down with it.
+    @Test
+    fun undoingATimersRemovalPutsBackTheMarksOfItsStep() {
+        val long = "n".repeat(61)
+        val recipe = recipe(Step(0, "Knead.", timers = listOf(Timer(1.minutes, "A"), Timer(2.minutes, long), Timer(3.minutes, "C"))))
+        val editor = RecipeEditor(recipes, recipe.id, { created }, CoroutineScope(Dispatchers.Unconfined))
+        runBlocking { editor.load() }
+        editor.leave(RecipePart.TimerName(0, 1))
+        assertEquals(mapOf(RecipePart.TimerName(0, 1) to Bound.OverLimit(60, 61)), editor.marks.value)
+        assertTrue(editor.removeTimer(0, 0))
+        assertEquals(mapOf(RecipePart.TimerName(0, 0) to Bound.OverLimit(60, 61)), editor.marks.value)
+        assertTrue(editor.undoRemoval(editor.removal.value!!))
+        assertEquals(mapOf(RecipePart.TimerName(0, 1) to Bound.OverLimit(60, 61)), editor.marks.value)
+        // Removed itself, its mark goes; undone, it comes back with it.
+        assertTrue(editor.removeTimer(0, 1))
+        assertTrue(editor.marks.value.isEmpty())
+        assertTrue(editor.undoRemoval(editor.removal.value!!))
+        assertEquals(mapOf(RecipePart.TimerName(0, 1) to Bound.OverLimit(60, 61)), editor.marks.value)
+        assertEquals(recipe.steps, editor.recipe.value!!.steps)
+        runBlocking { editor.written() }
+    }
+
+    // A timer with no duration yet — added, or cleared — has a removal that takes only it off the screen; it counts
+    // among the five while shown, and taken off, leaves room for another.
+    @Test
+    fun aTimerWithNoDurationCanBeTakenOffAndLeavesRoom() {
+        val recipe = recipe(Step(0, "Knead, prove and glaze.", timers = three))
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        repeat(2) { compose.onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performClick() }
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 4)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
+        assertFalse(exists(EditorTags.timerMinutes(0, 5)))
+
+        // Taken off: nothing stored changes, nothing is offered for undoing, and there is room for one more.
+        assertTrue(exists(EditorTags.timerRemove(0, 4)))
+        compose.onNodeWithTag(EditorTags.timerRemove(0, 4)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.timerMinutes(0, 4)) }
+        assertFalse(exists(EditorTags.STATEMENT))
+        assertEquals(three, timers(recipe.id))
+        compose.onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 4)), PATIENCE_MS)
+        assertFalse(exists(EditorTags.timerStatement(0)))
+
+        // A timer cleared to no duration is taken off the same way; the others stand.
+        type(EditorTags.timerHours(0, 1), "")
+        type(EditorTags.timerMinutes(0, 1), "")
+        assertEquals(listOf(three[0], three[2]), timers(recipe.id))
+        compose.onNodeWithTag(EditorTags.timerRemove(0, 1)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.timerMinutes(0, 4)) }
+        assertEquals(listOf("10", "5", "", ""), minutesShown(0, 4))
+        assertFalse(exists(EditorTags.STATEMENT))
+        assertEquals(listOf(three[0], three[2]), timers(recipe.id))
+        // The empty rows filled in, they go in after the others.
+        type(EditorTags.timerMinutes(0, 3), "9")
+        assertEquals(listOf(three[0], three[2], Timer(9.minutes)), timers(recipe.id))
+    }
+
+    // A step moved carries all its timers, names and all, on screen and stored.
+    @Test
+    fun aMovedStepCarriesAllItsTimers() {
+        val recipe = recipe(Step(0, "Knead, prove and glaze.", timers = three), Step(1, "Bake.", timers = listOf(Timer(25.minutes))))
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.stepMenu(0)).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepAction(0, RowAction.MOVE_DOWN)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.stepAction(0, RowAction.MOVE_DOWN)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps.map { it.text } == listOf("Bake.", "Knead, prove and glaze.") }
+        assertEquals(listOf(listOf(Timer(25.minutes)), three), stored(recipe.id).steps.map { it.timers })
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(1, 2)), PATIENCE_MS)
+        assertEquals(listOf("25"), minutesShown(0, 1))
+        assertFalse(exists(EditorTags.timerMinutes(0, 1)))
+        assertEquals(listOf("10", "20", "5"), minutesShown(1, 3))
+        assertEquals(listOf("Dough", "Knead, prove and glaze.", "Glaze"), (0..2).map { fieldText(EditorTags.timerName(1, it)) })
+    }
+
+    // A step removed with its timers, and put back by Undo, comes back with every one of them, names and all.
+    @Test
+    fun aRemovedStepComesBackWithAllItsTimers() {
+        val recipe = recipe(Step(0, "Knead, prove and glaze.", timers = three), Step(1, "Bake.", timers = listOf(Timer(25.minutes))))
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
+        compose.awaitStatement(string(R.string.editor_step_removed, 1))
+        compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps == listOf(Step(0, "Bake.", timers = listOf(Timer(25.minutes)))) }
+        assertEquals(listOf("25"), minutesShown(0, 1))
+
+        undo()
+        compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps == recipe.steps }
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        assertEquals(listOf("10", "20", "5"), minutesShown(0, 3))
+        assertEquals(listOf("Dough", "Knead, prove and glaze.", "Glaze"), (0..2).map { fieldText(EditorTags.timerName(0, it)) })
+        assertEquals(listOf("25"), minutesShown(1, 1))
+    }
+
+    // GUIDE-006 with several timers: once the step is left, what the notification will say shows under each unnamed
+    // timer, whose own "Name the timer" takes the author to its own name.
+    @Test
+    fun theNotificationShowsUnderEachUnnamedTimer() {
+        val longStep = "Put the chicken in the oven at 190 degrees and roast until the skin is golden and crisp"
+        val recipe = recipe(Step(0, longStep, timers = listOf(Timer(40.minutes), Timer(5.minutes, "Rest"), Timer(10.minutes))))
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        assertFalse((0..2).any { exists(EditorTags.timerNotification(0, it)) })
+        compose.onNodeWithTag(EditorTags.stepText(0)).performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.timerNotification(0, 0)) && exists(EditorTags.timerNotification(0, 2)) }
+        assertFalse(exists(EditorTags.timerNotification(0, 1)))
+        val said = string(R.string.editor_timer_notification, "Put the chicken in the oven at 190 degrees and roast until…")
+        listOf(0, 2).forEach { assertEquals(listOf(said), compose.textsOf(EditorTags.timerNotificationText(0, it))) }
+        assertEquals(
+            string(R.string.editor_timer_notification_name_numbered_action, 1, 3),
+            AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(EditorTags.timerNotificationName(0, 2)).fetchSemanticsNode()),
+        )
+
+        compose.onNodeWithTag(EditorTags.timerNotificationName(0, 2)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onNodeWithTag(EditorTags.timerName(0, 2)).fetchSemanticsNode().config[SemanticsProperties.Focused]
+        }
+        compose.onNodeWithTag(EditorTags.timerName(0, 2)).performTextReplacement("Chicken")
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.timerNotification(0, 2)) }
+        assertTrue(exists(EditorTags.timerNotification(0, 0)))
+        assertEquals(listOf(Timer(40.minutes), Timer(5.minutes, "Rest"), Timer(10.minutes, "Chicken")), timers(recipe.id))
+    }
+
     // Each timer has its own duration fields, its own name — following the step's text until the author types one —
     // and its own removal; editing the first leaves the others as they were (a file brought them all).
     @Test
@@ -244,7 +372,8 @@ class SeveralTimersEditorTest {
         open(recipe)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0, 1)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.timerRemove(0, 1)).performScrollTo().performClick()
-        compose.awaitStatement(string(R.string.editor_timer_removed, 1))
+        compose.awaitStatement(string(R.string.editor_timer_removed_numbered, 1, 2))
+        assertEquals("Timer 2 removed from step 1", string(R.string.editor_timer_removed_numbered, 1, 2))
         compose.waitUntil(PATIENCE_MS) { timers(recipe.id) == listOf(three[0], three[2]) }
         assertEquals(listOf("10", "5"), minutesShown(0, 2))
         assertEquals(listOf("Dough", "Glaze"), (0..1).map { fieldText(EditorTags.timerName(0, it)) })
@@ -258,7 +387,7 @@ class SeveralTimersEditorTest {
 
         // Removed again and left to go: the others stay, and the removed one stays off.
         compose.onNodeWithTag(EditorTags.timerRemove(0, 0)).performScrollTo().performClick()
-        compose.awaitStatement(string(R.string.editor_timer_removed, 1))
+        compose.awaitStatement(string(R.string.editor_timer_removed_numbered, 1, 1))
         compose.swipeAwayStatement()
         assertEquals(three.drop(1), timers(recipe.id))
         assertEquals(listOf("20", "5"), minutesShown(0, 2))
@@ -272,7 +401,7 @@ class SeveralTimersEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0, 2)), PATIENCE_MS)
         assertEquals("Убрать таймер 3 шага 1", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(EditorTags.timerRemove(0, 2)).fetchSemanticsNode()))
         compose.onNodeWithTag(EditorTags.timerRemove(0, 2)).performScrollTo().performClick()
-        compose.awaitStatement("Таймер шага 1 убран")
+        compose.awaitStatement("Таймер 3 шага 1 убран")
     }
 
     // A timer whose duration is cleared stays on screen where it stood, holding its name; entered again, it goes
@@ -287,8 +416,9 @@ class SeveralTimersEditorTest {
         type(EditorTags.timerMinutes(0, 1), "")
         assertEquals(listOf(three[0], three[2]), timers(recipe.id))
         assertEquals(listOf("10", "", "5"), minutesShown(0, 3))
-        // While it holds no duration it is no timer: it has no name or removal to show.
-        assertFalse(exists(EditorTags.timerName(0, 1)) || exists(EditorTags.timerRemove(0, 1)))
+        // While it holds no duration it is no timer: it has no name to show, only the removal that takes it off the screen.
+        assertFalse(exists(EditorTags.timerName(0, 1)))
+        assertTrue(exists(EditorTags.timerRemove(0, 1)))
         assertEquals("Glaze", fieldText(EditorTags.timerName(0, 2)))
 
         type(EditorTags.timerMinutes(0, 1), "45")

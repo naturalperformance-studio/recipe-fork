@@ -612,8 +612,8 @@ class StepTimerEditorTest {
         assertTrue(tag, target.size.width / density >= 48f && target.size.height / density >= 48f)
     }
 
-    // At the demo the author asked for a small button that takes a step's timer off: it sits with the timer's fields
-    // of a step that carries one, and nowhere else.
+    // At the demo the author asked for a small button that takes a step's timer off: it sits with the timer's fields,
+    // and nowhere else. One just opened, holding no duration yet, has it too: it only takes the fields away.
     @Test
     fun aRemoveControlSitsWithTheTimerOfAStepThatCarriesOne() {
         val recipe = seed(
@@ -623,13 +623,19 @@ class StepTimerEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(1)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.timerRemove(1)).assertExists()
         assertEquals("Remove timer from step 2", AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(1))))
-        // A step with no timer has none, nor does one whose timer is opened but holds no duration yet.
+        // A step with no timer has none.
         compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
         chooseTimer(0)
         compose.onNodeWithTag(EditorTags.timerHours(0)).assertExists()
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
+        assertEquals("Remove timer from step 1", AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(0))))
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.STATEMENT, useUnmergedTree = true).assertDoesNotExist()
+        assertEquals(recipe, stored(recipe.id))
+        chooseTimer(0)
         type(EditorTags.timerMinutes(0), "10")
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertExists()
     }
 
     // Pressing it takes the timer off, its given name with it: the fields go, nothing is stored, the step offers a
@@ -648,6 +654,8 @@ class StepTimerEditorTest {
 
         compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
+        // Said as today, with Undo: a step's only timer is not numbered.
+        compose.awaitStatement(string(R.string.editor_timer_removed, 1))
         compose.onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
         compose.onNodeWithTag(EditorTags.timerName(0)).assertDoesNotExist()
         compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
@@ -680,6 +688,20 @@ class StepTimerEditorTest {
         compose.onNodeWithTag(EditorTags.timerHours(0)).assertDoesNotExist()
         compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
         compose.onNodeWithTag(EditorTags.timerRemove(1)).assertExists()
+    }
+
+    // A timer the author adds takes the focus in its hours, whether the step had a timer or not.
+    @Test
+    fun anAddedTimerTakesTheFocusInItsHours() {
+        writeANewRecipe()
+        addStep("Bake.")
+        chooseTimer(0)
+        compose.waitUntil(PATIENCE_MS) { node(EditorTags.timerHours(0)).config[SemanticsProperties.Focused] }
+        type(EditorTags.timerMinutes(0), "30")
+        chooseTimer(0)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerHours(0, 1)), PATIENCE_MS)
+        compose.waitUntil(PATIENCE_MS) { node(EditorTags.timerHours(0, 1)).config[SemanticsProperties.Focused] }
+        assertFalse(node(EditorTags.timerHours(0)).config[SemanticsProperties.Focused])
     }
 
     // The remove control is named in Russian, with its step.
