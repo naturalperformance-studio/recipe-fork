@@ -77,7 +77,7 @@ import java.util.zip.DeflaterOutputStream
  * The Google Play store's phone screenshots and feature graphic, drawn as the device draws them (Robolectric's native
  * graphics) from the application's own screens over the demo book ([PlayDemoBook]): the book, a card mid-cook, the
  * editor, the card's steps and the settings, in English and in Russian, in the light theme, 1080×1920 opaque PNGs. The
- * screen is 432 × 768 dp at 400 dpi, a common phone's width, on which the editor shows both of the traybake's ingredient
+ * screen is 432 × 768 dp at 400 dpi, close to a Pixel's 412 dp, on which the editor shows both of the traybake's ingredient
  * groups at once.
  *
  * They are written only when asked: `scripts/play-screenshots.sh` passes `-Precipefork.playScreenshots=<directory>`,
@@ -199,12 +199,25 @@ class PlayScreenshotsTest {
         compose.waitForIdle()
         scrollToTop(CardTags.CONTENT, CardTags.TITLE)
         await(TimerTags.BAR)
+        assertWhole(TimerTags.barStatus(demo.runningStep), "the running timer in the bar")
         tinted = true
         capture("$prefix-2-card.png")
 
-        // (4) The card's steps: references read at six servings, a step's photo, the running timer in the bar.
+        // (4) The card's steps: references read at six servings, a step's photo, and the running step whole with its
+        // timer running in it — the bar steps aside while the running step is in view.
         scrollToTop(CardTags.CONTENT, CardTags.STEPS)
         await(CardTags.stepPhoto(1))
+        val running = TimerTags.cancel(demo.runningStep)
+        await(running)
+        val chipEnd = bottomOf(running) + px(12)
+        val frameEnd = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.bottom
+        if (chipEnd > frameEnd) scrollBy(CardTags.CONTENT, chipEnd - frameEnd)
+        // No step cut at the top edge: where the step of the photo no longer stands whole, the shot begins at its photo.
+        val frameTop = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.top
+        if (topOf(CardTags.step(1)) < frameTop) scrollBy(CardTags.CONTENT, topOf(CardTags.stepPhoto(1)) - frameTop - px(8))
+        assertWhole(TimerTags.status(demo.runningStep), "the running step's timer")
+        assertWhole(running, "the running step's timer")
+        assertWhole(CardTags.stepPhoto(1), "the step's photo")
         capture("$prefix-4-steps.png")
 
         // (3) The editor on the same recipe, at its ingredient groups and their notes: both groups on the screen.
@@ -226,6 +239,12 @@ class PlayScreenshotsTest {
         session.openSettings()
         await(SettingsTags.LIST)
         capture("$prefix-5-settings.png")
+    }
+
+    /** Asserts that the node tagged [tag] stands whole on the screen, between the status bar's place and the bottom. */
+    private fun assertWhole(tag: String, what: String) {
+        val root = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        assertTrue("$what whole on the screen", shown(tag) && topOf(tag) >= px(STATUS_BAR_DP) && bottomOf(tag) <= root.bottom)
     }
 
     private fun scrollBy(scrolling: String, by: Float) {

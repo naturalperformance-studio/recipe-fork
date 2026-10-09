@@ -75,7 +75,7 @@ class PlayDemoBook(val language: RecipeLanguage) {
         groups = listOf(IngredientGroup(t("Marinade", "Маринад"), 0), IngredientGroup(t("Tray", "На противень"), 2)),
         ingredients = listOf(
             household(OLIVE_OIL, 3, QuantityUnit.TABLESPOON),
-            household(SWEET_PAPRIKA, 2, QuantityUnit.TEASPOON),
+            household(SWEET_PAPRIKA, 2, QuantityUnit.TEASPOON, note = t("smoked or sweet", "копчёная или сладкая")),
             grams(CHICKEN_THIGHS, 800, note = t("bone in, skin on", "на кости, с кожей")),
             grams(POTATO, 1000, note = t("in wedges", "дольками")),
             piece(RED_ONION, 1, divisible = true, note = t("in thick rings", "толстыми кольцами")),
@@ -263,8 +263,8 @@ class PlayDemoBook(val language: RecipeLanguage) {
         private fun exact(entry: Long, amount: Long, unit: QuantityUnit, note: String?) =
             Ingredient(0, entry, unitType = UnitType.EXACT, unit = unit, quantity = Rational.of(amount), note = note)
 
-        private fun household(entry: Long, count: Long, unit: QuantityUnit) =
-            Ingredient(0, entry, unitType = UnitType.HOUSEHOLD, unit = unit, quantity = Rational.of(count))
+        private fun household(entry: Long, count: Long, unit: QuantityUnit, note: String? = null) =
+            Ingredient(0, entry, unitType = UnitType.HOUSEHOLD, unit = unit, quantity = Rational.of(count), note = note)
 
         private fun piece(entry: Long, count: Long, divisible: Boolean, note: String? = null) =
             Ingredient(0, entry, unitType = UnitType.PIECE, unit = QuantityUnit.PIECE, quantity = Rational.of(count), divisible = divisible, note = note)
