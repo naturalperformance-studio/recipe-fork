@@ -4,6 +4,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
 import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.app.book.EquipmentEntity
 import app.recipefork.app.book.FavouriteEntity
 import app.recipefork.app.book.MarkedRecipeRow
 import app.recipefork.app.book.IngredientEntity
@@ -209,7 +210,8 @@ open class RecipeRepository(
     private companion object {
         /** Every table a recipe's rows live in. */
         val RECIPE_TABLES = arrayOf(
-            "recipe", "ingredient", "ingredient_group", "step", "step_timer", "step_reference", "media", "recipe_tag",
+            "recipe", "recipe_equipment", "ingredient", "ingredient_group", "step", "step_timer", "step_reference", "media",
+            "recipe_tag",
         )
     }
 }
@@ -310,6 +312,7 @@ internal fun Recipe.toRows(): RecipeRows {
         },
         tags = tags.map { RecipeTagEntity(id, it) },
         groups = ingredientGroups.mapIndexed { index, it -> IngredientGroupEntity(id, index, it.name, it.firstPosition) },
+        equipment = equipment.mapIndexed { index, it -> EquipmentEntity(id, index, it) },
     )
 }
 
@@ -359,5 +362,6 @@ internal fun RecipeRows.toRecipe(): Recipe {
         createdAt = recipe.createdAt,
         contentChangedAt = recipe.contentChangedAt,
         ingredientGroups = groups.map { IngredientGroup(it.name, it.firstIngredient) },
+        equipment = equipment.sortedBy { it.position }.map { it.name },
     )
 }

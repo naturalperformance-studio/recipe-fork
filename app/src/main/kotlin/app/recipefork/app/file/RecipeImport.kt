@@ -206,6 +206,7 @@ class RecipeImport(
                 servings = content.servings,
                 ingredients = content.ingredients,
                 ingredientGroups = content.ingredientGroups,
+                equipment = content.equipment,
                 steps = content.steps,
                 media = media,
             ).inState(FOUND_STATE)

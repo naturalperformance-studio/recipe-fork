@@ -82,6 +82,7 @@ class RecipeExportTest {
             // A part of an ingredient travels in the file.
             Step(1, "Add the eggs", listOf(IngredientReference(1, 4, IngredientShare(Rational.of(1, 2), QuantityUnit.PIECE))), Timer(3.minutes)),
         ),
+        equipment = listOf("Frying pan 26 cm", "Spatula"),
     )
 
     private fun save(recipe: Recipe) = runBlocking { recipes.save(recipe) }
@@ -114,7 +115,7 @@ class RecipeExportTest {
         assertEquals(listOf("recipe.json", "media/"), entries.keys.toList())
         assertEquals(0, entries.getValue("media/").size)
         val json = entries.getValue("recipe.json").toString(Charsets.UTF_8)
-        assertTrue(json, json.contains("\"format_version\": 3"))
+        assertTrue(json, json.contains("\"format_version\": 4"))
     }
 
     // FLOW-063 (3, 5): the document holds the recipe whole; written with no account, it names no author; with no
@@ -132,6 +133,7 @@ class RecipeExportTest {
         assertEquals(4, read.servings)
         assertEquals(recipe.ingredients, read.ingredients)
         assertEquals(recipe.steps, read.steps)
+        assertEquals(listOf("Frying pan 26 cm", "Spatula"), read.equipment)
         assertNull(read.author)
         assertNull(read.parent)
         assertTrue(read.media.isEmpty())

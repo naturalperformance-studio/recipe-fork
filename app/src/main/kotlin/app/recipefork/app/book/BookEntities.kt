@@ -77,6 +77,18 @@ data class IngredientGroupEntity(
     @ColumnInfo(name = "first_ingredient") val firstIngredient: Int,
 )
 
+/** The [position]th item of the equipment a recipe is cooked with, its [name] as the author wrote it. Added in version 6. */
+@Entity(
+    tableName = "recipe_equipment",
+    primaryKeys = ["recipe_id", "position"],
+    foreignKeys = [ForeignKey(RecipeEntity::class, ["recipe_id"], ["recipe_id"], onDelete = CASCADE)],
+)
+data class EquipmentEntity(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    val position: Int,
+    val name: String,
+)
+
 @Entity(
     tableName = "step",
     primaryKeys = ["recipe_id", "position"],
