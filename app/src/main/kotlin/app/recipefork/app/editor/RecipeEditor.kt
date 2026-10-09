@@ -126,6 +126,8 @@ class RecipeEditor(
     private val ingredientKeys: RowKeys = RowKeys(),
     /** As [ingredientKeys], for the headings of the ingredient groups. */
     private val groupKeys: RowKeys = RowKeys(),
+    /** As [ingredientKeys], for the items of the equipment. */
+    private val equipmentKeys: RowKeys = RowKeys(),
 ) {
     private val current = MutableStateFlow<Recipe?>(null)
 
@@ -147,6 +149,78 @@ class RecipeEditor(
     fun addTag(tag: TagEntity) = edit { it.copy(tags = it.tags + tag.id) }
 
     fun removeTag(tagId: Long) = edit { it.copy(tags = it.tags - tagId) }
+
+    // The equipment: short lines, in the author's order, up to [RecipeBounds.MAX_EQUIPMENT].
+
+    private val equipmentFull = MutableStateFlow(false)
+
+    /**
+     * Whether the statement that a recipe lists no more than [RecipeBounds.MAX_EQUIPMENT] items shows, as the timers'
+     * does (GUIDE-007): from an "Add" refused until the author's next action.
+     */
+    val equipmentStatement: StateFlow<Boolean> = equipmentFull.asStateFlow()
+
+    /**
+     * Appends an item with no text yet, for the author to type into; where the recipe already lists
+     * [RecipeBounds.MAX_EQUIPMENT], nothing is added and [equipmentStatement] says why. Returns whether it was added.
+     */
+    fun addEquipment(): Boolean {
+        val recipe = current.value ?: return false
+        if (!recipe.state.editable) return false
+        if (!recipe.canAddEquipment) {
+            equipmentFull.value = true
+            return false
+        }
+        return edit { it.copy(equipment = it.equipment + "") }
+    }
+
+    /** The item at [index] as the author types it, kept in full however long (the limit is marked on leaving it, FLOW-028). */
+    fun setEquipment(index: Int, typed: String): Boolean {
+        val item = current.value?.equipment?.getOrNull(index) ?: return false
+        if (item == typed) return editable
+        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) typed else it }) }
+    }
+
+    /** The author left the item at [index]: it is held trimmed, and an item left blank goes without a word. */
+    fun settleEquipment(index: Int) {
+        val item = current.value?.equipment?.getOrNull(index) ?: return
+        val settled = Recipe.equipmentItemOf(item)
+        when {
+            settled == null -> edit { recipe ->
+                equipmentKeys.remove(index, recipe.equipment.size)
+                recipe.copy(equipment = recipe.equipment.filterIndexed { i, _ -> i != index })
+            }
+            settled != item -> setEquipment(index, settled)
+        }
+    }
+
+    /** Takes the item at [index] away; the items after it move up. The removal is offered for undoing as [removal]. */
+    fun removeEquipment(index: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (index !in recipe.equipment.indices) return false
+        val removing = edit { edited ->
+            equipmentKeys.remove(index, edited.equipment.size)
+            edited.copy(equipment = edited.equipment.filterIndexed { i, _ -> i != index })
+        }
+        if (removing) offered.value = Removal(Removal.Kind.EQUIPMENT, index, recipe) {}
+        return removing
+    }
+
+    /** Moves the item at [from] to [to]; the items between close up. Returns whether it moved. */
+    fun moveEquipment(from: Int, to: Int): Boolean {
+        val count = current.value?.equipment?.size ?: return false
+        if (from !in 0 until count || to !in 0 until count || from == to) return false
+        return edit { recipe ->
+            equipmentKeys.move(from, to, count)
+            recipe.copy(equipment = recipe.equipment.toMutableList().apply { add(to, removeAt(from)) })
+        }
+    }
+
+    /** As [stepKey], for the item of equipment at [index]. */
+    fun equipmentKey(index: Int): Long = equipmentKeys.of(index)
+
+    /** Where the item whose [equipmentKey] is [key] stands now; null once it is gone. */
+    fun equipmentIndex(key: Long): Int? = equipmentKeys.positionOf(key)?.takeIf { it < (current.value?.equipment?.size ?: 0) }
 
     // The steps and the description (FLOW-024).
 
@@ -355,6 +429,7 @@ class RecipeEditor(
      */
     fun noteAction() {
         stating.value = null
+        equipmentFull.value = false
     }
 
     /** Whether the references of GUIDE-008 were offered in this editing session. */
@@ -676,6 +751,7 @@ class RecipeEditor(
             Removal.Kind.STEP -> stepKeys.insert(removal.position, now.steps.size)
             Removal.Kind.INGREDIENT -> ingredientKeys.insert(removal.position, now.ingredients.size)
             Removal.Kind.GROUP -> groupKeys.insert(removal.position, now.ingredientGroups.size)
+            Removal.Kind.EQUIPMENT -> equipmentKeys.insert(removal.position, now.equipment.size)
             // A timer goes back into its step, which kept its key; the step's timer names are marked as they were.
             Removal.Kind.TIMER -> {
                 val key = stepKeys.of(removal.position)
@@ -806,6 +882,7 @@ class RecipeEditor(
             is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timer = part.index)
             is RecipePart.IngredientNote -> Left.OfIngredient(ingredientKeys.of(part.position))
             is RecipePart.GroupName -> Left.OfGroup(groupKeys.of(part.index))
+            is RecipePart.EquipmentName -> Left.OfEquipment(equipmentKeys.of(part.index))
             else -> Left.Whole(part)
         },
     )
@@ -834,6 +911,7 @@ class RecipeEditor(
         is Left.OfStep -> stepPosition(key)?.let { if (timer != null) RecipePart.TimerName(it, timer) else RecipePart.StepText(it) }
         is Left.OfIngredient -> ingredientPosition(key)?.let { RecipePart.IngredientNote(it) }
         is Left.OfGroup -> groupIndex(key)?.let { RecipePart.GroupName(it) }
+        is Left.OfEquipment -> equipmentIndex(key)?.let { RecipePart.EquipmentName(it) }
     }
 
     internal sealed interface Left {
@@ -844,6 +922,8 @@ class RecipeEditor(
         data class OfIngredient(val key: Long) : Left
         /** The name of the heading whose [groupKey] is [key]. */
         data class OfGroup(val key: Long) : Left
+        /** The item of equipment whose [equipmentKey] is [key]. */
+        data class OfEquipment(val key: Long) : Left
     }
 
     /** Where the ingredient row whose [ingredientKey] is [key] stands now; null once it is deleted. */
@@ -890,12 +970,13 @@ class RecipeEditor(
     val refused: StateFlow<Boolean> = refusedNow.asStateFlow()
 
     /**
-     * Writes [recipe] — a heading still being named left out (DOM-022) — and returns whether the book took it. Only a
+     * Writes [recipe] — a heading still being named left out (DOM-022), and each item of equipment trimmed, one still
+     * blank left out — and returns whether the book took it. Only a
      * failure of the storage is a refusal; any other error is the program's and goes on. Called under the queue of writes.
      */
     private suspend fun take(recipe: Recipe): Boolean {
         val taken = try {
-            recipes.save(recipe.withNamedGroups())
+            recipes.save(recipe.withNamedGroups().withSettledEquipment())
             true
         } catch (refusal: IOException) {
             Log.w(LOG_TAG, "The book refused the recipe ${recipe.id.value}", refusal)
@@ -994,7 +1075,7 @@ class RecipeEditor(
 }
 
 /**
- * A step, an ingredient row, a group's heading or a step's timer ([kind]) deleted from [position] — a timer from the
+ * A step, an ingredient row, a group's heading, a step's timer or an item of equipment ([kind]) deleted from [position] — a timer from the
  * step at [position], at [index] of its timers — offered for undoing; [before] is the recipe it was deleted from,
  * [headings] the indices of the headings that went with a row — its group left empty — and [ended] what is done once it
  * is gone for good.
@@ -1011,7 +1092,7 @@ class Removal internal constructor(
     val number: Int? = null,
     internal val ended: suspend () -> Unit,
 ) {
-    enum class Kind { STEP, INGREDIENT, GROUP, TIMER }
+    enum class Kind { STEP, INGREDIENT, GROUP, TIMER, EQUIPMENT }
 
     /** Whether the timer removed is said by its [number]. */
     val ofSeveral: Boolean

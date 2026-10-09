@@ -201,4 +201,16 @@
     <string name="editor_timer_removed">Timer removed from step %1$d</string>
     <string name="editor_timer_removed_numbered">Timer %2$d removed from step %1$d</string>
     <string name="editor_undo">Undo</string>
+    <!-- The equipment, between the serving count and the ingredients: one short line per item, up to 15 (GUIDE-007 for the limit). -->
+    <string name="editor_equipment">Equipment</string>
+    <string name="editor_equipment_add">Add item</string>
+    <string name="editor_equipment_add_action">Add an item of equipment</string>
+    <!-- %1$d is the item's place in the list. -->
+    <string name="editor_equipment_item">Item %1$d</string>
+    <string name="editor_equipment_example">e.g. Oven</string>
+    <string name="editor_equipment_remove_action">Remove equipment item %1$d</string>
+    <string name="editor_equipment_menu_action">Equipment item %1$d actions</string>
+    <!-- %1$d is the most items a recipe lists (15). -->
+    <string name="editor_equipment_limit">A recipe can list up to %1$d items of equipment.</string>
+    <string name="editor_equipment_removed">Equipment item %1$d removed</string>
 </resources>

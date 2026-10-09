@@ -366,15 +366,24 @@ class RecipeFileTest {
         assertEquals(0, parse(RecipeFileContent.of(recipe(), null, null))["recipe"]!!.jsonObject["equipment"]!!.jsonArray.size)
     }
 
-    // An item is read as the file states it, so that the check, not the reader, refuses one blank, untrimmed or long.
+    // An item is read trimmed, as a note is; one blank or long once trimmed is kept for the check, not the reader, to refuse.
     @Test
-    fun anItemIsReadAsTheFileStatesIt() {
+    fun anItemIsReadTrimmedAndTheCheckRefusesABlankOrLongOne() {
         val written = RecipeFile.encode(RecipeFileContent.of(recipe().copy(equipment = listOf("@@", "Pan")), null, null))
-        val read = RecipeFile.decode(written.replace("\"@@\"", "\"  \""))
-        assertEquals(listOf("  ", "Pan"), read.equipment)
-        assertTrue(RecipeFileCheck.problems(read).isNotEmpty())
-        assertEquals(listOf(" Oven ", "Pan"), RecipeFile.decode(written.replace("\"@@\"", "\" Oven \"")).equipment)
+        val untrimmed = RecipeFile.decode(written.replace("\"@@\"", "\"  Oven \\t\""))
+        assertEquals(listOf("Oven", "Pan"), untrimmed.equipment)
+        assertEquals(emptyList<String>(), equipmentProblems(untrimmed))
+        val blank = RecipeFile.decode(written.replace("\"@@\"", "\"   \""))
+        assertEquals(listOf("", "Pan"), blank.equipment)
+        assertEquals(listOf("equipment 0 is blank or untrimmed"), equipmentProblems(blank))
+        val long = RecipeFile.decode(written.replace("\"@@\"", "\" ${"p".repeat(41)} \""))
+        assertEquals(listOf("p".repeat(41), "Pan"), long.equipment)
+        assertEquals(listOf("equipment 0 is over 40 characters"), equipmentProblems(long))
+        // Forty characters once trimmed pass, whatever the spaces around them.
+        assertEquals(emptyList<String>(), equipmentProblems(RecipeFile.decode(written.replace("\"@@\"", "\"  ${"p".repeat(40)}  \""))))
     }
+
+    private fun equipmentProblems(content: RecipeFileContent) = RecipeFileCheck.problems(content).filter { "equipment" in it }
 
     // A document of format 3 — before equipment — still reads, with none.
     @Test

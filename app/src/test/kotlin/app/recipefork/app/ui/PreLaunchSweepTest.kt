@@ -109,7 +109,8 @@ import kotlin.time.Duration.Companion.minutes
  * The screens: the book — the marked and the own view, each empty and with recipes, an entry's menu, a recipe file's
  * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with ingredient groups, notes,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, with its menu open; the
- * editor on that recipe, with a row removed and its Undo offered, and on a frozen one; the settings and each of their
+ * editor on that recipe, its equipment among it, with a row removed and its Undo offered, and on a frozen one with
+ * equipment; the settings and each of their
  * dialogs; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
@@ -216,12 +217,16 @@ class PreLaunchSweepTest {
     private fun grams(position: Int, name: String, grams: Int, note: String? = null) =
         Ingredient(position, null, null, name, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(grams.toLong()), null, null, note = note)
 
-    /** Everything a card and an editor show: groups, notes, a cover, a step's photo and clip, several timers, tags. */
+    /**
+     * Everything a card and an editor show: equipment, groups, notes, a cover, a step's photo and clip, several timers,
+     * tags.
+     */
     private val plumCake = Recipe.create(now, owner = null).copy(
         title = "Plum cake",
         description = "A sheet cake for late summer.",
         servings = 8,
         tags = setOf(10L, 12L),
+        equipment = listOf("Oven", "Baking tray 30 × 40 cm", "Mixing bowl"),
         ingredients = listOf(
             grams(0, "flour", 250),
             grams(1, "butter", 125, note = "cold"),
@@ -246,8 +251,9 @@ class PreLaunchSweepTest {
         steps = listOf(Step(0, "Simmer the tomatoes.", timer = Timer(20.minutes))),
     )
 
-    /** An own recipe that cannot be changed: the editor shows it frozen. */
-    private val published = Recipe.create(now.minusSeconds(7200), owner = null).copy(title = "Apple pie", servings = 6)
+    /** An own recipe that cannot be changed, with its equipment: the editor shows it frozen. */
+    private val published = Recipe.create(now.minusSeconds(7200), owner = null)
+        .copy(title = "Apple pie", servings = 6, equipment = listOf("Oven", "Pie dish 24 cm"))
         .inState(RecipeState.PUBLISHED)
 
     private fun found(title: String, minutesAgo: Long): Recipe =
@@ -368,8 +374,9 @@ class PreLaunchSweepTest {
         compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) && !exists(CardTags.DELETE) }
         compose.onNodeWithTag(CardTags.EDIT).performClick()
         await(EditorTags.FORM)
+        await(EditorTags.equipmentName(2))
         compose.waitForIdle()
-        checkScreen("the editor, a recipe with groups, notes, several timers and tags")
+        checkScreen("the editor, a recipe with equipment, groups, notes, several timers and tags")
         // A row removed: the editor says so with Undo.
         compose.onNodeWithTag(EditorTags.ingredientRemove(4)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.STATEMENT, unmerged = true) }
@@ -382,8 +389,9 @@ class PreLaunchSweepTest {
     private fun theEditor() {
         compose.runOnIdle { session.openEditor(published.id.value) }
         await(EditorTags.FROZEN)
+        await(EditorTags.equipment(1))
         compose.waitForIdle()
-        checkScreen("the editor, a frozen recipe")
+        checkScreen("the editor, a frozen recipe with equipment")
         compose.runOnIdle {
             session.closeEditor()
             session.closeCard()
