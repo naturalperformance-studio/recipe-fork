@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher icon's picture (an adaptive icon's 108 dp canvas): a recipe card with a folded corner, a table fork
+     cut out of it, so the background shows through the fork. Everything sits inside the 66 dp safe zone in the middle
+     (LauncherIconTest). Drawn in the theme's primary colour over its primary container (ic_launcher_background). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@color/theme_light_primary"
+        android:fillType="evenOdd"
+        android:pathData="M39,29H64L74,39V74A5,5 0,0 1,69 79H39A5,5 0,0 1,34 74V34A5,5 0,0 1,39 29ZM46,48V36A1.5,1.5 0,0 1,49 36V44H52.5V36A1.5,1.5 0,0 1,55.5 36V44H59V36A1.5,1.5 0,0 1,62 36V48Q62,52 56,54V71A2,2 0,0 1,52 71V54Q46,52 46,48Z" />
+</vector>
