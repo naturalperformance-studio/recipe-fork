@@ -115,7 +115,7 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
     mode = container.mode,
     clipStore = container::clipStore,
     animatedImages = { container.animatedImages },
-    animationStore = container::animationStore,
+    animationStore = { context, _ -> container.animationStore(context) },
 )
 
 /**
@@ -161,7 +161,7 @@ fun EditorScreen(
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
     val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
     val animated = remember(context, environment) { environment.animatedImages(context.applicationContext) }
-    val animations = remember(context, environment) { environment.animationStore(context.applicationContext) }
+    val animations = remember(context, environment, animated) { environment.animationStore(context.applicationContext, animated) }
     remember(mediaWork, editor) { mediaWork.show(editor) }
     val activity = LocalActivity.current
     DisposableEffect(mediaWork) {

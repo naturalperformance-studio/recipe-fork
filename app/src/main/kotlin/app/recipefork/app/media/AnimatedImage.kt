@@ -48,7 +48,14 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
          * is never read past its signature — and only up to [maxBytes]: a file larger than that is no animation.
          * Null as [parse].
          */
-        fun read(input: InputStream, maxBytes: Int = MAX_BYTES, longest: Duration = VideoLimits.MAX_DURATION): AnimatedImage? {
+        fun read(input: InputStream, maxBytes: Int = MAX_BYTES, longest: Duration = VideoLimits.MAX_DURATION): AnimatedImage? =
+            (examine(input, maxBytes, longest) as? ImageKind.Animated)?.animation
+
+        /**
+         * What [input] holds, read as [read] reads it: the animation, or a still picture — or, for a GIF or a WebP
+         * larger than [maxBytes], one too large to be read at all ([ImageKind.TooLarge]).
+         */
+        fun examine(input: InputStream, maxBytes: Int = MAX_BYTES, longest: Duration = VideoLimits.MAX_DURATION): ImageKind {
             val signature = ByteArray(SIGNATURE_BYTES)
             var read = 0
             while (read < SIGNATURE_BYTES) {
@@ -56,17 +63,17 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
                 if (count < 0) break
                 read += count
             }
-            if (!Gif.matches(signature, read) && !WebP.matches(signature, read)) return null
+            if (!Gif.matches(signature, read) && !WebP.matches(signature, read)) return ImageKind.Still
             val bytes = ByteArrayOutputStream(64 * 1024)
             bytes.write(signature, 0, read)
             val buffer = ByteArray(64 * 1024)
             while (true) {
                 val count = input.read(buffer)
                 if (count < 0) break
-                if (bytes.size() + count > maxBytes) return null
+                if (bytes.size() + count > maxBytes) return ImageKind.TooLarge
                 bytes.write(buffer, 0, count)
             }
-            return parse(bytes.toByteArray(), longest)
+            return parse(bytes.toByteArray(), longest)?.let(ImageKind::Animated) ?: ImageKind.Still
         }
 
         /**
@@ -88,6 +95,18 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
 
         internal fun delay(stated: Duration): Duration = if (stated <= SHORTEST_DELAY) DEFAULT_DELAY else stated
     }
+}
+
+/** What a picture offered to a step is: an animation, a still picture, or a GIF or WebP too large to be read. */
+sealed interface ImageKind {
+    /** An animated GIF or WebP, read. */
+    class Animated(val animation: AnimatedImage) : ImageKind
+
+    /** Anything else: a still GIF or WebP, a PNG, a JPEG, a file that is no image or cannot be read as an animation. */
+    data object Still : ImageKind
+
+    /** A GIF or a WebP larger than [AnimatedImage.MAX_BYTES]: no animation this device will convert. */
+    data object TooLarge : ImageKind
 }
 
 /**

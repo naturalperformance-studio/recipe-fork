@@ -28,6 +28,7 @@ import app.recipefork.app.media.ClipConverter
 import app.recipefork.app.media.ClipSourceDuration
 import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.ClipTransformer
+import app.recipefork.app.media.HeldAnimatedImages
 import app.recipefork.app.media.MediaSweep
 import app.recipefork.app.media.ResolverAnimatedImages
 import app.recipefork.app.media.RetrieverClipSourceDuration
@@ -128,8 +129,11 @@ class AppContainer(
     /** Where steps' clips are converted and kept, in the books under [context]'s files directory. */
     fun clipStore(context: Context): ClipStore = ClipStore(context.filesDir, clipConverter, clipDuration)
 
-    /** Reads whether an image offered to a step is an animated GIF or WebP, to be attached as a clip (scenario 3). */
-    val animatedImages: AnimatedImages = ResolverAnimatedImages(context)
+    /**
+     * Reads whether an image offered to a step is an animated GIF or WebP, to be attached as a clip (scenario 3); the
+     * animation told is kept for [animationStore] to convert, so that it is read once.
+     */
+    val animatedImages: AnimatedImages = HeldAnimatedImages(ResolverAnimatedImages(context))
 
     /**
      * Where steps' animated images are turned into clips and kept beside them, refused as a clip is when they last

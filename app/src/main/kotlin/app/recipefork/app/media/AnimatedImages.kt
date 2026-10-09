@@ -15,22 +15,45 @@ fun interface AnimatedImages {
     /** The animation [source] holds; null when it is no animated GIF or WebP, or cannot be read ([AnimatedImage.read]). */
     fun read(source: Uri): AnimatedImage?
 
+    /** What [source] is ([AnimatedImage.examine]); a JPEG or a PNG is told still from its first bytes. */
+    fun examine(source: Uri): ImageKind = read(source)?.let(ImageKind::Animated) ?: ImageKind.Still
+
     /** Whether [source] is an animated GIF or WebP; a JPEG or a PNG is told still from its first bytes. */
-    fun isAnimated(source: Uri): Boolean = read(source) != null
+    fun isAnimated(source: Uri): Boolean = examine(source) is ImageKind.Animated
 }
 
 /** Reads animations offered by another app — a picked image — through [context]'s resolver. */
 class ResolverAnimatedImages(context: Context) : AnimatedImages {
     private val context = context.applicationContext
 
-    override fun read(source: Uri): AnimatedImage? = try {
-        context.contentResolver.openInputStream(source)?.use { AnimatedImage.read(it) }
+    override fun read(source: Uri): AnimatedImage? = (examine(source) as? ImageKind.Animated)?.animation
+
+    override fun examine(source: Uri): ImageKind = try {
+        context.contentResolver.openInputStream(source)?.use { AnimatedImage.examine(it) } ?: ImageKind.Still
     } catch (e: Exception) {
         // A source that cannot be opened holds no animation to read.
-        null
+        ImageKind.Still
     } catch (e: OutOfMemoryError) {
-        null
+        ImageKind.Still
     }
+}
+
+/**
+ * [images], keeping the animation its last [examine] read until it is [read] — once — so that an image told to be an
+ * animation is not read and parsed again to be converted. Any other read lets it go.
+ */
+class HeldAnimatedImages(private val images: AnimatedImages) : AnimatedImages {
+    private var held: Pair<Uri, AnimatedImage>? = null
+
+    override fun examine(source: Uri): ImageKind {
+        synchronized(this) { held = null }
+        return images.examine(source).also { kind ->
+            if (kind is ImageKind.Animated) synchronized(this) { held = source to kind.animation }
+        }
+    }
+
+    override fun read(source: Uri): AnimatedImage? =
+        synchronized(this) { held?.takeIf { it.first == source }?.second.also { held = null } } ?: images.read(source)
 }
 
 /**

@@ -30,6 +30,8 @@ import app.recipefork.app.media.AnimatedImages
 import app.recipefork.app.media.AnimationClips
 import app.recipefork.app.media.ClipConverter
 import app.recipefork.app.media.ClipStore
+import app.recipefork.app.media.HeldAnimatedImages
+import app.recipefork.app.media.ImageKind
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.ResolverAnimatedImages
 import app.recipefork.app.media.TestCamera
@@ -66,6 +68,7 @@ import java.io.File
 import java.time.Instant
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -75,6 +78,36 @@ import kotlin.time.Duration.Companion.seconds
  * picker never takes the animation's way. The detection is the application's own, reading the fixtures; the encoding
  * is the device's (AnimationEncoder's device tests), so an encoder stands in for it here.
  */
+/**
+ * The application's own detection, holding what it told for the conversion as the application's does, with what the
+ * tests watch: the pictures it was asked about, whether it was ever asked on the main thread, the pictures read for a
+ * conversion, and how many times a file was parsed. While [gate] is set, telling waits for it.
+ */
+class WatchedAnimatedImages(context: Context) : AnimatedImages {
+    private val real = ResolverAnimatedImages(context)
+    val parses = AtomicInteger(0)
+    private val held = HeldAnimatedImages(object : AnimatedImages {
+        override fun read(source: Uri): AnimatedImage? = real.read(source).also { parses.incrementAndGet() }
+
+        override fun examine(source: Uri): ImageKind = real.examine(source).also { parses.incrementAndGet() }
+    })
+    val asked: MutableList<Uri> = Collections.synchronizedList(mutableListOf())
+    val converted: MutableList<Uri> = Collections.synchronizedList(mutableListOf())
+    val askedOnMain = AtomicBoolean(false)
+
+    @Volatile
+    var gate: CompletableDeferred<Unit>? = null
+
+    override fun examine(source: Uri): ImageKind {
+        asked += source
+        if (Looper.myLooper() == Looper.getMainLooper()) askedOnMain.set(true)
+        gate?.let { runBlocking { it.await() } }
+        return held.examine(source)
+    }
+
+    override fun read(source: Uri): AnimatedImage? = held.read(source).also { converted += source }
+}
+
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -92,22 +125,7 @@ class StepAnimationEditorTest {
     private val incoming = File(context.externalCacheDir ?: context.cacheDir, "incoming").apply { mkdirs() }
     private val players = FakeClipPlayers()
 
-    /** The application's own detection, remembering what it was asked to tell and whether it was asked on the main thread. */
-    private inner class Images : AnimatedImages {
-        private val real = ResolverAnimatedImages(context)
-        val asked: MutableList<Uri> = Collections.synchronizedList(mutableListOf())
-        val askedOnMain = AtomicBoolean(false)
-
-        override fun read(source: Uri): AnimatedImage? = real.read(source)
-
-        override fun isAnimated(source: Uri): Boolean {
-            asked += source
-            if (Looper.myLooper() == Looper.getMainLooper()) askedOnMain.set(true)
-            return real.isAnimated(source)
-        }
-    }
-
-    private val images = Images()
+    private val images = WatchedAnimatedImages(context)
 
     /** Stands in for the device's encoder: what it encoded; while [gate] is set it waits for it; [failing], it fails. */
     private val encoded: MutableList<AnimatedImage> = Collections.synchronizedList(mutableListOf())
@@ -147,6 +165,7 @@ class StepAnimationEditorTest {
 
     @After
     fun close() {
+        images.gate?.cancel()
         gate?.cancel()
         clipGate?.cancel()
         saving.cancel()
@@ -173,7 +192,7 @@ class StepAnimationEditorTest {
             device.catalog(context),
             clipStore = { ClipStore(it.filesDir, clipConverter, { 10.seconds }) },
             animatedImages = { images },
-            animationStore = { AnimationClips(images, ::encode).let { clips -> ClipStore(it.filesDir, clips, clips) } },
+            animationStore = { context, shared -> AnimationClips(shared, ::encode).let { ClipStore(context.filesDir, it, it) } },
         ) { now }
         compose.setContent {
             MaterialTheme {
@@ -267,6 +286,8 @@ class StepAnimationEditorTest {
         assertFalse(exists(CropTags.SCREEN))
         assertEquals(1, images.asked.size)
         assertFalse("the detection ran on the main thread", images.askedOnMain.get())
+        assertEquals("the animation told is the one converted, parsed once", 1, images.parses.get())
+        assertEquals(images.asked, images.converted)
     }
 
     // Scenario 3: an animated WebP is attached the same way.
@@ -347,7 +368,7 @@ class StepAnimationEditorTest {
 
         gate = CompletableDeferred()
         choosePhoto(1, picture("animated.webp"))
-        compose.waitUntil(PATIENCE_MS) { encoded.size == 2 && exists(EditorTags.stepClipConverting(1)) }
+        awaitWork { encoded.size == 2 && exists(EditorTags.stepClipConverting(1)) }
         clipGate = null
         chooseClip(1, "second.mp4")
 
@@ -432,6 +453,146 @@ class StepAnimationEditorTest {
         compose.waitUntil(PATIENCE_MS) { stored(id).stepMedia(1)?.kind == MediaKind.PHOTO }
         assertTrue(images.asked.isEmpty())
         assertTrue(encoded.isEmpty())
+    }
+
+    /** Waits until [condition] holds, letting the screen's work run between looks. */
+    private fun awaitWork(condition: () -> Boolean) = compose.waitUntil(PATIENCE_MS) {
+        compose.waitForIdle()
+        condition()
+    }
+
+    /** The pictures whose reading the application holds past its activity. */
+    private fun readings(): List<Uri> = context.contentResolver.persistedUriPermissions.map { it.uri }
+
+    // The step shows that it is working while the picture picked is told apart — before any crop or conversion.
+    @Test
+    fun theStepShowsItIsWorkingWhileThePictureIsToldApart() {
+        open(threeSteps())
+        holdWork()
+        images.gate = CompletableDeferred()
+
+        choosePhoto(1, picture("still.png"))
+
+        awaitWork { images.asked.isNotEmpty() && exists(EditorTags.stepPhotoWorking(1)) }
+        assertFalse(exists(CropTags.SCREEN) || exists(EditorTags.stepClipConverting(1)))
+        images.gate!!.complete(Unit)
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.SCREEN), PATIENCE_MS)
+        assertFalse(exists(EditorTags.stepPhotoWorking(1)))
+    }
+
+    // Two picks overlapping while the first is told apart end with the later: a still picture after an animation
+    // opens the crop and nothing is converted.
+    @Test
+    fun aStillPickedAfterAnAnimationEndsInTheCrop() {
+        val id = open(threeSteps())
+        holdWork()
+        images.gate = CompletableDeferred()
+
+        choosePhoto(0, picture("animated.gif"))
+        awaitWork { images.asked.size == 1 }
+        choosePhoto(0, picture("still.png"))
+        awaitWork { images.asked.size == 2 }
+        images.gate!!.complete(Unit)
+
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.FRAME), PATIENCE_MS)
+        compose.onNodeWithTag(CropTags.DONE).performClick()
+        compose.waitUntil(PATIENCE_MS) { stored(id).stepMedia(0)?.kind == MediaKind.PHOTO && !exists(EditorTags.stepPhotoWorking(0)) }
+        assertTrue(encoded.isEmpty())
+        assertTrue(images.converted.isEmpty())
+        assertEquals(1, stored(id).media.size)
+    }
+
+    // ... and an animation picked after a still picture is attached as a clip, with no crop.
+    @Test
+    fun anAnimationPickedAfterAStillEndsAsAClip() {
+        val id = open(threeSteps())
+        holdWork()
+        images.gate = CompletableDeferred()
+
+        choosePhoto(0, picture("still.png"))
+        awaitWork { images.asked.size == 1 }
+        val later = picture("animated.webp")
+        choosePhoto(0, later)
+        awaitWork { images.asked.size == 2 }
+        images.gate!!.complete(Unit)
+
+        compose.waitUntil(PATIENCE_MS) { clipAt(id, 0) != null && !exists(EditorTags.stepPhotoWorking(0)) }
+        assertEquals(listOf(Uri.fromFile(later)), images.converted)
+        assertFalse(exists(CropTags.SCREEN))
+        assertEquals(1, stored(id).media.size)
+    }
+
+    // The reading of an animation picked is held past the activity while it is converted, and let go once converted.
+    @Test
+    fun theReadingIsHeldWhileConvertedAndLetGoAfter() {
+        val id = open(threeSteps())
+        holdWork()
+        gate = CompletableDeferred()
+        val file = picture("animated.gif")
+
+        choosePhoto(1, file)
+
+        awaitWork { encoded.isNotEmpty() }
+        assertEquals(listOf(Uri.fromFile(file)), readings())
+        gate!!.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { clipAt(id, 1) != null }
+        compose.waitUntil(PATIENCE_MS) { readings().isEmpty() }
+    }
+
+    // ... let go once refused: held while it is told apart, gone once it is refused as too long.
+    @Test
+    fun theReadingIsLetGoOnceRefused() {
+        open(threeSteps())
+        holdWork()
+        images.gate = CompletableDeferred()
+        val file = picture("long.gif")
+
+        choosePhoto(2, file)
+
+        awaitWork { images.asked.isNotEmpty() }
+        assertEquals(listOf(Uri.fromFile(file)), readings())
+        images.gate!!.complete(Unit)
+        awaitNotice(2, "This clip is longer than 15 seconds, so nothing was attached.")
+        compose.waitUntil(PATIENCE_MS) { readings().isEmpty() }
+    }
+
+    // ... and let go once cancelled.
+    @Test
+    fun theReadingIsLetGoOnceCancelled() {
+        val id = open(threeSteps())
+        holdWork()
+        gate = CompletableDeferred()
+        val file = picture("animated.webp")
+
+        choosePhoto(0, file)
+
+        awaitWork { encoded.isNotEmpty() && exists(EditorTags.stepClipCancel(0)) }
+        assertEquals(listOf(Uri.fromFile(file)), readings())
+        compose.onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(0)) }
+        compose.waitUntil(PATIENCE_MS) { readings().isEmpty() }
+        assertTrue(stored(id).media.isEmpty())
+    }
+
+    // An animated GIF over 32 MB is refused as a clip too large, with the clip's words — its first frame is not cropped.
+    @Test
+    fun aGifTooLargeToReadIsRefusedAsAClipTooLarge() {
+        val id = open(threeSteps())
+        val huge = File(incoming, "huge.gif")
+        huge.outputStream().use { out ->
+            out.write(checkNotNull(StepAnimationEditorTest::class.java.getResourceAsStream("/animation/animated.gif")).use { it.readBytes() })
+            val block = ByteArray(1024 * 1024)
+            repeat(33) { out.write(block) }
+        }
+
+        choosePhoto(1, huge)
+
+        awaitNotice(1, "This clip could not be made smaller than 6 MB, so nothing was attached.")
+        assertFalse(exists(CropTags.SCREEN))
+        assertTrue(encoded.isEmpty())
+        assertTrue(stored(id).media.isEmpty())
+        compose.waitUntil(PATIENCE_MS) { readings().isEmpty() }
+        huge.delete()
     }
 
     private companion object {

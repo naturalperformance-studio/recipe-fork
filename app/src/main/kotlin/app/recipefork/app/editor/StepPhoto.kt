@@ -89,6 +89,7 @@ internal fun StepPhotoAttaching(
         clips = photos.clips,
         setClip = { mediaId, written -> place(MediaKind.VIDEO, mediaId, written) },
         ready = ready,
+        animated = photos.animated,
         animations = photos.animations,
     )
 }
@@ -104,12 +105,14 @@ internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photo
     val key = editor.stepKey(position)
     val attaching = remember(editor, photos, key) { photos.work?.attaching(key, photos) ?: StepPhotoAttaching(editor, photos, key) }
     val sources = rememberPhotoSources(
-        key = STEP_KEY + key,
+        // The recipe's identity too: the keys of steps start again in every recipe, and a crop opened by work outliving
+        // the screen must open at the step it was for.
+        key = STEP_KEY + editor.id.value + "." + key,
         onPhoto = { attaching.attach(it) },
         onUnavailable = { attaching.tell(PhotoNotice.UNAVAILABLE) },
-        // An animated GIF or WebP picked from the gallery is attached as a silent clip, with no crop (scenario 3).
-        animations = photos.animated,
-        onAnimation = { attaching.attachAnimation(it) },
+        // A picture picked from the gallery is told apart by the step's work, which outlives the screen: an animated
+        // GIF or WebP is attached as a silent clip, with no crop; a still one comes back to the crop (scenario 3).
+        onPicked = if (photos.animated == null) null else { picked, still -> attaching.attachPicked(picked, still) },
     )
     val clipSources = rememberClipSources(
         key = STEP_CLIP_KEY + key,

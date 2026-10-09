@@ -2,6 +2,7 @@ package app.recipefork.app.media
 
 import android.content.ActivityNotFoundException
 import android.content.ClipData
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -15,9 +16,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -33,10 +34,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * A picture the author handed over — taken with the camera or picked from the gallery — to be read by [open] as many
@@ -76,9 +73,13 @@ private enum class SourceStage { CLOSED, CROPPING, NO_CAMERA, CAMERA_FAILED }
  * The pictures from the gallery waiting in a crop, by the place they are for: held for the process rather than the
  * activity, so that turning the phone in the crop — which recreates the activity — does not lose them. A picture is
  * let go once its crop is done or cancelled. A shot from the camera needs no holding: its file is on disk.
+ *
+ * A picture told still by work that outlives the activity is [open]ed: the crop opens on it on whichever screen shows
+ * the place by then, which observes [opening].
  */
 private object PendingCrops {
     private val held = ConcurrentHashMap<String, PhotoToCrop>()
+    private val toOpen = mutableStateMapOf<String, Boolean>()
 
     operator fun get(key: String): PhotoToCrop? = held[key]
 
@@ -86,8 +87,18 @@ private object PendingCrops {
         held[key] = photo
     }
 
+    /** Holds [photo] for the place [key] and has its crop opened there. */
+    fun open(key: String, photo: PhotoToCrop) {
+        held[key] = photo
+        toOpen[key] = true
+    }
+
+    /** Whether the crop of the place [key] is to be opened on a picture [open]ed for it. */
+    fun opening(key: String): Boolean = toOpen[key] == true
+
     fun remove(key: String) {
         held.remove(key)
+        toOpen.remove(key)
     }
 }
 
@@ -114,26 +125,23 @@ private fun shotToCrop(file: File) = PhotoToCrop({ file.inputStream() }, orienta
  * is deleted once its crop is done with — the cut read, cancelled or retaken — or as soon as the camera comes back
  * without one.
  *
- * A place that takes animations — a step, never the cover — is given [animations]: a picture picked from the gallery
- * that it reads as an animated GIF or WebP skips the crop and is handed to [onAnimation] as a clip (scenario 3); the
- * reading runs off the main thread, and tells a JPEG or a PNG still from its first bytes. A shot from the camera is
- * never one.
+ * A place that takes animations — a step, never the cover — is given [onPicked] (scenario 3): a picture picked from
+ * the gallery is handed to it at once, with its reading held past the activity, and with what opens the crop on it,
+ * should it be told a still picture — on whichever screen shows the place by then. A shot from the camera is never an
+ * animation.
  */
 @Composable
 fun rememberPhotoSources(
     key: String,
     onPhoto: (PhotoOffer) -> Unit,
     onUnavailable: () -> Unit,
-    animations: AnimatedImages? = null,
-    onAnimation: (ClipOffer) -> Unit = {},
+    onPicked: ((picked: ClipOffer, still: () -> Unit) -> Unit)? = null,
 ): PhotoSources {
     val context = LocalContext.current
     val resolver = context.applicationContext.contentResolver
     val deliver by rememberUpdatedState(onPhoto)
     val unavailable by rememberUpdatedState(onUnavailable)
-    val animated by rememberUpdatedState(animations)
-    val deliverAnimation by rememberUpdatedState(onAnimation)
-    val reading = rememberCoroutineScope()
+    val picked by rememberUpdatedState(onPicked)
     val stage = rememberSaveable(key) { mutableStateOf(SourceStage.CLOSED) }
     // The file the camera application writes the current shot into, kept across the process being ended meanwhile.
     val shotPath = rememberSaveable(key) { mutableStateOf<String?>(null) }
@@ -154,31 +162,16 @@ fun rememberPhotoSources(
             dropShot()
         }
     }
-    fun crop(uri: Uri) {
-        val open = { resolver.openInputStream(uri) ?: throw FileNotFoundException(uri.toString()) }
-        PendingCrops[key] = PhotoToCrop(open, orientation = null, retake = false)
-        stage.value = SourceStage.CROPPING
-    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         dropShot()
-        val images = animated
-        if (images == null) {
-            crop(uri)
-            return@rememberLauncherForActivityResult
-        }
-        val done = PhotoWork.begin()
-        // Started whatever happens to the scope meanwhile, so that what it counts in is always counted out.
-        reading.launch(start = CoroutineStart.ATOMIC) {
-            try {
-                if (withContext(Dispatchers.IO) { images.isAnimatedOrStill(uri) }) {
-                    deliverAnimation(ClipOffer(uri, release = holdReading(context, uri)))
-                } else {
-                    crop(uri)
-                }
-            } finally {
-                done()
-            }
+        val route = picked
+        if (route == null) {
+            PendingCrops[key] = pickedToCrop(resolver, uri)
+            stage.value = SourceStage.CROPPING
+        } else {
+            // Touches nothing of this screen's, so that it opens the crop on the screen shown when it is called.
+            route(ClipOffer(uri, release = holdReading(context, uri))) { PendingCrops.open(key, pickedToCrop(resolver, uri)) }
         }
     }
     fun shoot() {
@@ -207,7 +200,9 @@ fun rememberPhotoSources(
             unavailable()
         }
     }
-    when (stage.value) {
+    // A picture opened for the crop by work outliving the screen opens it here.
+    val shown = if (stage.value == SourceStage.CLOSED && PendingCrops.opening(key)) SourceStage.CROPPING else stage.value
+    when (shown) {
         SourceStage.CROPPING -> {
             val shot = shotPath.value?.let(::File)
             val photo = remember(key, shot) { shot?.takeIf { it.isFile }?.let(::shotToCrop) } ?: PendingCrops[key]
@@ -242,7 +237,7 @@ fun rememberPhotoSources(
             }
         }
         SourceStage.NO_CAMERA, SourceStage.CAMERA_FAILED -> CameraUnavailable(
-            if (stage.value == SourceStage.NO_CAMERA) R.string.media_camera_none else R.string.media_camera_failed,
+            if (shown == SourceStage.NO_CAMERA) R.string.media_camera_none else R.string.media_camera_failed,
             onGallery = {
                 stage.value = SourceStage.CLOSED
                 pick()
@@ -254,8 +249,9 @@ fun rememberPhotoSources(
     return remember(context, camera, picker, stage, shotPath) { PhotoSources(take = ::shoot, choose = ::pick) }
 }
 
-/** Whether [source] is an animation; one that cannot be read as any is a still picture, for the crop to judge. */
-private fun AnimatedImages.isAnimatedOrStill(source: Uri): Boolean = runCatching { isAnimated(source) }.getOrDefault(false)
+/** The picture [uri] picked from the gallery, to crop: turned upright by its own EXIF, and never retaken. */
+private fun pickedToCrop(resolver: ContentResolver, uri: Uri) =
+    PhotoToCrop({ resolver.openInputStream(uri) ?: throw FileNotFoundException(uri.toString()) }, orientation = null, retake = false)
 
 /** Why no photo can be taken here — [text] says — with the gallery a tap away. */
 @Composable
