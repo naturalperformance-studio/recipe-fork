@@ -325,7 +325,7 @@ private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
  * Says that a recipe left the book — "Recipe deleted", or "Recipe removed" for a found one — with Undo, for as long as
  * the session offers to undo it (FLOW-053). Undo puts it back; the notice gone without it — by itself, swiped away,
  * replaced by another notice, or the book left — makes the leaving final. A notice cut short by the screen turning is
- * said again.
+ * said again. An Undo the book could not take back is said to have failed.
  */
 @Composable
 private fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState) {
@@ -337,6 +337,14 @@ private fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState)
         val shown = removal ?: return@LaunchedEffect
         val result = snackbars.showSnackbar(if (shown.found) removed else deleted, actionLabel = undo, duration = SnackbarDuration.Long)
         if (result == SnackbarResult.ActionPerformed) session.undoRemoval(shown) else session.endRemoval(shown)
+    }
+    // An Undo the book could not take back is said, once.
+    val failed by session.undoFailed.collectAsState()
+    val notBack = stringResource(R.string.library_undo_failed)
+    LaunchedEffect(failed) {
+        val said = failed ?: return@LaunchedEffect
+        snackbars.showSnackbar(notBack, duration = SnackbarDuration.Long)
+        session.undoFailureSaid(said)
     }
 }
 

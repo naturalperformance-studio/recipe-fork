@@ -53,10 +53,20 @@ class PendingRemoval internal constructor(private val taken: TakenRecipe, privat
 
     /**
      * Puts the recipe back as it was: its content, photographs and clips, its place in the book, a found one's mark.
-     * Its done marks and its timers, ended as it left, stay ended.
+     * Its done marks and its timers, ended as it left, stay ended. Should the book not take it back — it holds that
+     * recipe again, or a media item of it, or cannot be written — the leaving is final instead, as [finish] makes it,
+     * and [onFailed] is told.
      */
-    fun undo() {
-        if (settled.compareAndSet(false, true)) timers.scope.launch { timers.turns.withLock { taken.putBack() } }
+    fun undo(onFailed: () -> Unit = {}) {
+        if (!settled.compareAndSet(false, true)) return
+        timers.scope.launch {
+            timers.turns.withLock {
+                if (!taken.putBack()) {
+                    taken.release()
+                    onFailed()
+                }
+            }
+        }
     }
 
     /** The leaving is final: the files of the recipe's media that no recipe of the book holds are deleted (MEDIA-012). */
@@ -93,7 +103,9 @@ fun removeFound(
 
 /**
  * Takes [id] out of the book by [taking], cancels its timers and drops its done [marks], one turn among the timers'
- * starts and cancels, where the timers' work runs, so that it finishes however soon the view is left.
+ * starts and cancels, where the timers' work runs, so that it finishes however soon the view is left. A session
+ * cleared before it finishes is told of a removal it never says nor finishes: the files of its media are left to the
+ * media sweep, which skips a book that holds no recipe at all.
  */
 private fun take(
     timers: CardTimers,

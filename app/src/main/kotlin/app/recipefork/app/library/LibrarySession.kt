@@ -256,12 +256,26 @@ class LibrarySession(
      */
     fun removed(removal: PendingRemoval) {
         closeNotice()
+        failedUndo.value = null
         pending.getAndUpdate { removal }?.takeIf { it !== removal }?.finish()
     }
 
-    /** Undo was taken on [removal]'s notice: the recipe is put back. Nothing once that removal is no longer offered. */
+    /**
+     * Undo was taken on [removal]'s notice: the recipe is put back. Nothing once that removal is no longer offered.
+     * Should the book not take it back, [undoFailed] says so.
+     */
     fun undoRemoval(removal: PendingRemoval) {
-        if (pending.compareAndSet(removal, null)) removal.undo()
+        if (pending.compareAndSet(removal, null)) removal.undo { failedUndo.value = removal }
+    }
+
+    private val failedUndo = MutableStateFlow<PendingRemoval?>(null)
+
+    /** The removal whose Undo the book could not take back, until the book has said so. */
+    val undoFailed: StateFlow<PendingRemoval?> = failedUndo.asStateFlow()
+
+    /** The book said that [removal] could not be undone. */
+    fun undoFailureSaid(removal: PendingRemoval) {
+        failedUndo.compareAndSet(removal, null)
     }
 
     /** [removal]'s notice went without Undo: its leaving is final. Nothing once that removal is no longer offered. */
@@ -271,6 +285,7 @@ class LibrarySession(
 
     /** The book is left, or another notice said: a removal still offered is final. */
     private fun finishRemoval() {
+        failedUndo.value = null
         pending.getAndUpdate { null }?.finish()
     }
 

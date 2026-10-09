@@ -107,5 +107,6 @@
     <!-- FLOW-053: a recipe gone from the book at once, said with the action that brings it back while it is said. -->
     <string name="library_recipe_deleted">Recipe deleted</string>
     <string name="library_recipe_removed">Recipe removed</string>
+    <string name="library_undo_failed">Couldn\'t bring the recipe back</string>
     <string name="library_undo">Undo</string>
 </resources>

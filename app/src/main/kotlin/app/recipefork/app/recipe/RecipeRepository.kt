@@ -228,12 +228,27 @@ class TakenRecipe internal constructor(
     /**
      * Puts the recipe back into the book it was taken from, whole and listed where it was: its content, its media, its
      * state and, for a found one, its mark. Returns false, putting back nothing, when that book holds one of its
-     * identity again.
+     * identity again, or refuses any of its rows — a media item another recipe holds now — or cannot be written.
      */
-    suspend fun putBack(): Boolean = withContext(NonCancellable) { open.database.recipes().putBack(taken) }
+    suspend fun putBack(): Boolean = withContext(NonCancellable) {
+        try {
+            open.database.recipes().putBack(taken)
+        } catch (e: Exception) {
+            false
+        }
+    }
 
-    /** The recipe's leaving is final: the files of its media that no recipe of the book holds are deleted (MEDIA-012). */
-    suspend fun release() = releaseMedia(open, taken.rows.media.map { it.mediaId }, files)
+    /**
+     * The recipe's leaving is final: the files of its media that no recipe of the book holds are deleted (MEDIA-012).
+     * Never fails: a file left behind is the media sweep's to delete.
+     */
+    suspend fun release() {
+        try {
+            releaseMedia(open, taken.rows.media.map { it.mediaId }, files)
+        } catch (e: Exception) {
+            // Left to MediaSweep, which deletes at a book's opening the files no recipe holds.
+        }
+    }
 }
 
 /**

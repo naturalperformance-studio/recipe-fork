@@ -163,6 +163,17 @@ class RemoveFromTheCardTest {
         files() == expected
     }
 
+    /**
+     * Waits until the book's media directory holds exactly [expected], and asserts that it did well before the notice
+     * shown at [noticeShown] could have gone by itself: the swipe made the deletion final, not the notice timing out
+     * while the test clock ran on.
+     */
+    private fun awaitFinalBeforeTimeout(expected: List<String>, noticeShown: Long) {
+        awaitFiles(expected)
+        val elapsed = compose.mainClock.currentTime - noticeShown
+        assertTrue("final only after $elapsed ms, as the notice timed out", elapsed < 5_000L)
+    }
+
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
     private fun stored(recipe: Recipe) = runBlocking { recipes.get(recipe.id) }
@@ -219,6 +230,7 @@ class RemoveFromTheCardTest {
         compose.onNodeWithTag(CardTags.DELETE).performClick()
         awaitBook(LibraryView.OWN)
         compose.awaitRemovalNotice("Recipe deleted", "Undo")
+        val shown = compose.mainClock.currentTime
         compose.waitUntil(PATIENCE_MS) { stored(soup) == null }
         compose.waitUntil(PATIENCE_MS) { runBlocking { store.all.first() }.isEmpty() }
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.entry(soup.id.value)), PATIENCE_MS)
@@ -226,7 +238,7 @@ class RemoveFromTheCardTest {
         assertEquals(listOf("bread-step", "soup-step"), files())
 
         compose.swipeAwayNotice()
-        awaitFiles(listOf("bread-step"))
+        awaitFinalBeforeTimeout(listOf("bread-step"), shown)
         assertEquals(kept, stored(kept))
         assertNull(stored(soup))
     }
@@ -263,12 +275,13 @@ class RemoveFromTheCardTest {
         compose.onNodeWithTag(CardTags.REMOVE).performClick()
         awaitBook(LibraryView.MARKED)
         compose.awaitRemovalNotice("Recipe removed", "Undo")
+        val shown = compose.mainClock.currentTime
         compose.waitUntil(PATIENCE_MS) { stored(recipe) == null }
         assertTrue(runBlocking { recipes.marked().first() }.isEmpty())
         assertEquals(listOf("found-step"), files())
 
         compose.swipeAwayNotice()
-        awaitFiles(emptyList())
+        awaitFinalBeforeTimeout(emptyList(), shown)
     }
 
     // L10N: the ⋮ is named, and its items read, in Russian.

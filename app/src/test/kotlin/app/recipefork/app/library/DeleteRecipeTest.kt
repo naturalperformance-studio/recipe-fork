@@ -7,6 +7,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -291,6 +294,11 @@ class DeleteRecipeTest {
         val content = setOf(w.recipe)
         LocalizationChecks.assertScreenTextFromResources(compose, context, content)
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content)
+        // A11Y-003, A11Y-005: the notice's Undo is large enough and says what it does.
+        val undo = compose.onNode(hasText(w.undo) and hasAnyAncestor(hasTestTag(LibraryTags.NOTICE)) and hasClickAction())
+        undo.assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 1)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 1, except = AccessibilityChecks.snackbarPane)
     }
 
     // FLOW-053 (3): Undo puts the recipe back with everything it holds, its entry with it.

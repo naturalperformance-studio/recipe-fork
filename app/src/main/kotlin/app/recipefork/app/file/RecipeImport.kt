@@ -9,6 +9,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.media.ClipDuration
 import app.recipefork.app.media.RetrieverClipDuration
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.recipe.TakenRecipe
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.Media
@@ -145,7 +146,7 @@ class RecipeImport(
      * Takes the found recipe [id] out of the active book with its held content and its mark, its media files left
      * until the removal is final or undone (FLOW-053, [RecipeRepository.take]); null when the book held no such recipe.
      */
-    suspend fun take(id: RecipeId): app.recipefork.app.recipe.TakenRecipe? = recipes.inOpenBook().take(id, filesDirectory)
+    suspend fun take(id: RecipeId): TakenRecipe? = recipes.inOpenBook().take(id, filesDirectory)
 
     companion object {
         /** The size of a file whose size is not known. */

@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -177,14 +179,30 @@ class RecipeUndoTest {
         }
     }
 
-    /** Deletes [recipe], or removes it when found, from its entry's menu; the book says so with Undo. */
-    private fun takeOut(recipe: Recipe, view: LibraryView = LibraryView.OWN) {
+    /**
+     * Deletes [recipe], or removes it when found, from its entry's menu; the book says so with Undo. Returns the test
+     * clock's time once the notice showed.
+     */
+    private fun takeOut(recipe: Recipe, view: LibraryView = LibraryView.OWN): Long {
         awaitEntry(recipe, view)
         val item = if (view == LibraryView.OWN) LibraryTags.delete(recipe.id.value) else LibraryTags.remove(recipe.id.value)
         compose.chooseEntryAction(recipe.id.value, item)
         compose.awaitRemovalNotice(if (view == LibraryView.OWN) "Recipe deleted" else "Recipe removed", "Undo")
+        val shown = compose.mainClock.currentTime
         compose.waitUntil(PATIENCE_MS) { stored(recipe) == null }
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.entry(recipe.id.value)), PATIENCE_MS)
+        return shown
+    }
+
+    /**
+     * Waits until the book's media directory holds exactly [expected], and asserts that it did well before the notice
+     * shown at [noticeShown] could have gone by itself: the deletion was made final by what the test did, not by the
+     * notice timing out while the test clock ran on.
+     */
+    private fun awaitFinalBeforeTimeout(expected: List<String>, noticeShown: Long) {
+        awaitFiles(expected)
+        val elapsed = compose.mainClock.currentTime - noticeShown
+        assertTrue("final only after $elapsed ms, as the notice timed out", elapsed < WELL_BEFORE_TIMEOUT_MS)
     }
 
     private fun stored(recipe: Recipe) = runBlocking { recipes.get(recipe.id) }
@@ -310,11 +328,11 @@ class RecipeUndoTest {
         val kept = own("Soup", minutesAgo = 1)
         val pie = own("Apple pie")
         show(LibraryView.OWN)
-        takeOut(pie)
+        val shown = takeOut(pie)
 
         compose.swipeAwayNotice()
 
-        awaitFiles(filesOf(kept))
+        awaitFinalBeforeTimeout(filesOf(kept), shown)
         assertNull(stored(pie))
     }
 
@@ -324,10 +342,10 @@ class RecipeUndoTest {
         val soup = own("Soup", minutesAgo = 1)
         val pie = own("Apple pie")
         show(LibraryView.OWN)
-        takeOut(pie)
+        val shown = takeOut(pie)
         takeOut(soup)
 
-        awaitFiles(filesOf(soup))
+        awaitFinalBeforeTimeout(filesOf(soup), shown)
         compose.takeNoticeAction("Undo")
 
         compose.waitUntil(PATIENCE_MS) { stored(soup) != null }
@@ -343,11 +361,14 @@ class RecipeUndoTest {
         val soup = own("Soup", minutesAgo = 1)
         val pie = own("Apple pie")
         show(LibraryView.OWN)
-        takeOut(pie)
+        val shown = takeOut(pie)
 
-        compose.runOnIdle { session.tell(FileMessage(FileMessage.Kind.ALREADY_IN_BOOK, soup.title, soup.id.value)) }
+        compose.runOnIdle {
+            session.tell(FileMessage(FileMessage.Kind.ALREADY_IN_BOOK, soup.title, soup.id.value))
+            assertNull("the removal is still offered", session.removal.value)
+        }
 
-        awaitFiles(filesOf(soup))
+        awaitFinalBeforeTimeout(filesOf(soup), shown)
         assertNull(stored(pie))
     }
 
@@ -357,12 +378,12 @@ class RecipeUndoTest {
         val soup = own("Soup", minutesAgo = 1)
         val pie = own("Apple pie")
         show(LibraryView.OWN)
-        takeOut(pie)
+        val shown = takeOut(pie)
 
         compose.onNodeWithTag(LibraryTags.entry(soup.id.value)).performSemanticsAction(SemanticsActions.OnClick)
         compose.awaitCard()
 
-        awaitFiles(filesOf(soup))
+        awaitFinalBeforeTimeout(filesOf(soup), shown)
         compose.onNodeWithTag(CardTags.BACK).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(soup.id.value)), PATIENCE_MS)
         compose.waitForIdle()
@@ -377,14 +398,94 @@ class RecipeUndoTest {
         val soup = own("Soup", minutesAgo = 1)
         val pie = own("Apple pie")
         show(LibraryView.OWN)
-        takeOut(pie)
+        val shown = takeOut(pie)
 
         // As a screen reader acts on it: the list brought to the entry may have scrolled the bar away.
         compose.onNodeWithTag(LibraryTags.SETTINGS).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilExactlyOneExists(hasTestTag(SettingsTags.USUAL), PATIENCE_MS)
 
-        awaitFiles(filesOf(soup))
+        awaitFinalBeforeTimeout(filesOf(soup), shown)
         assertNull(stored(pie))
+    }
+
+    // Leaving the book for the editor on a new recipe makes the deletion final.
+    @Test
+    fun leavingTheBookForANewRecipeMakesTheDeletionFinal() {
+        val soup = own("Soup", minutesAgo = 1)
+        val pie = own("Apple pie")
+        show(LibraryView.OWN)
+        val shown = takeOut(pie)
+
+        compose.onNodeWithTag(LibraryTags.NEW).performSemanticsAction(SemanticsActions.OnClick)
+        // The new recipe is written, then opened, on the main thread: its looper is let run meanwhile.
+        compose.waitUntil(PATIENCE_MS) {
+            ShadowLooper.idleMainLooper()
+            session.editing.value != null
+        }
+
+        assertNull("the removal is still offered", session.removal.value)
+        awaitFinalBeforeTimeout(filesOf(soup), shown)
+        assertNull(stored(pie))
+    }
+
+    // A timer's notification tapped opens its step's card in place of the book: the deletion is final.
+    @Test
+    fun aTimerNotificationsStepMakesTheDeletionFinal() {
+        val soup = own("Soup", minutesAgo = 1)
+        val pie = own("Apple pie")
+        show(LibraryView.OWN)
+        val shown = takeOut(pie)
+
+        compose.runOnIdle {
+            session.showStep(soup.id.value, 1)
+            assertNull("the removal is still offered", session.removal.value)
+        }
+        compose.awaitCard()
+
+        awaitFinalBeforeTimeout(filesOf(soup), shown)
+        assertNull(stored(pie))
+    }
+
+    // A file bringing a recipe the book holds shows the book in place of whatever was open: the deletion is final.
+    @Test
+    fun theBookShownForAFilesRecipeMakesTheDeletionFinal() {
+        val soup = own("Soup", minutesAgo = 1)
+        val pie = own("Apple pie")
+        show(LibraryView.OWN)
+        val shown = takeOut(pie)
+
+        compose.runOnIdle {
+            session.showHeld()
+            assertNull("the removal is still offered", session.removal.value)
+        }
+
+        awaitFinalBeforeTimeout(filesOf(soup), shown)
+        assertNull(stored(pie))
+    }
+
+    // Undo the book cannot take back — another recipe holds one of its media items now — fails softly: the book says
+    // so, the deletion is final, and the other recipe keeps everything it holds, its file included.
+    @Test
+    fun undoTheBookCannotTakeBackSaysSoAndChangesNothingElse() {
+        val pie = own("Apple pie")
+        show(LibraryView.OWN)
+        takeOut(pie)
+        val cover = pie.media.first { it.attachment == MediaAttachment.Cover }
+        val other = Recipe.create(now, owner = null).copy(title = "Pie again", media = listOf(cover))
+        runBlocking { recipes.save(other) }
+
+        // Undo taken; the notice that follows is the failure's, so nothing waits for the book's snackbar to empty.
+        compose.onNode(hasText("Undo") and hasAnyAncestor(hasTestTag(LibraryTags.NOTICE)), useUnmergedTree = true).performClick()
+
+        // The Undo runs on the timers' scope, on the main thread: its looper is let run meanwhile.
+        compose.waitUntil(PATIENCE_MS) {
+            ShadowLooper.idleMainLooper()
+            compose.onAllNodes(hasText("Couldn't bring the recipe back") and hasAnyAncestor(hasTestTag(LibraryTags.NOTICE)), useUnmergedTree = true)
+                .fetchSemanticsNodes().size == 1
+        }
+        awaitFiles(listOf(cover.mediaId))
+        assertNull(stored(pie))
+        assertEquals(other, stored(other))
     }
 
     // The book's session ended — the application closed from the book — makes the deletion final.
@@ -393,11 +494,14 @@ class RecipeUndoTest {
         val soup = own("Soup", minutesAgo = 1)
         val pie = own("Apple pie")
         show(LibraryView.OWN)
-        takeOut(pie)
+        val shown = takeOut(pie)
 
-        compose.runOnIdle { sessions.clear() }
+        compose.runOnIdle {
+            sessions.clear()
+            assertNull("the removal is still offered", session.removal.value)
+        }
 
-        awaitFiles(filesOf(soup))
+        awaitFinalBeforeTimeout(filesOf(soup), shown)
         assertNull(stored(pie))
     }
 
@@ -418,5 +522,8 @@ class RecipeUndoTest {
     private companion object {
         /** Longer than a notice with an action stays by itself: Material's long duration, ten seconds. */
         const val LONG_NOTICE_MS = 11_000L
+
+        /** Half the time a notice with an action stays: a deletion final by then did not wait for it to time out. */
+        const val WELL_BEFORE_TIMEOUT_MS = 5_000L
     }
 }
