@@ -72,6 +72,8 @@ class ClipStore(
             } catch (e: Exception) {
                 // Whatever stops the conversion is a clip it cannot process (MEDIA-008), never a crash.
                 return@withContext ClipOutcome.Refused(ClipRefusal.UNREADABLE)
+            } catch (e: OutOfMemoryError) {
+                return@withContext ClipOutcome.Refused(ClipRefusal.UNREADABLE)
             }
             ensureActive()
             val weight = partial.length()
