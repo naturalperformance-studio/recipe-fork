@@ -1,6 +1,11 @@
 package app.recipefork.app.card
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -79,9 +84,14 @@ import app.recipefork.core.scaling.Rounding
  * heading stand under none, and a heading with no lines yet is not shown (DOM-022). A group is presentation only: the
  * lines, their scaling, fixing, marks and references read exactly as without it.
  *
+ * Once every line is marked done, the list folds under its heading into one line, "All gathered · show"
+ * ([GatheredLine]); a tap on it shows the lines again, still marked. A line unmarked, or the marks cleared, shows the
+ * lines again too, and marking every line once more folds them again.
+ *
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a line is as tall as its text with a
- * modest space around it, its done mark is shown but a tap leaves it as it is, and no line offers fixing; a fixing
- * control open as the mode changes closes. The scale, the status line, the warning, groups and notes are as in cooking.
+ * modest space around it, its done mark is shown but a tap leaves it as it is, no line offers fixing, and the list
+ * never folds; a fixing control open as the mode changes closes. The scale, the status line, the warning, groups and
+ * notes are as in cooking.
  */
 @Composable
 internal fun IngredientsList(
@@ -97,6 +107,12 @@ internal fun IngredientsList(
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered, mode) { mutableStateOf<Int?>(null) }
+    // Every line marked on Cooking: the list folds, unless the reader has shown it again since.
+    val gathered = mode == CardMode.COOKING && marks != null && ordered.all { marks.done(MarkedPart.INGREDIENT, it.position) }
+    var shownAgain by remember(ordered, mode) { mutableStateOf(false) }
+    LaunchedEffect(gathered) { if (!gathered) shownAgain = false }
+    val folded = gathered && !shownAgain
+    LaunchedEffect(folded) { if (folded) open = null }
     // The list stands apart from the steps on a tonal surface of the theme, in its medium corners. The surface reaches
     // into the card's gutter, so the lines keep the whole width of the content and wrap no sooner (A11Y-004).
     Surface(
@@ -104,11 +120,16 @@ internal fun IngredientsList(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode) }
+        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) {
+            Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode, folded) { shownAgain = true }
+        }
     }
 }
 
-/** The list's heading, status, warning and lines, with the fixing control [open] under its line. */
+/**
+ * The list's heading, status, warning and lines, with the fixing control [open] under its line; or, [folded], the
+ * heading and the one line that shows the rest ([onShow]).
+ */
 @Composable
 private fun Lines(
     ordered: List<Ingredient>,
@@ -122,57 +143,113 @@ private fun Lines(
     marks: CardMarks?,
     groups: List<IngredientGroup>,
     mode: CardMode,
+    folded: Boolean,
+    onShow: () -> Unit,
 ) {
-    val cooking = mode == CardMode.COOKING
     // A small gap under the heading; the status line, the warning and the lines then stand one against the next, so that
     // more lines are in sight as the card opens, and a group's subheading has the same gap above it on the first line
     // as on any other.
     Section(R.string.card_ingredients, CardTags.INGREDIENTS, gap = HEADING_GAP) {
-        val column = quantityColumn(list.lines)
-        // The status line, then the lines one against the next, with no gap between them: each line's own height is its
-        // space. The warning unfolds under the status line and folds away into it, the gap above it included, so the
-        // lines below move with it rather than jump; the status line itself keeps its height.
-        Column {
-            ScaleStatus(list.recalculated)
-            AnimatedVisibility(!list.holdsProportions, enter = Motion.open, exit = Motion.close) {
-                Text(
-                    stringResource(R.string.card_proportions_warning),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = SECTION_GAP)
-                        .semantics { liveRegion = LiveRegionMode.Polite }
-                        .testTag(CardTags.PROPORTIONS),
-                )
-            }
-            list.lines.forEachIndexed { i, line ->
-                groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name) }
-                val position = ordered[i].position
-                // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
-                Column {
-                    IngredientRow(
-                        line, position, column, cardPlace(CardPlaces.ingredient(position)),
-                        done = marks?.done(MarkedPart.INGREDIENT, position) == true,
-                        onToggle = marks?.takeIf { cooking }?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
-                        mode = mode,
-                    ) { onOpen(if (open == position) null else position) }
-                    val offer = line.fixing?.takeIf { cooking }
-                    if (offer != null) {
-                        key(position) {
-                            FixAmountUnder(
-                                open = open == position,
-                                offer = offer,
-                                current = fixings.firstOrNull { it.position == position },
-                                language = language,
-                                onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
-                                onRelease = { onRelease(position); onOpen(null) },
-                                onClose = { onOpen(null) },
-                            )
-                        }
+        // Folded, the lines fold up into the one line that says so, and unfold from it again.
+        AnimatedVisibility(folded, enter = Motion.open, exit = Motion.close) { GatheredLine(onShow) }
+        AnimatedVisibility(!folded, enter = Motion.open, exit = Motion.close) { AllLines(ordered, list, fixings, language, open, onOpen, onFix, onRelease, marks, groups, mode) }
+    }
+}
+
+/** The list's status, warning and lines, with the fixing control [open] under its line. */
+@Composable
+private fun AllLines(
+    ordered: List<Ingredient>,
+    list: IngredientList,
+    fixings: List<CardFixing>,
+    language: InterfaceLanguage,
+    open: Int?,
+    onOpen: (Int?) -> Unit,
+    onFix: (CardFixing) -> Unit,
+    onRelease: (Int) -> Unit,
+    marks: CardMarks?,
+    groups: List<IngredientGroup>,
+    mode: CardMode,
+) {
+    val cooking = mode == CardMode.COOKING
+    val column = quantityColumn(list.lines)
+    // The status line, then the lines one against the next, with no gap between them: each line's own height is its
+    // space. The warning unfolds under the status line and folds away into it, the gap above it included, so the
+    // lines below move with it rather than jump; the status line itself keeps its height.
+    Column {
+        ScaleStatus(list.recalculated)
+        AnimatedVisibility(!list.holdsProportions, enter = Motion.open, exit = Motion.close) {
+            Text(
+                stringResource(R.string.card_proportions_warning),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = SECTION_GAP)
+                    .semantics { liveRegion = LiveRegionMode.Polite }
+                    .testTag(CardTags.PROPORTIONS),
+            )
+        }
+        list.lines.forEachIndexed { i, line ->
+            groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name) }
+            val position = ordered[i].position
+            // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
+            Column {
+                IngredientRow(
+                    line, position, column, cardPlace(CardPlaces.ingredient(position)),
+                    done = marks?.done(MarkedPart.INGREDIENT, position) == true,
+                    onToggle = marks?.takeIf { cooking }?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                    mode = mode,
+                ) { onOpen(if (open == position) null else position) }
+                val offer = line.fixing?.takeIf { cooking }
+                if (offer != null) {
+                    key(position) {
+                        FixAmountUnder(
+                            open = open == position,
+                            offer = offer,
+                            current = fixings.firstOrNull { it.position == position },
+                            language = language,
+                            onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
+                            onRelease = { onRelease(position); onOpen(null) },
+                            onClose = { onOpen(null) },
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * The one line a list folds into once every ingredient is marked: "All gathered · show", the word that shows the list
+ * in the theme's accent colour. The whole line, the card's [CardTarget] tall, is one button that shows the list again
+ * ([onShow]); the screen reader reads it as all gathered and names its click.
+ */
+@Composable
+private fun GatheredLine(onShow: () -> Unit) {
+    val gathered = stringResource(R.string.card_ingredients_gathered)
+    val show = stringResource(R.string.card_ingredients_show)
+    val accent = MaterialTheme.colorScheme.primary
+    val line = stringResource(R.string.card_ingredients_folded, gathered, show)
+    val shown = remember(line, show, accent) {
+        buildAnnotatedString {
+            append(line)
+            val at = line.lastIndexOf(show)
+            if (at >= 0) addStyle(SpanStyle(color = accent), at, at + show.length)
+        }
+    }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = CardTarget)
+            .clickable(onClickLabel = stringResource(R.string.card_ingredients_show_action), role = Role.Button, onClick = onShow)
+            .testTag(IngredientTags.GATHERED),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            shown,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(gathered); shownText = line },
+        )
     }
 }
 
@@ -203,6 +280,8 @@ internal object IngredientTags {
     const val RECALCULATED = "card-recalculated"
     /** The tonal surface the whole section sits on. */
     const val SURFACE = "card-ingredients-surface"
+    /** The one line the list folds into once every ingredient is marked done. */
+    const val GATHERED = "card-ingredients-gathered"
     /** The status line above the list, always present: as authored, or recalculated. */
     const val STATUS = "card-scale-status"
     /** The status line's text at the authored scale. */

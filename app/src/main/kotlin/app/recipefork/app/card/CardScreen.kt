@@ -730,9 +730,11 @@ private fun RecipeContent(
                     mode = mode,
                 )
             }
+            // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
             StepsList(
                 recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries),
                 StepMediaOnCard(recipe, recipes.bookName()), marks, mode,
+                readerScrolling = { scroll.isScrollInProgress },
             )
             if (viewing && recipe.description.isNotBlank()) {
                 // The description stands further apart from the steps than the parts above stand from each other.

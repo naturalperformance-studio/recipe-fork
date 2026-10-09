@@ -114,10 +114,16 @@ internal object StepTags {
 /**
  * A step's text on the card, each reference read as [references] gives it, followed by the list's arrow where rounding
  * moved it (FLOW-032 (3), SCALE-004). The screen reader reads it as one sentence, an arrow as the words it stands for.
- * A step marked [done] is struck through and muted (FLOW-068).
+ * A step marked [done] is struck through and muted (FLOW-068). It is set in the [mode]'s style ([stepTextStyle]).
  */
 @Composable
-internal fun StepText(step: Step, references: CardReferences, modifier: Modifier = Modifier, done: Boolean = false) {
+internal fun StepText(
+    step: Step,
+    references: CardReferences,
+    modifier: Modifier = Modifier,
+    done: Boolean = false,
+    mode: CardMode = CardMode.COOKING,
+) {
     val runs = StepText.runs(step, references::quantity)
     // Each rounded reference, by its run: its arrow, and how the screen reader reads the reference with it.
     val marks = runs.withIndex().filter { it.value is StepRun.Reference }.associate { (index, run) ->
@@ -147,7 +153,7 @@ internal fun StepText(step: Step, references: CardReferences, modifier: Modifier
     key(done) {
         Text(
             shown,
-            style = stepTextStyle.done(done),
+            style = stepTextStyle(mode).done(done),
             onTextLayout = { laidOut[0] = it },
             modifier = modifier.clearAndSetSemantics {
                 text = AnnotatedString(spoken)
@@ -161,11 +167,15 @@ internal fun StepText(step: Step, references: CardReferences, modifier: Modifier
 
 /**
  * How a step reads on the card: larger than the ingredient list and than body text anywhere else in the product, so
- * it can be read at arm's length (A11Y-007): the theme's title style, a size up from body text; it follows the font
- * scale like any text (A11Y-004).
+ * it can be read at arm's length (A11Y-007). On [CardMode.VIEW] the theme's large title style, a size up from body
+ * text; on [CardMode.COOKING], read from further away with busy hands, the theme's small headline, a size up again. It
+ * follows the font scale like any text (A11Y-004).
  */
-internal val stepTextStyle: TextStyle
-    @Composable get() = MaterialTheme.typography.titleLarge
+@Composable
+internal fun stepTextStyle(mode: CardMode): TextStyle = when (mode) {
+    CardMode.VIEW -> MaterialTheme.typography.titleLarge
+    CardMode.COOKING -> MaterialTheme.typography.headlineSmall
+}
 
 /** A narrow space that never breaks, so the arrow stays on its quantity's line. */
 private const val ARROW_GAP = "\u202F"

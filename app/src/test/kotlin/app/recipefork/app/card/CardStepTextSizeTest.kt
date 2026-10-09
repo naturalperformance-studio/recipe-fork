@@ -55,7 +55,8 @@ import java.time.Instant
 /**
  * A11Y-007, A11Y-004: a step's text on the card is set larger than the ingredient list, the rest of the card and body
  * text anywhere in the product; on a 360 dp-wide phone at font scale 2.0 it still wraps whole, inside the card, and a
- * reference in it keeps its small rounding arrow on screen and its words for the screen reader.
+ * reference in it keeps its small rounding arrow on screen and its words for the screen reader. On Cooking it is set a
+ * size larger again than on View, and still fits whole at twice the font scale on a 320 dp-wide phone.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -194,5 +195,36 @@ class CardStepTextSizeTest {
             .config[SemanticsProperties.Text].joinToString("") { it.text }
         assertTrue("read with its words: $spoken", spoken.contains(context.getString(R.string.card_quantity_rounded_up)))
         assertFalse(spoken.contains('↑'))
+    }
+
+    // Scenario 3 of v0.27: on Cooking, read from further away, a step is set a size up from View, from the theme's type
+    // scale.
+    @Test
+    fun onCookingAStepReadsLargerThanOnView() {
+        open(scale = 1f)
+        val view = stepLayout().layoutInput.style.fontSize
+        assertEquals(theme!!.titleLarge.fontSize, view)
+        compose.chooseCardTab(CardMode.COOKING)
+        val cooking = stepLayout().layoutInput.style
+        assertEquals(theme!!.headlineSmall.fontSize, cooking.fontSize)
+        assertEquals(theme!!.headlineSmall.lineHeight, cooking.lineHeight)
+        assertTrue("on Cooking at ${cooking.fontSize}, on View at $view", cooking.fontSize.value > view.value)
+    }
+
+    @Test
+    @Config(qualifiers = "en-w320dp-h640dp")
+    fun onCookingAtTwiceTheFontScaleOnA320dpPhoneTheStepStillFitsWhole() {
+        open(scale = 2f)
+        compose.chooseCardTab(CardMode.COOKING)
+        compose.onNodeWithTag(CardTags.step(0)).performScrollTo()
+        compose.waitForIdle()
+        val layout = stepLayout()
+        assertEquals(theme!!.headlineSmall.fontSize, layout.layoutInput.style.fontSize)
+        assertTrue("it wraps over several lines", layout.lineCount > 1)
+        assertFalse("nothing of it is cut off", layout.hasVisualOverflow)
+        compose.assertWhole(StepTags.text(0))
+        val node = compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val content = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot
+        assertTrue("the step lies within the card: $node in $content", node.left >= content.left && node.right <= content.right)
     }
 }

@@ -33,6 +33,8 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
+import app.recipefork.app.card.IngredientTags
+import app.recipefork.app.R
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -113,7 +115,8 @@ import kotlin.time.Duration.Companion.minutes
  * The screens: the book — the marked and the own view, each empty and with recipes, an entry's menu, a recipe file's
  * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with ingredient groups, notes,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
- * Cooking tab, each with its menu open; the editor on that recipe, its equipment among it, with a row removed and its
+ * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every ingredient marked,
+ * the list folded; the editor on that recipe, its equipment among it, with a row removed and its
  * Undo offered, and on a frozen one with equipment; the settings and each of their
  * dialogs; and the crop.
  *
@@ -376,13 +379,15 @@ class PreLaunchSweepTest {
         checkScreen("the card, View, its menu", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
         awaitGone(CardTags.DELETE)
-        // Cooking: one timer running; the step's two others ready.
+        // Cooking: one timer running; the step's two others ready; the second step, the first not marked, highlighted.
         chooseTheCardsTab(CardMode.COOKING)
         await(CardTags.stepPhoto(2))
         await(CardTags.stepVideo(4))
         compose.onNodeWithTag(TimerTags.start(1)).performScrollTo().performClick()
         await(TimerTags.cancel(1))
         compose.onNodeWithTag(CardTags.SCREEN).assertExists()
+        assertTrue("the second step is the current one", compose.onNodeWithTag(CardTags.step(1)).fetchSemanticsNode()
+            .config.getOrNull(SemanticsProperties.StateDescription) == context.getString(R.string.card_current_step))
         assertOnlyThePagerScrollsSideways("Cooking")
         checkScreen("the card, Cooking", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
@@ -390,6 +395,10 @@ class PreLaunchSweepTest {
         checkScreen("the card, Cooking, its menu", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
         awaitGone(CardTags.CLEAR_MARKS)
+        // Every ingredient marked: the list folds into its one line.
+        (1 until cake.ingredients.size).forEach { compose.onNodeWithTag(CardTags.ingredient(it)).performScrollTo().performClick() }
+        await(IngredientTags.GATHERED)
+        checkScreen("the card, Cooking, the ingredients all gathered", target = CardTarget)
         chooseTheCardsTab(CardMode.VIEW)
         compose.onNodeWithTag(CardTags.EDIT).performClick()
         await(EditorTags.FORM)
@@ -511,6 +520,6 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 22
+        const val SCREENS = 23
     }
 }
