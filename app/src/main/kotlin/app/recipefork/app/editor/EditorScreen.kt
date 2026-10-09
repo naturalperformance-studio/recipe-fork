@@ -45,8 +45,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -90,6 +88,7 @@ import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.SnackbarAction
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -253,16 +252,7 @@ internal fun EditorStatementHost(host: SnackbarHostState, modifier: Modifier = M
             val label = data.visuals.actionLabel
             Snackbar(
                 modifier = Modifier.testTag(EditorTags.STATEMENT),
-                action = label?.let {
-                    {
-                        TextButton(
-                            onClick = data::performAction,
-                            colors = ButtonDefaults.textButtonColors(contentColor = SnackbarDefaults.actionColor),
-                            // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
-                            modifier = Modifier.heightIn(min = 48.dp),
-                        ) { Text(it) }
-                    }
-                },
+                action = label?.let { { SnackbarAction(it, data::performAction) } },
             ) { Text(data.visuals.message) }
         }
     }
