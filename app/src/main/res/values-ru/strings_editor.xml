@@ -40,6 +40,12 @@
     <string name="editor_ingredient_unit_action">Выбрать единицу</string>
     <string name="editor_ingredient_remove_action">Убрать строку ингредиента %1$d</string>
     <string name="editor_ingredient_menu_action">Действия со строкой ингредиента %1$d</string>
+    <string name="editor_group_add">Добавить группу</string>
+    <string name="editor_group_add_action">Добавить заголовок группы к ингредиентам</string>
+    <string name="editor_group_name">Группа</string>
+    <string name="editor_group_name_example">например, Тесто</string>
+    <string name="editor_group_remove_action">Убрать заголовок группы %1$d</string>
+    <string name="editor_group_menu_action">Действия с группой %1$d</string>
     <string name="editor_ingredient_pick_action">Выбрать ингредиент словаря %1$s</string>
     <string name="editor_ingredient_free_text_offer">Добавить «%1$s» своими словами</string>
     <string name="editor_ingredient_free_text_action">Добавить %1$s своими словами, не из словаря</string>
@@ -104,6 +110,7 @@
     <string name="editor_row_insert_below">Вставить ниже</string>
     <string name="editor_row_move_up">Переместить вверх</string>
     <string name="editor_row_move_down">Переместить вниз</string>
+    <string name="editor_row_group_above">Добавить группу выше</string>
     <!-- Часть ингредиента в шаге: предлагается рядом с целым, вводится в единице ингредиента. -->
     <string name="editor_step_offered_part">%1$s — часть…</string>
     <string name="editor_part_title">Часть: %1$s</string>
@@ -154,5 +161,6 @@
     <!-- A row or a step deleted, with the action that puts it back. -->
     <string name="editor_ingredient_removed">Строка ингредиента %1$d убрана</string>
     <string name="editor_step_removed">Шаг %1$d убран</string>
+    <string name="editor_group_removed">Заголовок группы %1$d убран</string>
     <string name="editor_undo">Вернуть</string>
 </resources>

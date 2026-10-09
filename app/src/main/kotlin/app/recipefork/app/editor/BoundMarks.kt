@@ -142,7 +142,9 @@ private fun boundText(part: RecipePart, bound: Bound): String = when (bound) {
             RecipePart.Ingredients -> R.string.editor_mark_ingredients_missing
             RecipePart.Steps -> R.string.editor_mark_steps_missing
             // No minimum asks anything of these; within DOM-012 they are never missing.
-            RecipePart.Description, is RecipePart.StepText, is RecipePart.TimerName, is RecipePart.IngredientNote -> return ""
+            RecipePart.Description, is RecipePart.StepText, is RecipePart.TimerName, is RecipePart.IngredientNote,
+            is RecipePart.GroupName,
+            -> return ""
         },
     )
     is Bound.OverLimit -> stringResource(
@@ -150,6 +152,7 @@ private fun boundText(part: RecipePart, bound: Bound): String = when (bound) {
             RecipePart.Ingredients -> R.string.editor_mark_ingredients_over
             RecipePart.Steps -> R.string.editor_mark_steps_over
             RecipePart.Title, RecipePart.Description, is RecipePart.StepText, is RecipePart.TimerName, is RecipePart.IngredientNote,
+            is RecipePart.GroupName,
             -> R.string.editor_mark_characters_over
             // No limit of DOM-012 applies to these.
             RecipePart.Language, RecipePart.Servings -> return ""

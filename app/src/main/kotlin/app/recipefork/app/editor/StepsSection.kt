@@ -266,6 +266,8 @@ private fun StepRow(
                                 RowAction.INSERT_BELOW -> editor.insertStep(position + 1)
                                 RowAction.MOVE_UP -> editor.moveStep(position, position - 1)
                                 RowAction.MOVE_DOWN -> editor.moveStep(position, position + 1)
+                                // Steps have no groups; their menu never offers it.
+                                RowAction.GROUP_ABOVE -> Unit
                             }
                         },
                     )

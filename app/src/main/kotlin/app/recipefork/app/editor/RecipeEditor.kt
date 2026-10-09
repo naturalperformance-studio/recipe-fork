@@ -23,6 +23,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Bound
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShares
 import app.recipefork.core.recipe.Media
@@ -107,6 +108,8 @@ class RecipeEditor(
      */
     private val stepKeys: RowKeys = RowKeys(),
     private val ingredientKeys: RowKeys = RowKeys(),
+    /** As [ingredientKeys], for the headings of the ingredient groups. */
+    private val groupKeys: RowKeys = RowKeys(),
 ) {
     private val current = MutableStateFlow<Recipe?>(null)
 
@@ -174,7 +177,7 @@ class RecipeEditor(
                     .followingSteps { if (it > position) it - 1 else it },
             )
         }
-        if (removing) offered.value = Removal(step = true, position, recipe) { if (removed.isNotEmpty()) written(removed) }
+        if (removing) offered.value = Removal(Removal.Kind.STEP, position, recipe) { if (removed.isNotEmpty()) written(removed) }
         return removing
     }
 
@@ -302,6 +305,9 @@ class RecipeEditor(
     /** As [stepKey], for the ingredient row at [position]. */
     fun ingredientKey(position: Int): Long = ingredientKeys.of(position)
 
+    /** As [stepKey], for the heading at [index] of the ingredient groups. */
+    fun groupKey(index: Int): Long = groupKeys.of(index)
+
     /** The optional description, kept exactly as typed, line breaks included. */
     fun setDescription(description: String) = edit { it.copy(description = description) }
 
@@ -323,9 +329,11 @@ class RecipeEditor(
 
     /**
      * Puts an empty row, exactly like an appended one, at [position], from 0 to the number of rows; the rows from
-     * there on move down, and the references to them follow (DOM-007, FLOW-025 (1, 3)). Returns whether it was put.
+     * there on move down, and the references to them follow (DOM-007, FLOW-025 (1, 3)). Every heading stays over the
+     * rows it had (DOM-022): the new row joins the group of the row it is put above — or, [intoGroupAbove], that of the
+     * row it is put below. Returns whether it was put.
      */
-    fun insertIngredient(position: Int): Boolean {
+    fun insertIngredient(position: Int, intoGroupAbove: Boolean = false): Boolean {
         val count = current.value?.ingredients?.size ?: return false
         if (position !in 0..count) return false
         return edit { recipe ->
@@ -334,26 +342,132 @@ class RecipeEditor(
             recipe.copy(
                 ingredients = rows.mapIndexed { i, row -> row.copy(position = i) },
                 steps = recipe.steps.followingIngredients { if (it >= position) it + 1 else it },
+                ingredientGroups = recipe.ingredientGroups.map { group ->
+                    val below = group.firstPosition > position || group.firstPosition == position && intoGroupAbove
+                    if (below) group.copy(firstPosition = group.firstPosition + 1) else group
+                },
             )
         }
     }
 
     /**
      * Moves the row at [from] to [to]; the rows between close up. Every row keeps what it holds, and every step's
-     * reference still resolves to the same ingredient (DOM-007, FLOW-025 (2, 3)). Returns whether the row moved.
+     * reference still resolves to the same ingredient (DOM-007, FLOW-025 (2, 3)). The row joins the group of the row
+     * whose place it takes; every other row stays in its own (DOM-022). Returns whether the row moved.
      */
     fun moveIngredient(from: Int, to: Int): Boolean {
-        val count = current.value?.ingredients?.size ?: return false
+        val recipe = current.value ?: return false
+        val count = recipe.ingredients.size
         if (from !in 0 until count || to !in 0 until count || from == to) return false
-        return edit { recipe ->
-            val rows = recipe.ingredients.toMutableList().apply { add(to, removeAt(from)) }
-            ingredientKeys.move(from, to, count)
-            recipe.copy(
-                ingredients = rows.mapIndexed { i, row -> row.copy(position = i) },
-                steps = recipe.steps.followingIngredients { moved(it, from, to) },
-            )
+        val items = recipe.listItems
+        val at = items.indexOf(ListItem.Row(from))
+        // Taken out, the row lands at the place of the row at [to]: after it going down, before it — under its
+        // heading, if any — going up.
+        return moveIngredientItem(at, items.indexOf(ListItem.Row(to)))
+    }
+
+    /**
+     * Moves the item at [from] of the ingredient list as the editor shows it ([listItems]) so that it stands at [to]
+     * once taken out: a row alone — past a heading, it leaves its group for the one it now stands in — or a heading with
+     * every row it owns, its group as a whole (DOM-022, FLOW-025). A group left with no rows loses its heading. Returns
+     * whether anything moved.
+     */
+    fun moveIngredientItem(from: Int, to: Int): Boolean {
+        val items = current.value?.listItems ?: return false
+        if (from !in items.indices || from == to) return false
+        val span = blockAt(items, from)
+        if (to !in 0..items.size - span) return false
+        return rearrange { items.movedBlock(from, span, to) }
+    }
+
+    /**
+     * Moves the group whose heading is at [index] — heading and rows — past the next group, [down], or the one before:
+     * never above the rows no group owns, nor past a heading with no rows yet. Returns whether it moved.
+     */
+    fun moveGroup(index: Int, down: Boolean): Boolean {
+        val recipe = current.value ?: return false
+        val upper = if (down) index else index - 1
+        if (upper < 0 || upper + 1 >= recipe.ingredientGroups.size || recipe.groupRows(upper + 1).isEmpty()) return false
+        val items = recipe.listItems
+        val first = items.indexOf(ListItem.Heading(upper))
+        val second = items.indexOf(ListItem.Heading(upper + 1))
+        // The lower group's block is put where the upper one's began.
+        return rearrange { items.movedBlock(second, blockAt(items, second), first) }
+    }
+
+    /**
+     * Puts a heading with no name yet above the row at [position] — at the number of rows, after the last, where its
+     * group has no rows yet — so the rows from there to the next heading are its group (DOM-022). Where a heading
+     * already stands there, none is put. Returns whether it was put; the heading is not saved until it is named.
+     */
+    fun addGroup(position: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (position !in 0..recipe.ingredients.size || recipe.ingredientGroups.any { it.firstPosition == position }) return false
+        val index = recipe.ingredientGroups.count { it.firstPosition < position }
+        return edit { edited ->
+            groupKeys.insert(index, edited.ingredientGroups.size)
+            edited.copy(ingredientGroups = edited.ingredientGroups.toMutableList().apply { add(index, IngredientGroup("", position)) })
         }
     }
+
+    /**
+     * The name of the group whose heading is at [index], kept as typed however long (the limit is marked on leaving the
+     * field, never refused — FLOW-028).
+     */
+    fun renameGroup(index: Int, name: String): Boolean {
+        val group = current.value?.ingredientGroups?.getOrNull(index) ?: return false
+        if (group.name == name) return editable
+        return edit { recipe -> recipe.copy(ingredientGroups = recipe.ingredientGroups.mapIndexed { i, it -> if (i == index) it.copy(name = name) else it }) }
+    }
+
+    /**
+     * The author left the name of the heading at [index], which read [entered] when they came to it: it is held
+     * trimmed. A name left blank is no name — the heading takes back [entered], or, never named, goes without a word.
+     */
+    fun settleGroupName(index: Int, entered: String) {
+        val name = current.value?.ingredientGroups?.getOrNull(index)?.name ?: return
+        val settled = name.trim().ifEmpty { entered.trim() }
+        when {
+            settled.isEmpty() -> edit { recipe ->
+                groupKeys.remove(index, recipe.ingredientGroups.size)
+                recipe.copy(ingredientGroups = recipe.ingredientGroups.filterIndexed { i, _ -> i != index })
+            }
+            settled != name -> renameGroup(index, settled)
+        }
+    }
+
+    /**
+     * Takes the heading at [index] away; its rows stay where they are and so belong to the group above, or to none
+     * (DOM-022). The removal is offered for undoing as [removal].
+     */
+    fun removeGroup(index: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (index !in recipe.ingredientGroups.indices) return false
+        val removing = edit { edited ->
+            groupKeys.remove(index, edited.ingredientGroups.size)
+            edited.copy(ingredientGroups = edited.ingredientGroups.filterIndexed { i, _ -> i != index })
+        }
+        if (removing) offered.value = Removal(Removal.Kind.GROUP, index, recipe) {}
+        return removing
+    }
+
+    /**
+     * Applies the ingredient list [arranged] makes of it ([Recipe.arranged]), each row's key and each kept heading's
+     * following it. Returns the headings dropped, by their former index, or null where nothing was changed.
+     */
+    private fun rearrange(prepare: (Recipe) -> Recipe = { it }, arranged: (Recipe) -> List<ListItem>): List<Int>? {
+        var dropped: List<Int>? = null
+        val changed = edit { recipe ->
+            val result = prepare(recipe).arranged(arranged(recipe))
+            ingredientKeys.arrange(result.rows, recipe.ingredients.size)
+            groupKeys.arrange(result.headings, recipe.ingredientGroups.size)
+            dropped = recipe.ingredientGroups.indices.filter { it !in result.headings }
+            result.recipe
+        }
+        return dropped.takeIf { changed }
+    }
+
+    private fun rearrange(arranged: (Recipe) -> List<ListItem>): Boolean = rearrange({ it }, arranged) != null
 
     /** A new row: its unit starts as grams, so it always has a unit and so a unit type (DOM-016); no quantity yet. */
     private fun emptyRow(position: Int) = Ingredient(
@@ -451,21 +565,12 @@ class RecipeEditor(
     fun removeIngredient(position: Int): Boolean {
         val recipe = current.value ?: return false
         if (position !in recipe.ingredients.indices) return false
-        val removing = edit { edited ->
-            ingredientKeys.remove(position, edited.ingredients.size)
-            val rows = edited.ingredients.filterIndexed { i, _ -> i != position }.mapIndexed { i, row -> row.copy(position = i) }
-            val steps = edited.steps.map { step ->
-                val left = ReferenceSpacing.withoutReferencesTo(step, position)
-                left.copy(
-                    ingredientReferences = left.ingredientReferences.map {
-                        if (it.ingredientPosition > position) it.copy(ingredientPosition = it.ingredientPosition - 1) else it
-                    },
-                )
-            }
-            edited.copy(ingredients = rows, steps = steps)
-        }
-        if (removing) offered.value = Removal(step = false, position, recipe) {}
-        return removing
+        // Every heading stays over the rows it had; one whose only row this was goes with it (DOM-022).
+        val dropped = rearrange({ edited -> edited.copy(steps = edited.steps.map { ReferenceSpacing.withoutReferencesTo(it, position) }) }) { edited ->
+            edited.listItems - ListItem.Row(position)
+        } ?: return false
+        offered.value = Removal(Removal.Kind.INGREDIENT, position, recipe, dropped) {}
+        return true
     }
 
     private val offered = MutableStateFlow<Removal?>(null)
@@ -483,8 +588,12 @@ class RecipeEditor(
     fun undoRemoval(removal: Removal): Boolean {
         if (!offered.compareAndSet(removal, null)) return false
         val now = current.value ?: return false
-        if (removal.step) stepKeys.insert(removal.position, now.steps.size)
-        else ingredientKeys.insert(removal.position, now.ingredients.size)
+        when (removal.kind) {
+            Removal.Kind.STEP -> stepKeys.insert(removal.position, now.steps.size)
+            Removal.Kind.INGREDIENT -> ingredientKeys.insert(removal.position, now.ingredients.size)
+            Removal.Kind.GROUP -> groupKeys.insert(removal.position, now.ingredientGroups.size)
+        }
+        removal.headings.forEachIndexed { i, index -> groupKeys.insert(index, now.ingredientGroups.size + i) }
         return edit { removal.before }
     }
 
@@ -606,6 +715,7 @@ class RecipeEditor(
             is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timerName = false)
             is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timerName = true)
             is RecipePart.IngredientNote -> Left.OfIngredient(ingredientKeys.of(part.position))
+            is RecipePart.GroupName -> Left.OfGroup(groupKeys.of(part.index))
             else -> Left.Whole(part)
         },
     )
@@ -633,6 +743,7 @@ class RecipeEditor(
         is Left.Whole -> part
         is Left.OfStep -> stepPosition(key)?.let { if (timerName) RecipePart.TimerName(it) else RecipePart.StepText(it) }
         is Left.OfIngredient -> ingredientPosition(key)?.let { RecipePart.IngredientNote(it) }
+        is Left.OfGroup -> groupKeys.positionOf(key)?.takeIf { it < (current.value?.ingredientGroups?.size ?: 0) }?.let { RecipePart.GroupName(it) }
     }
 
     private sealed interface Left {
@@ -640,6 +751,8 @@ class RecipeEditor(
         data class OfStep(val key: Long, val timerName: Boolean) : Left
         /** The note of the ingredient row whose [ingredientKey] is [key], so the mark stays with the row. */
         data class OfIngredient(val key: Long) : Left
+        /** The name of the heading whose [groupKey] is [key]. */
+        data class OfGroup(val key: Long) : Left
     }
 
     /** Where the ingredient row whose [ingredientKey] is [key] stands now; null once it is deleted. */
@@ -665,7 +778,8 @@ class RecipeEditor(
         // Queued on a fair lock before this returns, so the book receives the changes in the order made — started
         // undispatched, since a dispatcher may run a launch made inside another coroutine of its own after a later one.
         saving.launch(start = CoroutineStart.UNDISPATCHED) {
-            writes.withLock { recipes.save(next) }
+            // A heading still being named is not saved (DOM-022).
+            writes.withLock { recipes.save(next.withNamedGroups()) }
             then()
         }
         return true
@@ -747,15 +861,19 @@ class RecipeEditor(
 }
 
 /**
- * A step ([step]) or an ingredient row deleted from [position], offered for undoing; [before] is the recipe it was
- * deleted from, and [ended] what is done once it is gone for good.
+ * A step, an ingredient row or a group's heading ([kind]) deleted from [position], offered for undoing; [before] is the
+ * recipe it was deleted from, [headings] the indices of the headings that went with a row — its group left empty — and
+ * [ended] what is done once it is gone for good.
  */
 class Removal internal constructor(
-    val step: Boolean,
+    val kind: Kind,
     val position: Int,
     internal val before: Recipe,
+    internal val headings: List<Int> = emptyList(),
     internal val ended: suspend () -> Unit,
-)
+) {
+    enum class Kind { STEP, INGREDIENT, GROUP }
+}
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
 data class PartsMadeWhole(val ingredientPosition: Int, val serial: Long)
@@ -788,6 +906,14 @@ class RowKeys private constructor(private val keys: MutableList<Long>, private v
     fun move(from: Int, to: Int, count: Int) {
         fill(count)
         keys.add(to, keys.removeAt(from))
+    }
+
+    /** The [count] rows now stand in the order [order] gives by their former positions; a row left out of it is gone. */
+    fun arrange(order: List<Int>, count: Int) {
+        fill(count)
+        val was = keys.toList()
+        keys.clear()
+        order.mapTo(keys) { was[it] }
     }
 
     private fun fill(count: Int) {
