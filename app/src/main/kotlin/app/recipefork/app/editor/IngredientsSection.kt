@@ -77,6 +77,7 @@ import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityProblem
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.UnitType
@@ -236,6 +237,15 @@ private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: Interfa
                 row.fieldNameIn(dictionary, language).takeIf { it.isNotBlank() } ?: stringResource(R.string.editor_ingredient_unnamed),
                 style = MaterialTheme.typography.bodyLarge,
             )
+            // How it is prepared, apart from the name and muted, as the card shows it (DOM-023).
+            row.note?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag(IngredientNoteTags.field(position)),
+                )
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 QuantityInput.fieldText(row, language).takeIf { it.isNotEmpty() }?.let {
                     Text(it, style = MaterialTheme.typography.bodyMedium)
@@ -247,9 +257,9 @@ private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: Interfa
 }
 
 /**
- * One row: exactly the ingredient, the quantity and the unit (FLOW-023 (1)) — never a unit type, which follows from
- * the unit (FLOW-023 (7)). Under them, only what the row calls for: the free-text hint under the name (FLOW-022 (2)),
- * the divisibility question of a `piece` (FLOW-022 (5)) and, in the quantity's own supporting text, what the field
+ * One row: the ingredient, how it is prepared (its note, DOM-023), the quantity and the unit (FLOW-023 (1)) — never a
+ * unit type, which follows from the unit (FLOW-023 (7)). Under them, only what the row calls for: the free-text hint
+ * under the name (FLOW-022 (2)), the divisibility question of a `piece` (FLOW-022 (5)) and, in the quantity's own supporting text, what the field
  * accepts when it does not hold what was typed (DOM-017 (6)).
  * Beside the ingredient, its removal and its menu of inserting and moving (FLOW-025).
  */
@@ -277,7 +287,7 @@ private fun IngredientRow(
     // What the name's hint and the quantity's error add under their fields, which the others do not take on.
     val nameUnder = remember { mutableIntStateOf(0) }
     val quantityUnder = remember { mutableIntStateOf(0) }
-    // The keyboard's Next goes name → quantity → unit → the next row's name; the last row's last field says Done.
+    // The keyboard's Next goes name → note → quantity → unit → the next row's name; the last row's last field says Done.
     val chain = remember { RowChain() }
     chain.last = position == count - 1
     chain.measured = row.unitType != UnitType.TASTE_UNMEASURED
@@ -312,6 +322,8 @@ private fun IngredientRow(
                         IngredientNameField(position, row, editor, language, dictionary, mode, chain, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME) { nameUnder.intValue }, nameUnder)
                         if (!under) Row(Modifier.padding(top = 8.dp)) { RowControls(position, count, editor) }
                     }
+                    // How the ingredient is prepared, under its name and apart from it: the name says what it is.
+                    NoteField(position, row, editor, chain)
                     // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
                     val quantity = row.unitType != UnitType.TASTE_UNMEASURED
                     val quantityHeight = heights.of(EvenHeights.Input.QUANTITY) { quantityUnder.intValue }
@@ -528,16 +540,10 @@ private fun IngredientNameField(
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
-                // "To taste" withdraws the quantity: on the last row the name is then its last field.
-                imeAction = if (chain.last && !chain.measured) ImeAction.Done else ImeAction.Next,
+                // The note follows the name on every row.
+                imeAction = ImeAction.Next,
             ),
-            keyboardActions = KeyboardActions(
-                onDone = { focus.clearFocus() },
-                onNext = {
-                    if (chain.measured) chain.quantity.requestFocus()
-                    else chain.openUnit(focus)
-                },
-            ),
+            keyboardActions = KeyboardActions(onNext = { chain.note.requestFocus() }),
             modifier = Modifier
                 .fillMaxWidth()
                 .then(fieldModifier)
@@ -635,6 +641,62 @@ object IngredientNameTags {
     fun entry(position: Int, entryId: Long) = "editor-ingredient-$position-offer-$entryId"
     fun freeText(position: Int) = "editor-ingredient-$position-offer-free-text"
     fun synonym(position: Int, entryId: Long) = "editor-ingredient-$position-offer-$entryId-synonym"
+}
+
+/**
+ * How the row's ingredient is prepared ("finely chopped"), any row's, an entry's or free text's (DOM-023): labelled
+ * apart from the name, whose qualifier says what the ingredient is. What the author types stays in the field as typed
+ * — a space before the next word included — while it reads as the note the row holds, trimmed, blank as none; once
+ * they leave the field, it reads as held. Over [RecipeBounds.MAX_NOTE] characters it is kept in full and marked on
+ * leaving the field, as every limit is (FLOW-028).
+ */
+@Composable
+private fun NoteField(position: Int, row: Ingredient, editor: RecipeEditor, chain: RowChain) {
+    // Kept across the activity being recreated, under the row's key, so it stays the row's own.
+    var typed by rememberSaveable { mutableStateOf<String?>(null) }
+    // The row as the editor holds it now — [row] at the latest; the text in the field stands only while it is what the
+    // row holds.
+    val held = (editor.recipe.value?.ingredients?.getOrNull(position) ?: row).note
+    val shown = typed?.takeIf { Ingredient.noteOf(it) == held } ?: held.orEmpty()
+    val focus = LocalFocusManager.current
+    Column(Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = shown,
+            onValueChange = {
+                typed = it
+                editor.setIngredientNote(position, it)
+            },
+            label = { Text(stringResource(R.string.editor_ingredient_note)) },
+            placeholder = { Text(stringResource(R.string.editor_ingredient_note_example)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                // It goes on after the ingredient's name, as the card shows it: "onion — finely chopped".
+                capitalization = KeyboardCapitalization.None,
+                // "To taste" withdraws the quantity: on the last row the note is then its last typed field.
+                imeAction = if (chain.last && !chain.measured) ImeAction.Done else ImeAction.Next,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { focus.clearFocus() },
+                onNext = {
+                    if (chain.measured) chain.quantity.requestFocus()
+                    else chain.openUnit(focus)
+                },
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(chain.note)
+                .onFocusChanged { if (!it.isFocused) typed = null }
+                .then(leaving { editor.leave(RecipePart.IngredientNote(position)) })
+                .testTag(IngredientNoteTags.field(position)),
+        )
+        BoundMark(editor, RecipePart.IngredientNote(position), IngredientNoteTags.mark(position), gap = 4.dp, Modifier.padding(top = 4.dp))
+    }
+}
+
+/** The test tags of an ingredient row's note (DOM-023). */
+object IngredientNoteTags {
+    fun field(position: Int) = "editor-ingredient-$position-note"
+    fun mark(position: Int) = "editor-ingredient-$position-note-mark"
 }
 
 /**
@@ -768,12 +830,14 @@ private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chai
 }
 
 /**
- * How the keyboard's Next goes through one ingredient row: the name, the quantity where the row has one, then the unit,
- * whose menu opens; a unit picked there goes on to the next row's name. The last row's last keyboard field says Done.
+ * How the keyboard's Next goes through one ingredient row: the name, the note, the quantity where the row has one, then
+ * the unit, whose menu opens; a unit picked there goes on to the next row's name. The last row's last keyboard field
+ * says Done.
  */
 @Stable
 private class RowChain {
     val name = FocusRequester()
+    val note = FocusRequester()
     val quantity = FocusRequester()
 
     /** Whether the row is the list's last. */

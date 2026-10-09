@@ -605,6 +605,7 @@ class RecipeEditor(
         when (part) {
             is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timerName = false)
             is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timerName = true)
+            is RecipePart.IngredientNote -> Left.OfIngredient(ingredientKeys.of(part.position))
             else -> Left.Whole(part)
         },
     )
@@ -631,12 +632,19 @@ class RecipeEditor(
     private fun Left.at(): RecipePart? = when (this) {
         is Left.Whole -> part
         is Left.OfStep -> stepPosition(key)?.let { if (timerName) RecipePart.TimerName(it) else RecipePart.StepText(it) }
+        is Left.OfIngredient -> ingredientPosition(key)?.let { RecipePart.IngredientNote(it) }
     }
 
     private sealed interface Left {
         data class Whole(val part: RecipePart) : Left
         data class OfStep(val key: Long, val timerName: Boolean) : Left
+        /** The note of the ingredient row whose [ingredientKey] is [key], so the mark stays with the row. */
+        data class OfIngredient(val key: Long) : Left
     }
+
+    /** Where the ingredient row whose [ingredientKey] is [key] stands now; null once it is deleted. */
+    private fun ingredientPosition(key: Long): Int? =
+        ingredientKeys.positionOf(key)?.takeIf { it < (current.value?.ingredients?.size ?: 0) }
 
     /** Where the step whose [stepKey] is [key] stands now; null once it is deleted. */
     fun stepPosition(key: Long): Int? = stepKeys.positionOf(key)?.takeIf { it < (current.value?.steps?.size ?: 0) }
@@ -695,6 +703,18 @@ class RecipeEditor(
         val held = qualifier?.trim { it.isWhitespace() || it == ',' }?.ifEmpty { null }
         if (held == row.qualifier) return true
         return editIngredient(position) { it.copy(qualifier = held) }
+    }
+
+    /**
+     * How the row's ingredient is prepared, as the author [typed] it (DOM-023): any row, an entry or free text, takes
+     * one. It is held trimmed, and blank holds none ([Ingredient.noteOf]); it is kept in full however long — the limit
+     * is marked on leaving the field, never refused (FLOW-028). The note the row already holds changes nothing.
+     */
+    fun setIngredientNote(position: Int, typed: String): Boolean {
+        val row = current.value?.ingredients?.getOrNull(position) ?: return false
+        val note = Ingredient.noteOf(typed)
+        if (note == row.note) return editable
+        return editIngredient(position) { it.copy(note = note) }
     }
 
     companion object {

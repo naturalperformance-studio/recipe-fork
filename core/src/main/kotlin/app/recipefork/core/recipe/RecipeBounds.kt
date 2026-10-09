@@ -17,6 +17,9 @@ sealed interface RecipePart {
 
     /** The name the author gave the timer of the step at [position]. */
     data class TimerName(val position: Int) : RecipePart
+
+    /** The note of the ingredient row at [position] (DOM-023). */
+    data class IngredientNote(val position: Int) : RecipePart
 }
 
 /** How a part stands against its bound: short of DOM-006's minimum, or over a limit of DOM-012. */
@@ -58,18 +61,22 @@ object RecipeBounds {
         is RecipePart.StepText -> step(recipe, part.position)?.let { over(MAX_STEP_TEXT, it.text.length) }
         // A timer whose name the author never set has no name limit: its name follows its step (DOM-012).
         is RecipePart.TimerName -> step(recipe, part.position)?.timer?.label?.let { over(MAX_TIMER_NAME, it.length) }
+        is RecipePart.IngredientNote -> ingredient(recipe, part.position)?.note?.let { over(MAX_NOTE, it.length) }
     }
 
     /** Every part of [recipe] outside its bound, in the order the editor shows them; empty when it is within all. */
     fun all(recipe: Recipe): Map<RecipePart, Bound> {
         val positions = recipe.steps.indices
         val parts = listOf(
-            RecipePart.Title, RecipePart.Language, RecipePart.Servings, RecipePart.Ingredients, RecipePart.Steps,
-        ) + positions.flatMap { listOf(RecipePart.StepText(it), RecipePart.TimerName(it)) } + RecipePart.Description
+            RecipePart.Title, RecipePart.Language, RecipePart.Servings, RecipePart.Ingredients,
+        ) + recipe.ingredients.indices.map { RecipePart.IngredientNote(it) } + RecipePart.Steps +
+            positions.flatMap { listOf(RecipePart.StepText(it), RecipePart.TimerName(it)) } + RecipePart.Description
         return parts.mapNotNull { part -> of(recipe, part)?.let { part to it } }.toMap()
     }
 
     private fun over(limit: Int, count: Int): Bound? = if (count > limit) Bound.OverLimit(limit, count) else null
 
     private fun step(recipe: Recipe, position: Int): Step? = recipe.steps.sortedBy { it.position }.getOrNull(position)
+
+    private fun ingredient(recipe: Recipe, position: Int): Ingredient? = recipe.ingredients.sortedBy { it.position }.getOrNull(position)
 }

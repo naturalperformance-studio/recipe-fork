@@ -150,6 +150,9 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     private fun hintHeight(position: Int): Float =
         if (exists(EditorTags.ingredientWarning(position))) bounds(EditorTags.ingredientWarning(position)).height + px(4f) else 0f
 
+    /** What the note's field takes in the row at [position], with the gap above it. */
+    private fun noteHeight(position: Int): Float = bounds(IngredientNoteTags.field(position)).height + px(4f)
+
     /** Every part of the editable row at [position] that is on the screen. */
     private fun parts(position: Int): List<String> = listOf(
         EditorTags.ingredientHandle(position),
@@ -511,7 +514,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     // The block is no taller than it was before its actions became the step's icons: measured at 360 dp and font
     // scale 1.0 on the block as it stood, 144 dp for a row of name, quantity and unit, 284 dp with the divisibility
     // question. The icons stand on the name's line, so they add no line of their own; the free-text hint under a name
-    // is the only thing added since.
+    // and the note's field under it (DOM-023) are the only things added since.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theBlockIsNoTallerThanBefore() = blockIsNoTallerThanBefore()
@@ -524,7 +527,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         open(1f)
         val before = listOf(284f, 144f, 144f, 144f)
         (0 until rows().size).forEach { position ->
-            val height = dp(bounds(EditorTags.ingredient(position)).height - hintHeight(position))
+            val height = dp(bounds(EditorTags.ingredient(position)).height - hintHeight(position) - noteHeight(position))
             assertTrue("row $position is $height dp tall, it was ${before[position]} dp", height <= before[position] + 0.5f)
             val name = bounds(EditorTags.ingredientName(position))
             actions(position).forEach {

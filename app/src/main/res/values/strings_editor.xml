@@ -40,6 +40,9 @@
     <string name="editor_ingredient_unnamed">Unnamed ingredient</string>
     <string name="editor_ingredient_quantity">Quantity</string>
     <string name="editor_ingredient_unit">Unit</string>
+    <!-- How an ingredient is prepared (DOM-023), apart from its name: the qualifier says what it is, the note how to prepare it. -->
+    <string name="editor_ingredient_note">How to prepare</string>
+    <string name="editor_ingredient_note_example">e.g. finely chopped</string>
     <string name="editor_ingredient_unit_action">Choose the unit</string>
     <string name="editor_ingredient_remove_action">Remove ingredient row %1$d</string>
     <string name="editor_ingredient_menu_action">Ingredient row %1$d actions</string>

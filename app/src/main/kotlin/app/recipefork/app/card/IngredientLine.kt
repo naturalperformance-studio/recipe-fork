@@ -21,7 +21,8 @@ import app.recipefork.core.scaling.UnitLabels
  * One ingredient line of the card, as text.
  *
  * [name] is the dictionary entry's label in the interface language or the free-text name, followed by the
- * qualifier; null when the row names nothing the device can show, which the screen words itself. [quantity] is
+ * qualifier; null when the row names nothing the device can show, which the screen words itself. [note] is how the
+ * ingredient is prepared, as the author wrote it — never scaled — shown after the name (DOM-023). [quantity] is
  * what `QuantityText` writes for the row, the unit's label alone where the row holds no quantity the card can
  * compute from, or null where it holds no unit either.
  *
@@ -39,6 +40,8 @@ data class IngredientLine(
     val fixed: Boolean = false,
     /** How the reader may fix this row's amount (SCALE-018), or null where the row offers no fixing. */
     val fixing: FixOffer? = null,
+    /** How the ingredient is prepared (DOM-023), as written at every scale; null for none. */
+    val note: String? = null,
 )
 
 /** What fixing a row offers: the units the amount may be typed in, the author's first, and its divisibility. */
@@ -193,8 +196,10 @@ private fun lineOf(
 ): IngredientLine {
     val computed = quantity?.let { runCatching { QuantityText.of(it, language) }.getOrNull() }
     val name = nameOf(ingredient, entries, language)
-    if (computed == null) return IngredientLine(name, unitOf(ingredient)?.let { UnitLabels.of(it, language) })
-    return IngredientLine(name, computed, derived = quantity.derived, rounding = quantity.rounding)
+    // The note is the author's words, whatever the scale (DOM-023).
+    val note = Ingredient.noteOf(ingredient.note)
+    if (computed == null) return IngredientLine(name, unitOf(ingredient)?.let { UnitLabels.of(it, language) }, note = note)
+    return IngredientLine(name, computed, derived = quantity.derived, rounding = quantity.rounding, note = note)
 }
 
 private fun nameOf(ingredient: Ingredient, entries: Map<Long, IngredientEntryEntity>, language: InterfaceLanguage): String? {
