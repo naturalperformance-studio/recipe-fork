@@ -177,6 +177,33 @@ class RecipeFileCheckTest {
         refused(valid.copy(steps = listOf(Step(0, "Fry", timer = Timer(90.seconds)), valid.steps[1])))
     }
 
+    // DOM-024: a step carries up to five timers; a sixth is refused, and so is the one problem it makes.
+    @Test
+    fun aSixthTimerOnAStepIsRefused() {
+        fun timers(count: Int) = valid.copy(steps = listOf(valid.steps[0].copy(timers = (1..count).map { Timer(it.minutes) }), valid.steps[1]))
+        assertEquals(emptyList(), RecipeFileCheck.problems(timers(5)))
+        refusedFor("more than 5 timers", timers(6))
+        // Each step is counted on its own: five on each of two steps is within the bound.
+        val fiveEach = valid.copy(steps = valid.steps.map { it.copy(timers = (1..5).map { m -> Timer(m.minutes) }) })
+        assertEquals(emptyList(), RecipeFileCheck.problems(fiveEach))
+    }
+
+    // DOM-024, FLOW-027, DOM-012: every timer of a step, not only its first, holds a duration of whole minutes from
+    // 1 minute to 99 h 59 min and a name of at most 60 characters.
+    @Test
+    fun everyTimerOfAStepIsHeldToItsBounds() {
+        fun second(timer: Timer) = valid.copy(steps = listOf(valid.steps[0].copy(timers = listOf(Timer(12.minutes, "Beet"), timer)), valid.steps[1]))
+        assertEquals(emptyList(), RecipeFileCheck.problems(second(Timer(1.minutes, "n".repeat(60)))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(second(Timer((99 * 60 + 59).minutes))))
+        refusedFor("timer 1 out of range", second(Timer(0.minutes)))
+        refusedFor("timer 1 out of range", second(Timer((100 * 60).minutes)))
+        refusedFor("timer 1 out of range", second(Timer(90.seconds)))
+        refusedFor("timer 1 name is over 60", second(Timer(5.minutes, "n".repeat(61))))
+        // The fifth timer, the last a step may carry, is checked as well.
+        val fifth = valid.copy(steps = listOf(valid.steps[0].copy(timers = List(4) { Timer(1.minutes) } + Timer(5.minutes, "n".repeat(61))), valid.steps[1]))
+        refusedFor("timer 4 name is over 60", fifth)
+    }
+
     // MEDIA-001 and the ADR: one photograph as cover, one item per step held, each in an entry of its own under media/.
     @Test
     fun theMediaItNames() {
@@ -204,10 +231,11 @@ class RecipeFileCheckTest {
     // FLOW-064 (5): a document from a later version is told apart from a damaged one.
     @Test
     fun aLaterFormatIsToldApart() {
-        val later = RecipeFile.encode(valid).replace("\"format_version\": 2", "\"format_version\": 3")
+        val later = RecipeFile.encode(valid).replace("\"format_version\": 3", "\"format_version\": 4")
+        assertTrue("\"format_version\": 4" in later)
         val thrown = runCatching { RecipeFile.decode(later) }.exceptionOrNull()
         assertTrue(thrown is LaterRecipeFile, "$thrown")
-        assertEquals(3, thrown.formatVersion)
+        assertEquals(4, thrown.formatVersion)
         val damaged = runCatching { RecipeFile.decode("{") }.exceptionOrNull()
         assertTrue(damaged is UnreadableRecipeFile && damaged !is LaterRecipeFile)
         val huge = RecipeFile.encode(valid).replace("\"3/2\"", "\"${"9".repeat(100_000)}/2\"")

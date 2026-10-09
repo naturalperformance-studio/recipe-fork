@@ -71,12 +71,57 @@ data class IngredientReference(
     val share: IngredientShare? = null,
 )
 
+/**
+ * A step of a recipe: its text, the references within it and its timers (DOM-024) — from none to
+ * [RecipeBounds.MAX_TIMERS], in the order the author added them, each with its own duration and name.
+ *
+ * A step may hold more timers than the bound while it is read from a file; [RecipeFileCheck][app.recipefork.core.file.RecipeFileCheck]
+ * refuses such a file. The editor adds a timer through [withTimer], which refuses a sixth.
+ */
 data class Step(
     val position: Int,
     val text: String,
     val ingredientReferences: List<IngredientReference> = emptyList(),
-    val timer: Timer? = null,
-)
+    val timers: List<Timer> = emptyList(),
+) {
+    /**
+     * Bridge from the one-timer step (DOM-013, retired): the step with [timer] as its only timer, or none. For code
+     * written before DOM-024 — the editor, the card and the timer runtime — until they read [timers].
+     */
+    constructor(
+        position: Int,
+        text: String,
+        ingredientReferences: List<IngredientReference> = emptyList(),
+        timer: Timer?,
+    ) : this(position, text, ingredientReferences, listOfNotNull(timer))
+
+    /**
+     * Bridge from the one-timer step (DOM-013, retired): the step's first timer, null for none. For code written
+     * before DOM-024 — the editor, the card and the timer runtime — until they read [timers].
+     */
+    val timer: Timer? get() = timers.firstOrNull()
+
+    /**
+     * Bridge from the one-timer step (DOM-013, retired): this step with [timer] as its only timer, or none — every
+     * other timer it held is dropped. For code written before DOM-024 until it edits [timers].
+     */
+    fun copy(
+        position: Int = this.position,
+        text: String = this.text,
+        ingredientReferences: List<IngredientReference> = this.ingredientReferences,
+        timer: Timer?,
+    ): Step = Step(position, text, ingredientReferences, listOfNotNull(timer))
+
+    /** Whether the step holds fewer timers than [RecipeBounds.MAX_TIMERS], so that one more may be added. */
+    val canAddTimer: Boolean get() = timers.size < RecipeBounds.MAX_TIMERS
+
+    /** This step with [timer] added after its others; null, refused, where it already holds [RecipeBounds.MAX_TIMERS]. */
+    fun withTimer(timer: Timer): Step? = if (canAddTimer) copy(timers = timers + timer) else null
+
+    /** This step without its timer at [index]; the others keep their order. The step itself where it holds none there. */
+    fun withoutTimer(index: Int): Step =
+        if (index in timers.indices) copy(timers = timers.filterIndexed { at, _ -> at != index }) else this
+}
 
 /**
  * An ingredient row as the author wrote it.

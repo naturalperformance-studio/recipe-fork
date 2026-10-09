@@ -1,5 +1,5 @@
 {
-    "format_version": 2,
+    "format_version": 3,
     "recipe": {
         "id": "0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10",
         "title": "Борщ «домашний»",
@@ -86,10 +86,12 @@
                         "text_offset": 8
                     }
                 ],
-                "timer": {
-                    "minutes": 12,
-                    "label": "Beet"
-                }
+                "timers": [
+                    {
+                        "minutes": 12,
+                        "label": "Beet"
+                    }
+                ]
             },
             {
                 "position": 1,
@@ -108,14 +110,24 @@
                         "text_offset": 0
                     }
                 ],
-                "timer": {
-                    "minutes": 95
-                }
+                "timers": [
+                    {
+                        "minutes": 95
+                    },
+                    {
+                        "minutes": 10,
+                        "label": "Onions"
+                    },
+                    {
+                        "minutes": 3
+                    }
+                ]
             },
             {
                 "position": 2,
                 "text": "Season and serve",
-                "references": []
+                "references": [],
+                "timers": []
             }
         ]
     },

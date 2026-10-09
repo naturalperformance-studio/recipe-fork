@@ -26,6 +26,7 @@ object RecipeFileCheck {
     const val MAX_TITLE = RecipeBounds.MAX_TITLE
     const val MAX_DESCRIPTION = RecipeBounds.MAX_DESCRIPTION
     const val MAX_TIMER_NAME = RecipeBounds.MAX_TIMER_NAME
+    const val MAX_TIMERS = RecipeBounds.MAX_TIMERS
     const val MAX_NOTE = RecipeBounds.MAX_NOTE
     const val MAX_GROUP_NAME = RecipeBounds.MAX_GROUP_NAME
 
@@ -111,11 +112,15 @@ object RecipeFileCheck {
         steps.forEach { step ->
             val at = "step ${step.position}"
             check(step.text.length <= MAX_STEP_TEXT) { "$at is over $MAX_STEP_TEXT characters" }
-            step.timer?.let { timer ->
+            // DOM-024: up to five timers, each within FLOW-027's range and DOM-012's name limit.
+            check(step.timers.size <= MAX_TIMERS) { "$at has more than $MAX_TIMERS timers" }
+            step.timers.forEachIndexed { index, timer ->
                 check(timer.duration.inWholeMinutes in TIMER_MINUTES && timer.duration.inWholeSeconds % 60 == 0L) {
-                    "$at has a timer out of range"
+                    "$at has timer $index out of range"
                 }
-                check(timer.label == null || timer.label.length <= MAX_TIMER_NAME) { "$at's timer name is over $MAX_TIMER_NAME characters" }
+                check(timer.label == null || timer.label.length <= MAX_TIMER_NAME) {
+                    "$at's timer $index name is over $MAX_TIMER_NAME characters"
+                }
             }
             step.ingredientReferences.forEach { reference ->
                 check(reference.ingredientPosition in ingredients.indices) { "$at refers to no ingredient" }

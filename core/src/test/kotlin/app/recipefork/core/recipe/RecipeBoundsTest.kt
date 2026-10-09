@@ -86,6 +86,25 @@ class RecipeBoundsTest {
         assertNull(RecipeBounds.of(atTheLimits, RecipePart.IngredientNote(50)))
     }
 
+    // DOM-024: each timer of a step has its own name bound, told by the step and the timer's place in it.
+    @Test
+    fun eachTimerOfAStepHasItsOwnNameBound() {
+        val step = Step(1, "Boil", timers = listOf(Timer(5.minutes, "n".repeat(60)), Timer(6.minutes), Timer(7.minutes, "n".repeat(62))))
+        val recipe = atTheLimits.copy(steps = listOf(Step(0, "Drain", timer = Timer(5.minutes, "n".repeat(61))), step))
+        assertNull(RecipeBounds.of(recipe, RecipePart.TimerName(1, 0)))
+        assertNull(RecipeBounds.of(recipe, RecipePart.TimerName(1, 1)))
+        assertEquals(Bound.OverLimit(60, 62), RecipeBounds.of(recipe, RecipePart.TimerName(1, 2)))
+        assertNull(RecipeBounds.of(recipe, RecipePart.TimerName(1, 3)))
+        assertEquals(Bound.OverLimit(60, 61), RecipeBounds.of(recipe, RecipePart.TimerName(0, 0)))
+        assertEquals(RecipePart.TimerName(0, 0), RecipePart.TimerName(0))
+        assertEquals(
+            mapOf<RecipePart, Bound>(RecipePart.TimerName(0, 0) to Bound.OverLimit(60, 61), RecipePart.TimerName(1, 2) to Bound.OverLimit(60, 62)),
+            RecipeBounds.all(recipe),
+        )
+        // Listed in the order of the steps, whatever the order they are held in.
+        assertEquals(RecipeBounds.all(recipe).keys.toList(), RecipeBounds.all(recipe.copy(steps = recipe.steps.reversed())).keys.toList())
+    }
+
     @Test
     fun aStepThatIsNotThereHasNoBound() {
         assertNull(RecipeBounds.of(atTheLimits, RecipePart.StepText(50)))
@@ -104,6 +123,7 @@ class RecipeBoundsTest {
                 RecipeFileCheck.MAX_TITLE, RecipeFileCheck.MAX_DESCRIPTION, RecipeFileCheck.MAX_TIMER_NAME,
             ),
         )
+        assertEquals(RecipeBounds.MAX_TIMERS, RecipeFileCheck.MAX_TIMERS)
         assertEquals(listOf(50, 50, 2_000, 120, 2_000, 60), listOf(
             RecipeBounds.MAX_INGREDIENTS, RecipeBounds.MAX_STEPS, RecipeBounds.MAX_STEP_TEXT,
             RecipeBounds.MAX_TITLE, RecipeBounds.MAX_DESCRIPTION, RecipeBounds.MAX_TIMER_NAME,

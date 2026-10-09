@@ -16,6 +16,7 @@ import app.recipefork.app.book.RecipeRows
 import app.recipefork.app.book.RecipeTagEntity
 import app.recipefork.app.book.StepEntity
 import app.recipefork.app.book.StepReferenceEntity
+import app.recipefork.app.book.StepTimerEntity
 import app.recipefork.app.book.TakenRows
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
@@ -207,7 +208,9 @@ open class RecipeRepository(
 
     private companion object {
         /** Every table a recipe's rows live in. */
-        val RECIPE_TABLES = arrayOf("recipe", "ingredient", "ingredient_group", "step", "step_reference", "media", "recipe_tag")
+        val RECIPE_TABLES = arrayOf(
+            "recipe", "ingredient", "ingredient_group", "step", "step_timer", "step_reference", "media", "recipe_tag",
+        )
     }
 }
 
@@ -290,7 +293,10 @@ internal fun Recipe.toRows(): RecipeRows {
                 it.quantity, it.pieceWeight, it.divisible, it.enteredQuantity, it.note,
             )
         },
-        steps = steps.map { StepEntity(id, it.position, it.text, it.timer?.duration?.inWholeMinutes, it.timer?.label) },
+        steps = steps.map { StepEntity(id, it.position, it.text) },
+        timers = steps.flatMap { step ->
+            step.timers.mapIndexed { index, it -> StepTimerEntity(id, step.position, index, it.duration.inWholeMinutes, it.label) }
+        },
         references = steps.flatMap { step ->
             step.ingredientReferences.map {
                 StepReferenceEntity(id, step.position, it.textOffset, it.ingredientPosition, it.share?.amount, it.share?.unit)
@@ -309,6 +315,7 @@ internal fun Recipe.toRows(): RecipeRows {
 
 internal fun RecipeRows.toRecipe(): Recipe {
     val references = references.groupBy { it.stepPosition }
+    val timers = timers.groupBy { it.stepPosition }
     return Recipe(
         id = RecipeId(recipe.recipeId),
         owner = recipe.owner?.let(::AccountId),
@@ -336,7 +343,7 @@ internal fun RecipeRows.toRecipe(): Recipe {
                         val share = reference.share?.let { amount -> reference.shareUnit?.let { IngredientShare(amount, it) } }
                         IngredientReference(reference.ingredientPosition, reference.textOffset, share)
                     },
-                timer = step.timerMinutes?.let { Timer(it.minutes, step.timerLabel) },
+                timers = timers[step.position].orEmpty().sortedBy { it.position }.map { Timer(it.minutes.minutes, it.label) },
             )
         },
         media = media.map {

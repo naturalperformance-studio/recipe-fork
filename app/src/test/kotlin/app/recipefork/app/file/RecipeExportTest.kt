@@ -114,7 +114,7 @@ class RecipeExportTest {
         assertEquals(listOf("recipe.json", "media/"), entries.keys.toList())
         assertEquals(0, entries.getValue("media/").size)
         val json = entries.getValue("recipe.json").toString(Charsets.UTF_8)
-        assertTrue(json, json.contains("\"format_version\": 2"))
+        assertTrue(json, json.contains("\"format_version\": 3"))
     }
 
     // FLOW-063 (3, 5): the document holds the recipe whole; written with no account, it names no author; with no

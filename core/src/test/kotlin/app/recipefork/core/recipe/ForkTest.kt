@@ -237,4 +237,17 @@ class ForkTest {
             assertEquals(noted, fork.ingredients, "byAuthor=$byAuthor")
         }
     }
+
+    // DOM-024: a fork — the author's own or someone else's — carries every timer of every step, in order, each with
+    // its duration and its name or the lack of one.
+    @Test
+    fun aForkCarriesEveryTimerOfAStep() {
+        val timers = listOf(Timer(10.minutes, "Pasta"), Timer(6.minutes), Timer(2.minutes, "Garlic"), Timer(1.minutes), Timer(3.minutes))
+        val parent = parent().let { it.copy(steps = it.steps.map { step -> if (step.position == 1) step.copy(timers = timers) else step }) }
+        listOf(true, false).forEach { byAuthor ->
+            val fork = parent.fork(now, owner = null, byAuthor = byAuthor)
+            assertEquals(timers, fork.steps[1].timers, "byAuthor=$byAuthor")
+            assertEquals(parent.steps.map { it.timers }, fork.steps.map { it.timers }, "byAuthor=$byAuthor")
+        }
+    }
 }
