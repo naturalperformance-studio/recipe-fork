@@ -22,9 +22,9 @@ import kotlinx.coroutines.flow.Flow
     entities = [
         RecipeEntity::class, IngredientEntity::class, StepEntity::class, StepReferenceEntity::class,
         MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class, IngredientGroupEntity::class,
-        StepTimerEntity::class,
+        StepTimerEntity::class, EquipmentEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -86,6 +86,16 @@ abstract class BookDatabase : RoomDatabase() {
                     db.execSQL("alter table step_new rename to step")
                 }
             },
+            // 5 → 6: a recipe lists the equipment it is cooked with; every recipe already in the book lists none.
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "create table if not exists `recipe_equipment` (`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, " +
+                            "`name` TEXT NOT NULL, PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) " +
+                            "REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    )
+                }
+            },
         )
     }
 }
@@ -121,6 +131,8 @@ data class RecipeRows(
     val groups: List<IngredientGroupEntity> = emptyList(),
     /** Its steps' timers, by step and then in order (DOM-024). */
     val timers: List<StepTimerEntity> = emptyList(),
+    /** Its equipment, in order. */
+    val equipment: List<EquipmentEntity> = emptyList(),
 )
 
 /** A recipe taken out of the book ([BookRecipeDao.take]): its rows, and its mark when it was a found one. */
@@ -177,6 +189,7 @@ abstract class BookRecipeDao {
         deleteTags(id)
         deleteGroups(id)
         deleteTimers(id)
+        deleteEquipment(id)
         insertIngredients(rows.ingredients)
         insertSteps(rows.steps)
         insertReferences(rows.references)
@@ -184,11 +197,12 @@ abstract class BookRecipeDao {
         insertTags(rows.tags)
         insertGroups(rows.groups)
         insertTimers(rows.timers)
+        insertEquipment(rows.equipment)
     }
 
     /**
-     * Deletes the recipe and everything it holds — ingredients and their groups, steps and their timers, references,
-     * media and tags — atomically (ST-010).
+     * Deletes the recipe and everything it holds — its equipment, ingredients and their groups, steps and their timers,
+     * references, media and tags — atomically (ST-010).
      * Its parts cascade from its row; they are deleted here as well, so that nothing of it is left whatever the
      * connection's foreign-key setting. Returns whether the book held it.
      */
@@ -201,6 +215,7 @@ abstract class BookRecipeDao {
         deleteTags(recipeId)
         deleteGroups(recipeId)
         deleteTimers(recipeId)
+        deleteEquipment(recipeId)
         return deleteRecipe(recipeId) > 0
     }
 
@@ -316,7 +331,7 @@ abstract class BookRecipeDao {
         val recipe = recipe(recipeId) ?: return null
         return RecipeRows(
             recipe, ingredients(recipeId), steps(recipeId), references(recipeId), media(recipeId), tags(recipeId),
-            groups(recipeId), timers(recipeId),
+            groups(recipeId), timers(recipeId), equipment(recipeId),
         )
     }
 
@@ -344,6 +359,9 @@ abstract class BookRecipeDao {
     @Query("select * from step_timer where recipe_id = :id order by step_position, position")
     protected abstract suspend fun timers(id: String): List<StepTimerEntity>
 
+    @Query("select * from recipe_equipment where recipe_id = :id order by position")
+    protected abstract suspend fun equipment(id: String): List<EquipmentEntity>
+
     @Upsert
     protected abstract suspend fun upsert(recipe: RecipeEntity)
 
@@ -370,6 +388,12 @@ abstract class BookRecipeDao {
 
     @Query("delete from step_timer where recipe_id = :id")
     protected abstract suspend fun deleteTimers(id: String)
+
+    @Query("delete from recipe_equipment where recipe_id = :id")
+    protected abstract suspend fun deleteEquipment(id: String)
+
+    @Insert
+    protected abstract suspend fun insertEquipment(rows: List<EquipmentEntity>)
 
     @Insert
     protected abstract suspend fun insertTimers(rows: List<StepTimerEntity>)

@@ -25,8 +25,11 @@ import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -198,4 +201,58 @@ class BookDatabaseTest {
 
     private fun timerRows(): Int =
         database.openHelper.readableDatabase.query("select count(*) from step_timer").use { it.moveToFirst(); it.getInt(0) }
+
+    // A recipe's equipment is saved and read back in order; saved again with other items, it holds those alone;
+    // deleted, the recipe leaves no item behind.
+    @Test
+    fun theEquipmentSurvivesTheBook() = runBlocking {
+        val recipe = Recipe.create(now, owner = null).copy(
+            title = "Pancakes",
+            equipment = listOf("Frying pan 26 cm", "Whisk", "Ladle"),
+        )
+        repository.save(recipe)
+        val read = repository.get(recipe.id)!!
+        assertEquals(recipe, read)
+        assertEquals(listOf("Frying pan 26 cm", "Whisk", "Ladle"), read.equipment)
+
+        val other = recipe.copy(equipment = listOf("Ladle", "Frying pan 26 cm"))
+        repository.save(other)
+        assertEquals(listOf("Ladle", "Frying pan 26 cm"), repository.get(recipe.id)!!.equipment)
+        assertEquals(2, equipmentRows())
+
+        repository.save(other.copy(equipment = emptyList()))
+        assertEquals(emptyList<String>(), repository.get(recipe.id)!!.equipment)
+        assertEquals(0, equipmentRows())
+
+        repository.save(recipe)
+        assertEquals(3, equipmentRows())
+        assertTrue(repository.delete(recipe.id))
+        assertEquals(0, equipmentRows())
+        repository.save(recipe.copy(equipment = emptyList()))
+        assertEquals(emptyList<String>(), repository.get(recipe.id)!!.equipment)
+    }
+
+    // A screen showing a recipe sees a change of its equipment alone: the equipment's table is one of the recipe's.
+    @Test
+    fun aChangeOfTheEquipmentAloneReachesWhatShowsTheRecipe() = runBlocking {
+        val recipe = Recipe.create(now, owner = null).copy(title = "Pancakes", equipment = listOf("Whisk"))
+        repository.save(recipe)
+        val seen = Channel<Recipe?>(Channel.UNLIMITED)
+        val showing = launch { repository.observe(recipe.id).collect { seen.send(it) } }
+        try {
+            assertEquals(recipe, withTimeout(10_000) { seen.receive() })
+            // Written past the repository, to the equipment's table alone.
+            database.openHelper.writableDatabase.execSQL(
+                "insert into recipe_equipment (recipe_id, position, name) values (?, 1, 'Ladle')",
+                arrayOf(recipe.id.value),
+            )
+            database.invalidationTracker.refreshAsync()
+            assertEquals(listOf("Whisk", "Ladle"), withTimeout(10_000) { seen.receive() }?.equipment)
+        } finally {
+            showing.cancel()
+        }
+    }
+
+    private fun equipmentRows(): Int =
+        database.openHelper.readableDatabase.query("select count(*) from recipe_equipment").use { it.moveToFirst(); it.getInt(0) }
 }

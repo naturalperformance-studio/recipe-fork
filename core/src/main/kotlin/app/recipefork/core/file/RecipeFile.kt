@@ -36,12 +36,16 @@ object RecipeFile {
     /**
      * The format this application writes, and the latest it reads. Format 2 added ingredient groups and notes
      * (DOM-022, DOM-023); a document of format 1 reads as one with neither. Format 3 gives a step a list of `timers`
-     * (DOM-024) where formats 1 and 2 gave it at most one `timer`, which reads as a step with that one timer.
+     * (DOM-024) where formats 1 and 2 gave it at most one `timer`, which reads as a step with that one timer. Format 4
+     * adds the recipe's `equipment`; a document of formats 1 to 3 reads as one with none.
      */
-    const val FORMAT_VERSION = 3
+    const val FORMAT_VERSION = 4
 
     /** The last format that wrote a step's one `timer` rather than its list of `timers`. */
     private const val LAST_ONE_TIMER_FORMAT = 2
+
+    /** The last format that wrote no `equipment`. */
+    private const val LAST_FORMAT_WITHOUT_EQUIPMENT = 3
     const val EXTENSION = "recipefork"
     const val MIME_TYPE = "application/vnd.recipefork.recipe+zip"
     /** The document's entry in the archive. */
@@ -68,7 +72,10 @@ object RecipeFile {
         if (version > FORMAT_VERSION) throw LaterRecipeFile(version)
         if (version < 1) throw UnreadableRecipeFile("format $version does not exist")
         return try {
-            json.decodeFromString(RecipeDocument.serializer(), text).also { it.checkTimerShape() }.toContent()
+            json.decodeFromString(RecipeDocument.serializer(), text)
+                .also { it.checkTimerShape() }
+                .also { it.checkEquipmentShape() }
+                .toContent()
         } catch (e: UnreadableRecipeFile) {
             throw e
         } catch (e: IllegalArgumentException) {
@@ -88,6 +95,7 @@ object RecipeFile {
             language = language?.let(::languageName),
             tags = tags.sorted(),
             servings = servings,
+            equipment = equipment,
             ingredients = ingredients.map { it.toDocument() },
             ingredientGroups = ingredientGroups.map { DocumentGroup(it.name, it.firstPosition) },
             steps = steps.map { it.toDocument() },
@@ -136,6 +144,13 @@ object RecipeFile {
         }
     }
 
+    /** A format before 4 wrote no equipment: a document of it that holds some is no document of its format. */
+    private fun RecipeDocument.checkEquipmentShape() {
+        if (formatVersion <= LAST_FORMAT_WITHOUT_EQUIPMENT && recipe.equipment.isNotEmpty()) {
+            throw UnreadableRecipeFile("format $formatVersion holds equipment, which it does not write")
+        }
+    }
+
     private fun RecipeDocument.toContent() = RecipeFileContent(
         id = RecipeId(recipe.id),
         title = recipe.title,
@@ -143,6 +158,8 @@ object RecipeFile {
         tags = recipe.tags.toSet(),
         language = recipe.language?.let(::languageOf),
         servings = recipe.servings,
+        // Read as written: an item a file holds blank, untrimmed or too long is the check's to refuse.
+        equipment = recipe.equipment,
         ingredients = recipe.ingredients.map { it.toIngredient() },
         ingredientGroups = recipe.ingredientGroups.map { IngredientGroup(it.name, it.firstIngredient) },
         steps = recipe.steps.map { it.toStep() },

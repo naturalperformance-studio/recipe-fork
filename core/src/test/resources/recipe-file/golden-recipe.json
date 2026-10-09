@@ -1,5 +1,5 @@
 {
-    "format_version": 3,
+    "format_version": 4,
     "recipe": {
         "id": "0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10",
         "title": "Борщ «домашний»",
@@ -10,6 +10,11 @@
             12
         ],
         "servings": 4,
+        "equipment": [
+            "Pot 5 l",
+            "Frying pan 26 cm",
+            "Grater"
+        ],
         "ingredients": [
             {
                 "position": 0,

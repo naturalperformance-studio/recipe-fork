@@ -28,6 +28,8 @@ internal data class DocumentRecipe(
     val language: String? = null,
     val tags: List<Long>,
     val servings: Int? = null,
+    /** What the recipe is cooked with, in order; added in format 4, absent from formats 1 to 3. */
+    val equipment: List<String> = emptyList(),
     val ingredients: List<DocumentIngredient>,
     /** The headings of the ingredient list, in order; added in format 2, absent from format 1. */
     @SerialName("ingredient_groups") val ingredientGroups: List<DocumentGroup> = emptyList(),
