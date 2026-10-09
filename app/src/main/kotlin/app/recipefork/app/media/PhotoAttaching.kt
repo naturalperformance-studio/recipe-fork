@@ -31,6 +31,9 @@ import kotlinx.coroutines.withContext
  * item offered wins: a photograph offered stops a clip still being converted there. What is prepared waits for
  * [ready] before it is placed, and is not placed if it says no. A clip the place does not take — its step deleted
  * meanwhile, its recipe frozen or gone — is not kept, and the author is told so.
+ *
+ * A place that takes clips may take animations too (scenario 3): given [animations], an animated GIF or WebP offered
+ * to [attachAnimation] is turned into a silent clip by it and attached exactly as a clip is.
  */
 class PhotoAttaching(
     private val store: PhotoStore,
@@ -42,6 +45,7 @@ class PhotoAttaching(
     private val clips: ClipStore? = null,
     private val setClip: (mediaId: String, written: suspend (replaced: String?) -> Unit) -> Boolean = { _, _ -> false },
     private val ready: suspend () -> Boolean = { true },
+    private val animations: ClipStore? = null,
 ) {
     /** One thing to tell the author: each told is a statement of its own, even where its [notice] is the last one's. */
     class Statement(val notice: PhotoNotice)
@@ -94,11 +98,20 @@ class PhotoAttaching(
      * Converts the clip [offer] and attaches it in place of whatever item the place held; a clip still being converted
      * here is stopped first, as only one item is held. A place that takes no clips refuses it as unreadable.
      */
-    fun attachClip(offer: ClipOffer): Job {
+    fun attachClip(offer: ClipOffer): Job = attachClip(offer, clips)
+
+    /**
+     * Turns the animation [offer] into a silent clip and attaches it as [attachClip] does a clip — refused as a clip
+     * is, and stopped as one by a later offer or [cancelClip]. A place that takes no animations refuses it as
+     * unreadable.
+     */
+    fun attachAnimation(offer: ClipOffer): Job = attachClip(offer, animations)
+
+    private fun attachClip(offer: ClipOffer, converting: ClipStore?): Job {
         clipJob?.cancel()
         val job = work(clip = true) {
             val outcome = try {
-                clips?.add(book, offer.source) ?: ClipOutcome.Refused(ClipRefusal.UNREADABLE)
+                converting?.add(book, offer.source) ?: ClipOutcome.Refused(ClipRefusal.UNREADABLE)
             } finally {
                 // The capture's own file is deleted however the conversion ends, cancelled included.
                 withContext(NonCancellable + Dispatchers.IO) { offer.release() }

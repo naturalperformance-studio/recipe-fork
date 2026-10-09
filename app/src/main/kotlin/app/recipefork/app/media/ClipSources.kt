@@ -150,7 +150,7 @@ fun rememberClipSources(key: String, onClip: (ClipOffer) -> Unit, onUnavailable:
  * would end it. Gives back what lets it go once the clip is done with. Where it cannot be kept, a reading cut short
  * is told as a clip that could not be read (MEDIA-008).
  */
-private fun holdReading(context: Context, uri: Uri): () -> Unit {
+internal fun holdReading(context: Context, uri: Uri): () -> Unit {
     val resolver = context.applicationContext.contentResolver
     val held = try {
         resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)

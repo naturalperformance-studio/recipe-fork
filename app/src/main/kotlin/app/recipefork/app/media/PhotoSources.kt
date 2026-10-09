@@ -17,6 +17,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -32,6 +33,10 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * A picture the author handed over — taken with the camera or picked from the gallery — to be read by [open] as many
@@ -108,13 +113,27 @@ private fun shotToCrop(file: File) = PhotoToCrop({ file.inputStream() }, orienta
  * receives every picture handed over from it; a camera, a picker or a crop closed hands over nothing. The shot's file
  * is deleted once its crop is done with — the cut read, cancelled or retaken — or as soon as the camera comes back
  * without one.
+ *
+ * A place that takes animations — a step, never the cover — is given [animations]: a picture picked from the gallery
+ * that it reads as an animated GIF or WebP skips the crop and is handed to [onAnimation] as a clip (scenario 3); the
+ * reading runs off the main thread, and tells a JPEG or a PNG still from its first bytes. A shot from the camera is
+ * never one.
  */
 @Composable
-fun rememberPhotoSources(key: String, onPhoto: (PhotoOffer) -> Unit, onUnavailable: () -> Unit): PhotoSources {
+fun rememberPhotoSources(
+    key: String,
+    onPhoto: (PhotoOffer) -> Unit,
+    onUnavailable: () -> Unit,
+    animations: AnimatedImages? = null,
+    onAnimation: (ClipOffer) -> Unit = {},
+): PhotoSources {
     val context = LocalContext.current
     val resolver = context.applicationContext.contentResolver
     val deliver by rememberUpdatedState(onPhoto)
     val unavailable by rememberUpdatedState(onUnavailable)
+    val animated by rememberUpdatedState(animations)
+    val deliverAnimation by rememberUpdatedState(onAnimation)
+    val reading = rememberCoroutineScope()
     val stage = rememberSaveable(key) { mutableStateOf(SourceStage.CLOSED) }
     // The file the camera application writes the current shot into, kept across the process being ended meanwhile.
     val shotPath = rememberSaveable(key) { mutableStateOf<String?>(null) }
@@ -135,12 +154,31 @@ fun rememberPhotoSources(key: String, onPhoto: (PhotoOffer) -> Unit, onUnavailab
             dropShot()
         }
     }
+    fun crop(uri: Uri) {
+        val open = { resolver.openInputStream(uri) ?: throw FileNotFoundException(uri.toString()) }
+        PendingCrops[key] = PhotoToCrop(open, orientation = null, retake = false)
+        stage.value = SourceStage.CROPPING
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            dropShot()
-            val open = { resolver.openInputStream(uri) ?: throw FileNotFoundException(uri.toString()) }
-            PendingCrops[key] = PhotoToCrop(open, orientation = null, retake = false)
-            stage.value = SourceStage.CROPPING
+        if (uri == null) return@rememberLauncherForActivityResult
+        dropShot()
+        val images = animated
+        if (images == null) {
+            crop(uri)
+            return@rememberLauncherForActivityResult
+        }
+        val done = PhotoWork.begin()
+        // Started whatever happens to the scope meanwhile, so that what it counts in is always counted out.
+        reading.launch(start = CoroutineStart.ATOMIC) {
+            try {
+                if (withContext(Dispatchers.IO) { images.isAnimatedOrStill(uri) }) {
+                    deliverAnimation(ClipOffer(uri, release = holdReading(context, uri)))
+                } else {
+                    crop(uri)
+                }
+            } finally {
+                done()
+            }
         }
     }
     fun shoot() {
@@ -215,6 +253,9 @@ fun rememberPhotoSources(key: String, onPhoto: (PhotoOffer) -> Unit, onUnavailab
     }
     return remember(context, camera, picker, stage, shotPath) { PhotoSources(take = ::shoot, choose = ::pick) }
 }
+
+/** Whether [source] is an animation; one that cannot be read as any is a still picture, for the crop to judge. */
+private fun AnimatedImages.isAnimatedOrStill(source: Uri): Boolean = runCatching { isAnimated(source) }.getOrDefault(false)
 
 /** Why no photo can be taken here — [text] says — with the gallery a tap away. */
 @Composable

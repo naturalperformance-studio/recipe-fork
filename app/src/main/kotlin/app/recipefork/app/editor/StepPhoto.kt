@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.book.BookName
+import app.recipefork.app.media.AnimatedImages
 import app.recipefork.app.media.ClipSources
 import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.PhotoAttaching
@@ -44,11 +45,24 @@ internal class StepPhotos(
     val clips: ClipStore? = null,
     /** Where each step's work is held past the activity being recreated; none, and it is the screen's alone. */
     val work: StepMediaWork? = null,
+    /** Tells an animated GIF or WebP picked for a step (scenario 3); none, and every picture picked is cropped. */
+    val animated: AnimatedImages? = null,
+    /** Turns a step's animation into a silent clip and keeps it, as [clips] does a clip. */
+    val animations: ClipStore? = null,
 )
 
 @Composable
-internal fun rememberStepPhotos(store: PhotoStore, book: BookName, saving: CoroutineScope, clips: ClipStore? = null, work: StepMediaWork? = null): StepPhotos =
-    remember(store, book, saving, clips, work) { StepPhotos(store, book, saving, clips, work) }
+internal fun rememberStepPhotos(
+    store: PhotoStore,
+    book: BookName,
+    saving: CoroutineScope,
+    clips: ClipStore? = null,
+    work: StepMediaWork? = null,
+    animated: AnimatedImages? = null,
+    animations: ClipStore? = null,
+): StepPhotos = remember(store, book, saving, clips, work, animated, animations) {
+    StepPhotos(store, book, saving, clips, work, animated, animations)
+}
 
 /**
  * Attaches a photograph or a clip to the step whose key is [key], wherever that step stands once it is ready; a step
@@ -75,6 +89,7 @@ internal fun StepPhotoAttaching(
         clips = photos.clips,
         setClip = { mediaId, written -> place(MediaKind.VIDEO, mediaId, written) },
         ready = ready,
+        animations = photos.animations,
     )
 }
 
@@ -92,6 +107,9 @@ internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photo
         key = STEP_KEY + key,
         onPhoto = { attaching.attach(it) },
         onUnavailable = { attaching.tell(PhotoNotice.UNAVAILABLE) },
+        // An animated GIF or WebP picked from the gallery is attached as a silent clip, with no crop (scenario 3).
+        animations = photos.animated,
+        onAnimation = { attaching.attachAnimation(it) },
     )
     val clipSources = rememberClipSources(
         key = STEP_CLIP_KEY + key,

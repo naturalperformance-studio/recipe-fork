@@ -114,6 +114,8 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
     dragHandleSide = container.dragHandleSide,
     mode = container.mode,
     clipStore = container::clipStore,
+    animatedImages = { container.animatedImages },
+    animationStore = container::animationStore,
 )
 
 /**
@@ -158,6 +160,8 @@ fun EditorScreen(
     val context = LocalContext.current
     val store = remember(context, environment) { environment.photoStore(context.applicationContext.filesDir) }
     val clips = remember(context, environment) { environment.clipStore(context.applicationContext) }
+    val animated = remember(context, environment) { environment.animatedImages(context.applicationContext) }
+    val animations = remember(context, environment) { environment.animationStore(context.applicationContext) }
     remember(mediaWork, editor) { mediaWork.show(editor) }
     val activity = LocalActivity.current
     DisposableEffect(mediaWork) {
@@ -225,7 +229,7 @@ fun EditorScreen(
                     ServingCount(shown, editor, servings, rows, headings)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
-                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork)
+                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork, animated, animations)
                     }
                     Description(shown, editor)
                 }
