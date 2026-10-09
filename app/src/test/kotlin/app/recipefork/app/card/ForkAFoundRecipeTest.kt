@@ -161,8 +161,6 @@ class ForkAFoundRecipeTest {
         }
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.actions(id.value)), PATIENCE_MS)
         compose.chooseEntryAction(id.value, LibraryTags.remove(id.value))
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.REMOVE_STATEMENT), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.REMOVE_CONFIRM).performClick()
         compose.waitUntil(PATIENCE_MS) { stored(id) == null }
         compose.runOnIdle { session.openCard(forkId.value, LibraryView.OWN) }
         compose.awaitCard()

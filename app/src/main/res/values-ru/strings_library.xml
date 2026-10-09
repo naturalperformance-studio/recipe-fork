@@ -26,18 +26,10 @@
     <string name="library_entry_actions">Действия с рецептом «%1$s»</string>
     <string name="library_entry_actions_action">Показать действия с рецептом</string>
     <string name="library_entry_delete">Удалить</string>
-    <string name="library_delete_title">Удалить «%1$s»?</string>
-    <string name="library_delete_statement">Рецепт удалится сразу, вместе с фотографиями и видео, и вернуть его будет нельзя.</string>
-    <string name="library_delete_confirm">Удалить</string>
-    <string name="library_delete_decline">Отмена</string>
     <string name="library_marked_empty">Отмеченных рецептов пока нет</string>
     <string name="library_marked_empty_sentence">Здесь хранятся рецепты, которые вы отметили.</string>
     <string name="library_marked_empty_sentence_serverless">Здесь хранятся рецепты, импортированные из файлов.</string>
     <string name="library_entry_remove">Убрать</string>
-    <string name="library_remove_title">Убрать «%1$s» из книги?</string>
-    <string name="library_remove_statement">Рецепт уйдёт с этого устройства вместе со всем, что книга о нём хранит.</string>
-    <string name="library_remove_confirm">Убрать</string>
-    <string name="library_remove_decline">Отмена</string>
     <string name="library_usual_servings">Обычно готовлю на…</string>
     <string name="library_usual_not_set">не задано</string>
     <string name="library_usual_count">Порций: %1$s</string>
@@ -91,4 +83,8 @@
     <string name="library_filter_language_none_chip">Язык не указан</string>
     <string name="library_nothing_matches">Ни один рецепт не подходит под фильтры</string>
     <string name="library_search_and_filters_clear">Очистить поиск и фильтры</string>
+    <string name="library_recipe_deleted">Рецепт удалён</string>
+    <string name="library_recipe_removed">Рецепт убран</string>
+    <string name="library_undo_failed">Не удалось вернуть рецепт</string>
+    <string name="library_undo">Вернуть</string>
 </resources>

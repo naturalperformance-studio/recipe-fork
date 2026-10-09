@@ -47,7 +47,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -209,24 +208,19 @@ class FoundRecipesTest {
         assertEquals(listOf(id.value), runBlocking { recipes.marked().first() }.map { it.recipeId })
     }
 
-    // FLOW-064 (6): removed from its entry, after a statement, it leaves the book with its content; declining keeps it.
+    // FLOW-064 (6), FLOW-053: removed from its entry, asking nothing, it leaves the book with its content at once, and
+    // the book says so with Undo.
     @Test
     fun aFoundRecipeIsRemovedFromItsEntry() {
         val id = found()
         show(Mode.Serverless)
         awaitEntry(id)
         compose.chooseEntryAction(id.value, LibraryTags.remove(id.value))
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.REMOVE_STATEMENT), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.REMOVE_DECLINE).performClick()
-        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.REMOVE_STATEMENT), PATIENCE_MS)
-        assertNotNull(runBlocking { recipes.get(id) })
-        compose.chooseEntryAction(id.value, LibraryTags.remove(id.value))
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.REMOVE_STATEMENT), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.REMOVE_CONFIRM).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.entry(id.value)), PATIENCE_MS)
         compose.waitUntil(PATIENCE_MS) { runBlocking { recipes.get(id) } == null }
         assertEquals(emptyList<Any>(), runBlocking { recipes.marked().first() })
         assertEquals(0, runBlocking { recipes.count() })
+        compose.awaitRemovalNotice("Recipe removed", "Undo")
     }
 
     // A11Y-003, A11Y-005: the entry, its removal and the import are large enough and say what they do.

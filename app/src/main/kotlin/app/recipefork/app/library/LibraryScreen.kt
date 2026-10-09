@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -24,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -36,14 +38,19 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -119,7 +126,6 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.withLock
 
 /** How many own recipes are shown at a time, and more shown near the end (FLOW-041). */
 const val OWN_PAGE = 30
@@ -180,10 +186,11 @@ fun LibraryScreen(
     val shown = VIEWS[pager.currentPage]
     val snackbars = remember { SnackbarHostState() }
     val notice = rememberFileNotice(session, snackbars)
+    RemovalNotice(session, snackbars)
     val work by session.work.collectAsState()
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection),
-        snackbarHost = { SnackbarHost(snackbars, Modifier.testTag(LibraryTags.SNACKBAR)) },
+        snackbarHost = { LibrarySnackbarHost(snackbars) },
         topBar = {
             Column {
                 // The book's title, with the settings action beside it; it scrolls away as the list goes down
@@ -286,6 +293,59 @@ private fun rememberFileNotice(session: LibrarySession, snackbars: SnackbarHostS
         if (result == SnackbarResult.ActionPerformed) session.openCard(notice.recipeId, session.view.value)
     }
     return notice?.recipeId
+}
+
+/**
+ * The book's snackbar: one notice at a time, above the keyboard where it is open, gone by itself after a while or
+ * swiped away either way, read by the screen reader as it comes (the host's live region).
+ */
+@Composable
+private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
+    SnackbarHost(snackbars, Modifier.imePadding().testTag(LibraryTags.SNACKBAR)) { data ->
+        val swipe = rememberSwipeToDismissBoxState()
+        // Only the snackbar itself is swiped: the margin around it lets a tap through to the list beneath.
+        SwipeToDismissBox(swipe, backgroundContent = {}, modifier = Modifier.padding(12.dp), onDismiss = { data.dismiss() }) {
+            val label = data.visuals.actionLabel
+            Snackbar(
+                modifier = Modifier.testTag(LibraryTags.NOTICE),
+                action = label?.let {
+                    {
+                        TextButton(
+                            onClick = data::performAction,
+                            colors = ButtonDefaults.textButtonColors(contentColor = SnackbarDefaults.actionColor),
+                        ) { Text(it) }
+                    }
+                },
+            ) { Text(data.visuals.message) }
+        }
+    }
+}
+
+/**
+ * Says that a recipe left the book — "Recipe deleted", or "Recipe removed" for a found one — with Undo, for as long as
+ * the session offers to undo it (FLOW-053). Undo puts it back; the notice gone without it — by itself, swiped away,
+ * replaced by another notice, or the book left — makes the leaving final. A notice cut short by the screen turning is
+ * said again. An Undo the book could not take back is said to have failed.
+ */
+@Composable
+private fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState) {
+    val removal by session.removal.collectAsState()
+    val deleted = stringResource(R.string.library_recipe_deleted)
+    val removed = stringResource(R.string.library_recipe_removed)
+    val undo = stringResource(R.string.library_undo)
+    LaunchedEffect(removal) {
+        val shown = removal ?: return@LaunchedEffect
+        val result = snackbars.showSnackbar(if (shown.found) removed else deleted, actionLabel = undo, duration = SnackbarDuration.Long)
+        if (result == SnackbarResult.ActionPerformed) session.undoRemoval(shown) else session.endRemoval(shown)
+    }
+    // An Undo the book could not take back is said, once.
+    val failed by session.undoFailed.collectAsState()
+    val notBack = stringResource(R.string.library_undo_failed)
+    LaunchedEffect(failed) {
+        val said = failed ?: return@LaunchedEffect
+        snackbars.showSnackbar(notBack, duration = SnackbarDuration.Long)
+        session.undoFailureSaid(said)
+    }
 }
 
 /** Brings [list] to the entry of [recipeId] once, when [rows] list it; nothing when they do not. */
@@ -431,18 +491,6 @@ private fun OwnList(
                 if (size == limit && last >= size - OWN_PAGE / 3) limit += OWN_PAGE
             }
     }
-    // The recipe whose deletion is being asked about, while it is (FLOW-053 (2)).
-    var deleting by rememberSaveable { mutableStateOf<String?>(null) }
-    found?.firstOrNull { it.recipeId == deleting }?.let { row ->
-        DeleteStatement(
-            row.title,
-            onConfirm = {
-                deleting = null
-                deleteRecipe(recipes, timers, marks, RecipeId(row.recipeId))
-            },
-            onDecline = { deleting = null },
-        )
-    }
     val export = rememberExport(recipes, session)
     val shown = listed
     // A book that lists recipes still offers to write one (FLOW-042 (5)), from the view's action.
@@ -482,7 +530,8 @@ private fun OwnList(
                         tagsOf(row.recipeId),
                         Modifier.animateItem(),
                         onOpen = { session.openCard(row.recipeId, LibraryView.OWN) },
-                        onDelete = { deleting = row.recipeId },
+                        // Deleted at once, asking nothing; the book says so with Undo (FLOW-053).
+                        onDelete = { deleteRecipe(recipes, timers, marks, RecipeId(row.recipeId), session::removed) },
                         onExport = { export(row.recipeId, row.title) },
                     )
                 }
@@ -763,22 +812,6 @@ private fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): Ent
 /** The states in which an own recipe may be deleted by its owner (ST-010); in any other it may not. */
 val DELETABLE = setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECTED)
 
-/**
- * Deletes [id] from the active book, on the device alone (FLOW-053 (6, 8)), and cancels its timers, so that none of
- * them announces itself or rings afterwards, and drops its done [marks] (FLOW-068). It runs where the timers' work
- * runs, which outlives the screen, one turn among the timers' starts and cancels, so that it finishes however soon the
- * view is left.
- */
-fun deleteRecipe(recipes: RecipeRepository, timers: CardTimers, marks: DoneMarks, id: RecipeId) {
-    timers.scope.launch {
-        timers.turns.withLock {
-            recipes.delete(id)
-            timers.store.cancelRecipe(timers.book(), id)
-            marks.clear(timers.book(), id)
-        }
-    }
-}
-
 /** The import of recipe files, writing found recipes' media under the application's own files. */
 @Composable
 fun rememberRecipeImport(recipes: RecipeRepository): RecipeImport {
@@ -837,17 +870,6 @@ private fun MarkedList(
     ScrollToTopOnChange(listed?.params, listState)
     val marked = listed?.rows
     RevealOnNotice(reveal, marked?.map { it.recipeId }, listState)
-    var removing by rememberSaveable { mutableStateOf<String?>(null) }
-    marked?.firstOrNull { it.recipeId == removing }?.let { row ->
-        RemoveStatement(
-            row.title,
-            onConfirm = {
-                removing = null
-                removeFound(files, timers, marks, RecipeId(row.recipeId))
-            },
-            onDecline = { removing = null },
-        )
-    }
     val export = rememberExport(recipes, session)
     val shown = listed
     val empty = shown != null && shown.viewIsEmpty && !shown.narrowed
@@ -903,7 +925,8 @@ private fun MarkedList(
                         tagsOf(row.recipeId),
                         Modifier.animateItem(),
                         onOpen = { session.openCard(row.recipeId, LibraryView.MARKED) },
-                        onRemove = { removing = row.recipeId },
+                        // Removed at once, asking nothing; the book says so with Undo (FLOW-053).
+                        onRemove = { removeFound(files, timers, marks, RecipeId(row.recipeId), session::removed) },
                         onExport = { export(row.recipeId, row.title) },
                     )
                 }
@@ -982,21 +1005,6 @@ private fun rememberImport(files: RecipeImport, session: LibrarySession): () -> 
 private const val ANY_FILE = "*/*"
 
 /**
- * Removes the found recipe [id] from the active book with its held content and media (FLOW-064 (6)), cancels its
- * timers and drops its done [marks] (FLOW-068), one turn among the timers' starts and cancels, where the timers' work
- * runs, as [deleteRecipe] does.
- */
-fun removeFound(files: RecipeImport, timers: CardTimers, marks: DoneMarks, id: RecipeId) {
-    timers.scope.launch {
-        timers.turns.withLock {
-            files.remove(id)
-            timers.store.cancelRecipe(timers.book(), id)
-            marks.clear(timers.book(), id)
-        }
-    }
-}
-
-/**
  * The marker of FLOW-036: `local` and `private` are both a draft. In [Mode.Serverless] a recipe keeps the last state
  * the device knew (FLOW-062 (5)), worded with nothing of publication, review or a private link.
  */
@@ -1043,9 +1051,8 @@ object LibraryTags {
     /** The progress of a file being imported or exported, and the snackbar that says a recipe a file brought. */
     const val FILE_PROGRESS = "library-file-progress"
     const val SNACKBAR = "library-snackbar"
-    const val REMOVE_STATEMENT = "library-remove-statement"
-    const val REMOVE_CONFIRM = "library-remove-confirm"
-    const val REMOVE_DECLINE = "library-remove-decline"
+    /** The notice the snackbar shows. */
+    const val NOTICE = "library-notice"
     const val OWN_EMPTY = "library-own-empty"
     const val WRITE = "library-write"
     const val NEW = "library-new"
@@ -1090,9 +1097,6 @@ object LibraryTags {
     fun emptyPicture(state: String) = "$state-picture"
     fun emptyHeadline(state: String) = "$state-headline"
     fun emptySentence(state: String) = "$state-sentence"
-    const val DELETE_STATEMENT = "library-delete-statement"
-    const val DELETE_CONFIRM = "library-delete-confirm"
-    const val DELETE_DECLINE = "library-delete-decline"
     fun entry(recipeId: String) = "library-entry-$recipeId"
     /** The ⋮ at the end of an entry's title line, which opens the menu of its actions. */
     fun actions(recipeId: String) = "library-actions-$recipeId"

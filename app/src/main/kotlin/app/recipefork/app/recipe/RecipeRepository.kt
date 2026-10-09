@@ -16,6 +16,7 @@ import app.recipefork.app.book.RecipeRows
 import app.recipefork.app.book.RecipeTagEntity
 import app.recipefork.app.book.StepEntity
 import app.recipefork.app.book.StepReferenceEntity
+import app.recipefork.app.book.TakenRows
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
@@ -126,7 +127,7 @@ open class RecipeRepository(
     suspend fun removeMarked(id: RecipeId, files: java.io.File? = filesDirectory): Boolean {
         val open = book.open.value
         val media = open.database.recipes().removeMarked(id.value) ?: return false
-        release(open, media, files)
+        releaseMedia(open, media, files)
         return true
     }
 
@@ -148,22 +149,21 @@ open class RecipeRepository(
     suspend fun delete(id: RecipeId): Boolean {
         val open = book.open.value
         val media = open.database.recipes().deleteHolding(id.value) ?: return false
-        release(open, media, filesDirectory)
+        releaseMedia(open, media, filesDirectory)
         return true
     }
 
     /**
-     * Deletes, under [files], the files of the media items [media] that a recipe of the book [open] no longer holds:
-     * the one way a recipe's leaving the book takes its photographs with it (MEDIA-012). A file a fork copied is the
-     * fork's own, under its own identity, and stays. Finished even when the caller is cancelled: the rows are gone.
+     * Takes the recipe [id] — an own one, or a found one with its mark — out of the active book with everything it
+     * holds, and leaves the files of its media under [files] on the device (FLOW-053): the recipe leaves the book at
+     * once, and what is returned either puts it back whole ([TakenRecipe.putBack]) or makes its leaving final, deleting
+     * those files ([TakenRecipe.release]). Should neither come — the process ending first — the media sweep deletes
+     * the files no recipe holds ([app.recipefork.app.media.MediaSweep]). Null when the book held no such recipe.
      */
-    private suspend fun release(open: ActiveBook.Open, media: List<String>, files: java.io.File?) {
-        if (files == null || media.isEmpty()) return
-        withContext(NonCancellable) {
-            val held = open.database.recipes().held(media).toSet()
-            val store = PhotoStore(files)
-            media.filterNot { it in held }.forEach { store.delete(open.name, it) }
-        }
+    suspend fun take(id: RecipeId, files: java.io.File? = filesDirectory): TakenRecipe? {
+        val open = book.open.value
+        val taken = open.database.recipes().take(id.value) ?: return null
+        return TakenRecipe(open, taken, files)
     }
 
     /**
@@ -208,6 +208,60 @@ open class RecipeRepository(
     private companion object {
         /** Every table a recipe's rows live in. */
         val RECIPE_TABLES = arrayOf("recipe", "ingredient", "ingredient_group", "step", "step_reference", "media", "recipe_tag")
+    }
+}
+
+/**
+ * A recipe taken out of the book [open] ([RecipeRepository.take]) whose leaving is not yet final: it is put back whole,
+ * or released, once.
+ */
+class TakenRecipe internal constructor(
+    private val open: ActiveBook.Open,
+    private val taken: TakenRows,
+    private val files: java.io.File?,
+) {
+    val id: RecipeId get() = RecipeId(taken.rows.recipe.recipeId)
+
+    /** Whether the book held it as a found recipe, marked, rather than one written in it. */
+    val found: Boolean get() = taken.favourite != null
+
+    /**
+     * Puts the recipe back into the book it was taken from, whole and listed where it was: its content, its media, its
+     * state and, for a found one, its mark. Returns false, putting back nothing, when that book holds one of its
+     * identity again, or refuses any of its rows — a media item another recipe holds now — or cannot be written.
+     */
+    suspend fun putBack(): Boolean = withContext(NonCancellable) {
+        try {
+            open.database.recipes().putBack(taken)
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * The recipe's leaving is final: the files of its media that no recipe of the book holds are deleted (MEDIA-012).
+     * Never fails: a file left behind is the media sweep's to delete.
+     */
+    suspend fun release() {
+        try {
+            releaseMedia(open, taken.rows.media.map { it.mediaId }, files)
+        } catch (e: Exception) {
+            // Left to MediaSweep, which deletes at a book's opening the files no recipe holds.
+        }
+    }
+}
+
+/**
+ * Deletes, under [files], the files of the media items [media] that a recipe of the book [open] no longer holds:
+ * the one way a recipe's leaving the book takes its photographs with it (MEDIA-012). A file a fork copied is the
+ * fork's own, under its own identity, and stays. Finished even when the caller is cancelled: the rows are gone.
+ */
+private suspend fun releaseMedia(open: ActiveBook.Open, media: List<String>, files: java.io.File?) {
+    if (files == null || media.isEmpty()) return
+    withContext(NonCancellable) {
+        val held = open.database.recipes().held(media).toSet()
+        val store = PhotoStore(files)
+        media.filterNot { it in held }.forEach { store.delete(open.name, it) }
     }
 }
 
