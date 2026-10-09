@@ -135,28 +135,31 @@ private fun Lines(
             }
         }
         val column = quantityColumn(list.lines)
-        list.lines.forEachIndexed { i, line ->
-            groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name) }
-            val position = ordered[i].position
-            // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
-            Column {
-                IngredientRow(
-                    line, position, column, cardPlace(CardPlaces.ingredient(position)),
-                    done = marks?.done(MarkedPart.INGREDIENT, position) == true,
-                    onToggle = marks?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
-                ) { onOpen(if (open == position) null else position) }
-                val offer = line.fixing
-                if (offer != null) {
-                    key(position) {
-                        FixAmountUnder(
-                            open = open == position,
-                            offer = offer,
-                            current = fixings.firstOrNull { it.position == position },
-                            language = language,
-                            onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
-                            onRelease = { onRelease(position); onOpen(null) },
-                            onClose = { onOpen(null) },
-                        )
+        // The lines stand one against the next, with no gap between them: each line's own height is its space.
+        Column {
+            list.lines.forEachIndexed { i, line ->
+                groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name) }
+                val position = ordered[i].position
+                // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
+                Column {
+                    IngredientRow(
+                        line, position, column, cardPlace(CardPlaces.ingredient(position)),
+                        done = marks?.done(MarkedPart.INGREDIENT, position) == true,
+                        onToggle = marks?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                    ) { onOpen(if (open == position) null else position) }
+                    val offer = line.fixing
+                    if (offer != null) {
+                        key(position) {
+                            FixAmountUnder(
+                                open = open == position,
+                                offer = offer,
+                                current = fixings.firstOrNull { it.position == position },
+                                language = language,
+                                onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
+                                onRelease = { onRelease(position); onOpen(null) },
+                                onClose = { onOpen(null) },
+                            )
+                        }
                     }
                 }
             }
@@ -164,15 +167,21 @@ private fun Lines(
     }
 }
 
-/** The subheading of the group at [index], over its first line (DOM-022): a heading for the screen reader. */
+/**
+ * The subheading of the group at [index], over its first line (DOM-022): a heading for the screen reader, a modest
+ * [GROUP_GAP] above it and nothing below it but its first line's own space.
+ */
 @Composable
 private fun GroupHeading(index: Int, name: String) {
     Text(
         name,
         style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.fillMaxWidth().padding(top = SECTION_GAP).semantics { heading() }.testTag(IngredientTags.group(index)),
+        modifier = Modifier.fillMaxWidth().padding(top = GROUP_GAP).semantics { heading() }.testTag(IngredientTags.group(index)),
     )
 }
+
+/** The space above a group's subheading, apart from the line before it. */
+private val GROUP_GAP = 12.dp
 
 /** Whether any quantity of the list was computed at a scale other than the authored one: the section says so once. */
 internal val IngredientList.recalculated: Boolean get() = lines.any { it.derived }
@@ -190,6 +199,8 @@ internal object IngredientTags {
     fun rounding(position: Int) = "card-ingredient-$position-rounding"
     /** The name of the line at [position], with its note after it where it carries one. */
     fun name(position: Int) = "card-ingredient-$position-name"
+    /** The quantity of the line at [position], with its arrow where it carries one. */
+    fun quantity(position: Int) = "card-ingredient-$position-quantity"
     /** The subheading of the group at [index] of the recipe's headings. */
     fun group(index: Int) = "card-ingredient-group-$index"
 }
@@ -318,7 +329,7 @@ private fun IngredientRow(
         }
         val quantity: @Composable () -> Unit = {
             line.quantity?.let { quantity ->
-                Row(Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth().testTag(IngredientTags.quantity(position))) {
                     // The arrow is measured first, so a long quantity wraps before it squeezes the arrow away.
                     Text(
                         quantity,
@@ -352,7 +363,9 @@ private fun IngredientRow(
             val shownName = names.first().measure(nameConstraints)
             val shownFixed = fixedMarks.firstOrNull()?.measure(nameConstraints)
             val content = maxOf(shownName.height + (shownFixed?.height ?: 0), shownQuantity?.height ?: 0)
-            val height = if (tall) maxOf(content, CardTarget.roundToPx()) else content
+            // A line is its text with a little space above and below it, and never less than the card's target where it
+            // answers a tap: one line of text is the target's height exactly, and each line it wraps onto adds no more than itself.
+            val height = maxOf(content + 2 * LINE_PADDING.roundToPx(), if (tall) CardTarget.roundToPx() else 0)
             val top = (height - content) / 2
             // It ends where the name begins at the latest, so a tap on the name always marks the line.
             val amountWidth = maxOf(quantityWidth + gap / 2, AMOUNT_TARGET.roundToPx()).coerceAtMost(minOf(width, quantityWidth + gap))
@@ -368,6 +381,9 @@ private fun IngredientRow(
         }
     }
 }
+
+/** The least space above and below a line's text, so that lines that wrap still read apart from the next. */
+private val LINE_PADDING = 8.dp
 
 /** The least width of the target an amount that offers fixing takes, the card's own; it is as tall as its line. */
 private val AMOUNT_TARGET = CardTarget
