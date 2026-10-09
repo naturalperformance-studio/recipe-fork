@@ -54,9 +54,16 @@ keytool -genkeypair -v \
 
 The script reads the key's location and passwords from `~/Projects/.env`, or from environment variables. It never reads them from the repository.
 
-### variables: see scripts/play-bundle.sh
+### Variables
 
-*(T-181 is writing that script now. Copy the variable names it lists here, then fill them in your `.env`: the keystore path, the alias `upload`, and the passwords. Do not paste the passwords into this file.)*
+```sh
+RECIPEFORK_UPLOAD_STORE_FILE=/home/you/keys/recipe-fork-upload.jks
+RECIPEFORK_UPLOAD_STORE_PASSWORD=...
+RECIPEFORK_UPLOAD_KEY_ALIAS=upload
+RECIPEFORK_UPLOAD_KEY_PASSWORD=...
+```
+
+Environment variables of the same names win over the file; `PLAY_ENV=/path/to/other.env` names another file. Do not paste the passwords into this checklist.
 
 - Keep `~/Projects/.env` readable only by you: `chmod 600 ~/Projects/.env`.
 
@@ -67,7 +74,7 @@ cd ~/Projects/recipe-fork   # or wherever the repository lives
 scripts/play-bundle.sh
 ```
 
-- It writes `build/play/recipe-fork-<version>.aab` (0.25 → version code 25), built serverless and minified, and signed with your upload key. If a setting is missing, it says which one and stops.
+- It writes `build/play/recipe-fork-<version>.aab` (0.25 → version code 25000), built serverless and minified, and signed with your upload key. If a setting is missing, it says which one and stops.
 - **Check that it is the serverless build.** The Data safety answers are only true for that build (`data-safety.md`, finding 3).
 - Every later upload needs a higher version code. The script takes the version from the increment.
 - *Costs:* nothing.
