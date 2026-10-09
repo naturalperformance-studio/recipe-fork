@@ -200,6 +200,7 @@ class PlayScreenshotsTest {
         scrollToTop(CardTags.CONTENT, CardTags.TITLE)
         await(TimerTags.BAR)
         assertWhole(TimerTags.barStatus(demo.runningStep), "the running timer in the bar")
+        assertTrue("fork above the bar of running timers", bottomOf(CardTags.FORK) <= topOf(TimerTags.BAR))
         tinted = true
         capture("$prefix-2-card.png")
 
@@ -209,8 +210,10 @@ class PlayScreenshotsTest {
         await(CardTags.stepPhoto(1))
         val running = TimerTags.cancel(demo.runningStep)
         await(running)
+        // The running step ends clear above fork, which floats over the content's end — shrunk to its icon once the
+        // card has scrolled down.
         val chipEnd = bottomOf(running) + px(12)
-        val frameEnd = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.bottom
+        val frameEnd = minOf(compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.bottom, topOf(CardTags.FORK))
         if (chipEnd > frameEnd) scrollBy(CardTags.CONTENT, chipEnd - frameEnd)
         // No step cut at the top edge: where the step of the photo no longer stands whole, the shot begins at its photo.
         val frameTop = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.top
@@ -218,6 +221,7 @@ class PlayScreenshotsTest {
         assertWhole(TimerTags.status(demo.runningStep), "the running step's timer")
         assertWhole(running, "the running step's timer")
         assertWhole(CardTags.stepPhoto(1), "the step's photo")
+        assertTrue("the running step's timer clear of fork", bottomOf(running) <= topOf(CardTags.FORK))
         capture("$prefix-4-steps.png")
 
         // (3) The editor on the same recipe, at its ingredient groups and their notes: both groups on the screen.

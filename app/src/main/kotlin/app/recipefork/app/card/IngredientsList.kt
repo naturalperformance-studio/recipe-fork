@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -73,7 +74,8 @@ import app.recipefork.core.scaling.Rounding
  *
  * Tapping a line marks it done, and tapping it again unmarks it ([marks], FLOW-068). Tapping the amount of a line that
  * carries a quantity opens its fixing control below it ([FixAmount]); a line "to taste", an unfinished one, or one off
- * its grid offers no fixing (SCALE-018 (7)). Without [marks] a line is not marked.
+ * its grid offers no fixing (SCALE-018 (7)); [onFixing] is told whether a fixing control is open. Without [marks] a
+ * line is not marked.
  *
  * Each of the [groups] stands as a subheading over its lines, a heading for the screen reader; lines above the first
  * heading stand under none, and a heading with no lines yet is not shown (DOM-022). A group is presentation only: the
@@ -89,9 +91,14 @@ internal fun IngredientsList(
     onRelease: (Int) -> Unit,
     marks: CardMarks? = null,
     groups: List<IngredientGroup> = emptyList(),
+    onFixing: (Boolean) -> Unit = {},
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered) { mutableStateOf<Int?>(null) }
+    // Whether a fixing control is open, told to the card.
+    val fixing = open != null
+    val told by rememberUpdatedState(onFixing)
+    LaunchedEffect(fixing) { told(fixing) }
     // The list stands apart from the steps on a tonal surface of the theme, in its medium corners. The surface reaches
     // into the card's gutter, so the lines keep the whole width of the content and wrap no sooner (A11Y-004).
     Surface(
@@ -117,9 +124,14 @@ private fun Lines(
     marks: CardMarks?,
     groups: List<IngredientGroup>,
 ) {
-    Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
-        // The warning unfolds under the status line and folds away into it, the gap above it included, so the lines
-        // below move with it rather than jump; the status line itself keeps its height.
+    // A small gap under the heading; the status line, the warning and the lines then stand one against the next, so that
+    // more lines are in sight as the card opens, and a group's subheading has the same gap above it on the first line
+    // as on any other.
+    Section(R.string.card_ingredients, CardTags.INGREDIENTS, gap = HEADING_GAP) {
+        val column = quantityColumn(list.lines)
+        // The status line, then the lines one against the next, with no gap between them: each line's own height is its
+        // space. The warning unfolds under the status line and folds away into it, the gap above it included, so the
+        // lines below move with it rather than jump; the status line itself keeps its height.
         Column {
             ScaleStatus(list.recalculated)
             AnimatedVisibility(!list.holdsProportions, enter = Motion.open, exit = Motion.close) {
@@ -133,10 +145,6 @@ private fun Lines(
                         .testTag(CardTags.PROPORTIONS),
                 )
             }
-        }
-        val column = quantityColumn(list.lines)
-        // The lines stand one against the next, with no gap between them: each line's own height is its space.
-        Column {
             list.lines.forEachIndexed { i, line ->
                 groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name) }
                 val position = ordered[i].position
@@ -166,6 +174,9 @@ private fun Lines(
         }
     }
 }
+
+/** The space between the section's heading and its status line. */
+private val HEADING_GAP = 4.dp
 
 /**
  * The subheading of the group at [index], over its first line (DOM-022): a heading for the screen reader, a modest
@@ -419,7 +430,7 @@ private fun AmountTarget(label: String, tag: String, onOpen: () -> Unit) {
 private val SURFACE_BLEED = 8.dp
 
 /** The space above and below the section on its tonal surface. */
-private val SURFACE_PADDING = 12.dp
+private val SURFACE_PADDING = 8.dp
 
 /** Laid out [by] wider on each side than the room it is given, the room it takes still only that. */
 private fun Modifier.bleed(by: Dp) = layout { measurable, constraints ->

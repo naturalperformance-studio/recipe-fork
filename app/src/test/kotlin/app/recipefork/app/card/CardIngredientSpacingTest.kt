@@ -141,11 +141,11 @@ class CardIngredientSpacingTest {
         assertEquals("no gap between lines", bounds(CardTags.ingredient(3)).bottom, bounds(CardTags.ingredient(4)).top, 0.5f)
         assertEquals("no gap between lines", bounds(CardTags.ingredient(4)).bottom, bounds(CardTags.ingredient(5)).top, 0.5f)
 
-        // A line that wraps onto a second line grows, by no more than that line.
+        // A line that wraps onto a second line is its two lines of text and 8 dp above and below them: 64 dp.
         assertEquals("the long name wraps onto two lines", 2, lineCount(IngredientTags.name(4)))
         val wrapped = dp(bounds(CardTags.ingredient(4)).height)
-        assertTrue("a two-line line is $wrapped dp: taller than 56 dp, by no more than its second line (${textLine(4)} dp)",
-            wrapped > CardTarget.value && wrapped <= CardTarget.value + textLine(4) + 0.5f)
+        assertEquals("a two-line line is its two text lines (${textLine(4)} dp each) and 2 × 8 dp", 2 * textLine(4) + 16f, wrapped, 0.5f)
+        assertEquals("a two-line line is 64 dp", 64f, wrapped, 0.5f)
 
         // The subheading: ≈12 dp above it, after the line before; its first line straight under it.
         val heading = bounds(IngredientTags.group(0))
@@ -175,6 +175,47 @@ class CardIngredientSpacingTest {
             compose.onNodeWithTag(CardTags.ingredient(2)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription) == null)
     }
 
+    // From T-188's review: a group that starts at the first line has the same ≈12 dp above its subheading as one further
+    // down — from the status line, as from the line before — and no gap below it.
+    @Test
+    fun aGroupAtTheFirstLineHasTheSameGapAboveItsSubheading() {
+        show(
+            Recipe.create(now, null).copy(
+                title = "Buns",
+                servings = 2,
+                ingredients = listOf(grams(0, "Flour", 500), grams(1, "Water", 300), grams(2, "Salt", 4), grams(3, "Sugar", 20)),
+                ingredientGroups = listOf(IngredientGroup("Dough", 0), IngredientGroup("Glaze", 2)),
+                steps = listOf(Step(0, "Mix")),
+            ),
+        )
+        val first = bounds(IngredientTags.group(0))
+        val second = bounds(IngredientTags.group(1))
+        assertEquals("the gap above a subheading on the first line", 12f, dp(first.top - bounds(IngredientTags.STATUS).bottom), 1f)
+        assertEquals("the gap above a subheading further down", 12f, dp(second.top - bounds(CardTags.ingredient(1)).bottom), 1f)
+        assertEquals("the same gap above both", dp(first.top - bounds(IngredientTags.STATUS).bottom), dp(second.top - bounds(CardTags.ingredient(1)).bottom), 0.5f)
+        assertEquals("no gap below the first subheading", first.bottom, bounds(CardTags.ingredient(0)).top, 0.5f)
+    }
+
+    // The tighter top keeps the card's parts apart: the parts 8 dp from each other, the description 16 dp from the steps.
+    @Test
+    fun theStepsAndTheDescriptionStillReadApart() {
+        show(
+            Recipe.create(now, null).copy(
+                title = "Buns",
+                description = "Best on the day they are baked.",
+                servings = 2,
+                ingredients = listOf(grams(0, "Flour", 500)),
+                steps = listOf(Step(0, "Mix"), Step(1, "Bake")),
+            ),
+        )
+        compose.onNodeWithTag(CardTags.DESCRIPTION).performScrollTo()
+        val steps = bounds(CardTags.STEPS)
+        val description = bounds(CardTags.DESCRIPTION)
+        assertEquals("the description 16 dp under the steps", 16f, dp(description.top - steps.bottom), 0.5f)
+        assertEquals("the steps 8 dp under the ingredients", 8f, dp(steps.top - bounds(IngredientTags.SURFACE).bottom), 0.5f)
+        assertEquals("the servings 8 dp under the title", 8f, dp(bounds(CardTags.SERVINGS_FEWER).top - bounds(CardTags.TITLE).bottom), 0.5f)
+    }
+
     @Test
     @Config(qualifiers = "en-w360dp-h640dp")
     fun aCookingScreenAsItOpensShowsMoreLinesInEnglish() = linesOnACookingScreen()
@@ -185,7 +226,8 @@ class CardIngredientSpacingTest {
 
     /**
      * The card as it opens on a 360 × 640 dp screen, the servings changed and a timer running out of sight, its bar
-     * up: at least [LINES_IN_SIGHT] whole lines lie between the "Ingredients" header and the bar — four, at 64 dp a line.
+     * up: at least [LINES_IN_SIGHT] whole lines lie between the "Ingredients" header and the bar. The recipe has no cover
+     * and a one-line title, as a cooking screen's recipe that is to show six lines must.
      */
     private fun linesOnACookingScreen() {
         val recipe = Recipe.create(now, null).copy(
@@ -212,10 +254,27 @@ class CardIngredientSpacingTest {
             bounds(CardTags.ingredient(position)).let { it.top >= headerBottom - 0.5f && it.bottom <= barTop + 0.5f }
         }
         assertTrue("$inSight lines in sight between the header and the bar", inSight >= LINES_IN_SIGHT)
+        // Fork floats above the bar, not over it, at the end of the lines: those it lies over keep their amount and
+        // name clear of it, and a stretch of the line of the card's target clear of it to mark the line done.
+        val fork = compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode().boundsInRoot
+        assertTrue("fork $fork above the bar at $barTop", fork.bottom <= barTop + 0.5f)
+        val shown = (0..11).map { bounds(CardTags.ingredient(it)) to it }.filter { (line, _) -> line.top >= headerBottom - 0.5f && line.bottom <= barTop + 0.5f }
+        shown.filter { (line, _) -> line.overlaps(fork) }.forEach { (line, position) ->
+            listOf(IngredientTags.name(position), IngredientTags.quantity(position)).forEach { part ->
+                assertTrue("$part ${bounds(part)} clear of fork $fork", !bounds(part).overlaps(fork))
+            }
+            assertTrue("line $position keeps a target's width clear of fork", dp(fork.left - line.left) >= CardTarget.value)
+        }
+        // Wholly clear of fork, as it floats at its widest at the top of the card: the lines above it.
+        val clear = shown.count { (line, _) -> !line.overlaps(fork) }
+        assertTrue("$clear lines wholly clear of fork", clear >= LINES_CLEAR_OF_FORK)
     }
 
     private companion object {
         /** The whole lines a 360 × 640 dp card shows under its header as it opens, with the servings and the bar up. */
-        const val LINES_IN_SIGHT = 5
+        const val LINES_IN_SIGHT = 6
+
+        /** Of them, the lines wholly clear of the floating fork action, which lies over the end of the last two. */
+        const val LINES_CLEAR_OF_FORK = 4
     }
 }

@@ -125,7 +125,7 @@ class ForkAFoundRecipeTest {
         session.openCard(id.value, LibraryView.MARKED)
         show()
         compose.awaitCard()
-        compose.onNodeWithTag(CardTags.FORK).performClick()
+        compose.forkFromTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         val forkId = RecipeId(requireNotNull(session.editing.value))
         assertNotEquals(id, forkId)

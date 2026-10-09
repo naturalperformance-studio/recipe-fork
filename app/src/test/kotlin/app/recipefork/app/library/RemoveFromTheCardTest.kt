@@ -212,6 +212,7 @@ class RemoveFromTheCardTest {
                 compose.waitUntilDoesNotExist(hasTestTag(CardTags.DELETE), PATIENCE_MS)
             } else {
                 assertFalse("${recipe.state} has a ⋮", exists(CardTags.MENU))
+                assertTrue("${recipe.state} offers fork", exists(CardTags.FORK))
             }
         }
     }
