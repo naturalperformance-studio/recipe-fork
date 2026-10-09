@@ -94,7 +94,8 @@ internal fun StepsList(
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }
-    val toShow = LocalStepToShow.current
+    // A timer's step is shown on Cooking, where the timer runs: the card opens on that tab for it.
+    val toShow = LocalStepToShow.current?.takeIf { mode == CardMode.COOKING }
     val pending = toShow?.pending?.collectAsState()?.value?.takeIf { it.recipeId == recipeId.value }
     val target = remember { BringIntoViewRequester() }
     val targetShown = pending != null && shown.any { it.position == pending.stepPosition }

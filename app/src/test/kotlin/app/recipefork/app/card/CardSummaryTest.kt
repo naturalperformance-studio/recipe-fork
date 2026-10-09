@@ -150,6 +150,14 @@ class CardSummaryTest {
         assertEquals("2 ingredients · 2 steps · timers ≈ 45 min", summary())
     }
 
+    // A whole hour reads as hours alone, as a timer's duration does: no "0 min" after it.
+    @Test
+    fun aWholeHourReadsAsHoursAlone() {
+        show(recipe("Stock", ingredients = 2, steps = 2, timers = listOf(25.minutes, 35.minutes)))
+        assertEquals("2 ingredients · 2 steps · timers ≈ 1 h", summary())
+        assertEquals("2 ingredients, 2 steps, timers about 1 h", spoken())
+    }
+
     // A recipe without timers: the timers part is left out.
     @Test
     fun aRecipeWithoutTimersSaysOnlyItsCounts() {

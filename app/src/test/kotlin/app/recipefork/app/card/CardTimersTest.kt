@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
@@ -91,7 +92,7 @@ class CardTimersTest {
             recipes.save(soup)
             recipes.save(bread)
         }
-        val environment = CardEnvironment { emptyList() }
+        val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
         compose.setContent {
             CompositionLocalProvider(LocalCardTimers provides timers.card, LocalAwakeClock provides TestAwakeClock()) {
                 MaterialTheme {

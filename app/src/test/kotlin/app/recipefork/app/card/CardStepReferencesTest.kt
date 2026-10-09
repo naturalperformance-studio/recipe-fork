@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +53,7 @@ class CardStepReferencesTest {
     private val book = TestBook(context)
     private val device = TestDevice(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { device.database.dictionaryDao().ingredients() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { device.database.dictionaryDao().ingredients() }
     private val now = Instant.parse("2026-10-02T12:00:00Z")
 
     @Before

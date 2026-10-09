@@ -16,6 +16,16 @@ import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import app.recipefork.app.editor.PATIENCE_MS
 import org.junit.Assert.assertTrue
 
+/** Turns the open card to its tab [mode] by a tap on the tab, and waits until the card has come to rest there. */
+fun ComposeTestRule.chooseCardTab(mode: CardMode) {
+    onNodeWithTag(CardTags.tab(mode)).performClick()
+    waitUntil(PATIENCE_MS) {
+        onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true &&
+            onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1
+    }
+    waitForIdle()
+}
+
 /** Waits until the card is open, then takes its back action to the recipe book. */
 fun ComposeTestRule.backThroughTheCard() {
     awaitCard()

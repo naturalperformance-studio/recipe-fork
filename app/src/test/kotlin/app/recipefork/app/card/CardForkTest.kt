@@ -120,6 +120,9 @@ class CardForkTest {
             .sortedWith(compareBy({ it.positionInRoot.y }, { it.positionInRoot.x }))
             .map { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } }
 
+    /** The card's two tabs, under its bar. */
+    private val TABS = listOf(CardTags.tab(CardMode.VIEW), CardTags.tab(CardMode.COOKING))
+
     // The fork action floats at the bottom end of the card of every recipe of the book, in each of the eight states,
     // never in the bar or its ⋮, and asks for a fork.
     @Test
@@ -129,7 +132,7 @@ class CardForkTest {
             show(recipe.id)
             assertEquals("$state", 0, compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.FORK)).fetchSemanticsNodes().size)
             val expected = listOf(CardTags.BACK) + listOfNotNull(CardTags.EDIT.takeIf { state.editable }, CardTags.MENU.takeIf { state in DELETABLE }) +
-                listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE, CardTags.FORK)
+                TABS + listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE, CardTags.FORK)
             assertEquals("$state", expected, interactiveTags())
             val screen = compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot
             val fork = compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode().boundsInRoot
@@ -242,7 +245,7 @@ class CardForkTest {
         assertEquals(listOf("Forked from a recipe that is not in this recipe book"), compose.textsOf(CardTags.PROVENANCE))
         val node = compose.onNodeWithTag(CardTags.PROVENANCE).fetchSemanticsNode()
         assertNull(node.config.getOrElseNullable(SemanticsActions.OnClick) { null })
-        assertEquals(listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU, CardTags.FORK), interactiveTags())
+        assertEquals(listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU) + TABS + CardTags.FORK, interactiveTags())
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         assertEquals(emptyList<RecipeId>(), opened)
     }

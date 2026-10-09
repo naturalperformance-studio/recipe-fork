@@ -305,14 +305,23 @@ object LocalizationChecks {
         content: Set<String> = emptySet(),
         res: File = resDir,
     ) {
-        val patterns = ownResolvedStrings(context, res).map { value ->
-            Regex(Regex.escape(value).replace(Regex("""%(\d+\$)?[sd]"""), """\\E.+\\Q"""))
-        }
+        val patterns = textPatterns(ownResolvedStrings(context, res))
         val shown = shownText(screen)
         assertTrue("the screen shows no text", shown.isNotEmpty())
         val foreign = shown.filter { it !in content && patterns.none { p -> p.matches(it) } }
         assertEquals("text not taken from the resources of this language", emptyList<String>(), foreign)
     }
+
+    private val placeholder = Regex("""%(\d+\$)?[sd]""")
+
+    /**
+     * The patterns a shown text may match to count as taken from one of [values]: each value with its placeholders
+     * standing for any text. A value made only of placeholders and punctuation — a joiner such as `%1$s, %2$s` or
+     * `%1$s · %2$s` — is left out, since it would let any text pass that holds its punctuation.
+     */
+    fun textPatterns(values: List<String>): List<Regex> =
+        values.filter { value -> value.replace(placeholder, "").any(Char::isLetterOrDigit) }
+            .map { value -> Regex(Regex.escape(value).replace(placeholder, """\\E.+\\Q""")) }
 
     /**
      * L10N-001 (1) as the reader reads it: every text, description and action label shown, except the reader's

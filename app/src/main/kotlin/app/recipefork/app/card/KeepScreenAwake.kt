@@ -34,17 +34,21 @@ val RealAwakeClock = AwakeClock { delay(it) }
 val LocalAwakeClock = staticCompositionLocalOf { RealAwakeClock }
 
 /**
- * Keeps the screen on while the element this modifies is shown, for [AWAKE_WITHOUT_A_TOUCH] after the last touch on
- * it, then leaves the screen to the device's own setting until the next touch (FLOW-014 (1–3)). Coming back to the
- * application counts as a touch. Once the element is no longer shown the screen is left to the device's setting at
- * once (FLOW-014 (4)).
+ * Keeps the screen on while the element this modifies is shown and [active], for [AWAKE_WITHOUT_A_TOUCH] after the last
+ * touch on it, then leaves the screen to the device's own setting until the next touch (FLOW-014 (1–3)). Coming back to
+ * the application, or the element becoming active, counts as a touch. Once the element is no longer shown, or no longer
+ * active, the screen is left to the device's setting at once (FLOW-014 (4)).
  */
 @Composable
-fun Modifier.keepScreenAwake(): Modifier {
+fun Modifier.keepScreenAwake(active: Boolean = true): Modifier {
     val clock = LocalAwakeClock.current
     val view = LocalView.current
     var touches by remember { mutableIntStateOf(0) }
-    LaunchedEffect(touches, clock, view) {
+    LaunchedEffect(touches, clock, view, active) {
+        if (!active) {
+            view.keepScreenOn = false
+            return@LaunchedEffect
+        }
         view.keepScreenOn = true
         clock.wait(AWAKE_WITHOUT_A_TOUCH)
         view.keepScreenOn = false

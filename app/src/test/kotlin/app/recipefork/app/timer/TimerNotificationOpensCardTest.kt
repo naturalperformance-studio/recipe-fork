@@ -5,18 +5,21 @@ import android.app.NotificationManager
 import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import app.recipefork.app.library.LibraryView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.MainActivity
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.book.BookName
+import app.recipefork.app.card.CardMode
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.library.LibraryTags
@@ -27,6 +30,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,8 +42,9 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * The application itself: a timer's notification opens its recipe's card scrolled to the timer's step (FLOW-013 (4)),
- * from a closed application and from an open one; and the platform's request for notifications is made at the first
- * timer started, never at launch (FLOW-013 (8)).
+ * from a closed application, from an open one and from its own card open on View, on Cooking whatever place Cooking
+ * was left at; and the platform's request for notifications is made at the first timer started, never at launch
+ * (FLOW-013 (8)).
  */
 @RunWith(AndroidJUnit4::class)
 class TimerNotificationOpensCardTest {
@@ -107,13 +112,16 @@ class TimerNotificationOpensCardTest {
         }
         compose.onNodeWithTag(CardTags.step(far)).assertIsDisplayed()
         compose.onNodeWithTag(TimerTags.start(far)).assertIsDisplayed()
+        // On the Cooking tab, where the timer runs, whichever tab was chosen last.
+        compose.onNodeWithTag(CardTags.tab(CardMode.COOKING)).assertIsSelected()
         // The card was brought down to it: its top is out of view.
-        compose.onNodeWithTag(CardTags.TITLE).assertIsNotDisplayed()
+        compose.onNodeWithTag(CardTags.step(0)).assertIsNotDisplayed()
     }
 
     // FLOW-013 (4): the application closed, tapping the notification opens it on the card at the timer's step.
     @Test
     fun tappingTheNotificationOpensTheCardAtTheStep() {
+        container.lastCardTab.keep(CardMode.VIEW)
         val intent = notificationIntent()
         launch(intent)
         assertTheCardShowsTheStep()
@@ -132,22 +140,64 @@ class TimerNotificationOpensCardTest {
         assertTheCardShowsTheStep()
     }
 
-    // FLOW-013 (4) over a held place: a card left scrolled elsewhere is brought to the timer's step all the same.
+    /** Opens the stew's card from the book, where the application was launched. */
+    private fun openTheStewFromTheBook() {
+        awaitTag(LibraryTags.tab(LibraryView.OWN))
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
+        awaitTag(LibraryTags.entry(stew.id.value))
+        compose.onNodeWithTag(LibraryTags.entry(stew.id.value)).performClick()
+        awaitTag(CardTags.CONTENT)
+        settled()
+    }
+
+    /** Waits until the card's pager has come to rest on one page. */
+    private fun settled() =
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1 }
+
+    private fun displayed(tag: String) = runCatching { compose.onNodeWithTag(tag).assertIsDisplayed() }.isSuccess
+
+    // FLOW-013 (4) over a held place: Cooking left scrolled elsewhere is brought to the timer's step all the same.
     @Test
     fun theNotificationsStepOutranksThePlaceTheCardWasLeftAt() {
         val intent = notificationIntent()
         launch()
-        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
-        awaitTag(LibraryTags.entry(stew.id.value))
-        compose.onNodeWithTag(LibraryTags.entry(stew.id.value)).performClick()
-        awaitTag(CardTags.step(0))
-        compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 600f) }
+        openTheStewFromTheBook()
+        // Cooking is left scrolled down, to a place well above the timer's step.
+        compose.onNodeWithTag(CardTags.tab(CardMode.COOKING)).performClick()
+        compose.waitUntil(PATIENCE_MS) { selectedTab() == CardMode.COOKING }
+        settled()
+        compose.onNodeWithTag(CardTags.step(8)).performScrollTo()
         compose.waitForIdle()
+        compose.waitUntil(PATIENCE_MS) { displayed(CardTags.step(8)) && !displayed(CardTags.step(0)) }
+        assertTrue("the place left is away from the timer's step", !displayed(CardTags.step(far)))
+        compose.onNodeWithTag(CardTags.BACK).performClick()
+        awaitTag(LibraryTags.TITLE)
+        // Cooking holds that place: the card opened again from the book comes back to it.
+        openTheStewFromTheBook()
+        compose.onNodeWithTag(CardTags.tab(CardMode.COOKING)).assertIsSelected()
+        compose.waitUntil(PATIENCE_MS) { displayed(CardTags.step(8)) && !displayed(CardTags.step(0)) }
         compose.onNodeWithTag(CardTags.BACK).performClick()
         awaitTag(LibraryTags.TITLE)
         opened!!.newIntent(intent)
         compose.waitForIdle()
         assertTheCardShowsTheStep()
+    }
+
+    // FLOW-013 (4) on the open card: the stew's card open on View is turned to Cooking, at the timer's step.
+    @Test
+    fun theNotificationTurnsTheOpenCardToCookingAtTheStep() {
+        container.lastCardTab.keep(CardMode.VIEW)
+        val intent = notificationIntent()
+        launch()
+        openTheStewFromTheBook()
+        compose.onNodeWithTag(CardTags.tab(CardMode.VIEW)).assertIsSelected()
+        opened!!.newIntent(intent)
+        compose.waitForIdle()
+        assertTheCardShowsTheStep()
+    }
+
+    private fun selectedTab(): CardMode? = CardMode.entries.singleOrNull { mode ->
+        compose.onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true
     }
 
     // FLOW-013 (8): nothing is requested at launch; the first timer started makes the platform's request.

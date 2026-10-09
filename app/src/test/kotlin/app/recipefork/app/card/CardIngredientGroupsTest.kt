@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -111,7 +112,7 @@ class CardIngredientGroupsTest {
         }
         compose.setContent {
             MaterialTheme {
-                shown?.let { CardScreen(it, recipes, CardEnvironment(ingredients = IngredientEntries { emptyList() }), onBack = {}, onEdit = {}) }
+                shown?.let { CardScreen(it, recipes, CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING), ingredients = IngredientEntries { emptyList() }), onBack = {}, onEdit = {}) }
             }
         }
         show(plain)

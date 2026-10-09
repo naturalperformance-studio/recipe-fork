@@ -28,7 +28,7 @@ class ContrastTest {
     private fun pairs(c: ColorScheme) = listOf(
         // Text.
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
-        text("muted notes and marks — an entry's sending mark, step notes, ingredient notes, labels, placeholders, the synonym beside an offered entry", c.onSurfaceVariant, c.surface),
+        text("muted notes and marks — an entry's sending mark, step notes, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\")", c.onSurfaceVariant, c.surface),
         text("text actions — the bar's actions, text buttons, timers' figures, the checklist's label", c.primary, c.surface),
         text("a filled button's label, a step's number in its circle on the card", c.onPrimary, c.primary),
         text("a problem said under a field", c.error, c.surface),
@@ -58,8 +58,8 @@ class ContrastTest {
         text("a menu's items", c.onSurface, c.surfaceContainer),
         text("the bar of running timers — names and times left", c.onSurface, c.surfaceContainer),
         text("the book's top bar — its title and menu — with a list scrolled under it", c.onSurface, c.surfaceContainer),
-        text("the chosen view's tab", c.primary, c.surface),
-        text("a view's tab not chosen", c.onSurfaceVariant, c.surface),
+        text("the chosen tab — the book's view, the card's View or Cooking", c.primary, c.surface),
+        text("a tab not chosen — the book's view, the card's View or Cooking", c.onSurfaceVariant, c.surface),
         text("a view's floating action — its words and icon", c.onPrimaryContainer, c.primaryContainer),
         text("a book's entry, a card — its title and state", c.onSurface, c.surfaceContainerHighest),
         text("a book's entry, a card — its tags and sending mark", c.onSurfaceVariant, c.surfaceContainerHighest),

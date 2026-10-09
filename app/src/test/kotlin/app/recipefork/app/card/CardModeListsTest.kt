@@ -97,6 +97,7 @@ class CardModeListsTest {
         val ovenLine: String,
         val beansLine: String,
         val ovenRunning: String,
+        val ovenFinished: String,
     )
 
     private val english = Words(
@@ -111,6 +112,7 @@ class CardModeListsTest {
         ovenLine = "Oven · 40 min",
         beansLine = "Beans · 1 h 30 min",
         ovenRunning = "Oven · 39:00",
+        ovenFinished = "Oven · Finished",
     )
 
     private val russian = Words(
@@ -125,6 +127,7 @@ class CardModeListsTest {
         ovenLine = "Духовка · 40 мин",
         beansLine = "Фасоль · 1 ч 30 мин",
         ovenRunning = "Духовка · 39:00",
+        ovenFinished = "Духовка · Готово",
     )
 
     private val now = Instant.parse("2026-10-09T12:00:00Z")
@@ -312,6 +315,27 @@ class CardModeListsTest {
         assertEquals("the timer not started shows its duration", words.beansLine, text(unmerged(ViewTimerTags.line(2))))
     }
 
+    @Test
+    @Config(qualifiers = "en-w360dp-h640dp")
+    fun anEndedTimerReadsFinishedInViewInEnglish() = endedInView(english)
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun anEndedTimerReadsFinishedInViewInRussian() = endedInView(russian)
+
+    // A timer started on Cooking that has ended reads as finished on View, its name kept, nothing on it to clear it.
+    private fun endedInView(words: Words) {
+        show(words, CardMode.COOKING)
+        compose.onNodeWithTag(TimerTags.start(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(TimerTags.cancel(0)) }
+        compose.runOnIdle { mode = CardMode.VIEW }
+        compose.runOnIdle { timers.clock.advance(40.minutes) }
+        compose.waitUntil(PATIENCE_MS) { exists(ViewTimerTags.line(0)) && text(unmerged(ViewTimerTags.line(0))) == words.ovenFinished }
+        assertEquals(words.ovenFinished, text(unmerged(ViewTimerTags.line(0))))
+        assertFalse("an ended timer offers no Start in view", exists(TimerTags.start(0)))
+        assertFalse("the ended timer's line answers no click", clickable(unmerged(ViewTimerTags.line(0))))
+    }
+
     // COOKING: today's card.
 
     @Test
@@ -336,6 +360,11 @@ class CardModeListsTest {
         // A tap marks, the amount opens its fixing control.
         compose.onNodeWithTag(lines[1]).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { marks.done(MarkedPart.INGREDIENT, 1) }
+        // A tap on a step marks it too.
+        assertFalse(marks.done(MarkedPart.STEP, 1))
+        compose.onNodeWithTag(steps[1]).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { marks.done(MarkedPart.STEP, 1) }
+        assertEquals(words.done, node(steps[1]).config.getOrNull(SemanticsProperties.StateDescription))
         compose.onNodeWithTag(CardTags.fixAmount(1), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.FIX_FIELD) }
         // Switching to view closes it.

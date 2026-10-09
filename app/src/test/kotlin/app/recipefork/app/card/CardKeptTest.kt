@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -68,7 +69,7 @@ class CardKeptTest {
     private val book = TestBook(context)
     private val timers = TestTimers(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { emptyList() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
     private val now = Instant.parse("2026-10-03T12:00:00Z")
 
     /** What the session saved, which outlives the composition as saved state outlives the process. */

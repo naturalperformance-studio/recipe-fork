@@ -129,4 +129,18 @@ class InterfaceStringsTest {
         }
         assertEquals(emptyList<String>(), strings.filter { words.containsMatchIn(it) })
     }
+
+    // L10N-001 (1): a resource made only of placeholders and punctuation — a joiner — lets no shown text pass as taken
+    // from the resources, while a resource with words of its own still matches its text with anything in its places.
+    @Test
+    fun joinersLetNoTextPass() {
+        val patterns = LocalizationChecks.textPatterns(
+            listOf("%1${'$'}s, %2${'$'}s", "%1${'$'}s · %2${'$'}s", "%1${'$'}s — %2${'$'}s", "Serves %1${'$'}s"),
+        )
+        assertEquals(1, patterns.size)
+        listOf("Fried text, fixed in code", "Hardcoded · 10 min", "Not ours — at all").forEach { shown ->
+            assertEquals(shown, false, patterns.any { it.matches(shown) })
+        }
+        assertEquals(true, patterns.any { it.matches("Serves 4") })
+    }
 }

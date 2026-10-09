@@ -383,7 +383,8 @@ class ReleaseSmokeTest {
             awaitUntil(30.seconds) {
                 val found = find()
                 if (found == null || !found.isVisibleToUser) {
-                    val scrolled = nodes().filter { it.isScrollable }
+                    // What scrolls up and down: never the card's tabs' pager, which a forward scroll would turn.
+                    val scrolled = nodes().filter { it.isScrollable && it.actionList.none { action -> action.id in SIDEWAYS } }
                         .maxByOrNull { node -> Rect().also(node::getBoundsInScreen).let { it.width() * it.height() } }
                         ?.performAction(if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
                     if (scrolled == false) forward = !forward
@@ -455,11 +456,13 @@ class ReleaseSmokeTest {
             tap(written.title)
             awaitShown("Servings: 2")
 
-            // A timer started from the card runs.
+            // A timer started from the card's Cooking tab runs.
+            tap(COOKING)
             clickRevealed("Simmer")
             awaitUntil(30.seconds) { runBlocking { container.timers.all.first() }.any { it.key.recipeId == written.id.value } }
 
-            // The editor: a group, a note and a timer added, and saved.
+            // The editor, from the View tab: a group, a note and a timer added, and saved.
+            tap(VIEW)
             tap(EDIT)
             awaitShown(DONE)
             // In the order the editor lays them out: the first ingredient's note, a group under the list, the second
@@ -650,6 +653,16 @@ class ReleaseSmokeTest {
         /** The library's tab of the recipes written on this device. */
         const val WRITTEN_HERE = "Written here"
         const val EDIT = "Edit"
+        /** The card's two tabs. */
+        const val VIEW = "View"
+        const val COOKING = "Cooking"
+        /** The accessibility actions of something that scrolls sideways. */
+        val SIDEWAYS = listOf(
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT,
+        ).map { it.id }
         /** The editor's set cover, a tap on which opens the sheet of the camera, the gallery and its removal. */
         const val CHANGE_COVER = "Replace or remove the cover photo"
         /** The sheet's item that opens the phone's camera application. */

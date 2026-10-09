@@ -102,4 +102,9 @@
     <string name="card_clear_marks">Clear marks</string>
     <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
     <string name="card_view_timer">%1$s · %2$s</string>
+    <!-- The card's two tabs, under its top bar: the recipe for reading and deciding, and for cooking with busy hands. -->
+    <string name="card_tab_view">View</string>
+    <string name="card_tab_cooking">Cooking</string>
+    <string name="card_tab_view_action">Show the recipe for reading</string>
+    <string name="card_tab_cooking_action">Show the recipe for cooking</string>
 </resources>
