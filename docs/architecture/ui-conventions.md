@@ -17,7 +17,7 @@ The general rules live in the `android-m3-ui` skill (`~/.claude/skills/android-m
 - **Top bars**: the book (`library/LibraryScreen.kt`), the card (`card/CardScreen.kt`, `BarAction` with a long-press tooltip) and the editor (`editor/EditorScreen.kt`) each have an M3 `TopAppBar`. The editor's back arrow leaves for the recipe; its Done saves and says "Saved" without closing; the checklist and the fork note are icon-only actions with tooltips. Settings (`settings/SettingsScreen.kt`) is the reference for a screen of `ListItem`s showing current values.
 - **Statements**: one snackbar host per screen. In the editor, `EditorStatements.say` (a statement; the newest replaces) and `EditorStatements.offer` (with an action, e.g. Undo). An open Undo is never replaced by "Saved".
 - **Undo**: removing an ingredient row or a step is undoable (`RecipeEditor.removal`); a removed step's media is deleted only once the removal is final. `MediaSweep` clears files left by process death.
-- **Keyboard**: `editor/RowFocus.kt` and the row chain in `IngredientsSection.kt` — Next walks name → quantity → unit menu → next row; the last typed field shows Done.
+- **Keyboard**: `editor/RowFocus.kt` and the row chain in `IngredientsSection.kt` — Next walks name → note → quantity → unit menu → next row; the last typed field shows Done.
 - **Choices**: tags are `InputChip`s, offers `SuggestionChip`s, the recipe language a `SingleChoiceSegmentedButtonRow` (`editor/TagsAndLanguage.kt`).
 - **Field messages**: errors in `supportingText` with `isError`; the free-text hint (FLOW-022) is muted supporting text shown once the name is left.
 
@@ -27,5 +27,5 @@ All replaced in v0.21 (`ActionText` → `editor/EditorButton`, the card's `StepA
 
 ## Exceptions to the skill
 
-- Recipe deletion asks for confirmation (FLOW-053 says immediate and final); Undo instead is an open product question in `docs/increments/ux-roadmap.md`.
+- Recipe deletion asks nothing: the book offers Undo while its notice shows (FLOW-053 as rewritten 2026-10-04; v0.23, T-172).
 - The proportions warning on the card (SCALE-009) may still appear and disappear; the recalculation status line above the ingredients does not shift them (v0.19).
