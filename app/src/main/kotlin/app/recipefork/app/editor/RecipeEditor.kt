@@ -308,6 +308,9 @@ class RecipeEditor(
     /** As [stepKey], for the heading at [index] of the ingredient groups. */
     fun groupKey(index: Int): Long = groupKeys.of(index)
 
+    /** Where the heading whose [groupKey] is [key] stands now; null once it is gone. */
+    fun groupIndex(key: Long): Int? = groupKeys.positionOf(key)?.takeIf { it < (current.value?.ingredientGroups?.size ?: 0) }
+
     /** The optional description, kept exactly as typed, line breaks included. */
     fun setDescription(description: String) = edit { it.copy(description = description) }
 
@@ -369,15 +372,20 @@ class RecipeEditor(
     /**
      * Moves the item at [from] of the ingredient list as the editor shows it ([listItems]) so that it stands at [to]
      * once taken out: a row alone — past a heading, it leaves its group for the one it now stands in — or a heading with
-     * every row it owns, its group as a whole (DOM-022, FLOW-025). A group left with no rows loses its heading. Returns
-     * whether anything moved.
+     * every row it owns, its group as a whole, to a place a group may land at ([groupLanding]) (DOM-022, FLOW-025). No
+     * move empties a group: the only row of a group stays in it, and a heading with no rows yet stays where it is.
+     * Returns whether anything moved.
      */
     fun moveIngredientItem(from: Int, to: Int): Boolean {
-        val items = current.value?.listItems ?: return false
-        if (from !in items.indices || from == to) return false
+        val recipe = current.value ?: return false
+        val items = recipe.listItems
+        if (from !in items.indices || from == to || !items.movable(from)) return false
         val span = blockAt(items, from)
         if (to !in 0..items.size - span) return false
-        return rearrange { items.movedBlock(from, span, to) }
+        if (items[from] is ListItem.Heading && !groupLanding(items, from, span)(to)) return false
+        val moved = items.movedBlock(from, span, to)
+        if (recipe.arranged(moved).headings.size < recipe.ingredientGroups.size) return false
+        return rearrange { moved }
     }
 
     /**
@@ -743,7 +751,7 @@ class RecipeEditor(
         is Left.Whole -> part
         is Left.OfStep -> stepPosition(key)?.let { if (timerName) RecipePart.TimerName(it) else RecipePart.StepText(it) }
         is Left.OfIngredient -> ingredientPosition(key)?.let { RecipePart.IngredientNote(it) }
-        is Left.OfGroup -> groupKeys.positionOf(key)?.takeIf { it < (current.value?.ingredientGroups?.size ?: 0) }?.let { RecipePart.GroupName(it) }
+        is Left.OfGroup -> groupIndex(key)?.let { RecipePart.GroupName(it) }
     }
 
     private sealed interface Left {

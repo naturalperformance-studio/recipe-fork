@@ -246,6 +246,49 @@ class IngredientGroupsEditorTest {
         editor.renameGroup(1, "Dough")
         assertTrue(editor.marks.value.isEmpty())
         assertEquals(Bound.OverLimit(40, 41), RecipeBounds.all(seeded.copy(ingredientGroups = listOf(IngredientGroup(long, 0))))[RecipePart.GroupName(0)])
+        // Every part outside its bound in the order the editor shows them: each heading's name above its rows' notes.
+        val note = "n".repeat(RecipeBounds.MAX_NOTE + 1)
+        val marked = seeded.copy(
+            ingredients = seeded.ingredients.map { it.copy(note = note) },
+            ingredientGroups = listOf(IngredientGroup(long, 1), IngredientGroup(long, 3), IngredientGroup(long, 6)),
+        )
+        assertEquals(
+            listOf(
+                RecipePart.IngredientNote(0), RecipePart.GroupName(0), RecipePart.IngredientNote(1), RecipePart.IngredientNote(2),
+                RecipePart.GroupName(1), RecipePart.IngredientNote(3), RecipePart.IngredientNote(4), RecipePart.IngredientNote(5),
+                RecipePart.GroupName(2),
+            ),
+            RecipeBounds.all(marked).keys.filter { it is RecipePart.GroupName || it is RecipePart.IngredientNote },
+        )
+    }
+
+    // No move leaves a group with no rows: a heading with no rows yet stays last, and the only row of a group stays in
+    // it — by the item, by the row and by the menu's neighbour alike.
+    @Test
+    fun noMoveEmptiesAGroup() {
+        val editor = open()
+        assertTrue(editor.addGroup(6))
+        assertTrue(editor.renameGroup(2, "To serve"))
+        // Items: salt, Dough:, flour, water, Glaze:, sugar, butter, egg, To serve:.
+        assertFalse(editor.now.listItems.movable(8))
+        assertFalse(editor.moveIngredientItem(8, 4))
+        assertFalse(editor.moveIngredientItem(8, 1))
+        assertEquals("salt Dough: flour water Glaze: sugar butter egg To serve:", editor.now.shape())
+        assertNull(editor.removal.value)
+
+        assertTrue(editor.removeIngredient(1))
+        // Dough now owns water alone: it can go neither up past its heading nor down past the next one.
+        val items = editor.now.listItems
+        assertEquals(ListItem.Row(1), items[2])
+        assertFalse(items.movable(2))
+        assertFalse(editor.moveIngredientItem(2, 1))
+        assertFalse(editor.moveIngredientItem(2, 3))
+        assertFalse(editor.moveIngredient(1, 3))
+        assertEquals("salt Dough: water Glaze: sugar butter egg To serve:", editor.now.shape())
+        // Rows a group has to spare still move in and out of it.
+        assertTrue(editor.moveIngredientItem(4, 3))
+        assertEquals("salt Dough: water sugar Glaze: butter egg To serve:", editor.now.shape())
+        assertEquals(listOf("Dough", "Glaze", "To serve"), stored().ingredientGroups.map { it.name })
     }
 
     // Whatever series of edits the author makes, every heading stays over the rows it had — the row moved aside — and
@@ -288,6 +331,8 @@ class IngredientGroupsEditorTest {
                         ?.let { editor.moveIngredientItem(heading, it) }
                 }
             }
+            // A move never takes a heading away.
+            if (op == 3 || op == 8) assertEquals(recipe.ingredientGroups.size, editor.now.ingredientGroups.size)
             if (op <= 3) {
                 // An edit of rows leaves every other row under the heading it had.
                 val after = groupsOfRows()

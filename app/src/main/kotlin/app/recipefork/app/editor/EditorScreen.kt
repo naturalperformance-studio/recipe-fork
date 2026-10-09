@@ -218,12 +218,13 @@ fun EditorScreen(
                     // The keyboard's Next goes from the title to the serving count, and from there into the rows.
                     val servings = remember { FocusRequester() }
                     val rows = remember { RowFocus() }
+                    val headings = remember { RowFocus() }
                     TitleAndLanguage(shown, editor) { servings.requestFocus() }
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
-                    ServingCount(shown, editor, servings, rows)
+                    ServingCount(shown, editor, servings, rows, headings)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
-                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows)
+                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
                         Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork)
                     }
                     Description(shown, editor)

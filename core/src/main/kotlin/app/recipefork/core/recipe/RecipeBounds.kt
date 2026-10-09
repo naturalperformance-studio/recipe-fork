@@ -73,10 +73,20 @@ object RecipeBounds {
         val positions = recipe.steps.indices
         val parts = listOf(
             RecipePart.Title, RecipePart.Language, RecipePart.Servings, RecipePart.Ingredients,
-        ) + recipe.ingredientGroups.indices.map { RecipePart.GroupName(it) } +
-            recipe.ingredients.indices.map { RecipePart.IngredientNote(it) } + RecipePart.Steps +
+        ) + ingredientParts(recipe) + RecipePart.Steps +
             positions.flatMap { listOf(RecipePart.StepText(it), RecipePart.TimerName(it)) } + RecipePart.Description
         return parts.mapNotNull { part -> of(recipe, part)?.let { part to it } }.toMap()
+    }
+
+    /** The ingredient list's parts as it reads: each group's name above its first row, then every row's note. */
+    private fun ingredientParts(recipe: Recipe): List<RecipePart> = buildList {
+        fun headingsAt(position: Int) = recipe.ingredientGroups.indices.filter { recipe.ingredientGroups[it].firstPosition == position }
+        recipe.ingredients.indices.forEach { position ->
+            headingsAt(position).forEach { add(RecipePart.GroupName(it)) }
+            add(RecipePart.IngredientNote(position))
+        }
+        recipe.ingredientGroups.indices.filter { recipe.ingredientGroups[it].firstPosition >= recipe.ingredients.size }
+            .forEach { add(RecipePart.GroupName(it)) }
     }
 
     private fun over(limit: Int, count: Int): Bound? = if (count > limit) Bound.OverLimit(limit, count) else null

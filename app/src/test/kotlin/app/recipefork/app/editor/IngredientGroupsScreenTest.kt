@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
@@ -150,6 +151,8 @@ class IngredientGroupsScreenTest {
 
         compose.onNodeWithTag(EditorTags.groupName(0)).performTextInput("Glaze")
         awaitShape(recipe, "salt flour water sugar butter Glaze:")
+        // With no rows yet, the heading cannot move: it has no handle.
+        assertTrue(!exists(EditorTags.groupHandle(0)))
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(5)) }
         compose.onNodeWithTag(EditorTags.ingredientName(5)).performTextReplacement("egg")
@@ -209,8 +212,33 @@ class IngredientGroupsScreenTest {
 
         menu(EditorTags.ingredientMenu(1), EditorTags.ingredientAction(1, RowAction.MOVE_UP))
         awaitShape(recipe, "salt sugar Glaze: butter Dough: flour water")
-        menu(EditorTags.ingredientMenu(2), EditorTags.ingredientAction(2, RowAction.MOVE_DOWN))
-        awaitShape(recipe, "salt sugar Dough: butter flour water")
+        // Butter is now Glaze's only row: no move that would empty the group is offered, nor a handle to drag it by.
+        compose.onNodeWithTag(EditorTags.ingredientMenu(2)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientAction(2, RowAction.INSERT_ABOVE)) }
+        assertTrue(!exists(EditorTags.ingredientAction(2, RowAction.MOVE_UP)) && !exists(EditorTags.ingredientAction(2, RowAction.MOVE_DOWN)))
+        compose.onNodeWithTag(EditorTags.ingredientMenu(2)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.ingredientAction(2, RowAction.INSERT_ABOVE)), PATIENCE_MS)
+        assertTrue(!exists(EditorTags.ingredientHandle(2)) && exists(EditorTags.ingredientHandle(3)))
+    }
+
+    // The keyboard's Next follows the list as shown: from the serving count into the first heading, from a group's last
+    // row on to the next group's heading, and from a heading to its group's first row.
+    @Test
+    fun nextGoesThroughTheHeadingsInTheOrderShown() {
+        open(recipe(IngredientGroup("Dough", 0), IngredientGroup("Glaze", 3)))
+        compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
+        compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.groupName(0)) }
+        compose.onNodeWithTag(EditorTags.groupName(0)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
+
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(2)).performScrollTo().performClick()
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(2)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.unitOption(QuantityUnit.GRAM)) }
+        compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.groupName(1)) }
+        compose.onNodeWithTag(EditorTags.groupName(1)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(3)) }
     }
 
     // Dragged by its handle onto the heading above, a group lands there with every row it owns.

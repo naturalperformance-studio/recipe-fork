@@ -41,6 +41,15 @@ internal fun blockAt(items: List<ListItem>, from: Int): Int =
     if (items[from] is ListItem.Heading) 1 + items.drop(from + 1).takeWhile { it is ListItem.Row }.size else 1
 
 /**
+ * Whether the item at [at] can move at all without leaving a group with no rows: neither the only row of a group nor a
+ * heading with no rows yet can.
+ */
+internal fun List<ListItem>.movable(at: Int): Boolean = when (this[at]) {
+    is ListItem.Heading -> getOrNull(at + 1) is ListItem.Row
+    is ListItem.Row -> getOrNull(at - 1) !is ListItem.Heading || getOrNull(at + 1) is ListItem.Row
+}
+
+/**
  * Where a group's block of [span] items picked up at [from] may land, as the first item of the list it is put back into:
  * just above another heading, or at the end after a row — never among the rows above the first heading, which no group
  * owns, nor inside another group, nor after a heading with no rows yet.
