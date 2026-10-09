@@ -526,9 +526,10 @@ private fun TimerNameField(
     OutlinedTextField(
         value = value,
         onValueChange = { text ->
-            // A name is one line.
-            val name = text.replace('\n', ' ')
-            if (name == value) return@OutlinedTextField
+            // A name is one line, its spaces ordinary ones: a derived name holds its references together with no-break
+            // spaces, which a name the author gives — seeded from it, or pasted — never keeps.
+            val name = text.replace('\n', ' ').replace(StepText.NO_BREAK_SPACE, ' ')
+            if (name == value.replace(StepText.NO_BREAK_SPACE, ' ')) return@OutlinedTextField
             typed = name
             onGiven(name.ifEmpty { null })
             editor.setTimerLabel(position, index, name)
@@ -544,7 +545,7 @@ private fun TimerNameField(
             .fillMaxWidth()
             .focusRequester(requester)
             .onFocusChanged {
-                if (it.isFocused && !focused) typed = shown
+                if (it.isFocused && !focused) typed = shown.replace(StepText.NO_BREAK_SPACE, ' ')
                 if (!it.isFocused && focused) editor.leaveStep(editor.stepKey(position), timer = index)
                 focused = it.isFocused
             }

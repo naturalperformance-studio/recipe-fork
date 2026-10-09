@@ -23,7 +23,7 @@ import kotlin.time.Duration.Companion.minutes
  * reference are no-break spaces. What a step stores, and so what a file exports, holds no quantity and is unchanged.
  */
 class ReferenceNoBreakTest {
-    private val nbsp = " "
+    private val nbsp = "\u00A0"
 
     private val ingredients = listOf(
         Ingredient(0, null, freeTextName = "сахар", unitType = UnitType.HOUSEHOLD, unit = QuantityUnit.TABLESPOON, quantity = Rational.of(9, 2)),
@@ -81,7 +81,17 @@ class ReferenceNoBreakTest {
     @Test
     fun `what a held timer is started from is read as stored, not as displayed`() {
         val part = step.copy(text = "Всыпьте  сахара", ingredientReferences = listOf(IngredientReference(0, 8, IngredientShare(Rational.of(2), QuantityUnit.TABLESPOON))))
-        assertEquals("Всыпьте ￼2 TABLESPOON сахара", TimerName.source(part))
+        assertEquals("Всыпьте \uFFFC2 TABLESPOON сахара", TimerName.source(part))
+    }
+
+    @Test
+    fun `a timer started before references were held together is still its step's timer`() {
+        val sugar = Step(0, "Всыпьте  сахара", listOf(IngredientReference(0, 8)), listOf(Timer(5.minutes)))
+        // As it was held: named with plain spaces, from the source read as it always was.
+        val oldName = "Всыпьте 4½ ст. л. сахара"
+        val oldSource = "Всыпьте \uFFFC сахара"
+        assertEquals(oldSource, TimerName.source(sugar, 0))
+        assertTrue(TimerName.holds(sugar, 0, oldName, oldSource))
     }
 
     @Test

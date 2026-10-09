@@ -119,7 +119,7 @@ class CardReferenceNoBreakTest {
      * and the steps do wrap, over several lines each.
      */
     private fun assertNoBreakInside(steps: List<Step>, quantities: List<String>) {
-        val patterns = quantities.map { quantity -> Regex(quantity.split(' ').joinToString("[  ]") { Regex.escape(it) }) }
+        val patterns = quantities.map { quantity -> Regex(quantity.split(' ').joinToString("[ \u00A0]") { Regex.escape(it) }) }
         var breaks = 0
         steps.forEach { step ->
             val layout = layoutOf(step.position)
