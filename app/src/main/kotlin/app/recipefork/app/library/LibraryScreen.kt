@@ -313,6 +313,8 @@ private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
                         TextButton(
                             onClick = data::performAction,
                             colors = ButtonDefaults.textButtonColors(contentColor = SnackbarDefaults.actionColor),
+                            // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
+                            modifier = Modifier.heightIn(min = 48.dp),
                         ) { Text(it) }
                     }
                 },

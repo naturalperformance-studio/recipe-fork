@@ -45,6 +45,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -248,7 +250,20 @@ internal fun EditorStatementHost(host: SnackbarHostState, modifier: Modifier = M
     SnackbarHost(host, modifier.imePadding()) { data ->
         val swipe = rememberSwipeToDismissBoxState()
         SwipeToDismissBox(swipe, backgroundContent = {}, onDismiss = { data.dismiss() }) {
-            Snackbar(data, modifier = Modifier.testTag(EditorTags.STATEMENT))
+            val label = data.visuals.actionLabel
+            Snackbar(
+                modifier = Modifier.testTag(EditorTags.STATEMENT),
+                action = label?.let {
+                    {
+                        TextButton(
+                            onClick = data::performAction,
+                            colors = ButtonDefaults.textButtonColors(contentColor = SnackbarDefaults.actionColor),
+                            // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
+                            modifier = Modifier.heightIn(min = 48.dp),
+                        ) { Text(it) }
+                    }
+                },
+            ) { Text(data.visuals.message) }
         }
     }
 }
