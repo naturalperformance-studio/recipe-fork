@@ -10,6 +10,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -67,7 +68,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -80,9 +80,9 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * FLOW-053: an own recipe in `local`, `private` or `rejected` is deleted from its entry in the own-recipes view, after
- * a statement that it goes at once and cannot be brought back; declining changes nothing, confirming removes it with
- * everything it holds, and its timers with it. Besides the entry, only the card's ⋮ offers it (RemoveFromTheCardTest).
+ * FLOW-053: an own recipe in `local`, `private` or `rejected` is deleted from its entry in the own-recipes view, asking
+ * nothing: it goes at once with everything it holds, and its timers with it, and the book says so with Undo, which
+ * puts it back (RecipeUndoTest). Besides the entry, only the card's ⋮ offers it (RemoveFromTheCardTest).
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -115,13 +115,11 @@ class DeleteRecipeTest {
     private val cardTimers = CardTimers(store, timers.scope, timers.access, ringing) { BookName.Pool }
 
     private class Words(
-        /** A recipe's title written in the language, which the statement's title quotes. */
+        /** A recipe's title written in the language. */
         val recipe: String,
         val delete: String,
-        val title: (String) -> String,
-        val statement: String,
-        val confirm: String,
-        val decline: String,
+        val notice: String,
+        val undo: String,
         val empty: String,
         val write: String,
     )
@@ -129,10 +127,8 @@ class DeleteRecipeTest {
     private val english = Words(
         recipe = "Soup",
         delete = "Delete",
-        title = { "Delete “$it”?" },
-        statement = "The recipe goes at once, with its photographs and video, and cannot be brought back.",
-        confirm = "Delete",
-        decline = "Cancel",
+        notice = "Recipe deleted",
+        undo = "Undo",
         empty = "Nothing written here yet",
         write = "New recipe",
     )
@@ -140,10 +136,8 @@ class DeleteRecipeTest {
     private val russian = Words(
         recipe = "Суп",
         delete = "Удалить",
-        title = { "Удалить «$it»?" },
-        statement = "Рецепт удалится сразу, вместе с фотографиями и видео, и вернуть его будет нельзя.",
-        confirm = "Удалить",
-        decline = "Отмена",
+        notice = "Рецепт удалён",
+        undo = "Вернуть",
         empty = "Здесь пока ничего не написано",
         write = "Новый рецепт",
     )
@@ -202,15 +196,11 @@ class DeleteRecipeTest {
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
-    private fun askToDelete(recipe: Recipe) {
+    /** Deletes [recipe] from its entry's menu: nothing is asked, and the book says so with Undo. */
+    private fun delete(recipe: Recipe, w: Words = english) {
         bringIntoView(recipe)
         compose.chooseEntryAction(recipe.id.value, LibraryTags.delete(recipe.id.value))
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-    }
-
-    private fun confirm() {
-        compose.onNodeWithTag(LibraryTags.DELETE_CONFIRM).performClick()
-        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
+        compose.awaitRemovalNotice(w.notice, w.undo)
     }
 
     private fun stored(recipe: Recipe) = runBlocking { recipes.get(recipe.id) }
@@ -279,66 +269,54 @@ class DeleteRecipeTest {
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.DELETE), PATIENCE_MS)
     }
 
-    // FLOW-053 (2): before anything is destroyed, the statement says the recipe goes at once and cannot be brought
-    // back; for a recipe in `local` no amount of any allowance is named.
+    // FLOW-053 (2): Delete asks nothing — no dialog, no statement — and the recipe leaves the book at once; the book
+    // says so in its snackbar, with Undo.
     @Test
-    fun theStatementSaysItGoesAtOnceAndCannotBeBroughtBack() = statement(english)
+    fun deletingAsksNothingAndSaysSoWithUndo() = deleting(english)
 
     @Test
     @Config(qualifiers = "ru")
-    fun theStatementSaysItGoesAtOnceAndCannotBeBroughtBackInRussian() = statement(russian)
+    fun deletingAsksNothingAndSaysSoWithUndoInRussian() = deleting(russian)
 
-    private fun statement(w: Words) {
+    private fun deleting(w: Words) {
         val recipe = own(w.recipe)
         show()
         bringIntoView(recipe)
         compose.openEntryMenu(recipe.id.value)
         assertEquals(listOf(w.delete), compose.textsOf(LibraryTags.delete(recipe.id.value)))
         compose.onNodeWithTag(LibraryTags.delete(recipe.id.value)).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-        val inStatement = hasAnyAncestor(hasTestTag(LibraryTags.DELETE_STATEMENT))
-        compose.onNode(hasText(w.title(w.recipe)) and inStatement).assertExists()
-        compose.onNode(hasText(w.statement) and inStatement).assertExists()
-        assertEquals(listOf(w.confirm), compose.textsOf(LibraryTags.DELETE_CONFIRM))
-        assertEquals(listOf(w.decline), compose.textsOf(LibraryTags.DELETE_DECLINE))
-        // No amount is named: nothing in the statement carries a figure.
-        assertFalse(w.statement.any(Char::isDigit))
-        assertFalse(w.title(w.recipe).any(Char::isDigit))
-        // Shown before anything is destroyed.
-        assertNotNull(stored(recipe))
+        compose.awaitRemovalNotice(w.notice, w.undo)
+        assertEquals(0, compose.onAllNodes(isDialog()).fetchSemanticsNodes().size)
+        awaitGone(recipe)
         val content = setOf(w.recipe)
         LocalizationChecks.assertScreenTextFromResources(compose, context, content)
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content)
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 2)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 2)
     }
 
-    // FLOW-053 (5): declining changes nothing — the entry stays and the recipe keeps its state and all it holds.
+    // FLOW-053 (3): Undo puts the recipe back with everything it holds, its entry with it.
     @Test
-    fun decliningChangesNothing() {
+    fun undoPutsTheRecipeBackWithEverythingItHolds() {
         val recipe = own("Soup", RecipeState.PRIVATE) { full(it) }
         val before = rowsOf(recipe)
         show()
-        askToDelete(recipe)
-        compose.onNodeWithTag(LibraryTags.DELETE_DECLINE).performClick()
-        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.entry(recipe.id.value)).assertExists()
+        delete(recipe)
+        awaitGone(recipe)
+        compose.takeNoticeAction("Undo")
+        compose.waitUntil(PATIENCE_MS) { stored(recipe) != null }
         assertEquals(recipe, stored(recipe))
         assertEquals(before, rowsOf(recipe))
-        // Asked again, the statement comes back: declining did not remember an answer.
-        askToDelete(recipe)
+        bringIntoView(recipe)
     }
 
-    // FLOW-053 (6): confirming removes the entry, and the recipe with everything it holds leaves the book; another
+    // FLOW-053 (6): the deletion removes the entry, and the recipe with everything it holds leaves the book; another
     // recipe is untouched.
     @Test
-    fun confirmingRemovesTheEntryAndTheRecipeWithEverythingItHolds() {
+    fun deletingRemovesTheEntryAndTheRecipeWithEverythingItHolds() {
         val kept = own("Bread", minutesAgo = 1) { full(it) }
         val recipe = own("Soup", RecipeState.REJECTED) { full(it) }
         assertTrue(rowsOf(recipe).values.all { it > 0 })
         show()
-        askToDelete(recipe)
-        confirm()
+        delete(recipe)
         awaitGone(recipe)
         assertEquals(rowsOf(recipe).keys.associateWith { 0 }, rowsOf(recipe))
         assertEquals(kept, stored(kept))
@@ -355,10 +333,9 @@ class DeleteRecipeTest {
     fun deletingTheLastRecipeLeavesTheViewThatOffersToWriteOneInRussian() = lastRecipe(russian)
 
     private fun lastRecipe(w: Words) {
-        val recipe = own("Soup")
+        val recipe = own(w.recipe)
         show()
-        askToDelete(recipe)
-        confirm()
+        delete(recipe, w)
         awaitGone(recipe)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.OWN_EMPTY), PATIENCE_MS)
         compose.onNode(hasText(w.empty) and hasAnyAncestor(hasTestTag(LibraryTags.OWN_EMPTY))).assertExists()
@@ -372,8 +349,7 @@ class DeleteRecipeTest {
         assertTrue(Connection.isOffline(context))
         val recipe = own("Soup") { full(it) }
         show()
-        askToDelete(recipe)
-        confirm()
+        delete(recipe)
         awaitGone(recipe)
         assertEquals(rowsOf(recipe).keys.associateWith { 0 }, rowsOf(recipe))
     }
@@ -398,8 +374,7 @@ class DeleteRecipeTest {
         assertTrue(sound.ringing)
 
         show()
-        askToDelete(soup)
-        confirm()
+        delete(soup)
         awaitGone(soup)
         compose.waitUntil(PATIENCE_MS) { runBlocking { store.all.first() }.none { it.key.recipeId == soup.id.value } }
 
@@ -423,8 +398,7 @@ class DeleteRecipeTest {
         val fork = parent.fork(now, owner = null).copy(title = "Green borscht")
         runBlocking { recipes.save(fork) }
         show()
-        askToDelete(parent)
-        confirm()
+        delete(parent)
         awaitGone(parent)
         bringIntoView(fork)
         compose.onNodeWithTag(LibraryTags.entry(fork.id.value)).performClick()

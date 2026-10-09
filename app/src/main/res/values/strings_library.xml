@@ -37,23 +37,15 @@
     <!-- The menu at the end of an entry's title line, holding the entry's actions; it names the recipe. -->
     <string name="library_entry_actions">Actions for “%1$s”</string>
     <string name="library_entry_actions_action">Show the recipe\'s actions</string>
-    <!-- FLOW-053: deleting an own recipe from its entry, and the statement shown before anything is destroyed. -->
+    <!-- FLOW-053: deleting an own recipe from its entry. -->
     <string name="library_entry_delete">Delete</string>
-    <string name="library_delete_title">Delete “%1$s”?</string>
-    <string name="library_delete_statement">The recipe goes at once, with its photographs and video, and cannot be brought back.</string>
-    <string name="library_delete_confirm">Delete</string>
-    <string name="library_delete_decline">Cancel</string>
     <!-- FLOW-042: the view of marked recipes when nothing is marked in the book: its one-line headline and its
          sentence; in a build without the server the view holds imported recipe files (FLOW-062 (1)). -->
     <string name="library_marked_empty">No marked recipes yet</string>
     <string name="library_marked_empty_sentence">Recipes you mark are kept here.</string>
     <string name="library_marked_empty_sentence_serverless">Recipes you import from files are kept here.</string>
-    <!-- FLOW-009 (4), FLOW-064 (6): removing a found recipe from the book, and the statement shown first. -->
+    <!-- FLOW-009 (4), FLOW-064 (6): removing a found recipe from the book. -->
     <string name="library_entry_remove">Remove</string>
-    <string name="library_remove_title">Remove “%1$s” from your book?</string>
-    <string name="library_remove_statement">The recipe leaves this device with everything the book holds of it.</string>
-    <string name="library_remove_confirm">Remove</string>
-    <string name="library_remove_decline">Cancel</string>
     <!-- FLOW-017: the serving count the reader usually cooks for. -->
     <string name="library_usual_servings">I usually cook for…</string>
     <string name="library_usual_not_set">not set</string>
@@ -112,4 +104,8 @@
     <string name="library_nothing_matches">No recipe matches the filters</string>
     <!-- FLOW-042 (1): the one offer of a search that found nothing while filters are on as well. -->
     <string name="library_search_and_filters_clear">Clear search and filters</string>
+    <!-- FLOW-053: a recipe gone from the book at once, said with the action that brings it back while it is said. -->
+    <string name="library_recipe_deleted">Recipe deleted</string>
+    <string name="library_recipe_removed">Recipe removed</string>
+    <string name="library_undo">Undo</string>
 </resources>

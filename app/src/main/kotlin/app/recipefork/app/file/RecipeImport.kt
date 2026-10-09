@@ -141,6 +141,12 @@ class RecipeImport(
      */
     suspend fun remove(id: RecipeId): Boolean = recipes.inOpenBook().removeMarked(id, filesDirectory)
 
+    /**
+     * Takes the found recipe [id] out of the active book with its held content and its mark, its media files left
+     * until the removal is final or undone (FLOW-053, [RecipeRepository.take]); null when the book held no such recipe.
+     */
+    suspend fun take(id: RecipeId): app.recipefork.app.recipe.TakenRecipe? = recipes.inOpenBook().take(id, filesDirectory)
+
     companion object {
         /** The size of a file whose size is not known. */
         const val UNKNOWN_SIZE = -1L

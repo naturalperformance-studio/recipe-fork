@@ -97,6 +97,9 @@ data class RecipeRows(
     val groups: List<IngredientGroupEntity> = emptyList(),
 )
 
+/** A recipe taken out of the book ([BookRecipeDao.take]): its rows, and its mark when it was a found one. */
+data class TakenRows(val rows: RecipeRows, val favourite: FavouriteEntity?)
+
 /** SQLite's limit that limits nothing. */
 private const val NO_LIMIT = -1
 
@@ -228,6 +231,37 @@ abstract class BookRecipeDao {
         delete(recipeId)
         return media
     }
+
+    /**
+     * Takes the recipe [recipeId] out of the book, atomically: everything it holds, and its mark when the book holds it
+     * as a found one. Returns what was taken, which [putBack] puts back as it was; null when the book held no such
+     * recipe. The files of its media are the caller's.
+     */
+    @Transaction
+    open suspend fun take(recipeId: String): TakenRows? {
+        val rows = get(recipeId) ?: return null
+        val favourite = favourite(recipeId)
+        if (favourite != null) deleteFavourite(recipeId)
+        delete(recipeId)
+        return TakenRows(rows, favourite)
+    }
+
+    /**
+     * Puts back what [take] took, atomically, as it was: the recipe with everything it held, and its mark, under the
+     * same times, so that it is listed where it was. Returns false, writing nothing, when the book holds or marks a
+     * recipe of that identity again.
+     */
+    @Transaction
+    open suspend fun putBack(taken: TakenRows): Boolean {
+        val id = taken.rows.recipe.recipeId
+        if (recipe(id) != null || isMarked(id)) return false
+        put(taken.rows)
+        taken.favourite?.let { insertFavourite(it) }
+        return true
+    }
+
+    @Query("select * from favourite where recipe_id = :id")
+    protected abstract suspend fun favourite(id: String): FavouriteEntity?
 
     @Query("select exists(select 1 from favourite where recipe_id = :id)")
     abstract suspend fun isMarked(id: String): Boolean

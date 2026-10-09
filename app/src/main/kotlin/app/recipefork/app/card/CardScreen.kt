@@ -71,10 +71,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberUpdatedState
 import app.recipefork.app.library.DELETABLE
-import app.recipefork.app.library.DeleteStatement
-import app.recipefork.app.library.RemoveStatement
+import app.recipefork.app.library.PendingRemoval
 import app.recipefork.app.library.deleteRecipe
 import app.recipefork.app.library.rememberRecipeImport
 import app.recipefork.app.library.removeFound
@@ -163,8 +162,9 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book, the fork action on every recipe,
  * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
  * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Its ⋮ holds the
- * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — after the same statement
- * the book shows; once it is confirmed the card closes to the book; and, while the recipe has done marks, their
+ * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — which takes it out of the
+ * book at once, asking nothing, and closes the card to the book, which says so with Undo ([onRemoved], FLOW-053); and,
+ * while the recipe has done marks, their
  * clearing (FLOW-068). Nothing inside the recipe edits it; the serving count's − and +, which change how
  * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
  * provenance, which opens its parent's card, the other. It opens each time at the reader's usual count, or at the
@@ -185,6 +185,7 @@ fun CardScreen(
     onFork: () -> Unit = {},
     onOpenParent: (RecipeId) -> Unit = {},
     session: CardSession = remember { TextCardSession.inMemory() },
+    onRemoved: (PendingRemoval) -> Unit = PendingRemoval::finish,
 ) {
     // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
     // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
@@ -214,16 +215,8 @@ fun CardScreen(
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
     val removal = (shown as? CardContent.Shown)?.let { removalOf(it.recipe, it.marked) }
-    // The removal being asked about, while it is; once confirmed, the card closes to the book.
-    var removing by rememberSaveable(recipeId.value) { mutableStateOf(false) }
-    // A recipe that stops being removable while asked about drops the question, which is not asked again unbidden.
-    LaunchedEffect(recipe, removal) { if (recipe != null && removal == null) removing = false }
-    if (removing && recipe != null && removal != null) {
-        RemovalStatement(recipe, removal, recipes, environment.marks, onDone = { removed ->
-            removing = false
-            if (removed) onBack()
-        })
-    }
+    // The recipe leaves the book at once, asking nothing, and the card closes to the book, which says so with Undo.
+    val remove = rememberRemoval(recipes, environment.marks, onRemoved)
     // The title is the content's heading; the bar repeats it only once that heading has scrolled out of view — as when
     // the reader scrolls on, or the card opens at a place further down.
     var titleOut by remember(recipeId) { mutableStateOf(false) }
@@ -248,7 +241,12 @@ fun CardScreen(
                 onFork = onFork,
                 onEdit = onEdit,
                 removal = removal,
-                onRemove = { removing = true },
+                onRemove = {
+                    if (recipe != null && removal != null) {
+                        remove(recipe, removal)
+                        onBack()
+                    }
+                },
                 marked = marks?.any == true,
                 onClearMarks = { marks?.clear() },
             )
@@ -802,34 +800,24 @@ private fun CardMenu(removal: Removal?, onRemove: () -> Unit, marked: Boolean, o
 }
 
 /**
- * The statement before [recipe] leaves the book from its card, the same the book's entry shows: confirmed, the recipe
- * is deleted or removed with its media and timers by the book's own path, and [onDone] is told so; declined, nothing
- * changes.
+ * Takes a recipe out of the book from its card by the book's own path, asking nothing (FLOW-053): an own one deleted,
+ * a found one removed, with its timers and its done [marks]; [onRemoved] is told of it, to say it with Undo.
  */
 @Composable
-private fun RemovalStatement(recipe: Recipe, removal: Removal, recipes: RecipeRepository, marks: DoneMarks, onDone: (removed: Boolean) -> Unit) {
+private fun rememberRemoval(
+    recipes: RecipeRepository,
+    marks: DoneMarks,
+    onRemoved: (PendingRemoval) -> Unit,
+): (Recipe, Removal) -> Unit {
     val timers = rememberCardTimers()
-    when (removal) {
-        Removal.DELETE -> DeleteStatement(
-            recipe.title,
-            onConfirm = {
-                deleteRecipe(recipes, timers, marks, recipe.id)
-                onDone(true)
-            },
-            onDecline = { onDone(false) },
-            target = CardTarget,
-        )
-        Removal.REMOVE -> {
-            val files = rememberRecipeImport(recipes)
-            RemoveStatement(
-                recipe.title,
-                onConfirm = {
-                    removeFound(files, timers, marks, recipe.id)
-                    onDone(true)
-                },
-                onDecline = { onDone(false) },
-                target = CardTarget,
-            )
+    val files = rememberRecipeImport(recipes)
+    val told by rememberUpdatedState(onRemoved)
+    return remember(recipes, marks, timers, files) {
+        { recipe, removal ->
+            when (removal) {
+                Removal.DELETE -> deleteRecipe(recipes, timers, marks, recipe.id) { told(it) }
+                Removal.REMOVE -> removeFound(files, timers, marks, recipe.id) { told(it) }
+            }
         }
     }
 }

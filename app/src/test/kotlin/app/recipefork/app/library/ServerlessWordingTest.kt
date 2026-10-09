@@ -145,14 +145,14 @@ class ServerlessWordingTest {
         val foundId = TestRecipeFiles.soup().id.value
         show(Mode.Serverless)
 
-        // The marked view, a found recipe's menu and the statement before its removal.
+        // The marked view, a found recipe's menu and the notice of its removal, undone.
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(foundId)), PATIENCE_MS)
         assertSaysNothingOfTheServer("the marked view")
         compose.chooseEntryAction(foundId, LibraryTags.remove(foundId))
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.REMOVE_STATEMENT), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the statement before a removal")
-        compose.onNodeWithTag(LibraryTags.REMOVE_DECLINE).performClick()
-        compose.waitForIdle()
+        compose.awaitRemovalNotice(context.getString(R.string.library_recipe_removed), context.getString(R.string.library_undo))
+        assertSaysNothingOfTheServer("the notice of a removal")
+        compose.takeNoticeAction(context.getString(R.string.library_undo))
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(foundId)), PATIENCE_MS)
 
         // The settings, their storage item counted.
         compose.onNodeWithTag(LibraryTags.SETTINGS).performClick()
@@ -171,17 +171,17 @@ class ServerlessWordingTest {
         compose.onNodeWithTag(SettingsTags.BACK).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(SettingsTags.SCREEN), PATIENCE_MS)
 
-        // The own view: every entry, the menu of one, and the statement before a deletion.
+        // The own view: every entry, the menu of one, and the notice of a deletion, undone.
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         owned.forEach { recipe ->
             awaitEntry(recipe)
             assertSaysNothingOfTheServer("the entry of a recipe in ${recipe.state}")
         }
         compose.chooseEntryAction(local.id.value, LibraryTags.delete(local.id.value))
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-        assertSaysNothingOfTheServer("the statement before a deletion")
-        compose.onNodeWithTag(LibraryTags.DELETE_DECLINE).performClick()
-        compose.waitForIdle()
+        compose.awaitRemovalNotice(context.getString(R.string.library_recipe_deleted), context.getString(R.string.library_undo))
+        assertSaysNothingOfTheServer("the notice of a deletion")
+        compose.takeNoticeAction(context.getString(R.string.library_undo))
+        awaitEntry(local)
 
         // The card of a recipe that was published.
         compose.runOnIdle { session.openCard(frozen.id.value, LibraryView.OWN) }

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -112,6 +113,7 @@ class LibrarySession(
 
     fun openEditor(recipeId: String) {
         closeNotice()
+        finishRemoval()
         saved[SETTINGS_KEY] = false
         saved[EDITING_KEY] = recipeId
         // Only an own recipe is edited, so the card shown on leaving the editor returns to the own recipes.
@@ -132,6 +134,7 @@ class LibrarySession(
 
     fun openCard(recipeId: String, from: LibraryView? = null) {
         closeNotice()
+        finishRemoval()
         saved[SETTINGS_KEY] = false
         saved[VIEWING_KEY] = recipeId
         from?.let { saved[CARD_FROM_KEY] = it }
@@ -154,6 +157,7 @@ class LibrarySession(
     val settings: StateFlow<Boolean> = saved.getStateFlow(SETTINGS_KEY, false)
 
     fun openSettings() {
+        finishRemoval()
         saved[SETTINGS_KEY] = true
     }
 
@@ -186,6 +190,7 @@ class LibrarySession(
      * whatever was open — an editor keeps what was entered as it is typed — so that its snackbar offers to open it.
      */
     fun showHeld() {
+        finishRemoval()
         saved[SETTINGS_KEY] = false
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
@@ -198,6 +203,7 @@ class LibrarySession(
      */
     fun showStep(recipeId: String, position: Int) {
         closeNotice()
+        finishRemoval()
         saved[SETTINGS_KEY] = false
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = recipeId
@@ -216,8 +222,9 @@ class LibrarySession(
         .map(FileMessage::decoded)
         .stateIn(viewModelScope, SharingStarted.Eagerly, FileMessage.decoded(saved[MESSAGE_KEY]))
 
-    /** Tells the person [message], in place of any not yet closed. */
+    /** Tells the person [message], in place of any not yet closed, and of a removal's notice, which is final now. */
     fun tell(message: FileMessage) {
+        finishRemoval()
         saved[MESSAGE_KEY] = message.encoded()
     }
 
@@ -232,6 +239,43 @@ class LibrarySession(
      */
     private fun closeNotice() {
         if (FileMessage.decoded(saved[MESSAGE_KEY])?.isNotice == true) told()
+    }
+
+    private val pending = MutableStateFlow<PendingRemoval?>(null)
+
+    /**
+     * The recipe last taken out of the book from its entry or its card, while its leaving can still be undone
+     * (FLOW-053): the book's notice says so, with Undo, until it goes. Held in memory alone: should the process end
+     * first, the leaving is final, and the media sweep deletes what the recipe's media left on the device.
+     */
+    val removal: StateFlow<PendingRemoval?> = pending.asStateFlow()
+
+    /**
+     * [removal] left the book: said with Undo in place of whatever the book's snackbar said. A removal said before it
+     * is final now.
+     */
+    fun removed(removal: PendingRemoval) {
+        closeNotice()
+        pending.getAndUpdate { removal }?.takeIf { it !== removal }?.finish()
+    }
+
+    /** Undo was taken on [removal]'s notice: the recipe is put back. Nothing once that removal is no longer offered. */
+    fun undoRemoval(removal: PendingRemoval) {
+        if (pending.compareAndSet(removal, null)) removal.undo()
+    }
+
+    /** [removal]'s notice went without Undo: its leaving is final. Nothing once that removal is no longer offered. */
+    fun endRemoval(removal: PendingRemoval) {
+        if (pending.compareAndSet(removal, null)) removal.finish()
+    }
+
+    /** The book is left, or another notice said: a removal still offered is final. */
+    private fun finishRemoval() {
+        pending.getAndUpdate { null }?.finish()
+    }
+
+    override fun onCleared() {
+        finishRemoval()
     }
 
     private val working = MutableStateFlow<FileWork?>(null)

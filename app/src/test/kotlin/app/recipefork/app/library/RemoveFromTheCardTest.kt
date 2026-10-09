@@ -57,20 +57,21 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLooper
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Scenario 5 of v0.19: a recipe leaves the book from its card's ⋮ as from the book's entry — an own recipe in a
- * deletable state (ST-010) by Delete, a found one by Remove — after the same statement, whose confirm is marked as
- * destructive; confirmed, the recipe goes with its media and timers and the card closes to the book.
+ * Scenario 5 of v0.19, as FLOW-053 has it since: a recipe leaves the book from its card's ⋮ as from the book's entry —
+ * an own recipe in a deletable state (ST-010) by Delete, a found one by Remove — asking nothing: it goes at once with
+ * its timers, the card closes to the book, and the book says so with Undo; its media files go once the notice does.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -151,6 +152,17 @@ class RemoveFromTheCardTest {
         compose.awaitCard()
     }
 
+    private fun files() = photos.directory(BookName.Pool).list().orEmpty().sorted()
+
+    /**
+     * Waits until the book's media directory holds exactly [expected]. The removal's work runs on the timers' scope, on
+     * the main thread: its looper is let run meanwhile.
+     */
+    private fun awaitFiles(expected: List<String>) = compose.waitUntil(PATIENCE_MS) {
+        ShadowLooper.idleMainLooper()
+        files() == expected
+    }
+
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
     private fun stored(recipe: Recipe) = runBlocking { recipes.get(recipe.id) }
@@ -193,11 +205,11 @@ class RemoveFromTheCardTest {
         }
     }
 
-    // FLOW-053 (2, 6), MEDIA-012: Delete asks with the book's own statement, its confirm in the error colour;
-    // confirming deletes the recipe with its media files and its timers, and the card closes to the book. Another
-    // recipe and its photograph stay.
+    // FLOW-053 (2, 6), MEDIA-012: Delete asks nothing: the recipe goes at once with its timers, and the card closes
+    // to the book, which says "Recipe deleted" with Undo. Its photograph stays while Undo is offered and is deleted
+    // once the notice goes; another recipe and its photograph stay.
     @Test
-    fun deletingFromTheCardDeletesTheRecipeWithItsMediaAndClosesToTheBook() {
+    fun deletingFromTheCardClosesToTheBookWhichSaysSoWithUndo() {
         val kept = own("Bread", minutesAgo = 1, media = listOf(photo("bread-step")))
         val soup = own("Soup", RecipeState.PRIVATE, media = listOf(photo("soup-step")))
         val boil = TimerKey(BookName.Pool, soup.id, 0)
@@ -205,65 +217,41 @@ class RemoveFromTheCardTest {
         showCard(soup)
         openMenu()
         compose.onNodeWithTag(CardTags.DELETE).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-        val inStatement = hasAnyAncestor(hasTestTag(LibraryTags.DELETE_STATEMENT))
-        compose.onNode(hasText("Delete “Soup”?") and inStatement).assertExists()
-        compose.onNode(
-            hasText("The recipe goes at once, with its photographs and video, and cannot be brought back.") and inStatement,
-        ).assertExists()
-        assertEquals(listOf("Delete"), compose.textsOf(LibraryTags.DELETE_CONFIRM))
-        assertConfirmInErrorColour(compose, LibraryTags.DELETE_CONFIRM, LibraryTags.DELETE_DECLINE)
-        compose.onNodeWithTag(LibraryTags.DELETE_CONFIRM).assertHeightIsAtLeast(CardTarget)
-        assertNotNull(stored(soup))
-
-        compose.onNodeWithTag(LibraryTags.DELETE_CONFIRM).performClick()
         awaitBook(LibraryView.OWN)
+        compose.awaitRemovalNotice("Recipe deleted", "Undo")
         compose.waitUntil(PATIENCE_MS) { stored(soup) == null }
         compose.waitUntil(PATIENCE_MS) { runBlocking { store.all.first() }.isEmpty() }
-        compose.waitUntil(PATIENCE_MS) { photos.directory(BookName.Pool).list()!!.sorted() == listOf("bread-step") }
-        assertEquals(kept, stored(kept))
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.entry(soup.id.value)), PATIENCE_MS)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(kept.id.value)), PATIENCE_MS)
+        assertEquals(listOf("bread-step", "soup-step"), files())
+
+        compose.swipeAwayNotice()
+        awaitFiles(listOf("bread-step"))
+        assertEquals(kept, stored(kept))
+        assertNull(stored(soup))
     }
 
-    // ST-010: a recipe that stops being deletable while the statement is open takes the statement away, and once it is
-    // deletable again the statement does not come back by itself.
+    // FLOW-053 (3): Undo on the book's notice puts back the recipe deleted from its card, with its photograph.
     @Test
-    fun aRecipeNoLongerDeletableMidStatementIsNotAskedAboutAgain() {
-        val soup = own("Soup")
-        showCard(soup)
-        openMenu()
-        compose.onNodeWithTag(CardTags.DELETE).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-
-        runBlocking { recipes.save(soup.copy(sent = SentStatus.SENT).inState(RecipeState.PUBLISHED)) }
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
-        assertFalse(exists(LibraryTags.DELETE_STATEMENT))
-
-        runBlocking { recipes.save(soup) }
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.MENU) }
-        compose.waitForIdle()
-        assertFalse("the statement came back unasked", exists(LibraryTags.DELETE_STATEMENT))
-        assertEquals(soup, stored(soup))
-    }
-
-    // FLOW-053 (5): declining the statement from the card changes nothing and leaves the card open.
-    @Test
-    fun decliningOnTheCardChangesNothing() {
+    fun undoPutsBackTheRecipeDeletedFromItsCard() {
         val soup = own("Soup", media = listOf(photo("soup-step")))
         showCard(soup)
         openMenu()
         compose.onNodeWithTag(CardTags.DELETE).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.DELETE_DECLINE).performClick()
-        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-        compose.onNodeWithTag(CardTags.CONTENT).assertExists()
+        awaitBook(LibraryView.OWN)
+        compose.awaitRemovalNotice("Recipe deleted", "Undo")
+        compose.waitUntil(PATIENCE_MS) { stored(soup) == null }
+        compose.takeNoticeAction("Undo")
+        compose.waitUntil(PATIENCE_MS) { stored(soup) != null }
         assertEquals(soup, stored(soup))
-        assertEquals(listOf("soup-step"), photos.directory(BookName.Pool).list()!!.toList())
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(soup.id.value)), PATIENCE_MS)
+        compose.waitForIdle()
+        assertEquals(listOf("soup-step"), files())
     }
 
-    // FLOW-009 (4), FLOW-064 (6): a found recipe's card offers Remove, never Delete; confirming the book's statement,
-    // its confirm in the error colour, removes it with its media and the card closes to the marked recipes.
+    // FLOW-009 (4), FLOW-064 (6), FLOW-053: a found recipe's card offers Remove, never Delete; it removes the recipe
+    // at once, asking nothing, and the card closes to the marked recipes, which say "Recipe removed" with Undo. Its
+    // media goes once the notice does.
     @Test
     fun removingAFoundRecipeFromTheCardClosesToTheMarkedRecipes() {
         val recipe = found("Found soup", listOf(photo("found-step")))
@@ -273,17 +261,14 @@ class RemoveFromTheCardTest {
         assertEquals(listOf("Remove"), compose.textsOf(CardTags.REMOVE))
         assertFalse(exists(CardTags.DELETE))
         compose.onNodeWithTag(CardTags.REMOVE).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.REMOVE_STATEMENT), PATIENCE_MS)
-        val inStatement = hasAnyAncestor(hasTestTag(LibraryTags.REMOVE_STATEMENT))
-        compose.onNode(hasText("Remove “Found soup” from your book?") and inStatement).assertExists()
-        assertEquals(listOf("Remove"), compose.textsOf(LibraryTags.REMOVE_CONFIRM))
-        assertConfirmInErrorColour(compose, LibraryTags.REMOVE_CONFIRM, LibraryTags.REMOVE_DECLINE)
-
-        compose.onNodeWithTag(LibraryTags.REMOVE_CONFIRM).performClick()
         awaitBook(LibraryView.MARKED)
+        compose.awaitRemovalNotice("Recipe removed", "Undo")
         compose.waitUntil(PATIENCE_MS) { stored(recipe) == null }
-        compose.waitUntil(PATIENCE_MS) { photos.directory(BookName.Pool).list().isNullOrEmpty() }
         assertTrue(runBlocking { recipes.marked().first() }.isEmpty())
+        assertEquals(listOf("found-step"), files())
+
+        compose.swipeAwayNotice()
+        awaitFiles(emptyList())
     }
 
     // L10N: the ⋮ is named, and its items read, in Russian.
@@ -297,8 +282,7 @@ class RemoveFromTheCardTest {
         openMenu()
         assertEquals(listOf("Удалить"), compose.textsOf(CardTags.DELETE))
         compose.onNodeWithTag(CardTags.DELETE).performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.DELETE_STATEMENT), PATIENCE_MS)
-        assertEquals(listOf("Удалить"), compose.textsOf(LibraryTags.DELETE_CONFIRM))
-        assertEquals(listOf("Отмена"), compose.textsOf(LibraryTags.DELETE_DECLINE))
+        awaitBook(LibraryView.OWN)
+        compose.awaitRemovalNotice("Рецепт удалён", "Вернуть")
     }
 }
