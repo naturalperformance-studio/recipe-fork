@@ -71,6 +71,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
@@ -123,9 +124,9 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
  * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
  *
- * [onClose] is the bar's back action. What is entered is written as it is typed, so leaving holds nothing back: the
- * system's back, and its predictive gesture, are the navigation host's, which leaves the editor for the destination
- * beneath it.
+ * [onClose] is the bar's back action, and what "Done" does once every change is in the book. What is entered is
+ * written as it is typed, so leaving holds nothing back: the system's back, and its predictive gesture, are the
+ * navigation host's, which leaves the editor for the destination beneath it.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -174,13 +175,17 @@ fun EditorScreen(
     PartsMadeWholeStatement(editor, statements)
     RemovalStatement(editor, statements)
     val focus = LocalFocusManager.current
-    val saved = stringResource(R.string.editor_saved)
+    val notSaved = stringResource(R.string.editor_not_saved)
+    // One close per "Done": a second tap while the first waits for the book closes nothing more.
+    var closing by remember { mutableStateOf(false) }
 
     Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
-            // The top bar: back, and on its right what a fork takes (FLOW-030) and the checklist, there whatever the
-            // recipe holds and whatever its state (GUIDE-003), then "Done" while the recipe can be changed.
+            // The top bar: back and the recipe's title, and on its right what a fork takes (FLOW-030) and the checklist,
+            // there whatever the recipe holds and whatever its state (GUIDE-003), then "Done" while the recipe can be
+            // changed.
             EditorBar(
+                title = recipe?.title,
                 done = recipe?.state?.editable == true,
                 checklist = {
                     ForkNoteAction()
@@ -188,12 +193,21 @@ fun EditorScreen(
                 },
                 onBack = onClose,
                 onDone = {
-                    // Leaving the field is what a field's marks wait for (FLOW-028); then, once every change is in
-                    // the book, it says so — unless a removal still offers Undo, which "Saved" never replaces.
-                    focus.clearFocus()
-                    statementScope.launch {
-                        editor.written()
-                        if (editor.removal.value == null) statements.say(saved, SnackbarDuration.Short)
+                    // Leaving the field is what a field's marks wait for (FLOW-028); a removal still offering Undo
+                    // becomes final, as on leaving; then, once every change is in the book, the editor closes as back
+                    // closes it. A change the book did not take keeps it open, and it says so.
+                    if (!closing) {
+                        closing = true
+                        focus.clearFocus()
+                        editor.removal.value?.let(editor::endRemoval)
+                        statementScope.launch {
+                            if (editor.written()) {
+                                onClose()
+                            } else {
+                                closing = false
+                                statements.say(notSaved)
+                            }
+                        }
                     }
                 },
             )
@@ -333,14 +347,24 @@ private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements)
 }
 
 /**
- * The editor's top app bar, as the book's and the card's: back at its start, announced as showing the recipe; at its
- * end [checklist] and, where [done], "Done", which says the recipe is saved.
+ * The editor's top app bar, as the book's and the card's: back at its start, announced as showing the recipe, then the
+ * recipe's [title] on one line, cut short where it is too long, or "New recipe" while it has none (nothing while the
+ * recipe is read); at its end [checklist] and, where [done], "Done", which saves the recipe and closes the editor.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditorBar(done: Boolean, checklist: @Composable () -> Unit, onBack: () -> Unit, onDone: () -> Unit) {
+private fun EditorBar(title: String?, done: Boolean, checklist: @Composable () -> Unit, onBack: () -> Unit, onDone: () -> Unit) {
     TopAppBar(
-        title = {},
+        title = {
+            if (title != null) {
+                Text(
+                    title.ifBlank { stringResource(R.string.editor_bar_new_recipe) },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag(EditorTags.BAR_TITLE),
+                )
+            }
+        },
         modifier = Modifier.testTag(EditorTags.BAR),
         navigationIcon = {
             val label = stringResource(R.string.editor_back)
@@ -585,7 +609,9 @@ object EditorTags {
     const val SCREEN = "editor"
     const val BAR = "editor-bar"
     const val BACK = "editor-back"
-    /** The top bar's "Done": the changes are in the book, and it says "Saved". */
+    /** The recipe's title in the top bar, or "New recipe" while it has none. */
+    const val BAR_TITLE = "editor-bar-title"
+    /** The top bar's "Done": once the changes are in the book, the editor closes. */
     const val DONE = "editor-done"
     const val FORM = "editor-form"
     const val FROZEN = "editor-frozen"

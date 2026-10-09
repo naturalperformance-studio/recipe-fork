@@ -2,10 +2,12 @@
 <resources>
     <!-- The editor (FLOW-024). -->
     <string name="editor_back">Back</string>
-    <!-- The top bar's "Done": what is written is in the book, and a short statement says so. -->
+    <!-- The top bar's "Done": once what is written is in the book, the editor closes; where the book refused it, it stays open and says so. -->
     <string name="editor_done">Done</string>
-    <string name="editor_done_action">Save what is written</string>
-    <string name="editor_saved">Saved</string>
+    <string name="editor_done_action">Save and close</string>
+    <string name="editor_not_saved">Couldn\'t save the recipe</string>
+    <!-- The top bar's title while the recipe has none. -->
+    <string name="editor_bar_new_recipe">New recipe</string>
     <string name="editor_back_action">Show the recipe</string>
     <string name="editor_title">Title</string>
     <!-- A recipe outside local, private and rejected is open, not editable (FLOW-002). -->

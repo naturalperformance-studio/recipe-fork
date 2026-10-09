@@ -72,6 +72,7 @@ class RemovalUndoTest {
     private val saving = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val now = Instant.parse("2026-10-04T12:00:00Z")
     private var shown by mutableStateOf(true)
+    private var closed = 0
 
     @Before
     fun setUp() {
@@ -113,7 +114,7 @@ class RemovalUndoTest {
         val environment = EditorEnvironment(ActiveBook(BookName.Pool, book.database), device.catalog(context)) { now }
         compose.setContent {
             MaterialTheme {
-                if (shown) EditorScreen(recipe.id, recipes, environment, saving, onClose = {})
+                if (shown) EditorScreen(recipe.id, recipes, environment, saving, onClose = { closed++ })
             }
         }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
@@ -191,6 +192,29 @@ class RemovalUndoTest {
         compose.waitUntil(PATIENCE_MS) { held().isEmpty() }
         assertTrue(stored(recipe).media.isEmpty())
         assertEquals(2, stored(recipe).steps.size)
+    }
+
+    // "Done" while Undo is offered makes the removal final, as leaving does: the editor closes, and the removed step's
+    // photograph is deleted, the statement having had no time to go by itself.
+    @Test
+    fun doneEndsUndoAndDeletesARemovedStepsPhotograph() {
+        val recipe = open(recipe())
+        removeStep(1)
+        compose.waitUntil(PATIENCE_MS) { stored(recipe).steps.size == 2 && stored(recipe).media.isEmpty() }
+        assertEquals(listOf("fry.jpg"), held())
+
+        // The clock held, so that the statement cannot go by itself first; the editor stays composed, so nothing but
+        // "Done" ends the removal.
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag(EditorTags.DONE).performClick()
+
+        compose.waitUntilWithMainThread {
+            compose.mainClock.advanceTimeByFrame()
+            closed == 1 && held().isEmpty()
+        }
+        assertEquals(listOf(Step(0, "Mix flour."), Step(1, "Fry.")), stored(recipe).steps)
+        compose.mainClock.autoAdvance = true
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.STATEMENT) }
     }
 
     // The next change ends Undo: the statement goes and the removed step's photograph is deleted.

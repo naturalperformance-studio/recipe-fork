@@ -48,6 +48,7 @@ import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.recipe.withUnit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -860,17 +861,35 @@ class RecipeEditor(
         // Queued on a fair lock before this returns, so the book receives the changes in the order made — started
         // undispatched, since a dispatcher may run a launch made inside another coroutine of its own after a later one.
         saving.launch(start = CoroutineStart.UNDISPATCHED) {
-            // A heading still being named is not saved (DOM-022).
-            writes.withLock { recipes.save(next.withNamedGroups()) }
-            then()
+            // A heading still being named is not saved (DOM-022). A write the book refuses leaves the editor open on
+            // what the author has; each write holds the whole recipe, so the next one taken makes the book whole.
+            val taken = writes.withLock {
+                val taken = try {
+                    recipes.save(next.withNamedGroups())
+                    true
+                } catch (refused: CancellationException) {
+                    throw refused
+                } catch (refused: Exception) {
+                    false
+                }
+                behind = !taken
+                taken
+            }
+            // What follows a change — a replaced file deleted — waits for the book to hold it.
+            if (taken) then()
         }
         return true
     }
 
-    /** Returns once every change made so far is in the book: queued behind the writes already asked for. */
-    suspend fun written() {
-        saving.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock {} }.await()
-    }
+    /** Whether the last write this editor asked for was refused, so the book holds less than the author has. */
+    private var behind = false
+
+    /**
+     * Returns once every change made so far is in the book — queued behind the writes already asked for — with whether
+     * the book holds them: false where the last write was refused.
+     */
+    suspend fun written(): Boolean =
+        saving.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock { !behind } }.await()
 
     /** Applies [change] and writes the result; a recipe in a frozen state is left as it is. */
     private fun edit(change: (Recipe) -> Recipe): Boolean = edit(change) {}
