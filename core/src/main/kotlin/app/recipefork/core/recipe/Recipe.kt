@@ -118,9 +118,8 @@ data class Step(
     /** This step with [timer] added after its others; null, refused, where it already holds [RecipeBounds.MAX_TIMERS]. */
     fun withTimer(timer: Timer): Step? = if (canAddTimer) copy(timers = timers + timer) else null
 
-    /** This step without its timer at [index]; the others keep their order. The step itself where it holds none there. */
-    fun withoutTimer(index: Int): Step =
-        if (index in timers.indices) copy(timers = timers.filterIndexed { at, _ -> at != index }) else this
+    /** This step without its timer at [index]; the others keep their order. Unchanged where it holds none there. */
+    fun withoutTimer(index: Int): Step = copy(timers = timers.filterIndexed { at, _ -> at != index })
 }
 
 /**
