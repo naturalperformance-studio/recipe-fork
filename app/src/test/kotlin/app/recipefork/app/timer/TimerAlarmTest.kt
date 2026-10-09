@@ -53,10 +53,18 @@ class TimerAlarmTest {
     private val timer = RunningTimer(key, "Beans", "Soup", 20.minutes, Instant.parse("2026-10-02T12:20:00Z"))
     private val notices = AndroidTimerNotices(application)
 
+    /** The second timer of the same step (DOM-024). */
+    private val second = key.copy(index = 1)
+    private val secondTimer = RunningTimer(second, "Beans", "Soup", 5.minutes, Instant.parse("2026-10-02T12:05:00Z"), number = 2)
+
     @After
     fun close() {
         ringing.forget(key)
-        runBlocking { container.timers.cancel(key) }
+        ringing.forget(second)
+        runBlocking {
+            container.timers.cancel(key)
+            container.timers.cancel(second)
+        }
     }
 
     /** Waits for [condition], letting the main thread run between looks. */
@@ -215,6 +223,76 @@ class TimerAlarmTest {
         )
         shadowOf(Looper.getMainLooper()).idle()
         assertTrue(ringing.isRinging)
+    }
+
+    /** Both timers of the step ended, each announced and ringing. */
+    private fun bothAnnounced() {
+        announced()
+        notices.announce(secondTimer)
+        ringing.ring(secondTimer)
+        assertEquals(setOf(key, second), ringing.ringing.value)
+    }
+
+    private fun notificationOf(timer: TimerKey) = shadowOf(manager).allNotifications.single {
+        TimerIntents.keyOf(shadowOf(it.contentIntent).savedIntent.data) == timer
+    }
+
+    // DOM-024: two timers of one step ring each with a notification of its own; Stop on one stops it alone.
+    @Test
+    fun theStopOfOneTimerOfAStepLeavesTheOtherRinging() {
+        bothAnnounced()
+        assertEquals(2, shadowOf(manager).allNotifications.count { it.channelId == TimerChannels.ENDED })
+        notificationOf(second).actions.single().actionIntent.send()
+        await { second !in ringing.ringing.value }
+        assertEquals(setOf(key), ringing.ringing.value)
+        assertTrue(notificationOf(second).actions.isNullOrEmpty())
+        assertEquals(1, notificationOf(key).actions.size)
+    }
+
+    // DOM-024: dismissing one timer's notification stops its ringing alone.
+    @Test
+    fun dismissingOneTimersNotificationLeavesTheOtherRinging() {
+        bothAnnounced()
+        notificationOf(key).deleteIntent.send()
+        await { key !in ringing.ringing.value }
+        assertEquals(setOf(second), ringing.ringing.value)
+    }
+
+    // FLOW-013 (4), DOM-024: tapping one timer's notification opens the card at its step and stops its ringing alone.
+    @Test
+    fun tappingOneTimersNotificationStopsThatTimerAlone() {
+        bothAnnounced()
+        val intent = shadowOf(notificationOf(second).contentIntent).savedIntent
+        val activity = Robolectric.buildActivity(MainActivity::class.java, intent).setup()
+        try {
+            assertEquals(setOf(key), ringing.ringing.value)
+        } finally {
+            activity.pause().stop().destroy()
+        }
+    }
+
+    /** The alarm set at the end of the timer of [timer], if any. */
+    private fun backstop(timer: TimerKey) = alarms.scheduledAlarms.singleOrNull {
+        val sent = shadowOf(it.operation).savedIntent
+        sent.component?.className == TimerEndReceiver::class.java.name && TimerIntents.keyOf(sent.data) == timer
+    }
+
+    // DOM-024: each timer of a step has its own alarm at its end; cancelling one takes back its alarm alone.
+    @Test
+    fun eachTimerOfAStepHasItsOwnAlarm() {
+        runBlocking {
+            container.timers.start(key, "Beans", "Soup", 20.minutes)
+            container.timers.start(second, "Beans", "Soup", 5.minutes, number = 2)
+        }
+        val first = backstop(key)
+        val other = backstop(second)
+        assertNotNull(first)
+        assertNotNull(other)
+        assertFalse(first!!.operation == other!!.operation)
+        assertTrue(other.triggerAtTime < first.triggerAtTime)
+        runBlocking { container.timers.cancel(second) }
+        assertNull(backstop(second))
+        assertNotNull(backstop(key))
     }
 
     // The service stays in the foreground while an ended timer rings, and ends once it is stopped.

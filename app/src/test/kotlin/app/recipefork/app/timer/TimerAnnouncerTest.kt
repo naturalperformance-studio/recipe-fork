@@ -59,6 +59,37 @@ class TimerAnnouncerTest {
         assertEquals(listOf(water, beans), notices.announced.map { it.key })
     }
 
+    // DOM-024: two timers of one step end, are announced and ring each on its own; stopping one leaves the other
+    // ringing, and cancelling one leaves the other to end.
+    @Test
+    fun twoTimersOfOneStepAreAnnouncedAndRingEachOnItsOwn() = runBlocking {
+        val sound = RecordedSound()
+        val ringing = TimerRinging(clock, sound, notices)
+        val ringingAnnouncer = TimerAnnouncer(notices, ringing) { true }
+        val first = TimerKey(BookName.Pool, soup, 2, 0)
+        val second = TimerKey(BookName.Pool, soup, 2, 1)
+        val third = TimerKey(BookName.Pool, soup, 2, 2)
+        store.start(first, "Simmer", "Soup", 10.minutes, number = 1)
+        store.start(second, "Simmer", "Soup", 10.minutes, number = 2)
+        store.start(third, "Simmer", "Soup", 30.minutes, number = 3)
+        clock.advance(10.minutes)
+        ringingAnnouncer.announceEnded(store)
+        assertEquals(setOf(first, second), notices.announced.map { it.key }.toSet())
+        assertEquals(listOf(1, 2), notices.announced.map { it.number }.sortedBy { it })
+        assertEquals(setOf(first, second), ringing.ringing.value)
+
+        ringing.stop(second)
+        assertEquals(setOf(first), ringing.ringing.value)
+        assertTrue(sound.ringing)
+        assertEquals(listOf(second), notices.quieted)
+
+        store.cancel(third)
+        clock.advance(30.minutes)
+        ringingAnnouncer.announceEnded(store)
+        assertEquals(2, notices.announced.size)
+        assertEquals(setOf(first), ringing.ringing.value)
+    }
+
     // FLOW-013 (3), FLOW-016 (3–5): the announcement carries the recipe's title and the name it was started with.
     @Test
     fun anAnnouncementCarriesTheTitleAndTheNameTheTimerWasStartedWith() = runBlocking {

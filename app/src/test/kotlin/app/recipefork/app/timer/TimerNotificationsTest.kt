@@ -33,12 +33,13 @@ class TimerNotificationsTest {
     private val notices = AndroidTimerNotices(context)
     private val beansText = "Simmer the beans with the onion and the bay leaf until they are soft through and through"
 
-    private fun timer(position: Int, name: String, recipe: String = "Soup") = RunningTimer(
-        TimerKey(BookName.Pool, RecipeId("soup"), position),
+    private fun timer(position: Int, name: String, recipe: String = "Soup", index: Int = 0, number: Int? = null) = RunningTimer(
+        TimerKey(BookName.Pool, RecipeId("soup"), position, index),
         name,
         recipe,
         30.minutes,
         Instant.parse("2026-10-02T12:30:00Z"),
+        number = number,
     )
 
     private fun shown(): List<Notification> = shadowOf(manager).allNotifications
@@ -84,6 +85,52 @@ class TimerNotificationsTest {
         assertEquals(setOf("Water", "Beans"), shown().map { it.text }.toSet())
         notices.withdraw(timer(0, "Water").key)
         assertEquals(listOf("Beans"), shown().map { it.text })
+    }
+
+    // DOM-024: two timers of one step are two notifications, each with its own tag and intents; the unnamed ones are
+    // told apart by their numbers; withdrawing one leaves the other.
+    @Test
+    fun twoTimersOfOneStepAreTwoNotifications() {
+        val first = timer(2, "Simmer", index = 0, number = 1)
+        val second = timer(2, "Simmer", index = 1, number = 2)
+        notices.announce(first)
+        notices.announce(second)
+        val both = shadowOf(manager).activeNotifications.toList()
+        assertEquals(2, both.size)
+        assertEquals(setOf(TimerIntents.tagOf(first.key), TimerIntents.tagOf(second.key)), both.map { it.tag }.toSet())
+        assertEquals(setOf("Simmer · timer 1", "Simmer · timer 2"), shown().map { it.text }.toSet())
+        val second2 = shown().single { it.text == "Simmer · timer 2" }
+        val opened = shadowOf(second2.contentIntent).savedIntent
+        assertEquals(second.key, TimerIntents.timerOf(opened))
+        assertEquals(second.key, TimerIntents.keyOf(opened.data))
+        assertEquals(second.key, TimerIntents.keyOf(shadowOf(second2.actions.single().actionIntent).savedIntent.data))
+        assertEquals(second.key, TimerIntents.keyOf(shadowOf(second2.deleteIntent).savedIntent.data))
+        val first2 = shown().single { it.text == "Simmer · timer 1" }
+        assertFalse(first2.contentIntent == second2.contentIntent)
+        assertFalse(first2.actions.single().actionIntent == second2.actions.single().actionIntent)
+        assertFalse(first2.deleteIntent == second2.deleteIntent)
+        notices.withdraw(first.key)
+        assertEquals(listOf("Simmer · timer 2"), shown().map { it.text })
+    }
+
+    // A timer's URI carries its place among its step's timers; the first is named as a step's only timer always was,
+    // so that what was set for it before a step held several is still its own.
+    @Test
+    fun theUriCarriesTheTimersIndex() {
+        val first = TimerKey(BookName.Pool, RecipeId("soup"), 2)
+        val third = TimerKey(BookName.Pool, RecipeId("soup"), 2, 2)
+        assertEquals(listOf("book-pool.db", "soup", "2"), TimerIntents.uriOf(first).pathSegments)
+        assertEquals(listOf("book-pool.db", "soup", "2", "2"), TimerIntents.uriOf(third).pathSegments)
+        assertEquals(first, TimerIntents.keyOf(TimerIntents.uriOf(first)))
+        assertEquals(third, TimerIntents.keyOf(TimerIntents.uriOf(third)))
+        assertFalse(TimerIntents.tagOf(first) == TimerIntents.tagOf(third))
+    }
+
+    // A named timer, or a step's only one, is announced by its name alone.
+    @Test
+    fun aTimerWithNoNumberIsAnnouncedByItsNameAlone() {
+        notices.announce(timer(2, "Beans", index = 1))
+        assertEquals("Beans", shown().single().text)
     }
 
     // FLOW-013 (4): tapping it opens the application on that recipe's card, at the timer's step.
