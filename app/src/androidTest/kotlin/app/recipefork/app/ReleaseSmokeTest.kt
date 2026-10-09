@@ -288,8 +288,8 @@ class ReleaseSmokeTest {
     }
 
     /**
-     * From the card, the editor's "Take a photo" launches the phone's camera application through the shrunk build's
-     * capture provider. The device's camera application is there to answer; the test stands in for it, as its shutter
+     * From the card, the editor's cover opens its source sheet, whose "Camera" launches the phone's camera application
+     * through the shrunk build's capture provider. The device's camera application is there to answer; the test stands in for it, as its shutter
      * cannot be pressed from here, writing the shot through the address it is handed. The shot is cropped — Done — and
      * becomes the recipe's cover, holding no metadata, the shot's own file deleted.
      */
@@ -312,8 +312,11 @@ class ReleaseSmokeTest {
         instrumentation.addMonitor(camera)
         try {
             click(EDIT)
-            awaitShown(TAKE_A_PHOTO)
-            click(TAKE_A_PHOTO)
+            // The cover opens its source sheet, the camera on it (FLOW-026).
+            awaitShown(CHANGE_COVER)
+            click(CHANGE_COVER)
+            awaitShown(CAMERA)
+            click(CAMERA)
             // The crop, in a window of its own, shows the shot under its frame: its Done is the one on screen.
             awaitShown(CROP_FRAME)
             val intent = launched!!
@@ -343,7 +346,10 @@ class ReleaseSmokeTest {
         /** The library's tab of the recipes written on this device. */
         const val WRITTEN_HERE = "Written here"
         const val EDIT = "Edit"
-        const val TAKE_A_PHOTO = "Take a photo"
+        /** The editor's set cover, a tap on which opens the sheet of the camera, the gallery and its removal. */
+        const val CHANGE_COVER = "Replace or remove the cover photo"
+        /** The sheet's item that opens the phone's camera application. */
+        const val CAMERA = "Camera"
         const val CROP_FRAME = "Crop frame: drag the photo to move it, pinch to zoom"
         const val CROP_DONE = "Done"
     }
