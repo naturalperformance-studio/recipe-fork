@@ -54,6 +54,7 @@ object TimerIntents {
     private const val BOOK_KEY = "app.recipefork.timer.book"
     private const val RECIPE_KEY = "app.recipefork.timer.recipe"
     private const val STEP_KEY = "app.recipefork.timer.step"
+    private const val INDEX_KEY = "app.recipefork.timer.index"
 
     /** Opens the application on [key]'s recipe card at its step, in the task already open if there is one. */
     fun open(context: Context, key: TimerKey): Intent = Intent(context, MainActivity::class.java)
@@ -63,6 +64,7 @@ object TimerIntents {
         .putExtra(BOOK_KEY, key.book)
         .putExtra(RECIPE_KEY, key.recipeId)
         .putExtra(STEP_KEY, key.stepPosition)
+        .putExtra(INDEX_KEY, key.index)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
     /** The step [intent] leads to, or null where it leads to none. */
@@ -74,24 +76,42 @@ object TimerIntents {
         return TimerStep(book, recipe, extras.getInt(STEP_KEY))
     }
 
+    /**
+     * The timer whose notification [intent] came from, or null where it came from none. One opened by a notification
+     * posted before a step held several timers names none among them: it was the step's only one, at index 0.
+     */
+    fun timerOf(intent: Intent?): TimerKey? {
+        val step = stepOf(intent) ?: return null
+        return TimerKey(step.book, step.recipeId, step.stepPosition, intent?.extras?.getInt(INDEX_KEY, 0) ?: 0)
+    }
+
     /** Marks [intent] as followed, so that it leads nowhere again. */
     fun followed(intent: Intent) {
         intent.removeExtra(BOOK_KEY)
         intent.removeExtra(RECIPE_KEY)
         intent.removeExtra(STEP_KEY)
+        intent.removeExtra(INDEX_KEY)
     }
 
     /** The timer [uri] names, as [uriOf] made it; null where it names none. */
     fun keyOf(uri: Uri?): TimerKey? {
         val path = uri?.takeIf { it.scheme == SCHEME }?.pathSegments ?: return null
-        if (path.size != 3) return null
-        return TimerKey(path[0], path[1], path[2].toIntOrNull() ?: return null)
+        if (path.size != 3 && path.size != 4) return null
+        val index = if (path.size == 4) path[3].toIntOrNull()?.takeIf { it > 0 } ?: return null else 0
+        return TimerKey(path[0], path[1], path[2].toIntOrNull() ?: return null, index)
     }
 
     private const val SCHEME = "recipefork-timer"
 
+    /**
+     * The URI that names [key] — its book, recipe, step and, from the second timer of a step on, its place among the
+     * step's timers — so that each timer has intents, alarms and a notification of its own. The first timer of a step
+     * is named as the step's only timer was before a step held several, so that what was set for it then is still its.
+     */
     fun uriOf(key: TimerKey): Uri = Uri.Builder().scheme(SCHEME)
-        .appendPath(key.book).appendPath(key.recipeId).appendPath(key.stepPosition.toString()).build()
+        .appendPath(key.book).appendPath(key.recipeId).appendPath(key.stepPosition.toString())
+        .apply { if (key.index != 0) appendPath(key.index.toString()) }
+        .build()
 
     /** A tag naming [key] among the application's notifications. */
     fun tagOf(key: TimerKey): String = uriOf(key).toString()
@@ -130,7 +150,7 @@ class AndroidTimerNotices(
         val builder = NotificationCompat.Builder(context, TimerChannels.ENDED)
             .setSmallIcon(R.drawable.ic_timer_notification)
             .setContentTitle(timer.recipe.ifBlank { context.getString(R.string.common_untitled_recipe) })
-            .setContentText(timer.name)
+            .setContentText(shownName(context, timer))
             .setSubText(context.getString(R.string.timer_ended))
             .setWhen(timer.endsAt.toEpochMilli())
             .setShowWhen(true)
@@ -165,6 +185,10 @@ class AndroidTimerNotices(
         const val ENDED_ID = 1
         const val RUNNING_ID = 2
 
+        /** [timer]'s name as its notification shows it: with its number where it shares its name within its step. */
+        fun shownName(context: Context, timer: RunningTimer): String =
+            timer.number?.let { context.getString(R.string.timer_numbered, timer.name, it) } ?: timer.name
+
         fun openingIntent(context: Context, key: TimerKey): PendingIntent = PendingIntent.getActivity(
             context,
             0,
@@ -186,7 +210,7 @@ class AndroidTimerNotices(
             if (next != null) {
                 builder
                     .setContentTitle(next.recipe.ifBlank { context.getString(R.string.common_untitled_recipe) })
-                    .setContentText(next.name)
+                    .setContentText(shownName(context, next))
                     .setWhen(next.endsAt.toEpochMilli())
                     .setShowWhen(true)
                     .setUsesChronometer(true)

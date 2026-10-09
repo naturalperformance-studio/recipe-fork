@@ -93,9 +93,10 @@ class RunningTimersTest {
         timers.start(TimerKey(BookName.Pool, bread, 0), "Timer", "Soup", 1.hours)
         timers.start(TimerKey(BookName.OfAccount("a1"), soup, 0), "Timer", "Soup", 7.minutes)
 
-        assertEquals(setOf(0, 3), timers.ofRecipe(BookName.Pool, soup).first().keys)
-        assertEquals(setOf(0), timers.ofRecipe(BookName.Pool, bread).first().keys)
-        assertEquals(7.minutes, timers.ofRecipe(BookName.OfAccount("a1"), soup).first().getValue(0).duration)
+        assertEquals(setOf(0, 3), timers.ofRecipe(BookName.Pool, soup).first().keys.map { it.stepPosition }.toSet())
+        assertEquals(setOf(0), timers.ofRecipe(BookName.Pool, bread).first().keys.map { it.stepPosition }.toSet())
+        val a1 = TimerKey(BookName.OfAccount("a1"), soup, 0)
+        assertEquals(7.minutes, timers.ofRecipe(BookName.OfAccount("a1"), soup).first().getValue(a1).duration)
         assertEquals(4, timers.all.first().size)
     }
 
@@ -110,7 +111,55 @@ class RunningTimersTest {
         timers.cancel(key)
         assertNull(timers.get(key))
         assertEquals(listOf(key), announcements.cancelled)
-        assertEquals(setOf(1), timers.ofRecipe(BookName.Pool, soup).first().keys)
+        assertEquals(setOf(other), timers.ofRecipe(BookName.Pool, soup).first().keys)
+    }
+
+    // DOM-024: the timers of one step are held each by its place among them, side by side.
+    @Test
+    fun theTimersOfOneStepAreHeldEachOnItsOwn() = runBlocking {
+        val timers = open()
+        val first = TimerKey(BookName.Pool, soup, 2, 0)
+        val second = TimerKey(BookName.Pool, soup, 2, 1)
+        val third = TimerKey(BookName.Pool, soup, 2, 4)
+        timers.start(first, "Boil", "Soup", 5.minutes)
+        val started = timers.start(second, "Boil", "Soup", 20.minutes, source = "Boil", number = 2)
+        timers.start(third, "Rest", "Soup", 1.hours)
+        assertEquals(setOf(first, second, third), timers.ofRecipe(BookName.Pool, soup).first().keys)
+        assertEquals(5.minutes, timers.get(first)!!.duration)
+        assertEquals(started, timers.get(second))
+        assertEquals(2, timers.get(second)!!.number)
+        assertNull(timers.get(first)!!.number)
+
+        // Started again, one is replaced alone.
+        clock.advance(1.minutes)
+        timers.start(first, "Boil", "Soup", 5.minutes)
+        assertEquals(19.minutes, timers.get(second)!!.remaining(clock.now()))
+        assertEquals(5.minutes, timers.get(first)!!.remaining(clock.now()))
+
+        // Announced on its own.
+        val ended = timers.get(first)!!
+        assertTrue(timers.markAnnounced(ended))
+        assertFalse(timers.get(second)!!.announced)
+        assertEquals(listOf(second, third), timers.unannounced().map { it.key }.sortedBy { it.index })
+
+        // Cancelled on its own.
+        timers.cancel(second)
+        assertNull(timers.get(second))
+        assertEquals(setOf(first, third), timers.ofRecipe(BookName.Pool, soup).first().keys)
+    }
+
+    // Leaving or deleting a recipe ends every timer of it, every timer of every step.
+    @Test
+    fun cancellingARecipeEndsEveryTimerOfEachOfItsSteps() = runBlocking {
+        val timers = open()
+        val keys = listOf(TimerKey(BookName.Pool, soup, 0, 0), TimerKey(BookName.Pool, soup, 0, 1), TimerKey(BookName.Pool, soup, 3, 2))
+        keys.forEach { timers.start(it, "Timer", "Soup", 5.minutes) }
+        val kept = TimerKey(BookName.Pool, bread, 0, 1)
+        timers.start(kept, "Timer", "Bread", 5.minutes)
+        timers.cancelRecipe(BookName.Pool, soup)
+        assertEquals(emptyMap<TimerKey, RunningTimer>(), timers.ofRecipe(BookName.Pool, soup).first())
+        assertEquals(keys.toSet(), announcements.cancelled.toSet())
+        assertEquals(setOf(kept), timers.ofRecipe(BookName.Pool, bread).first().keys)
     }
 
     // FLOW-021 (2): starting it again replaces what it had counted.
@@ -146,5 +195,7 @@ class RunningTimersTest {
     @Test
     fun keysNameTheBookByItsFile() {
         assertEquals(TimerKey("book-pool.db", "soup", 4), TimerKey(BookName.Pool, soup, 4))
+        assertEquals(TimerKey("book-pool.db", "soup", 4, 0), TimerKey(BookName.Pool, soup, 4))
+        assertEquals(TimerKey("book-pool.db", "soup", 4, 2), TimerKey(BookName.Pool, soup, 4, 2))
     }
 }

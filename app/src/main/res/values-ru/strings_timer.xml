@@ -27,4 +27,6 @@
     <string name="timer_bar_show_action">Показать его шаг</string>
     <string name="timer_bar_ringing">Звенит</string>
     <string name="timer_bar_step">Шаг %1$d</string>
+    <string name="timer_bar_step_timer">Шаг %1$d · таймер %2$d</string>
+    <string name="timer_numbered">%1$s · таймер %2$d</string>
 </resources>

@@ -157,7 +157,11 @@ private fun StepRow(
                 StepMedia(item, number, step.position)
             }
         }
-        if (step.timer != null) StepTimer(step, timers, references::quantity, Modifier.padding(start = StepIndent, top = TimerGap))
+        step.timers.indices.forEach { index ->
+            // Each timer on its own line: the first a clear gap below the rest, the others closer under it.
+            val gap = if (index == 0) TimerGap else TimersGap
+            StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
+        }
     }
 }
 
@@ -177,6 +181,9 @@ internal val StepNumberSize = 32.dp
 
 /** The gap above a step's timer, setting it clearly apart from the step's text and its media. */
 internal val TimerGap = 12.dp
+
+/** The gap between one timer of a step and the next. */
+internal val TimersGap = 8.dp
 
 /** Where a step's photograph, clip and timer start: under its text. */
 internal val StepIndent = StepNumberSize + StepGap

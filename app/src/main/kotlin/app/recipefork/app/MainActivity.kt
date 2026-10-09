@@ -25,7 +25,6 @@ import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.library.importFile
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.timer.TimerIntents
-import app.recipefork.app.timer.TimerKey
 import app.recipefork.app.timer.TimerService
 import app.recipefork.app.ui.AppNavHost
 import app.recipefork.app.ui.AppTheme
@@ -105,10 +104,10 @@ class MainActivity : ComponentActivity() {
             openRecipeFile(applicationContext, container.mode, RecipeImport(container.recipes, filesDir), librarySession, uri)
             return
         }
-        val step = TimerIntents.stepOf(intent) ?: return
-        (application as RecipeForkApplication).container.timerRinging
-            .forget(TimerKey(step.book, step.recipeId, step.stepPosition))
-        librarySession.showStep(step.recipeId, step.stepPosition)
+        val timer = TimerIntents.timerOf(intent) ?: return
+        // That timer's ringing alone: another of its step, or of its recipe, rings on.
+        (application as RecipeForkApplication).container.timerRinging.forget(timer)
+        librarySession.showStep(timer.recipeId, timer.stepPosition)
         TimerIntents.followed(intent!!)
     }
 
