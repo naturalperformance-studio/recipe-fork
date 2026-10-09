@@ -58,8 +58,9 @@ class AnimationConversionTest {
         }
     }
 
-    private val converter = Counted(AnimationEncoder(images))
-    private val animations = ClipStore(context.filesDir, converter, AnimationDuration(images))
+    private val clips = AnimationClips(images)
+    private val converter = Counted(clips)
+    private val animations = ClipStore(context.filesDir, converter, clips)
 
     private fun left(): List<String> = PhotoStore(context.filesDir).directory(book).list()?.toList().orEmpty()
 
@@ -239,6 +240,26 @@ class AnimationConversionTest {
     @Test
     fun anAnimationOverFifteenSecondsIsRefusedAsTooLong() {
         assertEquals(ClipOutcome.Refused(ClipRefusal.TOO_LONG), runBlocking { animations.add(book, source("long.gif")) })
+        assertEquals(0, converter.calls)
+        assertEquals(emptyList<String>(), left())
+    }
+
+    // A hostile GIF of 60-odd bytes stating a 65535 x 65535 canvas, which would take 16 GB to compose: refused as
+    // unreadable before anything of it is allocated, and the application goes on.
+    @Test
+    fun aGifStatingAHugeCanvasIsRefusedWithoutACrash() {
+        val file = File(sources, "huge.gif").apply {
+            parentFile?.mkdirs()
+            val frame = byteArrayOf(0x21, 0xF9.toByte(), 4, 0, 10, 0, 0, 0, 0x2C, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 2, 0x4C, 0x01, 0)
+            writeBytes(
+                byteArrayOf(0x47, 0x49, 0x46, 0x38, 0x39, 0x61, -1, -1, -1, -1, 0x80.toByte(), 0, 0, 0, 0, 0, -1, -1, -1) +
+                    frame + frame + byteArrayOf(0x3B),
+            )
+        }
+        val source = TestClips.uri(context, file)
+
+        assertFalse(images.isAnimated(source))
+        assertEquals(ClipOutcome.Refused(ClipRefusal.UNREADABLE), runBlocking { animations.add(book, source) })
         assertEquals(0, converter.calls)
         assertEquals(emptyList<String>(), left())
     }

@@ -2,6 +2,7 @@ package app.recipefork.app.media
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -158,6 +159,81 @@ class AnimatedImageTest {
         assertNull(AnimatedImage.parse(still))
     }
 
+    // A hostile file states a canvas its device cannot hold: refused before anything of it is allocated.
+    @Test
+    fun aCanvasOverTheCapIsNoAnimation() {
+        assertNull(AnimatedImage.parse(TestGif(listOf(Frame(10, width = 1, height = 1), Frame(10, width = 1, height = 1)), 65535, 65535).bytes()))
+        assertNull(AnimatedImage.parse(TestWebp(listOf(100, 100), canvas = 16_000_000, frame = 1).bytes()))
+        assertNull(AnimatedImage.parse(TestGif(listOf(Frame(10, width = 1, height = 1), Frame(10, width = 1, height = 1)), 3841, 2160).bytes()))
+        // A 4K canvas is the most there may be.
+        assertEquals(3840 * 2160L, AnimatedImage.MAX_CANVAS_PIXELS)
+        val largest = AnimatedImage.parse(TestGif(listOf(Frame(10, width = 1, height = 1), Frame(10, width = 1, height = 1)), 3840, 2160).bytes())!!
+        assertEquals(listOf(3840, 2160), listOf(largest.width, largest.height))
+    }
+
+    @Test
+    fun aFrameReachingOutsideItsCanvasIsNoAnimation() {
+        assertNull(AnimatedImage.parse(TestGif(listOf(Frame(10), Frame(10, left = 1))).bytes()))
+        assertNull(AnimatedImage.parse(TestGif(listOf(Frame(10), Frame(10, top = 4, height = 5))).bytes()))
+        assertNull(AnimatedImage.parse(TestGif(listOf(Frame(10), Frame(10, width = 65535, height = 65535))).bytes()))
+        assertNull(AnimatedImage.parse(TestWebp(listOf(100, 100), canvas = 8, frame = 9).bytes()))
+    }
+
+    // However many frames a file holds, they are read only until they pass the longest a clip may last.
+    @Test
+    fun aFrameCountBombIsReadOnlyUntilItPassesFifteenSeconds() {
+        val shortest = TestGif(List(100_000) { Frame(2) }).bytes() // 20 ms each: 2000 s in all
+        val gif = AnimatedImage.parse(shortest)!!
+        assertEquals(751, gif.frames.size)
+        assertEquals(15_020.milliseconds, gif.duration)
+
+        val unstated = AnimatedImage.parse(TestGif(List(100_000) { Frame(0) }).bytes())!! // read as 100 ms each
+        assertEquals(151, unstated.frames.size)
+
+        val webp = AnimatedImage.parse(TestWebp(List(100_000) { 11 }).bytes())!!
+        assertEquals(1364, webp.frames.size)
+        assertTrue(webp.duration > 15.seconds)
+    }
+
+    // A JPEG or a PNG is told still from its signature: nothing more of it is read.
+    @Test
+    fun aStillFormatIsToldFromItsFirstBytesAlone() {
+        listOf("still.jpg", "still.png").forEach { name ->
+            val input = Counting(fixture(name))
+            assertNull(name, AnimatedImage.read(input))
+            assertTrue("$name: ${input.read} bytes read", input.read <= 12)
+        }
+    }
+
+    @Test
+    fun aFileOverTheByteCapIsNoAnimation() {
+        val bytes = fixture("animated.gif")
+        assertNotNull(AnimatedImage.read(Counting(bytes), maxBytes = bytes.size))
+        val input = Counting(bytes)
+        assertNull(AnimatedImage.read(input, maxBytes = bytes.size - 1))
+        // A hostile file of endless bytes after a GIF's signature is read no further than the cap and one buffer.
+        val endless = object : java.io.InputStream() {
+            var read = 0L
+            override fun read(): Int = if (read++ < 6) "GIF89a"[read.toInt() - 1].code else 0
+        }
+        assertNull(AnimatedImage.read(endless, maxBytes = 1_000_000))
+        assertTrue("${endless.read} bytes read", endless.read < 1_000_000 + 128 * 1024)
+        assertEquals(32 * 1024 * 1024, AnimatedImage.MAX_BYTES)
+    }
+
+    @Test
+    fun anAnimationReadFromAStreamIsTheOneItsBytesHold() {
+        val gif = AnimatedImage.read(Counting(fixture("animated.gif")))!!
+        assertEquals(1700.milliseconds, gif.duration)
+        val webp = AnimatedImage.read(Counting(fixture("animated.webp")))!!
+        assertEquals(1400.milliseconds, webp.duration)
+    }
+
+    /** [bytes] as a stream that counts what is read of it. */
+    private class Counting(bytes: ByteArray) : java.io.ByteArrayInputStream(bytes) {
+        val read get() = pos
+    }
+
     private fun u16(bytes: ByteArray, at: Int) = (bytes[at].toInt() and 0xff) or ((bytes[at + 1].toInt() and 0xff) shl 8)
 
     private fun indexOf(bytes: ByteArray, part: ByteArray): Int =
@@ -175,12 +251,12 @@ class AnimatedImageTest {
     )
 
     /** A GIF of [frames] on an 8 x 8 canvas; their image data is a placeholder the reader never decodes. */
-    private class TestGif(private val frames: List<Frame>) {
+    private class TestGif(private val frames: List<Frame>, private val width: Int = 8, private val height: Int = 8) {
         fun bytes(loops: Boolean = false): ByteArray {
             val out = ByteArrayOutputStream()
             out.write("GIF89a".toByteArray())
-            out.u16(8)
-            out.u16(8)
+            out.u16(width)
+            out.u16(height)
             out.write(0x80) // a global colour table of two colours
             out.write(0)
             out.write(0)
@@ -213,21 +289,35 @@ class AnimatedImageTest {
     }
 
     /** A WebP of frames lasting [durations] ms with [flags] (blending and disposal), animated if [animated]. */
-    private class TestWebp(private val durations: List<Int>, private val animated: Boolean = true, private val flags: List<Int>? = null) {
+    private class TestWebp(
+        private val durations: List<Int>,
+        private val animated: Boolean = true,
+        private val flags: List<Int>? = null,
+        private val canvas: Int = 8,
+        private val frame: Int = 8,
+    ) {
         fun bytes(): ByteArray {
             val body = ByteArrayOutputStream()
-            body.chunk("VP8X", byteArrayOf(if (animated) 0x02 else 0, 0, 0, 0, 7, 0, 0, 7, 0, 0))
+            body.chunk(
+                "VP8X",
+                ByteArrayOutputStream().apply {
+                    write(if (animated) 0x02 else 0)
+                    write(ByteArray(3))
+                    u24(canvas - 1)
+                    u24(canvas - 1)
+                }.toByteArray(),
+            )
             body.chunk("ANIM", ByteArray(6))
             durations.forEachIndexed { i, duration ->
-                val frame = ByteArrayOutputStream()
-                frame.u24(0)
-                frame.u24(0)
-                frame.u24(7)
-                frame.u24(7)
-                frame.u24(duration)
-                frame.write(flags?.get(i) ?: 0)
-                frame.chunk("VP8L", byteArrayOf(0x2F, 7, 0xC0.toByte(), 1, 0))
-                body.chunk("ANMF", frame.toByteArray())
+                val anmf = ByteArrayOutputStream()
+                anmf.u24(0)
+                anmf.u24(0)
+                anmf.u24(frame - 1)
+                anmf.u24(frame - 1)
+                anmf.u24(duration)
+                anmf.write(flags?.get(i) ?: 0)
+                anmf.chunk("VP8L", byteArrayOf(0x2F, 7, 0xC0.toByte(), 1, 0))
+                body.chunk("ANMF", anmf.toByteArray())
             }
             val out = ByteArrayOutputStream()
             out.write("RIFF".toByteArray())

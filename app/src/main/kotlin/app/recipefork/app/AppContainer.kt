@@ -23,8 +23,7 @@ import app.recipefork.app.dictionary.DictionarySeeding
 import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.DictionarySync
 import app.recipefork.app.media.AnimatedImages
-import app.recipefork.app.media.AnimationDuration
-import app.recipefork.app.media.AnimationEncoder
+import app.recipefork.app.media.AnimationClips
 import app.recipefork.app.media.ClipConverter
 import app.recipefork.app.media.ClipSourceDuration
 import app.recipefork.app.media.ClipStore
@@ -136,8 +135,7 @@ class AppContainer(
      * Where steps' animated images are turned into clips and kept beside them, refused as a clip is when they last
      * too long or weigh too much converted (MEDIA-004, MEDIA-006, MEDIA-007).
      */
-    fun animationStore(context: Context): ClipStore =
-        ClipStore(context.filesDir, AnimationEncoder(animatedImages), AnimationDuration(animatedImages))
+    fun animationStore(context: Context): ClipStore = AnimationClips(animatedImages).let { ClipStore(context.filesDir, it, it) }
 
     /** Clears each book's media directory of files no recipe holds, once as the book is opened. */
     val mediaSweep = MediaSweep(context.filesDir)

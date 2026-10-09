@@ -12,7 +12,6 @@ import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
-import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.media3.common.util.MediaFormatUtil
 import androidx.media3.common.util.UnstableApi
@@ -20,13 +19,13 @@ import androidx.media3.muxer.BufferInfo
 import androidx.media3.muxer.Muxer
 import androidx.media3.transformer.InAppMp4Muxer
 import app.recipefork.core.recipe.VideoLimits
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
 import kotlin.coroutines.coroutineContext
+import kotlin.math.roundToInt
 
 /**
  * Turns an animated GIF or WebP into a step's clip (scenario 3, MEDIA-004): each frame decoded by the platform and
@@ -35,31 +34,29 @@ import kotlin.coroutines.coroutineContext
  * frame's own delay — into an MP4 with no audio track, written by the same muxer as [ClipTransformer]'s, which keeps
  * no metadata (MEDIA-003).
  *
+ * It is told the animation already read ([AnimationClips]), so a file is parsed once per clip.
+ *
  * Media3 Transformer reads only the first frame of an image, and takes timed pictures with no way to hold back an
  * animation decoded faster than it encodes; the platform's encoder, fed a frame whenever it has room, has neither
  * limit.
  */
 @OptIn(UnstableApi::class)
-class AnimationEncoder(private val images: AnimatedImages) : ClipConverter {
-    override suspend fun convert(source: Uri, target: File) = withContext(Dispatchers.Default) {
-        val animation = images.read(source) ?: throw ClipConversionFailed("The image is no animation")
-        val size = ClipPlan.converted(PixelSize(animation.width, animation.height), VideoLimits.MAX_LONGER_EDGE)
-        try {
-            encode(animation, size, target)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: ClipConversionFailed) {
-            throw e
-        } catch (e: Exception) {
-            throw ClipConversionFailed("The animation could not be encoded", e)
-        }
+object AnimationEncoder {
+    /**
+     * Writes [animation] as a clip to [target]. Throws when it cannot be encoded — [ClipConversionFailed] for a frame
+     * that cannot be decoded, the codec's or the muxer's own exception otherwise, [OutOfMemoryError] when the memory
+     * left is too little; cancelled, it stops the encoder before returning. Whatever it leaves in [target] on failure
+     * is the caller's to delete.
+     */
+    suspend fun encode(animation: AnimatedImage, target: File) = withContext(Dispatchers.Default) {
+        encode(animation, ClipPlan.converted(PixelSize(animation.width, animation.height), VideoLimits.MAX_LONGER_EDGE), target)
     }
 
     private suspend fun encode(animation: AnimatedImage, size: PixelSize, target: File) {
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, size.width, size.height).apply {
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible)
             setInteger(MediaFormat.KEY_BIT_RATE, ClipPlan.bitrate(size))
-            setInteger(MediaFormat.KEY_FRAME_RATE, NOMINAL_FRAME_RATE)
+            setInteger(MediaFormat.KEY_FRAME_RATE, frameRate(animation))
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
             setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT709)
             setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED)
@@ -68,8 +65,9 @@ class AnimationEncoder(private val images: AnimatedImages) : ClipConverter {
         val frames = animation.frames
         val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
         var muxer: Muxer? = null
+        var composer: Composer? = null
         try {
-            val composer = Composer(animation, size)
+            val pictures = Composer(animation, size).also { composer = it }
             codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             codec.start()
             // Dated to no time, like a converted clip; its last frame held for its own delay before the clip ends.
@@ -90,9 +88,9 @@ class AnimationEncoder(private val images: AnimatedImages) : ClipConverter {
                         if (queued == frames.size) {
                             codec.queueInputBuffer(input, 0, 0, timeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                         } else {
-                            val picture = composer.compose(frames[queued])
+                            pictures.compose(frames[queued])
                             val image = codec.getInputImage(input) ?: throw ClipConversionFailed("The encoder took no picture")
-                            Yuv.write(picture, image)
+                            pictures.write(image)
                             codec.queueInputBuffer(input, 0, size.width * size.height * 3 / 2, timeUs, 0)
                             timeUs += frames[queued].delay.inWholeMicroseconds
                         }
@@ -123,25 +121,30 @@ class AnimationEncoder(private val images: AnimatedImages) : ClipConverter {
             output.close()
         } finally {
             codec.release()
+            composer?.release()
             // Left unfinished, the file is the caller's to delete; closing it is only letting go of it.
             muxer?.let { runCatching { it.close() } }
         }
     }
 
-    private companion object {
-        /** How long the encoder is waited on for a buffer, in microseconds, before the loop looks again. */
-        const val WAIT_US = 10_000L
+    /** How long the encoder is waited on for a buffer, in microseconds, before the loop looks again. */
+    private const val WAIT_US = 10_000L
 
-        /**
-         * The frame rate the encoder is told to expect. An animation's frames come at their own pace; this only
-         * guides the encoder's rate control.
-         */
-        const val NOMINAL_FRAME_RATE = 15
+    /**
+     * The frame rate the encoder is told to expect: the animation's frames over its duration, at least one a second.
+     * Its frames come at their own pace; this only guides the encoder's rate control.
+     */
+    internal fun frameRate(animation: AnimatedImage): Int {
+        val seconds = animation.duration.inWholeMilliseconds / 1000.0
+        return if (seconds <= 0.0) 1 else (animation.frames.size / seconds).roundToInt().coerceIn(1, 60)
     }
 }
 
-/** Draws an animation's frames one after another onto its canvas, and hands out each result at the clip's size. */
-private class Composer(animation: AnimatedImage, private val size: PixelSize) {
+/**
+ * Draws an animation's frames one after another onto its canvas, and writes each result at the clip's size into the
+ * encoder's input. Its bitmaps are let go of by [release].
+ */
+private class Composer(animation: AnimatedImage, size: PixelSize) {
     private val canvasBitmap = Bitmap.createBitmap(animation.width, animation.height, Bitmap.Config.ARGB_8888)
     private val canvas = Canvas(canvasBitmap)
     private val picture = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
@@ -151,13 +154,14 @@ private class Composer(animation: AnimatedImage, private val size: PixelSize) {
     private val scaling = Paint(Paint.FILTER_BITMAP_FLAG)
     private val whole = Rect(0, 0, size.width, size.height)
     private val decoding = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 }
+    private val argb = IntArray(size.width * size.height)
 
     /** The frame last drawn, and the canvas as it was before it if it is to be restored. */
     private var last: AnimationFrame? = null
     private var beforeLast: Bitmap? = null
 
-    /** The picture once [frame] is drawn: its predecessor disposed of as it says, [frame] drawn over or in its place. */
-    fun compose(frame: AnimationFrame): Bitmap {
+    /** Draws [frame]: its predecessor disposed of as it says, [frame] drawn over it or in its place. */
+    fun compose(frame: AnimationFrame) {
         last?.let { previous ->
             when (previous.disposal) {
                 Disposal.KEEP -> Unit
@@ -182,16 +186,24 @@ private class Composer(animation: AnimatedImage, private val size: PixelSize) {
         // A clip has no transparency: what the animation leaves clear is shown on white, as a page shows it.
         pictureCanvas.drawColor(Color.WHITE)
         pictureCanvas.drawBitmap(canvasBitmap, null, whole, scaling)
-        return picture
+    }
+
+    /** Writes the picture last composed into [image]. */
+    fun write(image: Image) = Yuv.write(picture, argb, image)
+
+    fun release() {
+        canvasBitmap.recycle()
+        picture.recycle()
+        beforeLast?.recycle()
     }
 }
 
 /** Writes a picture into an encoder's YUV 4:2:0 input as BT.709 limited range, whatever the planes' layout. */
 private object Yuv {
-    fun write(picture: Bitmap, image: Image) {
+    /** Writes [picture] into [image], through [argb], which holds its pixels. */
+    fun write(picture: Bitmap, argb: IntArray, image: Image) {
         val width = picture.width
         val height = picture.height
-        val argb = IntArray(width * height)
         picture.getPixels(argb, 0, width, 0, 0, width, height)
         val (yPlane, uPlane, vPlane) = image.planes
         val luma = yPlane.buffer
