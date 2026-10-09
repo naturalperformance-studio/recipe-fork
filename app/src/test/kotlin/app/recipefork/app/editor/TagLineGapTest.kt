@@ -119,8 +119,9 @@ class TagLineGapTest {
     }
 
     /**
-     * Each chip of [tags] is drawn 32 dp tall at the usual font scale, and no less at a larger one, within a touch area
-     * of at least 48 by 48 dp: the element the screen reader and a touch find.
+     * Each chip of [tags] is drawn 32 dp tall at the usual font scale, and no less at a larger one — yet shorter than its
+     * touch area, not drawn as tall as it — within a touch area of at least 48 by 48 dp: the element the screen reader
+     * and a touch find.
      */
     private fun assertDrawnAtChipHeightWithinATouchArea(what: String, tags: List<String>) {
         val chip = with(compose.density) { 32.dp.toPx() }
@@ -131,6 +132,7 @@ class TagLineGapTest {
             val drawn = drawn(tag)
             if (scaled) {
                 assertTrue("$what: $tag is drawn ${drawn.height} px tall", drawn.height >= chip - tolerance)
+                assertTrue("$what: $tag is drawn ${drawn.height} px tall, as tall as its touch area", drawn.height < target - tolerance)
             } else {
                 assertEquals("$what: $tag's drawn height, in px", chip, drawn.height, tolerance)
             }
