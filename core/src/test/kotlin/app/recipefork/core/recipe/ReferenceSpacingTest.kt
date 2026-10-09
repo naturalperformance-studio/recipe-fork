@@ -24,10 +24,10 @@ class ReferenceSpacingTest {
     // A reference against a word gets a space on that side.
     @Test
     fun `a reference put against a word is spaced from it`() {
-        assertEquals("Всыпьте 200 г муки", inserted("Всыпьте|муки"))
-        assertEquals("Всыпьте 200 г муки", inserted("Всыпьте |муки"))
-        assertEquals("Всыпьте 200 г муки", inserted("Всыпьте| муки"))
-        assertEquals("Всыпьте 200 г муки", inserted("Всыпьте | муки"))
+        assertEquals("Всыпьте 200\u00A0г муки", inserted("Всыпьте|муки"))
+        assertEquals("Всыпьте 200\u00A0г муки", inserted("Всыпьте |муки"))
+        assertEquals("Всыпьте 200\u00A0г муки", inserted("Всыпьте| муки"))
+        assertEquals("Всыпьте 200\u00A0г муки", inserted("Всыпьте | муки"))
         val result = ReferenceSpacing.insert(Step(0, "Всыпьтемуки"), 0, 7, afterExisting = false)
         assertEquals(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))), result.step)
         assertTrue(result.spaceAfter)
@@ -36,14 +36,14 @@ class ReferenceSpacingTest {
     // None at the start or the end of the text, next to a space or a line break, or before punctuation.
     @Test
     fun `no space at an edge, next to a space or before punctuation`() {
-        assertEquals("200 г муки", inserted("|муки"))
-        assertEquals("Добавьте 200 г", inserted("Добавьте|"))
-        assertEquals("200 г", inserted("|"))
+        assertEquals("200\u00A0г муки", inserted("|муки"))
+        assertEquals("Добавьте 200\u00A0г", inserted("Добавьте|"))
+        assertEquals("200\u00A0г", inserted("|"))
         listOf(",", ".", ":", ";", ")", "!", "?").forEach { mark ->
-            assertEquals("Добавьте 200 г$mark", inserted("Добавьте|$mark"))
+            assertEquals("Добавьте 200\u00A0г$mark", inserted("Добавьте|$mark"))
         }
-        assertEquals("Муки (200 г)", inserted("Муки (|)"))
-        assertEquals("Муки:\n200 г", inserted("Муки:\n|"))
+        assertEquals("Муки (200\u00A0г)", inserted("Муки (|)"))
+        assertEquals("Муки:\n200\u00A0г", inserted("Муки:\n|"))
         assertFalse(ReferenceSpacing.insert(Step(0, "Добавьте."), 0, 8, afterExisting = false).spaceAfter)
     }
 
@@ -57,10 +57,10 @@ class ReferenceSpacingTest {
         val before = ReferenceSpacing.insert(step, 1, 8, afterExisting = false)
         assertEquals(Step(0, "Всыпьте   муки", listOf(IngredientReference(1, 8), IngredientReference(0, 9))), before.step)
         assertTrue(before.spaceAfter)
-        assertEquals("Всыпьте по вкусу 200 г муки", reads(before.step))
+        assertEquals("Всыпьте по\u00A0вкусу 200\u00A0г муки", reads(before.step))
         // Against a word on the other side too.
         val tight = ReferenceSpacing.insert(Step(0, "иx", listOf(IngredientReference(0, 1))), 1, 1, afterExisting = true)
-        assertEquals("и200 г по вкусу x", reads(tight.step))
+        assertEquals("и200\u00A0г по\u00A0вкусу x", reads(tight.step))
     }
 
     /** The step [typed] with the flour at "|", closed up where it is taken out; the step as it then reads. */
@@ -103,6 +103,6 @@ class ReferenceSpacingTest {
         val step = Step(0, "Всыпьте  муки и  соли, затем ", listOf(IngredientReference(0, 8), IngredientReference(1, 16), IngredientReference(0, 29)))
         val left = ReferenceSpacing.withoutReferencesTo(step, 0)
         assertEquals(Step(0, "Всыпьте муки и  соли, затем", listOf(IngredientReference(1, 15))), left)
-        assertEquals("Всыпьте муки и по вкусу соли, затем", reads(left))
+        assertEquals("Всыпьте муки и по\u00A0вкусу соли, затем", reads(left))
     }
 }

@@ -131,7 +131,9 @@ class CardStepReferencesTest {
             val p = ingredient.position
             // A row with no quantity yet reads as the editor writes it: the placeholder, then the unit the list shows.
             val unfinished = ingredient.quantity == null && ingredient.unitType != UnitType.TASTE_UNMEASURED
-            val quantity = if (unfinished) listOfNotNull("___", listQuantity(p)).joinToString(" ") else listQuantity(p)!!
+            // Held together in the step, its spaces no-break spaces, so it never wraps inside (T-191).
+            val quantity = (if (unfinished) listOfNotNull("___", listQuantity(p)).joinToString(" ") else listQuantity(p)!!)
+                .replace(' ', '\u00A0')
             val arrow = listArrow(p)?.let { " $it" } ?: ""
             assertEquals("${ingredient.freeTextName} at ${servings()}", "Take $quantity$arrow.", shown(p + 1))
             val words = listWords(p)?.let { " ($it)" } ?: ""
@@ -147,14 +149,14 @@ class CardStepReferencesTest {
     @Config(qualifiers = "ru")
     fun theScenarioStepReadsTheScaledQuantity() {
         open(recipe("Всыпьте  муки", 8))
-        assertEquals("Всыпьте 200 г муки", shown(0))
+        assertEquals("Всыпьте 200\u00A0г муки", shown(0))
         more(4)
         assertEquals("Порций: 8", servings())
-        assertEquals("Всыпьте 400 г муки", shown(0))
+        assertEquals("Всыпьте 400\u00A0г муки", shown(0))
         assertEquals("400 г", listQuantity(0))
-        assertEquals(listOf("1.", "Всыпьте 400 г муки"), spoken(0))
+        assertEquals(listOf("1.", "Всыпьте 400\u00A0г муки"), spoken(0))
         // A "to taste" reference reads as the list writes it, unmarked.
-        assertEquals("Take по вкусу.", shown(4))
+        assertEquals("Take по\u00A0вкусу.", shown(4))
     }
 
     // SCALE-007, DOM-007, FLOW-032 (3): at three counts every reference is its list line, arrows and words included;
@@ -168,19 +170,19 @@ class CardStepReferencesTest {
         more(4)
         assertEquals("Servings: 8", servings())
         assertStepsReadAsTheList()
-        assertEquals("Add 400 g flour", shown(0))
+        assertEquals("Add 400\u00A0g flour", shown(0))
         fewer(3)
         assertEquals("Servings: 5", servings())
         assertStepsReadAsTheList()
         // 3.75 eggs shown as 4, rounded up; 1¼ tsp of salt exact.
-        assertEquals("Take 4 pc ↑.", shown(2))
-        assertEquals(listOf("3.", "Take 4 pc ($up)."), spoken(2))
+        assertEquals("Take 4\u00A0pc ↑.", shown(2))
+        assertEquals(listOf("3.", "Take 4\u00A0pc ($up)."), spoken(2))
         fewer(2)
         assertEquals("Servings: 3", servings())
         assertStepsReadAsTheList()
         // 2.25 eggs shown as 2, rounded down.
-        assertEquals("Take 2 pc ↓.", shown(2))
-        assertEquals(listOf("3.", "Take 2 pc ($down)."), spoken(2))
+        assertEquals("Take 2\u00A0pc ↓.", shown(2))
+        assertEquals(listOf("3.", "Take 2\u00A0pc ($down)."), spoken(2))
     }
 
     // SCALE-007 while an ingredient is fixed: 300 g of flour sets 3/2 — every reference follows the list.
@@ -195,9 +197,9 @@ class CardStepReferencesTest {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isEmpty() }
         assertEquals("Servings: ≈6", servings())
         assertStepsReadAsTheList()
-        assertEquals("Add 300 g flour", shown(0))
+        assertEquals("Add 300\u00A0g flour", shown(0))
         // 4.5 eggs shown as 5, rounded up.
-        assertEquals("Take 5 pc ↑.", shown(2))
+        assertEquals("Take 5\u00A0pc ↑.", shown(2))
     }
 
     // FLOW-032 (4), SCALE-005: a value held at its floor reads the floor, with the list's ↑.
@@ -207,9 +209,9 @@ class CardStepReferencesTest {
         fewer(8)
         assertEquals("Servings: ¼", servings())
         assertStepsReadAsTheList()
-        assertEquals("Take 1 pc ↑.", shown(2))
-        assertEquals("Take ¼ tsp ↑.", shown(3))
-        assertEquals(listOf("4.", "Take ¼ tsp ($up)."), spoken(3))
+        assertEquals("Take 1\u00A0pc ↑.", shown(2))
+        assertEquals("Take ¼\u00A0tsp ↑.", shown(3))
+        assertEquals(listOf("4.", "Take ¼\u00A0tsp ($up)."), spoken(3))
     }
 
     // FLOW-032 (6): "to taste" reads as such and is never marked; unscaled rows read as their lines read.
@@ -217,11 +219,11 @@ class CardStepReferencesTest {
     fun toTasteAndUnscaledRowsReadAsTheirLines() {
         open()
         more(4)
-        assertEquals("Take to taste.", shown(4))
-        assertEquals(listOf("5.", "Take to taste."), spoken(4))
+        assertEquals("Take to\u00A0taste.", shown(4))
+        assertEquals(listOf("5.", "Take to\u00A0taste."), spoken(4))
         // FLOW-032: a row with no quantity yet reads as in the editor, the empty placeholder then its unit; with no
         // unit either, the placeholder alone. An off-grid row reads as its line, its unit alone, unscaled.
-        assertEquals("Take ___ g.", shown(5))
+        assertEquals("Take ___\u00A0g.", shown(5))
         assertEquals("Take g.", shown(6))
         assertEquals("g", listQuantity(5))
         assertEquals("Take ___.", shown(7))
@@ -256,11 +258,11 @@ class CardStepReferencesTest {
         )
         assertEquals("Stir well", shown(0))
         assertEquals(listOf("1.", "Stir well"), spoken(0))
-        assertEquals("200 g", shown(1))
-        assertEquals(listOf("2.", "200 g"), spoken(1))
+        assertEquals("200\u00A0g", shown(1))
+        assertEquals(listOf("2.", "200\u00A0g"), spoken(1))
         more(4)
         assertEquals("Stir well", shown(0))
-        assertEquals("400 g", shown(1))
+        assertEquals("400\u00A0g", shown(1))
     }
 
     // A recipe with no serving count shows none, and is scaled by a fixing all the same: the references follow.
@@ -275,14 +277,14 @@ class CardStepReferencesTest {
                     ingredients.take(3).map { Step(it.position + 1, "Take .", listOf(IngredientReference(it.position, 5))) },
             ),
         )
-        assertEquals("Add 200 g flour", shown(0))
+        assertEquals("Add 200\u00A0g flour", shown(0))
         fixFlour("100")
-        assertEquals("Add 100 g flour", shown(0))
+        assertEquals("Add 100\u00A0g flour", shown(0))
         // 1.5 eggs shown as 2, rounded up, as the list shows it.
         assertEquals("2 pc", listQuantity(1))
-        assertEquals("Take 2 pc\u202F↑.", shown(2))
-        assertEquals(listOf("3.", "Take 2 pc ($up)."), spoken(2))
-        assertEquals("Take ½ tsp.", shown(3))
+        assertEquals("Take 2\u00A0pc\u202F↑.", shown(2))
+        assertEquals(listOf("3.", "Take 2\u00A0pc ($up)."), spoken(2))
+        assertEquals("Take ½\u00A0tsp.", shown(3))
         assertEquals("½ tsp", listQuantity(2))
     }
 }

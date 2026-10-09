@@ -59,7 +59,7 @@ class IngredientGroupsAndNotesTest {
     @Test
     fun aRecipeWithGroupsAndNotesReadsItsReferencesAsWithout() {
         assertEquals(steps(plain), steps(grouped))
-        assertEquals("Rub 200 g into 500 g", StepText.render(grouped.steps[0], ReferenceText.authored(grouped.ingredients, InterfaceLanguage.ENGLISH)))
+        assertEquals("Rub 200\u00A0g into 500\u00A0g", StepText.render(grouped.steps[0], ReferenceText.authored(grouped.ingredients, InterfaceLanguage.ENGLISH)))
     }
 
     // DOM-023: what the author types is the note trimmed; blank is none.

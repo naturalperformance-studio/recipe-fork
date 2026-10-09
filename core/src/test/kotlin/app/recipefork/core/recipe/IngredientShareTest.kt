@@ -74,7 +74,7 @@ class IngredientShareTest {
             listOf(IngredientReference(0, 10, IngredientShare(Rational.of(3), QuantityUnit.PIECE)), IngredientReference(0, 20, IngredientShare(Rational.of(3), QuantityUnit.PIECE))),
         )
         assertEquals(part(Rational.of(3), QuantityUnit.PIECE), IngredientShares.read("3", garlic))
-        assertEquals("В маринад 3 шт и в соус 3 шт", StepText.render(step, ReferenceText.authored(ingredients, InterfaceLanguage.RUSSIAN)))
+        assertEquals("В маринад 3\u00A0шт и в соус 3\u00A0шт", StepText.render(step, ReferenceText.authored(ingredients, InterfaceLanguage.RUSSIAN)))
     }
 
     // A part larger than a whole changed since is told; one in grams of a row now in kilograms is compared as grams.
@@ -113,9 +113,9 @@ class IngredientShareTest {
                 IngredientReference(1, 29, IngredientShare(Rational.of(600), QuantityUnit.GRAM)),
             ),
         )
-        assertEquals("Чеснок: 2 шт в маринад, 4 шт в соус; 600 г муки", StepText.render(step, russian))
+        assertEquals("Чеснок: 2\u00A0шт в маринад, 4\u00A0шт в соус; 600\u00A0г муки", StepText.render(step, russian))
         assertEquals(
-            StepRun.Reference(0, "2 шт", IngredientShare(Rational.of(2), QuantityUnit.PIECE)),
+            StepRun.Reference(0, "2\u00A0шт", IngredientShare(Rational.of(2), QuantityUnit.PIECE)),
             StepText.runs(step, russian)[1],
         )
         assertEquals("1½ tbsp", ReferenceText.authored(oil, IngredientShare(Rational.of(3, 2), QuantityUnit.TABLESPOON), InterfaceLanguage.ENGLISH))
@@ -161,9 +161,9 @@ class IngredientShareTest {
     @Test
     fun `a timer named from its step reads a part`() {
         val step = Step(0, "Обжарьте  до аромата", listOf(IngredientReference(0, 9, IngredientShare(Rational.of(2), QuantityUnit.PIECE))), Timer(2.minutes))
-        assertEquals("Обжарьте 2 шт до аромата", TimerName.of(step, ReferenceText.authored(ingredients, InterfaceLanguage.RUSSIAN)))
+        assertEquals("Обжарьте 2\u00A0шт до аромата", TimerName.of(step, ReferenceText.authored(ingredients, InterfaceLanguage.RUSSIAN)))
         val whole = step.copy(ingredientReferences = listOf(IngredientReference(0, 9)))
-        assertEquals("Обжарьте 4 шт до аромата", TimerName.of(whole, ReferenceText.authored(ingredients, InterfaceLanguage.RUSSIAN)))
+        assertEquals("Обжарьте 4\u00A0шт до аромата", TimerName.of(whole, ReferenceText.authored(ingredients, InterfaceLanguage.RUSSIAN)))
         assertFalse(TimerName.source(step) == TimerName.source(whole))
     }
 }

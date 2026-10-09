@@ -59,8 +59,8 @@ class TimerNamesOfAStepTest {
     fun `each timer's name follows its step's text as the card reads it`() {
         val flour = Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8)), listOf(Timer(5.minutes, "Мука"), Timer(3.minutes)))
         assertEquals("Мука", TimerName.of(flour, 0) { "200 г" })
-        assertEquals("Всыпьте 200 г муки", TimerName.of(flour, 1) { "200 г" })
-        assertEquals("Всыпьте 400 г муки", TimerName.of(flour, 1) { "400 г" })
+        assertEquals("Всыпьте 200\u00A0г муки", TimerName.of(flour, 1) { "200 г" })
+        assertEquals("Всыпьте 400\u00A0г муки", TimerName.of(flour, 1) { "400 г" })
         assertNull(TimerName.of(flour, 2) { "200 г" })
     }
 

@@ -428,7 +428,8 @@ class StepReferencesEditorTest {
         assertFalse(compose.onNodeWithTag(EditorTags.stepText(0), useUnmergedTree = true).fetchSemanticsNode().config.contains(SemanticsActions.SetText))
         val timerName = compose.onNodeWithTag(EditorTags.timerName(0), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsProperties.Text].single().text
-        assertTrue(timerName, timerName.contains(text))
+        // The name holds each reference together with no-break spaces, as the card shows it; the field, plain ones.
+        assertTrue(timerName, timerName.replace('\u00A0', ' ').contains(text))
     }
 
     // FLOW-016 (8) at the authored scale: the derived timer name reads a reference as the editor shows it.
@@ -437,10 +438,10 @@ class StepReferencesEditorTest {
         val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8)), Timer(5.minutes)))
         open(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
-        assertEquals("Всыпьте 200 г муки", fieldText(EditorTags.timerName(0)))
+        assertEquals("Всыпьте 200\u00A0г муки", fieldText(EditorTags.timerName(0)))
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("300")
         compose.waitForIdle()
-        assertEquals("Всыпьте 300 г муки", fieldText(EditorTags.timerName(0)))
+        assertEquals("Всыпьте 300\u00A0г муки", fieldText(EditorTags.timerName(0)))
     }
 
     // A recipe with no ingredient yet: the control is there, and says there is nothing to insert.

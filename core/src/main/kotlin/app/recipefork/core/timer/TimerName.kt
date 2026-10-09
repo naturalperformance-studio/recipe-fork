@@ -31,7 +31,8 @@ object TimerName {
     /**
      * The name derived from a step as it reads — its [runs], each reference already read as the screen shows it
      * (FLOW-016 (8)) — cut as [derived] cuts plain text. A reference is one unit: a cut that would fall inside one,
-     * the space between its number and its unit included, falls before it instead.
+     * the space between its number and its unit included, falls before it instead. Its spaces stay as the runs give
+     * them — no-break spaces, from [StepText.runs] — so it never wraps inside where the name is shown.
      */
     fun derived(runs: List<StepRun>): String = reading(runs).name
 
@@ -141,8 +142,10 @@ object TimerName {
     fun source(step: Step, index: Int): String? {
         val timer = step.timers.getOrNull(index) ?: return null
         if (timer.label != null) return null
-        // A part is part of what the name reads; the scale it is read at is not.
-        return StepText.render(step) { reference -> REFERENCE_MARK + reference.share?.let { "${it.amount} ${it.unit}" }.orEmpty() }
+        // A part is part of what the name reads; the scale it is read at is not. Read as spliced, not as displayed, so
+        // a source held from before is the same source still.
+        return StepText.spliced(step) { reference -> REFERENCE_MARK + reference.share?.let { "${it.amount} ${it.unit}" }.orEmpty() }
+            .joinToString("") { it.text }
     }
 
     /**

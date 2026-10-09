@@ -121,14 +121,14 @@ class CardEntryDivisibilityTest {
             ),
         )
         assertEquals("8 pc", quantity(0))
-        assertEquals("Add 1 pc", shown(0))
+        assertEquals("Add 1\u00A0pc", shown(0))
         fewer()
         assertEquals("Servings: 3", servings())
         assertEquals("6 pc", quantity(0))
         fewer()
         assertEquals("Servings: 2", servings())
         assertEquals("4 pc", quantity(1))
-        assertEquals("Add 1 pc ↑", shown(0))
+        assertEquals("Add 1\u00A0pc ↑", shown(0))
     }
 
     // The fixing control holds what the entry's grid holds: a half wing is refused, a whole one fixes the scale.

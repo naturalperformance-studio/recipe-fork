@@ -186,7 +186,7 @@ class CardStepTextSizeTest {
 
         // The reference reads as its line, its arrow small on screen and read in words.
         val arrow = text.text.indexOf('↑')
-        assertTrue("the rounded reference carries its arrow: ${text.text}", arrow >= 0 && text.text.contains("4 pc"))
+        assertTrue("the rounded reference carries its arrow: ${text.text}", arrow >= 0 && text.text.contains("4\u00A0pc"))
         val span = text.spanStyles.singleOrNull { arrow in it.start until it.end }
         assertNotNull("the arrow is styled apart", span)
         assertTrue("the arrow is smaller than the step", span!!.item.fontSize.value < theme!!.titleLarge.fontSize.value)
