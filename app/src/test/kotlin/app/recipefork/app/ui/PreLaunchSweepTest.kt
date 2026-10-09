@@ -216,11 +216,12 @@ class PreLaunchSweepTest {
     private fun grams(position: Int, name: String, grams: Int, note: String? = null) =
         Ingredient(position, null, null, name, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(grams.toLong()), null, null, note = note)
 
-    /** Everything a card and an editor show: groups, notes, a cover, a step's photo and clip, several timers. */
+    /** Everything a card and an editor show: groups, notes, a cover, a step's photo and clip, several timers, tags. */
     private val plumCake = Recipe.create(now, owner = null).copy(
         title = "Plum cake",
         description = "A sheet cake for late summer.",
         servings = 8,
+        tags = setOf(10L, 12L),
         ingredients = listOf(
             grams(0, "flour", 250),
             grams(1, "butter", 125, note = "cold"),
@@ -368,7 +369,7 @@ class PreLaunchSweepTest {
         compose.onNodeWithTag(CardTags.EDIT).performClick()
         await(EditorTags.FORM)
         compose.waitForIdle()
-        checkScreen("the editor, a recipe with groups, notes and several timers")
+        checkScreen("the editor, a recipe with groups, notes, several timers and tags")
         // A row removed: the editor says so with Undo.
         compose.onNodeWithTag(EditorTags.ingredientRemove(4)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.STATEMENT, unmerged = true) }
