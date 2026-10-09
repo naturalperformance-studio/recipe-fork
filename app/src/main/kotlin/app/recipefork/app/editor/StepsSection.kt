@@ -49,6 +49,7 @@ import androidx.compose.ui.zIndex
 import app.recipefork.app.R
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.book.BookName
+import app.recipefork.app.media.AnimatedImages
 import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.stepMedia
 import app.recipefork.core.recipe.Media
@@ -85,8 +86,10 @@ internal fun Steps(
     saving: CoroutineScope,
     clips: ClipStore? = null,
     work: StepMediaWork? = null,
+    animated: AnimatedImages? = null,
+    animations: ClipStore? = null,
 ) {
-    val photos = rememberStepPhotos(store, book, saving, clips, work)
+    val photos = rememberStepPhotos(store, book, saving, clips, work, animated, animations)
     // What each step's media work tells is said here, so that a step deleted while its clip converts still says it.
     work?.all?.forEach { (stepKey, attaching) -> key(stepKey) { SaysPhotoNotices(attaching) } }
     val editable = recipe.state.editable

@@ -221,6 +221,21 @@ class AnimatedImageTest {
         assertEquals(32 * 1024 * 1024, AnimatedImage.MAX_BYTES)
     }
 
+    // A GIF or a WebP over the cap is told too large — never a still picture to crop; anything else over it is still.
+    @Test
+    fun aGifOrWebpOverTheByteCapIsToldTooLarge() {
+        listOf("animated.gif", "animated.webp", "still.gif", "still.webp").forEach { name ->
+            val bytes = fixture(name)
+            assertEquals(name, ImageKind.TooLarge, AnimatedImage.examine(Counting(bytes), maxBytes = bytes.size - 1))
+        }
+        listOf("still.jpg", "still.png").forEach { name ->
+            assertEquals(name, ImageKind.Still, AnimatedImage.examine(Counting(fixture(name)), maxBytes = 1))
+        }
+        assertEquals(ImageKind.Still, AnimatedImage.examine(Counting(fixture("still.gif"))))
+        val animated = AnimatedImage.examine(Counting(fixture("animated.gif")))
+        assertEquals(1700.milliseconds, (animated as ImageKind.Animated).animation.duration)
+    }
+
     @Test
     fun anAnimationReadFromAStreamIsTheOneItsBytesHold() {
         val gif = AnimatedImage.read(Counting(fixture("animated.gif")))!!

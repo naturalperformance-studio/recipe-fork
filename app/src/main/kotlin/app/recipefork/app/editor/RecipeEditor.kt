@@ -12,9 +12,13 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
+import app.recipefork.app.media.AnimatedImages
+import app.recipefork.app.media.AnimationClips
 import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.ClipTransformer
+import app.recipefork.app.media.HeldAnimatedImages
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.media.ResolverAnimatedImages
 import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepMedia
@@ -73,6 +77,15 @@ class EditorEnvironment(
     val photoStore: (File) -> PhotoStore = { PhotoStore(it) },
     /** Where the editor converts and keeps steps' clips, given the application's context; replaced in a test. */
     val clipStore: (Context) -> ClipStore = { ClipStore(it.filesDir, ClipTransformer(it), RetrieverClipSourceDuration(it)) },
+    /** Tells an animated GIF or WebP picked for a step from a still picture (scenario 3); replaced in a test. */
+    val animatedImages: (Context) -> AnimatedImages = { HeldAnimatedImages(ResolverAnimatedImages(it)) },
+    /**
+     * Where the editor turns steps' animations into silent clips and keeps them, given the application's context and
+     * the [animatedImages] that told them apart, so that an animation is read once.
+     */
+    val animationStore: (Context, AnimatedImages) -> ClipStore = { context, images ->
+        AnimationClips(images).let { ClipStore(context.filesDir, it, it) }
+    },
     /** What the release is built as (FLOW-061): the editor says nothing of publication where nothing can be published. */
     val mode: Mode = Mode.Standard,
     val clock: () -> Instant = Instant::now,
