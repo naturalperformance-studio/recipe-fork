@@ -1,0 +1,91 @@
+package app.recipefork.app.card
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import app.recipefork.app.R
+import app.recipefork.app.ui.Motion
+
+/**
+ * The equipment the recipe needs, above its ingredients and on the same tonal surface, under its heading "Equipment",
+ * one item a line in the author's order. With no equipment the part is left out, heading included.
+ *
+ * On [CardMode.COOKING] each line is the card's [CardTarget] tall and a tap marks it done, another unmarks it, as an
+ * ingredient line ([marks], FLOW-068); once every item is marked the list folds into the one line "All gathered · show"
+ * ([GatheredLine]), as the ingredients do, and whether the reader has shown it again is [shownAgain], held apart from
+ * the ingredients'. On [CardMode.VIEW] a line is as tall as its text with a modest space around it, its mark shown but
+ * a tap leaving it as it is, and the list never folds.
+ */
+@Composable
+internal fun EquipmentList(
+    equipment: List<String>,
+    marks: CardMarks?,
+    mode: CardMode,
+    shownAgain: MutableState<Boolean> = remember { mutableStateOf(false) },
+) {
+    if (equipment.isEmpty()) return
+    val gathered = marks != null && equipment.indices.all { marks.done(MarkedPart.EQUIPMENT, it) }
+    val folded = foldedOnCooking(gathered, shownAgain, mode)
+    GatheringSurface(EquipmentTags.SURFACE) {
+        Section(R.string.card_equipment, CardTags.EQUIPMENT, gap = HEADING_GAP) {
+            AnimatedVisibility(folded, enter = Motion.open, exit = Motion.close) {
+                GatheredLine(R.string.card_equipment_show_action, EquipmentTags.GATHERED) { shownAgain.value = true }
+            }
+            AnimatedVisibility(!folded, enter = Motion.open, exit = Motion.close) {
+                Column {
+                    equipment.forEachIndexed { index, item ->
+                        EquipmentLine(
+                            item, index,
+                            done = marks?.done(MarkedPart.EQUIPMENT, index) == true,
+                            onToggle = marks?.takeIf { mode == CardMode.COOKING }?.let { { it.toggle(MarkedPart.EQUIPMENT, index) } },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One item of equipment: its name, wrapping, never cut. With [onToggle] — on Cooking — a tap marks it [done] or
+ * unmarks it and the line is the card's [CardTarget] tall; without, its mark is only shown, and the line is its text
+ * with [VIEW_LINE_PADDING] above and below. A line marked done is struck through and muted, and read as done.
+ */
+@Composable
+private fun EquipmentLine(item: String, index: Int, done: Boolean, onToggle: (() -> Unit)?) {
+    val marking = if (onToggle != null) Modifier.markedDone(done, onToggle) else Modifier.shownDone(done)
+    Box(
+        cardPlace(CardPlaces.equipment(index))
+            .fillMaxWidth()
+            .then(marking)
+            .semantics(mergeDescendants = true) {}
+            .heightIn(min = if (onToggle != null) CardTarget else 0.dp)
+            .padding(vertical = if (onToggle != null) LINE_PADDING else VIEW_LINE_PADDING)
+            .testTag(CardTags.equipment(index)),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(item, style = MaterialTheme.typography.bodyLarge.done(done))
+    }
+}
+
+/** Test tags of the equipment section's own parts. */
+internal object EquipmentTags {
+    /** The tonal surface the whole section sits on. */
+    const val SURFACE = "card-equipment-surface"
+    /** The one line the list folds into once every item is marked done. */
+    const val GATHERED = "card-equipment-gathered"
+}

@@ -126,4 +126,30 @@ class DoneMarksStoreTest {
         marks.clear()
         assertEquals(emptySet<DoneMark>(), store.held(BookName.Pool, recipe.id))
     }
+
+    // A part added since is written under a code of its own: the marks a version before the equipment stored read as
+    // they did, beside an item of equipment marked since, and a mark under a code no version knows is passed over.
+    @Test
+    fun theMarksStoredBeforeTheEquipmentStillRead() {
+        val held = ConcurrentHashMap<String, String>()
+        val store = DoneMarks(held::get) { key, value -> if (value == null) held.remove(key) else held[key] = value }
+        val withEquipment = recipe.copy(equipment = listOf("Kettle", "Teapot"))
+        val key = "${BookName.Pool.fileName}/${recipe.id.value}"
+        val ingredient = recipe.ingredients[0].toString().hashCode()
+        val step = recipe.steps[1].toString().hashCode()
+        // As the store held them before the equipment, and a mark of a later part.
+        held[key] = "i:0:$ingredient;s:1:$step;x:0:1"
+
+        val marks = CardMarks(store, BookName.Pool, withEquipment)
+        assertTrue(marks.done(MarkedPart.INGREDIENT, 0))
+        assertTrue(marks.done(MarkedPart.STEP, 1))
+        assertFalse(marks.done(MarkedPart.EQUIPMENT, 0))
+        marks.toggle(MarkedPart.EQUIPMENT, 1)
+        assertEquals(
+            setOf(DoneMark.of(recipe.ingredients[0]), DoneMark.of(recipe.steps[1]), DoneMark.ofEquipment(1, "Teapot")),
+            store.held(BookName.Pool, recipe.id),
+        )
+        assertTrue("the old marks are written as they were", held.getValue(key).split(";").containsAll(listOf("i:0:$ingredient", "s:1:$step")))
+        assertTrue(CardMarks(store, BookName.Pool, withEquipment).done(MarkedPart.EQUIPMENT, 1))
+    }
 }
