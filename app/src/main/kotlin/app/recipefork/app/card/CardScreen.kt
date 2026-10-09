@@ -38,6 +38,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -232,9 +233,10 @@ fun CardScreen(
         }
         entries = read.associateBy { it.id }
     }
-    // The bar draws under the status bar and stays, its colour changing as the recipe scrolls under it; the content keeps
-    // clear of the other bars, the cutout and the keyboard, its last part above the navigation bar once scrolled to the end.
-    val bar = TopAppBarDefaults.pinnedScrollBehavior()
+    // The bar draws under the status bar and stays, its colour changing as the recipe scrolls under it — each tab's own
+    // scroll, so that turning to a tab at its top shows the bar as at the top; the content keeps clear of the other bars,
+    // the cutout and the keyboard, its last part above the navigation bar once scrolled to the end.
+    val barStates = TABS.map { rememberTopAppBarState() }
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
     val removal = (shown as? CardContent.Shown)?.let { removalOf(it.recipe, it.marked) }
@@ -250,6 +252,7 @@ fun CardScreen(
     LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.collect { environment.lastTab.keep(TABS[it]) } }
     LaunchedEffect(pager, toStep) { if (toStep) pager.scrollToPage(CardMode.COOKING.ordinal) }
     val tab = TABS[pager.currentPage]
+    val bar = TopAppBarDefaults.pinnedScrollBehavior(barStates[tab.ordinal])
     // The title is View's heading; View's bar repeats it only once that heading has scrolled out of view — as when the
     // reader scrolls on, or the card opens at a place further down. Cooking's bar holds it always.
     var titleOut by remember(recipeId) { mutableStateOf(false) }

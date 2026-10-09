@@ -259,9 +259,12 @@ class PlayScreenshotsTest {
     private fun selected(mode: CardMode) =
         compose.onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true
 
-    /** Turns the card to its tab [mode] and waits until it has come to rest there. */
+    /**
+     * Turns the card to its tab [mode] as the screen reader does, so that no touch's ripple is left on the tab in the
+     * picture, and waits until the card has come to rest there.
+     */
     private fun choose(mode: CardMode) {
-        compose.onNodeWithTag(CardTags.tab(mode)).performClick()
+        compose.onNodeWithTag(CardTags.tab(mode)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntil(PATIENCE_MS) { selected(mode) && compose.onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1 }
         compose.waitForIdle()
     }
