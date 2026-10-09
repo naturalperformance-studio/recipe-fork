@@ -77,8 +77,8 @@ import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityProblem
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
-import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipeBounds
+import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.effectiveDivisible
@@ -258,8 +258,8 @@ private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: Interfa
 
 /**
  * One row: the ingredient, how it is prepared (its note, DOM-023), the quantity and the unit (FLOW-023 (1)) — never a
- * unit type, which follows from the unit (FLOW-023 (7)). Under them, only what the row calls for: the free-text hint under the name (FLOW-022 (2)),
- * the divisibility question of a `piece` (FLOW-022 (5)) and, in the quantity's own supporting text, what the field
+ * unit type, which follows from the unit (FLOW-023 (7)). Under them, only what the row calls for: the free-text hint
+ * under the name (FLOW-022 (2)), the divisibility question of a `piece` (FLOW-022 (5)) and, in the quantity's own supporting text, what the field
  * accepts when it does not hold what was typed (DOM-017 (6)).
  * Beside the ingredient, its removal and its menu of inserting and moving (FLOW-025).
  */
@@ -323,7 +323,7 @@ private fun IngredientRow(
                         if (!under) Row(Modifier.padding(top = 8.dp)) { RowControls(position, count, editor) }
                     }
                     // How the ingredient is prepared, under its name and apart from it: the name says what it is.
-                    NoteField(position, editor, chain)
+                    NoteField(position, row, editor, chain)
                     // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
                     val quantity = row.unitType != UnitType.TASTE_UNMEASURED
                     val quantityHeight = heights.of(EvenHeights.Input.QUANTITY) { quantityUnder.intValue }
@@ -651,11 +651,12 @@ object IngredientNameTags {
  * leaving the field, as every limit is (FLOW-028).
  */
 @Composable
-private fun NoteField(position: Int, editor: RecipeEditor, chain: RowChain) {
+private fun NoteField(position: Int, row: Ingredient, editor: RecipeEditor, chain: RowChain) {
     // Kept across the activity being recreated, under the row's key, so it stays the row's own.
     var typed by rememberSaveable { mutableStateOf<String?>(null) }
-    // The row as the editor holds it now; the text in the field stands only while it is what the row holds.
-    val held = editor.recipe.value?.ingredients?.getOrNull(position)?.note
+    // The row as the editor holds it now — [row] at the latest; the text in the field stands only while it is what the
+    // row holds.
+    val held = (editor.recipe.value?.ingredients?.getOrNull(position) ?: row).note
     val shown = typed?.takeIf { Ingredient.noteOf(it) == held } ?: held.orEmpty()
     val focus = LocalFocusManager.current
     Column(Modifier.fillMaxWidth()) {

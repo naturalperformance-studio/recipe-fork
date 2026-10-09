@@ -66,8 +66,8 @@ import app.recipefork.core.scaling.Rounding
  * its height that of the taller of the two, so the list never moves between them; a quantity rounding moved carries ↑ where the exact value was
  * lower — a floor-held one included — and ↓ where it was higher, each read aloud in words (SCALE-004, SCALE-005).
  * Once two or more lines are held at their floors, a warning says the quantities no longer hold the authored
- * proportions (SCALE-009). A fixed line says it is fixed. A line's note follows its name, muted (DOM-023). None of it is carried by colour (A11Y-008). With no
- * ingredients the part is left out, heading included (FLOW-019).
+ * proportions (SCALE-009). A fixed line says it is fixed. A line's note follows its name, muted (DOM-023). None of
+ * it is carried by colour (A11Y-008). With no ingredients the part is left out, heading included (FLOW-019).
  *
  * Tapping a line marks it done, and tapping it again unmarks it ([marks], FLOW-068). Tapping the amount of a line that
  * carries a quantity opens its fixing control below it ([FixAmount]); a line "to taste", an unfinished one, or one off
@@ -317,7 +317,7 @@ private fun IngredientRow(
         val amount: @Composable () -> Unit = { if (fixable) AmountTarget(fixLabel, CardTags.fixAmount(position)) { opening() } }
         // The quantity stands at the line's start, the name beside it and the fixed mark under the name; the amount's
         // target lies over the quantity, as tall as the line, and never over the name.
-        Layout(contents = listOf(name, quantity, fixedMark, amount), modifier = Modifier.fillMaxWidth()) { (names, quantities, notes, amounts), constraints ->
+        Layout(contents = listOf(name, quantity, fixedMark, amount), modifier = Modifier.fillMaxWidth()) { (names, quantities, fixedMarks, amounts), constraints ->
             val gap = if (column.whole > 0) QUANTITY_GAP.roundToPx() else 0
             val width = constraints.maxWidth
             val share = maxOf((width * QUANTITY_SHARE).toInt(), column.word)
@@ -329,8 +329,8 @@ private fun IngredientRow(
             val shownQuantity = quantities.firstOrNull()?.measure(Constraints.fixedWidth(quantityWidth.coerceAtLeast(0)))
             val nameConstraints = Constraints(maxWidth = (width - quantityWidth - gap).coerceAtLeast(0))
             val shownName = names.first().measure(nameConstraints)
-            val shownNote = notes.firstOrNull()?.measure(nameConstraints)
-            val content = maxOf(shownName.height + (shownNote?.height ?: 0), shownQuantity?.height ?: 0)
+            val shownFixed = fixedMarks.firstOrNull()?.measure(nameConstraints)
+            val content = maxOf(shownName.height + (shownFixed?.height ?: 0), shownQuantity?.height ?: 0)
             val height = if (tall) maxOf(content, CardTarget.roundToPx()) else content
             val top = (height - content) / 2
             // It ends where the name begins at the latest, so a tap on the name always marks the line.
@@ -340,7 +340,7 @@ private fun IngredientRow(
                 // Placed in the order they read: the screen reader takes a line's parts in the order they are placed.
                 shownName.place(quantityWidth + gap, top)
                 shownQuantity?.place(0, top)
-                shownNote?.place(quantityWidth + gap, top + shownName.height)
+                shownFixed?.place(quantityWidth + gap, top + shownName.height)
                 // Last, so that it lies over the line and takes the taps on the amount.
                 shownAmount?.place(0, 0)
             }
