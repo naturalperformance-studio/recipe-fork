@@ -18,15 +18,25 @@ internal enum class ClearingMedia { ASKING, NOTHING }
 
 /**
  * The statement before saved media is cleared (FLOW-060): nothing is deleted until it is confirmed, and declining it
- * changes nothing. In [Mode.Serverless] it says the media cannot be fetched again (FLOW-060 (4)) and names nothing of
- * the server (FLOW-062 (1)); in [Mode.Standard] it says the media is fetched again when needed.
+ * changes nothing. In [Mode.Serverless] it names what is cleared as the photos and videos of recipes imported from
+ * files, the only media there that can be, says how to have them again (FLOW-060 (4)) and names nothing of the server
+ * (FLOW-062 (1)); in [Mode.Standard] it says the media is fetched again when needed.
  */
 @Composable
 internal fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDecline,
         modifier = Modifier.testTag(SettingsTags.CLEAR_MEDIA_STATEMENT),
-        title = { Text(stringResource(R.string.library_clear_media_title)) },
+        title = {
+            Text(
+                stringResource(
+                    when (mode) {
+                        Mode.Serverless -> R.string.library_clear_media_title_serverless
+                        Mode.Standard -> R.string.library_clear_media_title
+                    },
+                ),
+            )
+        },
         text = {
             Text(
                 stringResource(
@@ -49,13 +59,22 @@ internal fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: (
     )
 }
 
-/** Said in place of the statement when the device holds no media the clearing would delete. */
+/** Said in place of the statement when the device holds no media the clearing would delete, in the words of [mode]. */
 @Composable
-internal fun NothingToClear(onDone: () -> Unit) {
+internal fun NothingToClear(mode: Mode, onDone: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDone,
         modifier = Modifier.testTag(SettingsTags.CLEAR_MEDIA_NOTHING),
-        text = { Text(stringResource(R.string.library_clear_media_nothing)) },
+        text = {
+            Text(
+                stringResource(
+                    when (mode) {
+                        Mode.Serverless -> R.string.library_clear_media_nothing_serverless
+                        Mode.Standard -> R.string.library_clear_media_nothing
+                    },
+                ),
+            )
+        },
         confirmButton = {
             TextButton(
                 onClick = onDone,

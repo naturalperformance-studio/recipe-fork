@@ -404,6 +404,117 @@ class SeveralTimersEditorTest {
         compose.awaitStatement("Таймер 3 шага 1 убран")
     }
 
+    // Scenario 6 of v0.26: when a step's block shows several timer rows, each is numbered by its place in the block,
+    // top to bottom, whether or not it holds a duration — its removal, its name — and the notice of its removal says
+    // the number its removal showed, though the step may carry fewer timers than it shows rows.
+
+    // Rows [A, empty, C]: timers 1, 2 and 3; removing C says timer 3.
+    @Test
+    fun withAnEmptyRowBetweenEachRowIsNumberedByItsPlace() = emptyBetween(
+        removes = listOf("Remove timer 1 from step 1", "Remove timer 2 from step 1", "Remove timer 3 from step 1"),
+        names = listOf("Timer 1's name", "Timer 3's name"),
+        said = "Timer 3 removed from step 1",
+    )
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun withAnEmptyRowBetweenEachRowIsNumberedByItsPlaceInRussian() = emptyBetween(
+        removes = listOf("Убрать таймер 1 шага 1", "Убрать таймер 2 шага 1", "Убрать таймер 3 шага 1"),
+        names = listOf("Название таймера 1", "Название таймера 3"),
+        said = "Таймер 3 шага 1 убран",
+    )
+
+    // Rows [empty, A], the step carrying A alone: A is timer 2, and its removal says so.
+    @Test
+    fun withAnEmptyRowAboveTheOnlyTimerItIsTimer2() = emptyAbove(
+        removes = listOf("Remove timer 1 from step 1", "Remove timer 2 from step 1"),
+        name = "Timer 2's name",
+        said = "Timer 2 removed from step 1",
+    )
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun withAnEmptyRowAboveTheOnlyTimerItIsTimer2InRussian() = emptyAbove(
+        removes = listOf("Убрать таймер 1 шага 1", "Убрать таймер 2 шага 1"),
+        name = "Название таймера 2",
+        said = "Таймер 2 шага 1 убран",
+    )
+
+    // Rows [A, empty], the step carrying A alone: A is timer 1, and its removal says so.
+    @Test
+    fun withAnEmptyRowBelowTheOnlyTimerItIsTimer1() = emptyBelow(
+        removes = listOf("Remove timer 1 from step 1", "Remove timer 2 from step 1"),
+        name = "Timer 1's name",
+        said = "Timer 1 removed from step 1",
+    )
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun withAnEmptyRowBelowTheOnlyTimerItIsTimer1InRussian() = emptyBelow(
+        removes = listOf("Убрать таймер 1 шага 1", "Убрать таймер 2 шага 1"),
+        name = "Название таймера 1",
+        said = "Таймер 1 шага 1 убран",
+    )
+
+    private fun emptyBetween(removes: List<String>, names: List<String>, said: String) {
+        val recipe = recipe(Step(0, "Knead, prove and glaze.", timers = three))
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        empty(1)
+        compose.waitUntil(PATIENCE_MS) { timers(recipe.id) == listOf(three[0], three[2]) }
+        assertNumbered(removes, mapOf(0 to names[0], 2 to names[1]))
+        removeAndHear(2, said)
+        compose.waitUntil(PATIENCE_MS) { timers(recipe.id) == listOf(three[0]) }
+    }
+
+    private fun emptyAbove(removes: List<String>, name: String, said: String) {
+        val recipe = recipe(Step(0, "Knead, prove and glaze.", timers = three.take(2)))
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 1)), PATIENCE_MS)
+        empty(0)
+        compose.waitUntil(PATIENCE_MS) { timers(recipe.id) == listOf(three[1]) }
+        assertNumbered(removes, mapOf(1 to name))
+        removeAndHear(1, said)
+        compose.waitUntil(PATIENCE_MS) { timers(recipe.id).isEmpty() }
+    }
+
+    private fun emptyBelow(removes: List<String>, name: String, said: String) {
+        val recipe = recipe(Step(0, "Knead, prove and glaze.", timers = three.take(1)))
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 1)), PATIENCE_MS)
+        assertEquals(three.take(1), timers(recipe.id))
+        assertNumbered(removes, mapOf(0 to name))
+        removeAndHear(0, said)
+        compose.waitUntil(PATIENCE_MS) { timers(recipe.id).isEmpty() }
+    }
+
+    /** Empties the duration of the timer row at [place]: it stays on screen, the step no longer carrying it. */
+    private fun empty(place: Int) {
+        type(EditorTags.timerHours(0, place), "")
+        type(EditorTags.timerMinutes(0, place), "")
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerName(0, place)), PATIENCE_MS)
+    }
+
+    /** Each row's removal reads as in [removes], top to bottom, and the rows holding a timer are named as in [names]. */
+    private fun assertNumbered(removes: List<String>, names: Map<Int, String>) {
+        fun label(tag: String) = AccessibilityChecks.announcedLabel(compose.onNodeWithTag(tag).fetchSemanticsNode())
+        assertEquals(removes, removes.indices.map { label(EditorTags.timerRemove(0, it)) })
+        assertFalse(exists(EditorTags.timerRemove(0, removes.size)))
+        names.forEach { (place, name) -> assertEquals(name, fieldLabel(EditorTags.timerName(0, place))) }
+        AccessibilityChecks.assertDistinctLabels(compose)
+    }
+
+    /** Removes the timer row at [place]; the notice of its removal says [said]. */
+    private fun removeAndHear(place: Int, said: String) {
+        compose.onNodeWithTag(EditorTags.timerRemove(0, place)).performScrollTo().performClick()
+        compose.awaitStatement(said)
+    }
+
+    /** The label of the text field tagged [tag]. */
+    private fun fieldLabel(tag: String): String = compose.textsOf(tag).first()
+
     // A timer whose duration is cleared stays on screen where it stood, holding its name; entered again, it goes
     // back among the step's timers at that place.
     @Test

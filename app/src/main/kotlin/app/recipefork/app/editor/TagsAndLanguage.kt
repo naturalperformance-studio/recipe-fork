@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
@@ -24,12 +25,16 @@ import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.HorizontalAlignmentLine
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
@@ -38,10 +43,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
+import kotlin.math.max
+import kotlin.math.min
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagOffer
@@ -140,7 +152,7 @@ internal fun Tags(recipe: Recipe, editor: RecipeEditor, dictionary: List<TagEnti
         )
         val known = dictionary.orEmpty().filter { it.id in recipe.tags }
         if (known.isNotEmpty()) {
-            FlowRow(horizontalArrangement = TAG_GAP, verticalArrangement = TAG_GAP) {
+            FlowRow(horizontalArrangement = TAG_GAP, verticalArrangement = LINE_GAP) {
                 known.forEach { tag ->
                     Box(Modifier.testTag(EditorTags.chosen(tag.id))) {
                         if (editable) TagChip(tag.id, label(tag)) { editor.removeTag(tag.id) } else FrozenTag(label(tag))
@@ -156,19 +168,21 @@ internal fun Tags(recipe: Recipe, editor: RecipeEditor, dictionary: List<TagEnti
 @Composable
 private fun TagChip(id: Long, shown: String, onRemove: () -> Unit) {
     val action = stringResource(R.string.editor_tag_remove_action, shown)
-    InputChip(
-        selected = true,
-        onClick = onRemove,
-        label = { Text(shown) },
-        trailingIcon = {
-            Icon(
-                painterResource(R.drawable.ic_clear_search),
-                contentDescription = null,
-                modifier = Modifier.size(InputChipDefaults.IconSize).testTag(EditorTags.removeIcon(id)),
-            )
-        },
-        modifier = Modifier.touchTarget().semantics { onClick(label = action, action = null) }.testTag(EditorTags.remove(id)),
-    )
+    ChipTarget { target ->
+        InputChip(
+            selected = true,
+            onClick = onRemove,
+            label = { Text(shown) },
+            trailingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_clear_search),
+                    contentDescription = null,
+                    modifier = Modifier.size(InputChipDefaults.IconSize).testTag(EditorTags.removeIcon(id)),
+                )
+            },
+            modifier = target(EditorTags.remove(id)) { onClick(label = action, action = null) },
+        )
+    }
 }
 
 /** A tag of a recipe that cannot be changed: the chip's look, and nothing to tap. */
@@ -178,6 +192,7 @@ private fun FrozenTag(shown: String) {
         shape = InputChipDefaults.shape,
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = Modifier.lineGap(),
     ) {
         Text(shown, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
     }
@@ -207,24 +222,81 @@ private fun TagSearch(recipe: Recipe, editor: RecipeEditor, dictionary: List<Tag
             modifier = Modifier.testTag(EditorTags.NO_MATCH),
         )
     }
-    FlowRow(Modifier.fillMaxWidth().testTag(EditorTags.OFFERED), horizontalArrangement = TAG_GAP, verticalArrangement = TAG_GAP) {
+    FlowRow(Modifier.fillMaxWidth().testTag(EditorTags.OFFERED), horizontalArrangement = TAG_GAP, verticalArrangement = LINE_GAP) {
         offered.forEach { (tag, shown) ->
             val action = stringResource(R.string.editor_tag_add_action, shown)
-            SuggestionChip(
-                onClick = {
-                    editor.addTag(tag)
-                    query = ""
-                },
-                label = { Text(shown) },
-                border = SuggestionChipDefaults.suggestionChipBorder(enabled = true, borderColor = MaterialTheme.colorScheme.outline),
-                modifier = Modifier.touchTarget().semantics { onClick(label = action, action = null) }.testTag(EditorTags.offered(tag.id)),
-            )
+            ChipTarget { target ->
+                SuggestionChip(
+                    onClick = {
+                        editor.addTag(tag)
+                        query = ""
+                    },
+                    label = { Text(shown) },
+                    border = SuggestionChipDefaults.suggestionChipBorder(enabled = true, borderColor = MaterialTheme.colorScheme.outline),
+                    modifier = target(EditorTags.offered(tag.id)) { onClick(label = action, action = null) },
+                )
+            }
         }
     }
 }
 
-/** The gap between tag chips, beside each other and between wrapped lines alike. */
-private val TAG_GAP = Arrangement.spacedBy(8.dp)
+/** The gap between drawn tag chips beside each other, and between wrapped lines of them. */
+private val CHIP_GAP = 8.dp
 
-/** A chip laid out at least 48 by 48 dp, so that it is a whole touch target (A11Y-003). */
-private fun Modifier.touchTarget(): Modifier = heightIn(min = 48.dp).widthIn(min = 48.dp)
+/** Tag chips side by side: [CHIP_GAP] apart as drawn, a chip being laid out no wider than it is drawn unless it is drawn under 48 dp wide. */
+private val TAG_GAP = Arrangement.spacedBy(CHIP_GAP)
+
+/** Wrapped lines of tag chips: nothing between them, each chip laid out half the gap above and below where it is drawn ([lineGap]). */
+private val LINE_GAP = Arrangement.spacedBy(0.dp)
+
+/**
+ * A chip drawn at Material's height — 32 dp, or more as the font grows — with a touch area of at least the minimum
+ * interactive size (48 dp, A11Y-003) around it, and laid out in its line half the gap above and below where it is
+ * drawn, so that wrapped lines are [CHIP_GAP] apart as drawn, their touch areas overlapping between them. [content] is
+ * given what makes a chip so: its modifier, which carries the chip's test tag and its own [semantics]. The chip's own
+ * minimum interactive size is left to the touch area here, which says how tall the chip is drawn.
+ */
+@Composable
+private fun ChipTarget(content: @Composable (target: (tag: String, semantics: SemanticsPropertyReceiver.() -> Unit) -> Modifier) -> Unit) {
+    val minimum = LocalMinimumInteractiveComponentSize.current.takeIf { it.isSpecified } ?: 48.dp
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        content { tag, semantics ->
+            // The chip's semantics merge here, so that the element the screen reader and the touch-target check find is
+            // the touch area, not the drawn chip within it.
+            Modifier.lineGap().semantics(mergeDescendants = true, properties = semantics).testTag(tag).touchArea(minimum)
+        }
+    }
+}
+
+/** Where the chip within a [touchArea] is drawn from, below the area's top. */
+private val DrawnTop = HorizontalAlignmentLine { a, b -> min(a, b) }
+
+/** Where the chip within a [touchArea] is drawn to, below the area's top. */
+private val DrawnBottom = HorizontalAlignmentLine { a, b -> max(a, b) }
+
+/**
+ * At least [minimum] by [minimum] around what it holds, which is drawn centred within it: what Material's minimum
+ * interactive size does — touches around the drawn chip are the chip's — saying through [DrawnTop] and [DrawnBottom]
+ * where the chip is drawn.
+ */
+private fun Modifier.touchArea(minimum: Dp): Modifier = layout { measurable, constraints ->
+    val drawn = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+    val width = constraints.constrainWidth(max(drawn.width, minimum.roundToPx()))
+    val height = constraints.constrainHeight(max(drawn.height, minimum.roundToPx()))
+    val top = (height - drawn.height) / 2
+    layout(width, height, mapOf(DrawnTop to top, DrawnBottom to top + drawn.height)) { drawn.place((width - drawn.width) / 2, top) }
+}
+
+/**
+ * Laid out half [CHIP_GAP] above and below where the chip is drawn — the touch area around a smaller chip reaching
+ * beyond, over the gap — so that lines of chips are [CHIP_GAP] apart as drawn, whatever the height they are drawn at.
+ */
+private fun Modifier.lineGap(): Modifier = layout { measurable, constraints ->
+    val area = measurable.measure(constraints.copy(minHeight = 0))
+    // A chip with no touch area of its own here — one that cannot be tapped — is drawn as it is laid out.
+    val top = area[DrawnTop].takeIf { it != AlignmentLine.Unspecified } ?: 0
+    val drawn = (area[DrawnBottom].takeIf { it != AlignmentLine.Unspecified } ?: area.height) - top
+    val half = (CHIP_GAP / 2).roundToPx()
+    val height = constraints.constrainHeight(drawn + 2 * half)
+    layout(area.width, height) { area.place(0, half - top) }
+}
