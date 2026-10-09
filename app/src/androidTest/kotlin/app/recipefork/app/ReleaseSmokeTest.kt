@@ -1,6 +1,7 @@
 package app.recipefork.app
 
 import android.Manifest
+import android.accessibilityservice.AccessibilityService
 import android.app.Activity
 import android.app.Instrumentation
 import android.app.NotificationManager
@@ -8,18 +9,22 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Rect
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.ExifInterface
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
+import android.os.Bundle
 import android.provider.MediaStore
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
@@ -34,6 +39,7 @@ import app.recipefork.app.media.TestClips
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.TimerChannels
 import app.recipefork.app.timer.TimerKey
+import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
@@ -342,6 +348,300 @@ class ReleaseSmokeTest {
         }
     }
 
+    /** A recipe that is all text: two ingredients, two steps, a named timer on the first. */
+    private fun soup(): Recipe = Recipe.create(now, null, null, RecipeId.mint()).copy(
+        title = "Smoke soup ${System.currentTimeMillis() % 100_000}",
+        servings = 2,
+        ingredients = listOf(
+            Ingredient(0, null, null, "Onions", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(200), null, null, null),
+            Ingredient(1, null, null, "Water", UnitType.EXACT, QuantityUnit.MILLILITRE, Rational.of(800), null, null, null),
+        ),
+        steps = listOf(
+            Step(0, "Simmer the onions in the water.", listOf(IngredientReference(0, 11), IngredientReference(1, 25)), Timer(30.minutes, "Simmer")),
+            Step(1, "Season and serve."),
+        ),
+    )
+
+    /**
+     * The field on screen that takes text and is labelled [label] — the label a text of its own, read after the field
+     * it names; the last such where several are.
+     */
+    private fun field(label: String): AccessibilityNodeInfo? {
+        val all = nodes()
+        val at = all.indexOfLast { node -> listOfNotNull(node.text, node.contentDescription).any { it.toString() == label } }
+        if (at < 0) return null
+        return all.subList(0, at + 1).lastOrNull { it.isEditable }
+    }
+
+    /**
+     * Waits until [find] finds a node on screen, scrolling the screen's largest scrolling container meanwhile — on, and
+     * back once it goes no further — as a reader scrolls to what they look for; failing, says what is on screen.
+     */
+    private fun reveal(what: String, find: () -> AccessibilityNodeInfo?): AccessibilityNodeInfo {
+        var forward = true
+        try {
+            awaitUntil(30.seconds) {
+                val found = find()
+                if (found == null || !found.isVisibleToUser) {
+                    val scrolled = nodes().filter { it.isScrollable }
+                        .maxByOrNull { node -> Rect().also(node::getBoundsInScreen).let { it.width() * it.height() } }
+                        ?.performAction(if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+                    if (scrolled == false) forward = !forward
+                }
+                found != null && found.isVisibleToUser
+            }
+        } catch (e: IllegalStateException) {
+            val fields = nodes().filter { it.isEditable }.map { "field “${it.text}” hint “${it.hintText}” described “${it.contentDescription}”" }
+            throw AssertionError("“$what” not found; on screen: ${onScreen()} and $fields", e)
+        }
+        return find()!!
+    }
+
+    /** What holds [text] and answers a click, if anything on screen does. */
+    private fun clickable(text: String): AccessibilityNodeInfo? =
+        generateSequence(shown(text)) { it.parent }.firstOrNull { it.isClickable }
+
+    /** Clicks what holds [text] once something clickable does: a screen coming in may show it before it answers. */
+    private fun tap(text: String) {
+        try {
+            awaitUntil(30.seconds) { clickable(text) != null }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("nothing clickable holds “$text”; on screen: ${onScreen()}", e)
+        }
+        assertTrue(clickable(text)!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+    }
+
+    /** Clicks what shows [text], scrolled to first. */
+    private fun clickRevealed(text: String) {
+        reveal(text) { shown(text) }
+        tap(text)
+    }
+
+    /** Writes [text] into the field labelled [label], scrolled to first, as a screen reader's text entry does. */
+    private fun type(label: String, text: String) {
+        val field = reveal(label) { field(label) }
+        val arguments = Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text) }
+        assertTrue("“$label” takes “$text”", field.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments))
+    }
+
+    /** The recipe [written] as the book holds it now. */
+    private fun stored(written: Recipe): Recipe? = runBlocking { container.recipes.get(written.id) }
+
+    /**
+     * The pre-launch crash sweep of the build Play receives, the way a stranger first goes through it: the application
+     * starts and opens a recipe's card; a timer is started from it; the editor opens on the recipe and a group, a note
+     * and a timer are added and saved; the recipe is exported to a file and the file opened back into the book; the
+     * recipe is deleted and brought back with Undo. Nothing crashes, and each change is in the book.
+     *
+     * Export and the opening of a file belong to the serverless build (FLOW-063, FLOW-064): the standard one, which
+     * offers neither, writes and reads the file through the same code the menu and the opened file reach.
+     */
+    @Test
+    fun theBuildGoesThroughEveryMainScreenWithoutACrash() {
+        val written = soup().also { recipe = it }
+        runBlocking { container.recipes.save(written) }
+        // Started as the launcher starts it, in a task of its own, so that a file opened later from outside comes to
+        // that task, as on the phone.
+        application.startActivity(
+            application.packageManager.getLaunchIntentForPackage(application.packageName)!!
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+        )
+        try {
+            // The book, and the recipe's card.
+            // The book opens where it was left: on the recipes written here, or on the marked ones.
+            awaitUntil(30.seconds) { shown(written.title) != null || clickable(WRITTEN_HERE) != null }
+            if (shown(written.title) == null) tap(WRITTEN_HERE)
+            tap(written.title)
+            awaitShown("Servings: 2")
+
+            // A timer started from the card runs.
+            clickRevealed("Simmer")
+            awaitUntil(30.seconds) { runBlocking { container.timers.all.first() }.any { it.key.recipeId == written.id.value } }
+
+            // The editor: a group, a note and a timer added, and saved.
+            tap(EDIT)
+            awaitShown(DONE)
+            // In the order the editor lays them out: the first ingredient's note, a group under the list, the second
+            // step's timer.
+            type(NOTE, "thinly sliced")
+            clickRevealed(ADD_GROUP)
+            type(GROUP, "Base")
+            clickRevealed(TIMER_FOR_STEP_2)
+            // The new timer's fields, under the step's actions: the last minutes on screen once its removal shows.
+            reveal(REMOVE_TIMER_FROM_STEP_2) { shown(REMOVE_TIMER_FROM_STEP_2) }
+            type(MINUTES, "5")
+            tap(DONE)
+            awaitShown(SAVED)
+            fun edited() = stored(written)?.let { kept ->
+                listOf(kept.ingredientGroups.map { it.name }, kept.ingredients.map { it.note }, kept.steps.sortedBy { it.position }.map { it.timers.size })
+            }
+            val expected = listOf(listOf("Base"), listOf("thinly sliced", null), listOf(1, 1))
+            try {
+                awaitUntil(30.seconds) { edited() == expected }
+            } catch (e: IllegalStateException) {
+                throw AssertionError("the book holds ${edited()}, not $expected; on screen: ${onScreen()}", e)
+            }
+            // Back through the card to the book.
+            tap(BACK)
+            awaitShown("Servings: 2")
+            tap(BACK)
+            awaitShown(WRITTEN_HERE)
+            awaitShown(written.title)
+
+            // The settings: the theme and the language changed and set back, the usual servings' dialog left.
+            throughTheSettings()
+            awaitShown(written.title)
+
+            // Deleted, and brought back with Undo.
+            tap(actionsFor(written))
+            awaitShown(DELETE)
+            tap(DELETE)
+            awaitShown(DELETED)
+            awaitUntil(30.seconds) { stored(written) == null }
+            tap(UNDO)
+            awaitUntil(30.seconds) { stored(written) != null }
+            awaitShown(written.title)
+            // Exported to a file and the file opened back into the book, where it is listed as a recipe found.
+            exportAndImport(written)
+            assertTrue("the application is in front, as it was left", activities(Stage.RESUMED).any { it is MainActivity })
+        } finally {
+            finishTheApplication()
+        }
+    }
+
+    /**
+     * The interface's words the settings' walk reads, in English and in Russian, written out: the shrunk build's
+     * resources are reached by the application alone.
+     */
+    private class Words(val language: String, val cancel: String, val device: String, val usual: String, val set: String, val back: String, val book: String)
+
+    private val words = mapOf(
+        "en" to Words("Language", "Cancel", AS_ON_THE_DEVICE, "I usually cook for…", "Set", "Back", "My recipe book"),
+        "ru" to Words("Язык", "Отмена", "Как на устройстве", "Обычно готовлю на…", "Задать", "Назад", "Моя книга рецептов"),
+    )
+
+    /** Of the [choices] an open choice dialog offers, the one marked chosen. */
+    private fun chosen(choices: List<String>): String = choices.single { choice ->
+        generateSequence(shown(choice)) { it.parent }.any { it.isChecked || it.isSelected }
+    }
+
+    /**
+     * The settings opened from the book's bar: a theme other than the one in force chosen in the theme's dialog, and
+     * the one in force chosen back; the language switched in its dialog — the application shown again in it — and
+     * switched back; the usual servings' dialog opened and left by back; and back to the book, the application still
+     * in front. The walk starts in English, as the emulator's: the device's language, or English chosen.
+     */
+    private fun throughTheSettings() {
+        tap(SETTINGS)
+        awaitShown(THEME)
+
+        tap(THEME)
+        awaitShown(THEME_CANCEL)
+        val theme = chosen(THEMES)
+        val otherTheme = if (theme == DARK) LIGHT else DARK
+        tap(otherTheme)
+        awaitUntil(30.seconds) { shown(THEME_CANCEL) == null }
+        tap(THEME)
+        awaitShown(THEME_CANCEL)
+        assertEquals(otherTheme, chosen(THEMES))
+        tap(theme)
+        awaitUntil(30.seconds) { shown(THEME_CANCEL) == null }
+
+        tap(LANGUAGE)
+        awaitShown(LANGUAGE_CANCEL)
+        // English, chosen or the device's.
+        val language = chosen(listOf(ENGLISH, AS_ON_THE_DEVICE))
+        val before = words.getValue("en")
+        val after = words.getValue("ru")
+        tap(RUSSIAN)
+        // The application shows itself again in the language taken, the settings still open.
+        awaitShown(after.language)
+        tap(after.language)
+        awaitShown(after.cancel)
+        tap(if (language == AS_ON_THE_DEVICE) after.device else language)
+        awaitShown(before.language)
+
+        tap(before.usual)
+        awaitShown(before.set)
+        assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
+        awaitUntil(30.seconds) { shown(before.set) == null }
+
+        tap(before.back)
+        awaitShown(before.book)
+        assertTrue("the application is in front", activities(Stage.RESUMED).any { it is MainActivity })
+    }
+
+    /** The application's activities in [stage]. */
+    private fun activities(stage: Stage): List<Activity> {
+        var found = emptyList<Activity>()
+        instrumentation.runOnMainSync { found = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(stage).toList() }
+        return found
+    }
+
+    /** Finishes every activity of the application still alive, and waits until each is gone. */
+    private fun finishTheApplication() {
+        val alive = listOf(Stage.PRE_ON_CREATE, Stage.CREATED, Stage.STARTED, Stage.RESUMED, Stage.PAUSED, Stage.STOPPED, Stage.RESTARTED)
+        instrumentation.runOnMainSync { alive.forEach { stage -> ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(stage).forEach(Activity::finish) } }
+        awaitUntil(30.seconds) { alive.all { activities(it).isEmpty() } }
+    }
+
+    private fun actionsFor(recipe: Recipe) = "Actions for “${recipe.title}”"
+
+    /**
+     * Exports [written] and opens the file back into the book: in the serverless build from the entry's menu — the
+     * system's share sheet answered by the test, which takes the file it is handed — and then as another application
+     * opens a file; in the standard build through the code those reach. The recipe is in the book either way.
+     */
+    private fun exportAndImport(written: Recipe) {
+        if (!BuildConfig.SERVERLESS) {
+            val uri = runBlocking { RecipeExport.write(application, container.recipes, written.id) }!!
+            val database = BookDatabase.open(application, otherBook)
+            try {
+                val other = RecipeRepository(ActiveBook(otherBook, database), application.filesDir)
+                assertEquals(ImportOutcome.Added(written.id, written.title), runBlocking { RecipeImport(other, application.filesDir).importSafely(application, uri) })
+            } finally {
+                database.close()
+            }
+            return
+        }
+        var shared: Uri? = null
+        val sheet = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult? {
+                if (intent.action != Intent.ACTION_CHOOSER) return null
+                @Suppress("DEPRECATION")
+                val send = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!
+                @Suppress("DEPRECATION")
+                shared = send.getParcelableExtra(Intent.EXTRA_STREAM)
+                return Instrumentation.ActivityResult(Activity.RESULT_OK, null)
+            }
+        }
+        instrumentation.addMonitor(sheet)
+        try {
+            tap(actionsFor(written))
+            awaitShown(EXPORT)
+            tap(EXPORT)
+            awaitUntil(30.seconds) { shared != null }
+        } finally {
+            instrumentation.removeMonitor(sheet)
+        }
+        // The recipe leaves the book, so that the file brings it back.
+        tap(actionsFor(written))
+        awaitShown(DELETE)
+        tap(DELETE)
+        awaitShown(DELETED)
+        awaitUntil(30.seconds) { stored(written) == null }
+        val open = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(shared, RecipeFile.MIME_TYPE)
+            .setPackage(application.packageName)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        application.startActivity(open)
+        val added = "“${written.title}” is in your recipe book now"
+        val held = "“${written.title}” is already in your recipe book, so nothing was added"
+        awaitUntil(30.seconds) { shown(added) != null || shown(held) != null }
+        awaitUntil(30.seconds) { stored(written) != null }
+        awaitShown(written.title)
+    }
+
     private companion object {
         /** The library's tab of the recipes written on this device. */
         const val WRITTEN_HERE = "Written here"
@@ -352,5 +652,32 @@ class ReleaseSmokeTest {
         const val CAMERA = "Camera"
         const val CROP_FRAME = "Crop frame: drag the photo to move it, pinch to zoom"
         const val CROP_DONE = "Done"
+        const val BACK = "Back"
+        const val DONE = "Done"
+        const val SAVED = "Saved"
+        const val ADD_GROUP = "Add group"
+        /** The label of a group heading's name field, and of an ingredient's note field. */
+        const val GROUP = "Group"
+        const val NOTE = "How to prepare"
+        /** The second step's action that adds a timer to it, and a timer's minutes. */
+        const val TIMER_FOR_STEP_2 = "Timer for step 2"
+        const val MINUTES = "Minutes"
+        const val REMOVE_TIMER_FROM_STEP_2 = "Remove timer from step 2"
+        const val EXPORT = "Export"
+        /** The book's bar action that opens the settings, and the settings' theme and language with their dialogs. */
+        const val SETTINGS = "Settings"
+        const val THEME = "Theme"
+        const val THEME_CANCEL = "Cancel"
+        const val LIGHT = "Light"
+        const val DARK = "Dark"
+        val THEMES = listOf(LIGHT, DARK, AS_ON_THE_DEVICE)
+        const val LANGUAGE = "Language"
+        const val LANGUAGE_CANCEL = "Cancel"
+        const val ENGLISH = "English"
+        const val RUSSIAN = "Русский"
+        const val AS_ON_THE_DEVICE = "As on the device"
+        const val DELETE = "Delete"
+        const val DELETED = "Recipe deleted"
+        const val UNDO = "Undo"
     }
 }

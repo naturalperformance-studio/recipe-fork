@@ -228,4 +228,60 @@ class AccessibilityChecksTest {
         }
         assertFailsNaming("unlabelled element inside tag \"row\"")
     }
+
+    /** A row named [name] holding a button that removes something, announced as [action]. */
+    @Composable
+    private fun RemovableRow(name: String, action: String) = Row {
+        Text(name)
+        Box(Modifier.size(48.dp).clickable(onClickLabel = action) {}.semantics { contentDescription = "Remove" })
+    }
+
+    // Two elements announcing the same thing side by side, with nothing to tell them apart, fail.
+    @Test
+    fun twoElementsAnnouncingTheSameThingTogetherFail() {
+        compose.setContent {
+            Row {
+                Box(Modifier.size(48.dp).clickable(onClickLabel = "Remove") {}.semantics { contentDescription = "Delete" })
+                Box(Modifier.size(48.dp).clickable(onClickLabel = "Remove") {}.semantics { contentDescription = "Delete" })
+            }
+        }
+        val error = assertThrows(AssertionError::class.java) { AccessibilityChecks.assertDistinctLabels(compose) }
+        assertTrue(error.message.orEmpty(), error.message.orEmpty().contains("\"Delete | Remove\""))
+    }
+
+    // The same label on elements that act on different named things — each in its own row, beside its name — passes.
+    @Test
+    fun theSameLabelOnDifferentNamedThingsPasses() {
+        compose.setContent {
+            androidx.compose.foundation.layout.Column {
+                RemovableRow("flour", "Remove the row")
+                RemovableRow("butter", "Remove the row")
+            }
+        }
+        AccessibilityChecks.assertDistinctLabels(compose)
+    }
+
+    // Rows named alike do not tell their elements apart.
+    @Test
+    fun theSameLabelInRowsNamedAlikeFails() {
+        compose.setContent {
+            androidx.compose.foundation.layout.Column {
+                RemovableRow("flour", "Remove the row")
+                RemovableRow("flour", "Remove the row")
+            }
+        }
+        assertThrows(AssertionError::class.java) { AccessibilityChecks.assertDistinctLabels(compose) }
+    }
+
+    // A click label that names what each acts on tells them apart.
+    @Test
+    fun differentClickLabelsTellTheSameLabelApart() {
+        compose.setContent {
+            Row {
+                Box(Modifier.size(48.dp).clickable(onClickLabel = "Remove flour") {}.semantics { contentDescription = "Delete" })
+                Box(Modifier.size(48.dp).clickable(onClickLabel = "Remove butter") {}.semantics { contentDescription = "Delete" })
+            }
+        }
+        AccessibilityChecks.assertDistinctLabels(compose)
+    }
 }

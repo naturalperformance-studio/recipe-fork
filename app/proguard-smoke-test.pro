@@ -40,6 +40,7 @@
 -keep,allowobfuscation class app.recipefork.core.recipe.RecipeId, app.recipefork.core.recipe.RecipeId$Companion { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Ingredient, app.recipefork.core.recipe.IngredientReference, app.recipefork.core.recipe.IngredientShare { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Step, app.recipefork.core.recipe.Timer { *; }
+-keep,allowobfuscation class app.recipefork.core.recipe.IngredientGroup { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Media, app.recipefork.core.recipe.MediaAttachment, app.recipefork.core.recipe.MediaAttachment$* { *; }
 -keep,allowobfuscation class app.recipefork.core.scaling.Rational, app.recipefork.core.scaling.Rational$Companion { *; }
 # The smoke test closes the databases it opens itself; the application never closes one.

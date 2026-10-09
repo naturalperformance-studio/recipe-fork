@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -39,7 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -117,6 +115,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.rememberCardTimers
+import app.recipefork.app.ui.SnackbarAction
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
@@ -308,14 +307,7 @@ private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
             val label = data.visuals.actionLabel
             Snackbar(
                 modifier = Modifier.testTag(LibraryTags.NOTICE),
-                action = label?.let {
-                    {
-                        TextButton(
-                            onClick = data::performAction,
-                            colors = ButtonDefaults.textButtonColors(contentColor = SnackbarDefaults.actionColor),
-                        ) { Text(it) }
-                    }
-                },
+                action = label?.let { { SnackbarAction(it, data::performAction) } },
             ) { Text(data.visuals.message) }
         }
     }

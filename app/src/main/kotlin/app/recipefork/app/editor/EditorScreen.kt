@@ -88,6 +88,7 @@ import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.SnackbarAction
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -248,7 +249,11 @@ internal fun EditorStatementHost(host: SnackbarHostState, modifier: Modifier = M
     SnackbarHost(host, modifier.imePadding()) { data ->
         val swipe = rememberSwipeToDismissBoxState()
         SwipeToDismissBox(swipe, backgroundContent = {}, onDismiss = { data.dismiss() }) {
-            Snackbar(data, modifier = Modifier.testTag(EditorTags.STATEMENT))
+            val label = data.visuals.actionLabel
+            Snackbar(
+                modifier = Modifier.testTag(EditorTags.STATEMENT),
+                action = label?.let { { SnackbarAction(it, data::performAction) } },
+            ) { Text(data.visuals.message) }
         }
     }
 }
