@@ -1,16 +1,28 @@
 package app.recipefork.app.recipe
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.book.ActiveBook
+import app.recipefork.app.book.BookName
 import app.recipefork.app.book.IngredientLineRow
+import app.recipefork.app.book.TestBook
 import app.recipefork.app.book.RecipeTagEntity
 import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.search.BookOrder
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
+import java.time.Instant
 import java.util.Locale
 
 /** FLOW-035, CAT-002, CAT-006, CAT-007, CAT-009: what a view lists under a query, its filters and its order. */
@@ -263,3 +275,61 @@ class BookSearchTest {
     }
 }
 
+
+/**
+ * DOM-023: an ingredient's note is found by nothing — as the book's lines are read from its database, a word that
+ * stands only in a note makes no recipe match the text search, and a note naming an entry makes no recipe match the
+ * filter by that entry.
+ */
+@RunWith(AndroidJUnit4::class)
+class BookSearchNotesTest {
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val book = TestBook(context)
+    private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
+    private val now = Instant.parse("2026-10-09T12:00:00Z")
+
+    private val chicken = IngredientEntryEntity(1, "курица", "chicken", null, factors = mapOf("g" to 1.0))
+    private val wings = IngredientEntryEntity(2, "крылышки", "chicken wings", 1, factors = mapOf("g" to 1.0))
+    private val broth = IngredientEntryEntity(4, "бульон", "broth", null)
+
+    @After
+    fun close() = book.close()
+
+    private fun grams(position: Int, entry: IngredientEntryEntity?, free: String? = null, note: String? = null) = Ingredient(
+        position, entry?.id, freeTextName = free, unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(100), note = note,
+    )
+
+    @Test
+    fun aNoteAloneMatchesNeitherTheSearchNorTheIngredientFilter() = runBlocking {
+        val soup = Recipe.create(now, null).copy(
+            title = "Soup",
+            servings = 2,
+            ingredients = listOf(
+                grams(0, broth, note = "chicken wings, strained"),
+                grams(1, null, free = "onion", note = "finely chopped"),
+            ),
+        )
+        val wingsDish = Recipe.create(now, null).copy(title = "Baked", servings = 2, ingredients = listOf(grams(0, wings)))
+        listOf(soup, wingsDish).forEach { recipes.save(it) }
+        val titles = mapOf(soup.id.value to soup.title, wingsDish.id.value to wingsDish.title)
+        val rows = titles.keys.toList()
+        val lines = book.database.recipes().ingredientLines().first()
+        val search = BookSearch<String>({ listOf(chicken, wings, broth) }, { it }, { titles.getValue(it) })
+        suspend fun found(query: String = "", filters: BookFilters = BookFilters()) =
+            search.listed(rows, lines, emptyList(), ListingParams(query, BookOrder.NEWEST, Locale.ENGLISH, filters)).rows.map(titles::getValue)
+
+        // What names the ingredients finds them; what only a note says finds nothing.
+        assertEquals(listOf("Soup"), found("broth"))
+        assertEquals(listOf("Soup"), found("onion"))
+        assertEquals(emptyList<String>(), found("finely"))
+        assertEquals(emptyList<String>(), found("chopped"))
+        assertEquals(emptyList<String>(), found("strained"))
+        assertEquals(listOf("Baked"), found("wings"))
+        assertEquals(listOf("Baked"), found("chicken"))
+        // The filter by an entry a note names keeps only the recipes holding it.
+        assertEquals(listOf("Baked"), found(filters = BookFilters(ingredient = wings.id)))
+        assertEquals(listOf("Baked"), found(filters = BookFilters(ingredient = chicken.id)))
+        // The note is in the book all the same.
+        assertEquals("chicken wings, strained", recipes.get(soup.id)!!.ingredients[0].note)
+    }
+}

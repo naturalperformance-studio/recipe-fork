@@ -34,6 +34,9 @@
     <string name="editor_ingredient_unnamed">Ингредиент без названия</string>
     <string name="editor_ingredient_quantity">Количество</string>
     <string name="editor_ingredient_unit">Единица</string>
+    <!-- How an ingredient is prepared (DOM-023), apart from its name: the qualifier says what it is, the note how to prepare it. -->
+    <string name="editor_ingredient_note">Как подготовить</string>
+    <string name="editor_ingredient_note_example">например, мелко нарезать</string>
     <string name="editor_ingredient_unit_action">Выбрать единицу</string>
     <string name="editor_ingredient_remove_action">Убрать строку ингредиента %1$d</string>
     <string name="editor_ingredient_menu_action">Действия со строкой ингредиента %1$d</string>

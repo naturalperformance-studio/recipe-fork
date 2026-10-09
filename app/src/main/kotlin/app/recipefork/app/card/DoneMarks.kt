@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,7 +83,8 @@ class DoneMarks(
         /** Kept in a small preferences file of the device, across restarts. */
         fun preferences(context: Context): DoneMarks {
             val preferences = context.getSharedPreferences(FILE_KEY, Context.MODE_PRIVATE)
-            return DoneMarks({ preferences.all[it] as? String }) { key, value ->
+            // One key read, never a copy of every key the file holds; a value of another type reads as none.
+            return DoneMarks({ runCatching { preferences.getString(it, null) }.getOrNull() }) { key, value ->
                 preferences.edit().apply { if (value == null) remove(key) else putString(key, value) }.apply()
             }
         }
@@ -112,8 +114,9 @@ class DoneMarks(
 
 /**
  * The done marks of the [recipe] a card shows, as they stand: those held of rows that still hold what they held when
- * marked; a mark of a row changed since, or gone, is dropped, from the store too. Marking, unmarking and clearing are
- * kept at once. Nothing here depends on the scale: a change of servings or a fixing leaves the marks as they are.
+ * marked; a mark of a row changed since, or gone, is not shown, and [dropStale] takes it out of the store too. Marking,
+ * unmarking and clearing are kept at once. Nothing here depends on the scale: a change of servings or a fixing leaves
+ * the marks as they are.
  */
 @Stable
 internal class CardMarks(private val store: DoneMarks, private val book: BookName, recipe: Recipe) {
@@ -123,13 +126,19 @@ internal class CardMarks(private val store: DoneMarks, private val book: BookNam
     private val current: Map<Pair<MarkedPart, Int>, DoneMark> =
         (recipe.ingredients.map(DoneMark::of) + recipe.steps.map(DoneMark::of)).associateBy { it.part to it.position }
 
-    private var marks: Set<DoneMark> by mutableStateOf(
-        store.held(book, id).let { held ->
-            val kept = held.filter { current[it.part to it.position] == it }.toSet()
-            if (kept != held) store.hold(book, id, kept)
-            kept
-        },
-    )
+    /** What the store held when the card read it, stale marks included. */
+    private val held: Set<DoneMark> = store.held(book, id)
+
+    private var marks: Set<DoneMark> by mutableStateOf(held.filter { current[it.part to it.position] == it }.toSet())
+
+    /**
+     * Takes the marks of rows changed since, or gone, out of the store as well — from an effect, never while the card
+     * is composed. The store then holds the marks as they stand, which a mark, an unmark or a clearing since has
+     * already written.
+     */
+    fun dropStale() {
+        if (marks != held) store.hold(book, id, marks)
+    }
 
     /** Whether any line or step of the recipe is marked. */
     val any: Boolean get() = marks.isNotEmpty()
@@ -151,10 +160,16 @@ internal class CardMarks(private val store: DoneMarks, private val book: BookNam
     }
 }
 
-/** The marks of [recipe] of [book], read afresh whenever its lines or steps change. */
+/**
+ * The marks of [recipe] of [book], read afresh whenever its lines or steps change; the marks of rows changed since are
+ * dropped from the store from an effect, once the card is composed.
+ */
 @Composable
-internal fun rememberCardMarks(store: DoneMarks, book: BookName, recipe: Recipe): CardMarks =
-    remember(store, book, recipe.id, recipe.ingredients, recipe.steps) { CardMarks(store, book, recipe) }
+internal fun rememberCardMarks(store: DoneMarks, book: BookName, recipe: Recipe): CardMarks {
+    val marks = remember(store, book, recipe.id, recipe.ingredients, recipe.steps) { CardMarks(store, book, recipe) }
+    LaunchedEffect(marks) { marks.dropStale() }
+    return marks
+}
 
 /**
  * Makes the line or step it modifies mark itself done with a tap, and unmark itself with another (FLOW-068): the

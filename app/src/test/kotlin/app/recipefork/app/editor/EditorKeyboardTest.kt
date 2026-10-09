@@ -189,8 +189,8 @@ class EditorKeyboardTest {
         }
     }
 
-    // Next goes title → serving count → name → quantity → unit → the next row's name; the last row's last field says
-    // Done, which closes the keyboard and adds no row.
+    // Next goes title → serving count → name → note → quantity → unit → the next row's name; the last row's last field
+    // says Done, which closes the keyboard and adds no row.
     @Test
     fun nextGoesThroughTheRowsAndDoneEndsTheLastOne() {
         val id = writeANewRecipe()
@@ -209,6 +209,9 @@ class EditorKeyboardTest {
         awaitFocused(EditorTags.ingredientName(0))
         assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
+        awaitFocused(IngredientNoteTags.field(0))
+        assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
+        compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
         awaitFocused(EditorTags.ingredientQuantity(0))
         assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
         // The unit is chosen, not typed: Next opens its menu, and no field keeps the keyboard meanwhile.
@@ -224,6 +227,9 @@ class EditorKeyboardTest {
 
         assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
         compose.onNodeWithTag(EditorTags.ingredientName(1)).performImeAction()
+        awaitFocused(IngredientNoteTags.field(1))
+        assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
+        compose.onNodeWithTag(IngredientNoteTags.field(1)).performImeAction()
         awaitFocused(EditorTags.ingredientQuantity(1))
         // The last row's last field: Done closes the keyboard, and no row is added.
         assertEquals(EditorInfo.IME_ACTION_DONE, action(keyboardAskedFor()))
@@ -236,7 +242,8 @@ class EditorKeyboardTest {
         assertFalse(exists(EditorTags.unitOption(QuantityUnit.PIECE)))
     }
 
-    // "To taste" withdraws the quantity: Next goes from the name to the unit, and on the last row the name says Done.
+    // "To taste" withdraws the quantity: Next goes from the name to the note, then to the unit, and on the last row the
+    // note says Done.
     @Test
     fun aRowToTasteGoesFromItsNameToItsUnit() {
         val id = writeANewRecipe()
@@ -250,12 +257,18 @@ class EditorKeyboardTest {
         enter(EditorTags.ingredientName(0))
         assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
+        awaitFocused(IngredientNoteTags.field(0))
+        assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
+        compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.unitOption(QuantityUnit.TO_TASTE)) }
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.TO_TASTE)).performSemanticsAction(SemanticsActions.OnClick)
         awaitFocused(EditorTags.ingredientName(1))
-        assertEquals(EditorInfo.IME_ACTION_DONE, action(keyboardAskedFor()))
+        assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
         compose.onNodeWithTag(EditorTags.ingredientName(1)).performImeAction()
-        compose.waitUntil(PATIENCE_MS) { !isFocused(EditorTags.ingredientName(1)) }
+        awaitFocused(IngredientNoteTags.field(1))
+        assertEquals(EditorInfo.IME_ACTION_DONE, action(keyboardAskedFor()))
+        compose.onNodeWithTag(IngredientNoteTags.field(1)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { !isFocused(IngredientNoteTags.field(1)) }
         compose.waitForIdle()
         assertEquals(2, stored(id).ingredients.size)
     }
