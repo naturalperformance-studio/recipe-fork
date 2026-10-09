@@ -345,8 +345,9 @@ private fun IngredientRow(
     ) {
         // The block is dragged by the column down its left edge — or its right, for a left hand — so nothing that drags
         // stands among the inputs.
-        // The only row of a group has no handle: it cannot move without leaving its group with no rows.
-        DragColumnBlock(drag.takeIf { place.movable }, place.at, place.count, EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position)) {
+        // The only row of a group has no handle: it cannot move without leaving its group with no rows. Its column
+        // stays, empty, so that its inputs line up with the other rows'.
+        DragColumnBlock(drag, place.at, place.count, EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position), still = !place.movable) {
             // The name takes the first line up to the row's two action icons, so the block is no taller than its two
             // lines of inputs; the quantity and the unit start the line below at the same left edge.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -502,9 +503,8 @@ private fun GroupHeading(
     val focus = LocalFocusManager.current
     val span = blockAt(items, at)
     Box(Modifier.fillMaxWidth().then(drag.row(at, MaterialTheme.colorScheme.surface)).testTag(EditorTags.group(index))) {
-        // A heading with no rows yet has no handle: it stays last until rows fill its group.
-        val handle = drag.takeIf { items.movable(at) }
-        DragColumnBlock(handle, at, items.size, EditorTags.groupHandle(index), EditorTags.groupHandleIcon(index), span, groupLanding(items, at, span)) {
+        // A heading with no rows yet has no handle: it stays last until rows fill its group. Its column stays, empty.
+        DragColumnBlock(drag, at, items.size, EditorTags.groupHandle(index), EditorTags.groupHandleIcon(index), span, groupLanding(items, at, span), still = !items.movable(at)) {
             Column(Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     OutlinedTextField(

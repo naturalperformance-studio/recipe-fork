@@ -262,7 +262,8 @@ internal val LocalDragColumnOnRight = staticCompositionLocalOf { false }
 /**
  * A row's block with the column it is dragged by down its left edge — or its right edge, where [LocalDragColumnOnRight]
  * says so — the full height of the block, and [content] beside it (FLOW-025). Without a [drag] — a frozen recipe —
- * the block is [content] alone, with no column.
+ * the block is [content] alone, with no column. A block that stays put in an editable list — a group's only row, a
+ * heading with no rows yet — keeps the column's width, empty, so that every block's content shares one edge.
  */
 @Composable
 internal fun DragColumnBlock(
@@ -273,6 +274,7 @@ internal fun DragColumnBlock(
     iconTag: String,
     carried: Int = 1,
     mayLand: (Int) -> Boolean = { true },
+    still: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     if (drag == null) {
@@ -281,7 +283,7 @@ internal fun DragColumnBlock(
     }
     val onRight = LocalDragColumnOnRight.current
     Layout(
-        contents = listOf({ DragColumn(drag, position, count, tag, iconTag, carried, mayLand) }, content),
+        contents = listOf({ if (!still) DragColumn(drag, position, count, tag, iconTag, carried, mayLand) }, content),
     ) { (column, body), constraints ->
         val width = DRAG_COLUMN_WIDTH.roundToPx().coerceAtMost(constraints.maxWidth)
         val rest = (constraints.maxWidth - width).coerceAtLeast(0)
