@@ -102,6 +102,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -264,6 +266,10 @@ fun CardScreen(
     val placesOf = remember(recipeId) { TABS.map { CardPlaces() } }
     val scroll = scrolls[tab.ordinal]
     val places = placesOf[tab.ordinal]
+    // Whether the reader showed again the ingredients Cooking folded once every line was marked: the card's, not its
+    // page's, which leaves the composition as the other tab is shown, so that it outlasts a turn to View and back and
+    // the activity being recreated.
+    val ingredientsShownAgain = rememberSaveable(recipeId) { mutableStateOf(false) }
     // The recipe's timers running, or ringing, while their step is out of sight on the tab shown: in a bar at the bottom.
     val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
     val timing = timersBar?.timers?.let { timers -> timers.held.values.any { !it.hasEnded(timers.now) || timers.rings(it.key) } } == true
@@ -362,7 +368,7 @@ fun CardScreen(
                     ) { page ->
                         val mode = TABS[page]
                         RecipeContent(
-                            recipe, loaded, recipes, scale, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
+                            recipe, loaded, recipes, scale, mode, session, marks, onOpenParent, scrolls[page], placesOf[page], ingredientsShownAgain,
                             // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
                             bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
                         ) { if (mode == CardMode.VIEW) titleOut = it }
@@ -646,6 +652,7 @@ private fun RecipeContent(
     onOpenParent: (RecipeId) -> Unit,
     scroll: ScrollState,
     places: CardPlaces,
+    ingredientsShownAgain: MutableState<Boolean>,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
@@ -728,11 +735,15 @@ private fun RecipeContent(
                     marks = marks,
                     groups = recipe.ingredientGroups,
                     mode = mode,
+                    shownAgain = ingredientsShownAgain,
                 )
             }
+            // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
             StepsList(
                 recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries),
                 StepMediaOnCard(recipe, recipes.bookName()), marks, mode,
+                readerScrolling = { scroll.isScrollInProgress },
+                coveredBelow = bottom,
             )
             if (viewing && recipe.description.isNotBlank()) {
                 // The description stands further apart from the steps than the parts above stand from each other.

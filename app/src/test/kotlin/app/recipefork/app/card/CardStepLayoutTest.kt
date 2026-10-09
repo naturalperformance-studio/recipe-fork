@@ -44,8 +44,8 @@ import kotlin.math.abs
 
 /**
  * Scenario 5 of cooking with busy hands: each step on the card starts with its number in a filled circle — decorative
- * to the screen reader, which reads the step's number once — its text is set in the theme's title style, a size up from
- * the body text it was, and the steps stand clearly apart from one another.
+ * to the screen reader, which reads the step's number once — its text is set in the theme's small headline style on
+ * Cooking, two sizes up from the body text it was, and the steps stand clearly apart from one another.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -124,14 +124,14 @@ class CardStepLayoutTest {
     }
 
     @Test
-    fun aStepIsSetInTheThemesTitleStyleAndStandsApartFromTheNext() {
+    fun aStepIsSetInTheThemesHeadlineStyleOnCookingAndStandsApartFromTheNext() {
         open()
         val layout = compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsActions.GetTextLayoutResult].action!!.let { action ->
                 mutableListOf<TextLayoutResult>().also { action(it) }.single()
             }
         val style = layout.layoutInput.style
-        val title = typography!!.titleLarge
+        val title = typography!!.headlineSmall
         assertEquals(title.fontSize, style.fontSize)
         assertEquals(title.lineHeight, style.lineHeight)
         assertEquals(title.fontWeight, style.fontWeight)
