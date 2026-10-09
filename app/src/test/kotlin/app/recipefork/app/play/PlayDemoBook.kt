@@ -32,23 +32,24 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * The demo book the store screenshots show: the same six home recipes in English and in Russian, written for them, their
  * ingredients the shipped dictionary's entries, with covers and a step photo drawn here — plain shapes in food colours,
- * nobody's photograph. The book lists the two without a cover first, so that its first screen shows three recipes. The
- * traybake is the recipe the card, its steps and the editor are shown on: two ingredient groups, notes, references in
- * its steps and timers.
+ * nobody's photograph. The book lists the traybake, with its cover, first and the two without a cover after it, so that
+ * its first screen shows three titles beneath a cover. The traybake is the recipe the card, its steps and the editor are
+ * shown on: two ingredient groups — the first one short, so that the editor shows both on one screen — notes,
+ * references in its steps and timers.
  */
 class PlayDemoBook(val language: RecipeLanguage) {
     private val en = language == RecipeLanguage.EN
     private fun t(english: String, russian: String) = if (en) english else russian
 
     /** The recipes in the order they are written: the last one written stands first in the book. */
-    val recipes: List<DemoRecipe> by lazy { listOf(pancakes(), soup(), salad(), traybake(), pie(), pasta()) }
+    val recipes: List<DemoRecipe> by lazy { listOf(pancakes(), soup(), salad(), pie(), pasta(), traybake()) }
 
-    /** The recipe the card and the editor are shown on. */
-    val traybake: Recipe get() = recipes[3].recipe
+    /** The recipe the card and the editor are shown on, the book's first. */
+    val traybake: Recipe get() = recipes.last().recipe
 
-    /** The traybake's step whose timer runs in the screenshots, and the ingredients marked done meanwhile. */
+    /** The traybake's step whose timer runs in the screenshots, and the ingredients marked done meanwhile: the marinade. */
     val runningStep = 2
-    val doneIngredients = listOf(0, 1, 2)
+    val doneIngredients = listOf(0, 1)
 
     /** Writes every recipe's pictures into the [filesDirectory]'s book and the recipes as they name them. */
     fun pictures(filesDirectory: File) {
@@ -71,22 +72,22 @@ class PlayDemoBook(val language: RecipeLanguage) {
         t("Chicken and potato traybake", "Курица с картофелем в духовке"),
         tags = setOf(MAIN_COURSE, DINNER),
         servings = 4,
-        groups = listOf(IngredientGroup(t("Marinade", "Маринад"), 0), IngredientGroup(t("Tray", "На противень"), 4)),
+        groups = listOf(IngredientGroup(t("Marinade", "Маринад"), 0), IngredientGroup(t("Tray", "На противень"), 2)),
         ingredients = listOf(
-            piece(GARLIC, 4, divisible = false, note = t("cloves, crushed", "зубчики, раздавить")),
             household(OLIVE_OIL, 3, QuantityUnit.TABLESPOON),
-            household(SWEET_PAPRIKA, 2, QuantityUnit.TEASPOON),
-            toTaste(SALT),
+            household(SWEET_PAPRIKA, 2, QuantityUnit.TEASPOON, note = t("ground", "молотая")),
             grams(CHICKEN_THIGHS, 800, note = t("bone in, skin on", "на кости, с кожей")),
             grams(POTATO, 1000, note = t("in wedges", "дольками")),
             piece(RED_ONION, 1, divisible = true, note = t("in thick rings", "толстыми кольцами")),
             piece(LEMON, 1, divisible = true, note = t("sliced", "кружками")),
+            piece(GARLIC, 4, divisible = false, note = t("whole cloves, unpeeled", "целыми зубчиками, в шелухе")),
+            toTaste(SALT),
         ),
         steps = listOf(
-            step(t("Stir the garlic, {1} of olive oil and {2} of paprika with a good pinch of salt in a large bowl.", "Смешайте в большой миске чеснок, {1} масла и {2} паприки, хорошо посолите.")),
-            step(t("Coat {4} of chicken and {5} of potatoes in the marinade and spread them over the tray in one layer.", "Обваляйте в маринаде {4} курицы и {5} картофеля и разложите на противне в один слой.")),
+            step(t("Stir {0} of olive oil and {1} of paprika together in a large bowl.", "Смешайте в большой миске {0} масла и {1} паприки.")),
+            step(t("Coat {2} of chicken and {3} of potatoes in the marinade and spread them over the tray in one layer.", "Перемешайте {2} курицы и {3} картофеля с маринадом и разложите на противне в один слой.")),
             step(
-                t("Tuck the onion and the lemon in between and roast at 200 °C until the skin is golden and crisp.", "Разложите между ними лук и лимон и запекайте при 200 °C, пока кожа не станет золотистой и хрустящей."),
+                t("Tuck the onion, the lemon and the garlic in between, season with salt and roast at 200 °C until the skin is golden and crisp.", "Разложите между ними лук, лимон и чеснок, посолите и запекайте при 200 °C, пока кожа не станет золотистой и хрустящей."),
                 Timer(40.minutes, t("Oven", "Духовка")),
             ),
             step(t("Let it rest, then squeeze the roasted lemon over the top.", "Дайте постоять и выжмите сверху запечённый лимон."), Timer(5.minutes)),
@@ -109,7 +110,7 @@ class PlayDemoBook(val language: RecipeLanguage) {
         steps = listOf(
             step(t("Whisk {0} of kefir with the eggs and the sugar.", "Взбейте {0} кефира с яйцами и сахаром.")),
             step(t("Fold in the flour and the soda; let the batter stand.", "Вмешайте муку и соду, дайте тесту постоять."), Timer(10.minutes)),
-            step(t("Fry spoonfuls in a little oil until golden on both sides.", "Жарьте ложкой на небольшом количестве масла до румяности с двух сторон.")),
+            step(t("Fry spoonfuls in a little oil until golden on both sides.", "Выкладывайте тесто ложкой и жарьте на небольшом количестве масла до румяности с двух сторон.")),
         ),
         cover = ::pancakesPicture,
     )
@@ -172,7 +173,7 @@ class PlayDemoBook(val language: RecipeLanguage) {
         ),
         steps = listOf(
             step(t("Cook {0} of spaghetti in salted water.", "Отварите {0} спагетти в подсоленной воде."), Timer(9.minutes)),
-            step(t("Simmer the tomatoes with the garlic and toss with the pasta.", "Протушите томаты с чесноком и смешайте с пастой.")),
+            step(t("Simmer the tomatoes with the garlic and toss with the pasta.", "Потушите томаты с чесноком и смешайте с пастой.")),
         ),
         cover = null,
     )
@@ -262,8 +263,8 @@ class PlayDemoBook(val language: RecipeLanguage) {
         private fun exact(entry: Long, amount: Long, unit: QuantityUnit, note: String?) =
             Ingredient(0, entry, unitType = UnitType.EXACT, unit = unit, quantity = Rational.of(amount), note = note)
 
-        private fun household(entry: Long, count: Long, unit: QuantityUnit) =
-            Ingredient(0, entry, unitType = UnitType.HOUSEHOLD, unit = unit, quantity = Rational.of(count))
+        private fun household(entry: Long, count: Long, unit: QuantityUnit, note: String? = null) =
+            Ingredient(0, entry, unitType = UnitType.HOUSEHOLD, unit = unit, quantity = Rational.of(count), note = note)
 
         private fun piece(entry: Long, count: Long, divisible: Boolean, note: String? = null) =
             Ingredient(0, entry, unitType = UnitType.PIECE, unit = QuantityUnit.PIECE, quantity = Rational.of(count), divisible = divisible, note = note)

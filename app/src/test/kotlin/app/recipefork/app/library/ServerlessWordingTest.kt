@@ -105,7 +105,7 @@ class ServerlessWordingTest {
         assertEquals(STANDARD_ONLY.toSortedSet(), speaking)
         assertEquals(R.string.library_state_published_serverless, stateLabel(RecipeState.PUBLISHED, Mode.Serverless))
         RecipeState.entries.forEach { state ->
-            val name = context.resources.getResourceEntryName(stateLabel(state, Mode.Serverless))
+            val name = stateLabel(state, Mode.Serverless)?.let(context.resources::getResourceEntryName)
             assertTrue("$state reads $name in serverless mode", name !in STANDARD_ONLY)
         }
     }
@@ -130,6 +130,37 @@ class ServerlessWordingTest {
             entryTexts(draft),
         )
         assertEquals(listOf("Published soup", "Published", "Sent, with changes not sent"), entryTexts(published))
+    }
+
+    // Nothing can be published without the server, so an own draft, local or private, names no state there; the entry
+    // closes the gap where the state was, and the screen reader reads it the same, less the state. A recipe once
+    // published keeps its serverless state.
+    @Test
+    fun aServerlessDraftNamesNoState() {
+        val local = own("Local soup", RecipeState.LOCAL, SentStatus.NEVER, 0)
+        val private = own("Private soup", RecipeState.PRIVATE, SentStatus.SENT, 1)
+        val published = own("Published soup", RecipeState.PUBLISHED, SentStatus.SENT, 2)
+        show(Mode.Serverless)
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
+        listOf(local, private, published).forEach(::awaitEntry)
+        assertEquals(listOf("Local soup"), entryTexts(local))
+        assertEquals(listOf("Private soup"), entryTexts(private))
+        assertEquals(listOf("Published soup", context.getString(R.string.library_state_published_serverless)), entryTexts(published))
+        assertTrue("the draft's entry is shorter by the missing line", entryHeight(local) < entryHeight(published))
+        assertEquals(entryHeight(local), entryHeight(private))
+    }
+
+    // The standard build still names both kinds of draft.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h2000dp")
+    fun theStandardBuildStillNamesADraft() {
+        val local = own("Суп", RecipeState.LOCAL, SentStatus.NEVER, 0)
+        val private = own("Борщ", RecipeState.PRIVATE, SentStatus.SENT, 1)
+        show(Mode.Standard)
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
+        listOf(local, private).forEach(::awaitEntry)
+        assertEquals(listOf("Суп", "Черновик"), entryTexts(local).take(2))
+        assertEquals(listOf("Борщ", "Черновик"), entryTexts(private).take(2))
     }
 
     private fun everyScreen() {
@@ -244,6 +275,9 @@ class ServerlessWordingTest {
     private fun entryTexts(recipe: Recipe): List<String> =
         compose.onNodeWithTag(LibraryTags.entry(recipe.id.value)).fetchSemanticsNode().config
             .getOrElse(androidx.compose.ui.semantics.SemanticsProperties.Text) { emptyList() }.map { it.text }
+
+    private fun entryHeight(recipe: Recipe): Int =
+        compose.onNodeWithTag(LibraryTags.entry(recipe.id.value)).fetchSemanticsNode().size.height
 
     private fun assertSaysNothingOfTheServer(where: String) {
         compose.waitForIdle()
