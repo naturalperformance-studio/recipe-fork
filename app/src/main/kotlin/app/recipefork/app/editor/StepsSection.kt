@@ -331,19 +331,15 @@ private fun StepTimers(
         key(row.key) {
             val index = rows.take(place).count { it.held }
             val timer = if (row.held) step.timers.getOrNull(index) else null
-            // A timer is counted by its place among the step's timers, as its removal is said; one that holds no
-            // duration yet, which the step does not carry, is counted after them.
-            val number = if (row.held) index + 1 else rows.count { it.held } + rows.take(place + 1).count { !it.held }
             Column(Modifier.fillMaxWidth().padding(top = if (place > 0) 8.dp else 0.dp)) {
-                StepTimer(position, place, rows.size, index, number, step, timer, timers, focus, ingredients, language, editor, left)
+                StepTimer(position, place, rows.size, index, step, timer, timers, focus, ingredients, language, editor, left)
             }
         }
     }
 }
 
 /**
- * One timer of the step, at [place] among the [count] its block shows and at [index] of the step's timers, told apart
- * from the others as timer [number]: its duration in hours and whole minutes — the
+ * One timer of the step, at [place] among the [count] its block shows and at [index] of the step's timers: its duration in hours and whole minutes — the
  * only thing asked — and, once it holds one ([timer]), its own removal and the name it will announce itself by. A timer
  * just added holds no duration yet and is not stored until it does.
  */
@@ -353,7 +349,6 @@ private fun StepTimer(
     place: Int,
     count: Int,
     index: Int,
-    number: Int,
     step: Step,
     timer: Timer?,
     timers: TimerRows,
@@ -381,8 +376,9 @@ private fun StepTimer(
             timers.hold(place, true)
         }
     }
-    // Several timers are told apart by their place; a step's only timer reads as it always did.
-    val numbered = count > 1
+    // Several rows are told apart by their place in the block, top to bottom, whether or not each holds a duration —
+    // its removal, its name and the notice of its removal alike; a step's only row reads as it always did.
+    val number = (place + 1).takeIf { count > 1 }
 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         // Two digits each: the field cannot hold more than 99 h 59 min (FLOW-027 (14)), and no seconds are offered.
@@ -418,7 +414,7 @@ private fun StepTimer(
             onClick = {
                 when {
                     !timers.held(place) -> timers.remove(place)
-                    editor.removeTimer(position, timers.index(place), numbered) -> timers.remove(place)
+                    editor.removeTimer(position, timers.index(place), number) -> timers.remove(place)
                 }
             },
             // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
@@ -426,7 +422,7 @@ private fun StepTimer(
         ) {
             Icon(
                 painterResource(R.drawable.ic_remove_timer),
-                contentDescription = if (numbered) {
+                contentDescription = if (number != null) {
                     stringResource(R.string.editor_timer_remove_numbered_action, position + 1, number)
                 } else {
                     stringResource(R.string.editor_timer_remove_action, position + 1)
@@ -436,12 +432,12 @@ private fun StepTimer(
         }
     }
     if (timer != null) {
-        TimerNameField(position, place, index, number.takeIf { numbered }, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor, name) { given = it }
+        TimerNameField(position, place, index, number, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor, name) { given = it }
         BoundMark(editor, RecipePart.TimerName(position, index), EditorTags.timerNameMark(position, place), gap = 0.dp)
         // Under the name, so that it neither moves the name field nor goes from above it once the timer is named.
         if (left) {
             cutNotification(step, index, ingredients, language)?.let { reading ->
-                TimerNotification(position, place, number.takeIf { numbered }, reading) { name.requestFocus() }
+                TimerNotification(position, place, number, reading) { name.requestFocus() }
             }
         }
     }

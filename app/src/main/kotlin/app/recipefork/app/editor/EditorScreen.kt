@@ -345,7 +345,7 @@ private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements)
             Removal.Kind.GROUP -> R.string.editor_group_removed
             Removal.Kind.TIMER -> if (it.ofSeveral) R.string.editor_timer_removed_numbered else R.string.editor_timer_removed
         }
-        if (it.ofSeveral) stringResource(said, it.position + 1, it.index + 1) else stringResource(said, it.position + 1)
+        it.number?.let { number -> stringResource(said, it.position + 1, number) } ?: stringResource(said, it.position + 1)
     }
     val undo = stringResource(R.string.editor_undo)
     val offered = remember { arrayOfNulls<Job>(1) }

@@ -298,11 +298,11 @@ class RecipeEditor(
 
     /**
      * Takes the timer at [index] off the step at [position], name and all; the step's other timers keep their order.
-     * The removal is offered for undoing as [removal], which puts the timer back at its place, and is said with the
-     * timer's number where [numbered] — as its step's block numbers it, several timers shown — or, left unsaid, where
-     * the step carried several. Returns whether the step carried a timer there.
+     * The removal is offered for undoing as [removal], which puts the timer back at its place, and is said with
+     * [number] — the one its removal was labelled with, its place in its step's block where that shows several rows;
+     * none where it showed one. Left unsaid, it is the timer's place among the step's timers where the step carried several.
      */
-    fun removeTimer(position: Int, index: Int, numbered: Boolean? = null): Boolean {
+    fun removeTimer(position: Int, index: Int, number: Int? = storedNumber(position, index)): Boolean {
         val recipe = current.value ?: return false
         if (!recipe.state.editable || timerAt(position, index) == null) return false
         val key = stepKeys.of(position)
@@ -310,7 +310,7 @@ class RecipeEditor(
         val marks = left.value.filterTo(mutableSetOf()) { it is Left.OfStep && it.key == key && it.timer != null }
         marksWithoutTimer(position, index)
         if (!editStep(position) { it.withoutTimer(index) }) return false
-        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index, marks = marks, numbered = numbered) {}
+        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index, marks = marks, number = number) {}
         return true
     }
 
@@ -329,6 +329,10 @@ class RecipeEditor(
             }
         }
     }
+
+    /** The number of the timer at [index] of the step at [position] among the step's timers; none where it is the only one. */
+    private fun storedNumber(position: Int, index: Int): Int? =
+        (index + 1).takeIf { (current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timers?.size ?: 0) > 1 }
 
     /** The timer at [index] of the step at [position]; null where it carries none there. */
     private fun timerAt(position: Int, index: Int): Timer? =
@@ -1003,19 +1007,15 @@ class Removal internal constructor(
     val index: Int = 0,
     /** For a timer, the marks its step's timer names held when it was removed. */
     internal val marks: Set<RecipeEditor.Left> = emptySet(),
-    /** For a timer, whether its removal was chosen where its number was shown; null where none was. */
-    private val numbered: Boolean? = null,
+    /** For a timer, the number its removal was labelled with, said with it; null where none was. */
+    val number: Int? = null,
     internal val ended: suspend () -> Unit,
 ) {
     enum class Kind { STEP, INGREDIENT, GROUP, TIMER }
 
-    /**
-     * Whether the timer removed is said by its number, [index] + 1 — its place among the step's timers, as its removal
-     * was labelled: where it was numbered when chosen, else where it was one of several on its step.
-     */
+    /** Whether the timer removed is said by its [number]. */
     val ofSeveral: Boolean
-        get() = kind == Kind.TIMER &&
-            (numbered ?: ((before.steps.sortedBy { it.position }.getOrNull(position)?.timers?.size ?: 0) > 1))
+        get() = kind == Kind.TIMER && number != null
 }
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
