@@ -54,6 +54,7 @@ class RecipeFileGoldenTest {
             FileMedia("m-2", MediaKind.VIDEO, MediaAttachment.ToStep(1), "media/m-2.mp4"),
         ),
         ingredientGroups = listOf(IngredientGroup("Vegetables", 1), IngredientGroup("Seasoning", 3)),
+        equipment = listOf("Pot 5 l", "Frying pan 26 cm", "Grater"),
     )
 
     private val expected = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe.json")).readText()
@@ -64,8 +65,11 @@ class RecipeFileGoldenTest {
     @Test
     fun theCheckedInDocumentReadsBackAsTheRecipe() = assertEquals(golden, RecipeFile.decode(expected))
 
-    /** The golden recipe as formats 1 and 2 held it: each step's first timer alone (DOM-024). */
-    private val oneTimerEach = golden.copy(steps = golden.steps.map { it.copy(timers = it.timers.take(1)) })
+    /** The golden recipe as format 3 held it: with no equipment. */
+    private val withoutEquipment = golden.copy(equipment = emptyList())
+
+    /** The golden recipe as formats 1 and 2 held it: each step's first timer alone (DOM-024), and no equipment. */
+    private val oneTimerEach = withoutEquipment.copy(steps = golden.steps.map { it.copy(timers = it.timers.take(1)) })
 
     // DOM-022, DOM-023: the same recipe as format 1 wrote it, before groups and notes, still reads — with neither.
     @Test
@@ -80,5 +84,12 @@ class RecipeFileGoldenTest {
     fun theFormat2DocumentReadsBackWithOneTimerAStep() {
         val format2 = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe-v2.json")).readText()
         assertEquals(oneTimerEach, RecipeFile.decode(format2))
+    }
+
+    // The same recipe as format 3 wrote it, before equipment, still reads — with none.
+    @Test
+    fun theFormat3DocumentReadsBackWithNoEquipment() {
+        val format3 = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe-v3.json")).readText()
+        assertEquals(withoutEquipment, RecipeFile.decode(format3))
     }
 }

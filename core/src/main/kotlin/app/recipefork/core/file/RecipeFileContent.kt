@@ -31,6 +31,8 @@ data class RecipeFileContent(
     val media: List<FileMedia> = emptyList(),
     /** The headings of the ingredient list, in order (DOM-022); empty for a list with no groups. */
     val ingredientGroups: List<IngredientGroup> = emptyList(),
+    /** What the recipe is cooked with, in order; empty for none. */
+    val equipment: List<String> = emptyList(),
 ) {
     companion object {
         /**
@@ -60,6 +62,7 @@ data class RecipeFileContent(
                 ingredients = recipe.ingredients,
                 steps = recipe.steps,
                 ingredientGroups = recipe.ingredientGroups,
+                equipment = recipe.equipment,
                 author = recipe.statedAuthor ?: ownerNickname,
                 parent = parent,
             )

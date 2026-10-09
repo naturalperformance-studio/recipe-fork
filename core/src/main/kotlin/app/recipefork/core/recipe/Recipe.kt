@@ -247,10 +247,30 @@ data class Recipe(
     val contentChangedAt: Instant,
     /** The headings of the ingredient list, in order (DOM-022); empty for a list with no groups. */
     val ingredientGroups: List<IngredientGroup> = emptyList(),
+    /**
+     * What the recipe is cooked with ("Oven", "Frying pan 26 cm"), in the author's order; empty for none. On a recipe
+     * that passes the rules each item is trimmed, not blank and at most [RecipeBounds.MAX_EQUIPMENT_NAME] characters,
+     * and there are at most [RecipeBounds.MAX_EQUIPMENT]. The editor adds an item through [withEquipment], which refuses
+     * one more than that.
+     */
+    val equipment: List<String> = emptyList(),
 ) {
     init {
         require(servings == null || servings >= 1) { "servings must be 1 or more" }
         require(!contentChangedAt.isBefore(createdAt)) { "content cannot change before creation" }
+    }
+
+    /** Whether the recipe holds fewer items of equipment than [RecipeBounds.MAX_EQUIPMENT], so that one more may be added. */
+    val canAddEquipment: Boolean get() = equipment.size < RecipeBounds.MAX_EQUIPMENT
+
+    /**
+     * This recipe with the item the author [typed] added after its others, trimmed; unchanged where [typed] is blank, and
+     * null, refused, where it already holds [RecipeBounds.MAX_EQUIPMENT].
+     */
+    fun withEquipment(typed: String): Recipe? {
+        if (!canAddEquipment) return null
+        val item = equipmentItemOf(typed) ?: return this
+        return copy(equipment = equipment + item)
     }
 
     /** The time FLOW-039 orders by under `newest`. */
@@ -277,6 +297,12 @@ data class Recipe(
     )
 
     companion object {
+        /** The item of equipment the author's [typed] text gives: trimmed, and none when blank. */
+        fun equipmentItemOf(typed: String): String? = typed.trim().takeIf { it.isNotEmpty() }
+
+        /** The equipment the author's [typed] lines give, in their order: each trimmed, the blank ones dropped. */
+        fun equipmentOf(typed: List<String>): List<String> = typed.mapNotNull(::equipmentItemOf)
+
         /** An empty recipe in `local`, in the active book: the pool's when [owner] is null. */
         fun create(at: Instant, owner: AccountId?, parent: RecipeId? = null, id: RecipeId = RecipeId.mint()) =
             Recipe(
