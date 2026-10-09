@@ -123,7 +123,7 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
 
 /**
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
- * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
+ * cover under it (FLOW-026), the tags, the serving count, the equipment, the ingredients, the steps and the description.
  *
  * [onClose] leaves the editor: the bar's back and "Done" call it once every change is in the book. What is entered is
  * written as it is typed, so leaving holds nothing back: the system's back, and its predictive gesture, are the
@@ -148,10 +148,11 @@ fun EditorScreen(
     remember(mediaWork, stepKeys) { mediaWork.stepKeys = stepKeys }
     val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
     val groupKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val equipmentKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
     // Not saved: what the editor holds for this session alone — the references offered once (GUIDE-008) among it —
     // starts again after the activity is recreated or the process restored, which is intended, nothing of a hint
     // being kept (GUIDE-005).
-    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys, groupKeys) }
+    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys, groupKeys, equipmentKeys) }
     // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
     // touched from a database thread.
     LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }
@@ -247,14 +248,19 @@ fun EditorScreen(
                     )
                 }
                 CompositionLocalProvider(LocalEditorStatements provides statements, LocalEditorScroll provides scroll) {
-                    // The keyboard's Next goes from the title to the serving count, and from there into the rows.
+                    // The keyboard's Next goes from the title to the serving count, and from there through the
+                    // equipment into the ingredient list.
                     val servings = remember { FocusRequester() }
                     val rows = remember { RowFocus() }
                     val headings = remember { RowFocus() }
+                    val equipment = remember { RowFocus() }
+                    val firstItem = shown.listItems.firstOrNull()
+                    val toIngredients = firstItem?.let { { focusOn(it, rows, headings) } }
                     TitleAndLanguage(shown, editor) { servings.requestFocus() }
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
-                    ServingCount(shown, editor, servings, rows, headings)
+                    ServingCount(shown, editor, servings, if (shown.equipment.isNotEmpty()) ({ equipment.ask(0) }) else toIngredients)
+                    Equipment(shown, editor, equipment, toIngredients)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
                         Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork, animated, animations)
@@ -344,6 +350,7 @@ private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements)
             Removal.Kind.INGREDIENT -> R.string.editor_ingredient_removed
             Removal.Kind.GROUP -> R.string.editor_group_removed
             Removal.Kind.TIMER -> if (it.ofSeveral) R.string.editor_timer_removed_numbered else R.string.editor_timer_removed
+            Removal.Kind.EQUIPMENT -> R.string.editor_equipment_removed
         }
         it.number?.let { number -> stringResource(said, it.position + 1, number) } ?: stringResource(said, it.position + 1)
     }
@@ -652,6 +659,17 @@ object EditorTags {
     fun removeIcon(tagId: Long) = "editor-tag-remove-icon-$tagId"
     const val SERVINGS = "editor-servings"
     const val SERVINGS_ACCEPTS = "editor-servings-accepts"
+    /** The equipment, its "Add", and the statement an "Add" past the limit makes (GUIDE-007). */
+    const val EQUIPMENT = "editor-equipment"
+    const val EQUIPMENT_ADD = "editor-equipment-add"
+    const val EQUIPMENT_STATEMENT = "editor-equipment-statement"
+    /** The item at [index] of the equipment, and its parts. */
+    fun equipment(index: Int) = "editor-equipment-$index"
+    fun equipmentName(index: Int) = "editor-equipment-$index-name"
+    fun equipmentMark(index: Int) = "editor-equipment-$index-mark"
+    fun equipmentRemove(index: Int) = "editor-equipment-$index-remove"
+    fun equipmentMenu(index: Int) = "editor-equipment-$index-menu"
+    fun equipmentAction(index: Int, action: RowAction) = "editor-equipment-$index-${action.tag}"
     const val INGREDIENTS = "editor-ingredients"
     const val INGREDIENT_ADD = "editor-ingredient-add"
     fun ingredient(position: Int) = "editor-ingredient-$position"
