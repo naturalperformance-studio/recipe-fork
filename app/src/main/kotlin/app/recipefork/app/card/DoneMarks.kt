@@ -182,6 +182,16 @@ internal fun Modifier.markedDone(done: Boolean, onToggle: () -> Unit): Modifier 
     return clickable(onClickLabel = label, onClick = onToggle).semantics { if (done) stateDescription = state }
 }
 
+/**
+ * Shows the mark of the line or step it modifies without letting a tap change it ([CardMode.VIEW]): the screen reader
+ * still reads a marked one as done, and finds no action on it.
+ */
+@Composable
+internal fun Modifier.shownDone(done: Boolean): Modifier {
+    val state = stringResource(R.string.card_marked_done)
+    return if (done) semantics { stateDescription = state } else this
+}
+
 /** The colour of a line's or a step's text marked done: muted, and still of the theme's contrast (ContrastTest). */
 internal val doneColor: Color
     @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant

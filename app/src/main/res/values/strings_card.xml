@@ -82,4 +82,6 @@
     <string name="card_mark_not_done_action">Mark as not done</string>
     <string name="card_marked_done">Done</string>
     <string name="card_clear_marks">Clear marks</string>
+    <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
+    <string name="card_view_timer">%1$s · %2$s</string>
 </resources>
