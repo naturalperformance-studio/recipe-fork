@@ -1,6 +1,7 @@
 package app.recipefork.app
 
 import android.Manifest
+import android.accessibilityservice.AccessibilityService
 import android.app.Activity
 import android.app.Instrumentation
 import android.app.NotificationManager
@@ -8,15 +9,15 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Rect
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.ExifInterface
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
-import android.provider.MediaStore
-import android.graphics.Rect
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -487,6 +488,10 @@ class ReleaseSmokeTest {
             awaitShown(WRITTEN_HERE)
             awaitShown(written.title)
 
+            // The settings: the theme and the language changed and set back, the usual servings' dialog left.
+            throughTheSettings()
+            awaitShown(written.title)
+
             // Deleted, and brought back with Undo.
             tap(actionsFor(written))
             awaitShown(DELETE)
@@ -502,6 +507,68 @@ class ReleaseSmokeTest {
         } finally {
             finishTheApplication()
         }
+    }
+
+    /**
+     * The interface's words the settings' walk reads, in English and in Russian, written out: the shrunk build's
+     * resources are reached by the application alone.
+     */
+    private class Words(val language: String, val cancel: String, val device: String, val usual: String, val set: String, val back: String, val book: String)
+
+    private val words = mapOf(
+        "en" to Words("Language", "Cancel", AS_ON_THE_DEVICE, "I usually cook for…", "Set", "Back", "My recipe book"),
+        "ru" to Words("Язык", "Отмена", "Как на устройстве", "Обычно готовлю на…", "Задать", "Назад", "Моя книга рецептов"),
+    )
+
+    /** Of the [choices] an open choice dialog offers, the one marked chosen. */
+    private fun chosen(choices: List<String>): String = choices.single { choice ->
+        generateSequence(shown(choice)) { it.parent }.any { it.isChecked || it.isSelected }
+    }
+
+    /**
+     * The settings opened from the book's bar: a theme other than the one in force chosen in the theme's dialog, and
+     * the one in force chosen back; the language switched in its dialog — the application shown again in it — and
+     * switched back; the usual servings' dialog opened and left by back; and back to the book, the application still
+     * in front. The walk starts in English, as the emulator's: the device's language, or English chosen.
+     */
+    private fun throughTheSettings() {
+        tap(SETTINGS)
+        awaitShown(THEME)
+
+        tap(THEME)
+        awaitShown(THEME_CANCEL)
+        val theme = chosen(THEMES)
+        val otherTheme = if (theme == DARK) LIGHT else DARK
+        tap(otherTheme)
+        awaitUntil(30.seconds) { shown(THEME_CANCEL) == null }
+        tap(THEME)
+        awaitShown(THEME_CANCEL)
+        assertEquals(otherTheme, chosen(THEMES))
+        tap(theme)
+        awaitUntil(30.seconds) { shown(THEME_CANCEL) == null }
+
+        tap(LANGUAGE)
+        awaitShown(LANGUAGE_CANCEL)
+        // English, chosen or the device's.
+        val language = chosen(listOf(ENGLISH, AS_ON_THE_DEVICE))
+        val before = words.getValue("en")
+        val after = words.getValue("ru")
+        tap(RUSSIAN)
+        // The application shows itself again in the language taken, the settings still open.
+        awaitShown(after.language)
+        tap(after.language)
+        awaitShown(after.cancel)
+        tap(if (language == AS_ON_THE_DEVICE) after.device else language)
+        awaitShown(before.language)
+
+        tap(before.usual)
+        awaitShown(before.set)
+        assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
+        awaitUntil(30.seconds) { shown(before.set) == null }
+
+        tap(before.back)
+        awaitShown(before.book)
+        assertTrue("the application is in front", activities(Stage.RESUMED).any { it is MainActivity })
     }
 
     /** The application's activities in [stage]. */
@@ -597,6 +664,18 @@ class ReleaseSmokeTest {
         const val MINUTES = "Minutes"
         const val REMOVE_TIMER_FROM_STEP_2 = "Remove timer from step 2"
         const val EXPORT = "Export"
+        /** The book's bar action that opens the settings, and the settings' theme and language with their dialogs. */
+        const val SETTINGS = "Settings"
+        const val THEME = "Theme"
+        const val THEME_CANCEL = "Cancel"
+        const val LIGHT = "Light"
+        const val DARK = "Dark"
+        val THEMES = listOf(LIGHT, DARK, AS_ON_THE_DEVICE)
+        const val LANGUAGE = "Language"
+        const val LANGUAGE_CANCEL = "Cancel"
+        const val ENGLISH = "English"
+        const val RUSSIAN = "Русский"
+        const val AS_ON_THE_DEVICE = "As on the device"
         const val DELETE = "Delete"
         const val DELETED = "Recipe deleted"
         const val UNDO = "Undo"
