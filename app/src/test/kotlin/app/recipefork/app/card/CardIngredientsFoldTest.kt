@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -79,11 +80,17 @@ class CardIngredientsFoldTest {
         book.close()
     }
 
-    private fun open(tab: CardMode) {
+    private fun open(tab: CardMode): StateRestorationTester {
         val environment = CardEnvironment(marks = marks, lastTab = HeldLastCardTab(tab), ingredients = IngredientEntries { emptyList() })
-        compose.setContent {
+        val tester = StateRestorationTester(compose)
+        tester.setContent {
             MaterialTheme(colorScheme = lightColorScheme()) { CardScreen(pilaf.id, recipes, environment, onBack = {}, onEdit = {}) }
         }
+        awaitIngredients()
+        return tester
+    }
+
+    private fun awaitIngredients() {
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.INGREDIENTS) }
         compose.waitForIdle()
@@ -167,6 +174,39 @@ class CardIngredientsFoldTest {
         assertFalse(folded())
         (0..2).forEach { tap(line(it)) }
         assertTrue(folded())
+    }
+
+    // The list shown again is the card's, not the tab page's: it stays shown through a turn to View and back, and
+    // through the activity being recreated, for as long as every line stays marked.
+    @Test
+    fun aListShownAgainStaysShownThroughATurnToViewAndBack() {
+        marks.hold(BookName.Pool, pilaf.id, pilaf.ingredients.map(DoneMark::of).toSet())
+        open(CardMode.COOKING)
+        assertTrue(folded())
+        tap(IngredientTags.GATHERED)
+        assertFalse(folded())
+
+        compose.chooseCardTab(CardMode.VIEW)
+        compose.chooseCardTab(CardMode.COOKING)
+        assertFalse("shown again, the list stays shown on coming back to Cooking", folded())
+        assertEquals(listOf(0, 1, 2), doneLines())
+        // A line unmarked and marked again still folds it.
+        tap(line(0))
+        tap(line(0))
+        assertTrue(folded())
+    }
+
+    @Test
+    fun aListShownAgainStaysShownThroughRecreation() {
+        marks.hold(BookName.Pool, pilaf.id, pilaf.ingredients.map(DoneMark::of).toSet())
+        val tester = open(CardMode.COOKING)
+        tap(IngredientTags.GATHERED)
+        assertFalse(folded())
+
+        tester.emulateSavedInstanceStateRestore()
+        awaitIngredients()
+        assertFalse("shown again, the list stays shown once the activity is recreated", folded())
+        assertEquals(listOf(0, 1, 2), doneLines())
     }
 
     @Test

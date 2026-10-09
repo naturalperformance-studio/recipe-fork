@@ -17,6 +17,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.semantics.stateDescription
@@ -84,9 +86,9 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * media and its timer keep their own taps. Without [marks] a step is not marked.
  *
  * On Cooking the first step not marked done is the current one: drawn on the theme's primary container and read as the
- * current step. A step marked done brings the next one not marked after it into view, scrolling smoothly — unless the
- * reader is scrolling themselves ([readerScrolling]); a step unmarked, or a step marked with none unmarked after it, moves
- * nothing.
+ * current step. A step marked done brings the next one not marked after it into view, wholly above the [coveredBelow]
+ * the navigation bar covers at the bottom of the viewport, scrolling smoothly — unless the reader is scrolling themselves
+ * ([readerScrolling]); a step unmarked, or a step marked with none unmarked after it, moves nothing.
  *
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a step is as tall as its text, the steps a
  * modest [VIEW_STEP_SPACING] apart, its text a size smaller ([stepTextStyle]); its done mark is shown but a tap leaves it
@@ -103,6 +105,7 @@ internal fun StepsList(
     marks: CardMarks? = null,
     mode: CardMode = CardMode.COOKING,
     readerScrolling: () -> Boolean = { false },
+    coveredBelow: Dp = 0.dp,
 ) {
     // A step that is only a reference reads as one, and one that is only a photograph or a clip shows it — or says it
     // is unavailable (FLOW-061); one holding nothing that reads or shows is left out.
@@ -115,6 +118,14 @@ internal fun StepsList(
     // Each step can be brought into view: by a timer's notification, or as the next to do once one is marked.
     val requesters = remember { HashMap<Int, BringIntoViewRequester>() }
     fun requester(position: Int) = requesters.getOrPut(position) { BringIntoViewRequester() }
+    // A step is brought wholly above what covers the bottom of the viewport — the navigation bar, which the content runs
+    // under — not only as far as the viewport's edge.
+    val places = LocalCardPlaces.current
+    val covered by rememberUpdatedState(with(LocalDensity.current) { coveredBelow.toPx() })
+    suspend fun bring(position: Int) {
+        val height = places?.placeOf(CardPlaces.step(position))?.height
+        requester(position).bringIntoView(height?.let { Rect(Offset.Zero, Size(1f, it + covered)) })
+    }
     // A timer's step is shown on Cooking, where the timer runs: the card opens on that tab for it.
     val toShow = LocalStepToShow.current?.takeIf { cooking }
     val pending = toShow?.pending?.collectAsState()?.value?.takeIf { it.recipeId == recipeId.value }
@@ -124,7 +135,7 @@ internal fun StepsList(
         if (targetShown) {
             // Once laid out, the step comes into view.
             withFrameNanos { }
-            requester(pending.stepPosition).bringIntoView()
+            bring(pending.stepPosition)
         }
         toShow.shown()
     }
@@ -135,7 +146,7 @@ internal fun StepsList(
         val position = next ?: return@LaunchedEffect
         // Once the mark is drawn; the bringing animates, and a scroll of the reader's own stops it.
         withFrameNanos { }
-        if (!scrolling()) requester(position).bringIntoView()
+        if (!scrolling()) bring(position)
         next = null
     }
     if (shown.isEmpty()) return

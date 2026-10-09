@@ -1,11 +1,8 @@
 package app.recipefork.app.card
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,7 +20,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.MutableState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -86,7 +87,8 @@ import app.recipefork.core.scaling.Rounding
  *
  * Once every line is marked done, the list folds under its heading into one line, "All gathered · show"
  * ([GatheredLine]); a tap on it shows the lines again, still marked. A line unmarked, or the marks cleared, shows the
- * lines again too, and marking every line once more folds them again.
+ * lines again too, and marking every line once more folds them again. Whether the reader has shown the list again is
+ * [shownAgain], which the card holds above its tabs, so that it outlasts a turn to View and back.
  *
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a line is as tall as its text with a
  * modest space around it, its done mark is shown but a tap leaves it as it is, no line offers fixing, and the list
@@ -104,14 +106,15 @@ internal fun IngredientsList(
     marks: CardMarks? = null,
     groups: List<IngredientGroup> = emptyList(),
     mode: CardMode = CardMode.COOKING,
+    shownAgain: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered, mode) { mutableStateOf<Int?>(null) }
-    // Every line marked on Cooking: the list folds, unless the reader has shown it again since.
-    val gathered = mode == CardMode.COOKING && marks != null && ordered.all { marks.done(MarkedPart.INGREDIENT, it.position) }
-    var shownAgain by remember(ordered, mode) { mutableStateOf(false) }
-    LaunchedEffect(gathered) { if (!gathered) shownAgain = false }
-    val folded = gathered && !shownAgain
+    // Every line marked: on Cooking the list folds, unless the reader has shown it again since. A line not marked ends
+    // the showing again, so that marking every line once more folds the list again.
+    val gathered = marks != null && ordered.all { marks.done(MarkedPart.INGREDIENT, it.position) }
+    LaunchedEffect(gathered) { if (!gathered) shownAgain.value = false }
+    val folded = mode == CardMode.COOKING && gathered && !shownAgain.value
     LaunchedEffect(folded) { if (folded) open = null }
     // The list stands apart from the steps on a tonal surface of the theme, in its medium corners. The surface reaches
     // into the card's gutter, so the lines keep the whole width of the content and wrap no sooner (A11Y-004).
@@ -121,7 +124,7 @@ internal fun IngredientsList(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) {
-            Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode, folded) { shownAgain = true }
+            Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode, folded) { shownAgain.value = true }
         }
     }
 }
@@ -221,13 +224,14 @@ private fun AllLines(
 
 /**
  * The one line a list folds into once every ingredient is marked: "All gathered · show", the word that shows the list
- * in the theme's accent colour. The whole line, the card's [CardTarget] tall, is one button that shows the list again
- * ([onShow]); the screen reader reads it as all gathered and names its click.
+ * in the theme's accent colour. The whole line, the card's [CardTarget] tall, is one M3 text button that shows the list
+ * again ([onShow]); the screen reader reads it as all gathered and names its click.
  */
 @Composable
 private fun GatheredLine(onShow: () -> Unit) {
     val gathered = stringResource(R.string.card_ingredients_gathered)
     val show = stringResource(R.string.card_ingredients_show)
+    val showAction = stringResource(R.string.card_ingredients_show_action)
     val accent = MaterialTheme.colorScheme.primary
     val line = stringResource(R.string.card_ingredients_folded, gathered, show)
     val shown = remember(line, show, accent) {
@@ -237,18 +241,24 @@ private fun GatheredLine(onShow: () -> Unit) {
             if (at >= 0) addStyle(SpanStyle(color = accent), at, at + show.length)
         }
     }
-    Box(
-        Modifier
+    val showing by rememberUpdatedState(onShow)
+    // The text starts where the lines do and reads in the list's own colour, "show" in the accent; the press shows on
+    // the theme's small corners rather than a pill across the whole width.
+    TextButton(
+        onClick = onShow,
+        modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = CardTarget)
-            .clickable(onClickLabel = stringResource(R.string.card_ingredients_show_action), role = Role.Button, onClick = onShow)
+            .semantics { onClick(label = showAction) { showing(); true } }
             .testTag(IngredientTags.GATHERED),
-        contentAlignment = Alignment.CenterStart,
+        shape = MaterialTheme.shapes.small,
+        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+        contentPadding = PaddingValues(0.dp),
     ) {
         Text(
             shown,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(gathered); shownText = line },
+            modifier = Modifier.weight(1f).clearAndSetSemantics { text = AnnotatedString(gathered); shownText = line },
         )
     }
 }

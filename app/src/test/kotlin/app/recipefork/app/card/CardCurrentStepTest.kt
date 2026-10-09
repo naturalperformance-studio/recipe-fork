@@ -18,6 +18,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.core.graphics.Insets
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
@@ -207,6 +210,36 @@ class CardCurrentStepTest {
         assertEquals(positions.last(), scrolled(), 0.5f)
     }
 
+    // The content runs on under the navigation bar: the next step is brought wholly above it, not to the viewport's edge
+    // behind it.
+    @Test
+    fun theNextStepIsBroughtAboveTheNavigationBar() {
+        marks.hold(BookName.Pool, stew.id, (1..4).map { DoneMark.of(stew.steps[it]) }.toSet())
+        compose.runOnUiThread { WindowCompat.setDecorFitsSystemWindows(compose.activity.window, false) }
+        open(stew, CardMode.COOKING)
+        navigationBar(NAVIGATION)
+        compose.onNodeWithTag(step(0)).performScrollTo()
+        compose.waitForIdle()
+        assertFalse(inView(5))
+
+        compose.onNodeWithTag(step(0)).performClick()
+        compose.waitForIdle()
+        val screen = compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot
+        val next = compose.onNodeWithTag(step(5)).fetchSemanticsNode().boundsInRoot
+        assertTrue("the sixth step ($next) ends above the navigation bar (${screen.bottom - NAVIGATION})", next.bottom <= screen.bottom - NAVIGATION + 0.5f)
+        assertTrue("the sixth step is in view", inView(5))
+    }
+
+    private fun navigationBar(height: Int) {
+        compose.runOnUiThread {
+            val insets = WindowInsetsCompat.Builder()
+                .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, 0, 0, height))
+                .build()
+            compose.activity.window.decorView.dispatchApplyWindowInsets(insets.toWindowInsets())
+        }
+        compose.waitForIdle()
+    }
+
     @Test
     fun aStepMarkedWithNoneNotMarkedAfterItOrUnmarkedMovesNothing() {
         marks.hold(BookName.Pool, stew.id, (1..7).map { DoneMark.of(stew.steps[it]) }.toSet())
@@ -253,5 +286,7 @@ class CardCurrentStepTest {
     private companion object {
         /** More frames than any bringing into view or fling takes. */
         const val FRAMES = 90
+        /** The navigation bar's height, in pixels. */
+        const val NAVIGATION = 90
     }
 }
