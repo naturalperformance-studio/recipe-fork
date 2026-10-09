@@ -13,7 +13,14 @@ fi
 "$sdk/emulator/emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect >/tmp/recipe-fork-emulator.log 2>&1 &
 emu=$!
 trap 'kill $emu 2>/dev/null || true' EXIT
-"$sdk/platform-tools/adb" wait-for-device
-until [ "$("$sdk/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do sleep 2; done
+# Wait for the boot, but stop as soon as the emulator dies (e.g. no access to /dev/kvm) instead of waiting forever.
+until [ "$("$sdk/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+    if ! kill -0 "$emu" 2>/dev/null; then
+        echo "The emulator stopped before it booted; see /tmp/recipe-fork-emulator.log" >&2
+        grep -m1 -A1 'ERROR' /tmp/recipe-fork-emulator.log >&2 || true
+        exit 1
+    fi
+    sleep 2
+done
 ./gradlew --console=plain :app:connectedDebugAndroidTest
 "$sdk/platform-tools/adb" emu kill || true
