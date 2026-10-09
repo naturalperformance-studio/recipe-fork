@@ -13,6 +13,24 @@
     <string name="card_fork_held">У вас уже есть своя версия этого рецепта, она не менялась с тех пор, как вы её сделали.</string>
     <string name="card_fork_held_open">Открыть её</string>
     <string name="card_fork_held_another">Сделать ещё одну</string>
+    <plurals name="card_summary_ingredients">
+        <item quantity="one">%d ингредиент</item>
+        <item quantity="few">%d ингредиента</item>
+        <item quantity="many">%d ингредиентов</item>
+        <item quantity="other">%d ингредиента</item>
+    </plurals>
+    <plurals name="card_summary_steps">
+        <item quantity="one">%d шаг</item>
+        <item quantity="few">%d шага</item>
+        <item quantity="many">%d шагов</item>
+        <item quantity="other">%d шага</item>
+    </plurals>
+    <string name="card_summary_timers">таймеры ≈ %1$s</string>
+    <string name="card_summary_timers_spoken">таймеры примерно %1$s</string>
+    <string name="card_summary_two">%1$s · %2$s</string>
+    <string name="card_summary_three">%1$s · %2$s · %3$s</string>
+    <string name="card_summary_spoken_two">%1$s, %2$s</string>
+    <string name="card_summary_spoken_three">%1$s, %2$s, %3$s</string>
     <string name="card_parent">Основано на рецепте «%1$s»</string>
     <string name="card_parent_open_action">Открыть рецепт, на котором основан этот</string>
     <string name="card_parent_unavailable">Основано на рецепте, которого нет в этой книге рецептов</string>

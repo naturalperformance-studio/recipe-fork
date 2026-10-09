@@ -66,6 +66,7 @@ class ContrastTest {
         text("a photo source sheet's title and items", c.onSurface, c.surfaceContainerLow),
         text("a photo source sheet's removal — the cover, a step's photo or clip", c.error, c.surfaceContainerLow),
         text("the empty cover's label", c.onSurfaceVariant, c.surfaceContainerHigh),
+        text("the card's summary line under the title — counts of ingredients and steps, the timers' time", c.onSurfaceVariant, c.background),
         // Icons that carry meaning and the boundaries of controls.
         graphic("the drag column's handle, on the column's tint", c.onSurfaceVariant, c.surfaceContainerHigh),
         graphic("the empty cover's camera", c.onSurfaceVariant, c.surfaceContainerHigh),

@@ -213,7 +213,8 @@ class CardIngredientSpacingTest {
         val description = bounds(CardTags.DESCRIPTION)
         assertEquals("the description 16 dp under the steps", 16f, dp(description.top - steps.bottom), 0.5f)
         assertEquals("the steps 8 dp under the ingredients", 8f, dp(steps.top - bounds(IngredientTags.SURFACE).bottom), 0.5f)
-        assertEquals("the servings 8 dp under the title", 8f, dp(bounds(CardTags.SERVINGS_FEWER).top - bounds(CardTags.TITLE).bottom), 0.5f)
+        assertEquals("the summary right under the title", 0f, dp(bounds(CardTags.SUMMARY).top - bounds(CardTags.TITLE).bottom), 0.5f)
+        assertEquals("the servings 8 dp under the title's summary", 8f, dp(bounds(CardTags.SERVINGS_FEWER).top - bounds(CardTags.SUMMARY).bottom), 0.5f)
     }
 
     @Test
@@ -226,7 +227,7 @@ class CardIngredientSpacingTest {
 
     /**
      * The card as it opens on a 360 × 640 dp screen, the servings changed and a timer running out of sight, its bar
-     * up: at least [LINES_IN_SIGHT] whole lines lie between the "Ingredients" header and the bar. The recipe has no cover
+     * up: at least [LINES_IN_SIGHT_UNDER_SUMMARY] whole lines lie between the "Ingredients" header and the bar. The recipe has no cover
      * and a one-line title, as a cooking screen's recipe that is to show six lines must.
      */
     private fun linesOnACookingScreen() {
@@ -253,7 +254,7 @@ class CardIngredientSpacingTest {
         val inSight = (0..11).count { position ->
             bounds(CardTags.ingredient(position)).let { it.top >= headerBottom - 0.5f && it.bottom <= barTop + 0.5f }
         }
-        assertTrue("$inSight lines in sight between the header and the bar", inSight >= LINES_IN_SIGHT)
+        assertTrue("$inSight lines in sight between the header and the bar", inSight >= LINES_IN_SIGHT_UNDER_SUMMARY)
         // Fork floats above the bar, not over it, at the end of the lines: those it lies over keep their amount and
         // name clear of it, and a stretch of the line of the card's target clear of it to mark the line done.
         val fork = compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode().boundsInRoot
@@ -273,6 +274,12 @@ class CardIngredientSpacingTest {
     private companion object {
         /** The whole lines a 360 × 640 dp card shows under its header as it opens, with the servings and the bar up. */
         const val LINES_IN_SIGHT = 6
+
+        /**
+         * The same while the card shows the summary line under its title, which takes one of them: the card has one
+         * view until the Cooking tab (T-195), which shows no summary and so [LINES_IN_SIGHT] again.
+         */
+        const val LINES_IN_SIGHT_UNDER_SUMMARY = LINES_IN_SIGHT - 1
 
         /** Of them, the lines wholly clear of the floating fork action, which lies over the end of the last two. */
         const val LINES_CLEAR_OF_FORK = 4

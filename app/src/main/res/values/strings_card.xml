@@ -17,6 +17,24 @@
     <string name="card_fork_held">You already have a fork of this recipe, unchanged since you made it.</string>
     <string name="card_fork_held_open">Open it</string>
     <string name="card_fork_held_another">Make another</string>
+    <!-- The summary line under the title (the view of the card): counts of the recipe's ingredients and steps, and its
+         timers' durations added up and rounded; each part left out where the recipe has none. The spoken form of the
+         timers is what the screen reader reads instead of "≈". -->
+    <plurals name="card_summary_ingredients">
+        <item quantity="one">%d ingredient</item>
+        <item quantity="other">%d ingredients</item>
+    </plurals>
+    <plurals name="card_summary_steps">
+        <item quantity="one">%d step</item>
+        <item quantity="other">%d steps</item>
+    </plurals>
+    <string name="card_summary_timers">timers ≈ %1$s</string>
+    <string name="card_summary_timers_spoken">timers about %1$s</string>
+    <!-- The summary line's parts, two or three, as shown and as the screen reader reads them. -->
+    <string name="card_summary_two">%1$s · %2$s</string>
+    <string name="card_summary_three">%1$s · %2$s · %3$s</string>
+    <string name="card_summary_spoken_two">%1$s, %2$s</string>
+    <string name="card_summary_spoken_three">%1$s, %2$s, %3$s</string>
     <!-- A fork's provenance area (FORK-003, FORK-004): its one direct parent. -->
     <string name="card_parent">Forked from “%1$s”</string>
     <string name="card_parent_open_action">Open the recipe this one was forked from</string>
