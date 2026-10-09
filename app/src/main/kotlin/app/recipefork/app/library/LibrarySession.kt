@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.recipefork.app.card.CardAnchor
+import app.recipefork.app.card.CardMode
 import app.recipefork.app.card.CardSession
 import app.recipefork.app.card.HeldScale
 import app.recipefork.app.card.StepToShow
@@ -209,8 +210,8 @@ class LibrarySession(
         saved[VIEWING_KEY] = recipeId
         saved[CARD_FROM_KEY] = null
         saved[STEP_KEY] = "$position/$recipeId"
-        // The card is brought to the timer's step, not to the place it was left at.
-        cards.holdAnchor(RecipeId(recipeId), null)
+        // The card opens on Cooking and is brought to the timer's step there, not to the place it was left at.
+        cards.holdAnchor(RecipeId(recipeId), null, CardMode.COOKING)
     }
 
     /**
@@ -340,16 +341,16 @@ class LibrarySession(
         // Reading a card on its opening shows it: a card read again is the most recent, whether or not the reader
         // then changes anything on it.
         override fun heldScale(recipe: RecipeId) = held.heldScale(recipe).also { if (it != null) shown(recipe) }
-        override fun heldAnchor(recipe: RecipeId) = held.heldAnchor(recipe).also { if (it != null) shown(recipe) }
+        override fun heldAnchor(recipe: RecipeId, tab: CardMode) = held.heldAnchor(recipe, tab).also { if (it != null) shown(recipe) }
 
         override fun holdScale(recipe: RecipeId, scale: HeldScale) {
             shown(recipe)
             held.holdScale(recipe, scale)
         }
 
-        override fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?) {
+        override fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?, tab: CardMode) {
             shown(recipe)
-            held.holdAnchor(recipe, anchor)
+            held.holdAnchor(recipe, anchor, tab)
         }
     }
 

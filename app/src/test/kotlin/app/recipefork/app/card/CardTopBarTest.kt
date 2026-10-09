@@ -232,7 +232,7 @@ class CardTopBarTest {
 
     private fun forkCollapsed(): Boolean = bounds(CardTags.FORK).let { abs(it.width - it.height) < 1f }
 
-    // The recipe's end scrolls clear of fork: the last step, its timer and the description, scrolled to the end, stand
+    // View's end scrolls clear of fork: the last step, its timer's line and the description, scrolled to the end, stand
     // whole above it.
     @Test
     fun theRecipesEndScrollsClearOfFork() {
@@ -245,11 +245,12 @@ class CardTopBarTest {
         compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 1_000_000f) }
         compose.waitForIdle()
         val fork = bounds(CardTags.FORK)
-        val last = compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.CONTENT)) and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            .maxBy { it.boundsInRoot.bottom }
-        assertTrue("the last interactive element ${last.config.getOrNull(SemanticsProperties.TestTag)} ${last.boundsInRoot} clear above fork $fork",
-            last.boundsInRoot.bottom <= fork.top + 0.5f)
-        listOf(CardTags.step(11), TimerTags.start(11), CardTags.DESCRIPTION).forEach { tag ->
+        compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.CONTENT)) and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
+            .maxByOrNull { it.boundsInRoot.bottom }?.let { last ->
+                assertTrue("the last interactive element ${last.config.getOrNull(SemanticsProperties.TestTag)} ${last.boundsInRoot} clear above fork $fork",
+                    last.boundsInRoot.bottom <= fork.top + 0.5f)
+            }
+        listOf(CardTags.step(11), ViewTimerTags.line(11), CardTags.DESCRIPTION).forEach { tag ->
             val part = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
             assertTrue("$tag $part clear above fork $fork", part.bottom <= fork.top + 0.5f && part.top >= bounds(CardTags.BAR).bottom - 0.5f)
         }
@@ -402,22 +403,26 @@ class CardTopBarTest {
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.BAR_TITLE) }
     }
 
-    // While an amount is being fixed, fork steps aside, so that it lies over none of the fixing control; it is back once
-    // the control closes.
+    // An amount is fixed on Cooking, where no fork floats to lie over the fixing control; View, which holds fork, offers
+    // no fixing.
     @Test
-    fun forkStepsAsideWhileAnAmountIsBeingFixed() {
+    fun anAmountIsFixedOnCookingWhereNoForkFloats() {
         val recipe = Recipe.create(now, null).copy(
             title = "Stew",
             servings = 4,
             ingredients = listOf(Ingredient(0, null, freeTextName = "Beef", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(500))),
         ).also { runBlocking { recipes.save(it) } }
         show(recipe.id)
+        compose.chooseCardTab(CardMode.VIEW)
         assertTrue(exists(CardTags.FORK))
+        assertFalse("View offers no fixing", exists(CardTags.fixAmount(0)))
+        compose.chooseCardTab(CardMode.COOKING)
+        assertFalse(exists(CardTags.FORK))
         compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.FIX) }
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.FORK) }
+        assertFalse(exists(CardTags.FORK))
         compose.onNodeWithTag(CardTags.FIX_CANCEL).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.FIX) && exists(CardTags.FORK) }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.FIX) }
     }
 
     // The keyboard shrinks the content: a fixing field focused low on the card is brought above it.
@@ -432,6 +437,7 @@ class CardTopBarTest {
         ).also { runBlocking { recipes.save(it) } }
         compose.runOnUiThread { WindowCompat.setDecorFitsSystemWindows(compose.activity.window, false) }
         show(recipe.id)
+        compose.chooseCardTab(CardMode.COOKING)
         insets(navigation = NAVIGATION)
         compose.onNodeWithTag(CardTags.fixAmount(19), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.FIX_FIELD) }

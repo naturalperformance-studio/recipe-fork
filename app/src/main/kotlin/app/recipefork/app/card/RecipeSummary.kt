@@ -11,10 +11,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import app.recipefork.app.R
 import app.recipefork.app.media.stepMedia
+import app.recipefork.app.timer.durationText
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.StepText
 import app.recipefork.core.scaling.InterfaceLanguage
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * What the line under the card's title says of a recipe: how many ingredient rows it has, how many steps the card
@@ -55,7 +57,8 @@ internal data class RecipeSummary(val ingredients: Int, val steps: Int, val minu
 internal fun RecipeSummaryLine(summary: RecipeSummary, modifier: Modifier = Modifier) {
     val ingredients = summary.ingredients.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.card_summary_ingredients, it, it) }
     val steps = summary.steps.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.card_summary_steps, it, it) }
-    val duration = summary.minutes?.let { durationText(it) }
+    // Written as the app writes a timer's duration: hours and minutes, either left out where it is none.
+    val duration = summary.minutes?.let { durationText(it.minutes) }
     val counts = listOfNotNull(ingredients, steps)
     val shown = joined(counts + listOfNotNull(duration?.let { stringResource(R.string.card_summary_timers, it) }), spoken = false)
         ?: return
@@ -75,16 +78,4 @@ private fun joined(parts: List<String>, spoken: Boolean): String? = when (parts.
     1 -> parts[0]
     2 -> stringResource(if (spoken) R.string.card_summary_spoken_two else R.string.card_summary_two, parts[0], parts[1])
     else -> stringResource(if (spoken) R.string.card_summary_spoken_three else R.string.card_summary_three, parts[0], parts[1], parts[2])
-}
-
-/** [minutes] as the app writes a timer's duration: hours and minutes, either left out where it is none. */
-@Composable
-private fun durationText(minutes: Int): String {
-    val hours = minutes / 60
-    val rest = minutes % 60
-    return when {
-        hours == 0 -> stringResource(R.string.timer_duration_minutes, rest)
-        rest == 0 -> stringResource(R.string.timer_duration_hours, hours)
-        else -> stringResource(R.string.timer_duration, hours, rest)
-    }
 }

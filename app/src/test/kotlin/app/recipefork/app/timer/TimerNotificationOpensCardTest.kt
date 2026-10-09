@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -17,6 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.MainActivity
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.book.BookName
+import app.recipefork.app.card.CardMode
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.library.LibraryTags
@@ -107,13 +109,16 @@ class TimerNotificationOpensCardTest {
         }
         compose.onNodeWithTag(CardTags.step(far)).assertIsDisplayed()
         compose.onNodeWithTag(TimerTags.start(far)).assertIsDisplayed()
+        // On the Cooking tab, where the timer runs, whichever tab was chosen last.
+        compose.onNodeWithTag(CardTags.tab(CardMode.COOKING)).assertIsSelected()
         // The card was brought down to it: its top is out of view.
-        compose.onNodeWithTag(CardTags.TITLE).assertIsNotDisplayed()
+        compose.onNodeWithTag(CardTags.step(0)).assertIsNotDisplayed()
     }
 
     // FLOW-013 (4): the application closed, tapping the notification opens it on the card at the timer's step.
     @Test
     fun tappingTheNotificationOpensTheCardAtTheStep() {
+        container.lastCardTab.keep(CardMode.VIEW)
         val intent = notificationIntent()
         launch(intent)
         assertTheCardShowsTheStep()
@@ -140,7 +145,9 @@ class TimerNotificationOpensCardTest {
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         awaitTag(LibraryTags.entry(stew.id.value))
         compose.onNodeWithTag(LibraryTags.entry(stew.id.value)).performClick()
+        // The card opens on View, the tab last chosen, and is left scrolled down.
         awaitTag(CardTags.step(0))
+        compose.onNodeWithTag(CardTags.tab(CardMode.VIEW)).assertIsSelected()
         compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 600f) }
         compose.waitForIdle()
         compose.onNodeWithTag(CardTags.BACK).performClick()

@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.ColorScheme
@@ -68,7 +69,7 @@ class CardThemeTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val book = TestBook(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { emptyList() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
     private val now = Instant.parse("2026-10-04T12:00:00Z")
 
     private val recipe = Recipe.create(now, null).copy(
@@ -199,6 +200,7 @@ class CardThemeTest {
 
     @Test
     fun theMenusDeleteIsInTheThemesErrorColour() {
+        compose.chooseCardTab(CardMode.VIEW)
         compose.onNodeWithTag(CardTags.MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.DELETE)).fetchSemanticsNodes().isNotEmpty() }
         val delete = context.getString(R.string.library_entry_delete)

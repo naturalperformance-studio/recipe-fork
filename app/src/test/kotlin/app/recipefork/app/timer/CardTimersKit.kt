@@ -1,5 +1,7 @@
 package app.recipefork.app.timer
 
+import app.recipefork.app.card.CardMode
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
@@ -87,7 +89,7 @@ abstract class CardTimersKit {
         compose.registerIdlingResource(book.idling)
         compose.registerIdlingResource(timers.idling)
         runBlocking { recipes.save(soup) }
-        val environment = CardEnvironment(usual) { emptyList() }
+        val environment = CardEnvironment(usual, lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(

@@ -17,15 +17,15 @@ import java.math.BigInteger
 import kotlin.math.roundToInt
 
 /**
- * What a session keeps of each card the reader opened (FLOW-017 (7), FLOW-012): the scale they left it at and the
- * line or step that was at the top of the screen. It lasts exactly as long as the session — the application's saved
+ * What a session keeps of each card the reader opened (FLOW-017 (7), FLOW-012): the scale they left it at and, for each
+ * of its tabs, the line or step that was at the top of the screen. It lasts exactly as long as the session — the application's saved
  * state, which survives the end of the process while away and is gone once the task is removed (FLOW-058).
  */
 interface CardSession {
     fun heldScale(recipe: RecipeId): HeldScale?
     fun holdScale(recipe: RecipeId, scale: HeldScale)
-    fun heldAnchor(recipe: RecipeId): CardAnchor?
-    fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?)
+    fun heldAnchor(recipe: RecipeId, tab: CardMode = CardMode.COOKING): CardAnchor?
+    fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?, tab: CardMode = CardMode.COOKING)
 }
 
 /**
@@ -38,18 +38,23 @@ class TextCardSession(
 ) : CardSession {
     override fun heldScale(recipe: RecipeId): HeldScale? = HeldScale.decoded(read(SCALE_KEY + recipe.value))
     override fun holdScale(recipe: RecipeId, scale: HeldScale) = write(SCALE_KEY + recipe.value, scale.encoded())
-    override fun heldAnchor(recipe: RecipeId): CardAnchor? = CardAnchor.decoded(read(ANCHOR_KEY + recipe.value))
-    override fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?) = write(ANCHOR_KEY + recipe.value, anchor?.encoded())
+    override fun heldAnchor(recipe: RecipeId, tab: CardMode): CardAnchor? = CardAnchor.decoded(read(anchorKey(recipe, tab)))
+    override fun holdAnchor(recipe: RecipeId, anchor: CardAnchor?, tab: CardMode) = write(anchorKey(recipe, tab), anchor?.encoded())
 
     /** Nothing is held for [recipe] any more. */
     fun forget(recipe: RecipeId) {
         write(SCALE_KEY + recipe.value, null)
-        write(ANCHOR_KEY + recipe.value, null)
+        CardMode.entries.forEach { write(anchorKey(recipe, it), null) }
     }
 
     companion object {
         private const val SCALE_KEY = "card.scale."
         private const val ANCHOR_KEY = "card.anchor."
+        private const val VIEW_ANCHOR_KEY = "card.anchor.view."
+
+        /** Cooking's place is held under the key the single card held it under, so that a session from before reads it. */
+        private fun anchorKey(recipe: RecipeId, tab: CardMode) =
+            (if (tab == CardMode.VIEW) VIEW_ANCHOR_KEY else ANCHOR_KEY) + recipe.value
 
         /** Held in memory alone, for as long as the object lives. */
         fun inMemory(): TextCardSession {

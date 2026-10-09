@@ -1,6 +1,7 @@
 package app.recipefork.app.card
 
 import android.content.Context
+import app.recipefork.app.data.HeldLastCardTab
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
@@ -74,13 +75,17 @@ class CardIngredientSpacingTest {
     private val now = Instant.parse("2026-10-09T12:00:00Z")
     private var shown by mutableStateOf<RecipeId?>(null)
 
+    /** The tab the card opens on: Cooking, whose lines these are, unless a test turns to View. */
+    private val tab = HeldLastCardTab(CardMode.COOKING)
+    private val environment = CardEnvironment(lastTab = tab) { emptyList() }
+
     @Before
     fun setUp() {
         listOf(book.idling, timers.idling).forEach(compose::registerIdlingResource)
         compose.setContent {
             CompositionLocalProvider(LocalCardTimers provides timers.card) {
                 MaterialTheme {
-                    shown?.let { CardScreen(it, recipes, CardEnvironment { emptyList() }, onBack = {}, onEdit = {}) }
+                    shown?.let { CardScreen(it, recipes, environment, onBack = {}, onEdit = {}) }
                 }
             }
         }
@@ -199,6 +204,7 @@ class CardIngredientSpacingTest {
     // The tighter top keeps the card's parts apart: the parts 8 dp from each other, the description 16 dp from the steps.
     @Test
     fun theStepsAndTheDescriptionStillReadApart() {
+        tab.keep(CardMode.VIEW)
         show(
             Recipe.create(now, null).copy(
                 title = "Buns",
@@ -226,9 +232,9 @@ class CardIngredientSpacingTest {
     fun aCookingScreenAsItOpensShowsMoreLinesInRussian() = linesOnACookingScreen()
 
     /**
-     * The card as it opens on a 360 × 640 dp screen, the servings changed and a timer running out of sight, its bar
-     * up: at least [LINES_IN_SIGHT_UNDER_SUMMARY] whole lines lie between the "Ingredients" header and the bar. The recipe has no cover
-     * and a one-line title, as a cooking screen's recipe that is to show six lines must.
+     * The card as it opens again on its Cooking tab on a 360 × 640 dp screen, the servings changed and a timer running
+     * out of sight, its bar up: at least [LINES_IN_SIGHT] whole lines lie between the "Ingredients" header and the bar.
+     * Cooking shows no cover, no title in the content and no summary, and no floating fork lies over the lines.
      */
     private fun linesOnACookingScreen() {
         val recipe = Recipe.create(now, null).copy(
@@ -254,34 +260,15 @@ class CardIngredientSpacingTest {
         val inSight = (0..11).count { position ->
             bounds(CardTags.ingredient(position)).let { it.top >= headerBottom - 0.5f && it.bottom <= barTop + 0.5f }
         }
-        assertTrue("$inSight lines in sight between the header and the bar", inSight >= LINES_IN_SIGHT_UNDER_SUMMARY)
-        // Fork floats above the bar, not over it, at the end of the lines: those it lies over keep their amount and
-        // name clear of it, and a stretch of the line of the card's target clear of it to mark the line done.
-        val fork = compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode().boundsInRoot
-        assertTrue("fork $fork above the bar at $barTop", fork.bottom <= barTop + 0.5f)
-        val shown = (0..11).map { bounds(CardTags.ingredient(it)) to it }.filter { (line, _) -> line.top >= headerBottom - 0.5f && line.bottom <= barTop + 0.5f }
-        shown.filter { (line, _) -> line.overlaps(fork) }.forEach { (line, position) ->
-            listOf(IngredientTags.name(position), IngredientTags.quantity(position)).forEach { part ->
-                assertTrue("$part ${bounds(part)} clear of fork $fork", !bounds(part).overlaps(fork))
-            }
-            assertTrue("line $position keeps a target's width clear of fork", dp(fork.left - line.left) >= CardTarget.value)
-        }
-        // Wholly clear of fork, as it floats at its widest at the top of the card: the lines above it.
-        val clear = shown.count { (line, _) -> !line.overlaps(fork) }
-        assertTrue("$clear lines wholly clear of fork", clear >= LINES_CLEAR_OF_FORK)
+        val layout = listOf(CardTags.BAR, CardTags.TABS, CardTags.CONTENT, CardTags.SERVINGS_FEWER, CardTags.ingredient(0), CardTags.ingredient(5), TimerTags.BAR)
+            .joinToString { "$it ${bounds(it).let { b -> "${dp(b.top)}..${dp(b.bottom)}" }}" }
+        assertTrue("$inSight lines in sight between the header at ${dp(headerBottom)} and the bar at ${dp(barTop)}: $layout", inSight >= LINES_IN_SIGHT)
+        assertTrue("the card opened on Cooking", compose.onAllNodes(hasTestTag(CardTags.SUMMARY)).fetchSemanticsNodes().isEmpty())
+        assertTrue("no fork over the lines", compose.onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().isEmpty())
     }
 
     private companion object {
         /** The whole lines a 360 × 640 dp card shows under its header as it opens, with the servings and the bar up. */
         const val LINES_IN_SIGHT = 6
-
-        /**
-         * The same while the card shows the summary line under its title, which takes one of them: the card has one
-         * view until the Cooking tab (T-195), which shows no summary and so [LINES_IN_SIGHT] again.
-         */
-        const val LINES_IN_SIGHT_UNDER_SUMMARY = LINES_IN_SIGHT - 1
-
-        /** Of them, the lines wholly clear of the floating fork action, which lies over the end of the last two. */
-        const val LINES_CLEAR_OF_FORK = 4
     }
 }

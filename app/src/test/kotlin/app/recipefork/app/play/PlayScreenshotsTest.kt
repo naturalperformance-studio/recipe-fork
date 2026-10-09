@@ -41,6 +41,10 @@ import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.book.BookName
 import app.recipefork.app.card.CardTags
+import org.junit.Assert.assertFalse
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.semantics.SemanticsProperties
+import app.recipefork.app.card.CardMode
 import app.recipefork.app.card.DoneMark
 import app.recipefork.app.data.ThemeChoice
 import app.recipefork.app.editor.EditorTags
@@ -75,8 +79,8 @@ import java.util.zip.DeflaterOutputStream
 
 /**
  * The Google Play store's phone screenshots and feature graphic, drawn as the device draws them (Robolectric's native
- * graphics) from the application's own screens over the demo book ([PlayDemoBook]): the book, a card mid-cook, the
- * editor, the card's steps and the settings, in English and in Russian, in the light theme, 1080×1920 opaque PNGs. The
+ * graphics) from the application's own screens over the demo book ([PlayDemoBook]): the book, a card mid-cook on its View tab, the
+ * editor, the card's steps on its Cooking tab and the settings, in English and in Russian, in the light theme, 1080×1920 opaque PNGs. The
  * screen is 432 × 768 dp at 400 dpi, close to a Pixel's 412 dp, on which the editor shows both of the traybake's ingredient
  * groups at once.
  *
@@ -186,17 +190,23 @@ class PlayScreenshotsTest {
         book.filter { it.media.isNotEmpty() && shown(LibraryTags.entry(it.id.value)) }.forEach { await(LibraryTags.cover(it.id.value)) }
         capture("$prefix-1-book.png")
 
-        // (2) The traybake's card mid-cook: six servings in place of four, the marinade marked done, the oven running.
+        // (2) The traybake's card on its View tab, mid-cook: six servings in place of four, the marinade marked done,
+        // the oven running — started on the Cooking tab, where timers start.
         session.openCard(traybake.id.value, LibraryView.OWN)
         await(CardTags.COVER)
+        assertTrue("the card opens on View", selected(CardMode.VIEW))
         repeat(2) {
             compose.onNodeWithTag(CardTags.SERVINGS_MORE).performScrollTo().performClick()
             compose.waitForIdle()
         }
+        choose(CardMode.COOKING)
         compose.onNodeWithTag(TimerTags.start(demo.runningStep)).performScrollTo().performClick()
         compose.waitForIdle()
         compose.runOnIdle { timers.clock.advance(RUN_FOR) }
         compose.waitForIdle()
+        choose(CardMode.VIEW)
+        await(CardTags.COVER)
+        await(CardTags.SUMMARY)
         scrollToTop(CardTags.CONTENT, CardTags.TITLE)
         await(TimerTags.BAR)
         assertWhole(TimerTags.barStatus(demo.runningStep), "the running timer in the bar")
@@ -204,16 +214,17 @@ class PlayScreenshotsTest {
         tinted = true
         capture("$prefix-2-card.png")
 
-        // (4) The card's steps: references read at six servings, a step's photo, and the running step whole with its
-        // timer running in it — the bar steps aside while the running step is in view.
+        // (4) The card's steps on its Cooking tab: references read at six servings, a step's photo, and the running step
+        // whole with its timer running in it — the bar steps aside while the running step is in view.
+        choose(CardMode.COOKING)
+        assertFalse("no fork on Cooking", shown(CardTags.FORK))
         scrollToTop(CardTags.CONTENT, CardTags.STEPS)
         await(CardTags.stepPhoto(1))
         val running = TimerTags.cancel(demo.runningStep)
         await(running)
-        // The running step ends clear above fork, which floats over the content's end — shrunk to its icon once the
-        // card has scrolled down.
+        // The running step ends clear above the content's end.
         val chipEnd = bottomOf(running) + px(12)
-        val frameEnd = minOf(compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.bottom, topOf(CardTags.FORK))
+        val frameEnd = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.bottom
         if (chipEnd > frameEnd) scrollBy(CardTags.CONTENT, chipEnd - frameEnd)
         // No step cut at the top edge: where the step of the photo no longer stands whole, the shot begins at its photo.
         val frameTop = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().boundsInRoot.top
@@ -221,7 +232,7 @@ class PlayScreenshotsTest {
         assertWhole(TimerTags.status(demo.runningStep), "the running step's timer")
         assertWhole(running, "the running step's timer")
         assertWhole(CardTags.stepPhoto(1), "the step's photo")
-        assertTrue("the running step's timer clear of fork", bottomOf(running) <= topOf(CardTags.FORK))
+        assertTrue("Cooking's tab chosen", selected(CardMode.COOKING))
         capture("$prefix-4-steps.png")
 
         // (3) The editor on the same recipe, at its ingredient groups and their notes: both groups on the screen.
@@ -243,6 +254,16 @@ class PlayScreenshotsTest {
         session.openSettings()
         await(SettingsTags.LIST)
         capture("$prefix-5-settings.png")
+    }
+
+    private fun selected(mode: CardMode) =
+        compose.onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true
+
+    /** Turns the card to its tab [mode] and waits until it has come to rest there. */
+    private fun choose(mode: CardMode) {
+        compose.onNodeWithTag(CardTags.tab(mode)).performClick()
+        compose.waitUntil(PATIENCE_MS) { selected(mode) && compose.onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1 }
+        compose.waitForIdle()
     }
 
     /** Asserts that the node tagged [tag] stands whole on the screen, between the status bar's place and the bottom. */

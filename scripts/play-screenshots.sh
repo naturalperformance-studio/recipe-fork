@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The Google Play store's pictures, drawn from the app's own screens under Robolectric (no device needed):
-#   build/play/screenshots/en-*.png, ru-*.png   phone screenshots, 1080×1920: the book, a card mid-cook, the editor,
-#                                                the card's steps and the settings, in English and in Russian
+#   build/play/screenshots/en-*.png, ru-*.png   phone screenshots, 1080×1920: the book, a card mid-cook (View), the editor,
+#                                                the card's steps (Cooking) and the settings, in English and in Russian
 #   build/play/screenshots/feature-graphic.png   1024×500: the icon and the name on the theme's primary container
 #   build/play/screenshots/icon-512.png          the 512×512 store icon (LauncherIconTest)
 # The screenshot tests run only when this script names their directory; `./gradlew testAll` skips them.

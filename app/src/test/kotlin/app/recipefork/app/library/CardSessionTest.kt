@@ -1,5 +1,8 @@
 package app.recipefork.app.library
 
+import androidx.compose.ui.test.assertIsSelected
+import org.junit.Before
+import app.recipefork.app.card.CardMode
 import android.os.Bundle
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -80,6 +83,10 @@ class CardSessionTest {
             Ingredient(0, null, freeTextName = "Water", unitType = UnitType.EXACT, unit = QuantityUnit.MILLILITRE, quantity = Rational.of(500)),
         ),
     )
+
+    // Amounts are fixed on the card's Cooking tab: the card opens there.
+    @Before
+    fun openOnCooking() = container.lastCardTab.keep(CardMode.COOKING)
 
     @After
     fun forgetTheUsualCount() {
@@ -220,7 +227,10 @@ class CardSessionTest {
         RuntimeEnvironment.setQualifiers("+land")
         launch(saved)
         awaitLines()
-        assertEquals(listOf("Pilaf"), compose.textsOf(CardTags.TITLE))
+        // Back on the Cooking tab it was left on, its title in the bar.
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.BAR_TITLE)).fetchSemanticsNodes().isNotEmpty() }
+        assertEquals(listOf("Pilaf"), compose.textsOf(CardTags.BAR_TITLE))
+        compose.onNodeWithTag(CardTags.tab(CardMode.COOKING)).assertIsSelected()
         assertEquals(count, servings())
         assertTrue(fixed(1))
         compose.waitUntil(PATIENCE_MS) { compose.firstAtTheTop() == top }

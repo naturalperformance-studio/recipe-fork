@@ -33,6 +33,10 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.semantics.SemanticsProperties
+import app.recipefork.app.card.CardMode
 import app.recipefork.app.card.CardTarget
 import app.recipefork.app.card.DoneMark
 import app.recipefork.app.card.DoneMarks
@@ -108,7 +112,8 @@ import kotlin.time.Duration.Companion.minutes
  *
  * The screens: the book — the marked and the own view, each empty and with recipes, an entry's menu, a recipe file's
  * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with ingredient groups, notes,
- * a cover, a step's photo and clip, several timers on a step and one running, and done marks, with its menu open; the
+ * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
+ * Cooking tab, each with its menu open; the
  * editor on that recipe, with a row removed and its Undo offered, and on a frozen one; the settings and each of their
  * dialogs; and the crop.
  *
@@ -356,16 +361,31 @@ class PreLaunchSweepTest {
         await(CardTags.COVER)
         await(CardTags.stepPhoto(2))
         await(CardTags.stepVideo(4))
-        // One timer running; the step's two others ready.
+        // View, the tab a card first opens on: the cover, the summary, fork; compact lists, the done marks shown.
+        compose.onNodeWithTag(CardTags.tab(CardMode.VIEW)).assertIsSelected()
+        await(CardTags.SUMMARY)
+        assertOnlyThePagerScrollsSideways("View")
+        checkScreen("the card, View", target = CardTarget)
+        compose.onNodeWithTag(CardTags.MENU).performClick()
+        await(CardTags.DELETE)
+        checkScreen("the card, View, its menu", target = CardTarget)
+        compose.onNodeWithTag(CardTags.MENU).performClick()
+        awaitGone(CardTags.DELETE)
+        // Cooking: one timer running; the step's two others ready.
+        chooseTheCardsTab(CardMode.COOKING)
+        await(CardTags.stepPhoto(2))
+        await(CardTags.stepVideo(4))
         compose.onNodeWithTag(TimerTags.start(1)).performScrollTo().performClick()
         await(TimerTags.cancel(1))
         compose.onNodeWithTag(CardTags.SCREEN).assertExists()
-        checkScreen("the card", target = CardTarget)
+        assertOnlyThePagerScrollsSideways("Cooking")
+        checkScreen("the card, Cooking", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.CLEAR_MARKS) || exists(CardTags.DELETE) }
-        checkScreen("the card, its menu", target = CardTarget)
+        await(CardTags.CLEAR_MARKS)
+        checkScreen("the card, Cooking, its menu", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) && !exists(CardTags.DELETE) }
+        awaitGone(CardTags.CLEAR_MARKS)
+        chooseTheCardsTab(CardMode.VIEW)
         compose.onNodeWithTag(CardTags.EDIT).performClick()
         await(EditorTags.FORM)
         compose.waitForIdle()
@@ -377,6 +397,23 @@ class PreLaunchSweepTest {
         val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
         compose.onNode(undo, useUnmergedTree = true).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredient(4)) && !exists(EditorTags.STATEMENT, unmerged = true) }
+    }
+
+    /** Turns the card to its tab [mode] and waits until it has come to rest there. */
+    private fun chooseTheCardsTab(mode: CardMode) {
+        compose.onNodeWithTag(CardTags.tab(mode)).performClick()
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true &&
+                compose.onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1
+        }
+        compose.waitForIdle()
+    }
+
+    /** Nothing on the card's [tab] scrolls sideways but the pager of its tabs, so that a swipe always turns the tab. */
+    private fun assertOnlyThePagerScrollsSideways(tab: String) {
+        val sideways = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange), useUnmergedTree = true)
+            .fetchSemanticsNodes().map { it.config.getOrNull(SemanticsProperties.TestTag) }
+        assertEquals("on the card's $tab only the pager scrolls sideways", listOf(CardTags.PAGER), sideways)
     }
 
     private fun theEditor() {
@@ -467,6 +504,6 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 20
+        const val SCREENS = 22
     }
 }

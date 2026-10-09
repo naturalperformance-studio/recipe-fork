@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.ColorScheme
@@ -56,7 +57,7 @@ class CardStepLayoutTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val book = TestBook(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { emptyList() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
 
     private val recipe = Recipe.create(Instant.parse("2026-10-04T12:00:00Z"), null).copy(
         title = "Rice",

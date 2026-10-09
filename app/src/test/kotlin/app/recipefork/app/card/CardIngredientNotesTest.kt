@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
@@ -95,7 +96,7 @@ class CardIngredientNotesTest {
         runBlocking { recipes.save(recipe) }
         compose.setContent {
             MaterialTheme(colorScheme = scheme) {
-                CardScreen(recipe.id, recipes, CardEnvironment(ingredients = IngredientEntries { emptyList() }), onBack = {}, onEdit = {})
+                CardScreen(recipe.id, recipes, CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING), ingredients = IngredientEntries { emptyList() }), onBack = {}, onEdit = {})
             }
         }
         compose.awaitCard()

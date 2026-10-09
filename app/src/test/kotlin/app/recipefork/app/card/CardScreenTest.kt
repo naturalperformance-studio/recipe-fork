@@ -278,7 +278,13 @@ class CardScreenTest {
         RecipeState.entries.filter { it.editable }.forEach { state ->
             val recipe = save(fullRecipe(state))
             show(recipe.id)
-            assertEquals("$state", listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU) + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags() - CardTags.FORK)
+            // Cooking: the lines mark; no edit, no fork, no ⋮ while nothing is marked.
+            compose.chooseCardTab(CardMode.COOKING)
+            assertEquals("$state", listOf(CardTags.BACK) + TABS + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
+            assertNothingInTheContentActs()
+            // View: edit and the ⋮ in the bar, fork floating; nothing in the content acts but the servings.
+            compose.chooseCardTab(CardMode.VIEW)
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU) + TABS + SERVINGS_ACTIONS, interactiveTags() - CardTags.FORK)
             assertTrue("$state offers fork, floating", compose.onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().size == 1)
             compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.EDIT)).fetchSemanticsNodes()
                 .let { assertEquals("$state", 1, it.size) }
@@ -296,10 +302,14 @@ class CardScreenTest {
         RecipeState.entries.filter { !it.editable }.forEach { state ->
             val recipe = save(fullRecipe(state))
             show(recipe.id)
+            compose.chooseCardTab(CardMode.VIEW)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
-            assertEquals("$state", listOf(CardTags.BACK) + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags() - CardTags.FORK)
+            assertEquals("$state", listOf(CardTags.BACK) + TABS + SERVINGS_ACTIONS, interactiveTags() - CardTags.FORK)
             assertTrue("$state offers fork, floating", compose.onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().size == 1)
             assertNothingInTheContentActs()
+            compose.chooseCardTab(CardMode.COOKING)
+            compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
+            assertEquals("$state", listOf(CardTags.BACK) + TABS + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
         }
     }
 
@@ -390,6 +400,9 @@ class CardScreenTest {
     private companion object {
         const val PATIENCE = 60_000L
         val SERVINGS_ACTIONS = listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE)
+
+        /** The card's two tabs, under its bar. */
+        val TABS = listOf(CardTags.tab(CardMode.VIEW), CardTags.tab(CardMode.COOKING))
 
         /** Every ingredient line and every step is marked done with a tap (FLOW-068). */
         val MARKED_PARTS = (0..4).map(CardTags::ingredient) + (0..2).map(CardTags::step)
