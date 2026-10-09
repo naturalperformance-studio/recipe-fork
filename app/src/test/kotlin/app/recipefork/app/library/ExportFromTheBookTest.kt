@@ -236,7 +236,8 @@ class ExportFromTheBookTest {
         val after = runBlocking { recipes.get(recipe.id) }!!
         assertEquals(recipe, after)
         assertTrue(after.state.editable)
-        assertTrue(compose.textsOf(LibraryTags.entry(recipe.id.value)).contains("Draft"))
+        // A draft names no state in serverless mode (it can never be published there): the entry reads its title alone.
+        assertEquals(listOf("Soup"), compose.textsOf(LibraryTags.entry(recipe.id.value)))
         compose.openEntryMenu(recipe.id.value)
         assertTrue(exists(LibraryTags.delete(recipe.id.value)))
     }

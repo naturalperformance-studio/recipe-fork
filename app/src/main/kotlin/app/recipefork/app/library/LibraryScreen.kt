@@ -597,8 +597,8 @@ private fun OwnEntry(
     EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier) {
         EntryTitle(row.recipeId, row.title)
         EntryTags(row.recipeId, tags)
-        // The state is named in words, never carried by colour alone (A11Y-008).
-        Text(stringResource(stateLabel(row.state, mode)), style = MaterialTheme.typography.labelLarge)
+        // The state is named in words, never carried by colour alone (A11Y-008); a serverless draft names none.
+        stateLabel(row.state, mode)?.let { Text(stringResource(it), style = MaterialTheme.typography.labelLarge) }
         // The sending mark is shown beside the state and never replaces it (FLOW-036 (6), FLOW-005); a build without
         // the server sends nothing, so it shows none (FLOW-062 (1)).
         if (mode == Mode.Standard) Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
@@ -1005,12 +1005,13 @@ private fun rememberImport(files: RecipeImport, session: LibrarySession): () -> 
 private const val ANY_FILE = "*/*"
 
 /**
- * The marker of FLOW-036: `local` and `private` are both a draft. In [Mode.Serverless] a recipe keeps the last state
- * the device knew (FLOW-062 (5)), worded with nothing of publication, review or a private link.
+ * The marker of FLOW-036: `local` and `private` are both a draft. In [Mode.Serverless] nothing can be published, so a
+ * draft carries no marker (null); a recipe keeps the last other state the device knew (FLOW-062 (5)), worded with
+ * nothing of publication, review or a private link.
  */
 @StringRes
-fun stateLabel(state: RecipeState, mode: Mode): Int = when (state) {
-    RecipeState.LOCAL, RecipeState.PRIVATE -> R.string.library_state_draft
+fun stateLabel(state: RecipeState, mode: Mode): Int? = when (state) {
+    RecipeState.LOCAL, RecipeState.PRIVATE -> if (mode == Mode.Serverless) null else R.string.library_state_draft
     RecipeState.PENDING -> if (mode == Mode.Serverless) R.string.library_state_pending_serverless else R.string.library_state_pending
     RecipeState.REJECTED -> R.string.library_state_rejected
     RecipeState.LINK_SHARED -> if (mode == Mode.Serverless) R.string.library_state_link_shared_serverless else R.string.library_state_link_shared
