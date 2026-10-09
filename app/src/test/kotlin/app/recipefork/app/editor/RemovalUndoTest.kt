@@ -203,13 +203,16 @@ class RemovalUndoTest {
         compose.waitUntil(PATIENCE_MS) { stored(recipe).steps.size == 2 && stored(recipe).media.isEmpty() }
         assertEquals(listOf("fry.jpg"), held())
 
-        // The clock held, so that the statement cannot go by itself first; the editor stays composed, so nothing but
-        // "Done" ends the removal.
+        // The clock held, and let run for half a second at most — far less than the statement shows for — so that it
+        // cannot go by itself; the editor stays composed, so nothing but "Done" ends the removal.
         compose.mainClock.autoAdvance = false
         compose.onNodeWithTag(EditorTags.DONE).performClick()
-
+        var frames = 0
         compose.waitUntilWithMainThread {
-            compose.mainClock.advanceTimeByFrame()
+            if (frames < 30) {
+                compose.mainClock.advanceTimeByFrame()
+                frames++
+            }
             closed == 1 && held().isEmpty()
         }
         assertEquals(listOf(Step(0, "Mix flour."), Step(1, "Fry.")), stored(recipe).steps)

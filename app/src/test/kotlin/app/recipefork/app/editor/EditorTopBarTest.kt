@@ -92,10 +92,14 @@ class EditorTopBarTest {
     private class Refusable(book: ActiveBook) : RecipeRepository(book) {
         @Volatile var gate: CompletableDeferred<Unit>? = null
         @Volatile var refuse = false
+        @Volatile var refusals = 0
 
         override suspend fun save(recipe: Recipe) {
             gate?.await()
-            if (refuse) throw IOException("the book refused the write")
+            if (refuse) {
+                refusals++
+                throw IOException("the book refused the write")
+            }
             super.save(recipe)
         }
     }
@@ -265,7 +269,8 @@ class EditorTopBarTest {
         assertEquals(1, closed)
     }
 
-    // A write the book refuses keeps the editor open, and "Done" says so; once a later write is taken, "Done" closes it.
+    // A write the book refuses keeps the editor open, and "Done" says so, with Retry; once a later write is taken,
+    // "Done" closes it.
     @Test
     fun aRefusedWriteKeepsTheEditorOpenAndSaysSo() = refused("Couldn't save the recipe")
 
@@ -275,10 +280,10 @@ class EditorTopBarTest {
 
     private fun refused(said: String) {
         val recipe = open()
-        recipes.refuse = true
-        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performTextReplacement("Pancakes with jam")
+        typeRefused("Pancakes with jam")
         compose.onNodeWithTag(EditorTags.DONE).performClick()
         compose.awaitStatement(said)
+        assertTrue(shown(context.getString(R.string.editor_retry)))
         assertEquals(0, closed)
         assertEquals("Pancakes", stored(recipe).title)
         compose.onNodeWithTag(EditorTags.FORM).assertExists()
@@ -288,6 +293,86 @@ class EditorTopBarTest {
         compose.onNodeWithTag(EditorTags.DONE).performClick()
         compose.waitUntilWithMainThread { closed == 1 }
         assertEquals("Pancakes with honey", stored(recipe).title)
+    }
+
+    /** The title typed while the book refuses every write, once it has refused it. */
+    private fun typeRefused(title: String) {
+        recipes.refuse = true
+        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performTextReplacement(title)
+        compose.waitUntilWithMainThread { recipes.refusals > 0 }
+        compose.waitForIdle()
+    }
+
+    private fun retry() = compose.onNode(
+        hasText(context.getString(R.string.editor_retry)) and hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)),
+        useUnmergedTree = true,
+    ).performClick()
+
+    private fun systemBack() = compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+
+    // A write refused once and taken when tried again: "Done", with no change made since, writes the recipe once more
+    // and closes the editor.
+    @Test
+    fun doneWritesARefusedChangeOnceMoreAndCloses() {
+        val recipe = open()
+        typeRefused("Pancakes with jam")
+        recipes.refuse = false
+        compose.onNodeWithTag(EditorTags.DONE).performClick()
+        compose.waitUntilWithMainThread { closed == 1 }
+        assertEquals("Pancakes with jam", stored(recipe).title)
+    }
+
+    // The statement that the book refused it carries Retry, which writes the recipe once more and, once taken, closes.
+    @Test
+    fun retryWritesTheRecipeOnceMoreAndCloses() {
+        val recipe = open()
+        typeRefused("Pancakes with jam")
+        compose.onNodeWithTag(EditorTags.DONE).performClick()
+        compose.awaitStatement(context.getString(R.string.editor_not_saved))
+        assertEquals(0, closed)
+        recipes.refuse = false
+        retry()
+        compose.waitUntilWithMainThread { closed == 1 }
+        assertEquals("Pancakes with jam", stored(recipe).title)
+    }
+
+    // Back after a refused write: the editor stays open and says so, with Retry; a second back while that shows leaves
+    // anyway, what was refused lost — the bar's back and the system's alike.
+    @Test
+    fun theBarsBackAfterARefusedWriteStaysAndSaysSoAndASecondLeaves() =
+        backAfterARefusedWrite { compose.onNodeWithTag(EditorTags.BACK).performClick() }
+
+    @Test
+    fun theSystemBackAfterARefusedWriteStaysAndSaysSoAndASecondLeaves() = backAfterARefusedWrite { systemBack() }
+
+    private fun backAfterARefusedWrite(back: () -> Unit) {
+        val recipe = open()
+        typeRefused("Pancakes with jam")
+        back()
+        compose.awaitStatement(context.getString(R.string.editor_not_saved))
+        assertTrue(shown(context.getString(R.string.editor_retry)))
+        assertEquals(0, closed)
+        compose.onNodeWithTag(EditorTags.FORM).assertExists()
+        back()
+        compose.waitUntilWithMainThread { closed == 1 }
+        assertEquals("Pancakes", stored(recipe).title)
+    }
+
+    // Back once the book takes writes again: the refused change is written, and the editor closes.
+    @Test
+    fun theBarsBackAfterTheBookRecoversWritesAndCloses() =
+        backAfterRecovery { compose.onNodeWithTag(EditorTags.BACK).performClick() }
+
+    @Test
+    fun theSystemBackAfterTheBookRecoversWritesAndCloses() = backAfterRecovery { systemBack() }
+
+    private fun backAfterRecovery(back: () -> Unit) {
+        val recipe = open()
+        typeRefused("Pancakes with jam")
+        recipes.refuse = false
+        back()
+        compose.waitUntilWithMainThread { closed == 1 }
+        assertEquals("Pancakes with jam", stored(recipe).title)
     }
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()

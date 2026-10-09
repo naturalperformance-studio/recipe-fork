@@ -2,6 +2,8 @@ package app.recipefork.app.editor
 
 import android.content.Context
 import android.content.res.Configuration
+import android.database.sqlite.SQLiteException
+import android.util.Log
 import androidx.compose.runtime.saveable.Saver
 import app.recipefork.app.Mode
 import app.recipefork.app.book.ActiveBook
@@ -48,7 +50,6 @@ import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.recipe.withUnit
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -58,6 +59,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
 import java.time.Instant
 import java.io.File
 import kotlin.time.Duration.Companion.hours
@@ -682,12 +684,13 @@ class RecipeEditor(
     /**
      * [removal] is no longer offered for undoing — its statement went without Undo, or the editor closed: what it
      * deleted is gone for good, and the files of its media are handed over to be deleted once the deletion is in the
-     * book. Nothing happens for a removal already undone or ended.
+     * book. Nothing happens for a removal already undone or ended. Where the book refused the last write, it may still
+     * hold the deleted media, so their files are kept; a file left so is swept later (`MediaSweep`).
      */
     fun endRemoval(removal: Removal) {
         if (!offered.compareAndSet(removal, null)) return
         // Behind every write already queued, the deletion itself among them.
-        saving.launch(start = CoroutineStart.UNDISPATCHED) { writes.withLock { removal.ended() } }
+        saving.launch(start = CoroutineStart.UNDISPATCHED) { writes.withLock { if (!behind) removal.ended() } }
     }
 
     private fun editIngredient(position: Int, change: (Ingredient) -> Ingredient) = edit { recipe ->
@@ -863,33 +866,55 @@ class RecipeEditor(
         saving.launch(start = CoroutineStart.UNDISPATCHED) {
             // A heading still being named is not saved (DOM-022). A write the book refuses leaves the editor open on
             // what the author has; each write holds the whole recipe, so the next one taken makes the book whole.
-            val taken = writes.withLock {
-                val taken = try {
-                    recipes.save(next.withNamedGroups())
-                    true
-                } catch (refused: CancellationException) {
-                    throw refused
-                } catch (refused: Exception) {
-                    false
-                }
-                behind = !taken
-                taken
-            }
+            val taken = writes.withLock { take(next) }
             // What follows a change — a replaced file deleted — waits for the book to hold it.
             if (taken) then()
         }
         return true
     }
 
-    /** Whether the last write this editor asked for was refused, so the book holds less than the author has. */
+    /**
+     * Whether the last write this editor asked for was refused, so the book holds less than the author has; read and
+     * written under the queue of writes.
+     */
     private var behind = false
+
+    private val refusedNow = MutableStateFlow(false)
+
+    /** Whether the book refused the last write, so that leaving now would lose what the author has; until one is taken. */
+    val refused: StateFlow<Boolean> = refusedNow.asStateFlow()
+
+    /**
+     * Writes [recipe] — a heading still being named left out (DOM-022) — and returns whether the book took it. Only a
+     * failure of the storage is a refusal; any other error is the program's and goes on. Called under the queue of writes.
+     */
+    private suspend fun take(recipe: Recipe): Boolean {
+        val taken = try {
+            recipes.save(recipe.withNamedGroups())
+            true
+        } catch (refusal: IOException) {
+            Log.w(LOG_TAG, "The book refused the recipe ${recipe.id.value}", refusal)
+            false
+        } catch (refusal: SQLiteException) {
+            Log.w(LOG_TAG, "The book refused the recipe ${recipe.id.value}", refusal)
+            false
+        }
+        behind = !taken
+        refusedNow.value = !taken
+        return taken
+    }
 
     /**
      * Returns once every change made so far is in the book — queued behind the writes already asked for — with whether
-     * the book holds them: false where the last write was refused.
+     * the book holds them. Where the last write was refused, the recipe as the author has it now is written once more,
+     * and the answer is whether that write was taken.
      */
-    suspend fun written(): Boolean =
-        saving.async(start = CoroutineStart.UNDISPATCHED) { writes.withLock { !behind } }.await()
+    suspend fun written(): Boolean = saving.async(start = CoroutineStart.UNDISPATCHED) {
+        writes.withLock {
+            val now = current.value
+            if (behind && now != null) take(now) else !behind
+        }
+    }.await()
 
     /** Applies [change] and writes the result; a recipe in a frozen state is left as it is. */
     private fun edit(change: (Recipe) -> Recipe): Boolean = edit(change) {}
@@ -958,6 +983,8 @@ class RecipeEditor(
 
         /** One queue of writes for every editor, so that an editor opened again reads what the last one wrote. */
         private val writes = Mutex()
+
+        private const val LOG_TAG = "RecipeEditor"
     }
 }
 

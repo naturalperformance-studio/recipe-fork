@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -124,9 +125,10 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
  * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
  *
- * [onClose] is the bar's back action, and what "Done" does once every change is in the book. What is entered is
+ * [onClose] leaves the editor: the bar's back and "Done" call it once every change is in the book. What is entered is
  * written as it is typed, so leaving holds nothing back: the system's back, and its predictive gesture, are the
- * navigation host's, which leaves the editor for the destination beneath it.
+ * navigation host's, which leaves the editor for the destination beneath it — unless the book refused the last write,
+ * when the system's back goes as the bar's does.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -176,8 +178,36 @@ fun EditorScreen(
     RemovalStatement(editor, statements)
     val focus = LocalFocusManager.current
     val notSaved = stringResource(R.string.editor_not_saved)
-    // One close per "Done": a second tap while the first waits for the book closes nothing more.
+    val retry = stringResource(R.string.editor_retry)
+    // One close at a time: a second tap while the first waits for the book closes nothing more.
     var closing by remember { mutableStateOf(false) }
+    // The statement that the book refused what is written, while it shows.
+    var refusal by remember { mutableStateOf<Job?>(null) }
+    // Closing — by "Done", by back, or by Retry: leaving the field is what a field's marks wait for (FLOW-028); once
+    // every change is in the book — a refused write tried once more — a removal still offering Undo becomes final, as
+    // on leaving, and the editor closes. Where the book still refuses it, the editor stays open and says so, with Retry.
+    lateinit var close: () -> Unit
+    close = {
+        if (!closing) {
+            closing = true
+            focus.clearFocus()
+            statementScope.launch {
+                if (editor.written()) {
+                    editor.removal.value?.let(editor::endRemoval)
+                    onClose()
+                } else {
+                    closing = false
+                    refusal = statements.offer(notSaved, retry, onAction = { close() }, onGone = {})
+                }
+            }
+        }
+    }
+    // Back closes as "Done" does; a second back while the refusal shows leaves anyway, what the book refused lost.
+    val back = { if (refusal?.isActive == true) onClose() else close() }
+    // The system's back is the navigation host's, which leaves at once, as nothing is held back — unless the book
+    // refused the last write: then it goes as the bar's back.
+    val refused by editor.refused.collectAsState()
+    BackHandler(enabled = refused) { back() }
 
     Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
@@ -191,25 +221,8 @@ fun EditorScreen(
                     ForkNoteAction()
                     ChecklistControl(environment.mode)
                 },
-                onBack = onClose,
-                onDone = {
-                    // Leaving the field is what a field's marks wait for (FLOW-028); a removal still offering Undo
-                    // becomes final, as on leaving; then, once every change is in the book, the editor closes as back
-                    // closes it. A change the book did not take keeps it open, and it says so.
-                    if (!closing) {
-                        closing = true
-                        focus.clearFocus()
-                        editor.removal.value?.let(editor::endRemoval)
-                        statementScope.launch {
-                            if (editor.written()) {
-                                onClose()
-                            } else {
-                                closing = false
-                                statements.say(notSaved)
-                            }
-                        }
-                    }
-                },
+                onBack = back,
+                onDone = close,
             )
             val shown = recipe ?: return@Column
             Column(

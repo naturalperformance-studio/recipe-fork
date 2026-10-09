@@ -5,6 +5,8 @@
     <string name="editor_done">Готово</string>
     <string name="editor_done_action">Сохранить и закрыть</string>
     <string name="editor_not_saved">Не удалось сохранить рецепт</string>
+    <!-- The action of the statement that the book refused what is written: write it once more, and close. -->
+    <string name="editor_retry">Повторить</string>
     <!-- The top bar's title while the recipe has none. -->
     <string name="editor_bar_new_recipe">Новый рецепт</string>
     <string name="editor_back_action">Показать рецепт</string>
