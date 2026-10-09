@@ -141,10 +141,11 @@ fun EditorScreen(
     val stepKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { mediaWork.stepKeys ?: RowKeys() }
     remember(mediaWork, stepKeys) { mediaWork.stepKeys = stepKeys }
     val ingredientKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
+    val groupKeys = rememberSaveable(recipeId, saver = RowKeys.Saver) { RowKeys() }
     // Not saved: what the editor holds for this session alone — the references offered once (GUIDE-008) among it —
     // starts again after the activity is recreated or the process restored, which is intended, nothing of a hint
     // being kept (GUIDE-005).
-    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys) }
+    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys, groupKeys) }
     // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
     // touched from a database thread.
     LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }
@@ -217,12 +218,13 @@ fun EditorScreen(
                     // The keyboard's Next goes from the title to the serving count, and from there into the rows.
                     val servings = remember { FocusRequester() }
                     val rows = remember { RowFocus() }
+                    val headings = remember { RowFocus() }
                     TitleAndLanguage(shown, editor) { servings.requestFocus() }
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
-                    ServingCount(shown, editor, servings, rows)
+                    ServingCount(shown, editor, servings, rows, headings)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
-                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows)
+                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
                         Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork)
                     }
                     Description(shown, editor)
@@ -301,7 +303,12 @@ private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: EditorStat
 private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements) {
     val removal by editor.removal.collectAsState()
     val text = removal?.let {
-        stringResource(if (it.step) R.string.editor_step_removed else R.string.editor_ingredient_removed, it.position + 1)
+        val said = when (it.kind) {
+            Removal.Kind.STEP -> R.string.editor_step_removed
+            Removal.Kind.INGREDIENT -> R.string.editor_ingredient_removed
+            Removal.Kind.GROUP -> R.string.editor_group_removed
+        }
+        stringResource(said, it.position + 1)
     }
     val undo = stringResource(R.string.editor_undo)
     val offered = remember { arrayOfNulls<Job>(1) }
@@ -428,12 +435,16 @@ internal fun EditorButton(
     }
 }
 
-/** What a row's menu does to its row (FLOW-025): a new row above or below it, or the row one place up or down. */
+/**
+ * What a row's menu does to its row (FLOW-025): a new row above or below it, or the row one place up or down; for an
+ * ingredient row, also a group's heading above it (DOM-022).
+ */
 enum class RowAction(@StringRes val label: Int) {
     INSERT_ABOVE(R.string.editor_row_insert_above),
     INSERT_BELOW(R.string.editor_row_insert_below),
     MOVE_UP(R.string.editor_row_move_up),
     MOVE_DOWN(R.string.editor_row_move_down),
+    GROUP_ABOVE(R.string.editor_row_group_above),
     ;
 
     /** How a test tag names the action: `insert-above` and so on. */
@@ -442,8 +453,8 @@ enum class RowAction(@StringRes val label: Int) {
 
 /**
  * The menu of the row at [position] of [count] rows: a 48 dp control named for its row by [name] (A11Y-003, A11Y-005)
- * that opens the four actions of FLOW-025 — the first row has no "Move up", the last no "Move down". Each action is
- * one tap, so nothing here is done only by dragging (A11Y-006).
+ * that opens [actions] — by default the four of FLOW-025, the first row with no "Move up", the last with no "Move down".
+ * Each action is one tap, so nothing here is done only by dragging (A11Y-006).
  */
 @Composable
 internal fun RowMenu(
@@ -454,13 +465,15 @@ internal fun RowMenu(
     actionTag: (RowAction) -> String,
     onAction: (RowAction) -> Unit,
     modifier: Modifier = Modifier,
+    actions: List<RowAction> = RowAction.entries.filter {
+        it != RowAction.GROUP_ABOVE && (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1)
+    },
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier) {
         BlockAction(R.drawable.ic_row_menu, name, tag, onClick = { expanded = !expanded })
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            RowAction.entries
-                .filter { (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1) }
+            actions
                 .forEach { action ->
                     DropdownMenuItem(
                         text = { Text(stringResource(action.label)) },
@@ -603,6 +616,16 @@ object EditorTags {
     fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
+    /** "Add group" under the ingredient list, and the parts of the heading at [index] of the groups (DOM-022). */
+    const val GROUP_ADD = "editor-group-add"
+    fun group(index: Int) = "editor-group-$index"
+    fun groupName(index: Int) = "editor-group-$index-name"
+    fun groupMark(index: Int) = "editor-group-$index-mark"
+    fun groupRemove(index: Int) = "editor-group-$index-remove"
+    fun groupMenu(index: Int) = "editor-group-$index-menu"
+    fun groupAction(index: Int, action: RowAction) = "editor-group-$index-${action.tag}"
+    fun groupHandle(index: Int) = "editor-group-$index-handle"
+    fun groupHandleIcon(index: Int) = "editor-group-$index-handle-icon"
     fun divisibility(position: Int) = "editor-ingredient-$position-divisibility"
     fun divisible(position: Int, divisible: Boolean) = "editor-ingredient-$position-divisible-$divisible"
     fun unitOption(unit: QuantityUnit) = "editor-unit-${unit.name}"

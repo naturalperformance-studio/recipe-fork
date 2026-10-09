@@ -20,6 +20,9 @@ sealed interface RecipePart {
 
     /** The note of the ingredient row at [position] (DOM-023). */
     data class IngredientNote(val position: Int) : RecipePart
+
+    /** The name of the ingredient group whose heading is at [index] of the recipe's headings (DOM-022). */
+    data class GroupName(val index: Int) : RecipePart
 }
 
 /** How a part stands against its bound: short of DOM-006's minimum, or over a limit of DOM-012. */
@@ -62,6 +65,7 @@ object RecipeBounds {
         // A timer whose name the author never set has no name limit: its name follows its step (DOM-012).
         is RecipePart.TimerName -> step(recipe, part.position)?.timer?.label?.let { over(MAX_TIMER_NAME, it.length) }
         is RecipePart.IngredientNote -> ingredient(recipe, part.position)?.note?.let { over(MAX_NOTE, it.length) }
+        is RecipePart.GroupName -> recipe.ingredientGroups.getOrNull(part.index)?.let { over(MAX_GROUP_NAME, it.name.length) }
     }
 
     /** Every part of [recipe] outside its bound, in the order the editor shows them; empty when it is within all. */
@@ -69,9 +73,20 @@ object RecipeBounds {
         val positions = recipe.steps.indices
         val parts = listOf(
             RecipePart.Title, RecipePart.Language, RecipePart.Servings, RecipePart.Ingredients,
-        ) + recipe.ingredients.indices.map { RecipePart.IngredientNote(it) } + RecipePart.Steps +
+        ) + ingredientParts(recipe) + RecipePart.Steps +
             positions.flatMap { listOf(RecipePart.StepText(it), RecipePart.TimerName(it)) } + RecipePart.Description
         return parts.mapNotNull { part -> of(recipe, part)?.let { part to it } }.toMap()
+    }
+
+    /** The ingredient list's parts as it reads: each group's name above its first row, then every row's note. */
+    private fun ingredientParts(recipe: Recipe): List<RecipePart> = buildList {
+        fun headingsAt(position: Int) = recipe.ingredientGroups.indices.filter { recipe.ingredientGroups[it].firstPosition == position }
+        recipe.ingredients.indices.forEach { position ->
+            headingsAt(position).forEach { add(RecipePart.GroupName(it)) }
+            add(RecipePart.IngredientNote(position))
+        }
+        recipe.ingredientGroups.indices.filter { recipe.ingredientGroups[it].firstPosition >= recipe.ingredients.size }
+            .forEach { add(RecipePart.GroupName(it)) }
     }
 
     private fun over(limit: Int, count: Int): Bound? = if (count > limit) Bound.OverLimit(limit, count) else null

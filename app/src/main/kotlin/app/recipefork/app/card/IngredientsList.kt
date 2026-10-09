@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import app.recipefork.app.R
 import app.recipefork.app.ui.Motion
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rounding
 
@@ -72,6 +74,10 @@ import app.recipefork.core.scaling.Rounding
  * Tapping a line marks it done, and tapping it again unmarks it ([marks], FLOW-068). Tapping the amount of a line that
  * carries a quantity opens its fixing control below it ([FixAmount]); a line "to taste", an unfinished one, or one off
  * its grid offers no fixing (SCALE-018 (7)). Without [marks] a line is not marked.
+ *
+ * Each of the [groups] stands as a subheading over its lines, a heading for the screen reader; lines above the first
+ * heading stand under none, and a heading with no lines yet is not shown (DOM-022). A group is presentation only: the
+ * lines, their scaling, fixing, marks and references read exactly as without it.
  */
 @Composable
 internal fun IngredientsList(
@@ -82,6 +88,7 @@ internal fun IngredientsList(
     onFix: (CardFixing) -> Unit,
     onRelease: (Int) -> Unit,
     marks: CardMarks? = null,
+    groups: List<IngredientGroup> = emptyList(),
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered) { mutableStateOf<Int?>(null) }
@@ -92,7 +99,7 @@ internal fun IngredientsList(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks) }
+        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups) }
     }
 }
 
@@ -108,6 +115,7 @@ private fun Lines(
     onFix: (CardFixing) -> Unit,
     onRelease: (Int) -> Unit,
     marks: CardMarks?,
+    groups: List<IngredientGroup>,
 ) {
     Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
         // The warning unfolds under the status line and folds away into it, the gap above it included, so the lines
@@ -128,6 +136,7 @@ private fun Lines(
         }
         val column = quantityColumn(list.lines)
         list.lines.forEachIndexed { i, line ->
+            groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name) }
             val position = ordered[i].position
             // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
             Column {
@@ -155,6 +164,16 @@ private fun Lines(
     }
 }
 
+/** The subheading of the group at [index], over its first line (DOM-022): a heading for the screen reader. */
+@Composable
+private fun GroupHeading(index: Int, name: String) {
+    Text(
+        name,
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.fillMaxWidth().padding(top = SECTION_GAP).semantics { heading() }.testTag(IngredientTags.group(index)),
+    )
+}
+
 /** Whether any quantity of the list was computed at a scale other than the authored one: the section says so once. */
 internal val IngredientList.recalculated: Boolean get() = lines.any { it.derived }
 
@@ -171,6 +190,8 @@ internal object IngredientTags {
     fun rounding(position: Int) = "card-ingredient-$position-rounding"
     /** The name of the line at [position], with its note after it where it carries one. */
     fun name(position: Int) = "card-ingredient-$position-name"
+    /** The subheading of the group at [index] of the recipe's headings. */
+    fun group(index: Int) = "card-ingredient-group-$index"
 }
 
 /**

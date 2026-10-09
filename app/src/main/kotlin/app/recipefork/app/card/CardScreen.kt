@@ -512,6 +512,7 @@ private fun RecipeContent(
                 onFix = { change(scale.fix(it)) },
                 onRelease = { change(scale.release(it)) },
                 marks = marks,
+                groups = recipe.ingredientGroups,
             )
             StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()), marks)
             if (recipe.description.isNotBlank()) {

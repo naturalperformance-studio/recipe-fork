@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -128,7 +129,7 @@ private val Ingredient.shownUnit: QuantityUnit?
  * typed is not held — the field keeps what it held and says what it accepts (DOM-015).
  */
 @Composable
-internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: FocusRequester, rows: RowFocus) {
+internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: FocusRequester, rows: RowFocus, headings: RowFocus) {
     if (!recipe.state.editable) {
         Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.SERVINGS)) {
             Text(stringResource(R.string.editor_servings), style = MaterialTheme.typography.labelMedium)
@@ -151,12 +152,13 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: Focus
             },
             isError = refused,
             singleLine = true,
-            // Next goes on to the first ingredient row; with none, Done closes the keyboard and adds no row.
+            // Next goes on to the ingredient list's first item, a row or a group's heading; with none, Done closes
+            // the keyboard and adds no row.
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = if (recipe.ingredients.isEmpty()) ImeAction.Done else ImeAction.Next,
+                imeAction = if (recipe.listItems.isEmpty()) ImeAction.Done else ImeAction.Next,
             ),
-            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }, onNext = { rows.ask(0) }),
+            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }, onNext = { focusOn(recipe.listItems.firstOrNull(), rows, headings) }),
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(requester)
@@ -179,6 +181,7 @@ internal fun Ingredients(
     scroll: EditorScroll,
     mode: Mode,
     rows: RowFocus,
+    headings: RowFocus,
 ) {
     val editable = recipe.state.editable
     val language = numberLanguage(LocalConfiguration.current)
@@ -187,8 +190,10 @@ internal fun Ingredients(
         // A dictionary that cannot be read offers nothing; every name can still be written as free text (FLOW-022).
         dictionary = runCatching { ingredients.ingredients() }.getOrDefault(emptyList()).also(editor::knowEntries)
     }
-    // A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
-    val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveIngredient(from, to) }
+    // The rows and the groups' headings stand in one column (DOM-022); a row is dragged among them alone, a heading with
+    // its rows. A drop is the same single move as the row menu's (FLOW-025, A11Y-006).
+    val items = recipe.listItems
+    val drag = rememberRowDrag(scroll, ROW_SPACING) { from, to -> editor.moveIngredientItem(from, to) }
     val motion = rememberRowMotion()
     motion.update(recipe.ingredients.indices.map(editor::ingredientKey))
     RowsColumn(
@@ -202,28 +207,62 @@ internal fun Ingredients(
         )
         // Under the heading: the list left empty, or longer than the limit (FLOW-028).
         BoundMark(editor, RecipePart.Ingredients, EditorTags.INGREDIENTS_MARK, gap = ROW_SPACING)
-        recipe.ingredients.forEachIndexed { position, row ->
-            // What the screen holds for a row — focus, an open offer, a typed value — stays with it when rows before
-            // it are inserted, moved or deleted.
-            motion.LeavingAt(position)
-            key(editor.ingredientKey(position)) {
-                if (editable) IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag, mode, rows, motion)
-                else ReadOnlyIngredient(position, row, language, dictionary)
+        items.forEachIndexed { at, item ->
+            // What the screen holds for a row or a heading — focus, an open offer, a typed value — stays with it when
+            // items before it are inserted, moved or deleted: each is keyed directly in the list, never inside a branch.
+            if (item is ListItem.Row) motion.LeavingAt(item.position)
+            val itemKey: Any = when (item) {
+                is ListItem.Row -> editor.ingredientKey(item.position)
+                is ListItem.Heading -> GroupKey(editor.groupKey(item.index))
+            }
+            key(itemKey) {
+                when (item) {
+                    is ListItem.Row -> {
+                        val position = item.position
+                        val row = recipe.ingredients[position]
+                        if (editable) {
+                            val place = ItemPlace(at, items, recipe.ingredientGroups.any { it.firstPosition == position })
+                            IngredientRow(position, recipe.ingredients.size, row, editor, language, dictionary, drag, mode, rows, motion, place, headings)
+                        } else {
+                            ReadOnlyIngredient(position, row, language, dictionary)
+                        }
+                    }
+                    is ListItem.Heading -> {
+                        if (editable) GroupHeading(item.index, at, items, recipe, editor, drag, headings, rows)
+                        else ReadOnlyHeading(item.index, recipe.ingredientGroups[item.index].name)
+                    }
+                }
             }
         }
         motion.LeavingAt(recipe.ingredients.size, last = true)
         if (editable) {
-            EditorButton(
-                text = stringResource(R.string.editor_ingredient_add),
-                action = stringResource(R.string.editor_ingredient_add_action),
-                // The row added takes the focus in its name, with the keyboard up.
-                onClick = {
-                    val added = editor.recipe.value?.ingredients?.size
-                    if (editor.addIngredient() && added != null) rows.ask(added)
-                },
-                modifier = Modifier.testTag(EditorTags.INGREDIENT_ADD),
-                weight = ButtonWeight.TONAL,
-            )
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                EditorButton(
+                    text = stringResource(R.string.editor_ingredient_add),
+                    action = stringResource(R.string.editor_ingredient_add_action),
+                    // The row added takes the focus in its name, with the keyboard up.
+                    onClick = {
+                        val added = editor.recipe.value?.ingredients?.size
+                        if (editor.addIngredient() && added != null) rows.ask(added)
+                    },
+                    modifier = Modifier.testTag(EditorTags.INGREDIENT_ADD),
+                    weight = ButtonWeight.TONAL,
+                )
+                // A heading after the last row, whose group the rows added next fill; where one with no rows yet
+                // already stands there, it takes the focus instead of a second one.
+                EditorButton(
+                    text = stringResource(R.string.editor_group_add),
+                    action = stringResource(R.string.editor_group_add_action),
+                    onClick = {
+                        val now = editor.recipe.value ?: return@EditorButton
+                        val count = now.ingredients.size
+                        if (editor.addGroup(count)) headings.ask(now.ingredientGroups.size)
+                        else if (now.ingredientGroups.lastOrNull()?.firstPosition == count) headings.ask(now.ingredientGroups.lastIndex)
+                    },
+                    modifier = Modifier.testTag(EditorTags.GROUP_ADD),
+                    weight = ButtonWeight.TEXT,
+                )
+            }
         }
     }
 }
@@ -275,6 +314,8 @@ private fun IngredientRow(
     mode: Mode,
     rows: RowFocus,
     motion: RowMotion,
+    place: ItemPlace,
+    headings: RowFocus,
 ) {
     // An entry that gives a divisibility decides it (FLOW-023 (11)): the quantity is checked against its grid even before
     // the row holds it — a draft written before, holding 1½ of an indivisible entry, is marked (DOM-017 (9)).
@@ -289,21 +330,24 @@ private fun IngredientRow(
     val quantityUnder = remember { mutableIntStateOf(0) }
     // The keyboard's Next goes name → note → quantity → unit → the next row's name; the last row's last field says Done.
     val chain = remember { RowChain() }
-    chain.last = position == count - 1
+    // The chain follows the list as it is shown: after a group's last row comes the next group's heading.
+    chain.last = place.next == null
     chain.measured = row.unitType != UnitType.TASTE_UNMEASURED
-    chain.onUnitPicked = { if (position + 1 < count) rows.ask(position + 1) }
+    chain.onUnitPicked = { focusOn(place.next, rows, headings) }
     rows.TakenBy(position, chain.name)
     // One bounded block per row, so where one ingredient ends and the next begins is plain; dragged, it moves whole.
     OutlinedCard(
         Modifier
             .fillMaxWidth()
             .then(motion.row(editor.ingredientKey(position)))
-            .then(drag.row(position, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
+            .then(drag.row(place.at, MaterialTheme.colorScheme.surface, CardDefaults.outlinedShape))
             .testTag(EditorTags.ingredient(position)),
     ) {
         // The block is dragged by the column down its left edge — or its right, for a left hand — so nothing that drags
         // stands among the inputs.
-        DragColumnBlock(drag, position, count, EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position)) {
+        // The only row of a group has no handle: it cannot move without leaving its group with no rows. Its column
+        // stays, empty, so that its inputs line up with the other rows'.
+        DragColumnBlock(drag, place.at, place.count, EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position), still = !place.movable) {
             // The name takes the first line up to the row's two action icons, so the block is no taller than its two
             // lines of inputs; the quantity and the unit start the line below at the same left edge.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -320,7 +364,7 @@ private fun IngredientRow(
                 ) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                         IngredientNameField(position, row, editor, language, dictionary, mode, chain, Modifier.weight(1f), heights.of(EvenHeights.Input.NAME) { nameUnder.intValue }, nameUnder)
-                        if (!under) Row(Modifier.padding(top = 8.dp)) { RowControls(position, count, editor) }
+                        if (!under) Row(Modifier.padding(top = 8.dp)) { RowControls(position, place, editor, headings) }
                     }
                     // How the ingredient is prepared, under its name and apart from it: the name says what it is.
                     NoteField(position, row, editor, chain)
@@ -351,7 +395,7 @@ private fun IngredientRow(
                             }
                         }
                     }
-                    if (under) BlockActions { RowControls(position, count, editor) }
+                    if (under) BlockActions { RowControls(position, place, editor, headings) }
                     // A `piece` row asks for its divisibility unless its entry gives one (FLOW-022 (5), FLOW-023 (11)).
                     if (row.unitType == UnitType.PIECE && entryDivisible == null) Divisibility(position, row, editor)
                 }
@@ -361,11 +405,37 @@ private fun IngredientRow(
 }
 
 /**
- * The removal and the menu of the ingredient row at [position] of [count] (FLOW-025): icons as a step's are, 48 dp each,
- * named by the row for the screen reader and shown in a tooltip on long press.
+ * Where an ingredient row stands in the list as the editor shows it: at item [at] of [items], rows and headings
+ * together ([listItems]); [startsGroup] where a heading stands right above it.
+ */
+private class ItemPlace(val at: Int, items: List<ListItem>, val startsGroup: Boolean) {
+    val count = items.size
+
+    /** The item after the row, a row or a heading, which the keyboard's Next goes to; null after the last. */
+    val next: ListItem? = items.getOrNull(at + 1)
+
+    /** Whether the row can move: the only row of a group cannot ([movable]). */
+    val movable = items.movable(at)
+}
+
+/** Asks [item] — a row or a group's heading — to take the focus with the keyboard up; none for null. */
+private fun focusOn(item: ListItem?, rows: RowFocus, headings: RowFocus) = when (item) {
+    is ListItem.Row -> rows.ask(item.position)
+    is ListItem.Heading -> headings.ask(item.index)
+    null -> Unit
+}
+
+/** A heading's key among the ingredient list's items, apart from the rows' keys. */
+private data class GroupKey(val key: Long)
+
+/**
+ * The removal and the menu of the ingredient row at [position], standing at [place] (FLOW-025): icons as a step's are,
+ * 48 dp each, named by the row for the screen reader and shown in a tooltip on long press. Moved up or down, the row
+ * trades places with the item next to it — past a heading, it leaves its group for the one it now stands in (DOM-022).
+ * A group's heading put above the row takes the focus in its name, as [headings] asks.
  */
 @Composable
-private fun RowControls(position: Int, count: Int, editor: RecipeEditor) {
+private fun RowControls(position: Int, place: ItemPlace, editor: RecipeEditor, headings: RowFocus) {
     val remove = stringResource(R.string.editor_ingredient_remove_action, position + 1)
     BlockAction(
         icon = R.drawable.ic_remove_row,
@@ -376,19 +446,144 @@ private fun RowControls(position: Int, count: Int, editor: RecipeEditor) {
         destructive = true,
     )
     RowMenu(
-        position = position,
-        count = count,
+        position = place.at,
+        count = place.count,
         name = stringResource(R.string.editor_ingredient_menu_action, position + 1),
         tag = EditorTags.ingredientMenu(position),
         actionTag = { EditorTags.ingredientAction(position, it) },
         onAction = { action ->
             when (action) {
+                // A row put above or below this one joins its group.
                 RowAction.INSERT_ABOVE -> editor.insertIngredient(position)
-                RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1)
-                RowAction.MOVE_UP -> editor.moveIngredient(position, position - 1)
-                RowAction.MOVE_DOWN -> editor.moveIngredient(position, position + 1)
+                RowAction.INSERT_BELOW -> editor.insertIngredient(position + 1, intoGroupAbove = true)
+                RowAction.MOVE_UP -> editor.moveIngredientItem(place.at, place.at - 1)
+                RowAction.MOVE_DOWN -> editor.moveIngredientItem(place.at, place.at + 1)
+                RowAction.GROUP_ABOVE -> {
+                    val index = editor.recipe.value?.ingredientGroups?.count { it.firstPosition < position }
+                    if (editor.addGroup(position) && index != null) headings.ask(index)
+                }
             }
         },
+        actions = RowAction.entries.filter {
+            when (it) {
+                // A move that would leave a group with no rows is not offered.
+                RowAction.MOVE_UP -> place.movable && place.at > 0
+                RowAction.MOVE_DOWN -> place.movable && place.at < place.count - 1
+                RowAction.GROUP_ABOVE -> !place.startsGroup
+                else -> true
+            }
+        },
+    )
+}
+
+/**
+ * The heading of the group at [index], standing at item [at] of [items] (DOM-022): its name in a field of its own —
+ * a name over [RecipeBounds.MAX_GROUP_NAME] characters kept and marked on leaving it, as every limit is (FLOW-028); one
+ * left blank is no name ([RecipeEditor.settleGroupName]). Beside it its removal and its menu, which moves the group
+ * past the one above or below; dragged by its column, the heading carries its rows with it.
+ */
+@Composable
+private fun GroupHeading(
+    index: Int,
+    at: Int,
+    items: List<ListItem>,
+    recipe: Recipe,
+    editor: RecipeEditor,
+    drag: RowDrag,
+    headings: RowFocus,
+    rows: RowFocus,
+) {
+    val group = recipe.ingredientGroups[index]
+    val key = editor.groupKey(index)
+    val owned = recipe.groupRows(index)
+    val requester = remember { FocusRequester() }
+    headings.TakenBy(index, requester)
+    // The name the heading had as the author came to it, which a name left blank takes back.
+    var entered by remember { mutableStateOf("") }
+    val focus = LocalFocusManager.current
+    val span = blockAt(items, at)
+    Box(Modifier.fillMaxWidth().then(drag.row(at, MaterialTheme.colorScheme.surface)).testTag(EditorTags.group(index))) {
+        // A heading with no rows yet has no handle: it stays last until rows fill its group. Its column stays, empty.
+        DragColumnBlock(drag, at, items.size, EditorTags.groupHandle(index), EditorTags.groupHandleIcon(index), span, groupLanding(items, at, span), still = !items.movable(at)) {
+            Column(Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    OutlinedTextField(
+                        value = group.name,
+                        onValueChange = { editor.renameGroup(index, it) },
+                        label = { Text(stringResource(R.string.editor_group_name)) },
+                        placeholder = { Text(stringResource(R.string.editor_group_name_example)) },
+                        textStyle = MaterialTheme.typography.titleMedium,
+                        singleLine = true,
+                        // Next goes on to the group's first row; a group with no rows yet ends the chain here.
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = if (owned.isEmpty()) ImeAction.Done else ImeAction.Next,
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }, onNext = { rows.ask(owned.first) }),
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(requester)
+                            .then(
+                                // By the heading's key, so it is this heading that is settled wherever it stands now.
+                                leaving(
+                                    onEnter = { entered = editor.recipe.value?.ingredientGroups?.getOrNull(index)?.name.orEmpty() },
+                                    onLeave = {
+                                        val now = editor.groupIndex(key) ?: return@leaving
+                                        editor.leave(RecipePart.GroupName(now))
+                                        editor.settleGroupName(now, entered)
+                                    },
+                                ),
+                            )
+                            .testTag(EditorTags.groupName(index)),
+                    )
+                    Row(Modifier.padding(top = 8.dp)) { GroupControls(index, recipe, editor) }
+                }
+                BoundMark(editor, RecipePart.GroupName(index), EditorTags.groupMark(index), gap = 4.dp, Modifier.padding(top = 4.dp))
+            }
+        }
+    }
+}
+
+/**
+ * The removal of the heading at [index] — its rows stay, in the group above or in none — and its menu, which moves the
+ * group, heading and rows, past the group above or below it; never above the rows no group owns, nor past a group
+ * with no rows yet. A group with nowhere to go has no menu.
+ */
+@Composable
+private fun GroupControls(index: Int, recipe: Recipe, editor: RecipeEditor) {
+    val remove = stringResource(R.string.editor_group_remove_action, index + 1)
+    BlockAction(
+        icon = R.drawable.ic_remove_row,
+        label = remove,
+        tag = EditorTags.groupRemove(index),
+        action = remove,
+        onClick = { editor.removeGroup(index) },
+        destructive = true,
+    )
+    val filled = !recipe.groupRows(index).isEmpty()
+    val moves = listOfNotNull(
+        RowAction.MOVE_UP.takeIf { filled && index > 0 },
+        RowAction.MOVE_DOWN.takeIf { filled && index + 1 < recipe.ingredientGroups.size && !recipe.groupRows(index + 1).isEmpty() },
+    )
+    if (moves.isEmpty()) return
+    RowMenu(
+        position = index,
+        count = recipe.ingredientGroups.size,
+        name = stringResource(R.string.editor_group_menu_action, index + 1),
+        tag = EditorTags.groupMenu(index),
+        actionTag = { EditorTags.groupAction(index, it) },
+        onAction = { editor.moveGroup(index, down = it == RowAction.MOVE_DOWN) },
+        actions = moves,
+    )
+}
+
+/** A heading as a frozen recipe shows it: its name, a heading for the screen reader. */
+@Composable
+private fun ReadOnlyHeading(index: Int, name: String) {
+    Text(
+        name,
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.fillMaxWidth().semantics { heading() }.testTag(EditorTags.group(index)),
     )
 }
 
