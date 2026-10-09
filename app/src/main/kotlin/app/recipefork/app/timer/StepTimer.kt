@@ -176,6 +176,9 @@ class RecipeTimers internal constructor(
      * announced as what the step no longer is. Each timer is matched on its own: the others of its step keep running.
      * A name read with the step's references at another scale is the step's own: a timer is never dropped because
      * the reader changed the count or fixed an ingredient since it started.
+     *
+     * A timer is the step's timer at its index: if that one's duration or name differs — also because an earlier
+     * timer of the step was removed — the running timer ends; no timer takes over another's run.
      */
     internal fun dropStale(steps: List<Step>, held: Map<TimerKey, RunningTimer>) {
         val stale = held.values.filter { timer ->
@@ -197,7 +200,8 @@ class RecipeTimers internal constructor(
 
     private suspend fun startNow(step: Step, index: Int, name: String, title: String) {
         val duration = step.timers.getOrNull(index)?.duration ?: return
-        store.start(key(step, index), name, title, duration, TimerName.source(step, index), TimerName.number(step, index))
+        val source = TimerName.source(step, index)
+        store.start(key(step, index), name, title, duration, source, TimerName.number(step, index))
         withContext(Dispatchers.Main) { starts++ }
     }
 }
@@ -233,12 +237,16 @@ fun rememberRecipeTimers(recipeId: RecipeId, title: String): RecipeTimers {
 internal data class Restart(val step: Step, val index: Int, val name: String)
 
 /**
- * The name the timer at [index] of [step] reads by on the card, [name] being its name: told apart, where it shares
- * that name with the step's other timers, by its number (DOM-024).
+ * The name the timer at [index] of [step] reads by on the card: told apart, where it shares its name with the step's
+ * other timers, by its number (DOM-024). While it is held, the name and the number it started with, as its
+ * notification and the bar read them; otherwise [current], its name as the step reads now, and its number there.
  */
 @Composable
-private fun shownName(step: Step, index: Int, name: String): String =
-    TimerName.number(step, index)?.let { stringResource(R.string.timer_numbered, name, it) } ?: name
+private fun shownName(step: Step, index: Int, held: RunningTimer?, current: String): String {
+    val name = held?.name ?: current
+    val number = if (held != null) held.number else TimerName.number(step, index)
+    return number?.let { stringResource(R.string.timer_numbered, name, it) } ?: name
+}
 
 /**
  * The timer at [index] of [step] on the card (FLOW-016), apart from the step's other timers (DOM-024): a [TimerButton]
@@ -260,7 +268,7 @@ fun StepTimer(
     val current = TimerName.of(step, index, quantity) ?: return
     val key = timers.key(step, index)
     val held = timers.held[key]
-    val name = shownName(step, index, held?.name ?: current)
+    val name = shownName(step, index, held, current)
     val now = timers.now
     val finished = held != null && held.hasEnded(now)
     val status = when {
@@ -293,7 +301,8 @@ fun StepTimer(
                 Text(
                     status,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.align(Alignment.CenterVertically).testTag(TimerTags.status(step.position, index)),
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                        .testTag(TimerTags.status(step.position, index)),
                 )
             }
         }
@@ -334,7 +343,7 @@ fun RestartQuestion(timers: RecipeTimers) {
             Text(
                 stringResource(
                     R.string.timer_restart_question,
-                    shownName(step, restart.index, held?.name ?: restart.name),
+                    shownName(step, restart.index, held, restart.name),
                     remainingText(remaining),
                     durationText(timer.duration),
                 ),

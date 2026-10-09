@@ -38,7 +38,9 @@ class CardStepTimersTest : CardTimersKit() {
             Step(0, "Salt the water"),
             Step(1, "Boil the pasta", timers = listOf(Timer(10.minutes), Timer(3.minutes))),
             Step(2, "Make the sauce", timers = listOf(Timer(20.minutes, "Sauce"), Timer(5.minutes, "Garlic"))),
-        ) + (3..22).map { Step(it, long) },
+            Step(3, "Rest the pasta", timers = listOf(Timer(2.minutes))),
+            Step(4, "Drain the pasta", timers = listOf(Timer(5.minutes), Timer(10.minutes))),
+        ) + (5..22).map { Step(it, long) },
     )
     private val last = 22
 
@@ -179,8 +181,9 @@ class CardStepTimersTest : CardTimersKit() {
         compose.waitUntil(PATIENCE_MS) {
             shown(TimerTags.barTimer(1, 0)) && shown(TimerTags.barTimer(1, 1)) && shown(TimerTags.barTimer(2, 0))
         }
-        assertTrue(texts(TimerTags.barTimer(1, 0)).contains("Step 2 · timer 1"))
-        assertTrue(texts(TimerTags.barTimer(1, 1)).contains("Step 2 · timer 2"))
+        // As the card and the notification read them: the name, then the number that tells it apart.
+        assertTrue(texts(TimerTags.barTimer(1, 0)).contains("Boil the pasta · timer 1"))
+        assertTrue(texts(TimerTags.barTimer(1, 1)).contains("Boil the pasta · timer 2"))
         assertTrue(texts(TimerTags.barTimer(2, 0)).contains("Sauce"))
 
         // One ends and rings: its line offers Stop, which stops it alone.
@@ -196,5 +199,44 @@ class CardStepTimersTest : CardTimersKit() {
         compose.onNodeWithTag(TimerTags.barCancel(1, 0)).performClick()
         awaitHeld { timers -> timers.none { it.key == pastaKey(1, 0) } }
         assertEquals(setOf(pastaKey(1, 1), pastaKey(2, 0)), held().map { it.key }.toSet())
+    }
+
+    // A timer added to a step while one of its timers runs: the running one reads, on the card and in the bar, as it
+    // started — as its notification does — while the new one is told apart by its number.
+    private fun saveStep(position: Int, timers: List<Timer>) = runBlocking {
+        recipes.save(pasta.copy(steps = pasta.steps.map { if (it.position == position) it.copy(timers = timers) else it }))
+    }
+
+    @Test
+    fun aRunningTimerReadsAsItStartedAfterATimerIsAddedToItsStep() {
+        showPasta()
+        start(3, 0)
+        awaitHeld { it.size == 1 }
+        assertNull(heldOf(3, 0)!!.number)
+        saveStep(3, listOf(Timer(2.minutes), Timer(4.minutes)))
+        compose.waitUntil(PATIENCE_MS) { shown(TimerTags.start(3, 1)) }
+        assertTrue(texts(TimerTags.start(3, 0)).contains("Rest the pasta"))
+        assertTrue(texts(TimerTags.start(3, 1)).contains("Rest the pasta · timer 2"))
+        assertEquals(listOf(pastaKey(3, 0)), held().map { it.key })
+
+        compose.onNodeWithTag(CardTags.step(last)).performScrollTo()
+        compose.waitUntil(PATIENCE_MS) { shown(TimerTags.barTimer(3, 0)) }
+        assertTrue(texts(TimerTags.barTimer(3, 0)).contains("Rest the pasta"))
+    }
+
+    // A running timer is the step's timer at its index: an earlier timer removed, the one that slides into its place
+    // does not take over its run — the run ends, and the timer now there stands unstarted.
+    @Test
+    fun removingAnEarlierTimerEndsTheRunOfTheNext() {
+        showPasta()
+        start(4, 1)
+        awaitHeld { it.size == 1 }
+        awaitStatus(4, 1, "10:00")
+        saveStep(4, listOf(Timer(10.minutes)))
+        awaitHeld { it.isEmpty() }
+        assertEquals(listOf(pastaKey(4, 1)), timers.announcements.cancelled)
+        awaitStatus(4, 0, "10 min")
+        assertFalse(shown(TimerTags.start(4, 1)))
+        assertFalse(shown(TimerTags.cancel(4, 0)))
     }
 }

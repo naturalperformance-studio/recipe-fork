@@ -50,11 +50,12 @@ internal fun RecipeTimers.inBar(onScreen: (stepPosition: Int) -> Boolean): List<
 
 /**
  * The bar pinned at the bottom of the card while timers of its recipe run out of sight (FLOW-016): one line for each of
- * [shown], each timer of a step on its own (DOM-024) — its name, or its step's [number] where it has none, or, for an
- * unnamed timer of a step with several, its step's number and its own ([timerNumber], `TimerName.number`); the time it
- * has left or that it rings, and the control that cancels it or stops its ringing. Tapping a line brings the card to its step ([onShow]). Never taller than a
- * third of the screen; more lines scroll within it. It rises from the bottom edge as its first line comes and sinks
- * below it, still showing its last lines, as the last goes; between, it grows and shrinks with its lines.
+ * [shown], each timer of a step on its own (DOM-024) — its name, or its step's [number] where it has none, followed,
+ * for an unnamed timer of a step with several, by the number it started with, as on the card and its notification;
+ * the time it has left or that it rings, and the control that cancels it or stops its ringing. Tapping a line brings
+ * the card to its step ([onShow]). Never taller than a third of the screen; more lines scroll within it. It rises
+ * from the bottom edge as its first line comes and sinks below it, still showing its last lines, as the last goes;
+ * between, it grows and shrinks with its lines.
  */
 @Composable
 internal fun RunningTimersBar(
@@ -63,7 +64,6 @@ internal fun RunningTimersBar(
     number: (stepPosition: Int) -> Int,
     onShow: (stepPosition: Int) -> Unit,
     modifier: Modifier = Modifier,
-    timerNumber: (TimerKey) -> Int? = { null },
 ) {
     val most = (LocalConfiguration.current.screenHeightDp / 3).dp
     // The lines the bar last showed, which it keeps while it sinks away.
@@ -71,7 +71,7 @@ internal fun RunningTimersBar(
     if (shown.isNotEmpty()) held[0] = shown
     val lines = held[0]
     AnimatedVisibility(shown.isNotEmpty(), modifier, enter = Motion.rise, exit = Motion.sink) {
-        Bar(timers, lines, number, timerNumber, onShow, most)
+        Bar(timers, lines, number, onShow, most)
     }
 }
 
@@ -80,7 +80,6 @@ private fun Bar(
     timers: RecipeTimers,
     shown: List<RunningTimer>,
     number: (stepPosition: Int) -> Int,
-    timerNumber: (TimerKey) -> Int?,
     onShow: (stepPosition: Int) -> Unit,
     most: Dp,
 ) {
@@ -106,7 +105,6 @@ private fun Bar(
                     ringing = timer.key in timers.ringing,
                     timers = timers,
                     number = number(position),
-                    timerNumber = timerNumber(timer.key),
                     onShow = { onShow(position) },
                 )
             }
@@ -115,7 +113,7 @@ private fun Bar(
 }
 
 @Composable
-private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers, number: Int, timerNumber: Int?, onShow: () -> Unit) {
+private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers, number: Int, onShow: () -> Unit) {
     val key = timer.key
     val position = key.stepPosition
     val index = key.index
@@ -123,17 +121,19 @@ private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers,
         Modifier
             .fillMaxWidth()
             .heightIn(min = CardTarget)
-            .clickable(onClickLabel = stringResource(R.string.timer_bar_show_action), role = Role.Button, onClick = onShow)
+            .clickable(
+                onClickLabel = stringResource(R.string.timer_bar_show_action),
+                role = Role.Button,
+                onClick = onShow,
+            )
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .testTag(TimerTags.barTimer(position, index)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        val name = timer.name.ifBlank { stringResource(R.string.timer_bar_step, number) }
         Text(
-            when {
-                timerNumber != null -> stringResource(R.string.timer_bar_step_timer, number, timerNumber)
-                else -> timer.name.ifBlank { stringResource(R.string.timer_bar_step, number) }
-            },
+            timer.number?.let { stringResource(R.string.timer_numbered, name, it) } ?: name,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
         )

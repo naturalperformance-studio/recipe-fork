@@ -105,8 +105,6 @@ import app.recipefork.app.R
 import app.recipefork.app.timer.RecipeTimers
 import app.recipefork.app.timer.RunningTimer
 import app.recipefork.app.timer.RunningTimersBar
-import app.recipefork.app.timer.TimerKey
-import app.recipefork.core.timer.TimerName
 import app.recipefork.app.timer.inBar
 import app.recipefork.app.timer.rememberRecipeTimers
 import androidx.compose.runtime.derivedStateOf
@@ -255,7 +253,7 @@ fun CardScreen(
         },
         bottomBar = {
             timersBar?.let {
-                RunningTimersBar(it.timers, it.shown, it.number, timerNumber = it.timerNumber, onShow = { position ->
+                RunningTimersBar(it.timers, it.shown, it.number, onShow = { position ->
                     places.placeOf(CardPlaces.step(position))?.let { step -> scope.launch { scroll.animateScrollTo(step.top) } }
                 })
             }
@@ -297,16 +295,8 @@ fun CardScreen(
     }
 }
 
-/**
- * The recipe's [timers] and those of them [shown] in the bar; [number] is each step's number by its position, and
- * [timerNumber] what tells each timer apart within its step, where anything must (`TimerName.number`).
- */
-private class TimersBar(
-    val timers: RecipeTimers,
-    val shown: List<RunningTimer>,
-    val number: (Int) -> Int,
-    val timerNumber: (TimerKey) -> Int?,
-)
+/** The recipe's [timers] and those of them [shown] in the bar; [number] is each step's number by its position. */
+private class TimersBar(val timers: RecipeTimers, val shown: List<RunningTimer>, val number: (Int) -> Int)
 
 /**
  * The timers of [recipe] running, or ringing, whose step is not within the card's viewport of [scroll] — none before
@@ -328,10 +318,7 @@ private fun runningOutOfSight(recipe: Recipe, scroll: ScrollState, places: CardP
         }
     }
     val positions = remember(recipe.steps) { recipe.steps.map { it.position }.sorted() }
-    val steps = remember(recipe.steps) { recipe.steps.associateBy { it.position } }
-    return TimersBar(timers, shown, { position -> positions.indexOf(position) + 1 }) { key ->
-        steps[key.stepPosition]?.let { TimerName.number(it, key.index) }
-    }
+    return TimersBar(timers, shown) { position -> positions.indexOf(position) + 1 }
 }
 
 /**

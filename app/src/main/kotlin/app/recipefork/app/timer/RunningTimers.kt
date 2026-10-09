@@ -91,7 +91,8 @@ class RunningTimers(
         dao.ofRecipe(book.fileName, recipeId.value).map { rows -> rows.map { it.toTimer() }.associateBy { it.key } }
 
     /** The timer of [key], or null where none is held. */
-    suspend fun get(key: TimerKey): RunningTimer? = dao.get(key.book, key.recipeId, key.stepPosition, key.index)?.toTimer()
+    suspend fun get(key: TimerKey): RunningTimer? =
+        dao.get(key.book, key.recipeId, key.stepPosition, key.index)?.toTimer()
 
     /**
      * Starts the timer of [key] for its full [duration] from now, named [name], read from [source], told apart from
@@ -107,7 +108,8 @@ class RunningTimers(
         source: String? = null,
         number: Int? = null,
     ): RunningTimer {
-        val timer = RunningTimer(key, name, recipe, duration, clock.now().plus(duration.toJavaDuration()), source = source, number = number)
+        val endsAt = clock.now().plus(duration.toJavaDuration())
+        val timer = RunningTimer(key, name, recipe, duration, endsAt, source = source, number = number)
         dao.put(RunningTimerEntity.of(timer))
         announcements.started(timer)
         return timer
@@ -120,8 +122,10 @@ class RunningTimers(
      * Marks [timer] announced, if it is still the one held under its key — not cancelled meanwhile nor started again.
      * Returns whether it was.
      */
-    suspend fun markAnnounced(timer: RunningTimer): Boolean =
-        dao.markAnnounced(timer.key.book, timer.key.recipeId, timer.key.stepPosition, timer.key.index, timer.endsAt.toEpochMilli()) > 0
+    suspend fun markAnnounced(timer: RunningTimer): Boolean {
+        val key = timer.key
+        return dao.markAnnounced(key.book, key.recipeId, key.stepPosition, key.index, timer.endsAt.toEpochMilli()) > 0
+    }
 
     /** Cancels the timer of [key]: it never ends and never announces itself (FLOW-013 (7)). */
     suspend fun cancel(key: TimerKey) {
@@ -193,7 +197,9 @@ interface RunningTimerDao {
     @Query("select * from running_timer order by ends_at_ms, book, recipe_id, step_position, timer_index")
     fun all(): Flow<List<RunningTimerEntity>>
 
-    @Query("select * from running_timer where book = :book and recipe_id = :recipeId order by step_position, timer_index")
+    @Query(
+        "select * from running_timer where book = :book and recipe_id = :recipeId order by step_position, timer_index",
+    )
     fun ofRecipe(book: String, recipeId: String): Flow<List<RunningTimerEntity>>
 
     @Query(
@@ -240,7 +246,9 @@ abstract class TimerDatabase : RoomDatabase() {
         const val FILE_NAME = "timers.db"
 
         fun open(context: Context): TimerDatabase =
-            Room.databaseBuilder(context, TimerDatabase::class.java, FILE_NAME).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+            Room.databaseBuilder(context, TimerDatabase::class.java, FILE_NAME)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .build()
 
         /** Version 2 holds what a derived name was read from; a timer running across the update holds none. */
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -257,9 +265,10 @@ abstract class TimerDatabase : RoomDatabase() {
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
-                    "CREATE TABLE IF NOT EXISTS `running_timer_new` (`book` TEXT NOT NULL, `recipe_id` TEXT NOT NULL, " +
-                        "`step_position` INTEGER NOT NULL, `timer_index` INTEGER NOT NULL, `name` TEXT NOT NULL, " +
-                        "`recipe_title` TEXT NOT NULL, `duration_ms` INTEGER NOT NULL, `ends_at_ms` INTEGER NOT NULL, " +
+                    "CREATE TABLE IF NOT EXISTS `running_timer_new` (`book` TEXT NOT NULL, " +
+                        "`recipe_id` TEXT NOT NULL, `step_position` INTEGER NOT NULL, " +
+                        "`timer_index` INTEGER NOT NULL, `name` TEXT NOT NULL, `recipe_title` TEXT NOT NULL, " +
+                        "`duration_ms` INTEGER NOT NULL, `ends_at_ms` INTEGER NOT NULL, " +
                         "`announced` INTEGER NOT NULL, `step_source` TEXT, `timer_number` INTEGER, " +
                         "PRIMARY KEY(`book`, `recipe_id`, `step_position`, `timer_index`))",
                 )
