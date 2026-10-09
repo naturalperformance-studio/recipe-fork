@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -71,6 +72,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
@@ -123,9 +125,10 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
  * cover under it (FLOW-026), the tags, the serving count, the ingredients, the steps and the description.
  *
- * [onClose] is the bar's back action. What is entered is written as it is typed, so leaving holds nothing back: the
- * system's back, and its predictive gesture, are the navigation host's, which leaves the editor for the destination
- * beneath it.
+ * [onClose] leaves the editor: the bar's back and "Done" call it once every change is in the book. What is entered is
+ * written as it is typed, so leaving holds nothing back: the system's back, and its predictive gesture, are the
+ * navigation host's, which leaves the editor for the destination beneath it — unless the book refused the last write,
+ * when the system's back goes as the bar's does.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -174,28 +177,52 @@ fun EditorScreen(
     PartsMadeWholeStatement(editor, statements)
     RemovalStatement(editor, statements)
     val focus = LocalFocusManager.current
-    val saved = stringResource(R.string.editor_saved)
+    val notSaved = stringResource(R.string.editor_not_saved)
+    val retry = stringResource(R.string.editor_retry)
+    // One close at a time: a second tap while the first waits for the book closes nothing more.
+    var closing by remember { mutableStateOf(false) }
+    // The statement that the book refused what is written, while it shows.
+    var refusal by remember { mutableStateOf<Job?>(null) }
+    // Closing — by "Done", by back, or by Retry: leaving the field is what a field's marks wait for (FLOW-028); once
+    // every change is in the book — a refused write tried once more — a removal still offering Undo becomes final, as
+    // on leaving, and the editor closes. Where the book still refuses it, the editor stays open and says so, with Retry.
+    lateinit var close: () -> Unit
+    close = {
+        if (!closing) {
+            closing = true
+            focus.clearFocus()
+            statementScope.launch {
+                if (editor.written()) {
+                    editor.removal.value?.let(editor::endRemoval)
+                    onClose()
+                } else {
+                    closing = false
+                    refusal = statements.offer(notSaved, retry, onAction = { close() }, onGone = {})
+                }
+            }
+        }
+    }
+    // Back closes as "Done" does; a second back while the refusal shows leaves anyway, what the book refused lost.
+    val back = { if (refusal?.isActive == true) onClose() else close() }
+    // The system's back is the navigation host's, which leaves at once, as nothing is held back — unless the book
+    // refused the last write: then it goes as the bar's back.
+    val refused by editor.refused.collectAsState()
+    BackHandler(enabled = refused) { back() }
 
     Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
-            // The top bar: back, and on its right what a fork takes (FLOW-030) and the checklist, there whatever the
-            // recipe holds and whatever its state (GUIDE-003), then "Done" while the recipe can be changed.
+            // The top bar: back and the recipe's title, and on its right what a fork takes (FLOW-030) and the checklist,
+            // there whatever the recipe holds and whatever its state (GUIDE-003), then "Done" while the recipe can be
+            // changed.
             EditorBar(
+                title = recipe?.title,
                 done = recipe?.state?.editable == true,
                 checklist = {
                     ForkNoteAction()
                     ChecklistControl(environment.mode)
                 },
-                onBack = onClose,
-                onDone = {
-                    // Leaving the field is what a field's marks wait for (FLOW-028); then, once every change is in
-                    // the book, it says so — unless a removal still offers Undo, which "Saved" never replaces.
-                    focus.clearFocus()
-                    statementScope.launch {
-                        editor.written()
-                        if (editor.removal.value == null) statements.say(saved, SnackbarDuration.Short)
-                    }
-                },
+                onBack = back,
+                onDone = close,
             )
             val shown = recipe ?: return@Column
             Column(
@@ -333,14 +360,24 @@ private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements)
 }
 
 /**
- * The editor's top app bar, as the book's and the card's: back at its start, announced as showing the recipe; at its
- * end [checklist] and, where [done], "Done", which says the recipe is saved.
+ * The editor's top app bar, as the book's and the card's: back at its start, announced as showing the recipe, then the
+ * recipe's [title] on one line, cut short where it is too long, or "New recipe" while it has none (nothing while the
+ * recipe is read); at its end [checklist] and, where [done], "Done", which saves the recipe and closes the editor.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditorBar(done: Boolean, checklist: @Composable () -> Unit, onBack: () -> Unit, onDone: () -> Unit) {
+private fun EditorBar(title: String?, done: Boolean, checklist: @Composable () -> Unit, onBack: () -> Unit, onDone: () -> Unit) {
     TopAppBar(
-        title = {},
+        title = {
+            if (title != null) {
+                Text(
+                    title.ifBlank { stringResource(R.string.editor_bar_new_recipe) },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag(EditorTags.BAR_TITLE),
+                )
+            }
+        },
         modifier = Modifier.testTag(EditorTags.BAR),
         navigationIcon = {
             val label = stringResource(R.string.editor_back)
@@ -585,7 +622,9 @@ object EditorTags {
     const val SCREEN = "editor"
     const val BAR = "editor-bar"
     const val BACK = "editor-back"
-    /** The top bar's "Done": the changes are in the book, and it says "Saved". */
+    /** The recipe's title in the top bar, or "New recipe" while it has none. */
+    const val BAR_TITLE = "editor-bar-title"
+    /** The top bar's "Done": once the changes are in the book, the editor closes. */
     const val DONE = "editor-done"
     const val FORM = "editor-form"
     const val FROZEN = "editor-frozen"

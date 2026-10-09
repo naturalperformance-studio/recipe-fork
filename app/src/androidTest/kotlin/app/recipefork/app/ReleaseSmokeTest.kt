@@ -430,8 +430,9 @@ class ReleaseSmokeTest {
     /**
      * The pre-launch crash sweep of the build Play receives, the way a stranger first goes through it: the application
      * starts and opens a recipe's card; a timer is started from it; the editor opens on the recipe and a group, a note
-     * and a timer are added and saved; the recipe is exported to a file and the file opened back into the book; the
-     * recipe is deleted and brought back with Undo. Nothing crashes, and each change is in the book.
+     * and a timer are added and saved, which closes the editor; the recipe is exported to a file and the file opened
+     * back into the book; the recipe is deleted and brought back with Undo. Nothing crashes, and each change is in the
+     * book.
      *
      * Export and the opening of a file belong to the serverless build (FLOW-063, FLOW-064): the standard one, which
      * offers neither, writes and reads the file through the same code the menu and the opened file reach.
@@ -470,8 +471,13 @@ class ReleaseSmokeTest {
             // The new timer's fields, under the step's actions: the last minutes on screen once its removal shows.
             reveal(REMOVE_TIMER_FROM_STEP_2) { shown(REMOVE_TIMER_FROM_STEP_2) }
             type(MINUTES, "5")
+            // Done saves and closes the editor, back to the recipe's card.
             tap(DONE)
-            awaitShown(SAVED)
+            try {
+                awaitUntil(30.seconds) { shown(DONE) == null && shown("Servings: 2") != null }
+            } catch (e: IllegalStateException) {
+                throw AssertionError("the editor did not close to the card; on screen: ${onScreen()}", e)
+            }
             fun edited() = stored(written)?.let { kept ->
                 listOf(kept.ingredientGroups.map { it.name }, kept.ingredients.map { it.note }, kept.steps.sortedBy { it.position }.map { it.timers.size })
             }
@@ -481,9 +487,7 @@ class ReleaseSmokeTest {
             } catch (e: IllegalStateException) {
                 throw AssertionError("the book holds ${edited()}, not $expected; on screen: ${onScreen()}", e)
             }
-            // Back through the card to the book.
-            tap(BACK)
-            awaitShown("Servings: 2")
+            // Back from the card to the book.
             tap(BACK)
             awaitShown(WRITTEN_HERE)
             awaitShown(written.title)
@@ -654,7 +658,6 @@ class ReleaseSmokeTest {
         const val CROP_DONE = "Done"
         const val BACK = "Back"
         const val DONE = "Done"
-        const val SAVED = "Saved"
         const val ADD_GROUP = "Add group"
         /** The label of a group heading's name field, and of an ingredient's note field. */
         const val GROUP = "Group"
