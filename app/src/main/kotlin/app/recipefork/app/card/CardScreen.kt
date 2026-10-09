@@ -546,12 +546,17 @@ private fun RecipeContent(
             verticalArrangement = Arrangement.spacedBy(PART_GAP),
         ) {
             Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
-            // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
-            Text(
-                recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
-            )
+            Column {
+                // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
+                Text(
+                    recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
+                )
+                // Right under the title, as its subtitle, muted: the counts of ingredients and steps and the timers' time
+                // together, for deciding.
+                RecipeSummaryLine(remember(recipe, language) { RecipeSummary.of(recipe, language) })
+            }
             // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
             recipe.statedAuthor?.let {
                 Text(
@@ -952,6 +957,7 @@ object CardTags {
     const val CLEAR_MARKS = "card-clear-marks"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
+    const val SUMMARY = "card-summary"
     const val MISSING = "card-missing"
     const val UNREADABLE = "card-unreadable"
     const val RETRY = "card-retry"

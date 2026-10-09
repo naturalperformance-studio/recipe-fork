@@ -246,6 +246,7 @@ class CardStepClipBoxTest {
         compose.waitUntil(PATIENCE_MS) { players.made.last().playing }
         assertEquals("Pause video", controlName())
         // The control still does it, as a button.
+        compose.scrollClearOfFork(CardTags.stepVideoControl(1))
         compose.onNodeWithTag(CardTags.stepVideoControl(1)).performClick()
         compose.waitUntil(PATIENCE_MS) { !players.made.last().playing }
         assertEquals(Role.Button, compose.onNodeWithTag(CardTags.stepVideoControl(1)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Role))
@@ -256,6 +257,7 @@ class CardStepClipBoxTest {
     fun theControlIsNamedInTheInterfaceLanguage() {
         showClip(1280, 720, rotation = 90)
         assertEquals("Остановить видео", controlName())
+        compose.scrollClearOfFork(CardTags.stepVideoControl(1))
         compose.onNodeWithTag(CardTags.stepVideoControl(1)).performClick()
         compose.waitUntil(PATIENCE_MS) { !players.made.last().playing }
         assertEquals("Воспроизвести видео", controlName())

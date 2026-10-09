@@ -280,12 +280,19 @@ object LocalizationChecks {
     /**
      * The string resources of [context]'s current language that the language holds itself, resolved in it:
      * a string that exists only in another language's directory is left out, so its fallback value is not
-     * accepted as this language's text.
+     * accepted as this language's text. A plural resource gives each of its forms (as 0, 1, 2 and 5 select them).
      */
     fun ownResolvedStrings(context: Context, res: File = resDir): List<String> {
         val own = stringsIn(ownValuesDir(context, res)).keys
-        return R.string::class.java.fields.filter { it.name in own }.map { context.getString(it.getInt(null)) }
+        val strings = R.string::class.java.fields.filter { it.name in own }.map { context.getString(it.getInt(null)) }
+        val plurals = R.plurals::class.java.fields.filter { it.name in own }.flatMap { field ->
+            PLURAL_SAMPLES.map { context.resources.getQuantityText(field.getInt(null), it).toString() }
+        }.distinct()
+        return strings + plurals
     }
+
+    /** Counts that between them select every plural form of English and Russian: other, one, few and many. */
+    private val PLURAL_SAMPLES = listOf(0, 1, 2, 5)
 
     /**
      * L10N-001 (1) on a rendered screen: every text, description and action label shown is a string resource
