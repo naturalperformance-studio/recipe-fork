@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The launcher icon's background: the theme's primary container (app_theme.xml), so the icon follows the theme. -->
+    <color name="ic_launcher_background">@color/theme_light_primaryContainer</color>
+</resources>
