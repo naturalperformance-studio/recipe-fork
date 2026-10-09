@@ -5,6 +5,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.BookName
+import app.recipefork.app.card.scrollClearOfFork
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
@@ -111,7 +112,8 @@ class CardTimerReferencesTest : CardTimersKit() {
         assertEquals(listOf("Knead 300 g flour"), held().map { it.name })
         assertTrue(breadKey !in timers.announcements.cancelled)
         // Once cleared, a new start takes the name the step reads by now.
-        compose.onNodeWithTag(TimerTags.cancel(0)).performScrollTo().performClick()
+        compose.scrollClearOfFork(TimerTags.cancel(0))
+        compose.onNodeWithTag(TimerTags.cancel(0)).performClick()
         awaitHeld { it.isEmpty() }
         compose.waitUntil(PATIENCE_MS) { controlName() == "Knead 200 g flour" }
         start(0)

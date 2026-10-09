@@ -278,7 +278,8 @@ class CardScreenTest {
         RecipeState.entries.filter { it.editable }.forEach { state ->
             val recipe = save(fullRecipe(state))
             show(recipe.id)
-            assertEquals("$state", listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU) + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU) + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags() - CardTags.FORK)
+            assertTrue("$state offers fork, floating", compose.onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().size == 1)
             compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.EDIT)).fetchSemanticsNodes()
                 .let { assertEquals("$state", 1, it.size) }
             assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction(), useUnmergedTree = true).fetchSemanticsNodes().size)
@@ -296,7 +297,8 @@ class CardScreenTest {
             val recipe = save(fullRecipe(state))
             show(recipe.id)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
-            assertEquals("$state", listOf(CardTags.BACK, CardTags.MENU) + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK) + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags() - CardTags.FORK)
+            assertTrue("$state offers fork, floating", compose.onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().size == 1)
             assertNothingInTheContentActs()
         }
     }

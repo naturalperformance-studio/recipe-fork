@@ -140,11 +140,10 @@ class CardTargetsTest {
         ).forEach { compose.assertCardTarget(it) }
         // Back, edit, the ⋮, the provenance, fewer, more, the ingredient line, the timer.
         AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 8)
-        // The ⋮ open: Fork in it, a card target, its label whole.
-        compose.openTheCardMenu()
+        // Fork, floating at the bottom end: a card target, its word whole, all of it on screen.
         compose.assertCardTarget(CardTags.FORK)
         compose.assertWhole(CardTags.FORK)
-        compose.closeTheCardMenu()
+        assertTrue("fork is named", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode()).isNotBlank())
 
         // The fixing control, opened from its amount, at first and once a fixing is held.
         compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()

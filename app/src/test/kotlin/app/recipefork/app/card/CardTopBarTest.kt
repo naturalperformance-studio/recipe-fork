@@ -48,6 +48,11 @@ import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.book.FavouriteEntity
+import app.recipefork.app.timer.TimerTags
+import app.recipefork.app.ui.AccessibilityChecks
+import app.recipefork.core.recipe.Timer
+import kotlin.math.abs
+import kotlin.time.Duration.Companion.minutes
 import app.recipefork.app.ui.AppTheme
 import androidx.compose.runtime.key
 import app.recipefork.core.recipe.Recipe
@@ -151,9 +156,9 @@ class CardTopBarTest {
                 mutableListOf<TextLayoutResult>().also { action(it) }.first()
             }
 
-    // Scenario 6: the bar holds the back arrow and, as icons named for the screen reader, edit and the ⋮, which holds
-    // fork; each does what the bar's actions did. The title is the content's heading, under the bar, which repeats it
-    // only later.
+    // Scenario 6: the bar holds the back arrow and, as icons named for the screen reader, edit and the ⋮; fork floats at
+    // the bottom end, its icon and its word. Each does what the bar's actions did. The title is the content's heading,
+    // under the bar, which repeats it only later.
     @Test
     fun theBarHoldsBackTheTitleAndTheRecipesActionsAsNamedIcons() = theBar("Back", "Fork", "Edit", "More actions")
 
@@ -164,7 +169,7 @@ class CardTopBarTest {
     private fun theBar(back: String, fork: String, edit: String, menu: String) {
         show(save().id)
         listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU).forEach { assertTrue("$it in the bar", inTheBar(it)) }
-        assertFalse("fork is in the ⋮, not on the bar", exists(CardTags.FORK))
+        assertFalse("fork is not on the bar", inTheBar(CardTags.FORK))
         assertFalse("no title in the expanded bar", exists(CardTags.BAR_TITLE))
         assertTrue(compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.CONTENT)) and hasTestTag(CardTags.TITLE)).fetchSemanticsNodes().size == 1)
         assertEquals(listOf("Roast chicken"), compose.textsOf(CardTags.TITLE))
@@ -181,28 +186,78 @@ class CardTopBarTest {
         assertTrue("the title under the bar", title.top >= bounds(CardTags.BAR).bottom)
         compose.onNodeWithTag(CardTags.BACK).performClick()
         compose.onNodeWithTag(CardTags.EDIT).performClick()
-        // Fork, first in the ⋮, by its word, a card target.
-        compose.openTheCardMenu()
+        // Fork, floating at the bottom end, by its word, a card target, under the bar's actions.
         assertEquals(listOf(fork), compose.textsOf(CardTags.FORK))
         compose.assertCardTarget(CardTags.FORK)
+        val f = bounds(CardTags.FORK)
+        val screen = bounds(CardTags.SCREEN)
+        assertTrue("fork at the bottom end: $f in $screen", screen.right - f.right < screen.width * 0.1f && screen.bottom - f.bottom < screen.height * 0.1f)
         compose.onNodeWithTag(CardTags.FORK).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.FORK) }
         assertEquals(listOf(1, 1, 1), listOf(backs, forks, edits))
     }
 
-    // Scenario 6: a frozen recipe's bar offers fork, in its ⋮, and no edit, as before.
+    // Scenario 6: a frozen recipe's card offers fork, floating, and no edit, as before.
     @Test
-    fun aFrozenRecipesBarOffersForkAndNoEdit() {
+    fun aFrozenRecipesCardOffersForkAndNoEdit() {
         show(save(state = RecipeState.PUBLISHED).id)
-        assertTrue(inTheBar(CardTags.MENU))
         assertFalse(exists(CardTags.EDIT))
+        assertFalse(inTheBar(CardTags.FORK))
         compose.forkFromTheCard()
         assertEquals(1, forks)
     }
 
+    // M3's one primary action of a scrolling screen: fork shows its word at the top, shrinks to its icon while the
+    // recipe scrolls down, and shows its word again as the reader scrolls up, or at the top; it is a card target and
+    // reads its word to the screen reader all the while.
+    @Test
+    fun forkShrinksToItsIconScrollingDownAndShowsItsWordScrollingUpAndAtTheTop() {
+        show(save().id)
+        assertTrue("${bounds(CardTags.FORK)} shows its word at the top", forkExpanded())
+        repeat(3) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
+        compose.waitUntil(PATIENCE_MS) { forkCollapsed() }
+        compose.assertCardTarget(CardTags.FORK)
+        assertEquals(listOf("Fork"), compose.textsOf(CardTags.FORK))
+        compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeDown() }
+        compose.waitUntil(PATIENCE_MS) { forkExpanded() }
+        val range = compose.onNodeWithTag(CardTags.CONTENT).fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange]
+        assertTrue("a little way up, not at the top", range.value() > 0f)
+        repeat(2) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
+        compose.waitUntil(PATIENCE_MS) { forkCollapsed() }
+        compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, -1_000_000f) }
+        compose.waitUntil(PATIENCE_MS) { forkExpanded() }
+    }
+
+    /** Whether fork shows its word beside its icon: wider than tall. Shrunk to its icon it is as wide as tall. */
+    private fun forkExpanded(): Boolean = bounds(CardTags.FORK).let { it.width > it.height + 8f }
+
+    private fun forkCollapsed(): Boolean = bounds(CardTags.FORK).let { abs(it.width - it.height) < 1f }
+
+    // The recipe's end scrolls clear of fork: the last step, its timer and the description, scrolled to the end, stand
+    // whole above it.
+    @Test
+    fun theRecipesEndScrollsClearOfFork() {
+        val recipe = Recipe.create(now, null).copy(
+            title = "Roast chicken",
+            description = "A weeknight dinner.",
+            steps = (0 until 12).map { Step(it, "Step number ${it + 1} of the roast.", timer = Timer(10.minutes).takeIf { _ -> it == 11 }) },
+        ).also { runBlocking { recipes.save(it) } }
+        show(recipe.id)
+        compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 1_000_000f) }
+        compose.waitForIdle()
+        val fork = bounds(CardTags.FORK)
+        val last = compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.CONTENT)) and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
+            .maxBy { it.boundsInRoot.bottom }
+        assertTrue("the last interactive element ${last.config.getOrNull(SemanticsProperties.TestTag)} ${last.boundsInRoot} clear above fork $fork",
+            last.boundsInRoot.bottom <= fork.top + 0.5f)
+        listOf(CardTags.step(11), TimerTags.start(11), CardTags.DESCRIPTION).forEach { tag ->
+            val part = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+            assertTrue("$tag $part clear above fork $fork", part.bottom <= fork.top + 0.5f && part.top >= bounds(CardTags.BAR).bottom - 0.5f)
+        }
+    }
+
     // Scenario 4 of v0.26: on a 360 dp phone at 1× font, a title of some thirty characters reads whole in the collapsed
     // bar — beside back, before the actions, on up to two lines — on an own editable recipe (back, edit, ⋮), a frozen
-    // one and a found one (back, ⋮); every action stays a 56 dp target named for the screen reader.
+    // one (back) and a found one (back, ⋮); every action stays a 56 dp target named for the screen reader.
     @Test
     @Config(qualifiers = "en-w360dp-h640dp")
     fun aTitleOfThirtyCharactersReadsWholeInTheBarOnA360dpPhone() = wholeInTheBar("Oven chicken with new potatoes")
@@ -225,8 +280,10 @@ class CardTopBarTest {
             compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.TITLE) == listOf(title) }
             repeat(4) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
             compose.waitUntil(PATIENCE_MS) { exists(CardTags.BAR_TITLE) }
-            val actions = listOfNotNull(CardTags.EDIT.takeIf { editable }, CardTags.MENU)
+            val actions = listOf(CardTags.EDIT, CardTags.MENU).filter(::exists)
             assertEquals("${recipe.state}: edit only while editable", editable, exists(CardTags.EDIT))
+            assertFalse("fork is not on the bar", inTheBar(CardTags.FORK))
+            assertTrue("fork floats", exists(CardTags.FORK))
             (listOf(CardTags.BACK) + actions).forEach { tag ->
                 assertTrue("$tag in the bar", inTheBar(tag))
                 compose.assertCardTarget(tag)
@@ -242,11 +299,7 @@ class CardTopBarTest {
             val text = bounds(CardTags.BAR_TITLE)
             assertTrue("the title within the bar: $text, $bar", text.top >= bar.top - 0.5f && text.bottom <= bar.bottom + 0.5f)
             assertTrue("the title after back", text.left >= bounds(CardTags.BACK).right - 0.5f)
-            assertTrue("the title before the actions", text.right <= bounds(actions.first()).left + 0.5f)
-            // And fork, in the ⋮.
-            compose.openTheCardMenu()
-            compose.assertCardTarget(CardTags.FORK)
-            compose.closeTheCardMenu()
+            assertTrue("the title before the actions", text.right <= (actions.firstOrNull()?.let { bounds(it).left } ?: bar.right) + 0.5f)
         }
     }
 
@@ -280,10 +333,26 @@ class CardTopBarTest {
         assertTrue("the long title is longer than its two lines", layout.multiParagraph.didExceedMaxLines)
         assertEquals(TextOverflow.Ellipsis, layout.layoutInput.overflow)
         assertTrue("ellipsized at the end of its second line", layout.isLineEllipsized(1))
+        assertEquals("the smaller title style on two lines", 16f, layout.layoutInput.style.fontSize.value, 0.01f)
         assertEquals(listOf(long), compose.textsOf(CardTags.BAR_TITLE))
         // Back at the top, the bar loses the title again.
         repeat(6) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeDown() } }
         compose.waitUntil(PATIENCE_MS) { !exists(CardTags.BAR_TITLE) }
+    }
+
+    // A short title stands in the bar's own large title style, on one line; only one that does not fit takes the
+    // smaller style on two lines.
+    @Test
+    @Config(qualifiers = "w360dp-h640dp")
+    fun aShortTitleStandsInTheBarsLargeStyleOnOneLine() {
+        show(save().id)
+        repeat(4) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.BAR_TITLE) }
+        val layout = layoutOf(CardTags.BAR_TITLE)
+        assertEquals("Roast chicken", layout.layoutInput.text.text)
+        assertEquals("titleLarge", 22f, layout.layoutInput.style.fontSize.value, 0.01f)
+        assertEquals(1, layout.lineCount)
+        assertFalse(layout.isLineEllipsized(0))
     }
 
     // A11Y-004 with scenario 6: a title of 120 characters at twice the font scale on a narrow phone reads whole in the
@@ -331,6 +400,24 @@ class CardTopBarTest {
         compose.runOnIdle { open = true }
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.BAR_TITLE) }
+    }
+
+    // While an amount is being fixed, fork steps aside, so that it lies over none of the fixing control; it is back once
+    // the control closes.
+    @Test
+    fun forkStepsAsideWhileAnAmountIsBeingFixed() {
+        val recipe = Recipe.create(now, null).copy(
+            title = "Stew",
+            servings = 4,
+            ingredients = listOf(Ingredient(0, null, freeTextName = "Beef", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(500))),
+        ).also { runBlocking { recipes.save(it) } }
+        show(recipe.id)
+        assertTrue(exists(CardTags.FORK))
+        compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.FIX) }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.FORK) }
+        compose.onNodeWithTag(CardTags.FIX_CANCEL).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.FIX) && exists(CardTags.FORK) }
     }
 
     // The keyboard shrinks the content: a fixing field focused low on the card is brought above it.
@@ -433,6 +520,9 @@ class CardTopBarTest {
         compose.waitForIdle()
         val end = bounds(CardTags.DESCRIPTION)
         assertTrue("the end of the recipe ($end) clear of the navigation bar", end.bottom <= screen.bottom - NAVIGATION)
+        val fork = bounds(CardTags.FORK)
+        assertTrue("fork ($fork) above the navigation bar", fork.bottom <= screen.bottom - NAVIGATION)
+        assertTrue("the end of the recipe ($end) clear of fork ($fork)", end.bottom <= fork.top + 0.5f)
     }
 
     private companion object {

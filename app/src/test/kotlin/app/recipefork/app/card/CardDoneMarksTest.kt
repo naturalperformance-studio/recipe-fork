@@ -301,24 +301,22 @@ class CardDoneMarksTest {
         assertNotNull(runBlocking { recipes.get(recipe.id) })
     }
 
-    // A recipe the card offers no removal for has Clear marks in its ⋮ only while it has marks to clear; fork is always
-    // there.
+    // A recipe the card offers no removal for shows its ⋮ only while it has marks to clear; fork floats beside it all
+    // the while, never in the ⋮.
     @Test
-    fun aFrozenRecipesMenuOffersClearMarksOnlyWhileItHasMarks() {
+    fun aFrozenRecipeShowsItsMenuOnlyWhileItHasMarks() {
         show(save(pilaf(RecipeState.PUBLISHED)).id)
-        compose.openTheCardMenu()
-        assertFalse(exists(CardTags.CLEAR_MARKS))
-        compose.closeTheCardMenu()
+        assertFalse(exists(CardTags.MENU))
+        assertTrue(exists(CardTags.FORK))
         tap(step(2))
-        compose.openTheCardMenu()
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.MENU) }
+        compose.onNodeWithTag(CardTags.MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.CLEAR_MARKS) }
         assertFalse(exists(CardTags.DELETE) || exists(CardTags.REMOVE))
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) && !exists(CardTags.FORK) }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
         assertEquals(emptyList<String>(), doneParts())
-        compose.openTheCardMenu()
-        assertFalse(exists(CardTags.CLEAR_MARKS))
-        compose.closeTheCardMenu()
+        assertTrue(exists(CardTags.FORK))
     }
 
     // FLOW-068 (4): the file of a recipe carries no marks — it is the same file marked or not — and a fork of it

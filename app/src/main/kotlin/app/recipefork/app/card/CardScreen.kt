@@ -21,6 +21,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -159,10 +165,10 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
  * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe.
  *
- * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book,
- * only while the recipe is editable the edit action that opens the editor on it (FLOW-029 (2–4)), and the ⋮. The ⋮
- * holds the fork action on every recipe, editable or frozen (FORK-001, FORK-007) — a found recipe is held frozen, so
- * its card offers fork and never edit (FLOW-064 (2)) — and the
+ * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book
+ * and, only while the recipe is editable, the edit action that opens the editor on it (FLOW-029 (2–4)). Fork, the
+ * card's one primary action, floats at the bottom end on every recipe, editable or frozen (FORK-001, FORK-007) — a
+ * found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). The bar's ⋮ holds the
  * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — which takes it out of the
  * book at once, asking nothing, and closes the card to the book, which says so with Undo ([onRemoved], FLOW-053); and,
  * while the recipe has done marks, their
@@ -221,6 +227,8 @@ fun CardScreen(
     // The title is the content's heading; the bar repeats it only once that heading has scrolled out of view — as when
     // the reader scrolls on, or the card opens at a place further down.
     var titleOut by remember(recipeId) { mutableStateOf(false) }
+    // While an amount is being fixed, fork steps aside, so that it lies over none of the fixing control.
+    var fixing by remember(recipeId) { mutableStateOf(false) }
     // The place is restored by the part that was first at the top, not by a scroll in pixels, which a change of text
     // scale or orientation while away would make point elsewhere (FLOW-012 (5)).
     val scroll = remember(recipeId) { ScrollState(0) }
@@ -239,7 +247,6 @@ fun CardScreen(
                 editable = recipe?.state?.editable == true,
                 scrollBehavior = bar,
                 onBack = onBack,
-                onFork = onFork,
                 onEdit = onEdit,
                 removal = removal,
                 onRemove = {
@@ -251,6 +258,21 @@ fun CardScreen(
                 marked = marks?.any == true,
                 onClearMarks = { marks?.clear() },
             )
+        },
+        // Fork floats at the bottom end, above the bar of running timers when it shows and above the navigation bar; it
+        // shows its word at the top and while the reader scrolls up, and shrinks to its icon while they scroll down.
+        floatingActionButton = {
+            if (recipe != null && !fixing) {
+                var expanded by remember(scroll) { mutableStateOf(true) }
+                LaunchedEffect(scroll) {
+                    var last = scroll.value
+                    snapshotFlow { scroll.value }.collect { now ->
+                        if (now == 0 || now < last) expanded = true else if (now > last) expanded = false
+                        last = now
+                    }
+                }
+                ForkAction(expanded, onFork)
+            }
         },
         bottomBar = {
             timersBar?.let {
@@ -266,7 +288,8 @@ fun CardScreen(
         // The bar of running timers shortens the viewport instead, so that it covers nothing.
         val keyboard = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
         val barShown = timersBar?.shown?.isNotEmpty() == true
-        val bottom = if (barShown) 0.dp else (padding.calculateBottomPadding() - keyboard).coerceAtLeast(0.dp)
+        // Room for the floating fork action too, so that the recipe's end scrolls clear of it.
+        val bottom = (if (barShown) 0.dp else (padding.calculateBottomPadding() - keyboard).coerceAtLeast(0.dp)) + FORK_ROOM
         val direction = LocalLayoutDirection.current
         Box(
             Modifier
@@ -289,7 +312,10 @@ fun CardScreen(
                 shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
                 // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
                 recipe != null && loaded != null && marks != null ->
-                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, marks, onOpenParent, scroll, places, bottom) { titleOut = it }
+                    RecipeContent(
+                        recipe, loaded, recipes, environment.usualServings.count.value, session, marks, onOpenParent, scroll, places, bottom,
+                        onFixing = { fixing = it },
+                    ) { titleOut = it }
                 else -> Loading()
             }
         }
@@ -359,10 +385,10 @@ private fun Unreadable(onRetry: () -> Unit) {
 
 /**
  * The screen's bar: back at its start; the recipe's [title] once the content's heading has scrolled out of view, beside
- * back on up to two lines, ellipsized at the end of the second — the content holds it whole; and the recipe's actions
- * at its end — edit while the recipe is editable, then the ⋮ on any recipe shown, which holds fork with the recipe's
- * other actions, so that a title of some thirty characters reads whole on a 360 dp phone. Each icon is one the screen
- * reader names, whose click it announces as what it does (A11Y-005) and whose name a long press shows in a tooltip.
+ * back ([BarTitle]) — the content holds it whole; and the recipe's actions at its end — edit while the recipe is
+ * editable, then the ⋮ while it holds anything. Fork is not here but the screen's floating action ([ForkAction]), so
+ * that a title of some thirty characters reads whole on a 360 dp phone. Each icon is one the screen reader names, whose
+ * click it announces as what it does (A11Y-005) and whose name a long press shows in a tooltip.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -372,7 +398,6 @@ private fun TopBar(
     editable: Boolean,
     scrollBehavior: TopAppBarScrollBehavior,
     onBack: () -> Unit,
-    onFork: () -> Unit,
     onEdit: () -> Unit,
     removal: Removal?,
     onRemove: () -> Unit,
@@ -385,15 +410,7 @@ private fun TopBar(
     TopAppBar(
         title = {
             AnimatedVisibility(visible = title != null, enter = fadeIn(), exit = fadeOut()) {
-                last?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = BAR_TITLE_LINES,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag(CardTags.BAR_TITLE),
-                    )
-                }
+                last?.let { BarTitle(it) }
             }
         },
         modifier = Modifier.testTag(CardTags.BAR),
@@ -417,7 +434,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                CardMenu(onFork, removal, onRemove, marked, onClearMarks)
+                if (removal != null || marked) CardMenu(removal, onRemove, marked, onClearMarks)
             }
         },
         scrollBehavior = scrollBehavior,
@@ -439,6 +456,56 @@ private val DESCRIPTION_GAP = 16.dp
 /** The most lines the bar gives the recipe's title. */
 private const val BAR_TITLE_LINES = 2
 
+/**
+ * The recipe's [title] in the bar: in the bar's own large title style where it fits on one line; otherwise smaller, on
+ * up to [BAR_TITLE_LINES] lines, ellipsized at the end of the last.
+ */
+@Composable
+private fun BarTitle(title: String) {
+    val measurer = rememberTextMeasurer()
+    val large = MaterialTheme.typography.titleLarge
+    BoxWithConstraints {
+        val width = constraints.maxWidth
+        val fits = remember(title, large, width, measurer) {
+            !measurer.measure(title, large, maxLines = 1, softWrap = false, constraints = Constraints(maxWidth = width)).hasVisualOverflow
+        }
+        Text(
+            title,
+            style = if (fits) large else MaterialTheme.typography.titleMedium,
+            maxLines = if (fits) 1 else BAR_TITLE_LINES,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.testTag(CardTags.BAR_TITLE),
+        )
+    }
+}
+
+/** The room the content leaves at its end for the floating fork action: its height and its spacing, and a gap. */
+private val FORK_ROOM = 88.dp
+
+/**
+ * The card's floating fork action (FORK-001), on every recipe shown: its icon and its word while [expanded], its icon
+ * alone otherwise; the screen reader reads the word either way and announces its click as what it does (A11Y-005). It
+ * is at least the card's [CardTarget] tall.
+ */
+@Composable
+private fun ForkAction(expanded: Boolean, onFork: () -> Unit) {
+    val word = stringResource(R.string.card_fork)
+    val action = stringResource(R.string.card_fork_action)
+    ExtendedFloatingActionButton(
+        text = { Text(word) },
+        icon = { Icon(painterResource(R.drawable.ic_fork), contentDescription = null) },
+        onClick = onFork,
+        expanded = expanded,
+        modifier = Modifier
+            .heightIn(min = CardTarget)
+            .semantics {
+                text = AnnotatedString(word)
+                onClick(label = action, action = null)
+            }
+            .testTag(CardTags.FORK),
+    )
+}
+
 @Composable
 private fun RecipeContent(
     recipe: Recipe,
@@ -451,6 +518,7 @@ private fun RecipeContent(
     scroll: ScrollState,
     places: CardPlaces,
     bottom: Dp,
+    onFixing: (Boolean) -> Unit,
     onTitleOut: (Boolean) -> Unit,
 ) {
     val language = when (interfaceLanguage(LocalConfiguration.current)) {
@@ -530,6 +598,7 @@ private fun RecipeContent(
                 onRelease = { change(scale.release(it)) },
                 marks = marks,
                 groups = recipe.ingredientGroups,
+                onFixing = onFixing,
             )
             StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()), marks)
             if (recipe.description.isNotBlank()) {
@@ -776,13 +845,13 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 }
 
 /**
- * The card's ⋮, after its other actions, on every recipe shown: Fork, on any recipe (FORK-001, FORK-007), its click
- * announced as what it does (A11Y-005); Clear marks while the recipe has done marks (FLOW-068), which takes every mark
- * of the recipe away at once; and the recipe's removal — Delete for an own recipe in a deletable state, Remove for a
- * found one — in the theme's error colour, last. Each item is the card's [CardTarget] tall.
+ * The card's ⋮, after its other actions, shown while it holds anything: Clear marks while the recipe has done marks
+ * (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal — Delete for an own recipe
+ * in a deletable state, Remove for a found one — in the theme's error colour. Each item is the card's [CardTarget]
+ * tall.
  */
 @Composable
-private fun CardMenu(onFork: () -> Unit, removal: Removal?, onRemove: () -> Unit, marked: Boolean, onClearMarks: () -> Unit) {
+private fun CardMenu(removal: Removal?, onRemove: () -> Unit, marked: Boolean, onClearMarks: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         BarAction(
@@ -793,18 +862,6 @@ private fun CardMenu(onFork: () -> Unit, removal: Removal?, onRemove: () -> Unit
             onClick = { expanded = !expanded },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            val forkAction = stringResource(R.string.card_fork_action)
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.card_fork)) },
-                onClick = {
-                    expanded = false
-                    onFork()
-                },
-                modifier = Modifier
-                    .heightIn(min = CardTarget)
-                    .semantics { onClick(label = forkAction, action = null) }
-                    .testTag(CardTags.FORK),
-            )
             if (marked) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.card_clear_marks)) },

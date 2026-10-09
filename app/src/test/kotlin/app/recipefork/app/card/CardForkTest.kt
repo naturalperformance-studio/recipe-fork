@@ -120,20 +120,24 @@ class CardForkTest {
             .sortedWith(compareBy({ it.positionInRoot.y }, { it.positionInRoot.x }))
             .map { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } }
 
-    // The fork action is in the bar's ⋮ of every recipe of the book, in each of the eight states, and asks for a fork.
+    // The fork action floats at the bottom end of the card of every recipe of the book, in each of the eight states,
+    // never in the bar or its ⋮, and asks for a fork.
     @Test
-    fun theBarOffersForkOnEveryRecipeEditableOrFrozen() {
+    fun theCardOffersForkOnEveryRecipeEditableOrFrozen() {
         RecipeState.entries.forEach { state ->
             val recipe = save(recipe("Soup in $state", state))
             show(recipe.id)
-            val expected = listOf(CardTags.BACK) + listOfNotNull(CardTags.EDIT.takeIf { state.editable }) + CardTags.MENU +
-                listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE)
+            assertEquals("$state", 0, compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.FORK)).fetchSemanticsNodes().size)
+            val expected = listOf(CardTags.BACK) + listOfNotNull(CardTags.EDIT.takeIf { state.editable }, CardTags.MENU.takeIf { state in DELETABLE }) +
+                listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE, CardTags.FORK)
             assertEquals("$state", expected, interactiveTags())
-            compose.onNodeWithTag(CardTags.FORK).assertDoesNotExist()
+            val screen = compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot
+            val fork = compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode().boundsInRoot
+            assertTrue("$state: fork at the bottom end, $fork in $screen",
+                screen.right - fork.right < screen.width * 0.1f && screen.bottom - fork.bottom < screen.height * 0.1f)
             val before = forks
             compose.forkFromTheCard()
             assertEquals("$state", before + 1, forks)
-            compose.onNodeWithTag(CardTags.FORK).assertDoesNotExist()
         }
     }
 
@@ -174,14 +178,12 @@ class CardForkTest {
         val fork = save(parent.fork(now, owner = null).copy(title = w.forkTitle))
         show(fork.id)
         awaitProvenance()
-        compose.openTheCardMenu()
         assertEquals(listOf(w.fork), compose.textsOf(CardTags.FORK))
         assertEquals(w.forkAction, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode()))
         compose.assertCardTarget(CardTags.FORK)
-        compose.closeTheCardMenu()
         assertEquals(listOf(w.provenance), compose.textsOf(CardTags.PROVENANCE))
         assertEquals(w.openAction, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.PROVENANCE).fetchSemanticsNode()))
-        // Back, edit, the ⋮, the provenance, fewer and more.
+        // Back, edit, the ⋮, the provenance, fewer, more and fork.
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 6)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 6)
         val content = setOf(w.forkTitle, "2")
@@ -240,7 +242,7 @@ class CardForkTest {
         assertEquals(listOf("Forked from a recipe that is not in this recipe book"), compose.textsOf(CardTags.PROVENANCE))
         val node = compose.onNodeWithTag(CardTags.PROVENANCE).fetchSemanticsNode()
         assertNull(node.config.getOrElseNullable(SemanticsActions.OnClick) { null })
-        assertEquals(listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU), interactiveTags())
+        assertEquals(listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU, CardTags.FORK), interactiveTags())
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         assertEquals(emptyList<RecipeId>(), opened)
     }
