@@ -270,6 +270,9 @@ fun CardScreen(
     // page's, which leaves the composition as the other tab is shown, so that it outlasts a turn to View and back and
     // the activity being recreated.
     val ingredientsShownAgain = rememberSaveable(recipeId) { mutableStateOf(false) }
+    // The same of the equipment, which folds on its own.
+    val equipmentShownAgain = rememberSaveable(recipeId) { mutableStateOf(false) }
+    val shownAgain = remember(ingredientsShownAgain, equipmentShownAgain) { ShownAgain(equipmentShownAgain, ingredientsShownAgain) }
     // The recipe's timers running, or ringing, while their step is out of sight on the tab shown: in a bar at the bottom.
     val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
     val timing = timersBar?.timers?.let { timers -> timers.held.values.any { !it.hasEnded(timers.now) || timers.rings(it.key) } } == true
@@ -368,7 +371,8 @@ fun CardScreen(
                     ) { page ->
                         val mode = TABS[page]
                         RecipeContent(
-                            recipe, loaded, recipes, scale, mode, session, marks, onOpenParent, scrolls[page], placesOf[page], ingredientsShownAgain,
+                            recipe, loaded, recipes, scale, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
+                            shownAgain,
                             // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
                             bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
                         ) { if (mode == CardMode.VIEW) titleOut = it }
@@ -638,7 +642,7 @@ private fun ForkAction(expanded: Boolean, onFork: () -> Unit) {
 
 /**
  * The recipe as the tab [mode] shows it, scrolled by [scroll]: View the whole of it, Cooking only what cooking needs —
- * the serving count, the ingredients and the steps.
+ * the equipment, the serving count, the ingredients and the steps.
  */
 @Composable
 private fun RecipeContent(
@@ -652,7 +656,7 @@ private fun RecipeContent(
     onOpenParent: (RecipeId) -> Unit,
     scroll: ScrollState,
     places: CardPlaces,
-    ingredientsShownAgain: MutableState<Boolean>,
+    shownAgain: ShownAgain,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
@@ -707,6 +711,8 @@ private fun RecipeContent(
                 }
                 recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
             }
+            // The equipment stands above the serving count and the ingredients, as the editor lists it before them.
+            EquipmentList(recipe.equipment, marks, mode, shownAgain.equipment)
             val authored = recipe.servings?.takeIf { it >= 1 }
             val ordered = held.ordered
             val scale = held.scale
@@ -735,7 +741,7 @@ private fun RecipeContent(
                     marks = marks,
                     groups = recipe.ingredientGroups,
                     mode = mode,
-                    shownAgain = ingredientsShownAgain,
+                    shownAgain = shownAgain.ingredients,
                 )
             }
             // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
@@ -756,6 +762,9 @@ private fun RecipeContent(
         }
     }
 }
+
+/** Whether the reader showed again the lists Cooking folded once every line of them was marked: each list its own. */
+private class ShownAgain(val equipment: MutableState<Boolean>, val ingredients: MutableState<Boolean>)
 
 /** The serving count and the ingredients: as parts of the card, the card's gap between them, or [packed], none. */
 @Composable
@@ -1115,6 +1124,7 @@ object CardTags {
     const val SERVINGS = "card-servings"
     const val SERVINGS_FEWER = "card-servings-fewer"
     const val SERVINGS_MORE = "card-servings-more"
+    const val EQUIPMENT = "card-equipment"
     const val INGREDIENTS = "card-ingredients"
     const val PROPORTIONS = "card-proportions"
     const val STEPS = "card-steps"
@@ -1131,6 +1141,8 @@ object CardTags {
     fun tooltip(action: String) = "$action-tooltip"
     fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
+    /** The item of equipment at [index] of the recipe's equipment. */
+    fun equipment(index: Int) = "card-equipment-$index"
     /** The amount of the ingredient line at [position], which opens its fixing control. */
     fun fixAmount(position: Int) = "card-ingredient-$position-amount"
     fun step(position: Int) = "card-step-$position"

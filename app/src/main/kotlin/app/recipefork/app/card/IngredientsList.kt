@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.LaunchedEffect
@@ -113,19 +114,37 @@ internal fun IngredientsList(
     // Every line marked: on Cooking the list folds, unless the reader has shown it again since. A line not marked ends
     // the showing again, so that marking every line once more folds the list again.
     val gathered = marks != null && ordered.all { marks.done(MarkedPart.INGREDIENT, it.position) }
-    LaunchedEffect(gathered) { if (!gathered) shownAgain.value = false }
-    val folded = mode == CardMode.COOKING && gathered && !shownAgain.value
+    val folded = foldedOnCooking(gathered, shownAgain, mode)
     LaunchedEffect(folded) { if (folded) open = null }
-    // The list stands apart from the steps on a tonal surface of the theme, in its medium corners. The surface reaches
-    // into the card's gutter, so the lines keep the whole width of the content and wrap no sooner (A11Y-004).
+    GatheringSurface(IngredientTags.SURFACE) {
+        Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode, folded) { shownAgain.value = true }
+    }
+}
+
+/**
+ * Whether a list whose every line is marked ([gathered]) stands folded: on [CardMode.COOKING] alone, and not once the
+ * reader has shown it again ([shownAgain]). A line not marked ends the showing again, so that marking every line once
+ * more folds the list again.
+ */
+@Composable
+internal fun foldedOnCooking(gathered: Boolean, shownAgain: MutableState<Boolean>, mode: CardMode): Boolean {
+    LaunchedEffect(gathered) { if (!gathered) shownAgain.value = false }
+    return mode == CardMode.COOKING && gathered && !shownAgain.value
+}
+
+/**
+ * A list of what is gathered before cooking — the ingredients, the equipment — standing apart from the steps on a
+ * tonal surface of the theme, in its medium corners. The surface reaches into the card's gutter, so the lines keep the
+ * whole width of the content and wrap no sooner (A11Y-004).
+ */
+@Composable
+internal fun GatheringSurface(tag: String, content: @Composable () -> Unit) {
     Surface(
-        Modifier.fillMaxWidth().bleed(SURFACE_BLEED).testTag(IngredientTags.SURFACE),
+        Modifier.fillMaxWidth().bleed(SURFACE_BLEED).testTag(tag),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) {
-            Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode, folded) { shownAgain.value = true }
-        }
+        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { content() }
     }
 }
 
@@ -154,7 +173,9 @@ private fun Lines(
     // as on any other.
     Section(R.string.card_ingredients, CardTags.INGREDIENTS, gap = HEADING_GAP) {
         // Folded, the lines fold up into the one line that says so, and unfold from it again.
-        AnimatedVisibility(folded, enter = Motion.open, exit = Motion.close) { GatheredLine(onShow) }
+        AnimatedVisibility(folded, enter = Motion.open, exit = Motion.close) {
+            GatheredLine(R.string.card_ingredients_show_action, IngredientTags.GATHERED, onShow)
+        }
         AnimatedVisibility(!folded, enter = Motion.open, exit = Motion.close) { AllLines(ordered, list, fixings, language, open, onOpen, onFix, onRelease, marks, groups, mode) }
     }
 }
@@ -223,15 +244,15 @@ private fun AllLines(
 }
 
 /**
- * The one line a list folds into once every ingredient is marked: "All gathered · show", the word that shows the list
+ * The one line a list folds into once every line of it is marked: "All gathered · show", the word that shows the list
  * in the theme's accent colour. The whole line, the card's [CardTarget] tall, is one M3 text button that shows the list
- * again ([onShow]); the screen reader reads it as all gathered and names its click.
+ * again ([onShow]); the screen reader reads it as all gathered and names its click [showAction].
  */
 @Composable
-private fun GatheredLine(onShow: () -> Unit) {
+internal fun GatheredLine(@StringRes showAction: Int, tag: String, onShow: () -> Unit) {
     val gathered = stringResource(R.string.card_ingredients_gathered)
     val show = stringResource(R.string.card_ingredients_show)
-    val showAction = stringResource(R.string.card_ingredients_show_action)
+    val showLabel = stringResource(showAction)
     val accent = MaterialTheme.colorScheme.primary
     val line = stringResource(R.string.card_ingredients_folded, gathered, show)
     val shown = remember(line, show, accent) {
@@ -249,8 +270,8 @@ private fun GatheredLine(onShow: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = CardTarget)
-            .semantics { onClick(label = showAction) { showing(); true } }
-            .testTag(IngredientTags.GATHERED),
+            .semantics { onClick(label = showLabel) { showing(); true } }
+            .testTag(tag),
         shape = MaterialTheme.shapes.small,
         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
         contentPadding = PaddingValues(0.dp),
@@ -264,7 +285,7 @@ private fun GatheredLine(onShow: () -> Unit) {
 }
 
 /** The space between the section's heading and its status line. */
-private val HEADING_GAP = 4.dp
+internal val HEADING_GAP = 4.dp
 
 /**
  * The subheading of the group at [index], over its first line (DOM-022): a heading for the screen reader, a modest
@@ -490,7 +511,7 @@ private fun IngredientRow(
 }
 
 /** The least space above and below a line's text, so that lines that wrap still read apart from the next. */
-private val LINE_PADDING = 8.dp
+internal val LINE_PADDING = 8.dp
 
 /** The space above and below a line's text in [CardMode.VIEW]: compact, yet lines that wrap still read apart. */
 internal val VIEW_LINE_PADDING = 4.dp

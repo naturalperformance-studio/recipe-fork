@@ -94,4 +94,7 @@
     <string name="card_ingredients_show">показать</string>
     <string name="card_ingredients_folded">%1$s · %2$s</string>
     <string name="card_ingredients_show_action">Показать ингредиенты</string>
+    <!-- Посуда и техника рецепта, над ингредиентами; на «Готовке» сворачивается, как ингредиенты, когда отмечен каждый предмет. -->
+    <string name="card_equipment">Посуда и техника</string>
+    <string name="card_equipment_show_action">Показать посуду и технику</string>
 </resources>

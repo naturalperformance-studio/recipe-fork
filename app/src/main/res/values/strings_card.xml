@@ -115,4 +115,7 @@
     <string name="card_ingredients_show">show</string>
     <string name="card_ingredients_folded">%1$s · %2$s</string>
     <string name="card_ingredients_show_action">Show the ingredients</string>
+    <!-- The equipment the recipe needs, above the ingredients; on Cooking it folds as the ingredients do once every item is marked. -->
+    <string name="card_equipment">Equipment</string>
+    <string name="card_equipment_show_action">Show the equipment</string>
 </resources>

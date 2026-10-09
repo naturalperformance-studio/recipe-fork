@@ -42,6 +42,7 @@ import app.recipefork.app.card.CardMode
 import app.recipefork.app.card.CardTarget
 import app.recipefork.app.card.DoneMark
 import app.recipefork.app.card.DoneMarks
+import app.recipefork.app.card.EquipmentTags
 import app.recipefork.app.card.FakeClipPlayers
 import app.recipefork.app.card.LocalClipPlayers
 import app.recipefork.app.card.awaitCard
@@ -113,10 +114,10 @@ import kotlin.time.Duration.Companion.minutes
  *  - every text drawn reaches its contrast against what is drawn behind it (A11Y-002).
  *
  * The screens: the book — the marked and the own view, each empty and with recipes, an entry's menu, a recipe file's
- * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with ingredient groups, notes,
+ * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment, ingredient groups, notes,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
- * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every ingredient marked,
- * the list folded; the editor on that recipe, its equipment among it, with a row removed and its
+ * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
+ * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with a row removed and its
  * Undo offered, and on a frozen one with equipment; the settings and each of their
  * dialogs; and the crop.
  *
@@ -363,7 +364,10 @@ class PreLaunchSweepTest {
     }
 
     private fun theCard(cake: Recipe) {
-        marks.hold(BookName.Pool, cake.id, setOf(DoneMark.of(cake.ingredients[0]), DoneMark.of(cake.steps[0])))
+        marks.hold(
+            BookName.Pool, cake.id,
+            setOf(DoneMark.ofEquipment(0, cake.equipment[0]), DoneMark.of(cake.ingredients[0]), DoneMark.of(cake.steps[0])),
+        )
         compose.runOnIdle { session.openCard(cake.id.value, LibraryView.OWN) }
         compose.awaitCard()
         await(CardTags.COVER)
@@ -372,6 +376,8 @@ class PreLaunchSweepTest {
         // View, the tab a card first opens on: the cover, the summary, fork; compact lists, the done marks shown.
         compose.onNodeWithTag(CardTags.tab(CardMode.VIEW)).assertIsSelected()
         await(CardTags.SUMMARY)
+        // The equipment above the ingredients, one item marked.
+        cake.equipment.indices.forEach { await(CardTags.equipment(it)) }
         assertOnlyThePagerScrollsSideways("View")
         checkScreen("the card, View", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
@@ -385,6 +391,7 @@ class PreLaunchSweepTest {
         await(CardTags.stepVideo(4))
         compose.onNodeWithTag(TimerTags.start(1)).performScrollTo().performClick()
         await(TimerTags.cancel(1))
+        cake.equipment.indices.forEach { await(CardTags.equipment(it)) }
         compose.onNodeWithTag(CardTags.SCREEN).assertExists()
         assertTrue("the second step is the current one", compose.onNodeWithTag(CardTags.step(1)).fetchSemanticsNode()
             .config.getOrNull(SemanticsProperties.StateDescription) == context.getString(R.string.card_current_step))
@@ -395,10 +402,12 @@ class PreLaunchSweepTest {
         checkScreen("the card, Cooking, its menu", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
         awaitGone(CardTags.CLEAR_MARKS)
-        // Every ingredient marked: the list folds into its one line.
+        // Every item of equipment and every ingredient marked: each list folds into its one line.
+        (1 until cake.equipment.size).forEach { compose.onNodeWithTag(CardTags.equipment(it)).performScrollTo().performClick() }
         (1 until cake.ingredients.size).forEach { compose.onNodeWithTag(CardTags.ingredient(it)).performScrollTo().performClick() }
+        await(EquipmentTags.GATHERED)
         await(IngredientTags.GATHERED)
-        checkScreen("the card, Cooking, the ingredients all gathered", target = CardTarget)
+        checkScreen("the card, Cooking, the equipment and the ingredients all gathered", target = CardTarget)
         chooseTheCardsTab(CardMode.VIEW)
         compose.onNodeWithTag(CardTags.EDIT).performClick()
         await(EditorTags.FORM)
