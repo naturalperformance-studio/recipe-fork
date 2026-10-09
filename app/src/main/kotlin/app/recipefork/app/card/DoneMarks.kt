@@ -25,15 +25,19 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
 import java.util.concurrent.ConcurrentHashMap
 
-/** The part of a card a done mark is on: an ingredient line or a step. */
-enum class MarkedPart(internal val code: String) { INGREDIENT(INGREDIENT_KEY), STEP(STEP_KEY) }
-
-/** How each part is written in the store. */
-private const val INGREDIENT_KEY = "i"
-private const val STEP_KEY = "s"
+/** The part of a card a done mark is on: an ingredient line, a step, or an item of equipment. */
+enum class MarkedPart(internal val code: String) { INGREDIENT(INGREDIENT_KEY), STEP(STEP_KEY), EQUIPMENT(EQUIPMENT_KEY) }
 
 /**
- * A done mark (FLOW-068) on the ingredient row or the step at [position] of its part, taken of what that row held
+ * How each part is written in the store. A part is added under a code of its own, so that the marks stored before it
+ * read as they did; a store read by a version that does not know a code passes over the marks written under it.
+ */
+private const val INGREDIENT_KEY = "i"
+private const val STEP_KEY = "s"
+private const val EQUIPMENT_KEY = "e"
+
+/**
+ * A done mark (FLOW-068) on the ingredient row, the step or the item of equipment at [position] of its part, taken of what that row held
  * when it was marked ([row]), so that a mark whose row has since changed in the editor is dropped, as a held fixing is
  * ([HeldScale]).
  */
@@ -44,6 +48,9 @@ data class DoneMark(val part: MarkedPart, val position: Int, val row: Int) {
 
         /** The mark of [step] as it stands. */
         fun of(step: Step) = DoneMark(MarkedPart.STEP, step.position, rowOf(step))
+
+        /** The mark of the item of equipment at [index] of the recipe's equipment, reading [item], as it stands. */
+        fun ofEquipment(index: Int, item: String) = DoneMark(MarkedPart.EQUIPMENT, index, rowOf(item))
 
         /**
          * A stable mark of what a row holds, the same from one process to the next; like [HeldScale]'s, it is taken of
@@ -124,7 +131,8 @@ internal class CardMarks(private val store: DoneMarks, private val book: BookNam
 
     /** The mark each line and step would carry now, by its part and position. */
     private val current: Map<Pair<MarkedPart, Int>, DoneMark> =
-        (recipe.ingredients.map(DoneMark::of) + recipe.steps.map(DoneMark::of)).associateBy { it.part to it.position }
+        (recipe.ingredients.map(DoneMark::of) + recipe.steps.map(DoneMark::of) + recipe.equipment.mapIndexed(DoneMark::ofEquipment))
+            .associateBy { it.part to it.position }
 
     /** What the store held when the card read it, stale marks included. */
     private val held: Set<DoneMark> = store.held(book, id)
@@ -140,7 +148,7 @@ internal class CardMarks(private val store: DoneMarks, private val book: BookNam
         if (marks != held) store.hold(book, id, marks)
     }
 
-    /** Whether any line or step of the recipe is marked. */
+    /** Whether any line, step or item of equipment of the recipe is marked. */
     val any: Boolean get() = marks.isNotEmpty()
 
     /** Whether the line or step at [position] of [part] is marked done. */
@@ -161,12 +169,12 @@ internal class CardMarks(private val store: DoneMarks, private val book: BookNam
 }
 
 /**
- * The marks of [recipe] of [book], read afresh whenever its lines or steps change; the marks of rows changed since are
+ * The marks of [recipe] of [book], read afresh whenever its lines, steps or equipment change; the marks of rows changed since are
  * dropped from the store from an effect, once the card is composed.
  */
 @Composable
 internal fun rememberCardMarks(store: DoneMarks, book: BookName, recipe: Recipe): CardMarks {
-    val marks = remember(store, book, recipe.id, recipe.ingredients, recipe.steps) { CardMarks(store, book, recipe) }
+    val marks = remember(store, book, recipe.id, recipe.ingredients, recipe.steps, recipe.equipment) { CardMarks(store, book, recipe) }
     LaunchedEffect(marks) { marks.dropStale() }
     return marks
 }
@@ -180,6 +188,16 @@ internal fun Modifier.markedDone(done: Boolean, onToggle: () -> Unit): Modifier 
     val label = stringResource(if (done) R.string.card_mark_not_done_action else R.string.card_mark_done_action)
     val state = stringResource(R.string.card_marked_done)
     return clickable(onClickLabel = label, onClick = onToggle).semantics { if (done) stateDescription = state }
+}
+
+/**
+ * Shows the mark of the line or step it modifies without letting a tap change it ([CardMode.VIEW]): the screen reader
+ * still reads a marked one as done, and finds no action on it.
+ */
+@Composable
+internal fun Modifier.shownDone(done: Boolean): Modifier {
+    val state = stringResource(R.string.card_marked_done)
+    return if (done) semantics { stateDescription = state } else this
 }
 
 /** The colour of a line's or a step's text marked done: muted, and still of the theme's contrast (ContrastTest). */

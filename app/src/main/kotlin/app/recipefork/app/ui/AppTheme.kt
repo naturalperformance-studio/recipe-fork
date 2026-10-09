@@ -136,7 +136,10 @@ fun appShapes(resources: Resources): Shapes {
     )
 }
 
-/** Material 3's type scale, its title and body sizes from `app_theme.xml`, each line height kept in proportion. */
+/**
+ * Material 3's type scale, its small headline, title and body sizes from `app_theme.xml`, each line height kept in
+ * proportion.
+ */
 fun appTypography(resources: Resources): Typography {
     fun TextStyle.sized(@DimenRes id: Int): TextStyle {
         val size = resources.number(id, TypedValue.COMPLEX_UNIT_SP)
@@ -144,6 +147,7 @@ fun appTypography(resources: Resources): Typography {
     }
     val base = Typography()
     return base.copy(
+        headlineSmall = base.headlineSmall.sized(R.dimen.theme_type_headlineSmall),
         titleLarge = base.titleLarge.sized(R.dimen.theme_type_titleLarge),
         titleMedium = base.titleMedium.sized(R.dimen.theme_type_titleMedium),
         titleSmall = base.titleSmall.sized(R.dimen.theme_type_titleSmall),

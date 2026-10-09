@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.ColorScheme
@@ -43,8 +44,8 @@ import kotlin.math.abs
 
 /**
  * Scenario 5 of cooking with busy hands: each step on the card starts with its number in a filled circle — decorative
- * to the screen reader, which reads the step's number once — its text is set in the theme's title style, a size up from
- * the body text it was, and the steps stand clearly apart from one another.
+ * to the screen reader, which reads the step's number once — its text is set in the theme's small headline style on
+ * Cooking, two sizes up from the body text it was, and the steps stand clearly apart from one another.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -56,7 +57,7 @@ class CardStepLayoutTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val book = TestBook(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { emptyList() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
 
     private val recipe = Recipe.create(Instant.parse("2026-10-04T12:00:00Z"), null).copy(
         title = "Rice",
@@ -123,14 +124,14 @@ class CardStepLayoutTest {
     }
 
     @Test
-    fun aStepIsSetInTheThemesTitleStyleAndStandsApartFromTheNext() {
+    fun aStepIsSetInTheThemesHeadlineStyleOnCookingAndStandsApartFromTheNext() {
         open()
         val layout = compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsActions.GetTextLayoutResult].action!!.let { action ->
                 mutableListOf<TextLayoutResult>().also { action(it) }.single()
             }
         val style = layout.layoutInput.style
-        val title = typography!!.titleLarge
+        val title = typography!!.headlineSmall
         assertEquals(title.fontSize, style.fontSize)
         assertEquals(title.lineHeight, style.lineHeight)
         assertEquals(title.fontWeight, style.fontWeight)

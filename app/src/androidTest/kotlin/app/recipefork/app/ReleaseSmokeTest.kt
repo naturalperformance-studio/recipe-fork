@@ -138,11 +138,16 @@ class ReleaseSmokeTest {
         throw AssertionError("“$text” not shown; on screen: ${onScreen()}", e)
     }
 
-    /** Every node on screen, walked through accessibility as a reader's tools walk it. */
+    /**
+     * Every node on screen, walked through accessibility as a reader's tools walk it. Each is read anew from the screen,
+     * never from the test's cache of nodes: Compose tells a change only to a reader it counts as enabled, and the test's
+     * automation is none, so a cached node keeps what it showed when first read — a tab chosen since, a place scrolled
+     * from — and one gone from the screen is left out.
+     */
     private fun nodes(): List<AccessibilityNodeInfo> {
         val nodes = mutableListOf<AccessibilityNodeInfo>()
         fun walk(node: AccessibilityNodeInfo?) {
-            if (node == null) return
+            if (node == null || !node.refresh()) return
             nodes += node
             for (i in 0 until node.childCount) walk(node.getChild(i))
         }
@@ -154,16 +159,12 @@ class ReleaseSmokeTest {
     private fun onScreen(): List<String> =
         nodes().flatMap { listOfNotNull(it.text, it.contentDescription) }.map { it.toString() }
 
+    /** What holds this node, read anew from the screen as [nodes] reads it. */
+    private fun AccessibilityNodeInfo.holder(): AccessibilityNodeInfo? = parent?.takeIf { it.refresh() }
+
     /** The node on screen showing [text], or described by it. */
     private fun shown(text: String): AccessibilityNodeInfo? =
         nodes().firstOrNull { it.text?.toString() == text || it.contentDescription?.toString() == text }
-
-    private fun click(text: String) {
-        var node: AccessibilityNodeInfo? = shown(text)
-        while (node != null && !node.isClickable) node = node.parent
-        assertNotNull("nothing clickable holds “$text”", node)
-        assertTrue(node!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
-    }
 
     private fun borscht(): Recipe {
         val cover = photo(jpeg(1600, 1200, Color.RED), MediaAttachment.Cover)
@@ -206,12 +207,13 @@ class ReleaseSmokeTest {
         // The application starts, lists the recipe and opens its card; the camera takes a picture for it.
         val scenario = ActivityScenario.launch(MainActivity::class.java)
         try {
-            // The serverless book opens on what is marked; the recipe is under what is written here.
-            awaitShown(WRITTEN_HERE)
-            click(WRITTEN_HERE)
+            // The book opens on the view last left; the recipe is under what is written here.
+            choose(WRITTEN_HERE)
             awaitShown(written.title)
-            click(written.title)
-            // The card: its servings, and its cover decoded from the book's media.
+            tap(written.title)
+            // The card, on its View tab — it opens on the tab last chosen: its servings, and its cover decoded from
+            // the book's media.
+            choose(VIEW)
             awaitShown("Servings: 4")
             awaitShown("Cover photo of “${written.title}”")
             assertEquals(Lifecycle.State.RESUMED, scenario.state)
@@ -317,12 +319,12 @@ class ReleaseSmokeTest {
         }
         instrumentation.addMonitor(camera)
         try {
-            click(EDIT)
+            tap(EDIT)
             // The cover opens its source sheet, the camera on it (FLOW-026).
             awaitShown(CHANGE_COVER)
-            click(CHANGE_COVER)
+            tap(CHANGE_COVER)
             awaitShown(CAMERA)
-            click(CAMERA)
+            tap(CAMERA)
             // The crop, in a window of its own, shows the shot under its frame: its Done is the one on screen.
             awaitShown(CROP_FRAME)
             val intent = launched!!
@@ -332,7 +334,7 @@ class ReleaseSmokeTest {
             assertEquals(application.packageName + ".capture", output.authority)
             assertEquals(output, intent.clipData!!.getItemAt(0).uri)
             assertTrue(intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0)
-            click(CROP_DONE)
+            tap(CROP_DONE)
             fun coverOf(recipe: Recipe?) = recipe?.media?.firstOrNull { it.attachment == MediaAttachment.Cover }
             val before = coverOf(written)!!.mediaId
             awaitUntil(30.seconds) { coverOf(runBlocking { container.recipes.get(written.id) })?.mediaId.let { it != null && it != before } }
@@ -375,15 +377,17 @@ class ReleaseSmokeTest {
 
     /**
      * Waits until [find] finds a node on screen, scrolling the screen's largest scrolling container meanwhile — on, and
-     * back once it goes no further — as a reader scrolls to what they look for; failing, says what is on screen.
+     * back once it goes no further — as a reader scrolls to what they look for; failing, says what is on screen. What
+     * acts on the node finds it anew: a screen still settling may take it away a moment, and bring it back as another.
      */
-    private fun reveal(what: String, find: () -> AccessibilityNodeInfo?): AccessibilityNodeInfo {
+    private fun reveal(what: String, find: () -> AccessibilityNodeInfo?) {
         var forward = true
         try {
             awaitUntil(30.seconds) {
                 val found = find()
                 if (found == null || !found.isVisibleToUser) {
-                    val scrolled = nodes().filter { it.isScrollable }
+                    // What scrolls up and down: never the card's tabs' pager, which a forward scroll would turn.
+                    val scrolled = nodes().filter { it.isScrollable && it.actionList.none { action -> action.id in SIDEWAYS } }
                         .maxByOrNull { node -> Rect().also(node::getBoundsInScreen).let { it.width() * it.height() } }
                         ?.performAction(if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
                     if (scrolled == false) forward = !forward
@@ -394,21 +398,50 @@ class ReleaseSmokeTest {
             val fields = nodes().filter { it.isEditable }.map { "field “${it.text}” hint “${it.hintText}” described “${it.contentDescription}”" }
             throw AssertionError("“$what” not found; on screen: ${onScreen()} and $fields", e)
         }
-        return find()!!
     }
 
     /** What holds [text] and answers a click, if anything on screen does. */
     private fun clickable(text: String): AccessibilityNodeInfo? =
-        generateSequence(shown(text)) { it.parent }.firstOrNull { it.isClickable }
+        generateSequence(shown(text)) { it.holder() }.firstOrNull { it.isClickable }
 
-    /** Clicks what holds [text] once something clickable does: a screen coming in may show it before it answers. */
-    private fun tap(text: String) {
+    /**
+     * Performs [action] on what [find] finds on screen, once it takes it: a screen coming in may show a node before it
+     * answers, and one still settling may refuse it — the node moved on as it was found — so each try finds it anew.
+     * Failing, says where what was last found stands, if still on screen.
+     */
+    private fun perform(what: String, action: Int, arguments: Bundle? = null, find: () -> AccessibilityNodeInfo?) {
+        var last: AccessibilityNodeInfo? = null
         try {
-            awaitUntil(30.seconds) { clickable(text) != null }
+            awaitUntil(30.seconds) { find()?.also { last = it }?.performAction(action, arguments) == true }
         } catch (e: IllegalStateException) {
-            throw AssertionError("nothing clickable holds “$text”; on screen: ${onScreen()}", e)
+            val node = last
+            val now = when {
+                node == null -> "nothing on screen takes it"
+                node.refresh() -> "refused, visible ${node.isVisibleToUser}, enabled ${node.isEnabled}, at ${Rect().also(node::getBoundsInScreen)}"
+                else -> "refused, gone from the screen"
+            }
+            throw AssertionError("$what: $now; on screen: ${onScreen()}", e)
         }
-        assertTrue(clickable(text)!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+    }
+
+    /** Clicks what holds [text] once something clickable does and takes the click. */
+    private fun tap(text: String) = perform("a click on “$text”", AccessibilityNodeInfo.ACTION_CLICK) { clickable(text) }
+
+    /** Whether the tab showing [text] is the one chosen. */
+    private fun selected(text: String): Boolean = generateSequence(shown(text)) { it.holder() }.any { it.isSelected }
+
+    /**
+     * Brings forward the tab showing [text]. A screen of tabs opens on the one last chosen on the device — kept there
+     * by an earlier case or run — and the tab already chosen answers no click: it is tapped only when it is not.
+     */
+    private fun choose(text: String) {
+        try {
+            awaitUntil(30.seconds) { selected(text) || clickable(text) != null }
+            if (!selected(text)) tap(text)
+            awaitUntil(30.seconds) { selected(text) }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the tab “$text” is not chosen; on screen: ${onScreen()}", e)
+        }
     }
 
     /** Clicks what shows [text], scrolled to first. */
@@ -419,9 +452,9 @@ class ReleaseSmokeTest {
 
     /** Writes [text] into the field labelled [label], scrolled to first, as a screen reader's text entry does. */
     private fun type(label: String, text: String) {
-        val field = reveal(label) { field(label) }
+        reveal(label) { field(label) }
         val arguments = Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text) }
-        assertTrue("“$label” takes “$text”", field.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments))
+        perform("“$label” taking “$text”", AccessibilityNodeInfo.ACTION_SET_TEXT, arguments) { field(label) }
     }
 
     /** The recipe [written] as the book holds it now. */
@@ -430,8 +463,9 @@ class ReleaseSmokeTest {
     /**
      * The pre-launch crash sweep of the build Play receives, the way a stranger first goes through it: the application
      * starts and opens a recipe's card; a timer is started from it; the editor opens on the recipe and a group, a note
-     * and a timer are added and saved; the recipe is exported to a file and the file opened back into the book; the
-     * recipe is deleted and brought back with Undo. Nothing crashes, and each change is in the book.
+     * and a timer are added and saved, which closes the editor; the recipe is exported to a file and the file opened
+     * back into the book; the recipe is deleted and brought back with Undo. Nothing crashes, and each change is in the
+     * book.
      *
      * Export and the opening of a file belong to the serverless build (FLOW-063, FLOW-064): the standard one, which
      * offers neither, writes and reads the file through the same code the menu and the opened file reach.
@@ -448,17 +482,20 @@ class ReleaseSmokeTest {
         )
         try {
             // The book, and the recipe's card.
-            // The book opens where it was left: on the recipes written here, or on the marked ones.
-            awaitUntil(30.seconds) { shown(written.title) != null || clickable(WRITTEN_HERE) != null }
-            if (shown(written.title) == null) tap(WRITTEN_HERE)
+            // The book opens where it was left: on the recipes written here, or on the marked ones; the card on the
+            // tab last chosen.
+            choose(WRITTEN_HERE)
             tap(written.title)
+            choose(VIEW)
             awaitShown("Servings: 2")
 
-            // A timer started from the card runs.
+            // A timer started from the card's Cooking tab runs.
+            choose(COOKING)
             clickRevealed("Simmer")
             awaitUntil(30.seconds) { runBlocking { container.timers.all.first() }.any { it.key.recipeId == written.id.value } }
 
-            // The editor: a group, a note and a timer added, and saved.
+            // The editor, from the View tab: a group, a note and a timer added, and saved.
+            choose(VIEW)
             tap(EDIT)
             awaitShown(DONE)
             // In the order the editor lays them out: the first ingredient's note, a group under the list, the second
@@ -470,8 +507,13 @@ class ReleaseSmokeTest {
             // The new timer's fields, under the step's actions: the last minutes on screen once its removal shows.
             reveal(REMOVE_TIMER_FROM_STEP_2) { shown(REMOVE_TIMER_FROM_STEP_2) }
             type(MINUTES, "5")
+            // Done saves and closes the editor, back to the recipe's card.
             tap(DONE)
-            awaitShown(SAVED)
+            try {
+                awaitUntil(30.seconds) { shown(DONE) == null && shown("Servings: 2") != null }
+            } catch (e: IllegalStateException) {
+                throw AssertionError("the editor did not close to the card; on screen: ${onScreen()}", e)
+            }
             fun edited() = stored(written)?.let { kept ->
                 listOf(kept.ingredientGroups.map { it.name }, kept.ingredients.map { it.note }, kept.steps.sortedBy { it.position }.map { it.timers.size })
             }
@@ -481,9 +523,7 @@ class ReleaseSmokeTest {
             } catch (e: IllegalStateException) {
                 throw AssertionError("the book holds ${edited()}, not $expected; on screen: ${onScreen()}", e)
             }
-            // Back through the card to the book.
-            tap(BACK)
-            awaitShown("Servings: 2")
+            // Back from the card to the book.
             tap(BACK)
             awaitShown(WRITTEN_HERE)
             awaitShown(written.title)
@@ -522,7 +562,7 @@ class ReleaseSmokeTest {
 
     /** Of the [choices] an open choice dialog offers, the one marked chosen. */
     private fun chosen(choices: List<String>): String = choices.single { choice ->
-        generateSequence(shown(choice)) { it.parent }.any { it.isChecked || it.isSelected }
+        generateSequence(shown(choice)) { it.holder() }.any { it.isChecked || it.isSelected }
     }
 
     /**
@@ -646,6 +686,16 @@ class ReleaseSmokeTest {
         /** The library's tab of the recipes written on this device. */
         const val WRITTEN_HERE = "Written here"
         const val EDIT = "Edit"
+        /** The card's two tabs. */
+        const val VIEW = "View"
+        const val COOKING = "Cooking"
+        /** The accessibility actions of something that scrolls sideways. */
+        val SIDEWAYS = listOf(
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT,
+        ).map { it.id }
         /** The editor's set cover, a tap on which opens the sheet of the camera, the gallery and its removal. */
         const val CHANGE_COVER = "Replace or remove the cover photo"
         /** The sheet's item that opens the phone's camera application. */
@@ -654,7 +704,6 @@ class ReleaseSmokeTest {
         const val CROP_DONE = "Done"
         const val BACK = "Back"
         const val DONE = "Done"
-        const val SAVED = "Saved"
         const val ADD_GROUP = "Add group"
         /** The label of a group heading's name field, and of an ingredient's note field. */
         const val GROUP = "Group"

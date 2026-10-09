@@ -26,6 +26,9 @@ sealed interface RecipePart {
 
     /** The name of the ingredient group whose heading is at [index] of the recipe's headings (DOM-022). */
     data class GroupName(val index: Int) : RecipePart
+
+    /** The item of equipment at [index] of the recipe's equipment. */
+    data class EquipmentName(val index: Int) : RecipePart
 }
 
 /** How a part stands against its bound: short of DOM-006's minimum, or over a limit of DOM-012. */
@@ -54,6 +57,10 @@ object RecipeBounds {
     const val MAX_NOTE = 60
     /** The name of an ingredient group (DOM-022). */
     const val MAX_GROUP_NAME = 40
+    /** The items of equipment one recipe lists. */
+    const val MAX_EQUIPMENT = 15
+    /** One item of equipment. */
+    const val MAX_EQUIPMENT_NAME = 40
 
     /** How [part] of [recipe] stands against its bound; null where it is within it, or where the recipe has no such part. */
     fun of(recipe: Recipe, part: RecipePart): Bound? = when (part) {
@@ -72,14 +79,16 @@ object RecipeBounds {
             step(recipe, part.position)?.timers?.getOrNull(part.index)?.label?.let { over(MAX_TIMER_NAME, it.length) }
         is RecipePart.IngredientNote -> ingredient(recipe, part.position)?.note?.let { over(MAX_NOTE, it.length) }
         is RecipePart.GroupName -> recipe.ingredientGroups.getOrNull(part.index)?.let { over(MAX_GROUP_NAME, it.name.length) }
+        is RecipePart.EquipmentName -> recipe.equipment.getOrNull(part.index)?.let { over(MAX_EQUIPMENT_NAME, it.length) }
     }
 
     /** Every part of [recipe] outside its bound, in the order the editor shows them; empty when it is within all. */
     fun all(recipe: Recipe): Map<RecipePart, Bound> {
         val steps = recipe.steps.sortedBy { it.position }
-        val parts = listOf(
-            RecipePart.Title, RecipePart.Language, RecipePart.Servings, RecipePart.Ingredients,
-        ) + ingredientParts(recipe) + RecipePart.Steps +
+        // The equipment stands above the ingredients, as the card shows it.
+        val parts = listOf(RecipePart.Title, RecipePart.Language, RecipePart.Servings) +
+            recipe.equipment.indices.map { RecipePart.EquipmentName(it) } +
+            RecipePart.Ingredients + ingredientParts(recipe) + RecipePart.Steps +
             steps.indices.flatMap { position ->
                 listOf(RecipePart.StepText(position)) + steps[position].timers.indices.map { RecipePart.TimerName(position, it) }
             } + RecipePart.Description

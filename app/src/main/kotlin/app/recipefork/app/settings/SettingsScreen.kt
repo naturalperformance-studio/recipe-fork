@@ -212,7 +212,8 @@ private fun DragHandleItem(handleSide: DragHandleSide) {
 }
 
 /**
- * How much saved media the clearing would delete; it states first what clearing deletes ([ClearMediaStatement]) and
+ * How much saved media the clearing would delete — in [Mode.Serverless] named as what alone it can be there, the photos
+ * and videos of recipes imported from files; it states first what clearing deletes ([ClearMediaStatement]) and
  * clears only once confirmed, or says that nothing is left to clear.
  */
 @Composable
@@ -222,7 +223,12 @@ private fun SavedMediaItem(recipes: RecipeRepository, mode: Mode, scope: Corouti
     var cleared by remember { mutableIntStateOf(0) }
     val count by produceState<Int?>(null, recipes, cleared) { value = recipes.clearableMedia().size }
     Item(
-        headline = stringResource(R.string.library_clear_media),
+        headline = stringResource(
+            when (mode) {
+                Mode.Serverless -> R.string.library_clear_media_serverless
+                Mode.Standard -> R.string.library_clear_media
+            },
+        ),
         value = when (val held = count) {
             null -> stringResource(R.string.settings_media_counting)
             0 -> stringResource(R.string.settings_media_none)
@@ -247,7 +253,7 @@ private fun SavedMediaItem(recipes: RecipeRepository, mode: Mode, scope: Corouti
             },
             onDecline = { clearing = null },
         )
-        ClearingMedia.NOTHING -> NothingToClear(onDone = { clearing = null })
+        ClearingMedia.NOTHING -> NothingToClear(mode, onDone = { clearing = null })
         null -> Unit
     }
 }

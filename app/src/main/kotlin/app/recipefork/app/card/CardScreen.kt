@@ -21,6 +21,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -32,6 +38,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -60,6 +67,12 @@ import androidx.compose.ui.semantics.onClick
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.runtime.Stable
+import app.recipefork.core.recipe.Ingredient
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -89,6 +102,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -155,20 +170,32 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
 
 /**
  * The recipe card: the saved recipe exactly as a reader sees it, not an editor with reader styling (FLOW-029 (1)).
- * One scrolling screen (the card intro of `cooking`): the cover, the title, the serving count, the ingredients in
- * order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
- * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe.
  *
- * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book, the fork action on every recipe,
- * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
- * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Its ⋮ holds the
- * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — which takes it out of the
- * book at once, asking nothing, and closes the card to the book, which says so with Undo ([onRemoved], FLOW-053); and,
- * while the recipe has done marks, their
- * clearing (FLOW-068). Nothing inside the recipe edits it; the serving count's − and +, which change how
- * the recipe is read and never the recipe (SCALE-001, SCALE-011), are one control in the content, and a fork's
- * provenance, which opens its parent's card, the other. It opens each time at the reader's usual count, or at the
- * authored count while none is set (FLOW-017).
+ * Under the top bar sit two tabs, always in sight: View, compact and for deciding, and Cooking, large and for busy hands
+ * ([CardMode]). A tap on a tab or a horizontal swipe switches them; each keeps its own scroll. The card opens on the tab
+ * last chosen on the device — View the first time ([CardEnvironment.lastTab]) — and on Cooking when a timer's
+ * notification brings it to the timer's step (FLOW-013 (4)). The tab kept as last chosen is the one the card settles
+ * on, so a Cooking a notification brought is kept too, and the next card opens on it.
+ *
+ * View is one scrolling page: the cover, the title with its summary, the provenance, the serving count, the ingredients
+ * in order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
+ * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe. Its bar holds back, the
+ * title once it has scrolled away, and, only while the recipe is editable, the edit action that opens the editor on it
+ * (FLOW-029 (2–4)); its ⋮ holds the recipe's removal — Delete for an own recipe in a deletable state, Remove for a found
+ * one — which takes it out of the book at once, asking nothing, and closes the card to the book, which says so with
+ * Undo ([onRemoved], FLOW-053). Fork, its one primary action, floats at the bottom end on every recipe, editable or
+ * frozen (FORK-001, FORK-007) — a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)).
+ *
+ * Cooking holds nothing that distracts from cooking: no cover, no summary, no description, no fork, no edit. Its bar
+ * holds back and the title, and a ⋮ only while the recipe has done marks, holding their clearing (FLOW-068); its page
+ * the serving count, the ingredients and the steps, in lines the card's [CardTarget] tall that mark done, amounts fixed
+ * from their lines, timers started from their steps. The screen stays on while it is shown (FLOW-014), and on either
+ * tab while one of the recipe's timers runs.
+ *
+ * Nothing inside the recipe edits it; the serving count's − and +, which change how the recipe is read and never the
+ * recipe (SCALE-001, SCALE-011), are one control in the content, shared by both tabs, and a fork's provenance, which
+ * opens its parent's card, the other. It opens each time at the reader's usual count, or at the authored count while
+ * none is set (FLOW-017).
  *
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
@@ -209,47 +236,95 @@ fun CardScreen(
         }
         entries = read.associateBy { it.id }
     }
-    // The bar draws under the status bar and stays, its colour changing as the recipe scrolls under it; the content keeps
-    // clear of the other bars, the cutout and the keyboard, its last part above the navigation bar once scrolled to the end.
-    val bar = TopAppBarDefaults.pinnedScrollBehavior()
+    // The bar draws under the status bar and stays, its colour changing as the recipe scrolls under it — each tab's own
+    // scroll, so that turning to a tab at its top shows the bar as at the top; the content keeps clear of the other bars,
+    // the cutout and the keyboard, its last part above the navigation bar once scrolled to the end.
+    val barStates = TABS.map { rememberTopAppBarState() }
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
     val removal = (shown as? CardContent.Shown)?.let { removalOf(it.recipe, it.marked) }
     // The recipe leaves the book at once, asking nothing, and the card closes to the book, which says so with Undo.
     val remove = rememberRemoval(recipes, environment.marks, onRemoved)
-    // The title is the content's heading; the bar repeats it only once that heading has scrolled out of view — as when
-    // the reader scrolls on, or the card opens at a place further down.
+    // The tab last chosen on the device, View the first time; a card brought to a timer's step opens on Cooking, and an
+    // open card is turned to it. The tab kept as last chosen is the one the card settles on, whoever turned it: a
+    // Cooking a notification brought is kept as chosen, as a tap on it would be.
+    val toStep = LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipeId.value
+    val pager = remember(recipeId) {
+        val opening = if (toStep) CardMode.COOKING else environment.lastTab.read() ?: CardMode.VIEW
+        PagerState(currentPage = opening.ordinal) { TABS.size }
+    }
+    LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.collect { environment.lastTab.keep(TABS[it]) } }
+    LaunchedEffect(pager, toStep) { if (toStep) pager.scrollToPage(CardMode.COOKING.ordinal) }
+    val tab = TABS[pager.currentPage]
+    val bar = TopAppBarDefaults.pinnedScrollBehavior(barStates[tab.ordinal])
+    // The title is View's heading; View's bar repeats it only once that heading has scrolled out of view — as when the
+    // reader scrolls on, or the card opens at a place further down. Cooking's bar holds it always.
     var titleOut by remember(recipeId) { mutableStateOf(false) }
-    // The place is restored by the part that was first at the top, not by a scroll in pixels, which a change of text
-    // scale or orientation while away would make point elsewhere (FLOW-012 (5)).
-    val scroll = remember(recipeId) { ScrollState(0) }
-    val places = remember(recipeId) { CardPlaces() }
-    // The recipe's timers running, or ringing, while their step is out of sight: in a bar at the bottom.
+    // Each tab its own scroll. The place is restored by the part that was first at the top, not by a scroll in pixels,
+    // which a change of text scale or orientation while away would make point elsewhere (FLOW-012 (5)).
+    val scrolls = remember(recipeId) { TABS.map { ScrollState(0) } }
+    val placesOf = remember(recipeId) { TABS.map { CardPlaces() } }
+    val scroll = scrolls[tab.ordinal]
+    val places = placesOf[tab.ordinal]
+    // Whether the reader showed again the ingredients Cooking folded once every line was marked: the card's, not its
+    // page's, which leaves the composition as the other tab is shown, so that it outlasts a turn to View and back and
+    // the activity being recreated.
+    val ingredientsShownAgain = rememberSaveable(recipeId) { mutableStateOf(false) }
+    // The same of the equipment, which folds on its own.
+    val equipmentShownAgain = rememberSaveable(recipeId) { mutableStateOf(false) }
+    val shownAgain = remember(ingredientsShownAgain, equipmentShownAgain) { ShownAgain(equipmentShownAgain, ingredientsShownAgain) }
+    // The recipe's timers running, or ringing, while their step is out of sight on the tab shown: in a bar at the bottom.
     val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
+    val timing = timersBar?.timers?.let { timers -> timers.held.values.any { !it.hasEnded(timers.now) || timers.rings(it.key) } } == true
     // The reader's done marks on the recipe's lines and steps, kept on the device (FLOW-068).
     val marks = recipe?.let { rememberCardMarks(environment.marks, recipes.bookName(), it) }
     val scope = rememberCoroutineScope()
     Scaffold(
-        modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection).testTag(CardTags.SCREEN),
+        modifier
+            .keepScreenAwake(active = tab == CardMode.COOKING || timing)
+            .fillMaxSize()
+            .nestedScroll(bar.nestedScrollConnection)
+            .testTag(CardTags.SCREEN),
         topBar = {
-            TopBar(
-                shown = recipe != null,
-                title = recipe?.title?.ifBlank { stringResource(R.string.common_untitled_recipe) }?.takeIf { titleOut },
-                editable = recipe?.state?.editable == true,
-                scrollBehavior = bar,
-                onBack = onBack,
-                onFork = onFork,
-                onEdit = onEdit,
-                removal = removal,
-                onRemove = {
-                    if (recipe != null && removal != null) {
-                        remove(recipe, removal)
-                        onBack()
+            Column {
+                val viewing = tab == CardMode.VIEW
+                TopBar(
+                    shown = recipe != null,
+                    title = recipe?.title?.ifBlank { stringResource(R.string.common_untitled_recipe) }?.takeIf { !viewing || titleOut },
+                    editable = viewing && recipe?.state?.editable == true,
+                    scrollBehavior = bar,
+                    onBack = onBack,
+                    onEdit = onEdit,
+                    removal = removal?.takeIf { viewing },
+                    onRemove = {
+                        if (recipe != null && removal != null) {
+                            remove(recipe, removal)
+                            onBack()
+                        }
+                    },
+                    marked = !viewing && marks?.any == true,
+                    onClearMarks = { marks?.clear() },
+                )
+                // The tabs stay under the bar and never scroll with the recipe.
+                if (recipe != null) CardTabs(pager)
+            }
+        },
+        // Fork floats at the bottom end of View, above the bar of running timers when it shows and above the navigation
+        // bar; it shows its word at the top and while the reader scrolls up, and shrinks to its icon while they scroll
+        // down.
+        floatingActionButton = {
+            if (recipe != null && tab == CardMode.VIEW) {
+                val viewScroll = scrolls[CardMode.VIEW.ordinal]
+                var expanded by remember(viewScroll) { mutableStateOf(true) }
+                LaunchedEffect(viewScroll) {
+                    var last = viewScroll.value
+                    snapshotFlow { viewScroll.value }.collect { now ->
+                        if (now == 0 || now < last) expanded = true else if (now > last) expanded = false
+                        last = now
                     }
-                },
-                marked = marks?.any == true,
-                onClearMarks = { marks?.clear() },
-            )
+                }
+                ForkAction(expanded, onFork)
+            }
         },
         bottomBar = {
             timersBar?.let {
@@ -286,12 +361,98 @@ fun CardScreen(
                     modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
                 )
                 shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
-                // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
-                recipe != null && loaded != null && marks != null ->
-                    RecipeContent(recipe, loaded, recipes, environment.usualServings.count.value, session, marks, onOpenParent, scroll, places, bottom) { titleOut = it }
+                recipe != null && loaded != null && marks != null -> {
+                    // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
+                    val scale = rememberScaleInForce(recipe, environment.usualServings.count.value, session)
+                    HorizontalPager(
+                        state = pager,
+                        key = { TABS[it].name },
+                        modifier = Modifier.fillMaxSize().testTag(CardTags.PAGER),
+                    ) { page ->
+                        val mode = TABS[page]
+                        RecipeContent(
+                            recipe, loaded, recipes, scale, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
+                            shownAgain,
+                            // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
+                            bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
+                        ) { if (mode == CardMode.VIEW) titleOut = it }
+                    }
+                }
                 else -> Loading()
             }
         }
+    }
+}
+
+/** The card's tabs in the order of their tabs and pages: a tab's page is its ordinal. */
+private val TABS = CardMode.entries
+
+/**
+ * The card's two tabs, View and Cooking, M3 primary tabs under the bar: the one shown is selected, and a tap on the
+ * other turns the card to it. Each is the card's [CardTarget] tall at least, and announces what choosing it does
+ * (A11Y-005).
+ */
+@Composable
+private fun CardTabs(pager: PagerState) {
+    val scope = rememberCoroutineScope()
+    PrimaryTabRow(selectedTabIndex = pager.currentPage, modifier = Modifier.testTag(CardTags.TABS)) {
+        TABS.forEach { tab ->
+            val viewing = tab == CardMode.VIEW
+            val label = stringResource(if (viewing) R.string.card_tab_view else R.string.card_tab_cooking)
+            val action = stringResource(if (viewing) R.string.card_tab_view_action else R.string.card_tab_cooking_action)
+            val choose = { scope.launch { pager.animateScrollToPage(tab.ordinal) } }
+            Tab(
+                selected = pager.currentPage == tab.ordinal,
+                onClick = { choose() },
+                text = { Text(label) },
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .heightIn(min = CardTarget)
+                    .semantics {
+                        onClick(label = action) {
+                            choose()
+                            true
+                        }
+                    }
+                    .testTag(CardTags.tab(tab)),
+            )
+        }
+    }
+}
+
+/**
+ * The scale the card reads its recipe at — the count in force and any fixing — one for both tabs, and its change, which
+ * the [session] keeps.
+ */
+@Stable
+private class ScaleInForce(
+    opening: CardScale,
+    private val recipe: RecipeId,
+    val ordered: List<Ingredient>,
+    private val session: CardSession,
+) {
+    var scale by mutableStateOf(opening)
+        private set
+
+    fun change(to: CardScale) {
+        scale = to
+        session.holdScale(recipe, HeldScale.of(to, ordered))
+    }
+}
+
+/**
+ * The scale of [recipe] as the card opens it: at the reader's [usual] count, or at the authored one with none set
+ * (FLOW-017 (1, 2)) — unless the reader left it at another this session, which it comes back at (FLOW-017 (7),
+ * FLOW-012). The scale is the card's alone, kept by the session: a change of count leaves the setting as it is
+ * (FLOW-017 (3)). A fixing is of a row as it stood, so a change to that row drops it.
+ */
+@Composable
+private fun rememberScaleInForce(recipe: Recipe, usual: Rational?, session: CardSession): ScaleInForce {
+    val authored = recipe.servings?.takeIf { it >= 1 }
+    return remember(recipe.id, authored, recipe.ingredients) {
+        val ordered = recipe.ingredients.sortedBy { it.position }
+        val opening = session.heldScale(recipe.id)?.restored(authored, ordered, usual) ?: CardScale.opening(authored, usual)
+        ScaleInForce(opening, recipe.id, ordered, session)
     }
 }
 
@@ -357,10 +518,11 @@ private fun Unreadable(onRetry: () -> Unit) {
 }
 
 /**
- * The screen's bar: back at its start; the recipe's [title] once the content's heading has scrolled out of view, on one
- * line beside back, ellipsized — the content holds it whole; and the recipe's actions at its end — fork on any recipe shown, edit
- * beside it while the recipe is editable. Each action is an icon the screen reader names, whose click it announces as
- * what it does (A11Y-005) and whose name a long press shows in a tooltip.
+ * The screen's bar: back at its start; the recipe's [title] once the content's heading has scrolled out of view, beside
+ * back ([BarTitle]) — the content holds it whole; and the recipe's actions at its end — edit while the recipe is
+ * editable, then the ⋮ while it holds anything. Fork is not here but the screen's floating action ([ForkAction]), so
+ * that a title of some thirty characters reads whole on a 360 dp phone. Each icon is one the screen reader names, whose
+ * click it announces as what it does (A11Y-005) and whose name a long press shows in a tooltip.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -370,7 +532,6 @@ private fun TopBar(
     editable: Boolean,
     scrollBehavior: TopAppBarScrollBehavior,
     onBack: () -> Unit,
-    onFork: () -> Unit,
     onEdit: () -> Unit,
     removal: Removal?,
     onRemove: () -> Unit,
@@ -383,7 +544,7 @@ private fun TopBar(
     TopAppBar(
         title = {
             AnimatedVisibility(visible = title != null, enter = fadeIn(), exit = fadeOut()) {
-                last?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag(CardTags.BAR_TITLE)) }
+                last?.let { BarTitle(it) }
             }
         },
         modifier = Modifier.testTag(CardTags.BAR),
@@ -398,13 +559,6 @@ private fun TopBar(
         },
         actions = {
             if (shown) {
-                BarAction(
-                    icon = R.drawable.ic_fork,
-                    label = stringResource(R.string.card_fork),
-                    action = stringResource(R.string.card_fork_action),
-                    tag = CardTags.FORK,
-                    onClick = onFork,
-                )
                 if (editable) {
                     BarAction(
                         icon = R.drawable.ic_edit,
@@ -421,17 +575,88 @@ private fun TopBar(
     )
 }
 
+/** The card's side and bottom gutters. */
+private val GUTTER = 16.dp
+
+/** The space above the card's first part, under the bar. */
+private val CONTENT_TOP = 8.dp
+
+/** The space between the card's parts: cover, title, servings, ingredients, steps. */
+private val PART_GAP = 8.dp
+
+/** The space between the steps and the description, which reads apart from them. */
+private val DESCRIPTION_GAP = 16.dp
+
+/** The most lines the bar gives the recipe's title. */
+private const val BAR_TITLE_LINES = 2
+
+/**
+ * The recipe's [title] in the bar: in the bar's own large title style where it fits on one line; otherwise smaller, on
+ * up to [BAR_TITLE_LINES] lines, ellipsized at the end of the last.
+ */
+@Composable
+private fun BarTitle(title: String) {
+    val measurer = rememberTextMeasurer()
+    val large = MaterialTheme.typography.titleLarge
+    BoxWithConstraints {
+        val width = constraints.maxWidth
+        val fits = remember(title, large, width, measurer) {
+            !measurer.measure(title, large, maxLines = 1, softWrap = false, constraints = Constraints(maxWidth = width)).hasVisualOverflow
+        }
+        Text(
+            title,
+            style = if (fits) large else MaterialTheme.typography.titleMedium,
+            maxLines = if (fits) 1 else BAR_TITLE_LINES,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.testTag(CardTags.BAR_TITLE),
+        )
+    }
+}
+
+/** The room the content leaves at its end for the floating fork action: its height and its spacing, and a gap. */
+private val FORK_ROOM = 88.dp
+
+/**
+ * The card's floating fork action (FORK-001), on every recipe shown: its icon and its word while [expanded], its icon
+ * alone otherwise; the screen reader reads the word either way and announces its click as what it does (A11Y-005). It
+ * is at least the card's [CardTarget] tall.
+ */
+@Composable
+private fun ForkAction(expanded: Boolean, onFork: () -> Unit) {
+    val word = stringResource(R.string.card_fork)
+    val action = stringResource(R.string.card_fork_action)
+    ExtendedFloatingActionButton(
+        text = { Text(word) },
+        icon = { Icon(painterResource(R.drawable.ic_fork), contentDescription = null) },
+        onClick = onFork,
+        expanded = expanded,
+        modifier = Modifier
+            .heightIn(min = CardTarget)
+            .semantics {
+                text = AnnotatedString(word)
+                onClick(label = action, action = null)
+            }
+            .testTag(CardTags.FORK),
+    )
+}
+
+/**
+ * The recipe as the tab [mode] shows it, scrolled by [scroll]: View the whole of it, Cooking only what cooking needs —
+ * the equipment, the serving count, the ingredients and the steps.
+ */
 @Composable
 private fun RecipeContent(
     recipe: Recipe,
     entries: Map<Long, IngredientEntryEntity>,
     recipes: RecipeRepository,
-    usual: Rational?,
+    held: ScaleInForce,
+    mode: CardMode,
     session: CardSession,
     marks: CardMarks,
     onOpenParent: (RecipeId) -> Unit,
     scroll: ScrollState,
     places: CardPlaces,
+    shownAgain: ShownAgain,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
@@ -439,13 +664,16 @@ private fun RecipeContent(
         RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
         RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
     }
-    // A card brought to a timer's step goes there, not to the place it was left at (FLOW-013 (4)).
-    val toStep = LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipe.id.value
-    KeptPlace(recipe.id, scroll, places, session, restore = !toStep)
+    val viewing = mode == CardMode.VIEW
+    // A card brought to a timer's step goes there on Cooking, not to the place it was left at (FLOW-013 (4)).
+    val toStep = !viewing && LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipe.id.value
+    KeptPlace(recipe.id, mode, scroll, places, session, restore = !toStep)
     val titleOut by rememberUpdatedState(onTitleOut)
-    LaunchedEffect(scroll, places) {
-        snapshotFlow { places.placeOf(CardPlaces.TITLE_KEY)?.let { scroll.value >= it.top + it.height } == true }
-            .collect { titleOut(it) }
+    if (viewing) {
+        LaunchedEffect(scroll, places) {
+            snapshotFlow { places.placeOf(CardPlaces.TITLE_KEY)?.let { scroll.value >= it.top + it.height } == true }
+                .collect { titleOut(it) }
+        }
     }
     CompositionLocalProvider(LocalCardPlaces provides places) {
         Column(
@@ -453,88 +681,108 @@ private fun RecipeContent(
                 .fillMaxSize()
                 .verticalScroll(scroll)
                 .onGloballyPositioned(places::content)
-                .padding(16.dp)
+                // A tight top and gaps, so that more of the ingredients is in sight as the card opens; Cooking's first part
+                // stands right under the tabs, whose line sets it apart.
+                .padding(start = GUTTER, top = if (viewing) CONTENT_TOP else 0.dp, end = GUTTER, bottom = GUTTER)
                 .padding(bottom = bottom)
                 .testTag(CardTags.CONTENT),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(PART_GAP),
         ) {
-            Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
-            // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
-            Text(
-                recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
-            )
-            // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
-            recipe.statedAuthor?.let {
-                Text(
-                    stringResource(R.string.file_stated_author, it),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.testTag(CardTags.STATED_AUTHOR),
-                )
+            if (viewing) {
+                Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
+                Column {
+                    // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
+                    Text(
+                        recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
+                    )
+                    // Right under the title, as its subtitle, muted: the counts of ingredients and steps and the timers'
+                    // time together, for deciding.
+                    RecipeSummaryLine(remember(recipe, language) { RecipeSummary.of(recipe, language) })
+                }
+                // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
+                recipe.statedAuthor?.let {
+                    Text(
+                        stringResource(R.string.file_stated_author, it),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag(CardTags.STATED_AUTHOR),
+                    )
+                }
+                recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
             }
-            recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
-            // The card opens at the reader's usual count, or at the authored one with none set (FLOW-017 (1, 2)) — unless
-            // the reader left it at another this session, which it comes back at (FLOW-017 (7), FLOW-012). The scale — the
-            // count in force and any fixing — is the card's alone, kept by the session: a change of count leaves the
-            // setting as it is (FLOW-017 (3)). A fixing is of a row as it stood, so a change to that row drops it.
+            // The equipment stands above the serving count and the ingredients, as the editor lists it before them.
+            EquipmentList(recipe.equipment, marks, mode, shownAgain.equipment)
             val authored = recipe.servings?.takeIf { it >= 1 }
-            val ordered = recipe.ingredients.sortedBy { it.position }
-            var held by remember(recipe.id, authored, recipe.ingredients) {
-                mutableStateOf(
-                    session.heldScale(recipe.id)?.restored(authored, ordered, usual) ?: CardScale.opening(authored, usual),
-                )
-            }
-            val scale = held
-            fun change(to: CardScale) {
-                held = to
-                session.holdScale(recipe.id, HeldScale.of(to, ordered))
-            }
+            val ordered = held.ordered
+            val scale = held.scale
             val list = ingredientList(ordered, entries, language, authored, scale)
-            list.servingCount?.let { count ->
-                ServingsControl(
-                    modifier = cardPlace(CardPlaces.SERVINGS_KEY),
-                    count = RequestedServings.text(count.value, language),
-                    approximate = count.approximate,
-                    canDecrease = count.value > RequestedServings.MIN,
-                    // A change of count walks from the count shown, and releases every fixing (SCALE-016).
-                    onDecrease = { change(scale.request(RequestedServings.decreased(count.value))) },
-                    onIncrease = { change(scale.request(RequestedServings.increased(count.value))) },
+            // On Cooking the serving count stands right on the ingredients' tinted panel, with no gap: six lines are in
+            // sight as the card opens on a 360 × 640 dp phone.
+            CountAndIngredients(packed = !viewing) {
+                list.servingCount?.let { count ->
+                    ServingsControl(
+                        modifier = cardPlace(CardPlaces.SERVINGS_KEY),
+                        count = RequestedServings.text(count.value, language),
+                        approximate = count.approximate,
+                        canDecrease = count.value > RequestedServings.MIN,
+                        // A change of count walks from the count shown, and releases every fixing (SCALE-016).
+                        onDecrease = { held.change(scale.request(RequestedServings.decreased(count.value))) },
+                        onIncrease = { held.change(scale.request(RequestedServings.increased(count.value))) },
+                    )
+                }
+                IngredientsList(
+                    ordered,
+                    list,
+                    scale.fixings,
+                    language,
+                    onFix = { held.change(scale.fix(it)) },
+                    onRelease = { held.change(scale.release(it)) },
+                    marks = marks,
+                    groups = recipe.ingredientGroups,
+                    mode = mode,
+                    shownAgain = shownAgain.ingredients,
                 )
             }
-            IngredientsList(
-                ordered,
-                list,
-                scale.fixings,
-                language,
-                onFix = { change(scale.fix(it)) },
-                onRelease = { change(scale.release(it)) },
-                marks = marks,
-                groups = recipe.ingredientGroups,
+            // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
+            StepsList(
+                recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries),
+                StepMediaOnCard(recipe, recipes.bookName()), marks, mode,
+                readerScrolling = { scroll.isScrollInProgress },
+                coveredBelow = bottom,
             )
-            StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()), marks)
-            if (recipe.description.isNotBlank()) {
+            if (viewing && recipe.description.isNotBlank()) {
+                // The description stands further apart from the steps than the parts above stand from each other.
                 Text(
                     recipe.description,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = cardPlace(CardPlaces.DESCRIPTION_KEY).testTag(CardTags.DESCRIPTION),
+                    modifier = Modifier.padding(top = DESCRIPTION_GAP - PART_GAP).then(cardPlace(CardPlaces.DESCRIPTION_KEY)).testTag(CardTags.DESCRIPTION),
                 )
             }
         }
     }
 }
 
+/** Whether the reader showed again the lists Cooking folded once every line of them was marked: each list its own. */
+private class ShownAgain(val equipment: MutableState<Boolean>, val ingredients: MutableState<Boolean>)
+
+/** The serving count and the ingredients: as parts of the card, the card's gap between them, or [packed], none. */
+@Composable
+private fun CountAndIngredients(packed: Boolean, parts: @Composable () -> Unit) {
+    if (packed) Column { parts() } else parts()
+}
+
 /**
- * Keeps the reader's place on the card of [recipe] for the session: the part first at the top of [scroll] whenever
- * they move. A card coming back to a place held for it is brought there, and kept there while what lies above it is
+ * Keeps the reader's place on the [tab] of the card of [recipe] for the session: the part first at the top of [scroll]
+ * whenever they move. A card coming back to a place held for it is brought there, and kept there while what lies above it is
  * still being laid out — a cover, a photograph, a timer that ended — until the reader scrolls themselves.
  */
 @Composable
-private fun KeptPlace(recipe: RecipeId, scroll: ScrollState, places: CardPlaces, session: CardSession, restore: Boolean) {
+private fun KeptPlace(recipe: RecipeId, tab: CardMode, scroll: ScrollState, places: CardPlaces, session: CardSession, restore: Boolean) {
     // Decided once, as the card is drawn: a step shown later moves the reader as their own scroll does.
     val restoring = remember(recipe) { restore }
-    LaunchedEffect(recipe, scroll, places, session) {
-        val anchor = if (restoring) session.heldAnchor(recipe) else null
+    LaunchedEffect(recipe, tab, scroll, places, session) {
+        val anchor = if (restoring) session.heldAnchor(recipe, tab) else null
         if (anchor != null) {
             // Every scroll this has made: a move seen late, after the next target was set, is still its own.
             val ours = mutableSetOf(scroll.value)
@@ -550,7 +798,7 @@ private fun KeptPlace(recipe: RecipeId, scroll: ScrollState, places: CardPlaces,
                 pin.cancel()
             }
         }
-        snapshotFlow { places.anchorAt(scroll.value) }.collect { session.holdAnchor(recipe, it) }
+        snapshotFlow { places.anchorAt(scroll.value) }.collect { session.holdAnchor(recipe, it, tab) }
     }
 }
 
@@ -616,10 +864,10 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
 /** The space between a section's heading and its parts. */
 internal val SECTION_GAP = 8.dp
 
-/** One part of the recipe under its heading; the lists of ingredients and of steps are each one. */
+/** One part of the recipe under its heading, [gap] between the heading and each part; the lists of ingredients and of steps are each one. */
 @Composable
-internal fun Section(@StringRes title: Int, tag: String, lines: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(SECTION_GAP)) {
+internal fun Section(@StringRes title: Int, tag: String, gap: Dp = SECTION_GAP, lines: @Composable () -> Unit) {
+    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(gap)) {
         Text(
             stringResource(title),
             style = MaterialTheme.typography.titleMedium,
@@ -851,6 +1099,8 @@ object CardTags {
     const val FORK_HELD_OPEN = "card-fork-held-open"
     const val FORK_HELD_ANOTHER = "card-fork-held-another"
     const val SCREEN = "card"
+    const val TABS = "card-tabs"
+    const val PAGER = "card-pager"
     const val BAR = "card-bar"
     const val BACK = "card-back"
     const val BAR_TITLE = "card-bar-title"
@@ -863,6 +1113,7 @@ object CardTags {
     const val CLEAR_MARKS = "card-clear-marks"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
+    const val SUMMARY = "card-summary"
     const val MISSING = "card-missing"
     const val UNREADABLE = "card-unreadable"
     const val RETRY = "card-retry"
@@ -873,6 +1124,7 @@ object CardTags {
     const val SERVINGS = "card-servings"
     const val SERVINGS_FEWER = "card-servings-fewer"
     const val SERVINGS_MORE = "card-servings-more"
+    const val EQUIPMENT = "card-equipment"
     const val INGREDIENTS = "card-ingredients"
     const val PROPORTIONS = "card-proportions"
     const val STEPS = "card-steps"
@@ -883,10 +1135,14 @@ object CardTags {
     const val FIX_CONFIRM = "card-fix-confirm"
     const val FIX_RELEASE = "card-fix-release"
     const val FIX_CANCEL = "card-fix-cancel"
+    /** The tab that shows the card in [mode]. */
+    fun tab(mode: CardMode) = "card-tab-${mode.name.lowercase()}"
     /** The tooltip the bar's action tagged [action] shows on a long press. */
     fun tooltip(action: String) = "$action-tooltip"
     fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
+    /** The item of equipment at [index] of the recipe's equipment. */
+    fun equipment(index: Int) = "card-equipment-$index"
     /** The amount of the ingredient line at [position], which opens its fixing control. */
     fun fixAmount(position: Int) = "card-ingredient-$position-amount"
     fun step(position: Int) = "card-step-$position"

@@ -119,39 +119,63 @@ class CardTargetsTest {
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().size == 1 }
         // Each of the bar's actions whole: an icon named for the screen reader, all of it on screen.
-        listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU).forEach { tag ->
+        listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU).forEach { tag ->
             val node = compose.onNodeWithTag(tag).fetchSemanticsNode()
             val screen = compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot
             assertTrue("$tag at $fontScale lies within the screen", node.boundsInRoot.left >= screen.left - 0.5f && node.boundsInRoot.right <= screen.right + 0.5f)
             assertTrue("$tag is named", AccessibilityChecks.announcedLabel(node).isNotBlank())
         }
         if (fontScale == 1f) {
-            // Where they fit, one line: back at the start, fork, edit and the ⋮ at the end.
-            val (back, fork, edit, menu) = listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU)
+            // Where they fit, one line: back at the start, edit and the ⋮ at the end.
+            val (back, edit, menu) = listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU)
                 .map { compose.onNodeWithTag(it).fetchSemanticsNode().boundsInRoot }
             val bar = compose.onNodeWithTag(CardTags.BAR).fetchSemanticsNode().boundsInRoot
-            assertEquals(back.top, fork.top, 0.5f)
             assertEquals(back.top, edit.top, 0.5f)
             assertEquals(back.top, menu.top, 0.5f)
-            assertTrue(back.right <= fork.left && fork.right <= edit.left && edit.right <= menu.left && bar.right - menu.right < 9f * bar.width / 360f + 1f)
+            assertTrue(back.right <= edit.left && edit.right <= menu.left && bar.right - menu.right < 9f * bar.width / 360f + 1f)
         }
+        val tabs = CardMode.entries.map(CardTags::tab)
         listOf(
-            CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU, CardTags.PROVENANCE,
-            CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE, CardTags.ingredient(0), TimerTags.start(0),
-        ).forEach { compose.assertCardTarget(it) }
-        // Back, fork, edit, the provenance, fewer, more, the ingredient line, the timer.
-        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 8)
+            CardTags.BACK, CardTags.EDIT, CardTags.MENU, CardTags.PROVENANCE, CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE,
+        ).plus(tabs).forEach { compose.assertCardTarget(it) }
+        // View: back, edit, the ⋮, the two tabs, the provenance, fewer, more, fork.
+        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 9)
+        // The tabs' names whole: each laid out on its lines in full, nothing cut, the tab within the screen. (A tab
+        // centres its name, so the name's lines are measured against the paragraph, not the text's own width.)
+        val screen = compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot
+        tabs.forEach { tab ->
+            val bounds = compose.onNodeWithTag(tab).fetchSemanticsNode().boundsInRoot
+            assertTrue("$tab lies within the screen", bounds.left >= screen.left - 0.5f && bounds.right <= screen.right + 0.5f)
+            val layouts = compose.textLayoutsWithin(tab)
+            assertTrue("$tab shows its name", layouts.isNotEmpty())
+            layouts.forEach { layout ->
+                val name = layout.layoutInput.text.text
+                assertTrue("\"$name\" in $tab is whole at $fontScale",
+                    !layout.didOverflowHeight && !layout.multiParagraph.didExceedMaxLines && layout.getLineEnd(layout.lineCount - 1) == name.length &&
+                        layout.size.width <= bounds.width + 0.5f)
+            }
+        }
+        // Fork, floating at the bottom end: a card target, its word whole, all of it on screen.
+        compose.assertCardTarget(CardTags.FORK)
+        compose.assertWhole(CardTags.FORK)
+        assertTrue("fork is named", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode()).isNotBlank())
+
+        // Cooking: back, the two tabs, fewer, more, the ingredient line, the timer.
+        compose.chooseCardTab(CardMode.COOKING)
+        listOf(CardTags.BACK, CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE, CardTags.ingredient(0), TimerTags.start(0))
+            .plus(tabs).forEach { compose.assertCardTarget(it) }
+        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 7)
 
         // The fixing control, opened from its amount, at first and once a fixing is held.
         compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
         listOf(CardTags.FIX_FIELD, FixTags.UNIT, CardTags.FIX_CANCEL, CardTags.FIX_CONFIRM).forEach { compose.assertCardTarget(it) }
-        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 12)
+        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 11)
         // The unit drop-down open: each unit it offers is a card target too.
         compose.onNodeWithTag(FixTags.UNIT).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.fixUnit(QuantityUnit.KILOGRAM))).fetchSemanticsNodes().isNotEmpty() }
         listOf(QuantityUnit.GRAM, QuantityUnit.KILOGRAM, QuantityUnit.TONNE).forEach { compose.assertCardTarget(CardTags.fixUnit(it)) }
-        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 15)
+        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 14)
         compose.onNodeWithTag(CardTags.fixUnit(QuantityUnit.GRAM)).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.fixUnit(QuantityUnit.GRAM))).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("250")
@@ -160,7 +184,7 @@ class CardTargetsTest {
         compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX_RELEASE)).fetchSemanticsNodes().isNotEmpty() }
         compose.assertCardTarget(CardTags.FIX_RELEASE)
-        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 13)
+        AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 12)
     }
 
     @Test

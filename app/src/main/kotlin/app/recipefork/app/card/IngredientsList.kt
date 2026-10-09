@@ -1,6 +1,9 @@
 package app.recipefork.app.card
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -18,7 +21,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.MutableState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,6 +85,16 @@ import app.recipefork.core.scaling.Rounding
  * Each of the [groups] stands as a subheading over its lines, a heading for the screen reader; lines above the first
  * heading stand under none, and a heading with no lines yet is not shown (DOM-022). A group is presentation only: the
  * lines, their scaling, fixing, marks and references read exactly as without it.
+ *
+ * Once every line is marked done, the list folds under its heading into one line, "All gathered · show"
+ * ([GatheredLine]); a tap on it shows the lines again, still marked. A line unmarked, or the marks cleared, shows the
+ * lines again too, and marking every line once more folds them again. Whether the reader has shown the list again is
+ * [shownAgain], which the card holds above its tabs, so that it outlasts a turn to View and back.
+ *
+ * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a line is as tall as its text with a
+ * modest space around it, its done mark is shown but a tap leaves it as it is, no line offers fixing, and the list
+ * never folds; a fixing control open as the mode changes closes. The scale, the status line, the warning, groups and
+ * notes are as in cooking.
  */
 @Composable
 internal fun IngredientsList(
@@ -89,21 +106,52 @@ internal fun IngredientsList(
     onRelease: (Int) -> Unit,
     marks: CardMarks? = null,
     groups: List<IngredientGroup> = emptyList(),
+    mode: CardMode = CardMode.COOKING,
+    shownAgain: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
     if (ordered.isEmpty()) return
-    var open by remember(ordered) { mutableStateOf<Int?>(null) }
-    // The list stands apart from the steps on a tonal surface of the theme, in its medium corners. The surface reaches
-    // into the card's gutter, so the lines keep the whole width of the content and wrap no sooner (A11Y-004).
-    Surface(
-        Modifier.fillMaxWidth().bleed(SURFACE_BLEED).testTag(IngredientTags.SURFACE),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups) }
+    var open by remember(ordered, mode) { mutableStateOf<Int?>(null) }
+    // Every line marked: on Cooking the list folds, unless the reader has shown it again since. A line not marked ends
+    // the showing again, so that marking every line once more folds the list again.
+    val gathered = marks != null && ordered.all { marks.done(MarkedPart.INGREDIENT, it.position) }
+    val folded = foldedOnCooking(gathered, shownAgain, mode)
+    LaunchedEffect(folded) { if (folded) open = null }
+    GatheringSurface(IngredientTags.SURFACE) {
+        Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode, folded) { shownAgain.value = true }
     }
 }
 
-/** The list's heading, status, warning and lines, with the fixing control [open] under its line. */
+/**
+ * Whether a list whose every line is marked ([gathered]) stands folded: on [CardMode.COOKING] alone, and not once the
+ * reader has shown it again ([shownAgain]). A line not marked ends the showing again, so that marking every line once
+ * more folds the list again.
+ */
+@Composable
+internal fun foldedOnCooking(gathered: Boolean, shownAgain: MutableState<Boolean>, mode: CardMode): Boolean {
+    LaunchedEffect(gathered) { if (!gathered) shownAgain.value = false }
+    return mode == CardMode.COOKING && gathered && !shownAgain.value
+}
+
+/**
+ * A list of what is gathered before cooking — the ingredients, the equipment — standing apart from the steps on a
+ * tonal surface of the theme, in its medium corners. The surface reaches into the card's gutter, so the lines keep the
+ * whole width of the content and wrap no sooner (A11Y-004).
+ */
+@Composable
+internal fun GatheringSurface(tag: String, content: @Composable () -> Unit) {
+    Surface(
+        Modifier.fillMaxWidth().bleed(SURFACE_BLEED).testTag(tag),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Box(Modifier.padding(horizontal = SURFACE_BLEED, vertical = SURFACE_PADDING)) { content() }
+    }
+}
+
+/**
+ * The list's heading, status, warning and lines, with the fixing control [open] under its line; or, [folded], the
+ * heading and the one line that shows the rest ([onShow]).
+ */
 @Composable
 private fun Lines(
     ordered: List<Ingredient>,
@@ -116,25 +164,55 @@ private fun Lines(
     onRelease: (Int) -> Unit,
     marks: CardMarks?,
     groups: List<IngredientGroup>,
+    mode: CardMode,
+    folded: Boolean,
+    onShow: () -> Unit,
 ) {
-    Section(R.string.card_ingredients, CardTags.INGREDIENTS) {
-        // The warning unfolds under the status line and folds away into it, the gap above it included, so the lines
-        // below move with it rather than jump; the status line itself keeps its height.
-        Column {
-            ScaleStatus(list.recalculated)
-            AnimatedVisibility(!list.holdsProportions, enter = Motion.open, exit = Motion.close) {
-                Text(
-                    stringResource(R.string.card_proportions_warning),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = SECTION_GAP)
-                        .semantics { liveRegion = LiveRegionMode.Polite }
-                        .testTag(CardTags.PROPORTIONS),
-                )
-            }
+    // A small gap under the heading; the status line, the warning and the lines then stand one against the next, so that
+    // more lines are in sight as the card opens, and a group's subheading has the same gap above it on the first line
+    // as on any other.
+    Section(R.string.card_ingredients, CardTags.INGREDIENTS, gap = HEADING_GAP) {
+        // Folded, the lines fold up into the one line that says so, and unfold from it again.
+        AnimatedVisibility(folded, enter = Motion.open, exit = Motion.close) {
+            GatheredLine(R.string.card_ingredients_show_action, IngredientTags.GATHERED, onShow)
         }
-        val column = quantityColumn(list.lines)
+        AnimatedVisibility(!folded, enter = Motion.open, exit = Motion.close) { AllLines(ordered, list, fixings, language, open, onOpen, onFix, onRelease, marks, groups, mode) }
+    }
+}
+
+/** The list's status, warning and lines, with the fixing control [open] under its line. */
+@Composable
+private fun AllLines(
+    ordered: List<Ingredient>,
+    list: IngredientList,
+    fixings: List<CardFixing>,
+    language: InterfaceLanguage,
+    open: Int?,
+    onOpen: (Int?) -> Unit,
+    onFix: (CardFixing) -> Unit,
+    onRelease: (Int) -> Unit,
+    marks: CardMarks?,
+    groups: List<IngredientGroup>,
+    mode: CardMode,
+) {
+    val cooking = mode == CardMode.COOKING
+    val column = quantityColumn(list.lines)
+    // The status line, then the lines one against the next, with no gap between them: each line's own height is its
+    // space. The warning unfolds under the status line and folds away into it, the gap above it included, so the
+    // lines below move with it rather than jump; the status line itself keeps its height.
+    Column {
+        ScaleStatus(list.recalculated)
+        AnimatedVisibility(!list.holdsProportions, enter = Motion.open, exit = Motion.close) {
+            Text(
+                stringResource(R.string.card_proportions_warning),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = SECTION_GAP)
+                    .semantics { liveRegion = LiveRegionMode.Polite }
+                    .testTag(CardTags.PROPORTIONS),
+            )
+        }
         list.lines.forEachIndexed { i, line ->
             groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name) }
             val position = ordered[i].position
@@ -143,9 +221,10 @@ private fun Lines(
                 IngredientRow(
                     line, position, column, cardPlace(CardPlaces.ingredient(position)),
                     done = marks?.done(MarkedPart.INGREDIENT, position) == true,
-                    onToggle = marks?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                    onToggle = marks?.takeIf { cooking }?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                    mode = mode,
                 ) { onOpen(if (open == position) null else position) }
-                val offer = line.fixing
+                val offer = line.fixing?.takeIf { cooking }
                 if (offer != null) {
                     key(position) {
                         FixAmountUnder(
@@ -164,15 +243,65 @@ private fun Lines(
     }
 }
 
-/** The subheading of the group at [index], over its first line (DOM-022): a heading for the screen reader. */
+/**
+ * The one line a list folds into once every line of it is marked: "All gathered · show", the word that shows the list
+ * in the theme's accent colour. The whole line, the card's [CardTarget] tall, is one M3 text button that shows the list
+ * again ([onShow]); the screen reader reads it as all gathered and names its click [showAction].
+ */
+@Composable
+internal fun GatheredLine(@StringRes showAction: Int, tag: String, onShow: () -> Unit) {
+    val gathered = stringResource(R.string.card_ingredients_gathered)
+    val show = stringResource(R.string.card_ingredients_show)
+    val showLabel = stringResource(showAction)
+    val accent = MaterialTheme.colorScheme.primary
+    val line = stringResource(R.string.card_ingredients_folded, gathered, show)
+    val shown = remember(line, show, accent) {
+        buildAnnotatedString {
+            append(line)
+            val at = line.lastIndexOf(show)
+            if (at >= 0) addStyle(SpanStyle(color = accent), at, at + show.length)
+        }
+    }
+    val showing by rememberUpdatedState(onShow)
+    // The text starts where the lines do and reads in the list's own colour, "show" in the accent; the press shows on
+    // the theme's small corners rather than a pill across the whole width.
+    TextButton(
+        onClick = onShow,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = CardTarget)
+            .semantics { onClick(label = showLabel) { showing(); true } }
+            .testTag(tag),
+        shape = MaterialTheme.shapes.small,
+        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+        contentPadding = PaddingValues(0.dp),
+    ) {
+        Text(
+            shown,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f).clearAndSetSemantics { text = AnnotatedString(gathered); shownText = line },
+        )
+    }
+}
+
+/** The space between the section's heading and its status line. */
+internal val HEADING_GAP = 4.dp
+
+/**
+ * The subheading of the group at [index], over its first line (DOM-022): a heading for the screen reader, a modest
+ * [GROUP_GAP] above it and nothing below it but its first line's own space.
+ */
 @Composable
 private fun GroupHeading(index: Int, name: String) {
     Text(
         name,
         style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.fillMaxWidth().padding(top = SECTION_GAP).semantics { heading() }.testTag(IngredientTags.group(index)),
+        modifier = Modifier.fillMaxWidth().padding(top = GROUP_GAP).semantics { heading() }.testTag(IngredientTags.group(index)),
     )
 }
+
+/** The space above a group's subheading, apart from the line before it. */
+private val GROUP_GAP = 12.dp
 
 /** Whether any quantity of the list was computed at a scale other than the authored one: the section says so once. */
 internal val IngredientList.recalculated: Boolean get() = lines.any { it.derived }
@@ -182,6 +311,8 @@ internal object IngredientTags {
     const val RECALCULATED = "card-recalculated"
     /** The tonal surface the whole section sits on. */
     const val SURFACE = "card-ingredients-surface"
+    /** The one line the list folds into once every ingredient is marked done. */
+    const val GATHERED = "card-ingredients-gathered"
     /** The status line above the list, always present: as authored, or recalculated. */
     const val STATUS = "card-scale-status"
     /** The status line's text at the authored scale. */
@@ -190,6 +321,8 @@ internal object IngredientTags {
     fun rounding(position: Int) = "card-ingredient-$position-rounding"
     /** The name of the line at [position], with its note after it where it carries one. */
     fun name(position: Int) = "card-ingredient-$position-name"
+    /** The quantity of the line at [position], with its arrow where it carries one. */
+    fun quantity(position: Int) = "card-ingredient-$position-quantity"
     /** The subheading of the group at [index] of the recipe's headings. */
     fun group(index: Int) = "card-ingredient-group-$index"
 }
@@ -285,6 +418,9 @@ private fun quantityColumn(lines: List<IngredientLine>): QuantityColumn {
  * muted, and read as done. A line that offers fixing opens its control from its amount — a target of its own, at
  * least [AMOUNT_TARGET] wide and the line's height, named for what it does — and offers the same to the screen reader
  * as the line's second action, beside the marking ([onOpen]). A line that answers a tap is the card's [CardTarget] tall.
+ *
+ * In [CardMode.VIEW] the line answers no tap and offers no fixing: it is its text with [VIEW_LINE_PADDING] above and
+ * below, a mark it carries shown and read as done.
  */
 @Composable
 private fun IngredientRow(
@@ -294,18 +430,21 @@ private fun IngredientRow(
     place: Modifier,
     done: Boolean,
     onToggle: (() -> Unit)?,
+    mode: CardMode,
     onOpen: () -> Unit,
 ) {
-    val fixable = line.fixing != null
+    val cooking = mode == CardMode.COOKING
+    val fixable = cooking && line.fixing != null
     val fixLabel = stringResource(R.string.card_fix_action)
     val opening by rememberUpdatedState(onOpen)
-    val marking = if (onToggle != null) Modifier.markedDone(done, onToggle) else Modifier
+    val marking = if (onToggle != null && cooking) Modifier.markedDone(done, onToggle) else Modifier.shownDone(done)
     val fixing = if (fixable) {
         Modifier.semantics { customActions = listOf(CustomAccessibilityAction(fixLabel) { opening(); true }) }
     } else {
         Modifier
     }
-    val tall = onToggle != null || fixable
+    val tall = cooking && (onToggle != null || fixable)
+    val padding = if (cooking) LINE_PADDING else VIEW_LINE_PADDING
     Column(place.fillMaxWidth().then(marking).then(fixing).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position))) {
         val name: @Composable () -> Unit = {
             val named = line.name ?: stringResource(R.string.card_unnamed_ingredient)
@@ -318,7 +457,7 @@ private fun IngredientRow(
         }
         val quantity: @Composable () -> Unit = {
             line.quantity?.let { quantity ->
-                Row(Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth().testTag(IngredientTags.quantity(position))) {
                     // The arrow is measured first, so a long quantity wraps before it squeezes the arrow away.
                     Text(
                         quantity,
@@ -352,7 +491,9 @@ private fun IngredientRow(
             val shownName = names.first().measure(nameConstraints)
             val shownFixed = fixedMarks.firstOrNull()?.measure(nameConstraints)
             val content = maxOf(shownName.height + (shownFixed?.height ?: 0), shownQuantity?.height ?: 0)
-            val height = if (tall) maxOf(content, CardTarget.roundToPx()) else content
+            // A line is its text with a little space above and below it, and never less than the card's target where it
+            // answers a tap: one line of text is the target's height exactly, and each line it wraps onto adds no more than itself.
+            val height = maxOf(content + 2 * padding.roundToPx(), if (tall) CardTarget.roundToPx() else 0)
             val top = (height - content) / 2
             // It ends where the name begins at the latest, so a tap on the name always marks the line.
             val amountWidth = maxOf(quantityWidth + gap / 2, AMOUNT_TARGET.roundToPx()).coerceAtMost(minOf(width, quantityWidth + gap))
@@ -368,6 +509,12 @@ private fun IngredientRow(
         }
     }
 }
+
+/** The least space above and below a line's text, so that lines that wrap still read apart from the next. */
+internal val LINE_PADDING = 8.dp
+
+/** The space above and below a line's text in [CardMode.VIEW]: compact, yet lines that wrap still read apart. */
+internal val VIEW_LINE_PADDING = 4.dp
 
 /** The least width of the target an amount that offers fixing takes, the card's own; it is as tall as its line. */
 private val AMOUNT_TARGET = CardTarget
@@ -403,7 +550,7 @@ private fun AmountTarget(label: String, tag: String, onOpen: () -> Unit) {
 private val SURFACE_BLEED = 8.dp
 
 /** The space above and below the section on its tonal surface. */
-private val SURFACE_PADDING = 12.dp
+private val SURFACE_PADDING = 8.dp
 
 /** Laid out [by] wider on each side than the room it is given, the room it takes still only that. */
 private fun Modifier.bleed(by: Dp) = layout { measurable, constraints ->

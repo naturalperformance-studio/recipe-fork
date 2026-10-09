@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -58,7 +59,7 @@ class CardEntryDivisibilityTest {
     private val book = TestBook(context)
     private val device = TestDevice(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { device.database.dictionaryDao().ingredients() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { device.database.dictionaryDao().ingredients() }
     private val now = Instant.parse("2026-10-03T12:00:00Z")
 
     /** Chicken divisible, wings not: the flags the dictionary ships with. */
@@ -121,14 +122,14 @@ class CardEntryDivisibilityTest {
             ),
         )
         assertEquals("8 pc", quantity(0))
-        assertEquals("Add 1 pc", shown(0))
+        assertEquals("Add 1\u00A0pc", shown(0))
         fewer()
         assertEquals("Servings: 3", servings())
         assertEquals("6 pc", quantity(0))
         fewer()
         assertEquals("Servings: 2", servings())
         assertEquals("4 pc", quantity(1))
-        assertEquals("Add 1 pc ↑", shown(0))
+        assertEquals("Add 1\u00A0pc ↑", shown(0))
     }
 
     // The fixing control holds what the entry's grid holds: a half wing is refused, a whole one fixes the scale.

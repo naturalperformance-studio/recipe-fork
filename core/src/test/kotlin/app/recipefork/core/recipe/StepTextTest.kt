@@ -17,9 +17,9 @@ class StepTextTest {
     @Test
     fun `a reference reads as its quantity at its place in the text`() {
         val step = Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8)))
-        assertEquals("Всыпьте 200 г муки", StepText.render(step, russian))
+        assertEquals("Всыпьте 200\u00A0г муки", StepText.render(step, russian))
         assertEquals(
-            listOf(StepRun.Typed("Всыпьте "), StepRun.Reference(0, "200 г"), StepRun.Typed(" муки")),
+            listOf(StepRun.Typed("Всыпьте "), StepRun.Reference(0, "200\u00A0г"), StepRun.Typed(" муки")),
             StepText.runs(step, russian),
         )
     }
@@ -45,7 +45,7 @@ class StepTextTest {
     @Test
     fun `references at the start, at the end, side by side and to no ingredient`() {
         val step = Step(0, "и  в конце", listOf(IngredientReference(0, 0), IngredientReference(1, 2), IngredientReference(2, 10), IngredientReference(9, 5)))
-        assertEquals("200 ги по вкусу в конце${ReferenceText.PLACEHOLDER} мл", StepText.render(step, russian))
+        assertEquals("200\u00A0ги по\u00A0вкусу в конце${ReferenceText.PLACEHOLDER}\u00A0мл", StepText.render(step, russian))
         assertEquals("Mix.", StepText.render(Step(0, "Mix."), russian))
     }
 
@@ -54,6 +54,6 @@ class StepTextTest {
     fun `a forks references read its own ingredients`() {
         val step = Step(0, "Add  now", listOf(IngredientReference(1, 4)))
         val forkRows = listOf(flour, salt.copy(unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(5)))
-        assertEquals("Add 5 g now", StepText.render(step, ReferenceText.authored(forkRows, InterfaceLanguage.ENGLISH)))
+        assertEquals("Add 5\u00A0g now", StepText.render(step, ReferenceText.authored(forkRows, InterfaceLanguage.ENGLISH)))
     }
 }

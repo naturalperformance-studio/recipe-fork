@@ -115,8 +115,11 @@
     <dimen name="theme_shape_large">16dp</dimen>
     <dimen name="theme_shape_extraLarge">28dp</dimen>
 
-    <!-- Type sizes: titles (bars, dialogs, entries) and body text (ingredients, steps, fields). Line heights follow
-         in proportion. The reader's font size setting still scales them. -->
+    <!-- Type sizes: the headline (the card's title, and its steps on the Cooking tab), titles (bars, dialogs, entries,
+         the card's steps on the View tab) and body text (ingredients, fields). Line heights follow in proportion. The
+         reader's font size setting still scales them. The headline stays larger than titleLarge, and titleLarge larger
+         than bodyLarge, so that the steps on Cooking read larger than on View, and both larger than body text. -->
+    <dimen name="theme_type_headlineSmall">24sp</dimen>
     <dimen name="theme_type_titleLarge">22sp</dimen>
     <dimen name="theme_type_titleMedium">16sp</dimen>
     <dimen name="theme_type_titleSmall">14sp</dimen>

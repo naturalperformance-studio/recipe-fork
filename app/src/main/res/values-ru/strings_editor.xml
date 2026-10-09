@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="editor_back">Назад</string>
-    <!-- The top bar's "Done": what is written is in the book, and a short statement says so. -->
+    <!-- The top bar's "Done": once what is written is in the book, the editor closes; where the book refused it, it stays open and says so. -->
     <string name="editor_done">Готово</string>
-    <string name="editor_done_action">Сохранить написанное</string>
-    <string name="editor_saved">Сохранено</string>
+    <string name="editor_done_action">Сохранить и закрыть</string>
+    <string name="editor_not_saved">Не удалось сохранить рецепт</string>
+    <!-- The action of the statement that the book refused what is written: write it once more, and close. -->
+    <string name="editor_retry">Повторить</string>
+    <!-- The top bar's title while the recipe has none. -->
+    <string name="editor_bar_new_recipe">Новый рецепт</string>
     <string name="editor_back_action">Показать рецепт</string>
     <string name="editor_title">Название</string>
     <string name="editor_frozen">Этот рецепт нельзя изменить в его нынешнем состоянии.</string>
@@ -170,4 +174,14 @@
     <string name="editor_timer_removed">Таймер шага %1$d убран</string>
     <string name="editor_timer_removed_numbered">Таймер %2$d шага %1$d убран</string>
     <string name="editor_undo">Вернуть</string>
+    <!-- Посуда и техника, между числом порций и ингредиентами: по строке на предмет, до 15 (предел — GUIDE-007). -->
+    <string name="editor_equipment">Посуда и техника</string>
+    <string name="editor_equipment_add">Добавить предмет</string>
+    <string name="editor_equipment_add_action">Добавить предмет посуды или техники</string>
+    <string name="editor_equipment_item">Предмет %1$d</string>
+    <string name="editor_equipment_example">например, Духовка</string>
+    <string name="editor_equipment_remove_action">Убрать предмет %1$d</string>
+    <string name="editor_equipment_menu_action">Действия с предметом %1$d</string>
+    <string name="editor_equipment_limit">В рецепте можно указать до %1$d предметов посуды и техники.</string>
+    <string name="editor_equipment_removed">Предмет %1$d убран</string>
 </resources>

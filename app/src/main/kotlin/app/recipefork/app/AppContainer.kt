@@ -10,6 +10,8 @@ import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.LastBookView
 import app.recipefork.app.data.PreferencesLastBookView
+import app.recipefork.app.data.LastCardTab
+import app.recipefork.app.data.PreferencesLastCardTab
 import app.recipefork.app.data.Network
 import app.recipefork.app.data.PreferencesDragHandleSide
 import app.recipefork.app.data.PreferencesThemeSetting
@@ -102,6 +104,9 @@ class AppContainer(
 
     /** The view of the recipe book last shown, one for the device and kept across restarts: the book opens on it. */
     val lastBookView: LastBookView = PreferencesLastBookView(context)
+
+    /** The card's tab last chosen, one for the device and kept across restarts: a card opens on it. */
+    val lastCardTab: LastCardTab = PreferencesLastCardTab(context)
 
     /** The reader's done marks on cards, kept on the device per book and recipe across restarts (FLOW-068). */
     val doneMarks: DoneMarks = DoneMarks.preferences(context)

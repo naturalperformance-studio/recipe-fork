@@ -5,7 +5,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import app.recipefork.app.AppContainer
 import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.data.HeldLastCardTab
 import app.recipefork.app.data.HeldUsualServings
+import app.recipefork.app.data.LastCardTab
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.dictionary.IngredientEntryEntity
 
@@ -16,11 +18,13 @@ fun interface IngredientEntries {
 
 /**
  * What the card needs beyond the recipes of the active book: the serving count the reader usually cooks for, which a
- * recipe opens at (FLOW-017), the reader's done marks (FLOW-068), and the ingredient dictionary its rows are named from.
+ * recipe opens at (FLOW-017), the reader's done marks (FLOW-068), the tab last chosen, which a card opens on, and the
+ * ingredient dictionary its rows are named from.
  */
 class CardEnvironment(
     val usualServings: UsualServings = HeldUsualServings(),
     val marks: DoneMarks = DoneMarks.inMemory(),
+    val lastTab: LastCardTab = HeldLastCardTab(),
     val ingredients: IngredientEntries,
 )
 
@@ -32,8 +36,8 @@ fun rememberCardEnvironment(): CardEnvironment {
 }
 
 /**
- * The card's environment of [container]: its usual servings, the device's done marks and the dictionaries it shares
+ * The card's environment of [container]: its usual servings, the device's done marks, its last tab and the dictionaries it shares
  * with every screen.
  */
 fun cardEnvironmentOf(container: AppContainer): CardEnvironment =
-    CardEnvironment(container.usualServings, container.doneMarks) { container.dictionaries.ingredients() }
+    CardEnvironment(container.usualServings, container.doneMarks, container.lastCardTab) { container.dictionaries.ingredients() }

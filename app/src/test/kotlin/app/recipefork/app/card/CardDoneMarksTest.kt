@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -85,7 +86,7 @@ class CardDoneMarksTest {
 
     private val timers = TestTimers(context)
 
-    private fun environmentOf(marks: DoneMarks) = CardEnvironment(marks = marks, ingredients = IngredientEntries { emptyList() })
+    private fun environmentOf(marks: DoneMarks) = CardEnvironment(marks = marks, lastTab = HeldLastCardTab(CardMode.COOKING), ingredients = IngredientEntries { emptyList() })
 
     @Before
     fun setUp() {
@@ -278,34 +279,40 @@ class CardDoneMarksTest {
     // FLOW-068 (3): "Clear marks" is in the card's ⋮ while the recipe has marks, and takes every one of them away.
     @Test
     fun clearMarksIsOfferedWhileTheRecipeHasMarksAndClearsThemAll() {
-        // An own recipe in a deletable state: the menu holds Delete alone until something is marked.
+        // An own recipe in a deletable state, on Cooking: no ⋮ until something is marked, then Clear marks alone in it.
         val recipe = save(pilaf())
         show(recipe.id)
-        compose.onNodeWithTag(CardTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.DELETE) }
-        assertFalse(exists(CardTags.CLEAR_MARKS))
-        compose.onNodeWithTag(CardTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.DELETE) }
+        assertFalse(exists(CardTags.MENU))
 
         listOf(ingredient(0), ingredient(2), step(1)).forEach(::tap)
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.MENU) }
         compose.onNodeWithTag(CardTags.MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.CLEAR_MARKS) }
         assertEquals(listOf("Clear marks"), compose.textsOf(CardTags.CLEAR_MARKS))
         compose.assertCardTarget(CardTags.CLEAR_MARKS)
-        assertTrue(exists(CardTags.DELETE))
+        assertFalse("Cooking's ⋮ holds no Delete", exists(CardTags.DELETE))
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
         assertEquals(emptyList<String>(), doneParts())
         assertEquals(emptySet<DoneMark>(), marks.held(BookName.Pool, recipe.id))
         // The recipe itself is still in the book.
         assertNotNull(runBlocking { recipes.get(recipe.id) })
+
+        // View's ⋮ holds Delete alone, marked or not: the marks are cleared on Cooking.
+        tap(ingredient(1))
+        compose.chooseCardTab(CardMode.VIEW)
+        compose.onNodeWithTag(CardTags.MENU).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.DELETE) }
+        assertFalse(exists(CardTags.CLEAR_MARKS))
     }
 
-    // A recipe the card offers no removal for shows its ⋮ only while it has marks to clear.
+    // A recipe the card offers no removal for shows its ⋮ on Cooking only while it has marks to clear; fork floats on
+    // View, never in a ⋮, and View shows no ⋮ at all for it.
     @Test
     fun aFrozenRecipeShowsItsMenuOnlyWhileItHasMarks() {
         show(save(pilaf(RecipeState.PUBLISHED)).id)
         assertFalse(exists(CardTags.MENU))
+        assertFalse(exists(CardTags.FORK))
         tap(step(2))
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.MENU) }
         compose.onNodeWithTag(CardTags.MENU).performClick()
@@ -314,6 +321,10 @@ class CardDoneMarksTest {
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
         assertEquals(emptyList<String>(), doneParts())
+        tap(step(2))
+        compose.chooseCardTab(CardMode.VIEW)
+        assertTrue(exists(CardTags.FORK))
+        assertFalse(exists(CardTags.MENU))
     }
 
     // FLOW-068 (4): the file of a recipe carries no marks — it is the same file marked or not — and a fork of it

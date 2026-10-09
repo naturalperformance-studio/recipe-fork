@@ -116,3 +116,7 @@ internal fun <T> List<T>.movedBlock(from: Int, span: Int, to: Int): List<T> {
 /** [this] as the book keeps it: a heading not named yet — still being written — is not saved (DOM-022). */
 internal fun Recipe.withNamedGroups(): Recipe =
     if (ingredientGroups.none { it.name.isBlank() }) this else copy(ingredientGroups = ingredientGroups.filter { it.name.isNotBlank() })
+
+/** The recipe as the book keeps it while an item of equipment is being typed: each item trimmed, a blank one left out. */
+internal fun Recipe.withSettledEquipment(): Recipe =
+    Recipe.equipmentOf(equipment).let { if (it == equipment) this else copy(equipment = it) }

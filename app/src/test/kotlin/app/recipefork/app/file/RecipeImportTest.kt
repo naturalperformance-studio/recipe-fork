@@ -160,8 +160,8 @@ class RecipeImportTest {
     // FLOW-064 (5): a document of a later format, written by a later version of the application.
     @Test
     fun aLaterFormatIsRefused() {
-        val later = RecipeFile.encode(soup()).replace("\"format_version\": 3", "\"format_version\": 4")
-        assertTrue(later.contains("\"format_version\": 4"))
+        val later = RecipeFile.encode(soup()).replace("\"format_version\": 4", "\"format_version\": 5")
+        assertTrue(later.contains("\"format_version\": 5"))
         assertRefused(Refusal.LATER_VERSION, zip(RecipeFile.DOCUMENT to later.toByteArray()))
     }
 
@@ -379,11 +379,60 @@ class RecipeImportTest {
         assertEquals(timers, runBlocking { recipes.get(soup().id)!! }.steps[0].timers)
     }
 
-    /** [document] as format [version] — 1 or 2 — wrote it: each step's list of at most one timer as its one `timer`. */
-    private fun oneTimerFormat(document: String, version: Int): String = document
-        .replace("\"format_version\": ${RecipeFile.FORMAT_VERSION}", "\"format_version\": $version")
+    /**
+     * [document] as format [version] — 1 or 2 — wrote it: each step's list of at most one timer as its one `timer`, and
+     * no equipment.
+     */
+    private fun oneTimerFormat(document: String, version: Int): String = withoutEquipment(document, version)
         .replace(Regex(",\\s*\"timers\": \\[\\]"), "")
         .replace(Regex("\"timers\": \\[\\s*(\\{[^{}\\[\\]]*\\})\\s*\\]"), "\"timer\": $1")
+
+    /** [document], holding no equipment, as format [version] — 1, 2 or 3 — wrote it: with no `equipment` at all. */
+    private fun withoutEquipment(document: String, version: Int): String = document
+        .replace("\"format_version\": ${RecipeFile.FORMAT_VERSION}", "\"format_version\": $version")
+        .replace(Regex("\"equipment\": \\[\\],\\s*"), "")
+
+    // A found recipe keeps the file's equipment, in order.
+    @Test
+    fun aFoundRecipeKeepsItsEquipment() = runBlocking {
+        val content = soup().copy(equipment = listOf("Pot 5 l", "Ladle"))
+        assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
+        val found = recipes.get(content.id)!!
+        assertEquals(listOf("Pot 5 l", "Ladle"), found.equipment)
+        assertEquals(found, RecipeImport.foundRecipe(content, emptyList(), now))
+        assertEquals(listOf("Pot 5 l", "Ladle"), RecipeImport.foundRecipe(content, emptyList(), now).equipment)
+    }
+
+    // An item a file holds with spaces around it imports trimmed, as a note does.
+    @Test
+    fun anUntrimmedItemImportsTrimmed() = runBlocking {
+        val content = soup().copy(equipment = listOf("  Pot 5 l ", "Ladle\t"))
+        assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
+        assertEquals(listOf("Pot 5 l", "Ladle"), recipes.get(content.id)!!.equipment)
+    }
+
+    // A file of format 3, written before equipment, still imports, with none.
+    @Test
+    fun aFormat3FileImportsWithNoEquipment() = runBlocking {
+        val format3 = withoutEquipment(RecipeFile.encode(soup()), 3)
+        assertTrue(format3.contains("\"format_version\": 3"))
+        assertFalse(format3.contains("equipment"))
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(zip(RecipeFile.DOCUMENT to format3.toByteArray())))
+        val found = recipes.get(soup().id)!!
+        assertEquals(emptyList<String>(), found.equipment)
+        assertEquals(soup().steps, found.steps)
+        assertEquals(soup().ingredients, found.ingredients)
+    }
+
+    // A file whose equipment breaks the rules — a sixteenth item, a blank one, one over 40 characters — is refused.
+    @Test
+    fun aFileWhoseEquipmentBreaksTheRulesIsRefused() {
+        val fifteen = (1..15).map { "Item $it" }
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = fifteen + "Item 16")))
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = listOf("Pot", " "))))
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = listOf("p".repeat(41)))))
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(file(soup().copy(equipment = fifteen))))
+    }
 
     // DOM-022, DOM-023: a file whose groups or notes break the rules is refused, and adds nothing.
     @Test

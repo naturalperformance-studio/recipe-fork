@@ -161,6 +161,11 @@ class OwnEntryOpensCardTest {
     fun editFromTheCardsBarAndLeavingTheEditorShowsTheCardOfTheRecipeJustEdited() =
         editAndLeave { compose.onNodeWithTag(EditorTags.BACK).performClick() }
 
+    // The same, leaving the editor by "Done", which closes it once the change is in the book.
+    @Test
+    fun doneLeavesTheEditorForTheCardOfTheRecipeJustEdited() =
+        editAndLeave { compose.onNodeWithTag(EditorTags.DONE).performClick() }
+
     // The same, leaving the editor by the system's back, and leaving the card by it too.
     @Test
     fun theSystemBackLeavesTheEditorForTheCardAndTheCardForTheOwnView() = editAndLeave(systemBackFromTheCard = true) {
@@ -203,7 +208,7 @@ class OwnEntryOpensCardTest {
             tapEntry(recipe)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
             val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            assertEquals("${recipe.state}", 2, actions.size) // the back and fork actions
+            assertEquals("${recipe.state}", 4, actions.size) // back, the two tabs and fork
             compose.onNodeWithTag(CardTags.BACK).performClick()
             assertTheOwnView()
         }
@@ -218,7 +223,11 @@ class OwnEntryOpensCardTest {
     @Config(qualifiers = "ru")
     fun theOwnViewOffersANewRecipeAlsoWhenTheBookIsNotEmptyInRussian() = newRecipe("Новый рецепт")
 
-    private fun newRecipe(label: String) {
+    // A new recipe left by "Done" goes where back takes it: its card, the book beneath.
+    @Test
+    fun doneLeavesANewRecipeAsBackDoes() = newRecipe("New recipe", EditorTags.DONE)
+
+    private fun newRecipe(label: String, leave: String = EditorTags.BACK) {
         val existing = own("Soup")
         show()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.NEW), PATIENCE_MS)
@@ -235,7 +244,7 @@ class OwnEntryOpensCardTest {
         assertEquals(SentStatus.NEVER, created.sent)
         assertEquals(null, created.owner)
         assertEquals("", created.title)
-        compose.onNodeWithTag(EditorTags.BACK).performClick()
+        compose.onNodeWithTag(leave).performClick()
         compose.awaitCard()
         assertEquals(opened.value, session.viewing.value)
         compose.onNodeWithTag(CardTags.BACK).performClick()

@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -58,7 +59,7 @@ class CardStepTimerGapTest {
     private val book = TestBook(context)
     private val timers = TestTimers(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { emptyList() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
     private val store = PhotoStore(context.filesDir)
     private val now = Instant.parse("2026-10-04T12:00:00Z")
 
@@ -88,7 +89,7 @@ class CardStepTimerGapTest {
                 MaterialTheme { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
             }
         }
-        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.TITLE), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(CardTags.CONTENT), PATIENCE_MS)
     }
 
     private fun bounds(tag: String): Rect =

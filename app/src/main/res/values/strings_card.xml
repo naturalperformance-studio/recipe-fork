@@ -17,6 +17,24 @@
     <string name="card_fork_held">You already have a fork of this recipe, unchanged since you made it.</string>
     <string name="card_fork_held_open">Open it</string>
     <string name="card_fork_held_another">Make another</string>
+    <!-- The summary line under the title (the view of the card): counts of the recipe's ingredients and steps, and its
+         timers' durations added up and rounded; each part left out where the recipe has none. The spoken form of the
+         timers is what the screen reader reads instead of "≈". -->
+    <plurals name="card_summary_ingredients">
+        <item quantity="one">%d ingredient</item>
+        <item quantity="other">%d ingredients</item>
+    </plurals>
+    <plurals name="card_summary_steps">
+        <item quantity="one">%d step</item>
+        <item quantity="other">%d steps</item>
+    </plurals>
+    <string name="card_summary_timers">timers ≈ %1$s</string>
+    <string name="card_summary_timers_spoken">timers about %1$s</string>
+    <!-- The summary line's parts, two or three, as shown and as the screen reader reads them. -->
+    <string name="card_summary_two">%1$s · %2$s</string>
+    <string name="card_summary_three">%1$s · %2$s · %3$s</string>
+    <string name="card_summary_spoken_two">%1$s, %2$s</string>
+    <string name="card_summary_spoken_three">%1$s, %2$s, %3$s</string>
     <!-- A fork's provenance area (FORK-003, FORK-004): its one direct parent. -->
     <string name="card_parent">Forked from “%1$s”</string>
     <string name="card_parent_open_action">Open the recipe this one was forked from</string>
@@ -82,4 +100,22 @@
     <string name="card_mark_not_done_action">Mark as not done</string>
     <string name="card_marked_done">Done</string>
     <string name="card_clear_marks">Clear marks</string>
+    <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
+    <string name="card_view_timer">%1$s · %2$s</string>
+    <!-- The card's two tabs, under its top bar: the recipe for reading and deciding, and for cooking with busy hands. -->
+    <string name="card_tab_view">View</string>
+    <string name="card_tab_cooking">Cooking</string>
+    <string name="card_tab_view_action">Show the recipe for reading</string>
+    <string name="card_tab_cooking_action">Show the recipe for cooking</string>
+    <!-- On the Cooking tab the first step not marked done is the current one: the screen reader reads it so. -->
+    <string name="card_current_step">Current step</string>
+    <!-- On the Cooking tab, once every ingredient is marked done, the list folds into one line; a tap shows it again.
+         The line reads "All gathered · show", "show" in the accent colour. -->
+    <string name="card_ingredients_gathered">All gathered</string>
+    <string name="card_ingredients_show">show</string>
+    <string name="card_ingredients_folded">%1$s · %2$s</string>
+    <string name="card_ingredients_show_action">Show the ingredients</string>
+    <!-- The equipment the recipe needs, above the ingredients; on Cooking it folds as the ingredients do once every item is marked. -->
+    <string name="card_equipment">Equipment</string>
+    <string name="card_equipment_show_action">Show the equipment</string>
 </resources>

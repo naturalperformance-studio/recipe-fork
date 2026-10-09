@@ -33,9 +33,16 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
+import app.recipefork.app.card.IngredientTags
+import app.recipefork.app.R
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.semantics.SemanticsProperties
+import app.recipefork.app.card.CardMode
 import app.recipefork.app.card.CardTarget
 import app.recipefork.app.card.DoneMark
 import app.recipefork.app.card.DoneMarks
+import app.recipefork.app.card.EquipmentTags
 import app.recipefork.app.card.FakeClipPlayers
 import app.recipefork.app.card.LocalClipPlayers
 import app.recipefork.app.card.awaitCard
@@ -107,9 +114,11 @@ import kotlin.time.Duration.Companion.minutes
  *  - every text drawn reaches its contrast against what is drawn behind it (A11Y-002).
  *
  * The screens: the book — the marked and the own view, each empty and with recipes, an entry's menu, a recipe file's
- * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with ingredient groups, notes,
- * a cover, a step's photo and clip, several timers on a step and one running, and done marks, with its menu open; the
- * editor on that recipe, with a row removed and its Undo offered, and on a frozen one; the settings and each of their
+ * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment, ingredient groups, notes,
+ * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
+ * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
+ * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with a row removed and its
+ * Undo offered, and on a frozen one with equipment; the settings and each of their
  * dialogs; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
@@ -216,11 +225,16 @@ class PreLaunchSweepTest {
     private fun grams(position: Int, name: String, grams: Int, note: String? = null) =
         Ingredient(position, null, null, name, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(grams.toLong()), null, null, note = note)
 
-    /** Everything a card and an editor show: groups, notes, a cover, a step's photo and clip, several timers. */
+    /**
+     * Everything a card and an editor show: equipment, groups, notes, a cover, a step's photo and clip, several timers,
+     * tags.
+     */
     private val plumCake = Recipe.create(now, owner = null).copy(
         title = "Plum cake",
         description = "A sheet cake for late summer.",
         servings = 8,
+        tags = setOf(10L, 12L),
+        equipment = listOf("Oven", "Baking tray 30 × 40 cm", "Mixing bowl"),
         ingredients = listOf(
             grams(0, "flour", 250),
             grams(1, "butter", 125, note = "cold"),
@@ -245,8 +259,9 @@ class PreLaunchSweepTest {
         steps = listOf(Step(0, "Simmer the tomatoes.", timer = Timer(20.minutes))),
     )
 
-    /** An own recipe that cannot be changed: the editor shows it frozen. */
-    private val published = Recipe.create(now.minusSeconds(7200), owner = null).copy(title = "Apple pie", servings = 6)
+    /** An own recipe that cannot be changed, with its equipment: the editor shows it frozen. */
+    private val published = Recipe.create(now.minusSeconds(7200), owner = null)
+        .copy(title = "Apple pie", servings = 6, equipment = listOf("Oven", "Pie dish 24 cm"))
         .inState(RecipeState.PUBLISHED)
 
     private fun found(title: String, minutesAgo: Long): Recipe =
@@ -349,26 +364,56 @@ class PreLaunchSweepTest {
     }
 
     private fun theCard(cake: Recipe) {
-        marks.hold(BookName.Pool, cake.id, setOf(DoneMark.of(cake.ingredients[0]), DoneMark.of(cake.steps[0])))
+        marks.hold(
+            BookName.Pool, cake.id,
+            setOf(DoneMark.ofEquipment(0, cake.equipment[0]), DoneMark.of(cake.ingredients[0]), DoneMark.of(cake.steps[0])),
+        )
         compose.runOnIdle { session.openCard(cake.id.value, LibraryView.OWN) }
         compose.awaitCard()
         await(CardTags.COVER)
         await(CardTags.stepPhoto(2))
         await(CardTags.stepVideo(4))
-        // One timer running; the step's two others ready.
+        // View, the tab a card first opens on: the cover, the summary, fork; compact lists, the done marks shown.
+        compose.onNodeWithTag(CardTags.tab(CardMode.VIEW)).assertIsSelected()
+        await(CardTags.SUMMARY)
+        // The equipment above the ingredients, one item marked.
+        cake.equipment.indices.forEach { await(CardTags.equipment(it)) }
+        assertOnlyThePagerScrollsSideways("View")
+        checkScreen("the card, View", target = CardTarget)
+        compose.onNodeWithTag(CardTags.MENU).performClick()
+        await(CardTags.DELETE)
+        checkScreen("the card, View, its menu", target = CardTarget)
+        compose.onNodeWithTag(CardTags.MENU).performClick()
+        awaitGone(CardTags.DELETE)
+        // Cooking: one timer running; the step's two others ready; the second step, the first not marked, highlighted.
+        chooseTheCardsTab(CardMode.COOKING)
+        await(CardTags.stepPhoto(2))
+        await(CardTags.stepVideo(4))
         compose.onNodeWithTag(TimerTags.start(1)).performScrollTo().performClick()
         await(TimerTags.cancel(1))
+        cake.equipment.indices.forEach { await(CardTags.equipment(it)) }
         compose.onNodeWithTag(CardTags.SCREEN).assertExists()
-        checkScreen("the card", target = CardTarget)
+        assertTrue("the second step is the current one", compose.onNodeWithTag(CardTags.step(1)).fetchSemanticsNode()
+            .config.getOrNull(SemanticsProperties.StateDescription) == context.getString(R.string.card_current_step))
+        assertOnlyThePagerScrollsSideways("Cooking")
+        checkScreen("the card, Cooking", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.CLEAR_MARKS) || exists(CardTags.DELETE) }
-        checkScreen("the card, its menu", target = CardTarget)
+        await(CardTags.CLEAR_MARKS)
+        checkScreen("the card, Cooking, its menu", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) && !exists(CardTags.DELETE) }
+        awaitGone(CardTags.CLEAR_MARKS)
+        // Every item of equipment and every ingredient marked: each list folds into its one line.
+        (1 until cake.equipment.size).forEach { compose.onNodeWithTag(CardTags.equipment(it)).performScrollTo().performClick() }
+        (1 until cake.ingredients.size).forEach { compose.onNodeWithTag(CardTags.ingredient(it)).performScrollTo().performClick() }
+        await(EquipmentTags.GATHERED)
+        await(IngredientTags.GATHERED)
+        checkScreen("the card, Cooking, the equipment and the ingredients all gathered", target = CardTarget)
+        chooseTheCardsTab(CardMode.VIEW)
         compose.onNodeWithTag(CardTags.EDIT).performClick()
         await(EditorTags.FORM)
+        await(EditorTags.equipmentName(2))
         compose.waitForIdle()
-        checkScreen("the editor, a recipe with groups, notes and several timers")
+        checkScreen("the editor, a recipe with equipment, groups, notes, several timers and tags")
         // A row removed: the editor says so with Undo.
         compose.onNodeWithTag(EditorTags.ingredientRemove(4)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.STATEMENT, unmerged = true) }
@@ -378,11 +423,29 @@ class PreLaunchSweepTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredient(4)) && !exists(EditorTags.STATEMENT, unmerged = true) }
     }
 
+    /** Turns the card to its tab [mode] and waits until it has come to rest there. */
+    private fun chooseTheCardsTab(mode: CardMode) {
+        compose.onNodeWithTag(CardTags.tab(mode)).performClick()
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true &&
+                compose.onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1
+        }
+        compose.waitForIdle()
+    }
+
+    /** Nothing on the card's [tab] scrolls sideways but the pager of its tabs, so that a swipe always turns the tab. */
+    private fun assertOnlyThePagerScrollsSideways(tab: String) {
+        val sideways = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange), useUnmergedTree = true)
+            .fetchSemanticsNodes().map { it.config.getOrNull(SemanticsProperties.TestTag) }
+        assertEquals("on the card's $tab only the pager scrolls sideways", listOf(CardTags.PAGER), sideways)
+    }
+
     private fun theEditor() {
         compose.runOnIdle { session.openEditor(published.id.value) }
         await(EditorTags.FROZEN)
+        await(EditorTags.equipment(1))
         compose.waitForIdle()
-        checkScreen("the editor, a frozen recipe")
+        checkScreen("the editor, a frozen recipe with equipment")
         compose.runOnIdle {
             session.closeEditor()
             session.closeCard()
@@ -466,6 +529,6 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 20
+        const val SCREENS = 23
     }
 }

@@ -1,5 +1,6 @@
 package app.recipefork.app.library
 
+import app.recipefork.app.card.CardMode
 import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.content.Intent
@@ -96,6 +97,8 @@ class ExportAfterTheCardTest {
     fun setUp() {
         FileProviderCache.clear()
         runBlocking { recipes.save(pilaf) }
+        // Amounts are fixed on the card's Cooking tab: the card opens there.
+        container.lastCardTab.keep(CardMode.COOKING)
     }
 
     @After

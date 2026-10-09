@@ -2,10 +2,14 @@
 <resources>
     <!-- The editor (FLOW-024). -->
     <string name="editor_back">Back</string>
-    <!-- The top bar's "Done": what is written is in the book, and a short statement says so. -->
+    <!-- The top bar's "Done": once what is written is in the book, the editor closes; where the book refused it, it stays open and says so. -->
     <string name="editor_done">Done</string>
-    <string name="editor_done_action">Save what is written</string>
-    <string name="editor_saved">Saved</string>
+    <string name="editor_done_action">Save and close</string>
+    <string name="editor_not_saved">Couldn\'t save the recipe</string>
+    <!-- The action of the statement that the book refused what is written: write it once more, and close. -->
+    <string name="editor_retry">Retry</string>
+    <!-- The top bar's title while the recipe has none. -->
+    <string name="editor_bar_new_recipe">New recipe</string>
     <string name="editor_back_action">Show the recipe</string>
     <string name="editor_title">Title</string>
     <!-- A recipe outside local, private and rejected is open, not editable (FLOW-002). -->
@@ -197,4 +201,16 @@
     <string name="editor_timer_removed">Timer removed from step %1$d</string>
     <string name="editor_timer_removed_numbered">Timer %2$d removed from step %1$d</string>
     <string name="editor_undo">Undo</string>
+    <!-- The equipment, between the serving count and the ingredients: one short line per item, up to 15 (GUIDE-007 for the limit). -->
+    <string name="editor_equipment">Equipment</string>
+    <string name="editor_equipment_add">Add item</string>
+    <string name="editor_equipment_add_action">Add an item of equipment</string>
+    <!-- %1$d is the item's place in the list. -->
+    <string name="editor_equipment_item">Item %1$d</string>
+    <string name="editor_equipment_example">e.g. Oven</string>
+    <string name="editor_equipment_remove_action">Remove equipment item %1$d</string>
+    <string name="editor_equipment_menu_action">Equipment item %1$d actions</string>
+    <!-- %1$d is the most items a recipe lists (15). -->
+    <string name="editor_equipment_limit">A recipe can list up to %1$d items of equipment.</string>
+    <string name="editor_equipment_removed">Equipment item %1$d removed</string>
 </resources>

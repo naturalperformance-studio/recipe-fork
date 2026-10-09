@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -23,6 +24,7 @@ import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.TagOffer
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.api.DictionariesDto
 import app.recipefork.core.recipe.Recipe
 import kotlinx.coroutines.runBlocking
@@ -34,6 +36,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.time.Instant
 import kotlin.math.abs
@@ -41,9 +44,14 @@ import kotlin.math.abs
 /**
  * Scenario 6 of v0.23: many tags wrapping onto several lines in the editor keep an 8 dp gap between the lines, as
  * between the tags of a line — the recipe's tags and the offered ones alike, at 1× and 2× font, in English and Russian.
+ *
+ * Scenario 6 of v0.26: the chips are drawn at Material's 32 dp — taller only as the font grows — each with a touch area
+ * of at least 48 by 48 dp around it, and the gaps are between the chips as drawn: what the chip's surface draws in is
+ * measured, not the touch area laid out around it.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class TagLineGapTest {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
@@ -97,14 +105,41 @@ class TagLineGapTest {
             MaterialTheme { EditorScreen(recipe.id, recipes, environment, session.viewModelScope, onClose = {}) }
         }
         compose.waitUntil(PATIENCE_MS) { CHOSEN.all { exists(EditorTags.chosen(it)) } }
-        assertLinesKeepTheGap("the recipe's tags", CHOSEN.map { bounds(EditorTags.chosen(it)) })
+        assertDrawnAtChipHeightWithinATouchArea("the recipe's tags", CHOSEN.map { EditorTags.remove(it) })
+        assertLinesKeepTheGap("the recipe's tags", CHOSEN.map { drawn(EditorTags.remove(it)) })
 
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performScrollTo().performTextReplacement(typed)
         val offered = shipped.tags.map { it.id }.filter { it !in CHOSEN }
         compose.waitUntil(PATIENCE_MS) { offered.count { exists(EditorTags.offered(it)) } == TagOffer.LIMIT }
         compose.onNodeWithTag(EditorTags.OFFERED).performScrollTo()
         val shown = offered.filter { exists(EditorTags.offered(it)) }
-        assertLinesKeepTheGap("the offered tags", shown.map { bounds(EditorTags.offered(it)) })
+        assertDrawnAtChipHeightWithinATouchArea("the offered tags", shown.map { EditorTags.offered(it) })
+        assertLinesKeepTheGap("the offered tags", shown.map { drawn(EditorTags.offered(it)) })
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = CHOSEN.size + shown.size)
+    }
+
+    /**
+     * Each chip of [tags] is drawn 32 dp tall at the usual font scale, and no less at a larger one — yet shorter than its
+     * touch area, not drawn as tall as it — within a touch area of at least 48 by 48 dp: the element the screen reader
+     * and a touch find.
+     */
+    private fun assertDrawnAtChipHeightWithinATouchArea(what: String, tags: List<String>) {
+        val chip = with(compose.density) { 32.dp.toPx() }
+        val target = with(compose.density) { 48.dp.toPx() }
+        val tolerance = with(compose.density) { 0.5.dp.toPx() }
+        val scaled = context.resources.configuration.fontScale > 1f
+        tags.forEach { tag ->
+            val drawn = drawn(tag)
+            if (scaled) {
+                assertTrue("$what: $tag is drawn ${drawn.height} px tall", drawn.height >= chip - tolerance)
+                assertTrue("$what: $tag is drawn ${drawn.height} px tall, as tall as its touch area", drawn.height < target - tolerance)
+            } else {
+                assertEquals("$what: $tag's drawn height, in px", chip, drawn.height, tolerance)
+            }
+            val area = compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+            assertTrue("$what: $tag's touch area $area is under 48 dp", area.width >= target - tolerance && area.height >= target - tolerance)
+            assertTrue("$what: $tag's touch area $area does not hold the chip $drawn", area.inflate(tolerance).let { it.contains(drawn.topLeft) && it.contains(drawn.bottomRight) })
+        }
     }
 
     /**
@@ -135,9 +170,15 @@ class TagLineGapTest {
     private fun exists(tag: String): Boolean =
         compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
-    // Laid out bounds, not clipped by the scrolling form: a chip below the fold still has its place.
-    private fun bounds(tag: String): Rect =
-        compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+    /**
+     * Where the chip tagged [tag] is drawn: the box its surface fills — background, border and ripple — within the touch
+     * area its element is laid out in, as laid out, not clipped by the scrolling form: a chip below the fold still has
+     * its place.
+     */
+    private fun drawn(tag: String): Rect {
+        val surface = compose.onNodeWithTag(tag).fetchSemanticsNode().layoutInfo.coordinates
+        return Rect(surface.positionInRoot(), surface.size.toSize())
+    }
 
     private companion object {
         // Enough of the shipped dictionary's tags to wrap onto several lines on a 360 dp screen.

@@ -34,10 +34,33 @@ typealias ReferenceQuantity = (reference: IngredientReference) -> String?
 object StepText {
     /**
      * [step] as runs, in reading order: its typed text cut at each reference's offset, and each reference as
-     * [quantity] gives it. A reference [quantity] gives nothing for — one to no ingredient of the recipe — is left
-     * out, and the text around it reads as typed. An offset beyond the text places the reference at its end.
+     * [quantity] gives it, held together ([unbreakable]) so that a line never breaks inside it — not between its
+     * number and its unit, nor inside a unit of two words. A reference [quantity] gives nothing for — one to no
+     * ingredient of the recipe — is left out, and the text around it reads as typed. An offset beyond the text places
+     * the reference at its end.
      */
-    fun runs(step: Step, quantity: ReferenceQuantity): List<StepRun> {
+    fun runs(step: Step, quantity: ReferenceQuantity): List<StepRun> =
+        spliced(step) { reference -> quantity(reference)?.let(::unbreakable) }
+
+    /** [step] as one string, each reference read as [quantity] gives it, held together as in [runs]. */
+    fun render(step: Step, quantity: ReferenceQuantity): String =
+        runs(step, quantity).joinToString("") { it.text }
+
+    /**
+     * [text] — a reference as it reads — with each of its spaces a no-break space (U+00A0): «4½ ст. л.», «1,5 кг»,
+     * "1.5 kg" read on one line wherever a line breaks around them. Only display text is held so; what a step stores
+     * keeps no quantity at all.
+     */
+    fun unbreakable(text: String): String = text.replace(' ', NO_BREAK_SPACE)
+
+    /** The space a line never breaks at. */
+    const val NO_BREAK_SPACE = '\u00A0'
+
+    /**
+     * [step] as runs, each reference exactly as [quantity] gives it, its spaces as given: [runs] before a reference is
+     * held together. For a reading of the step that is no display — what a held timer is started from.
+     */
+    internal fun spliced(step: Step, quantity: ReferenceQuantity): List<StepRun> {
         val text = step.text
         val runs = mutableListOf<StepRun>()
         var at = 0
@@ -51,10 +74,6 @@ object StepText {
         if (at < text.length) runs += StepRun.Typed(text.substring(at))
         return runs
     }
-
-    /** [step] as one string, each reference read as [quantity] gives it. */
-    fun render(step: Step, quantity: ReferenceQuantity): String =
-        runs(step, quantity).joinToString("") { it.text }
 }
 
 /** What a reference reads as at the authored scale, the recipe's own (FLOW-032 (5–7)). */

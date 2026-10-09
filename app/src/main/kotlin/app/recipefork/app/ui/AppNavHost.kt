@@ -31,7 +31,6 @@ import app.recipefork.app.card.ForkAsked
 import app.recipefork.app.card.HeldForkDialog
 import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.card.forkUnlessHeld
-import app.recipefork.app.card.keepScreenAwake
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.ThemeSetting
@@ -184,7 +183,6 @@ private fun RecipeCard(
         id, recipes, card,
         onBack = session::closeCard,
         onEdit = { session.openEditor(id.value) },
-        modifier = Modifier.keepScreenAwake(),
         onFork = { fork(another = false) },
         onOpenParent = { parent -> session.openCard(parent.value) },
         session = session.cards,

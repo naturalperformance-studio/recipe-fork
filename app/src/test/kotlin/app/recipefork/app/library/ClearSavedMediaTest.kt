@@ -5,6 +5,8 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -54,6 +56,10 @@ import java.time.Instant
  * in serverless mode that it cannot be fetched again, in the standard build that it is fetched again when needed — and
  * deletes nothing until confirmed; Cancel changes nothing; confirmed, the found recipe's files are gone, with its rows,
  * while a draft keeps its own. With nothing to clear, it says so in place of asking.
+ *
+ * Scenario 6 of v0.26: in serverless mode all the device can clear is the photos and videos of recipes imported from
+ * files — no recipe is sent there — and the item, its statement and its message of nothing to clear say so in those
+ * words; the standard build keeps "saved media".
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -88,24 +94,59 @@ class ClearSavedMediaTest {
     }
 
     @Test
-    fun serverlessWarnsThatTheMediaCannotBeFetchedAgainAndClearsOnlyOnceConfirmed() =
-        warnsThenClears(Mode.Serverless, R.string.library_clear_media_statement_serverless)
+    fun serverlessWarnsThatTheMediaCannotBeFetchedAgainAndClearsOnlyOnceConfirmed() = warnsThenClears(
+        Mode.Serverless,
+        Wording(
+            item = "Clear photos and videos of imported recipes",
+            title = "Clear photos and videos of imported recipes?",
+            statement = "The photos and videos of the recipes you imported from files are deleted from this device. " +
+                "To have them again, remove the recipe and import its file again. Every recipe keeps its text, and the " +
+                "recipes you wrote here keep their photos and videos.",
+            nothing = "The recipes you imported have no photos or videos to clear.",
+        ),
+    )
 
     @Test
     @Config(qualifiers = "ru")
-    fun serverlessWarnsInRussian() = warnsThenClears(Mode.Serverless, R.string.library_clear_media_statement_serverless)
+    fun serverlessWarnsInRussian() = warnsThenClears(
+        Mode.Serverless,
+        Wording(
+            item = "Очистить фото и видео импортированных рецептов",
+            title = "Очистить фото и видео импортированных рецептов?",
+            statement = "Фото и видео рецептов, импортированных из файлов, удалятся с этого устройства. Чтобы вернуть их, " +
+                "уберите рецепт и импортируйте его файл снова. Текст каждого рецепта останется, а написанные здесь " +
+                "рецепты сохранят свои фото и видео.",
+            nothing = "У импортированных рецептов нет фото и видео, которые можно очистить.",
+        ),
+    )
 
     @Test
-    fun theStandardBuildSaysTheMediaIsFetchedAgainAndClearsOnlyOnceConfirmed() =
-        warnsThenClears(Mode.Standard, R.string.library_clear_media_statement)
+    fun theStandardBuildSaysTheMediaIsFetchedAgainAndClearsOnlyOnceConfirmed() = warnsThenClears(
+        Mode.Standard,
+        Wording(
+            item = "Clear saved media",
+            title = "Clear saved media?",
+            statement = context.getString(R.string.library_clear_media_statement),
+            nothing = "There is no saved media to clear.",
+        ),
+    )
 
     @Test
-    fun withNothingToClearItSaysSoInServerlessMode() = saysNothingToClear(Mode.Serverless)
+    fun withNothingToClearItSaysSoInServerlessMode() =
+        saysNothingToClear(Mode.Serverless, "The recipes you imported have no photos or videos to clear.")
 
     @Test
-    fun withNothingToClearItSaysSoInTheStandardBuild() = saysNothingToClear(Mode.Standard)
+    @Config(qualifiers = "ru")
+    fun withNothingToClearItSaysSoInServerlessModeInRussian() =
+        saysNothingToClear(Mode.Serverless, "У импортированных рецептов нет фото и видео, которые можно очистить.")
 
-    private fun warnsThenClears(mode: Mode, statement: Int) {
+    @Test
+    fun withNothingToClearItSaysSoInTheStandardBuild() = saysNothingToClear(Mode.Standard, "There is no saved media to clear.")
+
+    /** What the item, its statement's title and text, and its message of nothing to clear say. */
+    private data class Wording(val item: String, val title: String, val statement: String, val nothing: String)
+
+    private fun warnsThenClears(mode: Mode, wording: Wording) {
         val found = recipe("Found soup", SentStatus.NEVER, photo("found-cover"), photo("found-step", MediaAttachment.ToStep(0)))
             .inState(RecipeImport.FOUND_STATE)
         val draft = recipe("Draft bread", SentStatus.NEVER, photo("draft-cover"))
@@ -115,14 +156,16 @@ class ClearSavedMediaTest {
         }
         show(mode)
 
-        // The item shows the found recipe's two files as what it would clear.
+        // The item, named for what it clears, shows the found recipe's two files as what it would clear.
         openSettings()
         awaitValue(context.resources.getQuantityString(R.plurals.settings_media_count, 2, 2))
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).assert(hasText(wording.item))
 
         // Asked, and declined: nothing is deleted.
         chooseClear()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_STATEMENT), PATIENCE_MS)
-        compose.waitUntilExactlyOneExists(hasText(context.getString(statement)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasText(wording.statement), PATIENCE_MS)
+        compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_STATEMENT).assert(hasAnyDescendant(hasText(wording.title)))
         assertEquals(listOf("draft-cover", "found-cover", "found-step"), onDisk())
         compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_DECLINE).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_STATEMENT), PATIENCE_MS)
@@ -146,14 +189,15 @@ class ClearSavedMediaTest {
         // Now nothing is left to clear, and the action says so.
         chooseClear()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasText(wording.nothing), PATIENCE_MS)
     }
 
-    private fun saysNothingToClear(mode: Mode) {
+    private fun saysNothingToClear(mode: Mode, said: String) {
         runBlocking { recipes.save(recipe("Draft bread", SentStatus.NEVER, photo("draft-cover"))) }
         show(mode)
         chooseClear()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
-        compose.waitUntilExactlyOneExists(hasText(context.getString(R.string.library_clear_media_nothing)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasText(said), PATIENCE_MS)
         assertFalse(exists(LibraryTags.CLEAR_MEDIA_STATEMENT))
         compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_OK).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)

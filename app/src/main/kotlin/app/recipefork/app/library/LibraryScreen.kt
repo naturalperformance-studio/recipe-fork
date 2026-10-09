@@ -369,6 +369,7 @@ private fun ViewTab(
         selected = tab == current,
         onClick = { session.choose(tab) },
         text = { Text(stringResource(label)) },
+        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .heightIn(min = 48.dp)
             // The tab announces what choosing it does: which recipes it shows (A11Y-005).

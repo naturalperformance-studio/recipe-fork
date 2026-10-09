@@ -129,7 +129,7 @@ private val Ingredient.shownUnit: QuantityUnit?
  * typed is not held — the field keeps what it held and says what it accepts (DOM-015).
  */
 @Composable
-internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: FocusRequester, rows: RowFocus, headings: RowFocus) {
+internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: FocusRequester, onNext: (() -> Unit)?) {
     if (!recipe.state.editable) {
         Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.SERVINGS)) {
             Text(stringResource(R.string.editor_servings), style = MaterialTheme.typography.labelMedium)
@@ -152,13 +152,13 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: Focus
             },
             isError = refused,
             singleLine = true,
-            // Next goes on to the ingredient list's first item, a row or a group's heading; with none, Done closes
-            // the keyboard and adds no row.
+            // Next goes on to the first item of equipment or, with none, the ingredient list's first item, a row or a
+            // group's heading ([onNext]); with neither, Done closes the keyboard and adds nothing.
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = if (recipe.listItems.isEmpty()) ImeAction.Done else ImeAction.Next,
+                imeAction = if (onNext == null) ImeAction.Done else ImeAction.Next,
             ),
-            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }, onNext = { focusOn(recipe.listItems.firstOrNull(), rows, headings) }),
+            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }, onNext = { onNext?.invoke() }),
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(requester)
@@ -419,7 +419,7 @@ private class ItemPlace(val at: Int, items: List<ListItem>, val startsGroup: Boo
 }
 
 /** Asks [item] — a row or a group's heading — to take the focus with the keyboard up; none for null. */
-private fun focusOn(item: ListItem?, rows: RowFocus, headings: RowFocus) = when (item) {
+internal fun focusOn(item: ListItem?, rows: RowFocus, headings: RowFocus) = when (item) {
     is ListItem.Row -> rows.ask(item.position)
     is ListItem.Heading -> headings.ask(item.index)
     null -> Unit

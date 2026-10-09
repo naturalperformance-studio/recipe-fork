@@ -13,6 +13,24 @@
     <string name="card_fork_held">У вас уже есть своя версия этого рецепта, она не менялась с тех пор, как вы её сделали.</string>
     <string name="card_fork_held_open">Открыть её</string>
     <string name="card_fork_held_another">Сделать ещё одну</string>
+    <plurals name="card_summary_ingredients">
+        <item quantity="one">%d ингредиент</item>
+        <item quantity="few">%d ингредиента</item>
+        <item quantity="many">%d ингредиентов</item>
+        <item quantity="other">%d ингредиента</item>
+    </plurals>
+    <plurals name="card_summary_steps">
+        <item quantity="one">%d шаг</item>
+        <item quantity="few">%d шага</item>
+        <item quantity="many">%d шагов</item>
+        <item quantity="other">%d шага</item>
+    </plurals>
+    <string name="card_summary_timers">таймеры ≈ %1$s</string>
+    <string name="card_summary_timers_spoken">таймеры примерно %1$s</string>
+    <string name="card_summary_two">%1$s · %2$s</string>
+    <string name="card_summary_three">%1$s · %2$s · %3$s</string>
+    <string name="card_summary_spoken_two">%1$s, %2$s</string>
+    <string name="card_summary_spoken_three">%1$s, %2$s, %3$s</string>
     <string name="card_parent">Основано на рецепте «%1$s»</string>
     <string name="card_parent_open_action">Открыть рецепт, на котором основан этот</string>
     <string name="card_parent_unavailable">Основано на рецепте, которого нет в этой книге рецептов</string>
@@ -64,4 +82,19 @@
     <string name="card_mark_not_done_action">Снять отметку «готово»</string>
     <string name="card_marked_done">Готово</string>
     <string name="card_clear_marks">Снять отметки</string>
+    <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
+    <string name="card_view_timer">%1$s · %2$s</string>
+    <!-- The card's two tabs, under its top bar: the recipe for reading and deciding, and for cooking with busy hands. -->
+    <string name="card_tab_view">Просмотр</string>
+    <string name="card_tab_cooking">Готовка</string>
+    <string name="card_tab_view_action">Показать рецепт для чтения</string>
+    <string name="card_tab_cooking_action">Показать рецепт для готовки</string>
+    <string name="card_current_step">Текущий шаг</string>
+    <string name="card_ingredients_gathered">Всё собрано</string>
+    <string name="card_ingredients_show">показать</string>
+    <string name="card_ingredients_folded">%1$s · %2$s</string>
+    <string name="card_ingredients_show_action">Показать ингредиенты</string>
+    <!-- Посуда и техника рецепта, над ингредиентами; на «Готовке» сворачивается, как ингредиенты, когда отмечен каждый предмет. -->
+    <string name="card_equipment">Посуда и техника</string>
+    <string name="card_equipment_show_action">Показать посуду и технику</string>
 </resources>

@@ -5,6 +5,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.BookName
+import app.recipefork.app.card.scrollClearOfFork
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
@@ -63,20 +64,20 @@ class CardTimerReferencesTest : CardTimersKit() {
     @Test
     fun aTimerIsNamedWithTheReferenceAsTheCardShowsIt() {
         open()
-        assertEquals("Knead 200 g flour", controlName())
+        assertEquals("Knead 200\u00A0g flour", controlName())
         more(4)
-        assertEquals("Knead 400 g flour", controlName())
+        assertEquals("Knead 400\u00A0g flour", controlName())
         start(0)
         awaitHeld { it.size == 1 }
-        assertEquals("Knead 400 g flour", held().single().name)
+        assertEquals("Knead 400\u00A0g flour", held().single().name)
         compose.waitUntil(PATIENCE_MS) { timers.announcements.started.isNotEmpty() }
-        assertEquals("Knead 400 g flour", timers.announcements.started.last().name)
+        assertEquals("Knead 400\u00A0g flour", timers.announcements.started.last().name)
         // Back at 4 the step reads 200 g; the held timer keeps the name it started under, and is not dropped.
         fewer(4)
         pass(1.minutes)
         awaitStatus(0, "4:00")
-        assertEquals("Knead 400 g flour", controlName())
-        assertEquals("Knead 400 g flour", held().single().name)
+        assertEquals("Knead 400\u00A0g flour", controlName())
+        assertEquals("Knead 400\u00A0g flour", held().single().name)
         assertTrue(timers.announcements.cancelled.isEmpty())
     }
 
@@ -86,12 +87,12 @@ class CardTimerReferencesTest : CardTimersKit() {
         usual.set(Rational.of(2))
         open()
         assertEquals(listOf("Servings: 2"), compose.textsOf(CardTags.SERVINGS))
-        assertEquals("Knead 100 g flour", controlName())
+        assertEquals("Knead 100\u00A0g flour", controlName())
         start(0)
         awaitHeld { it.size == 1 }
-        assertEquals("Knead 100 g flour", held().single().name)
+        assertEquals("Knead 100\u00A0g flour", held().single().name)
         compose.waitUntil(PATIENCE_MS) { timers.announcements.started.isNotEmpty() }
-        assertEquals("Knead 100 g flour", timers.announcements.started.last().name)
+        assertEquals("Knead 100\u00A0g flour", timers.announcements.started.last().name)
     }
 
     // The card reopens at the authored count: the timer started at another one is still the step's own.
@@ -107,16 +108,17 @@ class CardTimerReferencesTest : CardTimersKit() {
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.start(0)) }
         pass(1.minutes)
         awaitStatus(0, "4:00")
-        assertEquals("Knead 300 g flour", controlName())
-        assertEquals(listOf("Knead 300 g flour"), held().map { it.name })
+        assertEquals("Knead 300\u00A0g flour", controlName())
+        assertEquals(listOf("Knead 300\u00A0g flour"), held().map { it.name })
         assertTrue(breadKey !in timers.announcements.cancelled)
         // Once cleared, a new start takes the name the step reads by now.
-        compose.onNodeWithTag(TimerTags.cancel(0)).performScrollTo().performClick()
+        compose.scrollClearOfFork(TimerTags.cancel(0))
+        compose.onNodeWithTag(TimerTags.cancel(0)).performClick()
         awaitHeld { it.isEmpty() }
-        compose.waitUntil(PATIENCE_MS) { controlName() == "Knead 200 g flour" }
+        compose.waitUntil(PATIENCE_MS) { controlName() == "Knead 200\u00A0g flour" }
         start(0)
         awaitHeld { it.size == 1 }
-        assertEquals("Knead 200 g flour", held().single().name)
+        assertEquals("Knead 200\u00A0g flour", held().single().name)
     }
 
     // An edit to the step's own words still drops the timer, as before.
@@ -139,11 +141,11 @@ class CardTimerReferencesTest : CardTimersKit() {
         runBlocking { recipes.save(parted) }
         show(parted)
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.start(0)) }
-        assertEquals("Knead 50 g flour", controlName())
+        assertEquals("Knead 50\u00A0g flour", controlName())
         more(4)
-        assertEquals("Knead 100 g flour", controlName())
+        assertEquals("Knead 100\u00A0g flour", controlName())
         start(0)
         awaitHeld { it.size == 1 }
-        assertEquals("Knead 100 g flour", held().single().name)
+        assertEquals("Knead 100\u00A0g flour", held().single().name)
     }
 }

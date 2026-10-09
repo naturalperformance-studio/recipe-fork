@@ -28,7 +28,7 @@ class ContrastTest {
     private fun pairs(c: ColorScheme) = listOf(
         // Text.
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
-        text("muted notes and marks — an entry's sending mark, step notes, ingredient notes, labels, placeholders, the synonym beside an offered entry", c.onSurfaceVariant, c.surface),
+        text("muted notes and marks — an entry's sending mark, step notes, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\")", c.onSurfaceVariant, c.surface),
         text("text actions — the bar's actions, text buttons, timers' figures, the checklist's label", c.primary, c.surface),
         text("a filled button's label, a step's number in its circle on the card", c.onPrimary, c.primary),
         text("a problem said under a field", c.error, c.surface),
@@ -42,10 +42,10 @@ class ContrastTest {
         text("a tag's input chip in the editor, the declared language's segment", c.onSecondaryContainer, c.secondaryContainer),
         text("an offered tag's suggestion chip, the other language's segment", c.onSurfaceVariant, c.surface),
         text("a tonal button's label and icon — a timer's controls, the card's − and +", c.onSecondaryContainer, c.secondaryContainer),
-        text("the card's ingredients on their tint — heading, lines, the fixed note", c.onSurface, c.surfaceContainerLow),
+        text("the card's ingredients and equipment on their tint — headings, lines, the fixed note, \"All gathered\" once folded", c.onSurface, c.surfaceContainerLow),
         text("the card's ingredients on their tint — the status line, the arrows, an ingredient's note, the fixing field's label", c.onSurfaceVariant, c.surfaceContainerLow),
-        text("the fixing control's Cancel and Release, on the ingredients' tint", c.primary, c.surfaceContainerLow),
-        text("an ingredient line marked done on the card — struck through and muted — on the ingredients' tint", c.onSurfaceVariant, c.surfaceContainerLow),
+        text("the fixing control's Cancel and Release, the folded ingredients' and equipment's \"show\", on their tint", c.primary, c.surfaceContainerLow),
+        text("an ingredient line or an item of equipment marked done on the card — struck through and muted — on their tint", c.onSurfaceVariant, c.surfaceContainerLow),
         text("a step marked done on the card — struck through and muted", c.onSurfaceVariant, c.surface),
         text("a problem said under the fixing field, on the ingredients' tint", c.error, c.surfaceContainerLow),
         text("Delete and Remove in the card's menu", c.error, c.surfaceContainer),
@@ -58,14 +58,16 @@ class ContrastTest {
         text("a menu's items", c.onSurface, c.surfaceContainer),
         text("the bar of running timers — names and times left", c.onSurface, c.surfaceContainer),
         text("the book's top bar — its title and menu — with a list scrolled under it", c.onSurface, c.surfaceContainer),
-        text("the chosen view's tab", c.primary, c.surface),
-        text("a view's tab not chosen", c.onSurfaceVariant, c.surface),
-        text("a view's floating action — its words and icon", c.onPrimaryContainer, c.primaryContainer),
+        text("the chosen tab — the book's view, the card's View or Cooking", c.primary, c.surface),
+        text("a tab not chosen — the book's view, the card's View or Cooking", c.onSurfaceVariant, c.surface),
+        text("a view's floating action — its words and icon; the card's current step on Cooking, on its container", c.onPrimaryContainer, c.primaryContainer),
+        text("the arrow after a rounded reference in the card's current step, on its container", c.onSurfaceVariant, c.primaryContainer),
         text("a book's entry, a card — its title and state", c.onSurface, c.surfaceContainerHighest),
         text("a book's entry, a card — its tags and sending mark", c.onSurfaceVariant, c.surfaceContainerHighest),
         text("a photo source sheet's title and items", c.onSurface, c.surfaceContainerLow),
         text("a photo source sheet's removal — the cover, a step's photo or clip", c.error, c.surfaceContainerLow),
         text("the empty cover's label", c.onSurfaceVariant, c.surfaceContainerHigh),
+        text("the card's summary line under the title — counts of ingredients and steps, the timers' time", c.onSurfaceVariant, c.background),
         // Icons that carry meaning and the boundaries of controls.
         graphic("the drag column's handle, on the column's tint", c.onSurfaceVariant, c.surfaceContainerHigh),
         graphic("the empty cover's camera", c.onSurfaceVariant, c.surfaceContainerHigh),
@@ -84,6 +86,7 @@ class ContrastTest {
         graphic("the indicator of a list being read", c.primary, c.surface),
         graphic("a removal's icon in the editor — an ingredient row, a step, a timer", c.error, c.surface),
         graphic("the progress of a file being imported or exported, on its track", c.primary, c.surfaceContainerHighest),
+        graphic("a step's number circle in the card's current step, on its container", c.primary, c.primaryContainer),
     )
 
     private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }

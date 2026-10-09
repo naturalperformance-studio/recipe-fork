@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
@@ -53,7 +54,7 @@ class CardPartReferencesTest {
     private val book = TestBook(context)
     private val device = TestDevice(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { device.database.dictionaryDao().ingredients() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { device.database.dictionaryDao().ingredients() }
     private val now = Instant.parse("2026-10-02T12:00:00Z")
 
     @Before
@@ -107,15 +108,15 @@ class CardPartReferencesTest {
     @Config(qualifiers = "ru")
     fun partsReadTheirShareAtTheCardsScale() {
         open()
-        assertEquals("В маринад: 2 шт", shown(0))
-        assertEquals("В соус: 2 шт", shown(1))
-        assertEquals("Всего: 4 шт", shown(2))
+        assertEquals("В маринад: 2\u00A0шт", shown(0))
+        assertEquals("В соус: 2\u00A0шт", shown(1))
+        assertEquals("Всего: 4\u00A0шт", shown(2))
         assertEquals("4 шт", listQuantity())
         more(4)
         assertEquals("Порций: 8", servings())
-        assertEquals("В маринад: 4 шт", shown(0))
-        assertEquals("В соус: 4 шт", shown(1))
-        assertEquals("Всего: 8 шт", shown(2))
+        assertEquals("В маринад: 4\u00A0шт", shown(0))
+        assertEquals("В соус: 4\u00A0шт", shown(1))
+        assertEquals("Всего: 8\u00A0шт", shown(2))
         assertEquals("8 шт", listQuantity())
     }
 
@@ -127,9 +128,9 @@ class CardPartReferencesTest {
         fewer(1)
         assertEquals("Servings: 3", servings())
         assertEquals("3 pc", listQuantity())
-        assertEquals("Всего: 3 pc", shown(2))
-        assertEquals("В маринад: 2 pc\u202F↑", shown(0))
-        assertEquals(listOf("1.", "В маринад: 2 pc (rounded up, exact value was lower)"), spoken(0))
+        assertEquals("Всего: 3\u00A0pc", shown(2))
+        assertEquals("В маринад: 2\u00A0pc\u202F↑", shown(0))
+        assertEquals(listOf("1.", "В маринад: 2\u00A0pc (rounded up, exact value was lower)"), spoken(0))
     }
 
     // The references read as a timer names them: the part's text and rounding, and the whole's beside it.
@@ -167,8 +168,8 @@ class CardPartReferencesTest {
         compose.setContent { MaterialTheme { CardScreen(bread.id, recipes, environment, onBack = {}, onEdit = {}) } }
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.step(1))).fetchSemanticsNodes().size == 1 }
-        assertEquals("Dust with 100 g", shown(0))
-        assertEquals("Rub with 2 pc", shown(1))
+        assertEquals("Dust with 100\u00A0g", shown(0))
+        assertEquals("Rub with 2\u00A0pc", shown(1))
         compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("200")
@@ -176,7 +177,7 @@ class CardPartReferencesTest {
         compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().assertIsEnabled().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isEmpty() }
         assertEquals("Servings: ≈2", servings())
-        assertEquals("Dust with 50 g", shown(0))
-        assertEquals("Rub with 1 pc", shown(1))
+        assertEquals("Dust with 50\u00A0g", shown(0))
+        assertEquals("Rub with 1\u00A0pc", shown(1))
     }
 }

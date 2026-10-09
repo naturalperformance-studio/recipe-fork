@@ -280,12 +280,19 @@ object LocalizationChecks {
     /**
      * The string resources of [context]'s current language that the language holds itself, resolved in it:
      * a string that exists only in another language's directory is left out, so its fallback value is not
-     * accepted as this language's text.
+     * accepted as this language's text. A plural resource gives each of its forms (as 0, 1, 2 and 5 select them).
      */
     fun ownResolvedStrings(context: Context, res: File = resDir): List<String> {
         val own = stringsIn(ownValuesDir(context, res)).keys
-        return R.string::class.java.fields.filter { it.name in own }.map { context.getString(it.getInt(null)) }
+        val strings = R.string::class.java.fields.filter { it.name in own }.map { context.getString(it.getInt(null)) }
+        val plurals = R.plurals::class.java.fields.filter { it.name in own }.flatMap { field ->
+            PLURAL_SAMPLES.map { context.resources.getQuantityText(field.getInt(null), it).toString() }
+        }.distinct()
+        return strings + plurals
     }
+
+    /** Counts that between them select every plural form of English and Russian: other, one, few and many. */
+    private val PLURAL_SAMPLES = listOf(0, 1, 2, 5)
 
     /**
      * L10N-001 (1) on a rendered screen: every text, description and action label shown is a string resource
@@ -298,14 +305,23 @@ object LocalizationChecks {
         content: Set<String> = emptySet(),
         res: File = resDir,
     ) {
-        val patterns = ownResolvedStrings(context, res).map { value ->
-            Regex(Regex.escape(value).replace(Regex("""%(\d+\$)?[sd]"""), """\\E.+\\Q"""))
-        }
+        val patterns = textPatterns(ownResolvedStrings(context, res))
         val shown = shownText(screen)
         assertTrue("the screen shows no text", shown.isNotEmpty())
         val foreign = shown.filter { it !in content && patterns.none { p -> p.matches(it) } }
         assertEquals("text not taken from the resources of this language", emptyList<String>(), foreign)
     }
+
+    private val placeholder = Regex("""%(\d+\$)?[sd]""")
+
+    /**
+     * The patterns a shown text may match to count as taken from one of [values]: each value with its placeholders
+     * standing for any text. A value made only of placeholders and punctuation — a joiner such as `%1$s, %2$s` or
+     * `%1$s · %2$s` — is left out, since it would let any text pass that holds its punctuation.
+     */
+    fun textPatterns(values: List<String>): List<Regex> =
+        values.filter { value -> value.replace(placeholder, "").any(Char::isLetterOrDigit) }
+            .map { value -> Regex(Regex.escape(value).replace(placeholder, """\\E.+\\Q""")) }
 
     /**
      * L10N-001 (1) as the reader reads it: every text, description and action label shown, except the reader's

@@ -2,6 +2,15 @@ package app.recipefork.app.card
 
 import app.recipefork.app.ui.AppNavHost
 import android.content.Context
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.performScrollTo
+import app.recipefork.app.data.HeldLastCardTab
+import app.recipefork.app.timer.LocalCardTimers
+import app.recipefork.app.timer.TestTimers
+import app.recipefork.app.timer.TimerTags
+import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.Timer
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.ComponentActivity
@@ -46,8 +55,9 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * The screen stays on while a card is shown (FLOW-014): for 15 minutes after the last touch on it, then it is left
- * to the device's own setting until the next touch, and at once when the reader leaves the card. The 15 minutes are
+ * The screen stays on while the card's Cooking tab is shown, and on either tab while one of the recipe's timers runs
+ * (FLOW-014): for 15 minutes after the last touch on it, then it is left to the device's own setting until the next
+ * touch, and at once when the reader leaves the card or turns to View with no timer running. The 15 minutes are
  * measured by [TestAwakeClock], which the tests move by hand.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -63,12 +73,14 @@ class KeepScreenAwakeTest {
     private val recipes = RecipeRepository(active)
     private val session = LibrarySession(SavedStateHandle())
     private val clock = TestAwakeClock()
+    private val timers = TestTimers(context)
     private val now = Instant.parse("2026-10-01T12:00:00Z")
 
     @Before
     fun setUp() {
         compose.registerIdlingResource(book.idling)
         compose.registerIdlingResource(device.idling)
+        compose.registerIdlingResource(timers.idling)
         runBlocking { device.database.dictionaryDao().replace(SAMPLE_DICTIONARIES) }
     }
 
@@ -76,25 +88,46 @@ class KeepScreenAwakeTest {
     fun close() {
         compose.unregisterIdlingResource(book.idling)
         compose.unregisterIdlingResource(device.idling)
+        compose.unregisterIdlingResource(timers.idling)
         book.close()
         device.close()
+        timers.close()
     }
 
-    /** Shows the library with the card of a saved recipe open, and waits until its 15 minutes have begun. */
-    private fun openACard() {
-        val recipe = Recipe.create(now, owner = null).copy(title = "Borscht")
+    /**
+     * Shows the library with the card of a saved recipe open on [tab], the tab last chosen, and on Cooking waits until
+     * its 15 minutes have begun.
+     */
+    private fun openACard(tab: CardMode = CardMode.COOKING) {
+        val recipe = Recipe.create(now, owner = null).copy(title = "Borscht", steps = listOf(Step(0, "Boil the beets.", timer = Timer(40.minutes, "Beets"))))
         runBlocking { recipes.save(recipe) }
         session.choose(LibraryView.OWN)
         session.openCard(recipe.id.value)
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
-        val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
+        val card = CardEnvironment(lastTab = HeldLastCardTab(tab)) { device.database.dictionaryDao().ingredients() }
         compose.setContent {
-            CompositionLocalProvider(LocalAwakeClock provides clock) {
+            CompositionLocalProvider(LocalAwakeClock provides clock, LocalCardTimers provides timers.card) {
                 MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) }
             }
         }
         compose.awaitCard()
-        awaitAFreshPeriod()
+        if (tab == CardMode.COOKING) awaitAFreshPeriod() else compose.waitForIdle()
+    }
+
+    private fun selected(mode: CardMode) =
+        compose.onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true
+
+    /** Turns the card to [mode] and waits until it has come to rest there. */
+    private fun choose(mode: CardMode) {
+        compose.onNodeWithTag(CardTags.tab(mode)).performClick()
+        compose.waitUntil(PATIENCE_MS) { selected(mode) && compose.onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1 }
+        compose.waitForIdle()
+    }
+
+    /** Starts the recipe's timer from Cooking. */
+    private fun startTheTimer() {
+        compose.onNodeWithTag(TimerTags.start(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(TimerTags.cancel(0))).fetchSemanticsNodes().isNotEmpty() }
     }
 
     /** Waits until the 15 minutes run from the present moment: the last opening or touch has been counted. */
@@ -110,7 +143,7 @@ class KeepScreenAwakeTest {
     }
 
     private fun touchTheCard() {
-        compose.onNodeWithTag(CardTags.TITLE).performTouchInput { down(center); up() }
+        compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { down(center); up() }
         awaitAFreshPeriod()
     }
 
@@ -179,11 +212,46 @@ class KeepScreenAwakeTest {
         assertLeftToTheDevice()
     }
 
-    // FLOW-014 (4): the edit action leaves the screen to the device at once; leaving the editor shows the card,
-    // which keeps it on again.
+    // FLOW-014: View, with no timer running, leaves the screen to the device; turning to Cooking keeps it on, and
+    // turning back to View leaves it again at once.
+    @Test
+    fun theScreenStaysOnWhileTheCookingTabIsShown() {
+        openACard(CardMode.VIEW)
+        assertLeftToTheDevice()
+        choose(CardMode.COOKING)
+        awaitAFreshPeriod()
+        assertKeptOn()
+        pass(1.minutes)
+        assertKeptOn()
+        choose(CardMode.VIEW)
+        assertLeftToTheDevice()
+        touchTheCardOnView()
+        assertLeftToTheDevice()
+    }
+
+    // FLOW-014: while one of the recipe's timers runs, View keeps the screen on too.
+    @Test
+    fun aRunningTimerKeepsTheScreenOnOnView() {
+        openACard()
+        startTheTimer()
+        choose(CardMode.VIEW)
+        assertKeptOn()
+        pass(1.minutes)
+        assertKeptOn()
+    }
+
+    private fun touchTheCardOnView() {
+        compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { down(center); up() }
+        compose.waitForIdle()
+    }
+
+    // FLOW-014 (4): the edit action, on View with a timer running, leaves the screen to the device at once; leaving
+    // the editor shows the card, which keeps it on again.
     @Test
     fun leavingTheCardForTheEditorLeavesTheScreenToTheDeviceAtOnce() {
         openACard()
+        startTheTimer()
+        choose(CardMode.VIEW)
         assertKeptOn()
         compose.onNodeWithTag(CardTags.EDIT).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)

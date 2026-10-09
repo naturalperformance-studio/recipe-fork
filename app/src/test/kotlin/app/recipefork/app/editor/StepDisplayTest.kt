@@ -34,7 +34,9 @@ class StepDisplayTest {
     fun theFieldShowsTheStepAsTheSharedRenderingReadsIt() {
         val shown = display()
         assertEquals("Всыпьте 200 г муки", shown.text)
-        assertEquals(StepText.render(step, ReferenceText.authored(rows, InterfaceLanguage.RUSSIAN)), shown.text)
+        // The same reading, the reference's spaces plain: the field is edited as typed text is, so it keeps ordinary
+        // spaces where a screen that only shows the step holds the reference together with no-break ones.
+        assertEquals(StepText.render(step, ReferenceText.authored(rows, InterfaceLanguage.RUSSIAN)).replace('\u00A0', ' '), shown.text)
         assertEquals(listOf(ShownReference(8, 13, IngredientReference(0, 8))), shown.references)
     }
 

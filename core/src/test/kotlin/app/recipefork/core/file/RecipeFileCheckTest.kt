@@ -49,6 +49,7 @@ class RecipeFileCheckTest {
             FileMedia("m-2", MediaKind.VIDEO, MediaAttachment.ToStep(1), "media/m-2.mp4"),
         ),
         ingredientGroups = listOf(IngredientGroup("Soup", 0), IngredientGroup("Seasoning", 2)),
+        equipment = listOf("Pot", "Frying pan 26 cm"),
     )
 
     private fun refused(content: RecipeFileContent) =
@@ -231,11 +232,11 @@ class RecipeFileCheckTest {
     // FLOW-064 (5): a document from a later version is told apart from a damaged one.
     @Test
     fun aLaterFormatIsToldApart() {
-        val later = RecipeFile.encode(valid).replace("\"format_version\": 3", "\"format_version\": 4")
-        assertTrue("\"format_version\": 4" in later)
+        val later = RecipeFile.encode(valid).replace("\"format_version\": 4", "\"format_version\": 5")
+        assertTrue("\"format_version\": 5" in later)
         val thrown = runCatching { RecipeFile.decode(later) }.exceptionOrNull()
         assertTrue(thrown is LaterRecipeFile, "$thrown")
-        assertEquals(4, thrown.formatVersion)
+        assertEquals(5, thrown.formatVersion)
         val damaged = runCatching { RecipeFile.decode("{") }.exceptionOrNull()
         assertTrue(damaged is UnreadableRecipeFile && damaged !is LaterRecipeFile)
         val huge = RecipeFile.encode(valid).replace("\"3/2\"", "\"${"9".repeat(100_000)}/2\"")
@@ -274,5 +275,20 @@ class RecipeFileCheckTest {
         refusedFor("starts at no ingredient", valid.copy(ingredients = emptyList(), steps = emptyList(), media = emptyList(), ingredientGroups = listOf(IngredientGroup("Soup", 1))))
         refusedFor("out of order", groups(IngredientGroup("Seasoning", 2), IngredientGroup("Soup", 0)))
         refusedFor("two groups start at one ingredient", groups(IngredientGroup("Soup", 1), IngredientGroup("Seasoning", 1)))
+    }
+
+    // The equipment: at most fifteen items, each 1 to 40 characters, trimmed and not blank.
+    @Test
+    fun theEquipment() {
+        val fifteen = (1..15).map { "Item $it".padEnd(40, 'x') }
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = fifteen)))
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf("P"))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = emptyList())))
+        refusedFor("more than 15 items of equipment", valid.copy(equipment = fifteen + "Item 16"))
+        refusedFor("equipment 1 is over 40", valid.copy(equipment = listOf("Pot", "p".repeat(41))))
+        refusedFor("equipment 0 is blank", valid.copy(equipment = listOf("")))
+        refusedFor("equipment 1 is blank", valid.copy(equipment = listOf("Pot", "   ")))
+        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(" Pot")))
+        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf("Pot ")))
     }
 }

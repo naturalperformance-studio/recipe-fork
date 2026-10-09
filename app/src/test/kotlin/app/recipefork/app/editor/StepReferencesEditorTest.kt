@@ -428,7 +428,8 @@ class StepReferencesEditorTest {
         assertFalse(compose.onNodeWithTag(EditorTags.stepText(0), useUnmergedTree = true).fetchSemanticsNode().config.contains(SemanticsActions.SetText))
         val timerName = compose.onNodeWithTag(EditorTags.timerName(0), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsProperties.Text].single().text
-        assertTrue(timerName, timerName.contains(text))
+        // The name holds each reference together with no-break spaces, as the card shows it; the field, plain ones.
+        assertTrue(timerName, timerName.replace('\u00A0', ' ').contains(text))
     }
 
     // FLOW-016 (8) at the authored scale: the derived timer name reads a reference as the editor shows it.
@@ -437,10 +438,26 @@ class StepReferencesEditorTest {
         val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8)), Timer(5.minutes)))
         open(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
-        assertEquals("Всыпьте 200 г муки", fieldText(EditorTags.timerName(0)))
+        assertEquals("Всыпьте 200\u00A0г муки", fieldText(EditorTags.timerName(0)))
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("300")
         compose.waitForIdle()
-        assertEquals("Всыпьте 300 г муки", fieldText(EditorTags.timerName(0)))
+        assertEquals("Всыпьте 300\u00A0г муки", fieldText(EditorTags.timerName(0)))
+    }
+
+    // T-191: a derived name holds its references together with no-break spaces, but a name the author gives from it
+    // keeps ordinary ones — stored, and so exported, as typed text always is.
+    @Test
+    fun aNameGivenFromTheDerivedOneKeepsOrdinarySpaces() {
+        val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8)), Timer(5.minutes)))
+        open(recipe.id)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerName(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(EditorTags.timerName(0)).performTextInput("!")
+        compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps.single().timers.single().label != null }
+        val label = stored(recipe.id).steps.single().timers.single().label!!
+        assertFalse(label, '\u00A0' in label)
+        assertEquals("Всыпьте 200 г муки", label.replace("!", ""))
+        assertFalse('\u00A0' in fieldText(EditorTags.timerName(0)))
     }
 
     // A recipe with no ingredient yet: the control is there, and says there is nothing to insert.

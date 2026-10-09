@@ -391,7 +391,7 @@ class StepHintsEditorTest {
         openDirectly(draft(step))
         passThrough(0)
         awaitNotification(0)
-        val read = "Sift 200 g into the bowl, then whisk it with the eggs"
+        val read = "Sift 200\u00A0g into the bowl, then whisk it with the eggs"
         assertTrue(read.length <= TimerName.LENGTH)
         assertEquals(string(R.string.editor_timer_notification, read), notificationText(0))
         assertEquals(listOf(string(R.string.editor_timer_notification_follows)), compose.textsOf(EditorTags.timerNotificationFollows(0)))

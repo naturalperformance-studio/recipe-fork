@@ -10,15 +10,66 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import app.recipefork.app.editor.PATIENCE_MS
 import org.junit.Assert.assertTrue
+
+/** Turns the open card to its tab [mode] by a tap on the tab, and waits until the card has come to rest there. */
+fun ComposeTestRule.chooseCardTab(mode: CardMode) {
+    onNodeWithTag(CardTags.tab(mode)).performClick()
+    waitUntil(PATIENCE_MS) {
+        onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true &&
+            onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1
+    }
+    waitForIdle()
+}
 
 /** Waits until the card is open, then takes its back action to the recipe book. */
 fun ComposeTestRule.backThroughTheCard() {
     awaitCard()
     onNodeWithTag(CardTags.BACK).performClick()
     waitForIdle()
+}
+
+/** Whether the card's ⋮ is open: one of its items is shown. */
+private fun ComposeTestRule.cardMenuOpen() =
+    listOf(CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE).any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
+
+/** Opens the card's ⋮ and waits for its items, without taking one. */
+fun ComposeTestRule.openTheCardMenu() {
+    onNodeWithTag(CardTags.MENU).performClick()
+    waitUntil(PATIENCE_MS) { cardMenuOpen() }
+}
+
+/** Closes the card's open ⋮ by its own button, taking nothing from it. */
+fun ComposeTestRule.closeTheCardMenu() {
+    onNodeWithTag(CardTags.MENU).performClick()
+    waitUntil(PATIENCE_MS) { !cardMenuOpen() }
+}
+
+/** Takes the card's floating Fork action. */
+fun ComposeTestRule.forkFromTheCard() {
+    waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().isNotEmpty() }
+    onNodeWithTag(CardTags.FORK).performClick()
+    waitForIdle()
+}
+
+/**
+ * Scrolls the card's content until the element tagged [tag] stands clear above the floating fork action, as a reader
+ * scrolls a part out from under it before tapping it.
+ */
+fun ComposeTestRule.scrollClearOfFork(tag: String) {
+    onNodeWithTag(tag, useUnmergedTree = true).performScrollTo()
+    waitForIdle()
+    if (onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().isEmpty()) return
+    val fork = onNodeWithTag(CardTags.FORK).fetchSemanticsNode().boundsInRoot
+    val part = onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+    if (part.bottom > fork.top && part.right > fork.left) {
+        onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, part.bottom - fork.top) }
+        waitForIdle()
+    }
 }
 
 /** The element tagged [tag] is laid out at least the card's [CardTarget] in each direction (A11Y-003 (2), A11Y-007). */

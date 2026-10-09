@@ -1,5 +1,6 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.data.HeldLastCardTab
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.ColorScheme
@@ -54,7 +55,7 @@ import java.time.Instant
 
 /**
  * The card's controls and type come from the theme file (ADR 20261004): with `app_theme.xml` edited, the step text
- * takes the edited title size and stays larger than body text (A11Y-007); − and + are one connected group of tonal
+ * on Cooking takes the edited headline size and stays larger than body text (A11Y-007); − and + are one connected group of tonal
  * halves, each the card's 56 dp in the edited tonal colour; the ingredients sit on the edited tonal surface; the fixing control's actions are a
  * filled and text buttons in the edited colours; the ⋮'s Delete is in the edited error colour.
  */
@@ -68,7 +69,7 @@ class CardThemeTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val book = TestBook(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
-    private val environment = CardEnvironment { emptyList() }
+    private val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
     private val now = Instant.parse("2026-10-04T12:00:00Z")
 
     private val recipe = Recipe.create(now, null).copy(
@@ -91,7 +92,7 @@ class CardThemeTest {
                 R.color.theme_light_surfaceContainerLow to Color(0xFFFFF3E0),
                 R.color.theme_light_error to Color(0xFF8E0000),
             ),
-            sizes = mapOf(R.dimen.theme_type_titleLarge to EDITED_TITLE_SP),
+            sizes = mapOf(R.dimen.theme_type_titleLarge to EDITED_TITLE_SP, R.dimen.theme_type_headlineSmall to EDITED_HEADLINE_SP),
         )
     }
     private val scheme: ColorScheme by lazy { appColorScheme(resources, dark = false) }
@@ -133,9 +134,9 @@ class CardThemeTest {
     }
 
     @Test
-    fun aTitleSizeChangedInTheThemeFileShowsOnTheStepsWhichStayLargerThanBodyText() {
+    fun aHeadlineSizeChangedInTheThemeFileShowsOnTheCookingStepsWhichStayLargerThanBodyText() {
         val step = layoutOf(hasTestTag(StepTags.text(0))).layoutInput.style.fontSize
-        assertEquals(EDITED_TITLE_SP.sp, step)
+        assertEquals(EDITED_HEADLINE_SP.sp, step)
         val body = appTypography(resources)
         listOf(body.bodyLarge, body.bodyMedium, body.bodySmall).forEach {
             assertTrue("body text at ${it.fontSize} is smaller than the step at $step", it.fontSize.value < step.value)
@@ -199,6 +200,7 @@ class CardThemeTest {
 
     @Test
     fun theMenusDeleteIsInTheThemesErrorColour() {
+        compose.chooseCardTab(CardMode.VIEW)
         compose.onNodeWithTag(CardTags.MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.DELETE)).fetchSemanticsNodes().isNotEmpty() }
         val delete = context.getString(R.string.library_entry_delete)
@@ -208,5 +210,6 @@ class CardThemeTest {
     private companion object {
         /** The title size of the edited theme file, larger than Material's 22 sp. */
         const val EDITED_TITLE_SP = 30
+        const val EDITED_HEADLINE_SP = 32
     }
 }

@@ -38,7 +38,9 @@ The owner's PC has 31 GB of RAM; each Gradle daemon holds 1–4 GB (plus a Kotli
 - Use the default Gradle home `~/.gradle`. Never set `GRADLE_USER_HOME` (no `/tmp/*` homes per task or review): a different home starts a new daemon that nothing reuses.
 - Run Gradle commands one at a time per agent; no `--no-daemon` (it starts a fresh JVM every call), no extra parallel Gradle invocations.
 - `gradle.properties` sets `org.gradle.daemon.idletimeout` to 15 minutes, so an idle daemon exits on its own.
-- At the end of a working pass the lead runs `./gradlew --stop`, unless another session is visibly building. Check with `ps -eo pid,rss,etime,args | grep [G]radleDaemon`.
+- `./gradlew --stop` stops every daemon of this Gradle version in `~/.gradle`, other projects' included (2026-10-09 a neighbouring project's `--stop` killed this project's running builds). At the end of a working pass the lead runs it only when no other build runs: check `ps -eo pid,rss,etime,args | grep [G]radleDaemon` and the `currentDir=` lines of the newest `~/.gradle/daemon/<version>/daemon-*.out.log`.
+- Builds queue machine-wide: `~/.gradle/init.d/one-build-at-a-time.gradle` (outside the repository, the owner's request 2026-10-09) makes every root build of every project take a numbered ticket and then an OS file lock before configuring, so only one compiles or tests at a time, in the order they arrived (first come, first served; a dead build's ticket is dropped, and tickets that never take a free lock within 30 s are skipped); the rest print "waits for it to finish". A waiting build still holds its daemon, so the lead still runs at most two agents at once (2026-10-09 the lead's session was killed out of memory with three agents, an emulator and another project building). `ONE_GRADLE_BUILD=off` skips the lock.
+- Agents iterate with narrow `--tests` filters and run the full `testAll` once at the end of a task; the emulator runs only when no other recipe-fork build does.
 
 ## Test frameworks
 

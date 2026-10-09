@@ -5,10 +5,15 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
+import app.recipefork.core.recipe.Media
+import app.recipefork.core.recipe.MediaAttachment
+import app.recipefork.core.recipe.MediaKind
+import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -19,6 +24,7 @@ import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -96,6 +102,98 @@ class BookMigrationTest {
             db.execSQL("insert into step_reference values ('r4', 0, 10, 0, null, null)")
             db.execSQL("insert into recipe_tag values ('r4', 2)")
             db.version = 4
+        }
+    }
+
+    /**
+     * A book file of version 5, its tables exactly as that version created them, holding one recipe with every part a
+     * recipe had then — a noted row under a group, a step with two timers and a reference, a cover, a tag — and one
+     * found recipe, marked.
+     */
+    private fun writeVersion5() {
+        val file = context.getDatabasePath(book.fileName).also { it.parentFile?.mkdirs() }
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            VERSION_5.forEach(db::execSQL)
+            db.execSQL(
+                "insert into recipe values ('r5', 'acc-5', 'p5', 'SENT_WITH_CHANGES', null, null, null, 'Pancakes', 'Thin', 'EN', 3, " +
+                    "'PRIVATE', 0, 1, 0, 1000, 5000)",
+            )
+            db.execSQL("insert into ingredient values ('r5', 0, null, null, 'flour', 'EXACT', 'GRAM', '250', null, null, null, 'sifted')")
+            db.execSQL("insert into ingredient values ('r5', 1, 3, null, null, 'PIECE', 'PIECE', '2', null, 0, null, null)")
+            db.execSQL("insert into ingredient_group values ('r5', 0, 'Batter', 0)")
+            db.execSQL("insert into step values ('r5', 0, 'Whisk the  and rest')")
+            db.execSQL("insert into step values ('r5', 1, 'Fry')")
+            db.execSQL("insert into step_timer values ('r5', 0, 0, 30, 'Rest')")
+            db.execSQL("insert into step_timer values ('r5', 0, 1, 2, null)")
+            db.execSQL("insert into step_reference values ('r5', 0, 10, 0, null, null)")
+            db.execSQL("insert into media values ('m5', 'r5', 0, null, 'PHOTO', null, 'PRIVATE')")
+            db.execSQL("insert into recipe_tag values ('r5', 8)")
+            db.execSQL(
+                "insert into recipe values ('f5', null, null, 'NEVER', 'anna', null, null, 'Found soup', '', null, null, " +
+                    "'LINK_SHARED', 0, 0, 0, 1000, 1000)",
+            )
+            db.execSQL("insert into favourite values ('f5', 'Found soup', 6000)")
+            db.version = 5
+        }
+    }
+
+    // A version-5 book, written before a recipe listed its equipment, opens with every recipe intact — own and found —
+    // each listing none; then a recipe lists some, and the book reopens with it.
+    @Test
+    fun aVersion5BookOpensWithEveryRecipeIntactAndNoEquipment() = runBlocking {
+        writeVersion5()
+        val database = BookDatabase.open(context, book)
+        val equipped = try {
+            val repository = RecipeRepository(ActiveBook(book, database))
+            val recipe = repository.get(RecipeId("r5"))
+            val expected = Recipe.create(Instant.ofEpochMilli(1000), AccountId("acc-5"), RecipeId("p5"), RecipeId("r5")).copy(
+                sent = SentStatus.SENT_WITH_CHANGES,
+                title = "Pancakes",
+                description = "Thin",
+                tags = setOf(8L),
+                language = RecipeLanguage.EN,
+                servings = 3,
+                ingredients = listOf(
+                    Ingredient(0, null, null, "flour", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(250), note = "sifted"),
+                    Ingredient(1, 3, null, null, UnitType.PIECE, QuantityUnit.PIECE, Rational.of(2), divisible = false),
+                ),
+                ingredientGroups = listOf(IngredientGroup("Batter", 0)),
+                steps = listOf(
+                    Step(0, "Whisk the  and rest", listOf(IngredientReference(0, 10)), listOf(Timer(30.minutes, "Rest"), Timer(2.minutes))),
+                    Step(1, "Fry"),
+                ),
+                media = listOf(Media("m5", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)),
+                state = RecipeState.PRIVATE,
+                wasPublished = true,
+                contentChangedAt = Instant.ofEpochMilli(5000),
+            )
+            assertEquals(expected, recipe)
+            assertEquals(emptyList<String>(), recipe!!.equipment)
+            val found = repository.get(RecipeId("f5"))!!
+            assertEquals("Found soup", found.title)
+            assertEquals("anna", found.statedAuthor)
+            assertEquals(emptyList<String>(), found.equipment)
+            assertTrue(repository.isMarked(RecipeId("f5")))
+            assertEquals(listOf("r5"), repository.ownNewest(10).first().map { it.recipeId })
+
+            val equipped = recipe.copy(equipment = listOf("Frying pan 26 cm", "Whisk"))
+            repository.save(equipped)
+            assertEquals(equipped, repository.get(RecipeId("r5")))
+            equipped
+        } finally {
+            database.close()
+        }
+        val reopened = BookDatabase.open(context, book)
+        try {
+            val repository = RecipeRepository(ActiveBook(book, reopened))
+            assertEquals(equipped, repository.get(RecipeId("r5")))
+            assertTrue(repository.delete(RecipeId("r5")))
+            reopened.openHelper.readableDatabase.query("select count(*) from recipe_equipment").use {
+                it.moveToFirst()
+                assertEquals(0, it.getInt(0))
+            }
+        } finally {
+            reopened.close()
         }
     }
 
@@ -263,6 +361,26 @@ class BookMigrationTest {
     }
 
     private companion object {
+        /**
+         * What Room generated for the book at version 5, its identity hash included: version 4 with a step's timers in
+         * their own table and the step's row without them.
+         */
+        val VERSION_5 = listOf(
+            "CREATE TABLE IF NOT EXISTS `recipe` (`recipe_id` TEXT NOT NULL, `owner` TEXT, `parent` TEXT, `sent` TEXT NOT NULL, `stated_author` TEXT, `stated_parent_title` TEXT, `stated_parent_nickname` TEXT, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `language` TEXT, `servings` INTEGER, `state` TEXT NOT NULL, `replaces_parent` INTEGER NOT NULL, `was_published` INTEGER NOT NULL, `safety_flag` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `content_changed_at` INTEGER NOT NULL, PRIMARY KEY(`recipe_id`))",
+            "CREATE INDEX IF NOT EXISTS `index_recipe_content_changed_at` ON `recipe` (`content_changed_at`)",
+            "CREATE TABLE IF NOT EXISTS `ingredient` (`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, `dictionary_entry` INTEGER, `qualifier` TEXT, `free_text_name` TEXT, `unit_type` TEXT NOT NULL, `unit` TEXT, `quantity` TEXT, `piece_weight` TEXT, `divisible` INTEGER, `entered_quantity` TEXT, `note` TEXT, PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "CREATE TABLE IF NOT EXISTS `step` (`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, `text` TEXT NOT NULL, PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "CREATE TABLE IF NOT EXISTS `step_reference` (`recipe_id` TEXT NOT NULL, `step_position` INTEGER NOT NULL, `text_offset` INTEGER NOT NULL, `ingredient_position` INTEGER NOT NULL, `share` TEXT, `share_unit` TEXT, PRIMARY KEY(`recipe_id`, `step_position`, `text_offset`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "CREATE TABLE IF NOT EXISTS `media` (`media_id` TEXT NOT NULL, `recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, `owner` TEXT, `kind` TEXT NOT NULL, `step_position` INTEGER, `visibility` TEXT NOT NULL, PRIMARY KEY(`media_id`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "CREATE INDEX IF NOT EXISTS `index_media_recipe_id` ON `media` (`recipe_id`)",
+            "CREATE TABLE IF NOT EXISTS `recipe_tag` (`recipe_id` TEXT NOT NULL, `tag_id` INTEGER NOT NULL, PRIMARY KEY(`recipe_id`, `tag_id`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "CREATE TABLE IF NOT EXISTS `favourite` (`recipe_id` TEXT NOT NULL, `title` TEXT NOT NULL, `added_at` INTEGER NOT NULL, PRIMARY KEY(`recipe_id`))",
+            "CREATE TABLE IF NOT EXISTS `ingredient_group` (`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, `name` TEXT NOT NULL, `first_ingredient` INTEGER NOT NULL, PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "CREATE TABLE IF NOT EXISTS `step_timer` (`recipe_id` TEXT NOT NULL, `step_position` INTEGER NOT NULL, `position` INTEGER NOT NULL, `minutes` INTEGER NOT NULL, `label` TEXT, PRIMARY KEY(`recipe_id`, `step_position`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fc4c3c5324733e23de5e539a166a8b8e')",
+        )
+
         /**
          * What Room generated for the book at version 4: version 3 with an ingredient's note and the ingredient
          * groups, a step's one timer still in its row. The identity hash stands in for that version's.

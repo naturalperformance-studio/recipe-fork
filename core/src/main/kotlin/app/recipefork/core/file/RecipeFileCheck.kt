@@ -29,6 +29,8 @@ object RecipeFileCheck {
     const val MAX_TIMERS = RecipeBounds.MAX_TIMERS
     const val MAX_NOTE = RecipeBounds.MAX_NOTE
     const val MAX_GROUP_NAME = RecipeBounds.MAX_GROUP_NAME
+    const val MAX_EQUIPMENT = RecipeBounds.MAX_EQUIPMENT
+    const val MAX_EQUIPMENT_NAME = RecipeBounds.MAX_EQUIPMENT_NAME
 
     /** From 1 minute to 99 h 59 min (FLOW-027). */
     private val TIMER_MINUTES = 1L..(99L * 60 + 59)
@@ -60,6 +62,13 @@ object RecipeFileCheck {
             check(parent.nickname == null || parent.nickname.isNotBlank() && parent.nickname.length <= MAX_NICKNAME) {
                 "the parent's nickname is not one"
             }
+        }
+
+        // The equipment: at most fifteen items, each trimmed, not blank, and short.
+        check(content.equipment.size <= MAX_EQUIPMENT) { "more than $MAX_EQUIPMENT items of equipment" }
+        content.equipment.forEachIndexed { index, item ->
+            check(item.isNotBlank() && item == item.trim()) { "equipment $index is blank or untrimmed" }
+            check(item.length <= MAX_EQUIPMENT_NAME) { "equipment $index is over $MAX_EQUIPMENT_NAME characters" }
         }
 
         val ingredients = content.ingredients
