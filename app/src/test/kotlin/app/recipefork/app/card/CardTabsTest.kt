@@ -48,6 +48,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.LocalCardTimers
 import app.recipefork.app.timer.TestTimers
 import app.recipefork.app.timer.TimerTags
+import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.AppNavHost
 import app.recipefork.app.ui.AppTheme
 import app.recipefork.core.recipe.Ingredient
@@ -66,6 +67,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -201,18 +203,26 @@ class CardTabsTest {
 
     private fun bottom(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
 
-    // Scenario 1: two M3 tabs under the bar, named, in sight at any scroll.
+    // Scenario 1: two M3 tabs under the bar, named, each announcing what choosing it does, in sight at any scroll.
     @Test
-    fun twoTabsSitUnderTheBarAndStayThereAtAnyScroll() = tabsUnderTheBar("View", "Cooking")
+    fun twoTabsSitUnderTheBarAndStayThereAtAnyScroll() =
+        tabsUnderTheBar("View", "Cooking", "Show the recipe for reading", "Show the recipe for cooking")
 
     @Test
     @Config(qualifiers = "ru-w360dp-h640dp")
-    fun twoTabsSitUnderTheBarAndStayThereAtAnyScrollInRussian() = tabsUnderTheBar("Просмотр", "Готовка")
+    fun twoTabsSitUnderTheBarAndStayThereAtAnyScrollInRussian() =
+        tabsUnderTheBar("Просмотр", "Готовка", "Показать рецепт для чтения", "Показать рецепт для готовки")
 
-    private fun tabsUnderTheBar(view: String, cooking: String) {
+    private fun tabsUnderTheBar(view: String, cooking: String, showView: String, showCooking: String) {
         show(save())
         assertEquals(listOf(view), compose.textsOf(CardTags.tab(CardMode.VIEW)))
         assertEquals(listOf(cooking), compose.textsOf(CardTags.tab(CardMode.COOKING)))
+        // Each tab announces what choosing it does — how the recipe is shown — not what it looks like (A11Y-005).
+        mapOf(CardMode.VIEW to showView, CardMode.COOKING to showCooking).forEach { (mode, action) ->
+            val node = compose.onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode()
+            assertEquals(action, AccessibilityChecks.clickActionLabel(node))
+            assertNotEquals(action, AccessibilityChecks.announcedLabel(node))
+        }
         CardMode.entries.forEach { mode ->
             val tab = compose.onNodeWithTag(CardTags.tab(mode)).fetchSemanticsNode()
             assertEquals("${mode.name} is a tab", Role.Tab, tab.config.getOrNull(SemanticsProperties.Role))

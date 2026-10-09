@@ -172,7 +172,8 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * Under the top bar sit two tabs, always in sight: View, compact and for deciding, and Cooking, large and for busy hands
  * ([CardMode]). A tap on a tab or a horizontal swipe switches them; each keeps its own scroll. The card opens on the tab
  * last chosen on the device — View the first time ([CardEnvironment.lastTab]) — and on Cooking when a timer's
- * notification brings it to the timer's step (FLOW-013 (4)).
+ * notification brings it to the timer's step (FLOW-013 (4)). The tab kept as last chosen is the one the card settles
+ * on, so a Cooking a notification brought is kept too, and the next card opens on it.
  *
  * View is one scrolling page: the cover, the title with its summary, the provenance, the serving count, the ingredients
  * in order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
@@ -243,7 +244,8 @@ fun CardScreen(
     // The recipe leaves the book at once, asking nothing, and the card closes to the book, which says so with Undo.
     val remove = rememberRemoval(recipes, environment.marks, onRemoved)
     // The tab last chosen on the device, View the first time; a card brought to a timer's step opens on Cooking, and an
-    // open card is turned to it.
+    // open card is turned to it. The tab kept as last chosen is the one the card settles on, whoever turned it: a
+    // Cooking a notification brought is kept as chosen, as a tap on it would be.
     val toStep = LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipeId.value
     val pager = remember(recipeId) {
         val opening = if (toStep) CardMode.COOKING else environment.lastTab.read() ?: CardMode.VIEW
@@ -393,6 +395,7 @@ private fun CardTabs(pager: PagerState) {
                 selected = pager.currentPage == tab.ordinal,
                 onClick = { choose() },
                 text = { Text(label) },
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .heightIn(min = CardTarget)
                     .semantics {

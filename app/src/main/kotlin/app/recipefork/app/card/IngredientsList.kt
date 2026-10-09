@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -74,8 +73,7 @@ import app.recipefork.core.scaling.Rounding
  *
  * Tapping a line marks it done, and tapping it again unmarks it ([marks], FLOW-068). Tapping the amount of a line that
  * carries a quantity opens its fixing control below it ([FixAmount]); a line "to taste", an unfinished one, or one off
- * its grid offers no fixing (SCALE-018 (7)); [onFixing] is told whether a fixing control is open. Without [marks] a
- * line is not marked.
+ * its grid offers no fixing (SCALE-018 (7)). Without [marks] a line is not marked.
  *
  * Each of the [groups] stands as a subheading over its lines, a heading for the screen reader; lines above the first
  * heading stand under none, and a heading with no lines yet is not shown (DOM-022). A group is presentation only: the
@@ -95,15 +93,10 @@ internal fun IngredientsList(
     onRelease: (Int) -> Unit,
     marks: CardMarks? = null,
     groups: List<IngredientGroup> = emptyList(),
-    onFixing: (Boolean) -> Unit = {},
     mode: CardMode = CardMode.COOKING,
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered, mode) { mutableStateOf<Int?>(null) }
-    // Whether a fixing control is open, told to the card.
-    val fixing = open != null
-    val told by rememberUpdatedState(onFixing)
-    LaunchedEffect(fixing) { told(fixing) }
     // The list stands apart from the steps on a tonal surface of the theme, in its medium corners. The surface reaches
     // into the card's gutter, so the lines keep the whole width of the content and wrap no sooner (A11Y-004).
     Surface(
