@@ -75,6 +75,9 @@ android {
                 "--add-opens=java.base/java.io=ALL-UNNAMED",
                 "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED",
             )
+            // Where scripts/play-screenshots.sh has the store screenshots written; unset, their tests skip themselves.
+            providers.gradleProperty("recipefork.playScreenshots").orNull
+                ?.let { directory -> it.systemProperty("recipefork.playScreenshots", directory) }
         }
     }
 }
