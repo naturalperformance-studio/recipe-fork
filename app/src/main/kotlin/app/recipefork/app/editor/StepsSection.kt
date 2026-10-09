@@ -331,15 +331,19 @@ private fun StepTimers(
         key(row.key) {
             val index = rows.take(place).count { it.held }
             val timer = if (row.held) step.timers.getOrNull(index) else null
+            // A timer is counted by its place among the step's timers, as its removal is said; one that holds no
+            // duration yet, which the step does not carry, is counted after them.
+            val number = if (row.held) index + 1 else rows.count { it.held } + rows.take(place + 1).count { !it.held }
             Column(Modifier.fillMaxWidth().padding(top = if (place > 0) 8.dp else 0.dp)) {
-                StepTimer(position, place, rows.size, index, step, timer, timers, focus, ingredients, language, editor, left)
+                StepTimer(position, place, rows.size, index, number, step, timer, timers, focus, ingredients, language, editor, left)
             }
         }
     }
 }
 
 /**
- * One timer of the step, at [place] among the [count] its block shows and at [index] of the step's timers: its duration in hours and whole minutes — the
+ * One timer of the step, at [place] among the [count] its block shows and at [index] of the step's timers, told apart
+ * from the others as timer [number]: its duration in hours and whole minutes — the
  * only thing asked — and, once it holds one ([timer]), its own removal and the name it will announce itself by. A timer
  * just added holds no duration yet and is not stored until it does.
  */
@@ -349,6 +353,7 @@ private fun StepTimer(
     place: Int,
     count: Int,
     index: Int,
+    number: Int,
     step: Step,
     timer: Timer?,
     timers: TimerRows,
@@ -413,7 +418,7 @@ private fun StepTimer(
             onClick = {
                 when {
                     !timers.held(place) -> timers.remove(place)
-                    editor.removeTimer(position, timers.index(place)) -> timers.remove(place)
+                    editor.removeTimer(position, timers.index(place), numbered) -> timers.remove(place)
                 }
             },
             // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
@@ -422,7 +427,7 @@ private fun StepTimer(
             Icon(
                 painterResource(R.drawable.ic_remove_timer),
                 contentDescription = if (numbered) {
-                    stringResource(R.string.editor_timer_remove_numbered_action, position + 1, place + 1)
+                    stringResource(R.string.editor_timer_remove_numbered_action, position + 1, number)
                 } else {
                     stringResource(R.string.editor_timer_remove_action, position + 1)
                 },
@@ -431,12 +436,12 @@ private fun StepTimer(
         }
     }
     if (timer != null) {
-        TimerNameField(position, place, index, numbered, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor, name) { given = it }
+        TimerNameField(position, place, index, number.takeIf { numbered }, StepText.runs(step, ReferenceText.authored(ingredients, language)), timer, editor, name) { given = it }
         BoundMark(editor, RecipePart.TimerName(position, index), EditorTags.timerNameMark(position, place), gap = 0.dp)
         // Under the name, so that it neither moves the name field nor goes from above it once the timer is named.
         if (left) {
             cutNotification(step, index, ingredients, language)?.let { reading ->
-                TimerNotification(position, place, numbered, reading) { name.requestFocus() }
+                TimerNotification(position, place, number.takeIf { numbered }, reading) { name.requestFocus() }
             }
         }
     }
@@ -458,7 +463,7 @@ internal fun cutNotification(step: Step, index: Int, ingredients: List<Ingredien
  * offer to name the timer, which takes the author to its name field. It refuses nothing and asks no rewrite.
  */
 @Composable
-private fun TimerNotification(position: Int, place: Int, numbered: Boolean, reading: TimerName.Reading, onName: () -> Unit) {
+private fun TimerNotification(position: Int, place: Int, number: Int?, reading: TimerName.Reading, onName: () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -488,8 +493,8 @@ private fun TimerNotification(position: Int, place: Int, numbered: Boolean, read
         }
         EditorButton(
             text = stringResource(R.string.editor_timer_notification_name),
-            action = if (numbered) {
-                stringResource(R.string.editor_timer_notification_name_numbered_action, position + 1, place + 1)
+            action = if (number != null) {
+                stringResource(R.string.editor_timer_notification_name_numbered_action, position + 1, number)
             } else {
                 stringResource(R.string.editor_timer_notification_name_action, position + 1)
             },
@@ -510,7 +515,7 @@ private fun TimerNameField(
     position: Int,
     place: Int,
     index: Int,
-    numbered: Boolean,
+    number: Int?,
     step: List<StepRun>,
     timer: Timer,
     editor: RecipeEditor,
@@ -534,7 +539,7 @@ private fun TimerNameField(
             onGiven(name.ifEmpty { null })
             editor.setTimerLabel(position, index, name)
         },
-        label = { Text(if (numbered) stringResource(R.string.editor_timer_name_numbered, place + 1) else stringResource(R.string.editor_timer_name)) },
+        label = { Text(if (number != null) stringResource(R.string.editor_timer_name_numbered, number) else stringResource(R.string.editor_timer_name)) },
         supportingText = if (timer.label == null) {
             { Text(stringResource(R.string.editor_timer_name_follows), modifier = Modifier.testTag(EditorTags.timerNameFollows(position, place))) }
         } else {

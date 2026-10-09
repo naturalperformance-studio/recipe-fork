@@ -298,10 +298,11 @@ class RecipeEditor(
 
     /**
      * Takes the timer at [index] off the step at [position], name and all; the step's other timers keep their order.
-     * The removal is offered for undoing as [removal], which puts the timer back at its place. Returns whether the step
-     * carried a timer there.
+     * The removal is offered for undoing as [removal], which puts the timer back at its place, and is said with the
+     * timer's number where [numbered] — as its step's block numbers it, several timers shown — or, left unsaid, where
+     * the step carried several. Returns whether the step carried a timer there.
      */
-    fun removeTimer(position: Int, index: Int): Boolean {
+    fun removeTimer(position: Int, index: Int, numbered: Boolean? = null): Boolean {
         val recipe = current.value ?: return false
         if (!recipe.state.editable || timerAt(position, index) == null) return false
         val key = stepKeys.of(position)
@@ -309,7 +310,7 @@ class RecipeEditor(
         val marks = left.value.filterTo(mutableSetOf()) { it is Left.OfStep && it.key == key && it.timer != null }
         marksWithoutTimer(position, index)
         if (!editStep(position) { it.withoutTimer(index) }) return false
-        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index, marks = marks) {}
+        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index, marks = marks, numbered = numbered) {}
         return true
     }
 
@@ -1002,13 +1003,19 @@ class Removal internal constructor(
     val index: Int = 0,
     /** For a timer, the marks its step's timer names held when it was removed. */
     internal val marks: Set<RecipeEditor.Left> = emptySet(),
+    /** For a timer, whether its removal was chosen where its number was shown; null where none was. */
+    private val numbered: Boolean? = null,
     internal val ended: suspend () -> Unit,
 ) {
     enum class Kind { STEP, INGREDIENT, GROUP, TIMER }
 
-    /** Whether the timer removed was one of several on its step, so that which one is said. */
+    /**
+     * Whether the timer removed is said by its number, [index] + 1 — its place among the step's timers, as its removal
+     * was labelled: where it was numbered when chosen, else where it was one of several on its step.
+     */
     val ofSeveral: Boolean
-        get() = kind == Kind.TIMER && (before.steps.sortedBy { it.position }.getOrNull(position)?.timers?.size ?: 0) > 1
+        get() = kind == Kind.TIMER &&
+            (numbered ?: ((before.steps.sortedBy { it.position }.getOrNull(position)?.timers?.size ?: 0) > 1))
 }
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */

@@ -404,6 +404,50 @@ class SeveralTimersEditorTest {
         compose.awaitStatement("Таймер 3 шага 1 убран")
     }
 
+    // Scenario 6 of v0.26: with an emptied timer above it, a timer's removal is labelled and said by the same number —
+    // its place among the step's timers, the empty row not counted: rows [A, empty, C] call C timer 2, in its removal,
+    // its name and the notice of its removal; the empty row is counted after the stored ones.
+    @Test
+    fun aTimersRemovalIsLabelledAndSaidByTheSameNumberWithAnEmptyRowAbove() = removalCountsStoredTimers(
+        removeC = "Remove timer 2 from step 1",
+        nameOfC = "Timer 2's name",
+        removeEmpty = "Remove timer 3 from step 1",
+        said = "Timer 2 removed from step 1",
+    )
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun aTimersRemovalIsLabelledAndSaidByTheSameNumberInRussian() = removalCountsStoredTimers(
+        removeC = "Убрать таймер 2 шага 1",
+        nameOfC = "Название таймера 2",
+        removeEmpty = "Убрать таймер 3 шага 1",
+        said = "Таймер 2 шага 1 убран",
+    )
+
+    private fun removalCountsStoredTimers(removeC: String, nameOfC: String, removeEmpty: String, said: String) {
+        val recipe = recipe(Step(0, "Knead, prove and glaze.", timers = three))
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        // The middle timer emptied: rows [A, empty, C], the step carrying A and C.
+        type(EditorTags.timerHours(0, 1), "")
+        type(EditorTags.timerMinutes(0, 1), "")
+        compose.waitUntil(PATIENCE_MS) { timers(recipe.id) == listOf(three[0], three[2]) }
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerName(0, 1)), PATIENCE_MS)
+
+        fun label(tag: String) = AccessibilityChecks.announcedLabel(compose.onNodeWithTag(tag).fetchSemanticsNode())
+        assertEquals(removeC, label(EditorTags.timerRemove(0, 2)))
+        assertEquals(nameOfC, fieldLabel(EditorTags.timerName(0, 2)))
+        assertEquals(removeEmpty, label(EditorTags.timerRemove(0, 1)))
+        AccessibilityChecks.assertDistinctLabels(compose)
+
+        compose.onNodeWithTag(EditorTags.timerRemove(0, 2)).performScrollTo().performClick()
+        compose.awaitStatement(said)
+        compose.waitUntil(PATIENCE_MS) { timers(recipe.id) == listOf(three[0]) }
+    }
+
+    /** The label of the text field tagged [tag]. */
+    private fun fieldLabel(tag: String): String = compose.textsOf(tag).first()
+
     // A timer whose duration is cleared stays on screen where it stood, holding its name; entered again, it goes
     // back among the step's timers at that place.
     @Test
