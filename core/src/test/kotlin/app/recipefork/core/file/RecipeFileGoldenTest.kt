@@ -39,11 +39,11 @@ class RecipeFileGoldenTest {
             Ingredient(6, null, freeTextName = "cream", unitType = UnitType.EXACT, unit = QuantityUnit.CUBIC_METRE, quantity = null, enteredQuantity = "-3"),
         ),
         steps = listOf(
-            Step(0, "Fry the beet until soft", listOf(IngredientReference(0, 8)), Timer(12.minutes, "Beet")),
+            Step(0, "Fry the beet until soft", listOf(IngredientReference(0, 8)), listOf(Timer(12.minutes, "Beet"))),
             Step(
                 1, "Simmer with the salt and onions",
                 listOf(IngredientReference(3, 14, IngredientShare(Rational.of(1, 4), QuantityUnit.TABLESPOON)), IngredientReference(1, 0)),
-                Timer(95.minutes),
+                listOf(Timer(95.minutes), Timer(10.minutes, "Onions"), Timer(3.minutes)),
             ),
             Step(2, "Season and serve"),
         ),
@@ -64,11 +64,21 @@ class RecipeFileGoldenTest {
     @Test
     fun theCheckedInDocumentReadsBackAsTheRecipe() = assertEquals(golden, RecipeFile.decode(expected))
 
+    /** The golden recipe as formats 1 and 2 held it: each step's first timer alone (DOM-024). */
+    private val oneTimerEach = golden.copy(steps = golden.steps.map { it.copy(timers = it.timers.take(1)) })
+
     // DOM-022, DOM-023: the same recipe as format 1 wrote it, before groups and notes, still reads — with neither.
     @Test
     fun theFormat1DocumentReadsBackWithNoGroupsAndNoNotes() {
         val format1 = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe-v1.json")).readText()
-        val withNeither = golden.copy(ingredientGroups = emptyList(), ingredients = golden.ingredients.map { it.copy(note = null) })
+        val withNeither = oneTimerEach.copy(ingredientGroups = emptyList(), ingredients = golden.ingredients.map { it.copy(note = null) })
         assertEquals(withNeither, RecipeFile.decode(format1))
+    }
+
+    // DOM-024: the same recipe as format 2 wrote it, one `timer` a step, still reads — each timer its step's only one.
+    @Test
+    fun theFormat2DocumentReadsBackWithOneTimerAStep() {
+        val format2 = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe-v2.json")).readText()
+        assertEquals(oneTimerEach, RecipeFile.decode(format2))
     }
 }

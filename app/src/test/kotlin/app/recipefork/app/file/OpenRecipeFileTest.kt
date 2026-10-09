@@ -100,7 +100,7 @@ class OpenRecipeFileTest {
         assertEquals("This file is not a recipe file, so nothing was added", told())
         open(Mode.Serverless, fileOf(TestRecipeFiles.zip(RecipeFile.DOCUMENT to "{".toByteArray()), "broken.recipefork"))
         assertEquals("This recipe file is damaged, so nothing was added", told())
-        val later = RecipeFile.encode(TestRecipeFiles.soup("other")).replace("\"format_version\": 2", "\"format_version\": 7")
+        val later = RecipeFile.encode(TestRecipeFiles.soup("other")).replace("\"format_version\": 3", "\"format_version\": 7")
         open(Mode.Serverless, fileOf(TestRecipeFiles.zip(RecipeFile.DOCUMENT to later.toByteArray()), "later.recipefork"))
         assertEquals(
             "This recipe file was made by a newer version of the app. Update the app to open it; nothing was added",

@@ -59,6 +59,9 @@ internal data class DocumentStep(
     val position: Int,
     val text: String,
     val references: List<DocumentReference> = emptyList(),
+    /** The step's timers, in order (DOM-024); added in format 3. */
+    val timers: List<DocumentTimer> = emptyList(),
+    /** The step's one timer as formats 1 and 2 wrote it; absent for none, and never written since format 3. */
     val timer: DocumentTimer? = null,
 )
 

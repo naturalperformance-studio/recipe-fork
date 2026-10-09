@@ -86,9 +86,23 @@ data class StepEntity(
     @ColumnInfo(name = "recipe_id") val recipeId: String,
     val position: Int,
     val text: String,
-    /** The step's timer in whole minutes; null when the step has none (DOM-013). */
-    @ColumnInfo(name = "timer_minutes") val timerMinutes: Long?,
-    @ColumnInfo(name = "timer_label") val timerLabel: String?,
+)
+
+/**
+ * The [position]th timer of the recipe's step at [stepPosition] (DOM-024): its duration in whole [minutes] and its
+ * [label], null for none. Added in version 5, when a step's one timer left its row.
+ */
+@Entity(
+    tableName = "step_timer",
+    primaryKeys = ["recipe_id", "step_position", "position"],
+    foreignKeys = [ForeignKey(RecipeEntity::class, ["recipe_id"], ["recipe_id"], onDelete = CASCADE)],
+)
+data class StepTimerEntity(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    @ColumnInfo(name = "step_position") val stepPosition: Int,
+    val position: Int,
+    val minutes: Long,
+    val label: String?,
 )
 
 @Entity(

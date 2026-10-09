@@ -54,14 +54,14 @@ class RecipeDeletionOnDiskTest {
             Ingredient(1, null, null, "salt", UnitType.TASTE_UNMEASURED, null, null),
         ),
         steps = listOf(
-            Step(0, "Boil the beans", listOf(IngredientReference(0, 9)), Timer(10.minutes)),
+            Step(0, "Boil the beans", listOf(IngredientReference(0, 9)), listOf(Timer(10.minutes), Timer(3.minutes, "Rest"))),
             Step(1, "Salt them", listOf(IngredientReference(1, 0))),
         ),
         media = listOf(Media("m-$title", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)),
     )
 
     private fun rows(database: BookDatabase, recipe: Recipe): Map<String, Int> =
-        listOf("recipe", "ingredient", "step", "step_reference", "media", "recipe_tag").associateWith { table ->
+        listOf("recipe", "ingredient", "step", "step_timer", "step_reference", "media", "recipe_tag").associateWith { table ->
             database.openHelper.readableDatabase
                 .query("select count(*) from $table where recipe_id = ?", arrayOf(recipe.id.value))
                 .use { it.moveToFirst(); it.getInt(0) }
