@@ -117,7 +117,7 @@ class TimerNameWithReferencesTest {
     @Test
     fun `a reference inside the name reads as shown`() {
         val step = Step(0, "Всыпьте  муки и перемешайте", listOf(IngredientReference(0, 8)), Timer(5.minutes))
-        assertEquals("Всыпьте 200 г муки и перемешайте", name(step))
+        assertEquals("Всыпьте 200\u00A0г муки и перемешайте", name(step))
     }
 
     @Test
@@ -125,7 +125,7 @@ class TimerNameWithReferencesTest {
         val text = "Всыпьте  муки, затем медленно перемешивайте венчиком до однородной густой массы"
         val step = Step(0, text, listOf(IngredientReference(0, 8)), Timer(5.minutes))
         val shown = name(step)!!
-        assertTrue(shown.startsWith("Всыпьте 200 г муки,"))
+        assertTrue(shown.startsWith("Всыпьте 200\u00A0г муки,"))
         assertTrue(shown.endsWith(TimerName.ELLIPSIS))
         assertTrue(shown.removeSuffix(TimerName.ELLIPSIS).length <= 60)
     }
@@ -145,7 +145,7 @@ class TimerNameWithReferencesTest {
     fun `a reference ending exactly at the cut is kept whole`() {
         val shorter = "a".repeat(10) + " " + "b".repeat(43) + " " // 55 characters, then "200 г" ends at the 60th
         val step = Step(0, shorter + " муки и так далее", listOf(IngredientReference(0, shorter.length)), Timer(5.minutes))
-        assertEquals(shorter + "200 г" + TimerName.ELLIPSIS, name(step))
+        assertEquals(shorter + "200\u00A0г" + TimerName.ELLIPSIS, name(step))
     }
 
     @Test
