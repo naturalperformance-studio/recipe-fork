@@ -159,9 +159,10 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
  * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe.
  *
- * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book, the fork action on every recipe,
- * editable or frozen (FORK-001, FORK-007), and, only while the recipe is editable, the edit action that opens the
- * editor on it (FLOW-029 (2–4)); a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)). Its ⋮ holds the
+ * The top bar holds the screen's actions, outside the recipe, and the title once it has scrolled away: back to the book,
+ * only while the recipe is editable the edit action that opens the editor on it (FLOW-029 (2–4)), and the ⋮. The ⋮
+ * holds the fork action on every recipe, editable or frozen (FORK-001, FORK-007) — a found recipe is held frozen, so
+ * its card offers fork and never edit (FLOW-064 (2)) — and the
  * recipe's removal — Delete for an own recipe in a deletable state, Remove for a found one — which takes it out of the
  * book at once, asking nothing, and closes the card to the book, which says so with Undo ([onRemoved], FLOW-053); and,
  * while the recipe has done marks, their
@@ -357,10 +358,11 @@ private fun Unreadable(onRetry: () -> Unit) {
 }
 
 /**
- * The screen's bar: back at its start; the recipe's [title] once the content's heading has scrolled out of view, on one
- * line beside back, ellipsized — the content holds it whole; and the recipe's actions at its end — fork on any recipe shown, edit
- * beside it while the recipe is editable. Each action is an icon the screen reader names, whose click it announces as
- * what it does (A11Y-005) and whose name a long press shows in a tooltip.
+ * The screen's bar: back at its start; the recipe's [title] once the content's heading has scrolled out of view, beside
+ * back on up to two lines, ellipsized at the end of the second — the content holds it whole; and the recipe's actions
+ * at its end — edit while the recipe is editable, then the ⋮ on any recipe shown, which holds fork with the recipe's
+ * other actions, so that a title of some thirty characters reads whole on a 360 dp phone. Each icon is one the screen
+ * reader names, whose click it announces as what it does (A11Y-005) and whose name a long press shows in a tooltip.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -383,7 +385,15 @@ private fun TopBar(
     TopAppBar(
         title = {
             AnimatedVisibility(visible = title != null, enter = fadeIn(), exit = fadeOut()) {
-                last?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag(CardTags.BAR_TITLE)) }
+                last?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = BAR_TITLE_LINES,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.testTag(CardTags.BAR_TITLE),
+                    )
+                }
             }
         },
         modifier = Modifier.testTag(CardTags.BAR),
@@ -398,13 +408,6 @@ private fun TopBar(
         },
         actions = {
             if (shown) {
-                BarAction(
-                    icon = R.drawable.ic_fork,
-                    label = stringResource(R.string.card_fork),
-                    action = stringResource(R.string.card_fork_action),
-                    tag = CardTags.FORK,
-                    onClick = onFork,
-                )
                 if (editable) {
                     BarAction(
                         icon = R.drawable.ic_edit,
@@ -414,12 +417,27 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                if (removal != null || marked) CardMenu(removal, onRemove, marked, onClearMarks)
+                CardMenu(onFork, removal, onRemove, marked, onClearMarks)
             }
         },
         scrollBehavior = scrollBehavior,
     )
 }
+
+/** The card's side and bottom gutters. */
+private val GUTTER = 16.dp
+
+/** The space above the card's first part, under the bar. */
+private val CONTENT_TOP = 8.dp
+
+/** The space between the card's parts: cover, title, servings, ingredients, steps. */
+private val PART_GAP = 8.dp
+
+/** The space between the steps and the description, which reads apart from them. */
+private val DESCRIPTION_GAP = 16.dp
+
+/** The most lines the bar gives the recipe's title. */
+private const val BAR_TITLE_LINES = 2
 
 @Composable
 private fun RecipeContent(
@@ -453,10 +471,11 @@ private fun RecipeContent(
                 .fillMaxSize()
                 .verticalScroll(scroll)
                 .onGloballyPositioned(places::content)
-                .padding(16.dp)
+                // A tight top and gaps, so that more of the ingredients is in sight as the card opens.
+                .padding(start = GUTTER, top = CONTENT_TOP, end = GUTTER, bottom = GUTTER)
                 .padding(bottom = bottom)
                 .testTag(CardTags.CONTENT),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(PART_GAP),
         ) {
             Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
             // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
@@ -514,10 +533,11 @@ private fun RecipeContent(
             )
             StepsList(recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries), StepMediaOnCard(recipe, recipes.bookName()), marks)
             if (recipe.description.isNotBlank()) {
+                // The description stands further apart from the steps than the parts above stand from each other.
                 Text(
                     recipe.description,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = cardPlace(CardPlaces.DESCRIPTION_KEY).testTag(CardTags.DESCRIPTION),
+                    modifier = Modifier.padding(top = DESCRIPTION_GAP - PART_GAP).then(cardPlace(CardPlaces.DESCRIPTION_KEY)).testTag(CardTags.DESCRIPTION),
                 )
             }
         }
@@ -616,10 +636,10 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
 /** The space between a section's heading and its parts. */
 internal val SECTION_GAP = 8.dp
 
-/** One part of the recipe under its heading; the lists of ingredients and of steps are each one. */
+/** One part of the recipe under its heading, [gap] between the heading and each part; the lists of ingredients and of steps are each one. */
 @Composable
-internal fun Section(@StringRes title: Int, tag: String, lines: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(SECTION_GAP)) {
+internal fun Section(@StringRes title: Int, tag: String, gap: Dp = SECTION_GAP, lines: @Composable () -> Unit) {
+    Column(Modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(gap)) {
         Text(
             stringResource(title),
             style = MaterialTheme.typography.titleMedium,
@@ -756,13 +776,13 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 }
 
 /**
- * The card's ⋮, after its other actions, shown while it holds anything: Clear marks while the recipe has done marks
- * (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal — Delete for an own recipe
- * in a deletable state, Remove for a found one — in the theme's error colour. Each item is the card's [CardTarget]
- * tall.
+ * The card's ⋮, after its other actions, on every recipe shown: Fork, on any recipe (FORK-001, FORK-007), its click
+ * announced as what it does (A11Y-005); Clear marks while the recipe has done marks (FLOW-068), which takes every mark
+ * of the recipe away at once; and the recipe's removal — Delete for an own recipe in a deletable state, Remove for a
+ * found one — in the theme's error colour, last. Each item is the card's [CardTarget] tall.
  */
 @Composable
-private fun CardMenu(removal: Removal?, onRemove: () -> Unit, marked: Boolean, onClearMarks: () -> Unit) {
+private fun CardMenu(onFork: () -> Unit, removal: Removal?, onRemove: () -> Unit, marked: Boolean, onClearMarks: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         BarAction(
@@ -773,6 +793,18 @@ private fun CardMenu(removal: Removal?, onRemove: () -> Unit, marked: Boolean, o
             onClick = { expanded = !expanded },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            val forkAction = stringResource(R.string.card_fork_action)
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.card_fork)) },
+                onClick = {
+                    expanded = false
+                    onFork()
+                },
+                modifier = Modifier
+                    .heightIn(min = CardTarget)
+                    .semantics { onClick(label = forkAction, action = null) }
+                    .testTag(CardTags.FORK),
+            )
             if (marked) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.card_clear_marks)) },

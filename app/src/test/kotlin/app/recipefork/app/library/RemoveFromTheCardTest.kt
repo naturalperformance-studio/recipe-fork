@@ -23,6 +23,8 @@ import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.card.CardTarget
 import app.recipefork.app.card.awaitCard
+import app.recipefork.app.card.closeTheCardMenu
+import app.recipefork.app.card.openTheCardMenu
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
@@ -211,7 +213,10 @@ class RemoveFromTheCardTest {
                 compose.onNodeWithTag(CardTags.MENU).performClick()
                 compose.waitUntilDoesNotExist(hasTestTag(CardTags.DELETE), PATIENCE_MS)
             } else {
-                assertFalse("${recipe.state} has a ⋮", exists(CardTags.MENU))
+                // The ⋮ holds fork, never Delete.
+                compose.openTheCardMenu()
+                assertFalse("${recipe.state} offers Delete", exists(CardTags.DELETE) || exists(CardTags.REMOVE))
+                compose.closeTheCardMenu()
             }
         }
     }

@@ -116,7 +116,7 @@ class ForkFromTheCardTest {
         session.openCard(original.id.value)
         show()
         compose.awaitCard()
-        compose.onNodeWithTag(CardTags.FORK).performClick()
+        compose.forkFromTheCard()
         // The editor opens on the fork, a new recipe, editable.
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         val forkId = RecipeId(requireNotNull(session.editing.value))
@@ -167,7 +167,7 @@ class ForkFromTheCardTest {
         session.openCard(original.id.value)
         show()
         compose.awaitCard()
-        compose.onNodeWithTag(CardTags.FORK).performClick()
+        compose.forkFromTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         val first = requireNotNull(session.editing.value)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
@@ -175,7 +175,7 @@ class ForkFromTheCardTest {
         compose.onNodeWithTag(CardTags.BACK).performClick()
         compose.runOnIdle { session.openCard(original.id.value) }
         compose.awaitCard()
-        compose.onNodeWithTag(CardTags.FORK).performClick()
+        compose.forkFromTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.FORK_HELD), PATIENCE_MS)
         compose.onNodeWithTag(CardTags.FORK_HELD_ANOTHER).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)

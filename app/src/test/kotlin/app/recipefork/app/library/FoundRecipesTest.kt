@@ -24,6 +24,9 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
+import app.recipefork.app.card.closeTheCardMenu
+import app.recipefork.app.card.forkFromTheCard
+import app.recipefork.app.card.openTheCardMenu
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.card.backThroughTheCard
 import app.recipefork.app.editor.EditorEnvironment
@@ -156,8 +159,11 @@ class FoundRecipesTest {
         openEntry(id)
         assertEquals("Bean soup", compose.textsOf(CardTags.TITLE).single())
         assertEquals("Author: anna (stated in the file, not verified)", compose.textsOf(CardTags.STATED_AUTHOR).single())
-        assertTrue(exists(CardTags.FORK))
         assertTrue(!exists(CardTags.EDIT))
+        compose.openTheCardMenu()
+        assertTrue(exists(CardTags.FORK))
+        assertTrue(exists(CardTags.REMOVE))
+        compose.closeTheCardMenu()
         assertEquals("Servings: 2", compose.textsOf(CardTags.SERVINGS).single())
         assertEquals("200 g", compose.textsOf(CardTags.ingredient(0))[1])
         compose.onNodeWithTag(CardTags.SERVINGS_MORE).performClick()
@@ -190,7 +196,7 @@ class FoundRecipesTest {
         val id = found()
         show(Mode.Serverless)
         openEntry(id)
-        compose.onNodeWithTag(CardTags.FORK).performClick()
+        compose.forkFromTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         val forkId = RecipeId(requireNotNull(session.editing.value))
         assertNotEquals(id, forkId)

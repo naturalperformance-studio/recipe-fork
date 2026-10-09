@@ -103,7 +103,7 @@ class ForkHeldOfferTest {
         session.openCard(original.id.value)
         show()
         compose.awaitCard()
-        compose.onNodeWithTag(CardTags.FORK).performClick()
+        compose.forkFromTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.FORK_HELD), PATIENCE_MS)
     }
 
@@ -162,7 +162,7 @@ class ForkHeldOfferTest {
         show()
         compose.awaitCard()
         now = forked
-        compose.onNodeWithTag(CardTags.FORK).performClick()
+        compose.forkFromTheCard()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         assertEquals(false, dialogShown())
         val first = requireNotNull(session.editing.value)
@@ -175,7 +175,7 @@ class ForkHeldOfferTest {
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.TITLE) and hasText("Borscht"), PATIENCE_MS)
         assertEquals(original.id.value, session.viewing.value)
-        compose.onNodeWithTag(CardTags.FORK).performClick()
+        compose.forkFromTheCard()
         compose.waitForIdle()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         assertNotEquals(first, session.editing.value)

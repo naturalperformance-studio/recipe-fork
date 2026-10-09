@@ -119,28 +119,32 @@ class CardTargetsTest {
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().size == 1 }
         // Each of the bar's actions whole: an icon named for the screen reader, all of it on screen.
-        listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU).forEach { tag ->
+        listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU).forEach { tag ->
             val node = compose.onNodeWithTag(tag).fetchSemanticsNode()
             val screen = compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot
             assertTrue("$tag at $fontScale lies within the screen", node.boundsInRoot.left >= screen.left - 0.5f && node.boundsInRoot.right <= screen.right + 0.5f)
             assertTrue("$tag is named", AccessibilityChecks.announcedLabel(node).isNotBlank())
         }
         if (fontScale == 1f) {
-            // Where they fit, one line: back at the start, fork, edit and the ⋮ at the end.
-            val (back, fork, edit, menu) = listOf(CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU)
+            // Where they fit, one line: back at the start, edit and the ⋮ at the end.
+            val (back, edit, menu) = listOf(CardTags.BACK, CardTags.EDIT, CardTags.MENU)
                 .map { compose.onNodeWithTag(it).fetchSemanticsNode().boundsInRoot }
             val bar = compose.onNodeWithTag(CardTags.BAR).fetchSemanticsNode().boundsInRoot
-            assertEquals(back.top, fork.top, 0.5f)
             assertEquals(back.top, edit.top, 0.5f)
             assertEquals(back.top, menu.top, 0.5f)
-            assertTrue(back.right <= fork.left && fork.right <= edit.left && edit.right <= menu.left && bar.right - menu.right < 9f * bar.width / 360f + 1f)
+            assertTrue(back.right <= edit.left && edit.right <= menu.left && bar.right - menu.right < 9f * bar.width / 360f + 1f)
         }
         listOf(
-            CardTags.BACK, CardTags.FORK, CardTags.EDIT, CardTags.MENU, CardTags.PROVENANCE,
+            CardTags.BACK, CardTags.EDIT, CardTags.MENU, CardTags.PROVENANCE,
             CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE, CardTags.ingredient(0), TimerTags.start(0),
         ).forEach { compose.assertCardTarget(it) }
-        // Back, fork, edit, the provenance, fewer, more, the ingredient line, the timer.
+        // Back, edit, the ⋮, the provenance, fewer, more, the ingredient line, the timer.
         AccessibilityChecks.assertTouchTargets(compose, min = CardTarget, expectAtLeast = 8)
+        // The ⋮ open: Fork in it, a card target, its label whole.
+        compose.openTheCardMenu()
+        compose.assertCardTarget(CardTags.FORK)
+        compose.assertWhole(CardTags.FORK)
+        compose.closeTheCardMenu()
 
         // The fixing control, opened from its amount, at first and once a fixing is held.
         compose.onNodeWithTag(CardTags.fixAmount(0), useUnmergedTree = true).performScrollTo().performClick()

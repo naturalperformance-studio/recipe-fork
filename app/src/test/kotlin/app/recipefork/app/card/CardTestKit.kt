@@ -21,6 +21,25 @@ fun ComposeTestRule.backThroughTheCard() {
     waitForIdle()
 }
 
+/** Opens the card's ⋮ and waits for its Fork, without taking it. */
+fun ComposeTestRule.openTheCardMenu() {
+    onNodeWithTag(CardTags.MENU).performClick()
+    waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().isNotEmpty() }
+}
+
+/** Closes the card's open ⋮ by its own button, taking nothing from it. */
+fun ComposeTestRule.closeTheCardMenu() {
+    onNodeWithTag(CardTags.MENU).performClick()
+    waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().isEmpty() }
+}
+
+/** Takes Fork from the card's ⋮, where it stands with the recipe's other actions. */
+fun ComposeTestRule.forkFromTheCard() {
+    openTheCardMenu()
+    onNodeWithTag(CardTags.FORK).performClick()
+    waitForIdle()
+}
+
 /** The element tagged [tag] is laid out at least the card's [CardTarget] in each direction (A11Y-003 (2), A11Y-007). */
 fun SemanticsNodeInteractionsProvider.assertCardTarget(tag: String) {
     val node = onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
