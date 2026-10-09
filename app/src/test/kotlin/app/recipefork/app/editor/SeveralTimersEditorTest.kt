@@ -28,7 +28,9 @@ import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
+import app.recipefork.core.recipe.Bound
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
@@ -177,6 +179,25 @@ class SeveralTimersEditorTest {
         assertTrue(editor.undoRemoval(removal))
         assertEquals(three, editor.recipe.value!!.steps[0].timers)
         assertNull(editor.removal.value)
+        runBlocking { editor.written() }
+    }
+
+    // A timer name's mark is its own timer's: it stays with that timer as one before it goes, by removal or by its
+    // duration cleared, and goes with its own timer.
+    @Test
+    fun aTimerNamesMarkStaysWithItsTimer() {
+        val long = "n".repeat(61)
+        val recipe = recipe(Step(0, "Knead.", timers = listOf(Timer(1.minutes), Timer(2.minutes), Timer(3.minutes, long))))
+        val editor = RecipeEditor(recipes, recipe.id, { created }, CoroutineScope(Dispatchers.Unconfined))
+        runBlocking { editor.load() }
+        editor.leave(RecipePart.TimerName(0, 2))
+        assertEquals(setOf(RecipePart.TimerName(0, 2)), editor.marks.value.keys)
+        assertTrue(editor.setTimerDuration(0, 0, 0, 0))
+        assertEquals(mapOf(RecipePart.TimerName(0, 1) to Bound.OverLimit(60, 61)), editor.marks.value)
+        assertTrue(editor.removeTimer(0, 0))
+        assertEquals(mapOf(RecipePart.TimerName(0, 0) to Bound.OverLimit(60, 61)), editor.marks.value)
+        assertTrue(editor.removeTimer(0, 0))
+        assertTrue(editor.marks.value.isEmpty())
         runBlocking { editor.written() }
     }
 

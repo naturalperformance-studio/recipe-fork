@@ -259,8 +259,9 @@ class RecipeEditor(
      */
     fun setTimerDuration(position: Int, index: Int, hours: Int, minutes: Int): Boolean {
         if (hours !in 0..MAX_HOURS || minutes !in 0..MAX_MINUTES) return false
-        if (timerAt(position, index) == null) return false
+        if (!editable || timerAt(position, index) == null) return false
         val duration = hours.hours + minutes.minutes
+        if (!duration.isPositive()) marksWithoutTimer(position, index)
         return editStep(position) { step ->
             if (!duration.isPositive()) step.withoutTimer(index)
             else step.copy(timers = step.timers.mapIndexed { i, timer -> if (i == index) timer.copy(duration = duration) else timer })
@@ -287,8 +288,18 @@ class RecipeEditor(
     fun removeTimer(position: Int, index: Int): Boolean {
         val recipe = current.value ?: return false
         if (!recipe.state.editable || timerAt(position, index) == null) return false
+        marksWithoutTimer(position, index)
+        if (!editStep(position) { it.withoutTimer(index) }) return false
+        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index) {}
+        return true
+    }
+
+    /**
+     * The timer at [index] of the step at [position] is going: its name's mark goes with it, and a mark left on a later
+     * timer's name stays with that timer, now one place up.
+     */
+    private fun marksWithoutTimer(position: Int, index: Int) {
         val key = stepKeys.of(position)
-        // A mark left on a later timer's name stays with that timer, now one place up.
         left.value = left.value.mapNotNullTo(mutableSetOf()) { part ->
             val timer = (part as? Left.OfStep)?.timer
             when {
@@ -297,9 +308,6 @@ class RecipeEditor(
                 else -> part.copy(timer = timer - 1)
             }
         }
-        if (!editStep(position) { it.withoutTimer(index) }) return false
-        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index) {}
-        return true
     }
 
     /** The timer at [index] of the step at [position]; null where it carries none there. */
@@ -829,7 +837,7 @@ class RecipeEditor(
         offered.value?.let(::endRemoval)
         val next = recipe.edited(clock()) { withEntryDivisibility(change(it)) }
         current.value = next
-        if (left.value.isNotEmpty()) remark(next)
+        if (left.value.isNotEmpty() || marked.value.isNotEmpty()) remark(next)
         // Queued on a fair lock before this returns, so the book receives the changes in the order made — started
         // undispatched, since a dispatcher may run a launch made inside another coroutine of its own after a later one.
         saving.launch(start = CoroutineStart.UNDISPATCHED) {

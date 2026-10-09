@@ -666,7 +666,8 @@ object EditorTags {
      * The parts of the timer at [index] of those the step at [position] shows (DOM-024). The first timer's tags read as
      * they did when a step carried one: `editor-step-0-timer-hours`; the second's `editor-step-0-timer-1-hours`.
      */
-    private fun timer(position: Int, index: Int) = if (index == 0) "editor-step-$position-timer" else "editor-step-$position-timer-$index"
+    fun timer(position: Int, index: Int) = "editor-step-$position-timer${timerPlace(index)}"
+    private fun timerPlace(index: Int) = if (index == 0) "" else "-$index"
     fun timerRemove(position: Int, index: Int = 0) = "${timer(position, index)}-remove"
     fun timerHours(position: Int, index: Int = 0) = "${timer(position, index)}-hours"
     fun timerMinutes(position: Int, index: Int = 0) = "${timer(position, index)}-minutes"
