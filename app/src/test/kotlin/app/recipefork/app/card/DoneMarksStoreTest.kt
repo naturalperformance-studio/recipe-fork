@@ -1,6 +1,8 @@
 package app.recipefork.app.card
 
 import android.content.Context
+import android.content.ContextWrapper
+import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
@@ -53,7 +55,7 @@ class DoneMarksStoreTest {
     }
 
     // Reading the marks writes nothing: the stale one is not shown, and only dropStale — run from an effect — takes it
-    // out of the store.
+    // out of the store. This is the test that guards "from an effect": a write in the constructor fails it.
     @Test
     fun readingTheMarksWritesNothingAndTheStaleOneGoesFromAnEffect() {
         val counted = Counted()
@@ -89,18 +91,39 @@ class DoneMarksStoreTest {
         assertEquals(true, any)
     }
 
-    // The device's store reads its one key; a value of another kind under it reads as no marks.
+    /**
+     * The device's preferences file, as the store opens it, whose every read of the whole file — `getAll` — is
+     * refused: a store that copied the whole file to read one key would fail here.
+     */
+    private class OneKeyOnly(base: Context) : ContextWrapper(base) {
+        override fun getSharedPreferences(name: String, mode: Int): SharedPreferences {
+            val file = super.getSharedPreferences(name, mode)
+            return object : SharedPreferences by file {
+                override fun getAll(): MutableMap<String, *> = throw AssertionError("the whole file was read for one key")
+            }
+        }
+    }
+
+    // The device's store reads its one key, never the whole file; a value of another kind under it reads as no marks.
     @Test
     fun theDevicesStoreReadsTheOneKeyAskedFor() {
-        val store = DoneMarks.preferences(context)
+        val store = DoneMarks.preferences(OneKeyOnly(context))
         val mark = DoneMark.of(recipe.steps[0])
         store.hold(BookName.Pool, recipe.id, setOf(mark))
-        assertEquals(setOf(mark), DoneMarks.preferences(context).held(BookName.Pool, recipe.id))
+        assertEquals(setOf(mark), DoneMarks.preferences(OneKeyOnly(context)).held(BookName.Pool, recipe.id))
 
         val other = Recipe.create(now, null)
         context.getSharedPreferences("done-marks", Context.MODE_PRIVATE).edit()
             .putInt("${BookName.Pool.fileName}/${other.id.value}", 3).commit()
         assertEquals(emptySet<DoneMark>(), store.held(BookName.Pool, other.id))
         assertEquals(setOf(mark), store.held(BookName.Pool, recipe.id))
+        // Marking, clearing and reading the card's marks read the one key too.
+        val marks = CardMarks(store, BookName.Pool, recipe)
+        assertTrue(marks.done(MarkedPart.STEP, 0))
+        marks.toggle(MarkedPart.STEP, 1)
+        marks.dropStale()
+        assertEquals(2, store.held(BookName.Pool, recipe.id).size)
+        marks.clear()
+        assertEquals(emptySet<DoneMark>(), store.held(BookName.Pool, recipe.id))
     }
 }

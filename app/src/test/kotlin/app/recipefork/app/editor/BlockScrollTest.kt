@@ -127,6 +127,7 @@ class BlockScrollTest(private val handleRight: Boolean) {
         compose.waitForIdle()
         val form = bounds(EditorTags.FORM)
         val start = at(bounds(tag))
+        assertTrue("the point $where ($start) lies in the scrolling form ($form)", form.contains(start))
         val distance = px(160f)
         val up = start.y - distance > form.top + px(8f)
         val move = if (up) -distance else distance
