@@ -96,13 +96,17 @@
     <string name="editor_timer_label">Таймер для шага %1$d</string>
     <string name="editor_timer_action">Добавить таймер к шагу %1$d</string>
     <string name="editor_timer_remove_action">Убрать таймер шага %1$d</string>
+    <string name="editor_timer_remove_numbered_action">Убрать таймер %2$d шага %1$d</string>
     <string name="editor_timer_hours">Часы</string>
     <string name="editor_timer_minutes">Минуты</string>
     <string name="editor_timer_name">Название таймера</string>
+    <string name="editor_timer_name_numbered">Название таймера %1$d</string>
     <string name="editor_timer_name_follows">Взято из шага. Можно назвать таймер по-своему.</string>
-    <string name="editor_timer_one_per_step">У шага один таймер. Если ждать нужно дважды подряд, разделите этот шаг на два, у каждого свой таймер.</string>
+    <string name="editor_timer_limit">У шага может быть до пяти таймеров. Для других ожиданий разделите этот шаг на несколько шагов, у каждого свои таймеры.</string>
     <string name="editor_timer_read_only">Таймер: %1$s</string>
     <string name="editor_timer_name_read_only">Название таймера: %1$s</string>
+    <string name="editor_timer_read_only_numbered">Таймер %1$d: %2$s</string>
+    <string name="editor_timer_name_read_only_numbered">Название таймера %1$d: %2$s</string>
     <string name="editor_timer_duration">%1$d ч %2$d мин</string>
     <string name="editor_timer_duration_hours">%1$d ч</string>
     <string name="editor_timer_duration_minutes">%1$d мин</string>
@@ -140,7 +144,7 @@
     <!-- %1$d — сколько символов шага несёт уведомление таймера (TimerName.LENGTH). -->
     <string name="editor_checklist_1_text">Уведомление несёт первые %1$d символов шага, поэтому «курица в духовку на 30 минут» говорит сама за себя, а «нарежьте лук полукольцами, обжарьте… и в духовку» — нет. Если начало шага не может сказать, чего ждёт таймер, таймеру можно дать имя вручную.</string>
     <string name="editor_checklist_2_title">Одно действие — один шаг.</string>
-    <string name="editor_checklist_2_text">Шаги не объединяются: два ожидания подряд — это два шага, и у шага один таймер.</string>
+    <string name="editor_checklist_2_text">Шаги не объединяются: два ожидания подряд лучше записать двумя шагами, хотя у шага может быть до пяти таймеров.</string>
     <string name="editor_checklist_3_title">Фото или видео — у того шага, который они показывают.</string>
     <string name="editor_checklist_3_text">Их стоит прикладывать в лучшем качестве, какое даёт камера: по ним читатель сверяет свою сковороду.</string>
     <string name="editor_checklist_4_title">Количества внутри шага вставляются ссылками, а не набираются числами.</string>
@@ -158,9 +162,11 @@
     <string name="editor_timer_notification_follows">Количества в нём следуют за числом порций читателя, поэтому у читателя уведомление может звучать и обрезаться иначе.</string>
     <string name="editor_timer_notification_name">Назвать таймер</string>
     <string name="editor_timer_notification_name_action">Назвать таймер шага %1$d</string>
+    <string name="editor_timer_notification_name_numbered_action">Назвать таймер %2$d шага %1$d</string>
     <!-- A row or a step deleted, with the action that puts it back. -->
     <string name="editor_ingredient_removed">Строка ингредиента %1$d убрана</string>
     <string name="editor_step_removed">Шаг %1$d убран</string>
     <string name="editor_group_removed">Заголовок группы %1$d убран</string>
+    <string name="editor_timer_removed">Таймер шага %1$d убран</string>
     <string name="editor_undo">Вернуть</string>
 </resources>

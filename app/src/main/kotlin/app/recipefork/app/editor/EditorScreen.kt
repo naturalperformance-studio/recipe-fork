@@ -307,6 +307,7 @@ private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements)
             Removal.Kind.STEP -> R.string.editor_step_removed
             Removal.Kind.INGREDIENT -> R.string.editor_ingredient_removed
             Removal.Kind.GROUP -> R.string.editor_group_removed
+            Removal.Kind.TIMER -> R.string.editor_timer_removed
         }
         stringResource(said, it.position + 1)
     }
@@ -588,7 +589,7 @@ object EditorTags {
     const val STEPS_MARK = "editor-steps-mark"
     const val DESCRIPTION_MARK = "editor-description-mark"
     fun stepMark(position: Int) = "editor-step-$position-mark"
-    fun timerNameMark(position: Int) = "editor-step-$position-timer-name-mark"
+    fun timerNameMark(position: Int, index: Int = 0) = "${timer(position, index)}-name-mark"
     const val LANGUAGE = "editor-language"
     const val LANGUAGE_CLEAR = "editor-language-clear"
     /** One option of the language's segmented switch: `editor-language-ru`, `editor-language-en`. */
@@ -658,19 +659,25 @@ object EditorTags {
     fun stepClipCancel(position: Int) = "editor-step-$position-clip-cancel"
     fun stepOffer(position: Int, ingredientPosition: Int) = "editor-step-$position-offer-$ingredientPosition"
     fun stepOfferNone(position: Int) = "editor-step-$position-offer-none"
+    /** The control that adds a timer to the step at [position], and the statement it makes on a sixth (GUIDE-007). */
     fun timerAttach(position: Int) = "editor-step-$position-timer"
-    fun timerRemove(position: Int) = "editor-step-$position-timer-remove"
     fun timerStatement(position: Int) = "editor-step-$position-timer-statement"
-    fun timerHours(position: Int) = "editor-step-$position-timer-hours"
-    fun timerMinutes(position: Int) = "editor-step-$position-timer-minutes"
-    fun timerName(position: Int) = "editor-step-$position-timer-name"
-    fun timerNameFollows(position: Int) = "editor-step-$position-timer-name-follows"
+    /**
+     * The parts of the timer at [index] of those the step at [position] shows (DOM-024). The first timer's tags read as
+     * they did when a step carried one: `editor-step-0-timer-hours`; the second's `editor-step-0-timer-1-hours`.
+     */
+    private fun timer(position: Int, index: Int) = if (index == 0) "editor-step-$position-timer" else "editor-step-$position-timer-$index"
+    fun timerRemove(position: Int, index: Int = 0) = "${timer(position, index)}-remove"
+    fun timerHours(position: Int, index: Int = 0) = "${timer(position, index)}-hours"
+    fun timerMinutes(position: Int, index: Int = 0) = "${timer(position, index)}-minutes"
+    fun timerName(position: Int, index: Int = 0) = "${timer(position, index)}-name"
+    fun timerNameFollows(position: Int, index: Int = 0) = "${timer(position, index)}-name-follows"
     /** What a step's unnamed timer will announce itself by, shown once the step is left (GUIDE-006). */
-    fun timerNotification(position: Int) = "editor-step-$position-timer-notification"
-    fun timerNotificationText(position: Int) = "editor-step-$position-timer-notification-text"
-    fun timerNotificationFollows(position: Int) = "editor-step-$position-timer-notification-follows"
-    fun timerNotificationName(position: Int) = "editor-step-$position-timer-notification-name"
-    fun timerDuration(position: Int) = "editor-step-$position-timer-duration"
+    fun timerNotification(position: Int, index: Int = 0) = "${timer(position, index)}-notification"
+    fun timerNotificationText(position: Int, index: Int = 0) = "${timer(position, index)}-notification-text"
+    fun timerNotificationFollows(position: Int, index: Int = 0) = "${timer(position, index)}-notification-follows"
+    fun timerNotificationName(position: Int, index: Int = 0) = "${timer(position, index)}-notification-name"
+    fun timerDuration(position: Int, index: Int = 0) = "${timer(position, index)}-duration"
     /** The tooltip a block's action tagged [action] shows on a long press. */
     fun tooltip(action: String) = "$action-tooltip"
     const val DESCRIPTION = "editor-description"

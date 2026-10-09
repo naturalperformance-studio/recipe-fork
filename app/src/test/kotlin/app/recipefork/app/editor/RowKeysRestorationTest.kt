@@ -138,6 +138,32 @@ class RowKeysRestorationTest {
         )
     }
 
+    // A step's timers come back as they were shown: one cleared of its duration stays at its place, one just added
+    // stays under them, and each is entered again where it stands (DOM-024).
+    @Test
+    fun aStepsTimersWithNoDurationComeBackWhereTheyStood() {
+        val recipe = Recipe.create(created, null).copy(
+            steps = listOf(Step(0, "Bake.", timers = listOf(Timer(2.minutes), Timer(7.minutes, "Rest"), Timer(40.minutes)))),
+        )
+        open(recipe)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerMinutes(0, 1)).performScrollTo().performTextReplacement("")
+        compose.onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performClick()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 3)), PATIENCE_MS)
+        assertEquals(listOf(Timer(2.minutes), Timer(40.minutes)), stored(recipe.id).steps[0].timers)
+
+        restore()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 3)), PATIENCE_MS)
+        assertEquals(listOf("2", "", "40", ""), (0..3).map { fieldText(EditorTags.timerMinutes(0, it)) })
+        compose.onNodeWithTag(EditorTags.timerMinutes(0, 3)).performScrollTo().performTextReplacement("9")
+        compose.onNodeWithTag(EditorTags.timerMinutes(0, 1)).performScrollTo().performTextReplacement("8")
+        compose.waitForIdle()
+        assertEquals(
+            listOf(Timer(2.minutes), Timer(8.minutes, "Rest"), Timer(40.minutes), Timer(9.minutes)),
+            stored(recipe.id).steps[0].timers,
+        )
+    }
+
     @Test
     fun aRowsTypedQuantityComesBackOnItsRowAfterAMoveAndAnInsert() {
         val recipe = Recipe.create(created, null).copy(

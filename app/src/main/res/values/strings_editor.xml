@@ -124,17 +124,23 @@
     <!-- The long press of an icon-only action in the editor's top bar: it shows the action's name in a tooltip. -->
     <string name="editor_action_show_name">Show the name</string>
     <string name="editor_fork_takes">A fork takes the title, tags, servings, ingredients and steps; the description and photos stay with you unless the fork is your own.</string>
-    <!-- A step's timer: hours and whole minutes, one per step, named by its step unless the author names it (FLOW-027, GUIDE-007). -->
+    <!-- A step's timers: hours and whole minutes, up to five per step, each named by its step unless the author names it (FLOW-027, DOM-024, GUIDE-007). -->
     <string name="editor_timer_label">Timer for step %1$d</string>
     <string name="editor_timer_action">Add a timer to step %1$d</string>
     <string name="editor_timer_remove_action">Remove timer from step %1$d</string>
+    <!-- Where a step shows several timers: %1$d is the step, %2$d the timer's place among them. -->
+    <string name="editor_timer_remove_numbered_action">Remove timer %2$d from step %1$d</string>
     <string name="editor_timer_hours">Hours</string>
     <string name="editor_timer_minutes">Minutes</string>
     <string name="editor_timer_name">Timer\'s name</string>
+    <string name="editor_timer_name_numbered">Timer %1$d\'s name</string>
     <string name="editor_timer_name_follows">Taken from the step. Change it to name the timer yourself.</string>
-    <string name="editor_timer_one_per_step">A step has one timer. For two waits one after another, split this step into two steps, each with its own timer.</string>
+    <string name="editor_timer_limit">A step can hold up to five timers. For more waits, split this step into further steps, each with its own timers.</string>
     <string name="editor_timer_read_only">Timer: %1$s</string>
     <string name="editor_timer_name_read_only">Timer\'s name: %1$s</string>
+    <!-- A frozen recipe's step with several timers: %1$d is the timer's place among them. -->
+    <string name="editor_timer_read_only_numbered">Timer %1$d: %2$s</string>
+    <string name="editor_timer_name_read_only_numbered">Timer %1$d\'s name: %2$s</string>
     <string name="editor_timer_duration">%1$d h %2$d min</string>
     <string name="editor_timer_duration_hours">%1$d h</string>
     <string name="editor_timer_duration_minutes">%1$d min</string>
@@ -163,7 +169,7 @@
     <!-- %1$d is the number of a step's characters a timer's notification carries (TimerName.LENGTH). -->
     <string name="editor_checklist_1_text">The notification carries the step\'s first %1$d characters, so “chicken into the oven for 30 minutes” announces itself and “slice the onion into half rings, fry… and into the oven” does not. Where the opening cannot be the point of the wait, the timer can be named by hand instead.</string>
     <string name="editor_checklist_2_title">One action, one step.</string>
-    <string name="editor_checklist_2_text">Steps are not joined together: two waits in sequence are two steps, and a step carries one timer.</string>
+    <string name="editor_checklist_2_text">Steps are not joined together: two waits in sequence read best as two steps, though a step can carry up to five timers.</string>
     <string name="editor_checklist_3_title">A photograph or a clip belongs at the step it shows.</string>
     <string name="editor_checklist_3_text">It is worth attaching at the best quality the camera gives, because it is what the reader checks their own pan against.</string>
     <string name="editor_checklist_4_title">Quantities inside a step go in as references, not as typed numbers.</string>
@@ -183,9 +189,11 @@
     <string name="editor_timer_notification_follows">The quantities in it follow the reader\'s serving count, so the reader\'s notification may read and be cut differently.</string>
     <string name="editor_timer_notification_name">Name the timer</string>
     <string name="editor_timer_notification_name_action">Name the timer of step %1$d</string>
+    <string name="editor_timer_notification_name_numbered_action">Name timer %2$d of step %1$d</string>
     <!-- A row or a step deleted, with the action that puts it back. -->
     <string name="editor_ingredient_removed">Ingredient row %1$d removed</string>
     <string name="editor_step_removed">Step %1$d removed</string>
     <string name="editor_group_removed">Group heading %1$d removed</string>
+    <string name="editor_timer_removed">Timer removed from step %1$d</string>
     <string name="editor_undo">Undo</string>
 </resources>

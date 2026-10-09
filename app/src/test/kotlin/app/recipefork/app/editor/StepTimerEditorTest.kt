@@ -214,11 +214,13 @@ class StepTimerEditorTest {
         val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Ferment."))))
         val editor = RecipeEditor(recipes, recipe.id, { created }, CoroutineScope(Dispatchers.Unconfined))
         runBlocking { editor.load() }
-        assertFalse(editor.setTimerDuration(0, 100, 0))
-        assertFalse(editor.setTimerDuration(0, 0, 60))
-        assertFalse(editor.setTimerDuration(0, -1, 30))
+        assertFalse(editor.addTimer(0, 0, 100, 0))
+        assertFalse(editor.addTimer(0, 0, 0, 60))
+        assertFalse(editor.addTimer(0, 0, -1, 30))
         assertNull(editor.recipe.value!!.steps[0].timer)
-        assertTrue(editor.setTimerDuration(0, 99, 59))
+        assertTrue(editor.addTimer(0, 0, 99, 59))
+        assertFalse(editor.setTimerDuration(0, 0, 100, 0))
+        assertFalse(editor.setTimerDuration(0, 0, 0, 60))
         assertEquals(Timer(99.hours + 59.minutes), editor.recipe.value!!.steps[0].timer)
         // Another editor reads once every write of this one is in the book.
         val read = RecipeEditor(recipes, recipe.id, { created }, CoroutineScope(Dispatchers.Unconfined))
@@ -260,33 +262,35 @@ class StepTimerEditorTest {
         assertEquals(setOf(EditorTags.stepText(0)), fieldsIn(0))
     }
 
-    // FLOW-027 (2), GUIDE-007: the control stays on a step with a timer; choosing it creates no second timer and
-    // says that a step carries one timer and two waits in sequence are two steps. The author's next action ends it.
+    // FLOW-027 (2, 3), GUIDE-007: the control stays on a step with timers and adds another each time, up to five;
+    // choosing it on a step showing five creates no sixth and says that a step holds up to five timers and further
+    // waits are further steps. The author's next action ends it.
     @Test
-    fun aSecondTimerOnAStepIsNotCreatedAndTheStepSaysWhy() {
+    fun aSixthTimerOnAStepIsNotCreatedAndTheStepSaysWhy() {
+        val five = (1..5).map { Timer(it.minutes) }
         val recipe = seed(
             Recipe.create(created, null).copy(
                 title = "Roast",
-                steps = listOf(Step(0, "Preheat the oven."), Step(1, "Roast the chicken.", timer = Timer(20.minutes))),
+                steps = listOf(Step(0, "Preheat the oven."), Step(1, "Roast the chicken.", timers = five)),
             ),
         )
         openDirectly(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerAttach(1)), PATIENCE_MS)
-        assertEquals("0", fieldText(EditorTags.timerHours(1)))
-        assertEquals("20", fieldText(EditorTags.timerMinutes(1)))
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(1, 4)), PATIENCE_MS)
+        assertEquals((1..5).map { "$it" }, (0..4).map { fieldText(EditorTags.timerMinutes(1, it)) })
 
         chooseTimer(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(1)), PATIENCE_MS)
-        val statement = string(R.string.editor_timer_one_per_step)
+        val statement = string(R.string.editor_timer_limit)
         assertEquals(listOf(statement), compose.textsOf(EditorTags.timerStatement(1)))
-        assertTrue(statement.contains("one timer") && statement.contains("two steps"))
-        // No second timer, and nothing about the step or its timer changed.
+        assertTrue(statement.startsWith("A step can hold up to five timers") && statement.contains("split this step"))
+        // No sixth timer, and nothing about the step or its timers changed.
+        compose.onNodeWithTag(EditorTags.timerHours(1, 5)).assertDoesNotExist()
         assertEquals(recipe, stored(recipe.id))
-        assertEquals("20", fieldText(EditorTags.timerMinutes(1)))
         compose.onNodeWithTag(EditorTags.timerAttach(1)).assertExists()
         // Choosing it again changes nothing either.
         chooseTimer(1)
         compose.onNodeWithTag(EditorTags.timerStatement(1)).assertExists()
+        compose.onNodeWithTag(EditorTags.timerHours(1, 5)).assertDoesNotExist()
         assertEquals(recipe, stored(recipe.id))
 
         // A scroll is not the next action: the statement stays.
@@ -295,36 +299,78 @@ class StepTimerEditorTest {
         compose.waitForIdle()
         compose.onNodeWithTag(EditorTags.timerStatement(1)).assertExists()
 
-        // A touch on another field is: the statement goes, and the step and its timer stand.
+        // A touch on another field is: the statement goes, and the step and its timers stand.
         compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performTouchInput { click() }
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerStatement(1)), PATIENCE_MS)
         assertEquals(recipe, stored(recipe.id))
-        assertEquals(Timer(20.minutes), timerOf(recipe.id, 1))
 
         // So is a typed character.
         chooseTimer(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(1)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.stepText(1)).performTextInput(" Baste.")
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerStatement(1)), PATIENCE_MS)
-        assertEquals(Timer(20.minutes), timerOf(recipe.id, 1))
+        assertEquals(five, stored(recipe.id).steps[1].timers)
 
-        // On a step with no timer, attaching one shows nothing.
+        // On a step with no timer, adding one shows nothing.
         chooseTimer(0)
         compose.onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
         compose.onNodeWithTag(EditorTags.timerHours(0)).assertExists()
     }
 
+    // FLOW-027 (2, 3): "Add timer" adds a timer each time it is chosen, each with its own duration, until five; the
+    // sixth adds nothing and says why — timers added but holding no duration yet count among the five.
+    @Test
+    fun addTimerAddsAnotherTimerUntilFive() {
+        val id = writeANewRecipe()
+        addStep("Bake the bread.")
+        (0..4).forEach { place ->
+            chooseTimer(0)
+            compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, place)), PATIENCE_MS)
+            compose.onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
+            if (place < 4) type(EditorTags.timerMinutes(0, place), "${place + 1}0")
+        }
+        assertEquals((1..4).map { Timer((it * 10).minutes) }, stored(id).steps[0].timers)
+        // Four timers and one added with no duration yet: a sixth is not offered.
+        chooseTimer(0)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerMinutes(0, 5)).assertDoesNotExist()
+        type(EditorTags.timerHours(0, 4), "1")
+        assertEquals((1..4).map { Timer((it * 10).minutes) } + Timer(1.hours), stored(id).steps[0].timers)
+        chooseTimer(0)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
+        compose.onNodeWithTag(EditorTags.timerMinutes(0, 5)).assertDoesNotExist()
+        assertEquals(5, stored(id).steps[0].timers.size)
+    }
+
+    // The editor itself adds no sixth timer, and counts those shown with no duration yet.
+    @Test
+    fun theEditorAddsNoSixthTimer() {
+        val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Ferment.", timers = (1..4).map { Timer(it.hours) }))))
+        val editor = RecipeEditor(recipes, recipe.id, { created }, CoroutineScope(Dispatchers.Unconfined))
+        runBlocking { editor.load() }
+        assertFalse(editor.attachTimer(0))
+        assertNull(editor.statement.value)
+        assertTrue(editor.attachTimer(0, unheld = 1))
+        assertEquals(0, editor.statement.value)
+        assertTrue(editor.addTimer(0, 4, 0, 5))
+        assertTrue(editor.attachTimer(0))
+        assertFalse(editor.addTimer(0, 5, 0, 6))
+        assertFalse(editor.addTimer(0, 0, 0, 6))
+        assertEquals((1..4).map { Timer(it.hours) } + Timer(5.minutes), editor.recipe.value!!.steps[0].timers)
+        runBlocking { editor.written() }
+    }
+
     @Test
     @Config(qualifiers = "ru")
-    fun theStatementOfOneTimerPerStepIsInRussian() {
-        val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Томить.", timer = Timer(2.hours)))))
+    fun theStatementOfFiveTimersPerStepIsInRussian() {
+        val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Томить.", timers = (1..5).map { Timer(it.hours) }))))
         openDirectly(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerAttach(0)), PATIENCE_MS)
         assertEquals("Таймер для шага 1", compose.descriptionOf(EditorTags.timerAttach(0)).single())
         chooseTimer(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
         val statement = compose.textsOf(EditorTags.timerStatement(0)).single()
-        assertTrue(statement, statement.contains("один таймер") && statement.contains("на два"))
+        assertTrue(statement, statement.contains("до пяти таймеров") && statement.contains("разделите этот шаг"))
         assertEquals(recipe, stored(recipe.id))
     }
 
@@ -509,10 +555,12 @@ class StepTimerEditorTest {
         runBlocking { editor.load() }
         assertFalse(editor.attachTimer(0))
         assertNull(editor.statement.value)
-        assertFalse(editor.setTimerDuration(0, 1, 0))
-        assertFalse(editor.setTimerDuration(0, 0, 0))
-        assertFalse(editor.setTimerLabel(0, "Oven"))
-        assertFalse(editor.removeTimer(0))
+        assertFalse(editor.addTimer(0, 1, 1, 0))
+        assertFalse(editor.setTimerDuration(0, 0, 1, 0))
+        assertFalse(editor.setTimerDuration(0, 0, 0, 0))
+        assertFalse(editor.setTimerLabel(0, 0, "Oven"))
+        assertFalse(editor.removeTimer(0, 0))
+        assertNull(editor.removal.value)
         assertEquals(recipe, editor.recipe.value)
         assertEquals(recipe, stored(recipe.id))
     }
@@ -531,8 +579,6 @@ class StepTimerEditorTest {
         chooseTimer(0)
         type(EditorTags.timerMinutes(0), "5")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
-        chooseTimer(0)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 8)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 8)
         assertEquals(string(R.string.editor_timer_hours), fieldLabel(EditorTags.timerHours(0)))
@@ -541,9 +587,29 @@ class StepTimerEditorTest {
         assertEquals(string(R.string.editor_timer_action, 1), AccessibilityChecks.clickActionLabel(node(EditorTags.timerAttach(0))))
         // The control that takes the timer off is named for the screen reader, with its step, and is 48 dp.
         assertEquals(string(R.string.editor_timer_remove_action, 1), AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(0))))
-        val remove = node(EditorTags.timerRemove(0))
-        val density = remove.layoutInfo.density.density
-        assertTrue(remove.size.width / density >= 48f && remove.size.height / density >= 48f)
+        assertTargetOf48(EditorTags.timerRemove(0))
+
+        // Several timers are each named with their place: their names and their removals.
+        chooseTimer(0)
+        type(EditorTags.timerMinutes(0, 1), "7")
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0, 1)), PATIENCE_MS)
+        chooseTimer(0)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 14)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 14)
+        (0..1).forEach { place ->
+            assertEquals(string(R.string.editor_timer_name_numbered, place + 1), fieldLabel(EditorTags.timerName(0, place)))
+            assertEquals(string(R.string.editor_timer_remove_numbered_action, 1, place + 1), AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(0, place))))
+            assertTargetOf48(EditorTags.timerRemove(0, place))
+        }
+        assertEquals(string(R.string.editor_timer_hours), fieldLabel(EditorTags.timerHours(0, 2)))
+        assertEquals(string(R.string.editor_timer_minutes), fieldLabel(EditorTags.timerMinutes(0, 2)))
+    }
+
+    private fun assertTargetOf48(tag: String) {
+        val target = node(tag)
+        val density = target.layoutInfo.density.density
+        assertTrue(tag, target.size.width / density >= 48f && target.size.height / density >= 48f)
     }
 
     // At the demo the author asked for a small button that takes a step's timer off: it sits with the timer's fields

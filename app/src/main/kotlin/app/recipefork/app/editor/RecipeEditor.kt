@@ -218,49 +218,93 @@ class RecipeEditor(
     }
 
     /**
-     * The author chose the control that attaches a timer to the step at [position]. A step carries one timer
-     * (DOM-013): where it already carries one, nothing is created and [statement] names the step until the author's
-     * next action (GUIDE-007). Returns whether the step already carried a timer.
+     * The author chose the control that adds a timer to the step at [position], whose block already shows [unheld]
+     * timers that hold no duration yet. A step carries up to [RecipeBounds.MAX_TIMERS] timers (DOM-024): where it
+     * would show more, nothing is added and [statement] names the step until the author's next action (GUIDE-007).
+     * Returns whether the timer was refused.
      */
-    fun attachTimer(position: Int): Boolean {
+    fun attachTimer(position: Int, unheld: Int = 0): Boolean {
         val recipe = current.value ?: return false
         if (!recipe.state.editable) return false
-        val carries = recipe.steps.sortedBy { it.position }.getOrNull(position)?.timer != null
-        stating.value = if (carries) position else null
-        return carries
+        val step = recipe.steps.sortedBy { it.position }.getOrNull(position) ?: return false
+        val full = step.timers.size + unheld >= RecipeBounds.MAX_TIMERS
+        stating.value = if (full) position else null
+        return full
     }
 
     /**
-     * The step's timer as [hours] and whole [minutes], from 0 to 99 and 0 to 59 (FLOW-027 (12)); anything beyond is
-     * not held. 0 h 0 min is no duration, so the step then carries no timer, and nothing is refused (FLOW-027 (11, 13)).
-     * A timer that stays keeps its name; one newly attached takes [label], the name the author gave it before its
-     * duration was cleared, if any. Returns whether the duration was held.
+     * Puts a timer of [hours] and whole [minutes] at [index] of the step at [position]'s timers, from 0 to their
+     * number; the timers from there on keep their order after it. It takes [label], the name the author gave it before
+     * its duration was cleared, if any. 0 h 0 min is no duration and adds nothing (FLOW-027 (11, 13)); nor is a sixth
+     * timer added (DOM-024). Returns whether the timer was added.
      */
-    fun setTimerDuration(position: Int, hours: Int, minutes: Int, label: String? = null): Boolean {
+    fun addTimer(position: Int, index: Int, hours: Int, minutes: Int, label: String? = null): Boolean {
         if (hours !in 0..MAX_HOURS || minutes !in 0..MAX_MINUTES) return false
         val duration = hours.hours + minutes.minutes
+        val step = current.value?.steps?.sortedBy { it.position }?.getOrNull(position) ?: return false
+        if (!duration.isPositive()) {
+            // Typed all the same: the author's next action ends a statement (GUIDE-007).
+            if (editable) noteAction()
+            return false
+        }
+        if (!step.canAddTimer || index !in 0..step.timers.size) return false
+        return editStep(position) { it.copy(timers = it.timers.toMutableList().apply { add(index, Timer(duration, label?.ifEmpty { null })) }) }
+    }
+
+    /**
+     * The duration of the timer at [index] of the step at [position], as [hours] and whole [minutes], from 0 to 99 and
+     * 0 to 59 (FLOW-027 (12)); anything beyond is not held. The timer keeps its name. 0 h 0 min is no duration, so the
+     * step then no longer carries that timer, and nothing is refused (FLOW-027 (11, 13)); its other timers stand as
+     * they were. Returns whether the duration was held.
+     */
+    fun setTimerDuration(position: Int, index: Int, hours: Int, minutes: Int): Boolean {
+        if (hours !in 0..MAX_HOURS || minutes !in 0..MAX_MINUTES) return false
+        if (timerAt(position, index) == null) return false
+        val duration = hours.hours + minutes.minutes
         return editStep(position) { step ->
-            step.copy(timer = if (duration.isPositive()) Timer(duration, step.timer?.label ?: label?.ifEmpty { null }) else null)
+            if (!duration.isPositive()) step.withoutTimer(index)
+            else step.copy(timers = step.timers.mapIndexed { i, timer -> if (i == index) timer.copy(duration = duration) else timer })
         }
     }
 
     /**
-     * The name the author gives the step's timer, kept in full however long (DOM-012 is enforced at submission and
-     * marked on leaving the field, never while typing — FLOW-028). An empty name gives none, and the name follows the step's text again (FLOW-027 (7), FLOW-016).
+     * The name the author gives the timer at [index] of the step at [position], kept in full however long (DOM-012 is
+     * enforced at submission and marked on leaving the field, never while typing — FLOW-028). An empty name gives none,
+     * and the name follows the step's text again (FLOW-027 (7), FLOW-016). The step's other timers stand as they were.
      */
-    fun setTimerLabel(position: Int, label: String): Boolean {
-        if (current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timer == null) return false
-        return editStep(position) { step -> step.copy(timer = step.timer?.copy(label = label.ifEmpty { null })) }
+    fun setTimerLabel(position: Int, index: Int, label: String): Boolean {
+        if (timerAt(position, index) == null) return false
+        return editStep(position) { step ->
+            step.copy(timers = step.timers.mapIndexed { i, timer -> if (i == index) timer.copy(label = label.ifEmpty { null }) else timer })
+        }
     }
 
     /**
-     * Takes the step's timer off, name and all: attached again, it starts from the name derived from the step.
-     * Returns whether the step carried a timer.
+     * Takes the timer at [index] off the step at [position], name and all; the step's other timers keep their order.
+     * The removal is offered for undoing as [removal], which puts the timer back at its place. Returns whether the step
+     * carried a timer there.
      */
-    fun removeTimer(position: Int): Boolean {
-        if (current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timer == null) return false
-        return editStep(position) { it.copy(timer = null) }
+    fun removeTimer(position: Int, index: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (!recipe.state.editable || timerAt(position, index) == null) return false
+        val key = stepKeys.of(position)
+        // A mark left on a later timer's name stays with that timer, now one place up.
+        left.value = left.value.mapNotNullTo(mutableSetOf()) { part ->
+            val timer = (part as? Left.OfStep)?.timer
+            when {
+                part !is Left.OfStep || part.key != key || timer == null || timer < index -> part
+                timer == index -> null
+                else -> part.copy(timer = timer - 1)
+            }
+        }
+        if (!editStep(position) { it.withoutTimer(index) }) return false
+        offered.value = Removal(Removal.Kind.TIMER, position, recipe, index = index) {}
+        return true
     }
+
+    /** The timer at [index] of the step at [position]; null where it carries none there. */
+    private fun timerAt(position: Int, index: Int): Timer? =
+        current.value?.steps?.sortedBy { it.position }?.getOrNull(position)?.timers?.getOrNull(index)
 
     private fun editStep(position: Int, change: (Step) -> Step) = edit { recipe ->
         val steps = recipe.steps.sortedBy { it.position }
@@ -584,7 +628,7 @@ class RecipeEditor(
     private val offered = MutableStateFlow<Removal?>(null)
 
     /**
-     * The last row or step deleted, while it can still be undone: until it is undone, ended, or the next change is
+     * The last row, step or timer deleted, while it can still be undone: until it is undone, ended, or the next change is
      * made — which ends it — so undoing it puts back exactly the recipe it was taken from; null for none.
      */
     val removal: StateFlow<Removal?> = offered.asStateFlow()
@@ -600,6 +644,8 @@ class RecipeEditor(
             Removal.Kind.STEP -> stepKeys.insert(removal.position, now.steps.size)
             Removal.Kind.INGREDIENT -> ingredientKeys.insert(removal.position, now.ingredients.size)
             Removal.Kind.GROUP -> groupKeys.insert(removal.position, now.ingredientGroups.size)
+            // A timer goes back into its step, which kept its key.
+            Removal.Kind.TIMER -> Unit
         }
         removal.headings.forEachIndexed { i, index -> groupKeys.insert(index, now.ingredientGroups.size + i) }
         return edit { removal.before }
@@ -720,16 +766,16 @@ class RecipeEditor(
      */
     fun leave(part: RecipePart) = hold(
         when (part) {
-            is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timerName = false)
-            is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timerName = true)
+            is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timer = null)
+            is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timer = part.index)
             is RecipePart.IngredientNote -> Left.OfIngredient(ingredientKeys.of(part.position))
             is RecipePart.GroupName -> Left.OfGroup(groupKeys.of(part.index))
             else -> Left.Whole(part)
         },
     )
 
-    /** The author left the text of the step whose [stepKey] is [key], or, [timerName], the name of its timer. */
-    fun leaveStep(key: Long, timerName: Boolean = false) = hold(Left.OfStep(key, timerName))
+    /** The author left the text of the step whose [stepKey] is [key], or, given a [timer], the name of its timer at that index. */
+    fun leaveStep(key: Long, timer: Int? = null) = hold(Left.OfStep(key, timer))
 
     private fun hold(part: Left) {
         val recipe = current.value ?: return
@@ -749,14 +795,15 @@ class RecipeEditor(
     /** The part [this] is at now; null for a step deleted since. */
     private fun Left.at(): RecipePart? = when (this) {
         is Left.Whole -> part
-        is Left.OfStep -> stepPosition(key)?.let { if (timerName) RecipePart.TimerName(it) else RecipePart.StepText(it) }
+        is Left.OfStep -> stepPosition(key)?.let { if (timer != null) RecipePart.TimerName(it, timer) else RecipePart.StepText(it) }
         is Left.OfIngredient -> ingredientPosition(key)?.let { RecipePart.IngredientNote(it) }
         is Left.OfGroup -> groupIndex(key)?.let { RecipePart.GroupName(it) }
     }
 
     private sealed interface Left {
         data class Whole(val part: RecipePart) : Left
-        data class OfStep(val key: Long, val timerName: Boolean) : Left
+        /** The text of the step whose [stepKey] is [key], or, given a [timer], the name of its timer at that index. */
+        data class OfStep(val key: Long, val timer: Int?) : Left
         /** The note of the ingredient row whose [ingredientKey] is [key], so the mark stays with the row. */
         data class OfIngredient(val key: Long) : Left
         /** The name of the heading whose [groupKey] is [key]. */
@@ -869,18 +916,20 @@ class RecipeEditor(
 }
 
 /**
- * A step, an ingredient row or a group's heading ([kind]) deleted from [position], offered for undoing; [before] is the
- * recipe it was deleted from, [headings] the indices of the headings that went with a row — its group left empty — and
- * [ended] what is done once it is gone for good.
+ * A step, an ingredient row, a group's heading or a step's timer ([kind]) deleted from [position] — a timer from the
+ * step at [position], at [index] of its timers — offered for undoing; [before] is the recipe it was deleted from,
+ * [headings] the indices of the headings that went with a row — its group left empty — and [ended] what is done once it
+ * is gone for good.
  */
 class Removal internal constructor(
     val kind: Kind,
     val position: Int,
     internal val before: Recipe,
     internal val headings: List<Int> = emptyList(),
+    val index: Int = 0,
     internal val ended: suspend () -> Unit,
 ) {
-    enum class Kind { STEP, INGREDIENT, GROUP }
+    enum class Kind { STEP, INGREDIENT, GROUP, TIMER }
 }
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
