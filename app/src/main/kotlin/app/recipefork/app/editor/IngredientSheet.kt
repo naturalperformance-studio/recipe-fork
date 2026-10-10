@@ -25,7 +25,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -75,6 +74,8 @@ import app.recipefork.app.card.withNote
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientOffer
 import app.recipefork.app.dictionary.label
+import app.recipefork.app.ui.widestWord
+import app.recipefork.core.recipe.AcceptedValues
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityProblem
@@ -104,6 +105,7 @@ internal fun rememberTypedInSheet(): TypedInSheet {
 /** The test tags of an ingredient row read as a line, and of the sheet it opens in. */
 object IngredientSheetTags {
     const val SHEET = "editor-ingredient-sheet"
+    const val TITLE = "editor-ingredient-sheet-title"
     const val DONE = "editor-ingredient-sheet-done"
 
     /** The row's line: what it holds, written as the card writes it; the row's click target. */
@@ -218,16 +220,7 @@ internal fun IngredientSheet(
         // Asked for — added, or reached by the keyboard's Next, or tapped with no name yet — the row's name takes the
         // focus as soon as the sheet is laid out, with the keyboard up.
         rows.TakenInSheet(position, chain.name)
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(R.string.editor_ingredient_edit),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
-            TextButton(onClick = done, modifier = Modifier.heightIn(min = 48.dp).testTag(IngredientSheetTags.DONE)) {
-                Text(stringResource(R.string.editor_done))
-            }
-        }
+        SheetHeader(stringResource(R.string.editor_ingredient_edit), IngredientSheetTags.TITLE, IngredientSheetTags.DONE, done)
         Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(bottom = 8.dp)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 IngredientFields(position, row, editor, language, dictionary, mode, chain, entryDivisible, typed)
@@ -268,20 +261,35 @@ private fun IngredientFields(
     val quantityHeight = heights.of(EvenHeights.Input.QUANTITY) { quantityUnder.intValue }
     val unitHeight = heights.of(EvenHeights.Input.UNIT)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        // The quantity's label is never wrapped onto the field above it (A11Y-004): where it does not fit on one line
-        // beside the unit, the quantity and the unit each take a line of their own.
-        val label = stringResource(R.string.editor_ingredient_quantity)
+        // No label is wrapped onto the field above it, nor broken inside a word (A11Y-004): each is measured as it rests
+        // in its empty field, in the field's own text style. The unit select is as wide as its label or its longest
+        // unit needs beside its arrow; where the quantity's label — or a word of what the quantity may say under it —
+        // does not fit beside it, the quantity and the unit each take a line of their own.
         val measurer = rememberTextMeasurer()
-        val labelStyle = MaterialTheme.typography.bodySmall
+        val resting = MaterialTheme.typography.bodyLarge
+        val under = MaterialTheme.typography.bodySmall
         val density = LocalDensity.current
-        val labelWidth = remember(label, labelStyle, density) { with(density) { measurer.measure(label, labelStyle).size.width.toDp() } }
-        val besideUnit = maxWidth - UNIT_WIDTH - 8.dp
-        if (!quantity || besideUnit >= labelWidth + QUANTITY_LABEL_ROOM) {
+        val quantityLabel = stringResource(R.string.editor_ingredient_quantity)
+        val unitTexts = listOf(stringResource(R.string.editor_ingredient_unit)) + QuantityUnit.entries.map { stringResource(unitName(it)) }
+        val messages = QUANTITY_MESSAGES.map { stringResource(it) }
+        val needs = remember(quantityLabel, unitTexts, messages, resting, under, density) {
+            with(density) {
+                val unitNeed = unitTexts.maxOf { measurer.measure(it, resting, softWrap = false, maxLines = 1).size.width }.toDp() + UNIT_ROOM
+                val quantityNeed = maxOf(
+                    measurer.measure(quantityLabel, resting, softWrap = false, maxLines = 1).size.width,
+                    widestWord(messages, under, measurer),
+                ).toDp() + LABEL_ROOM
+                unitNeed to quantityNeed
+            }
+        }
+        val unitWidth = maxOf(UNIT_WIDTH, needs.first)
+        val besideUnit = maxWidth - unitWidth - 8.dp
+        if (!quantity && unitWidth <= maxWidth || besideUnit >= needs.second) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                 if (quantity) {
                     QuantityField(position, row, editor, language, chain, problem, typed.quantity, quantityUnder, Modifier.weight(1f).then(quantityHeight))
                 }
-                UnitField(position, row, editor, chain, Modifier.width(UNIT_WIDTH).then(unitHeight))
+                UnitField(position, row, editor, chain, Modifier.width(unitWidth).then(unitHeight))
             }
         } else {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -294,11 +302,18 @@ private fun IngredientFields(
     if (row.unitType == UnitType.PIECE && entryDivisible == null) Divisibility(position, row, editor)
 }
 
-/** How wide the unit select is beside the quantity: room for its longest unit, "по вкусу", and its arrow. */
+/** How wide the unit select is at least beside the quantity: room for its longest unit, "по вкусу", and its arrow. */
 private val UNIT_WIDTH = 140.dp
 
-/** What an outlined field takes across besides its floating label: its padding on both sides and the label's gaps. */
-private val QUANTITY_LABEL_ROOM = 40.dp
+/** What an outlined field takes across besides its label or its text: its padding on both sides and the label's gaps. */
+internal val LABEL_ROOM = 40.dp
+
+/** What the unit select takes across besides its label or its unit: [LABEL_ROOM] and its 48 dp arrow. */
+private val UNIT_ROOM = LABEL_ROOM + 48.dp
+
+/** Everything the quantity field may say under itself (DOM-017 (6), DOM-019 (5)): no word of it is broken. */
+private val QUANTITY_MESSAGES =
+    (listOf<QuantityProblem>(QuantityProblem.Separators) + AcceptedValues.entries.map { QuantityProblem.NotAccepted(it) }).map(::problemMessage)
 
 /**
  * The free-text warning (FLOW-022 (2)) as a hint in the name's supporting text, in its muted colour, never as an error:
@@ -705,6 +720,7 @@ private fun Divisibility(position: Int, row: Ingredient, editor: RecipeEditor) {
 /** The test tags of a group's heading read as its name, and of the sheet it opens in. */
 object GroupSheetTags {
     const val SHEET = "editor-group-sheet"
+    const val TITLE = "editor-group-sheet-title"
     const val DONE = "editor-group-sheet-done"
 
     /** The heading's line: its name, or a placeholder while it has none; the heading's click target. */
@@ -772,16 +788,7 @@ internal fun GroupSheet(
         val manager = LocalFocusManager.current
         SideEffect { focus = manager }
         headings.TakenInSheet(index, requester)
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(R.string.editor_group_edit),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
-            TextButton(onClick = done, modifier = Modifier.heightIn(min = 48.dp).testTag(GroupSheetTags.DONE)) {
-                Text(stringResource(R.string.editor_done))
-            }
-        }
+        SheetHeader(stringResource(R.string.editor_group_edit), GroupSheetTags.TITLE, GroupSheetTags.DONE, done)
         Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(bottom = 8.dp)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 OutlinedTextField(

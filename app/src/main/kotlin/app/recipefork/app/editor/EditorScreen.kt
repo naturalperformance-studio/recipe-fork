@@ -5,7 +5,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.onFocusedBoundsChanged
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -13,15 +12,12 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -77,7 +73,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -475,16 +477,14 @@ private fun EditorBar(title: String?, done: Boolean, checklist: @Composable () -
         },
         modifier = Modifier.testTag(EditorTags.BAR),
         navigationIcon = {
-            val label = stringResource(R.string.editor_back)
-            Box(
-                Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(onClickLabel = stringResource(R.string.editor_back_action), role = Role.Button, onClick = onBack)
-                    .testTag(EditorTags.BACK),
-                contentAlignment = Alignment.Center,
+            val action = stringResource(R.string.editor_back_action)
+            // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003); its click announced as what it
+            // does (A11Y-005).
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(48.dp).semantics { onClick(label = action, action = null) }.testTag(EditorTags.BACK),
             ) {
-                Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = label)
+                Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.editor_back))
             }
         },
         actions = {
@@ -507,30 +507,75 @@ private fun EditorBar(title: String?, done: Boolean, checklist: @Composable () -
 private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () -> Unit) {
     val editable = recipe.state.editable
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-            if (editable) {
-                OutlinedTextField(
-                    value = recipe.title,
-                    onValueChange = { editor.setTitle(it) },
-                    label = { Text(stringResource(R.string.editor_title)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { onNext() }),
-                    modifier = Modifier.weight(1f).then(leaving { editor.leave(RecipePart.Title) }).testTag(EditorTags.TITLE),
-                )
-            } else {
-                Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}.testTag(EditorTags.TITLE)) {
-                    Text(stringResource(R.string.editor_title), style = MaterialTheme.typography.labelMedium)
-                    Text(recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }, style = MaterialTheme.typography.titleLarge)
-                }
+        val label = stringResource(R.string.editor_title)
+        val measurer = rememberTextMeasurer()
+        val resting = MaterialTheme.typography.bodyLarge
+        val density = LocalDensity.current
+        // What the title needs across at least, in the field's text style: its label on one line as it rests in the
+        // empty field, and room for about ten characters of the title — so that "Plum cake" is not "Plum c".
+        val need = remember(label, resting, density) {
+            with(density) {
+                listOf(label, TITLE_SAMPLE).maxOf { measurer.measure(it, resting, softWrap = false, maxLines = 1).size.width }.toDp() + LABEL_ROOM
             }
-            Spacer(Modifier.width(8.dp))
-            // The declared language sits beside the title (FLOW-024): changing it is one action (L10N-004).
-            Language(recipe, editor)
         }
+        TitleBesideLanguage(
+            need = need,
+            title = {
+                if (editable) {
+                    OutlinedTextField(
+                        value = recipe.title,
+                        onValueChange = { editor.setTitle(it) },
+                        label = { Text(label) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { onNext() }),
+                        modifier = Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Title) }).testTag(EditorTags.TITLE),
+                    )
+                } else {
+                    Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.TITLE)) {
+                        Text(label, style = MaterialTheme.typography.labelMedium)
+                        Text(recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }, style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+            },
+            // The declared language sits beside the title (FLOW-024): changing it is one action (L10N-004).
+            language = { Language(recipe, editor) },
+        )
         // Under the title and the language, across the width, what either still needs (FLOW-028).
         BoundMark(editor, RecipePart.Title, EditorTags.TITLE_MARK, gap = 4.dp)
         BoundMark(editor, RecipePart.Language, EditorTags.LANGUAGE_MARK, gap = 4.dp)
+    }
+}
+
+/** About ten characters of a title, as wide as ten digits in the field's style: what a title needs to be read. */
+private const val TITLE_SAMPLE = "0000000000"
+
+/**
+ * The [title] with the [language] beside it, 8 dp apart, both from the top — where the title keeps at least half the
+ * width and what it [need]s; else the language goes under the title, at its start, 4 dp below it, and the title takes
+ * the whole width.
+ */
+@Composable
+private fun TitleBesideLanguage(need: Dp, title: @Composable () -> Unit, language: @Composable () -> Unit) {
+    Layout(contents = listOf(title, language), modifier = Modifier.fillMaxWidth().testTag(EditorTags.TITLE_ROW)) { (titles, languages), constraints ->
+        val width = constraints.maxWidth
+        val gap = 8.dp.roundToPx()
+        val shown = languages.single().measure(Constraints(maxWidth = width))
+        val room = width - shown.width - gap
+        if (room >= need.roundToPx() && room >= width / 2) {
+            val field = titles.single().measure(Constraints.fixedWidth(room))
+            layout(width, maxOf(field.height, shown.height)) {
+                field.place(0, 0)
+                shown.place(room + gap, 0)
+            }
+        } else {
+            val field = titles.single().measure(Constraints.fixedWidth(width))
+            val below = field.height + 4.dp.roundToPx()
+            layout(width, below + shown.height) {
+                field.place(0, 0)
+                shown.place(0, below)
+            }
+        }
     }
 }
 
@@ -758,6 +803,8 @@ object EditorTags {
     const val FORM = "editor-form"
     const val FROZEN = "editor-frozen"
     const val TITLE = "editor-title"
+    /** The title with the language beside it, or under it where the line is too narrow for both. */
+    const val TITLE_ROW = "editor-title-row"
     /** The marks of FLOW-028: a part left below the minimum or over a limit. */
     const val TITLE_MARK = "editor-title-mark"
     const val LANGUAGE_MARK = "editor-language-mark"
