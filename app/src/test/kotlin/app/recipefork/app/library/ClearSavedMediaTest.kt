@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -55,7 +56,8 @@ import java.time.Instant
  * it would clear, and states first what it deletes —
  * in serverless mode that it cannot be fetched again, in the standard build that it is fetched again when needed — and
  * deletes nothing until confirmed; Cancel changes nothing; confirmed, the found recipe's files are gone, with its rows,
- * while a draft keeps its own. With nothing to clear, it says so in place of asking.
+ * while a draft keeps its own, and the snackbar says the clearing is done. With nothing to clear, the item is disabled
+ * and says so beneath its name (v0.30, T-221), in place of asking.
  *
  * Scenario 6 of v0.26: in serverless mode all the device can clear is the photos and videos of recipes imported from
  * files — no recipe is sent there — and the item, its statement and its message of nothing to clear say so in those
@@ -102,7 +104,8 @@ class ClearSavedMediaTest {
             statement = "The photos and videos of the recipes you imported from files are deleted from this device. " +
                 "To have them again, remove the recipe and import its file again. Every recipe keeps its text, and the " +
                 "recipes you wrote here keep their photos and videos.",
-            nothing = "The recipes you imported have no photos or videos to clear.",
+            done = "Photos and videos of imported recipes cleared",
+            nothing = "Nothing to clear",
         ),
     )
 
@@ -116,7 +119,8 @@ class ClearSavedMediaTest {
             statement = "Фото и видео рецептов, импортированных из файлов, удалятся с этого устройства. Чтобы вернуть их, " +
                 "уберите рецепт и импортируйте его файл снова. Текст каждого рецепта останется, а написанные здесь " +
                 "рецепты сохранят свои фото и видео.",
-            nothing = "У импортированных рецептов нет фото и видео, которые можно очистить.",
+            done = "Фото и видео импортированных рецептов очищены",
+            nothing = "Очищать нечего",
         ),
     )
 
@@ -127,24 +131,26 @@ class ClearSavedMediaTest {
             item = "Clear saved media",
             title = "Clear saved media?",
             statement = context.getString(R.string.library_clear_media_statement),
-            nothing = "There is no saved media to clear.",
+            done = "Saved media cleared",
+            nothing = "Nothing to clear",
         ),
     )
 
     @Test
-    fun withNothingToClearItSaysSoInServerlessMode() =
-        saysNothingToClear(Mode.Serverless, "The recipes you imported have no photos or videos to clear.")
+    fun withNothingToClearItIsDisabledAndSaysWhyInServerlessMode() = saysNothingToClear(Mode.Serverless, "Nothing to clear")
 
     @Test
     @Config(qualifiers = "ru")
-    fun withNothingToClearItSaysSoInServerlessModeInRussian() =
-        saysNothingToClear(Mode.Serverless, "У импортированных рецептов нет фото и видео, которые можно очистить.")
+    fun withNothingToClearItIsDisabledAndSaysWhyInServerlessModeInRussian() = saysNothingToClear(Mode.Serverless, "Очищать нечего")
 
     @Test
-    fun withNothingToClearItSaysSoInTheStandardBuild() = saysNothingToClear(Mode.Standard, "There is no saved media to clear.")
+    fun withNothingToClearItIsDisabledAndSaysWhyInTheStandardBuild() = saysNothingToClear(Mode.Standard, "Nothing to clear")
 
-    /** What the item, its statement's title and text, and its message of nothing to clear say. */
-    private data class Wording(val item: String, val title: String, val statement: String, val nothing: String)
+    /**
+     * What the item, its statement's title and text, the snackbar once it is [done], and the reason it is disabled
+     * with nothing to clear say.
+     */
+    private data class Wording(val item: String, val title: String, val statement: String, val done: String, val nothing: String)
 
     private fun warnsThenClears(mode: Mode, wording: Wording) {
         val found = recipe("Found soup", SentStatus.NEVER, photo("found-cover"), photo("found-step", MediaAttachment.ToStep(0)))
@@ -179,29 +185,33 @@ class ClearSavedMediaTest {
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_STATEMENT), PATIENCE_MS)
         // The disk is read, not the screen: the clearing resumes on the main thread, which is run meanwhile.
         compose.waitUntilWithMainThread { onDisk() == listOf("draft-cover") }
-        awaitValue(context.getString(R.string.settings_media_none))
+        // The clearing done is said in the snackbar.
+        compose.waitUntilExactlyOneExists(hasText(wording.done), PATIENCE_MS)
+        awaitValue(wording.nothing)
         runBlocking {
             assertEquals(found.media, recipes.get(found.id)!!.media)
             assertEquals(draft.media, recipes.get(draft.id)!!.media)
             assertTrue(recipes.isMarked(found.id))
         }
 
-        // Now nothing is left to clear, and the action says so.
-        chooseClear()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
-        compose.waitUntilExactlyOneExists(hasText(wording.nothing), PATIENCE_MS)
+        // Now nothing is left to clear: the item is disabled, says so, and asks nothing.
+        assertDisabledAsNothingToClear()
     }
 
     private fun saysNothingToClear(mode: Mode, said: String) {
         runBlocking { recipes.save(recipe("Draft bread", SentStatus.NEVER, photo("draft-cover"))) }
         show(mode)
-        chooseClear()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
-        compose.waitUntilExactlyOneExists(hasText(said), PATIENCE_MS)
-        assertFalse(exists(LibraryTags.CLEAR_MEDIA_STATEMENT))
-        compose.onNodeWithTag(LibraryTags.CLEAR_MEDIA_OK).performClick()
-        compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.CLEAR_MEDIA_NOTHING), PATIENCE_MS)
+        openSettings()
+        awaitValue(said)
+        assertDisabledAsNothingToClear()
         assertEquals(listOf("draft-cover"), onDisk())
+    }
+
+    private fun assertDisabledAsNothingToClear() {
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performClick()
+        compose.waitForIdle()
+        assertFalse(exists(LibraryTags.CLEAR_MEDIA_STATEMENT))
     }
 
     private fun openSettings() {

@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- My kitchen: the equipment the reader's kitchen has, ticked from the equipment dictionary; opened from the settings. -->
+    <!-- My kitchen: the equipment the reader's kitchen has, ticked from the equipment dictionary; opened from the settings,
+         the filters sheet, or a recipe's card. -->
     <string name="kitchen_title">My kitchen</string>
     <string name="kitchen_back">Back</string>
     <string name="kitchen_back_action">Back to the settings</string>
     <!-- Opened from an item of equipment on a recipe's card: back returns to the recipe, and that item stands out. -->
     <string name="kitchen_back_to_recipe_action">Back to the recipe</string>
+    <!-- Opened from the book's filters sheet: back returns to the book. -->
+    <string name="kitchen_back_to_book_action">Back to the book</string>
     <string name="kitchen_from_recipe">Needed for the recipe</string>
     <string name="kitchen_search">Search equipment</string>
     <string name="kitchen_search_clear">Clear the search</string>
@@ -13,6 +16,15 @@
     <string name="kitchen_show_all">Show all equipment</string>
     <!-- A group's row: how many of its items are ticked. -->
     <string name="kitchen_group_ticked">%1$d of %2$d</string>
+    <!-- A group folds: its row shows or hides its items; its checkbox ticks or unticks all of them, with Undo. -->
+    <string name="kitchen_group_expand_action">Show the items</string>
+    <string name="kitchen_group_collapse_action">Hide the items</string>
+    <string name="kitchen_group_expanded">Expanded</string>
+    <string name="kitchen_group_collapsed">Collapsed</string>
+    <string name="kitchen_group_tick">Every item of %1$s</string>
+    <string name="kitchen_group_ticked_all">All of “%1$s” ticked</string>
+    <string name="kitchen_group_unticked_all">All of “%1$s” unticked</string>
+    <string name="kitchen_undo">Undo</string>
     <!-- The settings' row: how many items are ticked. -->
     <string name="kitchen_none_ticked">Nothing ticked yet</string>
     <plurals name="kitchen_ticked">

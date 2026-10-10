@@ -5,8 +5,8 @@
     <string name="settings_title">Настройки</string>
     <string name="settings_back">Назад</string>
     <string name="settings_back_action">Вернуться к книге</string>
-    <string name="settings_media_counting">Считаю…</string>
-    <string name="settings_media_none">Удалять нечего</string>
+    <string name="settings_media_counting">Подсчёт…</string>
+    <string name="settings_media_none">Очищать нечего</string>
     <plurals name="settings_media_count">
         <item quantity="one">%d сохранённое фото или видео</item>
         <item quantity="few">%d сохранённых фото или видео</item>
@@ -18,4 +18,5 @@
     <string name="settings_theme_dark">Тёмная</string>
     <string name="settings_theme_device">Как на устройстве</string>
     <string name="settings_theme_cancel">Отмена</string>
+    <string name="settings_handle_right_hint">Для перемещения ингредиентов и шагов в редакторе</string>
 </resources>

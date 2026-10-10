@@ -216,7 +216,7 @@ class EquipmentFilterTest {
         assertListed(*all)
         openTheSheet()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_CHOICE), PATIENCE_MS)
-        assertEquals(listOf("Equipment", "Recipes that need something My kitchen lacks are hidden.", "Enough equipment"),
+        assertEquals(listOf("Equipment", "Recipes that need something My kitchen lacks are hidden.", "Enough equipment", "Edit My kitchen"),
             textsIn(LibraryTags.EQUIPMENT_CHOOSER))
         assertEquals(ToggleableState.Off, toggleState(LibraryTags.EQUIPMENT_CHOICE))
         assertEquals(Role.Checkbox, compose.onNodeWithTag(LibraryTags.EQUIPMENT_CHOICE).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Role))
@@ -249,19 +249,27 @@ class EquipmentFilterTest {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_FILTER), PATIENCE_MS)
     }
 
-    // Criterion 1: nothing ticked, or nothing that counts — a consumable, an entry since removed — offers no such filter.
+    // Criterion 1: nothing ticked, or nothing that counts — a consumable, an entry since removed — offers no such filter;
+    // the section offers to set My kitchen up instead (v0.30, T-221).
     @Test
     fun aKitchenWithNothingThatCountsOffersNoSuchFilter() {
         theBook()
         store.hold(listOf(FRYING_PAN), false)
         show(LibraryView.OWN)
         openTheSheet()
-        assertFalse(exists(LibraryTags.EQUIPMENT_CHOOSER))
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_KITCHEN), PATIENCE_MS)
+        assertFalse(exists(LibraryTags.EQUIPMENT_CHOICE))
+        assertEquals(
+            listOf("Equipment", "Tick what your kitchen has, and recipes that need something else can be hidden.", "Set up My kitchen"),
+            textsIn(LibraryTags.EQUIPMENT_CHOOSER),
+        )
+        compose.onNodeWithTag(LibraryTags.EQUIPMENT_KITCHEN).assertHeightIsAtLeast(48.dp)
         closeTheSheet()
         store.hold(listOf(PARCHMENT, REMOVED_POT), true)
         compose.waitForIdle()
         openTheSheet()
-        assertFalse(exists(LibraryTags.EQUIPMENT_CHOOSER))
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_KITCHEN), PATIENCE_MS)
+        assertFalse(exists(LibraryTags.EQUIPMENT_CHOICE))
         closeTheSheet()
         // Ticking an item that counts offers it.
         store.hold(listOf(SAUCEPAN), true)
@@ -344,17 +352,17 @@ class EquipmentFilterTest {
         openTheSheet()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_CHOICE), PATIENCE_MS)
         assertEquals(
-            listOf("Посуда и техника", "Скроются рецепты, для которых нужно то, чего нет в «Моей кухне».", "Хватает посуды"),
+            listOf("Посуда и техника", "Скроются рецепты, для которых нужно то, чего нет в «Моей кухне».", "Хватает посуды и техники", "Изменить «Мою кухню»"),
             textsIn(LibraryTags.EQUIPMENT_CHOOSER),
         )
         click(LibraryTags.EQUIPMENT_CHOICE)
         closeTheSheet()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_FILTER), PATIENCE_MS)
-        assertEquals(listOf("Хватает посуды"), compose.textsOf(LibraryTags.EQUIPMENT_FILTER))
+        assertEquals(listOf("Хватает посуды и техники"), compose.textsOf(LibraryTags.EQUIPMENT_FILTER))
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.NOTHING_FOUND), PATIENCE_MS)
         assertEquals(listOf("Для всех рецептов чего-то не хватает"), compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.NOTHING_FOUND)))
         assertEquals(1, lineCount(LibraryTags.emptyHeadline(LibraryTags.NOTHING_FOUND)))
-        assertEquals(listOf("Выключить «Хватает посуды»"), compose.textsOf(LibraryTags.NOTHING_FOUND_EQUIPMENT_OFF))
+        assertEquals(listOf("Выключить «Хватает посуды и техники»"), compose.textsOf(LibraryTags.NOTHING_FOUND_EQUIPMENT_OFF))
     }
 
     // Criterion 1: it combines with the ingredient, tag and language filters and the search, where the book's queries run.

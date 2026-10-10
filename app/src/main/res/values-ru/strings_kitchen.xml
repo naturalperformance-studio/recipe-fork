@@ -1,17 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Моя кухня: что есть на кухне читателя, отмеченное по словарю оборудования; открывается из настроек. -->
+    <!-- Моя кухня: что есть на кухне читателя, отмеченное по словарю посуды и техники; открывается из настроек, из фильтров
+         книги или с карточки рецепта. -->
     <string name="kitchen_title">Моя кухня</string>
     <string name="kitchen_back">Назад</string>
     <string name="kitchen_back_action">Вернуться в настройки</string>
     <!-- Открыта с предмета на карточке рецепта: «Назад» возвращает к рецепту, а этот предмет выделен. -->
     <string name="kitchen_back_to_recipe_action">Вернуться к рецепту</string>
+    <string name="kitchen_back_to_book_action">Вернуться к книге</string>
     <string name="kitchen_from_recipe">Нужно для рецепта</string>
-    <string name="kitchen_search">Найти оборудование</string>
+    <string name="kitchen_search">Найти посуду и технику</string>
     <string name="kitchen_search_clear">Очистить поиск</string>
     <string name="kitchen_nothing_found">По запросу «%1$s» ничего не найдено</string>
-    <string name="kitchen_show_all">Показать всё оборудование</string>
+    <string name="kitchen_show_all">Показать всю посуду и технику</string>
     <string name="kitchen_group_ticked">%1$d из %2$d</string>
+    <string name="kitchen_group_expand_action">Показать предметы</string>
+    <string name="kitchen_group_collapse_action">Скрыть предметы</string>
+    <string name="kitchen_group_expanded">Развёрнуто</string>
+    <string name="kitchen_group_collapsed">Свёрнуто</string>
+    <string name="kitchen_group_tick">Все предметы группы «%1$s»</string>
+    <string name="kitchen_group_ticked_all">Отмечена вся группа «%1$s»</string>
+    <string name="kitchen_group_unticked_all">Снята отметка со всей группы «%1$s»</string>
+    <string name="kitchen_undo">Отменить</string>
     <string name="kitchen_none_ticked">Пока ничего не отмечено</string>
     <plurals name="kitchen_ticked">
         <item quantity="one">Отмечен %d предмет</item>
@@ -20,6 +30,6 @@
         <item quantity="other">Отмечено %d предмета</item>
     </plurals>
     <!-- My kitchen when the equipment dictionary cannot be read. -->
-    <string name="kitchen_unreadable">Не удалось прочитать список оборудования</string>
+    <string name="kitchen_unreadable">Не удалось прочитать список посуды и техники</string>
     <string name="kitchen_retry">Попробовать ещё раз</string>
 </resources>

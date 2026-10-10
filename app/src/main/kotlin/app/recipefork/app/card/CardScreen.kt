@@ -219,7 +219,8 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  *
  * On View an item of equipment the reader's kitchen lacks opens My kitchen at it ([onOpenKitchen], given the equipment
  * dictionary entry it names), so that it is ticked there and the card found again on return; without [onOpenKitchen]
- * it answers no tap.
+ * it answers no tap. While My kitchen has nothing ticked, View offers under the equipment to set it up
+ * ([onSetUpKitchen]).
  *
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
@@ -236,6 +237,7 @@ fun CardScreen(
     onFork: () -> Unit = {},
     onOpenParent: (RecipeId) -> Unit = {},
     onOpenKitchen: ((Long) -> Unit)? = null,
+    onSetUpKitchen: (() -> Unit)? = null,
     session: CardSession = remember { TextCardSession.inMemory() },
     onRemoved: (PendingRemoval) -> Unit = PendingRemoval::finish,
 ) {
@@ -432,6 +434,7 @@ fun CardScreen(
                             equipmentEntries = equipmentEntries,
                             kitchen = kitchen,
                             onOpenKitchen = onOpenKitchen,
+                            onSetUpKitchen = onSetUpKitchen,
                             onServingsPlaced = if (mode == CardMode.VIEW) { bounds -> servingsShown = bounds } else null,
                             // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
                             bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
@@ -748,8 +751,11 @@ private fun BarTitle(title: String) {
     }
 }
 
-/** The room the content leaves at its end for the floating fork action: its height and its spacing, and a gap. */
-private val FORK_ROOM = 88.dp
+/**
+ * The room the content leaves at its end for the floating fork action: Material's spacing below it, its height — the
+ * card's [CardTarget] — and the same spacing again as a gap above it.
+ */
+private val FORK_ROOM = FAB_SPACING + CardTarget + FAB_SPACING
 
 /**
  * The card's floating fork action (FORK-001), on every recipe shown: its icon and its word while [expanded], its icon
@@ -795,6 +801,7 @@ private fun RecipeContent(
     equipmentEntries: Map<Long, DictionaryEntry>,
     kitchen: Kitchen,
     onOpenKitchen: ((Long) -> Unit)?,
+    onSetUpKitchen: (() -> Unit)?,
     onServingsPlaced: ((Rect) -> Unit)?,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
@@ -868,7 +875,7 @@ private fun RecipeContent(
                     ShownEquipment(EquipmentNames.shown(item, equipmentEntries, reading), entry?.takeIf(kitchen::lacks))
                 }
             }
-            EquipmentList(equipment, marks, mode, shownAgain.equipment, onOpenKitchen)
+            EquipmentList(equipment, marks, mode, shownAgain.equipment, onOpenKitchen, onSetUpKitchen?.takeIf { kitchen.isEmpty })
             val authored = recipe.servings?.takeIf { it >= 1 }
             val ordered = held.ordered
             val scale = held.scale
@@ -1032,7 +1039,8 @@ internal fun Section(@StringRes title: Int, tag: String, gap: Dp = SECTION_GAP, 
  * The serving count and the two actions that walk it (SCALE-011): the count as the reader requested it, never
  * marked approximate, or, while a fixed ingredient sets the scale, the count it implies marked as approximate
  * (SCALE-002, SCALE-008); beside it the fewer and more actions as one connected group [ − | + ]. At ¼ the fewer action
- * is disabled and does nothing.
+ * is disabled and does nothing. The settings' usual count walks with it too, its parts [tagged][tags] and its actions
+ * announced as [fewerAction] and [moreAction] there.
  */
 @Composable
 internal fun ServingsControl(
@@ -1042,6 +1050,9 @@ internal fun ServingsControl(
     canDecrease: Boolean,
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
+    tags: ServingsTags = ServingsTags(CardTags.SERVINGS, CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE),
+    @StringRes fewerAction: Int = R.string.card_servings_fewer_action,
+    @StringRes moreAction: Int = R.string.card_servings_more_action,
 ) {
     // Each step of the count answers with a light tick; at ¼ the fewer action is disabled, so a refused step gives none.
     val haptics = rememberHaptics()
@@ -1049,7 +1060,7 @@ internal fun ServingsControl(
         Text(
             stringResource(if (approximate) R.string.card_servings_approximate else R.string.card_servings, count),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }.testTag(CardTags.SERVINGS),
+            modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }.testTag(tags.count),
         )
         Spacer(Modifier.width(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
@@ -1059,30 +1070,33 @@ internal fun ServingsControl(
             StepAction(
                 icon = R.drawable.ic_servings_fewer,
                 name = stringResource(R.string.card_servings_fewer),
-                action = stringResource(R.string.card_servings_fewer_action),
+                action = stringResource(fewerAction),
                 shape = inner.copy(topStart = outer, bottomStart = outer),
                 enabled = canDecrease,
                 onClick = {
                     haptics.perform(Haptic.TICK)
                     onDecrease()
                 },
-                modifier = Modifier.testTag(CardTags.SERVINGS_FEWER),
+                modifier = Modifier.testTag(tags.fewer),
             )
             StepAction(
                 icon = R.drawable.ic_servings_more,
                 name = stringResource(R.string.card_servings_more),
-                action = stringResource(R.string.card_servings_more_action),
+                action = stringResource(moreAction),
                 shape = inner.copy(topEnd = outer, bottomEnd = outer),
                 enabled = true,
                 onClick = {
                     haptics.perform(Haptic.TICK)
                     onIncrease()
                 },
-                modifier = Modifier.testTag(CardTags.SERVINGS_MORE),
+                modifier = Modifier.testTag(tags.more),
             )
         }
     }
 }
+
+/** The test tags of a [ServingsControl]'s count and its − and +. */
+internal class ServingsTags(val count: String, val fewer: String, val more: String)
 
 /** The seam between the halves of a connected group: they read as one control, yet each half as its own target. */
 private val CONNECTED_GAP = 2.dp

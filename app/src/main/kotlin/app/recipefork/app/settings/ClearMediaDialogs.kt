@@ -13,9 +13,6 @@ import app.recipefork.app.Mode
 import app.recipefork.app.R
 import app.recipefork.app.library.DestructiveConfirm
 
-/** Where the clearing of saved media stands while a dialog of it is shown. */
-internal enum class ClearingMedia { ASKING, NOTHING }
-
 /**
  * The statement before saved media is cleared (FLOW-060): nothing is deleted until it is confirmed, and declining it
  * changes nothing. In [Mode.Serverless] it names what is cleared as the photos and videos of recipes imported from
@@ -55,31 +52,6 @@ internal fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: (
                 onClick = onDecline,
                 modifier = Modifier.heightIn(min = 48.dp).testTag(SettingsTags.CLEAR_MEDIA_DECLINE),
             ) { Text(stringResource(R.string.library_clear_media_decline)) }
-        },
-    )
-}
-
-/** Said in place of the statement when the device holds no media the clearing would delete, in the words of [mode]. */
-@Composable
-internal fun NothingToClear(mode: Mode, onDone: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDone,
-        modifier = Modifier.testTag(SettingsTags.CLEAR_MEDIA_NOTHING),
-        text = {
-            Text(
-                stringResource(
-                    when (mode) {
-                        Mode.Serverless -> R.string.library_clear_media_nothing_serverless
-                        Mode.Standard -> R.string.library_clear_media_nothing
-                    },
-                ),
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onDone,
-                modifier = Modifier.heightIn(min = 48.dp).testTag(SettingsTags.CLEAR_MEDIA_OK),
-            ) { Text(stringResource(R.string.library_clear_media_ok)) }
         },
     )
 }

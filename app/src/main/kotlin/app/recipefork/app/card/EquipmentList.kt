@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
@@ -37,6 +38,9 @@ import app.recipefork.app.ui.Motion
  * On both tabs an item the reader's kitchen lacks ([ShownEquipment.lacking]) says so under its name, "Not in your
  * kitchen", in words, read with the line. On View such a line — and only such a line — is a button that opens My
  * kitchen at the entry it names ([onOpenKitchen]), at least the card's [CardTarget] tall; on Cooking a tap still marks it.
+ *
+ * While My kitchen has nothing ticked — so no item is marked as lacking — View offers under the items a small text
+ * button, "Set up My kitchen" ([onSetUpKitchen]), the card's [CardTarget] tall.
  */
 @Composable
 internal fun EquipmentList(
@@ -45,6 +49,7 @@ internal fun EquipmentList(
     mode: CardMode,
     shownAgain: MutableState<Boolean> = remember { mutableStateOf(false) },
     onOpenKitchen: ((Long) -> Unit)? = null,
+    onSetUpKitchen: (() -> Unit)? = null,
 ) {
     if (equipment.isEmpty()) return
     val gathered = marks != null && equipment.indices.all { marks.done(MarkedPart.EQUIPMENT, it) }
@@ -65,6 +70,12 @@ internal fun EquipmentList(
                             onOpenKitchen = if (mode == CardMode.VIEW && lacked != null) onOpenKitchen?.let { open -> { open(lacked) } } else null,
                             stated = marks?.any == true,
                         )
+                    }
+                    if (mode == CardMode.VIEW && onSetUpKitchen != null) {
+                        TextButton(
+                            onClick = onSetUpKitchen,
+                            modifier = Modifier.heightIn(min = CardTarget).testTag(EquipmentTags.SET_UP_KITCHEN),
+                        ) { Text(stringResource(R.string.card_equipment_set_up_kitchen)) }
                     }
                 }
             }
@@ -136,6 +147,8 @@ internal object EquipmentTags {
     const val SURFACE = "card-equipment-surface"
     /** The one line the list folds into once every item is marked done. */
     const val GATHERED = "card-equipment-gathered"
+    /** Under the items on View while My kitchen has nothing ticked: the way to set it up. */
+    const val SET_UP_KITCHEN = "card-equipment-set-up-kitchen"
 
     /** The "Not in your kitchen" under the item at [index]. */
     fun lacking(index: Int) = "card-equipment-lacking-$index"

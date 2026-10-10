@@ -16,6 +16,8 @@ import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.card.awaitCard
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assertIsNotEnabled
+import app.recipefork.app.R
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -135,7 +137,10 @@ class SettingsScreenTest {
         assertEquals(listOf("Language", "As on the device"), compose.textsOf(SettingsTags.LANGUAGE))
         assertEquals(listOf("Theme", "As on the device"), compose.textsOf(SettingsTags.THEME))
         assertEquals(listOf("I usually cook for…", "3"), compose.textsOf(SettingsTags.USUAL))
-        assertEquals(listOf("Drag handle on the right"), compose.textsOf(SettingsTags.HANDLE_RIGHT))
+        assertEquals(
+            listOf("Drag handle on the right", "For moving ingredients and steps in the editor"),
+            compose.textsOf(SettingsTags.HANDLE_RIGHT),
+        )
         assertEquals(
             ToggleableState.On,
             compose.onNodeWithTag(SettingsTags.HANDLE_RIGHT).fetchSemanticsNode().config[SemanticsProperties.ToggleableState],
@@ -150,6 +155,25 @@ class SettingsScreenTest {
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 6)
         val back = compose.onNodeWithTag(SettingsTags.BACK).fetchSemanticsNode()
         assertEquals("Back to the book", AccessibilityChecks.clickActionLabel(back))
+    }
+
+    // v0.30, T-221: with nothing to clear, "Clear saved media" is disabled, its reason beneath its name, and opens no
+    // dialog; values are capitalised alike — "Not set" as "As on the device" is.
+    @Test
+    fun nothingToClearIsDisabledWithItsReasonAndValuesAreCapitalisedAlike() {
+        usual.set(null)
+        show()
+        openSettings()
+        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Nothing to clear" }
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performClick()
+        compose.waitForIdle()
+        assertFalse(exists(SettingsTags.CLEAR_MEDIA_STATEMENT))
+        assertEquals("Not set", value(SettingsTags.USUAL))
+        listOf(SettingsTags.LANGUAGE, SettingsTags.THEME, SettingsTags.USUAL, SettingsTags.KITCHEN, SettingsTags.CLEAR_MEDIA).forEach {
+            val shown = value(it)
+            assertTrue("$it's value \"$shown\" begins with a capital", shown.first().isUpperCase())
+        }
     }
 
     // A value changed in its item's dialog is shown at once.
@@ -186,8 +210,18 @@ class SettingsScreenTest {
         usual.set(null)
         show()
         openSettings()
-        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Удалять нечего" }
+        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Очищать нечего" }
         assertEquals(listOf("Настройки"), compose.textsOf(SettingsTags.TITLE))
+        // In one voice: no first person among the values, and the reason matches the action's «Очистить».
+        assertEquals("Подсчёт…", context.getString(R.string.settings_media_counting))
+        assertEquals("Не задано", value(SettingsTags.USUAL))
+        assertEquals(
+            listOf("Ручка перетаскивания справа", "Для перемещения ингредиентов и шагов в редакторе"),
+            compose.textsOf(SettingsTags.HANDLE_RIGHT),
+        )
+        listOf(SettingsTags.LANGUAGE, SettingsTags.THEME, SettingsTags.USUAL, SettingsTags.KITCHEN, SettingsTags.CLEAR_MEDIA).forEach {
+            assertTrue(it, value(it).first().isUpperCase())
+        }
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
     }

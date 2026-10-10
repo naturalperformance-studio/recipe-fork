@@ -565,7 +565,7 @@ private fun OwnList(
                 ListHeader(
                     search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
                     filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold, shown.carries,
-                    equipmentOffered = offersEquipment(kitchen),
+                    kitchen = sheetKitchen(kitchen, session),
                 )
                 HorizontalDivider()
             }
@@ -976,7 +976,7 @@ private fun MarkedList(
                 ListHeader(
                     search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
                     filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold, shown.carries,
-                    equipmentOffered = offersEquipment(kitchen),
+                    kitchen = sheetKitchen(kitchen, session),
                 )
                 HorizontalDivider()
             }
@@ -1116,8 +1116,6 @@ object LibraryTags {
     const val CLEAR_MEDIA_STATEMENT = SettingsTags.CLEAR_MEDIA_STATEMENT
     const val CLEAR_MEDIA_CONFIRM = SettingsTags.CLEAR_MEDIA_CONFIRM
     const val CLEAR_MEDIA_DECLINE = SettingsTags.CLEAR_MEDIA_DECLINE
-    const val CLEAR_MEDIA_NOTHING = SettingsTags.CLEAR_MEDIA_NOTHING
-    const val CLEAR_MEDIA_OK = SettingsTags.CLEAR_MEDIA_OK
     /** The book's top bar: its title and its settings action, which scrolls away as a list goes down. */
     const val TOP_BAR = "library-top-bar"
     const val SWITCH = "library-switch"
@@ -1180,6 +1178,8 @@ object LibraryTags {
     const val EQUIPMENT_CHOOSER = "library-equipment-chooser"
     const val EQUIPMENT_CHOICE = "library-equipment-choice"
     const val EQUIPMENT_FILTER = "library-equipment-filter"
+    /** The sheet's way into My kitchen: "Set up My kitchen" while it is empty, "Edit My kitchen" once it is not. */
+    const val EQUIPMENT_KITCHEN = "library-equipment-kitchen"
     /** The one action of a view that the filter "Enough equipment" alone narrowed to nothing: switching it off. */
     const val NOTHING_FOUND_EQUIPMENT_OFF = "library-nothing-found-equipment-off"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"

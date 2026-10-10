@@ -19,6 +19,7 @@ import androidx.compose.ui.test.performScrollToKey
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
@@ -164,9 +165,17 @@ class KitchenFromTheCardTest {
 
     private fun pressSystemBack() = compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
 
-    /** The item's row in My kitchen is in sight, and stands out: in words, and on the primary container. */
+    /**
+     * The item's row in My kitchen is in sight, and stands out: in words, and on the primary container. Its group is
+     * unfolded at it, every other group folded (v0.30, T-221).
+     */
     private fun assertStandsOut(needed: String) {
         compose.onNodeWithTag(KitchenTags.item(SCALE)).assertIsDisplayed()
+        assertEquals(
+            compose.activity.getString(R.string.kitchen_group_expanded),
+            compose.onNodeWithTag(KitchenTags.group(MEASURING)).fetchSemanticsNode().config[SemanticsProperties.StateDescription],
+        )
+        assertFalse("the other groups stay folded", exists(KitchenTags.item(FRYING_PAN)))
         assertEquals(needed, compose.textsOf(KitchenTags.item(SCALE)).last())
         val name = compose.textLayoutsWithin(KitchenTags.item(SCALE)).first()
         assertEquals(scheme.onPrimaryContainer, name.layoutInput.style.color)
@@ -273,11 +282,63 @@ class KitchenFromTheCardTest {
         compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.LIST) && !exists(SettingsTags.SCREEN) }
         assertNull(session.kitchenAt.value)
         assertEquals("Back to the settings", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(KitchenTags.BACK).fetchSemanticsNode()))
+        // Opened from the settings, every group is folded; the scale's shows once its group is unfolded.
+        compose.onNodeWithTag(KitchenTags.LIST).performScrollToKey(MEASURING)
+        assertFalse(exists(KitchenTags.item(SCALE)))
+        compose.onNodeWithTag(KitchenTags.group(MEASURING)).performClick()
         compose.onNodeWithTag(KitchenTags.LIST).performScrollToKey(SCALE)
         assertEquals(listOf("Kitchen scale"), compose.textsOf(KitchenTags.item(SCALE)))
         pressSystemBack()
         compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.SCREEN) && !exists(KitchenTags.SCREEN) }
         assertTrue(session.settings.value)
+    }
+
+    // v0.30, T-221: while My kitchen has nothing ticked no line is marked, and View offers under the equipment a small
+    // "Set up My kitchen", the card's target tall, which opens My kitchen above the card — nothing standing out, every
+    // group folded — and Back returns to the card; Cooking offers none; once something is ticked the offer goes.
+    @Test
+    fun anEmptyKitchenIsOfferedToBeSetUpUnderTheEquipment() = setUpFromTheCard("Set up My kitchen", "Back to the recipe")
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun anEmptyKitchenIsOfferedToBeSetUpInRussian() = setUpFromTheCard("Настроить «Мою кухню»", "Вернуться к рецепту")
+
+    private fun setUpFromTheCard(offer: String, back: String) {
+        store.hold(listOf(FRYING_PAN), has = false)
+        runBlocking { recipes.save(soup) }
+        session.choose(LibraryView.OWN)
+        compose.setContent {
+            MaterialTheme(colorScheme = scheme) {
+                AppNavHost(session, recipes, card = card, editor = editor, themeSetting = HeldThemeSetting(), kitchen = kitchen)
+            }
+        }
+        compose.runOnIdle { session.openCard(soup.id.value, LibraryView.OWN) }
+        compose.awaitCard()
+        compose.waitUntil(PATIENCE_MS) { exists(EquipmentTags.SET_UP_KITCHEN) }
+        assertEquals(emptyList<Int>(), lacking())
+        assertEquals(listOf(offer), compose.textsOf(EquipmentTags.SET_UP_KITCHEN))
+        compose.scrollClearOfFork(EquipmentTags.SET_UP_KITCHEN)
+        compose.assertCardTarget(EquipmentTags.SET_UP_KITCHEN)
+        val link = compose.onNodeWithTag(EquipmentTags.SET_UP_KITCHEN).fetchSemanticsNode().boundsInRoot
+        val items = compose.onNodeWithTag(line(2)).fetchSemanticsNode().boundsInRoot
+        assertTrue("the offer stands under the equipment", link.top >= items.bottom - 0.5f)
+        compose.onNodeWithTag(EquipmentTags.SET_UP_KITCHEN).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.LIST) && !exists(CardTags.SCREEN) }
+        assertNull(session.kitchenAt.value)
+        assertEquals(back, AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(KitchenTags.BACK).fetchSemanticsNode()))
+        assertFalse("every group folded", exists(KitchenTags.item(FRYING_PAN)) || exists(KitchenTags.item(SCALE)))
+        compose.onNodeWithTag(KitchenTags.groupTick(STOVETOP)).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(KitchenTags.BACK).performClick()
+        awaitTheCard()
+        assertEquals(soup.id.value, session.viewing.value)
+        // Something ticked now: the offer goes, and the scale the kitchen lacks is marked.
+        compose.waitUntil(PATIENCE_MS) { lacking() == listOf(1) && !exists(EquipmentTags.SET_UP_KITCHEN) }
+        compose.runOnIdle { store.hold(store.held.value, has = false) }
+        compose.waitUntil(PATIENCE_MS) { exists(EquipmentTags.SET_UP_KITCHEN) }
+        compose.chooseCardTab(CardMode.COOKING)
+        compose.waitForIdle()
+        assertFalse("Cooking offers no set-up", exists(EquipmentTags.SET_UP_KITCHEN))
     }
 
     // L10N: the button's action, the row's words and the back action in Russian.
@@ -296,9 +357,18 @@ class KitchenFromTheCardTest {
         val NOW: Instant = Instant.parse("2026-10-10T12:00:00Z")
         val scheme = lightColorScheme()
 
-        /** The small dictionary, its stovetop cookware grown long, so that the scale stands far down My kitchen. */
+        /**
+         * The small dictionary, its stovetop cookware grown long and thirty more groups listed before the measuring
+         * tools, so that the scale stands far down My kitchen even with every other group folded.
+         */
         val DICTIONARY: List<EquipmentEntryEntity> = KITCHEN_DICTIONARY + List(30) { i ->
             EquipmentEntryEntity(10030L + i, "Сотейник $i", "Sauté pan $i", STOVETOP)
+        } + (0 until 30).flatMap { i ->
+            val group = 10200L + 2 * i
+            listOf(
+                EquipmentEntryEntity(group, "Группа $i", "Group $i"),
+                EquipmentEntryEntity(group + 1, "Предмет $i", "Item $i", group),
+            )
         }
     }
 }

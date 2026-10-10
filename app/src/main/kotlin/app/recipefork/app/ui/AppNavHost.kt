@@ -41,6 +41,7 @@ import app.recipefork.app.editor.rememberEditorEnvironment
 import app.recipefork.app.file.FileMessageDialog
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.kitchen.KitchenEnvironment
+import app.recipefork.app.kitchen.KitchenFrom
 import app.recipefork.app.kitchen.KitchenScreen
 import app.recipefork.app.kitchen.rememberKitchenEnvironment
 import app.recipefork.app.library.CoverThumbnails
@@ -79,8 +80,9 @@ object Destinations {
  * action — goes one destination back: from the editor to the card of the recipe just edited (FLOW-029 (1)), and from
  * the card to the book, which is where it was left. The settings lie above the book, opened from its top bar; back
  * from them returns to the book where it was left. My kitchen lies above the settings, opened from them; back from it
- * returns to them. Opened from an item of equipment on a recipe's card, it lies above that card instead, opened at the
- * item, and back from it returns to the card where it was left.
+ * returns to them. Opened from a recipe's card — at an item of equipment, or to be set up — it lies above that card
+ * instead, and back from it returns to the card where it was left; opened from the book's filters, it lies above the
+ * book.
  *
  * What is open is the [session]'s: its saved state says which card and which editor are open (FLOW-024, FLOW-029), and
  * whether the settings are; the back stack follows it. Back taken through the host — a destination left by the system's back — is told to the
@@ -135,7 +137,15 @@ fun AppNavHost(
         composable(Destinations.KITCHEN_ROUTE) {
             // The item it was opened at, read as it opens: closing it clears the session's, while it still slides away.
             val at = remember { session.kitchenAt.value }
-            KitchenScreen(kitchen, onBack = session::closeKitchen, at = at)
+            // Where it was opened from, read as it opens too: its back says where it returns.
+            val from = remember {
+                when {
+                    session.settings.value -> KitchenFrom.SETTINGS
+                    session.viewing.value != null -> KitchenFrom.RECIPE
+                    else -> KitchenFrom.BOOK
+                }
+            }
+            KitchenScreen(kitchen, onBack = session::closeKitchen, at = at, from = from)
         }
         composable(Destinations.CARD_ROUTE, arguments = recipeArgument) { entry ->
             RecipeCard(RecipeId(entry.recipeId()), session, recipes, editor, card)
@@ -203,6 +213,7 @@ private fun RecipeCard(
         onFork = { fork(another = false) },
         onOpenParent = { parent -> session.openCard(parent.value) },
         onOpenKitchen = session::openKitchenAt,
+        onSetUpKitchen = session::openKitchen,
         session = session.cards,
         onRemoved = session::removed,
     )
@@ -239,7 +250,7 @@ internal sealed interface Shown {
  * The back stack that shows what the session holds open: the book, beneath the card of the recipe open, beneath the
  * editor on it. The editor lies above the card of the recipe it edits — the one leaving it shows. The [settings] lie
  * above the book alone: a card or the editor open is shown in their place. My [kitchen] lies above the settings while
- * they are shown, and otherwise above the card, opened from it, while no editor is open on it.
+ * they are shown, and otherwise above the card or the book, opened from it, while no editor is open.
  */
 internal fun shownFor(viewing: String?, editing: String?, settings: Boolean = false, kitchen: Boolean = false): List<Shown> = buildList {
     add(Shown.Book)
@@ -248,7 +259,7 @@ internal fun shownFor(viewing: String?, editing: String?, settings: Boolean = fa
     if (settings && size == 1) {
         add(Shown.Settings)
         if (kitchen) add(Shown.Kitchen)
-    } else if (kitchen && last() is Shown.Card) {
+    } else if (kitchen && last() !is Shown.Editor) {
         add(Shown.Kitchen)
     }
 }
