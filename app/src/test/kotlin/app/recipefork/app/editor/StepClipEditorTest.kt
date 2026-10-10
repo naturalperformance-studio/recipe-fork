@@ -37,6 +37,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.toSize
 import androidx.test.core.app.ApplicationProvider
@@ -290,7 +291,7 @@ class StepClipEditorTest {
             compose.onNode(hasTestTag(EditorTags.stepPhoto(position)) and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET))).assertExists()
         }
         compose.openStep(1)
-        assertEquals(listOf("Photo or clip for step 2"), compose.descriptionOf(EditorTags.stepPhoto(1)))
+        assertEquals(listOf("Add photo or clip"), compose.textsOf(EditorTags.stepPhoto(1)))
         compose.inStep(1).onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepClipRecord(1)), PATIENCE_MS)
         assertEquals(listOf("Record a clip"), compose.textsOf(EditorTags.stepClipRecord(1)))
@@ -355,13 +356,26 @@ class StepClipEditorTest {
 
         choose(2, "long.mp4")
 
-        awaitNotice(2, "This clip is longer than 15 seconds, so nothing was attached.")
+        // Said in the step's sheet, in its clip's part, while the sheet is open (T-212).
+        val tooLong = "This clip is longer than 15 seconds, so nothing was attached."
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(2)) }
+        assertEquals(listOf(tooLong), compose.textsOf(StepSheetTags.mediaFailure(2)))
         assertTrue(converter.given.isEmpty())
         assertTrue(stored(id).media.isEmpty())
         assertEquals(emptyList<String>(), held())
+        // Said at the bottom too, once the sheet goes; opened again, the sheet does not repeat it.
+        awaitNotice(2, tooLong)
+        compose.openStep(2)
+        assertFalse(exists(StepSheetTags.mediaFailure(2)))
+        choose(2, "long.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(2)) }
 
+        // Another clip offered in the same sheet clears it; attached, nothing is said wrong there.
         choose(2, "large.mp4")
 
+        compose.waitUntil(PATIENCE_MS) { stored(id).stepMedia(2)?.kind == MediaKind.VIDEO }
+        assertTrue(compose.stepSheetOpen())
+        assertFalse(exists(StepSheetTags.mediaFailure(2)))
         awaitNotice(2, converted)
         compose.waitUntil(PATIENCE_MS) { stored(id).stepMedia(2)?.kind == MediaKind.VIDEO }
         assertEquals(1, converter.given.size)
@@ -375,10 +389,18 @@ class StepClipEditorTest {
         val id = open(threeSteps())
 
         choose(1, "heavy.mp4")
-        awaitNotice(1, "This clip could not be made smaller than 6 MB, so nothing was attached.")
+        val heavy = "This clip could not be made smaller than 6 MB, so nothing was attached."
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(1)) }
+        assertEquals(listOf(heavy), compose.textsOf(StepSheetTags.mediaFailure(1)))
+        awaitNotice(1, heavy)
+        // Opened again, the sheet does not repeat what was said.
+        assertFalse(exists(StepSheetTags.mediaFailure(1)))
 
         choose(1, "broken.mp4")
-        awaitNotice(1, "This file could not be read or converted as a clip, so nothing was attached.")
+        val broken = "This file could not be read or converted as a clip, so nothing was attached."
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(1)) }
+        assertEquals(listOf(broken), compose.textsOf(StepSheetTags.mediaFailure(1)))
+        awaitNotice(1, broken)
 
         assertTrue(stored(id).media.isEmpty())
         assertEquals(emptyList<String>(), held())
@@ -518,6 +540,55 @@ class StepClipEditorTest {
         compose.waitUntilWithMainThread { stored(id).stepMedia(3)?.kind == MediaKind.VIDEO }
         assertEquals(4, stored(id).steps.size)
         compose.waitUntil(PATIENCE_MS) { onRow(StepSheetTags.thumbnail(3)) }
+    }
+
+    // T-212: a step just added, kept because its sheet closed while its clip converted, goes once the conversion ends
+    // with nothing attached, as it holds nothing else; what went wrong is still said.
+    @Test
+    fun aNewStepKeptForItsClipGoesWhenTheClipIsNotAttached() {
+        val id = open(threeSteps())
+        holdClips()
+        compose.addStepAt(3)
+        choose(3, "broken.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(3)) }
+        compose.closeStep()
+        compose.waitForIdle()
+        assertEquals(4, stored(id).steps.size)
+        converter.gate!!.complete(Unit)
+        compose.waitUntilWithMainThread { stored(id).steps.size == 3 }
+        assertEquals(listOf("Boil.", "Fry.", "Serve."), stored(id).steps.map { it.text })
+        assertFalse(onRow(EditorTags.step(3)))
+        compose.awaitStatement("This file could not be read or converted as a clip, so nothing was attached.")
+    }
+
+    // A step kept for its clip and opened again is a new step once more: its conversion cancelled there and the sheet
+    // closed with nothing in it, it goes; one given a note meanwhile stays when its clip is not attached.
+    @Test
+    fun aNewStepKeptForItsClipAndOpenedAgainGoesOnlyWhenEmpty() {
+        val id = open(threeSteps())
+        holdClips()
+        compose.addStepAt(3)
+        choose(3, "first.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(3)) }
+        compose.closeStep()
+        compose.openStep(3)
+        compose.onNodeWithTag(EditorTags.stepClipCancel(3)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(3)) }
+        assertEquals(4, stored(id).steps.size)
+        compose.closeStep()
+        compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 3 }
+
+        compose.addStepAt(3)
+        choose(3, "broken.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(3)) }
+        compose.closeStep()
+        compose.openStep(3)
+        compose.onNodeWithTag(StepNoteTags.field(3)).performScrollTo().performTextReplacement("Optional.")
+        compose.closeStep()
+        converter.gate!!.complete(Unit)
+        compose.awaitStatement("This file could not be read or converted as a clip, so nothing was attached.")
+        assertEquals(4, stored(id).steps.size)
+        assertEquals("Optional.", stored(id).steps[3].note)
     }
 
     // A frozen recipe shows its steps' clips and offers nothing to change them.

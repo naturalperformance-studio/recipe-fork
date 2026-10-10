@@ -15,6 +15,9 @@
     <string name="media_unavailable">На этом телефоне не нашлось приложения, чтобы выбрать фото.</string>
     <string name="media_removed">Фото обложки убрано.</string>
     <string name="media_step_photo_label">Фото или видео для шага %1$d</string>
+    <string name="media_step_part">Фото или видео</string>
+    <string name="media_step_add">Добавить фото или видео</string>
+    <string name="media_step_change">Заменить или убрать</string>
     <string name="media_step_photo_action">Добавить, заменить или убрать фото или видео шага %1$d</string>
     <string name="media_step_take">Сфотографировать</string>
     <string name="media_step_choose">Выбрать фото</string>

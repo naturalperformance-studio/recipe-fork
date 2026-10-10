@@ -486,6 +486,51 @@ class StepAnimationEditorTest {
         assertFalse(exists(EditorTags.stepPhotoWorking(1)))
     }
 
+    // T-212 fix round 1: a step just added whose sheet closes while a still picture picked for it is told apart is
+    // kept through the crop that then opens — composed with its row — and takes the photograph once the crop is done.
+    @Test
+    fun aNewStepKeptWhileItsPictureIsToldApartOpensTheCropAndTakesThePhoto() {
+        val id = open(threeSteps())
+        holdWork()
+        images.gate = CompletableDeferred()
+        compose.addStepAt(3)
+
+        choosePhoto(3, picture("still.jpg"))
+        awaitWork { images.asked.isNotEmpty() }
+        compose.closeStep()
+        assertEquals(4, stored(id).steps.size)
+        images.gate!!.complete(Unit)
+
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.FRAME), PATIENCE_MS)
+        assertEquals(4, stored(id).steps.size)
+        compose.onNodeWithTag(CropTags.DONE).performClick()
+        awaitWork { stored(id).stepMedia(3)?.kind == MediaKind.PHOTO }
+        assertEquals(4, stored(id).steps.size)
+        assertFalse(compose.stepSheetOpen())
+    }
+
+    // ... and goes, as it was never written, where that crop is cancelled and it holds nothing.
+    @Test
+    fun aNewStepKeptForItsPictureGoesWhenTheCropIsCancelled() {
+        val id = open(threeSteps())
+        holdWork()
+        images.gate = CompletableDeferred()
+        compose.addStepAt(3)
+
+        choosePhoto(3, picture("still.jpg"))
+        awaitWork { images.asked.isNotEmpty() }
+        compose.closeStep()
+        images.gate!!.complete(Unit)
+
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.FRAME), PATIENCE_MS)
+        assertEquals(4, stored(id).steps.size)
+        compose.onNodeWithTag(CropTags.CANCEL).performClick()
+        awaitWork { stored(id).steps.size == 3 }
+        assertEquals(listOf("Boil.", "Fry.", "Serve."), stored(id).steps.map { it.text })
+        assertFalse(onRow(EditorTags.step(3)) || onRow(CropTags.SCREEN))
+        assertTrue(stored(id).media.isEmpty())
+    }
+
     // Two picks overlapping while the first is told apart end with the later: a still picture after an animation
     // opens the crop and nothing is converted.
     @Test

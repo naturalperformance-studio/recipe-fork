@@ -147,7 +147,9 @@
     <string name="editor_action_show_name">Show the name</string>
     <string name="editor_fork_takes">A fork takes the title, tags, servings, ingredients and steps; the description, step notes and photos stay with you unless the fork is your own.</string>
     <!-- A step's timers: hours and whole minutes, up to five per step, each named by its step unless the author names it (FLOW-027, DOM-024, GUIDE-007). -->
-    <string name="editor_timer_label">Timer for step %1$d</string>
+    <!-- The step sheet's part of the step's timers: its name, and the button under them that adds one. -->
+    <string name="editor_step_timers">Timers</string>
+    <string name="editor_timer_add">Add timer</string>
     <string name="editor_timer_action">Add a timer to step %1$d</string>
     <string name="editor_timer_remove_action">Remove timer from step %1$d</string>
     <!-- Where a step shows several timers: %1$d is the step, %2$d the timer's place among them. -->

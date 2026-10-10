@@ -103,7 +103,8 @@ internal val ROW_SPACING = 12.dp
  * Which step's sheet is open is kept by the step's key, across the activity being recreated: the sheet follows its step
  * where it moves, and goes when the step is deleted. A step added — by "Add step", or above or below another from its
  * sheet — opens in its sheet with its text focused; closed while it holds nothing (no text, note, timer or picture), it
- * is dropped again, with no Undo, as it was never written.
+ * is dropped again, with no Undo, as it was never written. Closed while its photograph or clip is being prepared, it is
+ * kept for it, and dropped the same way once that work ends with nothing attached.
  */
 @Composable
 internal fun Steps(
@@ -135,6 +136,10 @@ internal fun Steps(
     // The key of the step whose sheet is open, and of the step just added, which goes again if closed empty.
     var open by rememberSaveable { mutableStateOf<Long?>(null) }
     var fresh by rememberSaveable { mutableStateOf<Long?>(null) }
+    // The keys of steps just added whose sheet closed while their photograph or clip was being prepared — or a picture
+    // was in its crop: each is kept for it, and goes once that work ends with nothing attached (the crop cancelled
+    // among it), where the step still holds nothing.
+    var kept by rememberSaveable { mutableStateOf(LongArray(0)) }
     val asked = focus.asked
     LaunchedEffect(asked, editable) {
         if (asked != null && editable && asked < (editor.recipe.value?.steps?.size ?: 0)) open = editor.stepKey(asked)
@@ -145,13 +150,13 @@ internal fun Steps(
         LaunchedEffect(shownKey) { open = null }
     }
     // The sheet of the step [key] closes; a step just added that holds nothing goes again, as it was never written — but
-    // not while a photograph or a clip is being [prepared] for it, which it then holds. The author has left the steps'
-    // fields, which marks the steps (FLOW-028), as leaving them in the editor does.
+    // not while a photograph or a clip is being [prepared] for it: it is kept until that work ends. The author has left
+    // the steps' fields, which marks the steps (FLOW-028), as leaving them in the editor does.
     fun closed(key: Long, prepared: Boolean) {
         if (open == key) open = null
         if (fresh == key) {
             fresh = null
-            if (!prepared) editor.stepPosition(key)?.let(editor::dropStep)
+            if (!prepared) editor.stepPosition(key)?.let(editor::dropStep) else kept += key
         }
         editor.leave(RecipePart.Steps)
     }
@@ -190,9 +195,27 @@ internal fun Steps(
                 val media = recipe.stepMedia(position)
                 if (editable) {
                     val held = rememberStepHeld(position, step, editor, photos)
-                    StepRow(position, steps.size, step, media, recipe.ingredients, language, editor, drag, photos, held.photo.attaching.working.value || shownKey == key, motion) {
+                    val working = held.photo.attaching.working.value
+                    val preparing = held.photo.preparing
+                    if (key in kept) {
+                        // Kept for its photograph or clip: once that work ends — its crop cancelled, or what it prepared
+                        // refused — the step goes where it took nothing and holds nothing else, as it was never written.
+                        // The crop is composed with the step's row, so the step stays while it is open.
+                        LaunchedEffect(preparing) {
+                            if (!preparing) {
+                                kept = kept.filter { it != key }.toLongArray()
+                                editor.stepPosition(key)?.let(editor::dropStep)
+                            }
+                        }
+                    }
+                    StepRow(position, steps.size, step, media, recipe.ingredients, language, editor, drag, photos, working || shownKey == key, motion) {
                         // The author has moved on from the ingredients to the steps (FLOW-028 (1)).
                         editor.leave(RecipePart.Ingredients)
+                        // Opened again while kept for its media, it is a new step once more: closed empty, it goes.
+                        if (key in kept) {
+                            kept = kept.filter { it != key }.toLongArray()
+                            fresh = key
+                        }
                         open = key
                     }
                     // The sheet is a window of its own: it takes no place among the steps.
@@ -204,12 +227,12 @@ internal fun Steps(
                                     val inserted = if (above) at else at + 1
                                     if (editor.insertStep(inserted)) {
                                         val added = editor.stepKey(inserted)
-                                        closed(key, held.photo.attaching.working.value)
+                                        closed(key, held.photo.preparing)
                                         editor.stepPosition(added)?.let(::opened)
                                     }
                                 }
                             },
-                            close = { closed(key, held.photo.attaching.working.value) },
+                            close = { closed(key, held.photo.preparing) },
                         )
                         StepSheet(position, steps.size, step, media, recipe.ingredients, dictionary, language, editor, stating == position, photos, held, focus, host)
                     }
@@ -468,9 +491,8 @@ object StepNoteTags {
 }
 
 /**
- * The step's timers (FLOW-027, DOM-024), in its sheet under its note; the sheet's timer control adds one each time it is
- * chosen, one compact row under another in the order they were added. Choosing it where the step would show more than
- * five creates nothing and says why (GUIDE-007): what it says shows here while [stating].
+ * The step's timers (FLOW-027, DOM-024), in their part of its sheet; the part's "Add timer" adds one each time it is
+ * chosen, one compact row under another in the order they were added.
  */
 @Composable
 internal fun StepTimers(
@@ -482,19 +504,8 @@ internal fun StepTimers(
     ingredients: List<Ingredient>,
     language: InterfaceLanguage,
     editor: RecipeEditor,
-    stating: Boolean,
     left: Boolean,
 ) {
-    if (stating) {
-        Text(
-            stringResource(R.string.editor_timer_limit),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .padding(horizontal = 12.dp)
-                .semantics { liveRegion = LiveRegionMode.Polite }
-                .testTag(EditorTags.timerStatement(position)),
-        )
-    }
     rows.forEachIndexed { place, row ->
         // What the screen holds for a timer — what was typed, a name given — stays with it as others go.
         key(row.key) {
@@ -652,7 +663,6 @@ private fun TimerNotification(position: Int, place: Int, number: Int?, reading: 
             stringResource(R.string.editor_timer_notification, reading.name),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
-                .padding(horizontal = 12.dp)
                 .semantics { liveRegion = LiveRegionMode.Polite }
                 .testTag(EditorTags.timerNotificationText(position, place)),
         )
@@ -661,7 +671,6 @@ private fun TimerNotification(position: Int, place: Int, number: Int?, reading: 
                 stringResource(R.string.editor_timer_notification_follows),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
-                    .padding(horizontal = 12.dp)
                     .semantics { liveRegion = LiveRegionMode.Polite }
                     .testTag(EditorTags.timerNotificationFollows(position, place)),
             )

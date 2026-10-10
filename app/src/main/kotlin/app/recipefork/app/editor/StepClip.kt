@@ -115,7 +115,7 @@ private fun StillClipFrame(position: Int, frame: ImageBitmap?, said: String, ove
 internal fun ClipConverting(position: Int, onCancel: () -> Unit) {
     val cancelSaid = stringResource(R.string.media_clip_cancel_action, position + 1)
     Row(
-        Modifier.fillMaxWidth().padding(start = 12.dp, top = 4.dp).testTag(EditorTags.stepClipConverting(position)),
+        Modifier.fillMaxWidth().testTag(EditorTags.stepClipConverting(position)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

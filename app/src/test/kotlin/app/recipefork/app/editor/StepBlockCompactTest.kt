@@ -151,16 +151,19 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
 
     private fun dp(px: Float): Float = px / compose.density.density
 
-    /** The row of icons in the sheet of the step at [position], in order. */
-    private fun actions(position: Int) = listOf(
-        EditorTags.stepInsert(position),
-        EditorTags.timerAttach(position),
-        EditorTags.stepPhoto(position),
-    )
+    /** The row of icons in the sheet of the step at [position], under its text: since T-212, inserting an ingredient. */
+    private fun actions(position: Int) = listOf(EditorTags.stepInsert(position))
 
-    /** What the screen reader speaks for each of [actions] of the step at [position]. */
+    /** The text buttons of the sheet's parts of the step at [position] (T-212): adding a timer, a photo or clip. */
+    private fun buttons(position: Int) = listOf(EditorTags.timerAttach(position), EditorTags.stepPhoto(position))
+
+    /** What the screen reader speaks for each control of the step at [position]: its icon, its parts' buttons, its removal. */
     private fun labels(position: Int): List<String> =
-        (actions(position) + EditorTags.stepRemove(position)).map { AccessibilityChecks.announcedLabel(compose.onNodeWithTag(it).fetchSemanticsNode()) }
+        (actions(position) + buttons(position) + EditorTags.stepRemove(position)).map { AccessibilityChecks.announcedLabel(compose.onNodeWithTag(it).fetchSemanticsNode()) }
+
+    /** What a click on each of the parts' buttons of the step at [position] is announced as. */
+    private fun clickLabels(position: Int): List<String?> =
+        buttons(position).map { AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(it).fetchSemanticsNode()) }
 
     // A one-line step at 360 dp and font scale 1.0 is at most 40 % of the height its block had in v0.5: that block,
     // rebuilt as v0.5 laid it out, measured here first, at the same width and font.
@@ -185,7 +188,8 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
     }
 
     // The row's text takes the block's full width beside the drag column, nothing beside it and no control in the
-    // block. In the step's sheet, under its text, one row of the three icons in order, each 48 dp.
+    // block. In the step's sheet, under its text, its icon, 48 dp; under it, the parts' text buttons, at least 48 dp tall
+    // and within the sheet.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theTextIsFullWidthAndTheIconsAreOneRowUnderIt() = textAndRow(1f)
@@ -233,6 +237,15 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
             }
             // The icons carry no text of their own, only their spoken names.
             actions(position).forEach { assertTrue(node(it).config.getOrNull(SemanticsProperties.Text).orEmpty().isEmpty()) }
+            // The parts' buttons are text buttons, whole, under the icon and within the sheet.
+            val sheet = bounds(StepSheetTags.SHEET)
+            buttons(position).forEach { tag ->
+                val b = bounds(tag)
+                assertTrue("step $position: $tag is at least 48 dp high", dp(b.height) >= 48f - 0.5f)
+                assertTrue("step $position: $tag is under the icon", b.top >= controls.last().bottom - 0.5f)
+                assertTrue("step $position: $tag is within the sheet", b.left >= sheet.left - 0.5f && b.right <= sheet.right + 0.5f)
+                assertTrue("step $position: $tag says what it does", compose.textsOf(tag).single().isNotBlank())
+            }
             AccessibilityChecks.assertTouchTargets(compose)
             AccessibilityChecks.assertInteractiveElementsLabelled(compose)
             compose.closeStep()
@@ -245,7 +258,8 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
     fun eachIconIsNamedByItsStepAndShowsATooltip() {
         open(1f)
         compose.openStep(1)
-        assertEquals(listOf("Insert an ingredient into step 2", "Timer for step 2", "Photo or clip for step 2", "Remove step 2"), labels(1))
+        assertEquals(listOf("Insert an ingredient into step 2", "Add timer", "Add photo or clip", "Remove step 2"), labels(1))
+        assertEquals(listOf("Add a timer to step 2", "Add, change or remove the photo or clip of step 2"), clickLabels(1))
         actions(1).forEach { tag ->
             compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick() }
             compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(tag)) }
@@ -261,24 +275,28 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
     fun eachIconIsNamedByItsStepInRussian() {
         open(1f)
         compose.openStep(1)
-        assertEquals(listOf("Вставить ингредиент в шаг 2", "Таймер для шага 2", "Фото или видео для шага 2", "Убрать шаг 2"), labels(1))
+        assertEquals(listOf("Вставить ингредиент в шаг 2", "Добавить таймер", "Добавить фото или видео", "Убрать шаг 2"), labels(1))
+        assertEquals(listOf("Добавить таймер к шагу 2", "Добавить, заменить или убрать фото или видео шага 2"), clickLabels(1))
     }
 
-    // In the sheet, the timer's form and the photograph show under the row of icons only when the step has them; the
-    // timer icon opens the form under the row, the photo icon its menu.
+    // In the sheet, the timer's form and the photograph show in their parts only when the step has them, above the
+    // button that adds one; "Add timer" opens the form above it, "Add photo or clip" its menu.
     @Test
     @Config(qualifiers = "en-w360dp-h4000dp")
     fun theTimerAndThePhotoShowUnderTheRowOnlyWhenPresent() {
         open(1f)
         compose.openStep(1)
-        assertTrue(bounds(EditorTags.timerHours(1)).top >= bounds(EditorTags.timerAttach(1)).bottom - 0.5f)
-        assertTrue(bounds(EditorTags.timerName(1)).top >= bounds(EditorTags.timerAttach(1)).bottom - 0.5f)
+        val timers = bounds(StepSheetTags.TIMERS)
+        listOf(EditorTags.timerHours(1), EditorTags.timerName(1)).forEach { tag ->
+            assertTrue("$tag in the timers' part", bounds(tag).top >= timers.top - 0.5f)
+            assertTrue("$tag above Add timer", bounds(tag).bottom <= bounds(EditorTags.timerAttach(1)).top + 0.5f)
+        }
 
         compose.openStep(0)
         assertFalse(exists(EditorTags.timerHours(0)) || exists(EditorTags.timerName(0)) || exists(EditorTags.stepPhotoImage(0)))
         compose.onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.timerHours(0)) }
-        assertTrue(bounds(EditorTags.timerHours(0)).top >= bounds(EditorTags.timerAttach(0)).bottom - 0.5f)
+        assertTrue(bounds(EditorTags.timerHours(0)).bottom <= bounds(EditorTags.timerAttach(0)).top + 0.5f)
 
         compose.openStep(2)
         compose.onNodeWithTag(EditorTags.stepPhoto(2)).performScrollTo().performClick()
