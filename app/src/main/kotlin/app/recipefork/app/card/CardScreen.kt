@@ -219,8 +219,8 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  *
  * On View an item of equipment the reader's kitchen lacks opens My kitchen at it ([onOpenKitchen], given the equipment
  * dictionary entry it names), so that it is ticked there and the card found again on return; without [onOpenKitchen]
- * it answers no tap. While My kitchen has nothing ticked, View offers under the equipment to set it up
- * ([onSetUpKitchen]).
+ * it answers no tap. While My kitchen is known to have nothing ticked — nothing at all, or, the equipment dictionary
+ * read, nothing that counts — View offers under the equipment to set it up ([onSetUpKitchen]).
  *
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
@@ -257,6 +257,10 @@ fun CardScreen(
     // What the reader's kitchen has, as it changes: ticking an item in My kitchen marks an open card afresh.
     val ticked by environment.kitchen.held.collectAsState()
     val kitchen = remember(ticked, equipmentDictionary) { Kitchen(ticked, equipmentDictionary) }
+    // Whether the equipment dictionary has been read: until it is — and for good if it cannot be — a kitchen with
+    // anything ticked is not known to be empty, so View offers no set-up.
+    var equipmentKnown by remember(environment) { mutableStateOf(false) }
+    val setUpKitchen = onSetUpKitchen?.takeIf { ticked.isEmpty() || (equipmentKnown && kitchen.isEmpty) }
     LaunchedEffect(environment) {
         // Rows whose entry cannot be read are named as unnamed; the card itself never fails for it.
         val read = try {
@@ -268,7 +272,7 @@ fun CardScreen(
         }
         // So are the equipment entries an item names: an item whose entry cannot be read shows its qualifier alone.
         val equipment = try {
-            environment.equipment.equipment()
+            environment.equipment.equipment().also { equipmentKnown = true }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -434,7 +438,7 @@ fun CardScreen(
                             equipmentEntries = equipmentEntries,
                             kitchen = kitchen,
                             onOpenKitchen = onOpenKitchen,
-                            onSetUpKitchen = onSetUpKitchen,
+                            onSetUpKitchen = setUpKitchen,
                             onServingsPlaced = if (mode == CardMode.VIEW) { bounds -> servingsShown = bounds } else null,
                             // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
                             bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
@@ -875,7 +879,7 @@ private fun RecipeContent(
                     ShownEquipment(EquipmentNames.shown(item, equipmentEntries, reading), entry?.takeIf(kitchen::lacks))
                 }
             }
-            EquipmentList(equipment, marks, mode, shownAgain.equipment, onOpenKitchen, onSetUpKitchen?.takeIf { kitchen.isEmpty })
+            EquipmentList(equipment, marks, mode, shownAgain.equipment, onOpenKitchen, onSetUpKitchen)
             val authored = recipe.servings?.takeIf { it >= 1 }
             val ordered = held.ordered
             val scale = held.scale

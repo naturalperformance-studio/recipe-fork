@@ -28,6 +28,8 @@ import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.data.HeldThemeSetting
 import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.dictionary.EquipmentSource
+import app.recipefork.core.scaling.InterfaceLanguage
+import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.editor.EditorEnvironment
@@ -267,12 +269,25 @@ class KitchenScreenTest {
         compose.onNode(androidx.compose.ui.test.hasText(undo) and androidx.compose.ui.test.hasClickAction()).performClick()
         compose.waitUntil(PATIENCE_MS) { store.held.value == setOf(FRYING_PAN, SAUCEPAN, SCALE) }
 
-        // Ticked whole, then an item ticked elsewhere: the change is final, its Undo gone.
+        // Ticked whole, then an item ticked elsewhere: the change is final, its Undo gone at once — the clock held, so
+        // well before the statement's own time runs out.
         tap(KitchenTags.groupTick(STOVETOP))
         assertEquals(setOf(SCALE), store.held.value)
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(androidx.compose.ui.test.hasText(unticked)).fetchSemanticsNodes().isNotEmpty() }
-        compose.runOnIdle { store.hold(listOf(SCALE), has = false) }
-        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(androidx.compose.ui.test.hasText(undo)).fetchSemanticsNodes().isEmpty() }
+        fun undoShown() = compose.onAllNodes(androidx.compose.ui.test.hasText(undo)).fetchSemanticsNodes().isNotEmpty()
+        compose.mainClock.autoAdvance = false
+        try {
+            compose.mainClock.advanceTimeBy(SECOND_MS)
+            compose.waitForIdle()
+            assertTrue("left alone a second, the Undo still shows", undoShown())
+            compose.runOnUiThread { store.hold(listOf(SCALE), has = false) }
+            compose.waitForIdle()
+            compose.mainClock.advanceTimeBy(SECOND_MS)
+            compose.waitForIdle()
+            assertFalse("a second after another tick, the Undo is gone", undoShown())
+        } finally {
+            compose.mainClock.autoAdvance = true
+        }
         assertEquals(emptySet<Long>(), store.held.value)
     }
 
@@ -501,5 +516,48 @@ class KitchenScreenTest {
         assertFalse(exists(KitchenTags.UNREADABLE))
         unfold(STOVETOP)
         assertEquals(ToggleableState.On, state(KitchenTags.item(FRYING_PAN)))
+    }
+
+    // v0.30, T-221 review: at twice the font scale on a 320 dp phone every group of the shipped dictionary keeps its
+    // name's words whole — «Кухонные принадлежности» among them — beside the checkbox and the chevron.
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun inRussianTheShippedGroupNamesKeepTheirWordsWholeAtTwiceTheFontScale() = shippedGroupNamesKeepWordsWhole()
+
+    @Test
+    @Config(qualifiers = "en-w320dp-h640dp", fontScale = 2f)
+    fun theShippedGroupNamesKeepTheirWordsWholeAtTwiceTheFontScale() = shippedGroupNamesKeepWordsWhole()
+
+    private fun shippedGroupNamesKeepWordsWhole() {
+        val shipped = app.recipefork.app.dictionary.DictionarySnapshot.read(context).equipment.map(EquipmentEntryEntity::of)
+        val language = if (context.resources.configuration.locales[0].language == "ru") InterfaceLanguage.RUSSIAN else InterfaceLanguage.ENGLISH
+        val groups = Kitchen.groups(shipped, language)
+        assertTrue(groups.any { it.group.id == TOOLS_AND_UTENSILS })
+        compose.setContent { MaterialTheme { KitchenScreen(KitchenEnvironment(HeldKitchen(), EquipmentSource { shipped }), onBack = {}) } }
+        compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.LIST) }
+        groups.forEach { (group, _) ->
+            compose.onNodeWithTag(KitchenTags.LIST).performScrollToNode(hasTestTag(KitchenTags.group(group.id)))
+            compose.waitForIdle()
+            val layouts = mutableListOf<TextLayoutResult>()
+            compose.onNodeWithTag(KitchenTags.groupName(group.id), useUnmergedTree = true).fetchSemanticsNode()
+                .config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+            val layout = layouts.single()
+            val text = layout.layoutInput.text.text
+            for (line in 0 until layout.lineCount - 1) {
+                val end = layout.getLineEnd(line)
+                if (end <= 0 || end >= text.length) continue
+                val between = text[end - 1].isWhitespace() || text[end].isWhitespace() || text[end - 1] == '-'
+                assertTrue("“$text” breaks inside a word after line $line (“${text.substring(0, end)}|”)", between)
+            }
+            assertFalse("“$text” is cut", layout.didOverflowHeight || (0 until layout.lineCount).any(layout::isLineEllipsized))
+        }
+    }
+
+    private companion object {
+        /** A second of the test's clock. */
+        const val SECOND_MS = 1_000L
+
+        /** The shipped group with the longest Russian word, «Кухонные принадлежности». */
+        const val TOOLS_AND_UTENSILS = 10400L
     }
 }

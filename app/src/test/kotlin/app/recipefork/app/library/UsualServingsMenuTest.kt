@@ -10,6 +10,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -235,6 +236,26 @@ class UsualServingsMenuTest {
         }
         assertTrue("− and + are side by side, connected", more.left >= fewer.right && (more.left - fewer.right) / density <= 4f)
         assertEquals(fewer.top, more.top, 0.5f)
+    }
+
+    // Review of T-221: the screen turned while the dialog is open keeps the count walked to and the choice.
+    @Test
+    fun theDialogKeepsTheCountWalkedToAsTheScreenTurns() {
+        val editor = EditorEnvironment(active, device.catalog(context)) { now }
+        val card = CardEnvironment(usual) { device.database.dictionaryDao().ingredients() }
+        val tester = StateRestorationTester(compose)
+        tester.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) } }
+        compose.waitForIdle()
+        openChoice()
+        more()
+        more()
+        assertEquals("Servings: 4", count())
+        tester.emulateSavedInstanceStateRestore()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
+        assertEquals("Servings: 4", count())
+        assertTrue(selected(SettingsTags.USUAL_COUNT_CHOICE))
+        choose(SettingsTags.USUAL_SET)
+        assertEquals(Rational.of(4), usual.count.value)
     }
 
     // T-215: the dialog settles — nothing in it keeps laying itself out — at 360 dp, and at 320 dp at twice the font

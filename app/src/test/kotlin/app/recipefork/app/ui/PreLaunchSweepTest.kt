@@ -576,6 +576,12 @@ class PreLaunchSweepTest {
         awaitGone(KitchenTags.SCREEN)
         // The saved media's statement, where there is media to clear; with none the item is disabled, saying why.
         compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo()
+        // The item is disabled while it counts too: its count is waited for first.
+        val counting = context.getString(R.string.settings_media_counting)
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onAllNodes(hasTestTag(SettingsTags.value(SettingsTags.CLEAR_MEDIA)), useUnmergedTree = true).fetchSemanticsNodes()
+                .singleOrNull()?.config?.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }?.let { it != counting } == true
+        }
         val clearable = compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Disabled) == null
         if (clearable) {
             compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performClick()

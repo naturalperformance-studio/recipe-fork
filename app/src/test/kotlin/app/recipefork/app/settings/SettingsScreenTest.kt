@@ -54,6 +54,7 @@ import app.recipefork.app.ui.AppNavHost
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -174,6 +175,36 @@ class SettingsScreenTest {
             val shown = value(it)
             assertTrue("$it's value \"$shown\" begins with a capital", shown.first().isUpperCase())
         }
+    }
+
+    // Review of T-221: the screen turned while a clearing runs — the settings shown anew still say once it is done, and
+    // count again.
+    @Test
+    fun aClearingFinishedAfterTheScreenTurnedIsStillSaid() {
+        val gate = CompletableDeferred<Unit>()
+        var media = 2
+        val held = object : RecipeRepository(active) {
+            override suspend fun clearableMedia(): List<java.io.File> = List(media) { java.io.File("media-$it") }
+            override suspend fun clearMedia(): Int {
+                gate.await()
+                return media.also { media = 0 }
+            }
+        }
+        session.choose(LibraryView.OWN)
+        val tester = StateRestorationTester(compose)
+        tester.setContent { MaterialTheme { AppNavHost(session, held, card = card, editor = editor, themeSetting = theme) } }
+        compose.waitForIdle()
+        openSettings()
+        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "2 saved photos and videos" }
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.CLEAR_MEDIA_CONFIRM) }
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA_CONFIRM).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(SettingsTags.CLEAR_MEDIA_STATEMENT) }
+        tester.emulateSavedInstanceStateRestore()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.CLEAR_MEDIA) }
+        gate.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasText("Saved media cleared")).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Nothing to clear" }
     }
 
     // A value changed in its item's dialog is shown at once.

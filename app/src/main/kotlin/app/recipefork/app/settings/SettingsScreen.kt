@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -54,7 +53,13 @@ import app.recipefork.app.kitchen.KitchenEnvironment
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.scaling.RequestedServings
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
  * The settings, a destination above the book: one item per setting, each showing its value in force and changing it
@@ -260,8 +265,11 @@ private fun DragHandleItem(handleSide: DragHandleSide) {
 @Composable
 private fun SavedMediaItem(recipes: RecipeRepository, mode: Mode, scope: CoroutineScope, snackbars: SnackbarHostState) {
     var asking by rememberSaveable { mutableStateOf(false) }
+    // A clearing outlives the screen — turned while it runs, the screen shown anew still counts again and says so.
+    val clearing = rememberMediaClearing()
+    val cleared by clearing.finished.collectAsState()
+    val unsaid by clearing.unsaid.collectAsState()
     // Counted again once a clearing is done.
-    var cleared by remember { mutableIntStateOf(0) }
     val count by produceState<Int?>(null, recipes, cleared) { value = recipes.clearableMedia().size }
     val done = stringResource(
         when (mode) {
@@ -269,8 +277,11 @@ private fun SavedMediaItem(recipes: RecipeRepository, mode: Mode, scope: Corouti
             Mode.Standard -> R.string.library_clear_media_done
         },
     )
-    LaunchedEffect(cleared) {
-        if (cleared > 0) snackbars.showSnackbar(done)
+    LaunchedEffect(unsaid) {
+        if (unsaid) {
+            snackbars.showSnackbar(done)
+            clearing.unsaid.value = false
+        }
     }
     Item(
         headline = stringResource(
@@ -296,13 +307,32 @@ private fun SavedMediaItem(recipes: RecipeRepository, mode: Mode, scope: Corouti
                 asking = false
                 scope.launch {
                     recipes.clearMedia()
-                    cleared++
+                    clearing.finished.update { it + 1 }
+                    clearing.unsaid.value = true
                 }
             },
             onDecline = { asking = false },
         )
     }
 }
+
+/**
+ * The clearings of saved media done — how many, and whether the last is still to be said — held by the activity, past
+ * the settings shown when it began: the screen turned while it runs, the one shown then counts again and says so.
+ */
+internal class MediaClearing : ViewModel() {
+    val finished = MutableStateFlow(0)
+    val unsaid = MutableStateFlow(false)
+}
+
+@Composable
+private fun rememberMediaClearing(): MediaClearing = viewModel(
+    viewModelStoreOwner = LocalActivity.current as? ViewModelStoreOwner ?: checkNotNull(LocalViewModelStoreOwner.current),
+    key = MEDIA_CLEARING_KEY,
+) { MediaClearing() }
+
+/** The key the clearings of saved media are held under in the activity. */
+private const val MEDIA_CLEARING_KEY = "media-clearing"
 
 /**
  * One setting: its name, and beneath it the value in force; the whole row opens its choice. A row not [enabled] shows

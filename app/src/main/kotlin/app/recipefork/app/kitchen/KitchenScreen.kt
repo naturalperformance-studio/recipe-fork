@@ -3,6 +3,7 @@ package app.recipefork.app.kitchen
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,6 +59,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -78,6 +80,7 @@ import app.recipefork.app.library.EmptyAction
 import app.recipefork.app.library.EmptyState
 import app.recipefork.app.settings.servingsLanguage
 import app.recipefork.app.ui.SnackbarAction
+import app.recipefork.app.ui.fitWords
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
@@ -385,7 +388,17 @@ private fun GroupRow(
     val folding = stringResource(if (open) R.string.kitchen_group_collapse_action else R.string.kitchen_group_expand_action)
     val folded = stringResource(if (open) R.string.kitchen_group_expanded else R.string.kitchen_group_collapsed)
     ListItem(
-        headlineContent = { Text(label, style = MaterialTheme.typography.titleMedium) },
+        headlineContent = {
+            // A word wider than the name's room — a long Russian word at a large font scale on a narrow phone — is drawn
+            // smaller until it fits, so that no word is broken.
+            BoxWithConstraints {
+                val style = MaterialTheme.typography.titleMedium
+                val measurer = rememberTextMeasurer()
+                val width = constraints.maxWidth
+                val fitted = remember(label, style, width, measurer) { fitWords(label, style, width, measurer) }
+                Text(label, style = fitted, modifier = Modifier.testTag(KitchenTags.groupName(group.id)))
+            }
+        },
         supportingContent = {
             val count = stringResource(R.string.kitchen_group_ticked, ticked, items.size)
             Text(if (opened) "$count · $needed" else count)
@@ -491,6 +504,9 @@ object KitchenTags {
 
     /** A group's row, which shows or hides its items. */
     fun group(id: Long) = "kitchen-group-$id"
+
+    /** A group's name, in its row. */
+    fun groupName(id: Long) = "kitchen-group-name-$id"
 
     /** A group's checkbox, which ticks or unticks all its items. */
     fun groupTick(id: Long) = "kitchen-group-tick-$id"

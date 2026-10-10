@@ -57,6 +57,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -339,6 +340,49 @@ class KitchenFromTheCardTest {
         compose.chooseCardTab(CardMode.COOKING)
         compose.waitForIdle()
         assertFalse("Cooking offers no set-up", exists(EquipmentTags.SET_UP_KITCHEN))
+    }
+
+    // Review of T-221: a kitchen with something ticked is not known to be empty until the equipment dictionary is read —
+    // while its read is held back no set-up is offered, nor once it arrives; and none ever if it cannot be read.
+    @Test
+    fun aSetUpKitchenIsNeverOfferedToBeSetUpWhileTheDictionaryIsReadOrUnreadable() {
+        val gate = CompletableDeferred<Unit>()
+        val unreadable = java.util.concurrent.atomic.AtomicBoolean(false)
+        val held = EquipmentSource {
+            gate.await()
+            if (unreadable.get()) error("the store cannot be read") else DICTIONARY
+        }
+        val heldCard = CardEnvironment(
+            HeldUsualServings(), lastTab = HeldLastCardTab(CardMode.VIEW), equipment = held, kitchen = store,
+            ingredients = IngredientEntries { emptyList() },
+        )
+        runBlocking { recipes.save(soup) }
+        session.choose(LibraryView.OWN)
+        var offered = false
+        compose.setContent {
+            MaterialTheme(colorScheme = scheme) {
+                AppNavHost(session, recipes, card = heldCard, editor = editor, themeSetting = HeldThemeSetting(), kitchen = kitchen)
+            }
+        }
+        compose.runOnIdle { session.openCard(soup.id.value, LibraryView.OWN) }
+        compose.waitForIdle()
+        offered = offered || exists(EquipmentTags.SET_UP_KITCHEN)
+        gate.complete(Unit)
+        compose.awaitCard()
+        compose.waitUntil(PATIENCE_MS) { exists(EquipmentTags.SURFACE) && lacking() == listOf(1) }
+        compose.waitForIdle()
+        offered = offered || exists(EquipmentTags.SET_UP_KITCHEN)
+        assertFalse("a set-up kitchen is never offered to be set up", offered)
+
+        // Opened again with the dictionary unreadable: the kitchen's emptiness unknown, nothing is offered.
+        unreadable.set(true)
+        compose.runOnIdle { session.closeCard() }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.SCREEN) }
+        compose.runOnIdle { session.openCard(soup.id.value, LibraryView.OWN) }
+        compose.awaitCard()
+        compose.waitUntil(PATIENCE_MS) { exists(EquipmentTags.SURFACE) }
+        compose.waitForIdle()
+        assertFalse("with the dictionary unreadable, no set-up is offered", exists(EquipmentTags.SET_UP_KITCHEN))
     }
 
     // L10N: the button's action, the row's words and the back action in Russian.

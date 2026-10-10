@@ -14,9 +14,10 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
+import java.math.BigInteger
 
 /** The count the choice starts at while no usual count is set. */
 internal val FIRST_CHOICE: Rational = Rational.of(2)
@@ -53,7 +55,8 @@ internal fun UsualServingsDialog(
     onSet: (Rational?) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var shown by remember { mutableStateOf(initial) }
+    // Both kept as the screen turns: the count walked to, and the choice.
+    var shown by rememberSaveable(saver = COUNT_SAVER) { mutableStateOf(initial) }
     var none by rememberSaveable { mutableStateOf(notSet) }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -96,6 +99,12 @@ internal fun UsualServingsDialog(
         },
     )
 }
+
+/** The count walked to, kept as its numerator and denominator. */
+private val COUNT_SAVER = listSaver<MutableState<Rational>, String>(
+    save = { listOf(it.value.numerator.toString(), it.value.denominator.toString()) },
+    restore = { mutableStateOf(Rational.of(BigInteger(it[0]), BigInteger(it[1]))) },
+)
 
 /** How far the count's control stands in, under its choice's label rather than its radio button. */
 private val CONTROL_INDENT = 48.dp
