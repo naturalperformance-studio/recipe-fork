@@ -137,12 +137,41 @@ class ReleaseSmokeTest {
         return Media(outcome.mediaId, null, MediaKind.PHOTO, attachment, MediaVisibility.PRIVATE)
     }
 
+    /**
+     * Waits until [condition] holds. A system dialog saying another application isn't responding — the emulator's own
+     * launcher, stalled — is answered "Wait" first, and the wait begins anew, at most [ANSWERED_DIALOGS] times: that
+     * dialog covers the application without being its fault. The same dialog for this application fails the test.
+     */
     private fun awaitUntil(within: Duration, condition: () -> Boolean) {
-        val deadline = System.currentTimeMillis() + within.inWholeMilliseconds
-        while (!condition()) {
+        var deadline = System.currentTimeMillis() + within.inWholeMilliseconds
+        var answered = 0
+        while (true) {
+            if (answerAnotherNotResponding() && answered < ANSWERED_DIALOGS) {
+                answered++
+                deadline = System.currentTimeMillis() + within.inWholeMilliseconds
+            }
+            if (condition()) return
             check(System.currentTimeMillis() < deadline) { "not met within $within" }
             Thread.sleep(200)
         }
+    }
+
+    /** The application's name, as the system's dialogs name it. */
+    private val label = application.applicationInfo.loadLabel(application.packageManager).toString()
+
+    /**
+     * Answers "Wait" to the system's dialog saying another application isn't responding, if one is on screen, and says
+     * whether it did; fails the test where the dialog names this application.
+     */
+    private fun answerAnotherNotResponding(): Boolean {
+        val dialogs = instrumentation.uiAutomation.windows.mapNotNull { it.root }.filter { it.refresh() && it.packageName == "android" }
+        for (dialog in dialogs) {
+            val title = dialog.findAccessibilityNodeInfosByText(NOT_RESPONDING).firstOrNull()?.text?.toString() ?: continue
+            if (label in title || application.packageName in title) throw AssertionError("the application itself is not responding: “$title”")
+            val wait = dialog.findAccessibilityNodeInfosByText(WAIT).firstOrNull { it.text?.toString() == WAIT } ?: continue
+            if (generateSequence(wait) { it.parent }.firstOrNull { it.isClickable }?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true) return true
+        }
+        return false
     }
 
     /** Waits until [text] is on screen; failing, says what is. */
@@ -310,7 +339,7 @@ class ReleaseSmokeTest {
     }
 
     /**
-     * From the card, the editor's cover opens its source sheet, whose "Camera" launches the phone's camera application
+     * From the card, the editor's cover opens its source sheet, whose "Take a photo" launches the phone's camera application
      * through the shrunk build's capture provider. The device's camera application is there to answer; the test stands in for it, as its shutter
      * cannot be pressed from here, writing the shot through the address it is handed. The shot is cropped — Done — and
      * becomes the recipe's cover, holding no metadata, the shot's own file deleted.
@@ -337,8 +366,8 @@ class ReleaseSmokeTest {
             // The cover opens its source sheet, the camera on it (FLOW-026).
             awaitShown(CHANGE_COVER)
             tap(CHANGE_COVER)
-            awaitShown(CAMERA)
-            tap(CAMERA)
+            awaitShown(TAKE_A_PHOTO)
+            tap(TAKE_A_PHOTO)
             // The crop, in a window of its own, shows the shot under its frame: its Done is the one on screen.
             awaitShown(CROP_FRAME)
             val intent = launched!!
@@ -668,7 +697,7 @@ class ReleaseSmokeTest {
             tap(actionsFor(written))
             awaitShown(DELETE)
             tap(DELETE)
-            awaitShown(DELETED)
+            awaitShown(deleted(written))
             awaitUntil(30.seconds) { stored(written) == null }
             tap(UNDO)
             awaitUntil(30.seconds) { stored(written) != null }
@@ -759,6 +788,9 @@ class ReleaseSmokeTest {
 
     private fun actionsFor(recipe: Recipe) = "Actions for “${recipe.title}”"
 
+    /** The book's notice of [recipe] deleted, which names it. */
+    private fun deleted(recipe: Recipe) = "“${recipe.title}” deleted"
+
     /**
      * Exports [written] and opens the file back into the book: in the serverless build from the entry's menu — the
      * system's share sheet answered by the test, which takes the file it is handed — and then as another application
@@ -800,7 +832,7 @@ class ReleaseSmokeTest {
         tap(actionsFor(written))
         awaitShown(DELETE)
         tap(DELETE)
-        awaitShown(DELETED)
+        awaitShown(deleted(written))
         awaitUntil(30.seconds) { stored(written) == null }
         val open = Intent(Intent.ACTION_VIEW)
             .setDataAndType(shared, RecipeFile.MIME_TYPE)
@@ -815,6 +847,11 @@ class ReleaseSmokeTest {
     }
 
     private companion object {
+        /** The system's dialog of an application not responding, in the emulator's English, and its button that waits. */
+        const val NOT_RESPONDING = "isn't responding"
+        const val WAIT = "Wait"
+        /** How many such dialogs one wait answers, beginning anew, before it no longer waits longer for them. */
+        const val ANSWERED_DIALOGS = 5
         /** The library's tab of the recipes written on this device. */
         const val WRITTEN_HERE = "Written here"
         const val EDIT = "Edit"
@@ -831,7 +868,7 @@ class ReleaseSmokeTest {
         /** The editor's set cover, a tap on which opens the sheet of the camera, the gallery and its removal. */
         const val CHANGE_COVER = "Replace or remove the cover photo"
         /** The sheet's item that opens the phone's camera application. */
-        const val CAMERA = "Camera"
+        const val TAKE_A_PHOTO = "Take a photo"
         const val CROP_FRAME = "Crop frame: drag the photo to move it, pinch to zoom"
         const val CROP_DONE = "Done"
         const val BACK = "Back"
@@ -868,7 +905,6 @@ class ReleaseSmokeTest {
         const val RUSSIAN = "Русский"
         const val AS_ON_THE_DEVICE = "As on the device"
         const val DELETE = "Delete"
-        const val DELETED = "Recipe deleted"
         const val UNDO = "Undo"
     }
 }
