@@ -85,7 +85,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
@@ -126,7 +125,7 @@ import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.app.ui.SnackbarAction
-import app.recipefork.app.ui.fitWords
+import app.recipefork.app.ui.WordFitText
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
@@ -349,7 +348,8 @@ private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
 }
 
 /**
- * Says that a recipe left the book — "Recipe deleted", or "Recipe removed" for a found one — with Undo, for as long as
+ * Says that a recipe left the book, named by its title — "“Plum cake” deleted", or "“Plum cake” removed" for a found
+ * one; "Recipe deleted", "Recipe removed" for one with no title — with Undo, for as long as
  * the session offers to undo it (FLOW-053). Undo puts it back; the notice gone without it — by itself, swiped away,
  * replaced by another notice, or the book left — makes the leaving final. A notice cut short by the screen turning is
  * said again. An Undo the book could not take back is said to have failed.
@@ -357,12 +357,18 @@ private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
 @Composable
 private fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState) {
     val removal by session.removal.collectAsState()
-    val deleted = stringResource(R.string.library_recipe_deleted)
-    val removed = stringResource(R.string.library_recipe_removed)
+    val said = removal?.let { taken ->
+        val title = taken.title.trim()
+        when {
+            title.isEmpty() -> stringResource(if (taken.found) R.string.library_recipe_removed else R.string.library_recipe_deleted)
+            taken.found -> stringResource(R.string.library_recipe_removed_titled, title)
+            else -> stringResource(R.string.library_recipe_deleted_titled, title)
+        }
+    }
     val undo = stringResource(R.string.library_undo)
     LaunchedEffect(removal) {
         val shown = removal ?: return@LaunchedEffect
-        val result = snackbars.showSnackbar(if (shown.found) removed else deleted, actionLabel = undo, duration = SnackbarDuration.Long)
+        val result = snackbars.showSnackbar(said.orEmpty(), actionLabel = undo, duration = SnackbarDuration.Long)
         if (result == SnackbarResult.ActionPerformed) session.undoRemoval(shown) else session.endRemoval(shown)
     }
     // An Undo the book could not take back is said, once.
@@ -429,10 +435,7 @@ private fun ViewTab(
  */
 @Composable
 private fun TabLabel(text: String, width: Int) {
-    val style = LocalTextStyle.current
-    val measurer = rememberTextMeasurer()
-    val fitted = remember(text, style, width, measurer) { fitWords(text, style, width, measurer) }
-    Text(text, style = fitted, modifier = Modifier.testTag(LibraryTags.TAB_LABEL))
+    WordFitText(text, LocalTextStyle.current, width, Modifier.testTag(LibraryTags.TAB_LABEL))
 }
 
 /** The margin Material 3 keeps on each side of a tab's words. */

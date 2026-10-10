@@ -70,7 +70,7 @@ import app.recipefork.app.Mode
 import app.recipefork.app.R
 import app.recipefork.app.card.ingredientLine
 import app.recipefork.app.card.scalableQuantity
-import app.recipefork.app.card.withNote
+import app.recipefork.app.card.namedLine
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.IngredientOffer
 import app.recipefork.app.dictionary.label
@@ -85,6 +85,7 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.effectiveDivisible
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
+import app.recipefork.core.scaling.UnitLabels
 import kotlinx.coroutines.launch
 
 /**
@@ -123,9 +124,11 @@ object IngredientSheetTags {
 
 /**
  * What an ingredient row reads as in the editor: the line the card writes for it (FLOW-023) — its amount and unit, then
- * its name with the qualifier and, after a dash and muted, its note — so the editor and the card cannot read it apart.
- * Where the card computes no amount, the row shows what its quantity field holds before the unit, so what was typed
- * stays in sight; a row with no name reads as "Unnamed ingredient", and one holding nothing at all as "New ingredient".
+ * its name with the qualifier, "to taste" after a dash for a row to taste and, after a dash and muted, its note
+ * ([namedLine]) — so the editor and the card cannot read it apart. A row with no quantity yet shows no unit; where the
+ * card computes no amount from a quantity the row holds, the row shows what its quantity field holds before the unit, so
+ * what was typed stays in sight; a row with no name reads as "Unnamed ingredient", and one holding nothing at all as
+ * "New ingredient".
  */
 @Composable
 internal fun ingredientLineText(row: Ingredient, dictionary: List<IngredientEntryEntity>?, language: InterfaceLanguage): AnnotatedString {
@@ -137,17 +140,19 @@ internal fun ingredientLineText(row: Ingredient, dictionary: List<IngredientEntr
     val typed = QuantityInput.fieldText(row, language).takeIf { it.isNotEmpty() }
     val quantity = when {
         scalableQuantity(row, entries) != null -> line.quantity
-        typed != null -> listOfNotNull(typed, line.quantity).joinToString(" ")
-        line.name != null -> line.quantity
-        else -> null
+        // What the field holds stands as the amount, its unit after it, though the card computes nothing from it.
+        typed != null -> listOfNotNull(typed, row.unit?.let { UnitLabels.of(it, language) }).joinToString(" ")
+        else -> line.quantity
     }
-    if (line.name == null && quantity == null && line.note == null) {
+    if (line.name == null && quantity == null && line.toTaste == null && line.note == null) {
         return buildAnnotatedString { withStyle(SpanStyle(color = muted)) { append(fresh) } }
+    }
+    val name = buildAnnotatedString {
+        if (line.name == null) withStyle(SpanStyle(color = muted)) { append(unnamed) } else append(line.name)
     }
     return buildAnnotatedString {
         quantity?.let { append(it); append(" ") }
-        if (line.name == null) withStyle(SpanStyle(color = muted)) { append(unnamed) } else append(line.name)
-        append(withNote("", line.note, muted))
+        append(namedLine(name, line, muted))
     }
 }
 

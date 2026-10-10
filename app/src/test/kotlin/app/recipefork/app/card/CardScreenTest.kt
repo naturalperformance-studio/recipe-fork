@@ -103,7 +103,7 @@ class CardScreenTest {
             listOf("chicken", "1.5 kg"),
             listOf("Smoked paprika", "½ tsp"),
             listOf("chicken wings, trimmed", "6 pc"),
-            listOf("Salt", "to taste"),
+            listOf("Salt — to taste"),
             listOf("Water", "750 ml"),
         ),
     )
@@ -124,7 +124,7 @@ class CardScreenTest {
             listOf("курица", "1,5 кг"),
             listOf("Smoked paprika", "½ ч. л."),
             listOf("крылышки, trimmed", "6 шт"),
-            listOf("Salt", "по вкусу"),
+            listOf("Salt — по вкусу"),
             listOf("Water", "750 мл"),
         ),
     )
@@ -210,7 +210,7 @@ class CardScreenTest {
         compose.onNodeWithTag(CardTags.TITLE).assertHeading()
         assertEquals(listOf(w.servings), compose.textsOf(CardTags.SERVINGS))
         // The ingredients in their order, each by its dictionary label in the interface language or its free-text
-        // name, with its quantity as `QuantityText` writes it; "to taste" is the unit alone.
+        // name, with its quantity as `QuantityText` writes it; "to taste" follows the name after a dash (T-217).
         (0..4).forEach { assertEquals(w.lines[it], compose.textsOf(CardTags.ingredient(it))) }
         (0 until 4).forEach { assertTrue(top(CardTags.ingredient(it)) < top(CardTags.ingredient(it + 1))) }
         // The steps, numbered, in their order.
@@ -252,7 +252,8 @@ class CardScreenTest {
         compose.onNodeWithTag(CardTags.TITLE).assertExists()
     }
 
-    // An incomplete or off-grid row is shown by its name and whatever it holds, and the card never fails for it.
+    // An incomplete or off-grid row is shown by its name and whatever it holds — a row with no amount yet by its name
+    // alone, no unit (T-217) — and the card never fails for it.
     @Test
     fun incompleteAndOffGridRowsAreShownByNameAndWhatTheyHold() {
         val recipe = save(
@@ -269,7 +270,7 @@ class CardScreenTest {
             ),
         )
         show(recipe.id)
-        assertEquals(listOf("Flour", "g"), compose.textsOf(CardTags.ingredient(0)))
+        assertEquals(listOf("Flour"), compose.textsOf(CardTags.ingredient(0)))
         assertEquals(listOf("Sugar", "tsp"), compose.textsOf(CardTags.ingredient(1)))
         assertEquals(listOf("Eggs", "pc"), compose.textsOf(CardTags.ingredient(2)))
         assertEquals(listOf(english.unnamed), compose.textsOf(CardTags.ingredient(3)))

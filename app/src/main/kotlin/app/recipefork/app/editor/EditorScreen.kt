@@ -94,6 +94,9 @@ import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.dictionary.label
+import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.app.card.ingredientLine
+import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
@@ -204,7 +207,7 @@ fun EditorScreen(
     val statementScope = rememberCoroutineScope()
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
     PartsMadeWholeStatement(editor, statements)
-    RemovalStatement(editor, statements)
+    RemovalStatement(editor, statements, equipmentLanguage) { id -> equipmentEntries?.firstOrNull { it.id == id }?.label(equipmentLanguage) }
     val focus = LocalFocusManager.current
     val notSaved = stringResource(R.string.editor_not_saved)
     val retry = stringResource(R.string.editor_retry)
@@ -432,18 +435,9 @@ private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: EditorStat
  * the editor stops offering it — the next change made — and the deletion ends for good when it goes without Undo.
  */
 @Composable
-private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements) {
+private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements, language: InterfaceLanguage, equipmentLabel: (Long) -> String?) {
     val removal by editor.removal.collectAsState()
-    val text = removal?.let {
-        val said = when (it.kind) {
-            Removal.Kind.STEP -> R.string.editor_step_removed
-            Removal.Kind.INGREDIENT -> R.string.editor_ingredient_removed
-            Removal.Kind.GROUP -> R.string.editor_group_removed
-            Removal.Kind.TIMER -> if (it.ofSeveral) R.string.editor_timer_removed_numbered else R.string.editor_timer_removed
-            Removal.Kind.EQUIPMENT -> R.string.editor_equipment_removed
-        }
-        it.number?.let { number -> stringResource(said, it.position + 1, number) } ?: stringResource(said, it.position + 1)
-    }
+    val text = removal?.let { removalText(it, editor.knownEntries, language, equipmentLabel) }
     val undo = stringResource(R.string.editor_undo)
     val offered = remember { arrayOfNulls<Job>(1) }
     LaunchedEffect(removal) {
@@ -453,6 +447,39 @@ private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements)
         } else {
             offered[0] = statements.offer(text.orEmpty(), undo, { editor.undoRemoval(shown) }, { editor.endRemoval(shown) })
         }
+    }
+}
+
+/**
+ * What the statement of [removal] says: it names what went, as the recipe held it just before — an ingredient by its
+ * name as its line reads it in [language] ([entries] naming a dictionary row), a heading by its words, an item of
+ * equipment by its name ([equipmentLabel] giving an entry's label) — or says what kind of thing it was where it had no
+ * name; a step, which has none, by its number, and a timer by its step's.
+ */
+@Composable
+private fun removalText(
+    removal: Removal,
+    entries: Map<Long, IngredientEntryEntity>,
+    language: InterfaceLanguage,
+    equipmentLabel: (Long) -> String?,
+): String {
+    val before = removal.before
+    fun String?.named(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
+    return when (removal.kind) {
+        Removal.Kind.STEP -> stringResource(R.string.editor_step_removed, removal.position + 1)
+        Removal.Kind.TIMER -> removal.number?.let { stringResource(R.string.editor_timer_removed_numbered, removal.position + 1, it) }
+            ?: stringResource(R.string.editor_timer_removed, removal.position + 1)
+        Removal.Kind.INGREDIENT -> before.ingredients.firstOrNull { it.position == removal.position }
+            ?.let { ingredientLine(it, entries, language).name.named() }
+            ?.let { stringResource(R.string.editor_ingredient_removed, it) }
+            ?: stringResource(R.string.editor_ingredient_removed_unnamed)
+        Removal.Kind.GROUP -> before.ingredientGroups.getOrNull(removal.position)?.name.named()
+            ?.let { stringResource(R.string.editor_group_removed, it) }
+            ?: stringResource(R.string.editor_group_removed_unnamed)
+        Removal.Kind.EQUIPMENT -> before.equipment.getOrNull(removal.position)
+            ?.let { item -> item.shown(item.dictionaryEntry?.let(equipmentLabel)).named() }
+            ?.let { stringResource(R.string.editor_equipment_removed, it) }
+            ?: stringResource(R.string.editor_equipment_removed_unnamed)
     }
 }
 

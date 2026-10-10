@@ -23,8 +23,9 @@ import app.recipefork.core.scaling.UnitLabels
  * [name] is the dictionary entry's label in the interface language or the free-text name, followed by the
  * qualifier; null when the row names nothing the device can show, which the screen words itself. [note] is how the
  * ingredient is prepared, as the author wrote it — never scaled — shown after the name (DOM-023). [quantity] is
- * what `QuantityText` writes for the row, the unit's label alone where the row holds no quantity the card can
- * compute from, or null where it holds no unit either.
+ * what `QuantityText` writes for the row, standing before the name; the unit's label alone where the row holds a
+ * quantity the card cannot compute from; null where the row holds no quantity yet — a bare unit before a name reads
+ * as nothing — and for a row to taste, whose [toTaste] words follow the name instead ("salt — to taste").
  *
  * [derived] is true exactly when [quantity] was computed at a scale other than the authored one (SCALE-004 (1)),
  * whatever its value — the card says so once for its whole list; [rounding] says which way the grid moved it from
@@ -42,6 +43,8 @@ data class IngredientLine(
     val fixing: FixOffer? = null,
     /** How the ingredient is prepared (DOM-023), as written at every scale; null for none. */
     val note: String? = null,
+    /** "to taste" in the interface language for a row measured by taste, read after its name; null for any other row. */
+    val toTaste: String? = null,
 )
 
 /** What fixing a row offers: the units the amount may be typed in, the author's first, and its divisibility. */
@@ -90,8 +93,8 @@ data class CardScale(val requested: Rational?, val fixings: List<CardFixing> = e
 /**
  * The line of [ingredient] at [factor] — the authored values at [ScaleFactor.ONE].
  *
- * A row the author has not finished, or whose value is off its unit's grid, is shown by its name and whatever it
- * holds: its unit, without a computed quantity. Nothing about a row makes this throw.
+ * A row the author has not finished is shown by its name alone; one whose value is off its unit's grid by its name and
+ * its unit, without a computed quantity. Nothing about a row makes this throw.
  */
 fun ingredientLine(
     ingredient: Ingredient,
@@ -194,11 +197,18 @@ private fun lineOf(
     language: InterfaceLanguage,
     quantity: DisplayedQuantity?,
 ): IngredientLine {
-    val computed = quantity?.let { runCatching { QuantityText.of(it, language) }.getOrNull() }
     val name = nameOf(ingredient, entries, language)
     // The note is the author's words, whatever the scale (DOM-023).
     val note = Ingredient.noteOf(ingredient.note)
-    if (computed == null) return IngredientLine(name, unitOf(ingredient)?.let { UnitLabels.of(it, language) }, note = note)
+    val unit = unitOf(ingredient)
+    // "to taste" is no amount: it follows the name, as a cook says it — "salt — to taste", «соль — по вкусу».
+    if (unit == QuantityUnit.TO_TASTE) return IngredientLine(name, null, note = note, toTaste = UnitLabels.of(unit, language))
+    val computed = quantity?.let { runCatching { QuantityText.of(it, language) }.getOrNull() }
+    if (computed == null) {
+        // A unit stands only by the number it measures: a row with no quantity yet shows none ("Grains of paradise").
+        val shown = unit?.takeIf { ingredient.quantity != null }?.let { UnitLabels.of(it, language) }
+        return IngredientLine(name, shown, note = note)
+    }
     return IngredientLine(name, computed, derived = quantity.derived, rounding = quantity.rounding, note = note)
 }
 

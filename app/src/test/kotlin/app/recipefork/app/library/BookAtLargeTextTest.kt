@@ -1,6 +1,7 @@
 package app.recipefork.app.library
 
 import android.content.Context
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -22,6 +23,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
@@ -76,6 +78,7 @@ class BookAtLargeTextTest {
     private val session = LibrarySession(SavedStateHandle())
     private val now = Instant.parse("2026-10-10T12:00:00Z")
     private var mode by mutableStateOf(Mode.Standard)
+    private var tabStyle: TextStyle? = null
 
     @Before
     fun waitForTheBook() = compose.registerIdlingResource(book.idling)
@@ -97,7 +100,12 @@ class BookAtLargeTextTest {
     private fun show(view: LibraryView, shownMode: Mode = Mode.Standard) {
         mode = shownMode
         session.choose(view)
-        compose.setContent { AppTheme { AppNavHost(session, recipes, mode) } }
+        compose.setContent {
+            AppTheme {
+                tabStyle = MaterialTheme.typography.titleSmall
+                AppNavHost(session, recipes, mode)
+            }
+        }
         compose.waitForIdle()
     }
 
@@ -130,7 +138,8 @@ class BookAtLargeTextTest {
     /**
      * Each tab of the book, in the standard build and then in the build without the server, reads [standard] and
      * [serverless] (the marked view's name, then the own view's); its words break, if at all, between words, and stand
-     * whole inside the tab.
+     * whole inside the tab; a word drawn smaller to fit is never drawn smaller than the tabs' style at a font scale of 1
+     * (T-217): one that does not fit even so ends the label with an ellipsis, on one line, unbroken.
      */
     private fun assertTabs(standard: List<String>, serverless: List<String>) {
         show(LibraryView.OWN)
@@ -152,6 +161,11 @@ class BookAtLargeTextTest {
                     val width = layout.getLineRight(line) - layout.getLineLeft(line)
                     assertTrue("$shownMode, line $line of “$text” is $width wide", width <= layout.layoutInput.constraints.maxWidth + 0.5f)
                 }
+                // Never smaller than the tabs' style at a font scale of 1: as many pixels as its size in dp.
+                val drawn = with(layout.layoutInput.density) { layout.layoutInput.style.fontSize.toPx() }
+                val least = with(layout.layoutInput.density) { tabStyle!!.fontSize.value.dp.toPx() }
+                assertTrue("$shownMode, “$text” drawn at $drawn px, under the least $least px", drawn >= least - 0.5f)
+                if (layout.hasVisualOverflow) assertEquals("$shownMode, “$text” cut short on one line", 1, layout.lineCount)
                 val words = unclipped(tabLabel(view))
                 val tab = unclipped(hasTestTag(LibraryTags.tab(view)))
                 assertTrue("$shownMode, “$text” ($words) stands inside its tab ($tab)", tab.contains(words.topLeft) && words.right <= tab.right + 0.5f && words.bottom <= tab.bottom + 0.5f)
@@ -176,6 +190,17 @@ class BookAtLargeTextTest {
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
     fun inRussianTheTabsNeverBreakInsideAWordAtTwiceTheFontScale() =
         assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+
+    // T-217: on a very narrow window the words are still never drawn smaller than at a font scale of 1, nor broken.
+    @Test
+    @Config(qualifiers = "ru-w240dp-h640dp", fontScale = 2f)
+    fun inRussianOnAVeryNarrowWindowTheTabsStayReadable() =
+        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+
+    @Test
+    @Config(qualifiers = "w240dp-h640dp", fontScale = 2f)
+    fun onAVeryNarrowWindowTheTabsStayReadable() =
+        assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
 
     // In the build without the server the screen reader is told the view shows the imported recipes, and its empty
     // state names them; the standard build keeps "marked".

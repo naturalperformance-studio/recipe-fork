@@ -68,12 +68,12 @@ class IngredientsLanguageAndAccessibilityTest {
     private fun content(): Set<String> {
         val lines = if (context.resources.configuration.locales[0].language == "ru") {
             setOf(
-                "¼ шт черемша", "1 500 г Ингредиент без названия", "по вкусу черемша",
+                "¼ шт черемша", "1 500 г Ингредиент без названия", "черемша — по вкусу",
                 "500 г черемша", "½ ч. л. Ингредиент без названия", "2 шт черемша",
             )
         } else {
             setOf(
-                "¼ pc черемша", "1 500 g Unnamed ingredient", "to taste черемша",
+                "¼ pc черемша", "1 500 g Unnamed ingredient", "черемша — to taste",
                 "500 g черемша", "½ tsp Unnamed ingredient", "2 pc черемша",
             )
         }

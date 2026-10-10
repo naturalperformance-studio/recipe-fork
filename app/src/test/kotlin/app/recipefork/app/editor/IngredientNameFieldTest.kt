@@ -408,8 +408,8 @@ class IngredientNameFieldTest {
 
         openDirectly(id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredient(1)), PATIENCE_MS)
-        compose.waitUntil(PATIENCE_MS) { compose.ingredientLine(0) == "г курица" }
-        assertEquals("г черемша", compose.ingredientLine(1))
+        compose.waitUntil(PATIENCE_MS) { compose.ingredientLine(0) == "курица" }
+        assertEquals("черемша", compose.ingredientLine(1))
         assertTrue(!exists(IngredientSheetTags.freeText(0)))
         assertTrue(exists(IngredientSheetTags.freeText(1)))
         compose.openIngredient(0)
@@ -425,11 +425,11 @@ class IngredientNameFieldTest {
 
     // L10N-001, A11Y-003, A11Y-005: the open offer reads in the interface language, its choices labelled and 48 dp.
     @Test
-    fun theOpenOfferInEnglish() = theOpenOffer("chi", setOf("chi", "chicken", "chicken wings", "fillet", "g chi") + MATERIAL_SHEET_TEXTS)
+    fun theOpenOfferInEnglish() = theOpenOffer("chi", setOf("chi", "chicken", "chicken wings", "fillet", "chi") + MATERIAL_SHEET_TEXTS)
 
     @Test
     @Config(qualifiers = "ru")
-    fun theOpenOfferInRussian() = theOpenOffer("кур", setOf("кур", "курица", "крылышки", "филе", "куркума", "г кур") + MATERIAL_SHEET_TEXTS)
+    fun theOpenOfferInRussian() = theOpenOffer("кур", setOf("кур", "курица", "крылышки", "филе", "куркума", "кур") + MATERIAL_SHEET_TEXTS)
 
     private fun theOpenOffer(typed: String, content: Set<String>) {
         writeANewRecipe()

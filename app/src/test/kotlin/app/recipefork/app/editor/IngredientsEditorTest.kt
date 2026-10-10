@@ -678,7 +678,7 @@ class IngredientsEditorTest {
         val shownQuantities = listOf("0,5", "", "7,5", "1 500", null, "2", "")
         // Each row's line says what it holds, the rows whose quantity its field does not hold marked.
         assertEquals(
-            listOf("500 г мука", "г сахар", "7,5 г дрожжи", "1 500 мл вода", "по вкусу соль", "2 шт яйца", "Новый ингредиент"),
+            listOf("500 г мука", "сахар", "7,5 г дрожжи", "1 500 мл вода", "соль — по вкусу", "2 шт яйца", "Новый ингредиент"),
             rows.indices.map { compose.ingredientLine(it) },
         )
         assertEquals(listOf(2, 3), rows.indices.filter { exists(IngredientSheetTags.problem(it)) })
@@ -728,7 +728,7 @@ class IngredientsEditorTest {
                 // Each row reads as its line, as on the card.
                 assertEquals("$state", listOf("500 г мука"), compose.textsOf(EditorTags.ingredient(0)))
                 assertEquals("$state", listOf("½ ст. л. сахар"), compose.textsOf(EditorTags.ingredient(1)))
-                assertEquals("$state", listOf("по вкусу соль"), compose.textsOf(EditorTags.ingredient(2)))
+                assertEquals("$state", listOf("соль — по вкусу"), compose.textsOf(EditorTags.ingredient(2)))
                 assertEquals("$state", listOf("2 шт яйца"), compose.textsOf(EditorTags.ingredient(3)))
                 assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
                 val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()

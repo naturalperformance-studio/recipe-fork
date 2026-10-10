@@ -183,7 +183,7 @@ class ServerlessWordingTest {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(foundId)), PATIENCE_MS)
         assertSaysNothingOfTheServer("the marked view")
         compose.chooseEntryAction(foundId, LibraryTags.remove(foundId))
-        compose.awaitRemovalNotice(context.getString(R.string.library_recipe_removed), context.getString(R.string.library_undo))
+        compose.awaitRemovalNotice(context.getString(R.string.library_recipe_removed_titled, TestRecipeFiles.soup().title), context.getString(R.string.library_undo))
         assertSaysNothingOfTheServer("the notice of a removal")
         compose.takeNoticeAction(context.getString(R.string.library_undo))
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(foundId)), PATIENCE_MS)
@@ -212,7 +212,7 @@ class ServerlessWordingTest {
             assertSaysNothingOfTheServer("the entry of a recipe in ${recipe.state}")
         }
         compose.chooseEntryAction(local.id.value, LibraryTags.delete(local.id.value))
-        compose.awaitRemovalNotice(context.getString(R.string.library_recipe_deleted), context.getString(R.string.library_undo))
+        compose.awaitRemovalNotice(context.getString(R.string.library_recipe_deleted_titled, local.title), context.getString(R.string.library_undo))
         assertSaysNothingOfTheServer("the notice of a deletion")
         compose.takeNoticeAction(context.getString(R.string.library_undo))
         awaitEntry(local)

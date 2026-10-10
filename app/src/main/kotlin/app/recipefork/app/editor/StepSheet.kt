@@ -196,8 +196,7 @@ internal fun StepSheet(
         }
     }
     // A step just added offers no actions until it holds something: its fields are all there is to it.
-    val holds = step.text.isNotBlank() || step.ingredientReferences.isNotEmpty() || step.note != null || step.timers.isNotEmpty() || media != null
-    val actions = if (fresh && !holds) emptyList() else stepActions(key, position, count, editor, photos, host, leave)
+    val actions = if (fresh && holdsNothing(step, media)) emptyList() else stepActions(key, position, count, editor, photos, host, leave)
     ModalBottomSheet(
         onDismissRequest = dismiss,
         sheetState = state,

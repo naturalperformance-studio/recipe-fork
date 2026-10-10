@@ -276,7 +276,7 @@ class EntryRowEditorTest {
         assertFalse(exists(EditorTags.ingredientWarning(0)))
         assertFalse(exists(IngredientNameTags.offer(0)))
         compose.closeIngredient()
-        assertEquals("г крылышки, острые", compose.ingredientLine(0))
+        assertEquals("крылышки, острые", compose.ingredientLine(0))
 
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.awaitCard()

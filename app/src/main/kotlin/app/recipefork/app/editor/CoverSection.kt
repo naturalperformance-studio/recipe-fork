@@ -88,11 +88,9 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStor
                             .testTag(CoverTags.CHANGE),
                     )
                 }
+                if (working) PhotoWorking(Modifier.align(Alignment.TopEnd).padding(8.dp).testTag(CoverTags.WORKING))
             } else {
-                CoverTile(onClick = { sheet = true })
-            }
-            if (working) {
-                PhotoWorking(Modifier.align(if (cover != null) Alignment.TopEnd else Alignment.CenterEnd).padding(8.dp).testTag(CoverTags.WORKING))
+                CoverTile(working, onClick = { sheet = true })
             }
         }
     }
@@ -114,10 +112,12 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStor
 
 /**
  * The empty cover: one tinted tile, a row at least [TILE_HEIGHT] tall — a picture with a plus, then what a tap does and,
- * muted under it, that a cover is optional; the words wrap at a large font scale, and the tile grows with them.
+ * muted under it, that a cover is optional; the words wrap at a large font scale, and the tile grows with them. At its
+ * end the row keeps a place for the sign that a photograph is being prepared, shown there while [working], so the words
+ * never run under it and never move when it comes or goes.
  */
 @Composable
-private fun CoverTile(onClick: () -> Unit) {
+private fun CoverTile(working: Boolean, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -140,8 +140,14 @@ private fun CoverTile(onClick: () -> Unit) {
             Text(stringResource(R.string.media_cover_add), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             Text(stringResource(R.string.media_cover_optional), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        Box(Modifier.size(WORKING_SIZE), contentAlignment = Alignment.Center) {
+            if (working) PhotoWorking(Modifier.testTag(CoverTags.WORKING))
+        }
     }
 }
+
+/** The place the empty tile keeps at its end for the sign that a photograph is being prepared: the sign's own size. */
+private val WORKING_SIZE = 36.dp
 
 /** How tall the empty cover's tile is at least: a two-line list item's height. */
 private val TILE_HEIGHT = 64.dp

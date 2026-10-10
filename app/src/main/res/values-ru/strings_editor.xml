@@ -176,9 +176,11 @@
     <string name="editor_timer_notification_name_action">Назвать таймер шага %1$d</string>
     <string name="editor_timer_notification_name_numbered_action">Назвать таймер %2$d шага %1$d</string>
     <!-- A row or a step deleted, with the action that puts it back. -->
-    <string name="editor_ingredient_removed">Строка ингредиента %1$d убрана</string>
+    <string name="editor_ingredient_removed">Убрано: %1$s</string>
+    <string name="editor_ingredient_removed_unnamed">Ингредиент убран</string>
     <string name="editor_step_removed">Шаг %1$d убран</string>
-    <string name="editor_group_removed">Заголовок группы %1$d убран</string>
+    <string name="editor_group_removed">Заголовок «%1$s» убран</string>
+    <string name="editor_group_removed_unnamed">Заголовок группы убран</string>
     <string name="editor_timer_removed">Таймер шага %1$d убран</string>
     <string name="editor_timer_removed_numbered">Таймер %2$d шага %1$d убран</string>
     <string name="editor_undo">Вернуть</string>
@@ -191,7 +193,8 @@
     <string name="editor_equipment_remove_action">Убрать предмет %1$d</string>
     <string name="editor_equipment_menu_action">Действия с предметом %1$d</string>
     <string name="editor_equipment_limit">В рецепте можно указать до %1$d предметов посуды и техники.</string>
-    <string name="editor_equipment_removed">Предмет %1$d убран</string>
+    <string name="editor_equipment_removed">Убрано: %1$s</string>
+    <string name="editor_equipment_removed_unnamed">Предмет убран</string>
     <string name="editor_equipment_pick_action">Выбрать предмет словаря %1$s</string>
     <string name="editor_equipment_free_text_offer">Добавить «%1$s» своими словами</string>
     <string name="editor_equipment_free_text_action">Добавить %1$s своими словами, не из словаря</string>

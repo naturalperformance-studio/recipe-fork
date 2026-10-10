@@ -245,6 +245,9 @@ class TakenRecipe internal constructor(
     /** Whether the book held it as a found recipe, marked, rather than one written in it. */
     val found: Boolean get() = taken.favourite != null
 
+    /** Its title as the book held it; blank for a recipe never titled. */
+    val title: String get() = taken.rows.recipe.title
+
     /**
      * Puts the recipe back into the book it was taken from, whole and listed where it was: its content, its media, its
      * state and, for a found one, its mark. Returns false, putting back nothing, when that book holds one of its

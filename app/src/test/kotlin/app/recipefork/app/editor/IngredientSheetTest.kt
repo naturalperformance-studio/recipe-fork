@@ -145,7 +145,7 @@ class IngredientSheetTest {
     private fun cardLine(row: Ingredient, language: InterfaceLanguage): String {
         val entries = runBlocking { device.database.dictionaryDao().ingredients() }.associateBy { it.id }
         val line = ingredientLine(row, entries, language)
-        return listOfNotNull(line.quantity, line.name).joinToString(" ") + (line.note?.let { " — $it" } ?: "")
+        return listOfNotNull(line.quantity, listOfNotNull(line.name, line.toTaste, line.note).joinToString(" — ")).joinToString(" ")
     }
 
     /** Hands a press of the system's back to the topmost window: the sheet's own, in front of the editor. */
@@ -165,11 +165,35 @@ class IngredientSheetTest {
     // Scenario 1: each row reads as one line, as the card writes it — amount, unit, name, note — with no fields on it; its
     // drag handle stays; an empty row reads "New ingredient".
     @Test
-    fun eachRowReadsAsTheCardsLineWithNoFields() = rowsReadAsLines(InterfaceLanguage.ENGLISH, listOf("500 ml milk — warm", "2 pc onion", "to taste salt", "New ingredient"))
+    fun eachRowReadsAsTheCardsLineWithNoFields() = rowsReadAsLines(InterfaceLanguage.ENGLISH, listOf("500 ml milk — warm", "2 pc onion", "salt — to taste", "New ingredient"))
 
     @Test
     @Config(qualifiers = "ru")
-    fun eachRowReadsAsTheCardsLineWithNoFieldsInRussian() = rowsReadAsLines(InterfaceLanguage.RUSSIAN, listOf("500 мл молоко — warm", "2 шт onion", "по вкусу salt", "Новый ингредиент"))
+    fun eachRowReadsAsTheCardsLineWithNoFieldsInRussian() = rowsReadAsLines(InterfaceLanguage.RUSSIAN, listOf("500 мл молоко — warm", "2 шт onion", "salt — по вкусу", "Новый ингредиент"))
+
+    // T-217: a row with no amount yet reads by its name alone, the unit it defaults to unshown ("Grains of paradise", not
+    // "g Grains of paradise"); a row to taste reads "to taste" after its name, before its note; both as the card writes them.
+    @Test
+    fun aRowWithNoAmountShowsNoUnitAndToTasteFollowsTheName() =
+        naturalLines(InterfaceLanguage.ENGLISH, listOf("Grains of paradise", "salt — to taste — flaked", "Unnamed ingredient — to taste"))
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun aRowWithNoAmountShowsNoUnitAndToTasteFollowsTheNameInRussian() =
+        naturalLines(InterfaceLanguage.RUSSIAN, listOf("Grains of paradise", "salt — по вкусу — flaked", "Ингредиент без названия — по вкусу"))
+
+    private fun naturalLines(language: InterfaceLanguage, expected: List<String>) {
+        val recipe = draft().copy(
+            ingredients = listOf(
+                Ingredient(0, null, null, "Grains of paradise", UnitType.EXACT, QuantityUnit.GRAM, null),
+                Ingredient(1, null, null, "salt", UnitType.TASTE_UNMEASURED, null, null, note = "flaked"),
+                Ingredient(2, null, null, null, UnitType.TASTE_UNMEASURED, null, null),
+            ),
+        )
+        open(recipe)
+        assertEquals(expected, (0..2).map { compose.ingredientLine(it) })
+        (0..1).forEach { assertEquals(cardLine(recipe.ingredients[it], language), compose.ingredientLine(it)) }
+    }
 
     private fun rowsReadAsLines(language: InterfaceLanguage, expected: List<String>) {
         val recipe = draft()
@@ -289,7 +313,7 @@ class IngredientSheetTest {
         compose.onNodeWithTag(IngredientSheetTags.SHEET).performTouchInput { swipeDown() }
         awaitClosed()
         assertEquals("flaked", stored(id).ingredients[2].note)
-        assertEquals("to taste salt — flaked", compose.ingredientLine(2))
+        assertEquals("salt — to taste — flaked", compose.ingredientLine(2))
     }
 
     // The keyboard goes name → quantity → the unit's menu inside the sheet; a unit picked from there goes on to the note
@@ -368,7 +392,7 @@ class IngredientSheetTest {
         compose.chooseInSheet(EditorTags.ingredientRemove(0))
         awaitClosed()
         assertEquals(3, stored(id).ingredients.size)
-        compose.awaitStatement(string(R.string.editor_ingredient_removed, 1))
+        compose.awaitStatement("“onion” removed")
         val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
         compose.onNode(undo, useUnmergedTree = true).performClick()
         compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
@@ -535,12 +559,12 @@ class IngredientSheetTest {
     fun statementsWaitForTheSheetToGo() {
         val id = open(draft())
         compose.removeIngredient(3)
-        compose.awaitStatement(string(R.string.editor_ingredient_removed, 4))
+        compose.awaitStatement("Ingredient removed")
         assertEquals(3, stored(id).ingredients.size)
         compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.STATEMENT) }
         compose.closeIngredient()
-        compose.awaitStatement(string(R.string.editor_ingredient_removed, 4))
+        compose.awaitStatement("Ingredient removed")
         val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
         compose.onNode(undo, useUnmergedTree = true).performClick()
         compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
@@ -566,7 +590,7 @@ class IngredientSheetTest {
         tapHeld(EditorTags.ingredientRemove(1))
         compose.mainClock.autoAdvance = true
         awaitClosed()
-        compose.awaitStatement(string(R.string.editor_ingredient_removed, 2))
+        compose.awaitStatement("“onion” removed")
         assertEquals(listOf(null, "salt", null), stored(id).ingredients.map { it.freeTextName })
         assertEquals(1L, stored(id).ingredients[0].dictionaryEntry)
         val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
@@ -618,7 +642,7 @@ class IngredientSheetTest {
     fun aFrozenRecipesRowsReadAsTextAndOpenNothing() {
         val recipe = draft(RecipeState.PUBLISHED)
         open(recipe)
-        assertEquals(listOf("500 ml milk — warm", "2 pc onion", "to taste salt"), (0..2).map { compose.ingredientLine(it) })
+        assertEquals(listOf("500 ml milk — warm", "2 pc onion", "salt — to taste"), (0..2).map { compose.ingredientLine(it) })
         (0..3).forEach { position ->
             val line = compose.onNodeWithTag(IngredientSheetTags.line(position), useUnmergedTree = true).fetchSemanticsNode()
             assertFalse("row $position opens", SemanticsActions.OnClick in line.config)

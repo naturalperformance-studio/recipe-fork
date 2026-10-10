@@ -131,7 +131,7 @@ class CardRecalculatedTest {
     fun theSectionSaysRecalculatedOnceAndEachRoundedQuantityCarriesItsArrow() {
         open()
         assertEquals(
-            listOf(listOf("Chicken", "500 g"), listOf("Eggs", "3 pc"), listOf("Salt", "1 tsp"), listOf("Flour", "g")),
+            listOf(listOf("Chicken", "500 g"), listOf("Eggs", "3 pc"), listOf("Salt", "1 tsp"), listOf("Flour")),
             lines(),
         )
         assertEquals(emptyList<String>(), legends())
@@ -147,7 +147,7 @@ class CardRecalculatedTest {
                 listOf("Chicken", "750 g"),
                 listOf("Eggs", "5 pc", up),
                 listOf("Salt", "1½ tsp"),
-                listOf("Flour", "g"),
+                listOf("Flour"),
             ),
             lines(),
         )
@@ -165,7 +165,7 @@ class CardRecalculatedTest {
         awaitLegend(false)
         assertEquals(emptyList<String>(), shownLegends())
         assertEquals(listOf(null, null, null, null), arrows())
-        assertEquals(listOf(listOf("Chicken", "500 g"), listOf("Eggs", "3 pc"), listOf("Salt", "1 tsp"), listOf("Flour", "g")), lines())
+        assertEquals(listOf(listOf("Chicken", "500 g"), listOf("Eggs", "3 pc"), listOf("Salt", "1 tsp"), listOf("Flour")), lines())
     }
 
     // SCALE-002, SCALE-004: a fixed amount recalculates the list too — the section line once, arrows as rounded.
@@ -262,15 +262,15 @@ class CardRecalculatedTest {
         assertEquals(up, lines()[1].last())
         assertEquals("↑", arrows()[1])
         assertEquals(listOf(warning), compose.textsOf(CardTags.PROPORTIONS))
-        val content = setOf(forFour.title) + forFour.ingredients.mapNotNull { it.freeTextName } + lines().map { it[1] }
+        val content = setOf(forFour.title) + forFour.ingredients.mapNotNull { it.freeTextName } + lines().flatten()
         LocalizationChecks.assertScreenTextFromResources(compose, context, content)
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content)
         // 3 servings: 2.25 eggs → 2, rounded down.
         more(3)
         compose.waitUntil(PATIENCE_MS) { lines()[1].last() == down }
         assertEquals("↓", arrows()[1])
-        LocalizationChecks.assertScreenTextFromResources(compose, context, content + lines().map { it[1] })
-        LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content + lines().map { it[1] })
+        LocalizationChecks.assertScreenTextFromResources(compose, context, content + lines().flatten())
+        LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content + lines().flatten())
     }
 
     // T-159: the warning unfolds under the status line and folds away into it, the lines below moving gradually; the

@@ -187,11 +187,18 @@ class RecipeUndoTest {
         awaitEntry(recipe, view)
         val item = if (view == LibraryView.OWN) LibraryTags.delete(recipe.id.value) else LibraryTags.remove(recipe.id.value)
         compose.chooseEntryAction(recipe.id.value, item)
-        compose.awaitRemovalNotice(if (view == LibraryView.OWN) "Recipe deleted" else "Recipe removed", "Undo")
+        compose.awaitRemovalNotice(noticeOf(recipe, view), "Undo")
         val shown = compose.mainClock.currentTime
         compose.waitUntil(PATIENCE_MS) { stored(recipe) == null }
         compose.waitUntilDoesNotExist(hasTestTag(LibraryTags.entry(recipe.id.value)), PATIENCE_MS)
         return shown
+    }
+
+    /** What the book says of [recipe] taken out of [view]: named by its title (T-217), or by its kind where it has none. */
+    private fun noticeOf(recipe: Recipe, view: LibraryView): String = when {
+        recipe.title.isBlank() -> if (view == LibraryView.OWN) "Recipe deleted" else "Recipe removed"
+        view == LibraryView.OWN -> "“${recipe.title}” deleted"
+        else -> "“${recipe.title}” removed"
     }
 
     /**
@@ -505,6 +512,25 @@ class RecipeUndoTest {
         assertNull(stored(pie))
     }
 
+    // T-217: the notice names the recipe that left — "“Soup” deleted", "“Pie” removed" — and one with no title by its
+    // kind; Undo brings back each.
+    @Test
+    fun theNoticeNamesTheRecipeOrSaysWhatItWas() {
+        val soup = own("Soup", minutesAgo = 1)
+        val untitled = own("", minutesAgo = 2)
+        val pie = found("Pie", minutesAgo = 0)
+        show(LibraryView.OWN)
+        listOf(soup, untitled).forEach { recipe ->
+            takeOut(recipe)
+            compose.takeNoticeAction("Undo")
+            compose.waitUntil(PATIENCE_MS) { stored(recipe) != null }
+        }
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
+        takeOut(pie, LibraryView.MARKED)
+        compose.takeNoticeAction("Undo")
+        compose.waitUntil(PATIENCE_MS) { stored(pie) != null }
+    }
+
     // The removal of a found recipe reads in Russian, its Undo too.
     @Test
     @Config(qualifiers = "ru")
@@ -513,7 +539,7 @@ class RecipeUndoTest {
         show(LibraryView.MARKED)
         awaitEntry(pie, LibraryView.MARKED)
         compose.chooseEntryAction(pie.id.value, LibraryTags.remove(pie.id.value))
-        compose.awaitRemovalNotice("Рецепт убран", "Вернуть")
+        compose.awaitRemovalNotice("Рецепт «Яблочный пирог» убран", "Вернуть")
         compose.takeNoticeAction("Вернуть")
         compose.waitUntil(PATIENCE_MS) { stored(pie) != null }
         assertEquals(pie, stored(pie))

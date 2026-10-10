@@ -218,8 +218,9 @@ class EquipmentScreenTest {
     fun aRemovedItemComesBackWithUndo() {
         val recipe = open(recipe("Bowl", "Whisk", "Frying pan"))
         compose.onNodeWithTag(EditorTags.equipmentRemove(1)).performScrollTo().performClick()
-        compose.awaitStatement(context.getString(R.string.editor_equipment_removed, 2))
-        assertEquals("Equipment item 2 removed", context.getString(R.string.editor_equipment_removed, 2))
+        // It names the item that went (T-217).
+        compose.awaitStatement("“Whisk” removed")
+        assertEquals("“Whisk” removed", context.getString(R.string.editor_equipment_removed, "Whisk"))
         awaitStored(recipe, listOf("Bowl", "Frying pan"))
         compose.onNode(
             hasText(context.getString(R.string.editor_undo)) and hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)),
