@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
@@ -69,6 +71,8 @@ import app.recipefork.core.recipe.ReferenceSpacing
 import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.ShareReading
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.recipe.effectiveDivisible
 import app.recipefork.core.scaling.UnitLabels
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.flow.first
@@ -538,6 +542,8 @@ private val DENSE_FIELD_PADDING = PaddingValues(start = 12.dp, end = 16.dp, top 
  *
  * Each row holding a quantity is offered a second time, as a part of it ([IngredientShares.offered]): choosing that
  * asks for the part in the row's own unit ([PartDialog]), and the reference then reads that part instead of the whole.
+ * A `piece` row is offered a part once its divisibility is given — by the author, or by the dictionary entry it names —
+ * as that sets which parts it holds.
  */
 @Composable
 internal fun InsertIngredient(
@@ -577,7 +583,8 @@ internal fun InsertIngredient(
                 )
             }
             val unnamed = stringResource(R.string.editor_ingredient_unnamed)
-            ingredients.forEachIndexed { row, ingredient ->
+            ingredients.forEachIndexed { row, listed ->
+                val ingredient = withEntryDivisibility(listed, dictionary)
                 val name = ingredient.nameIn(dictionary, language).takeIf { it.isNotBlank() } ?: unnamed
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.editor_step_offered_ingredient, name, ReferenceText.authored(ingredient, language))) },
@@ -603,8 +610,9 @@ internal fun InsertIngredient(
         }
     }
     asking?.let { asked ->
-        val ingredient = ingredients.getOrNull(asked.row)
-        if (ingredient == null) {
+        // A row gone, or no longer offering a part, closes what was asked of it.
+        val ingredient = ingredients.getOrNull(asked.row)?.let { withEntryDivisibility(it, dictionary) }
+        if (ingredient == null || !IngredientShares.offered(ingredient)) {
             asking = null
             return@let
         }
@@ -629,6 +637,13 @@ internal fun InsertIngredient(
     }
 }
 
+/** [row] holding the divisibility it is read with: the one the dictionary entry it names gives, or its own (FLOW-023 (11)). */
+private fun withEntryDivisibility(row: Ingredient, dictionary: List<IngredientEntryEntity>?): Ingredient {
+    if (row.unitType != UnitType.PIECE) return row
+    val entryDivisible = row.dictionaryEntry?.let { id -> dictionary?.firstOrNull { it.id == id }?.divisible }
+    return row.copy(divisible = effectiveDivisible(row, entryDivisible))
+}
+
 /** A part being asked for: of the row at [row], named [name], for the offer opened at [trigger] (or at the cursor). */
 private data class AskedPart(val row: Int, val name: String, val trigger: Int?)
 
@@ -636,6 +651,10 @@ private data class AskedPart(val row: Int, val name: String, val trigger: Int?)
  * Asks for a part of [ingredient], named [name], in its own unit: typed and read like its quantity field (DOM-019),
  * held only on its unit type's grid and above zero (DOM-017), and no more than its quantity. Until it is, the field
  * says what it accepts and nothing is inserted.
+ *
+ * The dialog's window is as wide as the screen, the dialog itself in it at Material's widths with a gutter each side:
+ * a window at the platform's default width measures its content twice a pass, at two widths, and a text field laid
+ * out anew at each asks for one more pass, so the screen never settled.
  */
 @Composable
 private fun PartDialog(
@@ -652,7 +671,8 @@ private fun PartDialog(
     val focus = remember { FocusRequester() }
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(EditorTags.PART_DIALOG),
+        modifier = Modifier.padding(horizontal = 16.dp).testTag(EditorTags.PART_DIALOG),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         title = { Text(stringResource(R.string.editor_part_title, name)) },
         text = {
             OutlinedTextField(
