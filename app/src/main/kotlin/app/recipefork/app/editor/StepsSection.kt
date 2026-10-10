@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,6 +62,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.recipefork.app.R
@@ -570,8 +572,8 @@ private fun StepTimer(
     // its removal, its name and the notice of its removal alike; a step's only row reads as it always did.
     val number = (place + 1).takeIf { count > 1 }
 
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Two digits each: the field cannot hold more than 99 h 59 min (FLOW-027 (14)), and no seconds are offered.
+    // Two digits each: the field cannot hold more than 99 h 59 min (FLOW-027 (14)), and no seconds are offered.
+    val hoursInput: @Composable (Modifier) -> Unit = { modifier ->
         OutlinedTextField(
             value = hours,
             onValueChange = { typed ->
@@ -583,8 +585,10 @@ private fun StepTimer(
             label = { Text(stringResource(R.string.editor_timer_hours)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-            modifier = Modifier.weight(1f).focusRequester(hoursField).testTag(EditorTags.timerHours(position, place)),
+            modifier = modifier.focusRequester(hoursField).testTag(EditorTags.timerHours(position, place)),
         )
+    }
+    val minutesInput: @Composable (Modifier) -> Unit = { modifier ->
         OutlinedTextField(
             value = minutes,
             onValueChange = { typed ->
@@ -596,29 +600,53 @@ private fun StepTimer(
             label = { Text(stringResource(R.string.editor_timer_minutes)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            modifier = Modifier.weight(1f).testTag(EditorTags.timerMinutes(position, place)),
+            modifier = modifier.testTag(EditorTags.timerMinutes(position, place)),
         )
-        // Takes this timer off, with any name the author gave it; the step's other timers stay. Undo puts it back. One
-        // that holds no duration yet is no timer: it is only taken off the screen.
-        IconButton(
-            onClick = {
-                when {
-                    !timers.held(place) -> timers.remove(place)
-                    editor.removeTimer(position, timers.index(place), number) -> timers.remove(place)
+    }
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        // Hours and minutes side by side where each label fits on one line in its field as it rests there, empty, in the
+        // field's own text style; else one under the other, so that no label is broken inside a word (A11Y-004).
+        val measurer = rememberTextMeasurer()
+        val resting = MaterialTheme.typography.bodyLarge
+        val density = LocalDensity.current
+        val labels = listOf(stringResource(R.string.editor_timer_hours), stringResource(R.string.editor_timer_minutes))
+        val need = remember(labels, resting, density) {
+            with(density) { labels.maxOf { measurer.measure(it, resting, softWrap = false, maxLines = 1).size.width }.toDp() } + LABEL_ROOM
+        }
+        // Two fields and the removal's 48 dp, 8 dp apart.
+        val beside = (maxWidth - 48.dp - 16.dp) / 2 >= need
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (beside) {
+                hoursInput(Modifier.weight(1f))
+                minutesInput(Modifier.weight(1f))
+            } else {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    hoursInput(Modifier.fillMaxWidth())
+                    minutesInput(Modifier.fillMaxWidth())
                 }
-            },
-            // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
-            modifier = Modifier.align(Alignment.CenterVertically).size(48.dp).testTag(EditorTags.timerRemove(position, place)),
-        ) {
-            Icon(
-                painterResource(R.drawable.ic_remove_timer),
-                contentDescription = if (number != null) {
-                    stringResource(R.string.editor_timer_remove_numbered_action, position + 1, number)
-                } else {
-                    stringResource(R.string.editor_timer_remove_action, position + 1)
+            }
+            // Takes this timer off, with any name the author gave it; the step's other timers stay. Undo puts it back.
+            // One that holds no duration yet is no timer: it is only taken off the screen.
+            IconButton(
+                onClick = {
+                    when {
+                        !timers.held(place) -> timers.remove(place)
+                        editor.removeTimer(position, timers.index(place), number) -> timers.remove(place)
+                    }
                 },
-                tint = MaterialTheme.colorScheme.error,
-            )
+                // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003).
+                modifier = Modifier.align(Alignment.CenterVertically).size(48.dp).testTag(EditorTags.timerRemove(position, place)),
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_remove_timer),
+                    contentDescription = if (number != null) {
+                        stringResource(R.string.editor_timer_remove_numbered_action, position + 1, number)
+                    } else {
+                        stringResource(R.string.editor_timer_remove_action, position + 1)
+                    },
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            }
         }
     }
     if (timer != null) {

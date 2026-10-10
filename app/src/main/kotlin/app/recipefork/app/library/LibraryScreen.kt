@@ -85,8 +85,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
@@ -128,6 +126,7 @@ import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.app.ui.SnackbarAction
+import app.recipefork.app.ui.fitWords
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
@@ -438,27 +437,6 @@ private fun TabLabel(text: String, width: Int) {
 
 /** The margin Material 3 keeps on each side of a tab's words. */
 private val TAB_TEXT_PADDING = 16.dp
-
-/** [style], made smaller just as far as the widest word of [text] needs to fit in [width] pixels; unchanged if it fits. */
-internal fun fitWords(text: String, style: TextStyle, width: Int, measurer: TextMeasurer): TextStyle {
-    val words = text.split(' ').filter { it.isNotEmpty() }
-    if (words.isEmpty() || width <= 0 || !style.fontSize.isSp) return style
-    var fitted = style
-    repeat(FIT_STEPS) {
-        val widest = words.maxOf { measurer.measure(it, fitted, softWrap = false, maxLines = 1).size.width }
-        if (widest <= width) return fitted
-        val ratio = width.toFloat() / widest * FIT_MARGIN
-        fitted = fitted.copy(
-            fontSize = fitted.fontSize * ratio,
-            lineHeight = if (fitted.lineHeight.isSp) fitted.lineHeight * ratio else fitted.lineHeight,
-        )
-    }
-    return fitted
-}
-
-/** How many times a tab's words are made smaller at most, and how much below the exact ratio each time. */
-private const val FIT_STEPS = 8
-private const val FIT_MARGIN = 0.98f
 
 /**
  * The action of the view shown, at the bottom right: writing a new recipe in the own view (FLOW-042 (5)), importing a

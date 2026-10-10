@@ -1,6 +1,8 @@
 package app.recipefork.app.editor
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -11,11 +13,20 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import app.recipefork.app.R
+import app.recipefork.app.ui.fitWords
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -31,6 +42,27 @@ internal class SheetAction(
     val destructive: Boolean = false,
     val onClick: () -> Unit,
 )
+
+/**
+ * The top of a sheet — an ingredient row's, a heading's, a step's: its [title] as a heading, then "Done" ([onDone]). The
+ * title wraps between words; a word wider than its room — a long Russian word at a large font scale on a narrow phone —
+ * is drawn smaller until it fits, so that no word is broken.
+ */
+@Composable
+internal fun SheetHeader(title: String, titleTag: String, doneTag: String, onDone: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        BoxWithConstraints(Modifier.weight(1f)) {
+            val style = MaterialTheme.typography.titleLarge
+            val measurer = rememberTextMeasurer()
+            val width = constraints.maxWidth
+            val fitted = remember(title, style, width, measurer) { fitWords(title, style, width, measurer) }
+            Text(title, style = fitted, modifier = Modifier.semantics { heading() }.testTag(titleTag))
+        }
+        TextButton(onClick = onDone, modifier = Modifier.heightIn(min = 48.dp).testTag(doneTag)) {
+            Text(stringResource(R.string.editor_done))
+        }
+    }
+}
 
 /**
  * A sheet's [actions] under its fields, apart from them by a divider: one list item each, at least 56 dp tall, its whole

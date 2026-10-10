@@ -5,7 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -35,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -61,6 +59,7 @@ import kotlinx.coroutines.launch
 /** The test tags of a step read as text, and of the sheet it opens in. */
 object StepSheetTags {
     const val SHEET = "editor-step-sheet"
+    const val TITLE = "editor-step-sheet-title"
     const val DONE = "editor-step-sheet-done"
 
     /** The sheet's part of the step's timers, under its name, with the control that adds one. */
@@ -206,16 +205,7 @@ internal fun StepSheet(
         // Asked for — the step just added or inserted — its text takes the focus as soon as the sheet is laid out, with
         // the keyboard up.
         focus.TakenInSheet(position, held.field.focus)
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(R.string.editor_step, position + 1),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
-            TextButton(onClick = done, modifier = Modifier.heightIn(min = 48.dp).testTag(StepSheetTags.DONE)) {
-                Text(stringResource(R.string.editor_done))
-            }
-        }
+        SheetHeader(stringResource(R.string.editor_step, position + 1), StepSheetTags.TITLE, StepSheetTags.DONE, done)
         // The sheet's own scrolling, and where the field the author is in stands in it: a mark or a timer's display
         // appearing above that field scrolls the sheet by as much, so the field stays where the author has it.
         val scrolled = rememberScrollState()
