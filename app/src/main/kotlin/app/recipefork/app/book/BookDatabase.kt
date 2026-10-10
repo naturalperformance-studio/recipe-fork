@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.Flow
         MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class, IngredientGroupEntity::class,
         StepTimerEntity::class, EquipmentEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -117,6 +117,12 @@ abstract class BookDatabase : RoomDatabase() {
                 }
             },
             EquipmentByEntry(equipment),
+            // 7 → 8: a step may carry the author's note; every step already in the book has none.
+            object : Migration(7, 8) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table step add column note text")
+                }
+            },
         )
     }
 }

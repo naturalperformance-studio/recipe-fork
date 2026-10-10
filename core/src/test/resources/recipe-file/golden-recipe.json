@@ -1,5 +1,5 @@
 {
-    "format_version": 5,
+    "format_version": 6,
     "recipe": {
         "id": "0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10",
         "title": "Борщ «домашний»",
@@ -112,7 +112,8 @@
                         "minutes": 12,
                         "label": "Beet"
                     }
-                ]
+                ],
+                "note": "Бабушка всегда добавляла щепотку сахара"
             },
             {
                 "position": 1,

@@ -1,0 +1,176 @@
+{
+    "format_version": 5,
+    "recipe": {
+        "id": "0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10",
+        "title": "Борщ «домашний»",
+        "description": "Serve with sour cream.\nKeeps for two days.",
+        "language": "ru",
+        "tags": [
+            3,
+            12
+        ],
+        "servings": 4,
+        "equipment": [
+            {
+                "dictionary_entry": 10006,
+                "labels": {
+                    "ru": "Кастрюля",
+                    "en": "Saucepan"
+                },
+                "qualifier": "5 l"
+            },
+            {
+                "dictionary_entry": 10001,
+                "labels": {
+                    "ru": "Сковорода",
+                    "en": "Frying pan"
+                },
+                "qualifier": "26 cm"
+            },
+            {
+                "free_text_name": "Old cast-iron grater"
+            }
+        ],
+        "ingredients": [
+            {
+                "position": 0,
+                "dictionary_entry": 101,
+                "qualifier": "ripe",
+                "unit_type": "exact",
+                "unit": "kilogram",
+                "quantity": "3/2",
+                "note": "finely grated"
+            },
+            {
+                "position": 1,
+                "dictionary_entry": 102,
+                "unit_type": "piece",
+                "unit": "piece",
+                "quantity": "5/2",
+                "piece_weight": "120",
+                "divisible": true
+            },
+            {
+                "position": 2,
+                "dictionary_entry": 103,
+                "unit_type": "piece",
+                "unit": "piece",
+                "quantity": "2",
+                "divisible": false
+            },
+            {
+                "position": 3,
+                "free_text_name": "smoked salt",
+                "unit_type": "household",
+                "unit": "tablespoon",
+                "quantity": "1/2",
+                "note": "coarse"
+            },
+            {
+                "position": 4,
+                "dictionary_entry": 104,
+                "unit_type": "taste_measured",
+                "unit": "pinch",
+                "quantity": "2"
+            },
+            {
+                "position": 5,
+                "dictionary_entry": 105,
+                "qualifier": "black",
+                "unit_type": "taste_unmeasured"
+            },
+            {
+                "position": 6,
+                "free_text_name": "cream",
+                "unit_type": "exact",
+                "unit": "cubic_metre",
+                "entered_quantity": "-3"
+            }
+        ],
+        "ingredient_groups": [
+            {
+                "name": "Vegetables",
+                "first_ingredient": 1
+            },
+            {
+                "name": "Seasoning",
+                "first_ingredient": 3
+            }
+        ],
+        "steps": [
+            {
+                "position": 0,
+                "text": "Fry the beet until soft",
+                "references": [
+                    {
+                        "ingredient_position": 0,
+                        "text_offset": 8
+                    }
+                ],
+                "timers": [
+                    {
+                        "minutes": 12,
+                        "label": "Beet"
+                    }
+                ]
+            },
+            {
+                "position": 1,
+                "text": "Simmer with the salt and onions",
+                "references": [
+                    {
+                        "ingredient_position": 3,
+                        "text_offset": 14,
+                        "share": {
+                            "quantity": "1/4",
+                            "unit": "tablespoon"
+                        }
+                    },
+                    {
+                        "ingredient_position": 1,
+                        "text_offset": 0
+                    }
+                ],
+                "timers": [
+                    {
+                        "minutes": 95
+                    },
+                    {
+                        "minutes": 10,
+                        "label": "Onions"
+                    },
+                    {
+                        "minutes": 3
+                    }
+                ]
+            },
+            {
+                "position": 2,
+                "text": "Season and serve",
+                "references": [],
+                "timers": []
+            }
+        ]
+    },
+    "author": {
+        "nickname": "anna"
+    },
+    "parent": {
+        "id": "7d0e5c4a-2b1f-4e3d-8c6a-1f2e3d4c5b6a",
+        "title": "Борщ",
+        "nickname": "boris"
+    },
+    "media": [
+        {
+            "id": "m-1",
+            "kind": "photo",
+            "entry": "media/m-1.jpg"
+        },
+        {
+            "id": "m-2",
+            "kind": "video",
+            "step": 1,
+            "entry": "media/m-2.mp4"
+        }
+    ]
+}

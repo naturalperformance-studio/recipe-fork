@@ -142,8 +142,8 @@ private fun boundText(part: RecipePart, bound: Bound): String = when (bound) {
             RecipePart.Ingredients -> R.string.editor_mark_ingredients_missing
             RecipePart.Steps -> R.string.editor_mark_steps_missing
             // No minimum asks anything of these; within DOM-012 they are never missing.
-            RecipePart.Description, is RecipePart.StepText, is RecipePart.TimerName, is RecipePart.IngredientNote,
-            is RecipePart.GroupName, is RecipePart.EquipmentName,
+            RecipePart.Description, is RecipePart.StepText, is RecipePart.StepNote, is RecipePart.TimerName,
+            is RecipePart.IngredientNote, is RecipePart.GroupName, is RecipePart.EquipmentName,
             -> return ""
         },
     )
@@ -151,8 +151,8 @@ private fun boundText(part: RecipePart, bound: Bound): String = when (bound) {
         when (part) {
             RecipePart.Ingredients -> R.string.editor_mark_ingredients_over
             RecipePart.Steps -> R.string.editor_mark_steps_over
-            RecipePart.Title, RecipePart.Description, is RecipePart.StepText, is RecipePart.TimerName, is RecipePart.IngredientNote,
-            is RecipePart.GroupName, is RecipePart.EquipmentName,
+            RecipePart.Title, RecipePart.Description, is RecipePart.StepText, is RecipePart.StepNote, is RecipePart.TimerName,
+            is RecipePart.IngredientNote, is RecipePart.GroupName, is RecipePart.EquipmentName,
             -> R.string.editor_mark_characters_over
             // No limit of DOM-012 applies to these.
             RecipePart.Language, RecipePart.Servings -> return ""

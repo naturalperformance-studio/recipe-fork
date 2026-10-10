@@ -170,8 +170,8 @@ class RecipeImportTest {
     // FLOW-064 (5): a document of a later format, written by a later version of the application.
     @Test
     fun aLaterFormatIsRefused() {
-        val later = RecipeFile.encode(soup()).replace("\"format_version\": 5", "\"format_version\": 6")
-        assertTrue(later.contains("\"format_version\": 6"))
+        val later = RecipeFile.encode(soup()).replace("\"format_version\": 6", "\"format_version\": 7")
+        assertTrue(later.contains("\"format_version\": 7"))
         assertRefused(Refusal.LATER_VERSION, zip(RecipeFile.DOCUMENT to later.toByteArray()))
     }
 
@@ -401,6 +401,28 @@ class RecipeImportTest {
     private fun withoutEquipment(document: String, version: Int): String = document
         .replace("\"format_version\": ${RecipeFile.FORMAT_VERSION}", "\"format_version\": $version")
         .replace(Regex("\"equipment\": \\[\\],\\s*"), "")
+
+    // A found recipe keeps each step's note, as it keeps the rest of the content; a file of format 5, before notes,
+    // imports with none; a note over its bound refuses the file.
+    @Test
+    fun aFoundRecipeKeepsItsStepNotes() = runBlocking {
+        val note = "Бабушка всегда добавляла щепотку сахара"
+        val content = soup().copy(steps = soup().steps.map { if (it.position == 0) it.withNote(note) else it })
+        assertRefused(Refusal.BREAKS_RULES, file(content.copy(steps = content.steps.map { it.copy(note = it.note?.let { "n".repeat(501) }) })))
+        assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
+        val found = recipes.get(content.id)!!
+        assertEquals(note, found.steps[0].note)
+        assertEquals(content.steps, found.steps)
+        assertEquals(found, RecipeImport.foundRecipe(content, emptyList(), now))
+    }
+
+    @Test
+    fun aFormat5FileImportsWithNoStepNotes() = runBlocking {
+        val document = RecipeFile.encode(soup()).replace("\"format_version\": 6", "\"format_version\": 5")
+        assertTrue(document.contains("\"format_version\": 5"))
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(zip(RecipeFile.DOCUMENT to document.toByteArray())))
+        assertEquals(soup().steps.map { null }, recipes.get(soup().id)!!.steps.map { it.note })
+    }
 
     // A found recipe keeps the file's equipment, in order.
     @Test

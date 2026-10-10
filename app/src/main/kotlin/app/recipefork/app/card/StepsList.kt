@@ -107,10 +107,11 @@ internal fun StepsList(
     readerScrolling: () -> Boolean = { false },
     coveredBelow: Dp = 0.dp,
 ) {
-    // A step that is only a reference reads as one, and one that is only a photograph or a clip shows it — or says it
-    // is unavailable (FLOW-061); one holding nothing that reads or shows is left out.
+    // A step that is only a reference reads as one, one that is only its author's note reads as that, and one that is
+    // only a photograph or a clip shows it — or says it is unavailable (FLOW-061); one holding nothing that reads or
+    // shows is left out.
     val shown = steps.sortedBy { it.position }
-        .filter { StepText.render(it, references::quantity).isNotBlank() || media.of(it.position) != null }
+        .filter { StepText.render(it, references::quantity).isNotBlank() || it.note != null || media.of(it.position) != null }
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }
@@ -176,8 +177,9 @@ internal fun StepsList(
 }
 
 /**
- * One step: its number in a filled circle and its text beside it, read by the screen reader as one line that says the
- * number once — the circle itself is decorative — then its photograph or its clip, named by the step's number, and its
+ * One step: its number in a filled circle and its text beside it, with the author's note under the text, muted and
+ * smaller ([StepNote]), read by the screen reader as one line that says the number once — the circle itself is
+ * decorative — and the note after the text; then its photograph or its clip, named by the step's number, and its
  * timer, if it carries them, set under the text, the timer a clear gap below the rest. Steps after the first stand apart from the one before. An item whose
  * file the device does not hold, or cannot show, says so in its place (FLOW-061).
  *
@@ -218,7 +220,10 @@ private fun StepRow(
             val color = if (current) MaterialTheme.colorScheme.onPrimaryContainer else LocalContentColor.current
             CompositionLocalProvider(LocalContentColor provides color) {
                 StepNumber(number, step.position)
-                StepText(step, references, Modifier.weight(1f), done, mode)
+                Column(Modifier.weight(1f)) {
+                    StepText(step, references, done = done, mode = mode)
+                    step.note?.let { StepNote(it, step.position, mode) }
+                }
             }
         }
         media.of(step.position)?.let { item ->
@@ -264,7 +269,32 @@ internal val CURRENT_OUTSET_END = 4.dp
 /** Test tags of a step's parts on the card. */
 internal object StepRowTags {
     fun number(position: Int) = "card-step-$position-number"
+    fun note(position: Int) = "card-step-$position-note"
 }
+
+/**
+ * The author's note on a step, under its text: muted, in the theme's on-surface-variant colour — on the current step's
+ * container too — and a size of the type scale smaller than the step's text ([stepNoteStyle]).
+ */
+@Composable
+private fun StepNote(note: String, position: Int, mode: CardMode) {
+    Text(
+        note,
+        style = stepNoteStyle(mode),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(top = STEP_NOTE_GAP).testTag(StepRowTags.note(position)),
+    )
+}
+
+/** How a step's note reads: the theme's body style, large on [CardMode.COOKING] and medium on [CardMode.VIEW]. */
+@Composable
+internal fun stepNoteStyle(mode: CardMode) = when (mode) {
+    CardMode.VIEW -> MaterialTheme.typography.bodyMedium
+    CardMode.COOKING -> MaterialTheme.typography.bodyLarge
+}
+
+/** The gap between a step's text and its note. */
+internal val STEP_NOTE_GAP = 4.dp
 
 /** The space between one step and the next, beyond the section's own. */
 internal val StepSpacing = 16.dp

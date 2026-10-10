@@ -158,4 +158,29 @@ class ForkingTest {
         assertEquals(found, reopened.get(found.id))
         assertEquals(listOf(found.id.value), reopened.marked().first().map { it.recipeId })
     }
+
+    // FORK-007: a fork of the book's own recipe keeps every step's note; a fork of a found one — someone else's — carries
+    // the method and leaves the notes behind, as it leaves the description; after reopening too.
+    @Test
+    fun anOwnForkKeepsTheStepNotesAndAFoundRecipesForkLeavesThem() = runBlocking {
+        val first = openBook()
+        val book = ActiveBook(BookName.Pool, first)
+        val recipes = RecipeRepository(book)
+        val noted = parent.copy(steps = listOf(parent.steps[0].withNote("Бабушка всегда добавляла щепотку сахара"), parent.steps[1]))
+        recipes.save(noted)
+        val found = noted.copy(id = RecipeId("found-1"), statedAuthor = "anna", media = emptyList()).inState(RecipeState.LINK_SHARED)
+        recipes.addFound(found, created)
+        val own = requireNotNull(forkRecipe(recipes, book, noted.id, now))
+        val others = requireNotNull(forkRecipe(recipes, book, found.id, later))
+        first.close()
+
+        val reopened = RecipeRepository(ActiveBook(BookName.Pool, openBook()))
+        assertEquals(noted.steps, requireNotNull(reopened.get(own)).steps)
+        assertEquals(noted.description, requireNotNull(reopened.get(own)).description)
+        val fork = requireNotNull(reopened.get(others))
+        assertEquals(listOf(null, null), fork.steps.map { it.note })
+        assertEquals(found.steps.map { it.copy(note = null) }, fork.steps)
+        assertEquals("", fork.description)
+        assertEquals("Бабушка всегда добавляла щепотку сахара", requireNotNull(reopened.get(found.id)).steps[0].note)
+    }
 }

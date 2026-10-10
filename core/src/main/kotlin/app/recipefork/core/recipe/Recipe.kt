@@ -72,8 +72,9 @@ data class IngredientReference(
 )
 
 /**
- * A step of a recipe: its text, the references within it and its timers (DOM-024) — from none to
- * [RecipeBounds.MAX_TIMERS], in the order the author added them, each with its own duration and name.
+ * A step of a recipe: its text, the references within it, its timers (DOM-024) — from none to
+ * [RecipeBounds.MAX_TIMERS], in the order the author added them, each with its own duration and name — and the
+ * author's own [note] beside the method.
  *
  * A step may hold more timers than the bound while it is read from a file; [RecipeFileCheck][app.recipefork.core.file.RecipeFileCheck]
  * refuses such a file. The editor adds a timer through [withTimer], which refuses a sixth.
@@ -83,6 +84,12 @@ data class Step(
     val text: String,
     val ingredientReferences: List<IngredientReference> = emptyList(),
     val timers: List<Timer> = emptyList(),
+    /**
+     * The author's note on the step ("Grandma always added a pinch of sugar"): trimmed, never blank, at most
+     * [RecipeBounds.MAX_STEP_NOTE] characters on a recipe that passes the rules; null for none. It is the author's
+     * expression, not the method: a fork by anyone else leaves it behind, as it leaves the description (FORK-007).
+     */
+    val note: String? = null,
 ) {
     /**
      * Bridge from the one-timer step (DOM-013, retired): the step with [timer] as its only timer, or none. For code
@@ -93,7 +100,7 @@ data class Step(
         text: String,
         ingredientReferences: List<IngredientReference> = emptyList(),
         timer: Timer?,
-    ) : this(position, text, ingredientReferences, listOfNotNull(timer))
+    ) : this(position, text, ingredientReferences, listOfNotNull(timer), null)
 
     /**
      * Bridge from the one-timer step (DOM-013, retired): the step's first timer, null for none. For code written
@@ -103,14 +110,14 @@ data class Step(
 
     /**
      * Bridge from the one-timer step (DOM-013, retired): this step with [timer] as its only timer, or none — every
-     * other timer it held is dropped. For code written before DOM-024 until it edits [timers].
+     * other timer it held is dropped; its note stays. For code written before DOM-024 until it edits [timers].
      */
     fun copy(
         position: Int = this.position,
         text: String = this.text,
         ingredientReferences: List<IngredientReference> = this.ingredientReferences,
         timer: Timer?,
-    ): Step = Step(position, text, ingredientReferences, listOfNotNull(timer))
+    ): Step = Step(position, text, ingredientReferences, listOfNotNull(timer), note)
 
     /** Whether the step holds fewer timers than [RecipeBounds.MAX_TIMERS], so that one more may be added. */
     val canAddTimer: Boolean get() = timers.size < RecipeBounds.MAX_TIMERS
@@ -120,6 +127,14 @@ data class Step(
 
     /** This step without its timer at [index]; the others keep their order. Unchanged where it holds none there. */
     fun withoutTimer(index: Int): Step = copy(timers = timers.filterIndexed { at, _ -> at != index })
+
+    /** This step with the note the author [typed]: trimmed, and none when blank. */
+    fun withNote(typed: String?): Step = copy(note = noteOf(typed))
+
+    companion object {
+        /** The note the author's [typed] text gives a step: trimmed, and none when blank. */
+        fun noteOf(typed: String?): String? = typed?.trim()?.takeIf { it.isNotEmpty() }
+    }
 }
 
 /**

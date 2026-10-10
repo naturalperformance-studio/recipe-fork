@@ -117,7 +117,7 @@ class RecipeExportTest {
         assertEquals(listOf("recipe.json", "media/"), entries.keys.toList())
         assertEquals(0, entries.getValue("media/").size)
         val json = entries.getValue("recipe.json").toString(Charsets.UTF_8)
-        assertTrue(json, json.contains("\"format_version\": 5"))
+        assertTrue(json, json.contains("\"format_version\": 6"))
     }
 
     // Scenario 5 of v0.28: an item an entry names is exported with the entry's labels, as the device's dictionary

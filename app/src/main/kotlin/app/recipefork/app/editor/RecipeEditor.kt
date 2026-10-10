@@ -928,6 +928,7 @@ class RecipeEditor(
         when (part) {
             is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timer = null)
             is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timer = part.index)
+            is RecipePart.StepNote -> Left.OfStepNote(stepKeys.of(part.position))
             is RecipePart.IngredientNote -> Left.OfIngredient(ingredientKeys.of(part.position))
             is RecipePart.GroupName -> Left.OfGroup(groupKeys.of(part.index))
             is RecipePart.EquipmentName -> Left.OfEquipment(equipmentKeys.of(part.index))
@@ -957,6 +958,7 @@ class RecipeEditor(
     private fun Left.at(): RecipePart? = when (this) {
         is Left.Whole -> part
         is Left.OfStep -> stepPosition(key)?.let { if (timer != null) RecipePart.TimerName(it, timer) else RecipePart.StepText(it) }
+        is Left.OfStepNote -> stepPosition(key)?.let { RecipePart.StepNote(it) }
         is Left.OfIngredient -> ingredientPosition(key)?.let { RecipePart.IngredientNote(it) }
         is Left.OfGroup -> groupIndex(key)?.let { RecipePart.GroupName(it) }
         is Left.OfEquipment -> equipmentIndex(key)?.let { RecipePart.EquipmentName(it) }
@@ -966,6 +968,8 @@ class RecipeEditor(
         data class Whole(val part: RecipePart) : Left
         /** The text of the step whose [stepKey] is [key], or, given a [timer], the name of its timer at that index. */
         data class OfStep(val key: Long, val timer: Int?) : Left
+        /** The author's note on the step whose [stepKey] is [key], so the mark stays with the step. */
+        data class OfStepNote(val key: Long) : Left
         /** The note of the ingredient row whose [ingredientKey] is [key], so the mark stays with the row. */
         data class OfIngredient(val key: Long) : Left
         /** The name of the heading whose [groupKey] is [key]. */
@@ -1089,6 +1093,18 @@ class RecipeEditor(
         val note = Ingredient.noteOf(typed)
         if (note == row.note) return editable
         return editIngredient(position) { it.copy(note = note) }
+    }
+
+    /**
+     * The author's own note on the step at [position], as they [typed] it: held trimmed, and blank holds none
+     * ([Step.noteOf]); kept in full however long — the limit is marked on leaving the field, never refused (FLOW-028).
+     * The note the step already holds changes nothing.
+     */
+    fun setStepNote(position: Int, typed: String): Boolean {
+        val step = current.value?.steps?.sortedBy { it.position }?.getOrNull(position) ?: return false
+        val note = Step.noteOf(typed)
+        if (note == step.note) return editable
+        return editStep(position) { it.copy(note = note) }
     }
 
     companion object {
