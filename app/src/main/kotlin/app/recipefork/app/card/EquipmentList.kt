@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
@@ -29,10 +31,13 @@ import app.recipefork.app.ui.Motion
  * ([GatheredLine]), as the ingredients do, and whether the reader has shown it again is [shownAgain], held apart from
  * the ingredients'. On [CardMode.VIEW] a line is as tall as its text with a modest space around it, its mark shown but
  * a tap leaving it as it is, and the list never folds.
+ *
+ * On both tabs an item the reader's kitchen lacks ([ShownEquipment.lacking]) says so under its name, "Not in your
+ * kitchen", in words, read with the line.
  */
 @Composable
 internal fun EquipmentList(
-    equipment: List<String>,
+    equipment: List<ShownEquipment>,
     marks: CardMarks?,
     mode: CardMode,
     shownAgain: MutableState<Boolean> = remember { mutableStateOf(false) },
@@ -49,7 +54,7 @@ internal fun EquipmentList(
                 Column {
                     equipment.forEachIndexed { index, item ->
                         EquipmentLine(
-                            item, index,
+                            item.text, item.lacking, index,
                             done = marks?.done(MarkedPart.EQUIPMENT, index) == true,
                             onToggle = marks?.takeIf { mode == CardMode.COOKING }?.let { { it.toggle(MarkedPart.EQUIPMENT, index) } },
                         )
@@ -60,13 +65,19 @@ internal fun EquipmentList(
     }
 }
 
+/** An item of equipment as the card shows it: the [text] it reads as, and whether the reader's kitchen lacks it. */
+@Immutable
+internal data class ShownEquipment(val text: String, val lacking: Boolean = false)
+
 /**
- * One item of equipment: its name, wrapping, never cut. With [onToggle] — on Cooking — a tap marks it [done] or
+ * One item of equipment: its name, wrapping, never cut, and — when the kitchen is [lacking] it — "Not in your kitchen"
+ * under it, muted, part of the line the screen reader reads. With [onToggle] — on Cooking — a tap marks it [done] or
  * unmarks it and the line is the card's [CardTarget] tall; without, its mark is only shown, and the line is its text
- * with [VIEW_LINE_PADDING] above and below. A line marked done is struck through and muted, and read as done.
+ * with [VIEW_LINE_PADDING] above and below. A line marked done is struck through and muted, and read as done; the
+ * kitchen's mark stays as it is.
  */
 @Composable
-private fun EquipmentLine(item: String, index: Int, done: Boolean, onToggle: (() -> Unit)?) {
+private fun EquipmentLine(item: String, lacking: Boolean, index: Int, done: Boolean, onToggle: (() -> Unit)?) {
     val marking = if (onToggle != null) Modifier.markedDone(done, onToggle) else Modifier.shownDone(done)
     Box(
         cardPlace(CardPlaces.equipment(index))
@@ -78,7 +89,17 @@ private fun EquipmentLine(item: String, index: Int, done: Boolean, onToggle: (()
             .testTag(CardTags.equipment(index)),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Text(item, style = MaterialTheme.typography.bodyLarge.done(done))
+        Column {
+            Text(item, style = MaterialTheme.typography.bodyLarge.done(done))
+            if (lacking) {
+                Text(
+                    stringResource(R.string.card_equipment_not_in_kitchen),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag(EquipmentTags.lacking(index)),
+                )
+            }
+        }
     }
 }
 
@@ -88,4 +109,7 @@ internal object EquipmentTags {
     const val SURFACE = "card-equipment-surface"
     /** The one line the list folds into once every item is marked done. */
     const val GATHERED = "card-equipment-gathered"
+
+    /** The "Not in your kitchen" under the item at [index]. */
+    fun lacking(index: Int) = "card-equipment-lacking-$index"
 }

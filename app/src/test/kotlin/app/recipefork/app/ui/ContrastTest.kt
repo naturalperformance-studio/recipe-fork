@@ -43,7 +43,7 @@ class ContrastTest {
         text("an offered tag's suggestion chip, the other language's segment", c.onSurfaceVariant, c.surface),
         text("a tonal button's label and icon — a timer's controls, the card's − and +", c.onSecondaryContainer, c.secondaryContainer),
         text("the card's ingredients and equipment on their tint — headings, lines, the fixed note, \"All gathered\" once folded", c.onSurface, c.surfaceContainerLow),
-        text("the card's ingredients on their tint — the status line, the arrows, an ingredient's note, the fixing field's label", c.onSurfaceVariant, c.surfaceContainerLow),
+        text("the card's ingredients and equipment on their tint — the status line, the arrows, an ingredient's note, the fixing field's label, an item's \"Not in your kitchen\"", c.onSurfaceVariant, c.surfaceContainerLow),
         text("the fixing control's Cancel and Release, the folded ingredients' and equipment's \"show\", on their tint", c.primary, c.surfaceContainerLow),
         text("an ingredient line or an item of equipment marked done on the card — struck through and muted — on their tint", c.onSurfaceVariant, c.surfaceContainerLow),
         text("a step marked done on the card — struck through and muted", c.onSurfaceVariant, c.surface),

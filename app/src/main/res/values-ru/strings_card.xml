@@ -97,4 +97,6 @@
     <!-- Посуда и техника рецепта, над ингредиентами; на «Готовке» сворачивается, как ингредиенты, когда отмечен каждый предмет. -->
     <string name="card_equipment">Посуда и техника</string>
     <string name="card_equipment_show_action">Показать посуду и технику</string>
+    <!-- Под предметом, которого нет на кухне читателя («Моя кухня»). -->
+    <string name="card_equipment_not_in_kitchen">Нет на кухне</string>
 </resources>

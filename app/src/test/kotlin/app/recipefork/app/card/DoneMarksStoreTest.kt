@@ -153,4 +153,30 @@ class DoneMarksStoreTest {
         assertTrue("the old marks are written as they were", held.getValue(key).split(";").containsAll(listOf("i:0:$ingredient", "s:1:$step")))
         assertTrue(CardMarks(store, BookName.Pool, withEquipment).done(MarkedPart.EQUIPMENT, 1))
     }
+
+    // T-205: an entry's item is marked by an explicit key — its entry and qualifier — never by how the item prints; a
+    // free-text item by its text, as before entries, so the marks already held for it keep reading. (An entry's item
+    // marked before this key loses its mark once.)
+    @Test
+    fun anEntrysItemIsMarkedByItsEntryAndQualifier() {
+        val pan = EquipmentItem.entry(10001, "26 cm")
+        assertEquals("e:10001:26 cm", DoneMark.equipmentKey(pan))
+        assertEquals("e:10001:", DoneMark.equipmentKey(EquipmentItem.entry(10001)))
+        assertEquals(DoneMark(MarkedPart.EQUIPMENT, 0, "e:10001:26 cm".hashCode()), DoneMark.ofEquipment(0, pan))
+        assertFalse(DoneMark.ofEquipment(0, pan) == DoneMark.ofEquipment(0, EquipmentItem.entry(10001, "28 cm")))
+        assertFalse(DoneMark.ofEquipment(0, pan) == DoneMark.ofEquipment(0, EquipmentItem.entry(10002, "26 cm")))
+
+        // A free-text mark held before entries existed — taken of its text — still reads, and so does an entry's.
+        val held = ConcurrentHashMap<String, String>()
+        val store = DoneMarks(held::get) { key, value -> if (value == null) held.remove(key) else held[key] = value }
+        val withEquipment = recipe.copy(equipment = listOf(EquipmentItem.free("Kettle"), pan))
+        held["${BookName.Pool.fileName}/${recipe.id.value}"] = "e:0:${"Kettle".hashCode()}"
+        val marks = CardMarks(store, BookName.Pool, withEquipment)
+        assertTrue(marks.done(MarkedPart.EQUIPMENT, 0))
+        assertFalse(marks.done(MarkedPart.EQUIPMENT, 1))
+        marks.toggle(MarkedPart.EQUIPMENT, 1)
+        assertTrue(CardMarks(store, BookName.Pool, withEquipment).done(MarkedPart.EQUIPMENT, 1))
+        // The same entry with another qualifier is another item: its mark goes.
+        assertFalse(CardMarks(store, BookName.Pool, withEquipment.copy(equipment = listOf(EquipmentItem.free("Kettle"), EquipmentItem.entry(10001, "28 cm")))).done(MarkedPart.EQUIPMENT, 1))
+    }
 }
