@@ -6,6 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -247,11 +252,14 @@ class StepSheetTest {
         val interactive = compose.onAllNodes(sheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .mapNotNull { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } }
         assertEquals(
+            // T-212: the timers, then the photo or clip, each a part of its own with the control that adds to it; the
+            // actions in the ingredient sheet's order.
             listOf(
-                StepSheetTags.DONE, EditorTags.stepText(1), EditorTags.stepInsert(1), EditorTags.timerAttach(1), EditorTags.stepPhoto(1),
-                StepNoteTags.field(1), EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerRemove(1), EditorTags.timerName(1),
-                EditorTags.stepAction(1, RowAction.INSERT_ABOVE), EditorTags.stepAction(1, RowAction.INSERT_BELOW),
-                EditorTags.stepAction(1, RowAction.MOVE_UP), EditorTags.stepAction(1, RowAction.MOVE_DOWN), EditorTags.stepRemove(1),
+                StepSheetTags.DONE, EditorTags.stepText(1), EditorTags.stepInsert(1), StepNoteTags.field(1),
+                EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerRemove(1), EditorTags.timerName(1), EditorTags.timerAttach(1),
+                EditorTags.stepPhoto(1),
+                EditorTags.stepAction(1, RowAction.MOVE_UP), EditorTags.stepAction(1, RowAction.MOVE_DOWN),
+                EditorTags.stepAction(1, RowAction.INSERT_ABOVE), EditorTags.stepAction(1, RowAction.INSERT_BELOW), EditorTags.stepRemove(1),
             ),
             interactive,
         )
@@ -482,6 +490,82 @@ class StepSheetTest {
         awaitClosed()
         assertEquals(texts, stored(id).steps.map { it.text })
         assertFalse(statementShown())
+    }
+
+    // T-212: at 360 dp and twice the font size, the sheet holds the step's timers and its photo or clip as two parts,
+    // each under its name, after the note and before the actions: the timer's fields and "Add timer" in the one, "Add
+    // photo or clip" in the other; nothing of them goes past the sheet, every target is 48 dp and no text is cut. Its
+    // actions are list items as the ingredient sheet's are: as wide as the sheet, as tall as the ingredient's, read as
+    // buttons, the removal alone in the error colour.
+    @Test
+    @Config(qualifiers = "en-w360dp-h2000dp", fontScale = 2f)
+    fun theTimersAndThePictureArePartsOfTheSheetAtTheNarrowestWidthAndLargestText() =
+        partsFit(listOf("Timers", "Photo or clip"), listOf("Add timer", "Add photo or clip"))
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h2000dp", fontScale = 2f)
+    fun theTimersAndThePictureArePartsOfTheSheetAtTheNarrowestWidthAndLargestTextInRussian() =
+        partsFit(listOf("Таймеры", "Фото или видео"), listOf("Добавить таймер", "Добавить фото или видео"))
+
+    private fun bounds(tag: String): Rect =
+        compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+
+    private fun partsFit(titles: List<String>, buttons: List<String>) {
+        open(draft())
+        compose.openStep(1)
+        val sheet = bounds(StepSheetTags.SHEET)
+        // Under its name, a heading for the screen reader.
+        listOf(StepSheetTags.TIMERS, StepSheetTags.MEDIA).zip(titles).forEach { (part, title) ->
+            val heading = compose.onAllNodes(hasAnyAncestor(hasTestTag(part)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading), useUnmergedTree = true)
+                .fetchSemanticsNodes().single()
+            assertEquals(listOf(title), heading.config[SemanticsProperties.Text].map { it.text })
+        }
+        listOf(EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerRemove(1), EditorTags.timerName(1), EditorTags.timerAttach(1))
+            .forEach { compose.onNode(hasTestTag(it) and hasAnyAncestor(hasTestTag(StepSheetTags.TIMERS))).assertExists() }
+        compose.onNode(hasTestTag(EditorTags.stepPhoto(1)) and hasAnyAncestor(hasTestTag(StepSheetTags.MEDIA))).assertExists()
+        assertEquals(listOf(buttons[0]), compose.textsOf(EditorTags.timerAttach(1)))
+        assertEquals(listOf(buttons[1]), compose.textsOf(EditorTags.stepPhoto(1)))
+        // Top to bottom: the note, the timers, the photo or clip, the actions.
+        val order = listOf(StepNoteTags.field(1), StepSheetTags.TIMERS, StepSheetTags.MEDIA, EditorTags.stepAction(1, RowAction.MOVE_UP)).map(::bounds)
+        order.zipWithNext().forEach { (above, below) -> assertTrue("$above above $below", above.bottom <= below.top + 0.5f) }
+        listOf(
+            StepSheetTags.TIMERS, StepSheetTags.MEDIA, EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerRemove(1),
+            EditorTags.timerName(1), EditorTags.timerAttach(1), EditorTags.stepPhoto(1),
+        ).forEach { tag ->
+            val shown = bounds(tag)
+            assertTrue("$tag within the sheet", shown.left >= sheet.left - 0.5f && shown.right <= sheet.right + 0.5f)
+        }
+        (titles + buttons).forEach { text ->
+            val layouts = mutableListOf<TextLayoutResult>()
+            compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET)), useUnmergedTree = true).fetchSemanticsNode()
+                .config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+            val layout = layouts.single()
+            assertFalse("$text cut", layout.didOverflowHeight)
+            (0 until layout.lineCount).forEach { assertFalse("$text ellipsized", layout.isLineEllipsized(it)) }
+        }
+        AccessibilityChecks.assertTouchTargets(compose)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose)
+
+        // The actions, as the ingredient sheet's.
+        val least = with(compose.density) { 56.dp.toPx() }
+        val actions = listOf(RowAction.MOVE_UP, RowAction.MOVE_DOWN, RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW).map { EditorTags.stepAction(1, it) } + EditorTags.stepRemove(1)
+        actions.forEach { tag ->
+            val shown = bounds(tag)
+            assertEquals("$tag as wide as the sheet", sheet.width, shown.width, 1f)
+            assertTrue("$tag at least 56 dp tall", shown.height >= least - 0.5f)
+            assertEquals(Role.Button, compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.Role])
+            val colour = if (tag == EditorTags.stepRemove(1)) lightColorScheme().error else lightColorScheme().onSurface
+            assertEquals(tag, colour, compose.textColourOf(tag))
+        }
+        val stepInsert = bounds(EditorTags.stepAction(1, RowAction.INSERT_BELOW))
+        compose.closeStep()
+        compose.openIngredient(0)
+        val ingredientSheet = bounds(IngredientSheetTags.SHEET)
+        val ingredientInsert = bounds(EditorTags.ingredientAction(0, RowAction.INSERT_BELOW))
+        assertEquals(ingredientSheet.width, ingredientInsert.width, 1f)
+        assertEquals(ingredientInsert.height, stepInsert.height, 1f)
+        assertEquals(compose.textColourOf(EditorTags.ingredientRemove(0)), lightColorScheme().error)
+        compose.closeIngredient()
     }
 
     // A frozen recipe's steps read as the same text and open nothing.

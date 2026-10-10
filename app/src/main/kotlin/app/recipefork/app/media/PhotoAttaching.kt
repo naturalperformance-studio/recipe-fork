@@ -65,6 +65,9 @@ class PhotoAttaching(
     /** What the author was told last, said or not. */
     val notice: State<PhotoNotice?> = derivedStateOf { last.value?.notice }
 
+    /** As [notice], each telling a statement of its own: told twice, it changes twice. */
+    val told: State<Statement?> get() = last
+
     /** What the author is to be told and has not been yet. */
     val statement: State<Statement?> get() = pending
 

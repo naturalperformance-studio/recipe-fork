@@ -1,28 +1,31 @@
 package app.recipefork.app.editor
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onFocusedBoundsChanged
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
@@ -35,12 +38,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
@@ -50,14 +56,21 @@ import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.scaling.InterfaceLanguage
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 
 /** The test tags of a step read as text, and of the sheet it opens in. */
 object StepSheetTags {
     const val SHEET = "editor-step-sheet"
     const val DONE = "editor-step-sheet-done"
+
+    /** The sheet's part of the step's timers, under its name, with the control that adds one. */
+    const val TIMERS = "editor-step-sheet-timers"
+
+    /** The sheet's part of the step's photograph or clip, under its name, with what it is told and the control that adds one. */
+    const val MEDIA = "editor-step-sheet-media"
+
+    /** What went wrong with an item offered at the step while its sheet is open, in the sheet's media part. */
+    fun mediaFailure(position: Int) = "editor-step-$position-media-failure"
 
     /** The step as its row reads: its number, text, note, timers and picture; the row's click target. */
     fun line(position: Int) = "editor-step-$position-line"
@@ -132,10 +145,11 @@ internal class StepSheetHost(val insert: (above: Boolean) -> Unit, val close: ()
 
 /**
  * One step in a Material 3 bottom sheet: its text with its references and the control that inserts one (FLOW-031), the
- * author's note (FORK-007), its timers and its photograph or clip as the step's block held them, then its actions —
- * moving it up or down (FLOW-025, A11Y-006), putting a step above or below it, and removing it, which closes the sheet
- * and offers Undo. Each edit applies as it is typed, so the sheet closes — by Done, a swipe down or Back — keeping
- * everything; closing it leaves its fields, which marks what is over its limit (FLOW-028).
+ * author's note (FORK-007), then its timers and its photograph or clip, each a labelled part of its own, then its
+ * actions as the ingredient sheet has them ([SheetActions]) — moving it up or down (FLOW-025, A11Y-006), putting a step
+ * above or below it, and removing it, which closes the sheet and offers Undo. Each edit applies as it is typed, so the
+ * sheet closes — by Done, a swipe down or Back — keeping everything; closing it leaves its fields, which marks what is
+ * over its limit (FLOW-028).
  *
  * Where [focus] asks for the step at [position], its text takes the focus, with the keyboard up.
  */
@@ -163,24 +177,25 @@ internal fun StepSheet(
     val key = editor.stepKey(position)
     // The sheet's own focus, which the fields are left by before it goes.
     var manager by remember { mutableStateOf<FocusManager?>(null) }
-    // Once the sheet is closing — by Done, or by an action that ends it — nothing more is acted on: a second tap
-    // while it goes acts on nothing, and the sheet is closed once.
-    val ended = remember { AtomicBoolean(false) }
-    val closed = remember { AtomicBoolean(false) }
-    val close = close@{
-        if (!closed.compareAndSet(false, true)) return@close
-        manager?.clearFocus()
+    val leave: () -> Unit = { manager?.clearFocus() }
+    val close = {
+        leave()
         editor.stepPosition(key)?.let { editor.leave(RecipePart.StepNote(it)) }
         host.close()
     }
-    val done = done@{
-        if (!ended.compareAndSet(false, true)) return@done
-        manager?.clearFocus()
-        scope.launch { state.hide() }.invokeOnCompletion { close() }
-        Unit
+    // Once on its way out — closing, or left for a new step — the sheet takes no further action: a second tap while it
+    // goes acts on nothing, and the sheet is closed once.
+    val going = remember { Going() }
+    val dismiss = { if (going.start()) close() }
+    val done = {
+        if (going.start()) {
+            leave()
+            scope.launch { state.hide() }.invokeOnCompletion { close() }
+        }
     }
+    val actions = stepActions(key, position, count, editor, photos, host, leave)
     ModalBottomSheet(
-        onDismissRequest = close,
+        onDismissRequest = dismiss,
         sheetState = state,
         modifier = Modifier.testTag(StepSheetTags.SHEET),
         // No handle: the sheet opens whole, and Done, a swipe down or Back closes it.
@@ -215,17 +230,18 @@ internal fun StepSheet(
                     .onGloballyPositioned { scroll.viewport = it }
                     .onFocusedBoundsChanged { scroll.focused = it }
                     .verticalScroll(scrolled)
-                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(SHEET_GAP),
+                    .padding(bottom = 8.dp),
             ) {
-                StepFields(position, step, media, ingredients, dictionary, language, editor, stating, photos, held)
-                StepActions(key, position, count, editor, photos, host, ended, hide = { scope.launch { state.hide() } }) { manager?.clearFocus() }
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(SHEET_GAP)) {
+                    StepFields(position, step, media, ingredients, dictionary, language, editor, stating, photos, held)
+                }
+                SheetActions(actions) { action -> scope.take(action, going, state, leave, close) }
             }
         }
     }
 }
 
-/** The fields of the step at [position], as [StepSheet] holds them. */
+/** The fields of the step at [position], as [StepSheet] holds them: its text, its note, its timers, its picture. */
 @Composable
 private fun StepFields(
     position: Int,
@@ -282,90 +298,112 @@ private fun StepFields(
     )
     // What the text needs, right under it.
     BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = SHEET_GAP)
-    // The text's controls as the step's block held them: inserting a reference, adding a timer, its photo or clip.
-    val timers = held.timers
-    val timerRows = timers.shown(step.timers.size)
+    // The text's own control: inserting a reference.
     BlockActions {
         InsertIngredient(position, ingredients, dictionary, language, editor, held.field)
-        BlockAction(
-            icon = R.drawable.ic_step_timer,
-            label = stringResource(R.string.editor_timer_label, position + 1),
-            tag = EditorTags.timerAttach(position),
-            action = stringResource(R.string.editor_timer_action, position + 1),
-            onClick = { if (!editor.attachTimer(position, timers.unheld)) held.timerFocus.ask(timers.open()) },
-        )
-        StepPhotoAction(position, media, held.photo)
     }
     StepNoteField(position, step, editor, held.note)
-    // Its timers, and its photograph, or that one is being prepared.
-    if (timerRows.isNotEmpty() || stating || media != null || held.photo.attaching.working.value) {
-        Column(Modifier.fillMaxWidth()) {
-            StepTimers(position, step, timerRows, timers, held.timerFocus, ingredients, language, editor, stating, left = held.leftCut)
-            StepPhotoShown(position, media, photos, held.photo)
+    // Its timers, then its photograph or clip: each a part of its own, under its name.
+    val timers = held.timers
+    SheetPart(stringResource(R.string.editor_step_timers), StepSheetTags.TIMERS) {
+        StepTimers(position, step, timers.shown(step.timers.size), timers, held.timerFocus, ingredients, language, editor, left = held.leftCut)
+        PartButton(
+            icon = R.drawable.ic_step_timer,
+            text = stringResource(R.string.editor_timer_add),
+            action = stringResource(R.string.editor_timer_action, position + 1),
+            tag = EditorTags.timerAttach(position),
+        ) { if (!editor.attachTimer(position, timers.unheld)) held.timerFocus.ask(timers.open()) }
+        // Choosing it where the step would show more than five creates nothing and says why, under it (GUIDE-007).
+        if (stating) {
+            Text(
+                stringResource(R.string.editor_timer_limit),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { liveRegion = LiveRegionMode.Polite }
+                    .testTag(EditorTags.timerStatement(position)),
+            )
         }
+    }
+    SheetPart(stringResource(R.string.media_step_part), StepSheetTags.MEDIA) {
+        StepMediaPart(position, media, photos, held.photo)
     }
 }
 
 /**
- * The step's actions, under its fields: the four of FLOW-025 — the first step with no "Move up", the last with no
- * "Move down" — each one tap, so nothing is done only by dragging (A11Y-006), then its removal in the error colour.
- * Each first takes the focus off the sheet's fields ([leave]), so that what they mark is marked. Each finds its step
- * by its [key] as it runs, and does nothing where the step is gone; one that ends the sheet — a removal, an insertion,
- * which opens the new step — runs once, and nothing runs after it ([ended]).
+ * One labelled part of a step's sheet — its timers, its photograph or clip: its [title], a heading for the screen
+ * reader, then what it holds, set apart from what comes before it.
  */
 @Composable
-private fun StepActions(
+private fun SheetPart(title: String, tag: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp).testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            title,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.semantics { heading() },
+        )
+        content()
+    }
+}
+
+/**
+ * The control that adds to a part of a step's sheet — a timer, a photograph or clip: Material 3's text button with its
+ * [icon] before its [text], at least 48 dp tall (A11Y-003), its click announced as [action], which names the step
+ * (A11Y-005).
+ */
+@Composable
+internal fun PartButton(@DrawableRes icon: Int, text: String, action: String, tag: String, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .semantics { onClick(label = action, action = null) }
+            .testTag(tag),
+    ) {
+        Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Text(text)
+    }
+}
+
+/**
+ * The step's actions, under its fields, as the ingredient sheet has them: the four of FLOW-025 — the first step with no
+ * "Move up", the last with no "Move down" — each one tap, so nothing is done only by dragging (A11Y-006), then its
+ * removal in the error colour. A move first takes the focus off the sheet's fields ([leave]), so that what they mark is
+ * marked, and keeps the sheet open on the step where it now stands; an insertion opens the new step in its own sheet;
+ * the removal closes the sheet, then removes the step — the editor offers Undo, deleting its item's file once that is
+ * final. Each finds its step by its [key] as it runs, and does nothing where the step is gone.
+ */
+@Composable
+private fun stepActions(
     key: Long,
     position: Int,
     count: Int,
     editor: RecipeEditor,
     photos: StepPhotos,
     host: StepSheetHost,
-    ended: AtomicBoolean,
-    hide: () -> Job,
     leave: () -> Unit,
-) {
-    val actions = RowAction.entries.filter {
-        it != RowAction.GROUP_ABOVE && (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1)
+): List<SheetAction> {
+    val label = RowAction.entries.associateWith { stringResource(it.label) }
+    val remove = stringResource(R.string.editor_step_remove_action, position + 1)
+    fun move(by: Int) {
+        val at = editor.stepPosition(key) ?: return
+        leave()
+        editor.moveStep(at, at + by)
     }
-    FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        actions.forEach { action ->
-            TextButton(
-                onClick = click@{
-                    val at = editor.stepPosition(key) ?: return@click
-                    val ends = action == RowAction.INSERT_ABOVE || action == RowAction.INSERT_BELOW
-                    if (if (ends) !ended.compareAndSet(false, true) else ended.get()) return@click
-                    leave()
-                    when (action) {
-                        RowAction.INSERT_ABOVE -> host.insert(true)
-                        RowAction.INSERT_BELOW -> host.insert(false)
-                        RowAction.MOVE_UP -> editor.moveStep(at, at - 1)
-                        RowAction.MOVE_DOWN -> editor.moveStep(at, at + 1)
-                        // Steps have no groups; it is never offered.
-                        RowAction.GROUP_ABOVE -> Unit
-                    }
-                },
-                modifier = Modifier.heightIn(min = 48.dp).testTag(EditorTags.stepAction(position, action)),
-            ) {
-                Text(stringResource(action.label))
-            }
-        }
-        // Removing the step closes its sheet — the step goes once the sheet has gone down — and the editor offers Undo,
-        // deleting its item's file once that is final.
-        TextButton(
-            onClick = click@{
-                if (editor.stepPosition(key) == null || !ended.compareAndSet(false, true)) return@click
-                leave()
-                hide().invokeOnCompletion {
-                    editor.stepPosition(key)?.let { at -> editor.removeStep(at) { removed -> removed.forEach { photos.store.delete(photos.book, it) } } }
-                    host.close()
-                }
+    fun action(action: RowAction, leaves: Boolean, onClick: () -> Unit) =
+        SheetAction(label.getValue(action), EditorTags.stepAction(position, action), leaves = leaves, onClick = onClick)
+    return buildList {
+        if (position > 0) add(action(RowAction.MOVE_UP, false) { move(-1) })
+        if (position < count - 1) add(action(RowAction.MOVE_DOWN, false) { move(1) })
+        add(action(RowAction.INSERT_ABOVE, true) { host.insert(true) })
+        add(action(RowAction.INSERT_BELOW, true) { host.insert(false) })
+        add(
+            SheetAction(remove, EditorTags.stepRemove(position), leaves = true, destructive = true) {
+                editor.stepPosition(key)?.let { at -> editor.removeStep(at) { removed -> removed.forEach { photos.store.delete(photos.book, it) } } }
             },
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            modifier = Modifier.heightIn(min = 48.dp).testTag(EditorTags.stepRemove(position)),
-        ) {
-            Text(stringResource(R.string.editor_step_remove_action, position + 1))
-        }
+        )
     }
 }
 

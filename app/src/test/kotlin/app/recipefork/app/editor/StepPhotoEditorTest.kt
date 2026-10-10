@@ -37,6 +37,7 @@ import app.recipefork.app.media.crop.CropTags
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepPhoto
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
@@ -214,7 +215,10 @@ class StepPhotoEditorTest {
             compose.onNode(hasTestTag(EditorTags.stepPhoto(position)) and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET))).assertExists()
         }
         compose.openStep(1)
-        assertEquals(listOf("Photo or clip for step 2"), compose.descriptionOf(EditorTags.stepPhoto(1)))
+        // T-212: a text button in the sheet's part of the photo or clip, its click naming the step.
+        assertEquals(listOf("Add photo or clip"), compose.textsOf(EditorTags.stepPhoto(1)))
+        assertEquals("Add, change or remove the photo or clip of step 2", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(EditorTags.stepPhoto(1)).fetchSemanticsNode()))
+        compose.onNode(hasTestTag(EditorTags.stepPhoto(1)) and hasAnyAncestor(hasTestTag(StepSheetTags.MEDIA))).assertExists()
         compose.inStep(1).onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoTake(1)), PATIENCE_MS)
         assertTrue(exists(EditorTags.stepPhotoChoose(1)))
@@ -285,7 +289,12 @@ class StepPhotoEditorTest {
 
         choose(2, File(incoming, "photo.jpg").apply { writeText("not a photo at all") }, crop = false)
 
-        awaitNotice(2, "This file could not be read as a photo, so nothing was attached.")
+        // Said in the step's sheet, in its photo's part, while the sheet is open — then at the bottom once it goes.
+        val refused = "This file could not be read as a photo, so nothing was attached."
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(2)) }
+        assertEquals(listOf(refused), compose.textsOf(StepSheetTags.mediaFailure(2)))
+        compose.onNode(hasTestTag(StepSheetTags.mediaFailure(2)) and hasAnyAncestor(hasTestTag(StepSheetTags.MEDIA))).assertExists()
+        awaitNotice(2, refused)
         assertTrue(stored(id).media.isEmpty())
         assertEquals(emptyList<String>(), held())
         assertFalse(exists(EditorTags.stepPhotoImage(2)))
@@ -397,6 +406,7 @@ class StepPhotoEditorTest {
 
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(2)) }
         assertEquals(listOf("Фото шага 3"), compose.descriptionOf(EditorTags.stepPhotoImage(2)))
-        assertEquals(listOf("Фото или видео для шага 3"), compose.descriptionOf(EditorTags.stepPhoto(2)))
+        assertEquals(listOf("Заменить или убрать"), compose.textsOf(EditorTags.stepPhoto(2)))
+        assertEquals("Добавить, заменить или убрать фото или видео шага 3", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(EditorTags.stepPhoto(2)).fetchSemanticsNode()))
     }
 }

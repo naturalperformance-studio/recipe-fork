@@ -111,7 +111,8 @@
     <string name="editor_fork_note_close">Закрыть</string>
     <string name="editor_action_show_name">Показать название</string>
     <string name="editor_fork_takes">Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание, заметки к шагам и фото остаются у вас, если только версия не ваша собственная.</string>
-    <string name="editor_timer_label">Таймер для шага %1$d</string>
+    <string name="editor_step_timers">Таймеры</string>
+    <string name="editor_timer_add">Добавить таймер</string>
     <string name="editor_timer_action">Добавить таймер к шагу %1$d</string>
     <string name="editor_timer_remove_action">Убрать таймер шага %1$d</string>
     <string name="editor_timer_remove_numbered_action">Убрать таймер %2$d шага %1$d</string>

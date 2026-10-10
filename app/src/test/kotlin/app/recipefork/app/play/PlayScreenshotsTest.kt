@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
@@ -81,8 +82,8 @@ import java.util.zip.DeflaterOutputStream
  * The Google Play store's phone screenshots and feature graphic, drawn as the device draws them (Robolectric's native
  * graphics) from the application's own screens over the demo book ([PlayDemoBook]): the book, a card mid-cook on its View tab, the
  * editor, the card's steps on its Cooking tab and the settings, in English and in Russian, in the light theme, 1080×1920 opaque PNGs. The
- * screen is 432 × 768 dp at 400 dpi, close to a Pixel's 412 dp, on which the editor shows both of the traybake's ingredient
- * groups at once.
+ * screen is 432 × 768 dp at 400 dpi, close to a Pixel's 412 dp, on which the editor shows the traybake's last ingredients and
+ * its first steps at once, each read as text.
  *
  * They are written only when asked: `scripts/play-screenshots.sh` passes `-Precipefork.playScreenshots=<directory>`,
  * which the build hands the tests as the system property [PROPERTY]; without it every test here is skipped, so the
@@ -235,15 +236,20 @@ class PlayScreenshotsTest {
         assertTrue("Cooking's tab chosen", selected(CardMode.COOKING))
         capture("$prefix-4-steps.png")
 
-        // (3) The editor on the same recipe, at its ingredient groups and their notes: both groups on the screen.
+        // (3) The editor on the same recipe as it reads (v0.29): the tray's last ingredients as lines, then the first steps
+        // as text — the second with its photo's small picture, the third, below it, with its timer.
         tinted = false
         session.openEditor(traybake.id.value)
         await(EditorTags.FORM)
-        await(EditorTags.group(0))
-        scrollToTop(EditorTags.FORM, EditorTags.group(0))
-        await(EditorTags.group(1))
+        await(EditorTags.ingredient(5))
+        // The lines read their names from the dictionary, read off the main thread: scrolled once they all have them.
+        val unnamed = context.getString(R.string.editor_ingredient_unnamed)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasText(unnamed, substring = true), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
+        compose.waitForIdle()
+        scrollToTop(EditorTags.FORM, EditorTags.ingredient(5))
+        await(EditorTags.step(1))
         val form = compose.onNodeWithTag(EditorTags.FORM).fetchSemanticsNode().boundsInRoot
-        assertTrue("both groups in the editor's shot", topOf(EditorTags.group(0)) >= form.top && bottomOf(EditorTags.group(1)) <= form.bottom)
+        assertTrue("ingredients and two steps in the editor's shot", topOf(EditorTags.ingredient(5)) >= form.top && bottomOf(EditorTags.step(1)) <= form.bottom)
         capture("$prefix-3-editor.png")
 
         // (5) The settings.
