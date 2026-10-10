@@ -101,11 +101,11 @@ class ForkNoteEditorTest {
 
     private fun px(dp: Float): Float = dp * compose.density.density
 
-    // One line names the five parts a fork takes (1), the description and photos staying with the author (2), and
+    // One line names the five parts a fork takes (1), the description, step notes and photos staying with the author (2), and
     // the author's own fork carrying them too (3).
     private val english = listOf(
-        "A fork takes the title, tags, servings, ingredients and steps; the description and photos stay with you " +
-            "unless the fork is your own.",
+        "A fork takes the title, tags, servings, ingredients and steps; the description, step notes and photos stay " +
+            "with you unless the fork is your own.",
     )
 
     // FLOW-030 (1–4): what a fork takes, what stays, that the author's own forks keep it, and nothing of prevention.
@@ -164,8 +164,8 @@ class ForkNoteEditorTest {
         open(recipe)
         assertEquals(
             listOf(
-                "Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание и фото остаются у вас, " +
-                    "если только версия не ваша собственная.",
+                "Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание, заметки к шагам и фото " +
+                    "остаются у вас, если только версия не ваша собственная.",
             ),
             notes(),
         )

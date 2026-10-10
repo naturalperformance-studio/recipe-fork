@@ -15,6 +15,9 @@ sealed interface RecipePart {
     /** The text of the step at [position]. */
     data class StepText(val position: Int) : RecipePart
 
+    /** The author's note on the step at [position]. */
+    data class StepNote(val position: Int) : RecipePart
+
     /**
      * The name the author gave the timer at [index] of the step at [position] (DOM-024). [index] defaults to the
      * step's first timer as a bridge for code written when a step held one timer.
@@ -48,6 +51,8 @@ object RecipeBounds {
     const val MAX_INGREDIENTS = 50
     const val MAX_STEPS = 50
     const val MAX_STEP_TEXT = 2_000
+    /** The author's note on a step. */
+    const val MAX_STEP_NOTE = 500
     const val MAX_TITLE = 120
     const val MAX_DESCRIPTION = 2_000
     const val MAX_TIMER_NAME = 60
@@ -78,6 +83,7 @@ object RecipeBounds {
         RecipePart.Steps -> if (recipe.steps.isEmpty()) Bound.Missing else over(MAX_STEPS, recipe.steps.size)
         RecipePart.Description -> over(MAX_DESCRIPTION, recipe.description.length)
         is RecipePart.StepText -> step(recipe, part.position)?.let { over(MAX_STEP_TEXT, it.text.length) }
+        is RecipePart.StepNote -> step(recipe, part.position)?.note?.let { over(MAX_STEP_NOTE, it.length) }
         // A timer whose name the author never set has no name limit: its name follows its step (DOM-012).
         is RecipePart.TimerName ->
             step(recipe, part.position)?.timers?.getOrNull(part.index)?.label?.let { over(MAX_TIMER_NAME, it.length) }
@@ -98,7 +104,7 @@ object RecipeBounds {
             recipe.equipment.indices.map { RecipePart.EquipmentName(it) } +
             RecipePart.Ingredients + ingredientParts(recipe) + RecipePart.Steps +
             steps.indices.flatMap { position ->
-                listOf(RecipePart.StepText(position)) + steps[position].timers.indices.map { RecipePart.TimerName(position, it) }
+                listOf(RecipePart.StepText(position), RecipePart.StepNote(position)) + steps[position].timers.indices.map { RecipePart.TimerName(position, it) }
             } + RecipePart.Description
         return parts.mapNotNull { part -> of(recipe, part, equipmentLabel)?.let { part to it } }.toMap()
     }

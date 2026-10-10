@@ -104,6 +104,8 @@ data class StepEntity(
     @ColumnInfo(name = "recipe_id") val recipeId: String,
     val position: Int,
     val text: String,
+    /** The author's note on the step; null for none. Added in version 8. */
+    val note: String? = null,
 )
 
 /**

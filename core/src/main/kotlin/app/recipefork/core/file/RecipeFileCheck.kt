@@ -23,6 +23,7 @@ object RecipeFileCheck {
     const val MAX_INGREDIENTS = RecipeBounds.MAX_INGREDIENTS
     const val MAX_STEPS = RecipeBounds.MAX_STEPS
     const val MAX_STEP_TEXT = RecipeBounds.MAX_STEP_TEXT
+    const val MAX_STEP_NOTE = RecipeBounds.MAX_STEP_NOTE
     const val MAX_TITLE = RecipeBounds.MAX_TITLE
     const val MAX_DESCRIPTION = RecipeBounds.MAX_DESCRIPTION
     const val MAX_TIMER_NAME = RecipeBounds.MAX_TIMER_NAME
@@ -136,6 +137,11 @@ object RecipeFileCheck {
         steps.forEach { step ->
             val at = "step ${step.position}"
             check(step.text.length <= MAX_STEP_TEXT) { "$at is over $MAX_STEP_TEXT characters" }
+            // The author's note: trimmed, not blank, and within its limit.
+            step.note?.let { note ->
+                check(note.isNotBlank() && note == note.trim()) { "$at holds a blank or untrimmed note" }
+                check(note.length <= MAX_STEP_NOTE) { "$at's note is over $MAX_STEP_NOTE characters" }
+            }
             // DOM-024: up to five timers, each within FLOW-027's range and DOM-012's name limit.
             check(step.timers.size <= MAX_TIMERS) { "$at has more than $MAX_TIMERS timers" }
             step.timers.forEachIndexed { index, timer ->

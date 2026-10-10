@@ -85,6 +85,10 @@
     <string name="editor_step_add_action">Добавить шаг в конец</string>
     <string name="editor_step_remove_action">Убрать шаг %1$d</string>
     <string name="editor_step_menu_action">Действия с шагом %1$d</string>
+    <string name="editor_step_note_add">Добавить заметку</string>
+    <string name="editor_step_note">Заметка автора</string>
+    <string name="editor_step_note_hint">Остаётся у вас, когда кто-то делает свою версию рецепта</string>
+    <string name="editor_step_note_read_only">Заметка автора: %1$s</string>
     <string name="editor_step_insert_ingredient_label">Вставить ингредиент в шаг %1$d</string>
     <string name="editor_step_insert_ingredient_action">Вставить количество ингредиента в шаг %1$d</string>
     <string name="editor_step_insert_ingredient_none">В рецепте пока нет ингредиентов</string>
@@ -96,7 +100,7 @@
     <string name="editor_fork_note_action">Показать, что берёт своя версия</string>
     <string name="editor_fork_note_close">Закрыть</string>
     <string name="editor_action_show_name">Показать название</string>
-    <string name="editor_fork_takes">Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание и фото остаются у вас, если только версия не ваша собственная.</string>
+    <string name="editor_fork_takes">Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание, заметки к шагам и фото остаются у вас, если только версия не ваша собственная.</string>
     <string name="editor_timer_label">Таймер для шага %1$d</string>
     <string name="editor_timer_action">Добавить таймер к шагу %1$d</string>
     <string name="editor_timer_remove_action">Убрать таймер шага %1$d</string>

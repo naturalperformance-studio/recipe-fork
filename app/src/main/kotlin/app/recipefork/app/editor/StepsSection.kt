@@ -151,9 +151,10 @@ internal fun Steps(
 
 /**
  * One step: its number in the field's label, its text over as many lines as it takes with its ingredient references in
- * it, its removal, its menu of inserting and moving (FLOW-025), the control that inserts a reference (FLOW-031), the
- * control that adds its timers (FLOW-027) and its photograph or clip (FLOW-026 (2)). Removing the step deletes its
- * item's file once the book no longer holds it.
+ * it, the author's note under the text — shown where the step has one, or once the author asks for it from the step's
+ * menu ([StepNoteField]) — its removal, its menu of inserting and moving (FLOW-025), the control that inserts a
+ * reference (FLOW-031), the control that adds its timers (FLOW-027) and its photograph or clip (FLOW-026 (2)). Removing
+ * the step deletes its item's file once the book no longer holds it.
  */
 @Composable
 private fun StepRow(
@@ -187,6 +188,11 @@ private fun StepRow(
     var leftCut by remember { mutableStateOf(false) }
     // References offered under the first step while it is first written in this editing session (GUIDE-008).
     var offering by remember { mutableStateOf(false) }
+    // The note's field, asked for from the step's menu: it stays while the step holds a note or the author is in it, and
+    // goes once the author leaves it empty.
+    var noteAsked by rememberSaveable { mutableStateOf(false) }
+    val noteShown = noteAsked || step.note != null
+    val noteFocus = remember { RowFocus() }
     val offerShrinking = rememberShrinking()
     // One bounded block per step, as an ingredient's, so where one step ends and the next begins is plain; dragged, it
     // moves whole.
@@ -247,6 +253,10 @@ private fun StepRow(
                 )
                 // The step's own slot for what its text needs, right under the text and above its actions.
                 BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = 0.dp)
+                if (noteShown) {
+                    // Entered, the field stays while the author is in it, emptied or not; left empty, it goes.
+                    StepNoteField(position, step, editor, noteFocus, onEnter = { noteAsked = true }) { held -> if (!held) noteAsked = false }
+                }
                 BlockActions {
                     InsertIngredient(position, ingredients, dictionary, language, editor, field)
                     BlockAction(
@@ -265,13 +275,18 @@ private fun StepRow(
                         onClick = { editor.removeStep(position) { removed -> removed.forEach { photos.store.delete(photos.book, it) } } },
                         destructive = true,
                     )
-                    RowMenu(
-                        position = position,
-                        count = count,
-                        name = stringResource(R.string.editor_step_menu_action, position + 1),
-                        tag = EditorTags.stepMenu(position),
-                        actionTag = { EditorTags.stepAction(position, it) },
-                        onAction = { action ->
+                    // The step's menu: its note, where it has none yet, then the four moves of FLOW-025 — the first step
+                    // with no "Move up", the last with no "Move down". The row holds no room for another icon on a
+                    // 360 dp phone.
+                    val addNote = BlockMenuItem(stringResource(R.string.editor_step_note_add), StepNoteTags.add(position)) {
+                        noteAsked = true
+                        // The field the author asked for takes the focus, with the keyboard up, once the menu has gone.
+                        noteFocus.ask(0)
+                    }
+                    val moves = RowAction.entries.filter {
+                        it != RowAction.GROUP_ABOVE && (it != RowAction.MOVE_UP || position > 0) && (it != RowAction.MOVE_DOWN || position < count - 1)
+                    }.map { action ->
+                        BlockMenuItem(stringResource(action.label), EditorTags.stepAction(position, action)) {
                             when (action) {
                                 RowAction.INSERT_ABOVE -> editor.insertStep(position)
                                 RowAction.INSERT_BELOW -> editor.insertStep(position + 1)
@@ -280,7 +295,12 @@ private fun StepRow(
                                 // Steps have no groups; their menu never offers it.
                                 RowAction.GROUP_ABOVE -> Unit
                             }
-                        },
+                        }
+                    }
+                    BlockMenu(
+                        name = stringResource(R.string.editor_step_menu_action, position + 1),
+                        tag = EditorTags.stepMenu(position),
+                        items = listOfNotNull(addNote.takeIf { !noteShown }) + moves,
                     )
                 }
                 // Below the row, only what the step has: its timers, and its photograph, or that one is being prepared.
@@ -293,6 +313,66 @@ private fun StepRow(
             }
         }
     }
+}
+
+/**
+ * The author's own note on the step, beside the method, under the step's text: labelled as the author's, with the hint
+ * that it stays with them when someone else forks the recipe (FORK-007). What the author types stays in the field as
+ * typed — a space before the next word included — while it reads as the note the step holds, trimmed, blank as none.
+ * Over [app.recipefork.core.recipe.RecipeBounds.MAX_STEP_NOTE] characters it is kept in full and marked on leaving the
+ * field, as every limit is (FLOW-028). Entering it, [onEnter] is told; leaving it, [onLeft] is told whether the step
+ * holds a note.
+ */
+@Composable
+private fun StepNoteField(
+    position: Int,
+    step: Step,
+    editor: RecipeEditor,
+    focus: RowFocus,
+    onEnter: () -> Unit,
+    onLeft: (held: Boolean) -> Unit,
+) {
+    // Kept across the activity being recreated, under the step's key, so it stays the step's own.
+    var typed by rememberSaveable { mutableStateOf<String?>(null) }
+    // The step as the editor holds it now — [step] at the latest; the text in the field stands only while it is what the
+    // step holds.
+    fun held() = (editor.recipe.value?.steps?.sortedBy { it.position }?.getOrNull(position) ?: step).note
+    val note = held()
+    val shown = typed?.takeIf { Step.noteOf(it) == note } ?: note.orEmpty()
+    val requester = remember { FocusRequester() }
+    focus.TakenBy(0, requester)
+    Column(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+        OutlinedTextField(
+            value = shown,
+            onValueChange = {
+                typed = it
+                editor.setStepNote(position, it)
+            },
+            label = { Text(stringResource(R.string.editor_step_note)) },
+            supportingText = { Text(stringResource(R.string.editor_step_note_hint)) },
+            // Over several lines, the keyboard keeps its new-line key.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(requester)
+                .onFocusChanged { if (!it.isFocused) typed = null }
+                .then(
+                    leaving(onEnter = onEnter) {
+                        editor.leave(RecipePart.StepNote(position))
+                        onLeft(held() != null)
+                    },
+                )
+                .testTag(StepNoteTags.field(position)),
+        )
+        BoundMark(editor, RecipePart.StepNote(position), StepNoteTags.mark(position), gap = 4.dp, Modifier.padding(top = 4.dp))
+    }
+}
+
+/** The test tags of a step's note in the editor. */
+object StepNoteTags {
+    fun add(position: Int) = "editor-step-$position-note-add"
+    fun field(position: Int) = "editor-step-$position-note"
+    fun mark(position: Int) = "editor-step-$position-note-mark"
 }
 
 /** The room between a step block's outline, or its drag column, and what the block holds. */
@@ -568,7 +648,8 @@ internal fun durationText(duration: Duration): String {
 
 /**
  * A step as a frozen recipe shows it: its number, its whole text with its references read at the authored scale, set
- * apart as the field sets them (FLOW-032 (5–7)), its photograph and its timer, and nothing to change them with.
+ * apart as the field sets them (FLOW-032 (5–7)), the author's note, its photograph and its timer, and nothing to change
+ * them with.
  */
 @Composable
 private fun ReadOnlyStep(position: Int, step: Step, photo: Media?, ingredients: List<Ingredient>, language: InterfaceLanguage, photos: StepPhotos) {
@@ -582,6 +663,14 @@ private fun ReadOnlyStep(position: Int, step: Step, photo: Media?, ingredients: 
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.testTag(EditorTags.stepText(position)),
             )
+            step.note?.let {
+                Text(
+                    stringResource(R.string.editor_step_note_read_only, it),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag(StepNoteTags.field(position)),
+                )
+            }
             if (photo != null) StepMediaShown(position, photo, photos)
             // Every timer, in its order; several are told apart by their place, a step's only one reads as it always did.
             val numbered = step.timers.size > 1

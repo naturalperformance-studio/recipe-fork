@@ -41,8 +41,9 @@ object RecipeFile {
      * (DOM-024) where formats 1 and 2 gave it at most one `timer`, which reads as a step with that one timer. Format 4
      * adds the recipe's `equipment`, each item its text; a document of formats 1 to 3 reads as one with none. Format 5
      * names each item as an ingredient is named: a dictionary entry, with its labels, and a qualifier, or free text.
+     * Format 6 adds a step's `note`, the author's own; a document of formats 1 to 5 reads as one with none.
      */
-    const val FORMAT_VERSION = 5
+    const val FORMAT_VERSION = 6
 
     /** The last format that wrote a step's one `timer` rather than its list of `timers`. */
     private const val LAST_ONE_TIMER_FORMAT = 2
@@ -52,6 +53,9 @@ object RecipeFile {
 
     /** The last format that wrote each item of `equipment` as its text alone. */
     private const val LAST_TEXT_EQUIPMENT_FORMAT = 4
+
+    /** The last format that wrote no step's `note`. */
+    private const val LAST_FORMAT_WITHOUT_STEP_NOTES = 5
     const val EXTENSION = "recipefork"
     const val MIME_TYPE = "application/vnd.recipefork.recipe+zip"
     /** The document's entry in the archive. */
@@ -85,6 +89,7 @@ object RecipeFile {
             json.decodeFromString(RecipeDocument.serializer(), text)
                 .also { it.checkTimerShape() }
                 .also { it.checkEquipmentShape() }
+                .also { it.checkStepNoteShape() }
                 .toContent(entryOf)
         } catch (e: UnreadableRecipeFile) {
             throw e
@@ -148,6 +153,7 @@ object RecipeFile {
             )
         },
         timers = timers.map { DocumentTimer(it.duration.inWholeMinutes, it.label) },
+        note = note,
     )
 
     /** A step's timers stand as its format writes them: one `timer` up to format 2, a list of `timers` since. */
@@ -164,6 +170,15 @@ object RecipeFile {
     private fun RecipeDocument.checkEquipmentShape() {
         if (formatVersion <= LAST_FORMAT_WITHOUT_EQUIPMENT && recipe.equipment.isNotEmpty()) {
             throw UnreadableRecipeFile("format $formatVersion holds equipment, which it does not write")
+        }
+    }
+
+    /** A format before 6 wrote no step's note: a document of it that holds one is no document of its format. */
+    private fun RecipeDocument.checkStepNoteShape() {
+        if (formatVersion <= LAST_FORMAT_WITHOUT_STEP_NOTES) {
+            recipe.steps.firstOrNull { it.note != null }?.let { step ->
+                throw UnreadableRecipeFile("step ${step.position} holds a note, which format $formatVersion does not write")
+            }
         }
     }
 
@@ -240,6 +255,8 @@ object RecipeFile {
         },
         // Formats 1 and 2 held one timer at most; the shape was checked before.
         timers = (timers + listOfNotNull(timer)).map { Timer(it.minutes.minutes, it.label) },
+        // A note is read as the editor takes one: trimmed, and none when blank.
+        note = Step.noteOf(note),
     )
 
     private fun languageName(language: RecipeLanguage) = Names.language.nameOf(language)

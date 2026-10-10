@@ -86,6 +86,8 @@ internal data class DocumentStep(
     val timers: List<DocumentTimer> = emptyList(),
     /** The step's one timer as formats 1 and 2 wrote it; absent for none, and never written since format 3. */
     val timer: DocumentTimer? = null,
+    /** The author's note on the step; added in format 6, absent for none. */
+    val note: String? = null,
 )
 
 @Serializable
