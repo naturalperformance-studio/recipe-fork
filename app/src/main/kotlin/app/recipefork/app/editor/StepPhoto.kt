@@ -167,16 +167,19 @@ private fun StepPhotoAction(position: Int, media: Media?, control: StepPhotoCont
     ) { sheet = true }
     if (!sheet) return
     val items = listOfNotNull(
-        SourceItem(stringResource(R.string.media_step_take), EditorTags.stepPhotoTake(position)) { control.sources.takePhoto() },
-        SourceItem(stringResource(R.string.media_step_choose), EditorTags.stepPhotoChoose(position)) { control.sources.choosePhoto() },
-        SourceItem(stringResource(R.string.media_step_clip_record), EditorTags.stepClipRecord(position)) { control.clipSources.recordClip() },
-        SourceItem(stringResource(R.string.media_step_clip_choose), EditorTags.stepClipChoose(position)) { control.clipSources.chooseClip() },
+        // The photograph's sources are worded as the cover's are.
+        SourceItem(R.drawable.ic_step_photo, stringResource(R.string.media_source_take), EditorTags.stepPhotoTake(position)) { control.sources.takePhoto() },
+        SourceItem(R.drawable.ic_photo_library, stringResource(R.string.media_source_choose), EditorTags.stepPhotoChoose(position)) { control.sources.choosePhoto() },
+        SourceItem(R.drawable.ic_videocam, stringResource(R.string.media_step_clip_record), EditorTags.stepClipRecord(position)) { control.clipSources.recordClip() },
+        SourceItem(R.drawable.ic_video_library, stringResource(R.string.media_step_clip_choose), EditorTags.stepClipChoose(position)) { control.clipSources.chooseClip() },
         when (media?.kind) {
             null -> null
-            MediaKind.VIDEO -> SourceItem(stringResource(R.string.media_step_clip_remove), EditorTags.stepPhotoRemove(position), destructive = true) {
+            MediaKind.VIDEO -> SourceItem(R.drawable.ic_remove_row, stringResource(R.string.media_step_clip_remove), EditorTags.stepPhotoRemove(position), destructive = true) {
                 control.attaching.remove(PhotoNotice.STEP_CLIP_REMOVED)
             }
-            else -> SourceItem(stringResource(R.string.media_step_remove), EditorTags.stepPhotoRemove(position), destructive = true) { control.attaching.remove() }
+            else -> SourceItem(R.drawable.ic_remove_row, stringResource(R.string.media_step_remove), EditorTags.stepPhotoRemove(position), destructive = true) {
+                control.attaching.remove()
+            }
         },
     )
     SourceSheet(stringResource(R.string.media_step_photo_label, position + 1), items, onDismiss = { sheet = false })

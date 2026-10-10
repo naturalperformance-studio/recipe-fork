@@ -301,7 +301,7 @@ class IngredientGroupsScreenTest {
 
     // The keyboard's Next follows the list as shown: from the serving count into the first heading's sheet, and from a
     // heading to its group's first row, whose sheet opens with its name focused. A row's sheet ends the chain: its unit,
-    // picked by Next, closes it. The heading's name is settled on the way — trimmed — and the field left gives up its focus.
+    // picked by Next, goes on to its note (T-218), whose Done closes it. The heading's name is settled on the way — trimmed — and the field left gives up its focus.
     @Test
     fun nextGoesThroughTheHeadingsInTheOrderShown() {
         val recipe = open(recipe(IngredientGroup("Dough", 0), IngredientGroup("Glaze", 3)))
@@ -313,12 +313,12 @@ class IngredientGroupsScreenTest {
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
         assertTrue(!compose.groupSheetOpen())
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
-        compose.waitUntil(PATIENCE_MS) { focused(IngredientNoteTags.field(0)) }
-        compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientQuantity(0)) }
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.unitOption(QuantityUnit.GRAM)) }
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitUntil(PATIENCE_MS) { focused(IngredientNoteTags.field(0)) }
+        compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { !compose.ingredientSheetOpen() }
 
         compose.openGroup(1)

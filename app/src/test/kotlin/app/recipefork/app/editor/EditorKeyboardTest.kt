@@ -206,12 +206,12 @@ class EditorKeyboardTest {
         }
     }
 
-    // Next goes title → serving count → the first row, whose sheet opens with its name focused → note → quantity → the
-    // unit's menu; a unit picked there closes the sheet. With no rows, the serving count says Done, which closes the
+    // Next goes title → serving count → the first row, whose sheet opens with its name focused → quantity → the unit's
+    // menu; a unit picked there goes on to the note (T-218), the last field, whose Done closes the sheet. With no rows, the serving count says Done, which closes the
     // keyboard and adds no row. From the title it passes over the tags and the description between it and the serving
     // count (T-208): each keeps a key of its own — the tags' Done, the description's new line.
     @Test
-    fun nextGoesThroughTheFirstRowsSheetAndTheUnitEndsIt() {
+    fun nextGoesThroughTheFirstRowsSheetAndTheNoteEndsIt() {
         val id = writeANewRecipe()
         // With no rows, the serving count is the last field: Done.
         enter(EditorTags.SERVINGS)
@@ -235,17 +235,19 @@ class EditorKeyboardTest {
         assertTrue(compose.ingredientSheetOpen())
         assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
-        awaitFocused(IngredientNoteTags.field(0))
-        assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
-        compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
         awaitFocused(EditorTags.ingredientQuantity(0))
         assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
         // The unit is chosen, not typed: Next opens its menu, and no field keeps the keyboard meanwhile.
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.unitOption(QuantityUnit.KILOGRAM)) }
         assertFalse(isFocused(EditorTags.ingredientQuantity(0)))
-        // A unit picked ends the sheet: it closes, and no other row opens.
+        // A unit picked goes on to the note, with the keyboard up; the note says Done, which ends the sheet: it
+        // closes, and no other row opens.
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.KILOGRAM)).performSemanticsAction(SemanticsActions.OnClick)
+        awaitFocused(IngredientNoteTags.field(0))
+        compose.waitUntil(PATIENCE_MS) { keyboardUp() }
+        assertEquals(EditorInfo.IME_ACTION_DONE, action(keyboardAskedFor()))
+        compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { !compose.ingredientSheetOpen() }
         compose.waitForIdle()
         assertEquals(QuantityUnit.KILOGRAM, stored(id).ingredients[0].unit)
@@ -254,8 +256,8 @@ class EditorKeyboardTest {
         assertFalse(exists(EditorTags.unitOption(QuantityUnit.KILOGRAM)))
     }
 
-    // "To taste" withdraws the quantity: in its sheet, Next goes from the name to the note, then to the unit, whose pick
-    // closes the sheet.
+    // "To taste" withdraws the quantity: in its sheet, Next goes from the name to the unit, whose pick goes on to the
+    // note, whose Done closes the sheet.
     @Test
     fun aRowToTasteGoesFromItsNameToItsUnit() {
         val id = writeANewRecipe()
@@ -270,11 +272,11 @@ class EditorKeyboardTest {
         enter(EditorTags.ingredientName(0))
         assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
-        awaitFocused(IngredientNoteTags.field(0))
-        assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
-        compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.unitOption(QuantityUnit.TO_TASTE)) }
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.TO_TASTE)).performSemanticsAction(SemanticsActions.OnClick)
+        awaitFocused(IngredientNoteTags.field(0))
+        assertEquals(EditorInfo.IME_ACTION_DONE, action(keyboardAskedFor()))
+        compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { !compose.ingredientSheetOpen() }
         compose.waitForIdle()
         assertEquals(1, stored(id).ingredients.size)

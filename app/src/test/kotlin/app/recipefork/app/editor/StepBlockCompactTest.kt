@@ -36,11 +36,9 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
-import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
@@ -151,15 +149,15 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
 
     private fun dp(px: Float): Float = px / compose.density.density
 
-    /** The row of icons in the sheet of the step at [position], under its text: since T-212, inserting an ingredient. */
-    private fun actions(position: Int) = listOf(EditorTags.stepInsert(position))
+    /**
+     * The text buttons of the sheet of the step at [position], under its text: inserting an ingredient (a labelled button
+     * since T-218), then its parts' (T-212) — adding a timer, a photo or clip.
+     */
+    private fun buttons(position: Int) = listOf(EditorTags.stepInsert(position), EditorTags.timerAttach(position), EditorTags.stepPhoto(position))
 
-    /** The text buttons of the sheet's parts of the step at [position] (T-212): adding a timer, a photo or clip. */
-    private fun buttons(position: Int) = listOf(EditorTags.timerAttach(position), EditorTags.stepPhoto(position))
-
-    /** What the screen reader speaks for each control of the step at [position]: its icon, its parts' buttons, its removal. */
+    /** What the screen reader speaks for each control of the step at [position]: its buttons, its removal. */
     private fun labels(position: Int): List<String> =
-        (actions(position) + buttons(position) + EditorTags.stepRemove(position)).map { AccessibilityChecks.announcedLabel(compose.onNodeWithTag(it).fetchSemanticsNode()) }
+        (buttons(position) + EditorTags.stepRemove(position)).map { AccessibilityChecks.announcedLabel(compose.onNodeWithTag(it).fetchSemanticsNode()) }
 
     /** What a click on each of the parts' buttons of the step at [position] is announced as. */
     private fun clickLabels(position: Int): List<String?> =
@@ -188,8 +186,8 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
     }
 
     // The row's text takes the block's full width beside the drag column, nothing beside it and no control in the
-    // block. In the step's sheet, under its text, its icon, 48 dp; under it, the parts' text buttons, at least 48 dp tall
-    // and within the sheet.
+    // block. In the step's sheet, under its text, its text buttons — "Insert ingredient", then the parts' — each at least
+    // 48 dp tall, whole and within the sheet, in order.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theTextIsFullWidthAndTheIconsAreOneRowUnderIt() = textAndRow(1f)
@@ -224,59 +222,47 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
         (0..2).forEach { position ->
             compose.openStep(position)
             val text = bounds(EditorTags.stepText(position))
-            val controls = actions(position).map { bounds(it) }
-            controls.forEachIndexed { i, b ->
-                assertEquals("step $position: ${actions(position)[i]} is 48 dp wide", 48f, dp(b.width), 0.5f)
-                assertEquals("step $position: ${actions(position)[i]} is 48 dp high", 48f, dp(b.height), 0.5f)
-                assertTrue("step $position: ${actions(position)[i]} is under the text", b.top >= text.bottom - 0.5f)
-            }
-            controls.zipWithNext().forEach { (a, b) -> assertTrue("step $position: the icons do not overlap", b.left >= a.right - 0.5f || b.top >= a.bottom - 0.5f) }
-            if (fontScale == 1f) {
-                controls.forEach { assertEquals("step $position: the icons stand in one row", controls.first().top, it.top, 0.5f) }
-                controls.zipWithNext().forEach { (a, b) -> assertTrue("step $position: the icons stand in order", b.left >= a.right - 0.5f) }
-            }
-            // The icons carry no text of their own, only their spoken names.
-            actions(position).forEach { assertTrue(node(it).config.getOrNull(SemanticsProperties.Text).orEmpty().isEmpty()) }
-            // The parts' buttons are text buttons, whole, under the icon and within the sheet.
+            // The buttons are text buttons, whole, under the text, one under another in order, and within the sheet.
             val sheet = bounds(StepSheetTags.SHEET)
             buttons(position).forEach { tag ->
                 val b = bounds(tag)
                 assertTrue("step $position: $tag is at least 48 dp high", dp(b.height) >= 48f - 0.5f)
-                assertTrue("step $position: $tag is under the icon", b.top >= controls.last().bottom - 0.5f)
+                assertTrue("step $position: $tag is at least 48 dp wide", dp(b.width) >= 48f - 0.5f)
+                assertTrue("step $position: $tag is under the text", b.top >= text.bottom - 0.5f)
                 assertTrue("step $position: $tag is within the sheet", b.left >= sheet.left - 0.5f && b.right <= sheet.right + 0.5f)
                 assertTrue("step $position: $tag says what it does", compose.textsOf(tag).single().isNotBlank())
             }
+            buttons(position).map(::bounds).zipWithNext().forEach { (a, b) -> assertTrue("step $position: the buttons stand in order", b.top >= a.bottom - 0.5f) }
             AccessibilityChecks.assertTouchTargets(compose)
             AccessibilityChecks.assertInteractiveElementsLabelled(compose)
             compose.closeStep()
         }
     }
 
-    // Each icon is named for the screen reader by its step, and a long press shows that name in a tooltip.
+    // Each control says in words what it does — none is a bare icon (T-218) — and its click is announced naming its step;
+    // the removal is named as the ingredient's and the group's are, with no number.
     @Test
     @Config(qualifiers = "en-w360dp-h4000dp")
-    fun eachIconIsNamedByItsStepAndShowsATooltip() {
+    fun eachControlSaysWhatItDoesAndItsClickNamesItsStep() {
         open(1f)
         compose.openStep(1)
-        assertEquals(listOf("Insert an ingredient into step 2", "Add timer", "Add photo or clip", "Remove step 2"), labels(1))
-        assertEquals(listOf("Add a timer to step 2", "Add, change or remove the photo or clip of step 2"), clickLabels(1))
-        actions(1).forEach { tag ->
-            compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick() }
-            compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(tag)) }
-            val label = AccessibilityChecks.announcedLabel(compose.onNodeWithTag(tag).fetchSemanticsNode())
-            fun texts(node: SemanticsNode): List<String> = node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + node.children.flatMap(::texts)
-            assertTrue("$tag shows \"$label\" on a long press", texts(node(EditorTags.tooltip(tag))).contains(label))
-            compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.tooltip(tag)) }
-        }
+        assertEquals(listOf("Insert ingredient", "Add timer", "Add photo or clip", "Remove step"), labels(1))
+        assertEquals(
+            listOf("Insert an ingredient's quantity into step 2", "Add a timer to step 2", "Add, change or remove the photo or clip of step 2"),
+            clickLabels(1),
+        )
     }
 
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun eachIconIsNamedByItsStepInRussian() {
+    fun eachControlSaysWhatItDoesAndItsClickNamesItsStepInRussian() {
         open(1f)
         compose.openStep(1)
-        assertEquals(listOf("Вставить ингредиент в шаг 2", "Добавить таймер", "Добавить фото или видео", "Убрать шаг 2"), labels(1))
-        assertEquals(listOf("Добавить таймер к шагу 2", "Добавить, заменить или убрать фото или видео шага 2"), clickLabels(1))
+        assertEquals(listOf("Вставить ингредиент", "Добавить таймер", "Добавить фото или видео", "Убрать шаг"), labels(1))
+        assertEquals(
+            listOf("Вставить количество ингредиента в шаг 2", "Добавить таймер к шагу 2", "Добавить, заменить или убрать фото или видео шага 2"),
+            clickLabels(1),
+        )
     }
 
     // In the sheet, the timer's form and the photograph show in their parts only when the step has them, above the
@@ -312,7 +298,7 @@ class StepBlockCompactTest(private val handleRight: Boolean) {
         open(1f, RecipeState.PUBLISHED)
         (0..2).forEach { position ->
             assertTrue(exists(StepSheetTags.text(position)))
-            (actions(position) + EditorTags.stepRemove(position)).forEach { assertFalse("frozen step $position shows $it", exists(it)) }
+            (buttons(position) + EditorTags.stepRemove(position)).forEach { assertFalse("frozen step $position shows $it", exists(it)) }
             val inStep = hasAnyAncestor(hasTestTag(EditorTags.step(position)))
             assertEquals(0, compose.onAllNodes(inStep and AccessibilityChecks.isInteractive, useUnmergedTree = true).fetchSemanticsNodes().size)
         }

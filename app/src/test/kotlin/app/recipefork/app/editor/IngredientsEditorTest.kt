@@ -252,23 +252,30 @@ class IngredientsEditorTest {
         addIngredient()
         assertEquals(1, stored(id).ingredients.size)
         val inSheet = hasAnyAncestor(hasTestTag(IngredientSheetTags.SHEET))
-        // Two fields take text — the ingredient and the quantity — and the third is the unit, chosen from a list; beside
-        // them, the optional note on how the ingredient is prepared (DOM-023).
+        // Two fields take text — the ingredient and the quantity — and the third is the unit, chosen from a list; after
+        // them, the optional note on how the ingredient is prepared (DOM-023; T-218: the amount before the note).
         val textFields = compose.onAllNodes(inSheet and hasSetTextAction()).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }
-        assertEquals(listOf(EditorTags.ingredientName(0), IngredientNoteTags.field(0), EditorTags.ingredientQuantity(0)), textFields)
-        // Every control of the sheet, each tagged — it has no drag handle — in order: Done, the fields, then the row's
-        // actions; the only row moves nowhere.
-        val actions = compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
+        assertEquals(listOf(EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), IngredientNoteTags.field(0)), textFields)
+        // Every control of the sheet, each tagged — it has no drag handle — in order: Done, then the fields; a row just
+        // added offers no actions while it holds nothing (T-218).
+        fun controls() = compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }
+        val fields = listOf(
+            IngredientSheetTags.DONE, EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), EditorTags.ingredientUnit(0),
+            IngredientNoteTags.field(0),
+        )
+        assertEquals(fields, controls())
+        // Once it holds something, the row's actions follow the fields; the only row moves nowhere.
+        compose.onNodeWithTag(IngredientNoteTags.field(0)).performTextInput("sifted")
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientRemove(0))).fetchSemanticsNodes().isNotEmpty() }
         assertEquals(
-            listOf(
-                IngredientSheetTags.DONE, EditorTags.ingredientName(0), IngredientNoteTags.field(0), EditorTags.ingredientQuantity(0),
-                EditorTags.ingredientUnit(0), EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE),
+            fields + listOf(
+                EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE),
                 EditorTags.ingredientAction(0, RowAction.INSERT_BELOW), EditorTags.ingredientAction(0, RowAction.GROUP_ABOVE),
                 EditorTags.ingredientRemove(0),
             ),
-            actions,
+            controls(),
         )
         val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(0)))
         assertEquals(0, compose.onAllNodes(inRow and hasSetTextAction()).fetchSemanticsNodes().size)
@@ -319,8 +326,10 @@ class IngredientsEditorTest {
         addIngredient()
         openUnits(0)
         val offered = compose.onAllNodes(hasTestTagStartingWith("editor-unit-")).fetchSemanticsNodes()
-        assertEquals(QuantityUnit.entries.map { EditorTags.unitOption(it) }, offered.map { it.config[SemanticsProperties.TestTag] })
-        assertEquals(names, offered.map { node -> node.config[SemanticsProperties.Text].joinToString("") { it.text } })
+        // Listed with the kitchen's usual units first (T-218); each still named as DOM-016 names it.
+        val byUnit = offered.associate { node -> node.config[SemanticsProperties.TestTag] to node.config[SemanticsProperties.Text].joinToString("") { it.text } }
+        assertEquals(MENU_UNITS.map { EditorTags.unitOption(it) }, offered.map { it.config[SemanticsProperties.TestTag] })
+        assertEquals(names, QuantityUnit.entries.map { byUnit[EditorTags.unitOption(it)] })
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(QuantityUnit.GRAM)), PATIENCE_MS)
         // Each unit chosen stores its own unit and the unit type the table gives it.

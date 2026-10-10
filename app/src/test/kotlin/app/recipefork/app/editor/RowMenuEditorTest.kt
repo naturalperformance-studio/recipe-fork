@@ -225,17 +225,17 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
     // none to move the first up or the last down; an ingredient row's also puts a group's heading above it (DOM-022).
     @Test
     fun everyRowCarriesAMenuNamedForItsRowInEnglish() = everyRowCarriesAMenuNamedForItsRow(
-        listOf("Insert above", "Insert below", "Move up", "Move down", "Add group above"), "Step 2",
+        listOf("Insert above", "Insert below", "Move up", "Move down", "Add group above"), "Edit step",
     )
 
     @Test
     @Config(qualifiers = "ru")
     fun everyRowCarriesAMenuNamedForItsRowInRussian() = everyRowCarriesAMenuNamedForItsRow(
         listOf("Вставить выше", "Вставить ниже", "Переместить вверх", "Переместить вниз", "Добавить группу выше"),
-        "Шаг 2",
+        "Изменить шаг",
     )
 
-    private fun everyRowCarriesAMenuNamedForItsRow(labels: List<String>, secondStep: String) {
+    private fun everyRowCarriesAMenuNamedForItsRow(labels: List<String>, stepTitle: String) {
         writeANewRecipe()
         // A single row can only have rows put beside it.
         addStep("one")
@@ -253,7 +253,7 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         val expected = listOf(all - RowAction.MOVE_UP, all, all - RowAction.MOVE_DOWN)
         val ingredientExpected = expected.map { it + RowAction.GROUP_ABOVE }
         (0..2).forEach { position ->
-            // A step's actions are in its sheet, named by the step it is titled with.
+            // A step's actions are in its sheet, titled as the step edited (T-218: as the ingredient's and the group's are).
             assertEquals("step $position", expected[position], stepActions(position))
             expected[position].forEach { action ->
                 val node = node(EditorTags.stepAction(position, action))
@@ -267,7 +267,7 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
             AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = expected[position].size)
             AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = expected[position].size)
             if (position == 1) {
-                val title = hasAnyAncestor(hasTestTag(StepSheetTags.SHEET)) and hasText(secondStep) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
+                val title = hasAnyAncestor(hasTestTag(StepSheetTags.SHEET)) and hasText(stepTitle) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
                 assertEquals(1, compose.onAllNodes(title, useUnmergedTree = true).fetchSemanticsNodes().size)
             }
             compose.closeStep()

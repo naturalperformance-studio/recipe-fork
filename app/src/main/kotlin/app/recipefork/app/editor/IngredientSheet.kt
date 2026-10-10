@@ -152,16 +152,18 @@ internal fun ingredientLineText(row: Ingredient, dictionary: List<IngredientEntr
 }
 
 /**
- * The fields of one ingredient row in a Material 3 bottom sheet, in the order the row held them (FLOW-023): the name
- * with the dictionary's offers and the free-text hint, the note, the quantity and the unit, and the divisibility of a
- * `piece` where its entry gives none. Each edit applies as it is typed, so the sheet closes — by Done, a swipe down or
- * Back — keeping everything; closing it leaves its fields, which marks what is over its limit (FLOW-028).
+ * The fields of one ingredient row in a Material 3 bottom sheet: the name with the dictionary's offers and the free-text
+ * hint, the quantity and the unit, the divisibility of a `piece` where its entry gives none, and last the optional note
+ * — the amount the row needs before how it is prepared. Each edit applies as it is typed, so the sheet closes — by Done,
+ * a swipe down or Back — keeping everything; closing it leaves its fields, which marks what is over its limit (FLOW-028).
  *
- * The keyboard's Next goes name → note → quantity → the unit's menu; a unit picked from there closes the sheet, unless
- * the row then asks for its divisibility. Where [rows] asks for the row at [position], its name takes the focus.
+ * The keyboard's Next goes name → quantity → the unit's menu → note, and picking an offer of the name goes on as Next
+ * does; a unit picked by Next takes the author to the note, with the keyboard up, and the note's Done closes the sheet.
+ * Where [rows] asks for the row at [position], its name takes the focus.
  *
- * Under the fields stand the row's [actions] (FLOW-025, DOM-022): one that takes the author elsewhere — another row, a
- * heading — leaves the fields first, as closing does; the removal closes the sheet, then removes the row.
+ * A [fresh] row — just added — is titled "New ingredient". Under the fields stand the row's [actions] (FLOW-025,
+ * DOM-022): one that takes the author elsewhere — another row, a heading — leaves the fields first, as closing does; the
+ * removal closes the sheet, then removes the row.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -174,6 +176,7 @@ internal fun IngredientSheet(
     mode: Mode,
     rows: RowFocus,
     typed: TypedInSheet,
+    fresh: Boolean,
     actions: List<SheetAction>,
     onClose: () -> Unit,
 ) {
@@ -203,11 +206,8 @@ internal fun IngredientSheet(
     val entryDivisible = row.dictionaryEntry?.let { id -> dictionary?.firstOrNull { it.id == id }?.divisible }
     val chain = remember { RowChain() }
     chain.measured = row.unitType != UnitType.TASTE_UNMEASURED
-    // A unit picked by the keyboard's Next ends the sheet, unless the row now asks whether a piece can be halved.
-    chain.onUnitPicked = {
-        val now = editor.recipe.value?.ingredients?.getOrNull(at)
-        if (now == null || now.unitType != UnitType.PIECE || entryDivisible != null) done()
-    }
+    // The note, the chain's last field, ends it: its Done closes the sheet.
+    chain.onDone = done
     ModalBottomSheet(
         onDismissRequest = dismiss,
         sheetState = state,
@@ -220,7 +220,12 @@ internal fun IngredientSheet(
         // Asked for — added, or reached by the keyboard's Next, or tapped with no name yet — the row's name takes the
         // focus as soon as the sheet is laid out, with the keyboard up.
         rows.TakenInSheet(position, chain.name)
-        SheetHeader(stringResource(R.string.editor_ingredient_edit), IngredientSheetTags.TITLE, IngredientSheetTags.DONE, done)
+        SheetHeader(
+            stringResource(if (fresh) R.string.editor_ingredient_new else R.string.editor_ingredient_edit),
+            IngredientSheetTags.TITLE,
+            IngredientSheetTags.DONE,
+            done,
+        )
         Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(bottom = 8.dp)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 IngredientFields(position, row, editor, language, dictionary, mode, chain, entryDivisible, typed)
@@ -254,8 +259,6 @@ private fun IngredientFields(
     val nameUnder = remember { mutableIntStateOf(0) }
     val quantityUnder = remember { mutableIntStateOf(0) }
     IngredientNameField(position, row, editor, language, dictionary, mode, chain, heights.of(EvenHeights.Input.NAME) { nameUnder.intValue }, nameUnder)
-    // How the ingredient is prepared, under its name and apart from it: the name says what it is.
-    NoteField(position, row, editor, chain, typed.note)
     // "To taste" withdraws the quantity field (FLOW-023 (8)); it comes back empty with another unit (9).
     val quantity = row.unitType != UnitType.TASTE_UNMEASURED
     val quantityHeight = heights.of(EvenHeights.Input.QUANTITY) { quantityUnder.intValue }
@@ -284,7 +287,7 @@ private fun IngredientFields(
         }
         val unitWidth = maxOf(UNIT_WIDTH, needs.first)
         val besideUnit = maxWidth - unitWidth - 8.dp
-        if (!quantity && unitWidth <= maxWidth || besideUnit >= needs.second) {
+        if (!quantity && unitWidth <= maxWidth || quantity && besideUnit >= needs.second) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                 if (quantity) {
                     QuantityField(position, row, editor, language, chain, problem, typed.quantity, quantityUnder, Modifier.weight(1f).then(quantityHeight))
@@ -293,13 +296,18 @@ private fun IngredientFields(
             }
         } else {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                QuantityField(position, row, editor, language, chain, problem, typed.quantity, quantityUnder, Modifier.fillMaxWidth().then(quantityHeight))
+                // Stacked too — a unit wider than the sheet — "to taste" has no quantity field.
+                if (quantity) {
+                    QuantityField(position, row, editor, language, chain, problem, typed.quantity, quantityUnder, Modifier.fillMaxWidth().then(quantityHeight))
+                }
                 UnitField(position, row, editor, chain, Modifier.fillMaxWidth().then(unitHeight))
             }
         }
     }
     // A `piece` row asks for its divisibility unless its entry gives one (FLOW-022 (5), FLOW-023 (11)).
     if (row.unitType == UnitType.PIECE && entryDivisible == null) Divisibility(position, row, editor)
+    // How the ingredient is prepared, last: optional, after the amount the row needs.
+    NoteField(position, row, editor, chain, typed.note)
 }
 
 /** How wide the unit select is at least beside the quantity: room for its longest unit, "по вкусу", and its arrow. */
@@ -407,10 +415,10 @@ private fun IngredientNameField(
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
-                // The note follows the name.
+                // The quantity follows the name.
                 imeAction = ImeAction.Next,
             ),
-            keyboardActions = KeyboardActions(onNext = { chain.note.requestFocus() }),
+            keyboardActions = KeyboardActions(onNext = { chain.afterName(focus) }),
             modifier = Modifier
                 .fillMaxWidth()
                 .then(fieldModifier)
@@ -442,10 +450,11 @@ private fun IngredientNameField(
                         synonym = offer.synonyms[entry.id],
                         synonymTag = IngredientNameTags.synonym(position, entry.id),
                         action = stringResource(R.string.editor_ingredient_pick_action, entryLabel),
+                        // Picked, the author goes on to the amount, as Next takes them.
                         onClick = {
                             editor.setIngredientEntry(position, entry.id)
                             offering = false
-                            focus.clearFocus()
+                            chain.afterName(focus)
                         },
                         modifier = Modifier.testTag(IngredientNameTags.entry(position, entry.id)),
                     )
@@ -457,7 +466,7 @@ private fun IngredientNameField(
                         onClick = {
                             editor.setIngredientFreeText(position, text)
                             offering = false
-                            focus.clearFocus()
+                            chain.afterName(focus)
                         },
                         modifier = Modifier.testTag(IngredientNameTags.freeText(position)),
                     )
@@ -489,7 +498,8 @@ private fun NoteField(position: Int, row: Ingredient, editor: RecipeEditor, chai
     // row holds.
     val held = (editor.recipe.value?.ingredients?.getOrNull(position) ?: row).note
     val shown = typed?.takeIf { Ingredient.noteOf(it) == held } ?: held.orEmpty()
-    val focus = LocalFocusManager.current
+    // Reached by a unit picked by Next: the note takes the focus once the unit's menu has gone, with the keyboard up.
+    chain.toNote.TakenInSheet(NOTE, chain.note)
     Column(Modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = shown,
@@ -503,15 +513,10 @@ private fun NoteField(position: Int, row: Ingredient, editor: RecipeEditor, chai
             keyboardOptions = KeyboardOptions(
                 // It goes on after the ingredient's name, as the card shows it: "onion — finely chopped".
                 capitalization = KeyboardCapitalization.None,
-                imeAction = ImeAction.Next,
+                // The last field: Done closes the sheet.
+                imeAction = ImeAction.Done,
             ),
-            keyboardActions = KeyboardActions(
-                onNext = {
-                    // "To taste" withdraws the quantity: the note goes on to the unit.
-                    if (chain.measured) chain.quantity.requestFocus()
-                    else chain.openUnit(focus)
-                },
-            ),
+            keyboardActions = KeyboardActions(onDone = { chain.onDone() }),
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(chain.note)
@@ -613,7 +618,8 @@ private class EvenHeights {
 
 /**
  * The row's unit: exactly the twelve units of DOM-016, by their names in the interface language, in Material 3's exposed
- * drop-down — a read-only outlined field, as the fields beside it are, over the menu of units.
+ * drop-down — a read-only outlined field, as the fields beside it are, over the menu of units, the kitchen's usual ones
+ * first ([MENU_UNITS]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -642,14 +648,14 @@ private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chai
                 .testTag(EditorTags.ingredientUnit(position)),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            QuantityUnit.entries.forEach { unit ->
+            MENU_UNITS.forEach { unit ->
                 DropdownMenuItem(
                     text = { Text(stringResource(unitName(unit))) },
                     onClick = {
                         editor.setIngredientUnit(position, unit)
                         expanded = false
-                        // Reached by the keyboard's Next, a unit picked ends the sheet's chain.
-                        if (chain.byNext) chain.onUnitPicked()
+                        // Reached by the keyboard's Next, a unit picked goes on to the note.
+                        if (chain.byNext) chain.toNote.ask(NOTE)
                         chain.byNext = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -660,13 +666,30 @@ private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chai
     }
 }
 
+/**
+ * The units in the order the unit menu lists them: those a kitchen uses most first, so that a phone shows them without
+ * scrolling the menu — then the rest. The domain's own order ([QuantityUnit.entries]) is left as it is.
+ */
+internal val MENU_UNITS: List<QuantityUnit> = listOf(
+    QuantityUnit.PIECE,
+    QuantityUnit.GRAM,
+    QuantityUnit.KILOGRAM,
+    QuantityUnit.MILLILITRE,
+    QuantityUnit.LITRE,
+    QuantityUnit.TEASPOON,
+    QuantityUnit.TABLESPOON,
+    QuantityUnit.CUP,
+    QuantityUnit.PINCH,
+    QuantityUnit.TO_TASTE,
+).let { usual -> usual + QuantityUnit.entries.filterNot { it in usual } }
+
 /** The unit a row shows in its unit field: "to taste" holds no unit of its own (DOM-002). */
 private val Ingredient.shownUnit: QuantityUnit?
     get() = if (unitType == UnitType.TASTE_UNMEASURED) QuantityUnit.TO_TASTE else unit
 
 /**
- * How the keyboard's Next goes through the sheet's fields: the name, the note, the quantity where the row has one, then
- * the unit, whose menu opens; a unit picked there calls [onUnitPicked].
+ * How the keyboard's Next goes through the sheet's fields: the name, the quantity where the row has one, then the unit,
+ * whose menu opens; a unit picked there goes on to the note ([toNote]), whose Done calls [onDone].
  */
 @Stable
 private class RowChain {
@@ -683,7 +706,15 @@ private class RowChain {
     /** Whether the open unit menu was reached by the keyboard's Next. */
     var byNext = false
 
-    var onUnitPicked: () -> Unit = {}
+    /** Asks the note to take the focus, with the keyboard up, once the unit's menu has closed. */
+    val toNote = RowFocus()
+
+    var onDone: () -> Unit = {}
+
+    /** Goes on from the name: to the quantity, or — "to taste" withdraws it — to the unit's menu. */
+    fun afterName(focus: FocusManager) {
+        if (measured) runCatching { quantity.requestFocus() } else openUnit(focus)
+    }
 
     /** Opens the unit's menu from the field before it: the keyboard goes, as the unit is not typed. */
     fun openUnit(focus: FocusManager) {
@@ -692,6 +723,9 @@ private class RowChain {
         unitOpen = true
     }
 }
+
+/** What [RowChain.toNote] asks for: the sheet holds one row, one note. */
+private const val NOTE = 0
 
 /** The divisibility of a `piece` row in the author's own words, or naming an entry that gives none (FLOW-022 (5)). */
 @Composable

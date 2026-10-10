@@ -41,7 +41,7 @@
     <string name="editor_ingredient_add">Add ingredient</string>
     <string name="editor_ingredient_add_action">Add an ingredient row</string>
     <string name="editor_ingredient_name">Ingredient</string>
-    <!-- A row holding nothing yet, as it reads in the list. -->
+    <!-- A row holding nothing yet, as it reads in the list; and the title of the sheet of a row just added. -->
     <string name="editor_ingredient_new">New ingredient</string>
     <!-- A row's tap, and the title of the sheet it opens: the row's fields. -->
     <string name="editor_ingredient_edit">Edit ingredient</string>
@@ -105,11 +105,12 @@
     <!-- A step's number before its text in the editor's field; the screen reader reads editor_step instead. -->
     <string name="editor_step_number">%1$d.</string>
     <string name="editor_step_edit">Edit step</string>
-    <!-- What an empty step reads as on its row, muted. -->
+    <!-- What an empty step reads as on its row, muted; and the title of the sheet of a step just added. -->
     <string name="editor_step_new">New step</string>
     <string name="editor_step_add">Add step</string>
     <string name="editor_step_add_action">Add a step at the end</string>
-    <string name="editor_step_remove_action">Remove step %1$d</string>
+    <!-- The last of a step's actions in its sheet, named as the ingredient's and the group's are. -->
+    <string name="editor_step_remove">Remove step</string>
     <!-- The author's own note on a step, beside the method, in the step's sheet; a fork by someone else leaves it
          behind (FORK-007). -->
     <string name="editor_step_note">Author\'s note</string>
@@ -117,7 +118,7 @@
     <!-- How a frozen recipe's step row shows the step's note: %1$s is the note. -->
     <string name="editor_step_note_read_only">Author\'s note: %1$s</string>
     <!-- An ingredient's quantity inside a step's text: inserted from the step's control or by typing @ (FLOW-031). -->
-    <string name="editor_step_insert_ingredient_label">Insert an ingredient into step %1$d</string>
+    <string name="editor_step_insert_ingredient">Insert ingredient</string>
     <string name="editor_step_insert_ingredient_action">Insert an ingredient\'s quantity into step %1$d</string>
     <string name="editor_step_insert_ingredient_none">No ingredients in this recipe yet</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
@@ -199,7 +200,7 @@
     <string name="editor_checklist_7_title">The serving count is the number you actually cooked for.</string>
     <string name="editor_checklist_7_text">Every quantity a reader ever sees is computed from it.</string>
     <!-- Under the first step of a recipe holding ingredients, once an editing session, while it is begun (GUIDE-008). -->
-    <string name="editor_references_offered">A quantity can go into a step as a reference: type @ or use the step\'s insert-ingredient icon. A reference follows the reader\'s serving count; a number typed by hand does not.</string>
+    <string name="editor_references_offered">A quantity can go into a step as a reference: type @ or use “Insert ingredient”. A reference follows the reader\'s serving count; a number typed by hand does not.</string>
     <!-- Under a long step's unnamed timer once the author leaves the step: what its notification will say (GUIDE-006). -->
     <string name="editor_timer_notification">The timer\'s notification will say: “%1$s”</string>
     <string name="editor_timer_notification_follows">The quantities in it follow the reader\'s serving count, so the reader\'s notification may read and be cut differently.</string>

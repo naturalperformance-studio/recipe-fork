@@ -278,10 +278,12 @@ class BoundMarksEditorTest {
         assertFalse("the ingredients, below the description, not left", marked(EditorTags.INGREDIENTS_MARK))
         assertFalse("the steps, below the description, not left", marked(EditorTags.STEPS_MARK))
         assertEquals(long, stored(id).description)
-        // A step added and taken away again: the author has left the steps with none.
+        // A step added and closed holding nothing, which takes it away again (T-218: a new step offers no removal until
+        // it holds something): the author has left the steps with none.
         addStep()
         awaitMark(EditorTags.INGREDIENTS_MARK, string(R.string.editor_mark_ingredients_missing))
-        compose.inStep(0).onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
+        assertTrue(compose.onAllNodes(hasTestTag(EditorTags.stepRemove(0))).fetchSemanticsNodes().isEmpty())
+        compose.closeStep()
         awaitMark(EditorTags.STEPS_MARK, string(R.string.editor_mark_steps_missing))
         // The form scrolled to its end, where the Add stands clear of the removal's Undo.
         compose.onNodeWithTag(EditorTags.FORM).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }

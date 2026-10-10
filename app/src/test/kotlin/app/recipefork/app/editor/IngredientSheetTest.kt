@@ -224,7 +224,7 @@ class IngredientSheetTest {
     }
 
     // Scenario 2: a tap on the line — one target at least 48 dp tall, named "Edit ingredient" — opens the sheet with the
-    // row's fields in the row's order; edits apply as typed, and closed by Done the row reads the new line.
+    // row's fields — the amount before the note (T-218); edits apply as typed, and closed by Done the row reads the new line.
     @Test
     fun aTapOpensTheSheetWithTheFieldsAndDoneKeepsTheEdits() = tapOpensTheSheet()
 
@@ -240,15 +240,15 @@ class IngredientSheetTest {
         compose.openIngredient(1)
         val sheet = hasAnyAncestor(hasTestTag(IngredientSheetTags.SHEET))
         val fields = compose.onAllNodes(sheet and hasSetTextAction()).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
-        assertEquals(listOf(EditorTags.ingredientName(1), IngredientNoteTags.field(1), EditorTags.ingredientQuantity(1)), fields)
+        assertEquals(listOf(EditorTags.ingredientName(1), EditorTags.ingredientQuantity(1), IngredientNoteTags.field(1)), fields)
         // Every control of the sheet is tagged — it has no drag handle — and they stand in this order: Done, the fields,
         // then the row's actions.
         val interactive = compose.onAllNodes(sheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }
         assertEquals(
             listOf(
-                IngredientSheetTags.DONE, EditorTags.ingredientName(1), IngredientNoteTags.field(1), EditorTags.ingredientQuantity(1),
-                EditorTags.ingredientUnit(1), EditorTags.divisible(1, true), EditorTags.divisible(1, false),
+                IngredientSheetTags.DONE, EditorTags.ingredientName(1), EditorTags.ingredientQuantity(1),
+                EditorTags.ingredientUnit(1), EditorTags.divisible(1, true), EditorTags.divisible(1, false), IngredientNoteTags.field(1),
             ) + listOf(RowAction.MOVE_UP, RowAction.MOVE_DOWN, RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE)
                 .map { EditorTags.ingredientAction(1, it) } + EditorTags.ingredientRemove(1),
             interactive,
@@ -292,37 +292,40 @@ class IngredientSheetTest {
         assertEquals("to taste salt — flaked", compose.ingredientLine(2))
     }
 
-    // The keyboard goes name → note → quantity → the unit's menu inside the sheet; a unit picked from there closes it.
-    // A row with no name opens with its name focused and the keyboard up.
+    // The keyboard goes name → quantity → the unit's menu inside the sheet; a unit picked from there goes on to the note
+    // (T-218), whose Done closes the sheet. A row with no name opens with its name focused and the keyboard up.
     @Test
-    fun nextGoesThroughTheSheetAndTheUnitClosesIt() {
+    fun nextGoesThroughTheSheetAndTheNoteClosesIt() {
         val id = open(draft())
         compose.onNodeWithTag(IngredientSheetTags.line(3)).performScrollTo().performClick()
         awaitFocused(EditorTags.ingredientName(3))
         compose.onNodeWithTag(EditorTags.ingredientName(3)).performTextInput("Flour")
         assertEquals(EditorInfo.IME_ACTION_NEXT, compose.keyboardAskedFor().imeOptions and EditorInfo.IME_MASK_ACTION)
         compose.onNodeWithTag(EditorTags.ingredientName(3)).performImeAction()
-        awaitFocused(IngredientNoteTags.field(3))
-        assertEquals(EditorInfo.IME_ACTION_NEXT, compose.keyboardAskedFor().imeOptions and EditorInfo.IME_MASK_ACTION)
-        compose.onNodeWithTag(IngredientNoteTags.field(3)).performImeAction()
         awaitFocused(EditorTags.ingredientQuantity(3))
         assertEquals(EditorInfo.IME_ACTION_NEXT, compose.keyboardAskedFor().imeOptions and EditorInfo.IME_MASK_ACTION)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performTextInput("200")
         compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.unitOption(QuantityUnit.KILOGRAM)) }
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.MILLILITRE)).performSemanticsAction(SemanticsActions.OnClick)
+        awaitFocused(IngredientNoteTags.field(3))
+        assertEquals(EditorInfo.IME_ACTION_DONE, compose.keyboardAskedFor().imeOptions and EditorInfo.IME_MASK_ACTION)
+        compose.onNodeWithTag(IngredientNoteTags.field(3)).performImeAction()
         awaitClosed()
         assertEquals("200 ml Flour", compose.ingredientLine(3))
         assertEquals(QuantityUnit.MILLILITRE, stored(id).ingredients[3].unit)
 
-        // A piece picked by Next asks whether it can be halved: the sheet stays for the answer.
+        // A piece picked by Next asks whether it can be halved: the sheet stays, the question above the note it goes on to.
         compose.openIngredient(3)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performSemanticsAction(SemanticsActions.RequestFocus)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.unitOption(QuantityUnit.PIECE)) }
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.PIECE)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.divisibility(3)) }
+        awaitFocused(IngredientNoteTags.field(3))
         assertTrue(compose.ingredientSheetOpen())
+        val question = compose.onNodeWithTag(EditorTags.divisibility(3)).fetchSemanticsNode().boundsInRoot
+        assertTrue(question.bottom <= compose.onNodeWithTag(IngredientNoteTags.field(3)).fetchSemanticsNode().boundsInRoot.top)
         compose.closeIngredient()
     }
 
@@ -587,28 +590,27 @@ class IngredientSheetTest {
         compose.closeIngredient()
     }
 
-    // Insert above or below from the sheet of a row just added and still holding nothing leaves that row behind no more:
-    // it goes, with nothing to undo, and the sheet opens on the row put in its place.
+    // T-218: a row just added and still holding nothing offers no actions — nothing to insert beside, nothing to remove;
+    // named, it offers them, and a row put below it opens as new, which closed holding nothing goes with nothing to
+    // undo, leaving the named one.
     @Test
-    fun insertingFromAnEmptyNewRowDropsIt() {
+    fun aNewRowOffersItsActionsOnceItHoldsSomething() {
         val id = open(draft())
-        listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW).forEach { action ->
-            compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
-            awaitFocused(EditorTags.ingredientName(4))
-            compose.chooseInSheet(EditorTags.ingredientAction(4, action))
-            compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 5 }
-            awaitFocused(EditorTags.ingredientName(4))
-            assertFalse("$action", exists(EditorTags.ingredient(5)))
-            compose.onNodeWithTag(EditorTags.ingredientName(4)).performTextInput("pepper $action")
-            compose.closeIngredient()
-            assertEquals("$action", 5, stored(id).ingredients.size)
-            assertEquals("$action", "pepper $action", stored(id).ingredients[4].freeTextName)
-            compose.waitForIdle()
-            assertFalse("$action", exists(EditorTags.STATEMENT))
-            compose.removeIngredient(4)
-            compose.swipeAwayStatement()
-            compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
-        }
+        compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
+        awaitFocused(EditorTags.ingredientName(4))
+        (RowAction.entries.map { EditorTags.ingredientAction(4, it) } + EditorTags.ingredientRemove(4)).forEach { assertFalse(it, exists(it)) }
+        compose.onNodeWithTag(EditorTags.ingredientName(4)).performTextInput("pepper")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientAction(4, RowAction.INSERT_BELOW)) }
+        compose.chooseInSheet(EditorTags.ingredientAction(4, RowAction.INSERT_BELOW))
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 6 }
+        awaitFocused(EditorTags.ingredientName(5))
+        assertEquals(listOf(string(R.string.editor_ingredient_new)), compose.textsOf(IngredientSheetTags.TITLE))
+        assertFalse(exists(EditorTags.ingredientRemove(5)))
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 5 }
+        assertEquals("pepper", stored(id).ingredients[4].freeTextName)
+        compose.waitForIdle()
+        assertFalse(exists(EditorTags.STATEMENT))
     }
 
     // A frozen recipe's rows read as the same lines and open nothing.

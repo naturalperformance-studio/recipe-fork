@@ -167,7 +167,7 @@ class StepHintsEditorTest {
     private fun offered(position: Int): Boolean = exists(EditorTags.stepReferencesOffered(position))
 
     // Beginning the first step of a recipe that holds an ingredient says, under the step, that a quantity goes in as a
-    // reference, by @ or by the step's icon, and that a reference follows the reader's count while a typed number does
+    // reference, by @ or by the step's "Insert ingredient", and that a reference follows the reader's count while a typed number does
     // not; leaving the step, it goes.
     @Test
     fun beginningTheFirstStepOfARecipeWithIngredientsOffersReferences() {
@@ -178,9 +178,9 @@ class StepHintsEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
         val offer = string(R.string.editor_references_offered)
         assertEquals(listOf(offer), compose.textsOf(EditorTags.stepReferencesOffered(0)))
-        assertTrue(offer, offer.contains("@") && offer.contains("insert-ingredient icon"))
+        assertTrue(offer, offer.contains("@") && offer.contains("“Insert ingredient”"))
         assertTrue(offer, offer.contains("reader's serving count") && offer.contains("typed by hand does not"))
-        // The icon it names is the step's control that inserts a reference (FLOW-031), and it is not covered.
+        // The button it names is the step's control that inserts a reference (FLOW-031), and it is not covered.
         compose.inStep(0).onNodeWithTag(EditorTags.stepInsert(0)).assertExists()
         assertEquals(0, statements())
         // Typing goes on in the step while it is there.
@@ -192,11 +192,12 @@ class StepHintsEditorTest {
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
     }
 
-    // The offer is the step field's own supporting text: it stands inside the field, under the line being typed, and
-    // coming takes no height above the field — the field's top and its text stay where they were while the author types.
+    // T-218: the offer stands under the step's buttons — "Insert ingredient", "Add timer", "Add photo or clip" — and
+    // above its note, so that it never pushes the buttons from reach; coming takes no height above the field — the
+    // field's top and its text stay where they were while the author types.
     @Test
     @Config(qualifiers = "w360dp-h640dp")
-    fun theOfferIsTheStepFieldsSupportingTextAndShiftsNothingTyped() {
+    fun theOfferStandsUnderTheButtonsAndShiftsNothingTyped() {
         openDirectly(draft(Step(0, ""), Step(1, "")))
         compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performScrollTo()
         compose.waitForIdle()
@@ -211,9 +212,13 @@ class StepHintsEditorTest {
         val field = fromSheet(EditorTags.stepText(0))
         // In the step's sheet: nothing comes above the field.
         assertEquals(before.top, field.top, 1f)
-        // Inside the field's outline area, below the line the author types into.
-        assertTrue("offer $offer is not under the typed line ${before}", offer.top >= before.bottom - 1f)
-        assertTrue("offer $offer is not inside the field $field", offer.bottom <= field.bottom + 1f && offer.left >= field.left)
+        // Under the field and its buttons, above the note.
+        assertTrue("offer $offer is not under the field $field", offer.top >= field.bottom - 1f)
+        listOf(EditorTags.stepInsert(0), EditorTags.timerAttach(0), EditorTags.stepPhoto(0)).forEach { button ->
+            assertTrue("offer $offer is not under $button", offer.top >= fromSheet(button).bottom - 1f)
+        }
+        assertTrue("offer $offer is not above the note", offer.bottom <= fromSheet(StepNoteTags.field(0)).top + 1f)
+        assertEquals(field.left, offer.left, 1f)
         // Its own node, read politely as it comes, and not merged into the field the author types into.
         val node = compose.inStep(0).onNodeWithTag(EditorTags.stepReferencesOffered(0)).fetchSemanticsNode()
         assertEquals(LiveRegionMode.Polite, node.config[SemanticsProperties.LiveRegion])
@@ -329,7 +334,7 @@ class StepHintsEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
         val offer = compose.textsOf(EditorTags.stepReferencesOffered(0)).single()
         assertEquals(string(R.string.editor_references_offered), offer)
-        assertTrue(offer, offer.contains("@") && offer.contains("значок вставки ингредиента") && offer.contains("вручную"))
+        assertTrue(offer, offer.contains("@") && offer.contains("«Вставить ингредиент»") && offer.contains("вручную"))
     }
 
     // ---- GUIDE-006 ----
