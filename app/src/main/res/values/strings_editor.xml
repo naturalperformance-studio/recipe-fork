@@ -213,4 +213,10 @@
     <!-- %1$d is the most items a recipe lists (15). -->
     <string name="editor_equipment_limit">A recipe can list up to %1$d items of equipment.</string>
     <string name="editor_equipment_removed">Equipment item %1$d removed</string>
+    <!-- The equipment dictionary's offer under an item being typed, as an ingredient's (FLOW-057); %1$s is an entry's label or the typed text. -->
+    <string name="editor_equipment_pick_action">Use the dictionary item %1$s</string>
+    <string name="editor_equipment_free_text_offer">Add “%1$s” as free text</string>
+    <string name="editor_equipment_free_text_action">Add %1$s in your own words, not from the dictionary</string>
+    <!-- Under an item in the author's own words, once it is left: muted, a hint and not an error. -->
+    <string name="editor_equipment_free_text_warning">Not from the equipment dictionary: My kitchen does not check this item.</string>
 </resources>
