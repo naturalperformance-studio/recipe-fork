@@ -60,6 +60,7 @@ import app.recipefork.app.timer.TimerNotificationsCheck
 import app.recipefork.app.timer.TimerStep
 import app.recipefork.app.timer.rememberRecipeTimers
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepText
 import kotlinx.coroutines.flow.StateFlow
@@ -110,8 +111,7 @@ internal fun StepsList(
     // A step that is only a reference reads as one, one that is only its author's note reads as that, and one that is
     // only a photograph or a clip shows it — or says it is unavailable (FLOW-061); one holding nothing that reads or
     // shows is left out.
-    val shown = steps.sortedBy { it.position }
-        .filter { StepText.render(it, references::quantity).isNotBlank() || it.note != null || media.of(it.position) != null }
+    val shown = steps.sortedBy { it.position }.filter { isListed(it, references::quantity, media.of(it.position) != null) }
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }
@@ -175,6 +175,14 @@ internal fun StepsList(
     RestartQuestion(timers)
     TimerNotificationsCheck(timers)
 }
+
+/**
+ * Whether the card lists [step]: it reads as something — its text, each reference read by [quantity], or the author's
+ * note — or it carries a photo or a clip ([hasMedia]). The list of steps and the summary under the title ([RecipeSummary])
+ * both keep a step by this.
+ */
+internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean): Boolean =
+    StepText.render(step, quantity).isNotBlank() || step.note != null || hasMedia
 
 /**
  * One step: its number in a filled circle and its text beside it, with the author's note under the text, muted and

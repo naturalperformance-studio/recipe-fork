@@ -41,4 +41,19 @@ class RecipeSummaryTest {
         val recipe = Recipe.create(Instant.parse("2026-10-09T12:00:00Z"), null).copy(steps = listOf(Step(0, "Stir")))
         assertNull(RecipeSummary.of(recipe, InterfaceLanguage.ENGLISH).minutes)
     }
+
+    // A step that is only the author's note is listed on the card, so it is counted, and its timers with it — by the one
+    // rule the card's list keeps a step by.
+    @Test
+    fun aStepOfOnlyANoteIsCountedWithItsTimers() {
+        val recipe = Recipe.create(Instant.parse("2026-10-10T12:00:00Z"), null).copy(
+            steps = listOf(
+                Step(0, "Boil", timers = listOf(Timer(10.minutes))),
+                Step(1, " ", timers = listOf(Timer(40.minutes)), note = "Let it rest, covered."),
+                Step(2, " ", timers = listOf(Timer(5.hours))),
+            ),
+        )
+        assertEquals(RecipeSummary(0, 2, 50), RecipeSummary.of(recipe, InterfaceLanguage.ENGLISH))
+        assertEquals(listOf(true, true, false), recipe.steps.map { isListed(it, { null }, hasMedia = false) })
+    }
 }

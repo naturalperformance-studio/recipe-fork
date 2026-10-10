@@ -188,8 +188,8 @@ private fun StepRow(
     var leftCut by remember { mutableStateOf(false) }
     // References offered under the first step while it is first written in this editing session (GUIDE-008).
     var offering by remember { mutableStateOf(false) }
-    // The note's field, asked for from the step's menu: it stays while the step holds a note, and goes once the author
-    // leaves it empty.
+    // The note's field, asked for from the step's menu: it stays while the step holds a note or the author is in it, and
+    // goes once the author leaves it empty.
     var noteAsked by rememberSaveable { mutableStateOf(false) }
     val noteShown = noteAsked || step.note != null
     val noteFocus = remember { RowFocus() }
@@ -253,7 +253,10 @@ private fun StepRow(
                 )
                 // The step's own slot for what its text needs, right under the text and above its actions.
                 BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = 0.dp)
-                if (noteShown) StepNoteField(position, step, editor, noteFocus) { held -> if (!held) noteAsked = false }
+                if (noteShown) {
+                    // Entered, the field stays while the author is in it, emptied or not; left empty, it goes.
+                    StepNoteField(position, step, editor, noteFocus, onEnter = { noteAsked = true }) { held -> if (!held) noteAsked = false }
+                }
                 BlockActions {
                     InsertIngredient(position, ingredients, dictionary, language, editor, field)
                     BlockAction(
@@ -317,10 +320,18 @@ private fun StepRow(
  * that it stays with them when someone else forks the recipe (FORK-007). What the author types stays in the field as
  * typed — a space before the next word included — while it reads as the note the step holds, trimmed, blank as none.
  * Over [app.recipefork.core.recipe.RecipeBounds.MAX_STEP_NOTE] characters it is kept in full and marked on leaving the
- * field, as every limit is (FLOW-028). Leaving it, [onLeft] is told whether the step holds a note.
+ * field, as every limit is (FLOW-028). Entering it, [onEnter] is told; leaving it, [onLeft] is told whether the step
+ * holds a note.
  */
 @Composable
-private fun StepNoteField(position: Int, step: Step, editor: RecipeEditor, focus: RowFocus, onLeft: (held: Boolean) -> Unit) {
+private fun StepNoteField(
+    position: Int,
+    step: Step,
+    editor: RecipeEditor,
+    focus: RowFocus,
+    onEnter: () -> Unit,
+    onLeft: (held: Boolean) -> Unit,
+) {
     // Kept across the activity being recreated, under the step's key, so it stays the step's own.
     var typed by rememberSaveable { mutableStateOf<String?>(null) }
     // The step as the editor holds it now — [step] at the latest; the text in the field stands only while it is what the
@@ -346,7 +357,7 @@ private fun StepNoteField(position: Int, step: Step, editor: RecipeEditor, focus
                 .focusRequester(requester)
                 .onFocusChanged { if (!it.isFocused) typed = null }
                 .then(
-                    leaving {
+                    leaving(onEnter = onEnter) {
                         editor.leave(RecipePart.StepNote(position))
                         onLeft(held() != null)
                     },

@@ -200,6 +200,29 @@ class StepNoteEditorTest {
         assertTrue(offered(0))
     }
 
+    // The field of a step that opened with a note stays while the author is in it, emptied: they can clear the note and
+    // write it anew without the field, the focus or the keyboard going. Left empty, it goes, and the menu offers a note.
+    @Test
+    fun anEmptiedNoteKeepsItsFieldWhileTheAuthorIsInIt() {
+        val id = open(draft(secondNote = note))
+        type(StepNoteTags.field(1), "")
+        assertTrue(exists(StepNoteTags.field(1)))
+        assertTrue(focused(StepNoteTags.field(1)))
+        assertNull(stored(id).steps[1].note)
+        compose.onNodeWithTag(StepNoteTags.field(1)).performTextReplacement("Pour it hot.")
+        compose.waitForIdle()
+        assertTrue(focused(StepNoteTags.field(1)))
+        assertEquals("Pour it hot.", stored(id).steps[1].note)
+
+        compose.onNodeWithTag(StepNoteTags.field(1)).performTextReplacement("")
+        compose.waitForIdle()
+        assertTrue(focused(StepNoteTags.field(1)))
+        enter(EditorTags.TITLE)
+        compose.waitUntil(PATIENCE_MS) { !exists(StepNoteTags.field(1)) }
+        assertNull(stored(id).steps[1].note)
+        assertTrue(offered(1))
+    }
+
     // A step that already has a note shows its field, filled, and offers no action to add one.
     @Test
     fun aStepWithANoteShowsItsField() {

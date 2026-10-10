@@ -14,7 +14,6 @@ import app.recipefork.app.media.stepMedia
 import app.recipefork.app.timer.durationText
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.ReferenceText
-import app.recipefork.core.recipe.StepText
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlin.time.Duration.Companion.minutes
 
@@ -26,11 +25,12 @@ internal data class RecipeSummary(val ingredients: Int, val steps: Int, val minu
     companion object {
         /**
          * The summary of [recipe] as its card shows it: every ingredient row, and the steps the card lists — those
-         * that read as something or carry a photo or clip, as [StepsList] keeps them — with the timers of those steps.
+         * that read as something, a note of the author's included, or carry a photo or clip, by [isListed] as
+         * [StepsList] keeps them — with the timers of those steps.
          */
         fun of(recipe: Recipe, language: InterfaceLanguage): RecipeSummary {
             val quantity = ReferenceText.authored(recipe.ingredients, language)
-            val steps = recipe.steps.filter { StepText.render(it, quantity).isNotBlank() || recipe.stepMedia(it.position) != null }
+            val steps = recipe.steps.filter { isListed(it, quantity, recipe.stepMedia(it.position) != null) }
             val timers = steps.flatMap { it.timers }
             val total = timers.sumOf { it.duration.inWholeMinutes }
             return RecipeSummary(recipe.ingredients.size, steps.size, if (timers.isEmpty()) null else rounded(total))
