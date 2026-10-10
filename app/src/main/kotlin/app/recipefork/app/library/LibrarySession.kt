@@ -172,8 +172,9 @@ class LibrarySession(
     }
 
     /**
-     * Whether My kitchen is open: kept like the settings. It lies above the settings when opened from them
-     * ([openKitchen]), or above a recipe's card when opened from one of its items of equipment ([openKitchenAt]); it is
+     * Whether My kitchen is open: kept like the settings. It lies above the settings when opened from them, above the
+     * book from its filters, above a recipe's card to set it up ([openKitchen]), or above a recipe's card when opened
+     * from one of its items of equipment ([openKitchenAt]); it is
      * shown only above what it was opened from, and whatever opens something else — the settings, a card, the editor,
      * the book — closes it, so it never comes back above anything else.
      */

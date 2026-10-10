@@ -111,6 +111,8 @@ class ContrastTest {
         graphic("a step's number circle in the card's current step, on its container", c.primary, c.primaryContainer),
         graphic("a running timer's primary fill, told from the card it stands on", c.primary, c.surface),
         graphic("a running timer's primary fill, told from the current step's container it stands in", c.primary, c.primaryContainer),
+        graphic("a timer's control at rest and its Cancel on the current step — the primary edge that stands them off its container", c.primary, c.primaryContainer),
+        text("a timer's control at rest and its Cancel on the current step — the label on the surface they are filled with", c.primary, c.surface),
         graphic("My kitchen — a ticked or partly ticked checkbox's box, an item's or a group's", c.primary, c.surface),
         graphic("My kitchen — the tick or the dash in a ticked or partly ticked checkbox's box", c.onPrimary, c.primary),
         graphic("My kitchen opened from a recipe — its item's checkbox boundary, unticked, on the primary container", c.onSurfaceVariant, c.primaryContainer),

@@ -53,14 +53,13 @@
     <string name="library_entry_remove">Remove</string>
     <!-- FLOW-017: the serving count the reader usually cooks for. -->
     <string name="library_usual_servings">I usually cook for…</string>
-    <string name="library_usual_not_set">not set</string>
-    <string name="library_usual_count">Servings: %1$s</string>
-    <string name="library_usual_fewer">Fewer servings</string>
+    <string name="library_usual_not_set">Not set</string>
     <string name="library_usual_fewer_action">Lower the usual serving count</string>
-    <string name="library_usual_more">More servings</string>
     <string name="library_usual_more_action">Raise the usual serving count</string>
     <string name="library_usual_set">Set</string>
-    <string name="library_usual_clear">Not set</string>
+    <string name="library_usual_cancel">Cancel</string>
+    <!-- The dialog's two choices: no usual count, or the count its − and + walk. -->
+    <string name="library_usual_count_choice">A usual count</string>
     <!-- The drag column of the editor's steps and ingredients on the right of each block, for a left hand. -->
     <string name="library_drag_handle_right">Drag handle on the right</string>
     <!-- FLOW-060: clearing in the settings the media the device need not keep, and the statement shown first. -->
@@ -71,12 +70,12 @@
     <string name="library_clear_media_serverless">Clear photos and videos of imported recipes</string>
     <string name="library_clear_media_title_serverless">Clear photos and videos of imported recipes?</string>
     <string name="library_clear_media_statement_serverless">The photos and videos of the recipes you imported from files are deleted from this device. To have them again, remove the recipe and import its file again. Every recipe keeps its text, and the recipes you wrote here keep their photos and videos.</string>
-    <string name="library_clear_media_nothing_serverless">The recipes you imported have no photos or videos to clear.</string>
     <string name="library_clear_media_statement">The photographs and video of found recipes and of the recipes you sent are deleted from this device. They are fetched again when a recipe is opened with a connection. Every recipe keeps its text, and recipes not sent keep their photographs and video.</string>
     <string name="library_clear_media_confirm">Clear</string>
     <string name="library_clear_media_decline">Cancel</string>
-    <string name="library_clear_media_nothing">There is no saved media to clear.</string>
-    <string name="library_clear_media_ok">OK</string>
+    <!-- Said once a confirmed clearing is done. -->
+    <string name="library_clear_media_done">Saved media cleared</string>
+    <string name="library_clear_media_done_serverless">Photos and videos of imported recipes cleared</string>
     <!-- FLOW-035 (4): the search field at the top of each view — its short label, and the longer placeholder shown
          while it is focused and empty — and the result that holds nothing. -->
     <string name="library_search">Search</string>
@@ -127,4 +126,8 @@
     <string name="library_filter_equipment_enough">Enough equipment</string>
     <string name="library_nothing_equipment">Each recipe needs something you lack</string>
     <string name="library_filter_equipment_off">Turn off “Enough equipment”</string>
+    <!-- The way into My kitchen from the sheet's section: set it up while nothing is ticked, edit it once something is. -->
+    <string name="library_filter_equipment_empty_hint">Tick what your kitchen has, and recipes that need something else can be hidden.</string>
+    <string name="library_filter_equipment_set_up">Set up My kitchen</string>
+    <string name="library_filter_equipment_edit">Edit My kitchen</string>
 </resources>

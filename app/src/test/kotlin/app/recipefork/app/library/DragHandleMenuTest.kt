@@ -122,7 +122,11 @@ class DragHandleMenuTest {
     fun theSettingsOfferTheRightHandleAsASwitchKeptOnTheDevice() {
         show()
         openMenu()
-        assertEquals(listOf("Drag handle on the right"), compose.textsOf(SettingsTags.HANDLE_RIGHT))
+        // v0.30, T-221: beneath its name it says it is the editor's.
+        assertEquals(
+            listOf("Drag handle on the right", "For moving ingredients and steps in the editor"),
+            compose.textsOf(SettingsTags.HANDLE_RIGHT),
+        )
         val item = compose.onNodeWithTag(SettingsTags.HANDLE_RIGHT).fetchSemanticsNode()
         assertEquals(Role.Switch, item.config[SemanticsProperties.Role])
         assertEquals(ToggleableState.Off, checked())
@@ -154,7 +158,10 @@ class DragHandleMenuTest {
     fun theItemReadsInRussian() {
         show()
         openMenu()
-        assertEquals(listOf("Ручка перетаскивания справа"), compose.textsOf(SettingsTags.HANDLE_RIGHT))
+        assertEquals(
+            listOf("Ручка перетаскивания справа", "Для перемещения ингредиентов и шагов в редакторе"),
+            compose.textsOf(SettingsTags.HANDLE_RIGHT),
+        )
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
     }

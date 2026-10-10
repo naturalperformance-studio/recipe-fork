@@ -114,8 +114,8 @@ private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lower
  * (FLOW-035 (3)); under them, [FILTER_ROW_GAP] apart, the row of quick filters (FLOW-035, CAT-002, CAT-006), whose
  * "All filters" opens the sheet of every filter. The [languages] of the view's recipes are what its language filter offers (L10N-005); the entries
  * they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)); the tags they [carries]
- * most are offered as quick filters; the filter "Enough equipment" is offered by the sheet while [equipmentOffered] —
- * while My kitchen has something that counts. It stands at the top of its view's page, under the tabs, and never
+ * most are offered as quick filters; the sheet's equipment section is My [kitchen]'s ([SheetKitchen]), left out while
+ * it is not known yet. It stands at the top of its view's page, under the tabs, and never
  * scrolls with the list.
  */
 @Composable
@@ -129,7 +129,7 @@ internal fun ListHeader(
     languages: List<BookLanguage>,
     hold: Set<Long> = emptySet(),
     carries: Map<String, List<Long>> = emptyMap(),
-    equipmentOffered: Boolean = false,
+    kitchen: SheetKitchen? = null,
     modifier: Modifier = Modifier,
 ) {
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
@@ -179,7 +179,7 @@ internal fun ListHeader(
         }
         QuickFilters(filters, onFilters, choices, languages, carries, onAll = { sheetOpen = true })
     }
-    if (sheetOpen) FiltersSheet(filters, onFilters, choices, languages, hold, equipmentOffered, onClose = { sheetOpen = false })
+    if (sheetOpen) FiltersSheet(filters, onFilters, choices, languages, hold, kitchen, onClose = { sheetOpen = false })
 }
 
 /**

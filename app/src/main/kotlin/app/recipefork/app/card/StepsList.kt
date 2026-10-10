@@ -255,7 +255,7 @@ private fun StepRow(
             // Each timer on its own line: the first a clear gap below the rest, the others closer under it.
             if (cooking) {
                 val gap = if (index == 0) TimerGap else TimersGap
-                StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
+                StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap), onHighlight = current)
             } else {
                 val gap = if (index == 0) VIEW_TIMER_GAP else VIEW_TIMERS_GAP
                 ViewTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))

@@ -57,9 +57,6 @@ internal fun rememberKitchenFlow(kitchen: Kitchen?): Flow<Kitchen?> {
     return remember { snapshotFlow { current.value } }
 }
 
-/** Whether [kitchen] has anything that counts, so that the filter "Enough equipment" is offered. */
-internal fun offersEquipment(kitchen: Kitchen?): Boolean = kitchen != null && !kitchen.isEmpty
-
 /**
  * A kitchen emptied of everything that counts switches the filter "Enough equipment" of [view] off: it is not offered
  * then, and would hide nothing.

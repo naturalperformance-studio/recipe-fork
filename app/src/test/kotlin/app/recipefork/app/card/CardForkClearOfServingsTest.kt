@@ -44,6 +44,10 @@ import java.time.Instant
  * screen, wherever the recipe's description puts the count, on a 360 × 720 dp phone at the usual text size and on a
  * 320 dp one at twice the font scale, in English and Russian; nor anywhere while the reader scrolls through. Where the
  * count stands under it, Fork stands aside, and comes back once the count is scrolled clear of it.
+ *
+ * v0.30, T-221: so on a short recipe too — one ingredient, one step — whose count the description puts in Fork's band:
+ * the room View leaves at its end for Fork (its spacing, its height, a gap) lets the count be scrolled clear, and Fork
+ * comes back.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -133,6 +137,48 @@ class CardForkClearOfServingsTest {
             assertForkClearOfTheCount("${recipe.description.length} characters, Fork back")
         }
     }
+
+    /** A recipe of one ingredient and one step, whose description is [sentences] sentences long. */
+    private fun short(sentences: Int) = Recipe.create(now, null).copy(
+        title = "Tea",
+        description = List(sentences) { sentence }.joinToString(" "),
+        servings = 4,
+        ingredients = listOf(
+            Ingredient(0, null, freeTextName = "Tea leaves", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(5)),
+        ),
+        steps = listOf(Step(0, "Pour on boiling water.")),
+    )
+
+    private fun shortRecipeSweep() {
+        val opened = (0..SENTENCES).map { short(it).also { r -> runBlocking { recipes.save(r) } } }
+        val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.VIEW), ingredients = IngredientEntries { emptyList() })
+        compose.setContent { MaterialTheme { shown?.let { CardScreen(it, recipes, environment, onBack = {}, onEdit = {}) } } }
+        var asideOnce = false
+        opened.forEachIndexed { sentences, recipe ->
+            compose.runOnIdle { shown = null }
+            compose.waitForIdle()
+            compose.runOnIdle { shown = recipe.id }
+            compose.awaitCard()
+            compose.waitUntil(PATIENCE_MS) { exists(CardTags.SERVINGS) }
+            compose.waitForIdle()
+            assertForkClearOfTheCount("a short recipe, $sentences sentences, as the card opens")
+            if (!exists(CardTags.FORK)) {
+                // The count is in Fork's band: scrolled clear of it, Fork comes back, covering nothing.
+                asideOnce = true
+                compose.scrollUntilForkShows()
+                assertForkClearOfTheCount("a short recipe, $sentences sentences, Fork back")
+            }
+        }
+        assertTrue("the short recipe's count came under Fork somewhere, and Fork stood aside", asideOnce)
+    }
+
+    @Test
+    @Config(qualifiers = "en-w360dp-h720dp")
+    fun onAShortRecipeForkComesBackOnceTheCountIsScrolledClear() = shortRecipeSweep()
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun onAShortRecipeForkComesBackAtTwiceTheFontScaleInRussian() = shortRecipeSweep()
 
     @Test
     @Config(qualifiers = "en-w360dp-h720dp")
