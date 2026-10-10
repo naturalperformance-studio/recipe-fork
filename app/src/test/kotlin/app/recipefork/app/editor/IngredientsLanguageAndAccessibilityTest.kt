@@ -60,8 +60,16 @@ class IngredientsLanguageAndAccessibilityTest {
     private val session = LibrarySession(SavedStateHandle())
     private val opened = mutableStateOf<RecipeId?>(null)
 
-    /** The author's own content on the screen: tag labels, names, numbers typed and the frozen recipe's title. */
-    private val content = tagLabels(SAMPLE_DICTIONARIES) + setOf("Pancakes", "черемша", "4", "¼", "1 500", "500", "½", "2")
+    /**
+     * The author's own content on the screen: tag labels, names, numbers typed and the frozen recipe's title; and each
+     * row's line, which writes them with the unit as the card does.
+     */
+    private val content = tagLabels(SAMPLE_DICTIONARIES) + setOf("Pancakes", "черемша", "4", "¼", "1 500", "500", "½", "2") + setOf(
+        "¼ pc черемша", "1 500 g Unnamed ingredient", "to taste Unnamed ingredient",
+        "500 g черемша", "½ tsp Unnamed ingredient", "to taste черемша", "2 pc черемша",
+        "¼ шт черемша", "1 500 г Ингредиент без названия", "по вкусу Ингредиент без названия",
+        "500 г черемша", "½ ч. л. Ингредиент без названия", "по вкусу черемша", "2 шт черемша",
+    ) + MATERIAL_SHEET_TEXTS
 
     @Before
     fun setUp() {
@@ -87,13 +95,16 @@ class IngredientsLanguageAndAccessibilityTest {
     }
 
     private fun chooseUnit(position: Int, unit: QuantityUnit) {
+        compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientUnit(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(unit)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.unitOption(unit)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(unit)), PATIENCE_MS)
     }
 
+    /** Adds a row by "Add ingredient", which opens its sheet: any sheet open before is closed first. */
     private fun addIngredient(position: Int) {
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientName(position)), PATIENCE_MS)
     }
@@ -120,21 +131,29 @@ class IngredientsLanguageAndAccessibilityTest {
         addIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performTextInput("черемша")
         chooseUnit(0, QuantityUnit.PIECE)
-        compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextInput("¼")
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performTextInput("¼")
         addIngredient(1)
-        compose.onNodeWithTag(EditorTags.ingredientQuantity(1)).performScrollTo().performTextInput("1 500")
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(1)).performTextInput("1 500")
         addIngredient(2)
         chooseUnit(2, QuantityUnit.TO_TASTE)
-        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientError(1)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
-        // back, title, language, clear, search, three tags, servings, and per row its fields and actions
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(IngredientSheetTags.problem(1)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
+        // back, title, language, clear, search, three tags, servings, and per row its line and actions
         checkTheScreen(expectInteractive = 20)
 
+        // A row's sheet open: its fields, the free-text warning, the divisibility question and the quantity's error.
+        compose.openIngredient(0)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientError(0)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
+        checkTheScreen(expectInteractive = 7)
+
         // The unit list open.
-        compose.onNodeWithTag(EditorTags.ingredientUnit(1)).performScrollTo().performClick()
+        compose.openIngredient(1)
+        compose.onNodeWithTag(EditorTags.ingredientUnit(1)).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(QuantityUnit.CUP)), PATIENCE_MS)
         checkTheScreen(expectInteractive = 12)
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(QuantityUnit.CUP)), PATIENCE_MS)
+        compose.closeIngredient()
 
         // A frozen recipe's rows, read only.
         compose.onNodeWithTag(EditorTags.BACK).performClick()

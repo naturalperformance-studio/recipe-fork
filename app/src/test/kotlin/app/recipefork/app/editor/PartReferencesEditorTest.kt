@@ -263,6 +263,7 @@ class PartReferencesEditorTest {
         assertEquals("В маринад: 2 шт", stepShown(0))
         assertTrue(!exists(EditorTags.stepPartWarning(0)))
         assertTrue(background(11) != null && background(11) != warning)
+        compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("1")
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPartWarning(0)) }
         assertEquals("В маринад: 2 шт", stepShown(0))
@@ -271,6 +272,7 @@ class PartReferencesEditorTest {
         compose.waitUntil(PATIENCE_MS) { background(11) == warning }
         assertTrue(bold(11))
         assertEquals(listOf(IngredientReference(0, 11, two)), stored(recipe.id).steps[0].ingredientReferences)
+        compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("6")
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPartWarning(0)) }
         compose.waitUntil(PATIENCE_MS) { background(11) != warning }
@@ -286,6 +288,7 @@ class PartReferencesEditorTest {
             Step(1, "В соус: ", listOf(IngredientReference(0, 8, two))),
         )
         open(recipe.id)
+        compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientUnit(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(QuantityUnit.GRAM)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)

@@ -36,11 +36,17 @@
     <string name="editor_servings">Servings</string>
     <string name="editor_servings_accepts">A whole number, 1 or more</string>
     <string name="editor_servings_none">Not given</string>
-    <!-- The ingredient rows: three fields each (FLOW-023). -->
+    <!-- The ingredient rows: each reads as a line and opens in a sheet of its fields (FLOW-023). -->
     <string name="editor_ingredients">Ingredients</string>
     <string name="editor_ingredient_add">Add ingredient</string>
     <string name="editor_ingredient_add_action">Add an ingredient row</string>
     <string name="editor_ingredient_name">Ingredient</string>
+    <!-- A row holding nothing yet, as it reads in the list. -->
+    <string name="editor_ingredient_new">New ingredient</string>
+    <!-- A row's tap, and the title of the sheet it opens: the row's fields. -->
+    <string name="editor_ingredient_edit">Edit ingredient</string>
+    <!-- Under a row whose name is in the author's own words; the sheet says why it matters (FLOW-022). -->
+    <string name="editor_ingredient_free_text_mark">Not from the ingredient dictionary</string>
     <string name="editor_ingredient_unnamed">Unnamed ingredient</string>
     <string name="editor_ingredient_quantity">Quantity</string>
     <string name="editor_ingredient_unit">Unit</string>

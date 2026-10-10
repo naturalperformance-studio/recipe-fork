@@ -14,7 +14,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
@@ -143,12 +143,15 @@ class EntryRowEditorTest {
     private fun fieldText(tag: String): String =
         compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
 
+    /** Adds a row by "Add ingredient", which opens its sheet: any sheet open before is closed first. */
     private fun addIngredient(position: Int) {
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientName(position)), PATIENCE_MS)
     }
 
     private fun type(position: Int, text: String) {
+        compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientName(position)).performScrollTo().performTextReplacement(text)
         compose.waitForIdle()
     }
@@ -166,6 +169,7 @@ class EntryRowEditorTest {
     }
 
     private fun pieces(position: Int) {
+        compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientUnit(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(QuantityUnit.PIECE)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.PIECE)).performSemanticsAction(SemanticsActions.OnClick)
@@ -173,12 +177,17 @@ class EntryRowEditorTest {
     }
 
     private fun quantity(position: Int, typed: String) {
+        compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(position)).performScrollTo().performTextReplacement(typed)
         compose.waitForIdle()
     }
 
-    private fun errorText(position: Int): String? =
-        if (exists(EditorTags.ingredientError(position))) compose.textsOf(EditorTags.ingredientError(position)).joinToString("") else null
+    /** What marks the quantity of the row at [position]: in its sheet where that is open, on its line otherwise. */
+    private fun errorText(position: Int): String? = when {
+        exists(EditorTags.ingredientError(position)) -> compose.textsOf(EditorTags.ingredientError(position)).joinToString("")
+        !compose.ingredientSheetOpen() && exists(IngredientSheetTags.problem(position)) -> compose.textsOf(IngredientSheetTags.problem(position)).joinToString("")
+        else -> null
+    }
 
     // Scenario 1; FLOW-001 (2), FLOW-023 (11), DOM-017: an entry's flag asks nothing, is held by the row and decides the grid.
     @Test
@@ -266,6 +275,8 @@ class EntryRowEditorTest {
         assertNull(row(id).freeTextName)
         assertFalse(exists(EditorTags.ingredientWarning(0)))
         assertFalse(exists(IngredientNameTags.offer(0)))
+        compose.closeIngredient()
+        assertEquals("г крылышки, острые", compose.ingredientLine(0))
 
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.awaitCard()
@@ -279,6 +290,7 @@ class EntryRowEditorTest {
     @Config(qualifiers = "en")
     fun anotherEntrysWholeLabelNamesThatEntry() {
         val id = openSeeded(Ingredient(0, 10, null, null, UnitType.PIECE, QuantityUnit.PIECE, null, divisible = true))
+        compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "chicken" }
         type(0, "chicken wings")
         quantity(0, "1.5")
@@ -295,6 +307,7 @@ class EntryRowEditorTest {
     @Config(qualifiers = "ru")
     fun anotherEntrysWholeLabelNamesThatEntryInRussian() {
         val id = openSeeded(Ingredient(0, 10, null, null, UnitType.PIECE, QuantityUnit.PIECE, null, divisible = true))
+        compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "курица" }
         type(0, "курица копченая")
         quantity(0, "1,5")
@@ -313,6 +326,7 @@ class EntryRowEditorTest {
     @Config(qualifiers = "ru")
     fun separatorsAfterTheLabelAreNotKept() {
         val id = openSeeded(Ingredient(0, 11, null, null, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(500)))
+        compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "крылышки" }
         type(0, "крылышки , острые")
         assertEquals(11L to "острые", row(id).let { it.dictionaryEntry to it.qualifier })
@@ -322,12 +336,12 @@ class EntryRowEditorTest {
         assertFalse(exists(EditorTags.ingredientWarning(0)))
     }
 
-    // DOM-009: a frozen recipe's row reads as the field does, the entry's label then its qualifier.
+    // DOM-009: a frozen recipe's row reads as the card does, the entry's label then its qualifier.
     @Test
     @Config(qualifiers = "ru")
     fun aFrozenRowShowsTheLabelAndTheQualifier() {
         openSeeded(Ingredient(0, 11, "острые", null, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(500)), state = RecipeState.PUBLISHED)
-        compose.waitUntil(PATIENCE_MS) { "крылышки острые" in compose.textsOf(EditorTags.ingredient(0)) }
+        compose.waitUntil(PATIENCE_MS) { "500 г крылышки, острые" in compose.textsOf(EditorTags.ingredient(0)) }
     }
 
     // FLOW-023 (4), DOM-009: an edit inside the label makes the row the author's own words, the qualifier dropped.
@@ -335,6 +349,7 @@ class EntryRowEditorTest {
     @Config(qualifiers = "en")
     fun anEditInsideTheLabelMakesFreeText() {
         val id = openSeeded(Ingredient(0, 11, "spicy", null, UnitType.EXACT, QuantityUnit.GRAM, Rational.of(500)))
+        compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "chicken wings spicy" }
         type(0, "chicken wing spicy")
         val held = row(id)
@@ -347,35 +362,44 @@ class EntryRowEditorTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarning(0)) }
     }
 
-    // The row's layout, both languages: a qualified piece row at 360 dp and font scale 2.0 keeps every input inside its block.
+    // The row's layout, both languages: a qualified piece row at 360 dp and font scale 2.0 reads whole inside its block,
+    // and its sheet keeps every input inside the screen, the name above the quantity.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun aQualifiedRowLaysOutAtDoubleFontScale() = qualifiedRowLaysOut("крылышки острые")
+    fun aQualifiedRowLaysOutAtDoubleFontScale() = qualifiedRowLaysOut("крылышки острые", "6 шт крылышки, острые")
 
     @Test
     @Config(qualifiers = "en-w360dp-h4000dp")
-    fun aQualifiedRowLaysOutAtDoubleFontScaleInEnglish() = qualifiedRowLaysOut("chicken wings острые")
+    fun aQualifiedRowLaysOutAtDoubleFontScaleInEnglish() = qualifiedRowLaysOut("chicken wings острые", "6 pc chicken wings, острые")
 
     private fun bounds(tag: String): Rect = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
 
-    private fun qualifiedRowLaysOut(shownName: String) {
+    private fun inside(part: Rect, whole: Rect) =
+        part.left >= whole.left - 0.5f && part.right <= whole.right + 0.5f && part.top >= whole.top - 0.5f && part.bottom <= whole.bottom + 0.5f
+
+    private fun qualifiedRowLaysOut(shownName: String, line: String) {
         openSeeded(
             Ingredient(0, 11, "острые", null, UnitType.PIECE, QuantityUnit.PIECE, Rational.of(6), divisible = false),
             Ingredient(1, null, null, "яйцо", UnitType.PIECE, QuantityUnit.PIECE, Rational.of(2)),
             fontScale = 2f,
         )
+        compose.waitUntil(PATIENCE_MS) { compose.ingredientLine(0) == line }
+        val block = bounds(EditorTags.ingredient(0))
+        val screen = compose.onAllNodes(isRoot()).fetchSemanticsNodes().first().boundsInRoot
+        assertTrue(block.right <= screen.right + 0.5f && block.left >= screen.left - 0.5f)
+        assertTrue("the line inside its block", inside(bounds(IngredientSheetTags.line(0)), block))
+        compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == shownName }
         assertFalse(exists(EditorTags.divisibility(0)))
-        assertTrue(exists(EditorTags.divisibility(1)))
-        val block = bounds(EditorTags.ingredient(0))
-        val screen = compose.onRoot().fetchSemanticsNode().boundsInRoot
-        assertTrue(block.right <= screen.right + 0.5f && block.left >= screen.left - 0.5f)
+        val sheet = bounds(IngredientSheetTags.SHEET)
         listOf(EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), EditorTags.ingredientUnit(0)).forEach { tag ->
             val part = bounds(tag)
-            assertTrue("$tag inside its block", part.left >= block.left - 0.5f && part.right <= block.right + 0.5f)
-            assertTrue("$tag inside its block", part.top >= block.top - 0.5f && part.bottom <= block.bottom + 0.5f)
+            assertTrue("$tag inside the sheet", part.left >= sheet.left - 0.5f && part.right <= sheet.right + 0.5f)
+            assertTrue("$tag inside the screen", part.left >= screen.left - 0.5f && part.right <= screen.right + 0.5f)
             assertTrue("$tag has width", part.width > 0f)
         }
         assertTrue(bounds(EditorTags.ingredientName(0)).bottom <= bounds(EditorTags.ingredientQuantity(0)).top + 0.5f)
+        compose.openIngredient(1)
+        assertTrue(exists(EditorTags.divisibility(1)))
     }
 }

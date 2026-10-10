@@ -979,7 +979,7 @@ class RecipeEditor(
     }
 
     /** Where the ingredient row whose [ingredientKey] is [key] stands now; null once it is deleted. */
-    private fun ingredientPosition(key: Long): Int? =
+    fun ingredientPosition(key: Long): Int? =
         ingredientKeys.positionOf(key)?.takeIf { it < (current.value?.ingredients?.size ?: 0) }
 
     /** Where the step whose [stepKey] is [key] stands now; null once it is deleted. */

@@ -40,6 +40,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -152,15 +153,11 @@ class BlockScrollTest(private val handleRight: Boolean) {
         val id = open()
         val block = EditorTags.ingredient(1)
         val next = EditorTags.ingredient(2)
-        assertScrollsFrom("the name", EditorTags.ingredientName(1), block, next) { it.center }
-        assertScrollsFrom("the name's label", EditorTags.ingredientName(1), block, next) { Offset(it.left + px(24f), it.top + px(4f)) }
-        assertScrollsFrom("the quantity", EditorTags.ingredientQuantity(1), block, next) { it.center }
-        assertScrollsFrom("the quantity's label", EditorTags.ingredientQuantity(1), block, next) { Offset(it.left + px(24f), it.top + px(4f)) }
-        assertScrollsFrom("the unit", EditorTags.ingredientUnit(1), block, next) { it.center }
-        assertScrollsFrom("the note", IngredientNoteTags.field(1), block, next) { it.center }
-        // Blank: between the name and the note, between the note and the quantity, and below the inputs, inside the block.
-        assertScrollsFrom("the gap below the name", IngredientNoteTags.field(1), block, next) { Offset(it.center.x, it.top - px(2f)) }
-        assertScrollsFrom("the gap below the note", EditorTags.ingredientQuantity(1), block, next) { Offset(it.center.x, it.top - px(2f)) }
+        assertScrollsFrom("the line", IngredientSheetTags.line(1), block, next) { it.center }
+        assertScrollsFrom("the line's start", IngredientSheetTags.line(1), block, next) { Offset(it.left + px(16f), it.top + px(16f)) }
+        assertScrollsFrom("the line's end", IngredientSheetTags.line(1), block, next) { Offset(it.right - px(8f), it.center.y) }
+        // A finger that scrolls opens no sheet.
+        assertFalse(compose.ingredientSheetOpen())
         assertScrollsFrom("the blank bottom of the block", block, block, next) { Offset(it.center.x, it.bottom - px(3f)) }
         assertEquals(recipe().ingredients, stored(id).ingredients)
     }

@@ -138,13 +138,16 @@ class IngredientNameFieldTest {
     private fun fieldText(tag: String): String =
         compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
 
+    /** Adds a row by "Add ingredient", which opens its sheet: any sheet open before is closed first. */
     private fun addIngredient(position: Int) {
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientName(position)), PATIENCE_MS)
     }
 
     /** Types [text] as the whole content of the row's ingredient field and waits until it is held. */
     private fun type(position: Int, text: String) {
+        compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientName(position)).performScrollTo().performTextReplacement(text)
         compose.waitForIdle()
     }
@@ -341,6 +344,9 @@ class IngredientNameFieldTest {
         )
         runBlocking { recipes.save(recipe) }
         openDirectly(recipe.id)
+        // The row says its name is not from the dictionary; its sheet says what that means.
+        compose.waitUntil(PATIENCE_MS) { exists(IngredientSheetTags.freeText(0)) }
+        compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientWarning(0)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
         assertEquals("chiken", fieldText(EditorTags.ingredientName(0)))
         type(0, "chicken w")
@@ -356,6 +362,8 @@ class IngredientNameFieldTest {
         assertEquals("smoked chicken wings", stored(recipe.id).ingredients.single().freeTextName)
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientWarning(0)) }
+        compose.closeIngredient()
+        assertTrue(exists(IngredientSheetTags.freeText(0)))
     }
 
     // FLOW-023 (11), FLOW-022 (5): these entries give no divisibility, so a picked `piece` row still asks.
@@ -389,6 +397,7 @@ class IngredientNameFieldTest {
         addIngredient(1)
         type(1, "черемша")
         pick(IngredientNameTags.freeText(1))
+        compose.closeIngredient()
         val before = stored(id)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.awaitCard()
@@ -399,9 +408,15 @@ class IngredientNameFieldTest {
 
         openDirectly(id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredient(1)), PATIENCE_MS)
-        compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(0)) == "курица" }
-        assertEquals("черемша", fieldText(EditorTags.ingredientName(1)))
+        compose.waitUntil(PATIENCE_MS) { compose.ingredientLine(0) == "г курица" }
+        assertEquals("г черемша", compose.ingredientLine(1))
+        assertTrue(!exists(IngredientSheetTags.freeText(0)))
+        assertTrue(exists(IngredientSheetTags.freeText(1)))
+        compose.openIngredient(0)
+        assertEquals("курица", fieldText(EditorTags.ingredientName(0)))
         assertTrue(!exists(EditorTags.ingredientWarning(0)))
+        compose.openIngredient(1)
+        assertEquals("черемша", fieldText(EditorTags.ingredientName(1)))
         assertTrue(exists(EditorTags.ingredientWarning(1)))
         assertEquals(before, stored(id))
         assertEquals(listOf(10L, null), before.ingredients.map { it.dictionaryEntry })
@@ -410,11 +425,11 @@ class IngredientNameFieldTest {
 
     // L10N-001, A11Y-003, A11Y-005: the open offer reads in the interface language, its choices labelled and 48 dp.
     @Test
-    fun theOpenOfferInEnglish() = theOpenOffer("chi", setOf("chi", "chicken", "chicken wings", "fillet"))
+    fun theOpenOfferInEnglish() = theOpenOffer("chi", setOf("chi", "chicken", "chicken wings", "fillet", "g chi") + MATERIAL_SHEET_TEXTS)
 
     @Test
     @Config(qualifiers = "ru")
-    fun theOpenOfferInRussian() = theOpenOffer("кур", setOf("кур", "курица", "крылышки", "филе", "куркума"))
+    fun theOpenOfferInRussian() = theOpenOffer("кур", setOf("кур", "курица", "крылышки", "филе", "куркума", "г кур") + MATERIAL_SHEET_TEXTS)
 
     private fun theOpenOffer(typed: String, content: Set<String>) {
         writeANewRecipe()

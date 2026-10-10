@@ -145,11 +145,12 @@ class EditorControlsTest {
         assertTrue(image(EditorTags.STEP_ADD).draws(scheme.secondaryContainer))
     }
 
-    // The unit is Material 3's exposed drop-down: a read-only outlined field labelled Unit, holding the unit, whose tap
-    // opens the menu of units.
+    // The unit, in the row's sheet, is Material 3's exposed drop-down: a read-only outlined field labelled Unit, holding
+    // the unit, whose tap opens the menu of units.
     @Test
     fun theUnitIsAReadOnlyFieldOverItsMenu() {
         open()
+        compose.openIngredient(0)
         val node = compose.onNodeWithTag(EditorTags.ingredientUnit(0)).performScrollTo().fetchSemanticsNode()
         assertEquals(context.getString(R.string.editor_unit_gram), node.config[SemanticsProperties.EditableText].text)
         assertFalse("not typed into", node.config.contains(SemanticsActions.SetText))
