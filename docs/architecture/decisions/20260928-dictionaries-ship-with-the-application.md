@@ -22,3 +22,5 @@
 - *Fetch only, as now.* Rejected: a clean installation with no connection would have empty dictionaries, and a serverless release none at all.
 - *Ship only, with no refresh.* Rejected: FLOW-001 (6) requires the held copy to follow the product owner's changes.
 - *Keep the dictionaries' content in the repository as the source the store is loaded from.* Rejected: DOM-014 places their maintenance in the store.
+
+**Amended 2026-10-10:** a third dictionary, equipment (v0.28, T-201), ships the same way. While there is no server all three are kept in the repository's `dictionary/` sources and built by `scripts/dictionary-build.sh` (the serverless departure from DOM-014 recorded in `docs/increments/serverless-roadmap.md`, increment E); a server answer without equipment leaves the device's equipment as it is.
