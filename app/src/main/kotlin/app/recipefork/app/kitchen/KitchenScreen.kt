@@ -389,7 +389,8 @@ private fun GroupRow(
     ListItem(
         headlineContent = {
             // A word wider than the name's room — a long Russian word at a large font scale on a narrow phone — is drawn
-            // smaller until it fits, so that no word is broken.
+            // smaller until it fits, so that no word is broken; never smaller than the style's size at 1×, below which
+            // the name keeps to one line and ends in an ellipsis (WordFitText).
             BoxWithConstraints {
                 WordFitText(
                     label,
