@@ -178,20 +178,18 @@ class StepsEditorTest {
         assertTrue("$tag is shorter than its text", node(tag, unmerged).size.height >= layout.size.height)
     }
 
-    // FLOW-024 (1): after the ingredients, the steps and then the description.
+    // FLOW-024 (1) as T-208 orders it: the title, the tags, then the description, before the serving count; after the
+    // ingredients, the steps, the form's last part.
     @Test
-    fun theStepsAndThenTheDescriptionFollowTheIngredients() {
+    fun theDescriptionSitsUnderTheTitleAndTagsAndTheStepsFollowTheIngredients() {
         writeANewRecipe()
-        val ingredients = bounds(EditorTags.INGREDIENTS)
-        val steps = bounds(EditorTags.STEPS)
-        val description = bounds(EditorTags.DESCRIPTION)
-        assertTrue("the steps are not after the ingredients", steps.top >= ingredients.bottom)
-        assertTrue("the description is not after the steps", description.top >= steps.bottom)
-        // A step stays inside the steps, before the description.
+        val order = listOf(EditorTags.TITLE, EditorTags.TAGS, EditorTags.DESCRIPTION, EditorTags.SERVINGS, EditorTags.INGREDIENTS, EditorTags.STEPS)
+        order.zipWithNext().forEach { (above, below) -> assertTrue("$above above $below", bounds(above).bottom <= bounds(below).top + 0.5f) }
+        // A step stays inside the steps, after the ingredients.
         addStep()
         assertTrue(bounds(EditorTags.step(0)).top >= bounds(EditorTags.INGREDIENTS).bottom)
         assertTrue(bounds(EditorTags.STEP_ADD).top >= bounds(EditorTags.step(0)).bottom)
-        assertTrue(bounds(EditorTags.DESCRIPTION).top >= bounds(EditorTags.STEPS).bottom)
+        assertTrue(bounds(EditorTags.DESCRIPTION).bottom <= bounds(EditorTags.SERVINGS).top)
     }
 
     // "Add step" appends a numbered step of plain text, whose text is edited where it stands.

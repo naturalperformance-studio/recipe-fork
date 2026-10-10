@@ -126,7 +126,7 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
 
 /**
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
- * cover under it (FLOW-026), the tags, the serving count, the equipment, the ingredients, the steps and the description.
+ * cover under it (FLOW-026), the tags, the description, the serving count, the equipment, the ingredients and the steps.
  *
  * [onClose] leaves the editor: the bar's back and "Done" call it once every change is in the book. What is entered is
  * written as it is typed, so leaving holds nothing back: the system's back, and its predictive gesture, are the
@@ -262,6 +262,9 @@ fun EditorScreen(
                     .onFocusedBoundsChanged { scroll.focused = it }
                     .verticalScroll(scroll.state)
                     .padding(16.dp)
+                    // The steps' Add ends the form: it can scroll clear of a statement shown at the bottom, an Undo
+                    // among them.
+                    .padding(bottom = STATEMENT_ROOM)
                     .testTag(EditorTags.FORM),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -284,19 +287,28 @@ fun EditorScreen(
                     TitleAndLanguage(shown, editor) { servings.requestFocus() }
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
+                    // The description stands with the title it tells about, before the serving count; over several
+                    // lines it keeps the keyboard's new-line key, so the title's Next passes over it as over the tags.
+                    DescriptionField(shown, editor)
                     ServingCount(shown, editor, servings, if (shown.equipment.isNotEmpty()) ({ equipment.ask(0) }) else toIngredients)
                     Equipment(shown, editor, equipment, toIngredients, equipmentDictionary, equipmentLanguage)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
-                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork, animated, animations)
+                        // The steps are the form's last part: leaving them for any other part moves the author on from
+                        // them (FLOW-028).
+                        Box(Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Steps) })) {
+                            Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork, animated, animations)
+                        }
                     }
-                    Description(shown, editor)
                 }
             }
         }
         EditorStatementHost(host, Modifier.align(Alignment.BottomCenter))
     }
 }
+
+/** The room the form leaves at its end for a statement of one or two lines, so that it covers no part of the recipe. */
+private val STATEMENT_ROOM = 72.dp
 
 /**
  * Where the editor's statements show: at the bottom, above the keyboard where it is open, each wrapped to its whole
@@ -468,6 +480,40 @@ private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () ->
         // Under the title and the language, across the width, what either still needs (FLOW-028).
         BoundMark(editor, RecipePart.Title, EditorTags.TITLE_MARK, gap = 4.dp)
         BoundMark(editor, RecipePart.Language, EditorTags.LANGUAGE_MARK, gap = 4.dp)
+    }
+}
+
+/**
+ * The description, under the title and the tags, before the serving count: one optional field over as many lines as it
+ * takes, marked on leaving it when over its limit (FLOW-028); read-only where the recipe is frozen.
+ */
+@Composable
+private fun DescriptionField(recipe: Recipe, editor: RecipeEditor) {
+    if (!recipe.state.editable) {
+        Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.DESCRIPTION)) {
+            Text(stringResource(R.string.editor_description), style = MaterialTheme.typography.labelMedium)
+            Text(
+                recipe.description.ifEmpty { stringResource(R.string.editor_description_none) },
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.testTag(EditorTags.DESCRIPTION_TEXT),
+            )
+        }
+        return
+    }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedTextField(
+            value = recipe.description,
+            onValueChange = { editor.setDescription(it) },
+            label = { Text(stringResource(R.string.editor_description_optional)) },
+            minLines = 3,
+            // Over several lines, the keyboard keeps its new-line key.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(leaving { editor.leave(RecipePart.Description) })
+                .testTag(EditorTags.DESCRIPTION),
+        )
+        BoundMark(editor, RecipePart.Description, EditorTags.DESCRIPTION_MARK, gap = 4.dp)
     }
 }
 

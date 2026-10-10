@@ -214,8 +214,8 @@ class CardScreenTest {
         val headings = compose.onAllNodes(isHeading() and hasAnyAncestor(hasTestTag(CardTags.CONTENT)))
             .fetchSemanticsNodes().map { it.config[SemanticsProperties.Text].joinToString("") { t -> t.text } }
         assertEquals(listOf("Roast chicken", w.ingredients, w.steps), headings)
-        // Title, serving count, ingredients, steps, description, one under the other on one scrolling screen.
-        val order = listOf(CardTags.TITLE, CardTags.SERVINGS, CardTags.INGREDIENTS, CardTags.STEPS, CardTags.DESCRIPTION)
+        // Title, description, serving count, ingredients, steps, one under the other on one scrolling screen.
+        val order = listOf(CardTags.TITLE, CardTags.DESCRIPTION, CardTags.SERVINGS, CardTags.INGREDIENTS, CardTags.STEPS)
         order.zipWithNext().forEach { (above, below) -> assertTrue("$above above $below", top(above) < top(below)) }
         assertEquals(1, compose.onAllNodes(hasScrollAction() and hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size)
         // Every text on it is this language's own, or the recipe's.

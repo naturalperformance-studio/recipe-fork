@@ -41,6 +41,7 @@ import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -260,25 +261,35 @@ class BoundMarksEditorTest {
         awaitNoMark(EditorTags.LANGUAGE_MARK)
     }
 
-    // FLOW-028 over DOM-006: reaching the description moves the author on from the ingredients and the steps, and a
-    // description over 2 000 characters is marked on leaving it.
+    // FLOW-028 over DOM-006, the description under the title and the tags (T-208): reaching it moves the author on from
+    // neither the ingredients nor the steps, which stand below it; a description over 2 000 characters is marked on
+    // leaving it; the steps, the form's last part, are marked on leaving them for any other part.
     @Test
     fun theStepsAndTheDescriptionAreMarkedOnLeaving() {
         val id = writeANewRecipe()
         enter(EditorTags.DESCRIPTION)
-        awaitMark(EditorTags.STEPS_MARK, string(R.string.editor_mark_steps_missing))
-        awaitMark(EditorTags.INGREDIENTS_MARK, string(R.string.editor_mark_ingredients_missing))
         val long = "d".repeat(2_001)
         type(EditorTags.DESCRIPTION, long)
         assertTrue(!marked(EditorTags.DESCRIPTION_MARK))
         enter(EditorTags.TITLE)
         awaitMark(EditorTags.DESCRIPTION_MARK, over(R.string.editor_mark_characters_over, 2_000, 2_001))
+        assertFalse("the ingredients, below the description, not left", marked(EditorTags.INGREDIENTS_MARK))
+        assertFalse("the steps, below the description, not left", marked(EditorTags.STEPS_MARK))
         assertEquals(long, stored(id).description)
+        // A step added and taken away again: the author has left the steps with none.
+        addStep()
+        awaitMark(EditorTags.INGREDIENTS_MARK, string(R.string.editor_mark_ingredients_missing))
+        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
+        awaitMark(EditorTags.STEPS_MARK, string(R.string.editor_mark_steps_missing))
+        // The form scrolled to its end, where the Add stands clear of the removal's Undo.
+        compose.onNodeWithTag(EditorTags.FORM).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }
+        compose.waitForIdle()
         addStep()
         awaitNoMark(EditorTags.STEPS_MARK)
     }
 
-    // DOM-012: more than 50 ingredients and more than 50 steps, each named with its count.
+    // DOM-012: more than 50 ingredients and more than 50 steps, each named with its count — the ingredients on coming
+    // into a step, the steps on leaving them.
     @Test
     fun moreRowsThanTheLimitsAreMarked() {
         openDirectly(
@@ -286,8 +297,10 @@ class BoundMarksEditorTest {
                 it.copy(title = "Feast", ingredients = (0 until 51).map(::row), steps = (0 until 51).map { p -> Step(p, "Step.") })
             },
         )
-        enter(EditorTags.DESCRIPTION)
+        enter(EditorTags.stepText(0))
         awaitMark(EditorTags.INGREDIENTS_MARK, over(R.string.editor_mark_ingredients_over, 50, 51))
+        assertFalse("the steps not left yet", marked(EditorTags.STEPS_MARK))
+        enter(EditorTags.DESCRIPTION)
         awaitMark(EditorTags.STEPS_MARK, over(R.string.editor_mark_steps_over, 50, 51))
     }
 
@@ -408,14 +421,6 @@ class BoundMarksEditorTest {
     fun theIngredientMarkDoesNotPushTheStepTheAuthorIsIn() {
         openDirectly(draft { it.copy(title = "Tea", steps = listOf(Step(0, "Boil the water."))) })
         val (before, after) = boundsAroundTheMark(EditorTags.stepText(0), EditorTags.INGREDIENTS_MARK)
-        assertSamePlace(before, after)
-    }
-
-    // The same for the steps' mark and the description.
-    @Test
-    fun theStepsMarkDoesNotPushTheDescriptionTheAuthorIsIn() {
-        openDirectly(draft { it.copy(title = "Tea", ingredients = listOf(row(0))) })
-        val (before, after) = boundsAroundTheMark(EditorTags.DESCRIPTION, EditorTags.STEPS_MARK)
         assertSamePlace(before, after)
     }
 

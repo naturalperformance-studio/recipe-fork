@@ -190,7 +190,8 @@ class EditorKeyboardTest {
     }
 
     // Next goes title → serving count → name → note → quantity → unit → the next row's name; the last row's last field
-    // says Done, which closes the keyboard and adds no row.
+    // says Done, which closes the keyboard and adds no row. From the title it passes over the tags and the description
+    // between it and the serving count (T-208): each keeps a key of its own — the tags' Done, the description's new line.
     @Test
     fun nextGoesThroughTheRowsAndDoneEndsTheLastOne() {
         val id = writeANewRecipe()

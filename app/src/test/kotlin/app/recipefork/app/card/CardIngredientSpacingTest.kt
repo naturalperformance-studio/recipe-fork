@@ -32,6 +32,7 @@ import app.recipefork.app.timer.TestTimers
 import app.recipefork.app.timer.TimerKey
 import app.recipefork.app.timer.TimerTags
 import app.recipefork.app.ui.AccessibilityChecks
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.QuantityUnit
@@ -40,6 +41,7 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.recipe.fork
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -201,9 +203,41 @@ class CardIngredientSpacingTest {
         assertEquals("no gap below the first subheading", first.bottom, bounds(CardTags.ingredient(0)).top, 0.5f)
     }
 
-    // The tighter top keeps the card's parts apart: the parts 8 dp from each other, the description 16 dp from the steps.
+    // The tighter top keeps the card's parts apart, 8 dp from each other: the description among them, right under the
+    // title block — title, summary, stated author, provenance — and before the equipment and the ingredients (T-208).
     @Test
-    fun theStepsAndTheDescriptionStillReadApart() {
+    fun theDescriptionStandsUnderTheTitleBlockBeforeTheEquipment() {
+        tab.keep(CardMode.VIEW)
+        val parent = Recipe.create(now, null).copy(title = "Rolls")
+        runBlocking { recipes.save(parent) }
+        show(
+            parent.fork(now, owner = null).copy(
+                title = "Buns",
+                description = "Best on the day they are baked.",
+                statedAuthor = "anna",
+                equipment = listOf(EquipmentItem.free("Baking tray")),
+                servings = 2,
+                ingredients = listOf(grams(0, "Flour", 500)),
+                steps = listOf(Step(0, "Mix"), Step(1, "Bake")),
+            ),
+        )
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().isNotEmpty() }
+        val order = listOf(
+            CardTags.TITLE, CardTags.SUMMARY, CardTags.STATED_AUTHOR, CardTags.PROVENANCE, CardTags.DESCRIPTION,
+            EquipmentTags.SURFACE, CardTags.SERVINGS_FEWER, IngredientTags.SURFACE, CardTags.STEPS,
+        )
+        order.zipWithNext().forEach { (above, below) ->
+            assertTrue("$above above $below", bounds(above).bottom <= bounds(below).top + 0.5f)
+        }
+        assertEquals("the summary right under the title", 0f, dp(bounds(CardTags.SUMMARY).top - bounds(CardTags.TITLE).bottom), 0.5f)
+        assertEquals("the description 8 dp under the provenance", 8f, dp(bounds(CardTags.DESCRIPTION).top - bounds(CardTags.PROVENANCE).bottom), 0.5f)
+        assertEquals("the equipment 8 dp under the description", 8f, dp(bounds(EquipmentTags.SURFACE).top - bounds(CardTags.DESCRIPTION).bottom), 0.5f)
+        assertEquals("the steps 8 dp under the ingredients", 8f, dp(bounds(CardTags.STEPS).top - bounds(IngredientTags.SURFACE).bottom), 0.5f)
+    }
+
+    // With nothing between them, the description stands 8 dp under the title's summary and the serving count 8 dp under it.
+    @Test
+    fun theDescriptionStands8dpUnderTheSummaryAndAboveTheServings() {
         tab.keep(CardMode.VIEW)
         show(
             Recipe.create(now, null).copy(
@@ -214,13 +248,9 @@ class CardIngredientSpacingTest {
                 steps = listOf(Step(0, "Mix"), Step(1, "Bake")),
             ),
         )
-        compose.onNodeWithTag(CardTags.DESCRIPTION).performScrollTo()
-        val steps = bounds(CardTags.STEPS)
-        val description = bounds(CardTags.DESCRIPTION)
-        assertEquals("the description 16 dp under the steps", 16f, dp(description.top - steps.bottom), 0.5f)
-        assertEquals("the steps 8 dp under the ingredients", 8f, dp(steps.top - bounds(IngredientTags.SURFACE).bottom), 0.5f)
-        assertEquals("the summary right under the title", 0f, dp(bounds(CardTags.SUMMARY).top - bounds(CardTags.TITLE).bottom), 0.5f)
-        assertEquals("the servings 8 dp under the title's summary", 8f, dp(bounds(CardTags.SERVINGS_FEWER).top - bounds(CardTags.SUMMARY).bottom), 0.5f)
+        assertEquals("the description 8 dp under the summary", 8f, dp(bounds(CardTags.DESCRIPTION).top - bounds(CardTags.SUMMARY).bottom), 0.5f)
+        assertEquals("the servings 8 dp under the description", 8f, dp(bounds(CardTags.SERVINGS_FEWER).top - bounds(CardTags.DESCRIPTION).bottom), 0.5f)
+        assertTrue("the description above the steps", bounds(CardTags.DESCRIPTION).bottom <= bounds(CardTags.STEPS).top)
     }
 
     @Test

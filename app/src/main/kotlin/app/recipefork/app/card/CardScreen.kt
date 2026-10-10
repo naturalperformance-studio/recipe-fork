@@ -181,9 +181,9 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * notification brings it to the timer's step (FLOW-013 (4)). The tab kept as last chosen is the one the card settles
  * on, so a Cooking a notification brought is kept too, and the next card opens on it.
  *
- * View is one scrolling page: the cover, the title with its summary, the provenance, the serving count, the ingredients
- * in order, the steps numbered, the description. A part the recipe does not hold is left out with no heading and no
- * placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe. Its bar holds back, the
+ * View is one scrolling page: the cover, the title with its summary, the provenance, the description, the equipment, the
+ * serving count, the ingredients in order, the steps numbered. A part the recipe does not hold is left out with no
+ * heading and no placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe. Its bar holds back, the
  * title once it has scrolled away, and, only while the recipe is editable, the edit action that opens the editor on it
  * (FLOW-029 (2–4)); its ⋮ holds the recipe's removal — Delete for an own recipe in a deletable state, Remove for a found
  * one — which takes it out of the book at once, asking nothing, and closes the card to the book, which says so with
@@ -601,11 +601,8 @@ private val GUTTER = 16.dp
 /** The space above the card's first part, under the bar. */
 private val CONTENT_TOP = 8.dp
 
-/** The space between the card's parts: cover, title, servings, ingredients, steps. */
+/** The space between the card's parts: cover, title, description, servings, ingredients, steps. */
 private val PART_GAP = 8.dp
-
-/** The space between the steps and the description, which reads apart from them. */
-private val DESCRIPTION_GAP = 16.dp
 
 /** The most lines the bar gives the recipe's title. */
 private const val BAR_TITLE_LINES = 2
@@ -732,6 +729,15 @@ private fun RecipeContent(
                     )
                 }
                 recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
+                // The author's description stands with the title block it tells about, before the equipment and the
+                // ingredients, the card's gap from either.
+                if (recipe.description.isNotBlank()) {
+                    Text(
+                        recipe.description,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = cardPlace(CardPlaces.DESCRIPTION_KEY).testTag(CardTags.DESCRIPTION),
+                    )
+                }
             }
             // The equipment stands above the serving count and the ingredients, as the editor lists it before them; an
             // item naming an entry the kitchen lacks says so (free text never does).
@@ -780,14 +786,6 @@ private fun RecipeContent(
                 readerScrolling = { scroll.isScrollInProgress },
                 coveredBelow = bottom,
             )
-            if (viewing && recipe.description.isNotBlank()) {
-                // The description stands further apart from the steps than the parts above stand from each other.
-                Text(
-                    recipe.description,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = DESCRIPTION_GAP - PART_GAP).then(cardPlace(CardPlaces.DESCRIPTION_KEY)).testTag(CardTags.DESCRIPTION),
-                )
-            }
         }
     }
 }
