@@ -70,9 +70,10 @@ internal class Arranged(val recipe: Recipe, val rows: List<Int>, val headings: L
  * a row left out is gone. Each row takes its place in the new order and every step's reference follows its row; a
  * reference to a row left out is dropped. Each heading starts at the row that follows it. A heading left over no rows —
  * its group emptied by the change — goes, so that no two headings stand at one row and none stands past the last row,
- * except one that had no rows before and is still the last: a group just added at the end.
+ * except one that had no rows before and is still the last: a group just added at the end — or, [keepingLast], any
+ * heading left last.
  */
-internal fun Recipe.arranged(items: List<ListItem>): Arranged {
+internal fun Recipe.arranged(items: List<ListItem>, keepingLast: Boolean = false): Arranged {
     val rows = items.filterIsInstance<ListItem.Row>().map { it.position }
     val moved = IntArray(ingredients.size) { -1 }.also { rows.forEachIndexed { now, was -> it[was] = now } }
     val kept = mutableListOf<Int>()
@@ -83,7 +84,7 @@ internal fun Recipe.arranged(items: List<ListItem>): Arranged {
             is ListItem.Row -> above++
             is ListItem.Heading -> {
                 val owns = items.getOrNull(at + 1) is ListItem.Row
-                val stillNew = items.subList(at + 1, items.size).isEmpty() && groupRows(item.index).isEmpty()
+                val stillNew = items.subList(at + 1, items.size).isEmpty() && (keepingLast || groupRows(item.index).isEmpty())
                 if (owns || stillNew) {
                     kept += item.index
                     groups += ingredientGroups[item.index].copy(firstPosition = above)

@@ -3,10 +3,13 @@ package app.recipefork.app.editor
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
+import app.recipefork.app.ui.AccessibilityChecks
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -53,9 +56,10 @@ import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
 
 /**
- * DOM-022 in the editor: "Add group" after the list and in a row's menu puts a heading that takes the focus and is
- * saved once named; a heading is removed with Undo, moved with its rows by its menu or its handle; a row's menu moves it
- * into or out of a group; a long name is marked on leaving it; a frozen recipe shows its headings as headings.
+ * DOM-022 in the editor: a heading reads as its name and opens in a sheet of its name and actions; "Add group" after the
+ * list and in a row's sheet puts a heading whose sheet opens with the name focused, saved once named; a heading is
+ * removed with Undo, moved with its rows by its sheet or its handle; a row's sheet moves it into or out of a group; a
+ * long name is marked on leaving it; a frozen recipe shows its headings as headings.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -117,7 +121,14 @@ class IngredientGroupsScreenTest {
         ingredientGroups.filter { it.firstPosition >= ingredients.size }.forEach { add("${it.name}:") }
     }.joinToString(" ")
 
-    private fun awaitShape(recipe: Recipe, shape: String) = compose.waitUntil(PATIENCE_MS) { stored(recipe).shape() == shape }
+    private fun awaitShape(recipe: Recipe, shape: String) {
+        try {
+            compose.waitUntil(PATIENCE_MS) { stored(recipe).shape() == shape }
+        } catch (timedOut: ComposeTimeoutException) {
+            assertEquals(shape, stored(recipe).shape())
+            throw timedOut
+        }
+    }
 
     private fun node(tag: String): SemanticsNode = compose.onNodeWithTag(tag).fetchSemanticsNode()
 
@@ -125,69 +136,98 @@ class IngredientGroupsScreenTest {
 
     private fun focused(tag: String) = exists(tag) && node(tag).config.getOrElse(SemanticsProperties.Focused) { false }
 
-    private fun menu(menu: String, action: String) {
-        compose.onNodeWithTag(menu).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(action) }
-        compose.onNodeWithTag(action).performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitUntilDoesNotExist(hasTestTag(action), PATIENCE_MS)
-    }
+    private fun statementShown() = compose.onAllNodes(hasTestTag(EditorTags.STATEMENT), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
-    /** Takes the focus away from where it is, to the title. */
-    private fun leaveField() {
-        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performClick()
-        compose.waitForIdle()
-    }
-
-    // "Add group" puts a heading after the last row, which takes the focus; it is saved once named, and the rows added
-    // next belong to it. With no rows under it yet, its keyboard action is Done.
+    // "Add group" puts a heading after the last row and opens its sheet with the name focused; it is saved once named, and
+    // the rows added next belong to it. With no rows under it yet, its keyboard action is Done, which closes the sheet;
+    // the heading then reads as its name.
     @Test
     fun addGroupPutsAHeadingAfterTheListThatTheNextRowsFill() {
         val recipe = open(recipe())
         compose.onNodeWithTag(EditorTags.GROUP_ADD).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.groupName(0)) }
+        compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() && focused(EditorTags.groupName(0)) }
         assertEquals(ImeAction.Done, node(EditorTags.groupName(0)).config[SemanticsProperties.ImeAction])
         compose.waitForIdle()
         assertEquals(emptyList<IngredientGroup>(), stored(recipe).ingredientGroups)
+        // Not named yet, it reads as such in the list.
+        assertEquals(context.getString(R.string.editor_group_unnamed), compose.groupLine(0))
 
         compose.onNodeWithTag(EditorTags.groupName(0)).performTextInput("Glaze")
         awaitShape(recipe, "salt flour water sugar butter Glaze:")
+        compose.onNodeWithTag(EditorTags.groupName(0)).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { !compose.groupSheetOpen() }
+        assertEquals("Glaze", compose.groupLine(0))
         // With no rows yet, the heading cannot move: it has no handle.
         assertTrue(!exists(EditorTags.groupHandle(0)))
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(5)) }
-        compose.onNodeWithTag(EditorTags.ingredientName(5)).performTextReplacement("egg")
-        awaitShape(recipe, "salt flour water sugar butter Glaze: egg")
+        compose.onNodeWithTag(EditorTags.ingredientName(5)).performTextReplacement("Grandma's glaze")
+        awaitShape(recipe, "salt flour water sugar butter Glaze: Grandma's glaze")
+        compose.closeIngredient()
+        compose.openGroup(0)
         assertEquals(ImeAction.Next, node(EditorTags.groupName(0)).config[SemanticsProperties.ImeAction])
+        compose.closeGroup()
+        // "Add group" again, with a heading over no rows at the end, opens that one's sheet rather than a second heading.
+        compose.onNodeWithTag(EditorTags.GROUP_ADD).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() && focused(EditorTags.groupName(1)) }
+        compose.closeGroup()
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.group(1)) }
+        compose.onNodeWithTag(EditorTags.GROUP_ADD).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() && focused(EditorTags.groupName(1)) }
+        compose.onNodeWithTag(EditorTags.groupName(1)).performTextInput("Topping")
+        compose.closeGroup()
+        compose.onNodeWithTag(EditorTags.GROUP_ADD).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() && focused(EditorTags.groupName(1)) }
+        assertEquals("Topping", compose.textsOf(EditorTags.groupName(1)).last())
+        compose.closeGroup()
+        awaitShape(recipe, "salt flour water sugar butter Glaze: Grandma's glaze Topping:")
     }
 
-    // A row's menu puts a heading above the row, which then starts the group and offers it no more; a heading left
-    // without a name goes.
+    // A row's sheet puts a heading above the row and opens the heading's sheet with its name focused; the row then starts
+    // the group and offers it no more. A heading never named, closed empty, goes; one named and emptied takes its name
+    // back.
     @Test
-    fun aRowsMenuPutsAHeadingAboveItAndANameLeftBlankRemovesIt() {
+    fun aRowsSheetPutsAHeadingAboveItAndANameLeftBlankRemovesIt() {
         val recipe = open(recipe())
-        menu(EditorTags.ingredientMenu(3), EditorTags.ingredientAction(3, RowAction.GROUP_ABOVE))
-        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.groupName(0)) }
+        compose.onIngredient(3, RowAction.GROUP_ABOVE)
+        compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() && focused(EditorTags.groupName(0)) }
+        assertTrue(!compose.ingredientSheetOpen())
         compose.onNodeWithTag(EditorTags.groupName(0)).performTextInput("Glaze")
         awaitShape(recipe, "salt flour water Glaze: sugar butter")
-        compose.onNodeWithTag(EditorTags.ingredientMenu(3)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientAction(3, RowAction.INSERT_ABOVE)) }
+        compose.closeGroup()
+        compose.openIngredient(3)
         assertTrue(!exists(EditorTags.ingredientAction(3, RowAction.GROUP_ABOVE)))
-        compose.onNodeWithTag(EditorTags.ingredientAction(3, RowAction.INSERT_ABOVE)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.chooseInSheet(EditorTags.ingredientAction(3, RowAction.INSERT_ABOVE))
         // Inserted above the first row of a group, the row joins it.
         awaitShape(recipe, "salt flour water Glaze: ? sugar butter")
+        // Closed holding nothing, it goes again, with nothing to undo.
+        compose.closeIngredient()
+        awaitShape(recipe, "salt flour water Glaze: sugar butter")
+        compose.waitForIdle()
+        assertTrue(!statementShown())
 
-        menu(EditorTags.ingredientMenu(1), EditorTags.ingredientAction(1, RowAction.GROUP_ABOVE))
+        compose.onIngredient(1, RowAction.GROUP_ABOVE)
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.groupName(0)) }
-        leaveField()
+        compose.closeGroup()
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.group(1)) }
-        awaitShape(recipe, "salt flour water Glaze: ? sugar butter")
+        awaitShape(recipe, "salt flour water Glaze: sugar butter")
+
+        compose.openGroup(0)
+        compose.onNodeWithTag(EditorTags.groupName(0)).performTextReplacement("")
+        compose.closeGroup()
+        awaitShape(recipe, "salt flour water Glaze: sugar butter")
+        assertEquals("Glaze", compose.groupLine(0))
     }
 
-    // Removing a heading keeps its rows, now in the group above, and says so with Undo, which puts it back.
+    // Removing a heading — the last of its sheet's actions, in the error colour — closes the sheet, keeps its rows, now in
+    // the group above, and says so with Undo, which puts it back.
     @Test
     fun aHeadingRemovedIsOfferedForUndo() {
         val recipe = open(grouped)
-        compose.onNodeWithTag(EditorTags.groupRemove(1)).performScrollTo().performClick()
+        compose.openGroup(1)
+        assertEquals(listOf(context.getString(R.string.editor_group_remove)), compose.textsOf(EditorTags.groupRemove(1)))
+        assertEquals(lightColorScheme().error, compose.textColourOf(EditorTags.groupRemove(1)))
+        compose.removeGroup(1)
         compose.awaitStatement(context.getString(R.string.editor_group_removed, 2))
         awaitShape(recipe, "salt Dough: flour water sugar butter")
         compose.onNode(
@@ -195,43 +235,83 @@ class IngredientGroupsScreenTest {
             useUnmergedTree = true,
         ).performClick()
         awaitShape(recipe, "salt Dough: flour water Glaze: sugar butter")
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.groupName(1)) }
+        compose.waitUntil(PATIENCE_MS) { exists(GroupSheetTags.line(1)) }
+        assertEquals("Glaze", compose.groupLine(1))
     }
 
-    // A heading's menu moves the group, rows and all, past the group below — the first offers no "Move up" above the
-    // rows no group owns; a row's menu moves a row past a heading, out of its group or into the next, and a group left
-    // with no rows goes.
+    // Remove tapped twice while a heading's sheet goes down removes that heading alone, once, and its Undo puts it back;
+    // a Move tapped meanwhile does nothing.
     @Test
-    fun menusMoveAGroupWithItsRowsAndARowAcrossAHeading() {
+    fun twoQuickRemovesRemoveThatHeadingOnce() {
         val recipe = open(grouped)
-        compose.onNodeWithTag(EditorTags.groupMenu(0)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.groupAction(0, RowAction.MOVE_DOWN)) }
-        assertTrue(!exists(EditorTags.groupAction(0, RowAction.MOVE_UP)))
+        compose.openGroup(0)
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag(EditorTags.groupRemove(0)).performSemanticsAction(SemanticsActions.OnClick)
         compose.onNodeWithTag(EditorTags.groupAction(0, RowAction.MOVE_DOWN)).performSemanticsAction(SemanticsActions.OnClick)
-        awaitShape(recipe, "salt Glaze: sugar butter Dough: flour water")
+        compose.mainClock.advanceTimeBy(120)
+        compose.onNodeWithTag(EditorTags.groupRemove(0)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.mainClock.autoAdvance = true
+        compose.waitUntil(PATIENCE_MS) { !compose.groupSheetOpen() }
+        compose.awaitStatement(context.getString(R.string.editor_group_removed, 1))
+        awaitShape(recipe, "salt flour water Glaze: sugar butter")
+        compose.onNode(
+            hasText(context.getString(R.string.editor_undo)) and hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)),
+            useUnmergedTree = true,
+        ).performClick()
+        awaitShape(recipe, "salt Dough: flour water Glaze: sugar butter")
+    }
 
-        menu(EditorTags.ingredientMenu(1), EditorTags.ingredientAction(1, RowAction.MOVE_UP))
+    // A heading reads as its name, a heading for the screen reader, whose tap — named "Edit group", a target at least
+    // 48 dp tall — opens its sheet: the name, then its moves and its removal. Its sheet moves the group, rows and all,
+    // past the group below — the first offers no "Move up" above the rows no group owns — and follows it; a row's sheet
+    // moves a row past a heading, out of its group or into the next, and offers no move that would empty a group.
+    @Test
+    fun sheetsMoveAGroupWithItsRowsAndARowAcrossAHeading() {
+        val recipe = open(grouped)
+        assertEquals("Dough", compose.groupLine(0))
+        val line = node(GroupSheetTags.line(0))
+        assertTrue(SemanticsProperties.Heading in line.config)
+        assertEquals(context.getString(R.string.editor_group_edit), line.config[SemanticsActions.OnClick].label)
+        assertTrue(line.size.height >= 48 * compose.density.density - 0.5f)
+        compose.openGroup(0)
+        // A named heading opens with nothing focused.
+        assertTrue(!focused(EditorTags.groupName(0)))
+        val inSheet = hasAnyAncestor(hasTestTag(GroupSheetTags.SHEET))
+        assertEquals(
+            listOf(GroupSheetTags.DONE, EditorTags.groupName(0), EditorTags.groupAction(0, RowAction.MOVE_DOWN), EditorTags.groupRemove(0)),
+            compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] },
+        )
+        compose.chooseInSheet(EditorTags.groupAction(0, RowAction.MOVE_DOWN))
+        awaitShape(recipe, "salt Glaze: sugar butter Dough: flour water")
+        // The sheet follows its heading, now the last: it moves up, and no further down.
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.groupAction(1, RowAction.MOVE_UP)) }
+        assertEquals("Dough", compose.textsOf(EditorTags.groupName(1)).last())
+        assertTrue(!exists(EditorTags.groupAction(1, RowAction.MOVE_DOWN)))
+        compose.closeGroup()
+
+        compose.onIngredient(1, RowAction.MOVE_UP)
         awaitShape(recipe, "salt sugar Glaze: butter Dough: flour water")
         // Butter is now Glaze's only row: no move that would empty the group is offered, nor a handle to drag it by.
-        compose.onNodeWithTag(EditorTags.ingredientMenu(2)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientAction(2, RowAction.INSERT_ABOVE)) }
+        compose.openIngredient(2)
+        assertTrue(exists(EditorTags.ingredientAction(2, RowAction.INSERT_ABOVE)))
         assertTrue(!exists(EditorTags.ingredientAction(2, RowAction.MOVE_UP)) && !exists(EditorTags.ingredientAction(2, RowAction.MOVE_DOWN)))
-        compose.onNodeWithTag(EditorTags.ingredientMenu(2)).performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.ingredientAction(2, RowAction.INSERT_ABOVE)), PATIENCE_MS)
+        compose.closeIngredient()
         assertTrue(!exists(EditorTags.ingredientHandle(2)) && exists(EditorTags.ingredientHandle(3)))
     }
 
-    // The keyboard's Next follows the list as shown: from the serving count into the first heading, and from a heading to
-    // its group's first row, whose sheet opens with its name focused. A row's sheet ends the chain: its unit, picked by
-    // Next, closes it.
+    // The keyboard's Next follows the list as shown: from the serving count into the first heading's sheet, and from a
+    // heading to its group's first row, whose sheet opens with its name focused. A row's sheet ends the chain: its unit,
+    // picked by Next, closes it. The heading's name is settled on the way — trimmed — and the field left gives up its focus.
     @Test
     fun nextGoesThroughTheHeadingsInTheOrderShown() {
-        open(recipe(IngredientGroup("Dough", 0), IngredientGroup("Glaze", 3)))
+        val recipe = open(recipe(IngredientGroup("Dough", 0), IngredientGroup("Glaze", 3)))
         compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
         compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
-        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.groupName(0)) }
+        compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() && focused(EditorTags.groupName(0)) }
+        assertTrue(!focused(EditorTags.SERVINGS))
         compose.onNodeWithTag(EditorTags.groupName(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
+        assertTrue(!compose.groupSheetOpen())
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(IngredientNoteTags.field(0)) }
         compose.onNodeWithTag(IngredientNoteTags.field(0)).performImeAction()
@@ -241,11 +321,14 @@ class IngredientGroupsScreenTest {
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntil(PATIENCE_MS) { !compose.ingredientSheetOpen() }
 
-        compose.onNodeWithTag(EditorTags.groupName(1)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.groupName(1)) }
+        compose.openGroup(1)
+        compose.onNodeWithTag(EditorTags.groupName(1)).performTextReplacement("  Icing ")
         compose.onNodeWithTag(EditorTags.groupName(1)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(3)) }
+        assertEquals("Icing", stored(recipe).ingredientGroups[1].name)
         compose.closeIngredient()
+        assertTrue(!focused(EditorTags.SERVINGS) && !focused(EditorTags.groupName(1)))
+        assertEquals("Icing", compose.groupLine(1))
     }
 
     // Dragged by its handle onto the heading above, a group lands there with every row it owns.
@@ -264,17 +347,23 @@ class IngredientGroupsScreenTest {
         awaitShape(recipe, "salt Glaze: sugar butter Dough: flour water")
     }
 
-    // A name over the limit is kept and marked once the author leaves it.
+    // A name over the limit is kept and marked once the author leaves it — in the sheet, and on the heading once the sheet
+    // is closed.
     @Test
     fun aLongNameIsMarkedOnLeaving() {
         val recipe = open(grouped)
         val long = "g".repeat(RecipeBounds.MAX_GROUP_NAME + 1)
-        compose.onNodeWithTag(EditorTags.groupName(0)).performScrollTo().performTextReplacement(long)
+        compose.openGroup(0)
+        compose.onNodeWithTag(EditorTags.groupName(0)).performTextReplacement(long)
         compose.waitForIdle()
-        assertTrue(!exists(EditorTags.groupMark(0)))
-        leaveField()
+        assertTrue(!exists(GroupSheetTags.nameMark(0)) && !exists(EditorTags.groupMark(0)))
+        compose.onNodeWithTag(EditorTags.groupName(0)).performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.closeGroup()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.groupMark(0)) }
         assertEquals(long, stored(recipe).ingredientGroups[0].name)
+        compose.openGroup(0)
+        assertTrue(exists(GroupSheetTags.nameMark(0)))
+        compose.closeGroup()
     }
 
     // A frozen recipe shows its headings as headings for the screen reader, with nothing to change them by.

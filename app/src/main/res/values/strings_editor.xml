@@ -54,14 +54,17 @@
     <string name="editor_ingredient_note">How to prepare</string>
     <string name="editor_ingredient_note_example">e.g. finely chopped</string>
     <string name="editor_ingredient_unit_action">Choose the unit</string>
-    <string name="editor_ingredient_remove_action">Remove ingredient row %1$d</string>
-    <string name="editor_ingredient_menu_action">Ingredient row %1$d actions</string>
+    <!-- The last of a row's actions in its sheet, in the error colour; Undo follows. -->
+    <string name="editor_ingredient_remove">Remove ingredient</string>
     <string name="editor_group_add">Add group</string>
     <string name="editor_group_add_action">Add a group heading to the ingredients</string>
     <string name="editor_group_name">Group</string>
     <string name="editor_group_name_example">e.g. Dough</string>
-    <string name="editor_group_remove_action">Remove group heading %1$d</string>
-    <string name="editor_group_menu_action">Group %1$d actions</string>
+    <!-- A heading's tap, and the title of the sheet it opens: its name and actions. -->
+    <string name="editor_group_edit">Edit group</string>
+    <!-- A heading with no name yet, as it reads in the list. -->
+    <string name="editor_group_unnamed">Unnamed group</string>
+    <string name="editor_group_remove">Remove group</string>
     <!-- What the ingredient field offers while the author types (FLOW-057): entries, and the text as free text. -->
     <string name="editor_ingredient_pick_action">Use the dictionary ingredient %1$s</string>
     <string name="editor_ingredient_free_text_offer">Add “%1$s” as free text</string>
