@@ -73,22 +73,28 @@ class IngredientLineTest {
         }
     }
 
+    // T-217: "to taste" is no amount before the name — "to taste salt" — but words after it: "salt — to taste".
     @Test
-    fun toTasteShowsTheUnitAlone() {
+    fun toTasteFollowsTheNameAndIsNoQuantity() {
         // As the domain holds it, with no unit, and with the unit named.
         listOf(row(null, null), row(QuantityUnit.TO_TASTE, null)).forEach {
-            assertEquals("to taste", line(it, ENGLISH).quantity)
-            assertEquals("по вкусу", line(it, RUSSIAN).quantity)
+            assertEquals(IngredientLine("Flour", null, toTaste = "to taste"), line(it, ENGLISH))
+            assertEquals(IngredientLine("Flour", null, toTaste = "по вкусу"), line(it, RUSSIAN))
         }
         // A stray quantity on a "to taste" row is not shown as a number.
-        assertEquals("to taste", line(row(QuantityUnit.TO_TASTE, Rational.of(2))).quantity)
+        assertEquals(IngredientLine("Flour", null, toTaste = "to taste"), line(row(QuantityUnit.TO_TASTE, Rational.of(2))))
+        // At any scale it is the same words, and nothing about it is recalculated.
+        val scaled = ingredientLine(row(QuantityUnit.TO_TASTE, null), entries, ENGLISH, app.recipefork.core.scaling.ScaleFactor.of(Rational.of(3)))
+        assertEquals(IngredientLine("Flour", null, toTaste = "to taste"), scaled)
     }
 
+    // T-217: a row with no amount yet reads by its name alone — "Grains of paradise", never "g Grains of paradise".
     @Test
     fun anIncompleteRowIsShownByItsNameAndWhateverItHolds() {
-        // No quantity yet for a unit that carries one: the unit alone.
-        assertEquals(IngredientLine("Flour", "g"), line(row(QuantityUnit.GRAM, null)))
-        assertEquals(IngredientLine("Flour", "ст. л."), line(row(QuantityUnit.TABLESPOON, null), RUSSIAN))
+        // No quantity yet for a unit that carries one: no unit either, the name alone.
+        assertEquals(IngredientLine("Flour", null), line(row(QuantityUnit.GRAM, null)))
+        assertEquals(IngredientLine("Flour", null), line(row(QuantityUnit.TABLESPOON, null), RUSSIAN))
+        assertEquals(IngredientLine("Flour", null), line(row(QuantityUnit.PIECE, null, divisible = true)))
         // No unit yet: the name alone.
         assertEquals(IngredientLine("Flour", null), line(row(null, Rational.of(2), type = UnitType.EXACT)))
         assertEquals(IngredientLine("Flour", null), line(row(null, null, type = UnitType.HOUSEHOLD)))

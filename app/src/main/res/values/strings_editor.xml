@@ -207,10 +207,12 @@
     <string name="editor_timer_notification_name">Name the timer</string>
     <string name="editor_timer_notification_name_action">Name the timer of step %1$d</string>
     <string name="editor_timer_notification_name_numbered_action">Name timer %2$d of step %1$d</string>
-    <!-- A row or a step deleted, with the action that puts it back. -->
-    <string name="editor_ingredient_removed">Ingredient row %1$d removed</string>
+    <!-- A row or a step deleted, with the action that puts it back; each names what went: %1$s is the ingredient's name as its line reads it, the heading's words, or the item's name. -->
+    <string name="editor_ingredient_removed">“%1$s” removed</string>
+    <string name="editor_ingredient_removed_unnamed">Ingredient removed</string>
     <string name="editor_step_removed">Step %1$d removed</string>
-    <string name="editor_group_removed">Group heading %1$d removed</string>
+    <string name="editor_group_removed">“%1$s” removed</string>
+    <string name="editor_group_removed_unnamed">Group heading removed</string>
     <string name="editor_timer_removed">Timer removed from step %1$d</string>
     <string name="editor_timer_removed_numbered">Timer %2$d removed from step %1$d</string>
     <string name="editor_undo">Undo</string>
@@ -225,7 +227,8 @@
     <string name="editor_equipment_menu_action">Equipment item %1$d actions</string>
     <!-- %1$d is the most items a recipe lists (15). -->
     <string name="editor_equipment_limit">A recipe can list up to %1$d items of equipment.</string>
-    <string name="editor_equipment_removed">Equipment item %1$d removed</string>
+    <string name="editor_equipment_removed">“%1$s” removed</string>
+    <string name="editor_equipment_removed_unnamed">Equipment item removed</string>
     <!-- The equipment dictionary's offer under an item being typed, as an ingredient's (FLOW-057); %1$s is an entry's label or the typed text. -->
     <string name="editor_equipment_pick_action">Use the dictionary item %1$s</string>
     <string name="editor_equipment_free_text_offer">Add “%1$s” as free text</string>

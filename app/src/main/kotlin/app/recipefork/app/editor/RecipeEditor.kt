@@ -317,9 +317,7 @@ class RecipeEditor(
     fun dropStep(position: Int): Boolean {
         val recipe = current.value ?: return false
         val step = recipe.steps.sortedBy { it.position }.getOrNull(position) ?: return false
-        val empty = step.text.isBlank() && step.ingredientReferences.isEmpty() && step.note == null && step.timers.isEmpty() &&
-            recipe.media.none { it.attachment == MediaAttachment.ToStep(position) }
-        return empty && deleteStep(position)
+        return holdsNothing(step, recipe.stepMedia(position)) && deleteStep(position)
     }
 
     private fun deleteStep(position: Int): Boolean = edit { edited ->
@@ -767,7 +765,12 @@ class RecipeEditor(
      */
     fun knowEntries(entries: List<IngredientEntryEntity>) {
         entryFlags = entries.mapNotNull { entry -> entry.divisible?.let { entry.id to it } }.toMap()
+        knownEntries = entries.associateBy { it.id }
     }
+
+    /** The dictionary's entries as the screen last read them, by identity: what a removed row is named by. */
+    var knownEntries: Map<Long, IngredientEntryEntity> = emptyMap()
+        private set
 
     /** The divisibility the entry [row] names gives; null for free text, or an entry that gives none. */
     fun entryDivisible(row: Ingredient): Boolean? = row.dictionaryEntry?.let(entryFlags::get)
@@ -1192,6 +1195,14 @@ class Removal internal constructor(
     val ofSeveral: Boolean
         get() = kind == Kind.TIMER && number != null
 }
+
+/**
+ * Whether [step], carrying [media] (null for none), holds nothing the author put in it — no text, reference, note, timer,
+ * photograph or clip: the one rule by which a step just added is still empty, so that its sheet offers it no actions and
+ * [RecipeEditor.dropStep] takes it away as never written, the two agreeing by construction.
+ */
+internal fun holdsNothing(step: Step, media: Media?): Boolean =
+    step.text.isBlank() && step.ingredientReferences.isEmpty() && step.note == null && step.timers.isEmpty() && media == null
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
 data class PartsMadeWhole(val ingredientPosition: Int, val serial: Long)

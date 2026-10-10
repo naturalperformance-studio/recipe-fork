@@ -49,6 +49,9 @@ class PendingRemoval internal constructor(private val taken: TakenRecipe, privat
     /** Whether it was a found recipe, removed, rather than an own one, deleted. */
     val found: Boolean get() = taken.found
 
+    /** Its title, which its notice names it by; blank for a recipe never titled. */
+    val title: String get() = taken.title
+
     private val settled = AtomicBoolean(false)
 
     /**

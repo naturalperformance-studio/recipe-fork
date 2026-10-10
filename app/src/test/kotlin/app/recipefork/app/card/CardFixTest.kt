@@ -168,7 +168,7 @@ class CardFixTest {
         assertEquals(listOf("Rice", "210 g"), line(1))
         assertEquals(listOf("Eggs", "2 pc", "rounded up, exact value was lower"), line(2))
         assertEquals(listOf("Salt", "⅔ tsp", "rounded up, exact value was lower"), line(3))
-        assertEquals(listOf("Pepper", "to taste"), line(4))
+        assertEquals(listOf("Pepper — to taste"), line(4))
     }
 
     // SCALE-018 (7): a row to taste, or one left unfinished, offers nothing to fix: no amount to tap, no action to
@@ -312,7 +312,7 @@ class CardFixTest {
         tap(0)
         type("0,3")
         val content = setOf(forFour.title, "0,3", "г", "кг", "т") + forFour.ingredients.mapNotNull { it.freeTextName } +
-            (0..5).map { quantity(it) }
+            (0..5).flatMap { line(it) }
         // With the unit drop-down open, its choices too.
         compose.onNodeWithTag(FixTags.UNIT).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.fixUnit(QuantityUnit.KILOGRAM)) }

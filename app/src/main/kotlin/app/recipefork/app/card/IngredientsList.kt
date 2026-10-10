@@ -452,7 +452,7 @@ private fun IngredientRow(
             val named = line.name ?: stringResource(R.string.card_unnamed_ingredient)
             val muted = MaterialTheme.colorScheme.onSurfaceVariant
             Text(
-                remember(named, line.note, muted) { withNote(named, line.note, muted) },
+                remember(named, line, muted) { namedLine(AnnotatedString(named), line, muted) },
                 style = MaterialTheme.typography.bodyLarge.done(done),
                 modifier = Modifier.testTag(IngredientTags.name(position)),
             )
@@ -592,15 +592,18 @@ private fun FixedMark(text: String, done: Boolean) {
 }
 
 /**
- * The name of a line followed by its [note] (DOM-023), set apart by a dash and drawn in the [muted] colour, so that how
- * the ingredient is prepared reads apart from what it is; the whole wraps between words as one text.
+ * What a [line] reads after its amount, the one wording the card and the editor share (FLOW-023): its [name]; for a row
+ * to taste, "to taste" after a dash — "salt — to taste", «соль — по вкусу»; then its note (DOM-023), set apart by a dash
+ * and drawn in the [muted] colour, so that how the ingredient is prepared reads apart from what it is. The whole wraps
+ * between words as one text.
  */
-internal fun withNote(name: String, note: String?, muted: Color): AnnotatedString = buildAnnotatedString {
+internal fun namedLine(name: AnnotatedString, line: IngredientLine, muted: Color): AnnotatedString = buildAnnotatedString {
     append(name)
-    if (note != null) withStyle(SpanStyle(color = muted)) { append(NOTE_SEPARATOR); append(note) }
+    line.toTaste?.let { append(NOTE_SEPARATOR); append(it) }
+    line.note?.let { note -> withStyle(SpanStyle(color = muted)) { append(NOTE_SEPARATOR); append(note) } }
 }
 
-/** What stands between a line's name and its note. */
+/** What stands between a line's name and what follows it: "to taste", its note. */
 private const val NOTE_SEPARATOR = " — "
 
 /** The arrow a recalculated quantity carries and the words it is read as, or null where the grid held it exactly. */

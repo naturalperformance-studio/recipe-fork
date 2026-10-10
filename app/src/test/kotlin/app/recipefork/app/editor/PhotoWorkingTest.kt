@@ -10,6 +10,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -25,6 +27,7 @@ import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.media.PhotoReencoder
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.TestPhotos
+import app.recipefork.app.card.textLayoutsWithin
 import app.recipefork.app.media.crop.CropTags
 import app.recipefork.app.media.cover
 import app.recipefork.app.media.stepPhoto
@@ -46,6 +49,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.io.InputStream
@@ -195,6 +199,34 @@ class PhotoWorkingTest {
         compose.awaitStatementOnceSheetCloses(UNREADABLE)
         compose.waitUntil(PATIENCE_MS) { !exists(CoverTags.WORKING) }
         assertTrue(stored(id).media.isEmpty())
+    }
+
+    private fun bounds(matcher: androidx.compose.ui.test.SemanticsMatcher) =
+        compose.onNode(matcher, useUnmergedTree = true).getBoundsInRoot()
+
+    // T-217: on the empty cover's tile the sign stands in a place of its own at the row's end: at twice the font scale
+    // in Russian the words wrap, and never run under it, nor move when it comes.
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun theEmptyCoversWordsNeverRunUnderTheSignInRussianAtTwiceTheFontScale() {
+        open(Recipe.create(now, null))
+        val words = listOf("Добавить фото обложки", "Необязательно").map { hasText(it) and hasAnyAncestor(hasTestTag(CoverTags.PLACEHOLDER)) }
+        compose.waitUntil(PATIENCE_MS) { words.all { compose.onAllNodes(it, useUnmergedTree = true).fetchSemanticsNodes().size == 1 } }
+        val before = words.map(::bounds)
+        // The words wrap here: the case the sign could cover.
+        assertTrue("the words do not wrap", compose.textLayoutsWithin(CoverTags.PLACEHOLDER).first().lineCount > 1)
+        chooseForCover(photo())
+        compose.waitUntil(PATIENCE_MS) { onRow(CoverTags.WORKING) }
+        val sign = bounds(hasTestTag(CoverTags.WORKING))
+        val tile = bounds(hasTestTag(CoverTags.PLACEHOLDER))
+        assertTrue("the sign ($sign) stands inside the tile ($tile)", sign.left >= tile.left && sign.right <= tile.right && sign.top >= tile.top && sign.bottom <= tile.bottom)
+        words.forEachIndexed { i, word ->
+            val shown = bounds(word)
+            assertTrue("words $i ($shown) run under the sign ($sign)", shown.right <= sign.left)
+            assertEquals("words $i moved as the sign came", before[i], shown)
+        }
+        letGo()
+        compose.waitUntil(PATIENCE_MS) { !onRow(CoverTags.WORKING) }
     }
 
     @Test

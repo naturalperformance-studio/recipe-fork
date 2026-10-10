@@ -228,7 +228,7 @@ class IngredientGroupsScreenTest {
         assertEquals(listOf(context.getString(R.string.editor_group_remove)), compose.textsOf(EditorTags.groupRemove(1)))
         assertEquals(lightColorScheme().error, compose.textColourOf(EditorTags.groupRemove(1)))
         compose.removeGroup(1)
-        compose.awaitStatement(context.getString(R.string.editor_group_removed, 2))
+        compose.awaitStatement("“Glaze” removed")
         awaitShape(recipe, "salt Dough: flour water sugar butter")
         compose.onNode(
             hasText(context.getString(R.string.editor_undo)) and hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)),
@@ -252,7 +252,7 @@ class IngredientGroupsScreenTest {
         compose.onNodeWithTag(EditorTags.groupRemove(0)).performSemanticsAction(SemanticsActions.OnClick)
         compose.mainClock.autoAdvance = true
         compose.waitUntil(PATIENCE_MS) { !compose.groupSheetOpen() }
-        compose.awaitStatement(context.getString(R.string.editor_group_removed, 1))
+        compose.awaitStatement("“Dough” removed")
         awaitShape(recipe, "salt flour water Glaze: sugar butter")
         compose.onNode(
             hasText(context.getString(R.string.editor_undo)) and hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)),

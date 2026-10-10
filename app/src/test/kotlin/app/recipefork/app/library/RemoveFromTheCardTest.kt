@@ -218,7 +218,7 @@ class RemoveFromTheCardTest {
     }
 
     // FLOW-053 (2, 6), MEDIA-012: Delete asks nothing: the recipe goes at once with its timers, and the card closes
-    // to the book, which says "Recipe deleted" with Undo. Its photograph stays while Undo is offered and is deleted
+    // to the book, which says "“Soup” deleted" with Undo. Its photograph stays while Undo is offered and is deleted
     // once the notice goes; another recipe and its photograph stay.
     @Test
     fun deletingFromTheCardClosesToTheBookWhichSaysSoWithUndo() {
@@ -230,7 +230,7 @@ class RemoveFromTheCardTest {
         openMenu()
         compose.onNodeWithTag(CardTags.DELETE).performClick()
         awaitBook(LibraryView.OWN)
-        compose.awaitRemovalNotice("Recipe deleted", "Undo")
+        compose.awaitRemovalNotice("“Soup” deleted", "Undo")
         val shown = compose.mainClock.currentTime
         compose.waitUntil(PATIENCE_MS) { stored(soup) == null }
         compose.waitUntil(PATIENCE_MS) { runBlocking { store.all.first() }.isEmpty() }
@@ -252,7 +252,7 @@ class RemoveFromTheCardTest {
         openMenu()
         compose.onNodeWithTag(CardTags.DELETE).performClick()
         awaitBook(LibraryView.OWN)
-        compose.awaitRemovalNotice("Recipe deleted", "Undo")
+        compose.awaitRemovalNotice("“Soup” deleted", "Undo")
         compose.waitUntil(PATIENCE_MS) { stored(soup) == null }
         compose.takeNoticeAction("Undo")
         compose.waitUntil(PATIENCE_MS) { stored(soup) != null }
@@ -263,7 +263,7 @@ class RemoveFromTheCardTest {
     }
 
     // FLOW-009 (4), FLOW-064 (6), FLOW-053: a found recipe's card offers Remove, never Delete; it removes the recipe
-    // at once, asking nothing, and the card closes to the marked recipes, which say "Recipe removed" with Undo. Its
+    // at once, asking nothing, and the card closes to the marked recipes, which say "“Found soup” removed" with Undo. Its
     // media goes once the notice does.
     @Test
     fun removingAFoundRecipeFromTheCardClosesToTheMarkedRecipes() {
@@ -275,7 +275,7 @@ class RemoveFromTheCardTest {
         assertFalse(exists(CardTags.DELETE))
         compose.onNodeWithTag(CardTags.REMOVE).performClick()
         awaitBook(LibraryView.MARKED)
-        compose.awaitRemovalNotice("Recipe removed", "Undo")
+        compose.awaitRemovalNotice("“Found soup” removed", "Undo")
         val shown = compose.mainClock.currentTime
         compose.waitUntil(PATIENCE_MS) { stored(recipe) == null }
         assertTrue(runBlocking { recipes.marked().first() }.isEmpty())
@@ -297,6 +297,6 @@ class RemoveFromTheCardTest {
         assertEquals(listOf("Удалить"), compose.textsOf(CardTags.DELETE))
         compose.onNodeWithTag(CardTags.DELETE).performClick()
         awaitBook(LibraryView.OWN)
-        compose.awaitRemovalNotice("Рецепт удалён", "Вернуть")
+        compose.awaitRemovalNotice("Рецепт «Суп» удалён", "Вернуть")
     }
 }

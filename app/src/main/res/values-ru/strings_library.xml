@@ -89,6 +89,8 @@
     <string name="library_search_and_filters_clear">Очистить поиск и фильтры</string>
     <string name="library_recipe_deleted">Рецепт удалён</string>
     <string name="library_recipe_removed">Рецепт убран</string>
+    <string name="library_recipe_deleted_titled">Рецепт «%1$s» удалён</string>
+    <string name="library_recipe_removed_titled">Рецепт «%1$s» убран</string>
     <string name="library_undo_failed">Не удалось вернуть рецепт</string>
     <string name="library_undo">Вернуть</string>
     <!-- The filter by the equipment My kitchen has. -->
