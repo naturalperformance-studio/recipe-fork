@@ -125,6 +125,7 @@ class StepReferencesEditorTest {
     }
 
     private fun closeEditor() {
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         compose.waitForIdle()
@@ -312,6 +313,7 @@ class StepReferencesEditorTest {
         )
         open(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(1)), PATIENCE_MS)
+        compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("1500")
         compose.waitForIdle()
         assertEquals("Всыпьте 1,5 кг муки", stepShown(0))
@@ -321,11 +323,13 @@ class StepReferencesEditorTest {
         assertEquals("Всыпьте по вкусу муки", stepShown(0))
         chooseUnit(0, QuantityUnit.KILOGRAM)
         assertEquals("Всыпьте ${ReferenceText.PLACEHOLDER} кг муки", stepShown(0))
+        compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("2")
         compose.waitForIdle()
         assertEquals("Всыпьте 2 кг муки", stepShown(0))
         assertEquals(listOf(IngredientReference(0, 8)), stored(recipe.id).steps[0].ingredientReferences)
 
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
         compose.waitForIdle()
         // Single spacing is left where each stood (T-074).
@@ -348,6 +352,7 @@ class StepReferencesEditorTest {
     }
 
     private fun chooseUnit(position: Int, unit: QuantityUnit) {
+        compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientUnit(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(unit)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.unitOption(unit)).performSemanticsAction(SemanticsActions.OnClick)
@@ -361,10 +366,12 @@ class StepReferencesEditorTest {
         val recipe = bread(Step(0, "Всыпьте , добавьте ", listOf(IngredientReference(0, 8), IngredientReference(2, 19))))
         open(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.ingredientMenu(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.ingredientMenu(3)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientAction(3, RowAction.MOVE_UP)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.ingredientAction(3, RowAction.MOVE_UP)).performSemanticsAction(SemanticsActions.OnClick)
@@ -381,21 +388,25 @@ class StepReferencesEditorTest {
         placeCursor(0, 8)
         openOffer(0)
         pick(0, 0)
+        compose.closeIngredient()
         closeEditor()
         val read = stored(recipe.id)
         assertEquals(listOf(IngredientReference(0, 8)), read.steps.single().ingredientReferences)
         open(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
         assertEquals("Всыпьте 200 г муки", stepShown(0))
+        compose.closeIngredient()
         closeEditor()
 
         val fork = runBlocking { forkRecipe(recipes, active, recipe.id, created.plusSeconds(30)) }!!
         open(fork)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
         assertEquals("Всыпьте 200 г муки", stepShown(0))
+        compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("250")
         compose.waitForIdle()
         assertEquals("Всыпьте 250 г муки", stepShown(0))
+        compose.closeIngredient()
         closeEditor()
         // The parent's step still reads its own flour.
         assertEquals(Rational.of(200), stored(recipe.id).ingredients[0].quantity)
@@ -439,6 +450,7 @@ class StepReferencesEditorTest {
         open(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
         assertEquals("Всыпьте 200\u00A0г муки", fieldText(EditorTags.timerName(0)))
+        compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("300")
         compose.waitForIdle()
         assertEquals("Всыпьте 300\u00A0г муки", fieldText(EditorTags.timerName(0)))

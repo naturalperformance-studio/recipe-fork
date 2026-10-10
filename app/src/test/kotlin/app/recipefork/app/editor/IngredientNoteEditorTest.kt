@@ -2,9 +2,6 @@ package app.recipefork.app.editor
 
 import android.content.Context
 import android.text.InputType
-import android.view.View
-import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
@@ -19,8 +16,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.text.TextLayoutResult
-import androidx.core.view.children
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -124,16 +119,6 @@ class IngredientNoteEditorTest {
         compose.waitForIdle()
     }
 
-    /** What the focused field asks the keyboard for. */
-    private fun keyboardAskedFor(): EditorInfo {
-        fun View.all(): Sequence<View> = sequenceOf(this) + ((this as? ViewGroup)?.children?.flatMap { it.all() } ?: emptySequence())
-        val editor = EditorInfo()
-        compose.runOnUiThread {
-            compose.activity.window.decorView.all().first { it.onCheckIsTextEditor() }.onCreateInputConnection(editor)
-        }
-        return editor
-    }
-
     /** Chicken from the dictionary, qualified "skinless", and onion in the author's own words. */
     private fun draft(state: RecipeState = RecipeState.LOCAL, note: String? = null) = Recipe.create(created, owner = null).copy(
         title = "Stew",
@@ -145,22 +130,24 @@ class IngredientNoteEditorTest {
         ),
     ).inState(state)
 
-    // Each row, a dictionary entry's or free text's, offers the note under a label of its own, apart from the name's.
+    // Each row, a dictionary entry's or free text's, offers the note in its sheet under a label of its own, apart from
+    // the name's.
     @Test
     fun everyRowOffersANoteLabelledApartFromTheName() {
         val id = open(draft())
         listOf(0, 1).forEach { position ->
-            compose.onNodeWithTag(IngredientNoteTags.field(position)).performScrollTo()
+            compose.openIngredient(position)
             val note = compose.textsOf(IngredientNoteTags.field(position))
             val name = compose.textsOf(EditorTags.ingredientName(position))
             assertTrue("$note", "How to prepare" in note)
             assertTrue("$name", "Ingredient" in name && "How to prepare" !in name)
         }
         // Empty and entered, the field shows its example.
+        compose.openIngredient(0)
         enter(IngredientNoteTags.field(0))
         assertTrue("e.g. finely chopped" in compose.textsOf(IngredientNoteTags.field(0)))
         // The note goes on after the name: no capital forced on it.
-        assertEquals(0, keyboardAskedFor().inputType and InputType.TYPE_TEXT_FLAG_CAP_SENTENCES)
+        assertEquals(0, compose.keyboardAskedFor().inputType and InputType.TYPE_TEXT_FLAG_CAP_SENTENCES)
 
         // Typed, it is held trimmed; the field keeps what was typed, the space before the next word included.
         compose.onNodeWithTag(IngredientNoteTags.field(0)).performTextReplacement("cut into ")
@@ -168,9 +155,12 @@ class IngredientNoteEditorTest {
         assertEquals("cut into ", fieldText(IngredientNoteTags.field(0)))
         assertEquals("cut into", stored(id).ingredients[0].note)
         compose.onNodeWithTag(IngredientNoteTags.field(0)).performTextReplacement("  cut into cubes ")
-        type(IngredientNoteTags.field(1), "finely chopped")
         // Left, the field reads as held.
+        enter(EditorTags.ingredientName(0))
         assertEquals("cut into cubes", fieldText(IngredientNoteTags.field(0)))
+        compose.openIngredient(1)
+        type(IngredientNoteTags.field(1), "finely chopped")
+        compose.closeIngredient()
 
         val rows = stored(id).ingredients
         assertEquals(listOf("cut into cubes", "finely chopped"), rows.map { it.note })
@@ -178,12 +168,18 @@ class IngredientNoteEditorTest {
         assertEquals(10L, rows[0].dictionaryEntry)
         assertEquals("skinless", rows[0].qualifier)
         assertEquals("onion", rows[1].freeTextName)
+        compose.openIngredient(0)
         assertTrue(fieldText(EditorTags.ingredientName(0)).endsWith("skinless"))
+        // The rows read the notes after their names, as the card does.
+        compose.closeIngredient()
+        assertEquals(listOf("500 g chicken, skinless — cut into cubes", "1 pc onion — finely chopped"), listOf(0, 1).map { compose.ingredientLine(it) })
 
         // Cleared, or blank, the row holds no note.
+        compose.openIngredient(1)
         type(IngredientNoteTags.field(1), "   ")
-        enter(EditorTags.TITLE)
+        compose.closeIngredient()
         assertNull(stored(id).ingredients[1].note)
+        compose.openIngredient(1)
         assertEquals("", fieldText(IngredientNoteTags.field(1)))
     }
 
@@ -191,47 +187,54 @@ class IngredientNoteEditorTest {
     @Config(qualifiers = "ru")
     fun theNoteIsLabelledInRussian() {
         open(draft().copy(language = RecipeLanguage.RU))
+        compose.openIngredient(1)
         enter(IngredientNoteTags.field(1))
         val texts = compose.textsOf(IngredientNoteTags.field(1))
         assertTrue("$texts", "Как подготовить" in texts)
         assertTrue("$texts", "например, мелко нарезать" in texts)
     }
 
-    // At most 60 characters: more is kept in full, marked as every limit is once the field is left, and the mark goes
-    // once the note is within it again.
+    // At most 60 characters: more is kept in full, marked as every limit is once the field is left — in the sheet, and
+    // on the row once it is closed — and the mark goes once the note is within it again.
     @Test
     fun aNoteOver60IsMarkedOnLeavingTheFieldAndKeptWhole() {
         val id = open(draft())
         val long = "sliced into thin half-moons, then soaked in cold water for ten minutes"
         assertTrue(long.length > RecipeBounds.MAX_NOTE)
+        compose.openIngredient(1)
         type(IngredientNoteTags.field(1), long)
         assertFalse("not while typing", exists(IngredientNoteTags.mark(1)))
-        enter(EditorTags.TITLE)
+        enter(EditorTags.ingredientName(1))
         compose.waitUntil(PATIENCE_MS) { exists(IngredientNoteTags.mark(1)) }
         val en = InterfaceLanguage.ENGLISH
-        assertEquals(
-            listOf(string(R.string.editor_mark_characters_over, QuantityText.whole(60, en), QuantityText.whole(long.length.toLong(), en))),
-            compose.textsOf(IngredientNoteTags.mark(1)),
-        )
+        val said = listOf(string(R.string.editor_mark_characters_over, QuantityText.whole(60, en), QuantityText.whole(long.length.toLong(), en)))
+        assertEquals(said, compose.textsOf(IngredientNoteTags.mark(1)))
         assertEquals(listOf(string(R.string.editor_mark_warning)), compose.descriptionOf(IngredientNoteTags.mark(1)))
         assertEquals(long, stored(id).ingredients[1].note)
-        assertFalse(exists(IngredientNoteTags.mark(0)))
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { exists(IngredientSheetTags.noteMark(1)) }
+        assertEquals(said, compose.textsOf(IngredientSheetTags.noteMark(1)))
+        assertFalse(exists(IngredientSheetTags.noteMark(0)))
 
         // Exactly 60 is within the limit.
+        compose.openIngredient(1)
         type(IngredientNoteTags.field(1), "n".repeat(60))
         compose.waitUntil(PATIENCE_MS) { !exists(IngredientNoteTags.mark(1)) }
+        compose.closeIngredient()
+        assertFalse(exists(IngredientSheetTags.noteMark(1)))
     }
 
-    // A frozen recipe shows the note under the name, muted, and offers no field for it.
+    // A frozen recipe shows the note after the name, muted, as the card does, and offers no field for it.
     @Test
     fun aFrozenRecipeShowsTheNote() {
         open(draft(RecipeState.PUBLISHED, note = "finely chopped"))
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredient(1)) }
-        assertEquals(listOf("onion", "finely chopped"), compose.textsOf(EditorTags.ingredient(1)).take(2))
-        val note = compose.onNodeWithTag(IngredientNoteTags.field(1), useUnmergedTree = true).fetchSemanticsNode()
-        assertFalse(note.config.contains(SemanticsProperties.EditableText))
-        val layout = mutableListOf<TextLayoutResult>().also { note.config[SemanticsActions.GetTextLayoutResult].action!!(it) }.single()
-        assertEquals(lightColorScheme().onSurfaceVariant, layout.layoutInput.style.color)
-        assertTrue(compose.onAllNodes(hasTestTag(IngredientNoteTags.field(0)), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        assertEquals(listOf("1 pc onion — finely chopped"), compose.textsOf(EditorTags.ingredient(1)))
+        val line = compose.onNodeWithTag(IngredientSheetTags.line(1), useUnmergedTree = true).fetchSemanticsNode()
+        assertFalse(line.config.contains(SemanticsProperties.EditableText))
+        val text = line.config[SemanticsProperties.Text].single()
+        val muted = text.spanStyles.single { it.item.color == lightColorScheme().onSurfaceVariant }
+        assertEquals(" — finely chopped", text.text.substring(muted.start, muted.end))
+        assertEquals(0, compose.onAllNodes(hasTestTag(IngredientNoteTags.field(1)), useUnmergedTree = true).fetchSemanticsNodes().size)
     }
 }

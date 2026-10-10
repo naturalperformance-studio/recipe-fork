@@ -148,7 +148,7 @@ class RowDragEditorTest(private val handleRight: Boolean) {
 
     private fun stepCount(): Int = count("editor-step-\\d+")
 
-    private fun ingredientCount(): Int = count("editor-ingredient-\\d+-name")
+    private fun ingredientCount(): Int = count("editor-ingredient-\\d+-line")
 
     private fun addStep(text: String) {
         val position = stepCount()
@@ -158,17 +158,20 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         compose.waitForIdle()
     }
 
+    /** Adds a row named [name] by "Add ingredient", which opens its sheet; the sheet is closed after. */
     private fun addIngredient(name: String) {
         val position = ingredientCount()
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientName(position)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.ingredientName(position)).performScrollTo().performTextReplacement(name)
+        compose.onNodeWithTag(EditorTags.ingredientName(position)).performTextReplacement(name)
         compose.waitForIdle()
+        compose.closeIngredient()
     }
 
     private fun stepTexts(): List<String> = (0 until stepCount()).map { fieldText(EditorTags.stepText(it)) }
 
-    private fun ingredientNames(): List<String> = (0 until ingredientCount()).map { fieldText(EditorTags.ingredientName(it)) }
+    /** The rows' names, as their lines end with them. */
+    private fun ingredientNames(): List<String> = (0 until ingredientCount()).map { compose.ingredientLine(it).substringAfterLast(' ') }
 
     private fun top(tag: String): Float = node(tag).positionInRoot.y
 
@@ -271,8 +274,10 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         compose.onNodeWithTag(EditorTags.timerMinutes(3)).performScrollTo().performTextInput("5")
         compose.waitForIdle()
         listOf("salt", "flour", "water", "yeast").forEach(::addIngredient)
-        compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performScrollTo().performTextReplacement("7")
+        compose.openIngredient(3)
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performTextReplacement("7")
         compose.waitForIdle()
+        compose.closeIngredient()
         val before = stored(id)
 
         val secondStepTop = top(EditorTags.step(1)) - top(EditorTags.step(0))
@@ -295,7 +300,7 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         assertEquals(listOf("salt", "yeast", "flour", "water"), ingredientNames())
         assertEquals(listOf(0, 3, 1, 2).map { before.ingredients[it].copy(position = 0) }, stored(id).ingredients.map { it.copy(position = 0) })
         assertEquals((0..3).toList(), stored(id).ingredients.map { it.position })
-        assertEquals("7", fieldText(EditorTags.ingredientQuantity(1)))
+        assertEquals("7 g yeast", compose.ingredientLine(1))
         assertEquals(secondRowTop, top(EditorTags.ingredient(1)) - top(EditorTags.ingredient(0)), 0.5f)
         val after = stored(id)
 

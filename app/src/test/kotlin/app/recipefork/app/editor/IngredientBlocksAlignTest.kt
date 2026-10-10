@@ -84,7 +84,7 @@ class IngredientBlocksAlignTest(private val handleRight: Boolean) {
     private fun right(tag: String) = node(tag).let { it.positionInRoot.x + it.size.width }
 
     @Test
-    fun everyNameFieldSharesOneEdgeWhetherItsBlockMovesOrNot() {
+    fun everyLineSharesOneEdgeWhetherItsBlockMovesOrNot() {
         // Dough holds flour, water and sugar; Glaze holds butter alone, which therefore cannot move; a third heading is
         // added after the list, with no rows, which cannot move either.
         val recipe = Recipe.create(now, null).copy(
@@ -106,10 +106,13 @@ class IngredientBlocksAlignTest(private val handleRight: Boolean) {
         assertTrue(compose.onAllNodes(hasTestTag(EditorTags.ingredientHandle(4))).fetchSemanticsNodes().isEmpty())
         assertTrue(compose.onAllNodes(hasTestTag(EditorTags.groupHandle(2))).fetchSemanticsNodes().isEmpty())
 
-        val rows = (0..4).map { EditorTags.ingredientName(it) }
+        // Every row's line starts at one edge, whether its block moves or not, and ends at one edge before its icons;
+        // every heading's name starts at one edge, 8 dp in from where the lines start, as its field is padded.
+        val rows = (0..4).map { IngredientSheetTags.line(it) }
         val headings = (0..2).map { EditorTags.groupName(it) }
         val start = left(rows[0])
-        (rows + headings).forEach { assertEquals("$it starts with the others", start, left(it), 0.5f) }
+        rows.forEach { assertEquals("$it starts with the others", start, left(it), 0.5f) }
+        headings.forEach { assertEquals("$it starts with the others", start + 8 * compose.density.density, left(it), 0.5f) }
         val end = right(rows[0])
         rows.forEach { assertEquals("$it ends with the others", end, right(it), 0.5f) }
     }

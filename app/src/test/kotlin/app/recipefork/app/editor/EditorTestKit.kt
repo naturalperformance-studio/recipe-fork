@@ -5,6 +5,10 @@ import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Looper
+import android.view.View
+import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import androidx.core.view.children
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.snapshots.Snapshot
@@ -235,3 +239,55 @@ fun SemanticsNodeInteractionsProvider.declaredLanguage(): RecipeLanguage? =
 fun SemanticsNodeInteractionsProvider.declareLanguage(language: RecipeLanguage) {
     onNodeWithTag(EditorTags.language(language)).performScrollTo().performClick()
 }
+
+/** Whether an ingredient row's sheet is open. */
+fun ComposeTestRule.ingredientSheetOpen(): Boolean =
+    onAllNodes(hasTestTag(IngredientSheetTags.SHEET)).fetchSemanticsNodes().isNotEmpty()
+
+/**
+ * Opens the sheet of the ingredient row at [position] as the author does, by a tap on its line — closing by its Done
+ * the sheet of any other row open first — and waits until its fields are there. Nothing is done where it is open.
+ */
+fun ComposeTestRule.openIngredient(position: Int) {
+    if (onAllNodes(hasTestTag(EditorTags.ingredientName(position))).fetchSemanticsNodes().isNotEmpty()) return
+    closeIngredient()
+    onNodeWithTag(IngredientSheetTags.line(position)).performScrollTo().performClick()
+    waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(EditorTags.ingredientName(position))).fetchSemanticsNodes().size == 1 }
+    waitForIdle()
+}
+
+/** Closes the open ingredient sheet by its Done, if one is open, and waits until it is gone. */
+fun ComposeTestRule.closeIngredient() {
+    if (!ingredientSheetOpen()) return
+    onNodeWithTag(IngredientSheetTags.DONE).performClick()
+    waitUntil(PATIENCE_MS) { !ingredientSheetOpen() }
+    waitForIdle()
+}
+
+/** The text of the line the ingredient row at [position] reads as. */
+fun SemanticsNodeInteractionsProvider.ingredientLine(position: Int): String =
+    onNodeWithTag(IngredientSheetTags.line(position), useUnmergedTree = true).fetchSemanticsNode().let { node ->
+        onAllNodes(hasAnyAncestor(hasTestTag(IngredientSheetTags.line(position))) and hasText("", substring = true), useUnmergedTree = true)
+            .fetchSemanticsNodes().firstOrNull()?.config?.get(SemanticsProperties.Text)?.joinToString("") { it.text }
+            ?: node.config[SemanticsProperties.Text].joinToString("") { it.text }
+    }
+
+/** Every window's root view, the topmost last: the activity's, and any sheet's, dialog's or menu's in front of it. */
+fun windowRoots(): List<View> {
+    val global = Class.forName("android.view.WindowManagerGlobal").getMethod("getInstance").invoke(null)
+    @Suppress("UNCHECKED_CAST")
+    return (global.javaClass.getDeclaredField("mViews").apply { isAccessible = true }.get(global) as List<View>).toList()
+}
+
+/** What the focused field asks the keyboard for — in whichever window it stands, a sheet's included. */
+fun ComposeTestRule.keyboardAskedFor(): EditorInfo {
+    fun View.all(): Sequence<View> = sequenceOf(this) + ((this as? ViewGroup)?.children?.flatMap { it.all() } ?: emptySequence())
+    val info = EditorInfo()
+    runOnUiThread {
+        windowRoots().reversed().asSequence().flatMap { it.all() }.first { it.onCheckIsTextEditor() }.onCreateInputConnection(info)
+    }
+    return info
+}
+
+/** What Material 3's bottom sheet says itself — its scrim's and its drag handle's names — from the library's resources. */
+val MATERIAL_SHEET_TEXTS = setOf("Close sheet", "Drag handle", "Закрыть лист", "Маркер перемещения")

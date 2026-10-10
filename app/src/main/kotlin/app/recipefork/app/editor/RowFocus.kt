@@ -27,6 +27,11 @@ internal class RowFocus {
         asked = position
     }
 
+    /** The row at [position] has taken what it was asked: none is asked any more. */
+    fun taken(position: Int) {
+        if (asked == position) asked = null
+    }
+
     /** Called by the row at [position]: where it is the one asked, its first field, [requester], takes the focus. */
     @Composable
     fun TakenBy(position: Int, requester: FocusRequester) {

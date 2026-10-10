@@ -35,6 +35,12 @@
     <string name="editor_ingredient_add">Добавить ингредиент</string>
     <string name="editor_ingredient_add_action">Добавить строку ингредиента</string>
     <string name="editor_ingredient_name">Ингредиент</string>
+    <!-- A row holding nothing yet, as it reads in the list. -->
+    <string name="editor_ingredient_new">Новый ингредиент</string>
+    <!-- A row's tap, and the title of the sheet it opens: the row's fields. -->
+    <string name="editor_ingredient_edit">Изменить ингредиент</string>
+    <!-- Under a row whose name is in the author's own words; the sheet says why it matters (FLOW-022). -->
+    <string name="editor_ingredient_free_text_mark">Нет в словаре ингредиентов</string>
     <string name="editor_ingredient_unnamed">Ингредиент без названия</string>
     <string name="editor_ingredient_quantity">Количество</string>
     <string name="editor_ingredient_unit">Единица</string>

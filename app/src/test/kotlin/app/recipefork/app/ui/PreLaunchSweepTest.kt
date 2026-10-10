@@ -54,6 +54,8 @@ import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
+import app.recipefork.app.editor.closeIngredient
+import app.recipefork.app.editor.openIngredient
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.FileMessageTags
 import app.recipefork.app.file.RecipeImport
@@ -128,8 +130,8 @@ import kotlin.time.Duration.Companion.minutes
  * in My kitchen, so marked on both tabs — ingredient groups, notes,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
  * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
- * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with a row removed and its
- * Undo offered, and on a frozen one with equipment; the settings and each of their
+ * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with an ingredient's
+ * sheet open, with a row removed and its Undo offered, and on a frozen one with equipment; the settings and each of their
  * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
@@ -451,6 +453,10 @@ class PreLaunchSweepTest {
         await(EditorTags.equipmentName(2))
         compose.waitForIdle()
         checkScreen("the editor, a recipe with equipment, groups, notes, several timers and tags")
+        // An ingredient's sheet open, its fields over the editor.
+        compose.openIngredient(1)
+        checkScreen("the editor, an ingredient's sheet open")
+        compose.closeIngredient()
         // A row removed: the editor says so with Undo.
         compose.onNodeWithTag(EditorTags.ingredientRemove(4)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.STATEMENT, unmerged = true) }
@@ -583,7 +589,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 26
+        const val SCREENS = 27
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L

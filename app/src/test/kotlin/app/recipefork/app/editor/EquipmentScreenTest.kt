@@ -254,7 +254,8 @@ class EquipmentScreenTest {
         assertFalse(exists(EditorTags.equipmentMenu(0)))
     }
 
-    // The keyboard's Next goes from the serving count through every item to the first ingredient row.
+    // The keyboard's Next goes from the serving count through every item to the first ingredient row, whose sheet opens
+    // with its name focused.
     @Test
     fun nextGoesFromTheServingsThroughTheItemsToTheIngredients() {
         open(recipe("Bowl", "Whisk"))
@@ -277,6 +278,7 @@ class EquipmentScreenTest {
         compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
         compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { stored(recipe).ingredients.isEmpty() }
         compose.onNodeWithTag(EditorTags.EQUIPMENT_ADD).performScrollTo().performClick()

@@ -136,7 +136,7 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
     private fun stepCount(): Int = compose.onAllNodes(hasTestTagMatching(Regex("editor-step-\\d+"))).fetchSemanticsNodes().size
 
     private fun ingredientCount(): Int =
-        compose.onAllNodes(hasTestTagMatching(Regex("editor-ingredient-\\d+-name"))).fetchSemanticsNodes().size
+        compose.onAllNodes(hasTestTagMatching(Regex("editor-ingredient-\\d+-line"))).fetchSemanticsNodes().size
 
     private fun addStep(text: String) {
         val position = stepCount()
@@ -146,12 +146,14 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         compose.waitForIdle()
     }
 
+    /** Adds a row by "Add ingredient", which opens its sheet — closing any open before — and names it [name] there. */
     private fun addIngredient(name: String) {
+        compose.closeIngredient()
         val position = ingredientCount()
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientName(position)), PATIENCE_MS)
         if (name.isNotEmpty()) {
-            compose.onNodeWithTag(EditorTags.ingredientName(position)).performScrollTo().performTextReplacement(name)
+            compose.onNodeWithTag(EditorTags.ingredientName(position)).performTextReplacement(name)
             compose.waitForIdle()
         }
     }
@@ -160,11 +162,15 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
 
     private fun stepLabels(): List<String> = (0 until stepCount()).map { compose.textsOf(EditorTags.stepText(it)).first() }
 
-    private fun ingredientNames(): List<String> = (0 until ingredientCount()).map { fieldText(EditorTags.ingredientName(it)) }
+    /** The rows' names as their lines end with them; "" for a row holding nothing. */
+    private fun ingredientNames(): List<String> = (0 until ingredientCount()).map { position ->
+        compose.ingredientLine(position).let { if (it == context.getString(R.string.editor_ingredient_new)) "" else it.substringAfterLast(' ') }
+    }
 
     /** Opens the menu tagged [menu] and returns the actions it offers, in order, by tag. */
     private fun openMenu(menu: String, actionTag: (RowAction) -> String): List<RowAction> {
-        compose.onNodeWithTag(menu).performScrollTo().performClick()
+        // Opened by its click, as a screen reader would, so that a row's sheet open in front leaves it in reach.
+        compose.onNodeWithTag(menu).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntil(PATIENCE_MS) { exists(actionTag(RowAction.INSERT_ABOVE)) }
         return RowAction.entries.filter { exists(actionTag(it)) }
     }
@@ -283,6 +289,7 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         onIngredient(1, RowAction.INSERT_ABOVE)
         onIngredient(0, RowAction.INSERT_BELOW)
         addIngredient("")
+        compose.closeIngredient()
         val rows = stored(id).ingredients
         assertEquals(listOf("salt", null, null, "flour", null), rows.map { it.freeTextName })
         assertEquals((0..4).toList(), rows.map { it.position })
@@ -306,8 +313,9 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         compose.onNodeWithTag(EditorTags.timerMinutes(3)).performScrollTo().performTextInput("5")
         compose.waitForIdle()
         listOf("salt", "flour", "water", "yeast").forEach(::addIngredient)
-        compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performScrollTo().performTextReplacement("7")
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performTextReplacement("7")
         compose.waitForIdle()
+        compose.closeIngredient()
         val before = stored(id)
 
         onStep(3, RowAction.MOVE_UP)
@@ -332,7 +340,7 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         assertEquals(rowOrder.map { before.ingredients[it].copy(position = 0) }, stored(id).ingredients.map { it.copy(position = 0) })
         assertEquals((0..3).toList(), stored(id).ingredients.map { it.position })
         assertEquals(listOf("salt", "yeast", "flour", "water"), ingredientNames())
-        assertEquals("7", fieldText(EditorTags.ingredientQuantity(1)))
+        assertEquals("7 g yeast", compose.ingredientLine(1))
         assertEquals(Rational.of(7), stored(id).ingredients[1].quantity)
         val after = stored(id)
 
@@ -402,34 +410,36 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         assertEquals(listOf("three", "one", "four more!", "two"), stored(id).steps.map { it.text })
     }
 
-    // What the screen holds for an ingredient row — focus, an open dictionary offer, a typed value not held, an error
-    // mark — stays with that row through an insert, a move and a delete above it.
+    // What the screen holds for an ingredient row — its open sheet, with the focus, an open dictionary offer — stays with
+    // that row through an insert, a move and a delete above it, and its own move; a quantity the field does not hold stays
+    // marked on its row.
     @Test
     fun whatTheScreenHoldsForAnIngredientRowStaysWithIt() {
         val id = writeANewRecipe()
         addIngredient("salt")
-        // "2.50" g: a quantity the field does not hold (whole grams), marked, shown as typed.
+        // "2.50" g: a quantity the field does not hold (whole grams), marked.
         addIngredient("flour")
-        compose.onNodeWithTag(EditorTags.ingredientQuantity(1)).performScrollTo().performTextReplacement("2.50")
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(1)).performTextReplacement("2.50")
         compose.waitForIdle()
         assertEquals("2.50", fieldText(EditorTags.ingredientQuantity(1)))
         assertTrue(exists(EditorTags.ingredientError(1)))
         // The author is typing "chick" into the third row, and the dictionary offers entries for it.
         addIngredient("")
-        compose.onNodeWithTag(EditorTags.ingredientName(2)).performScrollTo().performTextInput("chick")
+        compose.onNodeWithTag(EditorTags.ingredientName(2)).performTextInput("chick")
         compose.waitUntilExactlyOneExists(hasTestTag(IngredientNameTags.offer(2)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.ingredientName(2)).assertIsFocused()
+        assertMarked(1)
 
         onIngredient(0, RowAction.INSERT_ABOVE)
         assertEquals(listOf("", "salt", "flour", "chick"), ingredientNames())
         assertOffered(3)
         compose.onNodeWithTag(EditorTags.ingredientName(3)).assertIsFocused()
-        assertMarked(2, "2.50")
+        assertMarked(2)
 
         // The marked row moves above "salt".
         onIngredient(2, RowAction.MOVE_UP)
         assertEquals(listOf("", "flour", "salt", "chick"), ingredientNames())
-        assertMarked(1, "2.50")
+        assertMarked(1)
         assertEquals(QuantityUnit.GRAM, stored(id).ingredients[1].unit)
         assertOffered(3)
         compose.onNodeWithTag(EditorTags.ingredientName(3)).assertIsFocused()
@@ -441,15 +451,13 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         compose.onNodeWithTag(EditorTags.ingredientName(2)).assertIsFocused()
 
         // Deleted above.
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(listOf("flour", "chick", "salt"), ingredientNames())
-        assertMarked(0, "2.50")
+        assertMarked(0)
         assertOffered(1)
         compose.onNodeWithTag(EditorTags.ingredientName(1)).assertIsFocused()
-        // The offer is still that row's: picking from it names that row, once the statement of the deletion, which
-        // covers the bottom of the screen, is swiped away.
-        compose.swipeAwayStatement()
+        // The offer is still that row's: picking from it names that row.
         compose.onNodeWithTag(IngredientNameTags.entry(1, 1)).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf(null, 1L, null), stored(id).ingredients.map { it.dictionaryEntry })
@@ -463,10 +471,10 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         )
     }
 
-    private fun assertMarked(position: Int, typed: String) {
-        assertEquals(typed, fieldText(EditorTags.ingredientQuantity(position)))
-        assertEquals(listOf(position), (0 until ingredientCount()).filter { exists(EditorTags.ingredientError(it)) })
-        assertTrue(SemanticsProperties.Error in node(EditorTags.ingredientQuantity(position)).config)
+    /** The row at [position], and no other, is marked for a quantity its field does not hold. */
+    private fun assertMarked(position: Int) {
+        assertEquals(listOf(position), (0 until ingredientCount()).filter { exists(IngredientSheetTags.problem(it)) })
+        assertEquals("2.5 g flour", compose.ingredientLine(position))
     }
 
     // A frozen recipe shows no row menu.

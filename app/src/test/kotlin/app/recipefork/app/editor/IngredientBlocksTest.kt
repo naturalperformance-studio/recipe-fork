@@ -11,6 +11,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -26,6 +28,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.createFontFamilyResolver
@@ -69,10 +72,10 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * Each ingredient row as one bounded block on a 360 dp phone, at font scale 1.0 and 2.0: every part of a row inside
  * its block, blocks apart from each other with an outline drawn round each, a tinted column down the left edge of each
- * block — or the right edge, with the handle on the right — with the handle icon at its centre, the inputs beside it at one left edge and of one height, and the name's text
- * with room to be read; the free-text warning as an icon beside the name whose text the screen reader reads and a tap
- * or a long press shows; a row dragged from anywhere in its column moving whole; a frozen recipe's rows as blocks,
- * with no column.
+ * block — or the right edge, with the handle on the right — with the handle icon at its centre, the row's line beside it
+ * with room to be read and its marks under it; in the row's sheet, the inputs at one left edge and of one height and the
+ * free-text warning as a hint under the name; a row dragged from anywhere in its column moving whole; a frozen recipe's
+ * rows as blocks, with no column.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(ParameterizedRobolectricTestRunner::class)
@@ -129,8 +132,8 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         compose.waitForIdle()
         compose.runOnIdle { opened.value = recipe.id }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredient(ingredients.lastIndex)), PATIENCE_MS)
-        // The dictionary is read: the entry's row shows its label.
-        if (state == null) compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(1)) in setOf("курица", "chicken") }
+        // The dictionary is read: the entry's row reads its label.
+        compose.waitUntil(PATIENCE_MS) { listOf("курица", "chicken").any { it in compose.ingredientLine(1) } }
         return recipe.id
     }
 
@@ -146,24 +149,19 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
 
     private fun string(id: Int): String = context.getString(id)
 
-    /** How much the free-text hint under the name of row [position] adds to its field: the hint and the 4 dp above it. */
+    /** How much the free-text hint under the name of the open row [position] adds to its field: the hint and the 4 dp above it. */
     private fun hintHeight(position: Int): Float =
         if (exists(EditorTags.ingredientWarning(position))) bounds(EditorTags.ingredientWarning(position)).height + px(4f) else 0f
-
-    /** What the note's field takes in the row at [position], with the gap above it. */
-    private fun noteHeight(position: Int): Float = bounds(IngredientNoteTags.field(position)).height + px(4f)
 
     /** Every part of the editable row at [position] that is on the screen. */
     private fun parts(position: Int): List<String> = listOf(
         EditorTags.ingredientHandle(position),
         EditorTags.ingredientHandleIcon(position),
-        EditorTags.ingredientName(position),
+        IngredientSheetTags.line(position),
+        IngredientSheetTags.freeText(position),
+        IngredientSheetTags.problem(position),
         EditorTags.ingredientRemove(position),
         EditorTags.ingredientMenu(position),
-        EditorTags.ingredientQuantity(position),
-        EditorTags.ingredientUnit(position),
-        EditorTags.ingredientWarning(position),
-        EditorTags.divisibility(position),
     ).filter(::exists)
 
     /**
@@ -196,8 +194,8 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         }
     }
 
-    // Each editable row is one bounded block, separated from the next; every part of it — the divisibility question
-    // and the warning included — inside it; the drag column down its left edge, and the inputs beside it at one left edge.
+    // Each editable row is one bounded block, separated from the next; every part of it — its line, its marks and its
+    // icons — inside it; the drag column down its left edge, and the line beside it.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun everyRowIsOneBlockInRussian() = everyRowIsOneBlock(1f)
@@ -224,9 +222,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
             }
             val column = bounds(EditorTags.ingredientHandle(position))
             val icon = bounds(EditorTags.ingredientHandleIcon(position))
-            val name = bounds(EditorTags.ingredientName(position))
-            val unit = bounds(EditorTags.ingredientUnit(position))
-            val below = if (exists(EditorTags.ingredientQuantity(position))) bounds(EditorTags.ingredientQuantity(position)) else unit
+            val line = bounds(IngredientSheetTags.line(position))
             // The column runs down the block's left edge, its full height, 48 dp wide and no wider, the icon at its centre.
             if (handleRight) {
                 assertEquals("row $position: the column ends at the block's right edge", block.right, column.right, 0.5f)
@@ -238,30 +234,34 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
             assertEquals("row $position: the column is ${column.width / compose.density.density} dp wide", px(48f), column.width, 0.5f)
             assertEquals("row $position: the icon is centred across the column", column.center.x, icon.center.x, 1f)
             assertEquals("row $position: the icon is centred down the column", column.center.y, icon.center.y, 1f)
-            // Nothing that drags stands among the inputs: every other part of the row is beside the column.
+            // Nothing that drags stands among the rest: every other part of the row is beside the column.
             (parts(position) - setOf(EditorTags.ingredientHandle(position), EditorTags.ingredientHandleIcon(position))).forEach {
                 val b = bounds(it)
                 if (handleRight) assertTrue("row $position: $it is left of the column", b.right <= column.left + 0.5f)
                 else assertTrue("row $position: $it is right of the column", b.left >= column.right - 0.5f)
             }
-            if (handleRight) assertTrue("row $position: the inputs start by the block's left edge", name.left - block.left <= px(16f))
-            // One left edge: the name starts the first line, the quantity (or the unit, with no quantity) the second.
-            assertEquals("row $position: the name and the field below it share their left edge", name.left, below.left, 0.5f)
-            assertTrue("row $position: the quantity and unit are below the name", below.top >= name.bottom - 0.5f)
-            // The menu beside the name and the unit beside a quantity end at one right edge.
-            val menu = bounds(EditorTags.ingredientMenu(position))
-            if (below != unit && menu.top < name.bottom) assertEquals("row $position: the menu and the unit end together", menu.right, unit.right, 0.5f)
+            if (handleRight) assertTrue("row $position: the line starts by the block's left edge", line.left - block.left <= px(16f))
+            // The line is the target: at least 48 dp tall.
+            assertTrue("row $position: the line is ${line.height / compose.density.density} dp tall", line.height >= px(48f) - 0.5f)
+            // Its marks stand under its text, inside it.
+            listOf(IngredientSheetTags.freeText(position), IngredientSheetTags.problem(position)).filter(::exists).forEach {
+                val b = bounds(it)
+                assertTrue("row $position: $it is inside the line", b.left >= line.left - 0.5f && b.bottom <= line.bottom + 0.5f)
+            }
         }
-        // The divisibility question of the free-text piece stays inside its block, below its fields.
-        assertTrue(exists(EditorTags.divisibility(0)))
-        assertTrue(bounds(EditorTags.divisibility(0)).top >= bounds(EditorTags.ingredientUnit(0)).bottom - 0.5f)
+        // The free-text names are marked, the dictionary's entry is not.
+        assertEquals(listOf(true, false, true, true), (0 until count).map { exists(IngredientSheetTags.freeText(it)) })
         // Nothing of a row leaves the screen's width.
         val screen = bounds(EditorTags.FORM)
         (0 until count).forEach { assertTrue(bounds(EditorTags.ingredient(it)).right <= screen.right + 0.5f) }
         assertSeparateOutlinedBlocks(count)
+        // The divisibility question of the free-text piece stands in its sheet, below its fields.
+        compose.openIngredient(0)
+        assertTrue(exists(EditorTags.divisibility(0)))
+        assertTrue(bounds(EditorTags.divisibility(0)).top >= bounds(EditorTags.ingredientUnit(0)).bottom - 0.5f)
     }
 
-    // The name field, the quantity field and the unit select of a row are of one height, and the quantity and the
+    // In the sheet, the name field, the quantity field and the unit select are of one height, and the quantity and the
     // unit stand level on their line — at font scale 1.0 and 2.0.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
@@ -278,6 +278,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     private fun inputsAreOfOneHeight(fontScale: Float) {
         open(fontScale)
         (0 until rows().size).forEach { position ->
+            compose.openIngredient(position)
             // The name's field without the free-text hint under it.
             val name = bounds(EditorTags.ingredientName(position)).let { it.copy(bottom = it.bottom - hintHeight(position)) }
             val unit = bounds(EditorTags.ingredientUnit(position))
@@ -296,17 +297,19 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         }
     }
 
-    // The quantity field takes the line from the block's left edge up to the unit: nothing stands before it any more.
+    // In the sheet, the quantity field takes the line from the name's left edge up to the unit.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theQuantityTakesTheWholeLineBeforeTheUnit() {
         open(1f)
+        compose.openIngredient(0)
         val quantity = bounds(EditorTags.ingredientQuantity(0))
         val unit = bounds(EditorTags.ingredientUnit(0))
         val name = bounds(EditorTags.ingredientName(0))
         assertEquals(name.left, quantity.left, 0.5f)
         assertEquals("only the 8 dp gap between the quantity and the unit", px(8f), unit.left - quantity.right, 0.5f)
         assertTrue("the quantity is ${quantity.width / compose.density.density} dp wide", quantity.width >= px(120f))
+        assertEquals("the unit ends with the name", name.right, unit.right, 0.5f)
     }
 
     // A11Y-004: at font scale 2.0 the quantity's label is not wrapped onto the name above it — where it cannot have one
@@ -323,6 +326,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         open(2f)
         val label = widthOf(string(R.string.editor_ingredient_quantity), 2f, Typography().bodySmall)
         listOf(0, 1, 3).forEach { position ->
+            compose.openIngredient(position)
             val quantity = bounds(EditorTags.ingredientQuantity(position))
             val unit = bounds(EditorTags.ingredientUnit(position))
             assertTrue("row $position: the quantity (${quantity.width} px) has room for its label ($label px) on one line", quantity.width - px(32f) >= label)
@@ -343,9 +347,9 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         fun differs(a: Color, b: Color) = abs(a.red - b.red) + abs(a.green - b.green) + abs(a.blue - b.blue) > 0.02f
         (0 until rows().size).forEach { position ->
             val column = bounds(EditorTags.ingredientHandle(position))
-            val unit = bounds(EditorTags.ingredientUnit(position))
-            // The block's own colour: just below the unit select, inside the block.
-            val body = at(unit.center.x, unit.bottom + px(2f))
+            val line = bounds(IngredientSheetTags.line(position))
+            // The block's own colour: in the padding under the line's text, inside the block.
+            val body = at(line.center.x, line.bottom - px(2f))
             val tint = at(column.center.x, column.top + px(12f))
             assertTrue("row $position: the column is tinted ($tint against $body)", differs(tint, body))
             assertFalse("row $position: the column is one tint to its bottom", differs(tint, at(column.center.x, column.bottom - px(12f))))
@@ -353,8 +357,9 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         }
     }
 
-    // FLOW-022 (2): the warning is a hint in the name field's own supporting text — under the name, inside its field —
-    // never an error and never an icon beside it; the screen reader reads it with the field.
+    // FLOW-022 (2): on the row, a name in the author's own words is marked in muted words under the line, never as an
+    // error; in the sheet, the warning is a hint in the name field's own supporting text — under the name, inside its
+    // field — never an error and never an icon beside it; the screen reader reads it with the field.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theFreeTextWarningIsAHintUnderTheNameInRussian() = theFreeTextWarningIsAHint()
@@ -366,9 +371,15 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     private fun theFreeTextWarningIsAHint() {
         open(1f)
         val text = string(R.string.editor_ingredient_free_text_warning)
-        // Free text warns; the dictionary entry does not.
-        assertEquals(listOf(true, false, true, true), (0..3).map { exists(EditorTags.ingredientWarning(it)) })
         listOf(0, 2, 3).forEach { position ->
+            assertEquals(listOf(string(R.string.editor_ingredient_free_text_mark)), compose.textsOf(IngredientSheetTags.freeText(position)))
+            assertEquals(Typography().bodyMedium.fontSize, layoutOf(IngredientSheetTags.freeText(position)).layoutInput.style.fontSize)
+            assertEquals(lightColorScheme().onSurfaceVariant, layoutOf(IngredientSheetTags.freeText(position)).layoutInput.style.color)
+        }
+        // Free text warns; the dictionary entry does not.
+        assertEquals(listOf(true, false, true, true), (0..3).map { compose.openIngredient(it); exists(EditorTags.ingredientWarning(it)) })
+        listOf(0, 2, 3).forEach { position ->
+            compose.openIngredient(position)
             val field = node(EditorTags.ingredientName(position))
             val name = bounds(EditorTags.ingredientName(position))
             val b = bounds(EditorTags.ingredientWarning(position))
@@ -381,10 +392,10 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         }
     }
 
-    /**
-     * The width the name field of row [position] leaves for its text: Material 3 pads it 16 dp from the field's edge at
-     * both ends.
-     */
+    private fun layoutOf(tag: String): TextLayoutResult =
+        mutableListOf<TextLayoutResult>().also { node(tag).config[SemanticsActions.GetTextLayoutResult].action!!(it) }.single()
+
+    /** The width the name field of the open row [position] leaves for its text: 16 dp of padding at both ends. */
     private fun nameTextWidth(position: Int): Float =
         bounds(EditorTags.ingredientName(position)).width - px(32f)
 
@@ -394,37 +405,46 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         return measurer.measure(text, style).size.width.toFloat()
     }
 
-    // Criterion 1 at large text: a free-text name keeps room for about eight Cyrillic letters
-    // on a 360 dp phone at font scale 2.0, so "черемша" reads whole.
+    /** The width the line of row [position] leaves for its text: 12 dp before it and 4 dp after it. */
+    private fun lineTextWidth(position: Int): Float = bounds(IngredientSheetTags.line(position)).width - px(16f)
+
+    // Criterion 1 at large text: on a 360 dp phone at font scale 2.0 a row's line keeps room for about eight Cyrillic
+    // letters beside its icons, so "черемша" reads whole; its sheet's name field more than that.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun aFreeTextNameKeepsRoomForItsTextAtDoubleFontScale() {
         open(2f)
-        val room = nameTextWidth(0)
         val eight = widthOf("морковка", 2f)
+        val line = lineTextWidth(0)
+        assertTrue("the line leaves ${line / compose.density.density} dp for its text, eight letters take ${eight / compose.density.density} dp", line >= eight)
+        compose.openIngredient(0)
+        val room = nameTextWidth(0)
         assertTrue("the name leaves ${room / compose.density.density} dp for its text, eight letters take ${eight / compose.density.density} dp", room >= eight)
     }
 
-    // On a 320 dp phone at font scale 2.0 the text of a free-text name still has room of its own.
+    // On a 320 dp phone at font scale 2.0 the text of a free-text name still has room of its own, on the row and in the
+    // sheet.
     @Test
     @Config(qualifiers = "ru-w320dp-h4000dp")
     fun aFreeTextNameKeepsUsableRoomOnANarrowPhoneAtDoubleFontScale() {
         open(2f)
-        val room = nameTextWidth(0)
         val four = widthOf("черм", 2f)
+        assertTrue(lineTextWidth(0) >= four)
+        compose.openIngredient(0)
+        val room = nameTextWidth(0)
         assertTrue("the name leaves ${room / compose.density.density} dp for its text, four letters take ${four / compose.density.density} dp", room >= four)
     }
 
     private fun isFocused(tag: String): Boolean = node(tag).config.getOrNull(SemanticsProperties.Focused) == true
 
-    // A free-text name typed letter by letter keeps its focus and its text, and the warning does not spring up under it
-    // while it is typed: it comes once the field is left.
+    // A row with no name opens with its name focused; a free-text name typed letter by letter keeps its focus and its
+    // text, and the warning does not spring up under it while it is typed: it comes once the field is left.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theFreeTextWarningComesOnceTheNameIsLeft() {
         open(1f, ingredients = rows() + Ingredient(4, null, null, null, UnitType.EXACT, QuantityUnit.GRAM, null))
         val name = EditorTags.ingredientName(4)
-        compose.onNodeWithTag(name).performScrollTo().performClick()
+        compose.openIngredient(4)
         compose.waitUntil(PATIENCE_MS) { isFocused(name) }
         assertFalse(exists(EditorTags.ingredientWarning(4)))
         var typed = ""
@@ -482,8 +502,10 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
             // Dropped past the second row's middle, it lands second, as the menu's "Move down" would put it.
             val first = names[(i + 1) % 2]
             val second = names[i % 2]
-            compose.waitUntil(PATIENCE_MS) { fieldText(EditorTags.ingredientName(1)) == second }
-            assertEquals("dragged from $where", first, fieldText(EditorTags.ingredientName(0)))
+            compose.waitUntil(PATIENCE_MS) { compose.ingredientLine(1).endsWith(second) }
+            assertTrue("dragged from $where", compose.ingredientLine(0).endsWith(first))
+            // A drag opens no sheet.
+            assertFalse(compose.ingredientSheetOpen())
             // Dropped, every part is back on its place.
             compose.waitUntil(PATIENCE_MS) { abs(bounds(EditorTags.ingredient(0)).top - before.getValue(EditorTags.ingredient(0))) < 1f }
         }
@@ -514,35 +536,35 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
 
     private fun dp(px: Float) = px / compose.density.density
 
-    // The block is no taller than it was before its actions became the step's icons: measured at 360 dp and font
-    // scale 1.0 on the block as it stood, 144 dp for a row of name, quantity and unit, 284 dp with the divisibility
-    // question. The icons stand on the name's line, so they add no line of their own; the free-text hint under a name
-    // and the note's field under it (DOM-023) are the only things added since.
+    // The block reads as its line: it is no taller than its line — the line's text and marks, or its icons beside it —
+    // and at 360 dp and font scale 1.0 a row with no mark is one line of 48 dp, a third of the 144 dp a row of fields
+    // took. The icons stand at the line's top, right of it.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun theBlockIsNoTallerThanBefore() = blockIsNoTallerThanBefore()
+    fun theBlockIsAShortLine() = blockIsAShortLine()
 
     @Test
     @Config(qualifiers = "en-w360dp-h4000dp")
-    fun theBlockIsNoTallerThanBeforeInEnglish() = blockIsNoTallerThanBefore()
+    fun theBlockIsAShortLineInEnglish() = blockIsAShortLine()
 
-    private fun blockIsNoTallerThanBefore() {
+    private fun blockIsAShortLine() {
         open(1f)
-        val before = listOf(284f, 144f, 144f, 144f)
         (0 until rows().size).forEach { position ->
-            val height = dp(bounds(EditorTags.ingredient(position)).height - hintHeight(position) - noteHeight(position))
-            assertTrue("row $position is $height dp tall, it was ${before[position]} dp", height <= before[position] + 0.5f)
-            val name = bounds(EditorTags.ingredientName(position))
+            val block = bounds(EditorTags.ingredient(position))
+            val line = bounds(IngredientSheetTags.line(position))
+            // The block is its line, within its outline.
+            assertEquals("row $position: the block is as tall as its line", line.height, block.height, px(2f))
             actions(position).forEach {
                 val b = bounds(it)
-                assertTrue("row $position: $it stands on the name's line", b.top >= name.top - 0.5f && b.bottom <= name.bottom + 0.5f)
-                assertTrue("row $position: $it is right of the name", b.left >= name.right - 0.5f)
+                assertTrue("row $position: $it stands at the line's top", b.top >= line.top - 0.5f && b.top <= line.top + px(12f))
+                assertTrue("row $position: $it is right of the line", b.left >= line.right - 0.5f)
             }
         }
+        assertTrue("an unmarked row is ${dp(bounds(EditorTags.ingredient(1)).height)} dp tall", dp(bounds(EditorTags.ingredient(1)).height) <= 50.5f)
     }
 
     // The row's actions are icons as a step's are: 48 dp each, side by side in one row, inside the block, and no text
-    // button anywhere in the block — at font scale 1.0 beside the name, at 2.0 in a row of their own under the inputs.
+    // button anywhere in the block — beside the line, or, where the line would keep no room for a word, under it.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theActionsAreIconsInOneRow() = actionsAreIconsInOneRow(1f)
@@ -559,8 +581,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         open(fontScale)
         (0 until rows().size).forEach { position ->
             val block = bounds(EditorTags.ingredient(position))
-            val name = bounds(EditorTags.ingredientName(position))
-            val unit = bounds(EditorTags.ingredientUnit(position))
+            val line = bounds(IngredientSheetTags.line(position))
             val controls = actions(position).map { bounds(it) }
             controls.forEach { b ->
                 assertEquals("row $position: an icon is 48 dp wide", 48f, dp(b.width), 0.5f)
@@ -570,21 +591,20 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
             val (remove, menu) = controls
             assertEquals("row $position: the icons stand in one row", remove.top, menu.top, 0.5f)
             assertTrue("row $position: remove, then the menu", menu.left >= remove.right - 0.5f)
-            if (fontScale == 2f) {
-                // The name has the whole line: it reaches the block's right edge, and the icons are under the inputs.
+            // Beside the line, or under it with the line reaching the block's far edge.
+            val beside = remove.left >= line.right - 0.5f
+            if (!beside) {
                 val end = if (handleRight) bounds(EditorTags.ingredientHandle(position)).left else block.right
-                assertTrue("row $position: the name reaches ${if (handleRight) "the column" else "the block's right edge"}", end - name.right <= px(4f) + 0.5f)
-                assertTrue("row $position: the icons are under the unit", remove.top >= unit.bottom - 0.5f)
-                if (exists(EditorTags.ingredientQuantity(position))) assertTrue(remove.top >= bounds(EditorTags.ingredientQuantity(position)).bottom - 0.5f)
-                assertEquals("row $position: the icons start at the inputs' left edge", name.left, remove.left, 0.5f)
-                if (exists(EditorTags.divisibility(position))) {
-                    assertTrue("row $position: the icons come before the divisibility question", remove.bottom <= bounds(EditorTags.divisibility(position)).top + 0.5f)
-                }
+                assertTrue("row $position: the line reaches ${if (handleRight) "the column" else "the block's right edge"}", end - line.right <= px(4f) + 0.5f)
+                assertTrue("row $position: the icons are under the line", remove.top >= line.bottom - 0.5f)
             }
+            assertTrue("row $position: the line keeps room for a word", lineTextWidth(position) >= widthOf("00000000", fontScale) - 0.5f)
             // No text button: in the merged tree a button carries the text of everything inside it, so a button in the
-            // block with any text is a text button; the icons carry only their spoken names.
+            // block with any text is a text button; the icons carry only their spoken names. The line is a target of
+            // its own, named by what it does.
             val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(position)))
             val texts = compose.onAllNodes(inRow and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
+                .filter { it.config.getOrNull(SemanticsProperties.TestTag) != IngredientSheetTags.line(position) }
                 .filter { it.config.getOrNull(SemanticsProperties.EditableText) == null }
                 .filter { it.config.getOrNull(SemanticsProperties.Role) == androidx.compose.ui.semantics.Role.Button }
                 .filter { it.config.getOrNull(SemanticsProperties.Text).orEmpty().isNotEmpty() }

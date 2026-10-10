@@ -26,6 +26,9 @@ import app.recipefork.app.card.awaitCard
 import app.recipefork.app.editor.ChecklistTags
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.EditorTags
+import app.recipefork.app.editor.IngredientSheetTags
+import app.recipefork.app.editor.closeIngredient
+import app.recipefork.app.editor.openIngredient
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
@@ -228,13 +231,17 @@ class ServerlessWordingTest {
         assertSaysNothingOfTheServer("the editor on a frozen recipe")
         compose.runOnIdle { session.closeEditor() }
         compose.runOnIdle { session.openEditor(local.id.value) }
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(IngredientSheetTags.freeText(0)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
+        assertSaysNothingOfTheServer("the editor and its free-text mark")
+        // The free-text warning is among what the row's sheet shows, in its name's supporting text.
+        compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientWarning(0)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
-        // The free-text warning is among what the editor shows, in its name's supporting text.
         assertSaysNothingOfTheServer("the editor and its free-text warning")
         assertEquals(
             listOf(context.getString(R.string.editor_ingredient_free_text_warning_serverless)),
             compose.textsOf(EditorTags.ingredientWarning(0)),
         )
+        compose.closeIngredient()
         compose.onNodeWithTag(ChecklistTags.CONTROL).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(ChecklistTags.DIALOG), PATIENCE_MS)
         assertSaysNothingOfTheServer("the checklist")

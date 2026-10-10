@@ -164,6 +164,8 @@ class RowKeysRestorationTest {
         )
     }
 
+    // An ingredient's sheet open while its row is moved and a row inserted above it follows its row, what was typed in it
+    // with it, and comes back on that row when the activity is recreated.
     @Test
     fun aRowsTypedQuantityComesBackOnItsRowAfterAMoveAndAnInsert() {
         val recipe = Recipe.create(created, null).copy(
@@ -173,19 +175,24 @@ class RowKeysRestorationTest {
             ),
         )
         open(recipe)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientQuantity(1)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredient(1)), PATIENCE_MS)
+        compose.openIngredient(0)
         // "2.50" g is not held — whole grams only — and is shown as typed.
-        compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("2.50")
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performTextReplacement("2.50")
         compose.waitForIdle()
         choose(EditorTags.ingredientMenu(0), EditorTags.ingredientAction(0, RowAction.MOVE_DOWN))
         choose(EditorTags.ingredientMenu(0), EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE))
-        assertEquals(listOf("", "5", "2.50"), (0..2).map { fieldText(EditorTags.ingredientQuantity(it)) })
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientQuantity(2)), PATIENCE_MS)
+        assertEquals("flour", fieldText(EditorTags.ingredientName(2)))
+        assertEquals("2.50", fieldText(EditorTags.ingredientQuantity(2)))
 
         restore()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientQuantity(2)), PATIENCE_MS)
-        assertEquals(listOf("", "salt", "flour"), (0..2).map { fieldText(EditorTags.ingredientName(it)) })
-        assertEquals(listOf("", "5", "2.50"), (0..2).map { fieldText(EditorTags.ingredientQuantity(it)) })
+        assertEquals("flour", fieldText(EditorTags.ingredientName(2)))
+        assertEquals("2.50", fieldText(EditorTags.ingredientQuantity(2)))
         compose.onNodeWithTag(EditorTags.ingredientError(2), useUnmergedTree = true).assertExists()
+        compose.closeIngredient()
+        assertEquals(listOf("New ingredient", "5 g salt", "2.5 g flour"), (0..2).map { compose.ingredientLine(it) })
     }
 
     // A row inserted after the state is restored gets a key no other row holds: what the screen keeps for each row
