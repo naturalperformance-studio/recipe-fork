@@ -4,6 +4,9 @@
     <string name="kitchen_title">Моя кухня</string>
     <string name="kitchen_back">Назад</string>
     <string name="kitchen_back_action">Вернуться в настройки</string>
+    <!-- Открыта с предмета на карточке рецепта: «Назад» возвращает к рецепту, а этот предмет выделен. -->
+    <string name="kitchen_back_to_recipe_action">Вернуться к рецепту</string>
+    <string name="kitchen_from_recipe">Нужно для рецепта</string>
     <string name="kitchen_search">Найти оборудование</string>
     <string name="kitchen_search_clear">Очистить поиск</string>
     <string name="kitchen_nothing_found">По запросу «%1$s» ничего не найдено</string>

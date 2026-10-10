@@ -99,4 +99,6 @@
     <string name="card_equipment_show_action">Показать посуду и технику</string>
     <!-- Под предметом, которого нет на кухне читателя («Моя кухня»). -->
     <string name="card_equipment_not_in_kitchen">Нет на кухне</string>
+    <!-- Что делает касание такого предмета на «Просмотре»: открывает «Мою кухню» на нём. -->
+    <string name="card_equipment_open_kitchen_action">Открыть «Мою кухню»</string>
 </resources>

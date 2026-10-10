@@ -120,4 +120,6 @@
     <string name="card_equipment_show_action">Show the equipment</string>
     <!-- Under an item of equipment the reader's kitchen lacks (My kitchen). -->
     <string name="card_equipment_not_in_kitchen">Not in your kitchen</string>
+    <!-- What a tap on such an item does, on View: My kitchen opens at it. -->
+    <string name="card_equipment_open_kitchen_action">Open My kitchen</string>
 </resources>
