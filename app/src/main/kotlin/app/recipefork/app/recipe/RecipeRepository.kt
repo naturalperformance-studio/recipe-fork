@@ -312,7 +312,7 @@ internal fun Recipe.toRows(): RecipeRows {
                 it.quantity, it.pieceWeight, it.divisible, it.enteredQuantity, it.note,
             )
         },
-        steps = steps.map { StepEntity(id, it.position, it.text) },
+        steps = steps.map { StepEntity(id, it.position, it.text, it.note) },
         timers = steps.flatMap { step ->
             step.timers.mapIndexed { index, it -> StepTimerEntity(id, step.position, index, it.duration.inWholeMinutes, it.label) }
         },
@@ -364,6 +364,7 @@ internal fun RecipeRows.toRecipe(): Recipe {
                         IngredientReference(reference.ingredientPosition, reference.textOffset, share)
                     },
                 timers = timers[step.position].orEmpty().sortedBy { it.position }.map { Timer(it.minutes.minutes, it.label) },
+                note = step.note,
             )
         },
         media = media.map {

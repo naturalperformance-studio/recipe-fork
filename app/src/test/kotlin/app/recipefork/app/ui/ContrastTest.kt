@@ -28,7 +28,7 @@ class ContrastTest {
     private fun pairs(c: ColorScheme) = listOf(
         // Text.
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
-        text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", step notes, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\")", c.onSurfaceVariant, c.surface),
+        text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", step notes, a step's author's note on the card, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\")", c.onSurfaceVariant, c.surface),
         text("text actions — the bar's actions, text buttons, timers' figures, the checklist's label", c.primary, c.surface),
         text("a filled button's label, a step's number in its circle on the card", c.onPrimary, c.primary),
         text("a problem said under a field, an ingredient row's mark of an amount its field does not hold", c.error, c.surface),
@@ -65,7 +65,7 @@ class ContrastTest {
         text("the chosen tab — the book's view, the card's View or Cooking", c.primary, c.surface),
         text("a tab not chosen — the book's view, the card's View or Cooking", c.onSurfaceVariant, c.surface),
         text("a view's floating action — its words and icon; the card's current step on Cooking, on its container", c.onPrimaryContainer, c.primaryContainer),
-        text("the arrow after a rounded reference in the card's current step, on its container", c.onSurfaceVariant, c.primaryContainer),
+        text("the arrow after a rounded reference in the card's current step, and the step's author's note, on its container", c.onSurfaceVariant, c.primaryContainer),
         text("a book's entry, a card — its title and state", c.onSurface, c.surfaceContainerHighest),
         text("a book's entry, a card — its tags and sending mark", c.onSurfaceVariant, c.surfaceContainerHighest),
         text("a photo source sheet's title and items", c.onSurface, c.surfaceContainerLow),

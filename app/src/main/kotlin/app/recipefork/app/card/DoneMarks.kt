@@ -20,10 +20,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import app.recipefork.app.R
 import app.recipefork.app.book.BookName
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.Timer
 import java.util.concurrent.ConcurrentHashMap
 
 /** The part of a card a done mark is on: an ingredient line, a step, or an item of equipment. */
@@ -47,8 +49,15 @@ data class DoneMark(val part: MarkedPart, val position: Int, val row: Int) {
         /** The mark of [ingredient] as it stands. */
         fun of(ingredient: Ingredient) = DoneMark(MarkedPart.INGREDIENT, ingredient.position, rowOf(ingredient))
 
-        /** The mark of [step] as it stands. */
-        fun of(step: Step) = DoneMark(MarkedPart.STEP, step.position, rowOf(step))
+        /** The mark of [step] as it stands, taken of [stepKey]. */
+        fun of(step: Step) = DoneMark(MarkedPart.STEP, step.position, rowOf(stepKey(step)))
+
+        /**
+         * What a step's mark is taken of: a step with no note as it printed before a step carried the author's note, so
+         * that the marks held of it keep reading; a step with a note as it prints now, its note included.
+         */
+        internal fun stepKey(step: Step): String =
+            if (step.note == null) Before.Step(step.position, step.text, step.ingredientReferences, step.timers).toString() else step.toString()
 
         /**
          * The mark of the item of equipment at [index] of the recipe's equipment, [item], as it stands: free text is
@@ -68,6 +77,12 @@ data class DoneMark(val part: MarkedPart, val position: Int, val row: Int) {
          */
         private fun rowOf(row: Any): Int = row.toString().hashCode()
     }
+}
+
+/** What was marked before a step carried the author's note, printing as it printed then. */
+private object Before {
+    /** A step as it was before its note: it prints "Step(position=…, text=…, ingredientReferences=…, timers=…)". */
+    data class Step(val position: Int, val text: String, val ingredientReferences: List<IngredientReference>, val timers: List<Timer>)
 }
 
 /**

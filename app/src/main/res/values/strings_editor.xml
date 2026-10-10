@@ -104,6 +104,13 @@
     <string name="editor_step_add_action">Add a step at the end</string>
     <string name="editor_step_remove_action">Remove step %1$d</string>
     <string name="editor_step_menu_action">Step %1$d actions</string>
+    <!-- The author's own note on a step, beside the method: offered on demand from the step's menu; a fork by
+         someone else leaves it behind (FORK-007). -->
+    <string name="editor_step_note_add">Add a note</string>
+    <string name="editor_step_note">Author\'s note</string>
+    <string name="editor_step_note_hint">Stays with you when someone else forks the recipe</string>
+    <!-- How a frozen recipe shows a step's note: %1$s is the note. -->
+    <string name="editor_step_note_read_only">Author\'s note: %1$s</string>
     <!-- An ingredient's quantity inside a step's text: inserted from the step's control or by typing @ (FLOW-031). -->
     <string name="editor_step_insert_ingredient_label">Insert an ingredient into step %1$d</string>
     <string name="editor_step_insert_ingredient_action">Insert an ingredient\'s quantity into step %1$d</string>
@@ -133,7 +140,7 @@
     <string name="editor_fork_note_close">Close</string>
     <!-- The long press of an icon-only action in the editor's top bar: it shows the action's name in a tooltip. -->
     <string name="editor_action_show_name">Show the name</string>
-    <string name="editor_fork_takes">A fork takes the title, tags, servings, ingredients and steps; the description and photos stay with you unless the fork is your own.</string>
+    <string name="editor_fork_takes">A fork takes the title, tags, servings, ingredients and steps; the description, step notes and photos stay with you unless the fork is your own.</string>
     <!-- A step's timers: hours and whole minutes, up to five per step, each named by its step unless the author names it (FLOW-027, DOM-024, GUIDE-007). -->
     <string name="editor_timer_label">Timer for step %1$d</string>
     <string name="editor_timer_action">Add a timer to step %1$d</string>

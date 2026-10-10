@@ -127,7 +127,7 @@ import kotlin.time.Duration.Companion.minutes
  * The screens: the book — the marked and the own view, each empty and with recipes, the own one filtered by "Enough
  * equipment", an entry's menu, a recipe file's
  * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment — an item of it not
- * in My kitchen, so marked on both tabs — ingredient groups, notes,
+ * in My kitchen, so marked on both tabs — ingredient groups, notes, a step's author's note,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
  * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
  * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with an ingredient's
@@ -269,7 +269,8 @@ class PreLaunchSweepTest {
         ),
         ingredientGroups = listOf(IngredientGroup("Dough", 0), IngredientGroup("Topping", 2)),
         steps = listOf(
-            Step(0, "Rub the butter into the flour.", listOf(IngredientReference(1, 8), IngredientReference(0, 24))),
+            // The author's note, under the current step's text on Cooking and in its field in the editor.
+            Step(0, "Rub the butter into the flour.", listOf(IngredientReference(1, 8), IngredientReference(0, 24)), note = "Work quickly, so the butter stays cold."),
             Step(1, "Chill the dough.", timer = Timer(30.minutes, "Chill")),
             Step(2, "Lay the plums over the dough.", listOf(IngredientReference(2, 8))),
             Step(3, "Sprinkle with sugar and cinnamon, then bake and let it rest.", emptyList(), listOf(Timer(40.minutes, "Bake"), Timer(10.minutes, "Rest"))),
