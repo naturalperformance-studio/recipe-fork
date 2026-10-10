@@ -2,7 +2,6 @@ package app.recipefork.app.editor
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -425,7 +424,6 @@ internal fun StepTextField(
     editor: RecipeEditor,
     state: StepFieldState,
     modifier: Modifier = Modifier,
-    hint: (@Composable () -> Unit)? = null,
 ) {
     // The newest step and rows, ahead of the screen when the author types faster than it redraws.
     fun current(): StepDisplay {
@@ -508,17 +506,12 @@ internal fun StepTextField(
                         modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(name) },
                     )
                 },
-                supportingText = if (oversized.isEmpty() && hint == null) null else {
+                supportingText = if (oversized.isEmpty()) null else {
                     {
-                        Column {
-                            if (oversized.isNotEmpty()) {
-                                Text(
-                                    oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
-                                    modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
-                                )
-                            }
-                            hint?.invoke()
-                        }
+                        Text(
+                            oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
+                            modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
+                        )
                     }
                 },
                 colors = colors,
@@ -556,16 +549,16 @@ internal fun InsertIngredient(
 ) {
     var asking by remember { mutableStateOf<AskedPart?>(null) }
     Box {
-        BlockAction(
+        // A labelled button, as the step's other ones are: what it does is never left to its icon.
+        PartButton(
             icon = R.drawable.ic_insert_ingredient,
-            label = stringResource(R.string.editor_step_insert_ingredient_label, position + 1),
-            tag = EditorTags.stepInsert(position),
+            text = stringResource(R.string.editor_step_insert_ingredient),
             action = stringResource(R.string.editor_step_insert_ingredient_action, position + 1),
-            onClick = {
-                state.trigger = null
-                state.offering = true
-            },
-        )
+            tag = EditorTags.stepInsert(position),
+        ) {
+            state.trigger = null
+            state.offering = true
+        }
         DropdownMenu(
             expanded = state.offering,
             onDismissRequest = {

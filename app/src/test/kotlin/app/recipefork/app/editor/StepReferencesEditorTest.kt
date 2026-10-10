@@ -216,7 +216,8 @@ class StepReferencesEditorTest {
         assertTrue(control.size.height >= with(compose.density) { 48.dp.roundToPx() })
         assertTrue(control.size.width >= with(compose.density) { 48.dp.roundToPx() })
         assertEquals(string(R.string.editor_step_insert_ingredient_action, 1), AccessibilityChecks.clickActionLabel(control))
-        assertEquals("Вставить ингредиент в шаг 1", compose.descriptionOf(EditorTags.stepInsert(0)).single())
+        // T-218: a button that says what it does, as "Add timer" does, not an icon described.
+        assertEquals(listOf("Вставить ингредиент"), compose.textsOf(EditorTags.stepInsert(0)))
 
         placeCursor(0, 8)
         openOffer(0)

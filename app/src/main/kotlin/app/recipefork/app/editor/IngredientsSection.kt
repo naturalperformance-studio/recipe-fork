@@ -299,7 +299,10 @@ internal fun Ingredients(
             key(shownKey) {
                 val typed = rememberTypedInSheet()
                 val place = ItemPlace(items.indexOf(ListItem.Row(position)), items, recipe.ingredientGroups.any { it.firstPosition == position })
-                val actions = rowActions(
+                val row = recipe.ingredients[position]
+                val isNew = fresh == shownKey
+                // A row just added offers no actions until it holds something: its fields are all there is to it.
+                val actions = if (isNew && row.holdsNothing()) emptyList() else rowActions(
                     position, place, editor,
                     // The row put above or below opens in the sheet in this one's place, as one added does; this one,
                     // added and left holding nothing, goes as it would on closing.
@@ -316,7 +319,7 @@ internal fun Ingredients(
                         headings.ask(index)
                     },
                 )
-                IngredientSheet(position, recipe.ingredients[position], editor, language, dictionary, mode, rows, typed, actions) {
+                IngredientSheet(position, row, editor, language, dictionary, mode, rows, typed, isNew, actions) {
                     open = null
                     if (fresh == shownKey) {
                         fresh = null

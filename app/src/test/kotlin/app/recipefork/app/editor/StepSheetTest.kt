@@ -245,19 +245,20 @@ class StepSheetTest {
         val sheet = hasAnyAncestor(hasTestTag(StepSheetTags.SHEET))
         val fields = compose.onAllNodes(sheet and hasSetTextAction()).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
         assertEquals(
-            listOf(EditorTags.stepText(1), StepNoteTags.field(1), EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerName(1)),
+            listOf(EditorTags.stepText(1), EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerName(1), StepNoteTags.field(1)),
             fields,
         )
         assertEquals(listOf(string(R.string.editor_step_note), string(R.string.editor_step_note_hint)), compose.textsOf(StepNoteTags.field(1)).take(2))
         val interactive = compose.onAllNodes(sheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .mapNotNull { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } }
         assertEquals(
-            // T-212: the timers, then the photo or clip, each a part of its own with the control that adds to it; the
-            // actions in the ingredient sheet's order.
+            // T-212: the timers, then the photo or clip, each a part of its own with the control that adds to it; T-218:
+            // those right after the text and its "Insert ingredient", the note after them; the actions in the ingredient
+            // sheet's order.
             listOf(
-                StepSheetTags.DONE, EditorTags.stepText(1), EditorTags.stepInsert(1), StepNoteTags.field(1),
+                StepSheetTags.DONE, EditorTags.stepText(1), EditorTags.stepInsert(1),
                 EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerRemove(1), EditorTags.timerName(1), EditorTags.timerAttach(1),
-                EditorTags.stepPhoto(1),
+                EditorTags.stepPhoto(1), StepNoteTags.field(1),
                 EditorTags.stepAction(1, RowAction.MOVE_UP), EditorTags.stepAction(1, RowAction.MOVE_DOWN),
                 EditorTags.stepAction(1, RowAction.INSERT_ABOVE), EditorTags.stepAction(1, RowAction.INSERT_BELOW), EditorTags.stepRemove(1),
             ),
@@ -269,7 +270,7 @@ class StepSheetTest {
             assertEquals(Role.Button, node.config[SemanticsProperties.Role])
             assertEquals(listOf(string(action.label)), node.config[SemanticsProperties.Text].map { it.text })
         }
-        assertEquals(listOf(string(R.string.editor_step_remove_action, 2)), compose.textsOf(EditorTags.stepRemove(1)))
+        assertEquals(listOf(string(R.string.editor_step_remove)), compose.textsOf(EditorTags.stepRemove(1)))
         // A step opened by a tap takes no focus by itself.
         assertFalse(isFocused(EditorTags.stepText(1)))
         compose.onNodeWithTag(EditorTags.stepText(1)).performTextInput(" Stir.")
@@ -493,7 +494,8 @@ class StepSheetTest {
     }
 
     // T-212: at 360 dp and twice the font size, the sheet holds the step's timers and its photo or clip as two parts,
-    // each under its name, after the note and before the actions: the timer's fields and "Add timer" in the one, "Add
+    // each under its name once it holds something (T-218: an empty part is its button alone), after the step's text and
+    // its "Insert ingredient" and before the note and the actions (T-218): the timer's fields and "Add timer" in the one, "Add
     // photo or clip" in the other; nothing of them goes past the sheet, every target is 48 dp and no text is cut. Its
     // actions are list items as the ingredient sheet's are: as wide as the sheet, as tall as the ingredient's, read as
     // buttons, the removal alone in the error colour.
@@ -514,19 +516,21 @@ class StepSheetTest {
         open(draft())
         compose.openStep(1)
         val sheet = bounds(StepSheetTags.SHEET)
-        // Under its name, a heading for the screen reader.
-        listOf(StepSheetTags.TIMERS, StepSheetTags.MEDIA).zip(titles).forEach { (part, title) ->
-            val heading = compose.onAllNodes(hasAnyAncestor(hasTestTag(part)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading), useUnmergedTree = true)
-                .fetchSemanticsNodes().single()
-            assertEquals(listOf(title), heading.config[SemanticsProperties.Text].map { it.text })
-        }
+        // Under its name, a heading for the screen reader, once it holds something: step 2 has a timer and no picture.
+        fun headings(part: String) = compose.onAllNodes(hasAnyAncestor(hasTestTag(part)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading), useUnmergedTree = true)
+            .fetchSemanticsNodes().map { heading -> heading.config[SemanticsProperties.Text].joinToString("") { it.text } }
+        assertEquals(listOf(titles[0]), headings(StepSheetTags.TIMERS))
+        assertEquals(emptyList<String>(), headings(StepSheetTags.MEDIA))
         listOf(EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerRemove(1), EditorTags.timerName(1), EditorTags.timerAttach(1))
             .forEach { compose.onNode(hasTestTag(it) and hasAnyAncestor(hasTestTag(StepSheetTags.TIMERS))).assertExists() }
         compose.onNode(hasTestTag(EditorTags.stepPhoto(1)) and hasAnyAncestor(hasTestTag(StepSheetTags.MEDIA))).assertExists()
         assertEquals(listOf(buttons[0]), compose.textsOf(EditorTags.timerAttach(1)))
         assertEquals(listOf(buttons[1]), compose.textsOf(EditorTags.stepPhoto(1)))
-        // Top to bottom: the note, the timers, the photo or clip, the actions.
-        val order = listOf(StepNoteTags.field(1), StepSheetTags.TIMERS, StepSheetTags.MEDIA, EditorTags.stepAction(1, RowAction.MOVE_UP)).map(::bounds)
+        // Top to bottom: the text, "Insert ingredient", the timers, the photo or clip, the note, the actions.
+        val order = listOf(
+            EditorTags.stepText(1), EditorTags.stepInsert(1), StepSheetTags.TIMERS, StepSheetTags.MEDIA, StepNoteTags.field(1),
+            EditorTags.stepAction(1, RowAction.MOVE_UP),
+        ).map(::bounds)
         order.zipWithNext().forEach { (above, below) -> assertTrue("$above above $below", above.bottom <= below.top + 0.5f) }
         listOf(
             StepSheetTags.TIMERS, StepSheetTags.MEDIA, EditorTags.timerHours(1), EditorTags.timerMinutes(1), EditorTags.timerRemove(1),
@@ -535,7 +539,7 @@ class StepSheetTest {
             val shown = bounds(tag)
             assertTrue("$tag within the sheet", shown.left >= sheet.left - 0.5f && shown.right <= sheet.right + 0.5f)
         }
-        (titles + buttons).forEach { text ->
+        (titles.take(1) + buttons).forEach { text ->
             val layouts = mutableListOf<TextLayoutResult>()
             compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET)), useUnmergedTree = true).fetchSemanticsNode()
                 .config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
@@ -566,6 +570,13 @@ class StepSheetTest {
         assertEquals(ingredientInsert.height, stepInsert.height, 1f)
         assertEquals(compose.textColourOf(EditorTags.ingredientRemove(0)), lightColorScheme().error)
         compose.closeIngredient()
+        // Step 4's picture names its part.
+        compose.openStep(3)
+        assertEquals(listOf(titles[1]), headings(StepSheetTags.MEDIA))
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNode(hasText(titles[1]) and hasAnyAncestor(hasTestTag(StepSheetTags.MEDIA)), useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+        assertFalse("${titles[1]} cut", layouts.single().didOverflowHeight)
     }
 
     // A frozen recipe's steps read as the same text and open nothing.

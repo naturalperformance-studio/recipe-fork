@@ -2,8 +2,11 @@
 <resources>
     <!-- The cover photograph, offered at the title (FLOW-026) and shown at the top of the card. -->
     <string name="media_cover">Cover photo (optional)</string>
-    <string name="media_cover_take">Camera</string>
-    <string name="media_cover_choose">Gallery</string>
+    <!-- An empty cover's tile says it is optional under what a tap does. -->
+    <string name="media_cover_optional">Optional</string>
+    <!-- Where a photograph comes from, worded alike in the cover's sheet and a step's. -->
+    <string name="media_source_take">Take a photo</string>
+    <string name="media_source_choose">Choose from gallery</string>
     <string name="media_cover_add">Add a cover photo</string>
     <string name="media_cover_change">Replace or remove the cover photo</string>
     <string name="media_cover_remove">Remove cover</string>
@@ -23,8 +26,6 @@
     <string name="media_step_add">Add photo or clip</string>
     <string name="media_step_change">Change or remove</string>
     <string name="media_step_photo_action">Add, change or remove the photo or clip of step %1$d</string>
-    <string name="media_step_take">Take a photo</string>
-    <string name="media_step_choose">Choose a photo</string>
     <string name="media_step_remove">Remove photo</string>
     <string name="media_step_description">Photo of step %1$d</string>
     <string name="media_step_removed">Step photo removed.</string>

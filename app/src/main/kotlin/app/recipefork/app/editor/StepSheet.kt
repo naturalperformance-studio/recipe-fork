@@ -143,13 +143,15 @@ internal fun rememberStepHeld(position: Int, step: Step, editor: RecipeEditor, p
 internal class StepSheetHost(val insert: (above: Boolean) -> Unit, val close: () -> Unit)
 
 /**
- * One step in a Material 3 bottom sheet: its text with its references and the control that inserts one (FLOW-031), the
- * author's note (FORK-007), then its timers and its photograph or clip, each a labelled part of its own, then its
+ * One step in a Material 3 bottom sheet: its text with its references and the button that inserts one (FLOW-031), then
+ * its timers and its photograph or clip, each a part of its own with the button that adds to it — all within reach
+ * with the keyboard up — then the one-time offer of references (GUIDE-008) and the author's note (FORK-007), then its
  * actions as the ingredient sheet has them ([SheetActions]) — moving it up or down (FLOW-025, A11Y-006), putting a step
  * above or below it, and removing it, which closes the sheet and offers Undo. Each edit applies as it is typed, so the
  * sheet closes — by Done, a swipe down or Back — keeping everything; closing it leaves its fields, which marks what is
  * over its limit (FLOW-028).
  *
+ * A [fresh] step — just added or inserted — is titled "New step" and offers its actions only once it holds something.
  * Where [focus] asks for the step at [position], its text takes the focus, with the keyboard up.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -168,6 +170,7 @@ internal fun StepSheet(
     held: StepHeld,
     focus: RowFocus,
     host: StepSheetHost,
+    fresh: Boolean,
 ) {
     // The editor's statements — an Undo among them — wait until the sheet goes, rather than show behind it.
     CoversStatements()
@@ -192,7 +195,9 @@ internal fun StepSheet(
             scope.launch { state.hide() }.invokeOnCompletion { close() }
         }
     }
-    val actions = stepActions(key, position, count, editor, photos, host, leave)
+    // A step just added offers no actions until it holds something: its fields are all there is to it.
+    val holds = step.text.isNotBlank() || step.ingredientReferences.isNotEmpty() || step.note != null || step.timers.isNotEmpty() || media != null
+    val actions = if (fresh && !holds) emptyList() else stepActions(key, position, count, editor, photos, host, leave)
     ModalBottomSheet(
         onDismissRequest = dismiss,
         sheetState = state,
@@ -205,7 +210,12 @@ internal fun StepSheet(
         // Asked for — the step just added or inserted — its text takes the focus as soon as the sheet is laid out, with
         // the keyboard up.
         focus.TakenInSheet(position, held.field.focus)
-        SheetHeader(stringResource(R.string.editor_step, position + 1), StepSheetTags.TITLE, StepSheetTags.DONE, done)
+        SheetHeader(
+            stringResource(if (fresh) R.string.editor_step_new else R.string.editor_step_edit),
+            StepSheetTags.TITLE,
+            StepSheetTags.DONE,
+            done,
+        )
         // The sheet's own scrolling, and where the field the author is in stands in it: a mark or a timer's display
         // appearing above that field scrolls the sheet by as much, so the field stays where the author has it.
         val scrolled = rememberScrollState()
@@ -231,7 +241,10 @@ internal fun StepSheet(
     }
 }
 
-/** The fields of the step at [position], as [StepSheet] holds them: its text, its note, its timers, its picture. */
+/**
+ * The fields of the step at [position], as [StepSheet] holds them: its text and the button inserting a reference, its
+ * timers, its picture — what a step is mostly written with, first — then the offer of references, then its note.
+ */
 @Composable
 private fun StepFields(
     position: Int,
@@ -253,18 +266,6 @@ private fun StepFields(
         language = language,
         editor = editor,
         state = held.field,
-        // In the field's own supporting text, under what the author types, so it moves nothing of it.
-        hint = if (!held.offering) null else {
-            {
-                Text(
-                    stringResource(R.string.editor_references_offered),
-                    modifier = Modifier
-                        // Its own node, read as it comes, apart from the text being typed.
-                        .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
-                        .testTag(EditorTags.stepReferencesOffered(position)),
-                )
-            }
-        },
         modifier = Modifier
             .fillMaxWidth()
             // Coming into a step moves the author on from the ingredients; leaving it marks it (FLOW-028).
@@ -289,14 +290,12 @@ private fun StepFields(
     // What the text needs, right under it.
     BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = SHEET_GAP)
     // The text's own control: inserting a reference.
-    BlockActions {
-        InsertIngredient(position, ingredients, dictionary, language, editor, held.field)
-    }
-    StepNoteField(position, step, editor, held.note)
-    // Its timers, then its photograph or clip: each a part of its own, under its name.
+    InsertIngredient(position, ingredients, dictionary, language, editor, held.field)
+    // Its timers, then its photograph or clip: each a part of its own, named once it holds something.
     val timers = held.timers
-    SheetPart(stringResource(R.string.editor_step_timers), StepSheetTags.TIMERS) {
-        StepTimers(position, step, timers.shown(step.timers.size), timers, held.timerFocus, ingredients, language, editor, left = held.leftCut)
+    val shownTimers = timers.shown(step.timers.size)
+    SheetPart(stringResource(R.string.editor_step_timers), StepSheetTags.TIMERS, named = shownTimers.isNotEmpty()) {
+        StepTimers(position, step, shownTimers, timers, held.timerFocus, ingredients, language, editor, left = held.leftCut)
         PartButton(
             icon = R.drawable.ic_step_timer,
             text = stringResource(R.string.editor_timer_add),
@@ -315,23 +314,41 @@ private fun StepFields(
             )
         }
     }
-    SheetPart(stringResource(R.string.media_step_part), StepSheetTags.MEDIA) {
+    SheetPart(stringResource(R.string.media_step_part), StepSheetTags.MEDIA, named = media != null || held.photo.preparing) {
         StepMediaPart(position, media, photos, held.photo)
     }
+    // Under the buttons, so that it never pushes them from reach: once, while the first step is begun (GUIDE-008).
+    if (held.offering) {
+        Text(
+            stringResource(R.string.editor_references_offered),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                // Its own node, read as it comes, apart from the text being typed.
+                .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
+                .testTag(EditorTags.stepReferencesOffered(position)),
+        )
+    }
+    StepNoteField(position, step, editor, held.note)
 }
 
 /**
- * One labelled part of a step's sheet — its timers, its photograph or clip: its [title], a heading for the screen
- * reader, then what it holds, set apart from what comes before it.
+ * One part of a step's sheet — its timers, its photograph or clip: where it is [named] — it holds something — its
+ * [title], a heading for the screen reader; then what it holds, ending in the button that adds to it. An empty part is
+ * its button alone, which says what it adds, so that a new step's buttons stand within reach of the keyboard.
  */
 @Composable
-private fun SheetPart(title: String, tag: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(top = 12.dp).testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.semantics { heading() },
-        )
+private fun SheetPart(title: String, tag: String, named: Boolean, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(top = if (named) 12.dp else 0.dp).testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (named) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
         content()
     }
 }
@@ -376,7 +393,7 @@ private fun stepActions(
     leave: () -> Unit,
 ): List<SheetAction> {
     val label = RowAction.entries.associateWith { stringResource(it.label) }
-    val remove = stringResource(R.string.editor_step_remove_action, position + 1)
+    val remove = stringResource(R.string.editor_step_remove)
     fun move(by: Int) {
         val at = editor.stepPosition(key) ?: return
         leave()

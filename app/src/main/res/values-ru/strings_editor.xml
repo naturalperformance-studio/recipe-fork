@@ -95,11 +95,11 @@
     <string name="editor_step_new">Новый шаг</string>
     <string name="editor_step_add">Добавить шаг</string>
     <string name="editor_step_add_action">Добавить шаг в конец</string>
-    <string name="editor_step_remove_action">Убрать шаг %1$d</string>
+    <string name="editor_step_remove">Убрать шаг</string>
     <string name="editor_step_note">Заметка автора</string>
     <string name="editor_step_note_hint">Остаётся у вас, когда кто-то делает свою версию рецепта</string>
     <string name="editor_step_note_read_only">Заметка автора: %1$s</string>
-    <string name="editor_step_insert_ingredient_label">Вставить ингредиент в шаг %1$d</string>
+    <string name="editor_step_insert_ingredient">Вставить ингредиент</string>
     <string name="editor_step_insert_ingredient_action">Вставить количество ингредиента в шаг %1$d</string>
     <string name="editor_step_insert_ingredient_none">В рецепте пока нет ингредиентов</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
@@ -169,7 +169,7 @@
     <string name="editor_checklist_6_text">Когда рецепт форкает кто-то другой, он забирает ингредиенты и шаги, а описание оставляет, поэтому способ, записанный в описании, — способ, на котором никто не сможет строить дальше.</string>
     <string name="editor_checklist_7_title">Число порций — то, на сколько вы на самом деле готовили.</string>
     <string name="editor_checklist_7_text">Из него рассчитывается каждое количество, которое когда-либо увидит читатель.</string>
-    <string name="editor_references_offered">Количество можно вставить в шаг ссылкой: наберите @ или нажмите в шаге значок вставки ингредиента. Ссылка следует за числом порций читателя, а число, набранное вручную, — нет.</string>
+    <string name="editor_references_offered">Количество можно вставить в шаг ссылкой: наберите @ или нажмите «Вставить ингредиент». Ссылка следует за числом порций читателя, а число, набранное вручную, — нет.</string>
     <string name="editor_timer_notification">Уведомление таймера скажет: «%1$s»</string>
     <string name="editor_timer_notification_follows">Количества в нём следуют за числом порций читателя, поэтому у читателя уведомление может звучать и обрезаться иначе.</string>
     <string name="editor_timer_notification_name">Назвать таймер</string>
