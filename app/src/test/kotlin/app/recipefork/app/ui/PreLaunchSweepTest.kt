@@ -545,30 +545,52 @@ class PreLaunchSweepTest {
         compose.onNodeWithTag(SettingsTags.USUAL).performClick()
         await(SettingsTags.USUAL_DIALOG)
         checkScreen("the settings, the usual servings' dialog")
+        compose.onNodeWithTag(SettingsTags.USUAL_COUNT_CHOICE).performClick()
+        compose.onNodeWithTag(SettingsTags.USUAL_MORE).performClick()
+        compose.waitForIdle()
+        checkScreen("the settings, the usual servings' dialog, a count chosen")
         compose.onNodeWithTag(SettingsTags.USUAL_SET).performClick()
         awaitGone(SettingsTags.USUAL_DIALOG)
         compose.waitForIdle()
         checkScreen("the settings, the usual servings set")
-        // My kitchen: its groups, some partly ticked; a search that finds nothing.
+        // My kitchen: its groups folded, some partly ticked; one unfolded; a whole group ticked, with Undo; a search
+        // that finds nothing.
         compose.onNodeWithTag(SettingsTags.KITCHEN).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.LIST) && !exists(SettingsTags.SCREEN) }
         compose.waitForIdle()
-        checkScreen("my kitchen")
+        checkScreen("my kitchen, its groups folded")
+        compose.onNodeWithTag(KitchenTags.group(STOVETOP)).performClick()
+        await(KitchenTags.item(FRYING_PAN))
+        checkScreen("my kitchen, a group unfolded")
+        compose.onNodeWithTag(KitchenTags.groupTick(STOVETOP)).performClick()
+        compose.waitForIdle()
+        checkScreen("my kitchen, a whole group ticked, with Undo")
+        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick) and
+            androidx.compose.ui.test.hasText(context.getString(R.string.kitchen_undo))).performClick()
+        compose.waitUntil(PATIENCE_MS) { kitchen.store.held.value == setOf(FRYING_PAN, OVEN) }
         compose.onNodeWithTag(KitchenTags.SEARCH).performTextInput("zzz")
         await(KitchenTags.EMPTY)
         checkScreen("my kitchen, nothing found")
         compose.onNodeWithTag(KitchenTags.BACK).performClick()
         await(SettingsTags.SCREEN)
         awaitGone(KitchenTags.SCREEN)
-        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.CLEAR_MEDIA_NOTHING) || exists(SettingsTags.CLEAR_MEDIA_STATEMENT) }
-        checkScreen("the settings, the saved media's dialog")
-        if (exists(SettingsTags.CLEAR_MEDIA_NOTHING)) {
-            compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA_OK).performClick()
-            awaitGone(SettingsTags.CLEAR_MEDIA_NOTHING)
-        } else {
+        // The saved media's statement, where there is media to clear; with none the item is disabled, saying why.
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo()
+        // The item is disabled while it counts too: its count is waited for first.
+        val counting = context.getString(R.string.settings_media_counting)
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onAllNodes(hasTestTag(SettingsTags.value(SettingsTags.CLEAR_MEDIA)), useUnmergedTree = true).fetchSemanticsNodes()
+                .singleOrNull()?.config?.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }?.let { it != counting } == true
+        }
+        val clearable = compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Disabled) == null
+        if (clearable) {
+            compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performClick()
+            await(SettingsTags.CLEAR_MEDIA_STATEMENT)
+            checkScreen("the settings, the saved media's dialog")
             compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA_DECLINE).performClick()
             awaitGone(SettingsTags.CLEAR_MEDIA_STATEMENT)
+        } else {
+            checkScreen("the settings, no saved media to clear")
         }
         compose.runOnIdle { session.closeSettings() }
         await(LibraryTags.PAGER)
@@ -613,10 +635,12 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 30
+        const val SCREENS = 33
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L
+        /** The frying pan's group, the stovetop cookware. */
+        const val STOVETOP = 10000L
         const val OVEN = 10202L
         const val BOWL = 10412L
     }

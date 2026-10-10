@@ -4,10 +4,13 @@ import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -21,6 +24,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
+import app.recipefork.app.card.CardTarget
 import app.recipefork.app.card.IngredientTags
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.data.PreferencesUsualServings
@@ -41,6 +45,8 @@ import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
@@ -51,8 +57,11 @@ import java.time.Instant
 
 /**
  * The settings offer the serving count the reader usually cooks for (FLOW-017): its values are exactly those a
- * requested count may take (SCALE-010, SCALE-011), "not set" among the choices; the choice is kept on the device; and
+ * requested count may take (SCALE-010, SCALE-011), "Not set" among the choices; the choice is kept on the device; and
  * every recipe opened from the book opens at it (scenario 1 of the increment).
+ *
+ * v0.30, T-221: the dialog walks the count with the card's own control — tonal connected − | + — offers "Not set" as a
+ * choice inside it, and its buttons are Cancel and Set; it settles at 360 dp and at 320 dp at twice the font scale.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -121,16 +130,22 @@ class UsualServingsMenuTest {
     private fun count() = compose.textsOf(SettingsTags.USUAL_COUNT).single()
     private fun fewer() = compose.onNodeWithTag(SettingsTags.USUAL_FEWER).performClick()
     private fun more() = compose.onNodeWithTag(SettingsTags.USUAL_MORE).performClick()
+    private fun selected(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.Selected]
 
-    // FLOW-017 (4): the settings offer it, with what it holds — "not set" until it is set, the count after.
+    // FLOW-017 (4): the settings offer it, with what it holds — "Not set" until it is set, the count after. The dialog
+    // opens on the setting in force: "Not set" chosen; choosing the count and Set sets it.
     @Test
     fun theMenuOffersTheUsualCountAndShowsWhatItHolds() {
         show()
         openMenu()
-        assertEquals(listOf("I usually cook for…", "not set"), compose.textsOf(SettingsTags.USUAL))
+        assertEquals(listOf("I usually cook for…", "Not set"), compose.textsOf(SettingsTags.USUAL))
         compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
         assertEquals("Servings: 2", count())
+        assertTrue(selected(SettingsTags.USUAL_NOT_SET))
+        assertFalse(selected(SettingsTags.USUAL_COUNT_CHOICE))
+        compose.onNodeWithTag(SettingsTags.USUAL_COUNT_CHOICE).performClick()
+        assertTrue(selected(SettingsTags.USUAL_COUNT_CHOICE))
         choose(SettingsTags.USUAL_SET)
         assertEquals(Rational.of(2), usual.count.value)
         openMenu()
@@ -138,12 +153,14 @@ class UsualServingsMenuTest {
     }
 
     // FLOW-017 (4), SCALE-010, SCALE-011: the values are exactly those a requested count may take — the fractions
-    // below one, the floor at ¼, every whole number with no ceiling — and "not set" clears the setting.
+    // below one, the floor at ¼, every whole number with no ceiling — and "Not set", chosen and set, clears the setting.
+    // A step of the count chooses the count.
     @Test
     fun theChoiceWalksTheRequestedCountsAndNotSetClearsIt() {
         show()
         openChoice()
         val walk = mutableListOf(count())
+        assertTrue(selected(SettingsTags.USUAL_NOT_SET))
         repeat(6) {
             fewer()
             walk += count()
@@ -152,6 +169,7 @@ class UsualServingsMenuTest {
             listOf("Servings: 2", "Servings: 1", "Servings: ¾", "Servings: ⅔", "Servings: ½", "Servings: ⅓", "Servings: ¼"),
             walk,
         )
+        assertTrue("a step chooses the count", selected(SettingsTags.USUAL_COUNT_CHOICE))
         compose.onNodeWithTag(SettingsTags.USUAL_FEWER).assertIsNotEnabled()
         fewer()
         assertEquals("Servings: ¼", count())
@@ -164,17 +182,112 @@ class UsualServingsMenuTest {
         assertEquals("⅓", held())
         compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
-        // The choice starts at the count held, and walks up without a ceiling.
+        // The choice starts at the count held, chosen, and walks up without a ceiling.
         assertEquals("Servings: ⅓", count())
+        assertTrue(selected(SettingsTags.USUAL_COUNT_CHOICE))
         repeat(15) { more() }
         assertEquals("Servings: 12", count())
         choose(SettingsTags.USUAL_SET)
         assertEquals(Rational.of(12), usual.count.value)
+        // Cancel changes nothing, whatever was chosen in the dialog.
         openChoice()
-        choose(SettingsTags.USUAL_CLEAR)
+        compose.onNodeWithTag(SettingsTags.USUAL_NOT_SET).performClick()
+        choose(SettingsTags.USUAL_CANCEL)
+        assertEquals(Rational.of(12), usual.count.value)
+        openChoice()
+        compose.onNodeWithTag(SettingsTags.USUAL_NOT_SET).performClick()
+        assertTrue(selected(SettingsTags.USUAL_NOT_SET))
+        assertTrue("the dialog stays open on a choice", exists(SettingsTags.USUAL_DIALOG))
+        choose(SettingsTags.USUAL_SET)
         assertNull(usual.count.value)
         openMenu()
-        assertEquals("not set", held())
+        assertEquals("Not set", held())
+    }
+
+    // The dialog's buttons: Cancel, then Set at the end; "Not set" is a choice inside it, not in Cancel's place.
+    @Test
+    fun theDialogsButtonsAreCancelAndSetAndNotSetIsAChoice() {
+        show()
+        openChoice()
+        assertEquals(listOf("Cancel"), compose.textsOf(SettingsTags.USUAL_CANCEL))
+        assertEquals(listOf("Set"), compose.textsOf(SettingsTags.USUAL_SET))
+        assertEquals(listOf("Not set"), compose.textsOf(SettingsTags.USUAL_NOT_SET))
+        assertEquals(listOf("A usual count"), compose.textsOf(SettingsTags.USUAL_COUNT_CHOICE))
+        val cancel = compose.onNodeWithTag(SettingsTags.USUAL_CANCEL).fetchSemanticsNode().boundsInRoot
+        val set = compose.onNodeWithTag(SettingsTags.USUAL_SET).fetchSemanticsNode().boundsInRoot
+        assertTrue("Set ($set) stands after Cancel ($cancel)", set.left >= cancel.right)
+        listOf(SettingsTags.USUAL_NOT_SET, SettingsTags.USUAL_COUNT_CHOICE).forEach {
+            assertEquals(Role.RadioButton, compose.onNodeWithTag(it).fetchSemanticsNode().config[SemanticsProperties.Role])
+        }
+    }
+
+    // The count is walked with the card's own control: the − | + halves are tonal icon buttons the card's target size,
+    // side by side as one connected group.
+    @Test
+    fun theCountIsWalkedWithTheCardsControl() {
+        show()
+        openChoice()
+        val fewer = compose.onNodeWithTag(SettingsTags.USUAL_FEWER).fetchSemanticsNode().boundsInRoot
+        val more = compose.onNodeWithTag(SettingsTags.USUAL_MORE).fetchSemanticsNode().boundsInRoot
+        val density = compose.density.density
+        listOf(fewer, more).forEach {
+            assertEquals(CardTarget.value, it.width / density, 0.5f)
+            assertEquals(CardTarget.value, it.height / density, 0.5f)
+        }
+        assertTrue("− and + are side by side, connected", more.left >= fewer.right && (more.left - fewer.right) / density <= 4f)
+        assertEquals(fewer.top, more.top, 0.5f)
+    }
+
+    // Review of T-221: the screen turned while the dialog is open keeps the count walked to and the choice.
+    @Test
+    fun theDialogKeepsTheCountWalkedToAsTheScreenTurns() {
+        val editor = EditorEnvironment(active, device.catalog(context)) { now }
+        val card = CardEnvironment(usual) { device.database.dictionaryDao().ingredients() }
+        val tester = StateRestorationTester(compose)
+        tester.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) } }
+        compose.waitForIdle()
+        openChoice()
+        more()
+        more()
+        assertEquals("Servings: 4", count())
+        tester.emulateSavedInstanceStateRestore()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
+        assertEquals("Servings: 4", count())
+        assertTrue(selected(SettingsTags.USUAL_COUNT_CHOICE))
+        choose(SettingsTags.USUAL_SET)
+        assertEquals(Rational.of(4), usual.count.value)
+    }
+
+    // T-215: the dialog settles — nothing in it keeps laying itself out — at 360 dp, and at 320 dp at twice the font
+    // scale, in English and Russian; its targets stay whole and labelled.
+    @Test
+    @Config(qualifiers = "w360dp-h640dp")
+    fun theDialogSettlesAt360Dp() = settles()
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
+    fun theDialogSettlesAt320DpAtTwiceTheFontScale() = settles()
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun inRussianTheDialogSettlesAt320DpAtTwiceTheFontScale() = settles()
+
+    private fun settles() {
+        show()
+        openChoice()
+        compose.waitForIdle()
+        more()
+        compose.waitForIdle()
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 6)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 6)
+        val dialog = compose.onNodeWithTag(SettingsTags.USUAL_DIALOG).fetchSemanticsNode().boundsInRoot
+        listOf(SettingsTags.USUAL_NOT_SET, SettingsTags.USUAL_COUNT_CHOICE, SettingsTags.USUAL_COUNT, SettingsTags.USUAL_FEWER,
+            SettingsTags.USUAL_MORE, SettingsTags.USUAL_CANCEL, SettingsTags.USUAL_SET).forEach { tag ->
+            val part = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+            assertTrue("$tag ($part) lies within the dialog ($dialog)", part.left >= dialog.left - 0.5f && part.right <= dialog.right + 0.5f)
+        }
+        choose(SettingsTags.USUAL_SET)
+        assertEquals(Rational.of(3), usual.count.value)
     }
 
     // FLOW-017 (4): the choice made in the book is the one the next start reads.
@@ -222,6 +335,7 @@ class UsualServingsMenuTest {
         val recipe = forFour()
         show()
         openChoice()
+        compose.onNodeWithTag(SettingsTags.USUAL_COUNT_CHOICE).performClick()
         choose(SettingsTags.USUAL_SET)
         leaveSettings()
         openCard(recipe)
@@ -264,16 +378,19 @@ class UsualServingsMenuTest {
     fun theMenuAndTheChoiceReadInRussian() {
         show()
         openMenu()
-        assertEquals(listOf("Обычно готовлю на…", "не задано"), compose.textsOf(SettingsTags.USUAL))
+        assertEquals(listOf("Обычно готовлю на…", "Не задано"), compose.textsOf(SettingsTags.USUAL))
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
         compose.onNodeWithTag(SettingsTags.USUAL).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.USUAL_DIALOG) }
         assertEquals("Порций: 2", count())
         assertEquals(listOf("Задать"), compose.textsOf(SettingsTags.USUAL_SET))
-        assertEquals(listOf("Не задавать"), compose.textsOf(SettingsTags.USUAL_CLEAR))
+        assertEquals(listOf("Отмена"), compose.textsOf(SettingsTags.USUAL_CANCEL))
+        assertEquals(listOf("Не задано"), compose.textsOf(SettingsTags.USUAL_NOT_SET))
+        assertEquals(listOf("Обычное число порций"), compose.textsOf(SettingsTags.USUAL_COUNT_CHOICE))
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
+        compose.onNodeWithTag(SettingsTags.USUAL_COUNT_CHOICE).performClick()
         choose(SettingsTags.USUAL_SET)
         openMenu()
         assertEquals("2", held())

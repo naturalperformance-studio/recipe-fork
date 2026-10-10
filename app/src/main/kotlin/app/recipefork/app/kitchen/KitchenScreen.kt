@@ -1,6 +1,9 @@
 package app.recipefork.app.kitchen
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.selection.triStateToggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
@@ -26,30 +28,44 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -63,7 +79,12 @@ import app.recipefork.app.dictionary.label
 import app.recipefork.app.library.EmptyAction
 import app.recipefork.app.library.EmptyState
 import app.recipefork.app.settings.servingsLanguage
+import app.recipefork.app.ui.SnackbarAction
+import app.recipefork.app.ui.fitWords
 import app.recipefork.core.scaling.InterfaceLanguage
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /** What My kitchen reads and writes: the ticked set, and the equipment dictionary it lists. */
@@ -78,20 +99,35 @@ fun rememberKitchenEnvironment(): KitchenEnvironment {
     }
 }
 
+/** Where My kitchen was opened from, which its back returns to. */
+enum class KitchenFrom(@StringRes val backAction: Int) {
+    SETTINGS(R.string.kitchen_back_action),
+    RECIPE(R.string.kitchen_back_to_recipe_action),
+    BOOK(R.string.kitchen_back_to_book_action),
+}
+
 /**
- * My kitchen, a destination above the settings: the equipment dictionary by its groups, each item a checkbox row the
- * reader ticks when the kitchen has it, each group a row that ticks or unticks all its items at once. A search — in
+ * My kitchen, a destination above the settings, the book's filters or a recipe's card ([from]): the equipment
+ * dictionary by its groups, each group folded until its row is tapped, saying how many of its items are ticked, its
+ * checkbox ticking or unticking all its items at once — said in the snackbar with Undo, which puts back exactly the
+ * ticks the group had — and, unfolded, each item a checkbox row the reader ticks when the kitchen has it. A search — in
  * either language, by synonyms, as the editor's equipment field finds — narrows the list to the items found. What is
- * ticked is kept at once ([KitchenStore]). Back — the bar's or the system's — returns to the settings. A dictionary that
- * cannot be read is said so, with "Try again", never a crash.
+ * ticked is kept at once ([KitchenStore]). Back — the bar's or the system's — returns to where it was opened from. A
+ * dictionary that cannot be read is said so, with "Try again", never a crash.
  *
- * Opened from a recipe's item of equipment the kitchen lacks, it opens [at] the entry that item names: the list is
- * scrolled to its row once, as it opens, and the row stands out on the primary container, saying "Needed for the
- * recipe", for as long as My kitchen stays open; back returns to the recipe.
+ * Opened from a recipe's item of equipment the kitchen lacks, it opens [at] the entry that item names: its group is
+ * unfolded, the list is scrolled to its row once, as it opens, and the row stands out on the primary container, saying
+ * "Needed for the recipe", for as long as My kitchen stays open; back returns to the recipe.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Modifier = Modifier, at: Long? = null) {
+fun KitchenScreen(
+    kitchen: KitchenEnvironment,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    at: Long? = null,
+    from: KitchenFrom = if (at == null) KitchenFrom.SETTINGS else KitchenFrom.RECIPE,
+) {
     var attempt by remember { mutableIntStateOf(0) }
     val dictionary by produceState<Result<List<EquipmentEntryEntity>>?>(null, kitchen.equipment, attempt) {
         value = null
@@ -108,15 +144,27 @@ fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Mod
     val language = servingsLanguage()
     val listed = rememberLazyListState()
     val results = rememberLazyListState()
+    // The groups unfolded: none as it opens, but the one holding the entry it was opened at.
+    val unfolded = rememberSaveable(saver = UNFOLDED_SAVER) { mutableStateOf(emptySet<Long>()) }
     // Brought to the entry it was opened at once, not again after the screen turns or the reader has scrolled away.
     var brought by rememberSaveable { mutableStateOf(at == null) }
+    val snackbars = remember { SnackbarHostState() }
+    val tickGroup = rememberGroupTick(kitchen.store, snackbars, language)
     Scaffold(
         modifier = modifier.fillMaxSize().testTag(KitchenTags.SCREEN),
+        snackbarHost = {
+            SnackbarHost(snackbars, Modifier.imePadding()) { data ->
+                Snackbar(
+                    modifier = Modifier.padding(12.dp),
+                    action = data.visuals.actionLabel?.let { label -> { SnackbarAction(label, data::performAction) } },
+                ) { Text(data.visuals.message) }
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.kitchen_title), Modifier.semantics { heading() }.testTag(KitchenTags.TITLE)) },
                 navigationIcon = {
-                    val action = stringResource(if (at == null) R.string.kitchen_back_action else R.string.kitchen_back_to_recipe_action)
+                    val action = stringResource(from.backAction)
                     IconButton(
                         onClick = onBack,
                         // Material's icon button lays out at 40 dp; a target is 48 by 48 dp at least (A11Y-003).
@@ -155,16 +203,76 @@ fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Mod
                     val groups = remember(entries, language) { Kitchen.groups(entries, language) }
                     if (!brought) {
                         LaunchedEffect(groups) {
-                            rowOf(groups, at)?.let { listed.scrollToItem(it) }
+                            groupOf(groups, at)?.let { unfolded.value += it }
+                            rowOf(groups, at, unfolded.value)?.let { row ->
+                                // The unfolded group's items are laid out first, then the list is brought to the row.
+                                snapshotFlow { listed.layoutInfo.totalItemsCount }.first { it > row }
+                                listed.scrollToItem(row)
+                            }
                             brought = true
                         }
                     }
-                    Groups(groups, held, language, kitchen.store, listed, at)
+                    Groups(
+                        groups, held, language, kitchen.store, listed, at,
+                        unfolded = unfolded.value,
+                        onFold = { id -> unfolded.value = if (id in unfolded.value) unfolded.value - id else unfolded.value + id },
+                        onTickGroup = tickGroup,
+                    )
                 }
                 else -> Found(query, entries, held, language, kitchen.store, results, at, onClear = { query = "" })
             }
         }
     }
+}
+
+/** The unfolded groups' ids, kept across a turn of the screen and the end of the process. */
+private val UNFOLDED_SAVER = listSaver<MutableState<Set<Long>>, Long>(
+    save = { it.value.toList() },
+    restore = { mutableStateOf(it.toSet()) },
+)
+
+/**
+ * Ticks or unticks every item of a group at once, from its checkbox, and says so in [snackbars] with Undo: Undo puts
+ * back exactly the ticks the group had. The change is final once the statement goes — by itself, or replaced — or as
+ * soon as anything else in the kitchen is ticked or unticked.
+ */
+@Composable
+private fun rememberGroupTick(store: KitchenStore, snackbars: SnackbarHostState, language: InterfaceLanguage): (KitchenGroup, Boolean) -> Unit {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val undo = stringResource(R.string.kitchen_undo)
+    return remember(store, snackbars, scope, context, undo, language) {
+        { (group, items): KitchenGroup, has: Boolean ->
+            val ids = items.map { it.id }
+            val before = store.held.value.intersect(ids.toSet())
+            store.hold(ids, has)
+            val after = store.held.value
+            val label = group.label(language)
+            val said = context.getString(if (has) R.string.kitchen_group_ticked_all else R.string.kitchen_group_unticked_all, label)
+            val visuals = Statement(said, undo)
+            scope.launch {
+                snackbars.currentSnackbarData?.dismiss()
+                val result = coroutineScope {
+                    // Anything ticked since makes the change final: its Undo goes.
+                    val changed = launch {
+                        store.held.first { it != after }
+                        snackbars.currentSnackbarData?.takeIf { it.visuals === visuals }?.dismiss()
+                    }
+                    snackbars.showSnackbar(visuals).also { changed.cancel() }
+                }
+                if (result == SnackbarResult.ActionPerformed) {
+                    store.hold(ids.filter { it !in before }, has = false)
+                    store.hold(before, has = true)
+                }
+            }
+        }
+    }
+}
+
+/** A statement of My kitchen with its Undo, told apart from any other by its identity. */
+private class Statement(override val message: String, override val actionLabel: String) : SnackbarVisuals {
+    override val withDismissAction = false
+    override val duration = SnackbarDuration.Long
 }
 
 /** The search over the dictionary: free text in either language, no capitals forced; Search closes the keyboard. */
@@ -189,14 +297,22 @@ private fun SearchField(query: String, onQuery: (String) -> Unit) {
     )
 }
 
-/** The index of the row of the entry [id] — a group's or an item's — in the list of [groups], or null when not listed. */
-private fun rowOf(groups: List<KitchenGroup>, id: Long?): Int? {
+/** The group that is or holds the entry [id], or null when none of [groups] does. */
+private fun groupOf(groups: List<KitchenGroup>, id: Long?): Long? =
+    groups.firstOrNull { (group, items) -> group.id == id || items.any { it.id == id } }?.group?.id
+
+/**
+ * The index of the row of the entry [id] — a group's or an item's — in the list of [groups], the [unfolded] ones
+ * showing their items, or null when not listed.
+ */
+private fun rowOf(groups: List<KitchenGroup>, id: Long?, unfolded: Set<Long>): Int? {
     var row = 0
     groups.forEach { (group, items) ->
         if (group.id == id) return row
+        val open = group.id in unfolded
         val item = items.indexOfFirst { it.id == id }
-        if (item >= 0) return row + 1 + item
-        row += 1 + items.size
+        if (item >= 0) return if (open) row + 1 + item else row
+        row += 1 + if (open) items.size else 0
     }
     return null
 }
@@ -210,8 +326,9 @@ private fun standingOut() = ListItemDefaults.colors(
 )
 
 /**
- * Every group with its items, a group's row ticking all of them: ticked when all are, partly when some are. The row
- * of the entry [at] stands out.
+ * Every group, folded but those [unfolded]: its row says how many of its items are ticked and shows or hides them
+ * ([onFold]); its checkbox ticks all of them ([onTickGroup]) — ticked when all are, partly when some are. The row of
+ * the entry [at] stands out.
  */
 @Composable
 private fun Groups(
@@ -221,39 +338,92 @@ private fun Groups(
     store: KitchenStore,
     state: LazyListState,
     at: Long?,
+    unfolded: Set<Long>,
+    onFold: (Long) -> Unit,
+    onTickGroup: (KitchenGroup, Boolean) -> Unit,
 ) {
-    val needed = stringResource(R.string.kitchen_from_recipe)
     LazyColumn(Modifier.fillMaxSize().testTag(KitchenTags.LIST), state = state) {
-        groups.forEach { (group, items) ->
+        groups.forEach { kitchenGroup ->
+            val (group, items) = kitchenGroup
+            val open = group.id in unfolded
             item(key = group.id) {
-                val ticked = items.count { it.id in held }
-                val toggle = when (ticked) {
-                    0 -> ToggleableState.Off
-                    items.size -> ToggleableState.On
-                    else -> ToggleableState.Indeterminate
+                Column(Modifier.animateItem()) {
+                    HorizontalDivider()
+                    GroupRow(kitchenGroup, held, language, open, opened = group.id == at, onFold = { onFold(group.id) }, onTick = onTickGroup)
                 }
-                val opened = group.id == at
-                HorizontalDivider()
-                ListItem(
-                    headlineContent = { Text(group.label(language), style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = {
-                        val count = stringResource(R.string.kitchen_group_ticked, ticked, items.size)
-                        Text(if (opened) "$count · $needed" else count)
-                    },
-                    leadingContent = { TriStateCheckbox(state = toggle, onClick = null) },
-                    colors = if (opened) standingOut() else ListItemDefaults.colors(),
-                    modifier = Modifier
-                        .triStateToggleable(toggle, role = Role.Checkbox) {
-                            store.hold(items.map { it.id }, has = toggle != ToggleableState.On)
-                        }
-                        .testTag(KitchenTags.group(group.id)),
-                )
             }
-            items(items, key = { it.id }) { item ->
-                Item(item, held, language, store, supporting = null, opened = item.id == at)
+            if (open) {
+                items(items, key = { it.id }) { item ->
+                    Item(item, held, language, store, supporting = null, opened = item.id == at, modifier = Modifier.animateItem())
+                }
             }
         }
     }
+}
+
+/**
+ * A group's row: its name, "n of m" ticked beneath it, a chevron at its end; a tap shows or hides its items ([onFold]).
+ * Its checkbox, a target of its own, ticks every item when not all are, else unticks them all ([onTick]).
+ */
+@Composable
+private fun GroupRow(
+    kitchenGroup: KitchenGroup,
+    held: Set<Long>,
+    language: InterfaceLanguage,
+    open: Boolean,
+    opened: Boolean,
+    onFold: () -> Unit,
+    onTick: (KitchenGroup, Boolean) -> Unit,
+) {
+    val (group, items) = kitchenGroup
+    val ticked = items.count { it.id in held }
+    val toggle = when (ticked) {
+        0 -> ToggleableState.Off
+        items.size -> ToggleableState.On
+        else -> ToggleableState.Indeterminate
+    }
+    val label = group.label(language)
+    val needed = stringResource(R.string.kitchen_from_recipe)
+    val tick = stringResource(R.string.kitchen_group_tick, label)
+    val folding = stringResource(if (open) R.string.kitchen_group_collapse_action else R.string.kitchen_group_expand_action)
+    val folded = stringResource(if (open) R.string.kitchen_group_expanded else R.string.kitchen_group_collapsed)
+    ListItem(
+        headlineContent = {
+            // A word wider than the name's room — a long Russian word at a large font scale on a narrow phone — is drawn
+            // smaller until it fits, so that no word is broken.
+            BoxWithConstraints {
+                val style = MaterialTheme.typography.titleMedium
+                val measurer = rememberTextMeasurer()
+                val width = constraints.maxWidth
+                val fitted = remember(label, style, width, measurer) { fitWords(label, style, width, measurer) }
+                Text(label, style = fitted, modifier = Modifier.testTag(KitchenTags.groupName(group.id)))
+            }
+        },
+        supportingContent = {
+            val count = stringResource(R.string.kitchen_group_ticked, ticked, items.size)
+            Text(if (opened) "$count · $needed" else count)
+        },
+        leadingContent = {
+            TriStateCheckbox(
+                state = toggle,
+                onClick = { onTick(kitchenGroup, toggle != ToggleableState.On) },
+                // The list item lays its leading part out at the checkbox's own size; the target is 48 dp (A11Y-003).
+                modifier = Modifier.size(48.dp).semantics { contentDescription = tick }.testTag(KitchenTags.groupTick(group.id)),
+            )
+        },
+        trailingContent = {
+            Icon(
+                painterResource(R.drawable.ic_expand_more),
+                contentDescription = null,
+                modifier = Modifier.rotate(if (open) 180f else 0f),
+            )
+        },
+        colors = if (opened) standingOut() else ListItemDefaults.colors(),
+        modifier = Modifier
+            .clickable(onClickLabel = folding, role = Role.Button, onClick = onFold)
+            .semantics { stateDescription = folded }
+            .testTag(KitchenTags.group(group.id)),
+    )
 }
 
 /**
@@ -301,6 +471,7 @@ private fun Item(
     store: KitchenStore,
     supporting: String?,
     opened: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val has = item.id in held
     val needed = stringResource(R.string.kitchen_from_recipe)
@@ -310,7 +481,7 @@ private fun Item(
         supportingContent = said?.let { { Text(it) } },
         leadingContent = { Checkbox(checked = has, onCheckedChange = null) },
         colors = if (opened) standingOut() else ListItemDefaults.colors(),
-        modifier = Modifier
+        modifier = modifier
             .toggleable(value = has, role = Role.Checkbox) { store.hold(listOf(item.id), it) }
             .testTag(KitchenTags.item(item.id)),
     )
@@ -331,8 +502,14 @@ object KitchenTags {
     const val UNREADABLE = "kitchen-unreadable"
     const val UNREADABLE_RETRY = "kitchen-unreadable-retry"
 
-    /** A group's row, which ticks all its items. */
+    /** A group's row, which shows or hides its items. */
     fun group(id: Long) = "kitchen-group-$id"
+
+    /** A group's name, in its row. */
+    fun groupName(id: Long) = "kitchen-group-name-$id"
+
+    /** A group's checkbox, which ticks or unticks all its items. */
+    fun groupTick(id: Long) = "kitchen-group-tick-$id"
 
     /** An item's row. */
     fun item(id: Long) = "kitchen-item-$id"

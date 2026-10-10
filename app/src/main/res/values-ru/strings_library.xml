@@ -34,26 +34,23 @@
     <string name="library_marked_empty_sentence_serverless">Здесь хранятся рецепты, импортированные из файлов.</string>
     <string name="library_entry_remove">Убрать</string>
     <string name="library_usual_servings">Обычно готовлю на…</string>
-    <string name="library_usual_not_set">не задано</string>
-    <string name="library_usual_count">Порций: %1$s</string>
-    <string name="library_usual_fewer">Меньше порций</string>
+    <string name="library_usual_not_set">Не задано</string>
     <string name="library_usual_fewer_action">Уменьшить обычное число порций</string>
-    <string name="library_usual_more">Больше порций</string>
     <string name="library_usual_more_action">Увеличить обычное число порций</string>
     <string name="library_usual_set">Задать</string>
-    <string name="library_usual_clear">Не задавать</string>
+    <string name="library_usual_cancel">Отмена</string>
+    <string name="library_usual_count_choice">Обычное число порций</string>
     <string name="library_drag_handle_right">Ручка перетаскивания справа</string>
     <string name="library_clear_media">Очистить сохранённые фото и видео</string>
     <string name="library_clear_media_title">Очистить сохранённые фото и видео?</string>
     <string name="library_clear_media_serverless">Очистить фото и видео импортированных рецептов</string>
     <string name="library_clear_media_title_serverless">Очистить фото и видео импортированных рецептов?</string>
     <string name="library_clear_media_statement_serverless">Фото и видео рецептов, импортированных из файлов, удалятся с этого устройства. Чтобы вернуть их, уберите рецепт и импортируйте его файл снова. Текст каждого рецепта останется, а написанные здесь рецепты сохранят свои фото и видео.</string>
-    <string name="library_clear_media_nothing_serverless">У импортированных рецептов нет фото и видео, которые можно очистить.</string>
     <string name="library_clear_media_statement">Фотографии и видео найденных рецептов и рецептов, которые вы отправили, удалятся с этого устройства. Они загрузятся снова, когда рецепт откроют при подключении к сети. Текст каждого рецепта останется, а неотправленные рецепты сохранят свои фотографии и видео.</string>
     <string name="library_clear_media_confirm">Очистить</string>
     <string name="library_clear_media_decline">Отмена</string>
-    <string name="library_clear_media_nothing">Сохранённых фото и видео, которые можно очистить, нет.</string>
-    <string name="library_clear_media_ok">ОК</string>
+    <string name="library_clear_media_done">Сохранённые фото и видео очищены</string>
+    <string name="library_clear_media_done_serverless">Фото и видео импортированных рецептов очищены</string>
     <!-- FLOW-035 (4): поле поиска над каждым видом и результат, в котором ничего нет. -->
     <string name="library_search">Поиск</string>
     <string name="library_search_placeholder">Поиск по названию или ингредиенту</string>
@@ -99,7 +96,10 @@
     <!-- The filter by the equipment My kitchen has. -->
     <string name="library_filter_equipment">Посуда и техника</string>
     <string name="library_filter_equipment_hint">Скроются рецепты, для которых нужно то, чего нет в «Моей кухне».</string>
-    <string name="library_filter_equipment_enough">Хватает посуды</string>
+    <string name="library_filter_equipment_enough">Хватает посуды и техники</string>
     <string name="library_nothing_equipment">Для всех рецептов чего-то не хватает</string>
-    <string name="library_filter_equipment_off">Выключить «Хватает посуды»</string>
+    <string name="library_filter_equipment_off">Выключить «Хватает посуды и техники»</string>
+    <string name="library_filter_equipment_empty_hint">Отметьте посуду и технику, которые у вас есть, — и рецепты, которым нужно что-то ещё, можно будет скрыть.</string>
+    <string name="library_filter_equipment_set_up">Настроить «Мою кухню»</string>
+    <string name="library_filter_equipment_edit">Изменить «Мою кухню»</string>
 </resources>

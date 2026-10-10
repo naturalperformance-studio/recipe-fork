@@ -258,8 +258,10 @@ internal fun shownName(step: Step, index: Int, held: RunningTimer?, current: Str
  * (FLOW-016 (8)), or, while it is held, the name it was started under; an unnamed one of a step with several told
  * apart by its number — that starts it, with its duration beside it; once started, the time remaining instead,
  * counting down by the clock, then that it has finished. A running timer's control is filled in the theme's primary
- * colour, one at rest tonal ([TimerButton]). A started timer has an action beside it, where it fits, that cancels it,
- * or clears it once finished; while a finished one rings, another beside it stops the ringing ([BesideOrUnder]).
+ * colour, one at rest tonal ([TimerButton]) — or, [onHighlight], on the current step's primary container, outlined on
+ * the surface, so that it stands off the container. A started timer has an action beside it, where it fits, that
+ * cancels it, or clears it once finished; while a finished one rings, another beside it stops the ringing
+ * ([BesideOrUnder]).
  */
 @Composable
 fun StepTimer(
@@ -268,6 +270,7 @@ fun StepTimer(
     timers: RecipeTimers,
     quantity: ReferenceQuantity,
     modifier: Modifier = Modifier,
+    onHighlight: Boolean = false,
 ) {
     val timer = step.timers.getOrNull(index) ?: return
     val current = TimerName.of(step, index, quantity) ?: return
@@ -296,6 +299,7 @@ fun StepTimer(
                 confirms = !running,
                 // A running timer is filled in the theme's primary colour, told at a glance from one at rest.
                 running = running,
+                onHighlight = onHighlight,
             ) {
                 FlowRow(
                     Modifier.weight(1f),
@@ -329,6 +333,7 @@ fun StepTimer(
                             action = stringResource(R.string.timer_stop_action),
                             tag = TimerTags.stop(step.position, index),
                             onClick = { timers.stopRinging(key) },
+                            onHighlight = onHighlight,
                         ) { Text(stringResource(R.string.timer_stop)) }
                     }
                     TimerButton(
@@ -336,6 +341,7 @@ fun StepTimer(
                         action = stringResource(if (finished) R.string.timer_clear_action else R.string.timer_cancel_action),
                         tag = TimerTags.cancel(step.position, index),
                         onClick = { timers.cancel(key) },
+                        onHighlight = onHighlight,
                     ) { Text(stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel)) }
                 }
             }

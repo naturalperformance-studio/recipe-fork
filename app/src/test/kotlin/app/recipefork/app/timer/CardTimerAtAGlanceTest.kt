@@ -65,6 +65,34 @@ class CardTimerAtAGlanceTest : CardTimersKit() {
         assertFalse(same(scheme.primary, fillOf(TimerTags.start(2))))
     }
 
+    // v0.30, T-221: on the current step's primary container a control at rest — the timer not started, and Cancel beside
+    // a running one — is outlined on the surface, standing off the container rather than tonal on it; the running
+    // timer stays filled in the primary colour.
+    @Test
+    fun onTheCurrentStepAControlAtRestStandsOffTheContainer() {
+        show(soup)
+        control(0)
+        compose.waitForIdle()
+        assertStandsOff(TimerTags.start(0))
+        start(0)
+        awaitHeld { it.size == 1 }
+        compose.waitUntil(PATIENCE_MS) { statusOf(0) == "10:00" && shown(TimerTags.cancel(0)) }
+        compose.onNodeWithTag(TimerTags.cancel(0)).performScrollTo()
+        compose.waitForIdle()
+        assertTrue("the running timer stays filled in the primary colour", same(scheme.primary, fillOf(TimerTags.start(0))))
+        assertStandsOff(TimerTags.cancel(0))
+    }
+
+    /** The control tagged [tag] is filled with the surface, not tonal, and its edge drawn apart from the container. */
+    private fun assertStandsOff(tag: String) {
+        val fill = fillOf(tag)
+        assertTrue("$tag is filled with the surface ($fill)", same(scheme.surface, fill))
+        assertFalse(same(scheme.secondaryContainer, fill))
+        val box = bounds(tag)
+        val edge = colourAt(box.left + 0.5f, box.top + box.height / 2)
+        assertFalse("$tag's edge ($edge) is drawn, not the container", same(scheme.primaryContainer, edge) || same(scheme.surface, edge))
+    }
+
     // Where they fit, Cancel stands beside the running timer's control, at its end; each a card target.
     @Test
     fun cancelStandsBesideStartWhereItFits() = cancelBesideStart()

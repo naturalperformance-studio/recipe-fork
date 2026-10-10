@@ -45,15 +45,16 @@ import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagOffer
 import app.recipefork.app.dictionary.label
 import app.recipefork.app.editor.numberLanguage
+import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import kotlinx.coroutines.launch
 
 /**
  * Every filter of a view in one bottom sheet: a section for the ingredient, one for the tags, one for the language
- * while the view holds recipes of more than one language (counting "not given" as one) and,
- * while [equipmentOffered] — My kitchen has something that counts — one for the equipment. A choice applies at once
- * and the sheet stays open for the next; Done, a swipe down or a tap outside closes it.
+ * while the view holds recipes of more than one language (counting "not given" as one) and, once My [kitchen] is
+ * known, one for the equipment ([EquipmentSection]). A choice applies at once and the sheet stays open for the next;
+ * Done, a swipe down or a tap outside closes it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +64,7 @@ internal fun FiltersSheet(
     choices: FilterChoices,
     languages: List<BookLanguage>,
     hold: Set<Long>,
-    equipmentOffered: Boolean,
+    kitchen: SheetKitchen?,
     onClose: () -> Unit,
 ) {
     LaunchedEffect(choices) {
@@ -96,9 +97,15 @@ internal fun FiltersSheet(
                 HorizontalDivider()
                 LanguageSection(languages, filters.language) { onFilters(filters.copy(language = it)) }
             }
-            if (equipmentOffered) {
+            if (kitchen != null) {
                 HorizontalDivider()
-                EquipmentSection(filters.equipment) { onFilters(filters.copy(equipment = it)) }
+                EquipmentSection(
+                    filters.equipment,
+                    onChoose = { onFilters(filters.copy(equipment = it)) },
+                    kitchenEmpty = kitchen.empty,
+                    // The sheet goes first, so that My kitchen is not opened under it.
+                    onOpenKitchen = { scope.launch { state.hide() }.invokeOnCompletion { onClose(); kitchen.onOpen() } },
+                )
             }
         }
     }
@@ -230,16 +237,37 @@ private fun LanguageSection(languages: List<BookLanguage>, chosen: BookLanguage?
 }
 
 /**
- * The filter "Enough equipment": checked, it hides every recipe naming an entry of equipment My kitchen lacks; an item
- * of free text hides none.
+ * What the filters sheet knows of My kitchen: whether it is [empty] — nothing that counts ticked — and how to open it
+ * ([onOpen]).
+ */
+internal class SheetKitchen(val empty: Boolean, val onOpen: () -> Unit)
+
+/** The sheet's view of the book's [kitchen], opened above the book; null while the kitchen is not known yet. */
+internal fun sheetKitchen(kitchen: Kitchen?, session: LibrarySession): SheetKitchen? =
+    kitchen?.let { SheetKitchen(it.isEmpty, session::openKitchen) }
+
+/**
+ * The equipment: while My kitchen is empty ([kitchenEmpty]) a sentence saying what it is for and "Set up My kitchen";
+ * otherwise the filter "Enough equipment" — checked, it hides every recipe naming an entry of equipment My kitchen
+ * lacks; an item of free text hides none — and "Edit My kitchen". Either opens My kitchen ([onOpenKitchen]).
  */
 @Composable
-private fun EquipmentSection(on: Boolean, onChoose: (Boolean) -> Unit) {
+private fun EquipmentSection(on: Boolean, onChoose: (Boolean) -> Unit, kitchenEmpty: Boolean, onOpenKitchen: () -> Unit) {
     Column(Modifier.testTag(LibraryTags.EQUIPMENT_CHOOSER), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionTitle(R.string.library_filter_equipment, R.string.library_filter_equipment_hint)
-        val toggle = Modifier.toggleable(value = on, role = Role.Checkbox) { onChoose(it) }
-        ChoiceRow(stringResource(R.string.library_filter_equipment_enough), LibraryTags.EQUIPMENT_CHOICE, toggle) {
-            Checkbox(checked = on, onCheckedChange = null)
+        if (kitchenEmpty) {
+            SectionTitle(R.string.library_filter_equipment, R.string.library_filter_equipment_empty_hint)
+        } else {
+            SectionTitle(R.string.library_filter_equipment, R.string.library_filter_equipment_hint)
+            val toggle = Modifier.toggleable(value = on, role = Role.Checkbox) { onChoose(it) }
+            ChoiceRow(stringResource(R.string.library_filter_equipment_enough), LibraryTags.EQUIPMENT_CHOICE, toggle) {
+                Checkbox(checked = on, onCheckedChange = null)
+            }
+        }
+        TextButton(
+            onClick = onOpenKitchen,
+            modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.EQUIPMENT_KITCHEN),
+        ) {
+            Text(stringResource(if (kitchenEmpty) R.string.library_filter_equipment_set_up else R.string.library_filter_equipment_edit))
         }
     }
 }

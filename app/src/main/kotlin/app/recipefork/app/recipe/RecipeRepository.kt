@@ -189,7 +189,7 @@ open class RecipeRepository(
      * with changes not sent — which may hold media sent nowhere — keeps its media (FLOW-060 (2)). Empty when the
      * media files are no concern of this repository's.
      */
-    suspend fun clearableMedia(): List<java.io.File> {
+    open suspend fun clearableMedia(): List<java.io.File> {
         val files = filesDirectory ?: return emptyList()
         val open = book.open.value
         val store = PhotoStore(files)
@@ -200,9 +200,9 @@ open class RecipeRepository(
     /**
      * Deletes the files of [clearableMedia] from the device (FLOW-060); every media row stays, so a recipe still
      * names the media it no longer holds a file of. Returns how many files were deleted. Finished even when the caller
-     * is cancelled.
+     * is cancelled. Open, so that a test can hold it back.
      */
-    suspend fun clearMedia(): Int = withContext(NonCancellable) {
+    open suspend fun clearMedia(): Int = withContext(NonCancellable) {
         val files = clearableMedia()
         withContext(Dispatchers.IO) { files.count { it.delete() } }
     }

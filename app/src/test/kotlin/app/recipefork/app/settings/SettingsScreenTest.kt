@@ -16,6 +16,8 @@ import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.card.awaitCard
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assertIsNotEnabled
+import app.recipefork.app.R
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -52,6 +54,7 @@ import app.recipefork.app.ui.AppNavHost
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -135,7 +138,10 @@ class SettingsScreenTest {
         assertEquals(listOf("Language", "As on the device"), compose.textsOf(SettingsTags.LANGUAGE))
         assertEquals(listOf("Theme", "As on the device"), compose.textsOf(SettingsTags.THEME))
         assertEquals(listOf("I usually cook for…", "3"), compose.textsOf(SettingsTags.USUAL))
-        assertEquals(listOf("Drag handle on the right"), compose.textsOf(SettingsTags.HANDLE_RIGHT))
+        assertEquals(
+            listOf("Drag handle on the right", "For moving ingredients and steps in the editor"),
+            compose.textsOf(SettingsTags.HANDLE_RIGHT),
+        )
         assertEquals(
             ToggleableState.On,
             compose.onNodeWithTag(SettingsTags.HANDLE_RIGHT).fetchSemanticsNode().config[SemanticsProperties.ToggleableState],
@@ -150,6 +156,55 @@ class SettingsScreenTest {
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 6)
         val back = compose.onNodeWithTag(SettingsTags.BACK).fetchSemanticsNode()
         assertEquals("Back to the book", AccessibilityChecks.clickActionLabel(back))
+    }
+
+    // v0.30, T-221: with nothing to clear, "Clear saved media" is disabled, its reason beneath its name, and opens no
+    // dialog; values are capitalised alike — "Not set" as "As on the device" is.
+    @Test
+    fun nothingToClearIsDisabledWithItsReasonAndValuesAreCapitalisedAlike() {
+        usual.set(null)
+        show()
+        openSettings()
+        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Nothing to clear" }
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performClick()
+        compose.waitForIdle()
+        assertFalse(exists(SettingsTags.CLEAR_MEDIA_STATEMENT))
+        assertEquals("Not set", value(SettingsTags.USUAL))
+        listOf(SettingsTags.LANGUAGE, SettingsTags.THEME, SettingsTags.USUAL, SettingsTags.KITCHEN, SettingsTags.CLEAR_MEDIA).forEach {
+            val shown = value(it)
+            assertTrue("$it's value \"$shown\" begins with a capital", shown.first().isUpperCase())
+        }
+    }
+
+    // Review of T-221: the screen turned while a clearing runs — the settings shown anew still say once it is done, and
+    // count again.
+    @Test
+    fun aClearingFinishedAfterTheScreenTurnedIsStillSaid() {
+        val gate = CompletableDeferred<Unit>()
+        var media = 2
+        val held = object : RecipeRepository(active) {
+            override suspend fun clearableMedia(): List<java.io.File> = List(media) { java.io.File("media-$it") }
+            override suspend fun clearMedia(): Int {
+                gate.await()
+                return media.also { media = 0 }
+            }
+        }
+        session.choose(LibraryView.OWN)
+        val tester = StateRestorationTester(compose)
+        tester.setContent { MaterialTheme { AppNavHost(session, held, card = card, editor = editor, themeSetting = theme) } }
+        compose.waitForIdle()
+        openSettings()
+        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "2 saved photos and videos" }
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.CLEAR_MEDIA_CONFIRM) }
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA_CONFIRM).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(SettingsTags.CLEAR_MEDIA_STATEMENT) }
+        tester.emulateSavedInstanceStateRestore()
+        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.CLEAR_MEDIA) }
+        gate.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasText("Saved media cleared")).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Nothing to clear" }
     }
 
     // A value changed in its item's dialog is shown at once.
@@ -186,8 +241,18 @@ class SettingsScreenTest {
         usual.set(null)
         show()
         openSettings()
-        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Удалять нечего" }
+        compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Очищать нечего" }
         assertEquals(listOf("Настройки"), compose.textsOf(SettingsTags.TITLE))
+        // In one voice: no first person among the values, and the reason matches the action's «Очистить».
+        assertEquals("Подсчёт…", context.getString(R.string.settings_media_counting))
+        assertEquals("Не задано", value(SettingsTags.USUAL))
+        assertEquals(
+            listOf("Ручка перетаскивания справа", "Для перемещения ингредиентов и шагов в редакторе"),
+            compose.textsOf(SettingsTags.HANDLE_RIGHT),
+        )
+        listOf(SettingsTags.LANGUAGE, SettingsTags.THEME, SettingsTags.USUAL, SettingsTags.KITCHEN, SettingsTags.CLEAR_MEDIA).forEach {
+            assertTrue(it, value(it).first().isUpperCase())
+        }
         LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, emptySet())
     }
