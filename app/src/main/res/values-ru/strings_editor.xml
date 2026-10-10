@@ -184,4 +184,8 @@
     <string name="editor_equipment_menu_action">Действия с предметом %1$d</string>
     <string name="editor_equipment_limit">В рецепте можно указать до %1$d предметов посуды и техники.</string>
     <string name="editor_equipment_removed">Предмет %1$d убран</string>
+    <string name="editor_equipment_pick_action">Выбрать предмет словаря %1$s</string>
+    <string name="editor_equipment_free_text_offer">Добавить «%1$s» своими словами</string>
+    <string name="editor_equipment_free_text_action">Добавить %1$s своими словами, не из словаря</string>
+    <string name="editor_equipment_free_text_warning">Этого предмета нет в словаре: «Моя кухня» его не проверяет.</string>
 </resources>

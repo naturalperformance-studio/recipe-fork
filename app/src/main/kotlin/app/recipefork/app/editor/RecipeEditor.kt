@@ -190,6 +190,42 @@ class RecipeEditor(
     }
 
     /**
+     * The item at [index] as the equipment dictionary's entry [entryId], with no qualifier and no free text beside it
+     * (DOM-009). The entry the item already names, unqualified, changes nothing.
+     */
+    fun setEquipmentEntry(index: Int, entryId: Long): Boolean {
+        val item = current.value?.equipment?.getOrNull(index) ?: return false
+        val entry = EquipmentItem.entry(entryId)
+        if (item == entry) return editable
+        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) entry else it }) }
+    }
+
+    /**
+     * The words the author typed after the label of the item's entry, which narrow it ("26 cm"): kept beside the entry
+     * without the spaces and commas that separate them from the label; none holds no qualifier (DOM-009). An item in the
+     * author's own words takes none; returns false. The qualifier the item already holds changes nothing.
+     */
+    fun setEquipmentQualifier(index: Int, qualifier: String?): Boolean {
+        val item = current.value?.equipment?.getOrNull(index) ?: return false
+        val entry = item.dictionaryEntry ?: return false
+        val qualified = EquipmentItem.entry(entry, qualifier?.trim { it.isWhitespace() || it == ',' })
+        if (qualified == item) return editable
+        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) qualified else it }) }
+    }
+
+    /** The label an equipment entry reads by in the interface language, as the screen read the dictionary; none before. */
+    private var equipmentLabel: (Long) -> String? = { null }
+
+    /**
+     * The equipment dictionary's labels as the screen read them, in the interface language: an item an entry names is
+     * measured against its limit by its label with its qualifier, as it reads ([RecipeBounds.of]).
+     */
+    fun knowEquipmentLabels(label: (Long) -> String?) {
+        equipmentLabel = label
+        current.value?.let { if (left.value.isNotEmpty()) remark(it) }
+    }
+
+    /**
      * The author left the item at [index]: free text is held trimmed, and an item left blank goes without a word; an
      * item an entry names stays as it is.
      */
@@ -912,10 +948,10 @@ class RecipeEditor(
     /** What is marked once [recipe] stands as it does: a part completed loses its mark and must be left again to regain it. */
     private fun remark(recipe: Recipe) {
         left.value = left.value.filterTo(mutableSetOf()) { bound(it, recipe) != null }
-        marked.value = left.value.mapNotNull { part -> part.at()?.let { at -> RecipeBounds.of(recipe, at)?.let { at to it } } }.toMap()
+        marked.value = left.value.mapNotNull { part -> part.at()?.let { at -> RecipeBounds.of(recipe, at, equipmentLabel)?.let { at to it } } }.toMap()
     }
 
-    private fun bound(part: Left, recipe: Recipe): Bound? = part.at()?.let { RecipeBounds.of(recipe, it) }
+    private fun bound(part: Left, recipe: Recipe): Bound? = part.at()?.let { RecipeBounds.of(recipe, it, equipmentLabel) }
 
     /** The part [this] is at now; null for a step deleted since. */
     private fun Left.at(): RecipePart? = when (this) {

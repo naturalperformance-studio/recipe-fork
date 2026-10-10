@@ -53,7 +53,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * The equipment in the editor: a section between the serving count and the ingredients whose "Add" puts an item that
+ * The equipment in the editor (T-203's offers in [EquipmentOfferScreenTest]): a section between the serving count and the ingredients whose "Add" puts an item that
  * takes the focus; an item is a one-line field with a hint, removed with Undo, moved by its menu, marked over 40
  * characters on leaving it and dropped when left blank; a sixteenth "Add" says why it adds nothing; Next walks the
  * serving count, the items and the first ingredient row; a frozen recipe shows its items as text.
@@ -298,7 +298,8 @@ class EquipmentScreenTest {
     }
 
     // An item an entry names shows as the entry's label in the interface language with its qualifier, editable or
-    // frozen; leaving it untouched keeps the entry, and typing into it makes it the text typed (T-203 offers entries).
+    // frozen; leaving it untouched keeps the entry, typing past its label changes its qualifier, and typing inside the
+    // label makes it the text typed.
     @Test
     fun anEntrysItemShowsItsLabelAndQualifier() {
         val recipe = open(recipe("Whisk").copy(equipment = listOf(EquipmentItem.entry(10001, "26 cm"), EquipmentItem.free("Whisk"))))
@@ -310,7 +311,11 @@ class EquipmentScreenTest {
         compose.onNodeWithTag(field(0)).performScrollTo().performClick()
         compose.onNodeWithTag(field(0)).performTextReplacement("Frying pan 28 cm")
         leaveField()
-        awaitStored(recipe, listOf("Frying pan 28 cm", "Whisk"))
+        compose.waitUntil(PATIENCE_MS) { stored(recipe).equipment == listOf(EquipmentItem.entry(10001, "28 cm"), EquipmentItem.free("Whisk")) }
+        compose.onNodeWithTag(field(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(field(0)).performTextReplacement("Frying pin 28 cm")
+        leaveField()
+        awaitStored(recipe, listOf("Frying pin 28 cm", "Whisk"))
     }
 
     @Test
