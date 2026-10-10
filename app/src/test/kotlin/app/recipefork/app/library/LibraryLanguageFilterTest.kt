@@ -188,9 +188,41 @@ class LibraryLanguageFilterTest {
     fun onlyTheLanguagesOfTheViewAreOffered() {
         own("Borscht", RecipeLanguage.EN, minutesAgo = 1)
         own("Beef stew", RecipeLanguage.EN, minutesAgo = 2)
+        own("Blini", null, minutesAgo = 3)
         found("Щи", RecipeLanguage.RU)
         show(LibraryView.OWN)
-        assertEquals(listOf("English"), openLanguages())
+        assertEquals(listOf("English", "Not given"), openLanguages())
+    }
+
+    // A view of fewer than two languages — one language, or none given at all — has nothing to filter by language:
+    // the sheet leaves its language section out, and keeps the others.
+    @Test
+    fun aViewOfOneLanguageHasNoLanguageSection() {
+        own("Borscht", RecipeLanguage.EN, minutesAgo = 1)
+        own("Beef stew", RecipeLanguage.EN, minutesAgo = 2)
+        found("Kasha", null)
+        show(LibraryView.OWN)
+        assertNoLanguageSection()
+        closeTheSheet()
+        choose(LibraryView.MARKED)
+        assertNoLanguageSection()
+    }
+
+    // The same in Russian.
+    @Test
+    @Config(qualifiers = "ru-h2000dp")
+    fun inRussianAViewOfOneLanguageHasNoLanguageSection() {
+        own("Борщ", RecipeLanguage.RU)
+        show(LibraryView.OWN)
+        assertNoLanguageSection()
+    }
+
+    private fun assertNoLanguageSection() {
+        click(LibraryTags.FILTER_ADD)
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_CHOOSER), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.INGREDIENT_CHOOSER), PATIENCE_MS)
+        assertEquals(false, exists(LibraryTags.LANGUAGE_CHOOSER))
+        assertEquals(0, compose.onAllNodes(languageChoice).fetchSemanticsNodes().size)
     }
 
     // The same in Russian: the languages and the chip are named in the interface language.

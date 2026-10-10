@@ -142,7 +142,7 @@ class EmptyStatesTest {
     fun inServerlessModeEachEmptyTabOffersItsOwnActionAndNamesNoServer() {
         show(LibraryView.MARKED, Mode.Serverless)
         assertEmptyState(
-            LibraryTags.MARKED_EMPTY, "No marked recipes yet", "Recipes you import from files are kept here.",
+            LibraryTags.MARKED_EMPTY, "No imported recipes yet", "Recipes you import from files are kept here.",
             LibraryTags.IMPORT, "Import a recipe file",
         )
         assertNothingNamesTheServer()
@@ -167,7 +167,7 @@ class EmptyStatesTest {
     fun inRussianTheEmptyViewsSpeakRussian() {
         show(LibraryView.MARKED, Mode.Serverless)
         assertEmptyState(
-            LibraryTags.MARKED_EMPTY, "Отмеченных рецептов пока нет", "Здесь хранятся рецепты, импортированные из файлов.",
+            LibraryTags.MARKED_EMPTY, "Импортированных рецептов пока нет", "Здесь хранятся рецепты, импортированные из файлов.",
             LibraryTags.IMPORT, "Импортировать файл рецепта",
         )
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()

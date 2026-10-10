@@ -8,6 +8,7 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.res.painterResource
@@ -31,7 +32,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.editor.BlockAction
@@ -142,7 +143,24 @@ internal fun ListHeader(
                 value = search.value,
                 onValueChange = search::type,
                 singleLine = true,
-                label = { Text(stringResource(R.string.library_search)) },
+                // A short label on one line, which the field keeps room for above its outline when it rises there; the
+                // longer words stand inside as its placeholder, cut short where they do not fit.
+                label = {
+                    Text(
+                        stringResource(R.string.library_search),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.testTag(LibraryTags.SEARCH_LABEL),
+                    )
+                },
+                placeholder = {
+                    Text(
+                        stringResource(R.string.library_search_placeholder),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.testTag(LibraryTags.SEARCH_PLACEHOLDER),
+                    )
+                },
                 trailingIcon = if (search.value.text.isEmpty()) null else {
                     {
                         BlockAction(
@@ -208,7 +226,7 @@ private fun orderLabel(order: BookOrder): Int = when (order) {
  * "Enough equipment" alone, it says the kitchen lacks something for every recipe, and offers to switch that filter off.
  */
 @Composable
-internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearFilters: () -> Unit) {
+internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearFilters: () -> Unit, modifier: Modifier = Modifier) {
     val searched = listed.searched
     val filtered = listed.params.filters.any
     if (!searched && listed.params.filters == BookFilters(equipment = true)) {
@@ -220,6 +238,7 @@ internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearF
                 stringResource(R.string.library_filter_equipment_off), null, LibraryTags.NOTHING_FOUND_EQUIPMENT_OFF, onClearFilters,
             ),
             tag = LibraryTags.NOTHING_FOUND,
+            modifier = modifier,
         )
         return
     }
@@ -243,6 +262,7 @@ internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearF
         sentence = null,
         action = action,
         tag = LibraryTags.NOTHING_FOUND,
+        modifier = modifier,
     )
 }
 
@@ -324,7 +344,7 @@ private fun QuickFilters(
             leadingIcon = {
                 Icon(painterResource(R.drawable.ic_filter), contentDescription = null, modifier = Modifier.size(AssistChipDefaults.IconSize))
             },
-            modifier = Modifier.chipTarget().testTag(LibraryTags.FILTER_ADD),
+            modifier = Modifier.chipTarget(LibraryTags.FILTER_ADD),
         )
         filters.ingredient?.let { id ->
             val name = choices.ingredients?.firstOrNull { it.id == id }?.label(language)
@@ -382,15 +402,20 @@ private fun FilterOn(name: String, tag: String, onRemove: () -> Unit) {
                 modifier = Modifier.size(FilterChipDefaults.IconSize),
             )
         },
-        modifier = Modifier.chipTarget().testTag(tag),
+        modifier = Modifier.chipTarget(tag),
     )
 }
 
-/** A chip laid out at least 48 by 48 dp, so that it is a whole touch target (A11Y-003). */
-private fun Modifier.chipTarget(): Modifier = heightIn(min = 48.dp).widthIn(min = 48.dp)
+/**
+ * A chip drawn at its own 32 dp, with a touch target of at least 48 by 48 dp around it (A11Y-003). The chip's semantics
+ * merge outside the target, so that the element the screen reader and the touch-target check find, tagged [tag], is
+ * the target, not the chip drawn within it — as the editor's tags do.
+ */
+private fun Modifier.chipTarget(tag: String): Modifier =
+    semantics(mergeDescendants = true) {}.testTag(tag).minimumInteractiveComponentSize()
 
 /** A filter offered, not selected; tapping it applies it. */
 @Composable
 private fun FilterOffer(name: String, tag: String, onApply: () -> Unit) {
-    FilterChip(selected = false, onClick = onApply, label = { Text(name) }, modifier = Modifier.chipTarget().testTag(tag))
+    FilterChip(selected = false, onClick = onApply, label = { Text(name) }, modifier = Modifier.chipTarget(tag))
 }

@@ -181,7 +181,7 @@ class EquipmentFilterTest {
 
     private fun openTheSheet() {
         click(LibraryTags.FILTER_ADD)
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.LANGUAGE_CHOOSER), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.TAG_CHOOSER), PATIENCE_MS)
     }
 
     private fun closeTheSheet() {

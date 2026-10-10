@@ -6,6 +6,10 @@
     <string name="library_view_own">Written here</string>
     <string name="library_view_marked_action">Show the recipes marked in this book</string>
     <string name="library_view_own_action">Show the recipes written in this book</string>
+    <!-- In a build without the server the marked view holds the recipes imported from files (FLOW-062 (1)): it is
+         named for them. -->
+    <string name="library_view_marked_serverless">Imported</string>
+    <string name="library_view_marked_action_serverless">Show the recipes imported from files</string>
     <!-- Said by the indicator a view shows while its list is read for longer than a moment. -->
     <string name="library_opening">Opening the recipes</string>
     <!-- FLOW-036: the state on an own recipe's entry; local and private are both drafts. -->
@@ -43,6 +47,7 @@
          sentence; in a build without the server the view holds imported recipe files (FLOW-062 (1)). -->
     <string name="library_marked_empty">No marked recipes yet</string>
     <string name="library_marked_empty_sentence">Recipes you mark are kept here.</string>
+    <string name="library_marked_empty_serverless">No imported recipes yet</string>
     <string name="library_marked_empty_sentence_serverless">Recipes you import from files are kept here.</string>
     <!-- FLOW-009 (4), FLOW-064 (6): removing a found recipe from the book. -->
     <string name="library_entry_remove">Remove</string>
@@ -72,8 +77,10 @@
     <string name="library_clear_media_decline">Cancel</string>
     <string name="library_clear_media_nothing">There is no saved media to clear.</string>
     <string name="library_clear_media_ok">OK</string>
-    <!-- FLOW-035 (4): the search field at the top of each view, and the result that holds nothing. -->
-    <string name="library_search">Search by title or ingredient</string>
+    <!-- FLOW-035 (4): the search field at the top of each view — its short label, and the longer placeholder shown
+         while it is focused and empty — and the result that holds nothing. -->
+    <string name="library_search">Search</string>
+    <string name="library_search_placeholder">Search by title or ingredient</string>
     <string name="library_search_clear">Clear the search</string>
     <string name="library_nothing_found">Nothing found for “%1$s”</string>
     <!-- FLOW-035 (3): the order of each view, and its three choices. -->
