@@ -305,18 +305,32 @@ class RecipeEditor(
         val recipe = current.value ?: return false
         if (position !in recipe.steps.indices) return false
         val removed = recipe.media.filter { it.attachment == MediaAttachment.ToStep(position) }.map { it.mediaId }
-        val removing = edit { edited ->
-            val steps = edited.steps.sortedBy { it.position }
-            stepKeys.remove(position, steps.size)
-            edited.copy(
-                steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) },
-                media = edited.media
-                    .filter { (it.attachment as? MediaAttachment.ToStep)?.stepPosition != position }
-                    .followingSteps { if (it > position) it - 1 else it },
-            )
-        }
+        val removing = deleteStep(position)
         if (removing) offered.value = Removal(Removal.Kind.STEP, position, recipe) { if (removed.isNotEmpty()) written(removed) }
         return removing
+    }
+
+    /**
+     * Takes away the step at [position] that was added and left holding nothing — no text, note, timer or media — as if
+     * it had never been added: nothing is offered for undoing. A step holding anything is left as it is.
+     */
+    fun dropStep(position: Int): Boolean {
+        val recipe = current.value ?: return false
+        val step = recipe.steps.sortedBy { it.position }.getOrNull(position) ?: return false
+        val empty = step.text.isBlank() && step.ingredientReferences.isEmpty() && step.note == null && step.timers.isEmpty() &&
+            recipe.media.none { it.attachment == MediaAttachment.ToStep(position) }
+        return empty && deleteStep(position)
+    }
+
+    private fun deleteStep(position: Int): Boolean = edit { edited ->
+        val steps = edited.steps.sortedBy { it.position }
+        stepKeys.remove(position, steps.size)
+        edited.copy(
+            steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) },
+            media = edited.media
+                .filter { (it.attachment as? MediaAttachment.ToStep)?.stepPosition != position }
+                .followingSteps { if (it > position) it - 1 else it },
+        )
     }
 
     /**

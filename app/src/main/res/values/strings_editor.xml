@@ -94,23 +94,23 @@
     <string name="editor_unit_cup">cup</string>
     <string name="editor_unit_pinch">pinch</string>
     <string name="editor_unit_to_taste">to taste</string>
-    <!-- The steps, after the ingredients: numbered plain text (FLOW-024). -->
+    <!-- The steps, after the ingredients: numbered plain text (FLOW-024). Each step reads as text on its row and opens
+         in a sheet on a tap, named by editor_step_edit. -->
     <string name="editor_steps">Steps</string>
     <string name="editor_steps_none">No steps</string>
     <string name="editor_step">Step %1$d</string>
     <!-- A step's number before its text in the editor's field; the screen reader reads editor_step instead. -->
     <string name="editor_step_number">%1$d.</string>
+    <string name="editor_step_edit">Edit step</string>
+    <!-- What an empty step reads as on its row, muted. -->
+    <string name="editor_step_new">New step</string>
     <string name="editor_step_add">Add step</string>
     <string name="editor_step_add_action">Add a step at the end</string>
     <string name="editor_step_remove_action">Remove step %1$d</string>
-    <string name="editor_step_menu_action">Step %1$d actions</string>
-    <!-- The author's own note on a step, beside the method: offered on demand from the step's menu; a fork by
-         someone else leaves it behind (FORK-007). -->
-    <string name="editor_step_note_add">Add a note</string>
+    <!-- The author's own note on a step, beside the method, in the step's sheet; a fork by someone else leaves it
+         behind (FORK-007). -->
     <string name="editor_step_note">Author\'s note</string>
     <string name="editor_step_note_hint">Stays with you when someone else forks the recipe</string>
-    <!-- How a frozen recipe shows a step's note: %1$s is the note. -->
-    <string name="editor_step_note_read_only">Author\'s note: %1$s</string>
     <!-- An ingredient's quantity inside a step's text: inserted from the step's control or by typing @ (FLOW-031). -->
     <string name="editor_step_insert_ingredient_label">Insert an ingredient into step %1$d</string>
     <string name="editor_step_insert_ingredient_action">Insert an ingredient\'s quantity into step %1$d</string>
@@ -128,7 +128,7 @@
     <string name="editor_step_part_more_than_whole">The part %1$s is more than the %2$s in the list.</string>
     <!-- A change of an ingredient's unit made the steps' parts of it whole references again; said once. -->
     <string name="editor_parts_made_whole">Ingredient %1$d changed its unit: the steps now use all of it where they used a part.</string>
-    <!-- The description, after the steps: one optional field (FLOW-024). -->
+    <!-- The description, under the title and the tags: one optional field (FLOW-024). -->
     <string name="editor_description">Description</string>
     <string name="editor_description_optional">Description (optional)</string>
     <string name="editor_description_none">No description</string>
@@ -153,14 +153,6 @@
     <string name="editor_timer_name_numbered">Timer %1$d\'s name</string>
     <string name="editor_timer_name_follows">Taken from the step. Change it to name the timer yourself.</string>
     <string name="editor_timer_limit">A step can hold up to five timers. For more waits, split this step into further steps, each with its own timers.</string>
-    <string name="editor_timer_read_only">Timer: %1$s</string>
-    <string name="editor_timer_name_read_only">Timer\'s name: %1$s</string>
-    <!-- A frozen recipe's step with several timers: %1$d is the timer's place among them. -->
-    <string name="editor_timer_read_only_numbered">Timer %1$d: %2$s</string>
-    <string name="editor_timer_name_read_only_numbered">Timer %1$d\'s name: %2$s</string>
-    <string name="editor_timer_duration">%1$d h %2$d min</string>
-    <string name="editor_timer_duration_hours">%1$d h</string>
-    <string name="editor_timer_duration_minutes">%1$d min</string>
     <!-- A row's menu: put a new row beside it, or move it one place; dragging comes later (FLOW-025, A11Y-006). -->
     <string name="editor_row_insert_above">Insert above</string>
     <string name="editor_row_insert_below">Insert below</string>

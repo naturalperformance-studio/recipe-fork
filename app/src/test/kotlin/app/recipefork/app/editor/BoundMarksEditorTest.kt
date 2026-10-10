@@ -128,6 +128,7 @@ class BoundMarksEditorTest {
 
     /** Puts the author in the field tagged [tag]; whatever field they were in, they have left. */
     private fun enter(tag: String) {
+        compose.reach(tag)
         compose.onNodeWithTag(tag).performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
         compose.waitForIdle()
     }
@@ -150,6 +151,7 @@ class BoundMarksEditorTest {
 
     /** Appends a step to a recipe of [position] steps. */
     private fun addStep(position: Int = 0) {
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.STEP_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(position)), PATIENCE_MS)
     }
@@ -173,7 +175,7 @@ class BoundMarksEditorTest {
                 )
             },
         )
-        (everyWholeMark + EditorTags.stepMark(0) + EditorTags.timerNameMark(0)).forEach { assertTrue(it, !marked(it)) }
+        (everyWholeMark + StepSheetTags.textMark(0) + StepSheetTags.timerNameMark(0, 0)).forEach { assertTrue(it, !marked(it)) }
     }
 
     // FLOW-028 (1, 3): an empty ingredient list is marked when the author moves on to the steps; one ingredient
@@ -204,17 +206,17 @@ class BoundMarksEditorTest {
         addStep()
         val long = "s".repeat(2_001)
         type(EditorTags.stepText(0), long)
-        assertTrue(!marked(EditorTags.stepMark(0)))
+        assertTrue(!marked(StepSheetTags.textMark(0)))
         enter(EditorTags.TITLE)
         // L10N-009: the limit and the count are grouped as English groups them.
-        awaitMark(EditorTags.stepMark(0), "Over the limit of 2,000 characters: 2,001 now. Kept in full.")
+        awaitMark(StepSheetTags.textMark(0), "Over the limit of 2,000 characters: 2,001 now. Kept in full.")
         assertEquals(long, stored(id).steps[0].text)
         // Typing on is not refused, and nothing is cut.
         enter(EditorTags.stepText(0))
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("!")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("!")
         compose.waitUntil(PATIENCE_MS) { stored(id).steps[0].text == "$long!" }
         type(EditorTags.stepText(0), "s".repeat(2_000))
-        awaitNoMark(EditorTags.stepMark(0))
+        awaitNoMark(StepSheetTags.textMark(0))
         assertEquals(2_000, stored(id).steps[0].text.length)
     }
 
@@ -223,7 +225,7 @@ class BoundMarksEditorTest {
     fun aStepsMarkFollowsItsStep() {
         markedSecondStep()
         stepAction(1, RowAction.INSERT_ABOVE)
-        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(2)) && !marked(EditorTags.stepMark(1)) }
+        compose.waitUntil(PATIENCE_MS) { marked(StepSheetTags.textMark(2)) && !marked(StepSheetTags.textMark(1)) }
     }
 
     // FLOW-028 (3) over DOM-006 and DOM-012 for the title: left empty, then left too long; each mark goes once the
@@ -279,7 +281,7 @@ class BoundMarksEditorTest {
         // A step added and taken away again: the author has left the steps with none.
         addStep()
         awaitMark(EditorTags.INGREDIENTS_MARK, string(R.string.editor_mark_ingredients_missing))
-        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
         awaitMark(EditorTags.STEPS_MARK, string(R.string.editor_mark_steps_missing))
         // The form scrolled to its end, where the Add stands clear of the removal's Undo.
         compose.onNodeWithTag(EditorTags.FORM).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }
@@ -313,15 +315,15 @@ class BoundMarksEditorTest {
         )
         enter(EditorTags.timerName(1))
         enter(EditorTags.TITLE)
-        assertTrue(!marked(EditorTags.timerNameMark(1)))
+        assertTrue(!marked(StepSheetTags.timerNameMark(1, 0)))
 
         val name = "The bread in the oven on the lowest shelf, with a tray of water beneath it for steam"
         enter(EditorTags.timerName(0))
-        compose.onNodeWithTag(EditorTags.timerName(0)).performTextReplacement(name)
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).performTextReplacement(name)
         compose.waitForIdle()
-        assertTrue(!marked(EditorTags.timerNameMark(0)))
+        assertTrue(!marked(StepSheetTags.timerNameMark(0, 0)))
         enter(EditorTags.TITLE)
-        awaitMark(EditorTags.timerNameMark(0), over(R.string.editor_mark_characters_over, 60, name.length))
+        awaitMark(StepSheetTags.timerNameMark(0, 0), over(R.string.editor_mark_characters_over, 60, name.length))
         assertEquals(name, stored(id).steps[0].timer!!.label)
     }
 
@@ -337,19 +339,19 @@ class BoundMarksEditorTest {
         val name = "The bread in the oven on the lowest shelf, with a tray of water beneath it for steam"
         type(EditorTags.timerName(0, 1), name)
         enter(EditorTags.TITLE)
-        awaitMark(EditorTags.timerNameMark(0, 1), over(R.string.editor_mark_characters_over, 60, name.length))
-        assertTrue(!marked(EditorTags.timerNameMark(0, 0)) && !marked(EditorTags.timerNameMark(0, 2)))
+        awaitMark(StepSheetTags.timerNameMark(0, 1), over(R.string.editor_mark_characters_over, 60, name.length))
+        assertTrue(!marked(StepSheetTags.timerNameMark(0, 0)) && !marked(StepSheetTags.timerNameMark(0, 2)))
         assertEquals(listOf(null, name, null), stored(id).steps[0].timers.map { it.label })
 
         // The first timer taken off: the long name, now the first, keeps its mark; the others have none.
-        compose.onNodeWithTag(EditorTags.timerRemove(0, 0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0, 0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { stored(id).steps[0].timers.size == 2 }
-        awaitMark(EditorTags.timerNameMark(0, 0), over(R.string.editor_mark_characters_over, 60, name.length))
-        assertTrue(!marked(EditorTags.timerNameMark(0, 1)))
+        awaitMark(StepSheetTags.timerNameMark(0, 0), over(R.string.editor_mark_characters_over, 60, name.length))
+        assertTrue(!marked(StepSheetTags.timerNameMark(0, 1)))
 
         // Completed, it loses its mark.
         type(EditorTags.timerName(0, 0), "Bread")
-        awaitNoMark(EditorTags.timerNameMark(0, 0))
+        awaitNoMark(StepSheetTags.timerNameMark(0, 0))
     }
 
     // The mark is words and an icon, never colour alone, and the screen reader reads it — as it appears, too.
@@ -401,6 +403,7 @@ class BoundMarksEditorTest {
      * and returns where it stood once the mark tagged [mark] has appeared, and where it stood before.
      */
     private fun boundsAroundTheMark(tag: String, mark: String): Pair<Rect, Rect> {
+        compose.reachStep(tag)
         compose.onNodeWithTag(tag).performScrollTo()
         compose.waitForIdle()
         val before = compose.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
@@ -429,41 +432,37 @@ class BoundMarksEditorTest {
         val id = openDirectly(draft { it.copy(title = "Tea", steps = listOf(Step(0, "Boil."), Step(1, "s".repeat(2_001)))) })
         enter(EditorTags.stepText(1))
         enter(EditorTags.TITLE)
-        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(1)) }
+        compose.waitUntil(PATIENCE_MS) { marked(StepSheetTags.textMark(1)) }
         return id
     }
 
-    private fun stepAction(position: Int, action: RowAction) {
-        compose.onNodeWithTag(EditorTags.stepMenu(position)).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepAction(position, action)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepAction(position, action)).performClick()
-    }
+    private fun stepAction(position: Int, action: RowAction) = compose.stepAction(position, action)
 
     // A step's mark stays with its step when the step is moved.
     @Test
     fun aStepsMarkMovesWithItsStep() {
         markedSecondStep()
         stepAction(1, RowAction.MOVE_UP)
-        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(0)) && !marked(EditorTags.stepMark(1)) }
+        compose.waitUntil(PATIENCE_MS) { marked(StepSheetTags.textMark(0)) && !marked(StepSheetTags.textMark(1)) }
     }
 
     // A step's mark stays with its step when a step before it is deleted.
     @Test
     fun aStepsMarkStaysWithItsStepWhenOneBeforeItIsDeleted() {
         markedSecondStep()
-        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(0)) && !marked(EditorTags.stepMark(1)) }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { marked(StepSheetTags.textMark(0)) && !marked(StepSheetTags.textMark(1)) }
     }
 
     // Deleting the marked step deletes its mark; a step later put in its place is not marked, never having been left.
     @Test
     fun deletingTheMarkedStepDeletesItsMark() {
         val id = markedSecondStep()
-        compose.onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 1 }
-        compose.waitUntil(PATIENCE_MS) { !marked(EditorTags.stepMark(0)) && !marked(EditorTags.stepMark(1)) }
+        compose.waitUntil(PATIENCE_MS) { !marked(StepSheetTags.textMark(0)) && !marked(StepSheetTags.textMark(1)) }
         addStep(1)
         compose.waitForIdle()
-        assertTrue(!marked(EditorTags.stepMark(1)) && !marked(EditorTags.stepMark(0)))
+        assertTrue(!marked(StepSheetTags.textMark(1)) && !marked(StepSheetTags.textMark(0)))
     }
 }

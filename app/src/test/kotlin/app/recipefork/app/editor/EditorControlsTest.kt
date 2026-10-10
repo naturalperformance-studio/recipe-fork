@@ -164,9 +164,13 @@ class EditorControlsTest {
     @Test
     fun theRemovalsAreInTheErrorColour() {
         open()
-        listOf(EditorTags.ingredientRemove(0), EditorTags.stepRemove(0), EditorTags.timerRemove(0)).forEach { tag ->
+        assertTrue(image(EditorTags.ingredientRemove(0)).draws(scheme.error))
+        // A step's removal and its timer's are in its sheet.
+        compose.openStep(0)
+        listOf(EditorTags.stepRemove(0), EditorTags.timerRemove(0)).forEach { tag ->
             assertTrue("$tag in the error colour", image(tag).draws(scheme.error))
         }
+        compose.closeStep()
         assertFalse(image(EditorTags.ingredientMenu(0)).draws(scheme.error))
     }
 

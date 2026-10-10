@@ -121,7 +121,13 @@ class StepClipRecreationTest {
     @get:Rule(order = 1)
     val compose = createAndroidComposeRule<EditorHostActivity>()
 
-    private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    /** Whether the node tagged [tag] is there — for a part of a step's sheet, in that step's sheet, opened for it. */
+    private fun exists(tag: String): Boolean {
+        compose.reachStep(tag)
+        return compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun onRow(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun stored(): Recipe {
         compose.waitForIdle()
@@ -137,9 +143,9 @@ class StepClipRecreationTest {
         compose.registerIdlingResource(book.idling)
         compose.registerIdlingResource(device.idling)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepClipChoose(position)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepClipChoose(position)).performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepClipChoose(position)).performClick()
         val activity = shadowOf(compose.activity)
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }
         val intent = activity.nextStartedActivityForResult.intent
@@ -179,7 +185,7 @@ class StepClipRecreationTest {
         chooseThenTurn(0)
 
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipCancel(0)) }
-        compose.onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
 
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(0)) }
         compose.waitUntil(PATIENCE_MS) { held().isEmpty() }

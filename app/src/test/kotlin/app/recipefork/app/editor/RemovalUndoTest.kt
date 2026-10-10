@@ -138,7 +138,7 @@ class RemovalUndoTest {
     }
 
     private fun removeStep(position: Int) {
-        compose.onNodeWithTag(EditorTags.stepRemove(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepRemove(position)).performScrollTo().performClick()
         compose.awaitStatement(context.getString(R.string.editor_step_removed, position + 1))
     }
 
@@ -153,7 +153,7 @@ class RemovalUndoTest {
         undo()
 
         compose.waitUntil(PATIENCE_MS) { stored(recipe).content() == recipe.content() }
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(1)) && !exists(EditorTags.STATEMENT) }
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.thumbnail(1)) && !exists(EditorTags.STATEMENT) }
         shown = false
         compose.waitForIdle()
         assertEquals(recipe.content(), stored(recipe).content())

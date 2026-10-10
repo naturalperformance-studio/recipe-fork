@@ -521,7 +521,7 @@ private fun DescriptionField(recipe: Recipe, editor: RecipeEditor) {
  * Calls [onTap] on every touch that lifts without having moved past the touch slop, before whatever it touched
  * handles it, and consumes nothing: a scroll or a drag is not a tap.
  */
-private fun Modifier.onEveryTap(onTap: () -> Unit): Modifier = pointerInput(Unit) {
+internal fun Modifier.onEveryTap(onTap: () -> Unit): Modifier = pointerInput(Unit) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
         var moved = false
@@ -773,7 +773,6 @@ object EditorTags {
     fun step(position: Int) = "editor-step-$position"
     fun stepText(position: Int) = "editor-step-$position-text"
     fun stepRemove(position: Int) = "editor-step-$position-remove"
-    fun stepMenu(position: Int) = "editor-step-$position-menu"
     fun stepHandle(position: Int) = "editor-step-$position-handle"
     fun stepHandleIcon(position: Int) = "editor-step-$position-handle-icon"
     fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"

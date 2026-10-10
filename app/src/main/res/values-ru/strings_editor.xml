@@ -87,14 +87,14 @@
     <string name="editor_step">Шаг %1$d</string>
     <!-- A step's number before its text in the editor's field; the screen reader reads editor_step instead. -->
     <string name="editor_step_number">%1$d.</string>
+    <string name="editor_step_edit">Изменить шаг</string>
+    <!-- What an empty step reads as on its row, muted. -->
+    <string name="editor_step_new">Новый шаг</string>
     <string name="editor_step_add">Добавить шаг</string>
     <string name="editor_step_add_action">Добавить шаг в конец</string>
     <string name="editor_step_remove_action">Убрать шаг %1$d</string>
-    <string name="editor_step_menu_action">Действия с шагом %1$d</string>
-    <string name="editor_step_note_add">Добавить заметку</string>
     <string name="editor_step_note">Заметка автора</string>
     <string name="editor_step_note_hint">Остаётся у вас, когда кто-то делает свою версию рецепта</string>
-    <string name="editor_step_note_read_only">Заметка автора: %1$s</string>
     <string name="editor_step_insert_ingredient_label">Вставить ингредиент в шаг %1$d</string>
     <string name="editor_step_insert_ingredient_action">Вставить количество ингредиента в шаг %1$d</string>
     <string name="editor_step_insert_ingredient_none">В рецепте пока нет ингредиентов</string>
@@ -117,13 +117,6 @@
     <string name="editor_timer_name_numbered">Название таймера %1$d</string>
     <string name="editor_timer_name_follows">Взято из шага. Можно назвать таймер по-своему.</string>
     <string name="editor_timer_limit">У шага может быть до пяти таймеров. Для других ожиданий разделите этот шаг на несколько шагов, у каждого свои таймеры.</string>
-    <string name="editor_timer_read_only">Таймер: %1$s</string>
-    <string name="editor_timer_name_read_only">Название таймера: %1$s</string>
-    <string name="editor_timer_read_only_numbered">Таймер %1$d: %2$s</string>
-    <string name="editor_timer_name_read_only_numbered">Название таймера %1$d: %2$s</string>
-    <string name="editor_timer_duration">%1$d ч %2$d мин</string>
-    <string name="editor_timer_duration_hours">%1$d ч</string>
-    <string name="editor_timer_duration_minutes">%1$d мин</string>
     <string name="editor_row_insert_above">Вставить выше</string>
     <string name="editor_row_insert_below">Вставить ниже</string>
     <string name="editor_row_move_up">Переместить вверх</string>

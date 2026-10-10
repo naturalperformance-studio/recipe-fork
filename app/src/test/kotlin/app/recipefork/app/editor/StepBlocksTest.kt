@@ -65,7 +65,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Each step as one bounded block, as an ingredient is, on a 360 dp phone at font scale 1.0 and 2.0: every part of a
- * step — its text, the control that inserts an ingredient, its timer, its photograph, its removal and its menu — inside its block,
+ * step's row — its text, its timer's line, its photograph's picture (T-211: the step reads as text) — inside its block,
  * blocks apart from each other with an outline drawn round each, a tinted column down the left edge of each block —
  * or the right edge, with the handle on the right — with the handle icon at its centre, the inputs beside it at one left edge; a step dragged from anywhere in its column
  * moving; a frozen recipe's steps as blocks, with no column.
@@ -138,8 +138,7 @@ class StepBlocksTest(private val handleRight: Boolean) {
         compose.waitForIdle()
         compose.runOnIdle { opened.value = recipe.id }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(steps().lastIndex)), PATIENCE_MS)
-        if (state == null) compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(1)), PATIENCE_MS)
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(PHOTO_STEP)) }
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.thumbnail(PHOTO_STEP)) }
         return recipe.id
     }
 
@@ -157,26 +156,16 @@ class StepBlocksTest(private val handleRight: Boolean) {
     private fun parts(position: Int): List<String> = listOf(
         EditorTags.stepHandle(position),
         EditorTags.stepHandleIcon(position),
-        EditorTags.stepText(position),
-        EditorTags.stepInsert(position),
-        EditorTags.stepRemove(position),
-        EditorTags.stepMenu(position),
-        EditorTags.timerAttach(position),
-        EditorTags.timerHours(position),
-        EditorTags.timerMinutes(position),
-        EditorTags.timerRemove(position),
-        EditorTags.timerName(position),
-        EditorTags.stepPhoto(position),
-        EditorTags.stepPhotoImage(position),
+        StepSheetTags.line(position),
+        StepSheetTags.text(position),
+        StepSheetTags.timer(position, 0),
+        StepSheetTags.thumbnail(position),
     ).filter(::exists)
 
-    /** The inputs and controls of the step at [position] that start a line of its block: the row of actions by its first. */
+    /** What starts a line of the row of the step at [position]: the row itself, and its timer's line. */
     private fun lineStarts(position: Int): List<String> = listOf(
-        EditorTags.stepText(position),
-        EditorTags.stepInsert(position),
-        EditorTags.timerHours(position),
-        EditorTags.timerName(position),
-        EditorTags.stepPhotoImage(position),
+        StepSheetTags.line(position),
+        StepSheetTags.timer(position, 0),
     ).filter(::exists)
 
     /**
@@ -224,8 +213,10 @@ class StepBlocksTest(private val handleRight: Boolean) {
         val screen = bounds(EditorTags.FORM)
         steps().indices.forEach { position ->
             val block = bounds(EditorTags.step(position))
-            listOf(EditorTags.stepText(position), EditorTags.stepInsert(position), EditorTags.stepRemove(position), EditorTags.stepMenu(position), EditorTags.timerAttach(position), EditorTags.stepPhoto(position))
-                .forEach { assertTrue("step $position shows $it", exists(it)) }
+            listOf(StepSheetTags.line(position), StepSheetTags.text(position)).forEach { assertTrue("step $position shows $it", exists(it)) }
+            // Nothing of the step is edited on its row.
+            listOf(EditorTags.stepText(position), EditorTags.stepInsert(position), EditorTags.stepRemove(position), EditorTags.timerAttach(position), EditorTags.stepPhoto(position))
+                .forEach { assertFalse("step $position shows $it", exists(it)) }
             parts(position).forEach { part ->
                 val b = bounds(part)
                 assertTrue(
@@ -245,8 +236,9 @@ class StepBlocksTest(private val handleRight: Boolean) {
             assertEquals("step $position: the column is ${column.width / compose.density.density} dp wide", px(48f), column.width, 0.5f)
             assertEquals("step $position: the icon is centred across the column", column.center.x, icon.center.x, 1f)
             assertEquals("step $position: the icon is centred down the column", column.center.y, icon.center.y, 1f)
-            // One left edge, beside the column: nothing that drags stands among the inputs.
-            val starts = lineStarts(position).map { bounds(it).left }
+            // One left edge, beside the column: nothing that drags stands among what the row reads. The timer's line
+            // starts under the step's number, its clock (18 dp and a gap of 8) before its text; the row's own padding is 12 dp.
+            val starts = lineStarts(position).map { if (it == StepSheetTags.line(position)) bounds(it).left + px(12f) else bounds(it).left - px(26f) }
             starts.forEach { assertEquals("step $position: its lines start at one left edge", starts.first(), it, 0.5f) }
             val inputs = parts(position) - setOf(EditorTags.stepHandle(position), EditorTags.stepHandleIcon(position))
             inputs.forEach {
@@ -257,9 +249,9 @@ class StepBlocksTest(private val handleRight: Boolean) {
             if (handleRight) assertTrue("step $position: its lines start by the block's left edge", starts.first() - block.left <= px(16f))
             assertTrue(block.right <= screen.right + 0.5f)
         }
-        // The timer's fields are there for the step that has one, and the photograph for the step that carries one.
-        assertTrue(exists(EditorTags.timerHours(1)) && exists(EditorTags.timerName(1)))
-        assertTrue(exists(EditorTags.stepPhotoImage(PHOTO_STEP)))
+        // The timer's line is there for the step that has one, and the photograph's picture for the step that carries one.
+        assertTrue(exists(StepSheetTags.timer(1, 0)))
+        assertTrue(exists(StepSheetTags.thumbnail(PHOTO_STEP)))
         assertSeparateOutlinedBlocks(steps().size)
     }
 
@@ -274,9 +266,9 @@ class StepBlocksTest(private val handleRight: Boolean) {
         fun differs(a: Color, b: Color) = abs(a.red - b.red) + abs(a.green - b.green) + abs(a.blue - b.blue) > 0.02f
         steps().indices.forEach { position ->
             val column = bounds(EditorTags.stepHandle(position))
-            val insert = bounds(EditorTags.stepInsert(position))
-            // The block's own colour: right of the insert-ingredient control, inside the block.
-            val body = at(insert.right + px(8f), insert.center.y)
+            val line = bounds(StepSheetTags.line(position))
+            // The block's own colour: inside the row's padding, before its number.
+            val body = at(line.left + px(4f), line.top + px(4f))
             val tint = at(column.center.x, column.top + px(12f))
             assertTrue("step $position: the column is tinted ($tint against $body)", differs(tint, body))
             assertFalse("step $position: the column is one tint to its bottom", differs(tint, at(column.center.x, column.bottom - px(12f))))
@@ -318,12 +310,12 @@ class StepBlocksTest(private val handleRight: Boolean) {
             assertFalse(exists(EditorTags.stepHandle(position)))
             assertFalse(exists(EditorTags.stepHandleIcon(position)))
             val block = bounds(EditorTags.step(position))
-            val text = bounds(EditorTags.stepText(position))
+            val text = bounds(StepSheetTags.text(position))
             assertTrue("step $position: its text is inside its block", text.left >= block.left && text.right <= block.right && text.top >= block.top && text.bottom <= block.bottom)
             assertFalse(exists(EditorTags.stepPhoto(position)))
         }
-        // The photograph shows, read-only, inside its step's block.
-        val photo = bounds(EditorTags.stepPhotoImage(PHOTO_STEP))
+        // The photograph's picture shows, read-only, inside its step's block.
+        val photo = bounds(StepSheetTags.thumbnail(PHOTO_STEP))
         val block = bounds(EditorTags.step(PHOTO_STEP))
         assertTrue(photo.left >= block.left - 0.5f && photo.right <= block.right + 0.5f && photo.top >= block.top - 0.5f && photo.bottom <= block.bottom + 0.5f)
         assertSeparateOutlinedBlocks(steps().size)

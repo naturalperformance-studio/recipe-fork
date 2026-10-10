@@ -167,12 +167,12 @@ class BlockScrollTest(private val handleRight: Boolean) {
         val id = open()
         val block = EditorTags.step(2)
         val next = EditorTags.step(3)
-        assertScrollsFrom("the text", EditorTags.stepText(2), block, next) { it.center }
-        assertScrollsFrom("the text's label", EditorTags.stepText(2), block, next) { Offset(it.left + px(24f), it.top + px(4f)) }
-        assertScrollsFrom("the timer's minutes", EditorTags.timerMinutes(2), block, next) { it.center }
-        assertScrollsFrom("the timer's name", EditorTags.timerName(2), block, next) { it.center }
-        // Blank: right of the insert-ingredient control, and at the block's bottom edge.
-        assertScrollsFrom("the blank right of the insert control", EditorTags.stepInsert(2), block, next) { Offset(it.right + px(24f), it.center.y) }
+        assertScrollsFrom("the text", StepSheetTags.line(2), block, next) { it.center }
+        assertScrollsFrom("the number", StepSheetTags.line(2), block, next) { Offset(it.left + px(16f), it.top + px(16f)) }
+        assertScrollsFrom("the row's end", StepSheetTags.line(2), block, next) { Offset(it.right - px(8f), it.center.y) }
+        assertScrollsFrom("the timer's line", StepSheetTags.timer(2, 0), block, next) { it.center }
+        // A finger that scrolls opens no sheet.
+        assertFalse(compose.stepSheetOpen())
         assertScrollsFrom("the blank bottom of the block", block, block, next) { Offset(it.center.x, it.bottom - px(3f)) }
         assertEquals(recipe().steps, stored(id).steps)
     }

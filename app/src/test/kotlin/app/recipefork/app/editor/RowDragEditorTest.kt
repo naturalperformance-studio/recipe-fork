@@ -138,7 +138,10 @@ class RowDragEditorTest(private val handleRight: Boolean) {
 
     private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
-    private fun fieldText(tag: String): String = node(tag).config[SemanticsProperties.EditableText].text
+    private fun fieldText(tag: String): String {
+        compose.reachStep(tag)
+        return node(tag).config[SemanticsProperties.EditableText].text
+    }
 
     private fun hasTestTagMatching(pattern: Regex) = SemanticsMatcher("tag matches $pattern") {
         it.config.getOrElseNullable(SemanticsProperties.TestTag) { null }?.matches(pattern) == true
@@ -151,11 +154,13 @@ class RowDragEditorTest(private val handleRight: Boolean) {
     private fun ingredientCount(): Int = count("editor-ingredient-\\d+-line")
 
     private fun addStep(text: String) {
+        compose.closeStep()
         val position = stepCount()
         compose.onNodeWithTag(EditorTags.STEP_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(position)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextReplacement(text)
+        compose.inStep(position).onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextReplacement(text)
         compose.waitForIdle()
+        compose.closeStep()
     }
 
     /** Adds a row named [name] by "Add ingredient", which opens its sheet; the sheet is closed after. */
@@ -168,7 +173,8 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         compose.closeIngredient()
     }
 
-    private fun stepTexts(): List<String> = (0 until stepCount()).map { fieldText(EditorTags.stepText(it)) }
+    /** The steps' texts as their rows read them. */
+    private fun stepTexts(): List<String> = (0 until stepCount()).map { compose.stepLine(it) }
 
     /** The rows' names, as their lines end with them. */
     private fun ingredientNames(): List<String> = (0 until ingredientCount()).map { compose.ingredientLine(it).substringAfterLast(' ') }
@@ -246,12 +252,11 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         }
         assertEquals(3, count("editor-step-\\d+-handle"))
         assertEquals(3, count("editor-ingredient-\\d+-handle"))
-        // The discrete moves are still offered.
-        compose.onNodeWithTag(EditorTags.stepMenu(1)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepAction(1, RowAction.MOVE_UP)) }
+        // The discrete moves are still offered, in the step's sheet.
+        compose.openStep(1)
+        assertTrue(exists(EditorTags.stepAction(1, RowAction.MOVE_UP)))
         assertTrue(exists(EditorTags.stepAction(1, RowAction.MOVE_DOWN)))
-        compose.onNodeWithTag(EditorTags.stepMenu(1)).performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepAction(1, RowAction.MOVE_UP)), PATIENCE_MS)
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.ingredientMenu(1)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientAction(1, RowAction.MOVE_UP)) }
         assertTrue(exists(EditorTags.ingredientAction(1, RowAction.MOVE_DOWN)))
@@ -269,10 +274,12 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Bread")
         listOf("Mix.", "Rest.", "Knead.", "Shape.", "Bake.").forEach(::addStep)
-        compose.onNodeWithTag(EditorTags.timerAttach(3)).performScrollTo().performClick()
+        compose.inStep(3).onNodeWithTag(EditorTags.timerAttach(3)).performScrollTo().performClick()
+        compose.openStep(3)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(3)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerMinutes(3)).performScrollTo().performTextInput("5")
+        compose.inStep(3).onNodeWithTag(EditorTags.timerMinutes(3)).performScrollTo().performTextInput("5")
         compose.waitForIdle()
+        compose.closeStep()
         listOf("salt", "flour", "water", "yeast").forEach(::addIngredient)
         compose.openIngredient(3)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performTextReplacement("7")
@@ -287,6 +294,7 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         assertEquals((0..4).toList(), stored(id).steps.map { it.position })
         assertEquals(listOf(null, Timer(5.minutes), null, null, null), stored(id).steps.map { it.timer })
         assertEquals("5", fieldText(EditorTags.timerMinutes(1)))
+        compose.closeStep()
         // It stays where it was dropped, drawn in its new place and nowhere else.
         assertEquals(secondStepTop, top(EditorTags.step(1)) - top(EditorTags.step(0)), 0.5f)
         // And down again, below the fourth.
@@ -331,7 +339,10 @@ class RowDragEditorTest(private val handleRight: Boolean) {
 
         openDirectly(moved.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(4)), PATIENCE_MS)
-        fun step(position: Int, action: RowAction) = onMenu(EditorTags.stepMenu(position), { EditorTags.stepAction(position, it) }, action)
+        fun step(position: Int, action: RowAction) {
+            compose.stepAction(position, action)
+            compose.closeStep()
+        }
         fun row(position: Int, action: RowAction) =
             onMenu(EditorTags.ingredientMenu(position), { EditorTags.ingredientAction(position, it) }, action)
         step(3, RowAction.MOVE_UP)

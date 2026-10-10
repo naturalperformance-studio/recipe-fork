@@ -98,7 +98,13 @@ class StepAnimationRecreationTest {
     @get:Rule(order = 1)
     val compose = createAndroidComposeRule<EditorHostActivity>()
 
-    private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    /** Whether the node tagged [tag] is there — for a part of a step's sheet, in that step's sheet, opened for it. */
+    private fun exists(tag: String): Boolean {
+        compose.reachStep(tag)
+        return compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun onRow(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun stored(): Recipe {
         compose.waitForIdle()
@@ -110,9 +116,9 @@ class StepAnimationRecreationTest {
         compose.registerIdlingResource(book.idling)
         compose.registerIdlingResource(device.idling)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoChoose(position)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepPhotoChoose(position)).performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepPhotoChoose(position)).performClick()
         val activity = shadowOf(compose.activity)
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }
         val intent = activity.nextStartedActivityForResult.intent

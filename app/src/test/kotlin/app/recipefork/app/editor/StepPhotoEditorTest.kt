@@ -123,7 +123,13 @@ class StepPhotoEditorTest {
         return recipe.id
     }
 
-    private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    /** Whether the node tagged [tag] is there — for a part of a step's sheet, in that step's sheet, opened for it. */
+    private fun exists(tag: String): Boolean {
+        compose.reachStep(tag)
+        return compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun onRow(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun bounds(tag: String): Rect =
         compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
@@ -155,7 +161,7 @@ class StepPhotoEditorTest {
     /** Opens the photo menu of the step at [position] and chooses [item] in it. */
     private fun menu(position: Int, item: String, shown: () -> Unit = {}) {
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(item), PATIENCE_MS)
         shown()
         compose.onNodeWithTag(item).performClick()
@@ -202,12 +208,14 @@ class StepPhotoEditorTest {
         open(threeSteps())
 
         (0..2).forEach { position ->
-            val control = bounds(EditorTags.stepPhoto(position))
-            val block = bounds(EditorTags.step(position))
-            assertTrue("step $position offers its photo inside its block", control.top >= block.top && control.bottom <= block.bottom)
+            // In the step's own sheet, and nowhere on its row.
+            assertFalse(onRow(EditorTags.stepPhoto(position)))
+            compose.openStep(position)
+            compose.onNode(hasTestTag(EditorTags.stepPhoto(position)) and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET))).assertExists()
         }
+        compose.openStep(1)
         assertEquals(listOf("Photo or clip for step 2"), compose.descriptionOf(EditorTags.stepPhoto(1)))
-        compose.onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoTake(1)), PATIENCE_MS)
         assertTrue(exists(EditorTags.stepPhotoChoose(1)))
         // Nothing to remove yet.
@@ -230,9 +238,12 @@ class StepPhotoEditorTest {
         awaitNotice(1, processed)
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(1)) }
         assertEquals(listOf("Photo of step 2"), compose.descriptionOf(EditorTags.stepPhotoImage(1)))
-        val image = bounds(EditorTags.stepPhotoImage(1))
+        compose.onNode(hasTestTag(EditorTags.stepPhotoImage(1)) and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET))).assertExists()
+        // Its row shows a small picture of it, inside its block.
+        val image = bounds(StepSheetTags.thumbnail(1))
         val block = bounds(EditorTags.step(1))
         assertTrue(image.top >= block.top && image.bottom <= block.bottom)
+        assertEquals(listOf("Photo of step 2"), unmergedDescriptionOf(StepSheetTags.thumbnail(1)))
         val photo = stored(id).stepPhoto(1)!!
         assertEquals(Media(photo.mediaId, null, MediaKind.PHOTO, MediaAttachment.ToStep(1), MediaVisibility.PRIVATE), photo)
         assertEquals(listOf(photo), stored(id).media)
@@ -308,17 +319,16 @@ class StepPhotoEditorTest {
         val photo = stored(id).stepPhoto(0)!!.mediaId
 
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(EditorTags.stepMenu(0)).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepAction(0, RowAction.MOVE_DOWN)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepAction(0, RowAction.MOVE_DOWN)).performClick()
+        compose.stepAction(0, RowAction.MOVE_DOWN)
 
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(1)) && !exists(EditorTags.stepPhotoImage(0)) }
+        compose.waitUntil(PATIENCE_MS) { onRow(StepSheetTags.thumbnail(1)) && !onRow(StepSheetTags.thumbnail(0)) }
+        assertTrue(exists(EditorTags.stepPhotoImage(1)))
         assertEquals(listOf("Photo of step 2"), compose.descriptionOf(EditorTags.stepPhotoImage(1)))
         compose.waitUntil(PATIENCE_MS) { stored(id).steps.single { it.position == 1 }.text == "Boil." }
         assertEquals(photo, stored(id).stepPhoto(1)!!.mediaId)
 
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
         // The photograph's file goes once the deletion can no longer be undone.
         compose.awaitStatement("Step 2 removed")
         compose.swipeAwayStatement()
@@ -326,7 +336,7 @@ class StepPhotoEditorTest {
         compose.waitForIdle()
         compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 2 && held().isEmpty() }
         assertTrue(stored(id).media.isEmpty())
-        assertFalse(exists(EditorTags.stepPhotoImage(0)) || exists(EditorTags.stepPhotoImage(1)))
+        assertFalse(onRow(StepSheetTags.thumbnail(0)) || onRow(StepSheetTags.thumbnail(1)))
     }
 
     // The camera opened at a step and cancelled attaches nothing to it and leaves no file.
@@ -368,12 +378,13 @@ class StepPhotoEditorTest {
         val photo = Media(mediaId, null, MediaKind.PHOTO, MediaAttachment.ToStep(1), MediaVisibility.PRIVATE)
         open(threeSteps().copy(media = listOf(photo)).inState(RecipeState.PUBLISHED))
 
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPhotoImage(1)) }
-        assertEquals(listOf("Photo of step 2"), unmergedDescriptionOf(EditorTags.stepPhotoImage(1)))
+        compose.waitUntil(PATIENCE_MS) { onRow(StepSheetTags.thumbnail(1)) }
+        assertEquals(listOf("Photo of step 2"), unmergedDescriptionOf(StepSheetTags.thumbnail(1)))
         (0..2).forEach { position ->
             listOf(EditorTags.stepPhoto(position), EditorTags.stepPhotoTake(position), EditorTags.stepPhotoRemove(position))
-                .forEach { assertFalse(it, exists(it)) }
+                .forEach { assertFalse(it, onRow(it)) }
         }
+        assertFalse(onRow(StepSheetTags.thumbnail(0)))
     }
 
     @Test

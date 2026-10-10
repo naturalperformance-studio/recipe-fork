@@ -50,6 +50,8 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.scaling.InterfaceLanguage
+import app.recipefork.core.recipe.StepText
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
@@ -145,9 +147,16 @@ class StepReferencesEditorTest {
 
     private fun fieldText(tag: String): String = node(tag).config[SemanticsProperties.EditableText].text
 
-    private fun selection(position: Int): TextRange = node(EditorTags.stepText(position)).config[SemanticsProperties.TextSelectionRange]
+    private fun selection(position: Int): TextRange {
+        compose.openStep(position)
+        return node(EditorTags.stepText(position)).config[SemanticsProperties.TextSelectionRange]
+    }
 
-    private fun stepShown(position: Int) = fieldText(EditorTags.stepText(position))
+    /** What the field of the step at [position] shows, in its sheet, opened as the author opens it. */
+    private fun stepShown(position: Int): String {
+        compose.openStep(position)
+        return fieldText(EditorTags.stepText(position))
+    }
 
     /** The text as laid out on screen under [tag], with its styles. */
     private fun laidOut(tag: String, unmerged: Boolean = false): AnnotatedString {
@@ -170,17 +179,17 @@ class StepReferencesEditorTest {
     }
 
     private fun placeCursor(position: Int, at: Int) {
-        compose.onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextInputSelection(TextRange(at))
+        compose.inStep(position).onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextInputSelection(TextRange(at))
         compose.waitForIdle()
     }
 
     private fun openOffer(position: Int) {
-        compose.onNodeWithTag(EditorTags.stepInsert(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepInsert(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOffer(position, 0)), PATIENCE_MS)
     }
 
     private fun pick(position: Int, row: Int) {
-        compose.onNodeWithTag(EditorTags.stepOffer(position, row)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.inStep(position).onNodeWithTag(EditorTags.stepOffer(position, row)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepOffer(position, row)), PATIENCE_MS)
         compose.waitForIdle()
     }
@@ -201,6 +210,7 @@ class StepReferencesEditorTest {
         seed(Recipe.create(created, null).copy(title = "Другой", ingredients = listOf(flour.copy(freeTextName = "Сахар"))))
         val recipe = bread(Step(0, "Всыпьте  муки"))
         open(recipe.id)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepInsert(0)), PATIENCE_MS)
         val control = node(EditorTags.stepInsert(0))
         assertTrue(control.size.height >= with(compose.density) { 48.dp.roundToPx() })
@@ -233,11 +243,11 @@ class StepReferencesEditorTest {
         placeCursor(0, 9)
         openOffer(0)
         pick(0, 2)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput(" соли, затем ")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput(" соли, затем ")
         compose.waitForIdle()
         openOffer(0)
         pick(0, 1)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput(" молока")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput(" молока")
         compose.waitForIdle()
         assertEquals("Добавьте по вкусу соли, затем ${ReferenceText.PLACEHOLDER} мл молока и ", stepShown(0))
         val step = stored(recipe.id).steps.single()
@@ -251,14 +261,14 @@ class StepReferencesEditorTest {
         val recipe = bread(Step(0, "Всыпьте "))
         open(recipe.id)
         placeCursor(0, 8)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOffer(0, 0)), PATIENCE_MS)
         assertEquals((0..2).map { EditorTags.stepOffer(0, it) }, offered(0))
         pick(0, 0)
         assertEquals("Всыпьте 200 г", stepShown(0))
         assertEquals(Step(0, "Всыпьте ", listOf(IngredientReference(0, 8))), stored(recipe.id).steps.single())
 
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput(" муки, @")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput(" муки, @")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOffer(0, 0)), PATIENCE_MS)
         pressBackOnTheOffer()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepOffer(0, 0)), PATIENCE_MS)
@@ -273,7 +283,7 @@ class StepReferencesEditorTest {
     fun aReferenceIsOneUnit() {
         val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))))
         open(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(0)), PATIENCE_MS)
         assertEquals("Всыпьте 200 г муки", stepShown(0))
         placeCursor(0, 9)
         assertEquals(TextRange(8), selection(0))
@@ -282,10 +292,10 @@ class StepReferencesEditorTest {
 
         // Typing before and after it keeps it at its place in the sentence.
         placeCursor(0, 0)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("Теперь ")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("Теперь ")
         compose.waitForIdle()
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInputSelection(TextRange(stepShown(0).length))
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput(" высшего сорта")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInputSelection(TextRange(stepShown(0).length))
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput(" высшего сорта")
         compose.waitForIdle()
         assertEquals("Теперь Всыпьте 200 г муки высшего сорта", stepShown(0))
         assertEquals(
@@ -294,8 +304,8 @@ class StepReferencesEditorTest {
         )
 
         // A backspace right after it takes the whole reference, and nothing else.
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInputSelection(TextRange(20))
-        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInputSelection(TextRange(20))
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
         // Single spacing is left where it stood (T-074).
         assertEquals("Теперь Всыпьте муки высшего сорта", stepShown(0))
@@ -312,7 +322,7 @@ class StepReferencesEditorTest {
             Step(1, "Остаток муки:  и соль ", listOf(IngredientReference(0, 14), IngredientReference(2, 22))),
         )
         open(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(1)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(1)), PATIENCE_MS)
         compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("1500")
         compose.waitForIdle()
@@ -365,7 +375,7 @@ class StepReferencesEditorTest {
     fun movingAndInsertingRowsKeepsEachReferenceOnItsIngredient() {
         val recipe = bread(Step(0, "Всыпьте , добавьте ", listOf(IngredientReference(0, 8), IngredientReference(2, 19))))
         open(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(0)), PATIENCE_MS)
         compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.ingredientMenu(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE)), PATIENCE_MS)
@@ -393,14 +403,14 @@ class StepReferencesEditorTest {
         val read = stored(recipe.id)
         assertEquals(listOf(IngredientReference(0, 8)), read.steps.single().ingredientReferences)
         open(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(0)), PATIENCE_MS)
         assertEquals("Всыпьте 200 г муки", stepShown(0))
         compose.closeIngredient()
         closeEditor()
 
         val fork = runBlocking { forkRecipe(recipes, active, recipe.id, created.plusSeconds(30)) }!!
         open(fork)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(0)), PATIENCE_MS)
         assertEquals("Всыпьте 200 г муки", stepShown(0))
         compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("250")
@@ -414,7 +424,7 @@ class StepReferencesEditorTest {
         assertEquals(Rational.of(250), stored(fork).ingredients[0].quantity)
     }
 
-    // A frozen recipe shows its steps with references rendered, and nothing to change them with.
+    // A frozen recipe shows its steps with references rendered as the card renders them, and nothing to change them with.
     @Test
     fun aFrozenRecipeShowsItsReferencesReadOnly() {
         val recipe = seed(
@@ -426,21 +436,16 @@ class StepReferencesEditorTest {
         open(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(0)), PATIENCE_MS)
         val text = "Всыпьте 200 г муки, ${ReferenceText.PLACEHOLDER} мл молока и по вкусу"
-        val shownText = compose.onNodeWithTag(EditorTags.stepText(0), useUnmergedTree = true).fetchSemanticsNode()
-            .config[SemanticsProperties.Text].map { it.text }
-        assertEquals(listOf(text), shownText)
-        // Set apart as the field sets them: all three references, the text between them plain.
-        val laid = laidOut(EditorTags.stepText(0), unmerged = true)
-        assertEquals(text, laid.text)
-        assertSetApart(laid, 8, 13, typed = listOf(7, 13, 18))
-        assertSetApart(laid, 20, 26, typed = listOf(19, 26))
-        assertSetApart(laid, text.length - 8, text.length, typed = listOf(text.length - 9))
-        compose.onNodeWithTag(EditorTags.stepInsert(0)).assertDoesNotExist()
-        assertFalse(compose.onNodeWithTag(EditorTags.stepText(0), useUnmergedTree = true).fetchSemanticsNode().config.contains(SemanticsActions.SetText))
-        val timerName = compose.onNodeWithTag(EditorTags.timerName(0), useUnmergedTree = true).fetchSemanticsNode()
-            .config[SemanticsProperties.Text].single().text
-        // The name holds each reference together with no-break spaces, as the card shows it; the field, plain ones.
-        assertTrue(timerName, timerName.replace('\u00A0', ' ').contains(text))
+        assertEquals(text, compose.stepLine(0))
+        // The card's own reading of the step, at the authored scale.
+        assertEquals(StepText.render(recipe.steps[0], ReferenceText.authored(recipe.ingredients, InterfaceLanguage.RUSSIAN)), compose.stepLineAsShown(0))
+        assertFalse(compose.onNodeWithTag(StepSheetTags.text(0), useUnmergedTree = true).fetchSemanticsNode().config.contains(SemanticsActions.SetText))
+        assertFalse(compose.onAllNodes(hasTestTag(EditorTags.stepInsert(0)), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+        assertFalse(compose.onAllNodes(hasTestTag(EditorTags.stepText(0)), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+        // The timer's line names it as the card does: each reference held together with no-break spaces.
+        val timer = compose.rowText(StepSheetTags.timer(0, 0))
+        assertTrue(timer, timer.replace('\u00A0', ' ').contains(text))
+        assertTrue(timer, timer.endsWith(" · 5 мин"))
     }
 
     // FLOW-016 (8) at the authored scale: the derived timer name reads a reference as the editor shows it.
@@ -448,6 +453,7 @@ class StepReferencesEditorTest {
     fun theDerivedTimerNameReadsAReferenceAsTheEditorShowsIt() {
         val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8)), Timer(5.minutes)))
         open(recipe.id)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
         assertEquals("Всыпьте 200\u00A0г муки", fieldText(EditorTags.timerName(0)))
         compose.openIngredient(0)
@@ -462,9 +468,10 @@ class StepReferencesEditorTest {
     fun aNameGivenFromTheDerivedOneKeepsOrdinarySpaces() {
         val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8)), Timer(5.minutes)))
         open(recipe.id)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerName(0)).performScrollTo().performClick()
-        compose.onNodeWithTag(EditorTags.timerName(0)).performTextInput("!")
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).performTextInput("!")
         compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps.single().timers.single().label != null }
         val label = stored(recipe.id).steps.single().timers.single().label!!
         assertFalse(label, '\u00A0' in label)
@@ -477,7 +484,7 @@ class StepReferencesEditorTest {
     fun aRecipeWithNoIngredientsOffersNothing() {
         val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Смешайте."))))
         open(recipe.id)
-        compose.onNodeWithTag(EditorTags.stepInsert(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepInsert(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOfferNone(0)), PATIENCE_MS)
         assertEquals(listOf(string(R.string.editor_step_insert_ingredient_none)), compose.textsOf(EditorTags.stepOfferNone(0)))
     }
@@ -488,12 +495,12 @@ class StepReferencesEditorTest {
         val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))))
         open(recipe.id)
         placeCursor(0, 13)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
         assertEquals("Всыпьте муки", stepShown(0))
-        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.Z) } }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.Z) } }
         compose.waitForIdle()
-        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { withKeyDown(Key.CtrlLeft) { withKeyDown(Key.ShiftLeft) { pressKey(Key.Z) } } }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performKeyInput { withKeyDown(Key.CtrlLeft) { withKeyDown(Key.ShiftLeft) { pressKey(Key.Z) } } }
         compose.waitForIdle()
         assertEquals("Всыпьте муки", stepShown(0))
         assertEquals(Step(0, "Всыпьте муки"), stored(recipe.id).steps.single())
@@ -505,11 +512,11 @@ class StepReferencesEditorTest {
         val recipe = bread(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))))
         open(recipe.id)
         placeCursor(0, 13)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
         assertEquals("Всыпьте муки", stepShown(0))
         placeCursor(0, 8)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("200 г ")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("200 г ")
         compose.waitForIdle()
         assertEquals("Всыпьте 200 г муки", stepShown(0))
         assertEquals(Step(0, "Всыпьте 200 г муки"), stored(recipe.id).steps.single())
@@ -520,10 +527,10 @@ class StepReferencesEditorTest {
     fun backspacingTheSpaceBetweenTwoReferences() {
         val recipe = bread(Step(0, "Всыпьте   и ", listOf(IngredientReference(0, 8), IngredientReference(2, 9))))
         open(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(0)), PATIENCE_MS)
         assertEquals("Всыпьте 200 г по вкусу и ", stepShown(0))
         placeCursor(0, 14)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
         assertEquals("Всыпьте по вкусу и ", stepShown(0))
         assertEquals(Step(0, "Всыпьте  и ", listOf(IngredientReference(2, 8))), stored(recipe.id).steps.single())
@@ -541,11 +548,11 @@ class StepReferencesEditorTest {
         assertFalse(keyboard.isSoftInputVisible)
     }
 
-    /** The step's field has focus again, the keyboard shown, the cursor at [cursor]. */
+    /** The step's field has focus again, the keyboard shown — for its sheet, taking input — the cursor at [cursor]. */
     private fun assertTypingGoesOn(position: Int, cursor: Int) {
         compose.waitUntil(PATIENCE_MS) { node(EditorTags.stepText(position)).config[SemanticsProperties.Focused] }
-        compose.onNodeWithTag(EditorTags.stepText(position)).assertIsFocused()
-        compose.waitUntil(PATIENCE_MS) { keyboard.isSoftInputVisible }
+        compose.inStep(position).onNodeWithTag(EditorTags.stepText(position)).assertIsFocused()
+        compose.waitUntil(PATIENCE_MS) { keyboard.isSoftInputVisible || compose.sheetTakesInput() }
         assertEquals(TextRange(cursor), selection(position))
     }
 
@@ -562,7 +569,7 @@ class StepReferencesEditorTest {
         assertEquals("Всыпьте 200 г муки", stepShown(0))
         assertEquals(Step(0, "Всыпьте  муки", listOf(IngredientReference(0, 8))), stored(recipe.id).steps.single())
         assertTypingGoesOn(0, 14)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("пшеничной ")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("пшеничной ")
         compose.waitForIdle()
         assertEquals("Всыпьте 200 г пшеничной муки", stepShown(0))
     }
@@ -573,7 +580,7 @@ class StepReferencesEditorTest {
         val recipe = bread(Step(0, "Всыпьте"))
         open(recipe.id)
         placeCursor(0, 7)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOffer(0, 0)), PATIENCE_MS)
         hideKeyboard()
         pick(0, 0)
@@ -581,7 +588,7 @@ class StepReferencesEditorTest {
         assertEquals(Step(0, "Всыпьте ", listOf(IngredientReference(0, 8))), stored(recipe.id).steps.single())
         assertTypingGoesOn(0, 13)
 
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput(" муки, @")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput(" муки, @")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOffer(0, 0)), PATIENCE_MS)
         hideKeyboard()
         pressBackOnTheOffer()
@@ -599,19 +606,19 @@ class StepReferencesEditorTest {
             Step(2, "Посолите ", listOf(IngredientReference(2, 9))),
         )
         open(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(2)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(2)), PATIENCE_MS)
         placeCursor(0, 13)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
         assertEquals("Всыпьте муки", stepShown(0))
         assertEquals(TextRange(8), selection(0))
         placeCursor(1, 9)
-        compose.onNodeWithTag(EditorTags.stepText(1)).performKeyInput { pressKey(Key.Delete) }
+        compose.inStep(1).onNodeWithTag(EditorTags.stepText(1)).performKeyInput { pressKey(Key.Delete) }
         compose.waitForIdle()
         assertEquals("добавьте.", stepShown(1))
         assertEquals(TextRange(8), selection(1))
         placeCursor(2, 17)
-        compose.onNodeWithTag(EditorTags.stepText(2)).performKeyInput { pressKey(Key.Backspace) }
+        compose.inStep(2).onNodeWithTag(EditorTags.stepText(2)).performKeyInput { pressKey(Key.Backspace) }
         compose.waitForIdle()
         assertEquals("Посолите", stepShown(2))
         assertEquals(

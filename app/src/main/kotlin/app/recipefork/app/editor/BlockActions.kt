@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -23,11 +21,7 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,7 +29,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import app.recipefork.app.R
 import kotlinx.coroutines.launch
 
 /**
@@ -87,33 +80,6 @@ internal fun BlockAction(
             contentAlignment = Alignment.Center,
         ) {
             Icon(painterResource(icon), contentDescription = label, tint = if (destructive) MaterialTheme.colorScheme.error else LocalContentColor.current)
-        }
-    }
-}
-
-/** One item of a block's menu ([BlockMenu]): what it reads as, its test tag, and what a tap on it does. */
-internal class BlockMenuItem(val label: String, val tag: String, val onClick: () -> Unit)
-
-/**
- * A block's menu, the last of its actions: a 48 dp control named for its block by [name] (A11Y-003, A11Y-005) that opens
- * [items], each one tap. The menu closes as an item is chosen.
- */
-@Composable
-internal fun BlockMenu(name: String, tag: String, items: List<BlockMenuItem>, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier) {
-        BlockAction(R.drawable.ic_row_menu, name, tag, onClick = { expanded = !expanded })
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            items.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(item.label) },
-                    onClick = {
-                        expanded = false
-                        item.onClick()
-                    },
-                    modifier = Modifier.testTag(item.tag),
-                )
-            }
         }
     }
 }
