@@ -2,6 +2,7 @@ package app.recipefork.app
 
 import android.Manifest
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Activity
 import android.app.Instrumentation
 import android.app.NotificationManager
@@ -19,6 +20,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -32,6 +34,7 @@ import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.importSafely
+import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.media.ClipOutcome
 import app.recipefork.app.media.PhotoOutcome
 import app.recipefork.app.media.PhotoStore
@@ -40,6 +43,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.TimerChannels
 import app.recipefork.app.timer.TimerKey
 import app.recipefork.core.file.RecipeFile
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
@@ -91,6 +95,8 @@ class ReleaseSmokeTest {
     // Earlier than the device clock, by which the editor dates the cover it takes.
     private val now = Instant.now().minusSeconds(3600)
     private var recipe: Recipe? = null
+    // What the kitchen held before a case changed it, given back after.
+    private var kitchenBefore: Set<Long>? = null
 
     private fun shell(command: String) {
         instrumentation.uiAutomation.executeShellCommand(command).use { FileInputStream(it.fileDescriptor).readBytes() }
@@ -100,6 +106,9 @@ class ReleaseSmokeTest {
     fun setUp() {
         shell("input keyevent KEYCODE_WAKEUP")
         shell("wm dismiss-keyguard")
+        // The keyboard is a window of its own, which the test reads among the screen's windows.
+        val automation = instrumentation.uiAutomation
+        automation.serviceInfo = automation.serviceInfo.apply { flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS }
     }
 
     @After
@@ -108,6 +117,11 @@ class ReleaseSmokeTest {
         application.getSystemService(NotificationManager::class.java).cancelAll()
         application.deleteDatabase(otherBook.fileName)
         store.directory(otherBook).deleteRecursively()
+        kitchenBefore?.let { before ->
+            val now = container.kitchen.held.value
+            container.kitchen.hold(before - now, has = true)
+            container.kitchen.hold(now - before, has = false)
+        }
         Unit
     }
 
@@ -350,10 +364,14 @@ class ReleaseSmokeTest {
         }
     }
 
-    /** A recipe that is all text: two ingredients, two steps, a named timer on the first. */
-    private fun soup(): Recipe = Recipe.create(now, null, null, RecipeId.mint()).copy(
+    /**
+     * A recipe that is all text: two ingredients, two steps, a named timer on the first, and the item of equipment
+     * [needs], from the equipment dictionary.
+     */
+    private fun soup(needs: Long): Recipe = Recipe.create(now, null, null, RecipeId.mint()).copy(
         title = "Smoke soup ${System.currentTimeMillis() % 100_000}",
         servings = 2,
+        equipment = listOf(EquipmentItem.entry(needs)),
         ingredients = listOf(
             Ingredient(0, null, null, "Onions", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(200), null, null, null),
             Ingredient(1, null, null, "Water", UnitType.EXACT, QuantityUnit.MILLILITRE, Rational.of(800), null, null, null),
@@ -363,6 +381,21 @@ class ReleaseSmokeTest {
             Step(1, "Season and serve."),
         ),
     )
+
+    /**
+     * The device's kitchen made to lack an item of the equipment dictionary while it has another, so that a recipe
+     * needing the first says so; the kitchen as it was is given back after the case. Returns the item lacked.
+     */
+    private fun lackedEquipment(): Long {
+        val kitchen = container.kitchen
+        kitchenBefore = kitchen.held.value
+        val items = runBlocking { container.dictionaries.equipment() }.filter { it.parentId != null && Kitchen.counts(it) }
+        check(items.size >= 2) { "the equipment dictionary lists ${items.size} items" }
+        val (had, lacked) = items.take(2).map { it.id }
+        kitchen.hold(listOf(had), has = true)
+        kitchen.hold(listOf(lacked), has = false)
+        return lacked
+    }
 
     /**
      * The field on screen that takes text and is labelled [label] — the label a text of its own, read after the field
@@ -450,11 +483,78 @@ class ReleaseSmokeTest {
         tap(text)
     }
 
-    /** Writes [text] into the field labelled [label], scrolled to first, as a screen reader's text entry does. */
+    /**
+     * Writes [text] into the field labelled [label], scrolled to first, as the author does: a tap on the field brings the
+     * keyboard up with the field in sight above it, and the text goes in as a screen reader's text entry puts it.
+     */
     private fun type(label: String, text: String) {
         reveal(label) { field(label) }
+        perform("a tap on “$label”", AccessibilityNodeInfo.ACTION_CLICK) { field(label) }
+        awaitKeyboard(label) { field(label) }
+        enter(label, text) { field(label) }
+    }
+
+    /**
+     * Writes [text] into the field that has the focus, as [what] gives it — a row just added — once the keyboard is up
+     * with the field in sight above it.
+     */
+    private fun typeFocused(what: String, text: String) {
+        awaitKeyboard(what) { focusedField() }
+        enter(what, text) { focusedField() }
+    }
+
+    /** The field on screen that takes text and has the focus. */
+    private fun focusedField(): AccessibilityNodeInfo? = nodes().firstOrNull { it.isEditable && it.isFocused }
+
+    private fun enter(what: String, text: String, find: () -> AccessibilityNodeInfo?) {
         val arguments = Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text) }
-        perform("“$label” taking “$text”", AccessibilityNodeInfo.ACTION_SET_TEXT, arguments) { field(label) }
+        perform("“$what” taking “$text”", AccessibilityNodeInfo.ACTION_SET_TEXT, arguments, find)
+    }
+
+    /** The keyboard's window, while the keyboard is up. */
+    private fun keyboard(): AccessibilityWindowInfo? =
+        instrumentation.uiAutomation.windows.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+
+    /**
+     * Waits until the keyboard is up and the field [find] finds has the focus and stands in sight above the keyboard,
+     * none of it behind; failing, says where both are.
+     */
+    private fun awaitKeyboard(what: String, find: () -> AccessibilityNodeInfo?) {
+        var seen = "no field"
+        try {
+            awaitUntil(30.seconds) {
+                val field = find()
+                val keys = keyboard()?.let { window -> Rect().also(window::getBoundsInScreen) }
+                val at = field?.let { node -> Rect().also(node::getBoundsInScreen) }
+                seen = "the field at $at, focused ${field?.isFocused}, visible ${field?.isVisibleToUser}; the keyboard at $keys"
+                field != null && at != null && field.isFocused && field.isVisibleToUser && keys != null && !keys.isEmpty &&
+                    !at.isEmpty && at.bottom <= keys.top
+            }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("“$what” is not typed in with the keyboard up: $seen; on screen: ${onScreen()}", e)
+        }
+    }
+
+    /** What holds the text on screen that has [part] in it and answers a click: a row read as text, as one line. */
+    private fun lineWith(part: String): AccessibilityNodeInfo? =
+        generateSequence(nodes().firstOrNull { node -> listOfNotNull(node.text, node.contentDescription).any { part in it } }) { it.holder() }
+            .firstOrNull { it.isClickable }
+
+    /** Opens the row whose text has [part] in it, scrolled to first: its sheet, which shows [sheet] and the editor does not. */
+    private fun openRow(part: String, sheet: String) {
+        reveal(part) { lineWith(part) }
+        perform("a click on the row with “$part”", AccessibilityNodeInfo.ACTION_CLICK) { lineWith(part) }
+        awaitShown(sheet)
+    }
+
+    /** Closes the sheet showing [sheet] by its Done, back to the editor, the keyboard gone with it. */
+    private fun closeSheet(sheet: String) {
+        tap(DONE)
+        try {
+            awaitUntil(30.seconds) { shown(sheet) == null && keyboard() == null && shown(DONE) != null }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the sheet showing “$sheet” did not close; on screen: ${onScreen()}", e)
+        }
     }
 
     /** The recipe [written] as the book holds it now. */
@@ -462,17 +562,18 @@ class ReleaseSmokeTest {
 
     /**
      * The pre-launch crash sweep of the build Play receives, the way a stranger first goes through it: the application
-     * starts and opens a recipe's card; a timer is started from it; the editor opens on the recipe and a group, a note
-     * and a timer are added and saved, which closes the editor; the recipe is exported to a file and the file opened
-     * back into the book; the recipe is deleted and brought back with Undo. Nothing crashes, and each change is in the
-     * book.
+     * starts and opens a recipe's card; a timer is started from it; the editor opens on the recipe, its rows read as
+     * text, and in the sheets they open — each typed in with the keyboard up — a note, a group, a step's note and timer
+     * and a new step are written and saved, which closes the editor; the item of equipment the kitchen lacks opens My
+     * kitchen and Back returns to the card; the settings are gone through; the recipe is deleted and brought back with
+     * Undo, exported to a file and the file opened back into the book. Nothing crashes, and each change is in the book.
      *
      * Export and the opening of a file belong to the serverless build (FLOW-063, FLOW-064): the standard one, which
      * offers neither, writes and reads the file through the same code the menu and the opened file reach.
      */
     @Test
     fun theBuildGoesThroughEveryMainScreenWithoutACrash() {
-        val written = soup().also { recipe = it }
+        val written = soup(needs = lackedEquipment()).also { recipe = it }
         runBlocking { container.recipes.save(written) }
         // Started as the launcher starts it, in a task of its own, so that a file opened later from outside comes to
         // that task, as on the phone.
@@ -494,19 +595,33 @@ class ReleaseSmokeTest {
             clickRevealed("Simmer")
             awaitUntil(30.seconds) { runBlocking { container.timers.all.first() }.any { it.key.recipeId == written.id.value } }
 
-            // The editor, from the View tab: a group, a note and a timer added, and saved.
+            // The editor, from the View tab: the rows read as text, each opening in its sheet on a tap, where it is
+            // written with the keyboard up; closed by Done. A note, a group, a step's note and timer, and a step added.
             choose(VIEW)
             tap(EDIT)
             awaitShown(DONE)
-            // In the order the editor lays them out: the first ingredient's note, a group under the list, the second
-            // step's timer.
+            // In the order the editor lays them out: the first ingredient's note...
+            openRow("Onions", EDIT_INGREDIENT)
             type(NOTE, "thinly sliced")
+            closeSheet(EDIT_INGREDIENT)
+            // ...a group under the list, its sheet opened with its name taking the keyboard...
             clickRevealed(ADD_GROUP)
-            type(GROUP, "Base")
-            clickRevealed(TIMER_FOR_STEP_2)
-            // The new timer's fields, under the step's actions: the last minutes on screen once its removal shows.
-            reveal(REMOVE_TIMER_FROM_STEP_2) { shown(REMOVE_TIMER_FROM_STEP_2) }
+            awaitShown(EDIT_GROUP)
+            typeFocused(GROUP, "Base")
+            closeSheet(EDIT_GROUP)
+            // ...the second step's note and a timer of five minutes...
+            openRow("Season and serve.", AUTHORS_NOTE)
+            awaitShown(STEP_2)
+            type(AUTHORS_NOTE, "Taste first.")
+            clickRevealed(ADD_TIMER)
             type(MINUTES, "5")
+            closeSheet(AUTHORS_NOTE)
+            // ...and a step added at the end, its sheet opened with its text taking the keyboard.
+            clickRevealed(ADD_STEP)
+            awaitShown(AUTHORS_NOTE)
+            awaitShown(STEP_3)
+            typeFocused(STEP_3, "Serve hot.")
+            closeSheet(AUTHORS_NOTE)
             // Done saves and closes the editor, back to the recipe's card.
             tap(DONE)
             try {
@@ -515,14 +630,31 @@ class ReleaseSmokeTest {
                 throw AssertionError("the editor did not close to the card; on screen: ${onScreen()}", e)
             }
             fun edited() = stored(written)?.let { kept ->
-                listOf(kept.ingredientGroups.map { it.name }, kept.ingredients.map { it.note }, kept.steps.sortedBy { it.position }.map { it.timers.size })
+                val steps = kept.steps.sortedBy { it.position }
+                listOf(kept.ingredientGroups.map { it.name }, kept.ingredients.map { it.note }, steps.map { it.timers.size }, steps.map { it.note }, steps.map { it.text }.drop(2))
             }
-            val expected = listOf(listOf("Base"), listOf("thinly sliced", null), listOf(1, 1))
+            val expected = listOf(listOf("Base"), listOf("thinly sliced", null), listOf(1, 1, 0), listOf(null, "Taste first.", null), listOf("Serve hot."))
             try {
                 awaitUntil(30.seconds) { edited() == expected }
             } catch (e: IllegalStateException) {
                 throw AssertionError("the book holds ${edited()}, not $expected; on screen: ${onScreen()}", e)
             }
+
+            // The item of equipment the kitchen lacks says so on the View tab; a tap opens My kitchen at it, and its
+            // Back returns to the card.
+            clickRevealed(NOT_IN_KITCHEN)
+            try {
+                awaitUntil(30.seconds) { shown(NEEDED_FOR_THE_RECIPE) != null && shown(KITCHEN) != null && shown("Servings: 2") == null }
+            } catch (e: IllegalStateException) {
+                throw AssertionError("My kitchen did not open at the item; on screen: ${onScreen()}", e)
+            }
+            tap(BACK)
+            try {
+                awaitUntil(30.seconds) { shown(KITCHEN) == null && shown("Servings: 2") != null }
+            } catch (e: IllegalStateException) {
+                throw AssertionError("My kitchen did not return to the card; on screen: ${onScreen()}", e)
+            }
+            awaitShown(NOT_IN_KITCHEN)
             // Back from the card to the book.
             tap(BACK)
             awaitShown(WRITTEN_HERE)
@@ -705,13 +837,23 @@ class ReleaseSmokeTest {
         const val BACK = "Back"
         const val DONE = "Done"
         const val ADD_GROUP = "Add group"
+        const val ADD_STEP = "Add step"
+        /** The titles of an ingredient row's sheet and of a group heading's. */
+        const val EDIT_INGREDIENT = "Edit ingredient"
+        const val EDIT_GROUP = "Edit group"
         /** The label of a group heading's name field, and of an ingredient's note field. */
         const val GROUP = "Group"
         const val NOTE = "How to prepare"
-        /** The second step's action that adds a timer to it, and a timer's minutes. */
-        const val TIMER_FOR_STEP_2 = "Timer for step 2"
+        /** A step's sheet: its title, the label of the author's note, which only the sheet shows, and its timers. */
+        const val STEP_2 = "Step 2"
+        const val STEP_3 = "Step 3"
+        const val AUTHORS_NOTE = "Author's note"
+        const val ADD_TIMER = "Add timer"
         const val MINUTES = "Minutes"
-        const val REMOVE_TIMER_FROM_STEP_2 = "Remove timer from step 2"
+        /** Under an item of equipment the kitchen lacks, on the card; My kitchen, and its row of the item. */
+        const val NOT_IN_KITCHEN = "Not in your kitchen"
+        const val KITCHEN = "My kitchen"
+        const val NEEDED_FOR_THE_RECIPE = "Needed for the recipe"
         const val EXPORT = "Export"
         /** The book's bar action that opens the settings, and the settings' theme and language with their dialogs. */
         const val SETTINGS = "Settings"
