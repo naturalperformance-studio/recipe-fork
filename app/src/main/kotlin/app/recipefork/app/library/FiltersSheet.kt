@@ -50,7 +50,8 @@ import app.recipefork.app.recipe.BookLanguage
 import kotlinx.coroutines.launch
 
 /**
- * Every filter of a view in one bottom sheet: a section for the ingredient, one for the tags, one for the language and,
+ * Every filter of a view in one bottom sheet: a section for the ingredient, one for the tags, one for the language
+ * while the view holds recipes of more than one language (counting "not given" as one) and,
  * while [equipmentOffered] — My kitchen has something that counts — one for the equipment. A choice applies at once
  * and the sheet stays open for the next; Done, a swipe down or a tap outside closes it.
  */
@@ -90,8 +91,11 @@ internal fun FiltersSheet(
             IngredientSection(choices.ingredients, hold, filters.ingredient) { onFilters(filters.copy(ingredient = it)) }
             HorizontalDivider()
             TagSection(choices.tags, filters, onFilters)
-            HorizontalDivider()
-            LanguageSection(languages, filters.language) { onFilters(filters.copy(language = it)) }
+            // A view of fewer than two languages has nothing to filter by language: the section is left out.
+            if (languages.size > 1) {
+                HorizontalDivider()
+                LanguageSection(languages, filters.language) { onFilters(filters.copy(language = it)) }
+            }
             if (equipmentOffered) {
                 HorizontalDivider()
                 EquipmentSection(filters.equipment) { onFilters(filters.copy(equipment = it)) }

@@ -2,9 +2,11 @@
 <resources>
     <string name="library_title">Моя книга рецептов</string>
     <string name="library_view_marked">Отмеченные</string>
-    <string name="library_view_own">Написанные здесь</string>
+    <string name="library_view_own">Мои рецепты</string>
     <string name="library_view_marked_action">Показать рецепты, отмеченные в этой книге</string>
     <string name="library_view_own_action">Показать рецепты, написанные в этой книге</string>
+    <string name="library_view_marked_serverless">Импортированные</string>
+    <string name="library_view_marked_action_serverless">Показать рецепты, импортированные из файлов</string>
     <string name="library_opening">Рецепты открываются</string>
     <string name="library_state_draft">Черновик</string>
     <string name="library_state_pending">Ждёт проверки</string>
@@ -28,6 +30,7 @@
     <string name="library_entry_delete">Удалить</string>
     <string name="library_marked_empty">Отмеченных рецептов пока нет</string>
     <string name="library_marked_empty_sentence">Здесь хранятся рецепты, которые вы отметили.</string>
+    <string name="library_marked_empty_serverless">Импортированных рецептов пока нет</string>
     <string name="library_marked_empty_sentence_serverless">Здесь хранятся рецепты, импортированные из файлов.</string>
     <string name="library_entry_remove">Убрать</string>
     <string name="library_usual_servings">Обычно готовлю на…</string>
@@ -52,7 +55,8 @@
     <string name="library_clear_media_nothing">Сохранённых фото и видео, которые можно очистить, нет.</string>
     <string name="library_clear_media_ok">ОК</string>
     <!-- FLOW-035 (4): поле поиска над каждым видом и результат, в котором ничего нет. -->
-    <string name="library_search">Поиск по названию или ингредиенту</string>
+    <string name="library_search">Поиск</string>
+    <string name="library_search_placeholder">Поиск по названию или ингредиенту</string>
     <string name="library_search_clear">Очистить поиск</string>
     <string name="library_nothing_found">По запросу «%1$s» ничего не найдено</string>
     <!-- FLOW-035 (3): порядок каждого вида и три варианта. -->

@@ -248,6 +248,10 @@ class LibrarySessionTest {
             container.recipes.save(
                 Recipe.create(Instant.parse("2026-10-01T12:00:00Z"), null).copy(title = "Pie", language = RecipeLanguage.EN),
             )
+            // A view of two languages, so that the sheet offers the language filter.
+            container.recipes.save(
+                Recipe.create(Instant.parse("2026-10-01T11:00:00Z"), null).copy(title = "Пирог", language = RecipeLanguage.RU),
+            )
         }
         chooseOwn()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
