@@ -57,6 +57,44 @@ class IngredientShareTest {
         assertEquals(part(Rational.of(1, 2), QuantityUnit.PIECE), IngredientShares.read("0,5", garlic.copy(divisible = true)))
     }
 
+    // A piece row offers a part only once its halving is answered, which sets its grid: until then nothing typed is read,
+    // and nothing is refused for a grid it does not have.
+    @Test
+    fun `a piece row whose halving is not answered offers no part`() {
+        val unanswered = garlic.copy(divisible = null)
+        assertFalse(IngredientShares.offered(unanswered))
+        listOf("", "1", "0,5", "1 0", "два", "0", "9").forEach { typed ->
+            assertEquals(ShareReading.NotOffered, IngredientShares.read(typed, unanswered), typed)
+        }
+        assertTrue(IngredientShares.offered(unanswered.copy(divisible = true)))
+        assertTrue(IngredientShares.offered(unanswered.copy(divisible = false)))
+    }
+
+    // Every row that offers no part reads as such, whatever is typed — a piece row never as "whole grams".
+    @Test
+    fun `a row offering no part is never refused for a grid`() {
+        val offeringNone = listOf(
+            garlic.copy(divisible = null),
+            garlic.copy(quantity = null),
+            garlic.copy(quantity = null, divisible = null),
+            garlic.copy(unit = QuantityUnit.GRAM),
+            garlic.copy(unit = null),
+            salt,
+            milk,
+            oil.copy(quantity = Rational.ZERO),
+        )
+        offeringNone.forEach { row ->
+            assertFalse(IngredientShares.offered(row), row.toString())
+            listOf("", "1", "0,5", "1 0", "abc").forEach { typed ->
+                assertEquals(ShareReading.NotOffered, IngredientShares.read(typed, row), "$typed of $row")
+            }
+        }
+        // An answered piece row is refused for its own grid, never for grams.
+        assertEquals(ShareReading.Refused(QuantityProblem.NotAccepted(AcceptedValues.WHOLE_PIECES)), IngredientShares.read("0,5", garlic))
+        assertEquals(ShareReading.Refused(QuantityProblem.NotAccepted(AcceptedValues.HALVES)), IngredientShares.read("0,3", garlic.copy(divisible = true)))
+        assertEquals(ShareReading.Refused(QuantityProblem.NotAccepted(AcceptedValues.HALVES)), IngredientShares.read("два", garlic.copy(divisible = true)))
+    }
+
     // A part never exceeds the ingredient's quantity; the whole itself is a part it may take.
     @Test
     fun `a part is no more than the whole`() {
