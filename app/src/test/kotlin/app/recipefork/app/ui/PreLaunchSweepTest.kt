@@ -376,13 +376,18 @@ class PreLaunchSweepTest {
         await(LibraryTags.entry(cake.id.value))
         await(LibraryTags.entry(soup.id.value))
         checkScreen("the book, own, with recipes")
-        // Filtered by "Enough equipment": its chip among the filters in force; free-text items hide no recipe.
+        // Filtered by "Enough equipment": its chip among the filters in force. The cake needs a bowl the kitchen lacks
+        // and is hidden; the pie, whose equipment is free text, and the soup, which needs none, stay listed.
         compose.runOnIdle { session.filter(LibraryView.OWN, BookFilters(equipment = true)) }
         await(LibraryTags.EQUIPMENT_FILTER)
-        await(LibraryTags.entry(cake.id.value))
+        compose.waitUntil(PATIENCE_MS) {
+            !exists(LibraryTags.entry(cake.id.value)) && exists(LibraryTags.entry(soup.id.value)) &&
+                exists(LibraryTags.entry(published.id.value))
+        }
         checkScreen("the book, own, filtered by equipment")
         compose.runOnIdle { session.filter(LibraryView.OWN, BookFilters()) }
         awaitGone(LibraryTags.EQUIPMENT_FILTER)
+        await(LibraryTags.entry(cake.id.value))
         compose.openEntryMenu(cake.id.value)
         checkScreen("the book, own, an entry's menu")
         compose.closeEntryMenu(cake.id.value)
