@@ -24,6 +24,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
@@ -63,6 +64,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowActivity
 import java.io.File
@@ -200,7 +202,8 @@ class CoverEditorTest {
         open(Recipe.create(now, null).copy(title = "Borscht"))
 
         compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.COVER), PATIENCE_MS)
-        compose.onNode(hasText("Cover photo (optional)") and hasAnyAncestor(hasTestTag(CoverTags.COVER))).assertExists()
+        // T-218: the empty cover's tile says it is optional under what a tap does.
+        compose.onNode(hasTestTag(CoverTags.PLACEHOLDER) and hasText("Optional")).assertExists()
         assertFalse(exists(CoverTags.IMAGE) || exists(CoverTags.CHANGE))
         // Directly under the title, before the tags.
         // Unclipped, as the cover's placeholder may run past the bottom of the screen.
@@ -209,10 +212,11 @@ class CoverEditorTest {
         assertTrue(top(CoverTags.COVER) >= bottom(EditorTags.TITLE) && bottom(CoverTags.COVER) <= top(EditorTags.TAGS))
     }
 
-    // T-147: an empty cover is a placeholder of the cover's own 4:3 size — a camera and a short label — and no text
-    // links; a tap on it opens one bottom sheet of "Camera" and "Gallery", which nothing is launched before an item is tapped.
+    // T-147, T-218: an empty cover is a compact tile — a row 56 to 72 dp tall, as wide as the form, with a picture and
+    // "Add a cover photo" — not the cover's 4:3 frame, and no text links; a tap on it opens one bottom sheet of "Take a
+    // photo" and "Choose from gallery", each with its icon, which nothing is launched before an item is tapped.
     @Test
-    fun anEmptyCoverIsAPlaceholderThatOpensTheSourceSheet() {
+    fun anEmptyCoverIsACompactTileThatOpensTheSourceSheet() {
         open(Recipe.create(now, null).copy(title = "Borscht"))
         compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.PLACEHOLDER), PATIENCE_MS)
         compose.onNodeWithTag(CoverTags.PLACEHOLDER).assertHasClickAction()
@@ -220,15 +224,32 @@ class CoverEditorTest {
         val cover = compose.onNodeWithTag(CoverTags.COVER).fetchSemanticsNode().boundsInRoot
         val placeholder = compose.onNodeWithTag(CoverTags.PLACEHOLDER).fetchSemanticsNode().boundsInRoot
         assertEquals(cover.width, placeholder.width, 1f)
-        assertEquals(4f / 3f, placeholder.width / placeholder.height, 0.01f)
+        val density = compose.density.density
+        assertTrue("${placeholder.height / density} dp", placeholder.height >= 56 * density - 0.5f && placeholder.height <= 72 * density + 0.5f)
         assertFalse(exists(SourceSheetTags.SHEET) || exists(CoverTags.TAKE) || exists(CoverTags.CHOOSE))
 
         sheetItem(CoverTags.TAKE)
 
-        assertEquals(listOf("Camera", "Gallery"), sheetItems())
+        assertEquals(listOf("Take a photo", "Choose from gallery"), sheetItems())
+        listOf(CoverTags.TAKE, CoverTags.CHOOSE).forEach { item ->
+            compose.onNodeWithTag(SourceSheetTags.icon(item), useUnmergedTree = true).assertExists()
+        }
         compose.onNodeWithTag(CoverTags.TAKE).assertHeightIsAtLeast(48.dp)
         assertFalse(exists(CoverTags.REMOVE))
         assertNull(activity.peekNextStartedActivityForResult())
+    }
+
+    // T-218: with the empty cover a compact tile, a new recipe's Ingredients heading stands on the first screen of a
+    // 360 × 720 dp phone, the form not scrolled.
+    @Test
+    @Config(qualifiers = "w360dp-h720dp")
+    fun aNewRecipesIngredientsAreOnTheFirstScreen() {
+        open(Recipe.create(now, null))
+        compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.PLACEHOLDER), PATIENCE_MS)
+        val heading = compose.onNode(hasText("Ingredients") and hasAnyAncestor(hasTestTag(EditorTags.INGREDIENTS))).fetchSemanticsNode()
+        val screen = compose.onRoot().fetchSemanticsNode().size.height
+        assertEquals(720f, screen / compose.density.density, 1f)
+        assertTrue("${(heading.positionInRoot.y + heading.size.height) / compose.density.density} dp", heading.positionInRoot.y + heading.size.height <= screen)
     }
 
     // T-147: a cover that is set opens the same sheet, which offers to replace it — camera, gallery — and to remove it.
@@ -238,11 +259,16 @@ class CoverEditorTest {
         takePhoto()
         compose.waitUntilExactlyOneExists(hasTestTag(CoverTags.IMAGE), PATIENCE_MS)
         assertFalse(exists(CoverTags.PLACEHOLDER))
+        // T-218: a set cover still shows in the crop's 4:3 frame, across the form.
+        val image = compose.onNodeWithTag(CoverTags.IMAGE).fetchSemanticsNode().boundsInRoot
+        assertEquals(4f / 3f, image.width / image.height, 0.01f)
+        assertEquals(compose.onNodeWithTag(CoverTags.COVER).fetchSemanticsNode().boundsInRoot.width, image.width, 1f)
         compose.swipeAwayStatement()
 
         sheetItem(CoverTags.REMOVE)
 
-        assertEquals(listOf("Camera", "Gallery", "Remove cover"), sheetItems())
+        assertEquals(listOf("Take a photo", "Choose from gallery", "Remove cover"), sheetItems())
+        compose.onNodeWithTag(SourceSheetTags.icon(CoverTags.REMOVE), useUnmergedTree = true).assertExists()
         // Scenario 3 (v0.21): the removal says it in the error colour; the sources do not.
         assertEquals(lightColorScheme().error, compose.textColourOf(CoverTags.REMOVE))
         assertNotEquals(lightColorScheme().error, compose.textColourOf(CoverTags.TAKE))

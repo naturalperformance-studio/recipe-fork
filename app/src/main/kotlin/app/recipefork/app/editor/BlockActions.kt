@@ -3,11 +3,7 @@ package app.recipefork.app.editor
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.FlowRowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,15 +26,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-
-/**
- * The row of a block's actions, under what the block holds: one icon each, side by side, going on to a second line only
- * when the block is too narrow for them all — at a large font scale nothing in it is shrunk or cut.
- */
-@Composable
-internal fun BlockActions(modifier: Modifier = Modifier, content: @Composable FlowRowScope.() -> Unit) {
-    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start, content = content)
-}
 
 /**
  * One action of a block as an icon, 48 by 48 dp (A11Y-003): the screen reader speaks its [label], which names the

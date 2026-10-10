@@ -236,7 +236,7 @@ internal fun Steps(
                             },
                             close = { closed(key, held.photo.preparing) },
                         )
-                        StepSheet(position, steps.size, step, media, recipe.ingredients, dictionary, language, editor, stating == position, photos, held, focus, host)
+                        StepSheet(position, steps.size, step, media, recipe.ingredients, dictionary, language, editor, stating == position, photos, held, focus, host, fresh == key)
                     }
                 } else {
                     ReadOnlyStep(position, step, media, recipe.ingredients, language, photos)
