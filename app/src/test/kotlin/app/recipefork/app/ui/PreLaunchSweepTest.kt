@@ -122,7 +122,8 @@ import kotlin.time.Duration.Companion.minutes
  *  - every text drawn reaches its contrast against what is drawn behind it (A11Y-002).
  *
  * The screens: the book — the marked and the own view, each empty and with recipes, an entry's menu, a recipe file's
- * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment, ingredient groups, notes,
+ * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment — an item of it not
+ * in My kitchen, so marked on both tabs — ingredient groups, notes,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
  * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
  * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with a row removed and its
@@ -157,7 +158,6 @@ class PreLaunchSweepTest {
     private val cardTimers = CardTimers(timers.store, timers.scope, timers.access, timers.ringing) { BookName.Pool }
     private val players = FakeClipPlayers()
     private val editor = EditorEnvironment(active, device.catalog(context)) { now }
-    private val card = CardEnvironment(HeldUsualServings(), marks) { device.database.dictionaryDao().ingredients() }
     private val theme = HeldThemeSetting()
 
     /** My kitchen over the shipped equipment dictionary: a frying pan and an oven ticked, so every group's state shows. */
@@ -165,6 +165,11 @@ class PreLaunchSweepTest {
         HeldKitchen(setOf(FRYING_PAN, OVEN)),
         EquipmentSource { DictionarySnapshot.read(context).equipment.map(EquipmentEntryEntity::of) },
     )
+
+    /** The card reads the device's dictionaries and the same kitchen: the cake's bowl is not in it. */
+    private val card = CardEnvironment(
+        HeldUsualServings(), marks, equipment = EquipmentSource { device.database.dictionaryDao().equipment() }, kitchen = kitchen.store,
+    ) { device.database.dictionaryDao().ingredients() }
 
     private var crop by mutableStateOf<PhotoToCrop?>(null)
 
@@ -177,7 +182,8 @@ class PreLaunchSweepTest {
     @Before
     fun setUp() {
         listOf(book.idling, device.idling, timers.idling).forEach(compose::registerIdlingResource)
-        runBlocking { device.database.dictionaryDao().replace(SAMPLE_DICTIONARIES) }
+        // The sample dictionaries with the shipped equipment, so that the card and the editor name the cake's items.
+        runBlocking { device.database.dictionaryDao().replace(SAMPLE_DICTIONARIES.copy(equipment = DictionarySnapshot.read(context).equipment)) }
     }
 
     @After
@@ -248,7 +254,8 @@ class PreLaunchSweepTest {
         description = "A sheet cake for late summer.",
         servings = 8,
         tags = setOf(10L, 12L),
-        equipment = listOf("Oven", "Baking tray 30 × 40 cm", "Mixing bowl").map(EquipmentItem::free),
+        // The oven the kitchen has, free text, and a bowl the kitchen lacks: marked "Not in your kitchen" on the card.
+        equipment = listOf(EquipmentItem.entry(OVEN), EquipmentItem.free("Baking tray 30 × 40 cm"), EquipmentItem.entry(BOWL, "large")),
         ingredients = listOf(
             grams(0, "flour", 250),
             grams(1, "butter", 125, note = "cold"),
@@ -390,8 +397,9 @@ class PreLaunchSweepTest {
         // View, the tab a card first opens on: the cover, the summary, fork; compact lists, the done marks shown.
         compose.onNodeWithTag(CardTags.tab(CardMode.VIEW)).assertIsSelected()
         await(CardTags.SUMMARY)
-        // The equipment above the ingredients, one item marked.
+        // The equipment above the ingredients, one item marked, the bowl not in the kitchen.
         cake.equipment.indices.forEach { await(CardTags.equipment(it)) }
+        awaitLacking(listOf(2))
         assertOnlyThePagerScrollsSideways("View")
         checkScreen("the card, View", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()
@@ -406,6 +414,7 @@ class PreLaunchSweepTest {
         compose.onNodeWithTag(TimerTags.start(1)).performScrollTo().performClick()
         await(TimerTags.cancel(1))
         cake.equipment.indices.forEach { await(CardTags.equipment(it)) }
+        awaitLacking(listOf(2))
         compose.onNodeWithTag(CardTags.SCREEN).assertExists()
         assertTrue("the second step is the current one", compose.onNodeWithTag(CardTags.step(1)).fetchSemanticsNode()
             .config.getOrNull(SemanticsProperties.StateDescription) == context.getString(R.string.card_current_step))
@@ -435,6 +444,12 @@ class PreLaunchSweepTest {
         val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
         compose.onNode(undo, useUnmergedTree = true).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredient(4)) && !exists(EditorTags.STATEMENT, unmerged = true) }
+    }
+
+    /** Waits until exactly the card's items at [indices] say "Not in your kitchen", on the tab in sight. */
+    private fun awaitLacking(indices: List<Int>) = compose.waitUntil(PATIENCE_MS) {
+        compose.onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1 &&
+            (0 until 3).filter { exists(EquipmentTags.lacking(it), unmerged = true) } == indices
     }
 
     /** Turns the card to its tab [mode] and waits until it has come to rest there. */
@@ -559,5 +574,6 @@ class PreLaunchSweepTest {
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L
         const val OVEN = 10202L
+        const val BOWL = 10412L
     }
 }

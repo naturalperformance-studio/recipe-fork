@@ -19,7 +19,8 @@ data class KitchenGroup(val group: EquipmentEntryEntity, val items: List<Equipme
  */
 class Kitchen(val held: Set<Long>, dictionary: List<EquipmentEntryEntity>) {
     private val byId = dictionary.associateBy { it.id }
-    private val itemsOf = dictionary.filter { it.parentId != null }.groupBy { it.parentId }
+    /** Each group's items that count: an item since removed — ticked or not — has no say in whether its group is had. */
+    private val itemsOf = dictionary.filter { it.parentId != null && counts(it) }.groupBy { it.parentId }
 
     /** How many items the kitchen has that count — those My kitchen lists ticked. */
     val count: Int = held.count { id -> byId[id]?.let { it.parentId != null && counts(it) } == true }
@@ -29,7 +30,7 @@ class Kitchen(val held: Set<Long>, dictionary: List<EquipmentEntryEntity>) {
 
     /**
      * Whether the kitchen lacks the entry [entryId]: never while it [isEmpty], never for an entry that does not count,
-     * and otherwise when it is not ticked — a group when none of its items is.
+     * and otherwise when it is not ticked — a group when none of its items that count is.
      */
     fun lacks(entryId: Long): Boolean {
         if (isEmpty) return false

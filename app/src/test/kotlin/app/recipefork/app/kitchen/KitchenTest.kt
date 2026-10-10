@@ -45,6 +45,16 @@ class KitchenTest {
         assertTrue(kitchen.lacks(MEASURING))
     }
 
+    // T-205: a removed entry has no say at all — ticked, it does not make its group count as had.
+    @Test
+    fun aRemovedTickedItemDoesNotMakeItsGroupHad() {
+        val kitchen = Kitchen(setOf(REMOVED_POT, SCALE), KITCHEN_DICTIONARY)
+        assertFalse(kitchen.isEmpty)
+        assertTrue("the pasta pot was removed: the stovetop group is not had", kitchen.lacks(STOVETOP))
+        assertFalse(kitchen.lacks(MEASURING))
+        assertFalse("a removed entry is never lacking", kitchen.lacks(REMOVED_POT))
+    }
+
     // Only what counts is counted and makes the kitchen not empty: a ticked consumable or an entry since removed does not.
     @Test
     fun onlyWhatCountsIsCounted() {

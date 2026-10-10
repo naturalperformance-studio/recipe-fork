@@ -118,4 +118,6 @@
     <!-- The equipment the recipe needs, above the ingredients; on Cooking it folds as the ingredients do once every item is marked. -->
     <string name="card_equipment">Equipment</string>
     <string name="card_equipment_show_action">Show the equipment</string>
+    <!-- Under an item of equipment the reader's kitchen lacks (My kitchen). -->
+    <string name="card_equipment_not_in_kitchen">Not in your kitchen</string>
 </resources>

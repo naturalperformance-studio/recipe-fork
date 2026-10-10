@@ -78,7 +78,10 @@ class KitchenScreenTest {
         },
     ) { Instant.parse("2026-10-10T12:00:00Z") }
     private val store = PreferencesKitchen(context)
-    private val kitchen = KitchenEnvironment(store, EquipmentSource { KITCHEN_DICTIONARY })
+    /** Whether the equipment dictionary fails to read, as a damaged device store would. */
+    @Volatile
+    private var unreadable = false
+    private val kitchen = KitchenEnvironment(store, EquipmentSource { if (unreadable) error("the store cannot be read") else KITCHEN_DICTIONARY })
 
     @Before
     fun waitForTheBook() = compose.registerIdlingResource(book.idling)
@@ -332,5 +335,34 @@ class KitchenScreenTest {
         awaitSettings()
         store.hold(listOf(FRYING_PAN, SAUCEPAN), has = true)
         compose.waitUntil(PATIENCE_MS) { kitchenValue() == "Отмечено 2 предмета" }
+    }
+
+    // T-205: a dictionary that cannot be read crashes neither the settings nor My kitchen: the settings' row counts
+    // nothing, My kitchen says it could not read the equipment and offers "Try again", which reads it anew.
+    @Test
+    fun anUnreadableDictionaryIsSaidSoAndTriedAgain() = unreadableDictionary("Nothing ticked yet", "Couldn’t read the equipment", "Try again")
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun anUnreadableDictionaryIsSaidSoInRussian() =
+        unreadableDictionary("Пока ничего не отмечено", "Не удалось прочитать список оборудования", "Попробовать ещё раз")
+
+    private fun unreadableDictionary(none: String, headline: String, retry: String) {
+        store.hold(listOf(FRYING_PAN), has = true)
+        unreadable = true
+        showSettings()
+        compose.waitUntil(PATIENCE_MS) { kitchenValue() == none }
+        compose.onNodeWithTag(SettingsTags.KITCHEN).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.UNREADABLE) }
+        assertEquals(listOf(headline), compose.textsOf(LibraryTags.emptyHeadline(KitchenTags.UNREADABLE)))
+        assertEquals(retry, compose.textsOf(KitchenTags.UNREADABLE_RETRY).single())
+        assertFalse(exists(KitchenTags.LIST))
+        LocalizationChecks.assertScreenTextFromResources(compose, context, emptySet())
+        AccessibilityChecks.assertTouchTargets(compose)
+        unreadable = false
+        compose.onNodeWithTag(KitchenTags.UNREADABLE_RETRY).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.LIST) }
+        assertFalse(exists(KitchenTags.UNREADABLE))
+        assertEquals(ToggleableState.On, state(KitchenTags.item(FRYING_PAN)))
     }
 }
