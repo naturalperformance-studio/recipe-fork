@@ -43,5 +43,11 @@
 -keep,allowobfuscation class app.recipefork.core.recipe.IngredientGroup { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.Media, app.recipefork.core.recipe.MediaAttachment, app.recipefork.core.recipe.MediaAttachment$* { *; }
 -keep,allowobfuscation class app.recipefork.core.scaling.Rational, app.recipefork.core.scaling.Rational$Companion { *; }
+# The smoke recipe's item of equipment, which the kitchen the test sets up lacks: the equipment dictionary, the kitchen.
+-keep,allowobfuscation class app.recipefork.core.recipe.EquipmentItem, app.recipefork.core.recipe.EquipmentItem$Companion { *; }
+-keep,allowobfuscation class app.recipefork.app.dictionary.DictionaryCatalog, app.recipefork.app.dictionary.EquipmentSource { *; }
+-keep,allowobfuscation class app.recipefork.app.dictionary.EquipmentEntryEntity { *; }
+-keep,allowobfuscation class app.recipefork.app.kitchen.KitchenStore, app.recipefork.app.kitchen.PreferencesKitchen { *; }
+-keep,allowobfuscation class app.recipefork.app.kitchen.Kitchen, app.recipefork.app.kitchen.Kitchen$Companion { *; }
 # The smoke test closes the databases it opens itself; the application never closes one.
 -keepclassmembers,allowobfuscation class androidx.room.RoomDatabase { public void close(); }
