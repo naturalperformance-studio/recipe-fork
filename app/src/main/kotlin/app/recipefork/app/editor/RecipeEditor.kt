@@ -11,6 +11,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
@@ -37,6 +38,7 @@ import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.RecipeId
@@ -74,6 +76,8 @@ class EditorEnvironment(
     val tags: TagSource,
     /** The ingredient dictionary the ingredient field offers from (FLOW-057); the catalog that holds the tags holds it. */
     val ingredients: IngredientSource = tags as? IngredientSource ?: IngredientSource { emptyList() },
+    /** The equipment dictionary the items of equipment are named from; the catalog that holds the tags holds it. */
+    val equipment: EquipmentSource = tags as? EquipmentSource ?: EquipmentSource { emptyList() },
     /** Which side of a block its drag column stands on (the left unless set otherwise). */
     val dragHandleSide: DragHandleSide = HeldDragHandleSide(),
     /** Where the editor keeps photographs, given the application's files directory; replaced in a test to hold one back. */
@@ -171,26 +175,34 @@ class RecipeEditor(
             equipmentFull.value = true
             return false
         }
-        return edit { it.copy(equipment = it.equipment + "") }
+        return edit { it.copy(equipment = it.equipment + EquipmentItem.free("")) }
     }
 
-    /** The item at [index] as the author types it, kept in full however long (the limit is marked on leaving it, FLOW-028). */
+    /**
+     * The item at [index] as the author types it, free text, kept in full however long (the limit is marked on leaving
+     * it, FLOW-028). An item an entry names that the author types into becomes the text typed.
+     */
     fun setEquipment(index: Int, typed: String): Boolean {
         val item = current.value?.equipment?.getOrNull(index) ?: return false
-        if (item == typed) return editable
-        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) typed else it }) }
+        val free = EquipmentItem.free(typed)
+        if (item == free) return editable
+        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) free else it }) }
     }
 
-    /** The author left the item at [index]: it is held trimmed, and an item left blank goes without a word. */
+    /**
+     * The author left the item at [index]: free text is held trimmed, and an item left blank goes without a word; an
+     * item an entry names stays as it is.
+     */
     fun settleEquipment(index: Int) {
         val item = current.value?.equipment?.getOrNull(index) ?: return
-        val settled = Recipe.equipmentItemOf(item)
+        if (item.dictionaryEntry != null) return
+        val settled = Recipe.equipmentItemOf(item.freeTextName.orEmpty())
         when {
             settled == null -> edit { recipe ->
                 equipmentKeys.remove(index, recipe.equipment.size)
                 recipe.copy(equipment = recipe.equipment.filterIndexed { i, _ -> i != index })
             }
-            settled != item -> setEquipment(index, settled)
+            settled != item -> setEquipment(index, settled.freeTextName.orEmpty())
         }
     }
 

@@ -82,6 +82,7 @@ import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.LocalCardTimers
 import app.recipefork.app.timer.TestTimers
 import app.recipefork.app.timer.TimerTags
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
@@ -247,7 +248,7 @@ class PreLaunchSweepTest {
         description = "A sheet cake for late summer.",
         servings = 8,
         tags = setOf(10L, 12L),
-        equipment = listOf("Oven", "Baking tray 30 × 40 cm", "Mixing bowl"),
+        equipment = listOf("Oven", "Baking tray 30 × 40 cm", "Mixing bowl").map(EquipmentItem::free),
         ingredients = listOf(
             grams(0, "flour", 250),
             grams(1, "butter", 125, note = "cold"),
@@ -274,7 +275,7 @@ class PreLaunchSweepTest {
 
     /** An own recipe that cannot be changed, with its equipment: the editor shows it frozen. */
     private val published = Recipe.create(now.minusSeconds(7200), owner = null)
-        .copy(title = "Apple pie", servings = 6, equipment = listOf("Oven", "Pie dish 24 cm"))
+        .copy(title = "Apple pie", servings = 6, equipment = listOf("Oven", "Pie dish 24 cm").map(EquipmentItem::free))
         .inState(RecipeState.PUBLISHED)
 
     private fun found(title: String, minutesAgo: Long): Recipe =

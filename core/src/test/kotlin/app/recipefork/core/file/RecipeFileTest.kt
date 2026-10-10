@@ -1,5 +1,6 @@
 package app.recipefork.core.file
 
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
@@ -108,18 +109,18 @@ class RecipeFileTest {
         assertEquals(content, RecipeFile.decode(RecipeFile.encode(content)))
     }
 
-    // The document carries format_version 4 and the recipe's every field, in plain JSON a reader can check.
+    // The document carries format_version 5 and the recipe's every field, in plain JSON a reader can check.
     @Test
     fun theDocumentCarriesItsVersionAndTheRecipe() {
-        val original = recipe().copy(equipment = listOf("Pot"))
+        val original = recipe().copy(equipment = listOf(EquipmentItem.free("Pot")))
         val json = parse(RecipeFileContent.of(original, null, null))
-        assertEquals(4, json["format_version"]!!.jsonPrimitive.int)
+        assertEquals(5, json["format_version"]!!.jsonPrimitive.int)
         val r = json["recipe"]!!.jsonObject
         assertEquals(original.id.value, r["id"]!!.jsonPrimitive.content)
         assertEquals("ru", r["language"]!!.jsonPrimitive.content)
         assertEquals(listOf(3, 7), r["tags"]!!.jsonArray.map { it.jsonPrimitive.int })
         assertEquals(4, r["servings"]!!.jsonPrimitive.int)
-        assertEquals(listOf("Pot"), r["equipment"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("Pot"), r["equipment"]!!.jsonArray.map { it.jsonObject["free_text_name"]!!.jsonPrimitive.content })
         val piece = r["ingredients"]!!.jsonArray[1].jsonObject
         assertEquals("piece", piece["unit_type"]!!.jsonPrimitive.content)
         assertEquals("3/2", piece["quantity"]!!.jsonPrimitive.content)
@@ -213,9 +214,9 @@ class RecipeFileTest {
     @Test
     fun aLaterFormatIsRefused() {
         val later = RecipeFile.encode(RecipeFileContent.of(recipe(), null, null))
-            .replace("\"format_version\": 4", "\"format_version\": 5")
-        assertTrue("\"format_version\": 5" in later)
-        assertEquals(5, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
+            .replace("\"format_version\": 5", "\"format_version\": 6")
+        assertTrue("\"format_version\": 6" in later)
+        assertEquals(6, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
     }
 
     @Test
@@ -231,7 +232,7 @@ class RecipeFileTest {
     }
 
     // A step's part of an ingredient is carried in the document — an exact fraction in a unit named as a row's is —
-    // and reads back; the format is version 4. A part in a unit the format does not name does not parse.
+    // and reads back; the format is version 5. A part in a unit the format does not name does not parse.
     @Test
     fun aPartOfAnIngredientIsWrittenAndReadBack() {
         val parted = recipe().copy(
@@ -248,7 +249,7 @@ class RecipeFileTest {
         val share = references[1].jsonObject["share"]!!.jsonObject
         assertEquals("1/2", share["quantity"]!!.jsonPrimitive.content)
         assertEquals("piece", share["unit"]!!.jsonPrimitive.content)
-        assertEquals(4, parse(content)["format_version"]!!.jsonPrimitive.int)
+        assertEquals(5, parse(content)["format_version"]!!.jsonPrimitive.int)
         assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(written.replace("\"piece\"\n", "\"furlong\"\n")) }
         assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(written.replace("\"1/2\"", "\"1/0\"")) }
     }
@@ -338,52 +339,104 @@ class RecipeFileTest {
     @Test
     fun aTimerInAnotherFormatsShapeIsRefused() {
         val content = RecipeFileContent.of(recipe(), null, null)
-        val format4 = RecipeFile.encode(content)
-        val format4WithOneTimer = format4.replace("\"timers\": [", "\"timer\": {\"minutes\": 5},\n\"timers\": [")
-        assertTrue("\"timer\": {" in format4WithOneTimer)
-        assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(format4WithOneTimer) }
-        val format2WithTimers = format4.replace("\"format_version\": 4", "\"format_version\": 2")
+        val format5 = RecipeFile.encode(content)
+        val format5WithOneTimer = format5.replace("\"timers\": [", "\"timer\": {\"minutes\": 5},\n\"timers\": [")
+        assertTrue("\"timer\": {" in format5WithOneTimer)
+        assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(format5WithOneTimer) }
+        val format2WithTimers = format5.replace("\"format_version\": 5", "\"format_version\": 2")
         assertTrue("\"format_version\": 2" in format2WithTimers)
         assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(format2WithTimers) }
         // A format-2 step whose list is empty holds no timer of format 3's shape, so it reads.
-        val format2 = oneTimerFormat(format4, 2)
+        val format2 = oneTimerFormat(format5, 2)
         val emptyList = format2.replace("\"text\": \"Season and serve\"", "\"text\": \"Season and serve\", \"timers\": []")
         assertTrue("\"timers\": []" in emptyList)
         assertEquals(content, RecipeFile.decode(emptyList))
     }
 
-    // The equipment is written as a list of lines, in order, and read back so; a recipe with none writes an empty list.
+    // Each item is written as an ingredient's name is — an entry with its labels and its qualifier, or free text — in
+    // order, and read back so; a recipe with none writes an empty list.
     @Test
     fun theEquipmentIsWrittenAndReadBackInOrder() {
-        val equipped = recipe().copy(equipment = listOf("Oven", "Frying pan 26 cm", "Whisk"))
-        val content = RecipeFileContent.of(equipped, null, null)
+        val equipped = recipe().copy(
+            equipment = listOf(EquipmentItem.entry(10202), EquipmentItem.entry(10001, "26 cm"), EquipmentItem.free("Grandma's whisk"), EquipmentItem.entry(10999)),
+        )
+        val labels = mapOf(10202L to EntryLabels("Духовка", "Oven"), 10001L to EntryLabels("Сковорода", "Frying pan"))
+        val content = RecipeFileContent.of(equipped, null, null, labels::get)
         assertEquals(equipped.equipment, content.equipment)
+        // An entry whose labels are not known is written without them.
+        assertEquals(labels, content.equipmentLabels)
         val read = RecipeFile.decode(RecipeFile.encode(content))
         assertEquals(content, read)
-        assertEquals(listOf("Oven", "Frying pan 26 cm", "Whisk"), read.equipment)
-        val written = parse(content)["recipe"]!!.jsonObject["equipment"]!!.jsonArray.map { it.jsonPrimitive.content }
-        assertEquals(listOf("Oven", "Frying pan 26 cm", "Whisk"), written)
+        val written = parse(content)["recipe"]!!.jsonObject["equipment"]!!.jsonArray.map { it.jsonObject }
+        assertEquals(listOf("10202", "10001", null, "10999"), written.map { it["dictionary_entry"]?.jsonPrimitive?.content })
+        assertEquals(listOf("Oven", "Frying pan", null, null), written.map { it["labels"]?.jsonObject?.get("en")?.jsonPrimitive?.content })
+        assertEquals(listOf("Духовка", "Сковорода", null, null), written.map { it["labels"]?.jsonObject?.get("ru")?.jsonPrimitive?.content })
+        assertEquals(listOf(null, "26 cm", null, null), written.map { it["qualifier"]?.jsonPrimitive?.content })
+        assertEquals(listOf(null, null, "Grandma's whisk", null), written.map { it["free_text_name"]?.jsonPrimitive?.content })
         assertEquals(0, parse(RecipeFileContent.of(recipe(), null, null))["recipe"]!!.jsonObject["equipment"]!!.jsonArray.size)
+    }
+
+    // Format 5 names its items itself: free text stays free text, whatever entry its text might name.
+    @Test
+    fun aFormat5ItemIsReadAsItIsNamed() {
+        val content = RecipeFileContent.of(recipe().copy(equipment = listOf(EquipmentItem.free("Oven"))), null, null)
+        val read = RecipeFile.decode(RecipeFile.encode(content)) { 10202 }
+        assertEquals(listOf(EquipmentItem.free("Oven")), read.equipment)
+    }
+
+    // Each item of format 4 is its text, read trimmed: the entry the matcher finds for the whole text, with no
+    // qualifier, or free text; an item that is no text does not parse — nor does a format-5 item that is.
+    @Test
+    fun aFormat4ItemIsItsTextAndFindsItsEntry() {
+        val format4 = textFormat(RecipeFile.encode(RecipeFileContent.of(recipe(), null, null)), listOf("  Oven ", "Frying pan 26 cm"))
+        assertTrue("\"format_version\": 4" in format4 && "\"  Oven \"" in format4)
+        val asked = mutableListOf<String>()
+        val read = RecipeFile.decode(format4) { text -> asked += text; 10202L.takeIf { text == "Oven" } }
+        assertEquals(listOf("Oven", "Frying pan 26 cm"), asked)
+        assertEquals(listOf(EquipmentItem.entry(10202), EquipmentItem.free("Frying pan 26 cm")), read.equipment)
+        assertEquals(emptyList(), RecipeFileCheck.problems(read))
+        assertEquals(listOf(EquipmentItem.free("Oven"), EquipmentItem.free("Frying pan 26 cm")), RecipeFile.decode(format4).equipment)
+
+        assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(format4.replace("\"  Oven \"", "{\"free_text_name\": \"Oven\"}")) }
+        val format5WithText = textFormat(RecipeFile.encode(RecipeFileContent.of(recipe(), null, null)), listOf("Oven"), version = 5)
+        assertTrue("\"format_version\": 5" in format5WithText && "\"Oven\"" in format5WithText)
+        assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(format5WithText) }
     }
 
     // An item is read trimmed, as a note is; one blank or long once trimmed is kept for the check, not the reader, to refuse.
     @Test
     fun anItemIsReadTrimmedAndTheCheckRefusesABlankOrLongOne() {
-        val written = RecipeFile.encode(RecipeFileContent.of(recipe().copy(equipment = listOf("@@", "Pan")), null, null))
+        val written = RecipeFile.encode(RecipeFileContent.of(recipe().copy(equipment = listOf(EquipmentItem.free("@@"), EquipmentItem.free("Pan"))), null, null))
         val untrimmed = RecipeFile.decode(written.replace("\"@@\"", "\"  Oven \\t\""))
-        assertEquals(listOf("Oven", "Pan"), untrimmed.equipment)
+        assertEquals(listOf(EquipmentItem.free("Oven"), EquipmentItem.free("Pan")), untrimmed.equipment)
         assertEquals(emptyList<String>(), equipmentProblems(untrimmed))
         val blank = RecipeFile.decode(written.replace("\"@@\"", "\"   \""))
-        assertEquals(listOf("", "Pan"), blank.equipment)
+        assertEquals(listOf(EquipmentItem.free(""), EquipmentItem.free("Pan")), blank.equipment)
         assertEquals(listOf("equipment 0 is blank or untrimmed"), equipmentProblems(blank))
         val long = RecipeFile.decode(written.replace("\"@@\"", "\" ${"p".repeat(41)} \""))
-        assertEquals(listOf("p".repeat(41), "Pan"), long.equipment)
+        assertEquals(listOf(EquipmentItem.free("p".repeat(41)), EquipmentItem.free("Pan")), long.equipment)
         assertEquals(listOf("equipment 0 is over 40 characters"), equipmentProblems(long))
         // Forty characters once trimmed pass, whatever the spaces around them.
         assertEquals(emptyList<String>(), equipmentProblems(RecipeFile.decode(written.replace("\"@@\"", "\"  ${"p".repeat(40)}  \""))))
+        // So in format 4, where an item is its text.
+        val format4 = textFormat(written, listOf("@@", "Pan"))
+        assertEquals(listOf("equipment 0 is blank or untrimmed"), equipmentProblems(RecipeFile.decode(format4.replace("\"@@\"", "\"   \""))))
+        assertEquals(listOf("equipment 0 is over 40 characters"), equipmentProblems(RecipeFile.decode(format4.replace("\"@@\"", "\" ${"p".repeat(41)} \""))))
+        // A qualifier is read trimmed, and one of nothing but spaces is none.
+        val qualified = RecipeFile.encode(RecipeFileContent.of(recipe().copy(equipment = listOf(EquipmentItem.entry(1, "@@"))), null, null))
+        assertEquals(listOf(EquipmentItem.entry(1, "26 cm")), RecipeFile.decode(qualified.replace("\"@@\"", "\" 26 cm \"")).equipment)
+        assertEquals(listOf(EquipmentItem(1, null, null)), RecipeFile.decode(qualified.replace("\"@@\"", "\"  \"")).equipment)
     }
 
     private fun equipmentProblems(content: RecipeFileContent) = RecipeFileCheck.problems(content).filter { "equipment" in it }
+
+    /** [document] as format 4 writes it — or as format [version] — its equipment the lines [items]. */
+    private fun textFormat(document: String, items: List<String>, version: Int = 4): String {
+        val json = Json.parseToJsonElement(document).jsonObject
+        val recipe = JsonObject(json["recipe"]!!.jsonObject + ("equipment" to JsonArray(items.map(::JsonPrimitive))))
+        val rewritten = JsonObject(json + mapOf("format_version" to JsonPrimitive(version), "recipe" to recipe))
+        return Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), rewritten)
+    }
 
     // A document of format 3 — before equipment — still reads, with none.
     @Test
@@ -407,16 +460,16 @@ class RecipeFileTest {
     // empty list holds none, and reads.
     @Test
     fun equipmentInAFormatBefore4IsRefused() {
-        val written = RecipeFile.encode(RecipeFileContent.of(recipe().copy(equipment = listOf("Pot")), null, null))
-        assertEquals(listOf("Pot"), RecipeFile.decode(written).equipment)
-        val format3 = written.replace("\"format_version\": 4", "\"format_version\": 3")
+        val written = RecipeFile.encode(RecipeFileContent.of(recipe().copy(equipment = listOf(EquipmentItem.free("Pot"))), null, null))
+        assertEquals(listOf(EquipmentItem.free("Pot")), RecipeFile.decode(written).equipment)
+        val format3 = written.replace("\"format_version\": 5", "\"format_version\": 3")
         assertTrue("\"format_version\": 3" in format3)
         assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(format3) }
         val format1 = oneTimerFormat(written, 1).replace("\"recipe\": {", "\"recipe\": {\"equipment\": [\"Pot\"],")
         assertTrue("\"equipment\": [\"Pot\"]" in format1)
         assertFailsWith<UnreadableRecipeFile> { RecipeFile.decode(format1) }
         val format3Empty = RecipeFile.encode(RecipeFileContent.of(recipe(), null, null))
-            .replace("\"format_version\": 4", "\"format_version\": 3")
+            .replace("\"format_version\": 5", "\"format_version\": 3")
         assertTrue("\"equipment\": []" in format3Empty && "\"format_version\": 3" in format3Empty)
         assertEquals(emptyList(), RecipeFile.decode(format3Empty).equipment)
     }

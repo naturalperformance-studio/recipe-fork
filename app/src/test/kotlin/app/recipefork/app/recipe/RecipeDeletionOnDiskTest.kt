@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.Media
@@ -58,7 +59,7 @@ class RecipeDeletionOnDiskTest {
             Step(1, "Salt them", listOf(IngredientReference(1, 0))),
         ),
         media = listOf(Media("m-$title", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)),
-        equipment = listOf("Pot", "Sieve"),
+        equipment = listOf("Pot", "Sieve").map(EquipmentItem::free),
     )
 
     private fun rows(database: BookDatabase, recipe: Recipe): Map<String, Int> =

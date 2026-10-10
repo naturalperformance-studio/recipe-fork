@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.RecipePart
@@ -42,11 +43,18 @@ import app.recipefork.core.recipe.RecipePart
  * and marked on leaving it (FLOW-028); one left blank goes. The keyboard's Next walks the items, then [onPastLast] —
  * the ingredient list's first item; with none ([onPastLast] null), the last item says Done.
  *
- * A frozen recipe shows its items as text, and nothing where it lists none.
+ * Each item reads as [shown] gives it: an entry's label and its qualifier, or its free text; typing into an entry's item
+ * makes it the text typed. A frozen recipe shows its items as text, and nothing where it lists none.
  */
 @Composable
-internal fun Equipment(recipe: Recipe, editor: RecipeEditor, focus: RowFocus, onPastLast: (() -> Unit)?) {
-    val items = recipe.equipment
+internal fun Equipment(
+    recipe: Recipe,
+    editor: RecipeEditor,
+    focus: RowFocus,
+    onPastLast: (() -> Unit)?,
+    shown: (EquipmentItem) -> String = { it.shown(null) },
+) {
+    val items = recipe.equipment.map(shown)
     if (!recipe.state.editable) {
         if (items.isNotEmpty()) ReadOnlyEquipment(items)
         return
@@ -57,7 +65,7 @@ internal fun Equipment(recipe: Recipe, editor: RecipeEditor, focus: RowFocus, on
             // What the screen holds for an item — its focus — stays with it as items before it go or move.
             key(editor.equipmentKey(index)) {
                 val next = if (index < items.lastIndex) ({ focus.ask(index + 1) }) else onPastLast
-                EquipmentItem(index, items.size, item, editor, focus, next)
+                EquipmentLine(index, items.size, item, editor, focus, next)
             }
         }
         val full by editor.equipmentStatement.collectAsState()
@@ -100,7 +108,7 @@ private fun EquipmentHeading() {
  * keyboard's Next goes; with none, the field says Done.
  */
 @Composable
-private fun EquipmentItem(index: Int, count: Int, item: String, editor: RecipeEditor, focus: RowFocus, onNext: (() -> Unit)?) {
+private fun EquipmentLine(index: Int, count: Int, item: String, editor: RecipeEditor, focus: RowFocus, onNext: (() -> Unit)?) {
     val key = editor.equipmentKey(index)
     val requester = remember { FocusRequester() }
     focus.TakenBy(index, requester)

@@ -64,11 +64,26 @@ object RecipeFileCheck {
             }
         }
 
-        // The equipment: at most fifteen items, each trimmed, not blank, and short.
+        // The equipment: at most fifteen items, each named by an entry or by free text, never both (as DOM-009 names an
+        // ingredient); free text and a qualifier trimmed and not blank; and each reading as a short line — the entry's
+        // label in either language with its qualifier, where the file gives the labels.
         check(content.equipment.size <= MAX_EQUIPMENT) { "more than $MAX_EQUIPMENT items of equipment" }
         content.equipment.forEachIndexed { index, item ->
-            check(item.isNotBlank() && item == item.trim()) { "equipment $index is blank or untrimmed" }
-            check(item.length <= MAX_EQUIPMENT_NAME) { "equipment $index is over $MAX_EQUIPMENT_NAME characters" }
+            val at = "equipment $index"
+            check(item.isNamed) { "$at is named by both an entry and free text, or by neither" }
+            check(item.dictionaryEntry == null || item.dictionaryEntry >= 0) { "$at names an entry that is none" }
+            check(item.qualifier == null || item.dictionaryEntry != null) { "$at qualifies no entry" }
+            listOfNotNull(item.freeTextName, item.qualifier).forEach { text ->
+                check(text.isNotBlank() && text == text.trim()) { "$at is blank or untrimmed" }
+            }
+            val labels = item.dictionaryEntry?.let(content.equipmentLabels::get)
+            val shown = if (labels != null) listOf(item.shown(labels.ru), item.shown(labels.en)) else listOf(item.shown(null))
+            check(shown.all { it.length <= MAX_EQUIPMENT_NAME }) { "$at is over $MAX_EQUIPMENT_NAME characters" }
+        }
+        content.equipmentLabels.forEach { (id, labels) ->
+            check(listOf(labels.ru, labels.en).all { it.isNotBlank() && it == it.trim() && it.length <= MAX_EQUIPMENT_NAME }) {
+                "the labels of equipment entry $id are not labels"
+            }
         }
 
         val ingredients = content.ingredients

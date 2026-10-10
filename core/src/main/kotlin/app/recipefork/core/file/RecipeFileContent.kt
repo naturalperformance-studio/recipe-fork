@@ -1,5 +1,6 @@
 package app.recipefork.core.file
 
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.MediaAttachment
@@ -32,7 +33,12 @@ data class RecipeFileContent(
     /** The headings of the ingredient list, in order (DOM-022); empty for a list with no groups. */
     val ingredientGroups: List<IngredientGroup> = emptyList(),
     /** What the recipe is cooked with, in order; empty for none. */
-    val equipment: List<String> = emptyList(),
+    val equipment: List<EquipmentItem> = emptyList(),
+    /**
+     * The labels of the dictionary entries [equipment] names, by entry id, as the exporting device held them; an entry
+     * whose labels were not known is absent.
+     */
+    val equipmentLabels: Map<Long, EntryLabels> = emptyMap(),
 ) {
     companion object {
         /**
@@ -40,9 +46,15 @@ data class RecipeFileContent(
          * a fork of it was made from — is named as stated, so that a re-exported import keeps its lineage
          * (FLOW-063 (6)) and a fork of a found recipe names it even once removed (FLOW-065 (6)). Otherwise
          * [parentInBook], its direct parent when the book holds it, gives the title. [ownerNickname] is the nickname
-         * of the account whose recipe it is, null in the pool.
+         * of the account whose recipe it is, null in the pool. [equipmentLabels] gives the labels of an equipment entry
+         * the recipe names, null where they are not known.
          */
-        fun of(recipe: Recipe, parentInBook: Recipe?, ownerNickname: String?): RecipeFileContent {
+        fun of(
+            recipe: Recipe,
+            parentInBook: Recipe?,
+            ownerNickname: String?,
+            equipmentLabels: (Long) -> EntryLabels? = { null },
+        ): RecipeFileContent {
             val parent = recipe.parent?.let { id ->
                 val stated = recipe.statedParent
                 val held = parentInBook?.takeIf { it.id == id }
@@ -63,11 +75,19 @@ data class RecipeFileContent(
                 steps = recipe.steps,
                 ingredientGroups = recipe.ingredientGroups,
                 equipment = recipe.equipment,
+                equipmentLabels = recipe.equipment.mapNotNull { it.dictionaryEntry }.distinct()
+                    .mapNotNull { id -> equipmentLabels(id)?.let { id to it } }.toMap(),
                 author = recipe.statedAuthor ?: ownerNickname,
                 parent = parent,
             )
         }
     }
+}
+
+/** A dictionary entry's label in Russian and in English (L10N-001). */
+data class EntryLabels(val ru: String, val en: String) {
+    /** The label in [language]; English where no language is declared. */
+    fun of(language: RecipeLanguage?): String = if (language == RecipeLanguage.RU) ru else en
 }
 
 /** A recipe's direct parent: its identity always, its title and its author's nickname where known. */

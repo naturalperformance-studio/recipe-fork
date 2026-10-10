@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.BookName
 import app.recipefork.app.editor.PATIENCE_MS
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
@@ -133,7 +134,7 @@ class DoneMarksStoreTest {
     fun theMarksStoredBeforeTheEquipmentStillRead() {
         val held = ConcurrentHashMap<String, String>()
         val store = DoneMarks(held::get) { key, value -> if (value == null) held.remove(key) else held[key] = value }
-        val withEquipment = recipe.copy(equipment = listOf("Kettle", "Teapot"))
+        val withEquipment = recipe.copy(equipment = listOf("Kettle", "Teapot").map(EquipmentItem::free))
         val key = "${BookName.Pool.fileName}/${recipe.id.value}"
         val ingredient = recipe.ingredients[0].toString().hashCode()
         val step = recipe.steps[1].toString().hashCode()
@@ -146,7 +147,7 @@ class DoneMarksStoreTest {
         assertFalse(marks.done(MarkedPart.EQUIPMENT, 0))
         marks.toggle(MarkedPart.EQUIPMENT, 1)
         assertEquals(
-            setOf(DoneMark.of(recipe.ingredients[0]), DoneMark.of(recipe.steps[1]), DoneMark.ofEquipment(1, "Teapot")),
+            setOf(DoneMark.of(recipe.ingredients[0]), DoneMark.of(recipe.steps[1]), DoneMark.ofEquipment(1, EquipmentItem.free("Teapot"))),
             store.held(BookName.Pool, recipe.id),
         )
         assertTrue("the old marks are written as they were", held.getValue(key).split(";").containsAll(listOf("i:0:$ingredient", "s:1:$step")))

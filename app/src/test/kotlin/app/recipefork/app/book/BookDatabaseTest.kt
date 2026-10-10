@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
@@ -208,20 +209,20 @@ class BookDatabaseTest {
     fun theEquipmentSurvivesTheBook() = runBlocking {
         val recipe = Recipe.create(now, owner = null).copy(
             title = "Pancakes",
-            equipment = listOf("Frying pan 26 cm", "Whisk", "Ladle"),
+            equipment = listOf("Frying pan 26 cm", "Whisk", "Ladle").map(EquipmentItem::free),
         )
         repository.save(recipe)
         val read = repository.get(recipe.id)!!
         assertEquals(recipe, read)
-        assertEquals(listOf("Frying pan 26 cm", "Whisk", "Ladle"), read.equipment)
+        assertEquals(listOf("Frying pan 26 cm", "Whisk", "Ladle").map(EquipmentItem::free), read.equipment)
 
-        val other = recipe.copy(equipment = listOf("Ladle", "Frying pan 26 cm"))
+        val other = recipe.copy(equipment = listOf("Ladle", "Frying pan 26 cm").map(EquipmentItem::free))
         repository.save(other)
-        assertEquals(listOf("Ladle", "Frying pan 26 cm"), repository.get(recipe.id)!!.equipment)
+        assertEquals(listOf("Ladle", "Frying pan 26 cm").map(EquipmentItem::free), repository.get(recipe.id)!!.equipment)
         assertEquals(2, equipmentRows())
 
         repository.save(other.copy(equipment = emptyList()))
-        assertEquals(emptyList<String>(), repository.get(recipe.id)!!.equipment)
+        assertEquals(emptyList<EquipmentItem>(), repository.get(recipe.id)!!.equipment)
         assertEquals(0, equipmentRows())
 
         repository.save(recipe)
@@ -229,13 +230,31 @@ class BookDatabaseTest {
         assertTrue(repository.delete(recipe.id))
         assertEquals(0, equipmentRows())
         repository.save(recipe.copy(equipment = emptyList()))
-        assertEquals(emptyList<String>(), repository.get(recipe.id)!!.equipment)
+        assertEquals(emptyList<EquipmentItem>(), repository.get(recipe.id)!!.equipment)
+    }
+
+    // An item is kept as it is named: an entry with its qualifier, an entry with none, free text — in order.
+    @Test
+    fun anItemIsKeptAsItIsNamed() = runBlocking {
+        val items = listOf(EquipmentItem.entry(10001, "26 cm"), EquipmentItem.entry(10202), EquipmentItem.free("Grandma's whisk"))
+        val recipe = Recipe.create(now, owner = null).copy(title = "Pancakes", equipment = items)
+        repository.save(recipe)
+        assertEquals(items, repository.get(recipe.id)!!.equipment)
+        database.openHelper.readableDatabase
+            .query("select dictionary_entry, qualifier, free_text_name from recipe_equipment order by position").use { rows ->
+                val read = buildList {
+                    while (rows.moveToNext()) {
+                        add(listOf(if (rows.isNull(0)) null else rows.getLong(0), rows.getString(1), rows.getString(2)))
+                    }
+                }
+                assertEquals(listOf(listOf(10001L, "26 cm", null), listOf(10202L, null, null), listOf(null, null, "Grandma's whisk")), read)
+            }
     }
 
     // A screen showing a recipe sees a change of its equipment alone: the equipment's table is one of the recipe's.
     @Test
     fun aChangeOfTheEquipmentAloneReachesWhatShowsTheRecipe() = runBlocking {
-        val recipe = Recipe.create(now, owner = null).copy(title = "Pancakes", equipment = listOf("Whisk"))
+        val recipe = Recipe.create(now, owner = null).copy(title = "Pancakes", equipment = listOf("Whisk").map(EquipmentItem::free))
         repository.save(recipe)
         val seen = Channel<Recipe?>(Channel.UNLIMITED)
         val showing = launch { repository.observe(recipe.id).collect { seen.send(it) } }
@@ -243,11 +262,11 @@ class BookDatabaseTest {
             assertEquals(recipe, withTimeout(10_000) { seen.receive() })
             // Written past the repository, to the equipment's table alone.
             database.openHelper.writableDatabase.execSQL(
-                "insert into recipe_equipment (recipe_id, position, name) values (?, 1, 'Ladle')",
+                "insert into recipe_equipment (recipe_id, position, free_text_name) values (?, 1, 'Ladle')",
                 arrayOf(recipe.id.value),
             )
             database.invalidationTracker.refreshAsync()
-            assertEquals(listOf("Whisk", "Ladle"), withTimeout(10_000) { seen.receive() }?.equipment)
+            assertEquals(listOf("Whisk", "Ladle").map(EquipmentItem::free), withTimeout(10_000) { seen.receive() }?.equipment)
         } finally {
             showing.cancel()
         }

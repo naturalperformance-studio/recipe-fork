@@ -186,6 +186,43 @@ data class Ingredient(
 }
 
 /**
+ * An item of the equipment a recipe is cooked with, named as an ingredient is (DOM-009): by an entry of the equipment
+ * dictionary, narrowed by an optional [qualifier] shown after it ("Frying pan" + "26 cm"), or by words of the author's
+ * own ([freeTextName]), never both. It reads as its [shown] text: the entry's label in the interface language and its
+ * qualifier, or its free text.
+ *
+ * On a recipe that passes the rules the free text and the qualifier are trimmed and not blank, and the shown text is at
+ * most [RecipeBounds.MAX_EQUIPMENT_NAME] characters. The editor holds an item being typed as free text as it stands.
+ */
+data class EquipmentItem(
+    /** The equipment dictionary entry's id; null exactly when [freeTextName] is present. */
+    val dictionaryEntry: Long?,
+    /** What narrows the entry ("26 cm"); null for nothing, and always null for free text. */
+    val qualifier: String? = null,
+    /** The author's own words, for an item no entry names. */
+    val freeTextName: String? = null,
+) {
+    /** Named by an entry or by the author's own words, exactly one of the two. */
+    val isNamed: Boolean get() = (dictionaryEntry != null) != (freeTextName != null)
+
+    /**
+     * The text the item reads as: for an entry, its [label] — in the interface language, null where it is not known —
+     * followed by the qualifier; otherwise its free text.
+     */
+    fun shown(label: String?): String =
+        if (dictionaryEntry != null) listOfNotNull(label, qualifier).joinToString(" ") else freeTextName.orEmpty()
+
+    companion object {
+        /** The item [entry] names, narrowed by [qualifier]: trimmed, and none when blank. */
+        fun entry(entry: Long, qualifier: String? = null) =
+            EquipmentItem(entry, qualifier = qualifier?.trim()?.takeIf { it.isNotEmpty() })
+
+        /** The item the author's own [text] names, as it stands. */
+        fun free(text: String) = EquipmentItem(null, freeTextName = text)
+    }
+}
+
+/**
  * A heading in the ingredient list (DOM-022): the rows from [firstPosition] up to the next heading belong to the group
  * [name]; rows above the first heading belong to none. A group is presentation only: ingredients keep their positions,
  * so scaling, references, filters and search read them exactly as without groups.
@@ -248,12 +285,12 @@ data class Recipe(
     /** The headings of the ingredient list, in order (DOM-022); empty for a list with no groups. */
     val ingredientGroups: List<IngredientGroup> = emptyList(),
     /**
-     * What the recipe is cooked with ("Oven", "Frying pan 26 cm"), in the author's order; empty for none. On a recipe
-     * that passes the rules each item is trimmed, not blank and at most [RecipeBounds.MAX_EQUIPMENT_NAME] characters,
-     * and there are at most [RecipeBounds.MAX_EQUIPMENT]. The editor adds an item through [withEquipment], which refuses
-     * one more than that.
+     * What the recipe is cooked with ("Oven", "Frying pan" + "26 cm"), in the author's order; empty for none. Each item
+     * names a dictionary entry or is free text ([EquipmentItem]). On a recipe that passes the rules each item reads as
+     * at most [RecipeBounds.MAX_EQUIPMENT_NAME] characters, and there are at most [RecipeBounds.MAX_EQUIPMENT]. The
+     * editor adds an item through [withEquipment], which refuses one more than that.
      */
-    val equipment: List<String> = emptyList(),
+    val equipment: List<EquipmentItem> = emptyList(),
 ) {
     init {
         require(servings == null || servings >= 1) { "servings must be 1 or more" }
@@ -297,11 +334,15 @@ data class Recipe(
     )
 
     companion object {
-        /** The item of equipment the author's [typed] text gives: trimmed, and none when blank. */
-        fun equipmentItemOf(typed: String): String? = typed.trim().takeIf { it.isNotEmpty() }
+        /** The item of equipment the author's [typed] text gives: free text, trimmed, and none when blank. */
+        fun equipmentItemOf(typed: String): EquipmentItem? = typed.trim().takeIf { it.isNotEmpty() }?.let(EquipmentItem::free)
 
-        /** The equipment the author's [typed] lines give, in their order: each trimmed, the blank ones dropped. */
-        fun equipmentOf(typed: List<String>): List<String> = typed.mapNotNull(::equipmentItemOf)
+        /**
+         * The equipment the author's [items] settle to, in their order: free text trimmed, a blank one dropped; an item
+         * an entry names stays as it is.
+         */
+        fun equipmentOf(items: List<EquipmentItem>): List<EquipmentItem> =
+            items.mapNotNull { item -> if (item.dictionaryEntry != null) item else equipmentItemOf(item.freeTextName.orEmpty()) }
 
         /** An empty recipe in `local`, in the active book: the pool's when [owner] is null. */
         fun create(at: Instant, owner: AccountId?, parent: RecipeId? = null, id: RecipeId = RecipeId.mint()) =
