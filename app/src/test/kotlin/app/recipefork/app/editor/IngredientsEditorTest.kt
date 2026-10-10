@@ -244,7 +244,7 @@ class IngredientsEditorTest {
     }
 
     // FLOW-023 (1, 7): a row's sheet holds exactly three fields and the note, and no unit type is ever shown. The row
-    // itself holds no field: its line opens the sheet, beside it its removal and its menu.
+    // itself holds no field and no action: its line opens the sheet, which holds the row's actions.
     @Test
     fun addIngredientAppendsARowOfExactlyThreeFieldsAndNoUnitType() {
         val id = writeANewRecipe()
@@ -257,21 +257,24 @@ class IngredientsEditorTest {
         val textFields = compose.onAllNodes(inSheet and hasSetTextAction()).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }
         assertEquals(listOf(EditorTags.ingredientName(0), IngredientNoteTags.field(0), EditorTags.ingredientQuantity(0)), textFields)
+        // Every control of the sheet, each tagged — it has no drag handle — in order: Done, the fields, then the row's
+        // actions; the only row moves nowhere.
         val actions = compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            .mapNotNull { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } }.toSet()
-        // Besides Material's own drag handle, untagged.
+            .map { it.config[SemanticsProperties.TestTag] }
         assertEquals(
-            setOf(
+            listOf(
                 IngredientSheetTags.DONE, EditorTags.ingredientName(0), IngredientNoteTags.field(0), EditorTags.ingredientQuantity(0),
-                EditorTags.ingredientUnit(0),
+                EditorTags.ingredientUnit(0), EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE),
+                EditorTags.ingredientAction(0, RowAction.INSERT_BELOW), EditorTags.ingredientAction(0, RowAction.GROUP_ABOVE),
+                EditorTags.ingredientRemove(0),
             ),
             actions,
         )
         val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(0)))
         assertEquals(0, compose.onAllNodes(inRow and hasSetTextAction()).fetchSemanticsNodes().size)
         assertEquals(
-            setOf(IngredientSheetTags.line(0), EditorTags.ingredientRemove(0), EditorTags.ingredientMenu(0)),
-            compose.onAllNodes(inRow and AccessibilityChecks.isInteractive).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }.toSet(),
+            listOf(IngredientSheetTags.line(0)),
+            compose.onAllNodes(inRow and AccessibilityChecks.isInteractive).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] },
         )
         assertEquals(string(R.string.editor_ingredient_unit), compose.textsOf(EditorTags.ingredientUnit(0)).first())
 
@@ -602,10 +605,10 @@ class IngredientsEditorTest {
             typeQuantity(position, quantity)
         }
         compose.closeIngredient()
-        // The remove control is an icon named for its row: the screen reader reads that name.
-        assertEquals(string(R.string.editor_ingredient_remove_action, 1), AccessibilityChecks.announcedLabel(node(EditorTags.ingredientRemove(0))))
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
-        compose.waitForIdle()
+        // The removal is the last action of the row's sheet, and says what it removes.
+        compose.openIngredient(0)
+        assertEquals(listOf(string(R.string.editor_ingredient_remove)), compose.textsOf(EditorTags.ingredientRemove(0)))
+        compose.removeIngredient(0)
         val rows = stored(id).ingredients
         assertEquals(listOf("flour", "water"), rows.map { it.freeTextName })
         assertEquals(listOf(0, 1), rows.map { it.position })
@@ -618,9 +621,8 @@ class IngredientsEditorTest {
         assertEquals("300", fieldText(EditorTags.ingredientQuantity(1)))
         compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.ingredient(2)).assertDoesNotExist()
-        compose.onNodeWithTag(EditorTags.ingredientRemove(1)).performScrollTo().performClick()
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
-        compose.waitForIdle()
+        compose.removeIngredient(1)
+        compose.removeIngredient(0)
         assertEquals(emptyList<Ingredient>(), stored(id).ingredients)
         compose.onNodeWithTag(EditorTags.ingredient(0)).assertDoesNotExist()
     }
@@ -632,7 +634,8 @@ class IngredientsEditorTest {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.SERVINGS).performTextInput("4")
         // A complete row, a row with no quantity, one off its grid, one that reads as no number, one to taste and a
-        // piece whose divisibility is not given; and a row with nothing in it.
+        // piece whose divisibility is not given; and a row with nothing in it — one no longer new, which closing its
+        // sheet does not take away: the row added last, once a row is put above it from its sheet.
         val rows = listOf(
             Triple("мука", QuantityUnit.KILOGRAM, "0.5"),
             Triple("сахар", QuantityUnit.GRAM, ""),
@@ -648,7 +651,11 @@ class IngredientsEditorTest {
             if (unit != QuantityUnit.GRAM) chooseUnit(position, unit)
             if (quantity.isNotEmpty()) typeQuantity(position, quantity)
         }
+        compose.onIngredient(rows.lastIndex, RowAction.INSERT_ABOVE)
+        // The row put above opens in the sheet, holding nothing: closed so, it goes again.
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientName(rows.lastIndex)) }
         compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == rows.size }
         val before = stored(id)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.backThroughTheCard()

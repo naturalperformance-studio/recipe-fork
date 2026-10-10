@@ -101,18 +101,19 @@ class IngredientBlocksAlignTest(private val handleRight: Boolean) {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.groupName(2)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.groupName(2)).performTextInput("To serve")
         compose.waitForIdle()
+        compose.closeGroup()
 
         // The blocks that cannot move have no handle.
         assertTrue(compose.onAllNodes(hasTestTag(EditorTags.ingredientHandle(4))).fetchSemanticsNodes().isEmpty())
         assertTrue(compose.onAllNodes(hasTestTag(EditorTags.groupHandle(2))).fetchSemanticsNodes().isEmpty())
 
-        // Every row's line starts at one edge, whether its block moves or not, and ends at one edge before its icons;
-        // every heading's name starts at one edge, 8 dp in from where the lines start, as its field is padded.
+        // Every row's line starts at one edge, whether its block moves or not, and ends at one edge; every heading's name
+        // starts where the lines start.
         val rows = (0..4).map { IngredientSheetTags.line(it) }
-        val headings = (0..2).map { EditorTags.groupName(it) }
+        val headings = (0..2).map { GroupSheetTags.line(it) }
         val start = left(rows[0])
         rows.forEach { assertEquals("$it starts with the others", start, left(it), 0.5f) }
-        headings.forEach { assertEquals("$it starts with the others", start + 8 * compose.density.density, left(it), 0.5f) }
+        headings.forEach { assertEquals("$it starts with the others", start, left(it), 0.5f) }
         val end = right(rows[0])
         rows.forEach { assertEquals("$it ends with the others", end, right(it), 0.5f) }
     }

@@ -252,11 +252,11 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         assertTrue(exists(EditorTags.stepAction(1, RowAction.MOVE_DOWN)))
         compose.onNodeWithTag(EditorTags.stepMenu(1)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepAction(1, RowAction.MOVE_UP)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.ingredientMenu(1)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientAction(1, RowAction.MOVE_UP)) }
+        // An ingredient row's, in its sheet.
+        compose.openIngredient(1)
+        assertTrue(exists(EditorTags.ingredientAction(1, RowAction.MOVE_UP)))
         assertTrue(exists(EditorTags.ingredientAction(1, RowAction.MOVE_DOWN)))
-        compose.onNodeWithTag(EditorTags.ingredientMenu(1)).performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.ingredientAction(1, RowAction.MOVE_UP)), PATIENCE_MS)
+        compose.closeIngredient()
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 20)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 20)
     }
@@ -332,8 +332,10 @@ class RowDragEditorTest(private val handleRight: Boolean) {
         openDirectly(moved.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(4)), PATIENCE_MS)
         fun step(position: Int, action: RowAction) = onMenu(EditorTags.stepMenu(position), { EditorTags.stepAction(position, it) }, action)
-        fun row(position: Int, action: RowAction) =
-            onMenu(EditorTags.ingredientMenu(position), { EditorTags.ingredientAction(position, it) }, action)
+        fun row(position: Int, action: RowAction) {
+            compose.onIngredient(position, action)
+            compose.closeIngredient()
+        }
         step(3, RowAction.MOVE_UP)
         step(2, RowAction.MOVE_UP)
         (3 downTo 1).forEach { row(it, RowAction.MOVE_UP) }

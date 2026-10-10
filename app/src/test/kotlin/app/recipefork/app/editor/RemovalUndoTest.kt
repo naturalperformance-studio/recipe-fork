@@ -237,7 +237,7 @@ class RemovalUndoTest {
     @Test
     fun undoPutsAnIngredientBackWithItsReferences() {
         val recipe = open(recipe())
-        compose.onNodeWithTag(EditorTags.ingredientRemove(1)).performScrollTo().performClick()
+        compose.removeIngredient(1)
         compose.awaitStatement(context.getString(R.string.editor_ingredient_removed, 2))
         compose.waitUntil(PATIENCE_MS) { stored(recipe).ingredients.size == 2 }
         assertEquals(listOf(flour, salt.copy(position = 1)), stored(recipe).ingredients)

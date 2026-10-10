@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -20,21 +21,19 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalWindowInfo
-import kotlinx.coroutines.flow.first
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
@@ -90,6 +89,7 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.effectiveDivisible
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
@@ -163,6 +163,9 @@ internal fun ingredientLineText(row: Ingredient, dictionary: List<IngredientEntr
  *
  * The keyboard's Next goes name → note → quantity → the unit's menu; a unit picked from there closes the sheet, unless
  * the row then asks for its divisibility. Where [rows] asks for the row at [position], its name takes the focus.
+ *
+ * Under the fields stand the row's [actions] (FLOW-025, DOM-022): one that takes the author elsewhere — another row, a
+ * heading — leaves the fields first, as closing does; the removal closes the sheet, then removes the row.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -175,16 +178,21 @@ internal fun IngredientSheet(
     mode: Mode,
     rows: RowFocus,
     typed: TypedInSheet,
+    actions: List<SheetAction>,
     onClose: () -> Unit,
 ) {
+    CoversStatements()
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val at by rememberUpdatedState(position)
     // The sheet's own focus, which the fields are left by before it goes.
     var focus by remember { mutableStateOf<FocusManager?>(null) }
-    val close = {
+    val leave = {
         focus?.clearFocus()
         editor.leave(RecipePart.IngredientNote(at))
+    }
+    val close = {
+        leave()
         onClose()
     }
     val done = {
@@ -211,25 +219,7 @@ internal fun IngredientSheet(
         SideEffect { focus = manager }
         // Asked for — added, or reached by the keyboard's Next, or tapped with no name yet — the row's name takes the
         // focus as soon as the sheet is laid out, with the keyboard up.
-        val keyboard = LocalSoftwareKeyboardController.current
-        val window = LocalWindowInfo.current
-        // The sheet's own scope, so that the request outlives the ask it answers.
-        val focusing = rememberCoroutineScope()
-        if (rows.asked == position) {
-            LaunchedEffect(rows, position) {
-                rows.taken(position)
-                focusing.launch {
-                    withFrameNanos {}
-                    runCatching { chain.name.requestFocus() }
-                    // Asked once the field has started its input, and again once the sheet's window has the focus,
-                    // should that come after.
-                    withFrameNanos {}
-                    keyboard?.show()
-                    snapshotFlow { window.isWindowFocused }.first { it }
-                    keyboard?.show()
-                }
-            }
-        }
+        rows.TakenInSheet(position, chain.name)
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 stringResource(R.string.editor_ingredient_edit),
@@ -240,12 +230,64 @@ internal fun IngredientSheet(
                 Text(stringResource(R.string.editor_done))
             }
         }
-        Column(
-            Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            IngredientFields(position, row, editor, language, dictionary, mode, chain, entryDivisible, typed)
+        Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(bottom = 8.dp)) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                IngredientFields(position, row, editor, language, dictionary, mode, chain, entryDivisible, typed)
+            }
+            SheetActions(actions) { action -> scope.take(action, state, leave, onClose) }
         }
+    }
+}
+
+/**
+ * Does [action] of the sheet whose state is [state]: [leave] first where it [SheetAction.leaves] the sheet's fields; a
+ * removal once the sheet has gone down, after which the sheet is done ([onClose]).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun CoroutineScope.take(action: SheetAction, state: SheetState, leave: () -> Unit, onClose: () -> Unit) {
+    if (action.leaves) leave()
+    if (!action.destructive) return action.onClick()
+    launch { state.hide() }.invokeOnCompletion {
+        action.onClick()
+        onClose()
+    }
+}
+
+/**
+ * One action of a sheet: what it says, the tag tests find it by, and what a tap on it does. One that [leaves] the sheet
+ * for something else has its fields left first; a [destructive] one — a removal — says it in the error colour, leaves
+ * the fields, and is done once the sheet has gone down.
+ */
+internal class SheetAction(
+    val text: String,
+    val tag: String,
+    val leaves: Boolean = false,
+    val destructive: Boolean = false,
+    val onClick: () -> Unit,
+)
+
+/**
+ * A sheet's [actions] under its fields, apart from them by a divider: one list item each, at least 56 dp tall, its whole
+ * width the target, a removal in the error colour. Each is one tap, so nothing done by dragging is done only so
+ * (A11Y-006); a tap hands its action to [take].
+ */
+@Composable
+internal fun SheetActions(actions: List<SheetAction>, take: (SheetAction) -> Unit) {
+    if (actions.isEmpty()) return
+    HorizontalDivider(Modifier.padding(top = 12.dp, bottom = 4.dp))
+    actions.forEach { action ->
+        ListItem(
+            headlineContent = { Text(action.text) },
+            colors = ListItemDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                headlineColor = if (action.destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .clickable(role = Role.Button) { take(action) }
+                .testTag(action.tag),
+        )
     }
 }
 
@@ -711,5 +753,114 @@ private fun Divisibility(position: Int, row: Ingredient, editor: RecipeEditor) {
                     Text(stringResource(label), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 8.dp))
                 }
             }
+    }
+}
+
+/** The test tags of a group's heading read as its name, and of the sheet it opens in. */
+object GroupSheetTags {
+    const val SHEET = "editor-group-sheet"
+    const val DONE = "editor-group-sheet-done"
+
+    /** The heading's line: its name, or a placeholder while it has none; the heading's click target. */
+    fun line(index: Int) = "editor-group-$index-line"
+
+    /** The mark of the name over its limit, under the field in the sheet (FLOW-028). */
+    fun nameMark(index: Int) = "editor-group-$index-sheet-mark"
+}
+
+/**
+ * The heading at [index] — whose key is [key] — in a Material 3 bottom sheet, as small as an ingredient's (DOM-022):
+ * its name in a field, kept as typed however long and marked over [app.recipefork.core.recipe.RecipeBounds.MAX_GROUP_NAME]
+ * characters once left (FLOW-028), and under it its [actions]. Closed — by Done, a swipe down or Back — or left by the
+ * keyboard's Next for the group's first row ([onNext]; with no rows, the keyboard's Done closes the sheet), the name is
+ * settled: one left blank is no name ([RecipeEditor.settleGroupName]). Where [headings] asks for [index], the name takes
+ * the focus.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun GroupSheet(
+    index: Int,
+    key: Long,
+    name: String,
+    editor: RecipeEditor,
+    headings: RowFocus,
+    actions: List<SheetAction>,
+    onNext: (() -> Unit)?,
+    onClose: () -> Unit,
+) {
+    CoversStatements()
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    // The name the heading had as the sheet opened, which a name left blank takes back.
+    val entered = rememberSaveable { name }
+    var focus by remember { mutableStateOf<FocusManager?>(null) }
+    val leave: () -> Unit = { focus?.clearFocus() }
+    // By the heading's key, so it is this heading that is settled wherever it stands now.
+    val settle = {
+        leave()
+        editor.groupIndex(key)?.let { now ->
+            editor.leave(RecipePart.GroupName(now))
+            editor.settleGroupName(now, entered)
+        }
+    }
+    val close = {
+        settle()
+        onClose()
+    }
+    val done = {
+        leave()
+        scope.launch { state.hide() }.invokeOnCompletion { close() }
+        Unit
+    }
+    val requester = remember { FocusRequester() }
+    ModalBottomSheet(
+        onDismissRequest = close,
+        sheetState = state,
+        modifier = Modifier.testTag(GroupSheetTags.SHEET),
+        dragHandle = null,
+    ) {
+        val manager = LocalFocusManager.current
+        SideEffect { focus = manager }
+        headings.TakenInSheet(index, requester)
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.editor_group_edit),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f).semantics { heading() },
+            )
+            TextButton(onClick = done, modifier = Modifier.heightIn(min = 48.dp).testTag(GroupSheetTags.DONE)) {
+                Text(stringResource(R.string.editor_done))
+            }
+        }
+        Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(bottom = 8.dp)) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { editor.groupIndex(key)?.let { now -> editor.renameGroup(now, it) } },
+                    label = { Text(stringResource(R.string.editor_group_name)) },
+                    placeholder = { Text(stringResource(R.string.editor_group_name_example)) },
+                    singleLine = true,
+                    // Next goes on to the group's first row; a group with no rows yet ends the chain here.
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = if (onNext == null) ImeAction.Done else ImeAction.Next,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { done() },
+                        onNext = {
+                            settle()
+                            onNext?.invoke()
+                        },
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(requester)
+                        .then(leaving { editor.groupIndex(key)?.let { editor.leave(RecipePart.GroupName(it)) } })
+                        .testTag(EditorTags.groupName(index)),
+                )
+                BoundMark(editor, RecipePart.GroupName(index), GroupSheetTags.nameMark(index), gap = 4.dp, Modifier.padding(top = 4.dp))
+            }
+            SheetActions(actions) { action -> scope.take(action, state, leave, onClose) }
+        }
     }
 }

@@ -53,7 +53,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -103,6 +105,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -331,13 +335,29 @@ internal fun EditorStatementHost(host: SnackbarHostState, modifier: Modifier = M
 /**
  * What the editor says at its bottom, above the keyboard where it is open: one statement at a time, each going by
  * itself after a while or swiped away; a new one replaces the one shown. The screen reader reads each as it comes.
+ *
+ * A sheet standing in front of the editor ([cover]) would hide a statement, so none shows while one does: a statement
+ * said then waits until the sheet goes, and one showing as a sheet rises is taken away and shown afresh once it goes —
+ * an Undo is never let run out unseen.
  */
 internal class EditorStatements(private val host: SnackbarHostState, private val scope: CoroutineScope) {
     private var shown: Job? = null
 
+    /** How many sheets stand in front of the editor now. */
+    private var covers by mutableIntStateOf(0)
+
+    /** A sheet now stands in front of the editor, until [uncover]. */
+    fun cover() {
+        covers++
+    }
+
+    fun uncover() {
+        covers--
+    }
+
     fun say(text: String, duration: SnackbarDuration = SnackbarDuration.Long) {
         shown?.cancel()
-        shown = scope.launch { host.showSnackbar(text, duration = duration) }
+        shown = scope.launch { show(text, null, duration) }
     }
 
     /**
@@ -348,13 +368,44 @@ internal class EditorStatements(private val host: SnackbarHostState, private val
         shown?.cancel()
         return scope.launch {
             val result = try {
-                host.showSnackbar(text, actionLabel = action, duration = SnackbarDuration.Long)
+                show(text, action, SnackbarDuration.Long)
             } catch (gone: CancellationException) {
                 onGone()
                 throw gone
             }
             if (result == SnackbarResult.ActionPerformed) onAction() else onGone()
         }.also { shown = it }
+    }
+
+    /** Shows the statement once no sheet covers the editor, and again afresh each time one rises while it shows. */
+    private suspend fun show(text: String, action: String?, duration: SnackbarDuration): SnackbarResult {
+        while (true) {
+            snapshotFlow { covers }.first { it == 0 }
+            var result: SnackbarResult? = null
+            coroutineScope {
+                val showing = launch { result = host.showSnackbar(text, actionLabel = action, duration = duration) }
+                val covered = launch {
+                    snapshotFlow { covers }.first { it > 0 }
+                    showing.cancel()
+                }
+                showing.join()
+                covered.cancel()
+            }
+            result?.let { return it }
+        }
+    }
+}
+
+/**
+ * Stands for a sheet in front of the editor while it is composed: the editor's statements wait until it goes
+ * ([EditorStatements.cover]).
+ */
+@Composable
+internal fun CoversStatements() {
+    val statements = LocalEditorStatements.current ?: return
+    DisposableEffect(statements) {
+        statements.cover()
+        onDispose { statements.uncover() }
     }
 }
 
@@ -747,20 +798,21 @@ object EditorTags {
     fun ingredientName(position: Int) = "editor-ingredient-$position-name"
     fun ingredientQuantity(position: Int) = "editor-ingredient-$position-quantity"
     fun ingredientUnit(position: Int) = "editor-ingredient-$position-unit"
+    /** The removal among the actions of the row's sheet. */
     fun ingredientRemove(position: Int) = "editor-ingredient-$position-remove"
-    fun ingredientMenu(position: Int) = "editor-ingredient-$position-menu"
     fun ingredientHandle(position: Int) = "editor-ingredient-$position-handle"
     fun ingredientHandleIcon(position: Int) = "editor-ingredient-$position-handle-icon"
+    /** An action of the row's sheet: moving it, putting a row or a heading beside it. */
     fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
     /** "Add group" under the ingredient list, and the parts of the heading at [index] of the groups (DOM-022). */
     const val GROUP_ADD = "editor-group-add"
     fun group(index: Int) = "editor-group-$index"
+    /** The heading's name field, in its sheet. */
     fun groupName(index: Int) = "editor-group-$index-name"
     fun groupMark(index: Int) = "editor-group-$index-mark"
     fun groupRemove(index: Int) = "editor-group-$index-remove"
-    fun groupMenu(index: Int) = "editor-group-$index-menu"
     fun groupAction(index: Int, action: RowAction) = "editor-group-$index-${action.tag}"
     fun groupHandle(index: Int) = "editor-group-$index-handle"
     fun groupHandleIcon(index: Int) = "editor-group-$index-handle-icon"

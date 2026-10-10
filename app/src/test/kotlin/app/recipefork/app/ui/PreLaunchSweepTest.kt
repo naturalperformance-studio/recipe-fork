@@ -54,8 +54,11 @@ import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
+import app.recipefork.app.editor.closeGroup
 import app.recipefork.app.editor.closeIngredient
+import app.recipefork.app.editor.openGroup
 import app.recipefork.app.editor.openIngredient
+import app.recipefork.app.editor.removeIngredient
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.FileMessageTags
 import app.recipefork.app.file.RecipeImport
@@ -454,12 +457,16 @@ class PreLaunchSweepTest {
         await(EditorTags.equipmentName(2))
         compose.waitForIdle()
         checkScreen("the editor, a recipe with equipment, groups, notes, several timers and tags")
-        // An ingredient's sheet open, its fields over the editor.
+        // An ingredient's sheet open, its fields and its actions over the editor.
         compose.openIngredient(1)
         checkScreen("the editor, an ingredient's sheet open")
         compose.closeIngredient()
-        // A row removed: the editor says so with Undo.
-        compose.onNodeWithTag(EditorTags.ingredientRemove(4)).performScrollTo().performClick()
+        // A heading's sheet open, its name and its actions.
+        compose.openGroup(0)
+        checkScreen("the editor, a group's sheet open")
+        compose.closeGroup()
+        // A row removed from its sheet: the editor says so with Undo.
+        compose.removeIngredient(4)
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.STATEMENT, unmerged = true) }
         checkScreen("the editor, a row removed, with Undo")
         val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
@@ -590,7 +597,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 27
+        const val SCREENS = 28
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L

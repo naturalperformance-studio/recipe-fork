@@ -62,14 +62,23 @@ class IngredientsLanguageAndAccessibilityTest {
 
     /**
      * The author's own content on the screen: tag labels, names, numbers typed and the frozen recipe's title; and each
-     * row's line, which writes them with the unit as the card does.
+     * row's line, which writes them with the unit as the card does — the lines of the interface language alone, so that a
+     * line written in the other language is caught.
      */
-    private val content = tagLabels(SAMPLE_DICTIONARIES) + setOf("Pancakes", "черемша", "4", "¼", "1 500", "500", "½", "2") + setOf(
-        "¼ pc черемша", "1 500 g Unnamed ingredient", "to taste Unnamed ingredient",
-        "500 g черемша", "½ tsp Unnamed ingredient", "to taste черемша", "2 pc черемша",
-        "¼ шт черемша", "1 500 г Ингредиент без названия", "по вкусу Ингредиент без названия",
-        "500 г черемша", "½ ч. л. Ингредиент без названия", "по вкусу черемша", "2 шт черемша",
-    ) + MATERIAL_SHEET_TEXTS
+    private fun content(): Set<String> {
+        val lines = if (context.resources.configuration.locales[0].language == "ru") {
+            setOf(
+                "¼ шт черемша", "1 500 г Ингредиент без названия", "по вкусу черемша",
+                "500 г черемша", "½ ч. л. Ингредиент без названия", "2 шт черемша",
+            )
+        } else {
+            setOf(
+                "¼ pc черемша", "1 500 g Unnamed ingredient", "to taste черемша",
+                "500 g черемша", "½ tsp Unnamed ingredient", "2 pc черемша",
+            )
+        }
+        return tagLabels(SAMPLE_DICTIONARIES) + setOf("Pancakes", "черемша", "4", "¼", "1 500", "500", "½", "2") + lines + MATERIAL_SHEET_TEXTS
+    }
 
     @Before
     fun setUp() {
@@ -88,8 +97,8 @@ class IngredientsLanguageAndAccessibilityTest {
 
     private fun checkTheScreen(expectInteractive: Int) {
         compose.waitForIdle()
-        LocalizationChecks.assertScreenTextFromResources(compose, context, content)
-        LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content)
+        LocalizationChecks.assertScreenTextFromResources(compose, context, content())
+        LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context, content())
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = expectInteractive)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = expectInteractive)
     }
@@ -125,8 +134,8 @@ class IngredientsLanguageAndAccessibilityTest {
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
 
-        // A serving count; a free-text piece asking for divisibility, holding a quarter it does not accept; a row
-        // with separators; and a row to taste.
+        // A serving count; a free-text piece asking for divisibility, holding a quarter it does not accept; a row with no
+        // name and separators in its amount; and a row to taste.
         compose.onNodeWithTag(EditorTags.SERVINGS).performTextInput("4")
         addIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performTextInput("черемша")
@@ -135,16 +144,18 @@ class IngredientsLanguageAndAccessibilityTest {
         addIngredient(1)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(1)).performTextInput("1 500")
         addIngredient(2)
+        compose.onNodeWithTag(EditorTags.ingredientName(2)).performTextInput("черемша")
         chooseUnit(2, QuantityUnit.TO_TASTE)
         compose.closeIngredient()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(IngredientSheetTags.problem(1)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
-        // back, title, language, clear, search, three tags, servings, and per row its line and actions
-        checkTheScreen(expectInteractive = 20)
+        // back, title, language, clear, search, three tags, servings, and per row its line
+        checkTheScreen(expectInteractive = 14)
 
-        // A row's sheet open: its fields, the free-text warning, the divisibility question and the quantity's error.
+        // A row's sheet open: its fields, the free-text warning, the divisibility question and the quantity's error, and
+        // the row's actions.
         compose.openIngredient(0)
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientError(0)), useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
-        checkTheScreen(expectInteractive = 7)
+        checkTheScreen(expectInteractive = 12)
 
         // The unit list open.
         compose.openIngredient(1)
@@ -154,6 +165,13 @@ class IngredientsLanguageAndAccessibilityTest {
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(QuantityUnit.CUP)), PATIENCE_MS)
         compose.closeIngredient()
+
+        // A heading put above a row from its sheet: the heading's sheet open, its name and its actions, over the heading
+        // not named yet as it reads in the list.
+        compose.onIngredient(1, RowAction.GROUP_ABOVE)
+        compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() }
+        checkTheScreen(expectInteractive = 3)
+        compose.closeGroup()
 
         // A frozen recipe's rows, read only.
         compose.onNodeWithTag(EditorTags.BACK).performClick()

@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
@@ -138,12 +139,18 @@ class EditorKeyboardTest {
         awaitFocused(tag)
     }
 
-    /** Adds a row by "Add ingredient", which opens its sheet: any sheet open before is closed first. */
+    /**
+     * Adds a row by "Add ingredient", which opens its sheet — any sheet open before is closed first — and names it there,
+     * so that closing its sheet keeps it.
+     */
     private fun addIngredient(): Int {
         compose.closeIngredient()
         val position = stored(RecipeId(requireNotNull(session.editing.value))).ingredients.size
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientName(position)), PATIENCE_MS)
+        awaitFocused(EditorTags.ingredientName(position))
+        compose.onNodeWithTag(EditorTags.ingredientName(position)).performTextInput("Row ${position + 1}")
+        compose.waitForIdle()
         return position
     }
 
@@ -306,8 +313,11 @@ class EditorKeyboardTest {
             listOf(EditorTags.STEP_ADD, EditorTags.step(0), EditorTags.stepText(0), EditorTags.stepText(1), EditorTags.stepRemove(1)),
         )
         for ((add, first, firstField, added, remove) in parts) {
+            // An ingredient row is kept once named: closed holding nothing, it would go again.
+            val ingredient = add == EditorTags.INGREDIENT_ADD
             compose.onNodeWithTag(add).performScrollTo().performClick()
             awaitFocused(firstField)
+            if (ingredient) compose.onNodeWithTag(firstField).performTextInput("Flour")
             hideKeyboard()
             // The ingredient's sheet closed, so the list is in sight.
             compose.closeIngredient()
@@ -319,9 +329,12 @@ class EditorKeyboardTest {
             awaitFocused(added)
             assertFalse(exists(firstField) && isFocused(firstField))
             compose.waitUntil(PATIENCE_MS) { keyboardUp() }
+            if (ingredient) compose.onNodeWithTag(added).performTextInput("Salt")
             hideKeyboard()
             compose.closeIngredient()
 
+            // A row's removal is in its sheet.
+            if (ingredient) compose.openIngredient(1)
             compose.onNodeWithTag(remove).performScrollTo()
             compose.assertChangesGradually("$add: a row removed", ::after) { compose.onNodeWithTag(remove).performClick() }
             // Its Undo put away, so that it covers nothing tapped next.

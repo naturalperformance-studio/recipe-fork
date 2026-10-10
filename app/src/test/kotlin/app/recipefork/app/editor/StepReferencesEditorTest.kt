@@ -329,8 +329,8 @@ class StepReferencesEditorTest {
         assertEquals("Всыпьте 2 кг муки", stepShown(0))
         assertEquals(listOf(IngredientReference(0, 8)), stored(recipe.id).steps[0].ingredientReferences)
 
-        compose.closeIngredient()
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
+        compose.chooseInSheet(EditorTags.ingredientRemove(0))
+        compose.waitUntil(PATIENCE_MS) { !compose.ingredientSheetOpen() }
         compose.waitForIdle()
         // Single spacing is left where each stood (T-074).
         assertEquals("Всыпьте муки", stepShown(0))
@@ -367,15 +367,13 @@ class StepReferencesEditorTest {
         open(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
         compose.closeIngredient()
-        compose.onNodeWithTag(EditorTags.ingredientMenu(0)).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onIngredient(0, RowAction.INSERT_ABOVE)
+        // The row put above opens in the sheet; named there, it stays once the sheet is closed.
+        compose.onNodeWithTag(EditorTags.ingredientName(0)).performTextReplacement("изюм")
         compose.waitForIdle()
         compose.closeIngredient()
-        compose.onNodeWithTag(EditorTags.ingredientMenu(3)).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientAction(3, RowAction.MOVE_UP)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.ingredientAction(3, RowAction.MOVE_UP)).performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitForIdle()
+        compose.onIngredient(3, RowAction.MOVE_UP)
+        compose.closeIngredient()
         assertEquals("Всыпьте 200 г, добавьте по вкусу", stepShown(0))
         assertEquals(listOf(IngredientReference(1, 8), IngredientReference(2, 19)), stored(recipe.id).steps.single().ingredientReferences)
     }

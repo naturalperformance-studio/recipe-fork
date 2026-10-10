@@ -21,7 +21,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
-import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
@@ -160,8 +160,6 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         IngredientSheetTags.line(position),
         IngredientSheetTags.freeText(position),
         IngredientSheetTags.problem(position),
-        EditorTags.ingredientRemove(position),
-        EditorTags.ingredientMenu(position),
     ).filter(::exists)
 
     /**
@@ -194,8 +192,8 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         }
     }
 
-    // Each editable row is one bounded block, separated from the next; every part of it — its line, its marks and its
-    // icons — inside it; the drag column down its left edge, and the line beside it.
+    // Each editable row is one bounded block, separated from the next; every part of it — its line and its marks —
+    // inside it; the drag column down its left edge, and the line beside it.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun everyRowIsOneBlockInRussian() = everyRowIsOneBlock(1f)
@@ -405,11 +403,11 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         return measurer.measure(text, style).size.width.toFloat()
     }
 
-    /** The width the line of row [position] leaves for its text: 12 dp before it and 4 dp after it. */
-    private fun lineTextWidth(position: Int): Float = bounds(IngredientSheetTags.line(position)).width - px(16f)
+    /** The width the line of row [position] leaves for its text: 12 dp before it and after it. */
+    private fun lineTextWidth(position: Int): Float = bounds(IngredientSheetTags.line(position)).width - px(24f)
 
     // Criterion 1 at large text: on a 360 dp phone at font scale 2.0 a row's line keeps room for about eight Cyrillic
-    // letters beside its icons, so "черемша" reads whole; its sheet's name field more than that.
+    // letters, so "черемша" reads whole; its sheet's name field more than that.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun aFreeTextNameKeepsRoomForItsTextAtDoubleFontScale() {
@@ -529,16 +527,10 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         assertSeparateOutlinedBlocks(rows().size)
     }
 
-    /** The action icons of the editable row at [position], in their order. */
-    private fun actions(position: Int) = listOf(EditorTags.ingredientRemove(position), EditorTags.ingredientMenu(position))
-
-    private fun labels(position: Int): List<String> = actions(position).map { AccessibilityChecks.announcedLabel(compose.onNodeWithTag(it).fetchSemanticsNode()) }
-
     private fun dp(px: Float) = px / compose.density.density
 
-    // The block reads as its line: it is no taller than its line — the line's text and marks, or its icons beside it —
-    // and at 360 dp and font scale 1.0 a row with no mark is one line of 48 dp, a third of the 144 dp a row of fields
-    // took. The icons stand at the line's top, right of it.
+    // The block reads as its line: it is no taller than its line — the line's text and marks — and at 360 dp and font
+    // scale 1.0 a row with no mark is one line of 48 dp, a third of the 144 dp a row of fields took.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
     fun theBlockIsAShortLine() = blockIsAShortLine()
@@ -554,93 +546,75 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
             val line = bounds(IngredientSheetTags.line(position))
             // The block is its line, within its outline.
             assertEquals("row $position: the block is as tall as its line", line.height, block.height, px(2f))
-            actions(position).forEach {
-                val b = bounds(it)
-                assertTrue("row $position: $it stands at the line's top", b.top >= line.top - 0.5f && b.top <= line.top + px(12f))
-                assertTrue("row $position: $it is right of the line", b.left >= line.right - 0.5f)
-            }
         }
         assertTrue("an unmarked row is ${dp(bounds(EditorTags.ingredient(1)).height)} dp tall", dp(bounds(EditorTags.ingredient(1)).height) <= 50.5f)
     }
 
-    // The row's actions are icons as a step's are: 48 dp each, side by side in one row, inside the block, and no text
-    // button anywhere in the block — beside the line, or, where the line would keep no room for a word, under it.
+    // The row holds its line and its drag column, and no action of its own — no icon, no button: its actions are in its
+    // sheet. The line takes the whole block beside the column, and keeps room for a word at any font scale.
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun theActionsAreIconsInOneRow() = actionsAreIconsInOneRow(1f)
+    fun theRowHoldsOnlyItsLine() = rowHoldsOnlyItsLine(1f)
 
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun theActionsAreIconsInOneRowAtDoubleFontScale() = actionsAreIconsInOneRow(2f)
+    fun theRowHoldsOnlyItsLineAtDoubleFontScale() = rowHoldsOnlyItsLine(2f)
 
     @Test
     @Config(qualifiers = "en-w360dp-h4000dp")
-    fun theActionsAreIconsInOneRowInEnglishAtDoubleFontScale() = actionsAreIconsInOneRow(2f)
+    fun theRowHoldsOnlyItsLineInEnglishAtDoubleFontScale() = rowHoldsOnlyItsLine(2f)
 
-    private fun actionsAreIconsInOneRow(fontScale: Float) {
+    private fun rowHoldsOnlyItsLine(fontScale: Float) {
         open(fontScale)
         (0 until rows().size).forEach { position ->
             val block = bounds(EditorTags.ingredient(position))
             val line = bounds(IngredientSheetTags.line(position))
-            val controls = actions(position).map { bounds(it) }
-            controls.forEach { b ->
-                assertEquals("row $position: an icon is 48 dp wide", 48f, dp(b.width), 0.5f)
-                assertEquals("row $position: an icon is 48 dp high", 48f, dp(b.height), 0.5f)
-                assertTrue("row $position: the icon lies inside the block", b.left >= block.left - 0.5f && b.right <= block.right + 0.5f && b.top >= block.top - 0.5f && b.bottom <= block.bottom + 0.5f)
-            }
-            val (remove, menu) = controls
-            assertEquals("row $position: the icons stand in one row", remove.top, menu.top, 0.5f)
-            assertTrue("row $position: remove, then the menu", menu.left >= remove.right - 0.5f)
-            // Beside the line, or under it with the line reaching the block's far edge.
-            val beside = remove.left >= line.right - 0.5f
-            if (!beside) {
-                val end = if (handleRight) bounds(EditorTags.ingredientHandle(position)).left else block.right
-                assertTrue("row $position: the line reaches ${if (handleRight) "the column" else "the block's right edge"}", end - line.right <= px(4f) + 0.5f)
-                assertTrue("row $position: the icons are under the line", remove.top >= line.bottom - 0.5f)
-            }
-            assertTrue("row $position: the line keeps room for a word", lineTextWidth(position) >= widthOf("00000000", fontScale) - 0.5f)
-            // No text button: in the merged tree a button carries the text of everything inside it, so a button in the
-            // block with any text is a text button; the icons carry only their spoken names. The line is a target of
-            // its own, named by what it does.
+            assertFalse(exists(EditorTags.ingredientRemove(position)))
             val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(position)))
-            val texts = compose.onAllNodes(inRow and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-                .filter { it.config.getOrNull(SemanticsProperties.TestTag) != IngredientSheetTags.line(position) }
-                .filter { it.config.getOrNull(SemanticsProperties.EditableText) == null }
-                .filter { it.config.getOrNull(SemanticsProperties.Role) == androidx.compose.ui.semantics.Role.Button }
-                .filter { it.config.getOrNull(SemanticsProperties.Text).orEmpty().isNotEmpty() }
-            assertEquals("row $position: no text buttons", emptyList<SemanticsNode>(), texts)
+            assertEquals(
+                "row $position: the line is its one target",
+                listOf(IngredientSheetTags.line(position)),
+                compose.onAllNodes(inRow and AccessibilityChecks.isInteractive, useUnmergedTree = true).fetchSemanticsNodes()
+                    .map { it.config[SemanticsProperties.TestTag] },
+            )
+            assertEquals("row $position: the line takes the block beside its column", block.width - px(48f), line.width, 1f)
+            assertTrue("row $position: the line keeps room for a word", lineTextWidth(position) >= widthOf("00000000", fontScale) - 0.5f)
         }
         AccessibilityChecks.assertTouchTargets(compose)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose)
     }
 
-    // Each icon is named for the screen reader by its row, and a long press shows that name in a tooltip.
+    // The row's actions stand in its sheet, each a whole-width item at least 56 dp tall with its words whole, at font
+    // scale 2.0 on a 360 dp phone — the sheet's own window taking the scale from the configuration.
     @Test
-    @Config(qualifiers = "en-w360dp-h4000dp")
-    fun eachIconIsNamedByItsRowAndShowsATooltip() {
-        open(1f)
-        assertEquals(listOf("Remove ingredient row 2", "Ingredient row 2 actions"), labels(1))
-        listOf(1, 3).flatMap(::actions).forEach { tag ->
-            compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick() }
-            compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(tag)) }
-            val label = AccessibilityChecks.announcedLabel(compose.onNodeWithTag(tag).fetchSemanticsNode())
-            fun texts(node: SemanticsNode): List<String> = node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + node.children.flatMap(::texts)
-            assertTrue("$tag shows \"$label\" on a long press", texts(node(EditorTags.tooltip(tag))).contains(label))
-            compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.tooltip(tag)) }
-        }
-        // A long press only shows the name: the row is still there, and no menu opened.
-        assertTrue(exists(EditorTags.ingredient(3)))
-        assertFalse(exists(EditorTags.ingredientAction(3, RowAction.INSERT_ABOVE)))
-    }
+    @Config(qualifiers = "ru-w360dp-h4000dp", fontScale = 2f)
+    fun theSheetsActionsAreWholeAtDoubleFontScale() = sheetsActionsAreWhole()
 
     @Test
-    @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun eachIconIsNamedByItsRowInRussian() {
+    @Config(qualifiers = "en-w360dp-h4000dp", fontScale = 2f)
+    fun theSheetsActionsAreWholeInEnglishAtDoubleFontScale() = sheetsActionsAreWhole()
+
+    private fun sheetsActionsAreWhole() {
         open(2f)
-        assertEquals(listOf("Убрать строку ингредиента 2", "Действия со строкой ингредиента 2"), labels(1))
-        val tag = EditorTags.ingredientRemove(0)
-        compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick() }
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.tooltip(tag)) }
+        compose.openIngredient(1)
+        val tags = listOf(RowAction.MOVE_UP, RowAction.MOVE_DOWN, RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE)
+            .map { EditorTags.ingredientAction(1, it) } + EditorTags.ingredientRemove(1)
+        val sheet = bounds(IngredientSheetTags.SHEET)
+        tags.forEach { tag ->
+            compose.onNodeWithTag(tag).performScrollTo()
+            val b = bounds(tag)
+            assertTrue("$tag is ${dp(b.height)} dp tall", b.height >= px(56f) - 0.5f)
+            assertEquals("$tag spans the sheet", sheet.width, b.width, 1f)
+            val text = compose.onAllNodes(hasAnyAncestor(hasTestTag(tag)) and hasText("", substring = true), useUnmergedTree = true)
+                .fetchSemanticsNodes().first()
+            val layout = mutableListOf<TextLayoutResult>().also { text.config[SemanticsActions.GetTextLayoutResult].action!!(it) }.single()
+            // Laid out at twice the size, and nothing of it cut: no line lost, every line within the item.
+            assertTrue("$tag at ${layout.layoutInput.density.fontScale}", layout.layoutInput.density.fontScale >= 2f)
+            assertFalse("$tag is cut", layout.didOverflowHeight || layout.multiParagraph.didExceedMaxLines)
+            val t = Rect(text.positionInRoot, text.size.toSize())
+            assertTrue("$tag: its text lies inside it", t.left >= b.left - 0.5f && t.right <= b.right + 0.5f && t.top >= b.top - 0.5f && t.bottom <= b.bottom + 0.5f)
+            assertTrue("$tag: its text is as tall as its lines", text.size.height >= layout.multiParagraph.height - 0.5f)
+        }
     }
 
     // A frozen recipe's ingredient block shows no action icons, and nothing in it is to be pressed.
@@ -650,7 +624,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         open(1f, state = RecipeState.PUBLISHED)
         (0 until rows().size).forEach { position ->
             assertTrue(exists(EditorTags.ingredient(position)))
-            actions(position).forEach { assertFalse("frozen row $position shows $it", exists(it)) }
+            assertFalse("frozen row $position shows a removal", exists(EditorTags.ingredientRemove(position)))
             val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(position)))
             assertEquals(0, compose.onAllNodes(inRow and AccessibilityChecks.isInteractive, useUnmergedTree = true).fetchSemanticsNodes().size)
         }
