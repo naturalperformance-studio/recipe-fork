@@ -175,8 +175,8 @@ class EquipmentEditorTest {
         assertTrue(editor.marks.value.isEmpty())
     }
 
-    // An item an entry names stays that entry, its qualifier with it, when the author leaves it or moves it; typed into,
-    // it becomes the text typed, free text, as every line the editor takes is until it offers entries (T-203).
+    // An item an entry names stays that entry, its qualifier with it, when the author leaves it or moves it; set as text,
+    // it becomes the text typed, free text (the field decides, as it is typed, whether text keeps the entry).
     @Test
     fun anEntrysItemStaysUntilTypedInto() {
         val pan = EquipmentItem.entry(10001, "26 cm")
@@ -189,6 +189,39 @@ class EquipmentEditorTest {
         assertEquals(listOf(EquipmentItem.free("Whisk"), EquipmentItem.free("Frying pan 28 cm")), stored().equipment)
     }
 
+    // T-203: a pick binds the item to an entry, with no qualifier; the words after its label are its qualifier, held
+    // without the spaces and commas around them; free text takes none.
+    @Test
+    fun anItemIsBoundToAnEntryAndQualified() {
+        val editor = open()
+        assertTrue(editor.setEquipmentEntry(2, 10001))
+        assertEquals(EquipmentItem.entry(10001), editor.recipe.value!!.equipment[2])
+        assertTrue(editor.setEquipmentQualifier(2, " , 26 cm "))
+        assertEquals(EquipmentItem.entry(10001, "26 cm"), editor.recipe.value!!.equipment[2])
+        assertFalse(editor.setEquipmentQualifier(0, "large"))
+        assertTrue(editor.setEquipmentQualifier(2, "  "))
+        assertEquals(EquipmentItem.entry(10001), stored().equipment[2])
+        assertTrue(editor.setEquipmentQualifier(2, "28 cm"))
+        // A pick of another entry drops the qualifier.
+        assertTrue(editor.setEquipmentEntry(2, 10202))
+        assertEquals(listOf(EquipmentItem.free("Bowl"), EquipmentItem.free("Whisk"), EquipmentItem.entry(10202)), stored().equipment)
+    }
+
+    // T-202's review: an entry's item is measured by its label and its qualifier, as it reads, once the labels are known.
+    @Test
+    fun anEntrysItemIsMeasuredByItsLabelAndQualifier() {
+        val qualifier = "with a lid, cast iron, 28 cm wide"
+        val editor = open(seeded.copy(equipment = listOf(EquipmentItem.entry(10001, qualifier))))
+        editor.leave(RecipePart.EquipmentName(0))
+        // Its qualifier alone is within the limit.
+        assertTrue(editor.marks.value.isEmpty())
+        editor.knowEquipmentLabels { if (it == 10001L) "Frying pan" else null }
+        editor.leave(RecipePart.EquipmentName(0))
+        assertEquals(mapOf(RecipePart.EquipmentName(0) to Bound.OverLimit(40, 44)), editor.marks.value)
+        editor.setEquipmentQualifier(0, "with a lid, cast iron, 28 cm")
+        assertTrue(editor.marks.value.isEmpty())
+    }
+
     @Test
     fun aFrozenRecipeTakesNoChangeToItsEquipment() {
         val frozen = seeded.inState(RecipeState.PUBLISHED)
@@ -198,6 +231,8 @@ class EquipmentEditorTest {
         assertFalse(editor.setEquipment(0, "Pot"))
         assertFalse(editor.removeEquipment(0))
         assertFalse(editor.moveEquipment(0, 1))
+        assertFalse(editor.setEquipmentEntry(0, 10001))
+        assertFalse(editor.setEquipmentQualifier(0, "26 cm"))
         editor.settleEquipment(0)
         assertEquals(seeded.equipment.map { it.shown(null) }, editor.items)
     }

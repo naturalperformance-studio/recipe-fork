@@ -85,6 +85,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.rememberUpdatedState
+import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.library.DELETABLE
 import app.recipefork.app.library.PendingRemoval
 import app.recipefork.app.library.deleteRecipe
@@ -124,6 +125,7 @@ import app.recipefork.app.timer.inBar
 import app.recipefork.app.timer.rememberRecipeTimers
 import androidx.compose.runtime.derivedStateOf
 import app.recipefork.app.dictionary.DictionaryEntry
+import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.interfaceLanguage
 import app.recipefork.app.recipe.EquipmentNames
@@ -227,7 +229,11 @@ fun CardScreen(
             .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(CardContent.Unreadable) else throw failure }
     }.collectAsState(initial = CardContent.Loading)
     var entries by remember(environment) { mutableStateOf<Map<Long, IngredientEntryEntity>?>(null) }
-    var equipmentEntries by remember(environment) { mutableStateOf<Map<Long, DictionaryEntry>>(emptyMap()) }
+    var equipmentDictionary by remember(environment) { mutableStateOf<List<EquipmentEntryEntity>>(emptyList()) }
+    val equipmentEntries = remember(equipmentDictionary) { equipmentDictionary.associateBy<DictionaryEntry, Long> { it.id } }
+    // What the reader's kitchen has, as it changes: ticking an item in My kitchen marks an open card afresh.
+    val ticked by environment.kitchen.held.collectAsState()
+    val kitchen = remember(ticked, equipmentDictionary) { Kitchen(ticked, equipmentDictionary) }
     LaunchedEffect(environment) {
         // Rows whose entry cannot be read are named as unnamed; the card itself never fails for it.
         val read = try {
@@ -245,7 +251,7 @@ fun CardScreen(
         } catch (e: Exception) {
             emptyList()
         }
-        equipmentEntries = equipment.associateBy { it.id }
+        equipmentDictionary = equipment
         entries = read.associateBy { it.id }
     }
     // The bar draws under the status bar and stays, its colour changing as the recipe scrolls under it — each tab's own
@@ -386,6 +392,7 @@ fun CardScreen(
                             recipe, loaded, recipes, scale, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
                             shownAgain,
                             equipmentEntries = equipmentEntries,
+                            kitchen = kitchen,
                             // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
                             bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
                         ) { if (mode == CardMode.VIEW) titleOut = it }
@@ -671,6 +678,7 @@ private fun RecipeContent(
     places: CardPlaces,
     shownAgain: ShownAgain,
     equipmentEntries: Map<Long, DictionaryEntry>,
+    kitchen: Kitchen,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
@@ -725,10 +733,13 @@ private fun RecipeContent(
                 }
                 recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
             }
-            // The equipment stands above the serving count and the ingredients, as the editor lists it before them.
-            val equipment = remember(recipe.equipment, equipmentEntries, language) {
+            // The equipment stands above the serving count and the ingredients, as the editor lists it before them; an
+            // item naming an entry the kitchen lacks says so (free text never does).
+            val equipment = remember(recipe.equipment, equipmentEntries, language, kitchen) {
                 val reading = if (language == InterfaceLanguage.RUSSIAN) RecipeLanguage.RU else RecipeLanguage.EN
-                recipe.equipment.map { EquipmentNames.shown(it, equipmentEntries, reading) }
+                recipe.equipment.map { item ->
+                    ShownEquipment(EquipmentNames.shown(item, equipmentEntries, reading), item.dictionaryEntry?.let(kitchen::lacks) == true)
+                }
             }
             EquipmentList(equipment, marks, mode, shownAgain.equipment)
             val authored = recipe.servings?.takeIf { it >= 1 }

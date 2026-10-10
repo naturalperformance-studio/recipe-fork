@@ -16,4 +16,7 @@
         <item quantity="many">Отмечено %d предметов</item>
         <item quantity="other">Отмечено %d предмета</item>
     </plurals>
+    <!-- My kitchen when the equipment dictionary cannot be read. -->
+    <string name="kitchen_unreadable">Не удалось прочитать список оборудования</string>
+    <string name="kitchen_retry">Попробовать ещё раз</string>
 </resources>

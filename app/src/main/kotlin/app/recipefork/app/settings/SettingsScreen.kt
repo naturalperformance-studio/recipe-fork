@@ -208,7 +208,10 @@ private fun UsualServingsItem(usual: UsualServings) {
 /** How many items of equipment My kitchen has ticked, or that none is; it opens My kitchen. */
 @Composable
 private fun KitchenItem(kitchen: KitchenEnvironment, onOpen: () -> Unit) {
-    val dictionary by produceState<List<EquipmentEntryEntity>?>(null, kitchen.equipment) { value = kitchen.equipment.equipment() }
+    // A dictionary that cannot be read counts nothing, as the editor reads it; My kitchen says it could not read it.
+    val dictionary by produceState<List<EquipmentEntryEntity>?>(null, kitchen.equipment) {
+        value = runCatching { kitchen.equipment.equipment() }.getOrDefault(emptyList())
+    }
     val held by kitchen.store.held.collectAsState()
     val count = dictionary?.let { Kitchen(held, it).count }
     Item(

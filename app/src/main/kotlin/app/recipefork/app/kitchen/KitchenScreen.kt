@@ -31,6 +31,7 @@ import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -61,6 +62,7 @@ import app.recipefork.app.library.EmptyAction
 import app.recipefork.app.library.EmptyState
 import app.recipefork.app.settings.servingsLanguage
 import app.recipefork.core.scaling.InterfaceLanguage
+import kotlin.coroutines.cancellation.CancellationException
 
 /** What My kitchen reads and writes: the ticked set, and the equipment dictionary it lists. */
 class KitchenEnvironment(val store: KitchenStore, val equipment: EquipmentSource)
@@ -78,12 +80,23 @@ fun rememberKitchenEnvironment(): KitchenEnvironment {
  * My kitchen, a destination above the settings: the equipment dictionary by its groups, each item a checkbox row the
  * reader ticks when the kitchen has it, each group a row that ticks or unticks all its items at once. A search — in
  * either language, by synonyms, as the editor's equipment field finds — narrows the list to the items found. What is
- * ticked is kept at once ([KitchenStore]). Back — the bar's or the system's — returns to the settings.
+ * ticked is kept at once ([KitchenStore]). Back — the bar's or the system's — returns to the settings. A dictionary that
+ * cannot be read is said so, with "Try again", never a crash.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Modifier = Modifier) {
-    val dictionary by produceState<List<EquipmentEntryEntity>?>(null, kitchen.equipment) { value = kitchen.equipment.equipment() }
+    var attempt by remember { mutableIntStateOf(0) }
+    val dictionary by produceState<Result<List<EquipmentEntryEntity>>?>(null, kitchen.equipment, attempt) {
+        value = null
+        value = try {
+            Result.success(kitchen.equipment.equipment())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
     val held by kitchen.store.held.collectAsState()
     var query by rememberSaveable { mutableStateOf("") }
     val language = servingsLanguage()
@@ -117,11 +130,19 @@ fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Mod
     ) { padding ->
         Column(Modifier.padding(padding).imePadding().fillMaxSize()) {
             SearchField(query, onQuery = { query = it })
-            val entries = dictionary
+            val read = dictionary
+            val entries = read?.getOrNull()
             when {
-                entries == null -> Box(Modifier.fillMaxSize().testTag(KitchenTags.LOADING), contentAlignment = Alignment.Center) {
+                read == null -> Box(Modifier.fillMaxSize().testTag(KitchenTags.LOADING), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
+                entries == null -> EmptyState(
+                    picture = R.drawable.ic_warning,
+                    headline = stringResource(R.string.kitchen_unreadable),
+                    sentence = null,
+                    action = EmptyAction(stringResource(R.string.kitchen_retry), null, KitchenTags.UNREADABLE_RETRY) { attempt++ },
+                    tag = KitchenTags.UNREADABLE,
+                )
                 query.isBlank() -> {
                     val groups = remember(entries, language) { Kitchen.groups(entries, language) }
                     Groups(groups, held, language, kitchen.store, listed)
@@ -251,6 +272,9 @@ object KitchenTags {
     const val RESULTS = "kitchen-results"
     const val EMPTY = "kitchen-nothing-found"
     const val EMPTY_CLEAR = "kitchen-nothing-found-clear"
+    /** The equipment dictionary could not be read, and its "Try again". */
+    const val UNREADABLE = "kitchen-unreadable"
+    const val UNREADABLE_RETRY = "kitchen-unreadable-retry"
 
     /** A group's row, which ticks all its items. */
     fun group(id: Long) = "kitchen-group-$id"

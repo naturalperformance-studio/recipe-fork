@@ -16,4 +16,7 @@
         <item quantity="one">%d item ticked</item>
         <item quantity="other">%d items ticked</item>
     </plurals>
+    <!-- My kitchen when the equipment dictionary cannot be read. -->
+    <string name="kitchen_unreadable">Couldn’t read the equipment</string>
+    <string name="kitchen_retry">Try again</string>
 </resources>

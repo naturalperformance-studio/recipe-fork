@@ -796,11 +796,11 @@ private fun IngredientNameField(
 }
 
 /**
- * One choice of the ingredient field's offer: a line at least 48 dp tall whose click says what it does (A11Y-003,
+ * One choice of a dictionary field's offer — an ingredient's or an item of equipment's: a line at least 48 dp tall whose click says what it does (A11Y-003,
  * A11Y-005) — with the [synonym] the entry was found by, if any, beside it in a muted style: «картофель · картошка».
  */
 @Composable
-private fun OfferedChoice(
+internal fun OfferedChoice(
     text: String,
     action: String,
     onClick: () -> Unit,

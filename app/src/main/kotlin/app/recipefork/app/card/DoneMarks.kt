@@ -52,9 +52,15 @@ data class DoneMark(val part: MarkedPart, val position: Int, val row: Int) {
 
         /**
          * The mark of the item of equipment at [index] of the recipe's equipment, [item], as it stands: free text is
-         * taken of its text, as before items named entries, so that its marks stay.
+         * taken of its text, as before items named entries, so that its marks stay; an entry's item of its entry's id
+         * and its qualifier ([equipmentKey]), never of how the item happens to print.
          */
-        fun ofEquipment(index: Int, item: EquipmentItem) = DoneMark(MarkedPart.EQUIPMENT, index, rowOf(item.freeTextName ?: item))
+        fun ofEquipment(index: Int, item: EquipmentItem) = DoneMark(MarkedPart.EQUIPMENT, index, rowOf(equipmentKey(item)))
+
+        /** What an item of equipment's mark is taken of: its free text, or "e:<entry id>:<qualifier>". */
+        internal fun equipmentKey(item: EquipmentItem): String =
+            item.dictionaryEntry?.let { listOf(EQUIPMENT_KEY, it, item.qualifier.orEmpty()).joinToString(":") }
+                ?: item.freeTextName.orEmpty()
 
         /**
          * A stable mark of what a row holds, the same from one process to the next; like [HeldScale]'s, it is taken of
