@@ -22,6 +22,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -29,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -82,10 +84,14 @@ fun rememberKitchenEnvironment(): KitchenEnvironment {
  * either language, by synonyms, as the editor's equipment field finds — narrows the list to the items found. What is
  * ticked is kept at once ([KitchenStore]). Back — the bar's or the system's — returns to the settings. A dictionary that
  * cannot be read is said so, with "Try again", never a crash.
+ *
+ * Opened from a recipe's item of equipment the kitchen lacks, it opens [at] the entry that item names: the list is
+ * scrolled to its row once, as it opens, and the row stands out on the primary container, saying "Needed for the
+ * recipe", for as long as My kitchen stays open; back returns to the recipe.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Modifier = Modifier, at: Long? = null) {
     var attempt by remember { mutableIntStateOf(0) }
     val dictionary by produceState<Result<List<EquipmentEntryEntity>>?>(null, kitchen.equipment, attempt) {
         value = null
@@ -102,13 +108,15 @@ fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Mod
     val language = servingsLanguage()
     val listed = rememberLazyListState()
     val results = rememberLazyListState()
+    // Brought to the entry it was opened at once, not again after the screen turns or the reader has scrolled away.
+    var brought by rememberSaveable { mutableStateOf(at == null) }
     Scaffold(
         modifier = modifier.fillMaxSize().testTag(KitchenTags.SCREEN),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.kitchen_title), Modifier.semantics { heading() }.testTag(KitchenTags.TITLE)) },
                 navigationIcon = {
-                    val action = stringResource(R.string.kitchen_back_action)
+                    val action = stringResource(if (at == null) R.string.kitchen_back_action else R.string.kitchen_back_to_recipe_action)
                     IconButton(
                         onClick = onBack,
                         // Material's icon button lays out at 40 dp; a target is 48 by 48 dp at least (A11Y-003).
@@ -145,9 +153,15 @@ fun KitchenScreen(kitchen: KitchenEnvironment, onBack: () -> Unit, modifier: Mod
                 )
                 query.isBlank() -> {
                     val groups = remember(entries, language) { Kitchen.groups(entries, language) }
-                    Groups(groups, held, language, kitchen.store, listed)
+                    if (!brought) {
+                        LaunchedEffect(groups) {
+                            rowOf(groups, at)?.let { listed.scrollToItem(it) }
+                            brought = true
+                        }
+                    }
+                    Groups(groups, held, language, kitchen.store, listed, at)
                 }
-                else -> Found(query, entries, held, language, kitchen.store, results, onClear = { query = "" })
+                else -> Found(query, entries, held, language, kitchen.store, results, at, onClear = { query = "" })
             }
         }
     }
@@ -175,7 +189,30 @@ private fun SearchField(query: String, onQuery: (String) -> Unit) {
     )
 }
 
-/** Every group with its items, a group's row ticking all of them: ticked when all are, partly when some are. */
+/** The index of the row of the entry [id] — a group's or an item's — in the list of [groups], or null when not listed. */
+private fun rowOf(groups: List<KitchenGroup>, id: Long?): Int? {
+    var row = 0
+    groups.forEach { (group, items) ->
+        if (group.id == id) return row
+        val item = items.indexOfFirst { it.id == id }
+        if (item >= 0) return row + 1 + item
+        row += 1 + items.size
+    }
+    return null
+}
+
+/** The colours of the row of the entry My kitchen was opened at: on the primary container, standing out of the list. */
+@Composable
+private fun standingOut() = ListItemDefaults.colors(
+    containerColor = MaterialTheme.colorScheme.primaryContainer,
+    headlineColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    supportingColor = MaterialTheme.colorScheme.onPrimaryContainer,
+)
+
+/**
+ * Every group with its items, a group's row ticking all of them: ticked when all are, partly when some are. The row
+ * of the entry [at] stands out.
+ */
 @Composable
 private fun Groups(
     groups: List<KitchenGroup>,
@@ -183,7 +220,9 @@ private fun Groups(
     language: InterfaceLanguage,
     store: KitchenStore,
     state: LazyListState,
+    at: Long?,
 ) {
+    val needed = stringResource(R.string.kitchen_from_recipe)
     LazyColumn(Modifier.fillMaxSize().testTag(KitchenTags.LIST), state = state) {
         groups.forEach { (group, items) ->
             item(key = group.id) {
@@ -193,11 +232,16 @@ private fun Groups(
                     items.size -> ToggleableState.On
                     else -> ToggleableState.Indeterminate
                 }
+                val opened = group.id == at
                 HorizontalDivider()
                 ListItem(
                     headlineContent = { Text(group.label(language), style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = { Text(stringResource(R.string.kitchen_group_ticked, ticked, items.size)) },
+                    supportingContent = {
+                        val count = stringResource(R.string.kitchen_group_ticked, ticked, items.size)
+                        Text(if (opened) "$count · $needed" else count)
+                    },
                     leadingContent = { TriStateCheckbox(state = toggle, onClick = null) },
+                    colors = if (opened) standingOut() else ListItemDefaults.colors(),
                     modifier = Modifier
                         .triStateToggleable(toggle, role = Role.Checkbox) {
                             store.hold(items.map { it.id }, has = toggle != ToggleableState.On)
@@ -206,7 +250,7 @@ private fun Groups(
                 )
             }
             items(items, key = { it.id }) { item ->
-                Item(item, held, language, store, supporting = null)
+                Item(item, held, language, store, supporting = null, opened = item.id == at)
             }
         }
     }
@@ -224,6 +268,7 @@ private fun Found(
     language: InterfaceLanguage,
     store: KitchenStore,
     state: LazyListState,
+    at: Long?,
     onClear: () -> Unit,
 ) {
     val groups = remember(dictionary, language) { Kitchen.groups(dictionary, language).associateBy { it.group.id } }
@@ -242,19 +287,29 @@ private fun Found(
     LazyColumn(Modifier.fillMaxSize().testTag(KitchenTags.RESULTS), state = state) {
         items(found, key = { it.id }) { item ->
             val group = groups.getValue(item.parentId!!).group.label(language)
-            Item(item, held, language, store, supporting = listOfNotNull(offer.synonyms[item.id], group).joinToString(" · "))
+            Item(item, held, language, store, supporting = listOfNotNull(offer.synonyms[item.id], group).joinToString(" · "), opened = item.id == at)
         }
     }
 }
 
-/** One item: a checkbox row, the whole row ticking or unticking it. */
+/** One item: a checkbox row, the whole row ticking or unticking it; standing out when My kitchen was [opened] at it. */
 @Composable
-private fun Item(item: EquipmentEntryEntity, held: Set<Long>, language: InterfaceLanguage, store: KitchenStore, supporting: String?) {
+private fun Item(
+    item: EquipmentEntryEntity,
+    held: Set<Long>,
+    language: InterfaceLanguage,
+    store: KitchenStore,
+    supporting: String?,
+    opened: Boolean,
+) {
     val has = item.id in held
+    val needed = stringResource(R.string.kitchen_from_recipe)
+    val said = if (opened) listOfNotNull(supporting, needed).joinToString(" · ") else supporting
     ListItem(
         headlineContent = { Text(item.label(language)) },
-        supportingContent = supporting?.let { { Text(it) } },
+        supportingContent = said?.let { { Text(it) } },
         leadingContent = { Checkbox(checked = has, onCheckedChange = null) },
+        colors = if (opened) standingOut() else ListItemDefaults.colors(),
         modifier = Modifier
             .toggleable(value = has, role = Role.Checkbox) { store.hold(listOf(item.id), it) }
             .testTag(KitchenTags.item(item.id)),

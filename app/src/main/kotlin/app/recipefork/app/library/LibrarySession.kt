@@ -116,6 +116,7 @@ class LibrarySession(
         closeNotice()
         finishRemoval()
         saved[SETTINGS_KEY] = false
+        shutKitchen()
         saved[EDITING_KEY] = recipeId
         // Only an own recipe is edited, so the card shown on leaving the editor returns to the own recipes.
         saved[CARD_FROM_KEY] = LibraryView.OWN
@@ -137,6 +138,7 @@ class LibrarySession(
         closeNotice()
         finishRemoval()
         saved[SETTINGS_KEY] = false
+        shutKitchen()
         saved[VIEWING_KEY] = recipeId
         from?.let { saved[CARD_FROM_KEY] = it }
     }
@@ -146,6 +148,7 @@ class LibrarySession(
      * is opened, or the marked ones, from which a found recipe is.
      */
     fun closeCard() {
+        shutKitchen()
         saved[VIEWING_KEY] = null
         show(saved.get<LibraryView>(CARD_FROM_KEY) ?: LibraryView.OWN)
     }
@@ -159,26 +162,48 @@ class LibrarySession(
 
     fun openSettings() {
         finishRemoval()
-        saved[KITCHEN_KEY] = false
+        shutKitchen()
         saved[SETTINGS_KEY] = true
     }
 
     fun closeSettings() {
+        shutKitchen()
         saved[SETTINGS_KEY] = false
     }
 
     /**
-     * Whether My kitchen is open, above the settings: kept like them. It is shown only while the settings are open, and
-     * opening the settings closes it, so whatever shows something in place of the settings closes it as well.
+     * Whether My kitchen is open: kept like the settings. It lies above the settings when opened from them
+     * ([openKitchen]), or above a recipe's card when opened from one of its items of equipment ([openKitchenAt]); it is
+     * shown only above what it was opened from, and whatever opens something else — the settings, a card, the editor,
+     * the book — closes it, so it never comes back above anything else.
      */
     val kitchen: StateFlow<Boolean> = saved.getStateFlow(KITCHEN_KEY, false)
 
+    /**
+     * The equipment dictionary entry My kitchen was opened at from a recipe's card ([openKitchenAt]), while it is open
+     * so; null when it was opened from the settings, or is not open.
+     */
+    val kitchenAt: StateFlow<Long?> = saved.getStateFlow(KITCHEN_AT_KEY, null)
+
     fun openKitchen() {
+        saved[KITCHEN_AT_KEY] = null
         saved[KITCHEN_KEY] = true
     }
 
-    fun closeKitchen() {
+    /**
+     * An item of equipment the open card marks as not in the kitchen was tapped: My kitchen opens above the card, at the
+     * entry [entryId] it names; back from it returns to the card.
+     */
+    fun openKitchenAt(entryId: Long) {
+        saved[KITCHEN_AT_KEY] = entryId
+        saved[KITCHEN_KEY] = true
+    }
+
+    fun closeKitchen() = shutKitchen()
+
+    private fun shutKitchen() {
         saved[KITCHEN_KEY] = false
+        saved[KITCHEN_AT_KEY] = null
     }
 
     /**
@@ -208,6 +233,7 @@ class LibrarySession(
     fun showHeld() {
         finishRemoval()
         saved[SETTINGS_KEY] = false
+        shutKitchen()
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
     }
@@ -221,6 +247,7 @@ class LibrarySession(
         closeNotice()
         finishRemoval()
         saved[SETTINGS_KEY] = false
+        shutKitchen()
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = recipeId
         saved[CARD_FROM_KEY] = null
@@ -398,6 +425,7 @@ class LibrarySession(
         const val STEP_KEY = "library.step"
         const val SETTINGS_KEY = "library.settings"
         const val KITCHEN_KEY = "library.kitchen"
+        const val KITCHEN_AT_KEY = "library.kitchen_at"
         const val MESSAGE_KEY = "library.file_message"
         const val VIEW_KEY = "library.view"
         const val EDITING_KEY = "library.editing"

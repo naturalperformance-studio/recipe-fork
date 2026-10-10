@@ -79,7 +79,8 @@ object Destinations {
  * action — goes one destination back: from the editor to the card of the recipe just edited (FLOW-029 (1)), and from
  * the card to the book, which is where it was left. The settings lie above the book, opened from its top bar; back
  * from them returns to the book where it was left. My kitchen lies above the settings, opened from them; back from it
- * returns to them.
+ * returns to them. Opened from an item of equipment on a recipe's card, it lies above that card instead, opened at the
+ * item, and back from it returns to the card where it was left.
  *
  * What is open is the [session]'s: its saved state says which card and which editor are open (FLOW-024, FLOW-029), and
  * whether the settings are; the back stack follows it. Back taken through the host — a destination left by the system's back — is told to the
@@ -132,7 +133,9 @@ fun AppNavHost(
             )
         }
         composable(Destinations.KITCHEN_ROUTE) {
-            KitchenScreen(kitchen, onBack = session::closeKitchen)
+            // The item it was opened at, read as it opens: closing it clears the session's, while it still slides away.
+            val at = remember { session.kitchenAt.value }
+            KitchenScreen(kitchen, onBack = session::closeKitchen, at = at)
         }
         composable(Destinations.CARD_ROUTE, arguments = recipeArgument) { entry ->
             RecipeCard(RecipeId(entry.recipeId()), session, recipes, editor, card)
@@ -199,6 +202,7 @@ private fun RecipeCard(
         onEdit = { session.openEditor(id.value) },
         onFork = { fork(another = false) },
         onOpenParent = { parent -> session.openCard(parent.value) },
+        onOpenKitchen = session::openKitchenAt,
         session = session.cards,
         onRemoved = session::removed,
     )
@@ -234,8 +238,8 @@ internal sealed interface Shown {
 /**
  * The back stack that shows what the session holds open: the book, beneath the card of the recipe open, beneath the
  * editor on it. The editor lies above the card of the recipe it edits — the one leaving it shows. The [settings] lie
- * above the book alone: a card or the editor open is shown in their place. My [kitchen] lies above the settings, and
- * only while they are shown.
+ * above the book alone: a card or the editor open is shown in their place. My [kitchen] lies above the settings while
+ * they are shown, and otherwise above the card, opened from it, while no editor is open on it.
  */
 internal fun shownFor(viewing: String?, editing: String?, settings: Boolean = false, kitchen: Boolean = false): List<Shown> = buildList {
     add(Shown.Book)
@@ -244,6 +248,8 @@ internal fun shownFor(viewing: String?, editing: String?, settings: Boolean = fa
     if (settings && size == 1) {
         add(Shown.Settings)
         if (kitchen) add(Shown.Kitchen)
+    } else if (kitchen && last() is Shown.Card) {
+        add(Shown.Kitchen)
     }
 }
 

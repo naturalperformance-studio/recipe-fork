@@ -70,6 +70,7 @@ class ContrastTest {
         text("a tab not chosen — the book's view, the card's View or Cooking", c.onSurfaceVariant, c.surface),
         text("a view's floating action — its words and icon; the card's current step on Cooking, on its container", c.onPrimaryContainer, c.primaryContainer),
         text("the arrow after a rounded reference in the card's current step, and the step's author's note, on its container", c.onSurfaceVariant, c.primaryContainer),
+        text("My kitchen opened from a recipe — the row of its item, its name and \"Needed for the recipe\", on the primary container", c.onPrimaryContainer, c.primaryContainer),
         text("a book's entry, a card — its title and state", c.onSurface, c.surfaceContainerHighest),
         text("a book's entry, a card — its tags and sending mark", c.onSurfaceVariant, c.surfaceContainerHighest),
         text("a photo source sheet's title and items", c.onSurface, c.surfaceContainerLow),
@@ -105,6 +106,8 @@ class ContrastTest {
         graphic("a step's number circle in the card's current step, on its container", c.primary, c.primaryContainer),
         graphic("My kitchen — a ticked or partly ticked checkbox's box, an item's or a group's", c.primary, c.surface),
         graphic("My kitchen — the tick or the dash in a ticked or partly ticked checkbox's box", c.onPrimary, c.primary),
+        graphic("My kitchen opened from a recipe — its item's checkbox boundary, unticked, on the primary container", c.onSurfaceVariant, c.primaryContainer),
+        graphic("My kitchen opened from a recipe — its item's checkbox box, ticked, on the primary container", c.primary, c.primaryContainer),
     )
 
     private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }

@@ -201,6 +201,10 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * opens its parent's card, the other. It opens each time at the reader's usual count, or at the authored count while
  * none is set (FLOW-017).
  *
+ * On View an item of equipment the reader's kitchen lacks opens My kitchen at it ([onOpenKitchen], given the equipment
+ * dictionary entry it names), so that it is ticked there and the card found again on return; without [onOpenKitchen]
+ * it answers no tap.
+ *
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
  */
@@ -215,6 +219,7 @@ fun CardScreen(
     modifier: Modifier = Modifier,
     onFork: () -> Unit = {},
     onOpenParent: (RecipeId) -> Unit = {},
+    onOpenKitchen: ((Long) -> Unit)? = null,
     session: CardSession = remember { TextCardSession.inMemory() },
     onRemoved: (PendingRemoval) -> Unit = PendingRemoval::finish,
 ) {
@@ -393,6 +398,7 @@ fun CardScreen(
                             shownAgain,
                             equipmentEntries = equipmentEntries,
                             kitchen = kitchen,
+                            onOpenKitchen = onOpenKitchen,
                             // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
                             bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
                         ) { if (mode == CardMode.VIEW) titleOut = it }
@@ -676,6 +682,7 @@ private fun RecipeContent(
     shownAgain: ShownAgain,
     equipmentEntries: Map<Long, DictionaryEntry>,
     kitchen: Kitchen,
+    onOpenKitchen: ((Long) -> Unit)?,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
@@ -744,10 +751,11 @@ private fun RecipeContent(
             val equipment = remember(recipe.equipment, equipmentEntries, language, kitchen) {
                 val reading = if (language == InterfaceLanguage.RUSSIAN) RecipeLanguage.RU else RecipeLanguage.EN
                 recipe.equipment.map { item ->
-                    ShownEquipment(EquipmentNames.shown(item, equipmentEntries, reading), item.dictionaryEntry?.let(kitchen::lacks) == true)
+                    val entry = item.dictionaryEntry
+                    ShownEquipment(EquipmentNames.shown(item, equipmentEntries, reading), entry?.takeIf(kitchen::lacks))
                 }
             }
-            EquipmentList(equipment, marks, mode, shownAgain.equipment)
+            EquipmentList(equipment, marks, mode, shownAgain.equipment, onOpenKitchen)
             val authored = recipe.servings?.takeIf { it >= 1 }
             val ordered = held.ordered
             val scale = held.scale

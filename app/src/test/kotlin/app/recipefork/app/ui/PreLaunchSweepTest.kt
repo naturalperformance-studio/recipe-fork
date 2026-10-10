@@ -47,6 +47,7 @@ import app.recipefork.app.card.EquipmentTags
 import app.recipefork.app.card.FakeClipPlayers
 import app.recipefork.app.card.LocalClipPlayers
 import app.recipefork.app.card.awaitCard
+import app.recipefork.app.card.scrollClearOfFork
 import app.recipefork.app.data.HeldThemeSetting
 import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.editor.EditorEnvironment
@@ -424,6 +425,15 @@ class PreLaunchSweepTest {
         awaitLacking(listOf(2))
         assertOnlyThePagerScrollsSideways("View")
         checkScreen("the card, View", target = CardTarget)
+        // The bowl, not in the kitchen, opens My kitchen at it; back returns to the card.
+        compose.scrollClearOfFork(CardTags.equipment(2))
+        compose.onNodeWithTag(CardTags.equipment(2)).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.item(BOWL)) && !exists(CardTags.SCREEN) }
+        checkScreen("my kitchen, opened from a recipe at an item")
+        compose.onNodeWithTag(KitchenTags.BACK).performClick()
+        compose.awaitCard()
+        awaitGone(KitchenTags.SCREEN)
+        awaitLacking(listOf(2))
         compose.onNodeWithTag(CardTags.MENU).performClick()
         await(CardTags.DELETE)
         checkScreen("the card, View, its menu", target = CardTarget)
@@ -603,7 +613,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 29
+        const val SCREENS = 30
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L
