@@ -5,16 +5,21 @@ import kotlinx.serialization.json.Json
 import java.security.MessageDigest
 
 /**
- * Both fixed dictionaries as the server serves them and the device holds them (FLOW-001).
+ * The fixed dictionaries as the server serves them and the device holds them (FLOW-001).
  *
- * [version] changes whenever either dictionary changes in the store; the server also sends it
+ * [version] changes whenever any dictionary changes in the store; the server also sends it
  * as the response's ETag, so a device that already holds this version is answered with 304.
+ *
+ * [equipment] is maintained in the repository alone (dictionary/README.md): a snapshot or a server answer without it
+ * reads as an empty one, and an empty one is not encoded, so the digest of dictionaries without equipment is what it
+ * was before the field existed.
  */
 @Serializable
 data class DictionariesDto(
     val version: String,
     val ingredients: List<IngredientEntryDto>,
     val tags: List<TagDto>,
+    val equipment: List<EquipmentEntryDto> = emptyList(),
 ) {
     /**
      * The version this content is given: the lowercase hex SHA-256 of the compact JSON of these dictionaries with an
@@ -79,4 +84,22 @@ data class TagDto(
     val id: Long,
     val labelRu: String,
     val labelEn: String,
+)
+
+/**
+ * An entry of the equipment dictionary: a top-level entry is a group (stovetop cookware, appliances…), and its
+ * leaves — [parentId] naming it — are the items a kitchen has. Like an ingredient entry, a [removed] entry is offered
+ * to nobody yet keeps naming what holds it, and [synonymsRu] and [synonymsEn] are the other words cooks write for it.
+ *
+ * Every field after [labelEn] has a default, which the encoding omits.
+ */
+@Serializable
+data class EquipmentEntryDto(
+    val id: Long,
+    val labelRu: String,
+    val labelEn: String,
+    val parentId: Long? = null,
+    val removed: Boolean = false,
+    val synonymsRu: List<String> = emptyList(),
+    val synonymsEn: List<String> = emptyList(),
 )

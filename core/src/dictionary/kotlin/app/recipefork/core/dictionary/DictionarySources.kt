@@ -1,6 +1,7 @@
 package app.recipefork.core.dictionary
 
 import app.recipefork.core.api.DictionariesDto
+import app.recipefork.core.api.EquipmentEntryDto
 import app.recipefork.core.api.IngredientEntryDto
 import app.recipefork.core.api.TagDto
 import app.recipefork.core.search.WordPrefix
@@ -19,16 +20,20 @@ sealed interface BuildResult {
     class Refused(val errors: List<String>) : BuildResult
 }
 
+/** Which dictionary a source file feeds. */
+enum class Dictionary { INGREDIENTS, TAGS, EQUIPMENT }
+
 /**
- * A family of source files: those whose file name begins with [prefix]. They hold tags when [tags] is true, ingredients
- * otherwise, and may declare only the id [ranges].
+ * A family of source files: those whose file name begins with [prefix]. They hold entries of [dictionary], and may
+ * declare only the id [ranges].
  */
-enum class Family(val prefix: String, val tags: Boolean, val ranges: List<LongRange>) {
-    PRODUCE("produce", false, listOf(1000L..2999L)),
-    ANIMAL("animal", false, listOf(3000L..4999L, 1L..5L)),
-    PANTRY("pantry", false, listOf(5000L..6999L)),
-    SEASONING("seasoning", false, listOf(7000L..8999L)),
-    TAGS("tags", true, listOf(100L..999L, 10L..11L)),
+enum class Family(val prefix: String, val dictionary: Dictionary, val ranges: List<LongRange>) {
+    PRODUCE("produce", Dictionary.INGREDIENTS, listOf(1000L..2999L)),
+    ANIMAL("animal", Dictionary.INGREDIENTS, listOf(3000L..4999L, 1L..5L)),
+    PANTRY("pantry", Dictionary.INGREDIENTS, listOf(5000L..6999L)),
+    SEASONING("seasoning", Dictionary.INGREDIENTS, listOf(7000L..8999L)),
+    TAGS("tags", Dictionary.TAGS, listOf(100L..999L, 10L..11L)),
+    EQUIPMENT("equipment", Dictionary.EQUIPMENT, listOf(10000L..10999L)),
     ;
 
     companion object {
@@ -42,11 +47,13 @@ enum class Family(val prefix: String, val tags: Boolean, val ranges: List<LongRa
  *
  * A source is tab-separated text, one entry per line; `#` starts a comment line, and `@range FIRST-LAST` declares an
  * id range the file may use. An ingredient line is `id, labelRu, labelEn, parentId, divisible, factors, removed,
- * synonymsRu, synonymsEn` — each synonym list `;`-separated — trailing empty columns left out; a tag line is `id, labelRu, labelEn`.
+ * synonymsRu, synonymsEn` — each synonym list `;`-separated — trailing empty columns left out; a tag line is `id, labelRu, labelEn`;
+ * an equipment line is `id, labelRu, labelEn, parentId, removed, synonymsRu, synonymsEn`.
  */
 object DictionaryBuild {
     private const val INGREDIENT_COLUMNS = 9
     private const val TAG_COLUMNS = 3
+    private const val EQUIPMENT_COLUMNS = 7
     private const val SYNONYM_SEPARATOR = ';'
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -67,29 +74,35 @@ object DictionaryBuild {
         val errors = mutableListOf<String>()
         val ingredients = mutableListOf<Row<IngredientEntryDto>>()
         val tags = mutableListOf<Row<TagDto>>()
+        val equipment = mutableListOf<Row<EquipmentEntryDto>>()
         files.forEach { file ->
             val family = Family.of(file.name)
-            when {
-                family == null -> errors += "${file.name}:1: the file name begins with no family " +
+            when (family?.dictionary) {
+                null -> errors += "${file.name}:1: the file name begins with no family " +
                     "(${Family.entries.joinToString { it.prefix }})"
-                family.tags -> tags += parseFile(file, family, TAG_COLUMNS, errors, ::tagRow)
-                else -> ingredients += parseFile(file, family, INGREDIENT_COLUMNS, errors, ::ingredientRow)
+                Dictionary.TAGS -> tags += parseFile(file, family, TAG_COLUMNS, errors, ::tagRow)
+                Dictionary.INGREDIENTS -> ingredients += parseFile(file, family, INGREDIENT_COLUMNS, errors, ::ingredientRow)
+                Dictionary.EQUIPMENT -> equipment += parseFile(file, family, EQUIPMENT_COLUMNS, errors, ::equipmentRow)
             }
         }
 
-        uniqueIds(ingredients, errors)
-        uniqueIds(tags, errors)
-        uniqueLabels(ingredients.filterNot { it.value.removed }, errors)
-        uniqueLabels(tags, errors)
-        synonyms(ingredients, errors)
-        parents(ingredients, errors)
+        // Each dictionary is checked on its own: an id or a label may stand in two of them.
+        listOf(ingredients, tags, equipment).forEach { rows ->
+            uniqueIds(rows, errors)
+            uniqueLabels(rows.filterNot { it.removed }, errors)
+            synonyms(rows, errors)
+            parents(rows, errors)
+        }
         if (baseline != null) {
-            val shippedIngredients = baseline.dictionaries.ingredients.associate { it.id to listOf(it.labelRu, it.labelEn) }
-            val shippedTags = baseline.dictionaries.tags.associate { it.id to listOf(it.labelRu, it.labelEn) }
-            kept(baseline.name, "ingredient", shippedIngredients.keys, ingredients, errors)
-            kept(baseline.name, "tag", shippedTags.keys, tags, errors)
-            notReused(baseline.name, shippedIngredients, ingredients, errors)
-            notReused(baseline.name, shippedTags, tags, errors)
+            val shipped = baseline.dictionaries
+            listOf(
+                Triple("ingredient", shipped.ingredients.associate { it.id to listOf(it.labelRu, it.labelEn) }, ingredients),
+                Triple("tag", shipped.tags.associate { it.id to listOf(it.labelRu, it.labelEn) }, tags),
+                Triple("equipment", shipped.equipment.associate { it.id to listOf(it.labelRu, it.labelEn) }, equipment),
+            ).forEach { (kind, labels, rows) ->
+                kept(baseline.name, kind, labels.keys, rows, errors)
+                notReused(baseline.name, labels, rows, errors)
+            }
         }
         if (errors.isNotEmpty()) return BuildResult.Refused(errors)
 
@@ -97,12 +110,24 @@ object DictionaryBuild {
             version = "",
             ingredients = ingredients.map { it.value }.sortedBy { it.id },
             tags = tags.map { it.value }.sortedBy { it.id },
+            equipment = equipment.map { it.value }.sortedBy { it.id },
         ).versioned()
         return BuildResult.Built(dictionaries, pretty.encodeToString(DictionariesDto.serializer(), dictionaries) + "\n")
     }
 
-    /** A parsed line: where it stands, and what it says. */
-    private class Row<T>(val at: String, val id: Long, val labels: List<String>, val value: T)
+    /**
+     * A parsed line: where it stands, and what it says — with what the checks across lines read of it: its parent,
+     * whether it is removed, and its synonyms in each language (Russian, English).
+     */
+    private class Row<T>(
+        val at: String,
+        val id: Long,
+        val labels: List<String>,
+        val value: T,
+        val parentId: Long? = null,
+        val removed: Boolean = false,
+        val synonyms: List<List<String>> = listOf(emptyList(), emptyList()),
+    )
 
     private fun <T> parseFile(
         file: SourceFile,
@@ -179,9 +204,7 @@ object DictionaryBuild {
     private fun ingredientRow(at: String, cells: List<String>, errors: MutableList<String>): Row<IngredientEntryDto>? {
         val id = id(at, cells[0], errors)
         val labelled = labels(at, cells, errors)
-        val parentId = cells[3].takeIf { it.isNotEmpty() }?.let { cell ->
-            cell.toLongOrNull() ?: null.also { errors += "$at: parentId '$cell' is not a whole number" }
-        }
+        val parentId = parentId(at, cells[3], errors)
         val divisible = when (cells[4]) {
             "" -> null
             "true" -> true
@@ -189,11 +212,7 @@ object DictionaryBuild {
             else -> null.also { errors += "$at: divisible '${cells[4]}' is neither 'true', 'false' nor empty" }
         }
         val factors = factors(at, cells[5], errors)
-        val removed = when (cells[6]) {
-            "" -> false
-            "removed" -> true
-            else -> false.also { errors += "$at: '${cells[6]}' in the removed column (expected 'removed' or empty)" }
-        }
+        val removed = removed(at, cells[6], errors)
         val synonymsRu = synonyms(at, "synonymsRu", cells[7], errors)
         val synonymsEn = synonyms(at, "synonymsEn", cells[8], errors)
         if ("pc" in factors && divisible == null) {
@@ -201,7 +220,35 @@ object DictionaryBuild {
         }
         // A line with a bad cell is still held by its id and labels, so that the checks across lines see it too.
         if (id == null || !labelled) return null
-        return Row(at, id, listOf(cells[1], cells[2]), IngredientEntryDto(id, cells[1], cells[2], parentId, divisible, factors, removed, synonymsRu, synonymsEn))
+        return Row(
+            at, id, listOf(cells[1], cells[2]),
+            IngredientEntryDto(id, cells[1], cells[2], parentId, divisible, factors, removed, synonymsRu, synonymsEn),
+            parentId, removed, listOf(synonymsRu, synonymsEn),
+        )
+    }
+
+    private fun equipmentRow(at: String, cells: List<String>, errors: MutableList<String>): Row<EquipmentEntryDto>? {
+        val id = id(at, cells[0], errors)
+        val labelled = labels(at, cells, errors)
+        val parentId = parentId(at, cells[3], errors)
+        val removed = removed(at, cells[4], errors)
+        val synonymsRu = synonyms(at, "synonymsRu", cells[5], errors)
+        val synonymsEn = synonyms(at, "synonymsEn", cells[6], errors)
+        if (id == null || !labelled) return null
+        return Row(
+            at, id, listOf(cells[1], cells[2]),
+            EquipmentEntryDto(id, cells[1], cells[2], parentId, removed, synonymsRu, synonymsEn),
+            parentId, removed, listOf(synonymsRu, synonymsEn),
+        )
+    }
+
+    private fun parentId(at: String, cell: String, errors: MutableList<String>): Long? =
+        cell.takeIf { it.isNotEmpty() }?.let { it.toLongOrNull() ?: null.also { errors += "$at: parentId '$cell' is not a whole number" } }
+
+    private fun removed(at: String, cell: String, errors: MutableList<String>): Boolean = when (cell) {
+        "" -> false
+        "removed" -> true
+        else -> false.also { errors += "$at: '$cell' in the removed column (expected 'removed' or empty)" }
     }
 
     /** The `;`-separated synonyms of [cell]; each must hold a letter or digit and have no spaces around it. */
@@ -261,22 +308,21 @@ object DictionaryBuild {
      * label, nor any live entry's label in its language, nor another synonym in its language. A removed entry is offered to nobody, so
      * its synonyms are checked against its own label only.
      */
-    private fun synonyms(rows: List<Row<IngredientEntryDto>>, errors: MutableList<String>) {
-        val live = rows.filterNot { it.value.removed }
+    private fun synonyms(rows: List<Row<*>>, errors: MutableList<String>) {
+        val live = rows.filterNot { it.removed }
         listOf("synonymsRu", "synonymsEn").forEachIndexed { language, name ->
             val labels = HashMap<List<String>, Row<*>>()
             live.forEach { labels.putIfAbsent(folded(it.labels[language]), it) }
             val synonyms = HashMap<List<String>, Pair<Row<*>, String>>()
             rows.forEach { row ->
                 val own = folded(row.labels[language])
-                val list = if (language == 0) row.value.synonymsRu else row.value.synonymsEn
-                list.forEach synonym@{ synonym ->
+                row.synonyms[language].forEach synonym@{ synonym ->
                     val key = folded(synonym)
                     if (key == own) {
                         errors += "${row.at}: $name '$synonym' is the entry's own label as the search reads it"
                         return@synonym
                     }
-                    if (row.value.removed) return@synonym
+                    if (row.removed) return@synonym
                     val label = labels[key]
                     val earlier = synonyms.putIfAbsent(key, row to synonym)
                     when {
@@ -293,17 +339,17 @@ object DictionaryBuild {
     /** A label or synonym folded and split as the search reads it, its words in any order. */
     private fun folded(text: String): List<String> = WordPrefix.words(text).sorted()
 
-    private fun parents(rows: List<Row<IngredientEntryDto>>, errors: MutableList<String>) {
+    private fun parents(rows: List<Row<*>>, errors: MutableList<String>) {
         val byId = rows.associateBy { it.id }
         rows.forEach { row ->
-            val parentId = row.value.parentId ?: return@forEach
+            val parentId = row.parentId ?: return@forEach
             val parent = byId[parentId]
             when {
                 parent == null -> errors += "${row.at}: parentId $parentId names no entry"
                 parent.id == row.id -> errors += "${row.at}: the entry names itself as its parent"
-                parent.value.parentId != null -> errors += "${row.at}: parentId $parentId is not a top-level entry " +
-                    "(${parent.at} has parent ${parent.value.parentId}); entries are two levels at most"
-                parent.value.removed && !row.value.removed -> errors += "${parent.at}: removed entry ${parent.id} is " +
+                parent.parentId != null -> errors += "${row.at}: parentId $parentId is not a top-level entry " +
+                    "(${parent.at} has parent ${parent.parentId}); entries are two levels at most"
+                parent.removed && !row.removed -> errors += "${parent.at}: removed entry ${parent.id} is " +
                     "still the parent of live entry ${row.id} at ${row.at}"
             }
         }
@@ -330,7 +376,7 @@ object DictionaryBuild {
         val held = rows.map { it.id }.toSet()
         shipped.filterNot { it in held }.forEach {
             errors += "$previousName: $kind id $it was shipped and is missing from the sources " +
-                "(ids are permanent; mark a dropped ingredient 'removed')"
+                "(ids are permanent; mark a dropped entry 'removed')"
         }
     }
 }

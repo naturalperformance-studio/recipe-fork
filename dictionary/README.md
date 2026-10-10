@@ -1,6 +1,6 @@
 # The dictionary sources
 
-The application ships its two fixed dictionaries — ingredients and tags — in
+The application ships its three fixed dictionaries — ingredients, tags and equipment — in
 `app/src/main/assets/dictionaries.json`. That file is **generated** from the sources in this directory and is never
 edited by hand: a test (`ShippedDictionaryTest` in `:core`) rebuilds it from these sources and fails unless the
 shipped file is byte for byte what they build.
@@ -55,6 +55,7 @@ writes is then no longer what these sources build, and the test says so.
 | `pantry.tsv`              | flour, grains, pasta, bread, legumes, sugar and sweeteners, baking, oils and fats                  | 5000–6999   |
 | `seasoning-and-other.tsv` | spices, dried herbs, salt, sauces and condiments, vinegars, canned and preserved goods, stocks, drinks and alcohol used in cooking, other | 7000–8999 |
 | `tags.tsv`                | tags: cuisines, meal and course, diet, method and appliance, occasion and season, characteristics  | 100–999, and the legacy 10–11 |
+| `equipment.tsv`           | equipment: stovetop cookware, oven and baking, appliances, knives and cutting, tools and utensils, measuring, storage | 10000–10999 |
 
 Every file declares its ranges itself with `@range FIRST-LAST` lines (one per range); the generator refuses an id
 outside the file's declared ranges. A file's name decides its family: a family may be split into several files whose
@@ -103,14 +104,26 @@ The tags file — `id, labelRu, labelEn`:
 10	итальянская	Italian
 ```
 
+The equipment files — `id, labelRu, labelEn, parentId, removed, synonymsRu, synonymsEn`; the columns mean what they
+mean for an ingredient, and an ingredient's `divisible` and `factors` have no place here. A top-level entry is a group
+(«Посуда для плиты» / "Stovetop cookware"), its leaves are the items a kitchen has; every item stands in a group. The
+equipment is maintained here alone: the server need not serve it, and a snapshot without it reads as one with none.
+
+```
+@range 10000-10999
+10000	Посуда для плиты	Stovetop cookware
+10001	Сковорода	Frying pan	10000		сковородка	skillet;frypan
+```
+
 ## What the generator refuses
 
 - a malformed line: an id that is not a positive whole number, a `divisible` other than `true`/`false`/empty, a
   `removed` column other than `removed`/empty, too many columns, an unknown `@` directive, a file without `@range`;
-- a duplicate id (ingredients across all ingredient files; tags across all tag files);
+- a duplicate id (ingredients across all ingredient files; tags across all tag files; equipment across all equipment
+  files) — each dictionary is checked on its own, so a label or an id may stand in two of them;
 - a file whose name begins with no family, a `@range` its family does not own, an id outside its file's ranges;
 - an id shipped in the previous snapshot that is missing from the sources — ids are permanent: a dropped ingredient
-  stays, marked `removed`; a tag is never dropped;
+  or equipment entry stays, marked `removed`; a tag is never dropped;
 - a reused id: a shipped id whose labels have **both** changed (as the search folds them) — that is another thing under
   an old id, and recipes holding the id would change meaning; correcting one label is fine;
 - no baseline at all, unless `--first-build` is given;
@@ -145,7 +158,12 @@ The tags file — `id, labelRu, labelEn`:
   piece; tsp, tbsp, cup (a cup is 250 ml) and pinch = grams each, level measure. Give only the factors a cook would
   plausibly use for that ingredient; never guess wildly — use common culinary references.
 - **Ids.** Each family source owns a range (produce 1 000–2 999, animal 3 000–4 999, pantry 5 000–6 999, seasoning
-  and the rest 7 000–8 999, tags 100–999; 1–5 and 10–11 stay). Ids are permanent once shipped.
+  and the rest 7 000–8 999, tags 100–999, equipment 10 000–10 999; 1–5 and 10–11 stay). Ids are permanent once shipped.
+  Equipment groups take the round hundreds (10000, 10100…) and their items the ids after them.
+- **Equipment labels.** Sentence case, as a list of equipment shows them: «Сковорода» / "Frying pan", «Форма для
+  выпечки» / "Baking dish"; the base nominative form a cook writes, singular unless only a pair or set exists
+  («Ступка» / "Mortar and pestle"). Synonyms in lower case, as for the ingredients. No sizes in the label —
+  "26 cm" is the recipe line's qualifier, not another entry.
 - **Synonyms.** Only words cooks really write for exactly this entry (картошка, манка, icing sugar) — colloquial or
   regional names, not kinds of it (a kind is a leaf) and not a vaguer word that would fit several entries — except a bare word that, on its own, cooks use for this entry (масло → butter, перец → black pepper, укроп → fresh dill).
 - **No brands**, no recipes-as-ingredients ("тесто для пиццы" is fine as a bought product; "соус бешамель" as a sauce

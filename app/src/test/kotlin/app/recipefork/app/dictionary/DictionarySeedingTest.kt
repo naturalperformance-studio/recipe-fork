@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.data.AppDatabase
 import app.recipefork.app.data.Network
 import app.recipefork.core.api.DictionariesDto
+import app.recipefork.core.api.EquipmentEntryDto
 import app.recipefork.core.api.IngredientEntryDto
 import app.recipefork.core.api.TagDto
 import io.ktor.client.engine.mock.MockEngine
@@ -182,6 +183,47 @@ class DictionarySeedingTest {
         v2.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null, 1, '{\"pc\":1500.0}', 0)")
     }
 
+    // T-201 added the equipment in version 4: a version-3 store — ingredients with synonyms, tags, no equipment — is
+    // wiped and seeded again, now holding the equipment.
+    @Test
+    fun aVersionThreeStoreIsWipedAndTheDictionariesAreSeededAgainWithEquipment() = wipedAndSeededAgain(3) { v3 ->
+        v3.execSQL(
+            "create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, " +
+                "parentId integer, divisible integer, factors text not null, removed integer not null, " +
+                "synonymsRu text not null, synonymsEn text not null)",
+        )
+        v3.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null, 1, '{\"pc\":1500.0}', 0, '[]', '[]')")
+    }
+
+    // T-201: the equipment is seeded from the snapshot exactly as the ingredients are — groups, items, synonyms and
+    // removal — and an entry removed upstream is held removed, whether marked so or no longer carried; an answer that
+    // carries no equipment at all (a server need not serve it) leaves it as it is.
+    @Test
+    fun theEquipmentIsSeededAndKeptLikeTheIngredients() = runBlocking {
+        val group = EquipmentEntryDto(10000, "Посуда для плиты", "Stovetop cookware")
+        val pan = EquipmentEntryDto(10001, "Сковорода", "Frying pan", 10000, synonymsRu = listOf("сковородка"), synonymsEn = listOf("skillet"))
+        val kazan = EquipmentEntryDto(10002, "Казан", "Kazan", 10000, removed = true)
+        shipped = DictionariesDto("s1", emptyList(), emptyList(), listOf(group, pan, kazan))
+        val catalog = DictionaryCatalog(dao, seeding)
+        assertEquals(listOf(group, pan, kazan), catalog.equipment().map { it.toDto() })
+        assertEquals(EquipmentEntryEntity(10001, "Сковорода", "Frying pan", 10000, false, listOf("сковородка"), listOf("skillet")), catalog.equipment()[1])
+
+        refreshFromServer(DictionariesDto("server-1", emptyList(), emptyList(), listOf(group, kazan.copy(removed = false))))
+        assertEquals(listOf(10000L to false, 10001L to true, 10002L to false), dao.equipment().map { it.id to it.removed })
+        refreshFromServer(DictionariesDto("server-2", emptyList(), emptyList()))
+        assertEquals(listOf(10000L to false, 10001L to true, 10002L to false), dao.equipment().map { it.id to it.removed })
+    }
+
+    // The application's own snapshot carries the equipment, and a clean device holds it after its first read.
+    @Test
+    fun theShippedEquipmentReachesTheDevice() = runBlocking {
+        val read = DictionarySnapshot.read(context)
+        shipped = read
+        val held = DictionaryCatalog(dao, seeding).equipment()
+        assertEquals(read.equipment, held.map { it.toDto() })
+        assertTrue(held.any { it.labelRu == "Сковорода" && it.labelEn == "Frying pan" })
+    }
+
     private fun wipedAndSeededAgain(version: Int, entries: (SQLiteDatabase) -> Unit) = runBlocking {
         val name = "app-database-v$version-test.db"
         val file = context.getDatabasePath(name)
@@ -198,6 +240,7 @@ class DictionarySeedingTest {
             "s1",
             listOf(IngredientEntryDto(1, "курица", "chicken", divisible = true, factors = mapOf("pc" to 1500.0), synonymsRu = listOf("кура"))),
             emptyList(),
+            listOf(EquipmentEntryDto(10000, "Техника", "Appliances")),
         )
 
         val opened = AppDatabase.open(context, name)
@@ -210,7 +253,8 @@ class DictionarySeedingTest {
                 catalog.ingredients(),
             )
             assertEquals("s1", dao.version())
-            assertEquals(3, AppDatabase.VERSION)
+            assertEquals(listOf(EquipmentEntryEntity(10000, "Техника", "Appliances")), catalog.equipment())
+            assertEquals(4, AppDatabase.VERSION)
             assertEquals(AppDatabase.VERSION, opened.openHelper.readableDatabase.version)
         } finally {
             opened.close()

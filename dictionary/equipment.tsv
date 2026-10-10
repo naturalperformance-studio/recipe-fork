@@ -1,0 +1,207 @@
+# The equipment dictionary (dictionary/README.md): a top-level entry is a group, its leaves are the items a kitchen has.
+# id	labelRu	labelEn	parentId	removed	synonymsRu	synonymsEn
+@range 10000-10999
+
+# Stovetop cookware
+10000	Посуда для плиты	Stovetop cookware
+10001	Сковорода	Frying pan	10000		сковородка	skillet;frypan
+10002	Сковорода-гриль	Grill pan	10000			griddle pan
+10003	Блинная сковорода	Crepe pan	10000		сковорода для блинов	pancake pan
+10004	Вок	Wok	10000		сковорода вок
+10005	Сотейник	Sauté pan	10000			sauteuse
+10006	Кастрюля	Saucepan	10000			pot
+10007	Ковш	Milk pan	10000		ковшик	small saucepan
+10008	Бульонная кастрюля	Stockpot	10000		большая кастрюля	stock pot
+10009	Казан	Kazan	10000			cauldron
+10010	Чугунная кастрюля	Dutch oven	10000			cast-iron casserole
+10011	Утятница	Oval roaster	10000		гусятница
+10012	Турка	Cezve	10000		джезва	ibrik;Turkish coffee pot
+10013	Гейзерная кофеварка	Moka pot	10000			stovetop espresso maker
+10014	Скороварка	Pressure cooker	10000
+10015	Мантоварка	Multi-tier steamer	10000
+10016	Бамбуковая пароварка	Bamboo steamer	10000
+10017	Решётка для варки на пару	Steamer basket	10000			steamer insert
+10018	Чайник	Kettle	10000
+10019	Крышка	Lid	10000
+10020	Тажин	Tagine	10000
+10021	Набор для фондю	Fondue set	10000		фондюшница	fondue pot
+10022	Кастрюля для пасты	Pasta pot	10000
+10023	Сковорода для паэльи	Paella pan	10000		паэльера
+10024	Рассекатель	Heat diffuser	10000		рассекатель пламени	flame tamer
+10025	Сетка от брызг	Splatter screen	10000		крышка-сетка	splatter guard
+
+# Oven and baking
+10100	Духовка и выпечка	Oven and baking
+10101	Противень	Baking tray	10100			baking sheet;sheet pan
+10102	Форма для выпечки	Baking dish	10100		форма;форма для запекания	ovenproof dish;casserole dish
+10103	Разъёмная форма	Springform pan	10100			springform
+10104	Форма для кекса	Loaf pan	10100			loaf tin
+10105	Форма для маффинов	Muffin tin	10100		форма для капкейков	muffin pan;cupcake tin
+10106	Форма для тарта	Tart pan	10100			tart tin
+10107	Форма для пирога	Pie dish	10100			pie plate;pie tin
+10108	Форма для торта	Cake pan	10100			cake tin
+10109	Форма для тарталеток	Tartlet tin	10100			tartlet pan
+10110	Форма-бундт	Bundt pan	10100		форма для бундта	bundt tin
+10111	Форма для мадлен	Madeleine pan	10100
+10112	Кулинарное кольцо	Food ring	10100		форма-кольцо;сервировочное кольцо	ring mold;ring mould;pastry ring
+10113	Рамекин	Ramekin	10100		кокотница
+10114	Горшочек	Clay pot	10100		глиняный горшок	earthenware pot
+10115	Жаровня	Roasting pan	10100			roasting tin
+10116	Камень для пиццы	Pizza stone	10100
+10117	Форма для пиццы	Pizza pan	10100			pizza tray
+10118	Силиконовый коврик	Silicone baking mat	10100		коврик для выпечки	baking mat
+10119	Пергамент	Parchment paper	10100		бумага для выпечки;пекарская бумага	baking paper
+10120	Фольга	Aluminium foil	10100			foil;tin foil;aluminum foil
+10121	Рукав для запекания	Roasting bag	10100		пакет для запекания	oven bag
+10122	Решётка для остывания	Cooling rack	10100			wire rack
+10123	Скалка	Rolling pin	10100
+10124	Кондитерский мешок	Piping bag	10100			pastry bag
+10125	Кондитерская насадка	Piping tip	10100			piping nozzle
+10126	Кондитерская кисть	Pastry brush	10100		кисточка для выпечки;силиконовая кисть	basting brush
+10127	Формочка для печенья	Cookie cutter	10100		вырубка для печенья	biscuit cutter
+10128	Кондитерский шпатель	Offset spatula	10100		шпатель	palette knife
+10129	Кондитерский скребок	Bench scraper	10100		скребок для теста	dough scraper;pastry scraper
+10130	Поворотный столик	Cake turntable	10100		вращающаяся подставка для торта
+10131	Корзина для расстойки	Proofing basket	10100		расстоечная корзина	banneton;proving basket
+10132	Сито для муки	Flour sifter	10100		просеиватель	sifter
+10133	Утяжелители для выпечки	Pie weights	10100		керамические шарики	baking beans
+10134	Термометр для духовки	Oven thermometer	10100
+
+# Appliances
+10200	Техника	Appliances
+10201	Плита	Stove	10200		варочная панель	cooker;cooktop;hob
+10202	Духовка	Oven	10200		духовой шкаф
+10203	Микроволновка	Microwave	10200		микроволновая печь;свч-печь	microwave oven
+10204	Мультиварка	Multicooker	10200			multi-cooker;electric pressure cooker
+10205	Медленноварка	Slow cooker	10200		слоукукер
+10206	Аэрогриль	Air fryer	10200		аэрофритюрница
+10207	Фритюрница	Deep fryer	10200			deep fat fryer
+10208	Блендер	Blender	10200		стационарный блендер	countertop blender
+10209	Погружной блендер	Hand blender	10200		ручной блендер	immersion blender;stick blender
+10210	Кухонный комбайн	Food processor	10200		комбайн
+10211	Миксер	Hand mixer	10200		ручной миксер	mixer;electric whisk
+10212	Планетарный миксер	Stand mixer	10200		стационарный миксер	planetary mixer
+10213	Мясорубка	Meat grinder	10200			mincer
+10214	Соковыжималка	Juicer	10200
+10215	Тостер	Toaster	10200
+10216	Электрочайник	Electric kettle	10200		электрический чайник
+10217	Кофемолка	Coffee grinder	10200			coffee mill
+10218	Кофеварка	Coffee maker	10200		кофемашина	coffee machine
+10219	Хлебопечка	Bread maker	10200			bread machine
+10220	Вафельница	Waffle iron	10200			waffle maker
+10221	Пароварка	Steamer	10200		электропароварка	electric steamer;food steamer
+10222	Электрогриль	Electric grill	10200		контактный гриль	contact grill;panini press
+10223	Гриль	Grill	10200
+10224	Мангал	Barbecue	10200		барбекю	BBQ
+10225	Сэндвичница	Sandwich maker	10200			sandwich toaster
+10226	Йогуртница	Yogurt maker	10200
+10227	Мороженица	Ice cream maker	10200
+10228	Сушилка для овощей и фруктов	Food dehydrator	10200		дегидратор;сушилка	dehydrator
+10229	Су-вид	Sous vide cooker	10200			sous vide;immersion circulator
+10230	Вакуумный упаковщик	Vacuum sealer	10200		вакууматор
+10231	Холодильник	Refrigerator	10200			fridge
+10232	Морозильник	Freezer	10200		морозилка;морозильная камера
+10233	Блинница	Crepe maker	10200		электроблинница
+10234	Яйцеварка	Egg cooker	10200
+10235	Капучинатор	Milk frother	10200		вспениватель молока
+10236	Мини-печь	Toaster oven	10200		электропечь;электродуховка
+10237	Ломтерезка	Food slicer	10200			meat slicer
+10238	Коптильня	Smoker	10200			smokehouse
+
+# Knives and cutting
+10300	Ножи и нарезка	Knives and cutting
+10301	Нож	Knife	10300
+10302	Поварской нож	Chef's knife	10300		шеф-нож	cook's knife
+10303	Нож для овощей	Paring knife	10300		овощной нож
+10304	Хлебный нож	Bread knife	10300		нож для хлеба
+10305	Филейный нож	Fillet knife	10300		нож для филе
+10306	Нож сантоку	Santoku knife	10300		сантоку	santoku
+10307	Нож для обвалки	Boning knife	10300		обвалочный нож
+10308	Тесак	Cleaver	10300		топорик;нож-топорик	meat cleaver
+10309	Разделочная доска	Cutting board	10300		доска;доска для нарезки	chopping board
+10310	Овощечистка	Vegetable peeler	10300		нож для чистки овощей;экономка	peeler
+10311	Тёрка	Grater	10300			box grater
+10312	Тёрка для цедры	Zester	10300		зестер	fine grater
+10313	Тёрка для корейской моркови	Julienne peeler	10300			julienne slicer
+10314	Мандолина	Mandoline	10300			mandoline slicer
+10315	Овощерезка	Vegetable chopper	10300
+10316	Спиралайзер	Spiralizer	10300		спиральная овощерезка
+10317	Кухонные ножницы	Kitchen shears	10300		ножницы	kitchen scissors
+10318	Ножницы для птицы	Poultry shears	10300
+10319	Точилка для ножей	Knife sharpener	10300		точилка	sharpener
+10320	Мусат	Honing steel	10300			sharpening steel
+10321	Нож для пиццы	Pizza cutter	10300		роликовый нож	pizza wheel
+10322	Яйцерезка	Egg slicer	10300
+10323	Яблокорезка	Apple slicer	10300
+10324	Чеснокодавка	Garlic press	10300		пресс для чеснока;давилка для чеснока
+10325	Нож для устриц	Oyster knife	10300
+10326	Рыбочистка	Fish scaler	10300		скребок для рыбы
+10327	Нож для нарезки мяса	Carving knife	10300		разделочный нож для мяса	slicing knife
+
+# Tools and utensils
+10400	Кухонные принадлежности	Tools and utensils
+10401	Венчик	Whisk	10400		веничек
+10402	Лопатка	Spatula	10400		кулинарная лопатка	turner
+10403	Силиконовая лопатка	Rubber spatula	10400			silicone spatula
+10404	Половник	Ladle	10400		поварёшка
+10405	Шумовка	Skimmer	10400			spider
+10406	Ложка с прорезями	Slotted spoon	10400
+10407	Деревянная ложка	Wooden spoon	10400
+10408	Щипцы	Tongs	10400		кулинарные щипцы	kitchen tongs
+10409	Дуршлаг	Colander	10400
+10410	Сито	Sieve	10400			strainer
+10411	Шенуа	Chinois	10400		коническое сито	conical strainer
+10412	Миска	Bowl	10400			mixing bowl
+10413	Картофелемялка	Potato masher	10400		толкушка	masher
+10414	Ступка	Mortar and pestle	10400		ступка с пестиком	mortar
+10415	Отбивной молоток	Meat mallet	10400		молоток для мяса	meat tenderizer;meat hammer
+10416	Открывалка для консервов	Can opener	10400		консервный нож;открывалка	tin opener
+10417	Штопор	Corkscrew	10400
+10418	Воронка	Funnel	10400		лейка
+10419	Ложка для мороженого	Ice cream scoop	10400
+10420	Нуазетка	Melon baller	10400
+10421	Пресс для цитрусовых	Citrus juicer	10400			citrus squeezer;lemon squeezer
+10422	Вилка для мяса	Carving fork	10400			meat fork
+10423	Шампур	Skewer	10400		шпажка
+10424	Сифон для сливок	Cream whipper	10400		сифон	whipped cream dispenser
+10425	Кулинарная горелка	Kitchen torch	10400		горелка	blowtorch;cook's torch
+10426	Марля	Cheesecloth	10400			muslin
+10427	Кулинарная нить	Kitchen twine	10400		кулинарный шпагат;шпагат	butcher's twine
+10428	Прихватка	Oven mitt	10400		кухонная рукавица	oven glove;pot holder
+10429	Подставка под горячее	Trivet	10400
+10430	Кухонное полотенце	Kitchen towel	10400			tea towel;dish towel
+10431	Бумажное полотенце	Paper towel	10400			kitchen paper
+10432	Кулинарный пинцет	Kitchen tweezers	10400		пинцет
+10433	Сушилка для салата	Salad spinner	10400		салатная центрифуга
+10434	Ложка для спагетти	Pasta server	10400			spaghetti spoon
+10435	Лопата для пиццы	Pizza peel	10400		лопатка для пиццы
+10436	Мельница для перца	Pepper mill	10400			pepper grinder
+10437	Пресс для бургеров	Burger press	10400
+10438	Пельменница	Dumpling mold	10400		форма для пельменей	ravioli mold
+10439	Машинка для пасты	Pasta machine	10400		лапшерезка	pasta maker
+10440	Шприц для маринада	Marinade injector	10400			meat injector
+10442	Решётка-гриль	Grill rack	10400		решётка для гриля	grill grate
+
+# Measuring
+10500	Мерная посуда	Measuring
+10501	Кухонные весы	Kitchen scale	10500		весы	scale;scales
+10502	Мерный стакан	Measuring jug	10500		мерная кружка	liquid measuring cup
+10503	Мерная ложка	Measuring spoon	10500
+10504	Мерная чашка	Measuring cup	10500			cup measure
+10505	Кулинарный термометр	Kitchen thermometer	10500		термометр;термощуп	meat thermometer;probe thermometer
+10506	Термометр для карамели	Candy thermometer	10500			sugar thermometer
+10507	Кухонный таймер	Kitchen timer	10500		таймер	timer
+
+# Storage
+10600	Хранение	Storage
+10601	Контейнер	Food container	10600		пищевой контейнер	storage container
+10602	Банка	Jar	10600		стеклянная банка	glass jar
+10603	Пищевая плёнка	Cling film	10600			plastic wrap;food wrap
+10604	Пакет с застёжкой	Zip-lock bag	10600		зип-пакет	ziplock bag;freezer bag
+10605	Вакуумный пакет	Vacuum bag	10600
+10606	Форма для льда	Ice cube tray	10600		формочки для льда
+10607	Бутылка	Bottle	10600
+10608	Термос	Vacuum flask	10600			thermos
+10609	Хлебница	Bread box	10600			bread bin
+10610	Кувшин	Jug	10600			pitcher
+10611	Термосумка	Cooler bag	10600			cool bag
