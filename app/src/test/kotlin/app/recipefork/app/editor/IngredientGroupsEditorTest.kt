@@ -137,6 +137,30 @@ class IngredientGroupsEditorTest {
         assertEquals(editor.now.ingredientGroups, stored().ingredientGroups)
     }
 
+    // A row added and left holding nothing goes as though never added (T-210): nothing is offered for undoing, and a
+    // heading added at the end that the row filled stays there over no rows.
+    @Test
+    fun anEmptyRowDroppedGoesWithNothingToUndoAndLeavesAHeadingJustAddedInPlace() {
+        val editor = open()
+        assertTrue(editor.addGroup(6))
+        assertTrue(editor.renameGroup(2, "Topping"))
+        assertTrue(editor.addIngredient())
+        assertEquals("salt Dough: flour water Glaze: sugar butter egg Topping: ?", editor.now.shape())
+        assertTrue(editor.dropIngredient(6))
+        assertEquals("salt Dough: flour water Glaze: sugar butter egg Topping:", editor.now.shape())
+        assertEquals(null, editor.removal.value)
+        assertEquals(editor.now.ingredientGroups, stored().ingredientGroups)
+        assertEquals(6, stored().ingredients.size)
+
+        // Inserted above salt, dropped: the list is as it was, the references on their rows.
+        assertTrue(editor.insertIngredient(0))
+        assertTrue(editor.dropIngredient(0))
+        assertEquals("salt Dough: flour water Glaze: sugar butter egg Topping:", editor.now.shape())
+        assertEquals(listOf(listOf("salt", "flour"), listOf("egg")), editor.now.resolved())
+        assertEquals(null, editor.removal.value)
+        assertTrue(!editor.dropIngredient(6))
+    }
+
     // Moved up or down one place, a row trades places with the item next to it: past a heading, it leaves its group
     // for the one above, or joins the one below as its first row — the rows between and their headings stay.
     @Test

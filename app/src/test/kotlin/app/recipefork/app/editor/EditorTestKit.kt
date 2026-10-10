@@ -26,6 +26,7 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
@@ -246,11 +247,13 @@ fun ComposeTestRule.ingredientSheetOpen(): Boolean =
 
 /**
  * Opens the sheet of the ingredient row at [position] as the author does, by a tap on its line — closing by its Done
- * the sheet of any other row open first — and waits until its fields are there. Nothing is done where it is open.
+ * the sheet of any other row or heading open first — and waits until its fields are there. Nothing is done where it is
+ * open.
  */
 fun ComposeTestRule.openIngredient(position: Int) {
     if (onAllNodes(hasTestTag(EditorTags.ingredientName(position))).fetchSemanticsNodes().isNotEmpty()) return
     closeIngredient()
+    closeGroup()
     onNodeWithTag(IngredientSheetTags.line(position)).performScrollTo().performClick()
     waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(EditorTags.ingredientName(position))).fetchSemanticsNodes().size == 1 }
     waitForIdle()
@@ -263,6 +266,71 @@ fun ComposeTestRule.closeIngredient() {
     waitUntil(PATIENCE_MS) { !ingredientSheetOpen() }
     waitForIdle()
 }
+
+/**
+ * Chooses the action tagged [tag] in the open sheet — a row's or a heading's — by its click, as a screen reader would,
+ * scrolled to first, and waits until the screen is idle.
+ */
+fun ComposeTestRule.chooseInSheet(tag: String) {
+    onNodeWithTag(tag).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+    waitForIdle()
+}
+
+/** Opens the sheet of the ingredient row at [position] and chooses its [action] there. */
+fun ComposeTestRule.onIngredient(position: Int, action: RowAction) {
+    openIngredient(position)
+    chooseInSheet(EditorTags.ingredientAction(position, action))
+}
+
+/** Opens the sheet of the ingredient row at [position] and removes the row there, which closes the sheet. */
+fun ComposeTestRule.removeIngredient(position: Int) {
+    openIngredient(position)
+    chooseInSheet(EditorTags.ingredientRemove(position))
+    waitUntil(PATIENCE_MS) { !ingredientSheetOpen() }
+    waitForIdle()
+}
+
+/** Whether a group heading's sheet is open. */
+fun ComposeTestRule.groupSheetOpen(): Boolean =
+    onAllNodes(hasTestTag(GroupSheetTags.SHEET)).fetchSemanticsNodes().isNotEmpty()
+
+/**
+ * Opens the sheet of the heading at [index] by a tap on its line — closing any sheet open first — and waits until its
+ * name field is there. Nothing is done where it is open.
+ */
+fun ComposeTestRule.openGroup(index: Int) {
+    if (onAllNodes(hasTestTag(EditorTags.groupName(index))).fetchSemanticsNodes().isNotEmpty()) return
+    closeIngredient()
+    closeGroup()
+    onNodeWithTag(GroupSheetTags.line(index)).performScrollTo().performClick()
+    waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(EditorTags.groupName(index))).fetchSemanticsNodes().size == 1 }
+    waitForIdle()
+}
+
+/** Closes the open heading's sheet by its Done, if one is open, and waits until it is gone. */
+fun ComposeTestRule.closeGroup() {
+    if (!groupSheetOpen()) return
+    onNodeWithTag(GroupSheetTags.DONE).performClick()
+    waitUntil(PATIENCE_MS) { !groupSheetOpen() }
+    waitForIdle()
+}
+
+/** Opens the sheet of the heading at [index] and chooses its [action] there. */
+fun ComposeTestRule.onGroup(index: Int, action: RowAction) {
+    openGroup(index)
+    chooseInSheet(EditorTags.groupAction(index, action))
+}
+
+/** Opens the sheet of the heading at [index] and removes the heading there, which closes the sheet. */
+fun ComposeTestRule.removeGroup(index: Int) {
+    openGroup(index)
+    chooseInSheet(EditorTags.groupRemove(index))
+    waitUntil(PATIENCE_MS) { !groupSheetOpen() }
+    waitForIdle()
+}
+
+/** What the heading at [index] reads as in the list: its name, or the placeholder of a heading with none. */
+fun SemanticsNodeInteractionsProvider.groupLine(index: Int): String = textsOf(GroupSheetTags.line(index)).first()
 
 /** The text of the line the ingredient row at [position] reads as. */
 fun SemanticsNodeInteractionsProvider.ingredientLine(position: Int): String =

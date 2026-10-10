@@ -28,7 +28,7 @@ class ContrastTest {
     private fun pairs(c: ColorScheme) = listOf(
         // Text.
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
-        text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", step notes, a step's author's note on the card, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\"), a step's row in the editor — its number, author's note, timer lines and \"New step\"", c.onSurfaceVariant, c.surface),
+        text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", a heading's \"Unnamed group\", step notes, a step's author's note on the card, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\"), a step's row in the editor — its number, author's note, timer lines and \"New step\"", c.onSurfaceVariant, c.surface),
         text("text actions — the bar's actions, text buttons, timers' figures, the checklist's label", c.primary, c.surface),
         text("a filled button's label, a step's number in its circle on the card", c.onPrimary, c.primary),
         text("a problem said under a field, an ingredient row's mark of an amount its field does not hold", c.error, c.surface),
@@ -39,10 +39,10 @@ class ContrastTest {
         text("the filters sheet — its title, sections and choices", c.onSurface, c.surfaceContainerLow),
         text("the filters sheet — its hints and fields' labels", c.onSurfaceVariant, c.surfaceContainerLow),
         text("the filters sheet's Done", c.primary, c.surfaceContainerLow),
-        text("an ingredient row's sheet in the editor — its title, the fields' text, the offers, the divisibility question", c.onSurface, c.surfaceContainerLow),
-        text("an ingredient row's sheet — its fields' labels and placeholders, the free-text hint, a synonym beside an offer", c.onSurfaceVariant, c.surfaceContainerLow),
-        text("an ingredient row's sheet's Done", c.primary, c.surfaceContainerLow),
-        text("a problem said under a field of an ingredient row's sheet", c.error, c.surfaceContainerLow),
+        text("an ingredient row's or a heading's sheet in the editor — its title, the fields' text, the offers, the divisibility question, its actions", c.onSurface, c.surfaceContainerLow),
+        text("an ingredient row's or a heading's sheet — its fields' labels and placeholders, the free-text hint, a synonym beside an offer", c.onSurfaceVariant, c.surfaceContainerLow),
+        text("an ingredient row's or a heading's sheet's Done", c.primary, c.surfaceContainerLow),
+        text("a problem said under a field of an ingredient row's sheet; the removal among a row's or a heading's sheet's actions", c.error, c.surfaceContainerLow),
         text("a step's sheet in the editor — its title, the step's text, its note, the timers' fields", c.onSurface, c.surfaceContainerLow),
         text("a step's sheet — its fields' labels, the note's fork hint, the step's number, the references' offer", c.onSurfaceVariant, c.surfaceContainerLow),
         text("a step's sheet — its Done and its actions (move, insert)", c.primary, c.surfaceContainerLow),

@@ -676,10 +676,14 @@ class RecipeEditor(
      * Applies the ingredient list [arranged] makes of it ([Recipe.arranged]), each row's key and each kept heading's
      * following it. Returns the headings dropped, by their former index, or null where nothing was changed.
      */
-    private fun rearrange(prepare: (Recipe) -> Recipe = { it }, arranged: (Recipe) -> List<ListItem>): List<Int>? {
+    private fun rearrange(
+        prepare: (Recipe) -> Recipe = { it },
+        keepingLast: Boolean = false,
+        arranged: (Recipe) -> List<ListItem>,
+    ): List<Int>? {
         var dropped: List<Int>? = null
         val changed = edit { recipe ->
-            val result = prepare(recipe).arranged(arranged(recipe))
+            val result = prepare(recipe).arranged(arranged(recipe), keepingLast)
             ingredientKeys.arrange(result.rows, recipe.ingredients.size)
             groupKeys.arrange(result.headings, recipe.ingredientGroups.size)
             dropped = recipe.ingredientGroups.indices.filter { it !in result.headings }
@@ -688,7 +692,7 @@ class RecipeEditor(
         return dropped.takeIf { changed }
     }
 
-    private fun rearrange(arranged: (Recipe) -> List<ListItem>): Boolean = rearrange({ it }, arranged) != null
+    private fun rearrange(arranged: (Recipe) -> List<ListItem>): Boolean = rearrange({ it }, arranged = arranged) != null
 
     /** A new row: its unit starts as grams, so it always has a unit and so a unit type (DOM-016); no quantity yet. */
     private fun emptyRow(position: Int) = Ingredient(
@@ -792,6 +796,18 @@ class RecipeEditor(
         } ?: return false
         offered.value = Removal(Removal.Kind.INGREDIENT, position, recipe, dropped) {}
         return true
+    }
+
+    /**
+     * Takes away the row at [position] that the author added and left holding nothing, as though it had never been
+     * added: nothing is offered for undoing, and a heading left last over no rows stays, as one just added does.
+     * Returns whether it went.
+     */
+    fun dropIngredient(position: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (position !in recipe.ingredients.indices) return false
+        val withoutReferences = { edited: Recipe -> edited.copy(steps = edited.steps.map { ReferenceSpacing.withoutReferencesTo(it, position) }) }
+        return rearrange(withoutReferences, keepingLast = true) { edited -> edited.listItems - ListItem.Row(position) } != null
     }
 
     private val offered = MutableStateFlow<Removal?>(null)

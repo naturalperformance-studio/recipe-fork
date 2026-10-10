@@ -140,12 +140,18 @@ class EditorKeyboardTest {
         awaitFocused(tag)
     }
 
-    /** Adds a row by "Add ingredient", which opens its sheet: any sheet open before is closed first. */
+    /**
+     * Adds a row by "Add ingredient", which opens its sheet — any sheet open before is closed first — and names it there,
+     * so that closing its sheet keeps it.
+     */
     private fun addIngredient(): Int {
         compose.closeIngredient()
         val position = stored(RecipeId(requireNotNull(session.editing.value))).ingredients.size
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientName(position)), PATIENCE_MS)
+        awaitFocused(EditorTags.ingredientName(position))
+        compose.onNodeWithTag(EditorTags.ingredientName(position)).performTextInput("Row ${position + 1}")
+        compose.waitForIdle()
         return position
     }
 
@@ -315,10 +321,12 @@ class EditorKeyboardTest {
         )
         for ((add, first, firstField, added, remove) in parts) {
             val steps = add == EditorTags.STEP_ADD
+            val ingredient = add == EditorTags.INGREDIENT_ADD
             compose.onNodeWithTag(add).performScrollTo().performClick()
             awaitFocused(firstField)
-            // A step added and closed empty goes again: it is written first.
+            // A row or a step added and closed holding nothing goes again: it is written first.
             if (steps) compose.onNodeWithTag(firstField).performTextInput("Mix.")
+            if (ingredient) compose.onNodeWithTag(firstField).performTextInput("Flour")
             hideKeyboard()
             // The sheet closed, so the list is in sight.
             compose.closeIngredient()
@@ -332,12 +340,14 @@ class EditorKeyboardTest {
             assertFalse(exists(firstField) && isFocused(firstField))
             compose.waitUntil(PATIENCE_MS) { keyboardUp() }
             if (steps) compose.onNodeWithTag(added).performTextInput("Serve.")
+            if (ingredient) compose.onNodeWithTag(added).performTextInput("Salt")
             hideKeyboard()
             compose.closeIngredient()
             compose.closeStep()
 
-            // A step is removed from its sheet.
+            // A row's or a step's removal is in its sheet.
             if (steps) compose.openStep(1)
+            if (ingredient) compose.openIngredient(1)
             compose.onNodeWithTag(remove).performScrollTo()
             compose.assertChangesGradually("$add: a row removed", ::after) { compose.onNodeWithTag(remove).performClick() }
             // Its Undo put away, so that it covers nothing tapped next.

@@ -200,8 +200,19 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         return RowAction.entries.filter { exists(EditorTags.stepAction(position, it)) }
     }
 
-    private fun onIngredient(position: Int, action: RowAction) =
-        choose(EditorTags.ingredientMenu(position), { EditorTags.ingredientAction(position, it) }, action)
+    /** Opens the sheet of ingredient row [position], chooses its [action] there and closes the sheet. */
+    private fun onIngredient(position: Int, action: RowAction) {
+        compose.onIngredient(position, action)
+        compose.closeIngredient()
+    }
+
+    /** Opens the sheet of ingredient row [position] and returns the row actions it offers, in [RowAction]'s order. */
+    private fun sheetActions(position: Int): List<RowAction> {
+        compose.openIngredient(position)
+        return RowAction.entries.filter { exists(EditorTags.ingredientAction(position, it)) }
+    }
+
+    private fun focused(tag: String) = exists(tag) && node(tag).config.getOrElse(SemanticsProperties.Focused) { false }
 
     /** Closes the open menu tagged [menu] by its control, as the author would without choosing anything. */
     private fun closeMenu(menu: String) {
@@ -209,12 +220,12 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTagMatching(Regex(".*-insert-above"))).fetchSemanticsNodes().isEmpty() }
     }
 
-    // FLOW-025 (1, 2, 6), A11Y-006: every editable step and row carries a 48 dp menu named for its row, with "Insert
-    // above", "Insert below", "Move up" and "Move down" — none to move the first up or the last down; an ingredient
-    // row's also puts a group's heading above it (DOM-022).
+    // FLOW-025 (1, 2, 6), A11Y-006: every editable step carries a 48 dp menu named for its row, and every ingredient
+    // row's sheet the same actions, with "Insert above", "Insert below", "Move up" and "Move down" — none to move the
+    // first up or the last down; an ingredient row's also puts a group's heading above it (DOM-022).
     @Test
     fun everyRowCarriesAMenuNamedForItsRowInEnglish() = everyRowCarriesAMenuNamedForItsRow(
-        listOf("Insert above", "Insert below", "Move up", "Move down", "Add group above"), "Step 2", "Ingredient row 3 actions",
+        listOf("Insert above", "Insert below", "Move up", "Move down", "Add group above"), "Step 2",
     )
 
     @Test
@@ -222,23 +233,21 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
     fun everyRowCarriesAMenuNamedForItsRowInRussian() = everyRowCarriesAMenuNamedForItsRow(
         listOf("Вставить выше", "Вставить ниже", "Переместить вверх", "Переместить вниз", "Добавить группу выше"),
         "Шаг 2",
-        "Действия со строкой ингредиента 3",
     )
 
-    private fun everyRowCarriesAMenuNamedForItsRow(labels: List<String>, secondStep: String, thirdRow: String) {
+    private fun everyRowCarriesAMenuNamedForItsRow(labels: List<String>, secondStep: String) {
         writeANewRecipe()
         // A single row can only have rows put beside it.
         addStep("one")
         addIngredient("salt")
+        compose.closeIngredient()
         assertEquals(listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW), stepActions(0))
         compose.closeStep()
-        assertEquals(
-            listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE),
-            openMenu(EditorTags.ingredientMenu(0)) { EditorTags.ingredientAction(0, it) },
-        )
-        closeMenu(EditorTags.ingredientMenu(0))
+        assertEquals(listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE), sheetActions(0))
+        compose.closeIngredient()
         listOf("two", "three").forEach(::addStep)
         listOf("flour", "water").forEach(::addIngredient)
+        compose.closeIngredient()
 
         val all = RowAction.entries - RowAction.GROUP_ABOVE
         val expected = listOf(all - RowAction.MOVE_UP, all, all - RowAction.MOVE_DOWN)
@@ -263,23 +272,19 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
             }
             compose.closeStep()
 
-            val row = node(EditorTags.ingredientMenu(position))
-            assertEquals(listOf(string(R.string.editor_ingredient_menu_action, position + 1)), row.config[SemanticsProperties.ContentDescription])
-            assertEquals(
-                "row $position",
-                ingredientExpected[position],
-                openMenu(EditorTags.ingredientMenu(position)) { EditorTags.ingredientAction(position, it) },
-            )
+            // The row's actions in its sheet, each in words.
+            assertEquals("row $position", ingredientExpected[position], sheetActions(position))
             assertEquals(
                 ingredientExpected[position].map { labels[it.ordinal] },
                 ingredientExpected[position].map { compose.textsOf(EditorTags.ingredientAction(position, it)).joinToString("") },
             )
             AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = ingredientExpected[position].size)
-            closeMenu(EditorTags.ingredientMenu(position))
+            AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = ingredientExpected[position].size)
+            compose.closeIngredient()
         }
-        assertEquals(listOf(thirdRow), node(EditorTags.ingredientMenu(2)).config[SemanticsProperties.ContentDescription])
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 20)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 20)
+        // With every sheet closed, each step and each row is one labelled target of 48 dp.
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 6)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 6)
     }
 
     // FLOW-025 (1): a new empty step, or a new row exactly like an appended one, at the place chosen; the ones after
@@ -310,17 +315,30 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
 
         addIngredient("salt")
         addIngredient("flour")
-        onIngredient(1, RowAction.INSERT_ABOVE)
-        onIngredient(0, RowAction.INSERT_BELOW)
         addIngredient("")
+        val appended = stored(id).ingredients.last()
+        // Closed holding nothing, the row added goes again.
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 2 }
+        // Put above a row from its sheet: a row exactly like an appended one, whose sheet opens in place of the first,
+        // its name focused.
+        compose.onIngredient(1, RowAction.INSERT_ABOVE)
+        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(1)) }
+        assertEquals(listOf("salt", null, "flour"), stored(id).ingredients.map { it.freeTextName })
+        assertEquals(appended.copy(position = 1), stored(id).ingredients[1])
+        compose.onNodeWithTag(EditorTags.ingredientName(1)).performTextReplacement("sugar")
+        compose.waitForIdle()
+        // And below one, from the sheet now open.
+        compose.chooseInSheet(EditorTags.ingredientAction(1, RowAction.INSERT_BELOW))
+        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(2)) }
+        assertEquals(appended.copy(position = 2), stored(id).ingredients[2])
+        compose.onNodeWithTag(EditorTags.ingredientName(2)).performTextReplacement("yeast")
+        compose.waitForIdle()
         compose.closeIngredient()
         val rows = stored(id).ingredients
-        assertEquals(listOf("salt", null, null, "flour", null), rows.map { it.freeTextName })
-        assertEquals((0..4).toList(), rows.map { it.position })
-        val appended = rows.last()
-        assertEquals(appended.copy(position = 1), rows[1])
-        assertEquals(appended.copy(position = 2), rows[2])
-        assertEquals(listOf("salt", "", "", "flour", ""), ingredientNames())
+        assertEquals(listOf("salt", "sugar", "yeast", "flour"), rows.map { it.freeTextName })
+        assertEquals((0..3).toList(), rows.map { it.position })
+        assertEquals(listOf("salt", "sugar", "yeast", "flour"), ingredientNames())
         assertEquals(stepTexts(), stored(id).steps.map { it.text })
     }
 
@@ -439,8 +457,8 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
     }
 
     // What the screen holds for an ingredient row — its open sheet, with the focus, an open dictionary offer — stays with
-    // that row through an insert, a move and a delete above it, and its own move; a quantity the field does not hold stays
-    // marked on its row.
+    // that row through its own moves from that sheet; a quantity the field does not hold stays marked on its row through
+    // moves, an insert and a delete above it.
     @Test
     fun whatTheScreenHoldsForAnIngredientRowStaysWithIt() {
         val id = writeANewRecipe()
@@ -458,38 +476,37 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         compose.onNodeWithTag(EditorTags.ingredientName(2)).assertIsFocused()
         assertMarked(1)
 
-        onIngredient(0, RowAction.INSERT_ABOVE)
-        assertEquals(listOf("", "salt", "flour", "chick"), ingredientNames())
-        assertOffered(3)
-        compose.onNodeWithTag(EditorTags.ingredientName(3)).assertIsFocused()
-        assertMarked(2)
-
-        // The marked row moves above "salt".
-        onIngredient(2, RowAction.MOVE_UP)
-        assertEquals(listOf("", "flour", "salt", "chick"), ingredientNames())
-        assertMarked(1)
-        assertEquals(QuantityUnit.GRAM, stored(id).ingredients[1].unit)
-        assertOffered(3)
-        compose.onNodeWithTag(EditorTags.ingredientName(3)).assertIsFocused()
-
-        // The focused row itself moves.
-        onIngredient(3, RowAction.MOVE_UP)
-        assertEquals(listOf("", "flour", "chick", "salt"), ingredientNames())
-        assertOffered(2)
-        compose.onNodeWithTag(EditorTags.ingredientName(2)).assertIsFocused()
-
-        // Deleted above.
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitForIdle()
-        assertEquals(listOf("flour", "chick", "salt"), ingredientNames())
-        assertMarked(0)
+        // The focused row moves above the marked one, from its own sheet, which goes with it.
+        compose.chooseInSheet(EditorTags.ingredientAction(2, RowAction.MOVE_UP))
+        assertEquals(listOf("salt", "chick", "flour"), ingredientNames())
         assertOffered(1)
         compose.onNodeWithTag(EditorTags.ingredientName(1)).assertIsFocused()
+        assertMarked(2)
+        assertEquals(QuantityUnit.GRAM, stored(id).ingredients[2].unit)
+        compose.chooseInSheet(EditorTags.ingredientAction(1, RowAction.MOVE_UP))
+        assertEquals(listOf("chick", "salt", "flour"), ingredientNames())
+        assertOffered(0)
+        compose.onNodeWithTag(EditorTags.ingredientName(0)).assertIsFocused()
         // The offer is still that row's: picking from it names that row.
-        compose.onNodeWithTag(IngredientNameTags.entry(1, 1)).performScrollTo().performClick()
+        compose.onNodeWithTag(IngredientNameTags.entry(0, 1)).performScrollTo().performClick()
         compose.waitForIdle()
-        assertEquals(listOf(null, 1L, null), stored(id).ingredients.map { it.dictionaryEntry })
-        assertEquals(listOf("flour", null, "salt"), stored(id).ingredients.map { it.freeTextName })
+        assertEquals(listOf(1L, null, null), stored(id).ingredients.map { it.dictionaryEntry })
+        assertEquals(listOf(null, "salt", "flour"), stored(id).ingredients.map { it.freeTextName })
+        compose.closeIngredient()
+
+        // A row put above, named, and one deleted above: the mark stays on its row.
+        compose.onIngredient(0, RowAction.INSERT_ABOVE)
+        compose.onNodeWithTag(EditorTags.ingredientName(0)).performTextReplacement("water")
+        compose.waitForIdle()
+        compose.closeIngredient()
+        assertMarked(3)
+        compose.removeIngredient(1)
+        assertEquals(listOf("water", "salt", "flour"), ingredientNames())
+        assertMarked(2)
+        // The marked row itself moves.
+        onIngredient(2, RowAction.MOVE_UP)
+        assertEquals(listOf("water", "flour", "salt"), ingredientNames())
+        assertMarked(1)
     }
 
     private fun assertOffered(position: Int) {

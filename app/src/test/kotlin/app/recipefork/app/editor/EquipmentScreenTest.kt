@@ -278,9 +278,10 @@ class EquipmentScreenTest {
         compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
         compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
-        compose.closeIngredient()
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
+        compose.removeIngredient(0)
         compose.waitUntil(PATIENCE_MS) { stored(recipe).ingredients.isEmpty() }
+        // Its Undo put away, so that it covers nothing tapped next.
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.EQUIPMENT_ADD).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { focused(field(0)) }
         assertEquals(androidx.compose.ui.text.input.ImeAction.Done, node(field(0)).config[SemanticsProperties.ImeAction])

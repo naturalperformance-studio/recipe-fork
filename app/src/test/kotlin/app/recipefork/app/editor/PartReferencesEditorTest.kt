@@ -49,6 +49,7 @@ import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -293,7 +294,8 @@ class PartReferencesEditorTest {
         assertEquals(listOf(IngredientReference(0, 11, two)), stored(recipe.id).steps[0].ingredientReferences)
     }
 
-    // A change of the row's unit type makes its parts whole references again, and says so once.
+    // A change of the row's unit type makes its parts whole references again, and says so once — once the row's sheet,
+    // which would hide it, is closed.
     @Test
     fun aChangeOfUnitTypeMakesThePartsWholeAndSaysSoOnce() {
         val recipe = chicken(
@@ -305,6 +307,11 @@ class PartReferencesEditorTest {
         compose.onNodeWithTag(EditorTags.ingredientUnit(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(QuantityUnit.GRAM)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps[0].ingredientReferences == listOf(IngredientReference(0, 11)) }
+        compose.waitForIdle()
+        assertTrue(compose.ingredientSheetOpen())
+        assertFalse("said behind the sheet", exists(EditorTags.STATEMENT))
+        compose.closeIngredient()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.STATEMENT) }
         val statement = string(R.string.editor_parts_made_whole, 1)
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodesWithText(statement, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }

@@ -5,7 +5,9 @@ import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -37,6 +39,7 @@ import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
@@ -178,9 +181,13 @@ class IngredientSheetTest {
             val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(position)))
             assertEquals("row $position holds a field", 0, compose.onAllNodes(inRow and hasSetTextAction(), useUnmergedTree = true).fetchSemanticsNodes().size)
             assertTrue("row $position has no handle", exists(EditorTags.ingredientHandle(position)))
-            // The row's ⋮ and Remove stay for now.
-            assertTrue(exists(EditorTags.ingredientRemove(position)))
-            assertTrue(exists(EditorTags.ingredientMenu(position)))
+            // Its line is all it offers: its actions are in its sheet.
+            assertEquals(
+                listOf(IngredientSheetTags.line(position)),
+                compose.onAllNodes(inRow and AccessibilityChecks.isInteractive, useUnmergedTree = true).fetchSemanticsNodes()
+                    .map { it.config[SemanticsProperties.TestTag] },
+            )
+            assertFalse(exists(EditorTags.ingredientRemove(position)))
         }
         assertFalse(compose.ingredientSheetOpen())
     }
@@ -234,13 +241,16 @@ class IngredientSheetTest {
         val sheet = hasAnyAncestor(hasTestTag(IngredientSheetTags.SHEET))
         val fields = compose.onAllNodes(sheet and hasSetTextAction()).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
         assertEquals(listOf(EditorTags.ingredientName(1), IngredientNoteTags.field(1), EditorTags.ingredientQuantity(1)), fields)
+        // Every control of the sheet is tagged — it has no drag handle — and they stand in this order: Done, the fields,
+        // then the row's actions.
         val interactive = compose.onAllNodes(sheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            .mapNotNull { it.config.getOrElseNullable(SemanticsProperties.TestTag) { null } }
+            .map { it.config[SemanticsProperties.TestTag] }
         assertEquals(
             listOf(
                 IngredientSheetTags.DONE, EditorTags.ingredientName(1), IngredientNoteTags.field(1), EditorTags.ingredientQuantity(1),
                 EditorTags.ingredientUnit(1), EditorTags.divisible(1, true), EditorTags.divisible(1, false),
-            ),
+            ) + listOf(RowAction.MOVE_UP, RowAction.MOVE_DOWN, RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE)
+                .map { EditorTags.ingredientAction(1, it) } + EditorTags.ingredientRemove(1),
             interactive,
         )
         // A named row opens with nothing focused.
@@ -340,9 +350,7 @@ class IngredientSheetTest {
     fun aMovedRowKeepsItsSheetAndADeletedOneClosesIt() {
         val id = open(draft())
         compose.openIngredient(1)
-        compose.onNodeWithTag(EditorTags.ingredientMenu(1)).performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientAction(1, RowAction.MOVE_UP)) }
-        compose.onNodeWithTag(EditorTags.ingredientAction(1, RowAction.MOVE_UP)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.chooseInSheet(EditorTags.ingredientAction(1, RowAction.MOVE_UP))
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientName(0)) }
         assertEquals("onion", fieldText(EditorTags.ingredientName(0)))
         assertFalse(exists(EditorTags.ingredientName(1)))
@@ -351,7 +359,10 @@ class IngredientSheetTest {
         assertEquals(listOf("onion", null), stored(id).ingredients.take(2).map { it.freeTextName })
         assertEquals("diced", stored(id).ingredients[0].note)
 
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performSemanticsAction(SemanticsActions.OnClick)
+        // Its sheet's actions are now the moved row's: Move up is gone, the first row's.
+        assertFalse(exists(EditorTags.ingredientAction(0, RowAction.MOVE_UP)))
+        assertTrue(exists(EditorTags.ingredientAction(0, RowAction.MOVE_DOWN)))
+        compose.chooseInSheet(EditorTags.ingredientRemove(0))
         awaitClosed()
         assertEquals(3, stored(id).ingredients.size)
         compose.awaitStatement(string(R.string.editor_ingredient_removed, 1))
@@ -360,6 +371,244 @@ class IngredientSheetTest {
         compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
         assertEquals("2 pc onion — diced", compose.ingredientLine(0))
         assertFalse(compose.ingredientSheetOpen())
+    }
+
+    // T-210: the row's actions in its sheet. Under the fields, in words: Move up, Move down, Insert above, Insert below,
+    // Add group above, and last the removal, in the error colour; each a button the whole sheet wide, at least 56 dp tall
+    // (A11Y-006: every move the drag makes is here, one tap each). The first row moves only down, the last only up.
+    @Test
+    fun theSheetHoldsTheRowsActions() = sheetHoldsTheRowsActions(
+        listOf("Move up", "Move down", "Insert above", "Insert below", "Add group above", "Remove ingredient"),
+    )
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun theSheetHoldsTheRowsActionsInRussian() = sheetHoldsTheRowsActions(
+        listOf("Переместить вверх", "Переместить вниз", "Вставить выше", "Вставить ниже", "Добавить группу выше", "Убрать ингредиент"),
+    )
+
+    private fun sheetHoldsTheRowsActions(labels: List<String>) {
+        val id = open(draft())
+        compose.openIngredient(1)
+        val tags = listOf(RowAction.MOVE_UP, RowAction.MOVE_DOWN, RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE)
+            .map { EditorTags.ingredientAction(1, it) } + EditorTags.ingredientRemove(1)
+        assertEquals(labels, tags.map { compose.textsOf(it).joinToString("") })
+        val scheme = lightColorScheme()
+        assertEquals(scheme.error, compose.textColourOf(EditorTags.ingredientRemove(1)))
+        tags.dropLast(1).forEach { assertEquals(it, scheme.onSurface, compose.textColourOf(it)) }
+        val sheet = compose.onNodeWithTag(IngredientSheetTags.SHEET).fetchSemanticsNode()
+        tags.forEach { tag ->
+            val node = compose.onNodeWithTag(tag).fetchSemanticsNode()
+            assertEquals(tag, Role.Button, node.config[SemanticsProperties.Role])
+            assertTrue("$tag is ${node.size.height / compose.density.density} dp tall", node.size.height >= 56 * compose.density.density - 0.5f)
+            assertEquals(tag, sheet.size.width, node.size.width)
+        }
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = tags.size)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = tags.size)
+        compose.openIngredient(0)
+        assertFalse(exists(EditorTags.ingredientAction(0, RowAction.MOVE_UP)))
+        assertTrue(exists(EditorTags.ingredientAction(0, RowAction.MOVE_DOWN)))
+        // The last row, holding nothing but not added now: closing its sheet leaves it.
+        compose.openIngredient(3)
+        assertTrue(exists(EditorTags.ingredientAction(3, RowAction.MOVE_UP)))
+        assertFalse(exists(EditorTags.ingredientAction(3, RowAction.MOVE_DOWN)))
+        compose.closeIngredient()
+        assertEquals(4, stored(id).ingredients.size)
+    }
+
+    // A move keeps the sheet on its row. Insert above or below puts a row exactly like an added one beside it and moves
+    // the sheet to the new row, its name focused; closed holding nothing, the new row goes again with nothing to undo.
+    // "Add group above" puts a heading over the row and opens the heading's sheet in place of the row's, its name focused.
+    @Test
+    fun theSheetsInsertsMoveTheSheetToTheNewRow() {
+        val id = open(draft())
+        compose.openIngredient(1)
+        compose.chooseInSheet(EditorTags.ingredientAction(1, RowAction.MOVE_DOWN))
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientName(2)) }
+        assertEquals("onion", fieldText(EditorTags.ingredientName(2)))
+        assertEquals(listOf(null, "salt", "onion", null), stored(id).ingredients.map { it.freeTextName })
+
+        compose.chooseInSheet(EditorTags.ingredientAction(2, RowAction.INSERT_ABOVE))
+        awaitFocused(EditorTags.ingredientName(2))
+        assertEquals("", fieldText(EditorTags.ingredientName(2)))
+        assertEquals(1, compose.onAllNodes(hasTestTag(IngredientSheetTags.SHEET)).fetchSemanticsNodes().size)
+        assertEquals(listOf(null, "salt", null, "onion", null), stored(id).ingredients.map { it.freeTextName })
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        compose.waitForIdle()
+        assertFalse(exists(EditorTags.STATEMENT))
+        assertEquals(listOf(null, "salt", "onion", null), stored(id).ingredients.map { it.freeTextName })
+
+        compose.openIngredient(2)
+        compose.chooseInSheet(EditorTags.ingredientAction(2, RowAction.INSERT_BELOW))
+        awaitFocused(EditorTags.ingredientName(3))
+        compose.onNodeWithTag(EditorTags.ingredientName(3)).performTextInput("pepper")
+        compose.closeIngredient()
+        assertEquals(listOf(null, "salt", "onion", "pepper", null), stored(id).ingredients.map { it.freeTextName })
+        assertTrue(compose.ingredientLine(3).endsWith("pepper"))
+
+        compose.openIngredient(1)
+        compose.chooseInSheet(EditorTags.ingredientAction(1, RowAction.GROUP_ABOVE))
+        compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() && exists(EditorTags.groupName(0)) && isFocused(EditorTags.groupName(0)) }
+        assertFalse(compose.ingredientSheetOpen())
+        compose.onNodeWithTag(EditorTags.groupName(0)).performTextInput("Seasoning")
+        compose.closeGroup()
+        assertEquals(listOf(IngredientGroup("Seasoning", 1)), stored(id).ingredientGroups)
+        assertEquals("Seasoning", compose.groupLine(0))
+        assertEquals(5, stored(id).ingredients.size)
+    }
+
+    // "Add ingredient" adds a row and opens its sheet with the name focused. Closed holding nothing — by Done, Back or a
+    // swipe — the row goes again with no Undo, and "Add" asked again at the same place opens the sheet again. A note
+    // alone or an amount alone is something written: that row stays. A row added, named and closed reads its line and
+    // opens again on a tap.
+    @Test
+    fun addOpensTheSheetAndAnEmptyNewRowGoesAgain() {
+        val id = open(draft())
+        fun add(position: Int) {
+            compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
+            awaitFocused(EditorTags.ingredientName(position))
+        }
+        add(4)
+        assertEquals(5, stored(id).ingredients.size)
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        compose.waitForIdle()
+        assertFalse(exists(EditorTags.ingredient(4)))
+        assertFalse(exists(EditorTags.STATEMENT))
+        add(4)
+        pressBack()
+        awaitClosed()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        add(4)
+        compose.onNodeWithTag(IngredientSheetTags.SHEET).performTouchInput { swipeDown() }
+        awaitClosed()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        assertFalse(exists(EditorTags.STATEMENT))
+
+        add(4)
+        compose.onNodeWithTag(IngredientNoteTags.field(4)).performTextReplacement("chopped")
+        compose.closeIngredient()
+        add(5)
+        compose.onNodeWithTag(EditorTags.ingredientQuantity(5)).performTextReplacement("3")
+        compose.closeIngredient()
+        assertEquals(6, stored(id).ingredients.size)
+        assertEquals("chopped", stored(id).ingredients[4].note)
+        assertEquals(Rational.of(3), stored(id).ingredients[5].quantity)
+
+        add(6)
+        compose.onNodeWithTag(EditorTags.ingredientName(6)).performTextInput("pepper")
+        compose.closeIngredient()
+        assertTrue(compose.ingredientLine(6).endsWith("pepper"))
+        compose.onNodeWithTag(IngredientSheetTags.line(6)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientName(6)) }
+        compose.waitForIdle()
+        assertEquals("pepper", fieldText(EditorTags.ingredientName(6)))
+        assertFalse(isFocused(EditorTags.ingredientName(6)))
+        compose.closeIngredient()
+        assertEquals(7, stored(id).ingredients.size)
+    }
+
+    // Next from the serving count opens the first row's sheet once the serving count is left: what leaving it does is
+    // done — a count left empty is marked — and once the sheet goes, the focus does not come back to it.
+    @Test
+    fun theServingCountIsLeftBeforeTheFirstRowsSheetOpens() {
+        open(draft().copy(servings = null))
+        compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
+        awaitFocused(EditorTags.SERVINGS)
+        assertFalse(exists(EditorTags.SERVINGS_MARK))
+        compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
+        awaitFocused(EditorTags.ingredientName(0))
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.SERVINGS_MARK) }
+        assertFalse(isFocused(EditorTags.SERVINGS))
+        compose.closeIngredient()
+        assertFalse(isFocused(EditorTags.SERVINGS))
+    }
+
+    // The editor's statements never stand hidden behind a sheet: a row removed from its sheet says so, with Undo, once
+    // the sheet has gone; a sheet rising over that Undo takes it away while it stands, and it is offered afresh once the
+    // sheet goes, and still undoes.
+    @Test
+    fun statementsWaitForTheSheetToGo() {
+        val id = open(draft())
+        compose.removeIngredient(3)
+        compose.awaitStatement(string(R.string.editor_ingredient_removed, 4))
+        assertEquals(3, stored(id).ingredients.size)
+        compose.openIngredient(0)
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.STATEMENT) }
+        compose.closeIngredient()
+        compose.awaitStatement(string(R.string.editor_ingredient_removed, 4))
+        val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
+        compose.onNode(undo, useUnmergedTree = true).performClick()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        assertEquals("New ingredient", compose.ingredientLine(3))
+    }
+
+    /** Taps the action tagged [tag] of the open sheet with the clock held: no frame passes, nothing of it is drawn yet. */
+    private fun tapHeld(tag: String) {
+        compose.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.OnClick)
+    }
+
+    // Remove tapped twice while the sheet goes down removes that row alone, once: its Undo puts back the recipe as it
+    // was. A Move tapped meanwhile does nothing either.
+    @Test
+    fun twoQuickRemovesRemoveThatRowOnce() {
+        val recipe = draft()
+        val id = open(recipe)
+        compose.openIngredient(1)
+        compose.mainClock.autoAdvance = false
+        tapHeld(EditorTags.ingredientRemove(1))
+        tapHeld(EditorTags.ingredientAction(1, RowAction.MOVE_UP))
+        compose.mainClock.advanceTimeBy(120)
+        tapHeld(EditorTags.ingredientRemove(1))
+        compose.mainClock.autoAdvance = true
+        awaitClosed()
+        compose.awaitStatement(string(R.string.editor_ingredient_removed, 2))
+        assertEquals(listOf(null, "salt", null), stored(id).ingredients.map { it.freeTextName })
+        assertEquals(1L, stored(id).ingredients[0].dictionaryEntry)
+        val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
+        compose.onNode(undo, useUnmergedTree = true).performClick()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        assertEquals(recipe.ingredients, stored(id).ingredients)
+    }
+
+    // A move tapped twice before the sheet is drawn again moves its row twice, each from where it stands then.
+    @Test
+    fun aMoveTappedTwiceMovesTheRowFromWhereItStands() {
+        val id = open(draft())
+        compose.openIngredient(2)
+        compose.mainClock.autoAdvance = false
+        tapHeld(EditorTags.ingredientAction(2, RowAction.MOVE_UP))
+        tapHeld(EditorTags.ingredientAction(2, RowAction.MOVE_UP))
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertEquals(listOf("salt", null, "onion", null), stored(id).ingredients.map { it.freeTextName })
+        assertEquals("salt", fieldText(EditorTags.ingredientName(0)))
+        compose.closeIngredient()
+    }
+
+    // Insert above or below from the sheet of a row just added and still holding nothing leaves that row behind no more:
+    // it goes, with nothing to undo, and the sheet opens on the row put in its place.
+    @Test
+    fun insertingFromAnEmptyNewRowDropsIt() {
+        val id = open(draft())
+        listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW).forEach { action ->
+            compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
+            awaitFocused(EditorTags.ingredientName(4))
+            compose.chooseInSheet(EditorTags.ingredientAction(4, action))
+            compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 5 }
+            awaitFocused(EditorTags.ingredientName(4))
+            assertFalse("$action", exists(EditorTags.ingredient(5)))
+            compose.onNodeWithTag(EditorTags.ingredientName(4)).performTextInput("pepper $action")
+            compose.closeIngredient()
+            assertEquals("$action", 5, stored(id).ingredients.size)
+            assertEquals("$action", "pepper $action", stored(id).ingredients[4].freeTextName)
+            compose.waitForIdle()
+            assertFalse("$action", exists(EditorTags.STATEMENT))
+            compose.removeIngredient(4)
+            compose.swipeAwayStatement()
+            compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        }
     }
 
     // A frozen recipe's rows read as the same lines and open nothing.
