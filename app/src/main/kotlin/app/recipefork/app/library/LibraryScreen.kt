@@ -109,6 +109,9 @@ import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.equipmentDictionaryOf
 import app.recipefork.app.file.RecipeImport
+import app.recipefork.app.kitchen.Kitchen
+import app.recipefork.app.kitchen.KitchenEnvironment
+import app.recipefork.app.kitchen.rememberKitchenEnvironment
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.ListingParams
@@ -162,9 +165,11 @@ fun LibraryScreen(
     card: CardEnvironment = rememberCardEnvironment(),
     files: RecipeImport = rememberRecipeImport(recipes),
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
+    kitchen: KitchenEnvironment = rememberKitchenEnvironment(),
     onOpenSettings: () -> Unit = {},
 ) {
     val view by session.view.collectAsState()
+    val bookKitchen = rememberBookKitchen(kitchen)
     val timers = rememberCardTimers()
     // The session holds the view shown; the pager follows it, and tells it the view a swipe settles on.
     val pager = remember { PagerState(currentPage = view.ordinal) { VIEWS.size } }
@@ -248,11 +253,11 @@ fun LibraryScreen(
         ) { page ->
             when (VIEWS[page]) {
                 LibraryView.MARKED -> MarkedList(
-                    recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags,
+                    recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags, bookKitchen,
                     markedList, bottom, import, notice, onOffer = { offers[LibraryView.MARKED] = it },
                 )
                 LibraryView.OWN -> OwnList(
-                    recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients,
+                    recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients, bookKitchen,
                     ownList, bottom, notice, write, onOffer = { offers[LibraryView.OWN] = it },
                 )
             }
@@ -455,6 +460,7 @@ private fun OwnList(
     mode: Mode,
     thumbnails: CoverThumbnails,
     dictionary: IngredientEntries,
+    kitchen: Kitchen?,
     listState: LazyListState,
     bottom: Dp,
     reveal: String?,
@@ -463,8 +469,10 @@ private fun OwnList(
 ) {
     val search = rememberSearchField(LibraryView.OWN, session)
     val params = rememberListingParams(LibraryView.OWN, session)
-    val listed by remember(recipes, params, dictionary) { recipes.ownListed(params, dictionary::entries) }
+    val kitchens = rememberKitchenFlow(kitchen)
+    val listed by remember(recipes, params, dictionary) { recipes.ownListed(params, kitchens, dictionary::entries) }
         .collectAsState(initial = null)
+    SwitchOffEquipmentWithoutKitchen(LibraryView.OWN, session, kitchen)
     val query by session.query(LibraryView.OWN).collectAsState()
     val order by session.order(LibraryView.OWN).collectAsState()
     val filters by session.filters(LibraryView.OWN).collectAsState()
@@ -500,6 +508,7 @@ private fun OwnList(
                 ListHeader(
                     search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
                     filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold, shown.carries,
+                    equipmentOffered = offersEquipment(kitchen),
                 )
                 HorizontalDivider()
             }
@@ -847,6 +856,7 @@ private fun MarkedList(
     thumbnails: CoverThumbnails,
     dictionary: IngredientEntries,
     tags: TagSource,
+    kitchen: Kitchen?,
     listState: LazyListState,
     bottom: Dp,
     onImport: () -> Unit,
@@ -855,8 +865,10 @@ private fun MarkedList(
 ) {
     val search = rememberSearchField(LibraryView.MARKED, session)
     val params = rememberListingParams(LibraryView.MARKED, session)
-    val listed by remember(recipes, params, dictionary) { recipes.markedListed(params, dictionary::entries) }
+    val kitchens = rememberKitchenFlow(kitchen)
+    val listed by remember(recipes, params, dictionary) { recipes.markedListed(params, kitchens, dictionary::entries) }
         .collectAsState(initial = null)
+    SwitchOffEquipmentWithoutKitchen(LibraryView.MARKED, session, kitchen)
     val order by session.order(LibraryView.MARKED).collectAsState()
     val filters by session.filters(LibraryView.MARKED).collectAsState()
     val choices = rememberFilterChoices(dictionary, tags)
@@ -895,6 +907,7 @@ private fun MarkedList(
                 ListHeader(
                     search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
                     filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold, shown.carries,
+                    equipmentOffered = offersEquipment(kitchen),
                 )
                 HorizontalDivider()
             }
@@ -1087,6 +1100,12 @@ object LibraryTags {
     const val TAG_FIELD = "library-tag-field"
     const val TAG_NO_MATCH = "library-tag-no-match"
     fun tagChoice(tagId: Long) = "library-tag-choice-$tagId"
+    /** The sheet's section of the filter "Enough equipment", its choice, and the chip of it in force. */
+    const val EQUIPMENT_CHOOSER = "library-equipment-chooser"
+    const val EQUIPMENT_CHOICE = "library-equipment-choice"
+    const val EQUIPMENT_FILTER = "library-equipment-filter"
+    /** The one action of a view that the filter "Enough equipment" alone narrowed to nothing: switching it off. */
+    const val NOTHING_FOUND_EQUIPMENT_OFF = "library-nothing-found-equipment-off"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
     /** The parts of an empty state tagged [state]: its picture, its headline and its sentence. */
     fun emptyPicture(state: String) = "$state-picture"

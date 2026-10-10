@@ -13,6 +13,7 @@ import app.recipefork.app.book.IngredientLineRow
 import app.recipefork.app.book.MediaEntity
 import app.recipefork.app.book.OwnRecipeRow
 import app.recipefork.app.book.RecipeEntity
+import app.recipefork.app.book.RecipeEquipmentRow
 import app.recipefork.app.book.RecipeRows
 import app.recipefork.app.book.RecipeTagEntity
 import app.recipefork.app.book.StepEntity
@@ -33,6 +34,7 @@ import app.recipefork.core.recipe.SentStatus
 import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
+import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.media.PhotoStore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +43,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.flatMapLatest
@@ -66,23 +70,26 @@ open class RecipeRepository(
 
     /**
      * The own recipes of the active book as their view lists them for each of [params] (FLOW-035): searched by title,
-     * description and ingredient, with the ingredient names of [dictionary], filtered by ingredient, tags and language, and ordered. Worked out where the book's queries
-     * run, never on the main thread.
+     * description and ingredient, with the ingredient names of [dictionary], filtered by ingredient, tags, language and
+     * the equipment the reader's [kitchen] has, and ordered. Worked out where the book's queries run, never on the main
+     * thread. While the kitchen is not known yet — null — a listing filtered by equipment waits for it.
      */
     open fun ownListed(
         params: Flow<ListingParams>,
+        kitchen: Flow<Kitchen?> = flowOf(null),
         dictionary: suspend () -> List<IngredientEntryEntity>,
     ): Flow<Listed<OwnRecipeRow>> =
-        listed(params, { it.recipes().own() }) {
+        listed(params, kitchen, { it.recipes().own() }) {
             BookSearch(dictionary, OwnRecipeRow::recipeId, OwnRecipeRow::title, OwnRecipeRow::language, OwnRecipeRow::description)
         }
 
     /** What is marked in the active book as its view lists it for each of [params], as [ownListed] does. */
     open fun markedListed(
         params: Flow<ListingParams>,
+        kitchen: Flow<Kitchen?> = flowOf(null),
         dictionary: suspend () -> List<IngredientEntryEntity>,
     ): Flow<Listed<MarkedRecipeRow>> =
-        listed(params, { it.favourites().marked() }) {
+        listed(params, kitchen, { it.favourites().marked() }) {
             BookSearch(
                 dictionary, MarkedRecipeRow::recipeId, MarkedRecipeRow::title,
                 MarkedRecipeRow::language, MarkedRecipeRow::description,
@@ -91,15 +98,22 @@ open class RecipeRepository(
 
     private fun <R> listed(
         params: Flow<ListingParams>,
+        kitchen: Flow<Kitchen?>,
         rows: (BookDatabase) -> Flow<List<R>>,
         search: () -> BookSearch<R>,
     ): Flow<Listed<R>> = book.open.flatMapLatest { open ->
         val searching = search()
         val recipes = open.database.recipes()
-        combine(rows(open.database), recipes.ingredientLines(), recipes.allTags(), params) { shown, lines, tags, asked ->
-            Listing(shown, lines, tags, asked)
+        val asked = combine(params, kitchen) { listing, held -> listing to held }
+        combine(rows(open.database), recipes.ingredientLines(), recipes.allTags(), recipes.equipmentEntries(), asked) {
+                shown, lines, tags, equipment, (listing, held) ->
+            Listing(shown, lines, tags, equipment, listing, held)
         }
-            .mapLatest { searching.listed(it.rows, it.lines, it.tags, it.params) }
+            .filter { !it.params.filters.equipment || it.kitchen != null }
+            .mapLatest { listing ->
+                val lacks: (Long) -> Boolean = listing.kitchen?.let { held -> held::lacks } ?: { false }
+                searching.listed(listing.rows, listing.lines, listing.tags, listing.params, listing.equipment, lacks)
+            }
             .flowOn(open.database.queryExecutor.asCoroutineDispatcher())
     }
 
@@ -276,7 +290,9 @@ private class Listing<R>(
     val rows: List<R>,
     val lines: List<IngredientLineRow>,
     val tags: List<RecipeTagEntity>,
+    val equipment: List<RecipeEquipmentRow>,
     val params: ListingParams,
+    val kitchen: Kitchen?,
 )
 
 internal fun Recipe.toRows(): RecipeRows {

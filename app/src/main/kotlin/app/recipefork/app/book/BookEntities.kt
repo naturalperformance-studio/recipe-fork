@@ -208,6 +208,15 @@ data class OwnRecipeRow(
 )
 
 /**
+ * A dictionary entry of equipment a recipe names, as the book's filter "Enough equipment" reads it: an item of free
+ * text names no entry and is not one of these.
+ */
+data class RecipeEquipmentRow(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    @ColumnInfo(name = "dictionary_entry") val dictionaryEntry: Long,
+)
+
+/**
  * An ingredient row as a view of the book is searched and filtered by it (FLOW-035): what names it — its dictionary
  * entry, its qualifier and its free text (FLOW-035 (4)) — and its quantity, with the serving count its recipe was
  * authored for, which a filter by an ingredient orders by (CAT-002).

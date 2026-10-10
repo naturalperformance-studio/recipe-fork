@@ -75,6 +75,7 @@ import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.media.crop.CropScreen
 import app.recipefork.app.media.crop.CropTags
 import app.recipefork.app.media.crop.PhotoToCrop
+import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.LanguageTags
 import app.recipefork.app.settings.SettingsTags
@@ -121,7 +122,8 @@ import kotlin.time.Duration.Companion.minutes
  *  - no two interactive elements in one window announce the same thing unless each acts on a different named thing;
  *  - every text drawn reaches its contrast against what is drawn behind it (A11Y-002).
  *
- * The screens: the book — the marked and the own view, each empty and with recipes, an entry's menu, a recipe file's
+ * The screens: the book — the marked and the own view, each empty and with recipes, the own one filtered by "Enough
+ * equipment", an entry's menu, a recipe file's
  * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment — an item of it not
  * in My kitchen, so marked on both tabs — ingredient groups, notes,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
@@ -374,6 +376,18 @@ class PreLaunchSweepTest {
         await(LibraryTags.entry(cake.id.value))
         await(LibraryTags.entry(soup.id.value))
         checkScreen("the book, own, with recipes")
+        // Filtered by "Enough equipment": its chip among the filters in force. The cake needs a bowl the kitchen lacks
+        // and is hidden; the pie, whose equipment is free text, and the soup, which needs none, stay listed.
+        compose.runOnIdle { session.filter(LibraryView.OWN, BookFilters(equipment = true)) }
+        await(LibraryTags.EQUIPMENT_FILTER)
+        compose.waitUntil(PATIENCE_MS) {
+            !exists(LibraryTags.entry(cake.id.value)) && exists(LibraryTags.entry(soup.id.value)) &&
+                exists(LibraryTags.entry(published.id.value))
+        }
+        checkScreen("the book, own, filtered by equipment")
+        compose.runOnIdle { session.filter(LibraryView.OWN, BookFilters()) }
+        awaitGone(LibraryTags.EQUIPMENT_FILTER)
+        await(LibraryTags.entry(cake.id.value))
         compose.openEntryMenu(cake.id.value)
         checkScreen("the book, own, an entry's menu")
         compose.closeEntryMenu(cake.id.value)
@@ -569,7 +583,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 25
+        const val SCREENS = 26
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L
