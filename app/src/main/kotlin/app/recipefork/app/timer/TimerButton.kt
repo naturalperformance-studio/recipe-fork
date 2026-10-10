@@ -34,7 +34,8 @@ import app.recipefork.app.ui.rememberHaptics
  * the card's [CardTarget] tall and wide (A11Y-003, A11Y-007), its [icon] before its [content], its click announced as
  * [action] (A11Y-005), which a long press shows in a tooltip so that its meaning is never left to the icon alone. Each
  * press answers with a confirm haptic — unless it [confirms] nothing, as a press that only asks a question — then does
- * [onClick]. The button itself is tagged [tag].
+ * [onClick]. The button itself is tagged [tag]. A timer [running] is told from one at rest at a glance: its control is
+ * filled in the theme's primary colour, not tonal.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +46,7 @@ fun TimerButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     confirms: Boolean = true,
+    running: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     val haptics = rememberHaptics()
@@ -65,6 +67,7 @@ fun TimerButton(
                 .widthIn(min = CardTarget)
                 .semantics { onClick(label = action) { press(); true } }
                 .testTag(tag),
+            colors = if (running) ButtonDefaults.buttonColors() else ButtonDefaults.filledTonalButtonColors(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))

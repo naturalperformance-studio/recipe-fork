@@ -179,7 +179,8 @@ class CardIngredientSpacingTest {
         compose.onNodeWithTag(CardTags.fixAmount(2), useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.FIX)).fetchSemanticsNodes().isNotEmpty() }
         assertTrue("the amount opened fixing, not the marking",
-            compose.onNodeWithTag(CardTags.ingredient(2)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription) == null)
+            compose.onNodeWithTag(CardTags.ingredient(2)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription) ==
+                context.getString(R.string.card_marked_not_done))
     }
 
     // From T-188's review: a group that starts at the first line has the same ≈12 dp above its subheading as one further

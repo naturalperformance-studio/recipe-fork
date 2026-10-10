@@ -262,7 +262,7 @@ class OwnEntryOpensCardTest {
         val card = CardEnvironment { device.database.dictionaryDao().ingredients() }
         compose.setContent { MaterialTheme { AppNavHost(session, recipes, editor = editor, card = card) } }
         compose.awaitCard()
-        assertEquals(listOf("This recipe is no longer in this recipe book."), compose.textsOf(CardTags.MISSING))
+        assertEquals(listOf("This recipe is no longer in this recipe book."), compose.textsOf(LibraryTags.emptySentence(CardTags.MISSING)))
         compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
         compose.onNodeWithTag(CardTags.BACK).performClick()
         assertTheOwnView()

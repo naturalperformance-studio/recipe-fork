@@ -93,6 +93,21 @@ import app.recipefork.app.library.rememberRecipeImport
 import app.recipefork.app.library.removeFound
 import app.recipefork.app.timer.rememberCardTimers
 import androidx.compose.material3.Button
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import app.recipefork.app.library.EmptyAction
+import app.recipefork.app.library.EmptyState
+import app.recipefork.app.ui.SnackbarAction
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -191,7 +206,8 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * frozen (FORK-001, FORK-007) — a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)).
  *
  * Cooking holds nothing that distracts from cooking: no cover, no summary, no description, no fork, no edit. Its bar
- * holds back and the title, and a ⋮ only while the recipe has done marks, holding their clearing (FLOW-068); its page
+ * holds back and the title, and a ⋮ only while the recipe has done marks, holding their clearing (FLOW-068) — which
+ * View's ⋮ holds too while there are marks, and which the card's snackbar offers to undo; its page
  * the serving count, the ingredients and the steps, in lines the card's [CardTarget] tall that mark done, amounts fixed
  * from their lines, timers started from their steps. The screen stays on while it is shown (FLOW-014), and on either
  * tab while one of the recipe's timers runs.
@@ -302,6 +318,15 @@ fun CardScreen(
     // The reader's done marks on the recipe's lines and steps, kept on the device (FLOW-068).
     val marks = recipe?.let { rememberCardMarks(environment.marks, recipes.bookName(), it) }
     val scope = rememberCoroutineScope()
+    // The card's statements: one at a time, the newest replacing the one before (ui-conventions "Statements").
+    val snackbars = remember { SnackbarHostState() }
+    val clearMarks = rememberClearMarks(marks, snackbars)
+    // Where the serving count stands on View, in the root, as laid out — for the floating fork action to keep clear of.
+    var servingsShown by remember(recipeId) { mutableStateOf<Rect?>(null) }
+    // Where the floating fork action's bottom stands, in the root: above the bar of running timers or the navigation
+    // bar, by Material's spacing.
+    var forkFloor by remember { mutableFloatStateOf(Float.NaN) }
+    var forkHeight by remember { mutableIntStateOf(0) }
     Scaffold(
         modifier
             .keepScreenAwake(active = tab == CardMode.COOKING || timing)
@@ -325,8 +350,8 @@ fun CardScreen(
                             onBack()
                         }
                     },
-                    marked = !viewing && marks?.any == true,
-                    onClearMarks = { marks?.clear() },
+                    marked = marks?.any == true,
+                    onClearMarks = clearMarks,
                 )
                 // The tabs stay under the bar and never scroll with the recipe.
                 if (recipe != null) CardTabs(pager)
@@ -334,7 +359,8 @@ fun CardScreen(
         },
         // Fork floats at the bottom end of View, above the bar of running timers when it shows and above the navigation
         // bar; it shows its word at the top and while the reader scrolls up, and shrinks to its icon while they scroll
-        // down.
+        // down. It never covers the serving count: while the count's row stands where Fork floats — at whatever size it
+        // is drawn — Fork stands aside, and comes back as soon as the reader scrolls the count clear of it.
         floatingActionButton = {
             if (recipe != null && tab == CardMode.VIEW) {
                 val viewScroll = scrolls[CardMode.VIEW.ordinal]
@@ -346,9 +372,14 @@ fun CardScreen(
                         last = now
                     }
                 }
-                ForkAction(expanded, onFork)
+                val least = with(LocalDensity.current) { CardTarget.roundToPx() }
+                val clear = forkClearOf(servingsShown, forkFloor, maxOf(forkHeight, least))
+                AnimatedVisibility(clear, enter = fadeIn() + scaleIn(), exit = fadeOut() + scaleOut()) {
+                    ForkAction(expanded, onFork, Modifier.onSizeChanged { forkHeight = it.height })
+                }
             }
         },
+        snackbarHost = { CardSnackbarHost(snackbars) },
         bottomBar = {
             timersBar?.let {
                 RunningTimersBar(it.timers, it.shown, it.number, onShow = { position ->
@@ -363,11 +394,17 @@ fun CardScreen(
         // The bar of running timers shortens the viewport instead, so that it covers nothing.
         val keyboard = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
         val barShown = timersBar?.shown?.isNotEmpty() == true
+        val density = LocalDensity.current
         val bottom = if (barShown) 0.dp else (padding.calculateBottomPadding() - keyboard).coerceAtLeast(0.dp)
         val direction = LocalLayoutDirection.current
         Box(
             Modifier
                 .fillMaxSize()
+                // The scaffold floats its action Material's spacing above what its content padding keeps clear below:
+                // the bar of running timers, or the navigation bar.
+                .onGloballyPositioned { area ->
+                    forkFloor = area.boundsInRoot().bottom - with(density) { (padding.calculateBottomPadding() + FAB_SPACING).toPx() }
+                }
                 .padding(
                     top = padding.calculateTopPadding(),
                     start = padding.calculateStartPadding(direction),
@@ -378,11 +415,7 @@ fun CardScreen(
         ) {
             val loaded = entries
             when {
-                shown == CardContent.Missing -> Text(
-                    stringResource(R.string.card_missing),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(16.dp).testTag(CardTags.MISSING),
-                )
+                shown == CardContent.Missing -> Missing(onBack)
                 shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
                 recipe != null && loaded != null && marks != null -> {
                     // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
@@ -399,6 +432,7 @@ fun CardScreen(
                             equipmentEntries = equipmentEntries,
                             kitchen = kitchen,
                             onOpenKitchen = onOpenKitchen,
+                            onServingsPlaced = if (mode == CardMode.VIEW) { bounds -> servingsShown = bounds } else null,
                             // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
                             bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
                         ) { if (mode == CardMode.VIEW) titleOut = it }
@@ -544,6 +578,84 @@ private fun Unreadable(onRetry: () -> Unit) {
 }
 
 /**
+ * Said when the book no longer holds the recipe: the app's empty state — a picture, that the recipe is not found, that
+ * it is no longer in this recipe book — with one way out, back to the book ([onBack]).
+ */
+@Composable
+private fun Missing(onBack: () -> Unit) {
+    EmptyState(
+        picture = R.drawable.ic_search_off,
+        headline = stringResource(R.string.card_missing_headline),
+        sentence = stringResource(R.string.card_missing),
+        action = EmptyAction(stringResource(R.string.card_missing_back), R.drawable.ic_arrow_back, CardTags.MISSING_BACK, onBack),
+        tag = CardTags.MISSING,
+        actionHeight = CardTarget,
+    )
+}
+
+/** Material's spacing between the floating action and what it floats above. */
+private val FAB_SPACING = 16.dp
+
+/**
+ * Whether the floating fork action, [height] tall with its bottom at [floor] in the root, stands clear of the serving
+ * count's row as it is shown, [servings] in the root (clipped to the part in sight, empty where the recipe shows no
+ * count): their heights do not meet. It sits at the row's end, where the count's − and + are, so whether drawn with its
+ * word or as its icon alone it would cover them. Not clear until both are known, so that it never shows over the count
+ * for a moment as the card opens.
+ */
+internal fun forkClearOf(servings: Rect?, floor: Float, height: Int): Boolean {
+    if (servings == null || floor.isNaN()) return false
+    if (servings.height <= 0f) return true
+    return servings.bottom <= floor - height || servings.top >= floor
+}
+
+/**
+ * Clears every done mark of the recipe (FLOW-068) from the card's ⋮, on either tab, and says so with Undo: Undo puts
+ * back exactly the marks cleared. The clearing is final once the statement goes — by itself, replaced, or as the card
+ * is left — or as soon as the reader marks anything again.
+ */
+@Composable
+private fun rememberClearMarks(marks: CardMarks?, snackbars: SnackbarHostState): () -> Unit {
+    val scope = rememberCoroutineScope()
+    val latest = rememberUpdatedState(marks)
+    val cleared = stringResource(R.string.card_marks_cleared)
+    val undo = stringResource(R.string.card_undo)
+    return remember(scope, snackbars, cleared, undo) {
+        {
+            val taken = latest.value?.clear().orEmpty()
+            if (taken.isNotEmpty()) {
+                scope.launch {
+                    snackbars.currentSnackbarData?.dismiss()
+                    val result = coroutineScope {
+                        // A mark made since makes the clearing final: its Undo goes.
+                        val marking = launch {
+                            snapshotFlow { latest.value?.any == true }.first { it }
+                            snackbars.currentSnackbarData?.dismiss()
+                        }
+                        snackbars.showSnackbar(cleared, actionLabel = undo, duration = SnackbarDuration.Long).also { marking.cancel() }
+                    }
+                    if (result == SnackbarResult.ActionPerformed) latest.value?.restore(taken)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The card's snackbar: one statement at a time, above the floating action and the bar of running timers, read by the
+ * screen reader as it comes (the host's live region); its action 48 dp tall at least ([SnackbarAction]).
+ */
+@Composable
+private fun CardSnackbarHost(snackbars: SnackbarHostState) {
+    SnackbarHost(snackbars) { data ->
+        Snackbar(
+            modifier = Modifier.padding(12.dp).testTag(CardTags.SNACKBAR),
+            action = data.visuals.actionLabel?.let { label -> { SnackbarAction(label, data::performAction) } },
+        ) { Text(data.visuals.message) }
+    }
+}
+
+/**
  * The screen's bar: back at its start; the recipe's [title] once the content's heading has scrolled out of view, beside
  * back ([BarTitle]) — the content holds it whole; and the recipe's actions at its end — edit while the recipe is
  * editable, then the ⋮ while it holds anything. Fork is not here but the screen's floating action ([ForkAction]), so
@@ -645,7 +757,7 @@ private val FORK_ROOM = 88.dp
  * is at least the card's [CardTarget] tall.
  */
 @Composable
-private fun ForkAction(expanded: Boolean, onFork: () -> Unit) {
+private fun ForkAction(expanded: Boolean, onFork: () -> Unit, modifier: Modifier = Modifier) {
     val word = stringResource(R.string.card_fork)
     val action = stringResource(R.string.card_fork_action)
     ExtendedFloatingActionButton(
@@ -653,7 +765,7 @@ private fun ForkAction(expanded: Boolean, onFork: () -> Unit) {
         icon = { Icon(painterResource(R.drawable.ic_fork), contentDescription = null) },
         onClick = onFork,
         expanded = expanded,
-        modifier = Modifier
+        modifier = modifier
             .heightIn(min = CardTarget)
             .semantics {
                 text = AnnotatedString(word)
@@ -683,6 +795,7 @@ private fun RecipeContent(
     equipmentEntries: Map<Long, DictionaryEntry>,
     kitchen: Kitchen,
     onOpenKitchen: ((Long) -> Unit)?,
+    onServingsPlaced: ((Rect) -> Unit)?,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
@@ -760,12 +873,15 @@ private fun RecipeContent(
             val ordered = held.ordered
             val scale = held.scale
             val list = ingredientList(ordered, entries, language, authored, scale)
+            // A recipe that shows no count says so, so that nothing waits on where the count stands.
+            if (list.servingCount == null && onServingsPlaced != null) LaunchedEffect(Unit) { onServingsPlaced(Rect.Zero) }
             // On Cooking the serving count stands right on the ingredients' tinted panel, with no gap: six lines are in
             // sight as the card opens on a 360 × 640 dp phone.
             CountAndIngredients(packed = !viewing) {
                 list.servingCount?.let { count ->
                     ServingsControl(
-                        modifier = cardPlace(CardPlaces.SERVINGS_KEY),
+                        modifier = cardPlace(CardPlaces.SERVINGS_KEY)
+                            .then(onServingsPlaced?.let { placed -> Modifier.onGloballyPositioned { placed(it.boundsInRoot()) } } ?: Modifier),
                         count = RequestedServings.text(count.value, language),
                         approximate = count.approximate,
                         canDecrease = count.value > RequestedServings.MIN,
@@ -1150,6 +1266,8 @@ object CardTags {
     const val STATED_AUTHOR = "card-stated-author"
     const val SUMMARY = "card-summary"
     const val MISSING = "card-missing"
+    const val MISSING_BACK = "card-missing-back"
+    const val SNACKBAR = "card-snackbar"
     const val UNREADABLE = "card-unreadable"
     const val RETRY = "card-retry"
     const val CONTENT = "card-content"

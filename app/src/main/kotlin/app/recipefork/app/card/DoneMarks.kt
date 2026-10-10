@@ -1,7 +1,7 @@
 package app.recipefork.app.card
 
 import android.content.Context
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
@@ -186,10 +188,23 @@ internal class CardMarks(private val store: DoneMarks, private val book: BookNam
         store.hold(book, id, marks)
     }
 
-    /** Every mark of the recipe goes. */
-    fun clear() {
+    /** Every mark of the recipe goes; what went is returned, for [restore] to put back. */
+    fun clear(): Set<DoneMark> {
+        val cleared = marks
         marks = emptySet()
         store.clear(book, id)
+        return cleared
+    }
+
+    /**
+     * Puts back the [cleared] marks a [clear] took away (its Undo), beside any made since: exactly those, each only
+     * while its row still holds what it held when marked.
+     */
+    fun restore(cleared: Set<DoneMark>) {
+        val back = cleared.filter { current[it.part to it.position] == it }
+        if (back.isEmpty()) return
+        marks = marks + back
+        store.hold(book, id, marks)
     }
 }
 
@@ -205,24 +220,32 @@ internal fun rememberCardMarks(store: DoneMarks, book: BookName, recipe: Recipe)
 }
 
 /**
- * Makes the line or step it modifies mark itself done with a tap, and unmark itself with another (FLOW-068): the
- * screen reader names the tap "Mark as done" or "Mark as not done" and reads a marked one as done.
+ * Makes the line or step it modifies a check box the reader ticks done with a tap, and unticks with another
+ * (FLOW-068): toggleable, in the role of a check box, its state on or off, so that the screen reader reads it as
+ * "Done" or "Not done" — or as [state] where the line has a state of its own to say, as the current step does — and
+ * names the tap "Mark as done" or "Mark as not done".
  */
 @Composable
-internal fun Modifier.markedDone(done: Boolean, onToggle: () -> Unit): Modifier {
+internal fun Modifier.markedDone(done: Boolean, onToggle: () -> Unit, state: String? = null): Modifier {
     val label = stringResource(if (done) R.string.card_mark_not_done_action else R.string.card_mark_done_action)
-    val state = stringResource(R.string.card_marked_done)
-    return clickable(onClickLabel = label, onClick = onToggle).semantics { if (done) stateDescription = state }
+    val said = state ?: stringResource(if (done) R.string.card_marked_done else R.string.card_marked_not_done)
+    return semantics {
+        stateDescription = said
+        onClick(label = label, action = null)
+    }.toggleable(value = done, role = Role.Checkbox, onValueChange = { onToggle() })
 }
 
 /**
- * Shows the mark of the line or step it modifies without letting a tap change it ([CardMode.VIEW]): the screen reader
- * still reads a marked one as done, and finds no action on it.
+ * Shows the mark of the line or step it modifies, read-only ([CardMode.VIEW]): the screen reader reads its state in
+ * words — "Done" or "Not done" — but finds no action, no check box role and no toggleable state on it, so that it is
+ * neither offered nor taken as a control that changes it. While the recipe has no mark at all ([stated] false) a line
+ * carries no state, as a recipe not yet cooked has nothing to say of it.
  */
 @Composable
-internal fun Modifier.shownDone(done: Boolean): Modifier {
-    val state = stringResource(R.string.card_marked_done)
-    return if (done) semantics { stateDescription = state } else this
+internal fun Modifier.shownDone(done: Boolean, stated: Boolean): Modifier {
+    if (!stated) return this
+    val said = stringResource(if (done) R.string.card_marked_done else R.string.card_marked_not_done)
+    return semantics { stateDescription = said }
 }
 
 /** The colour of a line's or a step's text marked done: muted, and still of the theme's contrast (ContrastTest). */

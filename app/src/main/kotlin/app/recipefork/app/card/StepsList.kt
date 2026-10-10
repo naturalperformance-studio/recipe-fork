@@ -86,10 +86,11 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * A tap on a step's line — its number and text — marks it done, and a tap again unmarks it ([marks], FLOW-068); its
  * media and its timer keep their own taps. Without [marks] a step is not marked.
  *
- * On Cooking the first step not marked done is the current one: drawn on the theme's primary container and read as the
- * current step. A step marked done brings the next one not marked after it into view, wholly above the [coveredBelow]
- * the navigation bar covers at the bottom of the viewport, scrolling smoothly — unless the reader is scrolling themselves
- * ([readerScrolling]); a step unmarked, or a step marked with none unmarked after it, moves nothing.
+ * On Cooking the first step not marked done is the current one: drawn, with its timers, on the theme's primary
+ * container and read as the current step. A step marked done brings the next one not marked after it into view, wholly
+ * above the [coveredBelow] the navigation bar covers at the bottom of the viewport, scrolling smoothly — unless the
+ * reader is scrolling themselves ([readerScrolling]); a step unmarked, or a step marked with none unmarked after it,
+ * moves nothing.
  *
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a step is as tall as its text, the steps a
  * modest [VIEW_STEP_SPACING] apart, its text a size smaller ([stepTextStyle]); its done mark is shown but a tap leaves it
@@ -169,6 +170,7 @@ internal fun StepsList(
                 },
                 mode = mode,
                 current = step.position == current,
+                stated = marks?.any == true,
             )
         }
     }
@@ -192,14 +194,16 @@ internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean
  * file the device does not hold, or cannot show, says so in its place (FLOW-061).
  *
  * The number and text are one target, the card's [CardTarget] tall at least, that marks the step [done] or unmarks it
- * ([onToggle]); a step marked done has its text struck through and muted, and is read as done.
+ * ([onToggle]) — a check box to the screen reader; a step marked done has its text struck through and muted, and is
+ * read as done.
  *
- * The [current] step's number and text stand on the theme's primary container, which reaches a little beyond them into
- * the gutter and the space between steps, so that nothing moves as the current step changes; its text is in the
- * container's own colour, and the screen reader reads it as the current step.
+ * The [current] step — its number and text, its media and its timers — stands on the theme's primary container, which
+ * reaches a little beyond it into the gutter and the space between steps, so that nothing moves as the current step
+ * changes; its text is in the container's own colour, and the screen reader reads it as the current step.
  *
- * In [CardMode.VIEW] the number and text answer no tap and are as tall as they are; a mark is shown and read as done; a
- * timer is a line of text ([ViewTimer]), closer under the text than in cooking.
+ * In [CardMode.VIEW] the number and text answer no tap and are as tall as they are; a mark is shown, read-only, its
+ * state read while the recipe has any mark ([stated]); a timer is a line of text ([ViewTimer]), closer under the text
+ * than in cooking.
  */
 @Composable
 private fun StepRow(
@@ -213,15 +217,23 @@ private fun StepRow(
     onToggle: (() -> Unit)? = null,
     mode: CardMode = CardMode.COOKING,
     current: Boolean = false,
+    stated: Boolean = false,
 ) {
     val cooking = mode == CardMode.COOKING
     val spacing = if (cooking) StepSpacing else VIEW_STEP_SPACING
-    Column(modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp)) {
-        val marking = if (onToggle != null && cooking) Modifier.heightIn(min = CardTarget).markedDone(done, onToggle) else Modifier.shownDone(done)
-        val currentState = stringResource(R.string.card_current_step)
-        val highlight = if (current) Modifier.currentStep().semantics { stateDescription = currentState } else Modifier
+    // The current step's container takes in the whole step — its number and text, its media and its timers — so that
+    // its timers read as its own.
+    val highlight = if (current) Modifier.currentStep() else Modifier
+    Column(modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp).then(highlight)) {
+        // The current step is read as such; it is never done, so its state says that it is current.
+        val currentState = stringResource(R.string.card_current_step).takeIf { current }
+        val marking = when {
+            onToggle != null && cooking -> Modifier.heightIn(min = CardTarget).markedDone(done, onToggle, state = currentState)
+            currentState != null -> Modifier.semantics { stateDescription = currentState }
+            else -> Modifier.shownDone(done, stated)
+        }
         Row(
-            Modifier.fillMaxWidth().then(highlight).then(marking).semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
+            Modifier.fillMaxWidth().then(marking).semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
                 .testTag(CardTags.step(step.position)),
             horizontalArrangement = Arrangement.spacedBy(StepGap),
         ) {

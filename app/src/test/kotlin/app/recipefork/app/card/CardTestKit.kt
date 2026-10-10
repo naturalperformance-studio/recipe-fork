@@ -49,12 +49,30 @@ fun ComposeTestRule.closeTheCardMenu() {
     waitUntil(PATIENCE_MS) { !cardMenuOpen() }
 }
 
-/** Takes the card's floating Fork action. */
+/** Takes the card's floating Fork action, scrolling the serving count clear of it first where it stands aside for it. */
 fun ComposeTestRule.forkFromTheCard() {
-    waitUntil(PATIENCE_MS) { onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().isNotEmpty() }
+    scrollUntilForkShows()
     onNodeWithTag(CardTags.FORK).performClick()
     waitForIdle()
 }
+
+/**
+ * Waits for View's floating Fork action; while it stands aside for the serving count under it, scrolls the content on
+ * a step at a time, as a reader would, until it shows.
+ */
+fun ComposeTestRule.scrollUntilForkShows() {
+    fun shown() = onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().isNotEmpty()
+    waitForIdle()
+    var steps = 0
+    while (!shown() && steps++ < FORK_SCROLL_STEPS) {
+        onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, FORK_SCROLL_STEP_PX) }
+        waitForIdle()
+    }
+    waitUntil(PATIENCE_MS) { shown() }
+}
+
+private const val FORK_SCROLL_STEPS = 40
+private const val FORK_SCROLL_STEP_PX = 40f
 
 /**
  * Scrolls the card's content until the element tagged [tag] stands clear above the floating fork action, as a reader
