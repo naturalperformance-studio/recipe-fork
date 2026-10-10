@@ -159,11 +159,26 @@ class LibrarySession(
 
     fun openSettings() {
         finishRemoval()
+        saved[KITCHEN_KEY] = false
         saved[SETTINGS_KEY] = true
     }
 
     fun closeSettings() {
         saved[SETTINGS_KEY] = false
+    }
+
+    /**
+     * Whether My kitchen is open, above the settings: kept like them. It is shown only while the settings are open, and
+     * opening the settings closes it, so whatever shows something in place of the settings closes it as well.
+     */
+    val kitchen: StateFlow<Boolean> = saved.getStateFlow(KITCHEN_KEY, false)
+
+    fun openKitchen() {
+        saved[KITCHEN_KEY] = true
+    }
+
+    fun closeKitchen() {
+        saved[KITCHEN_KEY] = false
     }
 
     /**
@@ -382,6 +397,7 @@ class LibrarySession(
         const val PROGRESS_STEP = 0.01f
         const val STEP_KEY = "library.step"
         const val SETTINGS_KEY = "library.settings"
+        const val KITCHEN_KEY = "library.kitchen"
         const val MESSAGE_KEY = "library.file_message"
         const val VIEW_KEY = "library.view"
         const val EDITING_KEY = "library.editing"

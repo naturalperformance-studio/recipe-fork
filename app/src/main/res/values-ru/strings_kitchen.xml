@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Моя кухня: что есть на кухне читателя, отмеченное по словарю оборудования; открывается из настроек. -->
+    <string name="kitchen_title">Моя кухня</string>
+    <string name="kitchen_back">Назад</string>
+    <string name="kitchen_back_action">Вернуться в настройки</string>
+    <string name="kitchen_search">Найти оборудование</string>
+    <string name="kitchen_search_clear">Очистить поиск</string>
+    <string name="kitchen_nothing_found">По запросу «%1$s» ничего не найдено</string>
+    <string name="kitchen_show_all">Показать всё оборудование</string>
+    <string name="kitchen_group_ticked">%1$d из %2$d</string>
+    <string name="kitchen_none_ticked">Пока ничего не отмечено</string>
+    <plurals name="kitchen_ticked">
+        <item quantity="one">Отмечен %d предмет</item>
+        <item quantity="few">Отмечено %d предмета</item>
+        <item quantity="many">Отмечено %d предметов</item>
+        <item quantity="other">Отмечено %d предмета</item>
+    </plurals>
+</resources>

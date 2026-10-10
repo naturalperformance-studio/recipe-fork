@@ -18,6 +18,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
@@ -56,6 +57,12 @@ import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.FileMessageTags
 import app.recipefork.app.file.RecipeImport
+import app.recipefork.app.dictionary.DictionarySnapshot
+import app.recipefork.app.dictionary.EquipmentEntryEntity
+import app.recipefork.app.dictionary.EquipmentSource
+import app.recipefork.app.kitchen.HeldKitchen
+import app.recipefork.app.kitchen.KitchenEnvironment
+import app.recipefork.app.kitchen.KitchenTags
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -119,7 +126,7 @@ import kotlin.time.Duration.Companion.minutes
  * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
  * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with a row removed and its
  * Undo offered, and on a frozen one with equipment; the settings and each of their
- * dialogs; and the crop.
+ * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
  * that the lists show every entry and the card and the editor are drawn whole for the contrast check, which reads
@@ -151,6 +158,12 @@ class PreLaunchSweepTest {
     private val editor = EditorEnvironment(active, device.catalog(context)) { now }
     private val card = CardEnvironment(HeldUsualServings(), marks) { device.database.dictionaryDao().ingredients() }
     private val theme = HeldThemeSetting()
+
+    /** My kitchen over the shipped equipment dictionary: a frying pan and an oven ticked, so every group's state shows. */
+    private val kitchen = KitchenEnvironment(
+        HeldKitchen(setOf(FRYING_PAN, OVEN)),
+        EquipmentSource { DictionarySnapshot.read(context).equipment.map(EquipmentEntryEntity::of) },
+    )
 
     private var crop by mutableStateOf<PhotoToCrop?>(null)
 
@@ -313,7 +326,7 @@ class PreLaunchSweepTest {
                     } else {
                         // As MainActivity shows it: on a surface of the theme.
                         Surface(Modifier.fillMaxSize()) {
-                            AppNavHost(session, recipes, Mode.Serverless, editor = editor, card = card, themeSetting = theme)
+                            AppNavHost(session, recipes, Mode.Serverless, editor = editor, card = card, themeSetting = theme, kitchen = kitchen)
                         }
                     }
                 }
@@ -476,6 +489,17 @@ class PreLaunchSweepTest {
         awaitGone(SettingsTags.USUAL_DIALOG)
         compose.waitForIdle()
         checkScreen("the settings, the usual servings set")
+        // My kitchen: its groups, some partly ticked; a search that finds nothing.
+        compose.onNodeWithTag(SettingsTags.KITCHEN).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.LIST) && !exists(SettingsTags.SCREEN) }
+        compose.waitForIdle()
+        checkScreen("my kitchen")
+        compose.onNodeWithTag(KitchenTags.SEARCH).performTextInput("zzz")
+        await(KitchenTags.EMPTY)
+        checkScreen("my kitchen, nothing found")
+        compose.onNodeWithTag(KitchenTags.BACK).performClick()
+        await(SettingsTags.SCREEN)
+        awaitGone(KitchenTags.SCREEN)
         compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.CLEAR_MEDIA_NOTHING) || exists(SettingsTags.CLEAR_MEDIA_STATEMENT) }
         checkScreen("the settings, the saved media's dialog")
@@ -529,6 +553,10 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 23
+        const val SCREENS = 25
+
+        /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
+        const val FRYING_PAN = 10001L
+        const val OVEN = 10202L
     }
 }

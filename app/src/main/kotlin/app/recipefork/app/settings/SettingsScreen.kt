@@ -43,6 +43,9 @@ import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.ThemeChoice
 import app.recipefork.app.data.ThemeSetting
 import app.recipefork.app.data.UsualServings
+import app.recipefork.app.dictionary.EquipmentEntryEntity
+import app.recipefork.app.kitchen.Kitchen
+import app.recipefork.app.kitchen.KitchenEnvironment
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.scaling.RequestedServings
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +54,8 @@ import kotlinx.coroutines.launch
 /**
  * The settings, a destination above the book: one item per setting, each showing its value in force and changing it
  * as the book's menu did — the interface language (L10N-002), the theme (ADR 20261004), the serving count the reader usually cooks for
- * (FLOW-017), the side of the editor's drag column, and the saved media the device need not keep (FLOW-060), cleared
+ * (FLOW-017), My kitchen — how many items of equipment are ticked, opening its own screen — the side of the editor's drag
+ * column, and the saved media the device need not keep (FLOW-060), cleared
  * only once its statement is confirmed. The clearing runs in [scope], which outlives the screen; its statement
  * differs by [mode] and in [Mode.Serverless] names nothing of the server (FLOW-062 (1)). Back — the bar's or the
  * system's — returns to the book.
@@ -65,7 +69,9 @@ fun SettingsScreen(
     recipes: RecipeRepository,
     mode: Mode,
     scope: CoroutineScope,
+    kitchen: KitchenEnvironment,
     onBack: () -> Unit,
+    onOpenKitchen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -100,6 +106,7 @@ fun SettingsScreen(
             LanguageItem()
             ThemeItem(theme)
             UsualServingsItem(usual)
+            KitchenItem(kitchen, onOpenKitchen)
             DragHandleItem(handleSide)
             SavedMediaItem(recipes, mode, scope)
         }
@@ -198,6 +205,24 @@ private fun UsualServingsItem(usual: UsualServings) {
     }
 }
 
+/** How many items of equipment My kitchen has ticked, or that none is; it opens My kitchen. */
+@Composable
+private fun KitchenItem(kitchen: KitchenEnvironment, onOpen: () -> Unit) {
+    val dictionary by produceState<List<EquipmentEntryEntity>?>(null, kitchen.equipment) { value = kitchen.equipment.equipment() }
+    val held by kitchen.store.held.collectAsState()
+    val count = dictionary?.let { Kitchen(held, it).count }
+    Item(
+        headline = stringResource(R.string.kitchen_title),
+        value = when (count) {
+            null -> stringResource(R.string.settings_media_counting)
+            0 -> stringResource(R.string.kitchen_none_ticked)
+            else -> pluralStringResource(R.plurals.kitchen_ticked, count, count)
+        },
+        tag = SettingsTags.KITCHEN,
+        onClick = onOpen,
+    )
+}
+
 /** The editor's drag column on the right of each block, for a left hand: a switch, the whole row toggling it. */
 @Composable
 private fun DragHandleItem(handleSide: DragHandleSide) {
@@ -278,6 +303,7 @@ object SettingsTags {
     const val THEME_DIALOG = "settings-theme-dialog"
     const val THEME_CANCEL = "settings-theme-cancel"
     const val USUAL = "settings-usual"
+    const val KITCHEN = "settings-kitchen"
     const val HANDLE_RIGHT = "settings-handle-right"
     const val CLEAR_MEDIA = "settings-clear-media"
 

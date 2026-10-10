@@ -24,6 +24,8 @@ import app.recipefork.app.dictionary.DictionaryRepository
 import app.recipefork.app.dictionary.DictionarySeeding
 import app.recipefork.app.dictionary.DictionarySnapshot
 import app.recipefork.app.dictionary.DictionarySync
+import app.recipefork.app.kitchen.KitchenStore
+import app.recipefork.app.kitchen.PreferencesKitchen
 import app.recipefork.app.media.AnimatedImages
 import app.recipefork.app.media.AnimationClips
 import app.recipefork.app.media.ClipConverter
@@ -107,6 +109,13 @@ class AppContainer(
 
     /** The card's tab last chosen, one for the device and kept across restarts: a card opens on it. */
     val lastCardTab: LastCardTab = PreferencesLastCardTab(context)
+
+    /**
+     * The equipment the reader's kitchen has, ticked on My kitchen: one set for the device, kept across restarts apart
+     * from the dictionaries' store. The card and the book read [KitchenStore.held] with the equipment dictionary
+     * through [app.recipefork.app.kitchen.Kitchen] to tell what the kitchen lacks.
+     */
+    val kitchen: KitchenStore = PreferencesKitchen(context)
 
     /** The reader's done marks on cards, kept on the device per book and recipe across restarts (FLOW-068). */
     val doneMarks: DoneMarks = DoneMarks.preferences(context)

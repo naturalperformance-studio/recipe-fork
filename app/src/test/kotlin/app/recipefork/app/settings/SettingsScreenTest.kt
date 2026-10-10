@@ -143,8 +143,8 @@ class SettingsScreenTest {
         compose.waitUntil(PATIENCE_MS) { value(SettingsTags.CLEAR_MEDIA) == "Nothing to clear" }
         assertEquals("Clear saved media", compose.textsOf(SettingsTags.CLEAR_MEDIA).first())
         // The items in order, top to bottom.
-        val tops = listOf(SettingsTags.LANGUAGE, SettingsTags.THEME, SettingsTags.USUAL, SettingsTags.HANDLE_RIGHT, SettingsTags.CLEAR_MEDIA)
-            .map { compose.onNodeWithTag(it).fetchSemanticsNode().boundsInRoot.top }
+        val tops = listOf(SettingsTags.LANGUAGE, SettingsTags.THEME, SettingsTags.USUAL, SettingsTags.KITCHEN, SettingsTags.HANDLE_RIGHT, SettingsTags.CLEAR_MEDIA)
+            .map { compose.onNodeWithTag(it).fetchSemanticsNode().positionInRoot.y }
         assertEquals(tops.sorted(), tops)
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 6)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 6)
