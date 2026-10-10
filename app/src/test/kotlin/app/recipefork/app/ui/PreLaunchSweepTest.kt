@@ -58,6 +58,8 @@ import app.recipefork.app.editor.closeGroup
 import app.recipefork.app.editor.closeIngredient
 import app.recipefork.app.editor.openGroup
 import app.recipefork.app.editor.openIngredient
+import app.recipefork.app.editor.openStep
+import app.recipefork.app.editor.closeStep
 import app.recipefork.app.editor.removeIngredient
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.FileMessageTags
@@ -134,7 +136,7 @@ import kotlin.time.Duration.Companion.minutes
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
  * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
  * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with an ingredient's
- * sheet open, with a row removed and its Undo offered, and on a frozen one with equipment; the settings and each of their
+ * sheet open, a step's sheet open, with a row removed and its Undo offered, and on a frozen one with equipment; the settings and each of their
  * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
@@ -461,6 +463,10 @@ class PreLaunchSweepTest {
         compose.openIngredient(1)
         checkScreen("the editor, an ingredient's sheet open")
         compose.closeIngredient()
+        // A step's sheet open: its text with references, its note, its controls and its actions over the editor.
+        compose.openStep(0)
+        checkScreen("the editor, a step's sheet open")
+        compose.closeStep()
         // A heading's sheet open, its name and its actions.
         compose.openGroup(0)
         checkScreen("the editor, a group's sheet open")
@@ -597,7 +603,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 28
+        const val SCREENS = 29
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L

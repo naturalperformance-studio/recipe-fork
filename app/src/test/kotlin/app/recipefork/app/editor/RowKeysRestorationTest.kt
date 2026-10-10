@@ -92,7 +92,7 @@ class RowKeysRestorationTest {
     private fun stored(id: RecipeId): Recipe = runBlocking { recipes.get(id) }!!
 
     private fun fieldText(tag: String): String =
-        compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+        compose.also { it.reachStep(tag) }.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
 
     private fun choose(menu: String, actionTag: String) {
         compose.onNodeWithTag(menu).performScrollTo().performClick()
@@ -118,19 +118,25 @@ class RowKeysRestorationTest {
             ),
         )
         open(recipe)
+        compose.openStep(2)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(2)), PATIENCE_MS)
         // The third to the top, then a new step above everything.
-        choose(EditorTags.stepMenu(2), EditorTags.stepAction(2, RowAction.MOVE_UP))
-        choose(EditorTags.stepMenu(1), EditorTags.stepAction(1, RowAction.MOVE_UP))
-        choose(EditorTags.stepMenu(0), EditorTags.stepAction(0, RowAction.INSERT_ABOVE))
+        compose.stepAction(2, RowAction.MOVE_UP)
+        compose.stepAction(1, RowAction.MOVE_UP)
+        // The step put above opens in its sheet; written, it stays.
+        compose.stepAction(0, RowAction.INSERT_ABOVE)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.step(3))).fetchSemanticsNodes().isNotEmpty() }
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextReplacement("Prep.")
+        compose.closeStep()
         assertEquals(listOf("40", "2", "7"), (1..3).map { fieldText(EditorTags.timerMinutes(it)) })
 
         restore()
+        compose.openStep(3)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(3)), PATIENCE_MS)
-        assertEquals(listOf("", "Bake.", "Whisk.", "Rest."), (0..3).map { fieldText(EditorTags.stepText(it)) })
+        assertEquals(listOf("Prep.", "Bake.", "Whisk.", "Rest."), (0..3).map { fieldText(EditorTags.stepText(it)) })
         assertEquals(listOf("40", "2", "7"), (1..3).map { fieldText(EditorTags.timerMinutes(it)) })
         // The moved step's hours are typed against its own minutes.
-        compose.onNodeWithTag(EditorTags.timerHours(1)).performScrollTo().performTextReplacement("1")
+        compose.inStep(1).onNodeWithTag(EditorTags.timerHours(1)).performScrollTo().performTextReplacement("1")
         compose.waitForIdle()
         assertEquals(
             listOf(null, Timer(1.hours + 40.minutes), Timer(2.minutes), Timer(7.minutes)),
@@ -146,17 +152,20 @@ class RowKeysRestorationTest {
             steps = listOf(Step(0, "Bake.", timers = listOf(Timer(2.minutes), Timer(7.minutes, "Rest"), Timer(40.minutes)))),
         )
         open(recipe)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerMinutes(0, 1)).performScrollTo().performTextReplacement("")
-        compose.onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0, 1)).performScrollTo().performTextReplacement("")
+        compose.inStep(0).onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performClick()
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 3)), PATIENCE_MS)
         assertEquals(listOf(Timer(2.minutes), Timer(40.minutes)), stored(recipe.id).steps[0].timers)
 
         restore()
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 3)), PATIENCE_MS)
         assertEquals(listOf("2", "", "40", ""), (0..3).map { fieldText(EditorTags.timerMinutes(0, it)) })
-        compose.onNodeWithTag(EditorTags.timerMinutes(0, 3)).performScrollTo().performTextReplacement("9")
-        compose.onNodeWithTag(EditorTags.timerMinutes(0, 1)).performScrollTo().performTextReplacement("8")
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0, 3)).performScrollTo().performTextReplacement("9")
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0, 1)).performScrollTo().performTextReplacement("8")
         compose.waitForIdle()
         assertEquals(
             listOf(Timer(2.minutes), Timer(8.minutes, "Rest"), Timer(40.minutes), Timer(9.minutes)),
@@ -207,24 +216,39 @@ class RowKeysRestorationTest {
             steps = listOf(Step(0, "Whisk.", timer = Timer(2.minutes)), Step(1, "Rest.", timer = Timer(7.minutes))),
         )
         open(recipe)
+        compose.openStep(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(1)), PATIENCE_MS)
-        choose(EditorTags.stepMenu(1), EditorTags.stepAction(1, RowAction.MOVE_UP))
+        compose.stepAction(1, RowAction.MOVE_UP)
+        compose.closeStep()
 
         restore()
+        compose.openStep(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(1)), PATIENCE_MS)
-        choose(EditorTags.stepMenu(0), EditorTags.stepAction(0, RowAction.INSERT_BELOW))
-        choose(EditorTags.stepMenu(0), EditorTags.stepAction(0, RowAction.INSERT_ABOVE))
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(3)), PATIENCE_MS)
-        assertEquals(listOf("", "Rest.", "", "Whisk."), (0..3).map { fieldText(EditorTags.stepText(it)) })
+        // Each step put in opens in its sheet; written, it stays.
+        compose.stepAction(0, RowAction.INSERT_BELOW)
+        compose.inStep(1).onNodeWithTag(EditorTags.stepText(1)).performTextReplacement("Cover.")
+        compose.stepAction(0, RowAction.INSERT_ABOVE)
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextReplacement("Grease.")
+        compose.closeStep()
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(3)), PATIENCE_MS)
+        assertEquals(listOf("Grease.", "Rest.", "Cover.", "Whisk."), (0..3).map { fieldText(EditorTags.stepText(it)) })
         assertEquals("7", fieldText(EditorTags.timerMinutes(1)))
         assertEquals("2", fieldText(EditorTags.timerMinutes(3)))
-        compose.onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
-        compose.onNodeWithTag(EditorTags.timerMinutes(2)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
+        compose.inStep(2).onNodeWithTag(EditorTags.timerMinutes(2)).assertDoesNotExist()
         // The new rows' own state is their own: a timer opened on one shows on it alone.
-        compose.onNodeWithTag(EditorTags.timerAttach(2)).performScrollTo().performClick()
+        compose.inStep(2).onNodeWithTag(EditorTags.timerAttach(2)).performScrollTo().performClick()
+        compose.openStep(2)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(2)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
-        assertEquals(listOf("", "7", "", "2"), (0..3).map { tag -> EditorTags.timerMinutes(tag).let { t -> if (compose.onAllNodes(hasTestTag(t)).fetchSemanticsNodes().isEmpty()) "" else fieldText(t) } })
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
+        // Each step's sheet: none on the first, its own on the second and fourth, the one just opened on the third.
+        assertEquals(
+            listOf(null, "7", "", "2"),
+            (0..3).map { position ->
+                compose.openStep(position)
+                EditorTags.timerMinutes(position).let { t -> if (compose.onAllNodes(hasTestTag(t)).fetchSemanticsNodes().isEmpty()) null else fieldText(t) }
+            },
+        )
     }
 
     // The keys as saved and restored: every key given after the restore is one no row held before it.

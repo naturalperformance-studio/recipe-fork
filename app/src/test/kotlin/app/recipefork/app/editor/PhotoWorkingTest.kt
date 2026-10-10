@@ -113,7 +113,13 @@ class PhotoWorkingTest {
         return recipe.id
     }
 
-    private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    /** Whether the node tagged [tag] is there — for a part of a step's sheet, in that step's sheet, opened for it. */
+    private fun exists(tag: String): Boolean {
+        compose.reachStep(tag)
+        return compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun onRow(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun stored(id: RecipeId): Recipe = runBlocking { recipes.get(id) }!!
 
@@ -143,9 +149,9 @@ class PhotoWorkingTest {
     }
 
     private fun chooseForStep(position: Int, file: File, crop: Boolean = true) {
-        compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoChoose(position)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepPhotoChoose(position)).performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepPhotoChoose(position)).performClick()
         pick(file, crop)
     }
 
@@ -173,7 +179,7 @@ class PhotoWorkingTest {
         assertNull(stored(id).cover)
 
         letGo()
-        compose.awaitStatement(PROCESSED)
+        compose.awaitStatementOnceSheetCloses(PROCESSED)
         compose.waitUntil(PATIENCE_MS) { !exists(CoverTags.WORKING) && exists(CoverTags.IMAGE) }
         assertTrue(stored(id).cover != null)
     }
@@ -186,7 +192,7 @@ class PhotoWorkingTest {
         awaitWorking(CoverTags.WORKING)
 
         letGo()
-        compose.awaitStatement(UNREADABLE)
+        compose.awaitStatementOnceSheetCloses(UNREADABLE)
         compose.waitUntil(PATIENCE_MS) { !exists(CoverTags.WORKING) }
         assertTrue(stored(id).media.isEmpty())
     }
@@ -200,7 +206,7 @@ class PhotoWorkingTest {
         assertTrue(!exists(EditorTags.stepPhotoWorking(0)) && !exists(CoverTags.WORKING))
 
         letGo()
-        compose.awaitStatement(PROCESSED)
+        compose.awaitStatementOnceSheetCloses(PROCESSED)
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPhotoWorking(1)) && exists(EditorTags.stepPhotoImage(1)) }
         assertTrue(stored(id).stepPhoto(1) != null)
     }
@@ -213,7 +219,7 @@ class PhotoWorkingTest {
         awaitWorking(EditorTags.stepPhotoWorking(0))
 
         letGo()
-        compose.awaitStatement(UNREADABLE)
+        compose.awaitStatementOnceSheetCloses(UNREADABLE)
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPhotoWorking(0)) }
         assertTrue(stored(id).media.isEmpty())
     }

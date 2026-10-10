@@ -377,15 +377,17 @@ class ChecklistTest {
     private fun backToTheSamePlace(close: () -> Unit) {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Borscht")
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.STEP_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performScrollTo().performClick()
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("Boil the beetroot")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("Boil the beetroot")
+        // The checklist is the editor's: the step's sheet is closed to reach its control.
+        compose.closeStep()
         compose.swipeAwayStatement()
         compose.waitForIdle()
         val scrolled = scrollOf(EditorTags.FORM)
         assertTrue("the editor is not scrolled", scrolled > 0f)
-        assertTrue(isFocused(EditorTags.stepText(0)))
         val recipe = runBlocking { recipes.get(id) }
         val prefs = preferences()
 
@@ -398,11 +400,10 @@ class ChecklistTest {
 
         compose.onNodeWithTag(EditorTags.SCREEN).assertExists()
         assertEquals(scrolled, scrollOf(EditorTags.FORM), 0.5f)
-        assertTrue("the field lost its focus", isFocused(EditorTags.stepText(0)))
         assertEquals(recipe, runBlocking { recipes.get(id) })
         assertEquals(prefs, preferences())
         // The author goes on typing where they were.
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput(" and grate it")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput(" and grate it")
         compose.waitForIdle()
         assertTrue(runBlocking { recipes.get(id) }!!.steps.single().text.endsWith("and grate it"))
     }

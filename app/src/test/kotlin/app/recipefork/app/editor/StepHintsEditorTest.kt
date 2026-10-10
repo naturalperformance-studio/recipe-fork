@@ -140,10 +140,11 @@ class StepHintsEditorTest {
         compose.onAllNodes(hasTestTag(EditorTags.STATEMENT), useUnmergedTree = true).fetchSemanticsNodes().size
 
     private fun fieldText(tag: String): String =
-        compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+        compose.also { it.reachStep(tag) }.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
 
     /** Puts the author in the field tagged [tag]; whatever field they were in, they have left. */
     private fun enter(tag: String) {
+        compose.reach(tag)
         compose.onNodeWithTag(tag).performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
         compose.waitForIdle()
     }
@@ -156,8 +157,10 @@ class StepHintsEditorTest {
 
     private fun notificationText(position: Int): String = compose.textsOf(EditorTags.timerNotificationText(position)).single()
 
-    private fun awaitNotification(position: Int) =
+    private fun awaitNotification(position: Int) {
+        compose.openStep(position)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerNotification(position)), PATIENCE_MS)
+    }
 
     // ---- GUIDE-008 ----
 
@@ -171,19 +174,20 @@ class StepHintsEditorTest {
         openDirectly(draft(Step(0, ""), Step(1, "")))
         assertFalse(offered(0))
         enter(EditorTags.stepText(0))
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
         val offer = string(R.string.editor_references_offered)
         assertEquals(listOf(offer), compose.textsOf(EditorTags.stepReferencesOffered(0)))
         assertTrue(offer, offer.contains("@") && offer.contains("insert-ingredient icon"))
         assertTrue(offer, offer.contains("reader's serving count") && offer.contains("typed by hand does not"))
         // The icon it names is the step's control that inserts a reference (FLOW-031), and it is not covered.
-        compose.onNodeWithTag(EditorTags.stepInsert(0)).assertExists()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepInsert(0)).assertExists()
         assertEquals(0, statements())
         // Typing goes on in the step while it is there.
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("Sift the flour.")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("Sift the flour.")
         compose.waitForIdle()
         assertEquals("Sift the flour.", fieldText(EditorTags.stepText(0)))
-        compose.onNodeWithTag(EditorTags.stepText(0)).assertIsFocused()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).assertIsFocused()
         enter(EditorTags.TITLE)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
     }
@@ -194,31 +198,33 @@ class StepHintsEditorTest {
     @Config(qualifiers = "w360dp-h640dp")
     fun theOfferIsTheStepFieldsSupportingTextAndShiftsNothingTyped() {
         openDirectly(draft(Step(0, ""), Step(1, "")))
-        compose.onNodeWithTag(EditorTags.stepText(0)).performScrollTo()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performScrollTo()
         compose.waitForIdle()
-        val heading = bounds(EditorTags.STEPS)
-        val before = bounds(EditorTags.stepText(0))
-        compose.onNodeWithTag(EditorTags.stepText(0)).performSemanticsAction(SemanticsActions.RequestFocus)
+        // Measured in the sheet's content: a bottom sheet grows upwards, and scrolls, as what it holds grows.
+        fun fromSheet(tag: String): Rect = compose.inSheetContent(tag)
+        val before = fromSheet(EditorTags.stepText(0))
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
         compose.waitForIdle()
-        val offer = bounds(EditorTags.stepReferencesOffered(0))
-        val field = bounds(EditorTags.stepText(0))
+        val offer = fromSheet(EditorTags.stepReferencesOffered(0))
+        val field = fromSheet(EditorTags.stepText(0))
+        // In the step's sheet: nothing comes above the field.
         assertEquals(before.top, field.top, 1f)
-        assertEquals(heading.top, bounds(EditorTags.STEPS).top, 1f)
         // Inside the field's outline area, below the line the author types into.
         assertTrue("offer $offer is not under the typed line ${before}", offer.top >= before.bottom - 1f)
         assertTrue("offer $offer is not inside the field $field", offer.bottom <= field.bottom + 1f && offer.left >= field.left)
         // Its own node, read politely as it comes, and not merged into the field the author types into.
-        val node = compose.onNodeWithTag(EditorTags.stepReferencesOffered(0)).fetchSemanticsNode()
+        val node = compose.inStep(0).onNodeWithTag(EditorTags.stepReferencesOffered(0)).fetchSemanticsNode()
         assertEquals(LiveRegionMode.Polite, node.config[SemanticsProperties.LiveRegion])
         val offerText = string(R.string.editor_references_offered)
-        val fieldNode = compose.onNodeWithTag(EditorTags.stepText(0)).fetchSemanticsNode()
+        val fieldNode = compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).fetchSemanticsNode()
         assertFalse(fieldNode.config.getOrElse(SemanticsProperties.Text) { emptyList() }.any { it.text == offerText })
         assertTrue(fieldNode.config.getOrElseNullable(SemanticsProperties.LiveRegion) { null } == null)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("Sift the flour.")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("Sift the flour.")
         compose.waitForIdle()
         assertTrue(offered(0))
-        assertEquals(before.top, bounds(EditorTags.stepText(0)).top, 1f)
+        assertEquals(before.top, fromSheet(EditorTags.stepText(0)).top, 1f)
     }
 
     // Said once an editing session: leaving the first step and beginning it again, or beginning another, says nothing.
@@ -226,6 +232,7 @@ class StepHintsEditorTest {
     fun theOfferIsSaidOnceAnEditingSession() {
         openDirectly(draft(Step(0, ""), Step(1, "")))
         enter(EditorTags.stepText(0))
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
         enter(EditorTags.stepText(1))
         enter(EditorTags.TITLE)
@@ -239,10 +246,11 @@ class StepHintsEditorTest {
     @Test
     fun aRecipeWithNoIngredientOffersNothing() {
         writeANewRecipe()
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.STEP_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(0)), PATIENCE_MS)
         enter(EditorTags.stepText(0))
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextReplacement("Boil the water.")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextReplacement("Boil the water.")
         compose.waitForIdle()
         assertFalse(offered(0))
     }
@@ -253,17 +261,18 @@ class StepHintsEditorTest {
     fun theOfferGoingDoesNotPullTheNextStepUp() {
         openDirectly(draft(Step(0, "Sift the flour."), Step(1, "Serve.")))
         enter(EditorTags.stepText(0))
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepText(1)).performScrollTo()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepText(1)).performScrollTo()
         compose.waitForIdle()
-        val before: Rect = compose.onNodeWithTag(EditorTags.stepText(1)).fetchSemanticsNode().boundsInRoot
-        compose.onNodeWithTag(EditorTags.stepText(1)).performSemanticsAction(SemanticsActions.RequestFocus)
+        val before: Rect = compose.inStep(1).onNodeWithTag(EditorTags.stepText(1)).fetchSemanticsNode().boundsInRoot
+        compose.inStep(1).onNodeWithTag(EditorTags.stepText(1)).performSemanticsAction(SemanticsActions.RequestFocus)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
         compose.waitForIdle()
-        val after = compose.onNodeWithTag(EditorTags.stepText(1)).fetchSemanticsNode().boundsInRoot
+        val after = compose.inStep(1).onNodeWithTag(EditorTags.stepText(1)).fetchSemanticsNode().boundsInRoot
         assertEquals(before.top, after.top, 1f)
         assertEquals(before.bottom, after.bottom, 1f)
-        compose.onNodeWithTag(EditorTags.stepText(1)).assertIsFocused()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepText(1)).assertIsFocused()
     }
 
     // Only "the first step is begun" and "the recipe holds an ingredient" decide it: whatever the steps say — empty, a
@@ -300,8 +309,9 @@ class StepHintsEditorTest {
     fun aNumberTypedByHandIsAcceptedAndUnmarked() {
         val recipe = openDirectly(draft(Step(0, "")))
         enter(EditorTags.stepText(0))
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("Add 200 g flour and stir.")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("Add 200 g flour and stir.")
         compose.waitForIdle()
         enter(EditorTags.TITLE)
         assertEquals(Step(0, "Add 200 g flour and stir."), stored(recipe.id).steps.single())
@@ -315,6 +325,7 @@ class StepHintsEditorTest {
     fun theOfferIsInRussian() {
         openDirectly(draft(Step(0, "")))
         enter(EditorTags.stepText(0))
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepReferencesOffered(0)), PATIENCE_MS)
         val offer = compose.textsOf(EditorTags.stepReferencesOffered(0)).single()
         assertEquals(string(R.string.editor_references_offered), offer)
@@ -344,7 +355,7 @@ class StepHintsEditorTest {
         // Coming back into the step, the author types on: the display is not in their way.
         enter(EditorTags.stepText(0))
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerNotification(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput(" Serve.")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput(" Serve.")
         compose.waitForIdle()
         assertEquals("$longStep Serve.", stored(recipe.id).steps.single().text)
     }
@@ -404,11 +415,11 @@ class StepHintsEditorTest {
         val recipe = openDirectly(draft(Step(0, longStep, timer = Timer(40.minutes)), Step(1, "Serve.")))
         passThrough(0)
         awaitNotification(0)
-        compose.onNodeWithTag(EditorTags.timerNotificationName(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerNotificationName(0)).performScrollTo().performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag(EditorTags.timerName(0)).assertIsFocused()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).assertIsFocused()
         assertEquals(TimerName.derived(longStep), fieldText(EditorTags.timerName(0)))
-        compose.onNodeWithTag(EditorTags.timerName(0)).performTextReplacement("Chicken in the oven")
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).performTextReplacement("Chicken in the oven")
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerNotification(0)), PATIENCE_MS)
         assertEquals(Timer(40.minutes, "Chicken in the oven"), stored(recipe.id).steps[0].timer)
         assertEquals(longStep, stored(recipe.id).steps[0].text)
@@ -425,7 +436,7 @@ class StepHintsEditorTest {
         awaitNotification(0)
         val rewritten = "Chicken into the oven for 40 minutes: put it in at 190 degrees, skin up, on the middle shelf"
         enter(EditorTags.stepText(0))
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextReplacement(rewritten)
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextReplacement(rewritten)
         compose.waitForIdle()
         enter(EditorTags.TITLE)
         awaitNotification(0)
@@ -433,22 +444,27 @@ class StepHintsEditorTest {
         assertTrue(notificationText(0).contains("Chicken into the oven for 40 minutes"))
     }
 
-    // Appearing above the field the author went on to, the display does not push that field away.
+    // Appearing above the field the author went on to, the display does not push that field away: leaving the step's
+    // text for its second timer's hours, the first timer's display comes above them, and the sheet scrolls by as much.
+    // (The second step, so that the references' offer of the first, which goes as the text is left, plays no part.)
     @Test
     @Config(qualifiers = "w360dp-h640dp")
     fun theDisplayDoesNotPushTheFieldTheAuthorWentOnTo() {
-        openDirectly(draft(Step(0, longStep, timer = Timer(40.minutes)), Step(1, "Serve.")))
-        enter(EditorTags.stepText(0))
-        compose.onNodeWithTag(EditorTags.stepText(1)).performScrollTo()
+        openDirectly(draft(Step(0, "Heat the oven."), Step(1, longStep, timers = listOf(Timer(40.minutes), Timer(10.minutes)))))
+        enter(EditorTags.stepText(1))
+        val hours = EditorTags.timerHours(1, 1)
+        compose.onNodeWithTag(hours).performScrollTo()
         compose.waitForIdle()
-        val before: Rect = compose.onNodeWithTag(EditorTags.stepText(1)).fetchSemanticsNode().boundsInRoot
-        compose.onNodeWithTag(EditorTags.stepText(1)).performSemanticsAction(SemanticsActions.RequestFocus)
-        awaitNotification(0)
+        // Where the author sees it, in the sheet's window.
+        val before = compose.onNodeWithTag(hours).fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithTag(hours).performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerNotification(1, 0)), PATIENCE_MS)
         compose.waitForIdle()
-        val after = compose.onNodeWithTag(EditorTags.stepText(1)).fetchSemanticsNode().boundsInRoot
+        val after = compose.onNodeWithTag(hours).fetchSemanticsNode().boundsInRoot
+        assertTrue("the display stands above the field", bounds(EditorTags.timerNotification(1, 0)).bottom <= bounds(hours).top)
         assertEquals(before.top, after.top, 1f)
         assertEquals(before.bottom, after.bottom, 1f)
-        compose.onNodeWithTag(EditorTags.stepText(1)).assertIsFocused()
+        compose.onNodeWithTag(hours).assertIsFocused()
     }
 
     @Test

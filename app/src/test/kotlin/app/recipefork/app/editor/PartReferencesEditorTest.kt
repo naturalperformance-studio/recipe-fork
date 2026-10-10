@@ -130,7 +130,11 @@ class PartReferencesEditorTest {
     private fun textOf(tag: String): String =
         compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().config[SemanticsProperties.Text].joinToString("") { it.text }
 
-    private fun stepShown(position: Int) = node(EditorTags.stepText(position)).config[SemanticsProperties.EditableText].text
+    /** What the field of the step at [position] shows, in its sheet, opened as the author opens it. */
+    private fun stepShown(position: Int): String {
+        compose.openStep(position)
+        return node(EditorTags.stepText(position)).config[SemanticsProperties.EditableText].text
+    }
 
     private fun laidOut(tag: String): AnnotatedString {
         val results = mutableListOf<TextLayoutResult>()
@@ -149,17 +153,17 @@ class PartReferencesEditorTest {
         .any { it.start <= at && at < it.end && it.item.fontWeight == FontWeight.Bold && it.item.textDecoration == TextDecoration.Underline }
 
     private fun placeCursor(position: Int, at: Int) {
-        compose.onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextInputSelection(TextRange(at))
+        compose.inStep(position).onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextInputSelection(TextRange(at))
         compose.waitForIdle()
     }
 
     private fun openOffer(position: Int) {
-        compose.onNodeWithTag(EditorTags.stepInsert(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepInsert(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOffer(position, 0)), PATIENCE_MS)
     }
 
     private fun askPart(position: Int, row: Int) {
-        compose.onNodeWithTag(EditorTags.stepOfferPart(position, row)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.inStep(position).onNodeWithTag(EditorTags.stepOfferPart(position, row)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.PART_FIELD), PATIENCE_MS)
     }
 
@@ -225,7 +229,7 @@ class PartReferencesEditorTest {
         // Choosing the whole still inserts the whole.
         placeCursor(1, 0)
         openOffer(1)
-        compose.onNodeWithTag(EditorTags.stepOffer(1, 0)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.inStep(1).onNodeWithTag(EditorTags.stepOffer(1, 0)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps[1].ingredientReferences.size == 2 }
         assertEquals(null, stored(recipe.id).steps[1].ingredientReferences.first().share)
     }
@@ -236,7 +240,7 @@ class PartReferencesEditorTest {
         val recipe = chicken(Step(0, "В соус "))
         open(recipe.id)
         placeCursor(0, 7)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOfferPart(0, 0)), PATIENCE_MS)
         askPart(0, 0)
         compose.onNodeWithTag(EditorTags.PART_CANCEL).performClick()
@@ -244,10 +248,10 @@ class PartReferencesEditorTest {
         compose.waitForIdle()
         assertEquals("В соус @", stepShown(0))
         assertEquals(Step(0, "В соус @"), stored(recipe.id).steps.single())
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextReplacement("В соус ")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextReplacement("В соус ")
         compose.waitForIdle()
         placeCursor(0, 7)
-        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
+        compose.inStep(0).onNodeWithTag(EditorTags.stepText(0)).performTextInput("@")
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepOfferPart(0, 0)), PATIENCE_MS)
         askPart(0, 0)
         typePart("2")
@@ -264,20 +268,29 @@ class PartReferencesEditorTest {
         assertEquals("В маринад: 2 шт", stepShown(0))
         assertTrue(!exists(EditorTags.stepPartWarning(0)))
         assertTrue(background(11) != null && background(11) != warning)
+        compose.closeStep()
+        assertTrue(!exists(StepSheetTags.partWarning(0)))
         compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("1")
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPartWarning(0)) }
+        compose.closeIngredient()
+        // The step's row says so, as its field does.
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.partWarning(0)) }
+        assertEquals("Часть 2 шт больше, чем 1 шт по списку.", textOf(StepSheetTags.partWarning(0)))
         assertEquals("В маринад: 2 шт", stepShown(0))
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepPartWarning(0)) }
         assertEquals("Часть 2 шт больше, чем 1 шт по списку.", textOf(EditorTags.stepPartWarning(0)))
         // The reference itself is tinted as a warning, still bold and underlined like any reference.
         compose.waitUntil(PATIENCE_MS) { background(11) == warning }
         assertTrue(bold(11))
         assertEquals(listOf(IngredientReference(0, 11, two)), stored(recipe.id).steps[0].ingredientReferences)
+        compose.closeStep()
         compose.openIngredient(0)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performScrollTo().performTextReplacement("6")
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { !exists(StepSheetTags.partWarning(0)) }
+        assertEquals("В маринад: 2 шт", stepShown(0))
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPartWarning(0)) }
         compose.waitUntil(PATIENCE_MS) { background(11) != warning }
-        assertEquals("В маринад: 2 шт", stepShown(0))
         assertEquals(listOf(IngredientReference(0, 11, two)), stored(recipe.id).steps[0].ingredientReferences)
     }
 

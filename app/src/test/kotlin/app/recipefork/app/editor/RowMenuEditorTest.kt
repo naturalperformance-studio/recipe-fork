@@ -10,6 +10,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -138,12 +140,17 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
     private fun ingredientCount(): Int =
         compose.onAllNodes(hasTestTagMatching(Regex("editor-ingredient-\\d+-line"))).fetchSemanticsNodes().size
 
+    /** Adds a step by "Add step", which opens its sheet, writes [text] in it and closes it. */
     private fun addStep(text: String) {
-        val position = stepCount()
-        compose.onNodeWithTag(EditorTags.STEP_ADD).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(position)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextReplacement(text)
+        compose.addStepAt(stepCount())
+        writeOpenStep(stepCount() - 1, text)
+    }
+
+    /** Writes [text] into the step at [position], whose sheet is open, and closes the sheet. */
+    private fun writeOpenStep(position: Int, text: String) {
+        compose.onNodeWithTag(EditorTags.stepText(position)).performTextReplacement(text)
         compose.waitForIdle()
+        compose.closeStep()
     }
 
     /** Adds a row by "Add ingredient", which opens its sheet — closing any open before — and names it [name] there. */
@@ -158,9 +165,11 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         }
     }
 
-    private fun stepTexts(): List<String> = (0 until stepCount()).map { fieldText(EditorTags.stepText(it)) }
+    /** The steps' texts as their rows read them; "" for a step holding none. */
+    private fun stepTexts(): List<String> =
+        (0 until stepCount()).map { compose.stepLine(it).let { line -> if (line == string(R.string.editor_step_new)) "" else line } }
 
-    private fun stepLabels(): List<String> = (0 until stepCount()).map { compose.textsOf(EditorTags.stepText(it)).first() }
+    private fun stepLabels(): List<String> = (0 until stepCount()).map { compose.textsOf(StepSheetTags.line(it)).first() }
 
     /** The rows' names as their lines end with them; "" for a row holding nothing. */
     private fun ingredientNames(): List<String> = (0 until ingredientCount()).map { position ->
@@ -182,8 +191,14 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         compose.waitForIdle()
     }
 
-    private fun onStep(position: Int, action: RowAction) =
-        choose(EditorTags.stepMenu(position), { EditorTags.stepAction(position, it) }, action)
+    /** Chooses [action] in the sheet of the step at [position]: it stays open on its step, or opens on the one inserted. */
+    private fun onStep(position: Int, action: RowAction) = compose.stepAction(position, action)
+
+    /** The actions the sheet of the step at [position] offers, in order. */
+    private fun stepActions(position: Int): List<RowAction> {
+        compose.openStep(position)
+        return RowAction.entries.filter { exists(EditorTags.stepAction(position, it)) }
+    }
 
     /** Opens the sheet of ingredient row [position], chooses its [action] there and closes the sheet. */
     private fun onIngredient(position: Int, action: RowAction) {
@@ -205,19 +220,19 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTagMatching(Regex(".*-insert-above"))).fetchSemanticsNodes().isEmpty() }
     }
 
-    // FLOW-025 (1, 2, 6), A11Y-006: every editable step carries a 48 dp menu named for its row, and every ingredient
-    // row's sheet the same actions, with "Insert above", "Insert below", "Move up" and "Move down" — none to move the
-    // first up or the last down; an ingredient row's also puts a group's heading above it (DOM-022).
+    // FLOW-025 (1, 2, 6), A11Y-006: every editable step's sheet — titled by its step — and every ingredient row's sheet
+    // carry the row's actions, each 48 dp and in words: "Insert above", "Insert below", "Move up" and "Move down" —
+    // none to move the first up or the last down; an ingredient row's also puts a group's heading above it (DOM-022).
     @Test
     fun everyRowCarriesAMenuNamedForItsRowInEnglish() = everyRowCarriesAMenuNamedForItsRow(
-        listOf("Insert above", "Insert below", "Move up", "Move down", "Add group above"), "Step 2 actions",
+        listOf("Insert above", "Insert below", "Move up", "Move down", "Add group above"), "Step 2",
     )
 
     @Test
     @Config(qualifiers = "ru")
     fun everyRowCarriesAMenuNamedForItsRowInRussian() = everyRowCarriesAMenuNamedForItsRow(
         listOf("Вставить выше", "Вставить ниже", "Переместить вверх", "Переместить вниз", "Добавить группу выше"),
-        "Действия с шагом 2",
+        "Шаг 2",
     )
 
     private fun everyRowCarriesAMenuNamedForItsRow(labels: List<String>, secondStep: String) {
@@ -226,8 +241,8 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         addStep("one")
         addIngredient("salt")
         compose.closeIngredient()
-        assertEquals(listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW), openMenu(EditorTags.stepMenu(0)) { EditorTags.stepAction(0, it) })
-        closeMenu(EditorTags.stepMenu(0))
+        assertEquals(listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW), stepActions(0))
+        compose.closeStep()
         assertEquals(listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE), sheetActions(0))
         compose.closeIngredient()
         listOf("two", "three").forEach(::addStep)
@@ -238,19 +253,24 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         val expected = listOf(all - RowAction.MOVE_UP, all, all - RowAction.MOVE_DOWN)
         val ingredientExpected = expected.map { it + RowAction.GROUP_ABOVE }
         (0..2).forEach { position ->
-            val step = node(EditorTags.stepMenu(position))
-            assertEquals(listOf(string(R.string.editor_step_menu_action, position + 1)), step.config[SemanticsProperties.ContentDescription])
-            assertTrue(step.size.width >= step.layoutInfo.density.run { 48.0f * density } - 0.5f)
-            assertTrue(step.size.height >= step.layoutInfo.density.run { 48.0f * density } - 0.5f)
-            assertEquals("step $position", expected[position], openMenu(EditorTags.stepMenu(position)) { EditorTags.stepAction(position, it) })
+            // A step's actions are in its sheet, named by the step it is titled with.
+            assertEquals("step $position", expected[position], stepActions(position))
+            expected[position].forEach { action ->
+                val node = node(EditorTags.stepAction(position, action))
+                assertTrue(node.size.height >= node.layoutInfo.density.run { 48.0f * density } - 0.5f)
+            }
             assertEquals(
                 expected[position].map { labels[it.ordinal] },
                 expected[position].map { compose.textsOf(EditorTags.stepAction(position, it)).joinToString("") },
             )
-            // A11Y-003, A11Y-005 with the menu open, its actions included.
+            // A11Y-003, A11Y-005 with the sheet open, its actions included.
             AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = expected[position].size)
             AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = expected[position].size)
-            closeMenu(EditorTags.stepMenu(position))
+            if (position == 1) {
+                val title = hasAnyAncestor(hasTestTag(StepSheetTags.SHEET)) and hasText(secondStep) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
+                assertEquals(1, compose.onAllNodes(title, useUnmergedTree = true).fetchSemanticsNodes().size)
+            }
+            compose.closeStep()
 
             // The row's actions in its sheet, each in words.
             assertEquals("row $position", ingredientExpected[position], sheetActions(position))
@@ -262,9 +282,9 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
             AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = ingredientExpected[position].size)
             compose.closeIngredient()
         }
-        assertEquals(listOf(secondStep), node(EditorTags.stepMenu(1)).config[SemanticsProperties.ContentDescription])
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 14)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 14)
+        // With every sheet closed, each step and each row is one labelled target of 48 dp, among the editor's others.
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 11)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 11)
     }
 
     // FLOW-025 (1): a new empty step, or a new row exactly like an appended one, at the place chosen; the ones after
@@ -273,20 +293,25 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
     fun insertingPutsANewRowAtThatPlace() {
         val id = writeANewRecipe()
         listOf("one", "two", "three", "four", "five").forEach(::addStep)
-        // Between the second and the third.
+        // Between the second and the third: an empty step, whose sheet opens on it.
         onStep(1, RowAction.INSERT_BELOW)
         assertEquals(listOf("one", "two", "", "three", "four", "five"), stored(id).steps.map { it.text })
         assertEquals((0..5).toList(), stored(id).steps.map { it.position })
-        assertEquals(listOf("one", "two", "", "three", "four", "five"), stepTexts())
+        assertTrue(exists(EditorTags.stepText(2)))
+        assertEquals("", fieldText(EditorTags.stepText(2)))
+        writeOpenStep(2, "2b")
+        assertEquals(listOf("one", "two", "2b", "three", "four", "five"), stepTexts())
         assertEquals((1..6).map { "Step $it" }, stepLabels())
         // Above the first.
         onStep(0, RowAction.INSERT_ABOVE)
-        assertEquals(listOf("", "one", "two", "", "three", "four", "five"), stored(id).steps.map { it.text })
-        assertEquals(listOf("", "one", "two", "", "three", "four", "five"), stepTexts())
+        assertEquals(listOf("", "one", "two", "2b", "three", "four", "five"), stored(id).steps.map { it.text })
+        writeOpenStep(0, "zero")
+        assertEquals(listOf("zero", "one", "two", "2b", "three", "four", "five"), stepTexts())
         // Below the last.
         onStep(6, RowAction.INSERT_BELOW)
-        assertEquals(listOf("", "one", "two", "", "three", "four", "five", ""), stepTexts())
         assertEquals(Step(7, ""), stored(id).steps.last())
+        writeOpenStep(7, "last")
+        assertEquals(listOf("zero", "one", "two", "2b", "three", "four", "five", "last"), stepTexts())
 
         addIngredient("salt")
         addIngredient("flour")
@@ -324,11 +349,13 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Bread")
         listOf("Mix.", "Rest.", "Knead.", "Shape.", "Bake.").forEach(::addStep)
-        // A timer on the fourth step, entered on the screen.
+        // A timer on the fourth step, entered in its sheet.
+        compose.openStep(3)
         compose.onNodeWithTag(EditorTags.timerAttach(3)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(3)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.timerMinutes(3)).performScrollTo().performTextInput("5")
         compose.waitForIdle()
+        compose.closeStep()
         listOf("salt", "flour", "water", "yeast").forEach(::addIngredient)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(3)).performTextReplacement("7")
         compose.waitForIdle()
@@ -341,14 +368,17 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         assertEquals(order.map { before.steps[it].text }, stored(id).steps.map { it.text })
         assertEquals(order.map { before.steps[it].copy(position = 0) }, stored(id).steps.map { it.copy(position = 0) })
         assertEquals(listOf(null, Timer(5.minutes), null, null, null), stored(id).steps.map { it.timer })
+        compose.closeStep()
         assertEquals(listOf("Mix.", "Shape.", "Rest.", "Knead.", "Bake."), stepTexts())
-        assertEquals("5", fieldText(EditorTags.timerMinutes(1)))
-        assertTrue(!exists(EditorTags.timerMinutes(3)))
+        assertEquals("Shape. · 5 min", compose.rowText(StepSheetTags.timer(1, 0)))
+        assertTrue(!exists(StepSheetTags.timer(3, 0)))
         // And one down again, then back.
         onStep(1, RowAction.MOVE_DOWN)
+        compose.closeStep()
         assertEquals(listOf("Mix.", "Rest.", "Shape.", "Knead.", "Bake."), stepTexts())
-        assertEquals("5", fieldText(EditorTags.timerMinutes(2)))
+        assertTrue(exists(StepSheetTags.timer(2, 0)))
         onStep(2, RowAction.MOVE_UP)
+        compose.closeStep()
         assertEquals(listOf("Mix.", "Shape.", "Rest.", "Knead.", "Bake."), stepTexts())
 
         onIngredient(3, RowAction.MOVE_UP)
@@ -373,58 +403,57 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
 
         // And so does the editor opened again.
         openDirectly(id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(4)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(4)), PATIENCE_MS)
         assertEquals(listOf("Mix.", "Shape.", "Rest.", "Knead.", "Bake."), stepTexts())
+        compose.openStep(1)
         assertEquals("5", fieldText(EditorTags.timerMinutes(1)))
+        compose.closeStep()
         assertEquals(listOf("salt", "yeast", "flour", "water"), ingredientNames())
         assertEquals(after, stored(id))
     }
 
-    // What the screen holds for a step — focus, a timer being attached — stays with it through an insert, a move and
-    // a delete above it.
+    // What the screen holds for a step — a timer being attached, kept by its row while its sheet is closed — stays with
+    // it through an insert, a move and a delete above it; the sheet itself follows its step as the step moves.
     @Test
     fun whatTheScreenHoldsForAStepStaysWithIt() {
         val id = writeANewRecipe()
         listOf("one", "two", "three", "four").forEach(::addStep)
         // A timer opened on "three", with no duration yet, so nothing of it is in the recipe.
+        compose.openStep(2)
         compose.onNodeWithTag(EditorTags.timerAttach(2)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerHours(2)), PATIENCE_MS)
         assertEquals(null, stored(id).steps[2].timer)
-        // The author is in "four".
-        compose.onNodeWithTag(EditorTags.stepText(3)).performScrollTo().performTextInput(" more")
-        compose.waitForIdle()
-        compose.onNodeWithTag(EditorTags.stepText(3)).assertIsFocused()
+        compose.closeStep()
+        fun timerOpenAt(): List<Int> = (0 until stepCount()).filter { position ->
+            compose.openStep(position)
+            exists(EditorTags.timerHours(position)).also { compose.closeStep() }
+        }
 
         onStep(0, RowAction.INSERT_ABOVE)
-        assertEquals(listOf("", "one", "two", "three", "four more"), stepTexts())
-        compose.onNodeWithTag(EditorTags.stepText(4)).assertIsFocused()
-        compose.onNodeWithTag(EditorTags.stepText(3)).assertIsNotFocused()
-        assertTrue(exists(EditorTags.timerHours(3)))
-        assertTrue(!exists(EditorTags.timerHours(2)))
+        writeOpenStep(0, "zero")
+        assertEquals(listOf("zero", "one", "two", "three", "four"), stepTexts())
+        assertEquals(listOf(3), timerOpenAt())
 
-        // "three", its timer open, moves above "one".
+        // "three", its timer open, moves above "one"; its sheet goes with it.
         onStep(3, RowAction.MOVE_UP)
+        assertTrue(exists(EditorTags.timerHours(2)))
         onStep(2, RowAction.MOVE_UP)
-        assertEquals(listOf("", "three", "one", "two", "four more"), stepTexts())
         assertTrue(exists(EditorTags.timerHours(1)))
-        assertEquals(1, compose.onAllNodes(hasTestTagMatching(Regex("editor-step-\\d+-timer-hours"))).fetchSemanticsNodes().size)
-        compose.onNodeWithTag(EditorTags.stepText(4)).assertIsFocused()
-
-        // The focused step itself moves.
-        onStep(4, RowAction.MOVE_UP)
-        assertEquals(listOf("", "three", "one", "four more", "two"), stepTexts())
-        compose.onNodeWithTag(EditorTags.stepText(3)).assertIsFocused()
+        assertEquals("three", fieldText(EditorTags.stepText(1)))
+        compose.closeStep()
+        assertEquals(listOf("zero", "three", "one", "two", "four"), stepTexts())
+        assertEquals(listOf(1), timerOpenAt())
 
         // Deleted above.
-        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
+        compose.removeStep(0)
+        assertEquals(listOf("three", "one", "two", "four"), stepTexts())
+        assertEquals(listOf(0), timerOpenAt())
+        // Still the same step's timer: a duration entered there is that step's.
+        compose.openStep(0)
+        compose.onNodeWithTag(EditorTags.timerMinutes(0)).performScrollTo().performTextInput("3")
         compose.waitForIdle()
-        assertEquals(listOf("three", "one", "four more", "two"), stepTexts())
-        assertTrue(exists(EditorTags.timerHours(0)))
-        compose.onNodeWithTag(EditorTags.stepText(2)).assertIsFocused()
-        // Still typing into the same step.
-        compose.onNodeWithTag(EditorTags.stepText(2)).performTextInput("!")
-        compose.waitForIdle()
-        assertEquals(listOf("three", "one", "four more!", "two"), stored(id).steps.map { it.text })
+        compose.closeStep()
+        assertEquals(listOf(Timer(3.minutes), null, null, null), stored(id).steps.map { it.timer })
     }
 
     // What the screen holds for an ingredient row — its open sheet, with the focus, an open dictionary offer — stays with

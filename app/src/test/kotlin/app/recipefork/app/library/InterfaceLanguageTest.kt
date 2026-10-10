@@ -243,7 +243,7 @@ class InterfaceLanguageTest {
         compose.onNodeWithTag(EditorTags.LANGUAGE).performScrollTo()
         // The editor offers every shipped tag, each by its Russian label; its rows read as the card's lines.
         val shippedTags = DictionarySnapshot.parse(File("src/main/assets/${DictionarySnapshot.ASSET}").readText()).tags
-        // Once the editor has read the dictionary, which names the rows.
+        // Once the editor has read the dictionary, the rows read its labels.
         compose.waitUntil(PATIENCE_MS) { compose.ingredientLine(0).contains("говядина") }
         val lines = (0..1).map { compose.ingredientLine(it) }
         assertTrue(lines.toString(), lines[0].contains("говядина") && lines[0].contains("1,5 кг"))

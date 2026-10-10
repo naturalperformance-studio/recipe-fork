@@ -123,7 +123,10 @@ class StepTimerEditorTest {
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 
-    private fun node(tag: String): SemanticsNode = compose.onNodeWithTag(tag).fetchSemanticsNode()
+    private fun node(tag: String): SemanticsNode {
+        compose.reachStep(tag)
+        return compose.onNodeWithTag(tag).fetchSemanticsNode()
+    }
 
     private fun fieldText(tag: String): String = node(tag).config[SemanticsProperties.EditableText].text
 
@@ -133,6 +136,7 @@ class StepTimerEditorTest {
 
     private fun addStep(text: String): Int {
         val position = compose.onAllNodes(hasTestTagMatching(Regex("editor-step-\\d+"))).fetchSemanticsNodes().size
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.STEP_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(position)), PATIENCE_MS)
         type(EditorTags.stepText(position), text)
@@ -144,20 +148,23 @@ class StepTimerEditorTest {
     }
 
     private fun type(tag: String, text: String) {
+        compose.reach(tag)
         compose.onNodeWithTag(tag).performScrollTo().performTextReplacement(text)
         compose.waitForIdle()
     }
 
     /** Chooses the step's timer control with a touch, as the author's finger does. */
     private fun chooseTimer(position: Int) {
-        compose.onNodeWithTag(EditorTags.timerAttach(position)).performScrollTo().performTouchInput { click() }
+        compose.inStep(position).onNodeWithTag(EditorTags.timerAttach(position)).performScrollTo().performTouchInput { click() }
         compose.waitForIdle()
     }
 
-    /** The fields the author can type into inside the step at [position]. */
-    private fun fieldsIn(position: Int): Set<String> =
-        compose.onAllNodes(hasAnyAncestor(hasTestTag(EditorTags.step(position))) and hasSetTextAction()).fetchSemanticsNodes()
-            .map { it.config[SemanticsProperties.TestTag] }.toSet()
+    /** The fields the author can type into in the sheet of the step at [position], besides the note every sheet holds. */
+    private fun fieldsIn(position: Int): Set<String> {
+        compose.openStep(position)
+        return compose.onAllNodes(hasAnyAncestor(hasTestTag(StepSheetTags.SHEET)) and hasSetTextAction()).fetchSemanticsNodes()
+            .map { it.config[SemanticsProperties.TestTag] }.toSet() - StepNoteTags.field(position)
+    }
 
     private fun timerOf(id: RecipeId, position: Int = 0): Timer? = stored(id).steps[position].timer
 
@@ -169,7 +176,7 @@ class StepTimerEditorTest {
         addStep("Boil the water.")
         addStep(longStep)
         listOf(0, 1).forEach { position ->
-            compose.onNodeWithTag(EditorTags.timerAttach(position)).assertExists()
+            compose.inStep(position).onNodeWithTag(EditorTags.timerAttach(position)).assertExists()
             assertEquals(string(R.string.editor_timer_action, position + 1), AccessibilityChecks.clickActionLabel(node(EditorTags.timerAttach(position))))
         }
         assertEquals(setOf(EditorTags.stepText(1)), fieldsIn(1))
@@ -202,7 +209,7 @@ class StepTimerEditorTest {
         assertEquals("59", fieldText(EditorTags.timerMinutes(1)))
         assertEquals(Timer(99.hours + 59.minutes), timerOf(id, 1))
         // Typed character by character, the third digit is not taken either.
-        compose.onNodeWithTag(EditorTags.timerHours(1)).performTextInput("9")
+        compose.inStep(1).onNodeWithTag(EditorTags.timerHours(1)).performTextInput("9")
         compose.waitForIdle()
         assertEquals("99", fieldText(EditorTags.timerHours(1)))
         assertEquals(Timer(99.hours + 59.minutes), timerOf(id, 1))
@@ -241,7 +248,7 @@ class StepTimerEditorTest {
         assertEquals("0", fieldText(EditorTags.timerHours(0)))
         assertEquals("0", fieldText(EditorTags.timerMinutes(0)))
         // Nothing is refused: no message, and the step and the recipe stand as they are.
-        compose.onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
         assertEquals("Rest the dough.", stored(id).steps.single().text)
 
         // A timer whose duration is cleared is no longer stored; the fields stay while the author is at them.
@@ -249,7 +256,7 @@ class StepTimerEditorTest {
         assertEquals(Timer(30.minutes), timerOf(id))
         type(EditorTags.timerMinutes(0), "")
         assertNull(timerOf(id))
-        compose.onNodeWithTag(EditorTags.timerMinutes(0)).assertExists()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0)).assertExists()
 
         // Left and opened again: no timer, and only the control that attaches one.
         compose.onNodeWithTag(EditorTags.BACK).performClick()
@@ -257,8 +264,9 @@ class StepTimerEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry(id.value)), PATIENCE_MS)
         assertNull(timerOf(id))
         openDirectly(id)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerAttach(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerHours(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerHours(0)).assertDoesNotExist()
         assertEquals(setOf(EditorTags.stepText(0)), fieldsIn(0))
     }
 
@@ -275,46 +283,49 @@ class StepTimerEditorTest {
             ),
         )
         openDirectly(recipe.id)
+        compose.openStep(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(1, 4)), PATIENCE_MS)
         assertEquals((1..5).map { "$it" }, (0..4).map { fieldText(EditorTags.timerMinutes(1, it)) })
 
         chooseTimer(1)
+        compose.openStep(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(1)), PATIENCE_MS)
         val statement = string(R.string.editor_timer_limit)
         assertEquals(listOf(statement), compose.textsOf(EditorTags.timerStatement(1)))
         assertTrue(statement.startsWith("A step can hold up to five timers") && statement.contains("split this step"))
         // No sixth timer, and nothing about the step or its timers changed.
-        compose.onNodeWithTag(EditorTags.timerHours(1, 5)).assertDoesNotExist()
+        compose.inStep(1).onNodeWithTag(EditorTags.timerHours(1, 5)).assertDoesNotExist()
         assertEquals(recipe, stored(recipe.id))
-        compose.onNodeWithTag(EditorTags.timerAttach(1)).assertExists()
+        compose.inStep(1).onNodeWithTag(EditorTags.timerAttach(1)).assertExists()
         // Choosing it again changes nothing either.
         chooseTimer(1)
-        compose.onNodeWithTag(EditorTags.timerStatement(1)).assertExists()
-        compose.onNodeWithTag(EditorTags.timerHours(1, 5)).assertDoesNotExist()
+        compose.inStep(1).onNodeWithTag(EditorTags.timerStatement(1)).assertExists()
+        compose.inStep(1).onNodeWithTag(EditorTags.timerHours(1, 5)).assertDoesNotExist()
         assertEquals(recipe, stored(recipe.id))
 
         // A scroll is not the next action: the statement stays.
         compose.onNodeWithTag(EditorTags.FORM).performTouchInput { swipeUp() }
         compose.onNodeWithTag(EditorTags.FORM).performTouchInput { swipeDown() }
         compose.waitForIdle()
-        compose.onNodeWithTag(EditorTags.timerStatement(1)).assertExists()
+        compose.inStep(1).onNodeWithTag(EditorTags.timerStatement(1)).assertExists()
 
-        // A touch on another field is: the statement goes, and the step and its timers stand.
-        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performTouchInput { click() }
+        // A touch on another field is — in the step's sheet, its note: the statement goes, and the step and its timers stand.
+        compose.inStep(1).onNodeWithTag(StepNoteTags.field(1)).performScrollTo().performTouchInput { click() }
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerStatement(1)), PATIENCE_MS)
         assertEquals(recipe, stored(recipe.id))
 
         // So is a typed character.
         chooseTimer(1)
+        compose.openStep(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(1)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepText(1)).performTextInput(" Baste.")
+        compose.inStep(1).onNodeWithTag(EditorTags.stepText(1)).performTextInput(" Baste.")
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerStatement(1)), PATIENCE_MS)
         assertEquals(five, stored(recipe.id).steps[1].timers)
 
         // On a step with no timer, adding one shows nothing.
         chooseTimer(0)
-        compose.onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
-        compose.onNodeWithTag(EditorTags.timerHours(0)).assertExists()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerHours(0)).assertExists()
     }
 
     // FLOW-027 (2, 3): "Add timer" adds a timer each time it is chosen, each with its own duration, until five; the
@@ -325,20 +336,23 @@ class StepTimerEditorTest {
         addStep("Bake the bread.")
         (0..4).forEach { place ->
             chooseTimer(0)
+            compose.openStep(0)
             compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, place)), PATIENCE_MS)
-            compose.onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
+            compose.inStep(0).onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
             if (place < 4) type(EditorTags.timerMinutes(0, place), "${place + 1}0")
         }
         assertEquals((1..4).map { Timer((it * 10).minutes) }, stored(id).steps[0].timers)
         // Four timers and one added with no duration yet: a sixth is not offered.
         chooseTimer(0)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerMinutes(0, 5)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0, 5)).assertDoesNotExist()
         type(EditorTags.timerHours(0, 4), "1")
         assertEquals((1..4).map { Timer((it * 10).minutes) } + Timer(1.hours), stored(id).steps[0].timers)
         chooseTimer(0)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerMinutes(0, 5)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0, 5)).assertDoesNotExist()
         assertEquals(5, stored(id).steps[0].timers.size)
     }
 
@@ -365,9 +379,11 @@ class StepTimerEditorTest {
     fun theStatementOfFiveTimersPerStepIsInRussian() {
         val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Томить.", timers = (1..5).map { Timer(it.hours) }))))
         openDirectly(recipe.id)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerAttach(0)), PATIENCE_MS)
         assertEquals("Таймер для шага 1", compose.descriptionOf(EditorTags.timerAttach(0)).single())
         chooseTimer(0)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerStatement(0)), PATIENCE_MS)
         val statement = compose.textsOf(EditorTags.timerStatement(0)).single()
         assertTrue(statement, statement.contains("до пяти таймеров") && statement.contains("разделите этот шаг"))
@@ -381,12 +397,13 @@ class StepTimerEditorTest {
         val id = writeANewRecipe()
         addStep(longStep)
         chooseTimer(0)
-        compose.onNodeWithTag(EditorTags.timerName(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).assertDoesNotExist()
         type(EditorTags.timerMinutes(0), "45")
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
         assertEquals(TimerName.derived(longStep), fieldText(EditorTags.timerName(0)))
         assertEquals("Put the chicken in the oven at 190 degrees and roast until…", fieldText(EditorTags.timerName(0)))
-        compose.onNodeWithTag(EditorTags.timerNameFollows(0), useUnmergedTree = true).assertExists()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerNameFollows(0), useUnmergedTree = true).assertExists()
         assertNull(timerOf(id)!!.label)
 
         // Unnamed, it follows the step's text.
@@ -397,7 +414,7 @@ class StepTimerEditorTest {
         // Corrected, it holds what the author wrote, whatever the step says afterwards.
         type(EditorTags.timerName(0), "Chicken in the oven")
         assertEquals(Timer(45.minutes, "Chicken in the oven"), timerOf(id))
-        compose.onNodeWithTag(EditorTags.timerNameFollows(0), useUnmergedTree = true).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerNameFollows(0), useUnmergedTree = true).assertDoesNotExist()
         type(EditorTags.stepText(0), "Roast the chicken, then rest it.")
         assertEquals("Chicken in the oven", fieldText(EditorTags.timerName(0)))
         assertEquals(Timer(45.minutes, "Chicken in the oven"), timerOf(id))
@@ -406,14 +423,14 @@ class StepTimerEditorTest {
         assertEquals(Timer(1.hours + 45.minutes, "Chicken in the oven"), timerOf(id))
 
         // Cleared, the name follows the step again, and nothing of what was typed is kept.
-        compose.onNodeWithTag(EditorTags.timerName(0)).performScrollTo().performTouchInput { click() }
-        compose.onNodeWithTag(EditorTags.timerName(0)).performTextClearance()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).performScrollTo().performTouchInput { click() }
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).performTextClearance()
         compose.waitForIdle()
         assertEquals(Timer(1.hours + 45.minutes), timerOf(id))
         // While the author is still in the field it stays empty; once they leave it, it shows the step's name.
         assertEquals("", fieldText(EditorTags.timerName(0)))
-        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performTouchInput { click() }
-        compose.waitForIdle()
+        // Left — the sheet closed — the field shows the step's name.
+        compose.closeStep()
         assertEquals("Roast the chicken, then rest it.", fieldText(EditorTags.timerName(0)))
         type(EditorTags.stepText(0), "Roast.")
         assertEquals("Roast.", fieldText(EditorTags.timerName(0)))
@@ -446,7 +463,7 @@ class StepTimerEditorTest {
         type(EditorTags.timerName(0), name)
         assertEquals(Timer(2.hours, name), timerOf(id))
         assertEquals(name, fieldText(EditorTags.timerName(0)))
-        compose.onNodeWithTag(EditorTags.timerName(0)).performTextInput(" and more")
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).performTextInput(" and more")
         compose.waitForIdle()
         assertEquals("$name and more", timerOf(id)!!.label)
     }
@@ -464,11 +481,11 @@ class StepTimerEditorTest {
         type(EditorTags.timerMinutes(1), "40")
         assertEquals(listOf(Timer(12.hours, "Marinade"), Timer(40.minutes)), stored(id).steps.map { it.timer })
 
-        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf(Step(0, "Roast the chicken.", timer = Timer(40.minutes))), stored(id).steps)
-        // What the screen held for the step stays with it: its hours were never entered.
-        assertEquals("", fieldText(EditorTags.timerHours(0)))
+        // Its sheet, opened again, reads its timer as the step holds it.
+        assertEquals("0", fieldText(EditorTags.timerHours(0)))
         assertEquals("40", fieldText(EditorTags.timerMinutes(0)))
         assertEquals("Roast the chicken.", fieldText(EditorTags.timerName(0)))
         compose.onNodeWithTag(EditorTags.step(1)).assertDoesNotExist()
@@ -496,6 +513,7 @@ class StepTimerEditorTest {
         assertEquals(before, stored(id))
 
         openDirectly(id)
+        compose.openStep(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(1)), PATIENCE_MS)
         assertEquals("1", fieldText(EditorTags.timerHours(0)))
         assertEquals("30", fieldText(EditorTags.timerMinutes(0)))
@@ -524,18 +542,18 @@ class StepTimerEditorTest {
         )
         openDirectly(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(3)), PATIENCE_MS)
-        assertEquals(listOf("Шаг 1", "Замариновать курицу.", "Таймер: 12 ч", "Название таймера: Маринад"), compose.textsOf(EditorTags.step(0)))
+        // Each step's row reads its timer as the card's View writes it: its name, then its duration.
+        assertEquals(listOf("Шаг 1", "Замариновать курицу.", "Маринад · 12 ч"), compose.textsOf(StepSheetTags.line(0)))
         assertEquals(
             listOf(
                 "Шаг 2",
                 "Запекать курицу при 190 градусах, пока кожа не станет золотистой и хрустящей",
-                "Таймер: 1 ч 5 мин",
-                "Название таймера: Запекать курицу при 190 градусах, пока кожа не станет…",
+                "Запекать курицу при 190 градусах, пока кожа не станет… · 1 ч 5 мин",
             ),
-            compose.textsOf(EditorTags.step(1)),
+            compose.textsOf(StepSheetTags.line(1)),
         )
-        assertEquals(listOf("Шаг 3", "Дать отдохнуть.", "Таймер: 10 мин", "Название таймера: Дать отдохнуть."), compose.textsOf(EditorTags.step(2)))
-        assertEquals(listOf("Шаг 4", "Подать."), compose.textsOf(EditorTags.step(3)))
+        assertEquals(listOf("Шаг 3", "Дать отдохнуть.", "Дать отдохнуть. · 10 мин"), compose.textsOf(StepSheetTags.line(2)))
+        assertEquals(listOf("Шаг 4", "Подать."), compose.textsOf(StepSheetTags.line(3)))
         (0..3).forEach { compose.onNodeWithTag(EditorTags.timerAttach(it)).assertDoesNotExist() }
         // No control takes a frozen recipe's timer off either.
         (0..3).forEach { compose.onNodeWithTag(EditorTags.timerRemove(it)).assertDoesNotExist() }
@@ -578,6 +596,7 @@ class StepTimerEditorTest {
         addStep("Mix.")
         chooseTimer(0)
         type(EditorTags.timerMinutes(0), "5")
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 8)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 8)
@@ -592,8 +611,10 @@ class StepTimerEditorTest {
         // Several timers are each named with their place: their names and their removals.
         chooseTimer(0)
         type(EditorTags.timerMinutes(0, 1), "7")
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0, 1)), PATIENCE_MS)
         chooseTimer(0)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0, 2)), PATIENCE_MS)
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 14)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 14)
@@ -620,22 +641,24 @@ class StepTimerEditorTest {
             Recipe.create(created, null).copy(steps = listOf(Step(0, "Preheat the oven."), Step(1, "Roast.", timer = Timer(20.minutes)))),
         )
         openDirectly(recipe.id)
+        compose.openStep(1)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(1)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerRemove(1)).assertExists()
+        compose.inStep(1).onNodeWithTag(EditorTags.timerRemove(1)).assertExists()
         assertEquals("Remove timer from step 2", AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(1))))
         // A step with no timer has none.
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
         chooseTimer(0)
-        compose.onNodeWithTag(EditorTags.timerHours(0)).assertExists()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerHours(0)).assertExists()
         assertEquals("Remove timer from step 1", AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(0))))
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.STATEMENT, useUnmergedTree = true).assertDoesNotExist()
         assertEquals(recipe, stored(recipe.id))
         chooseTimer(0)
         type(EditorTags.timerMinutes(0), "10")
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertExists()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).assertExists()
     }
 
     // Pressing it takes the timer off, its given name with it: the fields go, nothing is stored, the step offers a
@@ -652,13 +675,14 @@ class StepTimerEditorTest {
         type(EditorTags.timerMinutes(1), "10")
         assertEquals(Timer(20.minutes, "Chicken in the oven"), timerOf(id, 0))
 
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
-        // Said as today, with Undo: a step's only timer is not numbered.
+        // Said as today, with Undo, once the sheet is closed: a step's only timer is not numbered.
+        compose.closeStep()
         compose.awaitStatement(string(R.string.editor_timer_removed, 1))
-        compose.onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
-        compose.onNodeWithTag(EditorTags.timerName(0)).assertDoesNotExist()
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
         assertEquals(setOf(EditorTags.stepText(0)), fieldsIn(0))
         assertNull(timerOf(id, 0))
         // The other step's timer stands.
@@ -667,16 +691,17 @@ class StepTimerEditorTest {
 
         // Attached again, the timer starts empty, and from the name derived from the step.
         chooseTimer(0)
-        compose.onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerStatement(0)).assertDoesNotExist()
         assertEquals("", fieldText(EditorTags.timerHours(0)))
         assertEquals("", fieldText(EditorTags.timerMinutes(0)))
         type(EditorTags.timerMinutes(0), "25")
         assertEquals(Timer(25.minutes), timerOf(id, 0))
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
         assertEquals("Roast the chicken.", fieldText(EditorTags.timerName(0)))
 
         // Taken off again and the editor left: the book holds no timer on the step, and opened again, none shows.
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.backThroughTheCard()
@@ -684,10 +709,11 @@ class StepTimerEditorTest {
         assertNull(timerOf(id, 0))
         assertEquals(Timer(10.minutes), timerOf(id, 1))
         openDirectly(id)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerAttach(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerHours(0)).assertDoesNotExist()
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
-        compose.onNodeWithTag(EditorTags.timerRemove(1)).assertExists()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerHours(0)).assertDoesNotExist()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).assertDoesNotExist()
+        compose.inStep(1).onNodeWithTag(EditorTags.timerRemove(1)).assertExists()
     }
 
     // A timer the author adds takes the focus in its hours, whether the step had a timer or not.
@@ -699,6 +725,7 @@ class StepTimerEditorTest {
         compose.waitUntil(PATIENCE_MS) { node(EditorTags.timerHours(0)).config[SemanticsProperties.Focused] }
         type(EditorTags.timerMinutes(0), "30")
         chooseTimer(0)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerHours(0, 1)), PATIENCE_MS)
         compose.waitUntil(PATIENCE_MS) { node(EditorTags.timerHours(0, 1)).config[SemanticsProperties.Focused] }
         assertFalse(node(EditorTags.timerHours(0)).config[SemanticsProperties.Focused])
@@ -710,9 +737,10 @@ class StepTimerEditorTest {
     fun theRemoveControlIsNamedInRussian() {
         val recipe = seed(Recipe.create(created, null).copy(steps = listOf(Step(0, "Томить.", timer = Timer(2.hours, "Соус")))))
         openDirectly(recipe.id)
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0)), PATIENCE_MS)
         assertEquals("Убрать таймер шага 1", AccessibilityChecks.announcedLabel(node(EditorTags.timerRemove(0))))
-        compose.onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
         assertNull(timerOf(recipe.id))
     }

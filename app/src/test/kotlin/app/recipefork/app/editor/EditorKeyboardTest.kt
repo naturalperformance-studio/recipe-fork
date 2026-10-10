@@ -107,12 +107,12 @@ class EditorKeyboardTest {
 
     /**
      * The keyboard is up for the focused field: shown, as the shadow keyboard says for the editor's own window; for a
-     * row's sheet, whose window the shadow does not follow, the sheet's field has started its input, which brings the
+     * row's or a step's sheet, whose window the shadow does not follow, the sheet's field has started its input, which brings the
      * keyboard on a phone.
      */
     private fun keyboardUp(): Boolean {
         if (keyboardShown()) return true
-        if (!compose.ingredientSheetOpen()) return false
+        if (!compose.ingredientSheetOpen() && !compose.stepSheetOpen()) return false
         var taking = false
         compose.runOnUiThread { taking = windowRoots().last().let { it.hasFocus() && it.findFocus()?.onCheckIsTextEditor() == true } }
         return taking
@@ -135,6 +135,7 @@ class EditorKeyboardTest {
 
     /** Taps the field [tag], scrolled to first, and waits for it to take the focus. */
     private fun enter(tag: String) {
+        compose.reach(tag)
         compose.onNodeWithTag(tag).performScrollTo().performTouchInput { click() }
         awaitFocused(tag)
     }
@@ -157,6 +158,7 @@ class EditorKeyboardTest {
     private fun addStep(): Int {
         compose.closeIngredient()
         val position = stored(RecipeId(requireNotNull(session.editing.value))).steps.size
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.STEP_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(position)), PATIENCE_MS)
         return position
@@ -175,9 +177,11 @@ class EditorKeyboardTest {
         awaitFocused(EditorTags.stepText(0))
         assertTrue("step text", capitalisesSentences(keyboardAskedFor()))
         // A timer, so that its name field shows.
-        compose.onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performTouchInput { click() }
+        compose.inStep(0).onNodeWithTag(EditorTags.timerAttach(0)).performScrollTo().performTouchInput { click() }
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerMinutes(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.timerMinutes(0)).performScrollTo().performTextReplacement("5")
+        compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0)).performScrollTo().performTextReplacement("5")
+        compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerName(0)), PATIENCE_MS)
         enter(EditorTags.timerName(0))
         assertTrue("timer name", capitalisesSentences(keyboardAskedFor()))
@@ -297,9 +301,12 @@ class EditorKeyboardTest {
         compose.waitUntil(PATIENCE_MS) { keyboardUp() }
 
         hideKeyboard()
+        // Written, so that it stays as the next is added.
+        compose.onNodeWithTag(EditorTags.stepText(0)).performTextInput("Mix.")
         addStep()
         awaitFocused(EditorTags.stepText(1))
-        assertFalse(isFocused(EditorTags.stepText(0)))
+        // The first step's sheet closed as the second was added.
+        assertFalse(exists(EditorTags.stepText(0)))
         compose.waitUntil(PATIENCE_MS) { keyboardUp() }
     }
 
@@ -313,14 +320,17 @@ class EditorKeyboardTest {
             listOf(EditorTags.STEP_ADD, EditorTags.step(0), EditorTags.stepText(0), EditorTags.stepText(1), EditorTags.stepRemove(1)),
         )
         for ((add, first, firstField, added, remove) in parts) {
-            // An ingredient row is kept once named: closed holding nothing, it would go again.
+            val steps = add == EditorTags.STEP_ADD
             val ingredient = add == EditorTags.INGREDIENT_ADD
             compose.onNodeWithTag(add).performScrollTo().performClick()
             awaitFocused(firstField)
+            // A row or a step added and closed holding nothing goes again: it is written first.
+            if (steps) compose.onNodeWithTag(firstField).performTextInput("Mix.")
             if (ingredient) compose.onNodeWithTag(firstField).performTextInput("Flour")
             hideKeyboard()
-            // The ingredient's sheet closed, so the list is in sight.
+            // The sheet closed, so the list is in sight.
             compose.closeIngredient()
+            compose.closeStep()
             // How far the Add stands below the first row: the room the rows after it take.
             fun after(): Float = compose.onNodeWithTag(add).fetchSemanticsNode().positionInRoot.y -
                 compose.onNodeWithTag(first).fetchSemanticsNode().let { it.positionInRoot.y + it.size.height }
@@ -329,11 +339,14 @@ class EditorKeyboardTest {
             awaitFocused(added)
             assertFalse(exists(firstField) && isFocused(firstField))
             compose.waitUntil(PATIENCE_MS) { keyboardUp() }
+            if (steps) compose.onNodeWithTag(added).performTextInput("Serve.")
             if (ingredient) compose.onNodeWithTag(added).performTextInput("Salt")
             hideKeyboard()
             compose.closeIngredient()
+            compose.closeStep()
 
-            // A row's removal is in its sheet.
+            // A row's or a step's removal is in its sheet.
+            if (steps) compose.openStep(1)
             if (ingredient) compose.openIngredient(1)
             compose.onNodeWithTag(remove).performScrollTo()
             compose.assertChangesGradually("$add: a row removed", ::after) { compose.onNodeWithTag(remove).performClick() }
