@@ -136,8 +136,9 @@ internal fun Steps(
     // The key of the step whose sheet is open, and of the step just added, which goes again if closed empty.
     var open by rememberSaveable { mutableStateOf<Long?>(null) }
     var fresh by rememberSaveable { mutableStateOf<Long?>(null) }
-    // The keys of steps just added whose sheet closed while their photograph or clip was being prepared: each is kept
-    // for it, and goes once that work ends with nothing attached, where the step still holds nothing.
+    // The keys of steps just added whose sheet closed while their photograph or clip was being prepared — or a picture
+    // was in its crop: each is kept for it, and goes once that work ends with nothing attached (the crop cancelled
+    // among it), where the step still holds nothing.
     var kept by rememberSaveable { mutableStateOf(LongArray(0)) }
     val asked = focus.asked
     LaunchedEffect(asked, editable) {
@@ -195,11 +196,13 @@ internal fun Steps(
                 if (editable) {
                     val held = rememberStepHeld(position, step, editor, photos)
                     val working = held.photo.attaching.working.value
+                    val preparing = held.photo.preparing
                     if (key in kept) {
-                        // Kept for its photograph or clip: once that work ends, the step goes where it took nothing and
-                        // holds nothing else, as it was never written.
-                        LaunchedEffect(working) {
-                            if (!working) {
+                        // Kept for its photograph or clip: once that work ends — its crop cancelled, or what it prepared
+                        // refused — the step goes where it took nothing and holds nothing else, as it was never written.
+                        // The crop is composed with the step's row, so the step stays while it is open.
+                        LaunchedEffect(preparing) {
+                            if (!preparing) {
                                 kept = kept.filter { it != key }.toLongArray()
                                 editor.stepPosition(key)?.let(editor::dropStep)
                             }
@@ -224,12 +227,12 @@ internal fun Steps(
                                     val inserted = if (above) at else at + 1
                                     if (editor.insertStep(inserted)) {
                                         val added = editor.stepKey(inserted)
-                                        closed(key, held.photo.attaching.working.value)
+                                        closed(key, held.photo.preparing)
                                         editor.stepPosition(added)?.let(::opened)
                                     }
                                 }
                             },
-                            close = { closed(key, held.photo.attaching.working.value) },
+                            close = { closed(key, held.photo.preparing) },
                         )
                         StepSheet(position, steps.size, step, media, recipe.ingredients, dictionary, language, editor, stating == position, photos, held, focus, host)
                     }

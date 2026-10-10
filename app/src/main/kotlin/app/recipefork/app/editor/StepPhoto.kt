@@ -104,7 +104,14 @@ internal fun StepPhotoAttaching(
  * The media work of one editable step: attaching what the camera or the gallery gives — a photograph or a clip — and
  * their launchers.
  */
-internal class StepPhotoControl(val attaching: PhotoAttaching, val sources: PhotoSources, val clipSources: ClipSources)
+internal class StepPhotoControl(val attaching: PhotoAttaching, val sources: PhotoSources, val clipSources: ClipSources) {
+    /**
+     * Whether a photograph or a clip is on its way to the step: being prepared, or a picture in its crop — open, or about
+     * to open on a picture picked and told still. A crop done hands its cut to the work in the same moment, so this
+     * holds without a break until the item is attached, refused or the crop cancelled.
+     */
+    val preparing: Boolean get() = attaching.working.value || sources.cropping
+}
 
 @Composable
 internal fun rememberStepPhotoControl(position: Int, editor: RecipeEditor, photos: StepPhotos): StepPhotoControl {

@@ -363,6 +363,12 @@ class StepClipEditorTest {
         assertTrue(converter.given.isEmpty())
         assertTrue(stored(id).media.isEmpty())
         assertEquals(emptyList<String>(), held())
+        // Said at the bottom too, once the sheet goes; opened again, the sheet does not repeat it.
+        awaitNotice(2, tooLong)
+        compose.openStep(2)
+        assertFalse(exists(StepSheetTags.mediaFailure(2)))
+        choose(2, "long.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(2)) }
 
         // Another clip offered in the same sheet clears it; attached, nothing is said wrong there.
         choose(2, "large.mp4")
