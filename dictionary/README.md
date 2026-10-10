@@ -55,7 +55,7 @@ writes is then no longer what these sources build, and the test says so.
 | `pantry.tsv`              | flour, grains, pasta, bread, legumes, sugar and sweeteners, baking, oils and fats                  | 5000–6999   |
 | `seasoning-and-other.tsv` | spices, dried herbs, salt, sauces and condiments, vinegars, canned and preserved goods, stocks, drinks and alcohol used in cooking, other | 7000–8999 |
 | `tags.tsv`                | tags: cuisines, meal and course, diet, method and appliance, occasion and season, characteristics  | 100–999, and the legacy 10–11 |
-| `equipment.tsv`           | equipment: stovetop cookware, oven and baking, appliances, knives and cutting, tools and utensils, measuring, storage | 10000–10999 |
+| `equipment.tsv`           | equipment: stovetop cookware, oven and baking, appliances, knives and cutting, tools and utensils, measuring tools, storage, consumables | 10000–10999 |
 
 Every file declares its ranges itself with `@range FIRST-LAST` lines (one per range); the generator refuses an id
 outside the file's declared ranges. A file's name decides its family: a family may be split into several files whose
@@ -106,8 +106,9 @@ The tags file — `id, labelRu, labelEn`:
 
 The equipment files — `id, labelRu, labelEn, parentId, removed, synonymsRu, synonymsEn`; the columns mean what they
 mean for an ingredient, and an ingredient's `divisible` and `factors` have no place here. A top-level entry is a group
-(«Посуда для плиты» / "Stovetop cookware"), its leaves are the items a kitchen has; every item stands in a group. The
-equipment is maintained here alone: the server need not serve it, and a snapshot without it reads as one with none.
+(«Посуда для плиты» / "Stovetop cookware"), its leaves are the items a kitchen has; every item stands in a group. What is used
+up in cooking — parchment, foil, cling film, bags — stands in «Расходники» / "Consumables" (10700), which a kitchen
+never counts (the application's My kitchen). The equipment is maintained here alone: the server need not serve it, and a snapshot without it reads as one with none.
 
 ```
 @range 10000-10999

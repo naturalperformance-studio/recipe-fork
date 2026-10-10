@@ -1,5 +1,5 @@
 {
-  "version": "45ef26852de51fa5a4b39f8a1d8a65122816d201898c2ce9158ffbc7797768c9",
+  "version": "f53db1710536de42168b8f5807058f87dce4788eee84b389049f03e975c0c124",
   "ingredients": [
     {
       "id": 1,
@@ -28785,7 +28785,6 @@
       "labelEn": "Baking dish",
       "parentId": 10100,
       "synonymsRu": [
-        "форма",
         "форма для запекания"
       ],
       "synonymsEn": [
@@ -28955,7 +28954,7 @@
       "id": 10119,
       "labelRu": "Пергамент",
       "labelEn": "Parchment paper",
-      "parentId": 10100,
+      "parentId": 10700,
       "synonymsRu": [
         "бумага для выпечки",
         "пекарская бумага"
@@ -28968,7 +28967,7 @@
       "id": 10120,
       "labelRu": "Фольга",
       "labelEn": "Aluminium foil",
-      "parentId": 10100,
+      "parentId": 10700,
       "synonymsEn": [
         "foil",
         "tin foil",
@@ -28979,7 +28978,7 @@
       "id": 10121,
       "labelRu": "Рукав для запекания",
       "labelEn": "Roasting bag",
-      "parentId": 10100,
+      "parentId": 10700,
       "synonymsRu": [
         "пакет для запекания"
       ],
@@ -29399,8 +29398,7 @@
       "labelEn": "Food dehydrator",
       "parentId": 10200,
       "synonymsRu": [
-        "дегидратор",
-        "сушилка"
+        "дегидратор"
       ],
       "synonymsEn": [
         "dehydrator"
@@ -30007,7 +30005,7 @@
       "id": 10426,
       "labelRu": "Марля",
       "labelEn": "Cheesecloth",
-      "parentId": 10400,
+      "parentId": 10700,
       "synonymsEn": [
         "muslin"
       ]
@@ -30016,7 +30014,7 @@
       "id": 10427,
       "labelRu": "Кулинарная нить",
       "labelEn": "Kitchen twine",
-      "parentId": 10400,
+      "parentId": 10700,
       "synonymsRu": [
         "кулинарный шпагат",
         "шпагат"
@@ -30058,7 +30056,7 @@
       "id": 10431,
       "labelRu": "Бумажное полотенце",
       "labelEn": "Paper towel",
-      "parentId": 10400,
+      "parentId": 10700,
       "synonymsEn": [
         "kitchen paper"
       ]
@@ -30162,7 +30160,7 @@
     {
       "id": 10500,
       "labelRu": "Мерная посуда",
-      "labelEn": "Measuring"
+      "labelEn": "Measuring tools"
     },
     {
       "id": 10501,
@@ -30272,7 +30270,7 @@
       "id": 10603,
       "labelRu": "Пищевая плёнка",
       "labelEn": "Cling film",
-      "parentId": 10600,
+      "parentId": 10700,
       "synonymsEn": [
         "plastic wrap",
         "food wrap"
@@ -30282,7 +30280,7 @@
       "id": 10604,
       "labelRu": "Пакет с застёжкой",
       "labelEn": "Zip-lock bag",
-      "parentId": 10600,
+      "parentId": 10700,
       "synonymsRu": [
         "зип-пакет"
       ],
@@ -30295,7 +30293,7 @@
       "id": 10605,
       "labelRu": "Вакуумный пакет",
       "labelEn": "Vacuum bag",
-      "parentId": 10600
+      "parentId": 10700
     },
     {
       "id": 10606,
@@ -30347,6 +30345,11 @@
       "synonymsEn": [
         "cool bag"
       ]
+    },
+    {
+      "id": 10700,
+      "labelRu": "Расходники",
+      "labelEn": "Consumables"
     }
   ]
 }

@@ -33,7 +33,7 @@
 # Oven and baking
 10100	Духовка и выпечка	Oven and baking
 10101	Противень	Baking tray	10100			baking sheet;sheet pan
-10102	Форма для выпечки	Baking dish	10100		форма;форма для запекания	ovenproof dish;casserole dish
+10102	Форма для выпечки	Baking dish	10100		форма для запекания	ovenproof dish;casserole dish
 10103	Разъёмная форма	Springform pan	10100			springform
 10104	Форма для кекса	Loaf pan	10100			loaf tin
 10105	Форма для маффинов	Muffin tin	10100		форма для капкейков	muffin pan;cupcake tin
@@ -50,9 +50,6 @@
 10116	Камень для пиццы	Pizza stone	10100
 10117	Форма для пиццы	Pizza pan	10100			pizza tray
 10118	Силиконовый коврик	Silicone baking mat	10100		коврик для выпечки	baking mat
-10119	Пергамент	Parchment paper	10100		бумага для выпечки;пекарская бумага	baking paper
-10120	Фольга	Aluminium foil	10100			foil;tin foil;aluminum foil
-10121	Рукав для запекания	Roasting bag	10100		пакет для запекания	oven bag
 10122	Решётка для остывания	Cooling rack	10100			wire rack
 10123	Скалка	Rolling pin	10100
 10124	Кондитерский мешок	Piping bag	10100			pastry bag
@@ -96,7 +93,7 @@
 10225	Сэндвичница	Sandwich maker	10200			sandwich toaster
 10226	Йогуртница	Yogurt maker	10200
 10227	Мороженица	Ice cream maker	10200
-10228	Сушилка для овощей и фруктов	Food dehydrator	10200		дегидратор;сушилка	dehydrator
+10228	Сушилка для овощей и фруктов	Food dehydrator	10200		дегидратор	dehydrator
 10229	Су-вид	Sous vide cooker	10200			sous vide;immersion circulator
 10230	Вакуумный упаковщик	Vacuum sealer	10200		вакууматор
 10231	Холодильник	Refrigerator	10200			fridge
@@ -165,12 +162,9 @@
 10423	Шампур	Skewer	10400		шпажка
 10424	Сифон для сливок	Cream whipper	10400		сифон	whipped cream dispenser
 10425	Кулинарная горелка	Kitchen torch	10400		горелка	blowtorch;cook's torch
-10426	Марля	Cheesecloth	10400			muslin
-10427	Кулинарная нить	Kitchen twine	10400		кулинарный шпагат;шпагат	butcher's twine
 10428	Прихватка	Oven mitt	10400		кухонная рукавица	oven glove;pot holder
 10429	Подставка под горячее	Trivet	10400
 10430	Кухонное полотенце	Kitchen towel	10400			tea towel;dish towel
-10431	Бумажное полотенце	Paper towel	10400			kitchen paper
 10432	Кулинарный пинцет	Kitchen tweezers	10400		пинцет
 10433	Сушилка для салата	Salad spinner	10400		салатная центрифуга
 10434	Ложка для спагетти	Pasta server	10400			spaghetti spoon
@@ -183,7 +177,7 @@
 10442	Решётка-гриль	Grill rack	10400		решётка для гриля	grill grate
 
 # Measuring
-10500	Мерная посуда	Measuring
+10500	Мерная посуда	Measuring tools
 10501	Кухонные весы	Kitchen scale	10500		весы	scale;scales
 10502	Мерный стакан	Measuring jug	10500		мерная кружка	liquid measuring cup
 10503	Мерная ложка	Measuring spoon	10500
@@ -196,12 +190,21 @@
 10600	Хранение	Storage
 10601	Контейнер	Food container	10600		пищевой контейнер	storage container
 10602	Банка	Jar	10600		стеклянная банка	glass jar
-10603	Пищевая плёнка	Cling film	10600			plastic wrap;food wrap
-10604	Пакет с застёжкой	Zip-lock bag	10600		зип-пакет	ziplock bag;freezer bag
-10605	Вакуумный пакет	Vacuum bag	10600
 10606	Форма для льда	Ice cube tray	10600		формочки для льда
 10607	Бутылка	Bottle	10600
 10608	Термос	Vacuum flask	10600			thermos
 10609	Хлебница	Bread box	10600			bread bin
 10610	Кувшин	Jug	10600			pitcher
 10611	Термосумка	Cooler bag	10600			cool bag
+
+# Consumables: used up in cooking, they never count for a kitchen (app/kitchen).
+10700	Расходники	Consumables
+10119	Пергамент	Parchment paper	10700		бумага для выпечки;пекарская бумага	baking paper
+10120	Фольга	Aluminium foil	10700			foil;tin foil;aluminum foil
+10121	Рукав для запекания	Roasting bag	10700		пакет для запекания	oven bag
+10426	Марля	Cheesecloth	10700			muslin
+10427	Кулинарная нить	Kitchen twine	10700		кулинарный шпагат;шпагат	butcher's twine
+10431	Бумажное полотенце	Paper towel	10700			kitchen paper
+10603	Пищевая плёнка	Cling film	10700			plastic wrap;food wrap
+10604	Пакет с застёжкой	Zip-lock bag	10700		зип-пакет	ziplock bag;freezer bag
+10605	Вакуумный пакет	Vacuum bag	10700

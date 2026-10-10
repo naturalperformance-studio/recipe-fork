@@ -87,6 +87,8 @@ class ContrastTest {
         graphic("a removal's icon in the editor — an ingredient row, a step, a timer", c.error, c.surface),
         graphic("the progress of a file being imported or exported, on its track", c.primary, c.surfaceContainerHighest),
         graphic("a step's number circle in the card's current step, on its container", c.primary, c.primaryContainer),
+        graphic("My kitchen — a ticked or partly ticked checkbox's box, an item's or a group's", c.primary, c.surface),
+        graphic("My kitchen — the tick or the dash in a ticked or partly ticked checkbox's box", c.onPrimary, c.primary),
     )
 
     private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }

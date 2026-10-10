@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- My kitchen: the equipment the reader's kitchen has, ticked from the equipment dictionary; opened from the settings. -->
+    <string name="kitchen_title">My kitchen</string>
+    <string name="kitchen_back">Back</string>
+    <string name="kitchen_back_action">Back to the settings</string>
+    <string name="kitchen_search">Search equipment</string>
+    <string name="kitchen_search_clear">Clear the search</string>
+    <string name="kitchen_nothing_found">Nothing found for “%1$s”</string>
+    <string name="kitchen_show_all">Show all equipment</string>
+    <!-- A group's row: how many of its items are ticked. -->
+    <string name="kitchen_group_ticked">%1$d of %2$d</string>
+    <!-- The settings' row: how many items are ticked. -->
+    <string name="kitchen_none_ticked">Nothing ticked yet</string>
+    <plurals name="kitchen_ticked">
+        <item quantity="one">%d item ticked</item>
+        <item quantity="other">%d items ticked</item>
+    </plurals>
+</resources>
