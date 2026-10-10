@@ -345,14 +345,16 @@ class CardTabsTest {
         show(recipe)
         assertEquals(CardMode.VIEW, shownTab())
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.COVER) }
-        listOf(CardTags.FORK, CardTags.EDIT, CardTags.COVER, CardTags.TITLE, CardTags.SUMMARY).forEach {
+        listOf(CardTags.EDIT, CardTags.COVER, CardTags.TITLE, CardTags.SUMMARY).forEach {
             assertTrue("View shows $it", exists(it))
         }
+        // Fork floats on View — standing aside while the serving count is under it, back once that is scrolled clear.
+        compose.scrollUntilForkShows()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.PROVENANCE) }
         compose.onNodeWithTag(CardTags.DESCRIPTION).performScrollTo()
         compose.openTheCardMenu()
         assertTrue("View's ⋮ holds Delete", exists(CardTags.DELETE))
-        assertFalse("View's ⋮ holds no Clear marks", exists(CardTags.CLEAR_MARKS))
+        assertTrue("View's ⋮ holds Clear marks while the recipe has marks", exists(CardTags.CLEAR_MARKS))
         compose.closeTheCardMenu()
         // The lists in View: a line answers no tap, a timer reads as its duration with nothing to start it.
         val line = compose.onNodeWithTag(CardTags.ingredient(1)).fetchSemanticsNode()

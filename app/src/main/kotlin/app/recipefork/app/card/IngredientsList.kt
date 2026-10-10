@@ -222,6 +222,7 @@ private fun AllLines(
                     line, position, column, cardPlace(CardPlaces.ingredient(position)),
                     done = marks?.done(MarkedPart.INGREDIENT, position) == true,
                     onToggle = marks?.takeIf { cooking }?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                    stated = marks?.any == true,
                     mode = mode,
                 ) { onOpen(if (open == position) null else position) }
                 val offer = line.fixing?.takeIf { cooking }
@@ -420,7 +421,7 @@ private fun quantityColumn(lines: List<IngredientLine>): QuantityColumn {
  * as the line's second action, beside the marking ([onOpen]). A line that answers a tap is the card's [CardTarget] tall.
  *
  * In [CardMode.VIEW] the line answers no tap and offers no fixing: it is its text with [VIEW_LINE_PADDING] above and
- * below, a mark it carries shown and read as done.
+ * below, a mark it carries shown, read-only, its state read while the recipe has any mark ([stated]).
  */
 @Composable
 private fun IngredientRow(
@@ -430,6 +431,7 @@ private fun IngredientRow(
     place: Modifier,
     done: Boolean,
     onToggle: (() -> Unit)?,
+    stated: Boolean,
     mode: CardMode,
     onOpen: () -> Unit,
 ) {
@@ -437,7 +439,7 @@ private fun IngredientRow(
     val fixable = cooking && line.fixing != null
     val fixLabel = stringResource(R.string.card_fix_action)
     val opening by rememberUpdatedState(onOpen)
-    val marking = if (onToggle != null && cooking) Modifier.markedDone(done, onToggle) else Modifier.shownDone(done)
+    val marking = if (onToggle != null && cooking) Modifier.markedDone(done, onToggle) else Modifier.shownDone(done, stated)
     val fixing = if (fixable) {
         Modifier.semantics { customActions = listOf(CustomAccessibilityAction(fixLabel) { opening(); true }) }
     } else {

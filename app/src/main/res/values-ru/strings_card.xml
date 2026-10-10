@@ -52,7 +52,10 @@
     <string name="card_step_reference_rounded">%1$s (%2$s)</string>
     <string name="card_proportions_warning">Часть количеств на минимуме — пропорции нарушены.</string>
     <string name="card_unnamed_ingredient">Ингредиент без названия</string>
+    <!-- The recipe is no longer in the active book: the empty state's headline, its sentence and its way back. -->
+    <string name="card_missing_headline">Рецепт не найден</string>
     <string name="card_missing">Этого рецепта больше нет в этой книге рецептов.</string>
+    <string name="card_missing_back">Назад к книге</string>
     <!-- FLOW-020 (3): рецепт не прочитался с устройства; не говорим, что его нет. -->
     <string name="card_unreadable">Не удалось загрузить этот рецепт.</string>
     <string name="card_retry">Попробовать ещё раз</string>
@@ -81,7 +84,11 @@
     <string name="card_mark_done_action">Отметить как готовое</string>
     <string name="card_mark_not_done_action">Снять отметку «готово»</string>
     <string name="card_marked_done">Готово</string>
+    <string name="card_marked_not_done">Не готово</string>
     <string name="card_clear_marks">Снять отметки</string>
+    <!-- Said once the marks are cleared, from either tab's menu; Undo puts back exactly the marks cleared. -->
+    <string name="card_marks_cleared">Отметки сняты</string>
+    <string name="card_undo">Вернуть</string>
     <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
     <string name="card_view_timer">%1$s · %2$s</string>
     <!-- The card's two tabs, under its top bar: the recipe for reading and deciding, and for cooking with busy hands. -->

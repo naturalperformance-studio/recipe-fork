@@ -27,6 +27,7 @@ import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks
@@ -80,6 +81,8 @@ class CardScreenTest {
         val steps: String,
         val unnamed: String,
         val missing: String,
+        val missingHeadline: String,
+        val missingBack: String,
         /** The sample recipe's lines, in order: name, then quantity. */
         val lines: List<List<String>>,
     )
@@ -94,6 +97,8 @@ class CardScreenTest {
         steps = "Steps",
         unnamed = "Unnamed ingredient",
         missing = "This recipe is no longer in this recipe book.",
+        missingHeadline = "Recipe not found",
+        missingBack = "Back to the book",
         lines = listOf(
             listOf("chicken", "1.5 kg"),
             listOf("Smoked paprika", "½ tsp"),
@@ -113,6 +118,8 @@ class CardScreenTest {
         steps = "Шаги",
         unnamed = "Ингредиент без названия",
         missing = "Этого рецепта больше нет в этой книге рецептов.",
+        missingHeadline = "Рецепт не найден",
+        missingBack = "Назад к книге",
         lines = listOf(
             listOf("курица", "1,5 кг"),
             listOf("Smoked paprika", "½ ч. л."),
@@ -323,7 +330,8 @@ class CardScreenTest {
         assertEquals(1, backs)
     }
 
-    // A recipe the book no longer holds: a short message and the back action, never a crash.
+    // A recipe the book no longer holds: the app's empty state — a picture, a headline, the message — and a way back
+    // to the book beside the bar's back, never a crash.
     @Test
     fun aRecipeTheBookDoesNotHoldShowsAMessageAndTheBackAction() = missing(english)
 
@@ -333,11 +341,17 @@ class CardScreenTest {
 
     private fun missing(w: Words) {
         show(RecipeId("not-in-this-book"))
-        assertEquals(listOf(w.missing), compose.textsOf(CardTags.MISSING))
-        assertEquals(listOf(CardTags.BACK), interactiveTags())
+        assertEquals(listOf(w.missingHeadline), compose.textsOf(LibraryTags.emptyHeadline(CardTags.MISSING)))
+        assertEquals(listOf(w.missing), compose.textsOf(LibraryTags.emptySentence(CardTags.MISSING)))
+        compose.onNodeWithTag(LibraryTags.emptyPicture(CardTags.MISSING), useUnmergedTree = true).assertExists()
+        assertEquals(listOf(w.missingBack), compose.textsOf(CardTags.MISSING_BACK))
+        assertEquals(listOf(CardTags.BACK, CardTags.MISSING_BACK), interactiveTags())
+        compose.assertCardTarget(CardTags.MISSING_BACK)
         compose.onNodeWithTag(CardTags.CONTENT).assertDoesNotExist()
         compose.onNodeWithTag(CardTags.BACK).performClick()
         assertEquals(1, backs)
+        compose.onNodeWithTag(CardTags.MISSING_BACK).performClick()
+        assertEquals(2, backs)
         LocalizationChecks.assertScreenTextFromResources(compose, context)
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context)
     }

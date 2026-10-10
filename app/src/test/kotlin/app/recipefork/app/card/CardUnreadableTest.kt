@@ -17,6 +17,7 @@ import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.AppTheme
@@ -148,7 +149,7 @@ class CardUnreadableTest {
     fun aRecipeTheBookDoesNotHoldKeepsItsMessageAndOffersNoRetry() {
         show(RecipeId("not-in-this-book"))
 
-        assertEquals(listOf("This recipe is no longer in this recipe book."), compose.textsOf(CardTags.MISSING))
+        assertEquals(listOf("This recipe is no longer in this recipe book."), compose.textsOf(LibraryTags.emptySentence(CardTags.MISSING)))
         compose.onNodeWithTag(CardTags.UNREADABLE).assertDoesNotExist()
         compose.onNodeWithTag(CardTags.RETRY).assertDoesNotExist()
     }
