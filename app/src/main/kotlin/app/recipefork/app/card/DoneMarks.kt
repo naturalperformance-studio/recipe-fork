@@ -22,6 +22,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Step
 import java.util.concurrent.ConcurrentHashMap
 
@@ -49,8 +50,11 @@ data class DoneMark(val part: MarkedPart, val position: Int, val row: Int) {
         /** The mark of [step] as it stands. */
         fun of(step: Step) = DoneMark(MarkedPart.STEP, step.position, rowOf(step))
 
-        /** The mark of the item of equipment at [index] of the recipe's equipment, reading [item], as it stands. */
-        fun ofEquipment(index: Int, item: String) = DoneMark(MarkedPart.EQUIPMENT, index, rowOf(item))
+        /**
+         * The mark of the item of equipment at [index] of the recipe's equipment, [item], as it stands: free text is
+         * taken of its text, as before items named entries, so that its marks stay.
+         */
+        fun ofEquipment(index: Int, item: EquipmentItem) = DoneMark(MarkedPart.EQUIPMENT, index, rowOf(item.freeTextName ?: item))
 
         /**
          * A stable mark of what a row holds, the same from one process to the next; like [HeldScale]'s, it is taken of

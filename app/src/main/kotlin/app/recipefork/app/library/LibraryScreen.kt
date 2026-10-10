@@ -107,6 +107,7 @@ import app.recipefork.app.editor.numberLanguage
 import app.recipefork.app.editor.rememberEditorEnvironment
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.RecipeExport
+import app.recipefork.app.file.equipmentDictionaryOf
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
@@ -809,7 +810,7 @@ val DELETABLE = setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECT
 @Composable
 fun rememberRecipeImport(recipes: RecipeRepository): RecipeImport {
     val context = LocalContext.current.applicationContext
-    return remember(recipes, context) { RecipeImport(recipes, context.filesDir) }
+    return remember(recipes, context) { RecipeImport(recipes, context.filesDir, equipment = equipmentDictionaryOf(context)) }
 }
 
 /**

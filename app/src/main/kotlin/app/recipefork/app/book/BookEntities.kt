@@ -77,7 +77,11 @@ data class IngredientGroupEntity(
     @ColumnInfo(name = "first_ingredient") val firstIngredient: Int,
 )
 
-/** The [position]th item of the equipment a recipe is cooked with, its [name] as the author wrote it. Added in version 6. */
+/**
+ * The [position]th item of the equipment a recipe is cooked with, named as an ingredient row is: by an equipment
+ * dictionary entry and its [qualifier], or by the author's [freeTextName]. Added in version 6 as the item's text alone;
+ * since version 7 named so.
+ */
 @Entity(
     tableName = "recipe_equipment",
     primaryKeys = ["recipe_id", "position"],
@@ -86,7 +90,9 @@ data class IngredientGroupEntity(
 data class EquipmentEntity(
     @ColumnInfo(name = "recipe_id") val recipeId: String,
     val position: Int,
-    val name: String,
+    @ColumnInfo(name = "dictionary_entry") val dictionaryEntry: Long?,
+    val qualifier: String?,
+    @ColumnInfo(name = "free_text_name") val freeTextName: String?,
 )
 
 @Entity(

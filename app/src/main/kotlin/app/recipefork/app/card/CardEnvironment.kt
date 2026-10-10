@@ -9,6 +9,7 @@ import app.recipefork.app.data.HeldLastCardTab
 import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.data.LastCardTab
 import app.recipefork.app.data.UsualServings
+import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.IngredientEntryEntity
 
 /** The ingredient dictionary as the card reads it: from the device alone, with or without a connection. */
@@ -19,12 +20,13 @@ fun interface IngredientEntries {
 /**
  * What the card needs beyond the recipes of the active book: the serving count the reader usually cooks for, which a
  * recipe opens at (FLOW-017), the reader's done marks (FLOW-068), the tab last chosen, which a card opens on, and the
- * ingredient dictionary its rows are named from.
+ * ingredient dictionary its rows are named from, and the equipment dictionary its items of equipment are.
  */
 class CardEnvironment(
     val usualServings: UsualServings = HeldUsualServings(),
     val marks: DoneMarks = DoneMarks.inMemory(),
     val lastTab: LastCardTab = HeldLastCardTab(),
+    val equipment: EquipmentSource = EquipmentSource { emptyList() },
     val ingredients: IngredientEntries,
 )
 
@@ -40,4 +42,6 @@ fun rememberCardEnvironment(): CardEnvironment {
  * with every screen.
  */
 fun cardEnvironmentOf(container: AppContainer): CardEnvironment =
-    CardEnvironment(container.usualServings, container.doneMarks, container.lastCardTab) { container.dictionaries.ingredients() }
+    CardEnvironment(container.usualServings, container.doneMarks, container.lastCardTab, container.dictionaries) {
+        container.dictionaries.ingredients()
+    }

@@ -27,6 +27,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
@@ -88,7 +89,7 @@ class EquipmentScreenTest {
     private fun recipe(vararg equipment: String) = Recipe.create(now, null).copy(
         title = "Pancakes",
         servings = 4,
-        equipment = equipment.toList(),
+        equipment = equipment.map(EquipmentItem::free),
         ingredients = listOf(Ingredient(0, null, null, "flour", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(200))),
         steps = listOf(Step(0, "Fry.")),
     )
@@ -103,7 +104,8 @@ class EquipmentScreenTest {
 
     private fun stored(recipe: Recipe): Recipe = runBlocking { recipes.get(recipe.id) }!!
 
-    private fun awaitStored(recipe: Recipe, equipment: List<String>) = compose.waitUntil(PATIENCE_MS) { stored(recipe).equipment == equipment }
+    private fun awaitStored(recipe: Recipe, equipment: List<String>) =
+        compose.waitUntil(PATIENCE_MS) { stored(recipe).equipment == equipment.map(EquipmentItem::free) }
 
     private fun node(tag: String): SemanticsNode = compose.onNodeWithTag(tag).fetchSemanticsNode()
 
@@ -165,7 +167,7 @@ class EquipmentScreenTest {
         assertEquals("A recipe can list up to 15 items of equipment.", context.getString(R.string.editor_equipment_limit, RecipeBounds.MAX_EQUIPMENT))
         compose.onNode(hasTestTag(EditorTags.EQUIPMENT_STATEMENT) and hasText("A recipe can list up to 15 items of equipment.")).assertExists()
         assertFalse(exists(field(15)))
-        assertEquals(fifteen, stored(recipe).equipment)
+        assertEquals(fifteen.map(EquipmentItem::free), stored(recipe).equipment)
         // The author's next action ends it.
         compose.onNodeWithTag(field(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.EQUIPMENT_STATEMENT) }
@@ -184,7 +186,7 @@ class EquipmentScreenTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.equipmentMark(0)) }
         val said = context.getString(R.string.editor_mark_characters_over, "40", long.length.toString())
         compose.onNode(hasTestTag(EditorTags.equipmentMark(0)) and hasText(said)).assertExists()
-        assertEquals(listOf(long), stored(recipe).equipment)
+        assertEquals(listOf(EquipmentItem.free(long)), stored(recipe).equipment)
         compose.onNodeWithTag(field(0)).performScrollTo().performTextReplacement("Cast-iron pan 28 cm")
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.equipmentMark(0)) }
     }
@@ -293,6 +295,31 @@ class EquipmentScreenTest {
         assertFalse(exists(EditorTags.EQUIPMENT_ADD))
         assertFalse(exists(EditorTags.equipmentRemove(0)))
         assertFalse(exists(EditorTags.equipmentMenu(0)))
+    }
+
+    // An item an entry names shows as the entry's label in the interface language with its qualifier, editable or
+    // frozen; leaving it untouched keeps the entry, and typing into it makes it the text typed (T-203 offers entries).
+    @Test
+    fun anEntrysItemShowsItsLabelAndQualifier() {
+        val recipe = open(recipe("Whisk").copy(equipment = listOf(EquipmentItem.entry(10001, "26 cm"), EquipmentItem.free("Whisk"))))
+        compose.waitUntil(PATIENCE_MS) { text(field(0)) == "Frying pan 26 cm" }
+        compose.onNodeWithTag(field(0)).performScrollTo().performClick()
+        leaveField()
+        compose.waitForIdle()
+        assertEquals(listOf(EquipmentItem.entry(10001, "26 cm"), EquipmentItem.free("Whisk")), stored(recipe).equipment)
+        compose.onNodeWithTag(field(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(field(0)).performTextReplacement("Frying pan 28 cm")
+        leaveField()
+        awaitStored(recipe, listOf("Frying pan 28 cm", "Whisk"))
+    }
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun aFrozenRecipeShowsAnEntrysItemInRussian() {
+        open(recipe().copy(equipment = listOf(EquipmentItem.entry(10202), EquipmentItem.entry(10001, "26 см"))).inState(RecipeState.PUBLISHED))
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.FROZEN) }
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.equipment(1)) and hasText("Сковорода 26 см")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(hasTestTag(EditorTags.equipment(0)) and hasText("Духовка")).assertExists()
     }
 
     // A frozen recipe with no equipment shows no section.

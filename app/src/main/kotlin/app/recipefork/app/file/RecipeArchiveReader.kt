@@ -76,8 +76,16 @@ data class ArchiveLimits(
  * archive, and stops it by throwing — when the import is cancelled.
  */
 object RecipeArchiveReader {
-    /** The archive's document, decoded and checked; refuses the file with [RefusedFile] when it cannot be believed. */
-    fun document(open: () -> InputStream, limits: ArchiveLimits = ArchiveLimits(), alive: () -> Unit = {}): RecipeFileContent {
+    /**
+     * The archive's document, decoded and checked; refuses the file with [RefusedFile] when it cannot be believed. An item
+     * of equipment a format before 5 wrote as its text names the entry [entryOf] finds for it ([RecipeFile.decode]).
+     */
+    fun document(
+        open: () -> InputStream,
+        limits: ArchiveLimits = ArchiveLimits(),
+        alive: () -> Unit = {},
+        entryOf: (String) -> Long? = { null },
+    ): RecipeFileContent {
         var text: String? = null
         val names = mutableListOf<String>()
         // Walked to its end, which the entry cap bounds: a second document anywhere refuses the file, as does a media
@@ -93,7 +101,7 @@ object RecipeArchiveReader {
         }
         val document = text ?: throw RefusedFile(Refusal.NOT_A_RECIPE_FILE, if (names.isEmpty()) "not a ZIP" else "no document")
         val content = try {
-            RecipeFile.decode(document)
+            RecipeFile.decode(document, entryOf)
         } catch (e: LaterRecipeFile) {
             throw RefusedFile(Refusal.LATER_VERSION, e.message ?: "later", e)
         } catch (e: UnreadableRecipeFile) {

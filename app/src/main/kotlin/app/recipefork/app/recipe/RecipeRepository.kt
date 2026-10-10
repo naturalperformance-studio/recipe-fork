@@ -20,6 +20,7 @@ import app.recipefork.app.book.StepReferenceEntity
 import app.recipefork.app.book.StepTimerEntity
 import app.recipefork.app.book.TakenRows
 import app.recipefork.core.recipe.AccountId
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
@@ -312,7 +313,7 @@ internal fun Recipe.toRows(): RecipeRows {
         },
         tags = tags.map { RecipeTagEntity(id, it) },
         groups = ingredientGroups.mapIndexed { index, it -> IngredientGroupEntity(id, index, it.name, it.firstPosition) },
-        equipment = equipment.mapIndexed { index, it -> EquipmentEntity(id, index, it) },
+        equipment = equipment.mapIndexed { index, it -> EquipmentEntity(id, index, it.dictionaryEntry, it.qualifier, it.freeTextName) },
     )
 }
 
@@ -362,6 +363,6 @@ internal fun RecipeRows.toRecipe(): Recipe {
         createdAt = recipe.createdAt,
         contentChangedAt = recipe.contentChangedAt,
         ingredientGroups = groups.map { IngredientGroup(it.name, it.firstIngredient) },
-        equipment = equipment.sortedBy { it.position }.map { it.name },
+        equipment = equipment.sortedBy { it.position }.map { EquipmentItem(it.dictionaryEntry, it.qualifier, it.freeTextName) },
     )
 }

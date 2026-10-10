@@ -14,8 +14,10 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.FileParent
+import app.recipefork.core.file.EntryLabels
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
@@ -82,7 +84,7 @@ class RecipeExportTest {
             // A part of an ingredient travels in the file.
             Step(1, "Add the eggs", listOf(IngredientReference(1, 4, IngredientShare(Rational.of(1, 2), QuantityUnit.PIECE))), Timer(3.minutes)),
         ),
-        equipment = listOf("Frying pan 26 cm", "Spatula"),
+        equipment = listOf("Frying pan 26 cm", "Spatula").map(EquipmentItem::free),
     )
 
     private fun save(recipe: Recipe) = runBlocking { recipes.save(recipe) }
@@ -115,7 +117,32 @@ class RecipeExportTest {
         assertEquals(listOf("recipe.json", "media/"), entries.keys.toList())
         assertEquals(0, entries.getValue("media/").size)
         val json = entries.getValue("recipe.json").toString(Charsets.UTF_8)
-        assertTrue(json, json.contains("\"format_version\": 4"))
+        assertTrue(json, json.contains("\"format_version\": 5"))
+    }
+
+    // Scenario 5 of v0.28: an item an entry names is exported with the entry's labels, as the device's dictionary
+    // holds them, and its qualifier; free text as it is. Imported into another book, each item is named as it was.
+    @Test
+    fun anEntrysItemTravelsWithItsLabelsAndImportsAsTheSameEntry() = runBlocking {
+        val items = listOf(EquipmentItem.entry(10001, "26 cm"), EquipmentItem.entry(10202), EquipmentItem.free("Grandma's spatula"))
+        val recipe = full("Shakshuka").copy(equipment = items).also(::save)
+        val uri = export(recipe)
+        val read = content(uri)
+        assertEquals(items, read.equipment)
+        assertEquals(mapOf(10001L to EntryLabels("Сковорода", "Frying pan"), 10202L to EntryLabels("Духовка", "Oven")), read.equipmentLabels)
+        val json = entries(uri).getValue("recipe.json").toString(Charsets.UTF_8)
+        assertTrue(json, json.contains("\"labels\": {") && json.contains("\"en\": \"Frying pan\"") && json.contains("\"qualifier\": \"26 cm\""))
+
+        val friend = TestBook(context)
+        try {
+            val theirs = RecipeRepository(ActiveBook(BookName.OfAccount("friend"), friend.database))
+            val outcome = RecipeImport(theirs, File(context.cacheDir, "export-test-files"), clock = { now }, equipment = equipmentDictionaryOf(context))
+                .import { context.contentResolver.openInputStream(uri)!! }
+            assertEquals(ImportOutcome.Added(recipe.id, "Shakshuka"), outcome)
+            assertEquals(items, theirs.get(recipe.id)!!.equipment)
+        } finally {
+            friend.close()
+        }
     }
 
     // FLOW-063 (3, 5): the document holds the recipe whole; written with no account, it names no author; with no
@@ -133,7 +160,7 @@ class RecipeExportTest {
         assertEquals(4, read.servings)
         assertEquals(recipe.ingredients, read.ingredients)
         assertEquals(recipe.steps, read.steps)
-        assertEquals(listOf("Frying pan 26 cm", "Spatula"), read.equipment)
+        assertEquals(listOf("Frying pan 26 cm", "Spatula").map(EquipmentItem::free), read.equipment)
         assertNull(read.author)
         assertNull(read.parent)
         assertTrue(read.media.isEmpty())

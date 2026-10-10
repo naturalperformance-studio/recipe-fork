@@ -6,12 +6,15 @@ import android.content.Intent
 import android.net.Uri
 import app.recipefork.app.MainActivity
 import app.recipefork.app.book.BookName
+import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.media.ClipDuration
 import app.recipefork.app.media.RetrieverClipDuration
+import app.recipefork.app.recipe.EquipmentNames
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.recipe.TakenRecipe
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileContent
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.MediaVisibility
@@ -48,6 +51,11 @@ sealed interface ImportOutcome {
  * A recipe the book already holds adds nothing; a file that cannot be believed is refused and nothing of it is kept.
  * The book is the one active when the import began, whichever becomes active meanwhile; a cancelled import stops
  * reading at once and keeps nothing.
+ *
+ * The file's equipment is named against the device's [equipment] dictionary: an item a file of format 4 wrote as its
+ * text finds its entry as a book's item did on moving to version 7 ([EquipmentNames]), and an entry the dictionary does
+ * not hold is kept as free text — its label, in the recipe's language, with its qualifier — where the file gives its
+ * labels, so that it reads as it was written.
  */
 class RecipeImport(
     private val recipes: RecipeRepository,
@@ -55,6 +63,7 @@ class RecipeImport(
     private val clock: () -> Instant = Instant::now,
     private val limits: ArchiveLimits = ArchiveLimits(),
     private val clipDuration: ClipDuration = RetrieverClipDuration,
+    private val equipment: EquipmentSource = EquipmentSource { emptyList() },
 ) {
     /**
      * Imports the file [open] opens. When its [size] in bytes is known, [progress] is told the share of the work done
@@ -85,11 +94,20 @@ class RecipeImport(
     private suspend fun importInto(recipes: RecipeRepository, open: () -> InputStream): ImportOutcome = coroutineScope {
         val work = coroutineContext
         val alive = { work.ensureActive() }
+        // A dictionary that cannot be read names nothing: the file is read as its own words have it.
+        val dictionary = try {
+            equipment.equipment()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val names = EquipmentNames(dictionary)
         val content = try {
-            RecipeArchiveReader.document(open, limits, alive)
+            RecipeArchiveReader.document(open, limits, alive, names::entryOf)
         } catch (e: RefusedFile) {
             return@coroutineScope ImportOutcome.Refused(e.refusal)
-        }
+        }.let { withKnownEntries(it, dictionary.mapTo(HashSet()) { entry -> entry.id }) }
         val held = recipes.get(content.id)
         if (held != null || recipes.isMarked(content.id)) {
             // Named as the book holds it, which is what the person will find there.
@@ -149,6 +167,20 @@ class RecipeImport(
     suspend fun take(id: RecipeId): TakenRecipe? = recipes.inOpenBook().take(id, filesDirectory)
 
     companion object {
+        /**
+         * [content] with each item of equipment naming an entry the dictionary does not hold — of the ids [known] — as
+         * free text, its label in the recipe's language and its qualifier, where the file gives its labels; kept as it
+         * is where it does not. With no dictionary at all, nothing is changed.
+         */
+        fun withKnownEntries(content: RecipeFileContent, known: Set<Long>): RecipeFileContent {
+            if (known.isEmpty()) return content
+            val equipment = content.equipment.map { item ->
+                val entry = item.dictionaryEntry?.takeIf { it !in known } ?: return@map item
+                content.equipmentLabels[entry]?.let { EquipmentItem.free(item.shown(it.of(content.language))) } ?: item
+            }
+            return if (equipment == content.equipment) content else content.copy(equipment = equipment)
+        }
+
         /** The size of a file whose size is not known. */
         const val UNKNOWN_SIZE = -1L
 

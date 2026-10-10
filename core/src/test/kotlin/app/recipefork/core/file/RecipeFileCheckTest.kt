@@ -1,5 +1,6 @@
 package app.recipefork.core.file
 
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
@@ -49,7 +50,8 @@ class RecipeFileCheckTest {
             FileMedia("m-2", MediaKind.VIDEO, MediaAttachment.ToStep(1), "media/m-2.mp4"),
         ),
         ingredientGroups = listOf(IngredientGroup("Soup", 0), IngredientGroup("Seasoning", 2)),
-        equipment = listOf("Pot", "Frying pan 26 cm"),
+        equipment = listOf(EquipmentItem.free("Pot"), EquipmentItem.entry(10001, "26 cm")),
+        equipmentLabels = mapOf(10001L to EntryLabels("Сковорода", "Frying pan")),
     )
 
     private fun refused(content: RecipeFileContent) =
@@ -232,11 +234,11 @@ class RecipeFileCheckTest {
     // FLOW-064 (5): a document from a later version is told apart from a damaged one.
     @Test
     fun aLaterFormatIsToldApart() {
-        val later = RecipeFile.encode(valid).replace("\"format_version\": 4", "\"format_version\": 5")
-        assertTrue("\"format_version\": 5" in later)
+        val later = RecipeFile.encode(valid).replace("\"format_version\": 5", "\"format_version\": 6")
+        assertTrue("\"format_version\": 6" in later)
         val thrown = runCatching { RecipeFile.decode(later) }.exceptionOrNull()
         assertTrue(thrown is LaterRecipeFile, "$thrown")
-        assertEquals(5, thrown.formatVersion)
+        assertEquals(6, thrown.formatVersion)
         val damaged = runCatching { RecipeFile.decode("{") }.exceptionOrNull()
         assertTrue(damaged is UnreadableRecipeFile && damaged !is LaterRecipeFile)
         val huge = RecipeFile.encode(valid).replace("\"3/2\"", "\"${"9".repeat(100_000)}/2\"")
@@ -280,15 +282,46 @@ class RecipeFileCheckTest {
     // The equipment: at most fifteen items, each 1 to 40 characters, trimmed and not blank.
     @Test
     fun theEquipment() {
-        val fifteen = (1..15).map { "Item $it".padEnd(40, 'x') }
+        val fifteen = (1..15).map { EquipmentItem.free("Item $it".padEnd(40, 'x')) }
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid))
         assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = fifteen)))
-        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf("P"))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf(free("P")))))
         assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = emptyList())))
-        refusedFor("more than 15 items of equipment", valid.copy(equipment = fifteen + "Item 16"))
-        refusedFor("equipment 1 is over 40", valid.copy(equipment = listOf("Pot", "p".repeat(41))))
-        refusedFor("equipment 0 is blank", valid.copy(equipment = listOf("")))
-        refusedFor("equipment 1 is blank", valid.copy(equipment = listOf("Pot", "   ")))
-        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(" Pot")))
-        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf("Pot ")))
+        refusedFor("more than 15 items of equipment", valid.copy(equipment = fifteen + free("Item 16")))
+        refusedFor("equipment 1 is over 40", valid.copy(equipment = listOf(free("Pot"), free("p".repeat(41)))))
+        refusedFor("equipment 0 is blank", valid.copy(equipment = listOf(free(""))))
+        refusedFor("equipment 1 is blank", valid.copy(equipment = listOf(free("Pot"), free("   "))))
+        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(free(" Pot"))))
+        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(free("Pot "))))
     }
+
+    // An item is named as an ingredient is (DOM-009): an entry, which a qualifier may narrow, or free text — exactly one.
+    @Test
+    fun anItemIsAnEntryOrFreeTextNeverBoth() {
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf(EquipmentItem.entry(10001)))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf(EquipmentItem.entry(10001, "26 cm")))))
+        refusedFor("equipment 0 is named by both", valid.copy(equipment = listOf(EquipmentItem(10001, null, "Pan"))))
+        refusedFor("equipment 0 is named by both an entry and free text, or by neither", valid.copy(equipment = listOf(EquipmentItem(null, null, null))))
+        refusedFor("equipment 0 qualifies no entry", valid.copy(equipment = listOf(EquipmentItem(null, "26 cm", "Pan"))))
+        refusedFor("equipment 0 names an entry that is none", valid.copy(equipment = listOf(EquipmentItem.entry(-1))))
+        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(EquipmentItem(10001, " ", null))))
+        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(EquipmentItem(10001, "26 cm ", null))))
+    }
+
+    // An entry's item reads as its label with its qualifier, and is held to forty characters in either language where
+    // the file gives the labels; the labels themselves are labels.
+    @Test
+    fun anEntrysItemReadsAsItsLabelWithItsQualifier() {
+        val labels = mapOf(10001L to EntryLabels("Сковорода", "Frying pan"))
+        // "Frying pan " is 11 characters: 29 more make 40, and 30 one too many; the Russian label is shorter.
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf(EquipmentItem.entry(10001, "q".repeat(29))), equipmentLabels = labels)))
+        refusedFor("equipment 0 is over 40", valid.copy(equipment = listOf(EquipmentItem.entry(10001, "q".repeat(30))), equipmentLabels = labels))
+        // With no labels, the qualifier alone is counted.
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf(EquipmentItem.entry(10001, "q".repeat(40))), equipmentLabels = emptyMap())))
+        refusedFor("equipment 0 is over 40", valid.copy(equipment = listOf(EquipmentItem.entry(10001, "q".repeat(41))), equipmentLabels = emptyMap()))
+        refusedFor("labels of equipment entry 10001 are not labels", valid.copy(equipmentLabels = mapOf(10001L to EntryLabels("", "Frying pan"))))
+        refusedFor("labels of equipment entry 10001 are not labels", valid.copy(equipmentLabels = mapOf(10001L to EntryLabels("Сковорода", " Frying pan"))))
+    }
+
+    private fun free(text: String) = EquipmentItem.free(text)
 }

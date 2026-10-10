@@ -64,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -87,8 +88,10 @@ import androidx.compose.ui.res.painterResource
 import app.recipefork.app.AppContainer
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.dictionary.DictionaryEntry
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.recipe.EquipmentNames
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.SnackbarAction
 import app.recipefork.core.recipe.QuantityUnit
@@ -158,6 +161,19 @@ fun EditorScreen(
     LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }
     var dictionary by remember { mutableStateOf<List<TagEntity>?>(null) }
     LaunchedEffect(environment) { withContext(Dispatchers.Main.immediate) { dictionary = environment.tags.tags() } }
+    // The equipment entries an item names are shown by their labels; one whose entry cannot be read shows its qualifier.
+    var equipmentEntries by remember { mutableStateOf<Map<Long, DictionaryEntry>>(emptyMap()) }
+    LaunchedEffect(environment) {
+        val read = try {
+            environment.equipment.equipment()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyList()
+        }
+        withContext(Dispatchers.Main.immediate) { equipmentEntries = read.associateBy { it.id } }
+    }
+    val equipmentLanguage = interfaceLanguage(LocalConfiguration.current)
     val recipe by editor.recipe.collectAsState()
     val handleRight by environment.dragHandleSide.right.collectAsState()
     val scrolled = rememberScrollState()
@@ -260,7 +276,7 @@ fun EditorScreen(
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
                     ServingCount(shown, editor, servings, if (shown.equipment.isNotEmpty()) ({ equipment.ask(0) }) else toIngredients)
-                    Equipment(shown, editor, equipment, toIngredients)
+                    Equipment(shown, editor, equipment, toIngredients) { EquipmentNames.shown(it, equipmentEntries, equipmentLanguage) }
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
                         Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork, animated, animations)

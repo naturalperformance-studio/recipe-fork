@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
         if (!follows(intent)) return
         val container = (application as RecipeForkApplication).container
         RecipeFileIntents.fileOf(intent)?.let { uri ->
-            openRecipeFile(applicationContext, container.mode, RecipeImport(container.recipes, filesDir), librarySession, uri)
+            openRecipeFile(applicationContext, container.mode, RecipeImport(container.recipes, filesDir, equipment = container.dictionaries), librarySession, uri)
             return
         }
         val timer = TimerIntents.timerOf(intent) ?: return

@@ -8,6 +8,9 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
+import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.dictionary.EquipmentSource
+import app.recipefork.app.recipe.EquipmentNames
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.core.file.FileMedia
@@ -38,16 +41,31 @@ object RecipeExport {
      * Writes the file of the recipe [id] of the active book, with every photograph the device holds for it, and returns
      * its shareable address, or null when the book holds no such recipe. No account exists on the device yet, so no recipe is an account's own and the file names
      * an author only where the recipe states one (FLOW-063 (3)). [progress] is told the share of the file written, of
-     * the size its document and its media make.
+     * the size its document and its media make. Each item of equipment an entry names carries the entry's labels from
+     * the [equipment] dictionary, where it holds them.
      */
-    suspend fun write(context: Context, recipes: RecipeRepository, id: RecipeId, progress: (Float) -> Unit = {}): Uri? {
+    suspend fun write(
+        context: Context,
+        recipes: RecipeRepository,
+        id: RecipeId,
+        equipment: EquipmentSource = equipmentDictionaryOf(context),
+        progress: (Float) -> Unit = {},
+    ): Uri? {
         val book = recipes.inOpenBook()
         val recipe = book.get(id) ?: return null
         val parent = recipe.parent?.let { book.get(it) }
         val store = PhotoStore(context.filesDir)
         val name = book.bookName()
+        // An entry whose labels cannot be read is written without them; the file reads the same on a device that holds it.
+        val entries = if (recipe.equipment.none { it.dictionaryEntry != null }) emptyMap() else try {
+            equipment.equipment().associateBy { it.id }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyMap()
+        }
         val content = withContext(Dispatchers.IO) {
-            RecipeFileContent.of(recipe, parentInBook = parent, ownerNickname = null)
+            RecipeFileContent.of(recipe, parentInBook = parent, ownerNickname = null) { entries[it]?.let(EquipmentNames::labelsOf) }
                 .copy(media = fileMedia(recipe.media) { store.file(name, it).isFile })
         }
         val file = withContext(Dispatchers.IO) {
@@ -108,7 +126,7 @@ object RecipeExport {
         progress: (Float) -> Unit = {},
     ): Boolean =
         try {
-            val uri = write(context, recipes, id, progress)
+            val uri = write(context, recipes, id, progress = progress)
             if (uri != null) open(context, shareSheet(context, uri, sheetTitle))
             uri != null
         } catch (e: CancellationException) {
@@ -177,4 +195,13 @@ object RecipeExport {
 
     private const val MAX_NAME = 80
     private const val FALLBACK_NAME = "recipe"
+}
+
+/**
+ * The device's equipment dictionary as [context]'s application holds it, seeded before it is read, which a recipe file's
+ * equipment is named against on export and import; none where the application holds no dictionaries.
+ */
+fun equipmentDictionaryOf(context: Context): EquipmentSource {
+    val application = context.applicationContext as? RecipeForkApplication ?: return EquipmentSource { emptyList() }
+    return EquipmentSource { application.container.dictionaries.equipment() }
 }
