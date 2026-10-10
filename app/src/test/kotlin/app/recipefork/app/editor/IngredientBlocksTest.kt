@@ -171,6 +171,9 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
      * outline drawn at its top, bottom and sides — something other than the background just inside its edges.
      */
     private fun assertSeparateOutlinedBlocks(count: Int) {
+        // The list in sight whole, the parts above it as tall as they are at the font scale.
+        compose.onNodeWithTag(EditorTags.INGREDIENTS).performScrollTo()
+        compose.waitForIdle()
         val list = bounds(EditorTags.INGREDIENTS)
         val image = compose.onNodeWithTag(EditorTags.INGREDIENTS).captureToImage().toPixelMap()
         fun at(x: Float, y: Float): Color = image[(x - list.left).toInt().coerceIn(0, image.width - 1), (y - list.top).toInt().coerceIn(0, image.height - 1)]

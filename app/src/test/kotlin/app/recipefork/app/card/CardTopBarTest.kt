@@ -232,8 +232,8 @@ class CardTopBarTest {
 
     private fun forkCollapsed(): Boolean = bounds(CardTags.FORK).let { abs(it.width - it.height) < 1f }
 
-    // View's end scrolls clear of fork: the last step, its timer's line and the description, scrolled to the end, stand
-    // whole above it.
+    // View's end scrolls clear of fork: the last step and its timer's line — the end now the description stands under
+    // the title (T-208) — scrolled to the end, stand whole above it.
     @Test
     fun theRecipesEndScrollsClearOfFork() {
         val recipe = Recipe.create(now, null).copy(
@@ -250,7 +250,7 @@ class CardTopBarTest {
                 assertTrue("the last interactive element ${last.config.getOrNull(SemanticsProperties.TestTag)} ${last.boundsInRoot} clear above fork $fork",
                     last.boundsInRoot.bottom <= fork.top + 0.5f)
             }
-        listOf(CardTags.step(11), ViewTimerTags.line(11), CardTags.DESCRIPTION).forEach { tag ->
+        listOf(CardTags.step(11), ViewTimerTags.line(11)).forEach { tag ->
             val part = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
             assertTrue("$tag $part clear above fork $fork", part.bottom <= fork.top + 0.5f && part.top >= bounds(CardTags.BAR).bottom - 0.5f)
         }
