@@ -62,3 +62,21 @@ Theme-dependent and best left for after F1: 26 (error tone), 29 (type scale), 30
 - A fork carries the parent's title unchanged, so two identical titles sit in the book.
 - *(→ v0.23, kept on the device until cleared)* Ticking off ingredients / steps while cooking (conflicts with "nothing records progress" unless kept in memory).
 - Tab names "Marked" / "Written here" in a serverless build.
+
+## Audit of 2026-10-10 (v0.29 build) — not taken into v0.30
+From two fresh audits (v0.30's file lists what was taken). Still open from the 2026-10-04 audit: 4, 5 (editor), 19, 26/31 in part.
+- The book's header: only the top bar scrolls away; tabs, search and chips stay (~250 dp at 1×, ~58% of a 320×640 screen at 2×) — let search and chips collapse with the list. M.
+- The editor's Done top-right and "Add ingredient" / "Add step" at the end of long lists — out of thumb reach (2026-10-04 item 5). M.
+- Equipment items are inline fields with a trash icon and ⋮ — a third editing pattern beside the ingredient and step sheets; at 2× its hint wraps a word per line. M.
+- Rows read as tappable only by their outline and drag strip — a trailing edit cue; hide the handle when a list has one row. S.
+- The free-text mark repeats under every free-text row — one line at the list head. S.
+- Offers: "chicken wings" above "chicken" for "chi"; hand-built offer rows — exact/shorter first; ListItem in a surface. S.
+- A frozen recipe: an empty "Tags" heading; its message gives no next step (e.g. fork). S.
+- A tap anywhere on a tag chip removes it, with no Undo — remove from the × only, or offer Undo. S.
+- An unnamed timer's row repeats the whole step ("Roast the chicken until golden. · 40 min") — shorten the derived name on the row. S.
+- The crop uses hard-coded white and black and has no non-gesture way to adjust. S.
+- Limit marks are separate rows under fields, not supportingText (2026-10-04 item 19). S.
+- On Cooking an ingredient line has two targets (the amount fixes, the rest marks done) — one target per line. S.
+- The book's Undo snackbar stays after switching tabs — end it on a tab change. S.
+- Open product questions: which view the book opens on.
+
