@@ -59,7 +59,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -80,7 +79,7 @@ import app.recipefork.app.library.EmptyAction
 import app.recipefork.app.library.EmptyState
 import app.recipefork.app.settings.servingsLanguage
 import app.recipefork.app.ui.SnackbarAction
-import app.recipefork.app.ui.fitWords
+import app.recipefork.app.ui.WordFitText
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
@@ -392,11 +391,12 @@ private fun GroupRow(
             // A word wider than the name's room — a long Russian word at a large font scale on a narrow phone — is drawn
             // smaller until it fits, so that no word is broken.
             BoxWithConstraints {
-                val style = MaterialTheme.typography.titleMedium
-                val measurer = rememberTextMeasurer()
-                val width = constraints.maxWidth
-                val fitted = remember(label, style, width, measurer) { fitWords(label, style, width, measurer) }
-                Text(label, style = fitted, modifier = Modifier.testTag(KitchenTags.groupName(group.id)))
+                WordFitText(
+                    label,
+                    MaterialTheme.typography.titleMedium,
+                    constraints.maxWidth,
+                    Modifier.testTag(KitchenTags.groupName(group.id)),
+                )
             }
         },
         supportingContent = {
