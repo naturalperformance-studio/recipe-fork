@@ -3,11 +3,26 @@ package app.recipefork.app.dictionary
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
+import app.recipefork.core.api.EquipmentEntryDto
 import app.recipefork.core.api.IngredientEntryDto
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+
+/**
+ * What a dictionary search reads of an entry, whichever dictionary holds it: its labels and synonyms in both languages,
+ * its parent (null at the top level) and whether it is [removed] upstream.
+ */
+interface DictionaryEntry {
+    val id: Long
+    val labelRu: String
+    val labelEn: String
+    val parentId: Long?
+    val removed: Boolean
+    val synonymsRu: List<String>
+    val synonymsEn: List<String>
+}
 
 /**
  * An ingredient dictionary entry as the device holds it (FLOW-001, DOM-010), with its divisibility, its comparison
@@ -17,16 +32,16 @@ import kotlinx.serialization.json.Json
  */
 @Entity(tableName = "ingredient_entry")
 data class IngredientEntryEntity(
-    @PrimaryKey val id: Long,
-    val labelRu: String,
-    val labelEn: String,
-    val parentId: Long?,
+    @PrimaryKey override val id: Long,
+    override val labelRu: String,
+    override val labelEn: String,
+    override val parentId: Long?,
     val divisible: Boolean? = null,
     val factors: Map<String, Double> = emptyMap(),
-    val removed: Boolean = false,
-    val synonymsRu: List<String> = emptyList(),
-    val synonymsEn: List<String> = emptyList(),
-) {
+    override val removed: Boolean = false,
+    override val synonymsRu: List<String> = emptyList(),
+    override val synonymsEn: List<String> = emptyList(),
+) : DictionaryEntry {
     fun toDto(): IngredientEntryDto =
         IngredientEntryDto(id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn)
 
@@ -36,6 +51,28 @@ data class IngredientEntryEntity(
                 dto.id, dto.labelRu, dto.labelEn, dto.parentId, dto.divisible, dto.factors, dto.removed,
                 dto.synonymsRu, dto.synonymsEn,
             )
+    }
+}
+
+/**
+ * An equipment dictionary entry as the device holds it: a top-level entry is a group, its leaves the items. A
+ * [removed] entry is held, as an ingredient entry is, and offered to nobody.
+ */
+@Entity(tableName = "equipment_entry")
+data class EquipmentEntryEntity(
+    @PrimaryKey override val id: Long,
+    override val labelRu: String,
+    override val labelEn: String,
+    override val parentId: Long? = null,
+    override val removed: Boolean = false,
+    override val synonymsRu: List<String> = emptyList(),
+    override val synonymsEn: List<String> = emptyList(),
+) : DictionaryEntry {
+    fun toDto(): EquipmentEntryDto = EquipmentEntryDto(id, labelRu, labelEn, parentId, removed, synonymsRu, synonymsEn)
+
+    companion object {
+        fun of(dto: EquipmentEntryDto): EquipmentEntryEntity =
+            EquipmentEntryEntity(dto.id, dto.labelRu, dto.labelEn, dto.parentId, dto.removed, dto.synonymsRu, dto.synonymsEn)
     }
 }
 

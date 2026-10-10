@@ -15,6 +15,9 @@ abstract class DictionaryDao {
     @Query("select * from tag order by id")
     abstract suspend fun tags(): List<TagEntity>
 
+    @Query("select * from equipment_entry order by id")
+    abstract suspend fun equipment(): List<EquipmentEntryEntity>
+
     @Query("select version from dictionary_version where id = 0")
     abstract suspend fun version(): String?
 
@@ -22,9 +25,11 @@ abstract class DictionaryDao {
     abstract fun versionUpdates(): Flow<String?>
 
     /**
-     * Replaces the whole held copy of both dictionaries with [dictionaries], atomically. An entry removed upstream is
-     * held removed rather than dropped — whether [dictionaries] still carry it marked so, or no longer carry it — so
-     * that the card, the editor and search still name every recipe's entry (DOM-009, FLOW-001).
+     * Replaces the whole held copy of the dictionaries with [dictionaries], atomically. An ingredient or equipment
+     * entry removed upstream is held removed rather than dropped — whether [dictionaries] still carry it marked so, or
+     * no longer carry it — so that the card, the editor and search still name every recipe's entry (DOM-009, FLOW-001).
+     * [dictionaries] that carry no equipment at all — a server need not serve it, as it is maintained in the repository
+     * — leave the held equipment as it is.
      */
     @Transaction
     open suspend fun replace(dictionaries: DictionariesDto) {
@@ -35,6 +40,13 @@ abstract class DictionaryDao {
         deleteTags()
         insertIngredients(arrived + gone)
         insertTags(dictionaries.tags.map { TagEntity(it.id, it.labelRu, it.labelEn) })
+        if (dictionaries.equipment.isNotEmpty()) {
+            val arrivedEquipment = dictionaries.equipment.map(EquipmentEntryEntity::of)
+            val arrivedEquipmentIds = arrivedEquipment.mapTo(HashSet()) { it.id }
+            val goneEquipment = equipment().filter { it.id !in arrivedEquipmentIds }.map { it.copy(removed = true) }
+            deleteEquipment()
+            insertEquipment(arrivedEquipment + goneEquipment)
+        }
         setVersion(DictionaryVersionEntity(version = dictionaries.version))
     }
 
@@ -58,11 +70,17 @@ abstract class DictionaryDao {
     @Query("delete from tag")
     protected abstract suspend fun deleteTags()
 
+    @Query("delete from equipment_entry")
+    protected abstract suspend fun deleteEquipment()
+
     @Insert
     protected abstract suspend fun insertIngredients(entries: List<IngredientEntryEntity>)
 
     @Insert
     protected abstract suspend fun insertTags(tags: List<TagEntity>)
+
+    @Insert
+    protected abstract suspend fun insertEquipment(entries: List<EquipmentEntryEntity>)
 
     @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
     protected abstract suspend fun setVersion(version: DictionaryVersionEntity)
