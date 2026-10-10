@@ -229,6 +229,13 @@ abstract class BookRecipeDao {
     )
     abstract fun ingredientLines(): Flow<List<IngredientLineRow>>
 
+    /**
+     * Every dictionary entry of equipment the book's recipes name, which the views are filtered by when the kitchen is
+     * to have enough of it; items of free text are left out.
+     */
+    @Query("select recipe_id, dictionary_entry from recipe_equipment where dictionary_entry is not null order by recipe_id, position")
+    abstract fun equipmentEntries(): Flow<List<RecipeEquipmentRow>>
+
     /** Every tag the book's recipes carry, which the views are filtered by (FLOW-035). */
     @Query("select * from recipe_tag order by recipe_id, tag_id")
     abstract fun allTags(): Flow<List<RecipeTagEntity>>

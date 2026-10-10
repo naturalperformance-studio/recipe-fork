@@ -42,6 +42,7 @@ import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.recipe.Listed
+import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.recipe.ListingParams
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AppNavHost
@@ -349,6 +350,7 @@ class BookHeaderTest {
 
         override fun ownListed(
             params: Flow<ListingParams>,
+            kitchen: Flow<Kitchen?>,
             dictionary: suspend () -> List<IngredientEntryEntity>,
         ): Flow<Listed<OwnRecipeRow>> = flow {
             open.first { it }

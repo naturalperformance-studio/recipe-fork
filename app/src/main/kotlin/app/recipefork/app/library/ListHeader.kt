@@ -113,8 +113,9 @@ private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lower
  * (FLOW-035 (3)); under them, [FILTER_ROW_GAP] apart, the row of quick filters (FLOW-035, CAT-002, CAT-006), whose
  * "All filters" opens the sheet of every filter. The [languages] of the view's recipes are what its language filter offers (L10N-005); the entries
  * they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)); the tags they [carries]
- * most are offered as quick filters. It stands at the top of its view's page, under the tabs, and never scrolls with
- * the list.
+ * most are offered as quick filters; the filter "Enough equipment" is offered by the sheet while [equipmentOffered] —
+ * while My kitchen has something that counts. It stands at the top of its view's page, under the tabs, and never
+ * scrolls with the list.
  */
 @Composable
 internal fun ListHeader(
@@ -127,6 +128,7 @@ internal fun ListHeader(
     languages: List<BookLanguage>,
     hold: Set<Long> = emptySet(),
     carries: Map<String, List<Long>> = emptyMap(),
+    equipmentOffered: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
@@ -159,7 +161,7 @@ internal fun ListHeader(
         }
         QuickFilters(filters, onFilters, choices, languages, carries, onAll = { sheetOpen = true })
     }
-    if (sheetOpen) FiltersSheet(filters, onFilters, choices, languages, hold, onClose = { sheetOpen = false })
+    if (sheetOpen) FiltersSheet(filters, onFilters, choices, languages, hold, equipmentOffered, onClose = { sheetOpen = false })
 }
 
 /**
@@ -202,12 +204,25 @@ private fun orderLabel(order: BookOrder): Int = when (order) {
 
 /**
  * A view narrowed to nothing says so — naming the query, when one was searched — and offers one way out of it
- * (FLOW-035 (4), FLOW-042 (1)): clearing the search, the filters, or both when both are on.
+ * (FLOW-035 (4), FLOW-042 (1)): clearing the search, the filters, or both when both are on. Narrowed by the filter
+ * "Enough equipment" alone, it says the kitchen lacks something for every recipe, and offers to switch that filter off.
  */
 @Composable
 internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearFilters: () -> Unit) {
     val searched = listed.searched
     val filtered = listed.params.filters.any
+    if (!searched && listed.params.filters == BookFilters(equipment = true)) {
+        EmptyState(
+            picture = R.drawable.ic_filter,
+            headline = stringResource(R.string.library_nothing_equipment),
+            sentence = null,
+            action = EmptyAction(
+                stringResource(R.string.library_filter_equipment_off), null, LibraryTags.NOTHING_FOUND_EQUIPMENT_OFF, onClearFilters,
+            ),
+            tag = LibraryTags.NOTHING_FOUND,
+        )
+        return
+    }
     val action = when {
         searched && filtered -> EmptyAction(
             stringResource(R.string.library_search_and_filters_clear), null, LibraryTags.NOTHING_FOUND_CLEAR_ALL,
@@ -278,7 +293,8 @@ internal fun mostUsedTags(carries: Map<String, List<Long>>, excluded: Set<Long> 
 
 /**
  * The row of quick filters under the search field, scrolled sideways: "All filters", which opens [FiltersSheet]; a
- * selected chip for each filter in force — the ingredient, each tag, then the language — which removes it when tapped,
+ * selected chip for each filter in force — the ingredient, each tag, the language, then "Enough equipment" — which
+ * removes it when tapped,
  * and, while any is, the one control that clears them all; then the quick offers, each applied by one tap: the other
  * languages of the view while it holds more than one, and the tags its recipes carry most, up to [QUICK_TAGS].
  */
@@ -322,6 +338,11 @@ private fun QuickFilters(
         }
         filters.language?.let { chosen ->
             FilterOn(stringResource(languageChipLabel(chosen)), LibraryTags.LANGUAGE_FILTER) { onFilters(filters.copy(language = null)) }
+        }
+        if (filters.equipment) {
+            FilterOn(stringResource(R.string.library_filter_equipment_enough), LibraryTags.EQUIPMENT_FILTER) {
+                onFilters(filters.copy(equipment = false))
+            }
         }
         if (filters.any) {
             TextButton(

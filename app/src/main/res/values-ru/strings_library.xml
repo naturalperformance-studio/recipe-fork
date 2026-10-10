@@ -90,4 +90,10 @@
     <string name="library_recipe_removed">Рецепт убран</string>
     <string name="library_undo_failed">Не удалось вернуть рецепт</string>
     <string name="library_undo">Вернуть</string>
+    <!-- The filter by the equipment My kitchen has. -->
+    <string name="library_filter_equipment">Посуда и техника</string>
+    <string name="library_filter_equipment_hint">Скроются рецепты, для которых нужно то, чего нет в «Моей кухне».</string>
+    <string name="library_filter_equipment_enough">Хватает посуды</string>
+    <string name="library_nothing_equipment">Для всех рецептов чего-то не хватает</string>
+    <string name="library_filter_equipment_off">Выключить «Хватает посуды»</string>
 </resources>

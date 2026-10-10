@@ -50,8 +50,9 @@ import app.recipefork.app.recipe.BookLanguage
 import kotlinx.coroutines.launch
 
 /**
- * Every filter of a view in one bottom sheet: a section for the ingredient, one for the tags and one for the language.
- * A choice applies at once and the sheet stays open for the next; Done, a swipe down or a tap outside closes it.
+ * Every filter of a view in one bottom sheet: a section for the ingredient, one for the tags, one for the language and,
+ * while [equipmentOffered] — My kitchen has something that counts — one for the equipment. A choice applies at once
+ * and the sheet stays open for the next; Done, a swipe down or a tap outside closes it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +62,7 @@ internal fun FiltersSheet(
     choices: FilterChoices,
     languages: List<BookLanguage>,
     hold: Set<Long>,
+    equipmentOffered: Boolean,
     onClose: () -> Unit,
 ) {
     LaunchedEffect(choices) {
@@ -90,6 +92,10 @@ internal fun FiltersSheet(
             TagSection(choices.tags, filters, onFilters)
             HorizontalDivider()
             LanguageSection(languages, filters.language) { onFilters(filters.copy(language = it)) }
+            if (equipmentOffered) {
+                HorizontalDivider()
+                EquipmentSection(filters.equipment) { onFilters(filters.copy(equipment = it)) }
+            }
         }
     }
 }
@@ -215,6 +221,21 @@ private fun LanguageSection(languages: List<BookLanguage>, chosen: BookLanguage?
                     RadioButton(selected = on, onClick = null)
                 }
             }
+        }
+    }
+}
+
+/**
+ * The filter "Enough equipment": checked, it hides every recipe naming an entry of equipment My kitchen lacks; an item
+ * of free text hides none.
+ */
+@Composable
+private fun EquipmentSection(on: Boolean, onChoose: (Boolean) -> Unit) {
+    Column(Modifier.testTag(LibraryTags.EQUIPMENT_CHOOSER), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionTitle(R.string.library_filter_equipment, R.string.library_filter_equipment_hint)
+        val toggle = Modifier.toggleable(value = on, role = Role.Checkbox) { onChoose(it) }
+        ChoiceRow(stringResource(R.string.library_filter_equipment_enough), LibraryTags.EQUIPMENT_CHOICE, toggle) {
+            Checkbox(checked = on, onCheckedChange = null)
         }
     }
 }

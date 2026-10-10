@@ -120,7 +120,7 @@ fun AppNavHost(
         composable(Destinations.LIBRARY_ROUTE) {
             LibraryScreen(
                 session, recipes, mode,
-                editor = editor, card = card, files = files, thumbnails = thumbnails,
+                editor = editor, card = card, files = files, thumbnails = thumbnails, kitchen = kitchen,
                 onOpenSettings = session::openSettings,
             )
         }
