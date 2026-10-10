@@ -20,6 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -253,8 +257,9 @@ internal fun shownName(step: Step, index: Int, held: RunningTimer?, current: Str
  * named by the timer's name — each reference in a derived one read as [quantity] gives it, as the step reads now
  * (FLOW-016 (8)), or, while it is held, the name it was started under; an unnamed one of a step with several told
  * apart by its number — that starts it, with its duration beside it; once started, the time remaining instead,
- * counting down by the clock, then that it has finished. A started timer has an action beside it that cancels it, or
- * clears it once finished; while a finished one rings, another beside it stops the ringing.
+ * counting down by the clock, then that it has finished. A running timer's control is filled in the theme's primary
+ * colour, one at rest tonal ([TimerButton]). A started timer has an action beside it, where it fits, that cancels it,
+ * or clears it once finished; while a finished one rings, another beside it stops the ringing ([BesideOrUnder]).
  */
 @Composable
 fun StepTimer(
@@ -276,53 +281,113 @@ fun StepTimer(
         finished -> stringResource(R.string.timer_finished)
         else -> remainingText(held.remaining(now))
     }
-    // The control first, then its actions; where they do not fit beside it — a long name, a large font, a narrow
-    // screen — the actions wrap under it, and the status under the name, each whole (A11Y-004).
-    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TimerButton(
-            icon = if (held != null && !finished) R.drawable.ic_step_timer else R.drawable.ic_video_play,
-            action = stringResource(R.string.timer_start_action),
-            tag = TimerTags.start(step.position, index),
-            onClick = { timers.start(step, index, current) },
-            modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
-            // A press on a running timer only asks whether to restart it: the answer confirms, the question does not.
-            confirms = held == null || finished,
-        ) {
-            FlowRow(
-                Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.Center,
+    val running = held != null && !finished
+    // The control first, then its actions beside it where they fit; where they do not — a long name, a large font, a
+    // narrow screen — the actions go under it at its end, and the status under the name, each whole (A11Y-004).
+    BesideOrUnder(
+        modifier.fillMaxWidth(),
+        main = {
+            TimerButton(
+                icon = if (running) R.drawable.ic_step_timer else R.drawable.ic_video_play,
+                action = stringResource(R.string.timer_start_action),
+                tag = TimerTags.start(step.position, index),
+                onClick = { timers.start(step, index, current) },
+                // A press on a running timer only asks whether to restart it: the answer confirms, the question does not.
+                confirms = !running,
+                // A running timer is filled in the theme's primary colour, told at a glance from one at rest.
+                running = running,
             ) {
-                Text(
-                    name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                )
-                Text(
-                    status,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                        .testTag(TimerTags.status(step.position, index)),
-                )
+                FlowRow(
+                    Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                    )
+                    Text(
+                        status,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                            .testTag(TimerTags.status(step.position, index)),
+                    )
+                }
             }
-        }
-        if (finished && timers.rings(key)) {
-            TimerButton(
-                icon = R.drawable.ic_timer_stop,
-                action = stringResource(R.string.timer_stop_action),
-                tag = TimerTags.stop(step.position, index),
-                onClick = { timers.stopRinging(key) },
-                modifier = Modifier.align(Alignment.CenterVertically),
-            ) { Text(stringResource(R.string.timer_stop)) }
-        }
-        if (held != null) {
-            TimerButton(
-                icon = R.drawable.ic_remove_timer,
-                action = stringResource(if (finished) R.string.timer_clear_action else R.string.timer_cancel_action),
-                tag = TimerTags.cancel(step.position, index),
-                onClick = { timers.cancel(key) },
-                modifier = Modifier.align(Alignment.CenterVertically),
-            ) { Text(stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel)) }
+        },
+        trailing = if (held == null) null else {
+            {
+                // Stop and Clear side by side where they fit, Clear under Stop where they do not, each whole.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (finished && timers.rings(key)) {
+                        TimerButton(
+                            icon = R.drawable.ic_timer_stop,
+                            action = stringResource(R.string.timer_stop_action),
+                            tag = TimerTags.stop(step.position, index),
+                            onClick = { timers.stopRinging(key) },
+                        ) { Text(stringResource(R.string.timer_stop)) }
+                    }
+                    TimerButton(
+                        icon = R.drawable.ic_remove_timer,
+                        action = stringResource(if (finished) R.string.timer_clear_action else R.string.timer_cancel_action),
+                        tag = TimerTags.cancel(step.position, index),
+                        onClick = { timers.cancel(key) },
+                    ) { Text(stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel)) }
+                }
+            }
+        },
+        mainShare = 0.5f,
+    )
+}
+
+/**
+ * [main] with [trailing] beside it at its end where they fit — [main] keeping room for its longest word and at least
+ * [mainShare] of the width — [main] then filling the width [trailing] leaves; otherwise [main] the whole width and
+ * [trailing] [gap] under it, at its end. Without [trailing], [main] the whole width. Nothing is squeezed into breaking
+ * inside a word for want of room beside the other (A11Y-004).
+ */
+@Composable
+internal fun BesideOrUnder(
+    modifier: Modifier = Modifier,
+    gap: Dp = 8.dp,
+    mainShare: Float = 0f,
+    main: @Composable () -> Unit,
+    trailing: (@Composable () -> Unit)?,
+) {
+    Layout(contents = listOf(main, trailing ?: {}), modifier = modifier) { (mains, trailings), constraints ->
+        val width = constraints.maxWidth
+        val space = gap.roundToPx()
+        val shownTrailing = trailings.firstOrNull()?.measure(Constraints(maxWidth = width))
+        val room = width - (shownTrailing?.width ?: 0) - space
+        val beside = shownTrailing != null &&
+            room >= maxOf(mains.single().minIntrinsicWidth(Constraints.Infinity), (width * mainShare).toInt())
+        // Whatever it holds stands centred in the least height it is given.
+        fun place(height: Int, placing: Placeable.PlacementScope.(top: Int) -> Unit) =
+            maxOf(height, constraints.minHeight).let { tall -> layout(width, tall) { placing((tall - height) / 2) } }
+        when {
+            shownTrailing == null -> {
+                val shown = mains.single().measure(Constraints(minWidth = width, maxWidth = width))
+                place(shown.height) { top -> shown.place(0, top) }
+            }
+            beside -> {
+                val shown = mains.single().measure(Constraints(minWidth = room, maxWidth = room))
+                val height = maxOf(shown.height, shownTrailing.height)
+                place(height) { top ->
+                    shown.place(0, top + (height - shown.height) / 2)
+                    shownTrailing.place(width - shownTrailing.width, top + (height - shownTrailing.height) / 2)
+                }
+            }
+            else -> {
+                val shown = mains.single().measure(Constraints(minWidth = width, maxWidth = width))
+                place(shown.height + space + shownTrailing.height) { top ->
+                    shown.place(0, top)
+                    shownTrailing.place(width - shownTrailing.width, top + shown.height + space)
+                }
+            }
         }
     }
 }
@@ -411,6 +476,7 @@ object TimerTags {
     const val BAR = "timer-bar"
     fun barTimer(position: Int, index: Int = 0) = "timer-bar-${of(position, index)}"
     fun barStatus(position: Int, index: Int = 0) = "timer-bar-status-${of(position, index)}"
+    fun barName(position: Int, index: Int = 0) = "timer-bar-name-${of(position, index)}"
     fun barCancel(position: Int, index: Int = 0) = "timer-bar-cancel-${of(position, index)}"
     fun barStop(position: Int, index: Int = 0) = "timer-bar-stop-${of(position, index)}"
 }

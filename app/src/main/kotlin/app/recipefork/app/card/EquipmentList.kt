@@ -63,6 +63,7 @@ internal fun EquipmentList(
                             done = marks?.done(MarkedPart.EQUIPMENT, index) == true,
                             onToggle = marks?.takeIf { mode == CardMode.COOKING }?.let { { it.toggle(MarkedPart.EQUIPMENT, index) } },
                             onOpenKitchen = if (mode == CardMode.VIEW && lacked != null) onOpenKitchen?.let { open -> { open(lacked) } } else null,
+                            stated = marks?.any == true,
                         )
                     }
                 }
@@ -83,18 +84,27 @@ internal data class ShownEquipment(val text: String, val lackedEntry: Long? = nu
 /**
  * One item of equipment: its name, wrapping, never cut, and — when the kitchen is [lacking] it — "Not in your kitchen"
  * under it, muted, part of the line the screen reader reads. With [onToggle] — on Cooking — a tap marks it [done] or
- * unmarks it and the line is the card's [CardTarget] tall; without, its mark is only shown, and the line is its text
+ * unmarks it — a check box to the screen reader — and the line is the card's [CardTarget] tall; without, its mark is
+ * only shown, read-only, its state read while the recipe has any mark ([stated]), and the line is its text
  * with [VIEW_LINE_PADDING] above and below. A line marked done is struck through and muted, and read as done; the
  * kitchen's mark stays as it is. With [onOpenKitchen] — on View, an item the kitchen lacks — a tap opens My kitchen,
  * the line a button "Open My kitchen" the card's [CardTarget] tall at least.
  */
 @Composable
-private fun EquipmentLine(item: String, lacking: Boolean, index: Int, done: Boolean, onToggle: (() -> Unit)?, onOpenKitchen: (() -> Unit)?) {
+private fun EquipmentLine(
+    item: String,
+    lacking: Boolean,
+    index: Int,
+    done: Boolean,
+    onToggle: (() -> Unit)?,
+    onOpenKitchen: (() -> Unit)?,
+    stated: Boolean,
+) {
     val opening = stringResource(R.string.card_equipment_open_kitchen_action)
     val marking = when {
         onToggle != null -> Modifier.markedDone(done, onToggle)
-        onOpenKitchen != null -> Modifier.shownDone(done).clickable(onClickLabel = opening, role = Role.Button, onClick = onOpenKitchen)
-        else -> Modifier.shownDone(done)
+        onOpenKitchen != null -> Modifier.shownDone(done, stated).clickable(onClickLabel = opening, role = Role.Button, onClick = onOpenKitchen)
+        else -> Modifier.shownDone(done, stated)
     }
     Box(
         cardPlace(CardPlaces.equipment(index))

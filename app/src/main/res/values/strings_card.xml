@@ -68,7 +68,10 @@
     <!-- An ingredient row that names nothing the device can show yet. -->
     <string name="card_unnamed_ingredient">Unnamed ingredient</string>
     <!-- The recipe is no longer in the active book. -->
+    <!-- The recipe is no longer in the active book: the empty state's headline, its sentence and its way back. -->
+    <string name="card_missing_headline">Recipe not found</string>
     <string name="card_missing">This recipe is no longer in this recipe book.</string>
+    <string name="card_missing_back">Back to the book</string>
     <!-- FLOW-020 (3): the recipe could not be read from the device; it is not said to be gone. -->
     <string name="card_unreadable">This recipe could not be loaded.</string>
     <string name="card_retry">Try again</string>
@@ -99,7 +102,11 @@
     <string name="card_mark_done_action">Mark as done</string>
     <string name="card_mark_not_done_action">Mark as not done</string>
     <string name="card_marked_done">Done</string>
+    <string name="card_marked_not_done">Not done</string>
     <string name="card_clear_marks">Clear marks</string>
+    <!-- Said once the marks are cleared, from either tab's menu; Undo puts back exactly the marks cleared. -->
+    <string name="card_marks_cleared">Marks cleared</string>
+    <string name="card_undo">Undo</string>
     <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
     <string name="card_view_timer">%1$s · %2$s</string>
     <!-- The card's two tabs, under its top bar: the recipe for reading and deciding, and for cooking with busy hands. -->
