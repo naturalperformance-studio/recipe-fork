@@ -677,7 +677,8 @@ class StepTimerEditorTest {
 
         compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0)).performScrollTo().performClick()
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.timerHours(0)), PATIENCE_MS)
-        // Said as today, with Undo: a step's only timer is not numbered.
+        // Said as today, with Undo, once the sheet is closed: a step's only timer is not numbered.
+        compose.closeStep()
         compose.awaitStatement(string(R.string.editor_timer_removed, 1))
         compose.inStep(0).onNodeWithTag(EditorTags.timerMinutes(0)).assertDoesNotExist()
         compose.inStep(0).onNodeWithTag(EditorTags.timerName(0)).assertDoesNotExist()

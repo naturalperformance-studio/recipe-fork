@@ -146,7 +146,7 @@ class StepPhotoEditorTest {
      * block of the step at [position].
      */
     private fun awaitNotice(position: Int, text: String) {
-        compose.awaitStatement(text)
+        compose.awaitStatementOnceSheetCloses(text)
         compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(EditorTags.step(position))), useUnmergedTree = true)
             .assertDoesNotExist()
     }
@@ -330,7 +330,7 @@ class StepPhotoEditorTest {
         compose.swipeAwayStatement()
         compose.inStep(1).onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
         // The photograph's file goes once the deletion can no longer be undone.
-        compose.awaitStatement("Step 2 removed")
+        compose.awaitStatementOnceSheetCloses("Step 2 removed")
         compose.swipeAwayStatement()
 
         compose.waitForIdle()

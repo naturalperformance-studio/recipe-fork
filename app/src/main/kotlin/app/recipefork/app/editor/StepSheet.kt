@@ -1,5 +1,6 @@
 package app.recipefork.app.editor
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -9,6 +10,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.onFocusedBoundsChanged
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,15 +32,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -51,7 +50,7 @@ import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.scaling.InterfaceLanguage
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -140,7 +139,7 @@ internal class StepSheetHost(val insert: (above: Boolean) -> Unit, val close: ()
  *
  * Where [focus] asks for the step at [position], its text takes the focus, with the keyboard up.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun StepSheet(
     position: Int,
@@ -157,6 +156,8 @@ internal fun StepSheet(
     focus: RowFocus,
     host: StepSheetHost,
 ) {
+    // The editor's statements — an Undo among them — wait until the sheet goes, rather than show behind it.
+    CoversStatements()
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val key = editor.stepKey(position)
@@ -200,18 +201,26 @@ internal fun StepSheet(
                 Text(stringResource(R.string.editor_done))
             }
         }
-        Column(
-            Modifier
-                .fillMaxWidth()
-                // A touch in the sheet is the author's next action, as one in the editor is (GUIDE-007).
-                .onEveryTap { editor.noteAction() }
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            StepFields(position, step, media, ingredients, dictionary, language, editor, stating, photos, held)
-            StepActions(key, position, count, editor, photos, host, ended) { manager?.clearFocus() }
+        // The sheet's own scrolling, and where the field the author is in stands in it: a mark or a timer's display
+        // appearing above that field scrolls the sheet by as much, so the field stays where the author has it.
+        val scrolled = rememberScrollState()
+        val scroll = remember(scrolled) { EditorScroll(scrolled) }
+        CompositionLocalProvider(LocalEditorScroll provides scroll) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    // A touch in the sheet is the author's next action, as one in the editor is (GUIDE-007).
+                    .onEveryTap { editor.noteAction() }
+                    .imePadding()
+                    .onGloballyPositioned { scroll.viewport = it }
+                    .onFocusedBoundsChanged { scroll.focused = it }
+                    .verticalScroll(scrolled)
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(SHEET_GAP),
+            ) {
+                StepFields(position, step, media, ingredients, dictionary, language, editor, stating, photos, held)
+                StepActions(key, position, count, editor, photos, host, ended, hide = { scope.launch { state.hide() } }) { manager?.clearFocus() }
+            }
         }
     }
 }
@@ -272,7 +281,7 @@ private fun StepFields(
             .testTag(EditorTags.stepText(position)),
     )
     // What the text needs, right under it.
-    BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = 0.dp)
+    BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = SHEET_GAP)
     // The text's controls as the step's block held them: inserting a reference, adding a timer, its photo or clip.
     val timers = held.timers
     val timerRows = timers.shown(step.timers.size)
@@ -313,6 +322,7 @@ private fun StepActions(
     photos: StepPhotos,
     host: StepSheetHost,
     ended: AtomicBoolean,
+    hide: () -> Job,
     leave: () -> Unit,
 ) {
     val actions = RowAction.entries.filter {
@@ -340,14 +350,16 @@ private fun StepActions(
                 Text(stringResource(action.label))
             }
         }
-        // Removing the step closes its sheet; the editor offers Undo, and deletes its item's file once it is final.
+        // Removing the step closes its sheet — the step goes once the sheet has gone down — and the editor offers Undo,
+        // deleting its item's file once that is final.
         TextButton(
             onClick = click@{
-                val at = editor.stepPosition(key) ?: return@click
-                if (!ended.compareAndSet(false, true)) return@click
+                if (editor.stepPosition(key) == null || !ended.compareAndSet(false, true)) return@click
                 leave()
-                editor.removeStep(at) { removed -> removed.forEach { photos.store.delete(photos.book, it) } }
-                host.close()
+                hide().invokeOnCompletion {
+                    editor.stepPosition(key)?.let { at -> editor.removeStep(at) { removed -> removed.forEach { photos.store.delete(photos.book, it) } } }
+                    host.close()
+                }
             },
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             modifier = Modifier.heightIn(min = 48.dp).testTag(EditorTags.stepRemove(position)),
@@ -357,26 +369,5 @@ private fun StepActions(
     }
 }
 
-/**
- * Called by a field at [position] in a sheet: where it is the one asked, [requester] takes the focus as soon as the
- * sheet is laid out, with the keyboard up — asked once the field has started its input, and again once the sheet's
- * window has the focus, should that come after. The request outlives the ask it answers.
- */
-@Composable
-internal fun RowFocus.TakenInSheet(position: Int, requester: FocusRequester) {
-    val keyboard = LocalSoftwareKeyboardController.current
-    val window = LocalWindowInfo.current
-    val focusing = rememberCoroutineScope()
-    if (asked != position) return
-    LaunchedEffect(this, position) {
-        taken(position)
-        focusing.launch {
-            withFrameNanos {}
-            runCatching { requester.requestFocus() }
-            withFrameNanos {}
-            keyboard?.show()
-            snapshotFlow { window.isWindowFocused }.first { it }
-            keyboard?.show()
-        }
-    }
-}
+/** The space between one part of a step's sheet and the next. */
+private val SHEET_GAP = 4.dp

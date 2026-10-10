@@ -268,7 +268,7 @@ class StepClipEditorTest {
 
     /** Waits until [text] is said at the bottom of the editor and checks it is not written in the step's block. */
     private fun awaitNotice(position: Int, text: String) {
-        compose.awaitStatement(text)
+        compose.awaitStatementOnceSheetCloses(text)
         compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(EditorTags.step(position))), useUnmergedTree = true)
             .assertDoesNotExist()
     }
@@ -500,6 +500,24 @@ class StepClipEditorTest {
         assertEquals(listOf("Снять видео"), compose.textsOf(EditorTags.stepClipRecord(2)))
         assertEquals(listOf("Выбрать видео"), compose.textsOf(EditorTags.stepClipChoose(2)))
         assertEquals(listOf("Убрать видео"), compose.textsOf(EditorTags.stepPhotoRemove(2)))
+    }
+
+    // A step just added whose clip is still being converted holds it: closed, its sheet does not drop it, and the clip
+    // reaches it once converted.
+    @Test
+    fun aNewStepClosedWhileItsClipConvertsIsKept() {
+        val id = open(threeSteps())
+        holdClips()
+        compose.addStepAt(3)
+        choose(3, "new.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(3)) }
+        compose.closeStep()
+        compose.waitForIdle()
+        assertEquals(4, stored(id).steps.size)
+        converter.gate!!.complete(Unit)
+        compose.waitUntilWithMainThread { stored(id).stepMedia(3)?.kind == MediaKind.VIDEO }
+        assertEquals(4, stored(id).steps.size)
+        compose.waitUntil(PATIENCE_MS) { onRow(StepSheetTags.thumbnail(3)) }
     }
 
     // A frozen recipe shows its steps' clips and offers nothing to change them.

@@ -425,12 +425,72 @@ class StepSheetTest {
         compose.closeStep()
     }
 
+    // A timer removed in the sheet says so with Undo once the sheet is closed — not behind the sheet, out of reach, where
+    // the Undo would run out unseen — and the Undo puts the timer back.
+    @Test
+    fun aTimerRemovedInTheSheetOffersItsUndoOnceTheSheetCloses() {
+        val id = open(draft())
+        compose.openStep(1)
+        compose.onNodeWithTag(EditorTags.timerRemove(1)).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitUntil(PATIENCE_MS) { stored(id).steps[1].timers.isEmpty() }
+        compose.waitForIdle()
+        assertFalse(statementShown())
+        compose.closeStep()
+        compose.awaitStatement(string(R.string.editor_timer_removed, 2))
+        val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
+        compose.onNode(undo, useUnmergedTree = true).performClick()
+        compose.waitUntil(PATIENCE_MS) { stored(id).steps[1].timers == listOf(Timer(40.minutes, "Simmer")) }
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.timer(1, 0)) }
+        assertEquals("Simmer · 40 min", compose.rowText(StepSheetTags.timer(1, 0)))
+    }
+
+    /** What a tap on the control tagged [tag] does, to be run with others within one frame. */
+    private fun clickOf(tag: String): () -> Boolean =
+        compose.onNodeWithTag(tag).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
+
+    // Once an action has set the sheet on its way out, a tap within the same frame does nothing: Insert below then
+    // Remove opens the step put below and leaves the step itself; Done then Move up then Remove closes the sheet with
+    // the step neither moved nor removed.
+    @Test
+    fun nothingIsActedOnOnceTheSheetIsOnItsWayOut() {
+        val id = open(draft())
+        val texts = listOf("Peel  beets.", "Simmer.", "", "Serve.")
+        compose.openStep(1)
+        val insert = clickOf(EditorTags.stepAction(1, RowAction.INSERT_BELOW))
+        val remove = clickOf(EditorTags.stepRemove(1))
+        compose.runOnUiThread {
+            insert()
+            remove()
+        }
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepText(2)) }
+        compose.waitForIdle()
+        assertEquals(listOf("Peel  beets.", "Simmer.", "", "", "Serve."), stored(id).steps.map { it.text })
+        compose.closeStep()
+        compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 4 }
+        assertEquals(texts, stored(id).steps.map { it.text })
+        assertFalse(statementShown())
+
+        compose.openStep(1)
+        val done = clickOf(StepSheetTags.DONE)
+        val up = clickOf(EditorTags.stepAction(1, RowAction.MOVE_UP))
+        val removeAgain = clickOf(EditorTags.stepRemove(1))
+        compose.runOnUiThread {
+            done()
+            up()
+            removeAgain()
+        }
+        awaitClosed()
+        assertEquals(texts, stored(id).steps.map { it.text })
+        assertFalse(statementShown())
+    }
+
     // A frozen recipe's steps read as the same text and open nothing.
     @Test
     fun aFrozenRecipesStepsReadAsTextAndOpenNothing() {
         open(draft(RecipeState.PUBLISHED))
         assertEquals(listOf("Peel 500 g beets.", "Simmer.", "New step", "Serve."), (0..3).map { compose.stepLine(it) })
-        assertEquals("Wear gloves.", compose.rowText(StepSheetTags.note(0)))
+        // Said as the author's, as nothing else on a frozen row says whose it is.
+        assertEquals("Author's note: Wear gloves.", compose.rowText(StepSheetTags.note(0)))
         assertEquals("Simmer · 40 min", compose.rowText(StepSheetTags.timer(1, 0)))
         (0..3).forEach { position ->
             val line = compose.onNodeWithTag(StepSheetTags.line(position), useUnmergedTree = true).fetchSemanticsNode()

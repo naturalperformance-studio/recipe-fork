@@ -144,13 +144,14 @@ internal fun Steps(
         // The step was deleted, or the recipe can no longer be changed: the sheet goes.
         LaunchedEffect(shownKey) { open = null }
     }
-    // The sheet of the step [key] closes; a step just added that holds nothing goes again, as it was never written. The
-    // author has left the steps' fields, which marks the steps (FLOW-028), as leaving them in the editor does.
-    fun closed(key: Long) {
+    // The sheet of the step [key] closes; a step just added that holds nothing goes again, as it was never written — but
+    // not while a photograph or a clip is being [prepared] for it, which it then holds. The author has left the steps'
+    // fields, which marks the steps (FLOW-028), as leaving them in the editor does.
+    fun closed(key: Long, prepared: Boolean) {
         if (open == key) open = null
         if (fresh == key) {
             fresh = null
-            editor.stepPosition(key)?.let(editor::dropStep)
+            if (!prepared) editor.stepPosition(key)?.let(editor::dropStep)
         }
         editor.leave(RecipePart.Steps)
     }
@@ -203,12 +204,12 @@ internal fun Steps(
                                     val inserted = if (above) at else at + 1
                                     if (editor.insertStep(inserted)) {
                                         val added = editor.stepKey(inserted)
-                                        closed(key)
+                                        closed(key, held.photo.attaching.working.value)
                                         editor.stepPosition(added)?.let(::opened)
                                     }
                                 }
                             },
-                            close = { closed(key) },
+                            close = { closed(key, held.photo.attaching.working.value) },
                         )
                         StepSheet(position, steps.size, step, media, recipe.ingredients, dictionary, language, editor, stating == position, photos, held, focus, host)
                     }
@@ -336,7 +337,9 @@ private fun StepLine(
                     StepText(step, references, style = MaterialTheme.typography.bodyLarge, tag = StepSheetTags.text(position))
                 }
                 step.note?.let {
-                    Text(it, style = MaterialTheme.typography.bodyMedium, color = muted, modifier = Modifier.testTag(StepSheetTags.note(position)))
+                    // A frozen recipe's row says whose it is, as nothing else there does: "Author's note: …".
+                    val note = if (editor == null) stringResource(R.string.editor_step_note_read_only, it) else it
+                    Text(note, style = MaterialTheme.typography.bodyMedium, color = muted, modifier = Modifier.testTag(StepSheetTags.note(position)))
                 }
             }
             if (media != null) StepThumbnail(position, media, photos, waiting)

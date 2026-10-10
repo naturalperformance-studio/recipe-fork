@@ -98,6 +98,7 @@
     <string name="editor_step_remove_action">Убрать шаг %1$d</string>
     <string name="editor_step_note">Заметка автора</string>
     <string name="editor_step_note_hint">Остаётся у вас, когда кто-то делает свою версию рецепта</string>
+    <string name="editor_step_note_read_only">Заметка автора: %1$s</string>
     <string name="editor_step_insert_ingredient_label">Вставить ингредиент в шаг %1$d</string>
     <string name="editor_step_insert_ingredient_action">Вставить количество ингредиента в шаг %1$d</string>
     <string name="editor_step_insert_ingredient_none">В рецепте пока нет ингредиентов</string>

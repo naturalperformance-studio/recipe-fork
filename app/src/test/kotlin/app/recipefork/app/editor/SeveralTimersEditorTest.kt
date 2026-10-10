@@ -297,6 +297,8 @@ class SeveralTimersEditorTest {
         compose.awaitStatement(string(R.string.editor_step_removed, 1))
         compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps == listOf(Step(0, "Bake.", timers = listOf(Timer(25.minutes)))) }
         assertEquals(listOf("25"), minutesShown(0, 1))
+        // The Undo, back in sight once that step's sheet is closed again.
+        compose.awaitStatementOnceSheetCloses(string(R.string.editor_step_removed, 1))
 
         undo()
         compose.waitUntil(PATIENCE_MS) { stored(recipe.id).steps == recipe.steps }
@@ -384,12 +386,14 @@ class SeveralTimersEditorTest {
         compose.openStep(0)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0, 1)), PATIENCE_MS)
         compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0, 1)).performScrollTo().performClick()
-        compose.awaitStatement(string(R.string.editor_timer_removed_numbered, 1, 2))
-        assertEquals("Timer 2 removed from step 1", string(R.string.editor_timer_removed_numbered, 1, 2))
         compose.waitUntil(PATIENCE_MS) { timers(recipe.id) == listOf(three[0], three[2]) }
         assertEquals(listOf("10", "5"), minutesShown(0, 2))
         assertEquals(listOf("Dough", "Glaze"), (0..1).map { fieldText(EditorTags.timerName(0, it)) })
         assertFalse(exists(EditorTags.timerMinutes(0, 2)))
+        // Said once the sheet is closed — not behind it, out of reach.
+        compose.closeStep()
+        compose.awaitStatement(string(R.string.editor_timer_removed_numbered, 1, 2))
+        assertEquals("Timer 2 removed from step 1", string(R.string.editor_timer_removed_numbered, 1, 2))
 
         undo()
         compose.waitUntil(PATIENCE_MS) { timers(recipe.id) == three }
@@ -400,6 +404,7 @@ class SeveralTimersEditorTest {
 
         // Removed again and left to go: the others stay, and the removed one stays off.
         compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0, 0)).performScrollTo().performClick()
+        compose.closeStep()
         compose.awaitStatement(string(R.string.editor_timer_removed_numbered, 1, 1))
         compose.swipeAwayStatement()
         assertEquals(three.drop(1), timers(recipe.id))
@@ -415,6 +420,7 @@ class SeveralTimersEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerRemove(0, 2)), PATIENCE_MS)
         assertEquals("Убрать таймер 3 шага 1", AccessibilityChecks.announcedLabel(compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0, 2)).fetchSemanticsNode()))
         compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0, 2)).performScrollTo().performClick()
+        compose.closeStep()
         compose.awaitStatement("Таймер 3 шага 1 убран")
     }
 
@@ -524,10 +530,16 @@ class SeveralTimersEditorTest {
         AccessibilityChecks.assertDistinctLabels(compose)
     }
 
-    /** Removes the timer row at [place]; the notice of its removal says [said]. */
+    /**
+     * Removes the timer row at [place]; the notice of its removal, said once the step's sheet is closed, says [said]. The
+     * sheet is opened again after.
+     */
     private fun removeAndHear(place: Int, said: String) {
         compose.inStep(0).onNodeWithTag(EditorTags.timerRemove(0, place)).performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.closeStep()
         compose.awaitStatement(said)
+        compose.openStep(0)
     }
 
     /** The label of the text field tagged [tag]. */

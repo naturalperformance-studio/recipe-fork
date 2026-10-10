@@ -262,7 +262,7 @@ class StepAnimationEditorTest {
 
     /** Waits until [text] is said at the bottom of the editor and checks it is not written in the step's block. */
     private fun awaitNotice(position: Int, text: String) {
-        compose.awaitStatement(text)
+        compose.awaitStatementOnceSheetCloses(text)
         compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(EditorTags.step(position))), useUnmergedTree = true)
             .assertDoesNotExist()
     }
@@ -419,7 +419,7 @@ class StepAnimationEditorTest {
 
         choosePhoto(0, picture("animated.gif"))
 
-        compose.awaitStatement("Видео прикреплено. Оно сжато на этом телефоне до 1280 пикселей и 6 МБ, звук удалён.")
+        compose.awaitStatementOnceSheetCloses("Видео прикреплено. Оно сжато на этом телефоне до 1280 пикселей и 6 МБ, звук удалён.")
         compose.waitUntil(PATIENCE_MS) { clipAt(id, 0) != null }
     }
 

@@ -444,23 +444,27 @@ class StepHintsEditorTest {
         assertTrue(notificationText(0).contains("Chicken into the oven for 40 minutes"))
     }
 
-    // The display does not push the field the author went on to: leaving the step's text for its note, which stands
-    // above the timers in the step's sheet, the note stays where it was in the sheet's content. (The second step, so
-    // that the references' offer of the first, which goes as the text is left, plays no part.)
+    // Appearing above the field the author went on to, the display does not push that field away: leaving the step's
+    // text for its second timer's hours, the first timer's display comes above them, and the sheet scrolls by as much.
+    // (The second step, so that the references' offer of the first, which goes as the text is left, plays no part.)
     @Test
     @Config(qualifiers = "w360dp-h640dp")
     fun theDisplayDoesNotPushTheFieldTheAuthorWentOnTo() {
-        openDirectly(draft(Step(0, "Heat the oven."), Step(1, longStep, timer = Timer(40.minutes))))
+        openDirectly(draft(Step(0, "Heat the oven."), Step(1, longStep, timers = listOf(Timer(40.minutes), Timer(10.minutes)))))
         enter(EditorTags.stepText(1))
-        val before = compose.inSheetContent(StepNoteTags.field(1))
-        compose.inStep(1).onNodeWithTag(StepNoteTags.field(1)).performSemanticsAction(SemanticsActions.RequestFocus)
-        awaitNotification(1)
+        val hours = EditorTags.timerHours(1, 1)
+        compose.onNodeWithTag(hours).performScrollTo()
         compose.waitForIdle()
-        val after = compose.inSheetContent(StepNoteTags.field(1))
-        // Within a few pixels: the fields above it settle as the focus moves.
-        assertEquals(before.top, after.top, 3f)
-        assertEquals(before.bottom, after.bottom, 3f)
-        compose.inStep(1).onNodeWithTag(StepNoteTags.field(1)).assertIsFocused()
+        // Where the author sees it, in the sheet's window.
+        val before = compose.onNodeWithTag(hours).fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithTag(hours).performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.timerNotification(1, 0)), PATIENCE_MS)
+        compose.waitForIdle()
+        val after = compose.onNodeWithTag(hours).fetchSemanticsNode().boundsInRoot
+        assertTrue("the display stands above the field", bounds(EditorTags.timerNotification(1, 0)).bottom <= bounds(hours).top)
+        assertEquals(before.top, after.top, 1f)
+        assertEquals(before.bottom, after.bottom, 1f)
+        compose.onNodeWithTag(hours).assertIsFocused()
     }
 
     @Test

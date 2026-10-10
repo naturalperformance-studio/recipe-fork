@@ -179,7 +179,7 @@ class PhotoWorkingTest {
         assertNull(stored(id).cover)
 
         letGo()
-        compose.awaitStatement(PROCESSED)
+        compose.awaitStatementOnceSheetCloses(PROCESSED)
         compose.waitUntil(PATIENCE_MS) { !exists(CoverTags.WORKING) && exists(CoverTags.IMAGE) }
         assertTrue(stored(id).cover != null)
     }
@@ -192,7 +192,7 @@ class PhotoWorkingTest {
         awaitWorking(CoverTags.WORKING)
 
         letGo()
-        compose.awaitStatement(UNREADABLE)
+        compose.awaitStatementOnceSheetCloses(UNREADABLE)
         compose.waitUntil(PATIENCE_MS) { !exists(CoverTags.WORKING) }
         assertTrue(stored(id).media.isEmpty())
     }
@@ -206,7 +206,7 @@ class PhotoWorkingTest {
         assertTrue(!exists(EditorTags.stepPhotoWorking(0)) && !exists(CoverTags.WORKING))
 
         letGo()
-        compose.awaitStatement(PROCESSED)
+        compose.awaitStatementOnceSheetCloses(PROCESSED)
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPhotoWorking(1)) && exists(EditorTags.stepPhotoImage(1)) }
         assertTrue(stored(id).stepPhoto(1) != null)
     }
@@ -219,7 +219,7 @@ class PhotoWorkingTest {
         awaitWorking(EditorTags.stepPhotoWorking(0))
 
         letGo()
-        compose.awaitStatement(UNREADABLE)
+        compose.awaitStatementOnceSheetCloses(UNREADABLE)
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepPhotoWorking(0)) }
         assertTrue(stored(id).media.isEmpty())
     }

@@ -427,6 +427,27 @@ class BoundMarksEditorTest {
         assertSamePlace(before, after)
     }
 
+    // In the step's sheet, the step's mark appearing above the field the author went on to — its note — does not push
+    // that field away: the sheet scrolls by as much.
+    @Test
+    @Config(qualifiers = "w360dp-h640dp")
+    fun theStepsMarkDoesNotPushTheNoteTheAuthorWentOnTo() {
+        // Timers under the note, so that the sheet is taller than the screen and scrolls.
+        val timers = listOf(Timer(5.minutes), Timer(10.minutes), Timer(15.minutes))
+        openDirectly(draft { it.copy(title = "Tea", steps = listOf(Step(0, "Boil."), Step(1, "s".repeat(2_001), timers = timers))) })
+        enter(EditorTags.stepText(1))
+        compose.onNodeWithTag(StepNoteTags.field(1)).performScrollTo()
+        compose.waitForIdle()
+        val before = compose.onNodeWithTag(StepNoteTags.field(1)).fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithTag(StepNoteTags.field(1)).performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.stepMark(1)) }
+        compose.waitForIdle()
+        val after = compose.onNodeWithTag(StepNoteTags.field(1)).fetchSemanticsNode().boundsInRoot
+        // Its top where it was; its bottom within the pixels the field grows by as its label rises with the focus.
+        assertEquals(before.top, after.top, 1f)
+        assertEquals(before.bottom, after.bottom, 3f)
+    }
+
     /** A recipe whose second step is over its limit and marked; returns its identity. */
     private fun markedSecondStep(): RecipeId {
         val id = openDirectly(draft { it.copy(title = "Tea", steps = listOf(Step(0, "Boil."), Step(1, "s".repeat(2_001)))) })

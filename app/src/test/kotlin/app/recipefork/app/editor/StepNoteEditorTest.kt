@@ -268,7 +268,7 @@ class StepNoteEditorTest {
     fun aFrozenRecipeShowsTheNoteReadOnly() {
         open(draft(RecipeState.PUBLISHED, secondNote = note))
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.step(1)) }
-        assertTrue(compose.textsOf(StepSheetTags.line(1)).contains(note))
+        assertTrue(compose.textsOf(StepSheetTags.line(1)).contains("Author's note: $note"))
         val shown = compose.onNodeWithTag(StepSheetTags.note(1), useUnmergedTree = true).fetchSemanticsNode()
         assertFalse(shown.config.contains(SemanticsProperties.EditableText))
         val layout = mutableListOf<TextLayoutResult>().also { shown.config[SemanticsActions.GetTextLayoutResult].action!!(it) }.single()

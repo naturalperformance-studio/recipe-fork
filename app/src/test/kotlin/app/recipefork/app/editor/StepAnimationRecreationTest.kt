@@ -142,7 +142,7 @@ class StepAnimationRecreationTest {
         images.gate!!.complete(Unit)
 
         val said = "Clip attached. It was converted on this phone to at most 1280 pixels and 6 MB, and its sound was removed."
-        compose.awaitStatement(said)
+        compose.awaitStatementOnceSheetCloses(said)
         compose.waitUntil(PATIENCE_MS) { stored().stepMedia(1)?.kind == MediaKind.VIDEO }
         assertEquals(1, compose.onAllNodes(hasText(said), useUnmergedTree = true).fetchSemanticsNodes().size)
         assertFalse(exists(CropTags.SCREEN))

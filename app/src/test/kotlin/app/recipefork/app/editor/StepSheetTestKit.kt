@@ -133,3 +133,12 @@ fun ComposeTestRule.inSheetContent(tag: String): Rect {
     val node = onNodeWithTag(tag).fetchSemanticsNode()
     return Rect(node.positionInRoot, node.size.toSize()).translate(0f, scrolled - scroll.positionInRoot.y)
 }
+
+/**
+ * Waits until [text] is the one statement said at the bottom of the editor, once the open step's sheet — which the
+ * editor's statements wait behind — is closed.
+ */
+fun ComposeTestRule.awaitStatementOnceSheetCloses(text: String) {
+    closeStep()
+    awaitStatement(text)
+}

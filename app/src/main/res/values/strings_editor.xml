@@ -114,6 +114,8 @@
          behind (FORK-007). -->
     <string name="editor_step_note">Author\'s note</string>
     <string name="editor_step_note_hint">Stays with you when someone else forks the recipe</string>
+    <!-- How a frozen recipe's step row shows the step's note: %1$s is the note. -->
+    <string name="editor_step_note_read_only">Author\'s note: %1$s</string>
     <!-- An ingredient's quantity inside a step's text: inserted from the step's control or by typing @ (FLOW-031). -->
     <string name="editor_step_insert_ingredient_label">Insert an ingredient into step %1$d</string>
     <string name="editor_step_insert_ingredient_action">Insert an ingredient\'s quantity into step %1$d</string>

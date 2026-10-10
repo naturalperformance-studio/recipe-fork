@@ -169,8 +169,9 @@ class StepClipRecreationTest {
         gate.complete(Unit)
 
         val said = "Clip attached. It was converted on this phone to at most 1280 pixels and 6 MB, and its sound was removed."
-        compose.awaitStatement(said)
-        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(1)) && exists(EditorTags.stepClipImage(1)) }
+        compose.awaitStatementOnceSheetCloses(said)
+        // On its step's row, the sheet left closed so that the statement stays in sight.
+        compose.waitUntil(PATIENCE_MS) { onRow(StepSheetTags.thumbnail(1)) }
         assertEquals(MediaKind.VIDEO, stored().stepMedia(1)!!.kind)
         assertEquals(1, stored().media.size)
         compose.onAllNodes(hasText(said), useUnmergedTree = true).fetchSemanticsNodes().let { assertEquals(1, it.size) }

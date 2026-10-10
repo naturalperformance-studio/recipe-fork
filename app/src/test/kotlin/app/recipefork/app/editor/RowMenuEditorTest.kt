@@ -220,9 +220,9 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTagMatching(Regex(".*-insert-above"))).fetchSemanticsNodes().isEmpty() }
     }
 
-    // FLOW-025 (1, 2, 6), A11Y-006: every editable step carries a 48 dp menu named for its row, and every ingredient
-    // row's sheet the same actions, with "Insert above", "Insert below", "Move up" and "Move down" — none to move the
-    // first up or the last down; an ingredient row's also puts a group's heading above it (DOM-022).
+    // FLOW-025 (1, 2, 6), A11Y-006: every editable step's sheet — titled by its step — and every ingredient row's sheet
+    // carry the row's actions, each 48 dp and in words: "Insert above", "Insert below", "Move up" and "Move down" —
+    // none to move the first up or the last down; an ingredient row's also puts a group's heading above it (DOM-022).
     @Test
     fun everyRowCarriesAMenuNamedForItsRowInEnglish() = everyRowCarriesAMenuNamedForItsRow(
         listOf("Insert above", "Insert below", "Move up", "Move down", "Add group above"), "Step 2",
@@ -282,9 +282,9 @@ class RowMenuEditorTest(private val handleRight: Boolean) {
             AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = ingredientExpected[position].size)
             compose.closeIngredient()
         }
-        // With every sheet closed, each step and each row is one labelled target of 48 dp.
-        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 6)
-        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 6)
+        // With every sheet closed, each step and each row is one labelled target of 48 dp, among the editor's others.
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 11)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 11)
     }
 
     // FLOW-025 (1): a new empty step, or a new row exactly like an appended one, at the place chosen; the ones after
