@@ -124,7 +124,7 @@ class ShippedDictionaryTest {
         assertEquals(
             listOf(
                 "Stovetop cookware", "Oven and baking", "Appliances", "Knives and cutting", "Tools and utensils",
-                "Measuring", "Storage",
+                "Measuring tools", "Storage", "Consumables",
             ),
             groups.map { it.labelEn },
         )
@@ -144,5 +144,27 @@ class ShippedDictionaryTest {
                 assertTrue(label.split(' ').size <= 5 && label.last().isLetterOrDigit(), "$entry")
             }
         }
+    }
+
+    // T-204, from T-201's review: what is used up in cooking stands in a group of its own, which a kitchen never counts;
+    // the measuring group's English label says what its Russian one does; two vague synonyms are gone. Ids stay.
+    @Test
+    fun consumablesStandInAGroupOfTheirOwn() {
+        val equipment = built().dictionaries.equipment
+        val byId = equipment.associateBy { it.id }
+        val consumables = byId.getValue(10700L)
+        assertEquals(null, consumables.parentId)
+        assertEquals("Расходники" to "Consumables", consumables.labelRu to consumables.labelEn)
+        assertEquals(
+            setOf("Parchment paper", "Aluminium foil", "Roasting bag", "Cheesecloth", "Kitchen twine", "Paper towel", "Cling film", "Zip-lock bag", "Vacuum bag"),
+            equipment.filter { it.parentId == 10700L }.map { it.labelEn }.toSet(),
+        )
+        listOf(10119L, 10120L, 10121L, 10426L, 10427L, 10431L, 10603L, 10604L, 10605L).forEach {
+            assertEquals(10700L, byId.getValue(it).parentId, "$it")
+        }
+        assertEquals("Мерная посуда" to "Measuring tools", byId.getValue(10500L).let { it.labelRu to it.labelEn })
+        assertEquals(listOf("дегидратор"), byId.getValue(10228L).synonymsRu)
+        assertEquals(listOf("форма для запекания"), byId.getValue(10102L).synonymsRu)
+        assertTrue(equipment.none { "сушилка" in it.synonymsRu || "форма" in it.synonymsRu })
     }
 }
