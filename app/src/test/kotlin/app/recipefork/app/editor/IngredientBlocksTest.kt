@@ -259,6 +259,10 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         assertTrue(bounds(EditorTags.divisibility(0)).top >= bounds(EditorTags.ingredientUnit(0)).bottom - 0.5f)
     }
 
+    /** The sheet of row [position] is laid out at [fontScale] — its own window takes the scale from the configuration. */
+    private fun assertSheetAt(fontScale: Float, position: Int) =
+        assertEquals("the sheet's font scale", fontScale, layoutOf(EditorTags.ingredientName(position)).layoutInput.density.fontScale, 0.01f)
+
     // In the sheet, the name field, the quantity field and the unit select are of one height, and the quantity and the
     // unit stand level on their line — at font scale 1.0 and 2.0.
     @Test
@@ -266,17 +270,18 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     fun theInputsOfARowAreOfOneHeight() = inputsAreOfOneHeight(1f)
 
     @Test
-    @Config(qualifiers = "ru-w360dp-h4000dp")
+    @Config(qualifiers = "ru-w360dp-h4000dp", fontScale = 2f)
     fun theInputsOfARowAreOfOneHeightAtDoubleFontScale() = inputsAreOfOneHeight(2f)
 
     @Test
-    @Config(qualifiers = "en-w360dp-h4000dp")
+    @Config(qualifiers = "en-w360dp-h4000dp", fontScale = 2f)
     fun theInputsOfARowAreOfOneHeightInEnglishAtDoubleFontScale() = inputsAreOfOneHeight(2f)
 
     private fun inputsAreOfOneHeight(fontScale: Float) {
         open(fontScale)
         (0 until rows().size).forEach { position ->
             compose.openIngredient(position)
+            assertSheetAt(fontScale, position)
             // The name's field without the free-text hint under it.
             val name = bounds(EditorTags.ingredientName(position)).let { it.copy(bottom = it.bottom - hintHeight(position)) }
             val unit = bounds(EditorTags.ingredientUnit(position))
@@ -313,11 +318,11 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     // A11Y-004: at font scale 2.0 the quantity's label is not wrapped onto the name above it — where it cannot have one
     // line beside the unit, the quantity takes the whole line and the unit the line below, both from one left edge.
     @Test
-    @Config(qualifiers = "ru-w360dp-h4000dp")
+    @Config(qualifiers = "ru-w360dp-h4000dp", fontScale = 2f)
     fun theQuantityLabelHasOneLineAtDoubleFontScale() = quantityLabelHasOneLine()
 
     @Test
-    @Config(qualifiers = "en-w360dp-h4000dp")
+    @Config(qualifiers = "en-w360dp-h4000dp", fontScale = 2f)
     fun theQuantityLabelHasOneLineInEnglishAtDoubleFontScale() = quantityLabelHasOneLine()
 
     private fun quantityLabelHasOneLine() {
@@ -325,6 +330,7 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         val label = widthOf(string(R.string.editor_ingredient_quantity), 2f, Typography().bodySmall)
         listOf(0, 1, 3).forEach { position ->
             compose.openIngredient(position)
+            assertSheetAt(2f, position)
             val quantity = bounds(EditorTags.ingredientQuantity(position))
             val unit = bounds(EditorTags.ingredientUnit(position))
             assertTrue("row $position: the quantity (${quantity.width} px) has room for its label ($label px) on one line", quantity.width - px(32f) >= label)
@@ -409,13 +415,14 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     // Criterion 1 at large text: on a 360 dp phone at font scale 2.0 a row's line keeps room for about eight Cyrillic
     // letters, so "черемша" reads whole; its sheet's name field more than that.
     @Test
-    @Config(qualifiers = "ru-w360dp-h4000dp")
+    @Config(qualifiers = "ru-w360dp-h4000dp", fontScale = 2f)
     fun aFreeTextNameKeepsRoomForItsTextAtDoubleFontScale() {
         open(2f)
         val eight = widthOf("морковка", 2f)
         val line = lineTextWidth(0)
         assertTrue("the line leaves ${line / compose.density.density} dp for its text, eight letters take ${eight / compose.density.density} dp", line >= eight)
         compose.openIngredient(0)
+        assertSheetAt(2f, 0)
         val room = nameTextWidth(0)
         assertTrue("the name leaves ${room / compose.density.density} dp for its text, eight letters take ${eight / compose.density.density} dp", room >= eight)
     }
@@ -423,12 +430,13 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
     // On a 320 dp phone at font scale 2.0 the text of a free-text name still has room of its own, on the row and in the
     // sheet.
     @Test
-    @Config(qualifiers = "ru-w320dp-h4000dp")
+    @Config(qualifiers = "ru-w320dp-h4000dp", fontScale = 2f)
     fun aFreeTextNameKeepsUsableRoomOnANarrowPhoneAtDoubleFontScale() {
         open(2f)
         val four = widthOf("черм", 2f)
         assertTrue(lineTextWidth(0) >= four)
         compose.openIngredient(0)
+        assertSheetAt(2f, 0)
         val room = nameTextWidth(0)
         assertTrue("the name leaves ${room / compose.density.density} dp for its text, four letters take ${four / compose.density.density} dp", room >= four)
     }

@@ -544,6 +544,73 @@ class IngredientSheetTest {
         assertEquals("New ingredient", compose.ingredientLine(3))
     }
 
+    /** Taps the action tagged [tag] of the open sheet with the clock held: no frame passes, nothing of it is drawn yet. */
+    private fun tapHeld(tag: String) {
+        compose.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.OnClick)
+    }
+
+    // Remove tapped twice while the sheet goes down removes that row alone, once: its Undo puts back the recipe as it
+    // was. A Move tapped meanwhile does nothing either.
+    @Test
+    fun twoQuickRemovesRemoveThatRowOnce() {
+        val recipe = draft()
+        val id = open(recipe)
+        compose.openIngredient(1)
+        compose.mainClock.autoAdvance = false
+        tapHeld(EditorTags.ingredientRemove(1))
+        tapHeld(EditorTags.ingredientAction(1, RowAction.MOVE_UP))
+        compose.mainClock.advanceTimeBy(120)
+        tapHeld(EditorTags.ingredientRemove(1))
+        compose.mainClock.autoAdvance = true
+        awaitClosed()
+        compose.awaitStatement(string(R.string.editor_ingredient_removed, 2))
+        assertEquals(listOf(null, "salt", null), stored(id).ingredients.map { it.freeTextName })
+        assertEquals(1L, stored(id).ingredients[0].dictionaryEntry)
+        val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
+        compose.onNode(undo, useUnmergedTree = true).performClick()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        assertEquals(recipe.ingredients, stored(id).ingredients)
+    }
+
+    // A move tapped twice before the sheet is drawn again moves its row twice, each from where it stands then.
+    @Test
+    fun aMoveTappedTwiceMovesTheRowFromWhereItStands() {
+        val id = open(draft())
+        compose.openIngredient(2)
+        compose.mainClock.autoAdvance = false
+        tapHeld(EditorTags.ingredientAction(2, RowAction.MOVE_UP))
+        tapHeld(EditorTags.ingredientAction(2, RowAction.MOVE_UP))
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertEquals(listOf("salt", null, "onion", null), stored(id).ingredients.map { it.freeTextName })
+        assertEquals("salt", fieldText(EditorTags.ingredientName(0)))
+        compose.closeIngredient()
+    }
+
+    // Insert above or below from the sheet of a row just added and still holding nothing leaves that row behind no more:
+    // it goes, with nothing to undo, and the sheet opens on the row put in its place.
+    @Test
+    fun insertingFromAnEmptyNewRowDropsIt() {
+        val id = open(draft())
+        listOf(RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW).forEach { action ->
+            compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
+            awaitFocused(EditorTags.ingredientName(4))
+            compose.chooseInSheet(EditorTags.ingredientAction(4, action))
+            compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 5 }
+            awaitFocused(EditorTags.ingredientName(4))
+            assertFalse("$action", exists(EditorTags.ingredient(5)))
+            compose.onNodeWithTag(EditorTags.ingredientName(4)).performTextInput("pepper $action")
+            compose.closeIngredient()
+            assertEquals("$action", 5, stored(id).ingredients.size)
+            assertEquals("$action", "pepper $action", stored(id).ingredients[4].freeTextName)
+            compose.waitForIdle()
+            assertFalse("$action", exists(EditorTags.STATEMENT))
+            compose.removeIngredient(4)
+            compose.swipeAwayStatement()
+            compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == 4 }
+        }
+    }
+
     // A frozen recipe's rows read as the same lines and open nothing.
     @Test
     fun aFrozenRecipesRowsReadAsTextAndOpenNothing() {

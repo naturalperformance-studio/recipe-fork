@@ -239,6 +239,28 @@ class IngredientGroupsScreenTest {
         assertEquals("Glaze", compose.groupLine(1))
     }
 
+    // Remove tapped twice while a heading's sheet goes down removes that heading alone, once, and its Undo puts it back;
+    // a Move tapped meanwhile does nothing.
+    @Test
+    fun twoQuickRemovesRemoveThatHeadingOnce() {
+        val recipe = open(grouped)
+        compose.openGroup(0)
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag(EditorTags.groupRemove(0)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNodeWithTag(EditorTags.groupAction(0, RowAction.MOVE_DOWN)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.mainClock.advanceTimeBy(120)
+        compose.onNodeWithTag(EditorTags.groupRemove(0)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.mainClock.autoAdvance = true
+        compose.waitUntil(PATIENCE_MS) { !compose.groupSheetOpen() }
+        compose.awaitStatement(context.getString(R.string.editor_group_removed, 1))
+        awaitShape(recipe, "salt flour water Glaze: sugar butter")
+        compose.onNode(
+            hasText(context.getString(R.string.editor_undo)) and hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)),
+            useUnmergedTree = true,
+        ).performClick()
+        awaitShape(recipe, "salt Dough: flour water Glaze: sugar butter")
+    }
+
     // A heading reads as its name, a heading for the screen reader, whose tap — named "Edit group", a target at least
     // 48 dp tall — opens its sheet: the name, then its moves and its removal. Its sheet moves the group, rows and all,
     // past the group below — the first offers no "Move up" above the rows no group owns — and follows it; a row's sheet

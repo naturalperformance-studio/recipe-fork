@@ -635,7 +635,7 @@ class IngredientsEditorTest {
         compose.onNodeWithTag(EditorTags.SERVINGS).performTextInput("4")
         // A complete row, a row with no quantity, one off its grid, one that reads as no number, one to taste and a
         // piece whose divisibility is not given; and a row with nothing in it — one no longer new, which closing its
-        // sheet does not take away: the row added last, once a row is put above it from its sheet.
+        // sheet does not take away.
         val rows = listOf(
             Triple("мука", QuantityUnit.KILOGRAM, "0.5"),
             Triple("сахар", QuantityUnit.GRAM, ""),
@@ -651,11 +651,13 @@ class IngredientsEditorTest {
             if (unit != QuantityUnit.GRAM) chooseUnit(position, unit)
             if (quantity.isNotEmpty()) typeQuantity(position, quantity)
         }
-        compose.onIngredient(rows.lastIndex, RowAction.INSERT_ABOVE)
-        // The row put above opens in the sheet, holding nothing: closed so, it goes again.
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredientName(rows.lastIndex)) }
+        // Named, closed, and emptied again once no longer new: closing its sheet then leaves it.
+        compose.onNodeWithTag(EditorTags.ingredientName(rows.lastIndex)).performTextInput("лук")
         compose.closeIngredient()
-        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == rows.size }
+        compose.openIngredient(rows.lastIndex)
+        compose.onNodeWithTag(EditorTags.ingredientName(rows.lastIndex)).performTextReplacement("")
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == rows.size && stored(id).ingredients.last().freeTextName == null }
         val before = stored(id)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.backThroughTheCard()

@@ -195,10 +195,14 @@ internal fun IngredientSheet(
         leave()
         onClose()
     }
+    // Once on its way out — closing, or left for another row or a heading — the sheet takes no further action.
+    val going = remember { Going() }
+    val dismiss = { if (going.start()) close() }
     val done = {
-        focus?.clearFocus()
-        scope.launch { state.hide() }.invokeOnCompletion { close() }
-        Unit
+        if (going.start()) {
+            focus?.clearFocus()
+            scope.launch { state.hide() }.invokeOnCompletion { close() }
+        }
     }
     val entryDivisible = row.dictionaryEntry?.let { id -> dictionary?.firstOrNull { it.id == id }?.divisible }
     val chain = remember { RowChain() }
@@ -209,7 +213,7 @@ internal fun IngredientSheet(
         if (now == null || now.unitType != UnitType.PIECE || entryDivisible != null) done()
     }
     ModalBottomSheet(
-        onDismissRequest = close,
+        onDismissRequest = dismiss,
         sheetState = state,
         modifier = Modifier.testTag(IngredientSheetTags.SHEET),
         // No handle: the sheet opens whole, and Done, a swipe down or Back closes it.
@@ -234,17 +238,29 @@ internal fun IngredientSheet(
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 IngredientFields(position, row, editor, language, dictionary, mode, chain, entryDivisible, typed)
             }
-            SheetActions(actions) { action -> scope.take(action, state, leave, onClose) }
+            SheetActions(actions) { action -> scope.take(action, going, state, leave, onClose) }
         }
     }
 }
 
+/** Whether a sheet is on its way out: closing, or left for another row or a heading. */
+private class Going {
+    private var going = false
+
+    /** Sets the sheet on its way out; false where it already was, so that whatever asked does nothing. */
+    fun start(): Boolean = !going.also { going = true }
+
+    val now: Boolean get() = going
+}
+
 /**
- * Does [action] of the sheet whose state is [state]: [leave] first where it [SheetAction.leaves] the sheet's fields; a
- * removal once the sheet has gone down, after which the sheet is done ([onClose]).
+ * Does [action] of the sheet whose state is [state], unless the sheet is [going] already — a second tap during its way
+ * out does nothing: [leave] first where it [SheetAction.leaves] the sheet's fields, which sets the sheet on its way out;
+ * a removal once the sheet has gone down, after which the sheet is done ([onClose]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
-private fun CoroutineScope.take(action: SheetAction, state: SheetState, leave: () -> Unit, onClose: () -> Unit) {
+private fun CoroutineScope.take(action: SheetAction, going: Going, state: SheetState, leave: () -> Unit, onClose: () -> Unit) {
+    if (going.now || (action.leaves || action.destructive) && !going.start()) return
     if (action.leaves) leave()
     if (!action.destructive) return action.onClick()
     launch { state.hide() }.invokeOnCompletion {
@@ -807,14 +823,18 @@ internal fun GroupSheet(
         settle()
         onClose()
     }
+    // Once on its way out — closing, or left for a row — the sheet takes no further action.
+    val going = remember { Going() }
+    val dismiss = { if (going.start()) close() }
     val done = {
-        leave()
-        scope.launch { state.hide() }.invokeOnCompletion { close() }
-        Unit
+        if (going.start()) {
+            leave()
+            scope.launch { state.hide() }.invokeOnCompletion { close() }
+        }
     }
     val requester = remember { FocusRequester() }
     ModalBottomSheet(
-        onDismissRequest = close,
+        onDismissRequest = dismiss,
         sheetState = state,
         modifier = Modifier.testTag(GroupSheetTags.SHEET),
         dragHandle = null,
@@ -848,8 +868,10 @@ internal fun GroupSheet(
                     keyboardActions = KeyboardActions(
                         onDone = { done() },
                         onNext = {
-                            settle()
-                            onNext?.invoke()
+                            if (going.start()) {
+                                settle()
+                                onNext?.invoke()
+                            }
                         },
                     ),
                     modifier = Modifier
@@ -860,7 +882,7 @@ internal fun GroupSheet(
                 )
                 BoundMark(editor, RecipePart.GroupName(index), GroupSheetTags.nameMark(index), gap = 4.dp, Modifier.padding(top = 4.dp))
             }
-            SheetActions(actions) { action -> scope.take(action, state, leave, onClose) }
+            SheetActions(actions) { action -> scope.take(action, going, state, leave, onClose) }
         }
     }
 }

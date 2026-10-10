@@ -289,9 +289,10 @@ internal fun Ingredients(
         val shownKey = open
         val position = shownKey?.let(editor::ingredientPosition)
         if (shownKey != null && (position == null || !editable)) {
-            // The row was deleted, or the recipe can no longer be changed: the sheet goes.
+            // The row was deleted, or the recipe can no longer be changed: the sheet goes — unless it has gone on to
+            // another row meanwhile.
             LaunchedEffect(shownKey) {
-                open = null
+                if (open == shownKey) open = null
                 if (fresh == shownKey) fresh = null
             }
         } else if (shownKey != null && position != null) {
@@ -300,10 +301,14 @@ internal fun Ingredients(
                 val place = ItemPlace(items.indexOf(ListItem.Row(position)), items, recipe.ingredientGroups.any { it.firstPosition == position })
                 val actions = rowActions(
                     position, place, editor,
-                    // The row put above or below opens in the sheet in this one's place, as one added does.
+                    // The row put above or below opens in the sheet in this one's place, as one added does; this one,
+                    // added and left holding nothing, goes as it would on closing.
                     onInserted = { at ->
-                        fresh = editor.ingredientKey(at)
-                        rows.ask(at)
+                        val inserted = editor.ingredientKey(at)
+                        if (fresh == shownKey) dropIfEmpty(editor, shownKey)
+                        fresh = inserted
+                        open = inserted
+                        editor.ingredientPosition(inserted)?.let(rows::ask)
                     },
                     // The heading put above the row opens in its sheet, with its name focused; the row stays.
                     onGroup = { index ->
@@ -315,8 +320,7 @@ internal fun Ingredients(
                     open = null
                     if (fresh == shownKey) {
                         fresh = null
-                        val at = editor.ingredientPosition(shownKey)
-                        if (at != null && editor.recipe.value?.ingredients?.getOrNull(at)?.holdsNothing() == true) editor.dropIngredient(at)
+                        dropIfEmpty(editor, shownKey)
                     }
                 }
             }
@@ -325,18 +329,24 @@ internal fun Ingredients(
         val groupIndex = groupKey?.let(editor::groupIndex)
         if (groupKey != null && (groupIndex == null || !editable)) {
             // The heading was removed, or the recipe can no longer be changed: the sheet goes.
-            LaunchedEffect(groupKey) { openGroup = null }
+            LaunchedEffect(groupKey) { if (openGroup == groupKey) openGroup = null }
         } else if (groupKey != null && groupIndex != null) {
             key(GroupKey(groupKey)) {
                 val owned = recipe.groupRows(groupIndex)
                 GroupSheet(
                     groupIndex, groupKey, recipe.ingredientGroups[groupIndex].name, editor, headings,
-                    groupActions(groupIndex, recipe, editor),
+                    groupActions(groupIndex, groupKey, recipe, editor),
                     onNext = if (owned.isEmpty()) null else ({ rows.ask(owned.first) }),
                 ) { openGroup = null }
             }
         }
     }
+}
+
+/** Drops the row whose key is [key] where it still stands holding nothing ([RecipeEditor.dropIngredient]). */
+private fun dropIfEmpty(editor: RecipeEditor, key: Long) {
+    val at = editor.ingredientPosition(key) ?: return
+    if (editor.recipe.value?.ingredients?.getOrNull(at)?.holdsNothing() == true) editor.dropIngredient(at)
 }
 
 /** Whether a row holds nothing the author wrote: no name, no amount — held or typed — and no note. Its unit is no content. */
@@ -463,22 +473,31 @@ private fun rowActions(
 ): List<SheetAction> {
     val label = RowAction.entries.associateWith { stringResource(it.label) }
     val remove = stringResource(R.string.editor_ingredient_remove)
+    // Each action finds its row by its key when it is done, wherever it stands then; a row gone is left alone.
+    val key = editor.ingredientKey(position)
+    fun now(): Int? = editor.ingredientPosition(key)
+    fun move(by: Int) {
+        val items = editor.recipe.value?.listItems ?: return
+        val at = items.indexOf(ListItem.Row(now() ?: return))
+        editor.moveIngredientItem(at, at + by)
+    }
     fun action(action: RowAction, leaves: Boolean, onClick: () -> Unit) =
         SheetAction(label.getValue(action), EditorTags.ingredientAction(position, action), leaves = leaves, onClick = onClick)
     return buildList {
-        if (place.movable && place.at > 0) add(action(RowAction.MOVE_UP, false) { editor.moveIngredientItem(place.at, place.at - 1) })
-        if (place.movable && place.at < place.count - 1) add(action(RowAction.MOVE_DOWN, false) { editor.moveIngredientItem(place.at, place.at + 1) })
-        add(action(RowAction.INSERT_ABOVE, true) { if (editor.insertIngredient(position)) onInserted(position) })
-        add(action(RowAction.INSERT_BELOW, true) { if (editor.insertIngredient(position + 1, intoGroupAbove = true)) onInserted(position + 1) })
+        if (place.movable && place.at > 0) add(action(RowAction.MOVE_UP, false) { move(-1) })
+        if (place.movable && place.at < place.count - 1) add(action(RowAction.MOVE_DOWN, false) { move(1) })
+        add(action(RowAction.INSERT_ABOVE, true) { now()?.let { if (editor.insertIngredient(it)) onInserted(it) } })
+        add(action(RowAction.INSERT_BELOW, true) { now()?.let { if (editor.insertIngredient(it + 1, intoGroupAbove = true)) onInserted(it + 1) } })
         if (!place.startsGroup) {
             add(
                 action(RowAction.GROUP_ABOVE, true) {
-                    val index = editor.recipe.value?.ingredientGroups?.count { it.firstPosition < position }
-                    if (editor.addGroup(position) && index != null) onGroup(index)
+                    val at = now() ?: return@action
+                    val index = editor.recipe.value?.ingredientGroups?.count { it.firstPosition < at }
+                    if (editor.addGroup(at) && index != null) onGroup(index)
                 },
             )
         }
-        add(SheetAction(remove, EditorTags.ingredientRemove(position), leaves = true, destructive = true) { editor.removeIngredient(position) })
+        add(SheetAction(remove, EditorTags.ingredientRemove(position), leaves = true, destructive = true) { now()?.let(editor::removeIngredient) })
     }
 }
 
@@ -525,22 +544,27 @@ private fun GroupHeading(
 }
 
 /**
- * The actions of the heading at [index] in its sheet: moving the group, heading and rows, past the group above or below
- * it — never above the rows no group owns, nor past a group with no rows yet — and its removal, last and in the error
- * colour, which leaves its rows where they are, in the group above or in none, and is offered for undoing.
+ * The actions of the heading at [index], whose key is [key], in its sheet: moving the group, heading and rows, past the
+ * group above or below it — never above the rows no group owns, nor past a group with no rows yet — and its removal,
+ * last and in the error colour, which leaves its rows where they are, in the group above or in none, and is offered for
+ * undoing.
  */
 @Composable
-private fun groupActions(index: Int, recipe: Recipe, editor: RecipeEditor): List<SheetAction> {
+private fun groupActions(index: Int, key: Long, recipe: Recipe, editor: RecipeEditor): List<SheetAction> {
     val up = stringResource(RowAction.MOVE_UP.label)
     val down = stringResource(RowAction.MOVE_DOWN.label)
     val remove = stringResource(R.string.editor_group_remove)
     val filled = !recipe.groupRows(index).isEmpty()
+    // Each action finds its heading by its [key] when it is done, wherever it stands then; a heading gone is left alone.
+    fun now(): Int? = editor.groupIndex(key)
     return buildList {
-        if (filled && index > 0) add(SheetAction(up, EditorTags.groupAction(index, RowAction.MOVE_UP)) { editor.moveGroup(index, down = false) })
-        if (filled && index + 1 < recipe.ingredientGroups.size && !recipe.groupRows(index + 1).isEmpty()) {
-            add(SheetAction(down, EditorTags.groupAction(index, RowAction.MOVE_DOWN)) { editor.moveGroup(index, down = true) })
+        if (filled && index > 0) {
+            add(SheetAction(up, EditorTags.groupAction(index, RowAction.MOVE_UP)) { now()?.let { editor.moveGroup(it, down = false) } })
         }
-        add(SheetAction(remove, EditorTags.groupRemove(index), leaves = true, destructive = true) { editor.removeGroup(index) })
+        if (filled && index + 1 < recipe.ingredientGroups.size && !recipe.groupRows(index + 1).isEmpty()) {
+            add(SheetAction(down, EditorTags.groupAction(index, RowAction.MOVE_DOWN)) { now()?.let { editor.moveGroup(it, down = true) } })
+        }
+        add(SheetAction(remove, EditorTags.groupRemove(index), leaves = true, destructive = true) { now()?.let(editor::removeGroup) })
     }
 }
 
