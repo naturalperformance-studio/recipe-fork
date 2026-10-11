@@ -207,12 +207,12 @@ private fun ListContent(
         state = rememberLazyListState(),
         contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 16.dp),
     ) {
-        item(key = "recipes") { Heading(R.string.shopping_recipes) }
+        item(key = RECIPES_KEY) { Heading(R.string.shopping_recipes) }
         items(entries, key = { "${it.listed.book}/${it.listed.recipe.value}" }) { entry ->
             val title = entry.recipe.title.trim().ifEmpty { untitled }
             RecipeBlock(entry, title, onServings = { onServings(entry, it) }, onRemove = { onRemove(entry, title) })
         }
-        item(key = "lines") {
+        item(key = LINES_KEY) {
             Column {
                 HorizontalDivider(Modifier.padding(top = 8.dp))
                 Heading(R.string.shopping_to_buy)
@@ -221,6 +221,10 @@ private fun ListContent(
         itemsIndexed(lines) { index, line -> Line(line, Modifier.testTag(ShoppingTags.line(index))) }
     }
 }
+
+/** The list's keys of its two headings. */
+private const val RECIPES_KEY = "recipes"
+private const val LINES_KEY = "lines"
 
 @Composable
 private fun Heading(title: Int) {

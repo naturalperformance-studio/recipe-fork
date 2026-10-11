@@ -88,7 +88,7 @@ fun shownLines(
     language: InterfaceLanguage,
     resources: Resources,
 ): List<ShownLine> {
-    val measures = dictionary.mapValues { (_, entry) -> EntryMeasures(entry.divisible, entry.factors) }
+    val measures = dictionary.mapValues { (_, entry) -> EntryMeasures.of(entry.toDto()) }
     val recipes = entries.map { entry ->
         ShoppingRecipe(entry.recipe.id, entry.recipe.ingredients.sortedBy { it.position }, entry.authoredServings, entry.servings)
     }
