@@ -27,11 +27,14 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
+import app.recipefork.core.scaling.UnitLabels
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -114,8 +117,19 @@ class CardStepReferencesTest {
     /** The step at [position] as the screen reader reads it: its number, then its one sentence. */
     private fun spoken(position: Int): List<String> = compose.textsOf(CardTags.step(position))
 
-    /** The quantity the list shows for the row at [position], or null where it shows none. */
-    private fun listQuantity(position: Int): String? = compose.textsOf(CardTags.ingredient(position)).getOrNull(1)
+    /**
+     * The amount the list shows for the row at [position]: its quantity, or for a row to taste the words after its name
+     * ("Pepper — to taste", T-217); null where it shows none.
+     */
+    private fun listQuantity(position: Int): String? = compose.textsOf(CardTags.ingredient(position)).let { texts ->
+        texts.getOrNull(1) ?: ingredients[position].takeIf { it.unitType == UnitType.TASTE_UNMEASURED }?.let { texts.single().substringAfter(" — ") }
+    }
+
+    /** The label of [unit] in the interface language in force. */
+    private fun unitLabel(unit: QuantityUnit): String = UnitLabels.of(
+        unit,
+        if (context.resources.configuration.locales[0].language == "ru") InterfaceLanguage.RUSSIAN else InterfaceLanguage.ENGLISH,
+    )
 
     /** The arrow the list shows after the row's quantity, or null. */
     private fun listArrow(position: Int): String? =
@@ -130,10 +144,12 @@ class CardStepReferencesTest {
     private fun assertStepsReadAsTheList() {
         ingredients.forEach { ingredient ->
             val p = ingredient.position
-            // A row with no quantity yet reads as the editor writes it: the placeholder, then the unit the list shows.
+            // A row with no quantity yet reads as the editor writes it: the placeholder, then its unit — which the list,
+            // showing no amount, no longer shows (T-217).
             val unfinished = ingredient.quantity == null && ingredient.unitType != UnitType.TASTE_UNMEASURED
+            if (unfinished) assertNull("${ingredient.freeTextName} shows a unit with no amount", listQuantity(p))
             // Held together in the step, its spaces no-break spaces, so it never wraps inside (T-191).
-            val quantity = (if (unfinished) listOfNotNull("___", listQuantity(p)).joinToString(" ") else listQuantity(p)!!)
+            val quantity = (if (unfinished) listOfNotNull("___", ingredient.unit?.let(::unitLabel)).joinToString(" ") else listQuantity(p)!!)
                 .replace(' ', '\u00A0')
             val arrow = listArrow(p)?.let { " $it" } ?: ""
             assertEquals("${ingredient.freeTextName} at ${servings()}", "Take $quantity$arrow.", shown(p + 1))

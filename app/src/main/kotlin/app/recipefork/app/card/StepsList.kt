@@ -60,6 +60,7 @@ import app.recipefork.app.timer.TimerNotificationsCheck
 import app.recipefork.app.timer.TimerStep
 import app.recipefork.app.timer.rememberRecipeTimers
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepText
 import kotlinx.coroutines.flow.StateFlow
@@ -85,10 +86,11 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * A tap on a step's line — its number and text — marks it done, and a tap again unmarks it ([marks], FLOW-068); its
  * media and its timer keep their own taps. Without [marks] a step is not marked.
  *
- * On Cooking the first step not marked done is the current one: drawn on the theme's primary container and read as the
- * current step. A step marked done brings the next one not marked after it into view, wholly above the [coveredBelow]
- * the navigation bar covers at the bottom of the viewport, scrolling smoothly — unless the reader is scrolling themselves
- * ([readerScrolling]); a step unmarked, or a step marked with none unmarked after it, moves nothing.
+ * On Cooking the first step not marked done is the current one: drawn, with its timers, on the theme's primary
+ * container and read as the current step. A step marked done brings the next one not marked after it into view, wholly
+ * above the [coveredBelow] the navigation bar covers at the bottom of the viewport, scrolling smoothly — unless the
+ * reader is scrolling themselves ([readerScrolling]); a step unmarked, or a step marked with none unmarked after it,
+ * moves nothing.
  *
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a step is as tall as its text, the steps a
  * modest [VIEW_STEP_SPACING] apart, its text a size smaller ([stepTextStyle]); its done mark is shown but a tap leaves it
@@ -107,10 +109,10 @@ internal fun StepsList(
     readerScrolling: () -> Boolean = { false },
     coveredBelow: Dp = 0.dp,
 ) {
-    // A step that is only a reference reads as one, and one that is only a photograph or a clip shows it — or says it
-    // is unavailable (FLOW-061); one holding nothing that reads or shows is left out.
-    val shown = steps.sortedBy { it.position }
-        .filter { StepText.render(it, references::quantity).isNotBlank() || media.of(it.position) != null }
+    // A step that is only a reference reads as one, one that is only its author's note reads as that, and one that is
+    // only a photograph or a clip shows it — or says it is unavailable (FLOW-061); one holding nothing that reads or
+    // shows is left out.
+    val shown = steps.sortedBy { it.position }.filter { isListed(it, references::quantity, media.of(it.position) != null) }
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }
@@ -168,6 +170,7 @@ internal fun StepsList(
                 },
                 mode = mode,
                 current = step.position == current,
+                stated = marks?.any == true,
             )
         }
     }
@@ -176,20 +179,31 @@ internal fun StepsList(
 }
 
 /**
- * One step: its number in a filled circle and its text beside it, read by the screen reader as one line that says the
- * number once — the circle itself is decorative — then its photograph or its clip, named by the step's number, and its
+ * Whether the card lists [step]: it reads as something — its text, each reference read by [quantity], or the author's
+ * note — or it carries a photo or a clip ([hasMedia]). The list of steps and the summary under the title ([RecipeSummary])
+ * both keep a step by this.
+ */
+internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean): Boolean =
+    StepText.render(step, quantity).isNotBlank() || step.note != null || hasMedia
+
+/**
+ * One step: its number in a filled circle and its text beside it, with the author's note under the text, muted and
+ * smaller ([StepNote]), read by the screen reader as one line that says the number once — the circle itself is
+ * decorative — and the note after the text; then its photograph or its clip, named by the step's number, and its
  * timer, if it carries them, set under the text, the timer a clear gap below the rest. Steps after the first stand apart from the one before. An item whose
  * file the device does not hold, or cannot show, says so in its place (FLOW-061).
  *
  * The number and text are one target, the card's [CardTarget] tall at least, that marks the step [done] or unmarks it
- * ([onToggle]); a step marked done has its text struck through and muted, and is read as done.
+ * ([onToggle]) — a check box to the screen reader; a step marked done has its text struck through and muted, and is
+ * read as done.
  *
- * The [current] step's number and text stand on the theme's primary container, which reaches a little beyond them into
- * the gutter and the space between steps, so that nothing moves as the current step changes; its text is in the
- * container's own colour, and the screen reader reads it as the current step.
+ * The [current] step — its number and text, its media and its timers — stands on the theme's primary container, which
+ * reaches a little beyond it into the gutter and the space between steps, so that nothing moves as the current step
+ * changes; its text is in the container's own colour, and the screen reader reads it as the current step.
  *
- * In [CardMode.VIEW] the number and text answer no tap and are as tall as they are; a mark is shown and read as done; a
- * timer is a line of text ([ViewTimer]), closer under the text than in cooking.
+ * In [CardMode.VIEW] the number and text answer no tap and are as tall as they are; a mark is shown, read-only, its
+ * state read while the recipe has any mark ([stated]); a timer is a line of text ([ViewTimer]), closer under the text
+ * than in cooking.
  */
 @Composable
 private fun StepRow(
@@ -203,22 +217,33 @@ private fun StepRow(
     onToggle: (() -> Unit)? = null,
     mode: CardMode = CardMode.COOKING,
     current: Boolean = false,
+    stated: Boolean = false,
 ) {
     val cooking = mode == CardMode.COOKING
     val spacing = if (cooking) StepSpacing else VIEW_STEP_SPACING
-    Column(modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp)) {
-        val marking = if (onToggle != null && cooking) Modifier.heightIn(min = CardTarget).markedDone(done, onToggle) else Modifier.shownDone(done)
-        val currentState = stringResource(R.string.card_current_step)
-        val highlight = if (current) Modifier.currentStep().semantics { stateDescription = currentState } else Modifier
+    // The current step's container takes in the whole step — its number and text, its media and its timers — so that
+    // its timers read as its own.
+    val highlight = if (current) Modifier.currentStep() else Modifier
+    Column(modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp).then(highlight)) {
+        // The current step is read as such; it is never done, so its state says that it is current.
+        val currentState = stringResource(R.string.card_current_step).takeIf { current }
+        val marking = when {
+            onToggle != null && cooking -> Modifier.heightIn(min = CardTarget).markedDone(done, onToggle, state = currentState)
+            currentState != null -> Modifier.semantics { stateDescription = currentState }
+            else -> Modifier.shownDone(done, stated)
+        }
         Row(
-            Modifier.fillMaxWidth().then(highlight).then(marking).semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
+            Modifier.fillMaxWidth().then(marking).semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
                 .testTag(CardTags.step(step.position)),
             horizontalArrangement = Arrangement.spacedBy(StepGap),
         ) {
             val color = if (current) MaterialTheme.colorScheme.onPrimaryContainer else LocalContentColor.current
             CompositionLocalProvider(LocalContentColor provides color) {
                 StepNumber(number, step.position)
-                StepText(step, references, Modifier.weight(1f), done, mode)
+                Column(Modifier.weight(1f)) {
+                    StepText(step, references, done = done, mode = mode)
+                    step.note?.let { StepNote(it, step.position, mode) }
+                }
             }
         }
         media.of(step.position)?.let { item ->
@@ -230,7 +255,7 @@ private fun StepRow(
             // Each timer on its own line: the first a clear gap below the rest, the others closer under it.
             if (cooking) {
                 val gap = if (index == 0) TimerGap else TimersGap
-                StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
+                StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap), onHighlight = current)
             } else {
                 val gap = if (index == 0) VIEW_TIMER_GAP else VIEW_TIMERS_GAP
                 ViewTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
@@ -264,7 +289,32 @@ internal val CURRENT_OUTSET_END = 4.dp
 /** Test tags of a step's parts on the card. */
 internal object StepRowTags {
     fun number(position: Int) = "card-step-$position-number"
+    fun note(position: Int) = "card-step-$position-note"
 }
+
+/**
+ * The author's note on a step, under its text: muted, in the theme's on-surface-variant colour — on the current step's
+ * container too — and a size of the type scale smaller than the step's text ([stepNoteStyle]).
+ */
+@Composable
+private fun StepNote(note: String, position: Int, mode: CardMode) {
+    Text(
+        note,
+        style = stepNoteStyle(mode),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(top = STEP_NOTE_GAP).testTag(StepRowTags.note(position)),
+    )
+}
+
+/** How a step's note reads: the theme's body style, large on [CardMode.COOKING] and medium on [CardMode.VIEW]. */
+@Composable
+internal fun stepNoteStyle(mode: CardMode) = when (mode) {
+    CardMode.VIEW -> MaterialTheme.typography.bodyMedium
+    CardMode.COOKING -> MaterialTheme.typography.bodyLarge
+}
+
+/** The gap between a step's text and its note. */
+internal val STEP_NOTE_GAP = 4.dp
 
 /** The space between one step and the next, beyond the section's own. */
 internal val StepSpacing = 16.dp

@@ -92,6 +92,7 @@ class ShippedDictionaryTest {
             "pantry.tsv" to listOf("@range 5000-6999"),
             "seasoning-and-other.tsv" to listOf("@range 7000-8999"),
             "tags.tsv" to listOf("@range 100-999", "@range 10-11"),
+            "equipment.tsv" to listOf("@range 10000-10999"),
         )
         declared.forEach { (name, ranges) ->
             val lines = File(sources, name).readLines(Charsets.UTF_8)
@@ -103,11 +104,67 @@ class ShippedDictionaryTest {
     fun theReadmeDocumentsTheGeneratorTheRangesAndTheContentRules() {
         val readme = File(sources, "README.md").readText(Charsets.UTF_8)
         listOf(
-            "scripts/dictionary-build.sh", "1000–2999", "3000–4999", "5000–6999", "7000–8999", "100–999",
+            "scripts/dictionary-build.sh", "1000–2999", "10000–10999", "`equipment.tsv`", "The equipment files", "3000–4999", "5000–6999", "7000–8999", "100–999",
             "**Labels.**", "**Families, two levels.**", "**What a piece is.**", "**Divisibility.**",
             "**Factors, one scale.**", "**Ids.**", "**No brands**",
             "### The baseline", "merge base", "--first-build", "### Merging", "./gradlew testAll",
         ).forEach { assertTrue(it in readme, "README.md lacks $it") }
         assertTrue("$ASSET merge=binary" in File(root, ".gitattributes").readText(), ".gitattributes")
+    }
+
+    // T-201: the equipment dictionary ships beside the ingredients and the tags — groups of a home kitchen, their items
+    // labelled in both languages in short base forms, two levels, in its own id range.
+    @Test
+    fun theEquipmentDictionaryCoversAHomeKitchen() {
+        val equipment = built().dictionaries.equipment
+        val live = equipment.filterNot { it.removed }
+        assertTrue(live.size in 150..250, "${live.size} live equipment entries")
+        assertTrue(equipment.all { it.id in 10000L..10999L })
+        val groups = equipment.filter { it.parentId == null }
+        assertEquals(
+            listOf(
+                "Stovetop cookware", "Oven and baking", "Appliances", "Knives and cutting", "Tools and utensils",
+                "Measuring tools", "Storage", "Consumables",
+            ),
+            groups.map { it.labelEn },
+        )
+        val groupIds = groups.map { it.id }.toSet()
+        // Every item sits in a group; no group is empty.
+        equipment.filter { it.parentId != null }.forEach { assertTrue(it.parentId in groupIds, "$it") }
+        groupIds.forEach { group -> assertTrue(equipment.any { it.parentId == group }, "group $group is empty") }
+        val byRu = live.associateBy { it.labelRu }
+        listOf(
+            "Сковорода" to "Frying pan", "Духовка" to "Oven", "Блендер" to "Blender", "Кастрюля" to "Saucepan",
+            "Форма для выпечки" to "Baking dish",
+        ).forEach { (ru, en) -> assertEquals(en, byRu[ru]?.labelEn, ru) }
+        assertEquals(listOf("сковородка"), byRu.getValue("Сковорода").synonymsRu)
+        // Short base forms: a label of at most five words, no punctuation at its end.
+        live.forEach { entry ->
+            listOf(entry.labelRu, entry.labelEn).forEach { label ->
+                assertTrue(label.split(' ').size <= 5 && label.last().isLetterOrDigit(), "$entry")
+            }
+        }
+    }
+
+    // T-204, from T-201's review: what is used up in cooking stands in a group of its own, which a kitchen never counts;
+    // the measuring group's English label says what its Russian one does; two vague synonyms are gone. Ids stay.
+    @Test
+    fun consumablesStandInAGroupOfTheirOwn() {
+        val equipment = built().dictionaries.equipment
+        val byId = equipment.associateBy { it.id }
+        val consumables = byId.getValue(10700L)
+        assertEquals(null, consumables.parentId)
+        assertEquals("Расходники" to "Consumables", consumables.labelRu to consumables.labelEn)
+        assertEquals(
+            setOf("Parchment paper", "Aluminium foil", "Roasting bag", "Cheesecloth", "Kitchen twine", "Paper towel", "Cling film", "Zip-lock bag", "Vacuum bag"),
+            equipment.filter { it.parentId == 10700L }.map { it.labelEn }.toSet(),
+        )
+        listOf(10119L, 10120L, 10121L, 10426L, 10427L, 10431L, 10603L, 10604L, 10605L).forEach {
+            assertEquals(10700L, byId.getValue(it).parentId, "$it")
+        }
+        assertEquals("Мерная посуда" to "Measuring tools", byId.getValue(10500L).let { it.labelRu to it.labelEn })
+        assertEquals(listOf("дегидратор"), byId.getValue(10228L).synonymsRu)
+        assertEquals(listOf("форма для запекания"), byId.getValue(10102L).synonymsRu)
+        assertTrue(equipment.none { "сушилка" in it.synonymsRu || "форма" in it.synonymsRu })
     }
 }

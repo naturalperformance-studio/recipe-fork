@@ -6,6 +6,10 @@
     <string name="library_view_own">Written here</string>
     <string name="library_view_marked_action">Show the recipes marked in this book</string>
     <string name="library_view_own_action">Show the recipes written in this book</string>
+    <!-- In a build without the server the marked view holds the recipes imported from files (FLOW-062 (1)): it is
+         named for them. -->
+    <string name="library_view_marked_serverless">Imported</string>
+    <string name="library_view_marked_action_serverless">Show the recipes imported from files</string>
     <!-- Said by the indicator a view shows while its list is read for longer than a moment. -->
     <string name="library_opening">Opening the recipes</string>
     <!-- FLOW-036: the state on an own recipe's entry; local and private are both drafts. -->
@@ -43,19 +47,19 @@
          sentence; in a build without the server the view holds imported recipe files (FLOW-062 (1)). -->
     <string name="library_marked_empty">No marked recipes yet</string>
     <string name="library_marked_empty_sentence">Recipes you mark are kept here.</string>
+    <string name="library_marked_empty_serverless">No imported recipes yet</string>
     <string name="library_marked_empty_sentence_serverless">Recipes you import from files are kept here.</string>
     <!-- FLOW-009 (4), FLOW-064 (6): removing a found recipe from the book. -->
     <string name="library_entry_remove">Remove</string>
     <!-- FLOW-017: the serving count the reader usually cooks for. -->
     <string name="library_usual_servings">I usually cook for…</string>
-    <string name="library_usual_not_set">not set</string>
-    <string name="library_usual_count">Servings: %1$s</string>
-    <string name="library_usual_fewer">Fewer servings</string>
+    <string name="library_usual_not_set">Not set</string>
     <string name="library_usual_fewer_action">Lower the usual serving count</string>
-    <string name="library_usual_more">More servings</string>
     <string name="library_usual_more_action">Raise the usual serving count</string>
     <string name="library_usual_set">Set</string>
-    <string name="library_usual_clear">Not set</string>
+    <string name="library_usual_cancel">Cancel</string>
+    <!-- The dialog's two choices: no usual count, or the count its − and + walk. -->
+    <string name="library_usual_count_choice">A usual count</string>
     <!-- The drag column of the editor's steps and ingredients on the right of each block, for a left hand. -->
     <string name="library_drag_handle_right">Drag handle on the right</string>
     <!-- FLOW-060: clearing in the settings the media the device need not keep, and the statement shown first. -->
@@ -66,14 +70,16 @@
     <string name="library_clear_media_serverless">Clear photos and videos of imported recipes</string>
     <string name="library_clear_media_title_serverless">Clear photos and videos of imported recipes?</string>
     <string name="library_clear_media_statement_serverless">The photos and videos of the recipes you imported from files are deleted from this device. To have them again, remove the recipe and import its file again. Every recipe keeps its text, and the recipes you wrote here keep their photos and videos.</string>
-    <string name="library_clear_media_nothing_serverless">The recipes you imported have no photos or videos to clear.</string>
     <string name="library_clear_media_statement">The photographs and video of found recipes and of the recipes you sent are deleted from this device. They are fetched again when a recipe is opened with a connection. Every recipe keeps its text, and recipes not sent keep their photographs and video.</string>
     <string name="library_clear_media_confirm">Clear</string>
     <string name="library_clear_media_decline">Cancel</string>
-    <string name="library_clear_media_nothing">There is no saved media to clear.</string>
-    <string name="library_clear_media_ok">OK</string>
-    <!-- FLOW-035 (4): the search field at the top of each view, and the result that holds nothing. -->
-    <string name="library_search">Search by title or ingredient</string>
+    <!-- Said once a confirmed clearing is done. -->
+    <string name="library_clear_media_done">Saved media cleared</string>
+    <string name="library_clear_media_done_serverless">Photos and videos of imported recipes cleared</string>
+    <!-- FLOW-035 (4): the search field at the top of each view — its short label, and the longer placeholder shown
+         while it is focused and empty — and the result that holds nothing. -->
+    <string name="library_search">Search</string>
+    <string name="library_search_placeholder">Search by title or ingredient</string>
     <string name="library_search_clear">Clear the search</string>
     <string name="library_nothing_found">Nothing found for “%1$s”</string>
     <!-- FLOW-035 (3): the order of each view, and its three choices. -->
@@ -111,6 +117,20 @@
     <!-- FLOW-053: a recipe gone from the book at once, said with the action that brings it back while it is said. -->
     <string name="library_recipe_deleted">Recipe deleted</string>
     <string name="library_recipe_removed">Recipe removed</string>
+    <!-- The same notices for a recipe with a title; %1$s is the title. -->
+    <string name="library_recipe_deleted_titled">“%1$s” deleted</string>
+    <string name="library_recipe_removed_titled">“%1$s” removed</string>
     <string name="library_undo_failed">Couldn\'t bring the recipe back</string>
     <string name="library_undo">Undo</string>
+    <!-- The filter by the equipment My kitchen has: its section of the sheet, its choice and chip, and a view it alone
+         narrowed to nothing. -->
+    <string name="library_filter_equipment">Equipment</string>
+    <string name="library_filter_equipment_hint">Recipes that need something My kitchen lacks are hidden.</string>
+    <string name="library_filter_equipment_enough">Enough equipment</string>
+    <string name="library_nothing_equipment">Each recipe needs something you lack</string>
+    <string name="library_filter_equipment_off">Turn off “Enough equipment”</string>
+    <!-- The way into My kitchen from the sheet's section: set it up while nothing is ticked, edit it once something is. -->
+    <string name="library_filter_equipment_empty_hint">Tick what your kitchen has, and recipes that need something else can be hidden.</string>
+    <string name="library_filter_equipment_set_up">Set up My kitchen</string>
+    <string name="library_filter_equipment_edit">Edit My kitchen</string>
 </resources>

@@ -61,6 +61,18 @@ internal class CardReferences(
         val NONE = CardReferences(emptyMap())
 
         /**
+         * The references to [ingredients] at the authored scale in [language], nothing rounded: a step as the editor
+         * reads it (FLOW-032 (5)), its references read as the step's field shows them.
+         */
+        fun authored(ingredients: List<Ingredient>, language: InterfaceLanguage): CardReferences {
+            val rows = ingredients.associateBy { it.position }
+            return CardReferences(
+                rows.mapValues { (_, row) -> ReferenceText.authored(row, language) },
+                parts = { reference -> rows[reference.ingredientPosition]?.let { ReferenceText.authored(it, reference.share, language) to Rounding.NONE } },
+            )
+        }
+
+        /**
          * The references to [ordered] as their lines [list] show them in [language], the two in the same order; a
          * `piece` part is rounded by its row's effective divisibility, read from [entries] as the list reads it.
          */
@@ -114,7 +126,8 @@ internal object StepTags {
 /**
  * A step's text on the card, each reference read as [references] gives it, followed by the list's arrow where rounding
  * moved it (FLOW-032 (3), SCALE-004). The screen reader reads it as one sentence, an arrow as the words it stands for.
- * A step marked [done] is struck through and muted (FLOW-068). It is set in the [mode]'s style ([stepTextStyle]).
+ * A step marked [done] is struck through and muted (FLOW-068). It is set in the [mode]'s style ([stepTextStyle]), or in
+ * [style] where one is given — the editor's rows read a step in its body text — and tagged [tag].
  */
 @Composable
 internal fun StepText(
@@ -123,6 +136,8 @@ internal fun StepText(
     modifier: Modifier = Modifier,
     done: Boolean = false,
     mode: CardMode = CardMode.COOKING,
+    style: TextStyle? = null,
+    tag: String = StepTags.text(step.position),
 ) {
     val runs = StepText.runs(step, references::quantity)
     // Each rounded reference, by its run: its arrow, and how the screen reader reads the reference with it.
@@ -145,7 +160,6 @@ internal fun StepText(
         }
     }
     val spoken = runs.withIndex().joinToString("") { (index, run) -> marks[index]?.second ?: run.text }
-    val tag = StepTags.text(step.position)
     // The text as laid out stays reachable — by the screen reader for its bounds, by a test for its size — though the
     // node's own text is replaced by what is spoken.
     val laidOut = remember { arrayOfNulls<TextLayoutResult>(1) }
@@ -153,7 +167,7 @@ internal fun StepText(
     key(done) {
         Text(
             shown,
-            style = stepTextStyle(mode).done(done),
+            style = (style ?: stepTextStyle(mode)).done(done),
             onTextLayout = { laidOut[0] = it },
             modifier = modifier.clearAndSetSemantics {
                 text = AnnotatedString(spoken)

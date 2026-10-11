@@ -10,6 +10,11 @@ fun interface IngredientSource {
     suspend fun ingredients(): List<IngredientEntryEntity>
 }
 
+/** The equipment dictionary, from the device alone: groups and their items, removed entries included. */
+fun interface EquipmentSource {
+    suspend fun equipment(): List<EquipmentEntryEntity>
+}
+
 /**
  * The held dictionaries, seeded from the shipped snapshot before they are first read, so that a clean
  * installation with no connection offers the same entries as one that has reached the server. The application holds
@@ -19,7 +24,7 @@ fun interface IngredientSource {
 class DictionaryCatalog(
     private val dao: DictionaryDao,
     private val seeding: DictionarySeeding,
-) : TagSource, IngredientSource {
+) : TagSource, IngredientSource, EquipmentSource {
     override suspend fun tags(): List<TagEntity> {
         seeding.seedIfNeeded()
         return dao.tags()
@@ -28,5 +33,10 @@ class DictionaryCatalog(
     override suspend fun ingredients(): List<IngredientEntryEntity> {
         seeding.seedIfNeeded()
         return dao.ingredients()
+    }
+
+    override suspend fun equipment(): List<EquipmentEntryEntity> {
+        seeding.seedIfNeeded()
+        return dao.equipment()
     }
 }

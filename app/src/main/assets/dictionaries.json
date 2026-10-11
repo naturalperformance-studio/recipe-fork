@@ -1,5 +1,5 @@
 {
-  "version": "430b72ec0669f047659d86da1071e81accb98299f5d2df9d69f694eae5368e9a",
+  "version": "f53db1710536de42168b8f5807058f87dce4788eee84b389049f03e975c0c124",
   "ingredients": [
     {
       "id": 1,
@@ -28526,6 +28526,1830 @@
       "id": 832,
       "labelRu": "молочные продукты",
       "labelEn": "dairy"
+    }
+  ],
+  "equipment": [
+    {
+      "id": 10000,
+      "labelRu": "Посуда для плиты",
+      "labelEn": "Stovetop cookware"
+    },
+    {
+      "id": 10001,
+      "labelRu": "Сковорода",
+      "labelEn": "Frying pan",
+      "parentId": 10000,
+      "synonymsRu": [
+        "сковородка"
+      ],
+      "synonymsEn": [
+        "skillet",
+        "frypan"
+      ]
+    },
+    {
+      "id": 10002,
+      "labelRu": "Сковорода-гриль",
+      "labelEn": "Grill pan",
+      "parentId": 10000,
+      "synonymsEn": [
+        "griddle pan"
+      ]
+    },
+    {
+      "id": 10003,
+      "labelRu": "Блинная сковорода",
+      "labelEn": "Crepe pan",
+      "parentId": 10000,
+      "synonymsRu": [
+        "сковорода для блинов"
+      ],
+      "synonymsEn": [
+        "pancake pan"
+      ]
+    },
+    {
+      "id": 10004,
+      "labelRu": "Вок",
+      "labelEn": "Wok",
+      "parentId": 10000,
+      "synonymsRu": [
+        "сковорода вок"
+      ]
+    },
+    {
+      "id": 10005,
+      "labelRu": "Сотейник",
+      "labelEn": "Sauté pan",
+      "parentId": 10000,
+      "synonymsEn": [
+        "sauteuse"
+      ]
+    },
+    {
+      "id": 10006,
+      "labelRu": "Кастрюля",
+      "labelEn": "Saucepan",
+      "parentId": 10000,
+      "synonymsEn": [
+        "pot"
+      ]
+    },
+    {
+      "id": 10007,
+      "labelRu": "Ковш",
+      "labelEn": "Milk pan",
+      "parentId": 10000,
+      "synonymsRu": [
+        "ковшик"
+      ],
+      "synonymsEn": [
+        "small saucepan"
+      ]
+    },
+    {
+      "id": 10008,
+      "labelRu": "Бульонная кастрюля",
+      "labelEn": "Stockpot",
+      "parentId": 10000,
+      "synonymsRu": [
+        "большая кастрюля"
+      ],
+      "synonymsEn": [
+        "stock pot"
+      ]
+    },
+    {
+      "id": 10009,
+      "labelRu": "Казан",
+      "labelEn": "Kazan",
+      "parentId": 10000,
+      "synonymsEn": [
+        "cauldron"
+      ]
+    },
+    {
+      "id": 10010,
+      "labelRu": "Чугунная кастрюля",
+      "labelEn": "Dutch oven",
+      "parentId": 10000,
+      "synonymsEn": [
+        "cast-iron casserole"
+      ]
+    },
+    {
+      "id": 10011,
+      "labelRu": "Утятница",
+      "labelEn": "Oval roaster",
+      "parentId": 10000,
+      "synonymsRu": [
+        "гусятница"
+      ]
+    },
+    {
+      "id": 10012,
+      "labelRu": "Турка",
+      "labelEn": "Cezve",
+      "parentId": 10000,
+      "synonymsRu": [
+        "джезва"
+      ],
+      "synonymsEn": [
+        "ibrik",
+        "Turkish coffee pot"
+      ]
+    },
+    {
+      "id": 10013,
+      "labelRu": "Гейзерная кофеварка",
+      "labelEn": "Moka pot",
+      "parentId": 10000,
+      "synonymsEn": [
+        "stovetop espresso maker"
+      ]
+    },
+    {
+      "id": 10014,
+      "labelRu": "Скороварка",
+      "labelEn": "Pressure cooker",
+      "parentId": 10000
+    },
+    {
+      "id": 10015,
+      "labelRu": "Мантоварка",
+      "labelEn": "Multi-tier steamer",
+      "parentId": 10000
+    },
+    {
+      "id": 10016,
+      "labelRu": "Бамбуковая пароварка",
+      "labelEn": "Bamboo steamer",
+      "parentId": 10000
+    },
+    {
+      "id": 10017,
+      "labelRu": "Решётка для варки на пару",
+      "labelEn": "Steamer basket",
+      "parentId": 10000,
+      "synonymsEn": [
+        "steamer insert"
+      ]
+    },
+    {
+      "id": 10018,
+      "labelRu": "Чайник",
+      "labelEn": "Kettle",
+      "parentId": 10000
+    },
+    {
+      "id": 10019,
+      "labelRu": "Крышка",
+      "labelEn": "Lid",
+      "parentId": 10000
+    },
+    {
+      "id": 10020,
+      "labelRu": "Тажин",
+      "labelEn": "Tagine",
+      "parentId": 10000
+    },
+    {
+      "id": 10021,
+      "labelRu": "Набор для фондю",
+      "labelEn": "Fondue set",
+      "parentId": 10000,
+      "synonymsRu": [
+        "фондюшница"
+      ],
+      "synonymsEn": [
+        "fondue pot"
+      ]
+    },
+    {
+      "id": 10022,
+      "labelRu": "Кастрюля для пасты",
+      "labelEn": "Pasta pot",
+      "parentId": 10000
+    },
+    {
+      "id": 10023,
+      "labelRu": "Сковорода для паэльи",
+      "labelEn": "Paella pan",
+      "parentId": 10000,
+      "synonymsRu": [
+        "паэльера"
+      ]
+    },
+    {
+      "id": 10024,
+      "labelRu": "Рассекатель",
+      "labelEn": "Heat diffuser",
+      "parentId": 10000,
+      "synonymsRu": [
+        "рассекатель пламени"
+      ],
+      "synonymsEn": [
+        "flame tamer"
+      ]
+    },
+    {
+      "id": 10025,
+      "labelRu": "Сетка от брызг",
+      "labelEn": "Splatter screen",
+      "parentId": 10000,
+      "synonymsRu": [
+        "крышка-сетка"
+      ],
+      "synonymsEn": [
+        "splatter guard"
+      ]
+    },
+    {
+      "id": 10100,
+      "labelRu": "Духовка и выпечка",
+      "labelEn": "Oven and baking"
+    },
+    {
+      "id": 10101,
+      "labelRu": "Противень",
+      "labelEn": "Baking tray",
+      "parentId": 10100,
+      "synonymsEn": [
+        "baking sheet",
+        "sheet pan"
+      ]
+    },
+    {
+      "id": 10102,
+      "labelRu": "Форма для выпечки",
+      "labelEn": "Baking dish",
+      "parentId": 10100,
+      "synonymsRu": [
+        "форма для запекания"
+      ],
+      "synonymsEn": [
+        "ovenproof dish",
+        "casserole dish"
+      ]
+    },
+    {
+      "id": 10103,
+      "labelRu": "Разъёмная форма",
+      "labelEn": "Springform pan",
+      "parentId": 10100,
+      "synonymsEn": [
+        "springform"
+      ]
+    },
+    {
+      "id": 10104,
+      "labelRu": "Форма для кекса",
+      "labelEn": "Loaf pan",
+      "parentId": 10100,
+      "synonymsEn": [
+        "loaf tin"
+      ]
+    },
+    {
+      "id": 10105,
+      "labelRu": "Форма для маффинов",
+      "labelEn": "Muffin tin",
+      "parentId": 10100,
+      "synonymsRu": [
+        "форма для капкейков"
+      ],
+      "synonymsEn": [
+        "muffin pan",
+        "cupcake tin"
+      ]
+    },
+    {
+      "id": 10106,
+      "labelRu": "Форма для тарта",
+      "labelEn": "Tart pan",
+      "parentId": 10100,
+      "synonymsEn": [
+        "tart tin"
+      ]
+    },
+    {
+      "id": 10107,
+      "labelRu": "Форма для пирога",
+      "labelEn": "Pie dish",
+      "parentId": 10100,
+      "synonymsEn": [
+        "pie plate",
+        "pie tin"
+      ]
+    },
+    {
+      "id": 10108,
+      "labelRu": "Форма для торта",
+      "labelEn": "Cake pan",
+      "parentId": 10100,
+      "synonymsEn": [
+        "cake tin"
+      ]
+    },
+    {
+      "id": 10109,
+      "labelRu": "Форма для тарталеток",
+      "labelEn": "Tartlet tin",
+      "parentId": 10100,
+      "synonymsEn": [
+        "tartlet pan"
+      ]
+    },
+    {
+      "id": 10110,
+      "labelRu": "Форма-бундт",
+      "labelEn": "Bundt pan",
+      "parentId": 10100,
+      "synonymsRu": [
+        "форма для бундта"
+      ],
+      "synonymsEn": [
+        "bundt tin"
+      ]
+    },
+    {
+      "id": 10111,
+      "labelRu": "Форма для мадлен",
+      "labelEn": "Madeleine pan",
+      "parentId": 10100
+    },
+    {
+      "id": 10112,
+      "labelRu": "Кулинарное кольцо",
+      "labelEn": "Food ring",
+      "parentId": 10100,
+      "synonymsRu": [
+        "форма-кольцо",
+        "сервировочное кольцо"
+      ],
+      "synonymsEn": [
+        "ring mold",
+        "ring mould",
+        "pastry ring"
+      ]
+    },
+    {
+      "id": 10113,
+      "labelRu": "Рамекин",
+      "labelEn": "Ramekin",
+      "parentId": 10100,
+      "synonymsRu": [
+        "кокотница"
+      ]
+    },
+    {
+      "id": 10114,
+      "labelRu": "Горшочек",
+      "labelEn": "Clay pot",
+      "parentId": 10100,
+      "synonymsRu": [
+        "глиняный горшок"
+      ],
+      "synonymsEn": [
+        "earthenware pot"
+      ]
+    },
+    {
+      "id": 10115,
+      "labelRu": "Жаровня",
+      "labelEn": "Roasting pan",
+      "parentId": 10100,
+      "synonymsEn": [
+        "roasting tin"
+      ]
+    },
+    {
+      "id": 10116,
+      "labelRu": "Камень для пиццы",
+      "labelEn": "Pizza stone",
+      "parentId": 10100
+    },
+    {
+      "id": 10117,
+      "labelRu": "Форма для пиццы",
+      "labelEn": "Pizza pan",
+      "parentId": 10100,
+      "synonymsEn": [
+        "pizza tray"
+      ]
+    },
+    {
+      "id": 10118,
+      "labelRu": "Силиконовый коврик",
+      "labelEn": "Silicone baking mat",
+      "parentId": 10100,
+      "synonymsRu": [
+        "коврик для выпечки"
+      ],
+      "synonymsEn": [
+        "baking mat"
+      ]
+    },
+    {
+      "id": 10119,
+      "labelRu": "Пергамент",
+      "labelEn": "Parchment paper",
+      "parentId": 10700,
+      "synonymsRu": [
+        "бумага для выпечки",
+        "пекарская бумага"
+      ],
+      "synonymsEn": [
+        "baking paper"
+      ]
+    },
+    {
+      "id": 10120,
+      "labelRu": "Фольга",
+      "labelEn": "Aluminium foil",
+      "parentId": 10700,
+      "synonymsEn": [
+        "foil",
+        "tin foil",
+        "aluminum foil"
+      ]
+    },
+    {
+      "id": 10121,
+      "labelRu": "Рукав для запекания",
+      "labelEn": "Roasting bag",
+      "parentId": 10700,
+      "synonymsRu": [
+        "пакет для запекания"
+      ],
+      "synonymsEn": [
+        "oven bag"
+      ]
+    },
+    {
+      "id": 10122,
+      "labelRu": "Решётка для остывания",
+      "labelEn": "Cooling rack",
+      "parentId": 10100,
+      "synonymsEn": [
+        "wire rack"
+      ]
+    },
+    {
+      "id": 10123,
+      "labelRu": "Скалка",
+      "labelEn": "Rolling pin",
+      "parentId": 10100
+    },
+    {
+      "id": 10124,
+      "labelRu": "Кондитерский мешок",
+      "labelEn": "Piping bag",
+      "parentId": 10100,
+      "synonymsEn": [
+        "pastry bag"
+      ]
+    },
+    {
+      "id": 10125,
+      "labelRu": "Кондитерская насадка",
+      "labelEn": "Piping tip",
+      "parentId": 10100,
+      "synonymsEn": [
+        "piping nozzle"
+      ]
+    },
+    {
+      "id": 10126,
+      "labelRu": "Кондитерская кисть",
+      "labelEn": "Pastry brush",
+      "parentId": 10100,
+      "synonymsRu": [
+        "кисточка для выпечки",
+        "силиконовая кисть"
+      ],
+      "synonymsEn": [
+        "basting brush"
+      ]
+    },
+    {
+      "id": 10127,
+      "labelRu": "Формочка для печенья",
+      "labelEn": "Cookie cutter",
+      "parentId": 10100,
+      "synonymsRu": [
+        "вырубка для печенья"
+      ],
+      "synonymsEn": [
+        "biscuit cutter"
+      ]
+    },
+    {
+      "id": 10128,
+      "labelRu": "Кондитерский шпатель",
+      "labelEn": "Offset spatula",
+      "parentId": 10100,
+      "synonymsRu": [
+        "шпатель"
+      ],
+      "synonymsEn": [
+        "palette knife"
+      ]
+    },
+    {
+      "id": 10129,
+      "labelRu": "Кондитерский скребок",
+      "labelEn": "Bench scraper",
+      "parentId": 10100,
+      "synonymsRu": [
+        "скребок для теста"
+      ],
+      "synonymsEn": [
+        "dough scraper",
+        "pastry scraper"
+      ]
+    },
+    {
+      "id": 10130,
+      "labelRu": "Поворотный столик",
+      "labelEn": "Cake turntable",
+      "parentId": 10100,
+      "synonymsRu": [
+        "вращающаяся подставка для торта"
+      ]
+    },
+    {
+      "id": 10131,
+      "labelRu": "Корзина для расстойки",
+      "labelEn": "Proofing basket",
+      "parentId": 10100,
+      "synonymsRu": [
+        "расстоечная корзина"
+      ],
+      "synonymsEn": [
+        "banneton",
+        "proving basket"
+      ]
+    },
+    {
+      "id": 10132,
+      "labelRu": "Сито для муки",
+      "labelEn": "Flour sifter",
+      "parentId": 10100,
+      "synonymsRu": [
+        "просеиватель"
+      ],
+      "synonymsEn": [
+        "sifter"
+      ]
+    },
+    {
+      "id": 10133,
+      "labelRu": "Утяжелители для выпечки",
+      "labelEn": "Pie weights",
+      "parentId": 10100,
+      "synonymsRu": [
+        "керамические шарики"
+      ],
+      "synonymsEn": [
+        "baking beans"
+      ]
+    },
+    {
+      "id": 10134,
+      "labelRu": "Термометр для духовки",
+      "labelEn": "Oven thermometer",
+      "parentId": 10100
+    },
+    {
+      "id": 10200,
+      "labelRu": "Техника",
+      "labelEn": "Appliances"
+    },
+    {
+      "id": 10201,
+      "labelRu": "Плита",
+      "labelEn": "Stove",
+      "parentId": 10200,
+      "synonymsRu": [
+        "варочная панель"
+      ],
+      "synonymsEn": [
+        "cooker",
+        "cooktop",
+        "hob"
+      ]
+    },
+    {
+      "id": 10202,
+      "labelRu": "Духовка",
+      "labelEn": "Oven",
+      "parentId": 10200,
+      "synonymsRu": [
+        "духовой шкаф"
+      ]
+    },
+    {
+      "id": 10203,
+      "labelRu": "Микроволновка",
+      "labelEn": "Microwave",
+      "parentId": 10200,
+      "synonymsRu": [
+        "микроволновая печь",
+        "свч-печь"
+      ],
+      "synonymsEn": [
+        "microwave oven"
+      ]
+    },
+    {
+      "id": 10204,
+      "labelRu": "Мультиварка",
+      "labelEn": "Multicooker",
+      "parentId": 10200,
+      "synonymsEn": [
+        "multi-cooker",
+        "electric pressure cooker"
+      ]
+    },
+    {
+      "id": 10205,
+      "labelRu": "Медленноварка",
+      "labelEn": "Slow cooker",
+      "parentId": 10200,
+      "synonymsRu": [
+        "слоукукер"
+      ]
+    },
+    {
+      "id": 10206,
+      "labelRu": "Аэрогриль",
+      "labelEn": "Air fryer",
+      "parentId": 10200,
+      "synonymsRu": [
+        "аэрофритюрница"
+      ]
+    },
+    {
+      "id": 10207,
+      "labelRu": "Фритюрница",
+      "labelEn": "Deep fryer",
+      "parentId": 10200,
+      "synonymsEn": [
+        "deep fat fryer"
+      ]
+    },
+    {
+      "id": 10208,
+      "labelRu": "Блендер",
+      "labelEn": "Blender",
+      "parentId": 10200,
+      "synonymsRu": [
+        "стационарный блендер"
+      ],
+      "synonymsEn": [
+        "countertop blender"
+      ]
+    },
+    {
+      "id": 10209,
+      "labelRu": "Погружной блендер",
+      "labelEn": "Hand blender",
+      "parentId": 10200,
+      "synonymsRu": [
+        "ручной блендер"
+      ],
+      "synonymsEn": [
+        "immersion blender",
+        "stick blender"
+      ]
+    },
+    {
+      "id": 10210,
+      "labelRu": "Кухонный комбайн",
+      "labelEn": "Food processor",
+      "parentId": 10200,
+      "synonymsRu": [
+        "комбайн"
+      ]
+    },
+    {
+      "id": 10211,
+      "labelRu": "Миксер",
+      "labelEn": "Hand mixer",
+      "parentId": 10200,
+      "synonymsRu": [
+        "ручной миксер"
+      ],
+      "synonymsEn": [
+        "mixer",
+        "electric whisk"
+      ]
+    },
+    {
+      "id": 10212,
+      "labelRu": "Планетарный миксер",
+      "labelEn": "Stand mixer",
+      "parentId": 10200,
+      "synonymsRu": [
+        "стационарный миксер"
+      ],
+      "synonymsEn": [
+        "planetary mixer"
+      ]
+    },
+    {
+      "id": 10213,
+      "labelRu": "Мясорубка",
+      "labelEn": "Meat grinder",
+      "parentId": 10200,
+      "synonymsEn": [
+        "mincer"
+      ]
+    },
+    {
+      "id": 10214,
+      "labelRu": "Соковыжималка",
+      "labelEn": "Juicer",
+      "parentId": 10200
+    },
+    {
+      "id": 10215,
+      "labelRu": "Тостер",
+      "labelEn": "Toaster",
+      "parentId": 10200
+    },
+    {
+      "id": 10216,
+      "labelRu": "Электрочайник",
+      "labelEn": "Electric kettle",
+      "parentId": 10200,
+      "synonymsRu": [
+        "электрический чайник"
+      ]
+    },
+    {
+      "id": 10217,
+      "labelRu": "Кофемолка",
+      "labelEn": "Coffee grinder",
+      "parentId": 10200,
+      "synonymsEn": [
+        "coffee mill"
+      ]
+    },
+    {
+      "id": 10218,
+      "labelRu": "Кофеварка",
+      "labelEn": "Coffee maker",
+      "parentId": 10200,
+      "synonymsRu": [
+        "кофемашина"
+      ],
+      "synonymsEn": [
+        "coffee machine"
+      ]
+    },
+    {
+      "id": 10219,
+      "labelRu": "Хлебопечка",
+      "labelEn": "Bread maker",
+      "parentId": 10200,
+      "synonymsEn": [
+        "bread machine"
+      ]
+    },
+    {
+      "id": 10220,
+      "labelRu": "Вафельница",
+      "labelEn": "Waffle iron",
+      "parentId": 10200,
+      "synonymsEn": [
+        "waffle maker"
+      ]
+    },
+    {
+      "id": 10221,
+      "labelRu": "Пароварка",
+      "labelEn": "Steamer",
+      "parentId": 10200,
+      "synonymsRu": [
+        "электропароварка"
+      ],
+      "synonymsEn": [
+        "electric steamer",
+        "food steamer"
+      ]
+    },
+    {
+      "id": 10222,
+      "labelRu": "Электрогриль",
+      "labelEn": "Electric grill",
+      "parentId": 10200,
+      "synonymsRu": [
+        "контактный гриль"
+      ],
+      "synonymsEn": [
+        "contact grill",
+        "panini press"
+      ]
+    },
+    {
+      "id": 10223,
+      "labelRu": "Гриль",
+      "labelEn": "Grill",
+      "parentId": 10200
+    },
+    {
+      "id": 10224,
+      "labelRu": "Мангал",
+      "labelEn": "Barbecue",
+      "parentId": 10200,
+      "synonymsRu": [
+        "барбекю"
+      ],
+      "synonymsEn": [
+        "BBQ"
+      ]
+    },
+    {
+      "id": 10225,
+      "labelRu": "Сэндвичница",
+      "labelEn": "Sandwich maker",
+      "parentId": 10200,
+      "synonymsEn": [
+        "sandwich toaster"
+      ]
+    },
+    {
+      "id": 10226,
+      "labelRu": "Йогуртница",
+      "labelEn": "Yogurt maker",
+      "parentId": 10200
+    },
+    {
+      "id": 10227,
+      "labelRu": "Мороженица",
+      "labelEn": "Ice cream maker",
+      "parentId": 10200
+    },
+    {
+      "id": 10228,
+      "labelRu": "Сушилка для овощей и фруктов",
+      "labelEn": "Food dehydrator",
+      "parentId": 10200,
+      "synonymsRu": [
+        "дегидратор"
+      ],
+      "synonymsEn": [
+        "dehydrator"
+      ]
+    },
+    {
+      "id": 10229,
+      "labelRu": "Су-вид",
+      "labelEn": "Sous vide cooker",
+      "parentId": 10200,
+      "synonymsEn": [
+        "sous vide",
+        "immersion circulator"
+      ]
+    },
+    {
+      "id": 10230,
+      "labelRu": "Вакуумный упаковщик",
+      "labelEn": "Vacuum sealer",
+      "parentId": 10200,
+      "synonymsRu": [
+        "вакууматор"
+      ]
+    },
+    {
+      "id": 10231,
+      "labelRu": "Холодильник",
+      "labelEn": "Refrigerator",
+      "parentId": 10200,
+      "synonymsEn": [
+        "fridge"
+      ]
+    },
+    {
+      "id": 10232,
+      "labelRu": "Морозильник",
+      "labelEn": "Freezer",
+      "parentId": 10200,
+      "synonymsRu": [
+        "морозилка",
+        "морозильная камера"
+      ]
+    },
+    {
+      "id": 10233,
+      "labelRu": "Блинница",
+      "labelEn": "Crepe maker",
+      "parentId": 10200,
+      "synonymsRu": [
+        "электроблинница"
+      ]
+    },
+    {
+      "id": 10234,
+      "labelRu": "Яйцеварка",
+      "labelEn": "Egg cooker",
+      "parentId": 10200
+    },
+    {
+      "id": 10235,
+      "labelRu": "Капучинатор",
+      "labelEn": "Milk frother",
+      "parentId": 10200,
+      "synonymsRu": [
+        "вспениватель молока"
+      ]
+    },
+    {
+      "id": 10236,
+      "labelRu": "Мини-печь",
+      "labelEn": "Toaster oven",
+      "parentId": 10200,
+      "synonymsRu": [
+        "электропечь",
+        "электродуховка"
+      ]
+    },
+    {
+      "id": 10237,
+      "labelRu": "Ломтерезка",
+      "labelEn": "Food slicer",
+      "parentId": 10200,
+      "synonymsEn": [
+        "meat slicer"
+      ]
+    },
+    {
+      "id": 10238,
+      "labelRu": "Коптильня",
+      "labelEn": "Smoker",
+      "parentId": 10200,
+      "synonymsEn": [
+        "smokehouse"
+      ]
+    },
+    {
+      "id": 10300,
+      "labelRu": "Ножи и нарезка",
+      "labelEn": "Knives and cutting"
+    },
+    {
+      "id": 10301,
+      "labelRu": "Нож",
+      "labelEn": "Knife",
+      "parentId": 10300
+    },
+    {
+      "id": 10302,
+      "labelRu": "Поварской нож",
+      "labelEn": "Chef's knife",
+      "parentId": 10300,
+      "synonymsRu": [
+        "шеф-нож"
+      ],
+      "synonymsEn": [
+        "cook's knife"
+      ]
+    },
+    {
+      "id": 10303,
+      "labelRu": "Нож для овощей",
+      "labelEn": "Paring knife",
+      "parentId": 10300,
+      "synonymsRu": [
+        "овощной нож"
+      ]
+    },
+    {
+      "id": 10304,
+      "labelRu": "Хлебный нож",
+      "labelEn": "Bread knife",
+      "parentId": 10300,
+      "synonymsRu": [
+        "нож для хлеба"
+      ]
+    },
+    {
+      "id": 10305,
+      "labelRu": "Филейный нож",
+      "labelEn": "Fillet knife",
+      "parentId": 10300,
+      "synonymsRu": [
+        "нож для филе"
+      ]
+    },
+    {
+      "id": 10306,
+      "labelRu": "Нож сантоку",
+      "labelEn": "Santoku knife",
+      "parentId": 10300,
+      "synonymsRu": [
+        "сантоку"
+      ],
+      "synonymsEn": [
+        "santoku"
+      ]
+    },
+    {
+      "id": 10307,
+      "labelRu": "Нож для обвалки",
+      "labelEn": "Boning knife",
+      "parentId": 10300,
+      "synonymsRu": [
+        "обвалочный нож"
+      ]
+    },
+    {
+      "id": 10308,
+      "labelRu": "Тесак",
+      "labelEn": "Cleaver",
+      "parentId": 10300,
+      "synonymsRu": [
+        "топорик",
+        "нож-топорик"
+      ],
+      "synonymsEn": [
+        "meat cleaver"
+      ]
+    },
+    {
+      "id": 10309,
+      "labelRu": "Разделочная доска",
+      "labelEn": "Cutting board",
+      "parentId": 10300,
+      "synonymsRu": [
+        "доска",
+        "доска для нарезки"
+      ],
+      "synonymsEn": [
+        "chopping board"
+      ]
+    },
+    {
+      "id": 10310,
+      "labelRu": "Овощечистка",
+      "labelEn": "Vegetable peeler",
+      "parentId": 10300,
+      "synonymsRu": [
+        "нож для чистки овощей",
+        "экономка"
+      ],
+      "synonymsEn": [
+        "peeler"
+      ]
+    },
+    {
+      "id": 10311,
+      "labelRu": "Тёрка",
+      "labelEn": "Grater",
+      "parentId": 10300,
+      "synonymsEn": [
+        "box grater"
+      ]
+    },
+    {
+      "id": 10312,
+      "labelRu": "Тёрка для цедры",
+      "labelEn": "Zester",
+      "parentId": 10300,
+      "synonymsRu": [
+        "зестер"
+      ],
+      "synonymsEn": [
+        "fine grater"
+      ]
+    },
+    {
+      "id": 10313,
+      "labelRu": "Тёрка для корейской моркови",
+      "labelEn": "Julienne peeler",
+      "parentId": 10300,
+      "synonymsEn": [
+        "julienne slicer"
+      ]
+    },
+    {
+      "id": 10314,
+      "labelRu": "Мандолина",
+      "labelEn": "Mandoline",
+      "parentId": 10300,
+      "synonymsEn": [
+        "mandoline slicer"
+      ]
+    },
+    {
+      "id": 10315,
+      "labelRu": "Овощерезка",
+      "labelEn": "Vegetable chopper",
+      "parentId": 10300
+    },
+    {
+      "id": 10316,
+      "labelRu": "Спиралайзер",
+      "labelEn": "Spiralizer",
+      "parentId": 10300,
+      "synonymsRu": [
+        "спиральная овощерезка"
+      ]
+    },
+    {
+      "id": 10317,
+      "labelRu": "Кухонные ножницы",
+      "labelEn": "Kitchen shears",
+      "parentId": 10300,
+      "synonymsRu": [
+        "ножницы"
+      ],
+      "synonymsEn": [
+        "kitchen scissors"
+      ]
+    },
+    {
+      "id": 10318,
+      "labelRu": "Ножницы для птицы",
+      "labelEn": "Poultry shears",
+      "parentId": 10300
+    },
+    {
+      "id": 10319,
+      "labelRu": "Точилка для ножей",
+      "labelEn": "Knife sharpener",
+      "parentId": 10300,
+      "synonymsRu": [
+        "точилка"
+      ],
+      "synonymsEn": [
+        "sharpener"
+      ]
+    },
+    {
+      "id": 10320,
+      "labelRu": "Мусат",
+      "labelEn": "Honing steel",
+      "parentId": 10300,
+      "synonymsEn": [
+        "sharpening steel"
+      ]
+    },
+    {
+      "id": 10321,
+      "labelRu": "Нож для пиццы",
+      "labelEn": "Pizza cutter",
+      "parentId": 10300,
+      "synonymsRu": [
+        "роликовый нож"
+      ],
+      "synonymsEn": [
+        "pizza wheel"
+      ]
+    },
+    {
+      "id": 10322,
+      "labelRu": "Яйцерезка",
+      "labelEn": "Egg slicer",
+      "parentId": 10300
+    },
+    {
+      "id": 10323,
+      "labelRu": "Яблокорезка",
+      "labelEn": "Apple slicer",
+      "parentId": 10300
+    },
+    {
+      "id": 10324,
+      "labelRu": "Чеснокодавка",
+      "labelEn": "Garlic press",
+      "parentId": 10300,
+      "synonymsRu": [
+        "пресс для чеснока",
+        "давилка для чеснока"
+      ]
+    },
+    {
+      "id": 10325,
+      "labelRu": "Нож для устриц",
+      "labelEn": "Oyster knife",
+      "parentId": 10300
+    },
+    {
+      "id": 10326,
+      "labelRu": "Рыбочистка",
+      "labelEn": "Fish scaler",
+      "parentId": 10300,
+      "synonymsRu": [
+        "скребок для рыбы"
+      ]
+    },
+    {
+      "id": 10327,
+      "labelRu": "Нож для нарезки мяса",
+      "labelEn": "Carving knife",
+      "parentId": 10300,
+      "synonymsRu": [
+        "разделочный нож для мяса"
+      ],
+      "synonymsEn": [
+        "slicing knife"
+      ]
+    },
+    {
+      "id": 10400,
+      "labelRu": "Кухонные принадлежности",
+      "labelEn": "Tools and utensils"
+    },
+    {
+      "id": 10401,
+      "labelRu": "Венчик",
+      "labelEn": "Whisk",
+      "parentId": 10400,
+      "synonymsRu": [
+        "веничек"
+      ]
+    },
+    {
+      "id": 10402,
+      "labelRu": "Лопатка",
+      "labelEn": "Spatula",
+      "parentId": 10400,
+      "synonymsRu": [
+        "кулинарная лопатка"
+      ],
+      "synonymsEn": [
+        "turner"
+      ]
+    },
+    {
+      "id": 10403,
+      "labelRu": "Силиконовая лопатка",
+      "labelEn": "Rubber spatula",
+      "parentId": 10400,
+      "synonymsEn": [
+        "silicone spatula"
+      ]
+    },
+    {
+      "id": 10404,
+      "labelRu": "Половник",
+      "labelEn": "Ladle",
+      "parentId": 10400,
+      "synonymsRu": [
+        "поварёшка"
+      ]
+    },
+    {
+      "id": 10405,
+      "labelRu": "Шумовка",
+      "labelEn": "Skimmer",
+      "parentId": 10400,
+      "synonymsEn": [
+        "spider"
+      ]
+    },
+    {
+      "id": 10406,
+      "labelRu": "Ложка с прорезями",
+      "labelEn": "Slotted spoon",
+      "parentId": 10400
+    },
+    {
+      "id": 10407,
+      "labelRu": "Деревянная ложка",
+      "labelEn": "Wooden spoon",
+      "parentId": 10400
+    },
+    {
+      "id": 10408,
+      "labelRu": "Щипцы",
+      "labelEn": "Tongs",
+      "parentId": 10400,
+      "synonymsRu": [
+        "кулинарные щипцы"
+      ],
+      "synonymsEn": [
+        "kitchen tongs"
+      ]
+    },
+    {
+      "id": 10409,
+      "labelRu": "Дуршлаг",
+      "labelEn": "Colander",
+      "parentId": 10400
+    },
+    {
+      "id": 10410,
+      "labelRu": "Сито",
+      "labelEn": "Sieve",
+      "parentId": 10400,
+      "synonymsEn": [
+        "strainer"
+      ]
+    },
+    {
+      "id": 10411,
+      "labelRu": "Шенуа",
+      "labelEn": "Chinois",
+      "parentId": 10400,
+      "synonymsRu": [
+        "коническое сито"
+      ],
+      "synonymsEn": [
+        "conical strainer"
+      ]
+    },
+    {
+      "id": 10412,
+      "labelRu": "Миска",
+      "labelEn": "Bowl",
+      "parentId": 10400,
+      "synonymsEn": [
+        "mixing bowl"
+      ]
+    },
+    {
+      "id": 10413,
+      "labelRu": "Картофелемялка",
+      "labelEn": "Potato masher",
+      "parentId": 10400,
+      "synonymsRu": [
+        "толкушка"
+      ],
+      "synonymsEn": [
+        "masher"
+      ]
+    },
+    {
+      "id": 10414,
+      "labelRu": "Ступка",
+      "labelEn": "Mortar and pestle",
+      "parentId": 10400,
+      "synonymsRu": [
+        "ступка с пестиком"
+      ],
+      "synonymsEn": [
+        "mortar"
+      ]
+    },
+    {
+      "id": 10415,
+      "labelRu": "Отбивной молоток",
+      "labelEn": "Meat mallet",
+      "parentId": 10400,
+      "synonymsRu": [
+        "молоток для мяса"
+      ],
+      "synonymsEn": [
+        "meat tenderizer",
+        "meat hammer"
+      ]
+    },
+    {
+      "id": 10416,
+      "labelRu": "Открывалка для консервов",
+      "labelEn": "Can opener",
+      "parentId": 10400,
+      "synonymsRu": [
+        "консервный нож",
+        "открывалка"
+      ],
+      "synonymsEn": [
+        "tin opener"
+      ]
+    },
+    {
+      "id": 10417,
+      "labelRu": "Штопор",
+      "labelEn": "Corkscrew",
+      "parentId": 10400
+    },
+    {
+      "id": 10418,
+      "labelRu": "Воронка",
+      "labelEn": "Funnel",
+      "parentId": 10400,
+      "synonymsRu": [
+        "лейка"
+      ]
+    },
+    {
+      "id": 10419,
+      "labelRu": "Ложка для мороженого",
+      "labelEn": "Ice cream scoop",
+      "parentId": 10400
+    },
+    {
+      "id": 10420,
+      "labelRu": "Нуазетка",
+      "labelEn": "Melon baller",
+      "parentId": 10400
+    },
+    {
+      "id": 10421,
+      "labelRu": "Пресс для цитрусовых",
+      "labelEn": "Citrus juicer",
+      "parentId": 10400,
+      "synonymsEn": [
+        "citrus squeezer",
+        "lemon squeezer"
+      ]
+    },
+    {
+      "id": 10422,
+      "labelRu": "Вилка для мяса",
+      "labelEn": "Carving fork",
+      "parentId": 10400,
+      "synonymsEn": [
+        "meat fork"
+      ]
+    },
+    {
+      "id": 10423,
+      "labelRu": "Шампур",
+      "labelEn": "Skewer",
+      "parentId": 10400,
+      "synonymsRu": [
+        "шпажка"
+      ]
+    },
+    {
+      "id": 10424,
+      "labelRu": "Сифон для сливок",
+      "labelEn": "Cream whipper",
+      "parentId": 10400,
+      "synonymsRu": [
+        "сифон"
+      ],
+      "synonymsEn": [
+        "whipped cream dispenser"
+      ]
+    },
+    {
+      "id": 10425,
+      "labelRu": "Кулинарная горелка",
+      "labelEn": "Kitchen torch",
+      "parentId": 10400,
+      "synonymsRu": [
+        "горелка"
+      ],
+      "synonymsEn": [
+        "blowtorch",
+        "cook's torch"
+      ]
+    },
+    {
+      "id": 10426,
+      "labelRu": "Марля",
+      "labelEn": "Cheesecloth",
+      "parentId": 10700,
+      "synonymsEn": [
+        "muslin"
+      ]
+    },
+    {
+      "id": 10427,
+      "labelRu": "Кулинарная нить",
+      "labelEn": "Kitchen twine",
+      "parentId": 10700,
+      "synonymsRu": [
+        "кулинарный шпагат",
+        "шпагат"
+      ],
+      "synonymsEn": [
+        "butcher's twine"
+      ]
+    },
+    {
+      "id": 10428,
+      "labelRu": "Прихватка",
+      "labelEn": "Oven mitt",
+      "parentId": 10400,
+      "synonymsRu": [
+        "кухонная рукавица"
+      ],
+      "synonymsEn": [
+        "oven glove",
+        "pot holder"
+      ]
+    },
+    {
+      "id": 10429,
+      "labelRu": "Подставка под горячее",
+      "labelEn": "Trivet",
+      "parentId": 10400
+    },
+    {
+      "id": 10430,
+      "labelRu": "Кухонное полотенце",
+      "labelEn": "Kitchen towel",
+      "parentId": 10400,
+      "synonymsEn": [
+        "tea towel",
+        "dish towel"
+      ]
+    },
+    {
+      "id": 10431,
+      "labelRu": "Бумажное полотенце",
+      "labelEn": "Paper towel",
+      "parentId": 10700,
+      "synonymsEn": [
+        "kitchen paper"
+      ]
+    },
+    {
+      "id": 10432,
+      "labelRu": "Кулинарный пинцет",
+      "labelEn": "Kitchen tweezers",
+      "parentId": 10400,
+      "synonymsRu": [
+        "пинцет"
+      ]
+    },
+    {
+      "id": 10433,
+      "labelRu": "Сушилка для салата",
+      "labelEn": "Salad spinner",
+      "parentId": 10400,
+      "synonymsRu": [
+        "салатная центрифуга"
+      ]
+    },
+    {
+      "id": 10434,
+      "labelRu": "Ложка для спагетти",
+      "labelEn": "Pasta server",
+      "parentId": 10400,
+      "synonymsEn": [
+        "spaghetti spoon"
+      ]
+    },
+    {
+      "id": 10435,
+      "labelRu": "Лопата для пиццы",
+      "labelEn": "Pizza peel",
+      "parentId": 10400,
+      "synonymsRu": [
+        "лопатка для пиццы"
+      ]
+    },
+    {
+      "id": 10436,
+      "labelRu": "Мельница для перца",
+      "labelEn": "Pepper mill",
+      "parentId": 10400,
+      "synonymsEn": [
+        "pepper grinder"
+      ]
+    },
+    {
+      "id": 10437,
+      "labelRu": "Пресс для бургеров",
+      "labelEn": "Burger press",
+      "parentId": 10400
+    },
+    {
+      "id": 10438,
+      "labelRu": "Пельменница",
+      "labelEn": "Dumpling mold",
+      "parentId": 10400,
+      "synonymsRu": [
+        "форма для пельменей"
+      ],
+      "synonymsEn": [
+        "ravioli mold"
+      ]
+    },
+    {
+      "id": 10439,
+      "labelRu": "Машинка для пасты",
+      "labelEn": "Pasta machine",
+      "parentId": 10400,
+      "synonymsRu": [
+        "лапшерезка"
+      ],
+      "synonymsEn": [
+        "pasta maker"
+      ]
+    },
+    {
+      "id": 10440,
+      "labelRu": "Шприц для маринада",
+      "labelEn": "Marinade injector",
+      "parentId": 10400,
+      "synonymsEn": [
+        "meat injector"
+      ]
+    },
+    {
+      "id": 10442,
+      "labelRu": "Решётка-гриль",
+      "labelEn": "Grill rack",
+      "parentId": 10400,
+      "synonymsRu": [
+        "решётка для гриля"
+      ],
+      "synonymsEn": [
+        "grill grate"
+      ]
+    },
+    {
+      "id": 10500,
+      "labelRu": "Мерная посуда",
+      "labelEn": "Measuring tools"
+    },
+    {
+      "id": 10501,
+      "labelRu": "Кухонные весы",
+      "labelEn": "Kitchen scale",
+      "parentId": 10500,
+      "synonymsRu": [
+        "весы"
+      ],
+      "synonymsEn": [
+        "scale",
+        "scales"
+      ]
+    },
+    {
+      "id": 10502,
+      "labelRu": "Мерный стакан",
+      "labelEn": "Measuring jug",
+      "parentId": 10500,
+      "synonymsRu": [
+        "мерная кружка"
+      ],
+      "synonymsEn": [
+        "liquid measuring cup"
+      ]
+    },
+    {
+      "id": 10503,
+      "labelRu": "Мерная ложка",
+      "labelEn": "Measuring spoon",
+      "parentId": 10500
+    },
+    {
+      "id": 10504,
+      "labelRu": "Мерная чашка",
+      "labelEn": "Measuring cup",
+      "parentId": 10500,
+      "synonymsEn": [
+        "cup measure"
+      ]
+    },
+    {
+      "id": 10505,
+      "labelRu": "Кулинарный термометр",
+      "labelEn": "Kitchen thermometer",
+      "parentId": 10500,
+      "synonymsRu": [
+        "термометр",
+        "термощуп"
+      ],
+      "synonymsEn": [
+        "meat thermometer",
+        "probe thermometer"
+      ]
+    },
+    {
+      "id": 10506,
+      "labelRu": "Термометр для карамели",
+      "labelEn": "Candy thermometer",
+      "parentId": 10500,
+      "synonymsEn": [
+        "sugar thermometer"
+      ]
+    },
+    {
+      "id": 10507,
+      "labelRu": "Кухонный таймер",
+      "labelEn": "Kitchen timer",
+      "parentId": 10500,
+      "synonymsRu": [
+        "таймер"
+      ],
+      "synonymsEn": [
+        "timer"
+      ]
+    },
+    {
+      "id": 10600,
+      "labelRu": "Хранение",
+      "labelEn": "Storage"
+    },
+    {
+      "id": 10601,
+      "labelRu": "Контейнер",
+      "labelEn": "Food container",
+      "parentId": 10600,
+      "synonymsRu": [
+        "пищевой контейнер"
+      ],
+      "synonymsEn": [
+        "storage container"
+      ]
+    },
+    {
+      "id": 10602,
+      "labelRu": "Банка",
+      "labelEn": "Jar",
+      "parentId": 10600,
+      "synonymsRu": [
+        "стеклянная банка"
+      ],
+      "synonymsEn": [
+        "glass jar"
+      ]
+    },
+    {
+      "id": 10603,
+      "labelRu": "Пищевая плёнка",
+      "labelEn": "Cling film",
+      "parentId": 10700,
+      "synonymsEn": [
+        "plastic wrap",
+        "food wrap"
+      ]
+    },
+    {
+      "id": 10604,
+      "labelRu": "Пакет с застёжкой",
+      "labelEn": "Zip-lock bag",
+      "parentId": 10700,
+      "synonymsRu": [
+        "зип-пакет"
+      ],
+      "synonymsEn": [
+        "ziplock bag",
+        "freezer bag"
+      ]
+    },
+    {
+      "id": 10605,
+      "labelRu": "Вакуумный пакет",
+      "labelEn": "Vacuum bag",
+      "parentId": 10700
+    },
+    {
+      "id": 10606,
+      "labelRu": "Форма для льда",
+      "labelEn": "Ice cube tray",
+      "parentId": 10600,
+      "synonymsRu": [
+        "формочки для льда"
+      ]
+    },
+    {
+      "id": 10607,
+      "labelRu": "Бутылка",
+      "labelEn": "Bottle",
+      "parentId": 10600
+    },
+    {
+      "id": 10608,
+      "labelRu": "Термос",
+      "labelEn": "Vacuum flask",
+      "parentId": 10600,
+      "synonymsEn": [
+        "thermos"
+      ]
+    },
+    {
+      "id": 10609,
+      "labelRu": "Хлебница",
+      "labelEn": "Bread box",
+      "parentId": 10600,
+      "synonymsEn": [
+        "bread bin"
+      ]
+    },
+    {
+      "id": 10610,
+      "labelRu": "Кувшин",
+      "labelEn": "Jug",
+      "parentId": 10600,
+      "synonymsEn": [
+        "pitcher"
+      ]
+    },
+    {
+      "id": 10611,
+      "labelRu": "Термосумка",
+      "labelEn": "Cooler bag",
+      "parentId": 10600,
+      "synonymsEn": [
+        "cool bag"
+      ]
+    },
+    {
+      "id": 10700,
+      "labelRu": "Расходники",
+      "labelEn": "Consumables"
     }
   ]
 }

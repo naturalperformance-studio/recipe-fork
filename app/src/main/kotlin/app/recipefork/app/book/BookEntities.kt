@@ -77,7 +77,11 @@ data class IngredientGroupEntity(
     @ColumnInfo(name = "first_ingredient") val firstIngredient: Int,
 )
 
-/** The [position]th item of the equipment a recipe is cooked with, its [name] as the author wrote it. Added in version 6. */
+/**
+ * The [position]th item of the equipment a recipe is cooked with, named as an ingredient row is: by an equipment
+ * dictionary entry and its [qualifier], or by the author's [freeTextName]. Added in version 6 as the item's text alone;
+ * since version 7 named so.
+ */
 @Entity(
     tableName = "recipe_equipment",
     primaryKeys = ["recipe_id", "position"],
@@ -86,7 +90,9 @@ data class IngredientGroupEntity(
 data class EquipmentEntity(
     @ColumnInfo(name = "recipe_id") val recipeId: String,
     val position: Int,
-    val name: String,
+    @ColumnInfo(name = "dictionary_entry") val dictionaryEntry: Long?,
+    val qualifier: String?,
+    @ColumnInfo(name = "free_text_name") val freeTextName: String?,
 )
 
 @Entity(
@@ -98,6 +104,8 @@ data class StepEntity(
     @ColumnInfo(name = "recipe_id") val recipeId: String,
     val position: Int,
     val text: String,
+    /** The author's note on the step; null for none. Added in version 8. */
+    val note: String? = null,
 )
 
 /**
@@ -199,6 +207,15 @@ data class OwnRecipeRow(
     val language: RecipeLanguage? = null,
     /** The recipe's description, searched as the title is (L10N-006). */
     val description: String = "",
+)
+
+/**
+ * A dictionary entry of equipment a recipe names, as the book's filter "Enough equipment" reads it: an item of free
+ * text names no entry and is not one of these.
+ */
+data class RecipeEquipmentRow(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    @ColumnInfo(name = "dictionary_entry") val dictionaryEntry: Long,
 )
 
 /**

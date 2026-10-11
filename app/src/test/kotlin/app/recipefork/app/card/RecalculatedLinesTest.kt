@@ -61,8 +61,8 @@ class RecalculatedLinesTest {
                 Marking("750 g", true, Rounding.NONE),
                 Marking("5 pc", true, Rounding.UP),
                 Marking("1½ tsp", true, Rounding.NONE),
-                Marking("to taste", false, Rounding.NONE),
-                Marking("g", false, Rounding.NONE),
+                Marking(null, false, Rounding.NONE),
+                Marking(null, false, Rounding.NONE),
             ),
             markings(list(6)),
         )

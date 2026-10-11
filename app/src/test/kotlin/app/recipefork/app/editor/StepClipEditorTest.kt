@@ -37,6 +37,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.toSize
 import androidx.test.core.app.ApplicationProvider
@@ -191,7 +192,13 @@ class StepClipEditorTest {
         return recipe.id
     }
 
-    private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    /** Whether the node tagged [tag] is there — for a part of a step's sheet, in that step's sheet, opened for it. */
+    private fun exists(tag: String): Boolean {
+        compose.reachStep(tag)
+        return compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun onRow(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun bounds(tag: String): Rect =
         compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
@@ -214,7 +221,7 @@ class StepClipEditorTest {
     /** Opens the media menu of the step at [position] and chooses [item] in it. */
     private fun menu(position: Int, item: String) {
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(item), PATIENCE_MS)
         compose.onNodeWithTag(item).performClick()
     }
@@ -262,7 +269,7 @@ class StepClipEditorTest {
 
     /** Waits until [text] is said at the bottom of the editor and checks it is not written in the step's block. */
     private fun awaitNotice(position: Int, text: String) {
-        compose.awaitStatement(text)
+        compose.awaitStatementOnceSheetCloses(text)
         compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(EditorTags.step(position))), useUnmergedTree = true)
             .assertDoesNotExist()
     }
@@ -278,12 +285,14 @@ class StepClipEditorTest {
 
         compose.onNode(hasText("Record a clip") or hasText("Choose a clip")).assertDoesNotExist()
         (0..2).forEach { position ->
-            val control = bounds(EditorTags.stepPhoto(position))
-            val block = bounds(EditorTags.step(position))
-            assertTrue("step $position offers its media inside its block", control.top >= block.top && control.bottom <= block.bottom)
+            // In the step's own sheet, and nowhere on its row.
+            assertFalse(onRow(EditorTags.stepPhoto(position)))
+            compose.openStep(position)
+            compose.onNode(hasTestTag(EditorTags.stepPhoto(position)) and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET))).assertExists()
         }
-        assertEquals(listOf("Photo or clip for step 2"), compose.descriptionOf(EditorTags.stepPhoto(1)))
-        compose.onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
+        compose.openStep(1)
+        assertEquals(listOf("Add photo or clip"), compose.textsOf(EditorTags.stepPhoto(1)))
+        compose.inStep(1).onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepClipRecord(1)), PATIENCE_MS)
         assertEquals(listOf("Record a clip"), compose.textsOf(EditorTags.stepClipRecord(1)))
         assertEquals(listOf("Choose a clip"), compose.textsOf(EditorTags.stepClipChoose(1)))
@@ -347,13 +356,26 @@ class StepClipEditorTest {
 
         choose(2, "long.mp4")
 
-        awaitNotice(2, "This clip is longer than 15 seconds, so nothing was attached.")
+        // Said in the step's sheet, in its clip's part, while the sheet is open (T-212).
+        val tooLong = "This clip is longer than 15 seconds, so nothing was attached."
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(2)) }
+        assertEquals(listOf(tooLong), compose.textsOf(StepSheetTags.mediaFailure(2)))
         assertTrue(converter.given.isEmpty())
         assertTrue(stored(id).media.isEmpty())
         assertEquals(emptyList<String>(), held())
+        // Said at the bottom too, once the sheet goes; opened again, the sheet does not repeat it.
+        awaitNotice(2, tooLong)
+        compose.openStep(2)
+        assertFalse(exists(StepSheetTags.mediaFailure(2)))
+        choose(2, "long.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(2)) }
 
+        // Another clip offered in the same sheet clears it; attached, nothing is said wrong there.
         choose(2, "large.mp4")
 
+        compose.waitUntil(PATIENCE_MS) { stored(id).stepMedia(2)?.kind == MediaKind.VIDEO }
+        assertTrue(compose.stepSheetOpen())
+        assertFalse(exists(StepSheetTags.mediaFailure(2)))
         awaitNotice(2, converted)
         compose.waitUntil(PATIENCE_MS) { stored(id).stepMedia(2)?.kind == MediaKind.VIDEO }
         assertEquals(1, converter.given.size)
@@ -367,10 +389,18 @@ class StepClipEditorTest {
         val id = open(threeSteps())
 
         choose(1, "heavy.mp4")
-        awaitNotice(1, "This clip could not be made smaller than 6 MB, so nothing was attached.")
+        val heavy = "This clip could not be made smaller than 6 MB, so nothing was attached."
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(1)) }
+        assertEquals(listOf(heavy), compose.textsOf(StepSheetTags.mediaFailure(1)))
+        awaitNotice(1, heavy)
+        // Opened again, the sheet does not repeat what was said.
+        assertFalse(exists(StepSheetTags.mediaFailure(1)))
 
         choose(1, "broken.mp4")
-        awaitNotice(1, "This file could not be read or converted as a clip, so nothing was attached.")
+        val broken = "This file could not be read or converted as a clip, so nothing was attached."
+        compose.waitUntil(PATIENCE_MS) { exists(StepSheetTags.mediaFailure(1)) }
+        assertEquals(listOf(broken), compose.textsOf(StepSheetTags.mediaFailure(1)))
+        awaitNotice(1, broken)
 
         assertTrue(stored(id).media.isEmpty())
         assertEquals(emptyList<String>(), held())
@@ -387,14 +417,14 @@ class StepClipEditorTest {
         record(0)
 
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(0)) }
-        compose.onNode(hasText("Converting the clip…") and hasAnyAncestor(hasTestTag(EditorTags.step(0))), useUnmergedTree = true)
+        compose.onNode(hasText("Converting the clip…") and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET)), useUnmergedTree = true)
             .assertExists()
         val converting = bounds(EditorTags.stepClipConverting(0))
-        val block = bounds(EditorTags.step(0))
+        val block = bounds(StepSheetTags.SHEET)
         assertTrue(converting.top >= block.top && converting.bottom <= block.bottom)
         assertEquals(listOf("Cancel converting the clip of step 1"), compose.descriptionOf(EditorTags.stepClipCancel(0)))
 
-        compose.onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
 
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(0)) }
         compose.waitUntil(PATIENCE_MS) { TestCamera.left(context).isEmpty() }
@@ -440,11 +470,11 @@ class StepClipEditorTest {
         awaitNotice(0, converted)
 
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(EditorTags.stepPhoto(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepPhoto(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoRemove(0)), PATIENCE_MS)
         assertEquals(listOf("Remove clip"), compose.textsOf(EditorTags.stepPhotoRemove(0)))
         assertEquals(lightColorScheme().error, compose.textColourOf(EditorTags.stepPhotoRemove(0)))
-        compose.onNodeWithTag(EditorTags.stepPhotoRemove(0)).performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepPhotoRemove(0)).performClick()
 
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipImage(0)) && stored(id).media.isEmpty() && held().isEmpty() }
         awaitNotice(0, "Step clip removed.")
@@ -461,12 +491,18 @@ class StepClipEditorTest {
     // video — nothing else; its control is named as the card's is.
     @Test
     fun theClipShowsItsFirstFrameAndIsCalledTheStepsVideo() {
+        // In its step's sheet the clip is in sight at once, and its player reads its size: the clip's own, as its frame's.
+        players.width = 400
+        players.height = 300
         open(threeSteps().copy(media = listOf(keptClip("framed", 1))))
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipImage(1)) }
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipImage(1), useUnmergedTree = true).performScrollTo()
 
-        compose.waitUntil(PATIENCE_MS) {
+        // The frame is read off the main thread, and handed back on it.
+        compose.waitUntilWithMainThread {
             exists(EditorTags.stepClipImage(1)) && bounds(EditorTags.stepClipImage(1)).let { it.width / it.height in 1.32f..1.35f }
         }
-        val node = compose.onNodeWithTag(EditorTags.stepClipImage(1), useUnmergedTree = true).fetchSemanticsNode()
+        val node = compose.inStep(1).onNodeWithTag(EditorTags.stepClipImage(1), useUnmergedTree = true).fetchSemanticsNode()
         assertEquals(listOf("Video of step 2"), node.config[SemanticsProperties.ContentDescription])
         assertEquals(Role.Image, node.config[SemanticsProperties.Role])
         assertEquals(listOf("Play video"), compose.descriptionOf(EditorTags.stepClipControl(1)))
@@ -481,11 +517,78 @@ class StepClipEditorTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipImage(2)) }
         assertEquals(listOf("Видео шага 3"), compose.descriptionOf(EditorTags.stepClipImage(2)))
         assertEquals(listOf("Воспроизвести видео"), compose.descriptionOf(EditorTags.stepClipControl(2)))
-        compose.onNodeWithTag(EditorTags.stepPhoto(2)).performScrollTo().performClick()
+        compose.inStep(2).onNodeWithTag(EditorTags.stepPhoto(2)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepClipRecord(2)), PATIENCE_MS)
         assertEquals(listOf("Снять видео"), compose.textsOf(EditorTags.stepClipRecord(2)))
         assertEquals(listOf("Выбрать видео"), compose.textsOf(EditorTags.stepClipChoose(2)))
         assertEquals(listOf("Убрать видео"), compose.textsOf(EditorTags.stepPhotoRemove(2)))
+    }
+
+    // A step just added whose clip is still being converted holds it: closed, its sheet does not drop it, and the clip
+    // reaches it once converted.
+    @Test
+    fun aNewStepClosedWhileItsClipConvertsIsKept() {
+        val id = open(threeSteps())
+        holdClips()
+        compose.addStepAt(3)
+        choose(3, "new.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(3)) }
+        compose.closeStep()
+        compose.waitForIdle()
+        assertEquals(4, stored(id).steps.size)
+        converter.gate!!.complete(Unit)
+        compose.waitUntilWithMainThread { stored(id).stepMedia(3)?.kind == MediaKind.VIDEO }
+        assertEquals(4, stored(id).steps.size)
+        compose.waitUntil(PATIENCE_MS) { onRow(StepSheetTags.thumbnail(3)) }
+    }
+
+    // T-212: a step just added, kept because its sheet closed while its clip converted, goes once the conversion ends
+    // with nothing attached, as it holds nothing else; what went wrong is still said.
+    @Test
+    fun aNewStepKeptForItsClipGoesWhenTheClipIsNotAttached() {
+        val id = open(threeSteps())
+        holdClips()
+        compose.addStepAt(3)
+        choose(3, "broken.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(3)) }
+        compose.closeStep()
+        compose.waitForIdle()
+        assertEquals(4, stored(id).steps.size)
+        converter.gate!!.complete(Unit)
+        compose.waitUntilWithMainThread { stored(id).steps.size == 3 }
+        assertEquals(listOf("Boil.", "Fry.", "Serve."), stored(id).steps.map { it.text })
+        assertFalse(onRow(EditorTags.step(3)))
+        compose.awaitStatement("This file could not be read or converted as a clip, so nothing was attached.")
+    }
+
+    // A step kept for its clip and opened again is a new step once more: its conversion cancelled there and the sheet
+    // closed with nothing in it, it goes; one given a note meanwhile stays when its clip is not attached.
+    @Test
+    fun aNewStepKeptForItsClipAndOpenedAgainGoesOnlyWhenEmpty() {
+        val id = open(threeSteps())
+        holdClips()
+        compose.addStepAt(3)
+        choose(3, "first.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(3)) }
+        compose.closeStep()
+        compose.openStep(3)
+        compose.onNodeWithTag(EditorTags.stepClipCancel(3)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(3)) }
+        assertEquals(4, stored(id).steps.size)
+        compose.closeStep()
+        compose.waitUntil(PATIENCE_MS) { stored(id).steps.size == 3 }
+
+        compose.addStepAt(3)
+        choose(3, "broken.mp4")
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(3)) }
+        compose.closeStep()
+        compose.openStep(3)
+        compose.onNodeWithTag(StepNoteTags.field(3)).performScrollTo().performTextReplacement("Optional.")
+        compose.closeStep()
+        converter.gate!!.complete(Unit)
+        compose.awaitStatement("This file could not be read or converted as a clip, so nothing was attached.")
+        assertEquals(4, stored(id).steps.size)
+        assertEquals("Optional.", stored(id).steps[3].note)
     }
 
     // A frozen recipe shows its steps' clips and offers nothing to change them.
@@ -493,14 +596,14 @@ class StepClipEditorTest {
     fun aFrozenRecipeShowsItsStepClipsReadOnly() {
         open(threeSteps().copy(media = listOf(keptClip("frozen-clip", 0))).inState(RecipeState.PUBLISHED))
 
-        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipImage(0)) }
-        assertFalse(exists(EditorTags.stepPhoto(0)) || exists(EditorTags.stepClipRecord(0)))
-        // It can be watched in place all the same.
-        reveal(0)
-        compose.onNodeWithTag(EditorTags.stepClipControl(0), useUnmergedTree = true).performScrollTo().performClick()
-        awaitPlaying(true)
-        compose.onNodeWithTag(EditorTags.stepClipControl(0), useUnmergedTree = true).performClick()
-        awaitPlaying(false)
+        // T-211: its row reads as text, with a small picture of the clip's first frame, marked as a clip and named as the
+        // step's video; it opens nothing — the clip is watched on the card.
+        compose.waitUntil(PATIENCE_MS) { onRow(StepSheetTags.thumbnail(0)) }
+        assertEquals(listOf("Video of step 1"), compose.onNodeWithTag(StepSheetTags.thumbnail(0), useUnmergedTree = true).fetchSemanticsNode().config[SemanticsProperties.ContentDescription])
+        assertFalse(onRow(EditorTags.stepPhoto(0)) || onRow(EditorTags.stepClipRecord(0)) || onRow(EditorTags.stepClipControl(0)))
+        compose.onNodeWithTag(StepSheetTags.line(0), useUnmergedTree = true).performClick()
+        compose.waitForIdle()
+        assertFalse(compose.stepSheetOpen())
     }
 
     // A11Y-001: at 360 dp and twice the font size, the clip, its conversion and its Cancel stay within the step's block
@@ -520,9 +623,9 @@ class StepClipEditorTest {
         choose(1, "fits.mp4")
 
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(1)) }
-        compose.onNodeWithTag(EditorTags.stepClipCancel(1)).performScrollTo()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipCancel(1)).performScrollTo()
         val screen = bounds(EditorTags.SCREEN)
-        val block = bounds(EditorTags.step(1))
+        val block = bounds(StepSheetTags.SHEET)
         val control = bounds(EditorTags.stepClipControl(1))
         val least = with(compose.density) { 48.dp.toPx() }
         assertTrue("the control is at least 48 dp", control.width >= least - 0.5f && control.height >= least - 0.5f)
@@ -539,7 +642,7 @@ class StepClipEditorTest {
         AccessibilityChecks.assertTouchTargets(compose)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose)
 
-        compose.onNodeWithTag(EditorTags.stepClipCancel(1)).performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipCancel(1)).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(1)) }
         // Cancelled, the step keeps the clip it had.
         assertTrue(exists(EditorTags.stepClipImage(1)))
@@ -548,7 +651,7 @@ class StepClipEditorTest {
     /** Scrolls the clip at the step at [position] into view and waits until it holds a player. */
     private fun reveal(position: Int) {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipImage(position)) }
-        compose.onNodeWithTag(EditorTags.stepClipImage(position), useUnmergedTree = true).performScrollTo()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepClipImage(position), useUnmergedTree = true).performScrollTo()
         compose.waitUntil(PATIENCE_MS) { live() != null && exists(EditorTags.stepClipControl(position)) }
     }
 
@@ -608,20 +711,20 @@ class StepClipEditorTest {
         open(threeSteps().copy(media = listOf(keptClip("tapped", 1))))
         reveal(1)
 
-        compose.onNodeWithTag(EditorTags.stepClipControl(1)).performScrollTo().performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipControl(1)).performScrollTo().performClick()
         awaitPlaying(true)
         assertEquals(listOf("Pause video"), compose.descriptionOf(EditorTags.stepClipControl(1)))
-        compose.onNodeWithTag(EditorTags.stepClipControl(1)).performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipControl(1)).performClick()
         awaitPlaying(false)
         assertEquals(listOf("Play video"), compose.descriptionOf(EditorTags.stepClipControl(1)))
 
         // A tap anywhere on the clip does as the control does.
-        compose.onNodeWithTag(EditorTags.stepClipImage(1)).performScrollTo()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipImage(1)).performScrollTo()
         compose.waitForIdle()
-        compose.onNodeWithTag(EditorTags.stepClipImage(1)).performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipImage(1)).performClick()
         compose.waitForIdle()
         awaitPlaying(true)
-        compose.onNodeWithTag(EditorTags.stepClipImage(1)).performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipImage(1)).performClick()
         compose.waitForIdle()
         awaitPlaying(false)
         assertEquals(1, players.made.size)
@@ -629,36 +732,35 @@ class StepClipEditorTest {
 
     // MEDIA-004: the editor holds a player only while the clip is on screen; scrolled away it is let go of, scrolled
     // back a new one shows the clip, again not playing by itself.
+    // The clip leaving the screen — its step's sheet closed — releases its player; back in sight, it gets a new one.
     @Test
     @Config(qualifiers = "w360dp-h640dp")
-    fun scrollingTheClipAwayReleasesItsPlayer() {
+    fun theClipLeavingTheScreenReleasesItsPlayer() {
         open(steps(30).copy(media = listOf(keptClip("scrolled", 0))))
         reveal(0)
-        compose.onNodeWithTag(EditorTags.stepClipControl(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepClipControl(0)).performScrollTo().performClick()
         awaitPlaying(true)
 
-        compose.onNodeWithTag(EditorTags.step(29)).performScrollTo()
+        compose.closeStep()
         compose.waitUntil(PATIENCE_MS) { players.made.all { it.released } }
         assertFalse(players.made.any { it.playing })
 
         val made = players.made.size
-        compose.onNodeWithTag(EditorTags.stepClipImage(0)).performScrollTo()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepClipImage(0)).performScrollTo()
         compose.waitUntil(PATIENCE_MS) { players.made.size > made && live() != null }
     }
 
-    // A vertical drag that starts on the clip scrolls the editor and does not toggle the clip.
+    // A vertical drag that starts on the clip, in its step's sheet, does not toggle the clip.
     @Test
     @Config(qualifiers = "w360dp-h640dp")
-    fun aDragStartingOnTheClipScrollsTheEditor() {
+    fun aDragStartingOnTheClipDoesNotToggleIt() {
         open(steps(12).copy(media = listOf(keptClip("dragged", 1))))
         reveal(1)
         compose.waitForIdle()
-        val before = bounds(EditorTags.stepClipImage(1)).top
-        compose.onNodeWithTag(EditorTags.stepClipImage(1)).performTouchInput {
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipImage(1)).performTouchInput {
             swipe(Offset(width / 4f, height * 0.8f), Offset(width / 4f, height * 0.1f), durationMillis = 300)
         }
         compose.waitForIdle()
-        assertTrue("scrolled", bounds(EditorTags.stepClipImage(1)).top < before - 20f)
         assertTrue(players.made.none { it.playing })
     }
 
@@ -670,7 +772,7 @@ class StepClipEditorTest {
         val menu = bounds(EditorTags.stepPhoto(1))
         val clip = bounds(EditorTags.stepClipImage(1))
         assertFalse("the menu's control is not over the clip", menu.overlaps(clip))
-        compose.onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepPhoto(1)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoRemove(1)), PATIENCE_MS)
         assertTrue(exists(EditorTags.stepClipRecord(1)) && exists(EditorTags.stepClipChoose(1)))
         assertTrue(players.made.none { it.playing })
@@ -681,7 +783,7 @@ class StepClipEditorTest {
     fun replacingTheClipReleasesItsPlayer() {
         val id = open(threeSteps().copy(media = listOf(keptClip("first", 1))))
         reveal(1)
-        compose.onNodeWithTag(EditorTags.stepClipControl(1)).performScrollTo().performClick()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipControl(1)).performScrollTo().performClick()
         awaitPlaying(true)
         val first = live()!!
 
@@ -700,16 +802,19 @@ class StepClipEditorTest {
     @Config(qualifiers = "w360dp-h2000dp")
     fun removingTheClipOrClosingTheEditorReleasesItsPlayer() {
         val id = open(threeSteps().copy(media = listOf(keptClip("gone", 0), keptClip("kept", 2))))
-        compose.waitUntil(PATIENCE_MS) { players.made.count { !it.released } == 2 }
-        compose.onNodeWithTag(EditorTags.stepClipControl(0)).performScrollTo().performClick()
+        // A clip holds a player while it is in sight, in its step's sheet.
+        reveal(0)
+        compose.inStep(0).onNodeWithTag(EditorTags.stepClipControl(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { players.made.any { it.playing } }
         val removed = players.made.single { it.file!!.name == "gone" && !it.released }
 
-        compose.onNodeWithTag(EditorTags.stepPhoto(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepPhoto(0)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepPhotoRemove(0)), PATIENCE_MS)
-        compose.onNodeWithTag(EditorTags.stepPhotoRemove(0)).performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepPhotoRemove(0)).performClick()
         compose.waitUntil(PATIENCE_MS) { removed.released && stored(id).stepMedia(0) == null }
         assertTrue(players.made.filter { it.file!!.name == "gone" }.all { it.released })
+        reveal(2)
+        assertTrue(players.made.any { it.file!!.name == "kept" && !it.released })
 
         shown = false
         compose.waitForIdle()
@@ -723,7 +828,7 @@ class StepClipEditorTest {
         players.fails = true
         open(threeSteps().copy(media = listOf(keptClip("unplayable", 1))))
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipImage(1)) }
-        compose.onNodeWithTag(EditorTags.stepClipImage(1)).performScrollTo()
+        compose.inStep(1).onNodeWithTag(EditorTags.stepClipImage(1)).performScrollTo()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipMark(1)) }
         assertFalse(exists(EditorTags.stepClipControl(1)))
         assertEquals(listOf("Video of step 2"), compose.descriptionOf(EditorTags.stepClipImage(1)))

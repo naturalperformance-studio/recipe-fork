@@ -27,6 +27,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
@@ -52,7 +53,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * The equipment in the editor: a section between the serving count and the ingredients whose "Add" puts an item that
+ * The equipment in the editor (T-203's offers in [EquipmentOfferScreenTest]): a section between the serving count and the ingredients whose "Add" puts an item that
  * takes the focus; an item is a one-line field with a hint, removed with Undo, moved by its menu, marked over 40
  * characters on leaving it and dropped when left blank; a sixteenth "Add" says why it adds nothing; Next walks the
  * serving count, the items and the first ingredient row; a frozen recipe shows its items as text.
@@ -88,7 +89,7 @@ class EquipmentScreenTest {
     private fun recipe(vararg equipment: String) = Recipe.create(now, null).copy(
         title = "Pancakes",
         servings = 4,
-        equipment = equipment.toList(),
+        equipment = equipment.map(EquipmentItem::free),
         ingredients = listOf(Ingredient(0, null, null, "flour", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(200))),
         steps = listOf(Step(0, "Fry.")),
     )
@@ -103,7 +104,8 @@ class EquipmentScreenTest {
 
     private fun stored(recipe: Recipe): Recipe = runBlocking { recipes.get(recipe.id) }!!
 
-    private fun awaitStored(recipe: Recipe, equipment: List<String>) = compose.waitUntil(PATIENCE_MS) { stored(recipe).equipment == equipment }
+    private fun awaitStored(recipe: Recipe, equipment: List<String>) =
+        compose.waitUntil(PATIENCE_MS) { stored(recipe).equipment == equipment.map(EquipmentItem::free) }
 
     private fun node(tag: String): SemanticsNode = compose.onNodeWithTag(tag).fetchSemanticsNode()
 
@@ -165,7 +167,7 @@ class EquipmentScreenTest {
         assertEquals("A recipe can list up to 15 items of equipment.", context.getString(R.string.editor_equipment_limit, RecipeBounds.MAX_EQUIPMENT))
         compose.onNode(hasTestTag(EditorTags.EQUIPMENT_STATEMENT) and hasText("A recipe can list up to 15 items of equipment.")).assertExists()
         assertFalse(exists(field(15)))
-        assertEquals(fifteen, stored(recipe).equipment)
+        assertEquals(fifteen.map(EquipmentItem::free), stored(recipe).equipment)
         // The author's next action ends it.
         compose.onNodeWithTag(field(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.EQUIPMENT_STATEMENT) }
@@ -184,7 +186,7 @@ class EquipmentScreenTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.equipmentMark(0)) }
         val said = context.getString(R.string.editor_mark_characters_over, "40", long.length.toString())
         compose.onNode(hasTestTag(EditorTags.equipmentMark(0)) and hasText(said)).assertExists()
-        assertEquals(listOf(long), stored(recipe).equipment)
+        assertEquals(listOf(EquipmentItem.free(long)), stored(recipe).equipment)
         compose.onNodeWithTag(field(0)).performScrollTo().performTextReplacement("Cast-iron pan 28 cm")
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.equipmentMark(0)) }
     }
@@ -216,8 +218,9 @@ class EquipmentScreenTest {
     fun aRemovedItemComesBackWithUndo() {
         val recipe = open(recipe("Bowl", "Whisk", "Frying pan"))
         compose.onNodeWithTag(EditorTags.equipmentRemove(1)).performScrollTo().performClick()
-        compose.awaitStatement(context.getString(R.string.editor_equipment_removed, 2))
-        assertEquals("Equipment item 2 removed", context.getString(R.string.editor_equipment_removed, 2))
+        // It names the item that went (T-217).
+        compose.awaitStatement("“Whisk” removed")
+        assertEquals("“Whisk” removed", context.getString(R.string.editor_equipment_removed, "Whisk"))
         awaitStored(recipe, listOf("Bowl", "Frying pan"))
         compose.onNode(
             hasText(context.getString(R.string.editor_undo)) and hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)),
@@ -252,7 +255,8 @@ class EquipmentScreenTest {
         assertFalse(exists(EditorTags.equipmentMenu(0)))
     }
 
-    // The keyboard's Next goes from the serving count through every item to the first ingredient row.
+    // The keyboard's Next goes from the serving count through every item to the first ingredient row, whose sheet opens
+    // with its name focused.
     @Test
     fun nextGoesFromTheServingsThroughTheItemsToTheIngredients() {
         open(recipe("Bowl", "Whisk"))
@@ -275,8 +279,10 @@ class EquipmentScreenTest {
         compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
         compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
+        compose.removeIngredient(0)
         compose.waitUntil(PATIENCE_MS) { stored(recipe).ingredients.isEmpty() }
+        // Its Undo put away, so that it covers nothing tapped next.
+        compose.swipeAwayStatement()
         compose.onNodeWithTag(EditorTags.EQUIPMENT_ADD).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { focused(field(0)) }
         assertEquals(androidx.compose.ui.text.input.ImeAction.Done, node(field(0)).config[SemanticsProperties.ImeAction])
@@ -293,6 +299,36 @@ class EquipmentScreenTest {
         assertFalse(exists(EditorTags.EQUIPMENT_ADD))
         assertFalse(exists(EditorTags.equipmentRemove(0)))
         assertFalse(exists(EditorTags.equipmentMenu(0)))
+    }
+
+    // An item an entry names shows as the entry's label in the interface language with its qualifier, editable or
+    // frozen; leaving it untouched keeps the entry, typing past its label changes its qualifier, and typing inside the
+    // label makes it the text typed.
+    @Test
+    fun anEntrysItemShowsItsLabelAndQualifier() {
+        val recipe = open(recipe("Whisk").copy(equipment = listOf(EquipmentItem.entry(10001, "26 cm"), EquipmentItem.free("Whisk"))))
+        compose.waitUntil(PATIENCE_MS) { text(field(0)) == "Frying pan 26 cm" }
+        compose.onNodeWithTag(field(0)).performScrollTo().performClick()
+        leaveField()
+        compose.waitForIdle()
+        assertEquals(listOf(EquipmentItem.entry(10001, "26 cm"), EquipmentItem.free("Whisk")), stored(recipe).equipment)
+        compose.onNodeWithTag(field(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(field(0)).performTextReplacement("Frying pan 28 cm")
+        leaveField()
+        compose.waitUntil(PATIENCE_MS) { stored(recipe).equipment == listOf(EquipmentItem.entry(10001, "28 cm"), EquipmentItem.free("Whisk")) }
+        compose.onNodeWithTag(field(0)).performScrollTo().performClick()
+        compose.onNodeWithTag(field(0)).performTextReplacement("Frying pin 28 cm")
+        leaveField()
+        awaitStored(recipe, listOf("Frying pin 28 cm", "Whisk"))
+    }
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun aFrozenRecipeShowsAnEntrysItemInRussian() {
+        open(recipe().copy(equipment = listOf(EquipmentItem.entry(10202), EquipmentItem.entry(10001, "26 см"))).inState(RecipeState.PUBLISHED))
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.FROZEN) }
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.equipment(1)) and hasText("Сковорода 26 см")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(hasTestTag(EditorTags.equipment(0)) and hasText("Духовка")).assertExists()
     }
 
     // A frozen recipe with no equipment shows no section.

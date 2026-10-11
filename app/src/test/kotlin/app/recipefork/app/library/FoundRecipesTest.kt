@@ -221,7 +221,7 @@ class FoundRecipesTest {
         compose.waitUntil(PATIENCE_MS) { runBlocking { recipes.get(id) } == null }
         assertEquals(emptyList<Any>(), runBlocking { recipes.marked().first() })
         assertEquals(0, runBlocking { recipes.count() })
-        compose.awaitRemovalNotice("Recipe removed", "Undo")
+        compose.awaitRemovalNotice("“Bean soup” removed", "Undo")
     }
 
     // A11Y-003, A11Y-005: the entry, its removal and the import are large enough and say what they do.
@@ -239,7 +239,7 @@ class FoundRecipesTest {
     fun inServerlessModeTheMarkedViewOffersTheImport() {
         show(Mode.Serverless)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.MARKED_EMPTY), PATIENCE_MS)
-        assertEquals("No marked recipes yet", compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.MARKED_EMPTY)).single())
+        assertEquals("No imported recipes yet", compose.textsOf(LibraryTags.emptyHeadline(LibraryTags.MARKED_EMPTY)).single())
         assertEquals(listOf("Import a recipe file"), compose.textsOf(LibraryTags.IMPORT))
     }
 
@@ -307,8 +307,9 @@ class FoundRecipesTest {
         // The unfinished and the off-grid rows read as they were written, at either count.
         assertEquals(before[1], after[1])
         assertEquals(before[2], after[2])
-        // As an own draft's are (CardServingsTest): the row carries its unit and no value it does not hold.
-        assertEquals(listOf("200 g", "ml", "g"), before)
-        assertEquals(listOf("300 g", "ml", "g"), after)
+        // As an own draft's are (CardServingsTest): the row with no amount yet shows no unit either (T-217), the
+        // off-grid one its unit and no value it does not hold.
+        assertEquals(listOf("200 g", null, "g"), before)
+        assertEquals(listOf("300 g", null, "g"), after)
     }
 }

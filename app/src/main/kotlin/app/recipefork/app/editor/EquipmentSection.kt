@@ -14,11 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -30,9 +33,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.app.dictionary.EquipmentEntryEntity
+import app.recipefork.app.dictionary.EquipmentOffer
+import app.recipefork.app.dictionary.label
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.RecipePart
+import app.recipefork.core.scaling.InterfaceLanguage
 
 /**
  * What the recipe is cooked with, between the serving count and the ingredients: one short line per item ("Oven",
@@ -42,22 +50,33 @@ import app.recipefork.core.recipe.RecipePart
  * and marked on leaving it (FLOW-028); one left blank goes. The keyboard's Next walks the items, then [onPastLast] —
  * the ingredient list's first item; with none ([onPastLast] null), the last item says Done.
  *
- * A frozen recipe shows its items as text, and nothing where it lists none.
+ * An item is named from the equipment [dictionary] or in the author's own words, as an ingredient is (DOM-009): it reads
+ * as its entry's label in the interface [language] with its qualifier, or its free text. A frozen recipe shows its items
+ * as text, and nothing where it lists none.
  */
 @Composable
-internal fun Equipment(recipe: Recipe, editor: RecipeEditor, focus: RowFocus, onPastLast: (() -> Unit)?) {
-    val items = recipe.equipment
+internal fun Equipment(
+    recipe: Recipe,
+    editor: RecipeEditor,
+    focus: RowFocus,
+    onPastLast: (() -> Unit)?,
+    dictionary: List<EquipmentEntryEntity>,
+    language: InterfaceLanguage,
+) {
+    val byId = remember(dictionary) { dictionary.associateBy { it.id } }
+    val label: (EquipmentItem) -> String? = { item -> item.dictionaryEntry?.let(byId::get)?.label(language) }
     if (!recipe.state.editable) {
-        if (items.isNotEmpty()) ReadOnlyEquipment(items)
+        if (recipe.equipment.isNotEmpty()) ReadOnlyEquipment(recipe.equipment.map { it.shown(label(it)) })
         return
     }
+    val items = recipe.equipment
     Column(Modifier.fillMaxWidth().testTag(EditorTags.EQUIPMENT), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         EquipmentHeading()
         items.forEachIndexed { index, item ->
-            // What the screen holds for an item — its focus — stays with it as items before it go or move.
+            // What the screen holds for an item — its focus, an open offer — stays with it as items before it go or move.
             key(editor.equipmentKey(index)) {
                 val next = if (index < items.lastIndex) ({ focus.ask(index + 1) }) else onPastLast
-                EquipmentItem(index, items.size, item, editor, focus, next)
+                EquipmentLine(index, items.size, item, editor, focus, next, dictionary, language, label)
             }
         }
         val full by editor.equipmentStatement.collectAsState()
@@ -95,23 +114,76 @@ private fun EquipmentHeading() {
 }
 
 /**
- * The item at [index] of [count]: a one-line field, left trimmed — blank, it goes ([RecipeEditor.settleEquipment]) —
- * beside its removal, offered for undoing, and its menu of moving it one place up or down. [onNext] is where the
- * keyboard's Next goes; with none, the field says Done.
+ * The item at [index] of [count]: a one-line field beside its removal, offered for undoing, and its menu of moving it one
+ * place up or down. [onNext] is where the keyboard's Next goes; with none, the field says Done.
+ *
+ * As an ingredient's name is (FLOW-057, DOM-009): what the author types is held as their own words at once, and while
+ * they type the field offers the dictionary's entries for it — by label or synonym, in either language — and, beside
+ * them, keeping the text as free text. Picking an entry names the item by it. Typed past an entry's label, after a space
+ * or a comma, the words are the entry's qualifier ("Frying pan" + "26 cm"); an edit inside the label makes the item the
+ * author's own words again. Leaving the field with exactly an entry's name typed names the item by that entry; free text
+ * left blank goes ([RecipeEditor.settleEquipment]), and free text kept says, once the field is left, that it is not from
+ * the dictionary.
  */
 @Composable
-private fun EquipmentItem(index: Int, count: Int, item: String, editor: RecipeEditor, focus: RowFocus, onNext: (() -> Unit)?) {
+private fun EquipmentLine(
+    index: Int,
+    count: Int,
+    item: EquipmentItem,
+    editor: RecipeEditor,
+    focus: RowFocus,
+    onNext: (() -> Unit)?,
+    dictionary: List<EquipmentEntryEntity>,
+    language: InterfaceLanguage,
+    labelOf: (EquipmentItem) -> String?,
+) {
     val key = editor.equipmentKey(index)
     val requester = remember { FocusRequester() }
     focus.TakenBy(index, requester)
     val manager = LocalFocusManager.current
+    var offering by remember { mutableStateOf(false) }
+    var focused by remember { mutableStateOf(false) }
+    // What the author typed past the entry's label stays as typed — a space before the next word included — while it
+    // reads as the qualifier the item holds; once they leave the field, it reads as held.
+    var typed by remember { mutableStateOf<String?>(null) }
+    fun held(): EquipmentItem? = editor.recipe.value?.equipment?.getOrNull(index)
+    // The offerable entry, other than the one [of] names, whose name is exactly [text]: a qualifier is no substitute for
+    // an entry named whole ("Сковорода для блинов" is the crêpe pan).
+    fun otherEntryNamed(text: String, of: EquipmentItem): EquipmentEntryEntity? =
+        EquipmentOffer.of(text, dictionary, language).exact?.takeIf { it.id != of.dictionaryEntry }
+    val label = labelOf(item)
+    val shown = typed?.takeIf { label != null && qualifierTyped(it, label) == Qualified(item.qualifier) } ?: item.shown(label)
+    val offer = if (offering && item.dictionaryEntry == null) EquipmentOffer.of(shown, dictionary, language) else null
+    val hinting = !focused && item.dictionaryEntry == null && !item.freeTextName.isNullOrBlank()
     Column(Modifier.fillMaxWidth().testTag(EditorTags.equipment(index))) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             OutlinedTextField(
-                value = item,
-                onValueChange = { editor.setEquipment(index, it) },
+                value = shown,
+                onValueChange = { text ->
+                    val latest = held() ?: return@OutlinedTextField
+                    val kept = labelOf(latest)?.let { qualifierTyped(text, it) }
+                    val other = if (kept != null) otherEntryNamed(text, latest) else null
+                    if (other != null) {
+                        typed = text
+                        editor.setEquipmentEntry(index, other.id)
+                    } else if (kept != null) {
+                        typed = text
+                        editor.setEquipmentQualifier(index, kept.qualifier)
+                    } else {
+                        typed = null
+                        editor.setEquipment(index, text)
+                        offering = true
+                    }
+                },
                 label = { Text(stringResource(R.string.editor_equipment_item, index + 1)) },
                 placeholder = { Text(stringResource(R.string.editor_equipment_example)) },
+                // Only an item in the author's own words says so, and only once the field is left, so it never springs
+                // up under a name still being typed.
+                supportingText = if (hinting) {
+                    { Text(stringResource(R.string.editor_equipment_free_text_warning), Modifier.testTag(EquipmentLineTags.warning(index))) }
+                } else {
+                    null
+                },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
@@ -121,10 +193,21 @@ private fun EquipmentItem(index: Int, count: Int, item: String, editor: RecipeEd
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(requester)
+                    .onFocusChanged { focused = it.isFocused }
                     .then(
-                        // By the item's key, so it is this item that is settled and marked wherever it stands now.
+                        // By the item's key, so it is this item that is named, settled and marked wherever it stands now.
                         leaving {
+                            offering = false
+                            typed = null
                             val now = editor.equipmentIndex(key) ?: return@leaving
+                            val latest = editor.recipe.value?.equipment?.getOrNull(now)
+                            val written = latest?.freeTextName
+                            if (latest != null && latest.dictionaryEntry == null && written != null) {
+                                EquipmentOffer.of(written, dictionary, language).exact?.let { editor.setEquipmentEntry(now, it.id) }
+                            } else if (latest?.qualifier != null) {
+                                // A label and a qualifier that together are another entry's name name that entry.
+                                otherEntryNamed(latest.shown(labelOf(latest)), latest)?.let { editor.setEquipmentEntry(now, it.id) }
+                            }
                             editor.settleEquipment(now)
                             editor.equipmentIndex(key)?.let { editor.leave(RecipePart.EquipmentName(it)) }
                         },
@@ -133,8 +216,48 @@ private fun EquipmentItem(index: Int, count: Int, item: String, editor: RecipeEd
             )
             Row(Modifier.padding(top = 8.dp)) { EquipmentControls(index, count, editor) }
         }
+        if (offer != null && (offer.entries.isNotEmpty() || offer.freeText != null)) {
+            Column(Modifier.fillMaxWidth().testTag(EquipmentLineTags.offer(index))) {
+                offer.entries.forEach { entry ->
+                    val entryLabel = entry.label(language)
+                    OfferedChoice(
+                        text = entryLabel,
+                        synonym = offer.synonyms[entry.id],
+                        synonymTag = EquipmentLineTags.synonym(index, entry.id),
+                        action = stringResource(R.string.editor_equipment_pick_action, entryLabel),
+                        onClick = {
+                            editor.setEquipmentEntry(index, entry.id)
+                            offering = false
+                            manager.clearFocus()
+                        },
+                        modifier = Modifier.testTag(EquipmentLineTags.entry(index, entry.id)),
+                    )
+                }
+                offer.freeText?.let { text ->
+                    OfferedChoice(
+                        text = stringResource(R.string.editor_equipment_free_text_offer, text),
+                        action = stringResource(R.string.editor_equipment_free_text_action, text),
+                        onClick = {
+                            editor.setEquipment(index, text)
+                            offering = false
+                            manager.clearFocus()
+                        },
+                        modifier = Modifier.testTag(EquipmentLineTags.freeText(index)),
+                    )
+                }
+            }
+        }
         BoundMark(editor, RecipePart.EquipmentName(index), EditorTags.equipmentMark(index), gap = 4.dp, Modifier.padding(top = 4.dp))
     }
+}
+
+/** The test tags of an equipment item's offer and of its free-text hint. */
+object EquipmentLineTags {
+    fun offer(index: Int) = "editor-equipment-$index-offer"
+    fun entry(index: Int, entryId: Long) = "editor-equipment-$index-offer-$entryId"
+    fun freeText(index: Int) = "editor-equipment-$index-offer-free-text"
+    fun synonym(index: Int, entryId: Long) = "editor-equipment-$index-offer-$entryId-synonym"
+    fun warning(index: Int) = "editor-equipment-$index-warning"
 }
 
 /** The removal of the item at [index] of [count], and its menu of moving it — none for an only item. */

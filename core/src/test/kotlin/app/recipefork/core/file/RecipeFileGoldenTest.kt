@@ -1,5 +1,6 @@
 package app.recipefork.core.file
 
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
@@ -39,7 +40,7 @@ class RecipeFileGoldenTest {
             Ingredient(6, null, freeTextName = "cream", unitType = UnitType.EXACT, unit = QuantityUnit.CUBIC_METRE, quantity = null, enteredQuantity = "-3"),
         ),
         steps = listOf(
-            Step(0, "Fry the beet until soft", listOf(IngredientReference(0, 8)), listOf(Timer(12.minutes, "Beet"))),
+            Step(0, "Fry the beet until soft", listOf(IngredientReference(0, 8)), listOf(Timer(12.minutes, "Beet")), note = "Бабушка всегда добавляла щепотку сахара"),
             Step(
                 1, "Simmer with the salt and onions",
                 listOf(IngredientReference(3, 14, IngredientShare(Rational.of(1, 4), QuantityUnit.TABLESPOON)), IngredientReference(1, 0)),
@@ -54,7 +55,8 @@ class RecipeFileGoldenTest {
             FileMedia("m-2", MediaKind.VIDEO, MediaAttachment.ToStep(1), "media/m-2.mp4"),
         ),
         ingredientGroups = listOf(IngredientGroup("Vegetables", 1), IngredientGroup("Seasoning", 3)),
-        equipment = listOf("Pot 5 l", "Frying pan 26 cm", "Grater"),
+        equipment = listOf(EquipmentItem.entry(10006, "5 l"), EquipmentItem.entry(10001, "26 cm"), EquipmentItem.free("Old cast-iron grater")),
+        equipmentLabels = mapOf(10006L to EntryLabels("Кастрюля", "Saucepan"), 10001L to EntryLabels("Сковорода", "Frying pan")),
     )
 
     private val expected = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe.json")).readText()
@@ -65,11 +67,44 @@ class RecipeFileGoldenTest {
     @Test
     fun theCheckedInDocumentReadsBackAsTheRecipe() = assertEquals(golden, RecipeFile.decode(expected))
 
-    /** The golden recipe as format 3 held it: with no equipment. */
-    private val withoutEquipment = golden.copy(equipment = emptyList())
+    /** The golden recipe as format 5 held it: with no step's note. */
+    private val withoutStepNotes = golden.copy(steps = golden.steps.map { it.copy(note = null) })
+
+    // The same recipe as format 5 wrote it, before a step's note, still reads — with none.
+    @Test
+    fun theFormat5DocumentReadsBackWithNoStepNotes() {
+        val format5 = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe-v5.json")).readText()
+        assertEquals(withoutStepNotes, RecipeFile.decode(format5))
+    }
+
+    /** The golden recipe as format 3 held it: with no equipment and no step's note. */
+    private val withoutEquipment = withoutStepNotes.copy(equipment = emptyList(), equipmentLabels = emptyMap())
+
+    /** The golden recipe as format 4 held it: each item of equipment a line of text. */
+    private val textEquipment = withoutEquipment.copy(
+        equipment = listOf(EquipmentItem.free("Pot 5 l"), EquipmentItem.free("Frying pan 26 cm"), EquipmentItem.free("Grater")),
+    )
+
+    private val format4 = checkNotNull(javaClass.getResource("/recipe-file/golden-recipe-v4.json")).readText()
+
+    // The same recipe as format 4 wrote it, each item its text, still reads — each item free text where no entry is found.
+    @Test
+    fun theFormat4DocumentReadsBackWithFreeTextEquipment() = assertEquals(textEquipment, RecipeFile.decode(format4))
+
+    // A format-4 item whose whole text is an entry's name finds that entry, with no qualifier; the others stay free text.
+    @Test
+    fun aFormat4ItemThatIsAnEntrysNameFindsTheEntry() {
+        val read = RecipeFile.decode(format4) { text -> 10311L.takeIf { text == "Grater" } }
+        assertEquals(
+            listOf(EquipmentItem.free("Pot 5 l"), EquipmentItem.free("Frying pan 26 cm"), EquipmentItem(10311, null, null)),
+            read.equipment,
+        )
+        assertEquals(emptyMap(), read.equipmentLabels)
+        assertEquals(emptyList(), RecipeFileCheck.problems(read))
+    }
 
     /** The golden recipe as formats 1 and 2 held it: each step's first timer alone (DOM-024), and no equipment. */
-    private val oneTimerEach = withoutEquipment.copy(steps = golden.steps.map { it.copy(timers = it.timers.take(1)) })
+    private val oneTimerEach = withoutEquipment.copy(steps = withoutEquipment.steps.map { it.copy(timers = it.timers.take(1)) })
 
     // DOM-022, DOM-023: the same recipe as format 1 wrote it, before groups and notes, still reads — with neither.
     @Test

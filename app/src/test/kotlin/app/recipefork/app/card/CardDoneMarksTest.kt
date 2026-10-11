@@ -276,7 +276,8 @@ class CardDoneMarksTest {
         assertEquals(2, marks.held(BookName.Pool, recipe.id).size)
     }
 
-    // FLOW-068 (3): "Clear marks" is in the card's ⋮ while the recipe has marks, and takes every one of them away.
+    // FLOW-068 (3): "Clear marks" is in the card's ⋮ while the recipe has marks — on either tab — and takes every one
+    // of them away.
     @Test
     fun clearMarksIsOfferedWhileTheRecipeHasMarksAndClearsThemAll() {
         // An own recipe in a deletable state, on Cooking: no ⋮ until something is marked, then Clear marks alone in it.
@@ -298,16 +299,22 @@ class CardDoneMarksTest {
         // The recipe itself is still in the book.
         assertNotNull(runBlocking { recipes.get(recipe.id) })
 
-        // View's ⋮ holds Delete alone, marked or not: the marks are cleared on Cooking.
+        // View's ⋮ holds Delete, and Clear marks too while the recipe has marks.
+        compose.chooseCardTab(CardMode.VIEW)
+        compose.openTheCardMenu()
+        assertTrue(exists(CardTags.DELETE))
+        assertFalse(exists(CardTags.CLEAR_MARKS))
+        compose.closeTheCardMenu()
+        compose.chooseCardTab(CardMode.COOKING)
         tap(ingredient(1))
         compose.chooseCardTab(CardMode.VIEW)
-        compose.onNodeWithTag(CardTags.MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.DELETE) }
-        assertFalse(exists(CardTags.CLEAR_MARKS))
+        compose.openTheCardMenu()
+        assertTrue(exists(CardTags.DELETE))
+        assertTrue(exists(CardTags.CLEAR_MARKS))
     }
 
-    // A recipe the card offers no removal for shows its ⋮ on Cooking only while it has marks to clear; fork floats on
-    // View, never in a ⋮, and View shows no ⋮ at all for it.
+    // A recipe the card offers no removal for shows its ⋮ only while it has marks to clear, on either tab; fork floats on
+    // View, never in a ⋮.
     @Test
     fun aFrozenRecipeShowsItsMenuOnlyWhileItHasMarks() {
         show(save(pilaf(RecipeState.PUBLISHED)).id)
@@ -321,10 +328,16 @@ class CardDoneMarksTest {
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
         assertEquals(emptyList<String>(), doneParts())
-        tap(step(2))
+        // Marked again — a line clear of the statement the clearing left at the bottom.
+        tap(ingredient(0))
         compose.chooseCardTab(CardMode.VIEW)
-        assertTrue(exists(CardTags.FORK))
-        assertFalse(exists(CardTags.MENU))
+        compose.scrollUntilForkShows()
+        // View's ⋮ holds Clear marks alone while there are marks, and goes with them.
+        compose.openTheCardMenu()
+        assertTrue(exists(CardTags.CLEAR_MARKS))
+        assertFalse(exists(CardTags.DELETE) || exists(CardTags.REMOVE))
+        compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
     }
 
     // FLOW-068 (4): the file of a recipe carries no marks — it is the same file marked or not — and a fork of it

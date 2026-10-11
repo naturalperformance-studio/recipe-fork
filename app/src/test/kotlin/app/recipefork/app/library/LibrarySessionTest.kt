@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.test.core.app.ApplicationProvider
 import app.recipefork.app.MainActivity
 import app.recipefork.app.RecipeForkApplication
@@ -17,6 +18,7 @@ import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.BookLanguage
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.search.BookOrder
@@ -246,6 +248,10 @@ class LibrarySessionTest {
             container.recipes.save(
                 Recipe.create(Instant.parse("2026-10-01T12:00:00Z"), null).copy(title = "Pie", language = RecipeLanguage.EN),
             )
+            // A view of two languages, so that the sheet offers the language filter.
+            container.recipes.save(
+                Recipe.create(Instant.parse("2026-10-01T11:00:00Z"), null).copy(title = "Пирог", language = RecipeLanguage.RU),
+            )
         }
         chooseOwn()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
@@ -266,8 +272,44 @@ class LibrarySessionTest {
         assertEquals(listOf("English"), compose.textsOf(LibraryTags.LANGUAGE_FILTER))
     }
 
+    // T-206: the filter "Enough equipment" survives the end of the process as the other filters do; a new session has none.
+    @Test
+    fun theProcessEndedWhileAwayKeepsTheEquipmentFilter() {
+        container.kitchen.hold(listOf(FRYING_PAN), true)
+        val activity = launch()
+        runBlocking {
+            container.recipes.save(Recipe.create(Instant.parse("2026-10-01T12:00:00Z"), null).copy(title = "Pancakes", equipment = listOf(EquipmentItem(FRYING_PAN))))
+            container.recipes.save(Recipe.create(Instant.parse("2026-10-01T11:00:00Z"), null).copy(title = "Roast", equipment = listOf(EquipmentItem(OVEN))))
+        }
+        chooseOwn()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTER_ADD)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.FILTER_ADD).scrolledTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.EQUIPMENT_CHOICE)).fetchSemanticsNodes().size == 1 }
+        compose.onNodeWithTag(LibraryTags.EQUIPMENT_CHOICE).scrolledTo().performClick()
+        compose.onNodeWithTag(LibraryTags.FILTERS_SHEET_DONE).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.FILTERS_SHEET)).fetchSemanticsNodes().isEmpty() }
+        fun chipShown() = compose.onAllNodes(hasTestTag(LibraryTags.EQUIPMENT_FILTER)).fetchSemanticsNodes().size == 1
+        fun listed(title: String) = compose.onAllNodes(hasText(title), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        compose.waitUntil(PATIENCE_MS) { chipShown() && listed("Pancakes") && !listed("Roast") }
+        val saved = Bundle()
+        activity.pause().stop().saveInstanceState(saved)
+        activity.destroy()
+        val restored = launch(saved)
+        assertView(LibraryView.OWN)
+        compose.waitUntil(PATIENCE_MS) { chipShown() && listed("Pancakes") && !listed("Roast") }
+        restored.closeTask()
+        launch()
+        chooseOwn()
+        compose.waitUntil(PATIENCE_MS) { listed("Pancakes") && listed("Roast") }
+        assertEquals(false, chipShown())
+    }
+
     private companion object {
         /** A tag of the shipped dictionary. */
         const val ITALIAN = 10L
+
+        /** Equipment of the shipped dictionary. */
+        const val FRYING_PAN = 10001L
+        const val OVEN = 10202L
     }
 }

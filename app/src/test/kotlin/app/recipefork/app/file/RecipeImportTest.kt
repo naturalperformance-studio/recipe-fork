@@ -11,9 +11,13 @@ import app.recipefork.app.file.TestRecipeFiles.jpeg
 import app.recipefork.app.file.TestRecipeFiles.mp4
 import app.recipefork.app.file.TestRecipeFiles.soup
 import app.recipefork.app.file.TestRecipeFiles.zip
+import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.file.EntryLabels
 import app.recipefork.core.file.FileMedia
 import app.recipefork.core.file.RecipeFile
+import app.recipefork.core.file.RecipeFileContent
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
@@ -22,11 +26,17 @@ import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -160,8 +170,8 @@ class RecipeImportTest {
     // FLOW-064 (5): a document of a later format, written by a later version of the application.
     @Test
     fun aLaterFormatIsRefused() {
-        val later = RecipeFile.encode(soup()).replace("\"format_version\": 4", "\"format_version\": 5")
-        assertTrue(later.contains("\"format_version\": 5"))
+        val later = RecipeFile.encode(soup()).replace("\"format_version\": 6", "\"format_version\": 7")
+        assertTrue(later.contains("\"format_version\": 7"))
         assertRefused(Refusal.LATER_VERSION, zip(RecipeFile.DOCUMENT to later.toByteArray()))
     }
 
@@ -392,23 +402,45 @@ class RecipeImportTest {
         .replace("\"format_version\": ${RecipeFile.FORMAT_VERSION}", "\"format_version\": $version")
         .replace(Regex("\"equipment\": \\[\\],\\s*"), "")
 
+    // A found recipe keeps each step's note, as it keeps the rest of the content; a file of format 5, before notes,
+    // imports with none; a note over its bound refuses the file.
+    @Test
+    fun aFoundRecipeKeepsItsStepNotes() = runBlocking {
+        val note = "Бабушка всегда добавляла щепотку сахара"
+        val content = soup().copy(steps = soup().steps.map { if (it.position == 0) it.withNote(note) else it })
+        assertRefused(Refusal.BREAKS_RULES, file(content.copy(steps = content.steps.map { it.copy(note = it.note?.let { "n".repeat(501) }) })))
+        assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
+        val found = recipes.get(content.id)!!
+        assertEquals(note, found.steps[0].note)
+        assertEquals(content.steps, found.steps)
+        assertEquals(found, RecipeImport.foundRecipe(content, emptyList(), now))
+    }
+
+    @Test
+    fun aFormat5FileImportsWithNoStepNotes() = runBlocking {
+        val document = RecipeFile.encode(soup()).replace("\"format_version\": 6", "\"format_version\": 5")
+        assertTrue(document.contains("\"format_version\": 5"))
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(zip(RecipeFile.DOCUMENT to document.toByteArray())))
+        assertEquals(soup().steps.map { null }, recipes.get(soup().id)!!.steps.map { it.note })
+    }
+
     // A found recipe keeps the file's equipment, in order.
     @Test
     fun aFoundRecipeKeepsItsEquipment() = runBlocking {
-        val content = soup().copy(equipment = listOf("Pot 5 l", "Ladle"))
+        val content = soup().copy(equipment = listOf("Pot 5 l", "Ladle").map(EquipmentItem::free))
         assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
         val found = recipes.get(content.id)!!
-        assertEquals(listOf("Pot 5 l", "Ladle"), found.equipment)
+        assertEquals(listOf("Pot 5 l", "Ladle").map(EquipmentItem::free), found.equipment)
         assertEquals(found, RecipeImport.foundRecipe(content, emptyList(), now))
-        assertEquals(listOf("Pot 5 l", "Ladle"), RecipeImport.foundRecipe(content, emptyList(), now).equipment)
+        assertEquals(listOf("Pot 5 l", "Ladle").map(EquipmentItem::free), RecipeImport.foundRecipe(content, emptyList(), now).equipment)
     }
 
     // An item a file holds with spaces around it imports trimmed, as a note does.
     @Test
     fun anUntrimmedItemImportsTrimmed() = runBlocking {
-        val content = soup().copy(equipment = listOf("  Pot 5 l ", "Ladle\t"))
+        val content = soup().copy(equipment = listOf("  Pot 5 l ", "Ladle\t").map(EquipmentItem::free))
         assertEquals(ImportOutcome.Added(content.id, "Bean soup"), import(file(content)))
-        assertEquals(listOf("Pot 5 l", "Ladle"), recipes.get(content.id)!!.equipment)
+        assertEquals(listOf("Pot 5 l", "Ladle").map(EquipmentItem::free), recipes.get(content.id)!!.equipment)
     }
 
     // A file of format 3, written before equipment, still imports, with none.
@@ -419,18 +451,91 @@ class RecipeImportTest {
         assertFalse(format3.contains("equipment"))
         assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(zip(RecipeFile.DOCUMENT to format3.toByteArray())))
         val found = recipes.get(soup().id)!!
-        assertEquals(emptyList<String>(), found.equipment)
+        assertEquals(emptyList<EquipmentItem>(), found.equipment)
         assertEquals(soup().steps, found.steps)
         assertEquals(soup().ingredients, found.ingredients)
+    }
+
+    /** A device dictionary of equipment: two entries it offers, and one removed. */
+    private val dictionary = listOf(
+        EquipmentEntryEntity(10001, "Сковорода", "Frying pan", 10000, synonymsEn = listOf("skillet")),
+        EquipmentEntryEntity(10202, "Духовка", "Oven", 10200),
+        EquipmentEntryEntity(10950, "Казан", "Kazan", 10000, removed = true),
+    )
+
+    private fun importNamed(bytes: ByteArray) = runBlocking {
+        RecipeImport(recipes, files, clock = { now }, equipment = { dictionary }).import { ByteArrayInputStream(bytes) }
+    }
+
+    /** [content]'s document as format 4 wrote it, its equipment the lines [items]. */
+    private fun format4(content: RecipeFileContent, items: List<String>): ByteArray {
+        val json = Json.parseToJsonElement(RecipeFile.encode(content)).jsonObject
+        val recipe = JsonObject(json["recipe"]!!.jsonObject + ("equipment" to JsonArray(items.map(::JsonPrimitive))))
+        val document = JsonObject(json + mapOf("format_version" to JsonPrimitive(4), "recipe" to recipe)).toString()
+        return zip(RecipeFile.DOCUMENT to document.toByteArray())
+    }
+
+    // Scenario 5 of v0.28: a file of format 4, each item its text, imports with each item whose whole text is an
+    // entry's name naming that entry, with no qualifier, as a book's items did on moving to version 7; others free text.
+    @Test
+    fun aFormat4FilesItemsFindTheirEntries() = runBlocking {
+        val bytes = format4(soup(), listOf("Сковорода", " skillet ", "OVEN", "Frying pan 26 cm", "Kazan"))
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), importNamed(bytes))
+        assertEquals(
+            listOf(
+                EquipmentItem.entry(10001), EquipmentItem.entry(10001), EquipmentItem.entry(10202),
+                EquipmentItem.free("Frying pan 26 cm"), EquipmentItem.free("Kazan"),
+            ),
+            recipes.get(soup().id)!!.equipment,
+        )
+    }
+
+    // A format-4 file still refuses a sixteenth item, a blank one and one over 40 characters, as before.
+    @Test
+    fun aFormat4FileWhoseEquipmentBreaksTheRulesIsRefused() {
+        val fifteen = (1..15).map { "Item $it" }
+        listOf(fifteen + "Oven", listOf("Oven", "  "), listOf("p".repeat(41))).forEach { items ->
+            assertEquals(ImportOutcome.Refused(Refusal.BREAKS_RULES), importNamed(format4(soup(), items)))
+        }
+        assertNothingAdded()
+        assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), importNamed(format4(soup(), fifteen)))
+    }
+
+    // Export and import carry the entry: a file of format 5 imports each item as it names it — an entry with its
+    // qualifier, a removed entry the device still holds, and free text, which stays free text whatever its words.
+    @Test
+    fun aFormat5FileKeepsItsItemsAsTheyAreNamed() = runBlocking {
+        val items = listOf(EquipmentItem.entry(10001, "26 cm"), EquipmentItem.entry(10950, "8 l"), EquipmentItem.free("Oven"))
+        val content = soup().copy(equipment = items, equipmentLabels = mapOf(10001L to EntryLabels("Сковорода", "Frying pan")))
+        assertEquals(ImportOutcome.Added(content.id, "Bean soup"), importNamed(file(content)))
+        assertEquals(items, recipes.get(content.id)!!.equipment)
+    }
+
+    // An entry the device does not hold — a file of a later dictionary — reads as the file wrote it: free text, its
+    // label in the recipe's language with its qualifier; with no labels to read, it is kept as named.
+    @Test
+    fun anEntryTheDeviceDoesNotHoldIsKeptAsItsLabel() = runBlocking {
+        val items = listOf(EquipmentItem.entry(10777, "28 cm"), EquipmentItem.entry(10778), EquipmentItem.entry(10001))
+        val labels = mapOf(10777L to EntryLabels("Вок", "Wok"), 10001L to EntryLabels("Сковорода", "Frying pan"))
+        val russian = soup().copy(language = RecipeLanguage.RU, equipment = items, equipmentLabels = labels)
+        assertEquals(ImportOutcome.Added(russian.id, "Bean soup"), importNamed(file(russian)))
+        assertEquals(
+            listOf(EquipmentItem.free("Вок 28 cm"), EquipmentItem.entry(10778), EquipmentItem.entry(10001)),
+            recipes.get(russian.id)!!.equipment,
+        )
+        val undeclared = russian.copy(language = null)
+        assertEquals(EquipmentItem.free("Wok 28 cm"), RecipeImport.withKnownEntries(undeclared, setOf(10001L)).equipment[0])
+        // With no dictionary at all, nothing is changed.
+        assertEquals(undeclared, RecipeImport.withKnownEntries(undeclared, emptySet()))
     }
 
     // A file whose equipment breaks the rules — a sixteenth item, a blank one, one over 40 characters — is refused.
     @Test
     fun aFileWhoseEquipmentBreaksTheRulesIsRefused() {
-        val fifteen = (1..15).map { "Item $it" }
-        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = fifteen + "Item 16")))
-        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = listOf("Pot", " "))))
-        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = listOf("p".repeat(41)))))
+        val fifteen = (1..15).map { EquipmentItem.free("Item $it") }
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = fifteen + EquipmentItem.free("Item 16"))))
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = listOf("Pot", " ").map(EquipmentItem::free))))
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(equipment = listOf(EquipmentItem.free("p".repeat(41))))))
         assertEquals(ImportOutcome.Added(soup().id, "Bean soup"), import(file(soup().copy(equipment = fifteen))))
     }
 

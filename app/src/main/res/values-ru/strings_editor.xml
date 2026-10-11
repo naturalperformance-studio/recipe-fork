@@ -35,6 +35,12 @@
     <string name="editor_ingredient_add">Добавить ингредиент</string>
     <string name="editor_ingredient_add_action">Добавить строку ингредиента</string>
     <string name="editor_ingredient_name">Ингредиент</string>
+    <!-- A row holding nothing yet, as it reads in the list. -->
+    <string name="editor_ingredient_new">Новый ингредиент</string>
+    <!-- A row's tap, and the title of the sheet it opens: the row's fields. -->
+    <string name="editor_ingredient_edit">Изменить ингредиент</string>
+    <!-- Under a row whose name is in the author's own words; the sheet says why it matters (FLOW-022). -->
+    <string name="editor_ingredient_free_text_mark">Нет в словаре ингредиентов</string>
     <string name="editor_ingredient_unnamed">Ингредиент без названия</string>
     <string name="editor_ingredient_quantity">Количество</string>
     <string name="editor_ingredient_unit">Единица</string>
@@ -42,14 +48,17 @@
     <string name="editor_ingredient_note">Как подготовить</string>
     <string name="editor_ingredient_note_example">например, мелко нарезать</string>
     <string name="editor_ingredient_unit_action">Выбрать единицу</string>
-    <string name="editor_ingredient_remove_action">Убрать строку ингредиента %1$d</string>
-    <string name="editor_ingredient_menu_action">Действия со строкой ингредиента %1$d</string>
+    <!-- The last of a row's actions in its sheet, in the error colour; Undo follows. -->
+    <string name="editor_ingredient_remove">Убрать ингредиент</string>
     <string name="editor_group_add">Добавить группу</string>
     <string name="editor_group_add_action">Добавить заголовок группы к ингредиентам</string>
     <string name="editor_group_name">Группа</string>
     <string name="editor_group_name_example">например, Тесто</string>
-    <string name="editor_group_remove_action">Убрать заголовок группы %1$d</string>
-    <string name="editor_group_menu_action">Действия с группой %1$d</string>
+    <!-- A heading's tap, and the title of the sheet it opens: its name and actions. -->
+    <string name="editor_group_edit">Изменить группу</string>
+    <!-- A heading with no name yet, as it reads in the list. -->
+    <string name="editor_group_unnamed">Группа без названия</string>
+    <string name="editor_group_remove">Убрать группу</string>
     <string name="editor_ingredient_pick_action">Выбрать ингредиент словаря %1$s</string>
     <string name="editor_ingredient_free_text_offer">Добавить «%1$s» своими словами</string>
     <string name="editor_ingredient_free_text_action">Добавить %1$s своими словами, не из словаря</string>
@@ -81,11 +90,16 @@
     <string name="editor_step">Шаг %1$d</string>
     <!-- A step's number before its text in the editor's field; the screen reader reads editor_step instead. -->
     <string name="editor_step_number">%1$d.</string>
+    <string name="editor_step_edit">Изменить шаг</string>
+    <!-- What an empty step reads as on its row, muted. -->
+    <string name="editor_step_new">Новый шаг</string>
     <string name="editor_step_add">Добавить шаг</string>
     <string name="editor_step_add_action">Добавить шаг в конец</string>
-    <string name="editor_step_remove_action">Убрать шаг %1$d</string>
-    <string name="editor_step_menu_action">Действия с шагом %1$d</string>
-    <string name="editor_step_insert_ingredient_label">Вставить ингредиент в шаг %1$d</string>
+    <string name="editor_step_remove">Убрать шаг</string>
+    <string name="editor_step_note">Заметка автора</string>
+    <string name="editor_step_note_hint">Остаётся у вас, когда кто-то делает свою версию рецепта</string>
+    <string name="editor_step_note_read_only">Заметка автора: %1$s</string>
+    <string name="editor_step_insert_ingredient">Вставить ингредиент</string>
     <string name="editor_step_insert_ingredient_action">Вставить количество ингредиента в шаг %1$d</string>
     <string name="editor_step_insert_ingredient_none">В рецепте пока нет ингредиентов</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
@@ -96,8 +110,9 @@
     <string name="editor_fork_note_action">Показать, что берёт своя версия</string>
     <string name="editor_fork_note_close">Закрыть</string>
     <string name="editor_action_show_name">Показать название</string>
-    <string name="editor_fork_takes">Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание и фото остаются у вас, если только версия не ваша собственная.</string>
-    <string name="editor_timer_label">Таймер для шага %1$d</string>
+    <string name="editor_fork_takes">Своя версия рецепта берёт название, теги, порции, ингредиенты и шаги; описание, заметки к шагам и фото остаются у вас, если только версия не ваша собственная.</string>
+    <string name="editor_step_timers">Таймеры</string>
+    <string name="editor_timer_add">Добавить таймер</string>
     <string name="editor_timer_action">Добавить таймер к шагу %1$d</string>
     <string name="editor_timer_remove_action">Убрать таймер шага %1$d</string>
     <string name="editor_timer_remove_numbered_action">Убрать таймер %2$d шага %1$d</string>
@@ -107,13 +122,6 @@
     <string name="editor_timer_name_numbered">Название таймера %1$d</string>
     <string name="editor_timer_name_follows">Взято из шага. Можно назвать таймер по-своему.</string>
     <string name="editor_timer_limit">У шага может быть до пяти таймеров. Для других ожиданий разделите этот шаг на несколько шагов, у каждого свои таймеры.</string>
-    <string name="editor_timer_read_only">Таймер: %1$s</string>
-    <string name="editor_timer_name_read_only">Название таймера: %1$s</string>
-    <string name="editor_timer_read_only_numbered">Таймер %1$d: %2$s</string>
-    <string name="editor_timer_name_read_only_numbered">Название таймера %1$d: %2$s</string>
-    <string name="editor_timer_duration">%1$d ч %2$d мин</string>
-    <string name="editor_timer_duration_hours">%1$d ч</string>
-    <string name="editor_timer_duration_minutes">%1$d мин</string>
     <string name="editor_row_insert_above">Вставить выше</string>
     <string name="editor_row_insert_below">Вставить ниже</string>
     <string name="editor_row_move_up">Переместить вверх</string>
@@ -161,16 +169,18 @@
     <string name="editor_checklist_6_text">Когда рецепт форкает кто-то другой, он забирает ингредиенты и шаги, а описание оставляет, поэтому способ, записанный в описании, — способ, на котором никто не сможет строить дальше.</string>
     <string name="editor_checklist_7_title">Число порций — то, на сколько вы на самом деле готовили.</string>
     <string name="editor_checklist_7_text">Из него рассчитывается каждое количество, которое когда-либо увидит читатель.</string>
-    <string name="editor_references_offered">Количество можно вставить в шаг ссылкой: наберите @ или нажмите в шаге значок вставки ингредиента. Ссылка следует за числом порций читателя, а число, набранное вручную, — нет.</string>
+    <string name="editor_references_offered">Количество можно вставить в шаг ссылкой: наберите @ или нажмите «Вставить ингредиент». Ссылка следует за числом порций читателя, а число, набранное вручную, — нет.</string>
     <string name="editor_timer_notification">Уведомление таймера скажет: «%1$s»</string>
     <string name="editor_timer_notification_follows">Количества в нём следуют за числом порций читателя, поэтому у читателя уведомление может звучать и обрезаться иначе.</string>
     <string name="editor_timer_notification_name">Назвать таймер</string>
     <string name="editor_timer_notification_name_action">Назвать таймер шага %1$d</string>
     <string name="editor_timer_notification_name_numbered_action">Назвать таймер %2$d шага %1$d</string>
     <!-- A row or a step deleted, with the action that puts it back. -->
-    <string name="editor_ingredient_removed">Строка ингредиента %1$d убрана</string>
+    <string name="editor_ingredient_removed">Убрано: %1$s</string>
+    <string name="editor_ingredient_removed_unnamed">Ингредиент убран</string>
     <string name="editor_step_removed">Шаг %1$d убран</string>
-    <string name="editor_group_removed">Заголовок группы %1$d убран</string>
+    <string name="editor_group_removed">Заголовок «%1$s» убран</string>
+    <string name="editor_group_removed_unnamed">Заголовок группы убран</string>
     <string name="editor_timer_removed">Таймер шага %1$d убран</string>
     <string name="editor_timer_removed_numbered">Таймер %2$d шага %1$d убран</string>
     <string name="editor_undo">Вернуть</string>
@@ -183,5 +193,10 @@
     <string name="editor_equipment_remove_action">Убрать предмет %1$d</string>
     <string name="editor_equipment_menu_action">Действия с предметом %1$d</string>
     <string name="editor_equipment_limit">В рецепте можно указать до %1$d предметов посуды и техники.</string>
-    <string name="editor_equipment_removed">Предмет %1$d убран</string>
+    <string name="editor_equipment_removed">Убрано: %1$s</string>
+    <string name="editor_equipment_removed_unnamed">Предмет убран</string>
+    <string name="editor_equipment_pick_action">Выбрать предмет словаря %1$s</string>
+    <string name="editor_equipment_free_text_offer">Добавить «%1$s» своими словами</string>
+    <string name="editor_equipment_free_text_action">Добавить %1$s своими словами, не из словаря</string>
+    <string name="editor_equipment_free_text_warning">Этого предмета нет в словаре: «Моя кухня» его не проверяет.</string>
 </resources>

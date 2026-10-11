@@ -78,4 +78,16 @@ class ShippedSnapshotTest {
         // As the server computes it (DictionaryRoutes): a digest of the content with an empty version.
         assertEquals(snapshot.digest(), snapshot.version)
     }
+
+    // T-201: the equipment ships in the snapshot — labelled in both languages, groups and their items, ids unique.
+    @Test
+    fun theEquipmentIsLabelledInBothLanguagesAndAtMostTwoLevelsDeep() {
+        assertTrue(snapshot.equipment.size >= 150)
+        val byId = snapshot.equipment.associateBy { it.id }
+        assertEquals(snapshot.equipment.size, byId.size)
+        snapshot.equipment.forEach { entry ->
+            assertTrue("$entry", entry.labelRu.isNotBlank() && entry.labelEn.isNotBlank())
+            entry.parentId?.let { assertEquals("$entry sits under an entry that has a parent", null, byId.getValue(it).parentId) }
+        }
+    }
 }

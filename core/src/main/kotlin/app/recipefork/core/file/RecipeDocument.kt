@@ -2,6 +2,7 @@ package app.recipefork.core.file
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 /**
  * `recipe.json`, the document of a recipe file (decisions/20260928-recipe-file-is-a-zip.md), as it is written.
@@ -28,13 +29,33 @@ internal data class DocumentRecipe(
     val language: String? = null,
     val tags: List<Long>,
     val servings: Int? = null,
-    /** What the recipe is cooked with, in order; added in format 4, absent from formats 1 to 3. */
-    val equipment: List<String> = emptyList(),
+    /**
+     * What the recipe is cooked with, in order; added in format 4, absent from formats 1 to 3. Format 4 writes each item
+     * as its text; format 5 as a [DocumentEquipment]. Read as JSON first, so that each format's shape is read as its own.
+     */
+    val equipment: List<JsonElement> = emptyList(),
     val ingredients: List<DocumentIngredient>,
     /** The headings of the ingredient list, in order; added in format 2, absent from format 1. */
     @SerialName("ingredient_groups") val ingredientGroups: List<DocumentGroup> = emptyList(),
     val steps: List<DocumentStep>,
 )
+
+/**
+ * An item of equipment since format 5, named as an ingredient is: by a dictionary entry — with its labels, so that the
+ * file reads the same wherever the entry is not known — and an optional qualifier, or by free text.
+ */
+@Serializable
+internal data class DocumentEquipment(
+    @SerialName("dictionary_entry") val dictionaryEntry: Long? = null,
+    /** The entry's labels as the exporting device held them; absent for free text. */
+    val labels: DocumentLabels? = null,
+    val qualifier: String? = null,
+    @SerialName("free_text_name") val freeTextName: String? = null,
+)
+
+/** A dictionary entry's label in each language of L10N-001. */
+@Serializable
+internal data class DocumentLabels(val ru: String, val en: String)
 
 /** A heading of the ingredient list: its name, and the position of the first ingredient under it. */
 @Serializable
@@ -65,6 +86,8 @@ internal data class DocumentStep(
     val timers: List<DocumentTimer> = emptyList(),
     /** The step's one timer as formats 1 and 2 wrote it; absent for none, and never written since format 3. */
     val timer: DocumentTimer? = null,
+    /** The author's note on the step; added in format 6, absent for none. */
+    val note: String? = null,
 )
 
 @Serializable

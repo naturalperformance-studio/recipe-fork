@@ -5,8 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -48,8 +49,10 @@ fun CoverAttaching(editor: RecipeEditor, store: PhotoStore, book: BookName, scop
     PhotoAttaching(store, book, scope, PhotoNotice.REMOVED, set = editor::setCover, unset = editor::removeCover)
 
 /**
- * The cover, at the title (FLOW-026): described as optional; empty, a placeholder of the cover's size. A tap on the
- * placeholder or on the cover opens one sheet of the camera, the gallery and — for a cover set — its removal. A frozen recipe shows its cover and nothing to change it; a frozen one without a cover shows nothing.
+ * The cover, at the title (FLOW-026): described as optional; empty, a compact tile — not the cover's 4:3 frame — so a
+ * new recipe's ingredients stay near the top. A tap on the tile or on the cover opens one sheet of taking a photo,
+ * choosing one from the gallery and — for a cover set — its removal. A frozen recipe shows its cover and nothing to
+ * change it; a frozen one without a cover shows nothing.
  */
 @Composable
 internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStore, book: BookName, saving: CoroutineScope) {
@@ -66,7 +69,7 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStor
     )
     var sheet by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().testTag(CoverTags.COVER), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (editable) Text(stringResource(R.string.media_cover), style = MaterialTheme.typography.labelLarge)
+        if (editable && cover != null) Text(stringResource(R.string.media_cover), style = MaterialTheme.typography.labelLarge)
         Box(Modifier.fillMaxWidth()) {
             if (cover != null) {
                 PhotoImage(
@@ -85,17 +88,19 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStor
                             .testTag(CoverTags.CHANGE),
                     )
                 }
+                if (working) PhotoWorking(Modifier.align(Alignment.TopEnd).padding(8.dp).testTag(CoverTags.WORKING))
             } else {
-                CoverPlaceholder(onClick = { sheet = true })
+                CoverTile(working, onClick = { sheet = true })
             }
-            if (working) PhotoWorking(Modifier.align(Alignment.TopEnd).padding(8.dp).testTag(CoverTags.WORKING))
         }
     }
     if (editable && sheet) {
         val items = listOfNotNull(
-            SourceItem(stringResource(R.string.media_cover_take), CoverTags.TAKE, onClick = sources::takePhoto),
-            SourceItem(stringResource(R.string.media_cover_choose), CoverTags.CHOOSE, onClick = sources::choosePhoto),
-            cover?.let { SourceItem(stringResource(R.string.media_cover_remove), CoverTags.REMOVE, destructive = true, onClick = attaching::remove) },
+            SourceItem(R.drawable.ic_step_photo, stringResource(R.string.media_source_take), CoverTags.TAKE, onClick = sources::takePhoto),
+            SourceItem(R.drawable.ic_photo_library, stringResource(R.string.media_source_choose), CoverTags.CHOOSE, onClick = sources::choosePhoto),
+            cover?.let {
+                SourceItem(R.drawable.ic_remove_row, stringResource(R.string.media_cover_remove), CoverTags.REMOVE, destructive = true, onClick = attaching::remove)
+            },
         )
         SourceSheet(
             title = stringResource(if (cover == null) R.string.media_cover_add else R.string.media_cover_change),
@@ -105,33 +110,47 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStor
     }
 }
 
-/** The empty cover: the cover's own 4:3 frame, tinted, with a camera and what a tap does. */
+/**
+ * The empty cover: one tinted tile, a row at least [TILE_HEIGHT] tall — a picture with a plus, then what a tap does and,
+ * muted under it, that a cover is optional; the words wrap at a large font scale, and the tile grows with them. At its
+ * end the row keeps a place for the sign that a photograph is being prepared, shown there while [working], so the words
+ * never run under it and never move when it comes or goes.
+ */
 @Composable
-private fun CoverPlaceholder(onClick: () -> Unit) {
-    val add = stringResource(R.string.media_cover_add)
-    Column(
+private fun CoverTile(working: Boolean, onClick: () -> Unit) {
+    Row(
         Modifier
             .fillMaxWidth()
-            .aspectRatio(COVER_RATIO)
+            .heightIn(min = TILE_HEIGHT)
             .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .testTag(CoverTags.PLACEHOLDER),
-        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painterResource(R.drawable.ic_step_photo),
+            painterResource(R.drawable.ic_add_photo),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier.size(24.dp),
         )
-        Text(add, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelLarge)
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.media_cover_add), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(stringResource(R.string.media_cover_optional), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Box(Modifier.size(WORKING_SIZE), contentAlignment = Alignment.Center) {
+            if (working) PhotoWorking(Modifier.testTag(CoverTags.WORKING))
+        }
     }
 }
 
-/** The cover's shape: the crop's 4:3 landscape frame. */
-private const val COVER_RATIO = 4f / 3f
+/** The place the empty tile keeps at its end for the sign that a photograph is being prepared: the sign's own size. */
+private val WORKING_SIZE = 36.dp
+
+/** How tall the empty cover's tile is at least: a two-line list item's height. */
+private val TILE_HEIGHT = 64.dp
 
 /** The key the cover's camera file is saved under while the camera is in front. */
 private const val COVER_KEY = "editor.cover"

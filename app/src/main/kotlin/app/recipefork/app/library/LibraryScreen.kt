@@ -34,7 +34,9 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -70,8 +72,11 @@ import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -107,7 +112,11 @@ import app.recipefork.app.editor.numberLanguage
 import app.recipefork.app.editor.rememberEditorEnvironment
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.RecipeExport
+import app.recipefork.app.file.equipmentDictionaryOf
 import app.recipefork.app.file.RecipeImport
+import app.recipefork.app.kitchen.Kitchen
+import app.recipefork.app.kitchen.KitchenEnvironment
+import app.recipefork.app.kitchen.rememberKitchenEnvironment
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.ListingParams
@@ -116,6 +125,7 @@ import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.app.ui.SnackbarAction
+import app.recipefork.app.ui.WordFitText
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
@@ -161,9 +171,11 @@ fun LibraryScreen(
     card: CardEnvironment = rememberCardEnvironment(),
     files: RecipeImport = rememberRecipeImport(recipes),
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
+    kitchen: KitchenEnvironment = rememberKitchenEnvironment(),
     onOpenSettings: () -> Unit = {},
 ) {
     val view by session.view.collectAsState()
+    val bookKitchen = rememberBookKitchen(kitchen)
     val timers = rememberCardTimers()
     // The session holds the view shown; the pager follows it, and tells it the view a swipe settles on.
     val pager = remember { PagerState(currentPage = view.ordinal) { VIEWS.size } }
@@ -187,6 +199,8 @@ fun LibraryScreen(
     val notice = rememberFileNotice(session, snackbars)
     RemovalNotice(session, snackbars)
     val work by session.work.collectAsState()
+    // The height of the view's action, in pixels: the tallest it has been laid out.
+    var actionHeight by remember { mutableIntStateOf(0) }
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection),
         snackbarHost = { LibrarySnackbarHost(snackbars) },
@@ -215,9 +229,25 @@ fun LibraryScreen(
                     modifier = Modifier.testTag(LibraryTags.TOP_BAR),
                 )
                 // The switch of views stays above the list and never scrolls with it (FLOW-034 (1)).
-                PrimaryTabRow(selectedTabIndex = pager.currentPage, modifier = Modifier.testTag(LibraryTags.SWITCH)) {
-                    ViewTab(LibraryView.MARKED, shown, R.string.library_view_marked, R.string.library_view_marked_action, session)
-                    ViewTab(LibraryView.OWN, shown, R.string.library_view_own, R.string.library_view_own_action, session)
+                // The width each tab's words have: the row's share less the tab's margins, the window's width until the
+                // row is laid out (the row asks its tabs' intrinsic height, so the words cannot wait on their constraints).
+                var rowWidth by remember { mutableIntStateOf(0) }
+                val words = (rowWidth.takeIf { it > 0 } ?: LocalWindowInfo.current.containerSize.width) / VIEWS.size -
+                    with(LocalDensity.current) { (TAB_TEXT_PADDING * 2).roundToPx() }
+                PrimaryTabRow(
+                    selectedTabIndex = pager.currentPage,
+                    modifier = Modifier.onSizeChanged { rowWidth = it.width }.testTag(LibraryTags.SWITCH),
+                ) {
+                    // In [Mode.Serverless] the view holds only the recipes imported from files, and is named for them.
+                    if (mode == Mode.Serverless) {
+                        ViewTab(
+                            LibraryView.MARKED, shown, R.string.library_view_marked_serverless,
+                            R.string.library_view_marked_action_serverless, session, words,
+                        )
+                    } else {
+                        ViewTab(LibraryView.MARKED, shown, R.string.library_view_marked, R.string.library_view_marked_action, session, words)
+                    }
+                    ViewTab(LibraryView.OWN, shown, R.string.library_view_own, R.string.library_view_own_action, session, words)
                 }
             }
         },
@@ -226,11 +256,15 @@ fun LibraryScreen(
                 shown, mode, offered = offers[shown] == true,
                 list = if (shown == LibraryView.OWN) ownList else markedList,
                 onWrite = write, onImport = import,
+                // The tallest it has been: shrunk to its icon as a list goes down, it moves nothing.
+                modifier = Modifier.onSizeChanged { actionHeight = maxOf(actionHeight, it.height) },
             )
         },
     ) { padding ->
-        // The lists run under the navigation bar, their last entry kept clear of it and of the view's action.
-        val bottom = padding.calculateBottomPadding() + ACTION_ROOM
+        // The lists run under the navigation bar, their last entry kept clear of it and of the view's action — taller
+        // than its usual height where its words take two lines at a large font scale.
+        val room = maxOf(ACTION_ROOM, with(LocalDensity.current) { actionHeight.toDp() } + ACTION_MARGINS)
+        val bottom = padding.calculateBottomPadding() + room
         val layout = LocalLayoutDirection.current
         HorizontalPager(
             state = pager,
@@ -247,11 +281,11 @@ fun LibraryScreen(
         ) { page ->
             when (VIEWS[page]) {
                 LibraryView.MARKED -> MarkedList(
-                    recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags,
+                    recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags, bookKitchen,
                     markedList, bottom, import, notice, onOffer = { offers[LibraryView.MARKED] = it },
                 )
                 LibraryView.OWN -> OwnList(
-                    recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients,
+                    recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients, bookKitchen,
                     ownList, bottom, notice, write, onOffer = { offers[LibraryView.OWN] = it },
                 )
             }
@@ -314,7 +348,8 @@ private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
 }
 
 /**
- * Says that a recipe left the book — "Recipe deleted", or "Recipe removed" for a found one — with Undo, for as long as
+ * Says that a recipe left the book, named by its title — "“Plum cake” deleted", or "“Plum cake” removed" for a found
+ * one; "Recipe deleted", "Recipe removed" for one with no title — with Undo, for as long as
  * the session offers to undo it (FLOW-053). Undo puts it back; the notice gone without it — by itself, swiped away,
  * replaced by another notice, or the book left — makes the leaving final. A notice cut short by the screen turning is
  * said again. An Undo the book could not take back is said to have failed.
@@ -322,12 +357,18 @@ private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
 @Composable
 private fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState) {
     val removal by session.removal.collectAsState()
-    val deleted = stringResource(R.string.library_recipe_deleted)
-    val removed = stringResource(R.string.library_recipe_removed)
+    val said = removal?.let { taken ->
+        val title = taken.title.trim()
+        when {
+            title.isEmpty() -> stringResource(if (taken.found) R.string.library_recipe_removed else R.string.library_recipe_deleted)
+            taken.found -> stringResource(R.string.library_recipe_removed_titled, title)
+            else -> stringResource(R.string.library_recipe_deleted_titled, title)
+        }
+    }
     val undo = stringResource(R.string.library_undo)
     LaunchedEffect(removal) {
         val shown = removal ?: return@LaunchedEffect
-        val result = snackbars.showSnackbar(if (shown.found) removed else deleted, actionLabel = undo, duration = SnackbarDuration.Long)
+        val result = snackbars.showSnackbar(said.orEmpty(), actionLabel = undo, duration = SnackbarDuration.Long)
         if (result == SnackbarResult.ActionPerformed) session.undoRemoval(shown) else session.endRemoval(shown)
     }
     // An Undo the book could not take back is said, once.
@@ -350,8 +391,11 @@ private fun RevealOnNotice(recipeId: String?, rows: List<String>?, list: LazyLis
 /** The views in the order of their tabs and pages: a view's page is its ordinal. */
 private val VIEWS = LibraryView.entries
 
-/** The room kept under a list's last entry for the view's action: the action's height and its margins. */
+/** The room kept under a list's last entry for the view's action: the action's usual height and its margins. */
 private val ACTION_ROOM = 88.dp
+
+/** The margins of the view's action: below it, to the bottom of the screen, and above it, to what it must not cover. */
+private val ACTION_MARGINS = 32.dp
 
 /** How long a view waits on its list before it shows that the list is coming, so that a quick one shows no flash. */
 internal const val LOADING_DELAY_MS = 300L
@@ -363,12 +407,13 @@ private fun ViewTab(
     @StringRes label: Int,
     @StringRes action: Int,
     session: LibrarySession,
+    width: Int,
 ) {
     val actionLabel = stringResource(action)
     Tab(
         selected = tab == current,
         onClick = { session.choose(tab) },
-        text = { Text(stringResource(label)) },
+        text = { TabLabel(stringResource(label), width) },
         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .heightIn(min = 48.dp)
@@ -384,6 +429,19 @@ private fun ViewTab(
 }
 
 /**
+ * A tab's words, given the [width] in pixels they have: on one line where they fit, else wrapped between words. A word
+ * wider than that — a long Russian word at a large font scale on a narrow phone — is drawn smaller until it fits, so
+ * that no word is ever broken.
+ */
+@Composable
+private fun TabLabel(text: String, width: Int) {
+    WordFitText(text, LocalTextStyle.current, width, Modifier.testTag(LibraryTags.TAB_LABEL))
+}
+
+/** The margin Material 3 keeps on each side of a tab's words. */
+private val TAB_TEXT_PADDING = 16.dp
+
+/**
  * The action of the view shown, at the bottom right: writing a new recipe in the own view (FLOW-042 (5)), importing a
  * recipe file in the marked view in [Mode.Serverless] (FLOW-064); none in the marked view in [Mode.Standard], nor
  * while the view's empty state offers its own. It shrinks to its icon while the [list] goes down, and shows its words
@@ -397,17 +455,25 @@ private fun ViewAction(
     list: LazyListState,
     onWrite: () -> Unit,
     onImport: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (!offered) return
     val expanded by remember(list) { derivedStateOf { !list.canScrollBackward || !list.lastScrolledForward } }
     when {
-        view == LibraryView.OWN -> FloatingAction(R.string.library_own_new, R.drawable.ic_new_recipe, LibraryTags.NEW, expanded, onWrite)
-        mode == Mode.Serverless -> FloatingAction(R.string.file_import, R.drawable.ic_import_file, LibraryTags.IMPORT, expanded, onImport)
+        view == LibraryView.OWN -> FloatingAction(R.string.library_own_new, R.drawable.ic_new_recipe, LibraryTags.NEW, expanded, onWrite, modifier)
+        mode == Mode.Serverless -> FloatingAction(R.string.file_import, R.drawable.ic_import_file, LibraryTags.IMPORT, expanded, onImport, modifier)
     }
 }
 
 @Composable
-private fun FloatingAction(@StringRes label: Int, @DrawableRes icon: Int, tag: String, expanded: Boolean, onClick: () -> Unit) {
+private fun FloatingAction(
+    @StringRes label: Int,
+    @DrawableRes icon: Int,
+    tag: String,
+    expanded: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val words = stringResource(label)
     ExtendedFloatingActionButton(
         text = { Text(words) },
@@ -416,7 +482,7 @@ private fun FloatingAction(@StringRes label: Int, @DrawableRes icon: Int, tag: S
         expanded = expanded,
         // The action reads its words to the screen reader, shrunk to its icon or not: the button keeps its shown words
         // from the screen reader, so they are given to the button itself.
-        modifier = Modifier.semantics { text = AnnotatedString(words) }.testTag(tag),
+        modifier = modifier.semantics { text = AnnotatedString(words) }.testTag(tag),
     )
 }
 
@@ -454,6 +520,7 @@ private fun OwnList(
     mode: Mode,
     thumbnails: CoverThumbnails,
     dictionary: IngredientEntries,
+    kitchen: Kitchen?,
     listState: LazyListState,
     bottom: Dp,
     reveal: String?,
@@ -462,8 +529,10 @@ private fun OwnList(
 ) {
     val search = rememberSearchField(LibraryView.OWN, session)
     val params = rememberListingParams(LibraryView.OWN, session)
-    val listed by remember(recipes, params, dictionary) { recipes.ownListed(params, dictionary::entries) }
+    val kitchens = rememberKitchenFlow(kitchen)
+    val listed by remember(recipes, params, dictionary) { recipes.ownListed(params, kitchens, dictionary::entries) }
         .collectAsState(initial = null)
+    SwitchOffEquipmentWithoutKitchen(LibraryView.OWN, session, kitchen)
     val query by session.query(LibraryView.OWN).collectAsState()
     val order by session.order(LibraryView.OWN).collectAsState()
     val filters by session.filters(LibraryView.OWN).collectAsState()
@@ -499,13 +568,18 @@ private fun OwnList(
                 ListHeader(
                     search, order, onOrder = { session.orderBy(LibraryView.OWN, it) },
                     filters, onFilters = { session.filter(LibraryView.OWN, it) }, choices, shown.languages, shown.hold, shown.carries,
+                    kitchen = sheetKitchen(kitchen, session),
                 )
                 HorizontalDivider()
             }
             // While the list is read, no list is laid out: an empty one would bring the view's kept place to its top.
             if (shown == null) return@Column
             if (shown.narrowed && shown.rows.isEmpty()) {
-                NothingFound(shown, onClearSearch = search::clear, onClearFilters = { session.filter(LibraryView.OWN, BookFilters()) })
+                // The view's action floats over the bottom: the state keeps clear of it, as the list does.
+                NothingFound(
+                    shown, onClearSearch = search::clear, onClearFilters = { session.filter(LibraryView.OWN, BookFilters()) },
+                    modifier = Modifier.padding(bottom = bottom),
+                )
                 return@Column
             }
             val cover = coverOf(recipes, thumbnails)
@@ -584,8 +658,8 @@ private fun OwnEntry(
     onExport: () -> Unit,
 ) {
     val actions = buildList {
-        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onExport))
-        if (row.state in DELETABLE) add(EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), onDelete))
+        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onClick = onExport))
+        if (row.state in DELETABLE) add(EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), destructive = true, onClick = onDelete))
     }
     EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier) {
         EntryTitle(row.recipeId, row.title)
@@ -723,8 +797,11 @@ private class FirstLine(var centre: Int = 0)
 /** The middle of an entry's first title line, which the entry's menu stands level with. */
 private val TitleLine = HorizontalAlignmentLine { a, b -> min(a, b) }
 
-/** One item of an entry's menu: what it reads, its tag, and what choosing it does. */
-private class EntryAction(@StringRes val label: Int, val tag: String, val onClick: () -> Unit)
+/**
+ * One item of an entry's menu: what it reads, its tag, what choosing it does, and whether it takes the recipe out of
+ * the book — such an item is drawn in the theme's error colour, as on the card.
+ */
+private class EntryAction(@StringRes val label: Int, val tag: String, val destructive: Boolean = false, val onClick: () -> Unit)
 
 /**
  * The ⋮ of an entry, 48 by 48 dp (A11Y-003), named for the screen reader by the recipe it acts on (A11Y-005), with
@@ -749,6 +826,11 @@ private fun EntryMenu(recipeId: String, title: String, actions: List<EntryAction
                     onClick = {
                         expanded = false
                         action.onClick()
+                    },
+                    colors = if (action.destructive) {
+                        MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error)
+                    } else {
+                        MenuDefaults.itemColors()
                     },
                     modifier = Modifier.testTag(action.tag),
                 )
@@ -809,7 +891,7 @@ val DELETABLE = setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECT
 @Composable
 fun rememberRecipeImport(recipes: RecipeRepository): RecipeImport {
     val context = LocalContext.current.applicationContext
-    return remember(recipes, context) { RecipeImport(recipes, context.filesDir) }
+    return remember(recipes, context) { RecipeImport(recipes, context.filesDir, equipment = equipmentDictionaryOf(context)) }
 }
 
 /**
@@ -846,6 +928,7 @@ private fun MarkedList(
     thumbnails: CoverThumbnails,
     dictionary: IngredientEntries,
     tags: TagSource,
+    kitchen: Kitchen?,
     listState: LazyListState,
     bottom: Dp,
     onImport: () -> Unit,
@@ -854,8 +937,10 @@ private fun MarkedList(
 ) {
     val search = rememberSearchField(LibraryView.MARKED, session)
     val params = rememberListingParams(LibraryView.MARKED, session)
-    val listed by remember(recipes, params, dictionary) { recipes.markedListed(params, dictionary::entries) }
+    val kitchens = rememberKitchenFlow(kitchen)
+    val listed by remember(recipes, params, dictionary) { recipes.markedListed(params, kitchens, dictionary::entries) }
         .collectAsState(initial = null)
+    SwitchOffEquipmentWithoutKitchen(LibraryView.MARKED, session, kitchen)
     val order by session.order(LibraryView.MARKED).collectAsState()
     val filters by session.filters(LibraryView.MARKED).collectAsState()
     val choices = rememberFilterChoices(dictionary, tags)
@@ -876,7 +961,7 @@ private fun MarkedList(
                 val serverless = mode == Mode.Serverless
                 EmptyState(
                     picture = R.drawable.ic_empty_book,
-                    headline = stringResource(R.string.library_marked_empty),
+                    headline = stringResource(if (serverless) R.string.library_marked_empty_serverless else R.string.library_marked_empty),
                     sentence = stringResource(
                         if (serverless) R.string.library_marked_empty_sentence_serverless else R.string.library_marked_empty_sentence,
                     ),
@@ -894,13 +979,18 @@ private fun MarkedList(
                 ListHeader(
                     search, order, onOrder = { session.orderBy(LibraryView.MARKED, it) },
                     filters, onFilters = { session.filter(LibraryView.MARKED, it) }, choices, shown.languages, shown.hold, shown.carries,
+                    kitchen = sheetKitchen(kitchen, session),
                 )
                 HorizontalDivider()
             }
             // While the list is read, no list is laid out: an empty one would bring the view's kept place to its top.
             if (shown == null) return@Column
             if (shown.narrowed && shown.rows.isEmpty()) {
-                NothingFound(shown, onClearSearch = search::clear, onClearFilters = { session.filter(LibraryView.MARKED, BookFilters()) })
+                // The view's action floats over the bottom: the state keeps clear of it, as the list does.
+                NothingFound(
+                    shown, onClearSearch = search::clear, onClearFilters = { session.filter(LibraryView.MARKED, BookFilters()) },
+                    modifier = Modifier.padding(bottom = bottom),
+                )
                 return@Column
             }
             val cover = coverOf(recipes, thumbnails)
@@ -946,8 +1036,8 @@ private fun MarkedEntry(
     onExport: () -> Unit,
 ) {
     val actions = if (!row.held) emptyList() else buildList {
-        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onExport))
-        add(EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), onRemove))
+        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onClick = onExport))
+        add(EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), destructive = true, onClick = onRemove))
     }
     EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier) {
         EntryTitle(row.recipeId, row.title)
@@ -1029,8 +1119,6 @@ object LibraryTags {
     const val CLEAR_MEDIA_STATEMENT = SettingsTags.CLEAR_MEDIA_STATEMENT
     const val CLEAR_MEDIA_CONFIRM = SettingsTags.CLEAR_MEDIA_CONFIRM
     const val CLEAR_MEDIA_DECLINE = SettingsTags.CLEAR_MEDIA_DECLINE
-    const val CLEAR_MEDIA_NOTHING = SettingsTags.CLEAR_MEDIA_NOTHING
-    const val CLEAR_MEDIA_OK = SettingsTags.CLEAR_MEDIA_OK
     /** The book's top bar: its title and its settings action, which scrolls away as a list goes down. */
     const val TOP_BAR = "library-top-bar"
     const val SWITCH = "library-switch"
@@ -1054,6 +1142,9 @@ object LibraryTags {
     const val HEADER = "library-header"
     const val SEARCH = "library-search"
     const val SEARCH_CLEAR = "library-search-clear"
+    /** The search field's short label, and the longer words inside it, shown while it is focused and empty. */
+    const val SEARCH_LABEL = "library-search-label"
+    const val SEARCH_PLACEHOLDER = "library-search-placeholder"
     const val ORDER = "library-order"
     fun order(order: BookOrder) = "library-order-${order.name.lowercase()}"
     const val NOTHING_FOUND = "library-nothing-found"
@@ -1086,7 +1177,17 @@ object LibraryTags {
     const val TAG_FIELD = "library-tag-field"
     const val TAG_NO_MATCH = "library-tag-no-match"
     fun tagChoice(tagId: Long) = "library-tag-choice-$tagId"
+    /** The sheet's section of the filter "Enough equipment", its choice, and the chip of it in force. */
+    const val EQUIPMENT_CHOOSER = "library-equipment-chooser"
+    const val EQUIPMENT_CHOICE = "library-equipment-choice"
+    const val EQUIPMENT_FILTER = "library-equipment-filter"
+    /** The sheet's way into My kitchen: "Set up My kitchen" while it is empty, "Edit My kitchen" once it is not. */
+    const val EQUIPMENT_KITCHEN = "library-equipment-kitchen"
+    /** The one action of a view that the filter "Enough equipment" alone narrowed to nothing: switching it off. */
+    const val NOTHING_FOUND_EQUIPMENT_OFF = "library-nothing-found-equipment-off"
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
+    /** The words of a tab, found inside the node tagged with [tab]. */
+    const val TAB_LABEL = "library-tab-label"
     /** The parts of an empty state tagged [state]: its picture, its headline and its sentence. */
     fun emptyPicture(state: String) = "$state-picture"
     fun emptyHeadline(state: String) = "$state-headline"

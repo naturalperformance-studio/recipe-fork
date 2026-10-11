@@ -23,6 +23,7 @@ object RecipeFileCheck {
     const val MAX_INGREDIENTS = RecipeBounds.MAX_INGREDIENTS
     const val MAX_STEPS = RecipeBounds.MAX_STEPS
     const val MAX_STEP_TEXT = RecipeBounds.MAX_STEP_TEXT
+    const val MAX_STEP_NOTE = RecipeBounds.MAX_STEP_NOTE
     const val MAX_TITLE = RecipeBounds.MAX_TITLE
     const val MAX_DESCRIPTION = RecipeBounds.MAX_DESCRIPTION
     const val MAX_TIMER_NAME = RecipeBounds.MAX_TIMER_NAME
@@ -64,11 +65,26 @@ object RecipeFileCheck {
             }
         }
 
-        // The equipment: at most fifteen items, each trimmed, not blank, and short.
+        // The equipment: at most fifteen items, each named by an entry or by free text, never both (as DOM-009 names an
+        // ingredient); free text and a qualifier trimmed and not blank; and each reading as a short line — the entry's
+        // label in either language with its qualifier, where the file gives the labels.
         check(content.equipment.size <= MAX_EQUIPMENT) { "more than $MAX_EQUIPMENT items of equipment" }
         content.equipment.forEachIndexed { index, item ->
-            check(item.isNotBlank() && item == item.trim()) { "equipment $index is blank or untrimmed" }
-            check(item.length <= MAX_EQUIPMENT_NAME) { "equipment $index is over $MAX_EQUIPMENT_NAME characters" }
+            val at = "equipment $index"
+            check(item.isNamed) { "$at is named by both an entry and free text, or by neither" }
+            check(item.dictionaryEntry == null || item.dictionaryEntry >= 0) { "$at names an entry that is none" }
+            check(item.qualifier == null || item.dictionaryEntry != null) { "$at qualifies no entry" }
+            listOfNotNull(item.freeTextName, item.qualifier).forEach { text ->
+                check(text.isNotBlank() && text == text.trim()) { "$at is blank or untrimmed" }
+            }
+            val labels = item.dictionaryEntry?.let(content.equipmentLabels::get)
+            val shown = if (labels != null) listOf(item.shown(labels.ru), item.shown(labels.en)) else listOf(item.shown(null))
+            check(shown.all { it.length <= MAX_EQUIPMENT_NAME }) { "$at is over $MAX_EQUIPMENT_NAME characters" }
+        }
+        content.equipmentLabels.forEach { (id, labels) ->
+            check(listOf(labels.ru, labels.en).all { it.isNotBlank() && it == it.trim() && it.length <= MAX_EQUIPMENT_NAME }) {
+                "the labels of equipment entry $id are not labels"
+            }
         }
 
         val ingredients = content.ingredients
@@ -121,6 +137,11 @@ object RecipeFileCheck {
         steps.forEach { step ->
             val at = "step ${step.position}"
             check(step.text.length <= MAX_STEP_TEXT) { "$at is over $MAX_STEP_TEXT characters" }
+            // The author's note: trimmed, not blank, and within its limit.
+            step.note?.let { note ->
+                check(note.isNotBlank() && note == note.trim()) { "$at holds a blank or untrimmed note" }
+                check(note.length <= MAX_STEP_NOTE) { "$at's note is over $MAX_STEP_NOTE characters" }
+            }
             // DOM-024: up to five timers, each within FLOW-027's range and DOM-012's name limit.
             check(step.timers.size <= MAX_TIMERS) { "$at has more than $MAX_TIMERS timers" }
             step.timers.forEachIndexed { index, timer ->

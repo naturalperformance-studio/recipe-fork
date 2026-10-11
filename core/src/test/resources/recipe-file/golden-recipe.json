@@ -1,5 +1,5 @@
 {
-    "format_version": 4,
+    "format_version": 6,
     "recipe": {
         "id": "0b6f2c1e-6a43-4d8e-9a57-3f1c2b7d9e10",
         "title": "Борщ «домашний»",
@@ -11,9 +11,25 @@
         ],
         "servings": 4,
         "equipment": [
-            "Pot 5 l",
-            "Frying pan 26 cm",
-            "Grater"
+            {
+                "dictionary_entry": 10006,
+                "labels": {
+                    "ru": "Кастрюля",
+                    "en": "Saucepan"
+                },
+                "qualifier": "5 l"
+            },
+            {
+                "dictionary_entry": 10001,
+                "labels": {
+                    "ru": "Сковорода",
+                    "en": "Frying pan"
+                },
+                "qualifier": "26 cm"
+            },
+            {
+                "free_text_name": "Old cast-iron grater"
+            }
         ],
         "ingredients": [
             {
@@ -96,7 +112,8 @@
                         "minutes": 12,
                         "label": "Beet"
                     }
-                ]
+                ],
+                "note": "Бабушка всегда добавляла щепотку сахара"
             },
             {
                 "position": 1,

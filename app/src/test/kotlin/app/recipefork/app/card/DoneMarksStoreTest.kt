@@ -9,10 +9,12 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.BookName
 import app.recipefork.app.editor.PATIENCE_MS
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import org.junit.Assert.assertEquals
@@ -23,6 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * How the card keeps its done marks (FLOW-068): a mark of a row changed since is dropped from the store from an effect
@@ -133,10 +136,11 @@ class DoneMarksStoreTest {
     fun theMarksStoredBeforeTheEquipmentStillRead() {
         val held = ConcurrentHashMap<String, String>()
         val store = DoneMarks(held::get) { key, value -> if (value == null) held.remove(key) else held[key] = value }
-        val withEquipment = recipe.copy(equipment = listOf("Kettle", "Teapot"))
+        val withEquipment = recipe.copy(equipment = listOf("Kettle", "Teapot").map(EquipmentItem::free))
         val key = "${BookName.Pool.fileName}/${recipe.id.value}"
         val ingredient = recipe.ingredients[0].toString().hashCode()
-        val step = recipe.steps[1].toString().hashCode()
+        // As a step printed before it carried a note.
+        val step = "Step(position=1, text=Pour., ingredientReferences=[], timers=[])".hashCode()
         // As the store held them before the equipment, and a mark of a later part.
         held[key] = "i:0:$ingredient;s:1:$step;x:0:1"
 
@@ -146,10 +150,58 @@ class DoneMarksStoreTest {
         assertFalse(marks.done(MarkedPart.EQUIPMENT, 0))
         marks.toggle(MarkedPart.EQUIPMENT, 1)
         assertEquals(
-            setOf(DoneMark.of(recipe.ingredients[0]), DoneMark.of(recipe.steps[1]), DoneMark.ofEquipment(1, "Teapot")),
+            setOf(DoneMark.of(recipe.ingredients[0]), DoneMark.of(recipe.steps[1]), DoneMark.ofEquipment(1, EquipmentItem.free("Teapot"))),
             store.held(BookName.Pool, recipe.id),
         )
         assertTrue("the old marks are written as they were", held.getValue(key).split(";").containsAll(listOf("i:0:$ingredient", "s:1:$step")))
         assertTrue(CardMarks(store, BookName.Pool, withEquipment).done(MarkedPart.EQUIPMENT, 1))
+    }
+
+    // T-205: an entry's item is marked by an explicit key — its entry and qualifier — never by how the item prints; a
+    // free-text item by its text, as before entries, so the marks already held for it keep reading. (An entry's item
+    // marked before this key loses its mark once.)
+    @Test
+    fun anEntrysItemIsMarkedByItsEntryAndQualifier() {
+        val pan = EquipmentItem.entry(10001, "26 cm")
+        assertEquals("e:10001:26 cm", DoneMark.equipmentKey(pan))
+        assertEquals("e:10001:", DoneMark.equipmentKey(EquipmentItem.entry(10001)))
+        assertEquals(DoneMark(MarkedPart.EQUIPMENT, 0, "e:10001:26 cm".hashCode()), DoneMark.ofEquipment(0, pan))
+        assertFalse(DoneMark.ofEquipment(0, pan) == DoneMark.ofEquipment(0, EquipmentItem.entry(10001, "28 cm")))
+        assertFalse(DoneMark.ofEquipment(0, pan) == DoneMark.ofEquipment(0, EquipmentItem.entry(10002, "26 cm")))
+
+        // A free-text mark held before entries existed — taken of its text — still reads, and so does an entry's.
+        val held = ConcurrentHashMap<String, String>()
+        val store = DoneMarks(held::get) { key, value -> if (value == null) held.remove(key) else held[key] = value }
+        val withEquipment = recipe.copy(equipment = listOf(EquipmentItem.free("Kettle"), pan))
+        held["${BookName.Pool.fileName}/${recipe.id.value}"] = "e:0:${"Kettle".hashCode()}"
+        val marks = CardMarks(store, BookName.Pool, withEquipment)
+        assertTrue(marks.done(MarkedPart.EQUIPMENT, 0))
+        assertFalse(marks.done(MarkedPart.EQUIPMENT, 1))
+        marks.toggle(MarkedPart.EQUIPMENT, 1)
+        assertTrue(CardMarks(store, BookName.Pool, withEquipment).done(MarkedPart.EQUIPMENT, 1))
+        // The same entry with another qualifier is another item: its mark goes.
+        assertFalse(CardMarks(store, BookName.Pool, withEquipment.copy(equipment = listOf(EquipmentItem.free("Kettle"), EquipmentItem.entry(10001, "28 cm")))).done(MarkedPart.EQUIPMENT, 1))
+    }
+
+    // T-207: a step's mark is taken of the step as it printed before it carried a note, so that every mark held of a
+    // step with no note keeps reading after the update; a step's note is part of what it holds, so a note added since
+    // drops its mark, as an edit of its text does.
+    @Test
+    fun aStepsMarkHeldBeforeNotesStillReads() {
+        val held = ConcurrentHashMap<String, String>()
+        val store = DoneMarks(held::get) { key, value -> if (value == null) held.remove(key) else held[key] = value }
+        val timed = recipe.copy(steps = listOf(Step(0, "Brew.", timers = listOf(Timer(4.minutes))), recipe.steps[1]))
+        val brew = "Step(position=0, text=Brew., ingredientReferences=[], timers=[Timer(duration=4m, label=null)])"
+        val pour = "Step(position=1, text=Pour., ingredientReferences=[], timers=[])"
+        assertEquals(brew, DoneMark.stepKey(timed.steps[0]))
+        assertEquals(DoneMark(MarkedPart.STEP, 1, pour.hashCode()), DoneMark.of(timed.steps[1]))
+        held["${BookName.Pool.fileName}/${recipe.id.value}"] = "s:0:${brew.hashCode()};s:1:${pour.hashCode()}"
+
+        val marks = CardMarks(store, BookName.Pool, timed)
+        assertTrue(marks.done(MarkedPart.STEP, 0))
+        assertTrue(marks.done(MarkedPart.STEP, 1))
+        val noted = timed.copy(steps = listOf(timed.steps[0], timed.steps[1].withNote("Slowly")))
+        assertTrue(CardMarks(store, BookName.Pool, noted).done(MarkedPart.STEP, 0))
+        assertFalse(CardMarks(store, BookName.Pool, noted).done(MarkedPart.STEP, 1))
     }
 }

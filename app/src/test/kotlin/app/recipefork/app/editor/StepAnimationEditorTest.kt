@@ -205,7 +205,13 @@ class StepAnimationEditorTest {
         return recipe.id
     }
 
-    private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    /** Whether the node tagged [tag] is there — for a part of a step's sheet, in that step's sheet, opened for it. */
+    private fun exists(tag: String): Boolean {
+        compose.reachStep(tag)
+        return compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun onRow(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun stored(id: RecipeId): Recipe {
         compose.waitForIdle()
@@ -228,7 +234,7 @@ class StepAnimationEditorTest {
     /** Opens the media menu of the step at [position] and chooses [item] in it. */
     private fun menu(position: Int, item: String) {
         compose.swipeAwayStatement()
-        compose.onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
+        compose.inStep(position).onNodeWithTag(EditorTags.stepPhoto(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(item), PATIENCE_MS)
         compose.onNodeWithTag(item).performClick()
     }
@@ -256,7 +262,7 @@ class StepAnimationEditorTest {
 
     /** Waits until [text] is said at the bottom of the editor and checks it is not written in the step's block. */
     private fun awaitNotice(position: Int, text: String) {
-        compose.awaitStatement(text)
+        compose.awaitStatementOnceSheetCloses(text)
         compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(EditorTags.step(position))), useUnmergedTree = true)
             .assertDoesNotExist()
     }
@@ -338,9 +344,9 @@ class StepAnimationEditorTest {
         choosePhoto(0, picture("animated.gif"))
 
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.stepClipConverting(0)) && encoded.isNotEmpty() }
-        compose.onNode(hasText("Converting the clip…") and hasAnyAncestor(hasTestTag(EditorTags.step(0))), useUnmergedTree = true)
+        compose.onNode(hasText("Converting the clip…") and hasAnyAncestor(hasTestTag(StepSheetTags.SHEET)), useUnmergedTree = true)
             .assertExists()
-        compose.onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
 
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(0)) }
         compose.waitUntil(PATIENCE_MS) { store.directory(BookName.Pool).list().isNullOrEmpty() }
@@ -413,7 +419,7 @@ class StepAnimationEditorTest {
 
         choosePhoto(0, picture("animated.gif"))
 
-        compose.awaitStatement("Видео прикреплено. Оно сжато на этом телефоне до 1280 пикселей и 6 МБ, звук удалён.")
+        compose.awaitStatementOnceSheetCloses("Видео прикреплено. Оно сжато на этом телефоне до 1280 пикселей и 6 МБ, звук удалён.")
         compose.waitUntil(PATIENCE_MS) { clipAt(id, 0) != null }
     }
 
@@ -478,6 +484,51 @@ class StepAnimationEditorTest {
         images.gate!!.complete(Unit)
         compose.waitUntilExactlyOneExists(hasTestTag(CropTags.SCREEN), PATIENCE_MS)
         assertFalse(exists(EditorTags.stepPhotoWorking(1)))
+    }
+
+    // T-212 fix round 1: a step just added whose sheet closes while a still picture picked for it is told apart is
+    // kept through the crop that then opens — composed with its row — and takes the photograph once the crop is done.
+    @Test
+    fun aNewStepKeptWhileItsPictureIsToldApartOpensTheCropAndTakesThePhoto() {
+        val id = open(threeSteps())
+        holdWork()
+        images.gate = CompletableDeferred()
+        compose.addStepAt(3)
+
+        choosePhoto(3, picture("still.jpg"))
+        awaitWork { images.asked.isNotEmpty() }
+        compose.closeStep()
+        assertEquals(4, stored(id).steps.size)
+        images.gate!!.complete(Unit)
+
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.FRAME), PATIENCE_MS)
+        assertEquals(4, stored(id).steps.size)
+        compose.onNodeWithTag(CropTags.DONE).performClick()
+        awaitWork { stored(id).stepMedia(3)?.kind == MediaKind.PHOTO }
+        assertEquals(4, stored(id).steps.size)
+        assertFalse(compose.stepSheetOpen())
+    }
+
+    // ... and goes, as it was never written, where that crop is cancelled and it holds nothing.
+    @Test
+    fun aNewStepKeptForItsPictureGoesWhenTheCropIsCancelled() {
+        val id = open(threeSteps())
+        holdWork()
+        images.gate = CompletableDeferred()
+        compose.addStepAt(3)
+
+        choosePhoto(3, picture("still.jpg"))
+        awaitWork { images.asked.isNotEmpty() }
+        compose.closeStep()
+        images.gate!!.complete(Unit)
+
+        compose.waitUntilExactlyOneExists(hasTestTag(CropTags.FRAME), PATIENCE_MS)
+        assertEquals(4, stored(id).steps.size)
+        compose.onNodeWithTag(CropTags.CANCEL).performClick()
+        awaitWork { stored(id).steps.size == 3 }
+        assertEquals(listOf("Boil.", "Fry.", "Serve."), stored(id).steps.map { it.text })
+        assertFalse(onRow(EditorTags.step(3)) || onRow(CropTags.SCREEN))
+        assertTrue(stored(id).media.isEmpty())
     }
 
     // Two picks overlapping while the first is told apart end with the later: a still picture after an animation
@@ -568,7 +619,7 @@ class StepAnimationEditorTest {
 
         awaitWork { encoded.isNotEmpty() && exists(EditorTags.stepClipCancel(0)) }
         assertEquals(listOf(Uri.fromFile(file)), readings())
-        compose.onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
+        compose.inStep(0).onNodeWithTag(EditorTags.stepClipCancel(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.stepClipConverting(0)) }
         compose.waitUntil(PATIENCE_MS) { readings().isEmpty() }
         assertTrue(stored(id).media.isEmpty())

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="media_cover">Фото обложки (необязательно)</string>
-    <string name="media_cover_take">Камера</string>
-    <string name="media_cover_choose">Галерея</string>
+    <string name="media_cover_optional">Необязательно</string>
+    <string name="media_source_take">Сфотографировать</string>
+    <string name="media_source_choose">Выбрать из галереи</string>
     <string name="media_cover_add">Добавить фото обложки</string>
     <string name="media_cover_change">Заменить или убрать фото обложки</string>
     <string name="media_cover_remove">Убрать обложку</string>
@@ -15,9 +16,10 @@
     <string name="media_unavailable">На этом телефоне не нашлось приложения, чтобы выбрать фото.</string>
     <string name="media_removed">Фото обложки убрано.</string>
     <string name="media_step_photo_label">Фото или видео для шага %1$d</string>
+    <string name="media_step_part">Фото или видео</string>
+    <string name="media_step_add">Добавить фото или видео</string>
+    <string name="media_step_change">Заменить или убрать</string>
     <string name="media_step_photo_action">Добавить, заменить или убрать фото или видео шага %1$d</string>
-    <string name="media_step_take">Сфотографировать</string>
-    <string name="media_step_choose">Выбрать фото</string>
     <string name="media_step_remove">Убрать фото</string>
     <string name="media_step_description">Фото шага %1$d</string>
     <string name="media_step_removed">Фото шага убрано.</string>

@@ -1,5 +1,6 @@
 package app.recipefork.core.file
 
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
@@ -15,6 +16,7 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import java.math.BigInteger
 import kotlin.time.Duration.Companion.minutes
 
@@ -37,15 +39,23 @@ object RecipeFile {
      * The format this application writes, and the latest it reads. Format 2 added ingredient groups and notes
      * (DOM-022, DOM-023); a document of format 1 reads as one with neither. Format 3 gives a step a list of `timers`
      * (DOM-024) where formats 1 and 2 gave it at most one `timer`, which reads as a step with that one timer. Format 4
-     * adds the recipe's `equipment`; a document of formats 1 to 3 reads as one with none.
+     * adds the recipe's `equipment`, each item its text; a document of formats 1 to 3 reads as one with none. Format 5
+     * names each item as an ingredient is named: a dictionary entry, with its labels, and a qualifier, or free text.
+     * Format 6 adds a step's `note`, the author's own; a document of formats 1 to 5 reads as one with none.
      */
-    const val FORMAT_VERSION = 4
+    const val FORMAT_VERSION = 6
 
     /** The last format that wrote a step's one `timer` rather than its list of `timers`. */
     private const val LAST_ONE_TIMER_FORMAT = 2
 
     /** The last format that wrote no `equipment`. */
     private const val LAST_FORMAT_WITHOUT_EQUIPMENT = 3
+
+    /** The last format that wrote each item of `equipment` as its text alone. */
+    private const val LAST_TEXT_EQUIPMENT_FORMAT = 4
+
+    /** The last format that wrote no step's `note`. */
+    private const val LAST_FORMAT_WITHOUT_STEP_NOTES = 5
     const val EXTENSION = "recipefork"
     const val MIME_TYPE = "application/vnd.recipefork.recipe+zip"
     /** The document's entry in the archive. */
@@ -61,7 +71,11 @@ object RecipeFile {
 
     fun encode(content: RecipeFileContent): String = json.encodeToString(RecipeDocument.serializer(), content.toDocument())
 
-    fun decode(text: String): RecipeFileContent {
+    /**
+     * The content [text] holds. An item of equipment a format before 5 wrote as its text names the entry [entryOf] finds
+     * for that text, trimmed, with no qualifier, and is free text where it finds none.
+     */
+    fun decode(text: String, entryOf: (String) -> Long? = { null }): RecipeFileContent {
         val version = try {
             versionOnly.decodeFromString(DocumentVersion.serializer(), text).formatVersion
         } catch (e: SerializationException) {
@@ -75,7 +89,8 @@ object RecipeFile {
             json.decodeFromString(RecipeDocument.serializer(), text)
                 .also { it.checkTimerShape() }
                 .also { it.checkEquipmentShape() }
-                .toContent()
+                .also { it.checkStepNoteShape() }
+                .toContent(entryOf)
         } catch (e: UnreadableRecipeFile) {
             throw e
         } catch (e: IllegalArgumentException) {
@@ -95,7 +110,13 @@ object RecipeFile {
             language = language?.let(::languageName),
             tags = tags.sorted(),
             servings = servings,
-            equipment = equipment,
+            equipment = equipment.map { item ->
+                val labels = item.dictionaryEntry?.let(equipmentLabels::get)
+                json.encodeToJsonElement(
+                    DocumentEquipment.serializer(),
+                    DocumentEquipment(item.dictionaryEntry, labels?.let { DocumentLabels(it.ru, it.en) }, item.qualifier, item.freeTextName),
+                )
+            },
             ingredients = ingredients.map { it.toDocument() },
             ingredientGroups = ingredientGroups.map { DocumentGroup(it.name, it.firstPosition) },
             steps = steps.map { it.toDocument() },
@@ -132,6 +153,7 @@ object RecipeFile {
             )
         },
         timers = timers.map { DocumentTimer(it.duration.inWholeMinutes, it.label) },
+        note = note,
     )
 
     /** A step's timers stand as its format writes them: one `timer` up to format 2, a list of `timers` since. */
@@ -151,16 +173,48 @@ object RecipeFile {
         }
     }
 
-    private fun RecipeDocument.toContent() = RecipeFileContent(
+    /** A format before 6 wrote no step's note: a document of it that holds one is no document of its format. */
+    private fun RecipeDocument.checkStepNoteShape() {
+        if (formatVersion <= LAST_FORMAT_WITHOUT_STEP_NOTES) {
+            recipe.steps.firstOrNull { it.note != null }?.let { step ->
+                throw UnreadableRecipeFile("step ${step.position} holds a note, which format $formatVersion does not write")
+            }
+        }
+    }
+
+    /** The document's equipment as its format writes it, with the labels format 5 gives its entries. */
+    private fun RecipeDocument.equipmentOf(entryOf: (String) -> Long?): Pair<List<EquipmentItem>, Map<Long, EntryLabels>> {
+        if (formatVersion <= LAST_TEXT_EQUIPMENT_FORMAT) {
+            // Each item is read trimmed, as a note is and as the editor holds one; an item blank or too long once trimmed
+            // is the check's to refuse.
+            val items = recipe.equipment.map { element ->
+                val text = (element as? JsonPrimitive)?.takeIf { it.isString }?.content
+                    ?: throw UnreadableRecipeFile("format $formatVersion holds an item of equipment that is no text")
+                text.trim().let { trimmed -> entryOf(trimmed)?.let { EquipmentItem.entry(it) } ?: EquipmentItem.free(trimmed) }
+            }
+            return items to emptyMap()
+        }
+        val items = recipe.equipment.map { json.decodeFromJsonElement(DocumentEquipment.serializer(), it) }
+        val labels = items.mapNotNull { item -> item.dictionaryEntry?.let { id -> item.labels?.let { id to EntryLabels(it.ru, it.en) } } }
+            .distinctBy { it.first }.toMap()
+        // The free text and the qualifier are read trimmed; a qualifier of nothing but spaces is none.
+        return items.map { EquipmentItem(it.dictionaryEntry, it.qualifier?.trim()?.takeIf(String::isNotEmpty), it.freeTextName?.trim()) } to labels
+    }
+
+    private fun RecipeDocument.toContent(entryOf: (String) -> Long?): RecipeFileContent {
+        val (equipment, equipmentLabels) = equipmentOf(entryOf)
+        return toContent(equipment, equipmentLabels)
+    }
+
+    private fun RecipeDocument.toContent(equipment: List<EquipmentItem>, equipmentLabels: Map<Long, EntryLabels>) = RecipeFileContent(
         id = RecipeId(recipe.id),
         title = recipe.title,
         description = recipe.description,
         tags = recipe.tags.toSet(),
         language = recipe.language?.let(::languageOf),
         servings = recipe.servings,
-        // Each item is read trimmed, as a note is and as the editor holds one; an item blank or too long once trimmed
-        // is the check's to refuse.
-        equipment = recipe.equipment.map { it.trim() },
+        equipment = equipment,
+        equipmentLabels = equipmentLabels,
         ingredients = recipe.ingredients.map { it.toIngredient() },
         ingredientGroups = recipe.ingredientGroups.map { IngredientGroup(it.name, it.firstIngredient) },
         steps = recipe.steps.map { it.toStep() },
@@ -201,6 +255,8 @@ object RecipeFile {
         },
         // Formats 1 and 2 held one timer at most; the shape was checked before.
         timers = (timers + listOfNotNull(timer)).map { Timer(it.minutes.minutes, it.label) },
+        // A note is read as the editor takes one: trimmed, and none when blank.
+        note = Step.noteOf(note),
     )
 
     private fun languageName(language: RecipeLanguage) = Names.language.nameOf(language)

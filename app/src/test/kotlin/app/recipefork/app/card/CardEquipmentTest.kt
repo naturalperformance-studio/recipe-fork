@@ -27,6 +27,8 @@ import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
+import app.recipefork.app.dictionary.EquipmentEntryEntity
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
@@ -68,7 +70,7 @@ class CardEquipmentTest {
     private val pilaf = Recipe.create(now, null).copy(
         title = "Pilaf",
         servings = 4,
-        equipment = listOf("Cauldron", "Skimmer"),
+        equipment = listOf("Cauldron", "Skimmer").map(EquipmentItem::free),
         ingredients = listOf(
             Ingredient(0, null, freeTextName = "Chicken", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(500)),
             Ingredient(1, null, freeTextName = "Rice", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(350)),
@@ -89,7 +91,9 @@ class CardEquipmentTest {
 
     private fun open(tab: CardMode, recipe: Recipe = pilaf): StateRestorationTester {
         runBlocking { recipes.save(recipe) }
-        val environment = CardEnvironment(marks = marks, lastTab = HeldLastCardTab(tab), ingredients = IngredientEntries { emptyList() })
+        val environment = CardEnvironment(
+            marks = marks, lastTab = HeldLastCardTab(tab), equipment = { equipmentDictionary }, ingredients = IngredientEntries { emptyList() },
+        )
         val tester = StateRestorationTester(compose)
         tester.setContent {
             MaterialTheme(colorScheme = scheme) { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
@@ -179,6 +183,34 @@ class CardEquipmentTest {
         assertEquals("Показать посуду и технику", AccessibilityChecks.clickActionLabel(node(EquipmentTags.GATHERED)))
     }
 
+    /** The device's equipment dictionary the card names items from: an entry it offers, and one removed from it. */
+    private val equipmentDictionary = listOf(
+        EquipmentEntryEntity(10001, "Сковорода", "Frying pan", 10000),
+        EquipmentEntryEntity(10950, "Казан", "Kazan", 10000, removed = true),
+    )
+
+    private val named = pilaf.copy(
+        equipment = listOf(EquipmentItem.entry(10950, "8 l"), EquipmentItem.entry(10001), EquipmentItem.free("Skimmer")),
+    )
+
+    // An item an entry names reads as the entry's label in the interface language and its qualifier — an entry removed
+    // from the dictionary too — on View and on Cooking; free text reads as itself.
+    @Test
+    fun anEntrysItemReadsAsItsLabelAndQualifier() {
+        open(CardMode.VIEW, named)
+        assertEquals(listOf("Kazan 8 l"), compose.textsOf(item(0)))
+        assertEquals(listOf("Frying pan"), compose.textsOf(item(1)))
+        assertEquals(listOf("Skimmer"), compose.textsOf(item(2)))
+    }
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun anEntrysItemReadsInRussian() {
+        open(CardMode.COOKING, named)
+        assertEquals(listOf("Казан 8 l"), compose.textsOf(item(0)))
+        assertEquals(listOf("Сковорода"), compose.textsOf(item(1)))
+    }
+
     // A recipe without equipment shows no block, on either tab.
     @Test
     fun aRecipeWithoutEquipmentShowsNoBlock() {
@@ -197,7 +229,7 @@ class CardEquipmentTest {
         tap(item(1))
         assertEquals(listOf(1), doneItems())
         assertEquals("Mark as not done", AccessibilityChecks.clickActionLabel(node(item(1))))
-        assertEquals(setOf(DoneMark.ofEquipment(1, "Skimmer")), marks.held(BookName.Pool, pilaf.id))
+        assertEquals(setOf(DoneMark.ofEquipment(1, EquipmentItem.free("Skimmer"))), marks.held(BookName.Pool, pilaf.id))
         // Shown on View, as an ingredient's mark is, and not changed by a tap there.
         compose.chooseCardTab(CardMode.VIEW)
         assertEquals(listOf(1), doneItems())
@@ -223,13 +255,13 @@ class CardEquipmentTest {
     // An item changed in the editor loses its mark, for good, as an ingredient line does; the others keep theirs.
     @Test
     fun aMarkOfAnItemChangedInTheEditorIsDropped() {
-        marks.hold(BookName.Pool, pilaf.id, setOf(DoneMark.ofEquipment(0, "Cauldron"), DoneMark.ofEquipment(1, "Skimmer")))
+        marks.hold(BookName.Pool, pilaf.id, setOf(DoneMark.ofEquipment(0, EquipmentItem.free("Cauldron")), DoneMark.ofEquipment(1, EquipmentItem.free("Skimmer"))))
         open(CardMode.COOKING)
         assertTrue(equipmentFolded())
         compose.onNodeWithTag(EquipmentTags.GATHERED).performClick()
         compose.waitForIdle()
 
-        val changed = pilaf.copy(equipment = listOf("Cauldron 6 l", "Skimmer"))
+        val changed = pilaf.copy(equipment = listOf("Cauldron 6 l", "Skimmer").map(EquipmentItem::free))
         runBlocking { recipes.save(changed) }
         compose.waitUntil(PATIENCE_MS) { exists(item(0)) && compose.textsOf(item(0)) == listOf("Cauldron 6 l") }
         compose.waitForIdle()
@@ -239,7 +271,7 @@ class CardEquipmentTest {
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(item(0)) == listOf("Cauldron") }
         compose.waitForIdle()
         assertEquals(listOf(1), doneItems())
-        assertEquals(setOf(DoneMark.ofEquipment(1, "Skimmer")), marks.held(BookName.Pool, pilaf.id))
+        assertEquals(setOf(DoneMark.ofEquipment(1, EquipmentItem.free("Skimmer"))), marks.held(BookName.Pool, pilaf.id))
     }
 
     // Every item marked folds the equipment into its one line, on its own: the ingredients stand until theirs are all
@@ -277,7 +309,7 @@ class CardEquipmentTest {
     // Clearing the marks shows the equipment again; View never folds it.
     @Test
     fun clearingTheMarksShowsTheEquipmentAndViewNeverFoldsIt() {
-        marks.hold(BookName.Pool, pilaf.id, setOf(DoneMark.ofEquipment(0, "Cauldron"), DoneMark.ofEquipment(1, "Skimmer")))
+        marks.hold(BookName.Pool, pilaf.id, setOf(DoneMark.ofEquipment(0, EquipmentItem.free("Cauldron")), DoneMark.ofEquipment(1, EquipmentItem.free("Skimmer"))))
         open(CardMode.VIEW)
         assertFalse(equipmentFolded())
         assertEquals(listOf(0, 1), doneItems())
@@ -294,7 +326,7 @@ class CardEquipmentTest {
     fun equipmentShownAgainStaysShownThroughATurnAndRecreation() {
         marks.hold(
             BookName.Pool, pilaf.id,
-            pilaf.ingredients.map(DoneMark::of).toSet() + setOf(DoneMark.ofEquipment(0, "Cauldron"), DoneMark.ofEquipment(1, "Skimmer")),
+            pilaf.ingredients.map(DoneMark::of).toSet() + setOf(DoneMark.ofEquipment(0, EquipmentItem.free("Cauldron")), DoneMark.ofEquipment(1, EquipmentItem.free("Skimmer"))),
         )
         val tester = open(CardMode.COOKING)
         assertTrue(equipmentFolded())

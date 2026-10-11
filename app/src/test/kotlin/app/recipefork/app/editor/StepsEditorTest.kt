@@ -134,8 +134,11 @@ class StepsEditorTest {
 
     private fun fieldText(tag: String): String = node(tag).config[SemanticsProperties.EditableText].text
 
-    /** The label a step's field shows: its number. */
+    /** The label a step's field shows, in its open sheet: its number. */
     private fun stepLabel(position: Int): String = compose.textsOf(EditorTags.stepText(position)).first()
+
+    /** What the row of the step at [position] is read as first: its number, as the step's name. */
+    private fun rowLabel(position: Int): String = compose.textsOf(StepSheetTags.line(position)).first()
 
     private fun hasSetTextAction() = SemanticsMatcher.keyIsDefined(SemanticsActions.SetText)
 
@@ -145,15 +148,17 @@ class StepsEditorTest {
         it.config.getOrElseNullable(SemanticsProperties.TestTag) { null }?.matches(pattern) == true
     }
 
-    /** Appends a step through the screen and returns its position. */
+    /** Appends a step through the screen, which opens in its sheet, and returns its position. */
     private fun addStep(): Int {
+        compose.closeStep()
         val position = stepCount()
-        compose.onNodeWithTag(EditorTags.STEP_ADD).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(position)), PATIENCE_MS)
+        compose.addStepAt(position)
         return position
     }
 
+    /** Writes [text] into the step at [position] in its sheet, opening it first; the sheet stays open. */
     private fun typeStep(position: Int, text: String) {
+        compose.openStep(position)
         compose.onNodeWithTag(EditorTags.stepText(position)).performScrollTo().performTextReplacement(text)
         compose.waitForIdle()
     }
@@ -178,25 +183,25 @@ class StepsEditorTest {
         assertTrue("$tag is shorter than its text", node(tag, unmerged).size.height >= layout.size.height)
     }
 
-    // FLOW-024 (1): after the ingredients, the steps and then the description.
+    // FLOW-024 (1) as T-208 orders it: the title, the tags, then the description, before the serving count; after the
+    // ingredients, the steps, the form's last part.
     @Test
-    fun theStepsAndThenTheDescriptionFollowTheIngredients() {
+    fun theDescriptionSitsUnderTheTitleAndTagsAndTheStepsFollowTheIngredients() {
         writeANewRecipe()
-        val ingredients = bounds(EditorTags.INGREDIENTS)
-        val steps = bounds(EditorTags.STEPS)
-        val description = bounds(EditorTags.DESCRIPTION)
-        assertTrue("the steps are not after the ingredients", steps.top >= ingredients.bottom)
-        assertTrue("the description is not after the steps", description.top >= steps.bottom)
-        // A step stays inside the steps, before the description.
-        addStep()
+        val order = listOf(EditorTags.TITLE, EditorTags.TAGS, EditorTags.DESCRIPTION, EditorTags.SERVINGS, EditorTags.INGREDIENTS, EditorTags.STEPS)
+        order.zipWithNext().forEach { (above, below) -> assertTrue("$above above $below", bounds(above).bottom <= bounds(below).top + 0.5f) }
+        // A step stays inside the steps, after the ingredients.
+        typeStep(addStep(), "Mix.")
+        compose.closeStep()
         assertTrue(bounds(EditorTags.step(0)).top >= bounds(EditorTags.INGREDIENTS).bottom)
         assertTrue(bounds(EditorTags.STEP_ADD).top >= bounds(EditorTags.step(0)).bottom)
-        assertTrue(bounds(EditorTags.DESCRIPTION).top >= bounds(EditorTags.STEPS).bottom)
+        assertTrue(bounds(EditorTags.DESCRIPTION).bottom <= bounds(EditorTags.SERVINGS).top)
     }
 
-    // "Add step" appends a numbered step of plain text, whose text is edited where it stands.
+    // "Add step" appends a numbered step of plain text, which opens in its sheet; its text is edited there, and its row
+    // reads it.
     @Test
-    fun addStepAppendsANumberedStepEditedWhereItStands() {
+    fun addStepAppendsANumberedStepEditedInItsSheet() {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.step(0)).assertDoesNotExist()
         assertEquals(string(R.string.editor_step_add_action), AccessibilityChecks.clickActionLabel(node(EditorTags.STEP_ADD)))
@@ -207,45 +212,60 @@ class StepsEditorTest {
             assertEquals("Step ${position + 1}", stepLabel(position))
             typeStep(position, text)
         }
+        compose.closeStep()
         assertEquals(listOf("Boil the water.", "Add the pasta.", "Drain."), stored(id).steps.map { it.text })
         assertEquals(listOf(0, 1, 2), stored(id).steps.map { it.position })
-        // A step is one text field, its removal, its menu (FLOW-025), the control that inserts an ingredient's quantity
-        // (FLOW-031), the one that attaches its timer and the one that attaches its photo (FLOW-026 (2)); nothing else.
+        // A step's row is one target, which opens its sheet; nothing of the step is edited on the row.
         val inStep = hasAnyAncestor(hasTestTag(EditorTags.step(1)))
-        val actions = compose.onAllNodes(inStep and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
+        val onRow = compose.onAllNodes(inStep and AccessibilityChecks.isInteractive).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
+        assertEquals(listOf(StepSheetTags.line(1)), onRow)
+        // Its sheet holds its text field, its removal and its moves (FLOW-025), the control that inserts an ingredient's
+        // quantity (FLOW-031), the one that attaches its timer and the one that attaches its photo (FLOW-026 (2)), and
+        // its note.
+        compose.openStep(1)
+        val inSheet = hasAnyAncestor(hasTestTag(StepSheetTags.SHEET))
+        val actions = compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }.toSet()
-        assertEquals(setOf(EditorTags.stepText(1), EditorTags.stepRemove(1), EditorTags.stepMenu(1), EditorTags.stepInsert(1), EditorTags.timerAttach(1), EditorTags.stepPhoto(1)), actions)
+        assertEquals(
+            setOf(
+                StepSheetTags.DONE, EditorTags.stepText(1), EditorTags.stepRemove(1), EditorTags.stepInsert(1), EditorTags.timerAttach(1),
+                EditorTags.stepPhoto(1), StepNoteTags.field(1),
+            ) + RowAction.entries.filter { it != RowAction.GROUP_ABOVE }.map { EditorTags.stepAction(1, it) },
+            actions,
+        )
 
-        // Edited in place: the middle step changes, and the others and the numbering stay.
+        // Edited in its sheet: the middle step changes, and the others and the numbering stay.
         compose.onNodeWithTag(EditorTags.stepText(1)).performScrollTo().performTextInput(" Stir once.")
         compose.waitForIdle()
         assertEquals("Add the pasta. Stir once.", fieldText(EditorTags.stepText(1)))
         assertEquals(listOf("Boil the water.", "Add the pasta. Stir once.", "Drain."), stored(id).steps.map { it.text })
-        assertEquals(listOf("Step 1", "Step 2", "Step 3"), (0..2).map { stepLabel(it) })
+        compose.closeStep()
+        assertEquals(listOf("Boil the water.", "Add the pasta. Stir once.", "Drain."), (0..2).map { compose.stepLine(it) })
+        assertEquals(listOf("Step 1", "Step 2", "Step 3"), (0..2).map { rowLabel(it) })
     }
 
-    // A step can be deleted, and the numbers after it close up.
+    // A step can be deleted from its sheet, and the numbers after it close up.
     @Test
     fun aStepCanBeDeletedAndTheNumbersAfterItCloseUp() {
         val id = writeANewRecipe()
         listOf("one", "two", "three", "four").forEach { typeStep(addStep(), it) }
-        assertEquals(string(R.string.editor_step_remove_action, 2), AccessibilityChecks.clickActionLabel(node(EditorTags.stepRemove(1))))
-        compose.onNodeWithTag(EditorTags.stepRemove(1)).performScrollTo().performClick()
-        compose.waitForIdle()
+        compose.openStep(1)
+        assertEquals(listOf(string(R.string.editor_step_remove)), compose.textsOf(EditorTags.stepRemove(1)))
+        compose.removeStep(1)
         assertEquals(listOf("one", "three", "four"), stored(id).steps.map { it.text })
         assertEquals(listOf(0, 1, 2), stored(id).steps.map { it.position })
-        assertEquals(listOf("one", "three", "four"), (0..2).map { fieldText(EditorTags.stepText(it)) })
-        assertEquals(listOf("Step 1", "Step 2", "Step 3"), (0..2).map { stepLabel(it) })
-        assertEquals(string(R.string.editor_step_remove_action, 2), AccessibilityChecks.clickActionLabel(node(EditorTags.stepRemove(1))))
+        assertEquals(listOf("one", "three", "four"), (0..2).map { compose.stepLine(it) })
+        assertEquals(listOf("Step 1", "Step 2", "Step 3"), (0..2).map { rowLabel(it) })
+        compose.openStep(1)
+        assertEquals(listOf(string(R.string.editor_step_remove)), compose.textsOf(EditorTags.stepRemove(1)))
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.step(3)).assertDoesNotExist()
         // The last, then the first, then the only one left.
-        compose.onNodeWithTag(EditorTags.stepRemove(2)).performScrollTo().performClick()
-        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
-        compose.waitForIdle()
+        compose.removeStep(2)
+        compose.removeStep(0)
         assertEquals(listOf("three"), stored(id).steps.map { it.text })
-        assertEquals("Step 1", stepLabel(0))
-        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
-        compose.waitForIdle()
+        assertEquals("Step 1", rowLabel(0))
+        compose.removeStep(0)
         assertEquals(emptyList<Step>(), stored(id).steps)
         compose.onNodeWithTag(EditorTags.step(0)).assertDoesNotExist()
     }
@@ -268,8 +288,9 @@ class StepsEditorTest {
             ),
         )
         openDirectly(recipe.id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(2)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(2)), PATIENCE_MS)
         // Typed at the end of the step: the reference before it stays where it is.
+        compose.openStep(1)
         compose.onNodeWithTag(EditorTags.stepText(1)).performScrollTo().performTextInput(" Rest.")
         compose.waitForIdle()
         val edited = stored(recipe.id).steps[1]
@@ -277,8 +298,7 @@ class StepsEditorTest {
         assertEquals(Timer(10.minutes), edited.timer)
         assertEquals(listOf(IngredientReference(1, 4)), edited.ingredientReferences)
 
-        compose.onNodeWithTag(EditorTags.stepRemove(0)).performScrollTo().performClick()
-        compose.waitForIdle()
+        compose.removeStep(0)
         val steps = stored(recipe.id).steps
         assertEquals(listOf("Add flour and knead. Rest.", "Bake with the rest of the flour."), steps.map { it.text })
         assertEquals(listOf(Timer(10.minutes), Timer(40.minutes, "Oven")), steps.map { it.timer })
@@ -334,11 +354,14 @@ class StepsEditorTest {
         val longDescription = (1..60).joinToString(" ") { "a description that goes on and on, part $it" }
         val id = writeANewRecipe()
         typeStep(addStep(), longStep)
+        assertWhole(EditorTags.stepText(0), longStep)
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.DESCRIPTION).performScrollTo().performTextReplacement(longDescription)
         compose.waitForIdle()
         assertEquals(longStep, stored(id).steps.single().text)
         assertEquals(longDescription, stored(id).description)
-        assertWhole(EditorTags.stepText(0), longStep)
+        // The row reads it whole too.
+        assertWhole(StepSheetTags.text(0), longStep, unmerged = true)
         assertWhole(EditorTags.DESCRIPTION, longDescription)
 
         val frozen = seed(
@@ -348,7 +371,7 @@ class StepsEditorTest {
         compose.runOnIdle { opened.value = frozen.id }
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FROZEN), PATIENCE_MS)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(0)), PATIENCE_MS)
-        assertWhole(EditorTags.stepText(0), longStep, unmerged = true)
+        assertWhole(StepSheetTags.text(0), longStep, unmerged = true)
         assertWhole(EditorTags.DESCRIPTION_TEXT, longDescription, unmerged = true)
     }
 
@@ -359,7 +382,10 @@ class StepsEditorTest {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Окрошка")
         val steps = listOf("Нарезать овощи.", "", "Залить квасом.\nПодавать холодной.")
-        steps.forEach { typeStep(addStep(), it) }
+        // An empty step is one written and emptied: a step added and closed empty goes again.
+        steps.forEach { typeStep(addStep(), it.ifEmpty { "x" }) }
+        typeStep(1, "")
+        compose.closeStep()
         compose.onNodeWithTag(EditorTags.DESCRIPTION).performScrollTo().performTextReplacement("Летний суп.")
         compose.waitForIdle()
         val before = stored(id)
@@ -373,9 +399,11 @@ class StepsEditorTest {
         assertEquals(before, stored(id))
 
         openDirectly(id)
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.stepText(2)), PATIENCE_MS)
-        assertEquals(steps, (0..2).map { fieldText(EditorTags.stepText(it)) })
-        assertEquals(listOf("Шаг 1", "Шаг 2", "Шаг 3"), (0..2).map { stepLabel(it) })
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(2)), PATIENCE_MS)
+        assertEquals(listOf("Нарезать овощи.", "Новый шаг", "Залить квасом.\nПодавать холодной."), (0..2).map { compose.stepLine(it) })
+        assertEquals(listOf("Шаг 1", "Шаг 2", "Шаг 3"), (0..2).map { rowLabel(it) })
+        assertEquals(steps, (0..2).map { compose.openStep(it); fieldText(EditorTags.stepText(it)) })
+        compose.closeStep()
         assertEquals("Летний суп.", fieldText(EditorTags.DESCRIPTION))
         assertEquals(before, stored(id))
         assertEquals(steps, stored(id).steps.map { it.text })
@@ -398,11 +426,11 @@ class StepsEditorTest {
                 )
                 openDirectly(recipe.id)
                 compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(1)), PATIENCE_MS)
-                assertEquals("$state", listOf("Шаг 1", "Смешать тесто."), compose.textsOf(EditorTags.step(0)))
+                assertEquals("$state", listOf("Шаг 1", "Смешать тесто."), compose.textsOf(StepSheetTags.line(0)))
                 assertEquals(
                     "$state",
-                    listOf("Шаг 2", "Жарить с двух сторон.", "Таймер: 2 мин", "Название таймера: Жарить с двух сторон."),
-                    compose.textsOf(EditorTags.step(1)),
+                    listOf("Шаг 2", "Жарить с двух сторон.", "Жарить с двух сторон. · 2 мин"),
+                    compose.textsOf(StepSheetTags.line(1)),
                 )
                 assertEquals("$state", listOf("Описание", "Тонкие блины.\nНа молоке."), compose.textsOf(EditorTags.DESCRIPTION))
                 assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
@@ -453,10 +481,16 @@ class StepsEditorTest {
     private fun reachableAndNamed() {
         writeANewRecipe()
         typeStep(addStep(), "Mix.")
-        addStep()
+        typeStep(addStep(), "Serve.")
+        // The sheet open over the editor, then the editor's rows.
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 5)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 5)
         assertEquals(string(R.string.editor_step, 2), stepLabel(1))
-        assertEquals(string(R.string.editor_step_remove_action, 2), AccessibilityChecks.clickActionLabel(node(EditorTags.stepRemove(1))))
+        assertEquals(listOf(string(R.string.editor_step_remove)), compose.textsOf(EditorTags.stepRemove(1)))
+        compose.closeStep()
+        AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 3)
+        AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 3)
+        assertEquals(string(R.string.editor_step, 2), rowLabel(1))
+        assertEquals(string(R.string.editor_step_edit), AccessibilityChecks.clickActionLabel(node(StepSheetTags.line(1))))
     }
 }

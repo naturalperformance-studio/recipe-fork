@@ -18,6 +18,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
@@ -46,6 +47,7 @@ import app.recipefork.app.card.EquipmentTags
 import app.recipefork.app.card.FakeClipPlayers
 import app.recipefork.app.card.LocalClipPlayers
 import app.recipefork.app.card.awaitCard
+import app.recipefork.app.card.scrollClearOfFork
 import app.recipefork.app.data.HeldThemeSetting
 import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.editor.EditorEnvironment
@@ -53,9 +55,22 @@ import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
+import app.recipefork.app.editor.closeGroup
+import app.recipefork.app.editor.closeIngredient
+import app.recipefork.app.editor.openGroup
+import app.recipefork.app.editor.openIngredient
+import app.recipefork.app.editor.openStep
+import app.recipefork.app.editor.closeStep
+import app.recipefork.app.editor.removeIngredient
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.FileMessageTags
 import app.recipefork.app.file.RecipeImport
+import app.recipefork.app.dictionary.DictionarySnapshot
+import app.recipefork.app.dictionary.EquipmentEntryEntity
+import app.recipefork.app.dictionary.EquipmentSource
+import app.recipefork.app.kitchen.HeldKitchen
+import app.recipefork.app.kitchen.KitchenEnvironment
+import app.recipefork.app.kitchen.KitchenTags
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -68,6 +83,7 @@ import app.recipefork.app.media.TestPhotos
 import app.recipefork.app.media.crop.CropScreen
 import app.recipefork.app.media.crop.CropTags
 import app.recipefork.app.media.crop.PhotoToCrop
+import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.LanguageTags
 import app.recipefork.app.settings.SettingsTags
@@ -75,6 +91,7 @@ import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.LocalCardTimers
 import app.recipefork.app.timer.TestTimers
 import app.recipefork.app.timer.TimerTags
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.recipe.IngredientReference
@@ -113,13 +130,15 @@ import kotlin.time.Duration.Companion.minutes
  *  - no two interactive elements in one window announce the same thing unless each acts on a different named thing;
  *  - every text drawn reaches its contrast against what is drawn behind it (A11Y-002).
  *
- * The screens: the book — the marked and the own view, each empty and with recipes, an entry's menu, a recipe file's
- * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment, ingredient groups, notes,
+ * The screens: the book — the marked and the own view, each empty and with recipes, the own one filtered by "Enough
+ * equipment", an entry's menu, a recipe file's
+ * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment — an item of it not
+ * in My kitchen, so marked on both tabs — ingredient groups, notes, a step's author's note,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
  * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
- * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with a row removed and its
- * Undo offered, and on a frozen one with equipment; the settings and each of their
- * dialogs; and the crop.
+ * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with an ingredient's
+ * sheet open, a step's sheet open, with a row removed and its Undo offered, and on a frozen one with equipment; the settings and each of their
+ * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
  * that the lists show every entry and the card and the editor are drawn whole for the contrast check, which reads
@@ -149,8 +168,18 @@ class PreLaunchSweepTest {
     private val cardTimers = CardTimers(timers.store, timers.scope, timers.access, timers.ringing) { BookName.Pool }
     private val players = FakeClipPlayers()
     private val editor = EditorEnvironment(active, device.catalog(context)) { now }
-    private val card = CardEnvironment(HeldUsualServings(), marks) { device.database.dictionaryDao().ingredients() }
     private val theme = HeldThemeSetting()
+
+    /** My kitchen over the shipped equipment dictionary: a frying pan and an oven ticked, so every group's state shows. */
+    private val kitchen = KitchenEnvironment(
+        HeldKitchen(setOf(FRYING_PAN, OVEN)),
+        EquipmentSource { DictionarySnapshot.read(context).equipment.map(EquipmentEntryEntity::of) },
+    )
+
+    /** The card reads the device's dictionaries and the same kitchen: the cake's bowl is not in it. */
+    private val card = CardEnvironment(
+        HeldUsualServings(), marks, equipment = EquipmentSource { device.database.dictionaryDao().equipment() }, kitchen = kitchen.store,
+    ) { device.database.dictionaryDao().ingredients() }
 
     private var crop by mutableStateOf<PhotoToCrop?>(null)
 
@@ -163,7 +192,8 @@ class PreLaunchSweepTest {
     @Before
     fun setUp() {
         listOf(book.idling, device.idling, timers.idling).forEach(compose::registerIdlingResource)
-        runBlocking { device.database.dictionaryDao().replace(SAMPLE_DICTIONARIES) }
+        // The sample dictionaries with the shipped equipment, so that the card and the editor name the cake's items.
+        runBlocking { device.database.dictionaryDao().replace(SAMPLE_DICTIONARIES.copy(equipment = DictionarySnapshot.read(context).equipment)) }
     }
 
     @After
@@ -234,7 +264,8 @@ class PreLaunchSweepTest {
         description = "A sheet cake for late summer.",
         servings = 8,
         tags = setOf(10L, 12L),
-        equipment = listOf("Oven", "Baking tray 30 × 40 cm", "Mixing bowl"),
+        // The oven the kitchen has, free text, and a bowl the kitchen lacks: marked "Not in your kitchen" on the card.
+        equipment = listOf(EquipmentItem.entry(OVEN), EquipmentItem.free("Baking tray 30 × 40 cm"), EquipmentItem.entry(BOWL, "large")),
         ingredients = listOf(
             grams(0, "flour", 250),
             grams(1, "butter", 125, note = "cold"),
@@ -244,7 +275,8 @@ class PreLaunchSweepTest {
         ),
         ingredientGroups = listOf(IngredientGroup("Dough", 0), IngredientGroup("Topping", 2)),
         steps = listOf(
-            Step(0, "Rub the butter into the flour.", listOf(IngredientReference(1, 8), IngredientReference(0, 24))),
+            // The author's note, under the current step's text on Cooking and in its field in the editor.
+            Step(0, "Rub the butter into the flour.", listOf(IngredientReference(1, 8), IngredientReference(0, 24)), note = "Work quickly, so the butter stays cold."),
             Step(1, "Chill the dough.", timer = Timer(30.minutes, "Chill")),
             Step(2, "Lay the plums over the dough.", listOf(IngredientReference(2, 8))),
             Step(3, "Sprinkle with sugar and cinnamon, then bake and let it rest.", emptyList(), listOf(Timer(40.minutes, "Bake"), Timer(10.minutes, "Rest"))),
@@ -261,7 +293,7 @@ class PreLaunchSweepTest {
 
     /** An own recipe that cannot be changed, with its equipment: the editor shows it frozen. */
     private val published = Recipe.create(now.minusSeconds(7200), owner = null)
-        .copy(title = "Apple pie", servings = 6, equipment = listOf("Oven", "Pie dish 24 cm"))
+        .copy(title = "Apple pie", servings = 6, equipment = listOf("Oven", "Pie dish 24 cm").map(EquipmentItem::free))
         .inState(RecipeState.PUBLISHED)
 
     private fun found(title: String, minutesAgo: Long): Recipe =
@@ -313,7 +345,7 @@ class PreLaunchSweepTest {
                     } else {
                         // As MainActivity shows it: on a surface of the theme.
                         Surface(Modifier.fillMaxSize()) {
-                            AppNavHost(session, recipes, Mode.Serverless, editor = editor, card = card, themeSetting = theme)
+                            AppNavHost(session, recipes, Mode.Serverless, editor = editor, card = card, themeSetting = theme, kitchen = kitchen)
                         }
                     }
                 }
@@ -353,6 +385,18 @@ class PreLaunchSweepTest {
         await(LibraryTags.entry(cake.id.value))
         await(LibraryTags.entry(soup.id.value))
         checkScreen("the book, own, with recipes")
+        // Filtered by "Enough equipment": its chip among the filters in force. The cake needs a bowl the kitchen lacks
+        // and is hidden; the pie, whose equipment is free text, and the soup, which needs none, stay listed.
+        compose.runOnIdle { session.filter(LibraryView.OWN, BookFilters(equipment = true)) }
+        await(LibraryTags.EQUIPMENT_FILTER)
+        compose.waitUntil(PATIENCE_MS) {
+            !exists(LibraryTags.entry(cake.id.value)) && exists(LibraryTags.entry(soup.id.value)) &&
+                exists(LibraryTags.entry(published.id.value))
+        }
+        checkScreen("the book, own, filtered by equipment")
+        compose.runOnIdle { session.filter(LibraryView.OWN, BookFilters()) }
+        awaitGone(LibraryTags.EQUIPMENT_FILTER)
+        await(LibraryTags.entry(cake.id.value))
         compose.openEntryMenu(cake.id.value)
         checkScreen("the book, own, an entry's menu")
         compose.closeEntryMenu(cake.id.value)
@@ -376,10 +420,20 @@ class PreLaunchSweepTest {
         // View, the tab a card first opens on: the cover, the summary, fork; compact lists, the done marks shown.
         compose.onNodeWithTag(CardTags.tab(CardMode.VIEW)).assertIsSelected()
         await(CardTags.SUMMARY)
-        // The equipment above the ingredients, one item marked.
+        // The equipment above the ingredients, one item marked, the bowl not in the kitchen.
         cake.equipment.indices.forEach { await(CardTags.equipment(it)) }
+        awaitLacking(listOf(2))
         assertOnlyThePagerScrollsSideways("View")
         checkScreen("the card, View", target = CardTarget)
+        // The bowl, not in the kitchen, opens My kitchen at it; back returns to the card.
+        compose.scrollClearOfFork(CardTags.equipment(2))
+        compose.onNodeWithTag(CardTags.equipment(2)).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.item(BOWL)) && !exists(CardTags.SCREEN) }
+        checkScreen("my kitchen, opened from a recipe at an item")
+        compose.onNodeWithTag(KitchenTags.BACK).performClick()
+        compose.awaitCard()
+        awaitGone(KitchenTags.SCREEN)
+        awaitLacking(listOf(2))
         compose.onNodeWithTag(CardTags.MENU).performClick()
         await(CardTags.DELETE)
         checkScreen("the card, View, its menu", target = CardTarget)
@@ -392,6 +446,7 @@ class PreLaunchSweepTest {
         compose.onNodeWithTag(TimerTags.start(1)).performScrollTo().performClick()
         await(TimerTags.cancel(1))
         cake.equipment.indices.forEach { await(CardTags.equipment(it)) }
+        awaitLacking(listOf(2))
         compose.onNodeWithTag(CardTags.SCREEN).assertExists()
         assertTrue("the second step is the current one", compose.onNodeWithTag(CardTags.step(1)).fetchSemanticsNode()
             .config.getOrNull(SemanticsProperties.StateDescription) == context.getString(R.string.card_current_step))
@@ -414,13 +469,31 @@ class PreLaunchSweepTest {
         await(EditorTags.equipmentName(2))
         compose.waitForIdle()
         checkScreen("the editor, a recipe with equipment, groups, notes, several timers and tags")
-        // A row removed: the editor says so with Undo.
-        compose.onNodeWithTag(EditorTags.ingredientRemove(4)).performScrollTo().performClick()
+        // An ingredient's sheet open, its fields and its actions over the editor.
+        compose.openIngredient(1)
+        checkScreen("the editor, an ingredient's sheet open")
+        compose.closeIngredient()
+        // A step's sheet open: its text with references, its note, its controls and its actions over the editor.
+        compose.openStep(0)
+        checkScreen("the editor, a step's sheet open")
+        compose.closeStep()
+        // A heading's sheet open, its name and its actions.
+        compose.openGroup(0)
+        checkScreen("the editor, a group's sheet open")
+        compose.closeGroup()
+        // A row removed from its sheet: the editor says so with Undo.
+        compose.removeIngredient(4)
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.STATEMENT, unmerged = true) }
         checkScreen("the editor, a row removed, with Undo")
         val undo = hasAnyAncestor(hasTestTag(EditorTags.STATEMENT)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
         compose.onNode(undo, useUnmergedTree = true).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.ingredient(4)) && !exists(EditorTags.STATEMENT, unmerged = true) }
+    }
+
+    /** Waits until exactly the card's items at [indices] say "Not in your kitchen", on the tab in sight. */
+    private fun awaitLacking(indices: List<Int>) = compose.waitUntil(PATIENCE_MS) {
+        compose.onAllNodes(hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size == 1 &&
+            (0 until 3).filter { exists(EquipmentTags.lacking(it), unmerged = true) } == indices
     }
 
     /** Turns the card to its tab [mode] and waits until it has come to rest there. */
@@ -472,19 +545,52 @@ class PreLaunchSweepTest {
         compose.onNodeWithTag(SettingsTags.USUAL).performClick()
         await(SettingsTags.USUAL_DIALOG)
         checkScreen("the settings, the usual servings' dialog")
+        compose.onNodeWithTag(SettingsTags.USUAL_COUNT_CHOICE).performClick()
+        compose.onNodeWithTag(SettingsTags.USUAL_MORE).performClick()
+        compose.waitForIdle()
+        checkScreen("the settings, the usual servings' dialog, a count chosen")
         compose.onNodeWithTag(SettingsTags.USUAL_SET).performClick()
         awaitGone(SettingsTags.USUAL_DIALOG)
         compose.waitForIdle()
         checkScreen("the settings, the usual servings set")
-        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(SettingsTags.CLEAR_MEDIA_NOTHING) || exists(SettingsTags.CLEAR_MEDIA_STATEMENT) }
-        checkScreen("the settings, the saved media's dialog")
-        if (exists(SettingsTags.CLEAR_MEDIA_NOTHING)) {
-            compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA_OK).performClick()
-            awaitGone(SettingsTags.CLEAR_MEDIA_NOTHING)
-        } else {
+        // My kitchen: its groups folded, some partly ticked; one unfolded; a whole group ticked, with Undo; a search
+        // that finds nothing.
+        compose.onNodeWithTag(SettingsTags.KITCHEN).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(KitchenTags.LIST) && !exists(SettingsTags.SCREEN) }
+        compose.waitForIdle()
+        checkScreen("my kitchen, its groups folded")
+        compose.onNodeWithTag(KitchenTags.group(STOVETOP)).performClick()
+        await(KitchenTags.item(FRYING_PAN))
+        checkScreen("my kitchen, a group unfolded")
+        compose.onNodeWithTag(KitchenTags.groupTick(STOVETOP)).performClick()
+        compose.waitForIdle()
+        checkScreen("my kitchen, a whole group ticked, with Undo")
+        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick) and
+            androidx.compose.ui.test.hasText(context.getString(R.string.kitchen_undo))).performClick()
+        compose.waitUntil(PATIENCE_MS) { kitchen.store.held.value == setOf(FRYING_PAN, OVEN) }
+        compose.onNodeWithTag(KitchenTags.SEARCH).performTextInput("zzz")
+        await(KitchenTags.EMPTY)
+        checkScreen("my kitchen, nothing found")
+        compose.onNodeWithTag(KitchenTags.BACK).performClick()
+        await(SettingsTags.SCREEN)
+        awaitGone(KitchenTags.SCREEN)
+        // The saved media's statement, where there is media to clear; with none the item is disabled, saying why.
+        compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performScrollTo()
+        // The item is disabled while it counts too: its count is waited for first.
+        val counting = context.getString(R.string.settings_media_counting)
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onAllNodes(hasTestTag(SettingsTags.value(SettingsTags.CLEAR_MEDIA)), useUnmergedTree = true).fetchSemanticsNodes()
+                .singleOrNull()?.config?.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }?.let { it != counting } == true
+        }
+        val clearable = compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Disabled) == null
+        if (clearable) {
+            compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA).performClick()
+            await(SettingsTags.CLEAR_MEDIA_STATEMENT)
+            checkScreen("the settings, the saved media's dialog")
             compose.onNodeWithTag(SettingsTags.CLEAR_MEDIA_DECLINE).performClick()
             awaitGone(SettingsTags.CLEAR_MEDIA_STATEMENT)
+        } else {
+            checkScreen("the settings, no saved media to clear")
         }
         compose.runOnIdle { session.closeSettings() }
         await(LibraryTags.PAGER)
@@ -529,6 +635,13 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 23
+        const val SCREENS = 33
+
+        /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
+        const val FRYING_PAN = 10001L
+        /** The frying pan's group, the stovetop cookware. */
+        const val STOVETOP = 10000L
+        const val OVEN = 10202L
+        const val BOWL = 10412L
     }
 }

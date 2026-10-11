@@ -11,6 +11,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.IngredientSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
@@ -37,6 +38,7 @@ import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.RecipeId
@@ -74,6 +76,8 @@ class EditorEnvironment(
     val tags: TagSource,
     /** The ingredient dictionary the ingredient field offers from (FLOW-057); the catalog that holds the tags holds it. */
     val ingredients: IngredientSource = tags as? IngredientSource ?: IngredientSource { emptyList() },
+    /** The equipment dictionary the items of equipment are named from; the catalog that holds the tags holds it. */
+    val equipment: EquipmentSource = tags as? EquipmentSource ?: EquipmentSource { emptyList() },
     /** Which side of a block its drag column stands on (the left unless set otherwise). */
     val dragHandleSide: DragHandleSide = HeldDragHandleSide(),
     /** Where the editor keeps photographs, given the application's files directory; replaced in a test to hold one back. */
@@ -171,26 +175,70 @@ class RecipeEditor(
             equipmentFull.value = true
             return false
         }
-        return edit { it.copy(equipment = it.equipment + "") }
+        return edit { it.copy(equipment = it.equipment + EquipmentItem.free("")) }
     }
 
-    /** The item at [index] as the author types it, kept in full however long (the limit is marked on leaving it, FLOW-028). */
+    /**
+     * The item at [index] as the author types it, free text, kept in full however long (the limit is marked on leaving
+     * it, FLOW-028). An item an entry names that the author types into becomes the text typed.
+     */
     fun setEquipment(index: Int, typed: String): Boolean {
         val item = current.value?.equipment?.getOrNull(index) ?: return false
-        if (item == typed) return editable
-        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) typed else it }) }
+        val free = EquipmentItem.free(typed)
+        if (item == free) return editable
+        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) free else it }) }
     }
 
-    /** The author left the item at [index]: it is held trimmed, and an item left blank goes without a word. */
+    /**
+     * The item at [index] as the equipment dictionary's entry [entryId], with no qualifier and no free text beside it
+     * (DOM-009). The entry the item already names, unqualified, changes nothing.
+     */
+    fun setEquipmentEntry(index: Int, entryId: Long): Boolean {
+        val item = current.value?.equipment?.getOrNull(index) ?: return false
+        val entry = EquipmentItem.entry(entryId)
+        if (item == entry) return editable
+        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) entry else it }) }
+    }
+
+    /**
+     * The words the author typed after the label of the item's entry, which narrow it ("26 cm"): kept beside the entry
+     * without the spaces and commas that separate them from the label; none holds no qualifier (DOM-009). An item in the
+     * author's own words takes none; returns false. The qualifier the item already holds changes nothing.
+     */
+    fun setEquipmentQualifier(index: Int, qualifier: String?): Boolean {
+        val item = current.value?.equipment?.getOrNull(index) ?: return false
+        val entry = item.dictionaryEntry ?: return false
+        val qualified = EquipmentItem.entry(entry, qualifier?.trim { it.isWhitespace() || it == ',' })
+        if (qualified == item) return editable
+        return edit { recipe -> recipe.copy(equipment = recipe.equipment.mapIndexed { i, it -> if (i == index) qualified else it }) }
+    }
+
+    /** The label an equipment entry reads by in the interface language, as the screen read the dictionary; none before. */
+    private var equipmentLabel: (Long) -> String? = { null }
+
+    /**
+     * The equipment dictionary's labels as the screen read them, in the interface language: an item an entry names is
+     * measured against its limit by its label with its qualifier, as it reads ([RecipeBounds.of]).
+     */
+    fun knowEquipmentLabels(label: (Long) -> String?) {
+        equipmentLabel = label
+        current.value?.let { if (left.value.isNotEmpty()) remark(it) }
+    }
+
+    /**
+     * The author left the item at [index]: free text is held trimmed, and an item left blank goes without a word; an
+     * item an entry names stays as it is.
+     */
     fun settleEquipment(index: Int) {
         val item = current.value?.equipment?.getOrNull(index) ?: return
-        val settled = Recipe.equipmentItemOf(item)
+        if (item.dictionaryEntry != null) return
+        val settled = Recipe.equipmentItemOf(item.freeTextName.orEmpty())
         when {
             settled == null -> edit { recipe ->
                 equipmentKeys.remove(index, recipe.equipment.size)
                 recipe.copy(equipment = recipe.equipment.filterIndexed { i, _ -> i != index })
             }
-            settled != item -> setEquipment(index, settled)
+            settled != item -> setEquipment(index, settled.freeTextName.orEmpty())
         }
     }
 
@@ -257,18 +305,30 @@ class RecipeEditor(
         val recipe = current.value ?: return false
         if (position !in recipe.steps.indices) return false
         val removed = recipe.media.filter { it.attachment == MediaAttachment.ToStep(position) }.map { it.mediaId }
-        val removing = edit { edited ->
-            val steps = edited.steps.sortedBy { it.position }
-            stepKeys.remove(position, steps.size)
-            edited.copy(
-                steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) },
-                media = edited.media
-                    .filter { (it.attachment as? MediaAttachment.ToStep)?.stepPosition != position }
-                    .followingSteps { if (it > position) it - 1 else it },
-            )
-        }
+        val removing = deleteStep(position)
         if (removing) offered.value = Removal(Removal.Kind.STEP, position, recipe) { if (removed.isNotEmpty()) written(removed) }
         return removing
+    }
+
+    /**
+     * Takes away the step at [position] that was added and left holding nothing — no text, note, timer or media — as if
+     * it had never been added: nothing is offered for undoing. A step holding anything is left as it is.
+     */
+    fun dropStep(position: Int): Boolean {
+        val recipe = current.value ?: return false
+        val step = recipe.steps.sortedBy { it.position }.getOrNull(position) ?: return false
+        return holdsNothing(step, recipe.stepMedia(position)) && deleteStep(position)
+    }
+
+    private fun deleteStep(position: Int): Boolean = edit { edited ->
+        val steps = edited.steps.sortedBy { it.position }
+        stepKeys.remove(position, steps.size)
+        edited.copy(
+            steps = steps.filterIndexed { i, _ -> i != position }.mapIndexed { i, step -> step.copy(position = i) },
+            media = edited.media
+                .filter { (it.attachment as? MediaAttachment.ToStep)?.stepPosition != position }
+                .followingSteps { if (it > position) it - 1 else it },
+        )
     }
 
     /**
@@ -614,10 +674,14 @@ class RecipeEditor(
      * Applies the ingredient list [arranged] makes of it ([Recipe.arranged]), each row's key and each kept heading's
      * following it. Returns the headings dropped, by their former index, or null where nothing was changed.
      */
-    private fun rearrange(prepare: (Recipe) -> Recipe = { it }, arranged: (Recipe) -> List<ListItem>): List<Int>? {
+    private fun rearrange(
+        prepare: (Recipe) -> Recipe = { it },
+        keepingLast: Boolean = false,
+        arranged: (Recipe) -> List<ListItem>,
+    ): List<Int>? {
         var dropped: List<Int>? = null
         val changed = edit { recipe ->
-            val result = prepare(recipe).arranged(arranged(recipe))
+            val result = prepare(recipe).arranged(arranged(recipe), keepingLast)
             ingredientKeys.arrange(result.rows, recipe.ingredients.size)
             groupKeys.arrange(result.headings, recipe.ingredientGroups.size)
             dropped = recipe.ingredientGroups.indices.filter { it !in result.headings }
@@ -626,7 +690,7 @@ class RecipeEditor(
         return dropped.takeIf { changed }
     }
 
-    private fun rearrange(arranged: (Recipe) -> List<ListItem>): Boolean = rearrange({ it }, arranged) != null
+    private fun rearrange(arranged: (Recipe) -> List<ListItem>): Boolean = rearrange({ it }, arranged = arranged) != null
 
     /** A new row: its unit starts as grams, so it always has a unit and so a unit type (DOM-016); no quantity yet. */
     private fun emptyRow(position: Int) = Ingredient(
@@ -701,7 +765,12 @@ class RecipeEditor(
      */
     fun knowEntries(entries: List<IngredientEntryEntity>) {
         entryFlags = entries.mapNotNull { entry -> entry.divisible?.let { entry.id to it } }.toMap()
+        knownEntries = entries.associateBy { it.id }
     }
+
+    /** The dictionary's entries as the screen last read them, by identity: what a removed row is named by. */
+    var knownEntries: Map<Long, IngredientEntryEntity> = emptyMap()
+        private set
 
     /** The divisibility the entry [row] names gives; null for free text, or an entry that gives none. */
     fun entryDivisible(row: Ingredient): Boolean? = row.dictionaryEntry?.let(entryFlags::get)
@@ -730,6 +799,18 @@ class RecipeEditor(
         } ?: return false
         offered.value = Removal(Removal.Kind.INGREDIENT, position, recipe, dropped) {}
         return true
+    }
+
+    /**
+     * Takes away the row at [position] that the author added and left holding nothing, as though it had never been
+     * added: nothing is offered for undoing, and a heading left last over no rows stays, as one just added does.
+     * Returns whether it went.
+     */
+    fun dropIngredient(position: Int): Boolean {
+        val recipe = current.value ?: return false
+        if (position !in recipe.ingredients.indices) return false
+        val withoutReferences = { edited: Recipe -> edited.copy(steps = edited.steps.map { ReferenceSpacing.withoutReferencesTo(it, position) }) }
+        return rearrange(withoutReferences, keepingLast = true) { edited -> edited.listItems - ListItem.Row(position) } != null
     }
 
     private val offered = MutableStateFlow<Removal?>(null)
@@ -880,6 +961,7 @@ class RecipeEditor(
         when (part) {
             is RecipePart.StepText -> Left.OfStep(stepKeys.of(part.position), timer = null)
             is RecipePart.TimerName -> Left.OfStep(stepKeys.of(part.position), timer = part.index)
+            is RecipePart.StepNote -> Left.OfStepNote(stepKeys.of(part.position))
             is RecipePart.IngredientNote -> Left.OfIngredient(ingredientKeys.of(part.position))
             is RecipePart.GroupName -> Left.OfGroup(groupKeys.of(part.index))
             is RecipePart.EquipmentName -> Left.OfEquipment(equipmentKeys.of(part.index))
@@ -900,15 +982,16 @@ class RecipeEditor(
     /** What is marked once [recipe] stands as it does: a part completed loses its mark and must be left again to regain it. */
     private fun remark(recipe: Recipe) {
         left.value = left.value.filterTo(mutableSetOf()) { bound(it, recipe) != null }
-        marked.value = left.value.mapNotNull { part -> part.at()?.let { at -> RecipeBounds.of(recipe, at)?.let { at to it } } }.toMap()
+        marked.value = left.value.mapNotNull { part -> part.at()?.let { at -> RecipeBounds.of(recipe, at, equipmentLabel)?.let { at to it } } }.toMap()
     }
 
-    private fun bound(part: Left, recipe: Recipe): Bound? = part.at()?.let { RecipeBounds.of(recipe, it) }
+    private fun bound(part: Left, recipe: Recipe): Bound? = part.at()?.let { RecipeBounds.of(recipe, it, equipmentLabel) }
 
     /** The part [this] is at now; null for a step deleted since. */
     private fun Left.at(): RecipePart? = when (this) {
         is Left.Whole -> part
         is Left.OfStep -> stepPosition(key)?.let { if (timer != null) RecipePart.TimerName(it, timer) else RecipePart.StepText(it) }
+        is Left.OfStepNote -> stepPosition(key)?.let { RecipePart.StepNote(it) }
         is Left.OfIngredient -> ingredientPosition(key)?.let { RecipePart.IngredientNote(it) }
         is Left.OfGroup -> groupIndex(key)?.let { RecipePart.GroupName(it) }
         is Left.OfEquipment -> equipmentIndex(key)?.let { RecipePart.EquipmentName(it) }
@@ -918,6 +1001,8 @@ class RecipeEditor(
         data class Whole(val part: RecipePart) : Left
         /** The text of the step whose [stepKey] is [key], or, given a [timer], the name of its timer at that index. */
         data class OfStep(val key: Long, val timer: Int?) : Left
+        /** The author's note on the step whose [stepKey] is [key], so the mark stays with the step. */
+        data class OfStepNote(val key: Long) : Left
         /** The note of the ingredient row whose [ingredientKey] is [key], so the mark stays with the row. */
         data class OfIngredient(val key: Long) : Left
         /** The name of the heading whose [groupKey] is [key]. */
@@ -927,7 +1012,7 @@ class RecipeEditor(
     }
 
     /** Where the ingredient row whose [ingredientKey] is [key] stands now; null once it is deleted. */
-    private fun ingredientPosition(key: Long): Int? =
+    fun ingredientPosition(key: Long): Int? =
         ingredientKeys.positionOf(key)?.takeIf { it < (current.value?.ingredients?.size ?: 0) }
 
     /** Where the step whose [stepKey] is [key] stands now; null once it is deleted. */
@@ -1043,6 +1128,18 @@ class RecipeEditor(
         return editIngredient(position) { it.copy(note = note) }
     }
 
+    /**
+     * The author's own note on the step at [position], as they [typed] it: held trimmed, and blank holds none
+     * ([Step.noteOf]); kept in full however long — the limit is marked on leaving the field, never refused (FLOW-028).
+     * The note the step already holds changes nothing.
+     */
+    fun setStepNote(position: Int, typed: String): Boolean {
+        val step = current.value?.steps?.sortedBy { it.position }?.getOrNull(position) ?: return false
+        val note = Step.noteOf(typed)
+        if (note == step.note) return editable
+        return editStep(position) { it.copy(note = note) }
+    }
+
     companion object {
         /** Where the row at [position] stands once the row at [from] has moved to [to]. */
         private fun moved(position: Int, from: Int, to: Int): Int = when {
@@ -1098,6 +1195,14 @@ class Removal internal constructor(
     val ofSeveral: Boolean
         get() = kind == Kind.TIMER && number != null
 }
+
+/**
+ * Whether [step], carrying [media] (null for none), holds nothing the author put in it — no text, reference, note, timer,
+ * photograph or clip: the one rule by which a step just added is still empty, so that its sheet offers it no actions and
+ * [RecipeEditor.dropStep] takes it away as never written, the two agreeing by construction.
+ */
+internal fun holdsNothing(step: Step, media: Media?): Boolean =
+    step.text.isBlank() && step.ingredientReferences.isEmpty() && step.note == null && step.timers.isEmpty() && media == null
 
 /** A change of the unit of the row at [ingredientPosition] made its parts whole again; [serial] tells two apart. */
 data class PartsMadeWhole(val ingredientPosition: Int, val serial: Long)

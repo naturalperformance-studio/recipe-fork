@@ -8,18 +8,20 @@ import androidx.room.TypeConverters
 import app.recipefork.app.dictionary.DictionaryDao
 import app.recipefork.app.dictionary.FactorsConverter
 import app.recipefork.app.dictionary.DictionaryVersionEntity
+import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.TagEntity
 
 /**
  * The device's local store: its truth until the server has accepted a change.
  *
- * Version 2 gave an ingredient entry its divisibility, factors and removal; version 3 its synonyms. A change of version wipes the store
+ * Version 2 gave an ingredient entry its divisibility, factors and removal; version 3 its synonyms; version 4 added the equipment
+ * dictionary. A change of version wipes the store
  * rather than migrating it — what it holds is the dictionaries, which seeding and the next refresh bring back, and
  * the owner's book holds test data only — and the dictionaries are seeded again on their next read.
  */
 @Database(
-    entities = [IngredientEntryEntity::class, TagEntity::class, DictionaryVersionEntity::class],
+    entities = [IngredientEntryEntity::class, TagEntity::class, EquipmentEntryEntity::class, DictionaryVersionEntity::class],
     version = AppDatabase.VERSION,
     exportSchema = false,
 )
@@ -28,7 +30,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dictionaryDao(): DictionaryDao
 
     companion object {
-        const val VERSION = 3
+        const val VERSION = 4
         const val NAME = "recipe-fork.db"
 
         fun open(context: Context, name: String = NAME): AppDatabase =

@@ -47,7 +47,11 @@ class PhotoOffer(val open: () -> InputStream, val release: () -> Unit)
  * picker, which needs none either and hands over only the picture chosen. Either way the picture is cropped to the
  * recipe's 4:3 frame before it is handed over.
  */
-class PhotoSources internal constructor(private val take: () -> Unit, private val choose: () -> Unit) {
+class PhotoSources internal constructor(
+    private val take: () -> Unit,
+    private val choose: () -> Unit,
+    private val showing: () -> Boolean = { false },
+) {
     /**
      * Opens the phone's camera application; a phone with none, or one that cannot open it, says so and offers the
      * gallery instead.
@@ -56,6 +60,12 @@ class PhotoSources internal constructor(private val take: () -> Unit, private va
 
     /** Opens the system photo picker, offering images only; a phone with none says so through `onUnavailable`. */
     fun choosePhoto() = choose()
+
+    /**
+     * Whether the place shows a picture's way in over the screen: its crop — open, or to be opened on a picture told
+     * still — or why no camera could be opened. Read from the composition's state, so a reader follows it.
+     */
+    val cropping: Boolean get() = showing()
 
     companion object {
         /**
@@ -246,7 +256,9 @@ fun rememberPhotoSources(
         )
         SourceStage.CLOSED -> Unit
     }
-    return remember(context, camera, picker, stage, shotPath) { PhotoSources(take = ::shoot, choose = ::pick) }
+    return remember(context, camera, picker, stage, shotPath, key) {
+        PhotoSources(take = ::shoot, choose = ::pick, showing = { stage.value != SourceStage.CLOSED || PendingCrops.opening(key) })
+    }
 }
 
 /** The picture [uri] picked from the gallery, to crop: turned upright by its own EXIF, and never retaken. */

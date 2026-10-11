@@ -32,8 +32,9 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * A running timer's colours are the theme's roles (ADR 20261004): with `app_theme.xml` edited, a running timer on its
- * step and its cancel are drawn in the edited tonal colours, and the bar of running timers on the edited surface, its
- * name and time left in the scheme's text colour.
+ * step is drawn in the edited primary colour and its cancel — on the current step's container, outlined there (v0.30,
+ * T-221) — labelled in the edited primary colour, and the bar of running timers on the edited surface, its name and
+ * time left in the scheme's text colour, its cancel in the edited tonal colours.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -46,6 +47,8 @@ class TimerThemeTest : CardTimersKit() {
                 R.color.theme_light_secondaryContainer to Color(0xFFB2EBF2),
                 R.color.theme_light_onSecondaryContainer to Color(0xFF00363D),
                 R.color.theme_light_surfaceContainer to Color(0xFFFFF8E1),
+                R.color.theme_light_primary to Color(0xFF00696E),
+                R.color.theme_light_onPrimary to Color(0xFFFFFFFE),
             ),
         )
     }
@@ -87,11 +90,13 @@ class TimerThemeTest : CardTimersKit() {
         compose.waitUntil(PATIENCE_MS) { statusOf(0) == "10:00" }
 
         control(0)
-        assertSameColour("the running timer's time left", scheme.onSecondaryContainer, layoutOf(TimerTags.status(0)).layoutInput.style.color)
-        assertSameColour("the running timer's container", scheme.secondaryContainer, colourAt(TimerTags.start(0), 0.5f, 0.05f))
+        // A running timer is filled in the primary colour, its time left in the colour on it; its cancel, on the current
+        // step's container, is outlined, its label in the primary colour.
+        assertSameColour("the running timer's time left", scheme.onPrimary, layoutOf(TimerTags.status(0)).layoutInput.style.color)
+        assertSameColour("the running timer's container", scheme.primary, colourAt(TimerTags.start(0), 0.5f, 0.05f))
         val cancel = context.getString(R.string.timer_cancel)
         compose.onNodeWithTag(TimerTags.cancel(0)).performScrollTo()
-        assertSameColour("its cancel's label", scheme.onSecondaryContainer, layoutOf(TimerTags.cancel(0), cancel).layoutInput.style.color)
+        assertSameColour("its cancel's label", scheme.primary, layoutOf(TimerTags.cancel(0), cancel).layoutInput.style.color)
 
         compose.onNodeWithTag(CardTags.step(12)).performScrollTo()
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.BAR) && statusOfBar() == "10:00" }

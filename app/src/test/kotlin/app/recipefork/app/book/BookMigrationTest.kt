@@ -4,7 +4,9 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
@@ -137,6 +139,208 @@ class BookMigrationTest {
         }
     }
 
+    /**
+     * A book file of version 6, its tables exactly as that version created them, holding one recipe with every part a
+     * recipe had then — equipment written as text among it — and one found recipe, marked, with equipment of its own.
+     */
+    private fun writeVersion6(equipment: List<String> = V6_EQUIPMENT, found: List<String> = listOf("Венчик", "Old copper bowl")) {
+        val file = context.getDatabasePath(book.fileName).also { it.parentFile?.mkdirs() }
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            VERSION_6.forEach(db::execSQL)
+            db.execSQL(
+                "insert into recipe values ('r6', 'acc-6', 'p6', 'SENT', null, null, null, 'Pancakes', 'Thin', 'EN', 3, " +
+                    "'PRIVATE', 0, 1, 0, 1000, 6000)",
+            )
+            db.execSQL("insert into ingredient values ('r6', 0, null, null, 'flour', 'EXACT', 'GRAM', '250', null, null, null, 'sifted')")
+            db.execSQL("insert into ingredient values ('r6', 1, 3, null, null, 'PIECE', 'PIECE', '2', null, 0, null, null)")
+            db.execSQL("insert into ingredient_group values ('r6', 0, 'Batter', 0)")
+            db.execSQL("insert into step values ('r6', 0, 'Whisk the  and rest')")
+            db.execSQL("insert into step_timer values ('r6', 0, 0, 30, 'Rest')")
+            db.execSQL("insert into step_reference values ('r6', 0, 10, 0, null, null)")
+            db.execSQL("insert into media values ('m6', 'r6', 0, null, 'PHOTO', null, 'PRIVATE')")
+            db.execSQL("insert into recipe_tag values ('r6', 8)")
+            equipment.forEachIndexed { index, name -> db.execSQL("insert into recipe_equipment values ('r6', ?, ?)", arrayOf<Any>(index, name)) }
+            db.execSQL(
+                "insert into recipe values ('f6', null, null, 'NEVER', 'anna', null, null, 'Found pie', '', null, null, " +
+                    "'LINK_SHARED', 0, 0, 0, 1000, 1000)",
+            )
+            db.execSQL("insert into favourite values ('f6', 'Found pie', 7000)")
+            found.forEachIndexed { index, name -> db.execSQL("insert into recipe_equipment values ('f6', ?, ?)", arrayOf<Any>(index, name)) }
+            db.version = 6
+        }
+    }
+
+    /**
+     * A book file of version 7, its tables exactly as that version created them, holding an own recipe of two steps —
+     * one with a timer, a reference and a photo — and a found recipe, marked, with a step of its own.
+     */
+    private fun writeVersion7() {
+        val file = context.getDatabasePath(book.fileName).also { it.parentFile?.mkdirs() }
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            VERSION_7.forEach(db::execSQL)
+            db.execSQL(
+                "insert into recipe values ('r7', 'acc-7', null, 'NEVER', null, null, null, 'Pancakes', 'Thin', 'EN', 3, " +
+                    "'LOCAL', 0, 0, 0, 1000, 6000)",
+            )
+            db.execSQL("insert into ingredient values ('r7', 0, null, null, 'flour', 'EXACT', 'GRAM', '250', null, null, null, 'sifted')")
+            db.execSQL("insert into step values ('r7', 0, 'Whisk the  and rest')")
+            db.execSQL("insert into step values ('r7', 1, 'Fry thin')")
+            db.execSQL("insert into step_timer values ('r7', 0, 0, 30, 'Rest')")
+            db.execSQL("insert into step_reference values ('r7', 0, 10, 0, null, null)")
+            db.execSQL("insert into media values ('m7', 'r7', 0, null, 'PHOTO', 1, 'PRIVATE')")
+            db.execSQL("insert into recipe_equipment values ('r7', 0, 10001, '26 cm', null)")
+            db.execSQL(
+                "insert into recipe values ('f7', null, null, 'NEVER', 'anna', null, null, 'Found pie', '', null, null, " +
+                    "'LINK_SHARED', 0, 0, 0, 1000, 1000)",
+            )
+            db.execSQL("insert into step values ('f7', 0, 'Bake')")
+            db.execSQL("insert into favourite values ('f7', 'Found pie', 7000)")
+            db.version = 7
+        }
+    }
+
+    // A version-7 book, written before a step carried a note, opens with every recipe intact — own and found — and no
+    // step's note; then a step is given one, and the book reopens with it.
+    @Test
+    fun aVersion7BookOpensWithEveryRecipeIntactAndNoStepNotes() = runBlocking {
+        writeVersion7()
+        val expected = Recipe.create(Instant.ofEpochMilli(1000), AccountId("acc-7"), id = RecipeId("r7")).copy(
+            title = "Pancakes",
+            description = "Thin",
+            language = RecipeLanguage.EN,
+            servings = 3,
+            ingredients = listOf(Ingredient(0, null, null, "flour", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(250), note = "sifted")),
+            steps = listOf(
+                Step(0, "Whisk the  and rest", listOf(IngredientReference(0, 10)), listOf(Timer(30.minutes, "Rest"))),
+                Step(1, "Fry thin"),
+            ),
+            media = listOf(Media("m7", null, MediaKind.PHOTO, MediaAttachment.ToStep(1), MediaVisibility.PRIVATE)),
+            equipment = listOf(EquipmentItem.entry(10001, "26 cm")),
+            contentChangedAt = Instant.ofEpochMilli(6000),
+        )
+        val database = BookDatabase.open(context, book) { error("a book of version 7 reads no dictionary") }
+        val noted = expected.copy(steps = listOf(expected.steps[0], expected.steps[1].withNote("Бабушка всегда добавляла щепотку сахара")))
+        try {
+            val repository = RecipeRepository(ActiveBook(book, database))
+            assertEquals(expected, repository.get(RecipeId("r7")))
+            val found = repository.get(RecipeId("f7"))!!
+            assertEquals(listOf(Step(0, "Bake")), found.steps)
+            assertTrue(repository.isMarked(RecipeId("f7")))
+            assertEquals(listOf("r7"), repository.ownNewest(10).first().map { it.recipeId })
+            repository.save(noted)
+        } finally {
+            database.close()
+        }
+        val reopened = BookDatabase.open(context, book)
+        try {
+            assertEquals(noted, RecipeRepository(ActiveBook(book, reopened)).get(RecipeId("r7")))
+        } finally {
+            reopened.close()
+        }
+    }
+
+    /** The own recipe of [writeVersion6] as version 7 reads it, with [equipment]. */
+    private fun version6Recipe(equipment: List<EquipmentItem>) =
+        Recipe.create(Instant.ofEpochMilli(1000), AccountId("acc-6"), RecipeId("p6"), RecipeId("r6")).copy(
+            sent = SentStatus.SENT,
+            title = "Pancakes",
+            description = "Thin",
+            tags = setOf(8L),
+            language = RecipeLanguage.EN,
+            servings = 3,
+            ingredients = listOf(
+                Ingredient(0, null, null, "flour", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(250), note = "sifted"),
+                Ingredient(1, 3, null, null, UnitType.PIECE, QuantityUnit.PIECE, Rational.of(2), divisible = false),
+            ),
+            ingredientGroups = listOf(IngredientGroup("Batter", 0)),
+            steps = listOf(Step(0, "Whisk the  and rest", listOf(IngredientReference(0, 10)), listOf(Timer(30.minutes, "Rest")))),
+            media = listOf(Media("m6", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)),
+            state = RecipeState.PRIVATE,
+            wasPublished = true,
+            equipment = equipment,
+            contentChangedAt = Instant.ofEpochMilli(6000),
+        )
+
+    // Scenario 5 of v0.28: a version-6 book, whose equipment was text, opens with every recipe intact — own and found —
+    // each item whose whole text is an entry's label or synonym, in either language and any case, now that entry with
+    // no qualifier, against the dictionary the application ships; every other item free text as written. The binding is
+    // kept: the book reopens with it, and an entry's item is saved and read back with its qualifier.
+    @Test
+    fun aVersion6BookOpensWithEveryRecipeIntactAndItsEquipmentNamingEntries() = runBlocking {
+        writeVersion6()
+        val expected = version6Recipe(
+            listOf(
+                EquipmentItem.entry(10001), // "Сковорода", the Russian label
+                EquipmentItem.entry(10202), // "oven", the English label in another case
+                EquipmentItem.entry(10001), // "skillet", an English synonym
+                EquipmentItem.entry(10202), // "Духовой шкаф", a Russian synonym
+                EquipmentItem.free("Frying pan 26 cm"),
+                EquipmentItem.free("Grandma's whisk"),
+            ),
+        )
+        val database = BookDatabase.open(context, book)
+        try {
+            val repository = RecipeRepository(ActiveBook(book, database))
+            assertEquals(expected, repository.get(RecipeId("r6")))
+            val found = repository.get(RecipeId("f6"))!!
+            assertEquals(listOf(EquipmentItem.entry(10401), EquipmentItem.free("Old copper bowl")), found.equipment)
+            assertEquals("Found pie", found.title)
+            assertTrue(repository.isMarked(RecipeId("f6")))
+            assertEquals(listOf("r6"), repository.ownNewest(10).first().map { it.recipeId })
+        } finally {
+            database.close()
+        }
+        val reopened = BookDatabase.open(context, book) { error("a book of version 7 reads no dictionary") }
+        try {
+            val repository = RecipeRepository(ActiveBook(book, reopened))
+            assertEquals(expected, repository.get(RecipeId("r6")))
+            val qualified = expected.copy(equipment = listOf(EquipmentItem.entry(10001, "26 cm")) + expected.equipment.drop(1))
+            repository.save(qualified)
+            assertEquals(qualified, repository.get(RecipeId("r6")))
+        } finally {
+            reopened.close()
+        }
+    }
+
+    // An entry removed from the dictionary is found by nothing, and a dictionary that cannot be read finds nothing at
+    // all: every item stays free text, and every recipe opens.
+    @Test
+    fun aVersion6BookWithNoDictionaryToReadOpensWithItsEquipmentAsFreeText() = runBlocking {
+        writeVersion6(listOf("Frying pan", "Oven"), found = emptyList())
+        val removed = listOf(
+            EquipmentEntryEntity(10001, "Сковорода", "Frying pan", 10000, removed = true),
+            EquipmentEntryEntity(10202, "Духовка", "Oven", 10200),
+        )
+        val database = BookDatabase.open(context, book) { removed }
+        try {
+            val equipment = RecipeRepository(ActiveBook(book, database)).get(RecipeId("r6"))!!.equipment
+            assertEquals(listOf(EquipmentItem.free("Frying pan"), EquipmentItem.entry(10202)), equipment)
+        } finally {
+            database.close()
+        }
+        context.deleteDatabase(book.fileName)
+        writeVersion6(listOf("Frying pan", "Oven"), found = emptyList())
+        val unreadable = BookDatabase.open(context, book) { throw IllegalStateException("no snapshot") }
+        try {
+            val repository = RecipeRepository(ActiveBook(book, unreadable))
+            assertEquals(version6Recipe(listOf(EquipmentItem.free("Frying pan"), EquipmentItem.free("Oven"))), repository.get(RecipeId("r6")))
+        } finally {
+            unreadable.close()
+        }
+    }
+
+    // A version-6 book listing no equipment never reads the dictionary on opening.
+    @Test
+    fun aVersion6BookWithNoEquipmentReadsNoDictionary() = runBlocking {
+        writeVersion6(equipment = emptyList(), found = emptyList())
+        val database = BookDatabase.open(context, book) { error("no equipment, no dictionary") }
+        try {
+            assertEquals(version6Recipe(emptyList()), RecipeRepository(ActiveBook(book, database)).get(RecipeId("r6")))
+        } finally {
+            database.close()
+        }
+    }
+
     // A version-5 book, written before a recipe listed its equipment, opens with every recipe intact — own and found —
     // each listing none; then a recipe lists some, and the book reopens with it.
     @Test
@@ -168,15 +372,15 @@ class BookMigrationTest {
                 contentChangedAt = Instant.ofEpochMilli(5000),
             )
             assertEquals(expected, recipe)
-            assertEquals(emptyList<String>(), recipe!!.equipment)
+            assertEquals(emptyList<EquipmentItem>(), recipe!!.equipment)
             val found = repository.get(RecipeId("f5"))!!
             assertEquals("Found soup", found.title)
             assertEquals("anna", found.statedAuthor)
-            assertEquals(emptyList<String>(), found.equipment)
+            assertEquals(emptyList<EquipmentItem>(), found.equipment)
             assertTrue(repository.isMarked(RecipeId("f5")))
             assertEquals(listOf("r5"), repository.ownNewest(10).first().map { it.recipeId })
 
-            val equipped = recipe.copy(equipment = listOf("Frying pan 26 cm", "Whisk"))
+            val equipped = recipe.copy(equipment = listOf("Frying pan 26 cm", "Whisk").map(EquipmentItem::free))
             repository.save(equipped)
             assertEquals(equipped, repository.get(RecipeId("r5")))
             equipped
@@ -361,6 +565,27 @@ class BookMigrationTest {
     }
 
     private companion object {
+        /**
+         * What Room generated for the book at version 7: version 6 with each item of equipment named by an entry and a
+         * qualifier, or by free text. The identity hash stands in for that version's, which an upgrade does not read.
+         */
+        val VERSION_7: List<String> get() = VERSION_5.dropLast(1) + listOf(
+            "CREATE TABLE IF NOT EXISTS `recipe_equipment` (`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, `dictionary_entry` INTEGER, `qualifier` TEXT, `free_text_name` TEXT, PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '00000000000000000000000000000007')",
+        )
+
+        /** The equipment of the own recipe of [writeVersion6], as version 6 held it: text. */
+        val V6_EQUIPMENT = listOf("Сковорода", "oven", "skillet", "Духовой шкаф", "Frying pan 26 cm", "Grandma's whisk")
+
+        /**
+         * What Room generated for the book at version 6: version 5 with a recipe's equipment, each item its text. The
+         * identity hash stands in for that version's, which an upgrade does not read.
+         */
+        val VERSION_6: List<String> get() = VERSION_5.dropLast(1) + listOf(
+            "CREATE TABLE IF NOT EXISTS `recipe_equipment` (`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`recipe_id`, `position`), FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '00000000000000000000000000000006')",
+        )
+
         /**
          * What Room generated for the book at version 5, its identity hash included: version 4 with a step's timers in
          * their own table and the step's row without them.

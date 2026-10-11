@@ -1,6 +1,7 @@
 package app.recipefork.app.recipe
 
 import app.recipefork.app.book.IngredientLineRow
+import app.recipefork.app.book.RecipeEquipmentRow
 import app.recipefork.app.book.RecipeTagEntity
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.RecipeLanguage
@@ -37,15 +38,17 @@ enum class BookLanguage {
 /**
  * What narrows a view of the book beside its query (FLOW-035): a dictionary [ingredient] entry, which keeps the recipes
  * holding it or an entry below it (CAT-006) and orders them by how much of it a serving holds (CAT-002), [tags], all
- * of which a recipe must carry to be kept, and the [language] a recipe is written in (L10N-005).
+ * of which a recipe must carry to be kept, the [language] a recipe is written in (L10N-005), and whether the kitchen is
+ * to have [equipment] enough: a recipe naming an entry of equipment the kitchen lacks is not kept.
  */
 data class BookFilters(
     val ingredient: Long? = null,
     val tags: Set<Long> = emptySet(),
     val language: BookLanguage? = null,
+    val equipment: Boolean = false,
 ) : Serializable {
     /** Whether any filter is on. */
-    val any: Boolean get() = ingredient != null || tags.isNotEmpty() || language != null
+    val any: Boolean get() = ingredient != null || tags.isNotEmpty() || language != null || equipment
 
     fun toggled(tag: Long): BookFilters = copy(tags = if (tag in tags) tags - tag else tags + tag)
 
@@ -63,7 +66,9 @@ data class ListingParams(
 ) {
     /** These params as a text that is the same in every process, telling one listing from another across process death. */
     val key: String
-        get() = listOf(query, order.name, filters.ingredient, filters.tags.sorted(), filters.language, locale.toLanguageTag()).toString()
+        get() = listOf(
+            query, order.name, filters.ingredient, filters.tags.sorted(), filters.language, filters.equipment, locale.toLanguageTag(),
+        ).toString()
 }
 
 /**
@@ -97,7 +102,8 @@ data class Listed<R>(
  * A filter by tags keeps the recipes carrying every one of them; a filter by an ingredient entry keeps the recipes
  * holding it or an entry below it (CAT-006), the most of it per serving first (CAT-002, CAT-007), in the order chosen
  * for the view among recipes of equal or no comparable quantity. A filter by language keeps the recipes declaring it, or
- * declaring none for [BookLanguage.NOT_GIVEN] (L10N-005).
+ * declaring none for [BookLanguage.NOT_GIVEN] (L10N-005). A filter by equipment keeps the recipes naming no entry of
+ * equipment the kitchen lacks; an item of free text names no entry and never hides a recipe.
  *
  * The search index is kept for the rows it was built from and rebuilt only when the book's rows change, so that a
  * keystroke only compares words. The dictionary is read the first time a query or a filter needs it; while it cannot
@@ -114,16 +120,25 @@ class BookSearch<R>(
     private var entries: Map<Long, IngredientEntryEntity>? = null
     private var built: Triple<List<R>, List<IngredientLineRow>, SearchIndex<R>>? = null
 
-    /** The [rows] of a view, given newest first, with its recipes' ingredient [lines] and [tags], listed for [params]. */
+    /**
+     * The [rows] of a view, given newest first, with its recipes' ingredient [lines], [tags] and the entries of
+     * [equipment] they name, listed for [params]; the kitchen [lacks] an entry of equipment or not.
+     */
     suspend fun listed(
         rows: List<R>,
         lines: List<IngredientLineRow>,
         tags: List<RecipeTagEntity>,
         params: ListingParams,
+        equipment: List<RecipeEquipmentRow> = emptyList(),
+        lacks: (Long) -> Boolean = { false },
     ): Listed<R> {
         var found = if (WordPrefix.words(params.query).isEmpty()) rows else index(rows, lines).search(params.query)
         val filters = params.filters
         filters.language?.let { chosen -> found = found.filter { BookLanguage.of(language(it)) == chosen } }
+        if (filters.equipment) {
+            val wanting = equipment.mapNotNullTo(HashSet()) { item -> item.recipeId.takeIf { lacks(item.dictionaryEntry) } }
+            if (wanting.isNotEmpty()) found = found.filter { id(it) !in wanting }
+        }
         val carried = tags.groupBy({ it.recipeId }, { it.tagId })
         if (filters.tags.isNotEmpty()) {
             found = found.filter { row -> carried[id(row)].orEmpty().containsAll(filters.tags) }

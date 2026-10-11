@@ -14,6 +14,10 @@ import androidx.room.Upsert
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import app.recipefork.app.data.db.Converters
+import app.recipefork.app.dictionary.DictionaryEntry
+import app.recipefork.app.dictionary.DictionarySnapshot
+import app.recipefork.app.dictionary.EquipmentEntryEntity
+import app.recipefork.app.recipe.EquipmentNames
 import app.recipefork.core.recipe.SentStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -24,7 +28,7 @@ import kotlinx.coroutines.flow.Flow
         MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class, IngredientGroupEntity::class,
         StepTimerEntity::class, EquipmentEntity::class,
     ],
-    version = 6,
+    version = 8,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -33,11 +37,27 @@ abstract class BookDatabase : RoomDatabase() {
     abstract fun favourites(): FavouriteDao
 
     companion object {
-        fun open(context: Context, book: BookName): BookDatabase =
-            Room.databaseBuilder(context, BookDatabase::class.java, book.fileName).addMigrations(*MIGRATIONS).build()
+        /**
+         * Opens the book [book]. An older book file is brought to this version; [equipment] is the equipment dictionary
+         * its items written as text find their entries in, read only where a book of version 6 lists some — the one the
+         * application ships, which the device's own copy is seeded from.
+         */
+        fun open(
+            context: Context,
+            book: BookName,
+            equipment: () -> List<DictionaryEntry> = { shippedEquipment(context) },
+        ): BookDatabase =
+            Room.databaseBuilder(context, BookDatabase::class.java, book.fileName).addMigrations(*migrations(equipment)).build()
 
-        /** Every step from an older book file to this version; a book already on a phone keeps every recipe. */
-        val MIGRATIONS: Array<Migration> = arrayOf(
+        /** The equipment dictionary the application ships (decisions/20260928-dictionaries-ship-with-the-application.md). */
+        fun shippedEquipment(context: Context): List<DictionaryEntry> =
+            DictionarySnapshot.read(context).equipment.map(EquipmentEntryEntity::of)
+
+        /**
+         * Every step from an older book file to this version; a book already on a phone keeps every recipe. [equipment]
+         * is read by the step to version 7 alone, and only where there is an item to find an entry for.
+         */
+        fun migrations(equipment: () -> List<DictionaryEntry>): Array<Migration> = arrayOf(
             // 1 → 2: an ingredient row keeps a quantity the author typed that reads as no value (FLOW-024 (6)).
             object : Migration(1, 2) {
                 override fun migrate(db: SupportSQLiteDatabase) {
@@ -96,7 +116,52 @@ abstract class BookDatabase : RoomDatabase() {
                     )
                 }
             },
+            EquipmentByEntry(equipment),
+            // 7 → 8: a step may carry the author's note; every step already in the book has none.
+            object : Migration(7, 8) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table step add column note text")
+                }
+            },
         )
+    }
+}
+
+/**
+ * 6 → 7: an item of equipment is named as an ingredient row is — a dictionary entry and a qualifier, or free text. An
+ * item whose whole text is an entry's name ([EquipmentNames]) becomes that entry with no qualifier; every other stays,
+ * as free text, exactly as written. The dictionary is read once, and only where the book lists any equipment; one that
+ * cannot be read leaves every item free text.
+ */
+private class EquipmentByEntry(private val equipment: () -> List<DictionaryEntry>) : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        val items = buildList {
+            db.query("select recipe_id, position, name from recipe_equipment").use { rows ->
+                while (rows.moveToNext()) add(Triple(rows.getString(0), rows.getInt(1), rows.getString(2)))
+            }
+        }
+        db.execSQL("drop table recipe_equipment")
+        db.execSQL(
+            "create table if not exists `recipe_equipment` (`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, " +
+                "`dictionary_entry` INTEGER, `qualifier` TEXT, `free_text_name` TEXT, PRIMARY KEY(`recipe_id`, `position`), " +
+                "FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        if (items.isEmpty()) return
+        // A dictionary that cannot be read finds no entry: every recipe opens intact, its items as free text.
+        val names = EquipmentNames(
+            try {
+                equipment()
+            } catch (e: Exception) {
+                emptyList()
+            },
+        )
+        items.forEach { (recipe, position, name) ->
+            val entry = names.entryOf(name)
+            db.execSQL(
+                "insert into recipe_equipment (recipe_id, position, dictionary_entry, qualifier, free_text_name) values (?, ?, ?, null, ?)",
+                arrayOf<Any?>(recipe, position, entry, name.takeIf { entry == null }),
+            )
+        }
     }
 }
 
@@ -169,6 +234,13 @@ abstract class BookRecipeDao {
             "order by i.recipe_id, i.position",
     )
     abstract fun ingredientLines(): Flow<List<IngredientLineRow>>
+
+    /**
+     * Every dictionary entry of equipment the book's recipes name, which the views are filtered by when the kitchen is
+     * to have enough of it; items of free text are left out.
+     */
+    @Query("select recipe_id, dictionary_entry from recipe_equipment where dictionary_entry is not null order by recipe_id, position")
+    abstract fun equipmentEntries(): Flow<List<RecipeEquipmentRow>>
 
     /** Every tag the book's recipes carry, which the views are filtered by (FLOW-035). */
     @Query("select * from recipe_tag order by recipe_id, tag_id")

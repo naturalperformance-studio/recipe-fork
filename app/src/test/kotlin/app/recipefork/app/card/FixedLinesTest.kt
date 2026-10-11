@@ -69,7 +69,7 @@ class FixedLinesTest {
     fun aFixedAmountSetsTheExactFactorForTheWholeRecipe() {
         val fixed = list(atFour.fix(chicken300))
         // Rice 350 × 3/5 = 210 g: from the exact factor, not from the 2 servings shown (which would give 175 g).
-        assertEquals(listOf("300 g", "210 g", "2 pc", "⅔ tsp", "to taste", "g", "tsp"), quantities(fixed))
+        assertEquals(listOf("300 g", "210 g", "2 pc", "⅔ tsp", null, null, "tsp"), quantities(fixed))
         assertEquals(ServingCount(Rational.of(2), approximate = true), fixed.servingCount)
         assertEquals(listOf(true, false, false, false, false, false, false), fixed.lines.map { it.fixed })
     }
@@ -110,7 +110,7 @@ class FixedLinesTest {
     fun aSecondFixingReleasesTheFirst() {
         val both = list(atFour.fix(chicken300).fix(rice525))
         assertEquals(listOf(false, true, false, false, false, false, false), both.lines.map { it.fixed })
-        assertEquals(listOf("750 g", "525 g", "5 pc", "1½ tsp", "to taste", "g", "tsp"), quantities(both))
+        assertEquals(listOf("750 g", "525 g", "5 pc", "1½ tsp", null, null, "tsp"), quantities(both))
         assertEquals(ServingCount(Rational.of(6), approximate = true), both.servingCount)
         // Exactly the list of rice fixed alone: nothing of the chicken fixing is left.
         assertEquals(list(atFour.fix(rice525)), both)
@@ -122,7 +122,7 @@ class FixedLinesTest {
     @Test
     fun changingTheCountReleasesEveryFixing() {
         val asked = list(atFour.fix(chicken300).fix(fixing(eggs, 3, QuantityUnit.PIECE)).request(Rational.of(6)))
-        assertEquals(listOf("750 g", "525 g", "5 pc", "1½ tsp", "to taste", "g", "tsp"), quantities(asked))
+        assertEquals(listOf("750 g", "525 g", "5 pc", "1½ tsp", null, null, "tsp"), quantities(asked))
         assertTrue(asked.lines.none { it.fixed })
         assertEquals(ServingCount(Rational.of(6), approximate = false), asked.servingCount)
     }

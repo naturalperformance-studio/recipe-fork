@@ -36,11 +36,17 @@
     <string name="editor_servings">Servings</string>
     <string name="editor_servings_accepts">A whole number, 1 or more</string>
     <string name="editor_servings_none">Not given</string>
-    <!-- The ingredient rows: three fields each (FLOW-023). -->
+    <!-- The ingredient rows: each reads as a line and opens in a sheet of its fields (FLOW-023). -->
     <string name="editor_ingredients">Ingredients</string>
     <string name="editor_ingredient_add">Add ingredient</string>
     <string name="editor_ingredient_add_action">Add an ingredient row</string>
     <string name="editor_ingredient_name">Ingredient</string>
+    <!-- A row holding nothing yet, as it reads in the list; and the title of the sheet of a row just added. -->
+    <string name="editor_ingredient_new">New ingredient</string>
+    <!-- A row's tap, and the title of the sheet it opens: the row's fields. -->
+    <string name="editor_ingredient_edit">Edit ingredient</string>
+    <!-- Under a row whose name is in the author's own words; the sheet says why it matters (FLOW-022). -->
+    <string name="editor_ingredient_free_text_mark">Not from the ingredient dictionary</string>
     <string name="editor_ingredient_unnamed">Unnamed ingredient</string>
     <string name="editor_ingredient_quantity">Quantity</string>
     <string name="editor_ingredient_unit">Unit</string>
@@ -48,14 +54,17 @@
     <string name="editor_ingredient_note">How to prepare</string>
     <string name="editor_ingredient_note_example">e.g. finely chopped</string>
     <string name="editor_ingredient_unit_action">Choose the unit</string>
-    <string name="editor_ingredient_remove_action">Remove ingredient row %1$d</string>
-    <string name="editor_ingredient_menu_action">Ingredient row %1$d actions</string>
+    <!-- The last of a row's actions in its sheet, in the error colour; Undo follows. -->
+    <string name="editor_ingredient_remove">Remove ingredient</string>
     <string name="editor_group_add">Add group</string>
     <string name="editor_group_add_action">Add a group heading to the ingredients</string>
     <string name="editor_group_name">Group</string>
     <string name="editor_group_name_example">e.g. Dough</string>
-    <string name="editor_group_remove_action">Remove group heading %1$d</string>
-    <string name="editor_group_menu_action">Group %1$d actions</string>
+    <!-- A heading's tap, and the title of the sheet it opens: its name and actions. -->
+    <string name="editor_group_edit">Edit group</string>
+    <!-- A heading with no name yet, as it reads in the list. -->
+    <string name="editor_group_unnamed">Unnamed group</string>
+    <string name="editor_group_remove">Remove group</string>
     <!-- What the ingredient field offers while the author types (FLOW-057): entries, and the text as free text. -->
     <string name="editor_ingredient_pick_action">Use the dictionary ingredient %1$s</string>
     <string name="editor_ingredient_free_text_offer">Add “%1$s” as free text</string>
@@ -88,18 +97,28 @@
     <string name="editor_unit_cup">cup</string>
     <string name="editor_unit_pinch">pinch</string>
     <string name="editor_unit_to_taste">to taste</string>
-    <!-- The steps, after the ingredients: numbered plain text (FLOW-024). -->
+    <!-- The steps, after the ingredients: numbered plain text (FLOW-024). Each step reads as text on its row and opens
+         in a sheet on a tap, named by editor_step_edit. -->
     <string name="editor_steps">Steps</string>
     <string name="editor_steps_none">No steps</string>
     <string name="editor_step">Step %1$d</string>
     <!-- A step's number before its text in the editor's field; the screen reader reads editor_step instead. -->
     <string name="editor_step_number">%1$d.</string>
+    <string name="editor_step_edit">Edit step</string>
+    <!-- What an empty step reads as on its row, muted; and the title of the sheet of a step just added. -->
+    <string name="editor_step_new">New step</string>
     <string name="editor_step_add">Add step</string>
     <string name="editor_step_add_action">Add a step at the end</string>
-    <string name="editor_step_remove_action">Remove step %1$d</string>
-    <string name="editor_step_menu_action">Step %1$d actions</string>
+    <!-- The last of a step's actions in its sheet, named as the ingredient's and the group's are. -->
+    <string name="editor_step_remove">Remove step</string>
+    <!-- The author's own note on a step, beside the method, in the step's sheet; a fork by someone else leaves it
+         behind (FORK-007). -->
+    <string name="editor_step_note">Author\'s note</string>
+    <string name="editor_step_note_hint">Stays with you when someone else forks the recipe</string>
+    <!-- How a frozen recipe's step row shows the step's note: %1$s is the note. -->
+    <string name="editor_step_note_read_only">Author\'s note: %1$s</string>
     <!-- An ingredient's quantity inside a step's text: inserted from the step's control or by typing @ (FLOW-031). -->
-    <string name="editor_step_insert_ingredient_label">Insert an ingredient into step %1$d</string>
+    <string name="editor_step_insert_ingredient">Insert ingredient</string>
     <string name="editor_step_insert_ingredient_action">Insert an ingredient\'s quantity into step %1$d</string>
     <string name="editor_step_insert_ingredient_none">No ingredients in this recipe yet</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
@@ -115,7 +134,7 @@
     <string name="editor_step_part_more_than_whole">The part %1$s is more than the %2$s in the list.</string>
     <!-- A change of an ingredient's unit made the steps' parts of it whole references again; said once. -->
     <string name="editor_parts_made_whole">Ingredient %1$d changed its unit: the steps now use all of it where they used a part.</string>
-    <!-- The description, after the steps: one optional field (FLOW-024). -->
+    <!-- The description, under the title and the tags: one optional field (FLOW-024). -->
     <string name="editor_description">Description</string>
     <string name="editor_description_optional">Description (optional)</string>
     <string name="editor_description_none">No description</string>
@@ -127,9 +146,11 @@
     <string name="editor_fork_note_close">Close</string>
     <!-- The long press of an icon-only action in the editor's top bar: it shows the action's name in a tooltip. -->
     <string name="editor_action_show_name">Show the name</string>
-    <string name="editor_fork_takes">A fork takes the title, tags, servings, ingredients and steps; the description and photos stay with you unless the fork is your own.</string>
+    <string name="editor_fork_takes">A fork takes the title, tags, servings, ingredients and steps; the description, step notes and photos stay with you unless the fork is your own.</string>
     <!-- A step's timers: hours and whole minutes, up to five per step, each named by its step unless the author names it (FLOW-027, DOM-024, GUIDE-007). -->
-    <string name="editor_timer_label">Timer for step %1$d</string>
+    <!-- The step sheet's part of the step's timers: its name, and the button under them that adds one. -->
+    <string name="editor_step_timers">Timers</string>
+    <string name="editor_timer_add">Add timer</string>
     <string name="editor_timer_action">Add a timer to step %1$d</string>
     <string name="editor_timer_remove_action">Remove timer from step %1$d</string>
     <!-- Where a step shows several timers: %1$d is the step, %2$d the timer's place among them. -->
@@ -140,14 +161,6 @@
     <string name="editor_timer_name_numbered">Timer %1$d\'s name</string>
     <string name="editor_timer_name_follows">Taken from the step. Change it to name the timer yourself.</string>
     <string name="editor_timer_limit">A step can hold up to five timers. For more waits, split this step into further steps, each with its own timers.</string>
-    <string name="editor_timer_read_only">Timer: %1$s</string>
-    <string name="editor_timer_name_read_only">Timer\'s name: %1$s</string>
-    <!-- A frozen recipe's step with several timers: %1$d is the timer's place among them. -->
-    <string name="editor_timer_read_only_numbered">Timer %1$d: %2$s</string>
-    <string name="editor_timer_name_read_only_numbered">Timer %1$d\'s name: %2$s</string>
-    <string name="editor_timer_duration">%1$d h %2$d min</string>
-    <string name="editor_timer_duration_hours">%1$d h</string>
-    <string name="editor_timer_duration_minutes">%1$d min</string>
     <!-- A row's menu: put a new row beside it, or move it one place; dragging comes later (FLOW-025, A11Y-006). -->
     <string name="editor_row_insert_above">Insert above</string>
     <string name="editor_row_insert_below">Insert below</string>
@@ -187,17 +200,19 @@
     <string name="editor_checklist_7_title">The serving count is the number you actually cooked for.</string>
     <string name="editor_checklist_7_text">Every quantity a reader ever sees is computed from it.</string>
     <!-- Under the first step of a recipe holding ingredients, once an editing session, while it is begun (GUIDE-008). -->
-    <string name="editor_references_offered">A quantity can go into a step as a reference: type @ or use the step\'s insert-ingredient icon. A reference follows the reader\'s serving count; a number typed by hand does not.</string>
+    <string name="editor_references_offered">A quantity can go into a step as a reference: type @ or use “Insert ingredient”. A reference follows the reader\'s serving count; a number typed by hand does not.</string>
     <!-- Under a long step's unnamed timer once the author leaves the step: what its notification will say (GUIDE-006). -->
     <string name="editor_timer_notification">The timer\'s notification will say: “%1$s”</string>
     <string name="editor_timer_notification_follows">The quantities in it follow the reader\'s serving count, so the reader\'s notification may read and be cut differently.</string>
     <string name="editor_timer_notification_name">Name the timer</string>
     <string name="editor_timer_notification_name_action">Name the timer of step %1$d</string>
     <string name="editor_timer_notification_name_numbered_action">Name timer %2$d of step %1$d</string>
-    <!-- A row or a step deleted, with the action that puts it back. -->
-    <string name="editor_ingredient_removed">Ingredient row %1$d removed</string>
+    <!-- A row or a step deleted, with the action that puts it back; each names what went: %1$s is the ingredient's name as its line reads it, the heading's words, or the item's name. -->
+    <string name="editor_ingredient_removed">“%1$s” removed</string>
+    <string name="editor_ingredient_removed_unnamed">Ingredient removed</string>
     <string name="editor_step_removed">Step %1$d removed</string>
-    <string name="editor_group_removed">Group heading %1$d removed</string>
+    <string name="editor_group_removed">“%1$s” removed</string>
+    <string name="editor_group_removed_unnamed">Group heading removed</string>
     <string name="editor_timer_removed">Timer removed from step %1$d</string>
     <string name="editor_timer_removed_numbered">Timer %2$d removed from step %1$d</string>
     <string name="editor_undo">Undo</string>
@@ -212,5 +227,12 @@
     <string name="editor_equipment_menu_action">Equipment item %1$d actions</string>
     <!-- %1$d is the most items a recipe lists (15). -->
     <string name="editor_equipment_limit">A recipe can list up to %1$d items of equipment.</string>
-    <string name="editor_equipment_removed">Equipment item %1$d removed</string>
+    <string name="editor_equipment_removed">“%1$s” removed</string>
+    <string name="editor_equipment_removed_unnamed">Equipment item removed</string>
+    <!-- The equipment dictionary's offer under an item being typed, as an ingredient's (FLOW-057); %1$s is an entry's label or the typed text. -->
+    <string name="editor_equipment_pick_action">Use the dictionary item %1$s</string>
+    <string name="editor_equipment_free_text_offer">Add “%1$s” as free text</string>
+    <string name="editor_equipment_free_text_action">Add %1$s in your own words, not from the dictionary</string>
+    <!-- Under an item in the author's own words, once it is left: muted, a hint and not an error. -->
+    <string name="editor_equipment_free_text_warning">Not from the equipment dictionary: My kitchen does not check this item.</string>
 </resources>

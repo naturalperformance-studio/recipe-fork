@@ -94,6 +94,7 @@ class CardModeListsTest {
         val oven: String,
         val beans: String,
         val done: String,
+        val notDone: String,
         val ovenLine: String,
         val beansLine: String,
         val ovenRunning: String,
@@ -109,6 +110,7 @@ class CardModeListsTest {
         oven = "Oven",
         beans = "Beans",
         done = "Done",
+        notDone = "Not done",
         ovenLine = "Oven · 40 min",
         beansLine = "Beans · 1 h 30 min",
         ovenRunning = "Oven · 39:00",
@@ -124,6 +126,7 @@ class CardModeListsTest {
         oven = "Духовка",
         beans = "Фасоль",
         done = "Готово",
+        notDone = "Не готово",
         ovenLine = "Духовка · 40 мин",
         beansLine = "Фасоль · 1 ч 30 мин",
         ovenRunning = "Духовка · 39:00",
@@ -258,9 +261,18 @@ class CardModeListsTest {
             assertFalse("$tag carries no click action", clickable(line))
             assertNull("$tag carries no custom action", line.config.getOrNull(SemanticsActions.CustomActions))
         }
-        // Marked ones read as done and are struck; the others are not.
-        listOf(lines[0], steps[0]).forEach { assertEquals("$it reads as done", words.done, node(it).config.getOrNull(SemanticsProperties.StateDescription)) }
-        listOf(lines[1], steps[1]).forEach { assertNull("$it is not done", node(it).config.getOrNull(SemanticsProperties.StateDescription)) }
+        // Marked ones read as done and are struck; the others read as not done. Read-only: each line says its state in
+        // words, and carries neither a click, nor the check box role, nor a toggleable state, so nothing offers to change it.
+        listOf(lines[0], steps[0]).forEach {
+            assertEquals("$it reads as done", words.done, node(it).config.getOrNull(SemanticsProperties.StateDescription))
+        }
+        listOf(lines[1], steps[1]).forEach {
+            assertEquals("$it reads as not done", words.notDone, node(it).config.getOrNull(SemanticsProperties.StateDescription))
+        }
+        (lines + steps).forEach {
+            assertNull("$it is no check box on View", node(it).config.getOrNull(SemanticsProperties.Role))
+            assertNull("$it is not toggleable on View", node(it).config.getOrNull(SemanticsProperties.ToggleableState))
+        }
         assertEquals(TextDecoration.LineThrough, compose.textLayoutsWithin(IngredientTags.name(0)).single().layoutInput.style.textDecoration)
         assertEquals(TextDecoration.LineThrough, compose.textLayoutsWithin(StepTags.text(0)).single().layoutInput.style.textDecoration)
         // No amount offers fixing.

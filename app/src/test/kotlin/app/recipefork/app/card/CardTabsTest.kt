@@ -7,6 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -136,11 +138,11 @@ class CardTabsTest {
      * A fork long enough to scroll on either tab: a cover, a description, twelve ingredients, twenty steps, a photo on
      * the second step and a timer on the last.
      */
-    private fun save(): Recipe {
+    private fun save(description: String = "A weeknight dinner."): Recipe {
         val parent = Recipe.create(now, null).copy(title = "Roast chicken")
         val recipe = parent.fork(now, owner = null).copy(
             title = "Lemon roast chicken",
-            description = "A weeknight dinner.",
+            description = description,
             servings = 4,
             ingredients = (0 until 12).map {
                 Ingredient(it, null, freeTextName = "Ingredient $it", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(100))
@@ -155,12 +157,17 @@ class CardTabsTest {
         return recipe
     }
 
-    private fun show(recipe: Recipe) {
+    /** Shows the card on [recipe]; with a [session], one that outlives each showing, as the application's does. */
+    private fun show(recipe: Recipe, session: CardSession? = null) {
         compose.setContent {
             CompositionLocalProvider(LocalCardTimers provides timers.card) {
                 AppTheme {
                     key(showing) {
-                        CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = { edits++ }, onFork = { forks++ })
+                        if (session == null) {
+                            CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = { edits++ }, onFork = { forks++ })
+                        } else {
+                            CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = { edits++ }, onFork = { forks++ }, session = session)
+                        }
                     }
                 }
             }
@@ -282,6 +289,37 @@ class CardTabsTest {
         compose.waitUntil(PATIENCE_MS) { compose.firstAtTheTop() == cooking }
     }
 
+    // T-208: the description, now under the title block, is still a place the card keeps on View: a card left with the
+    // top through its description opens again there, while Cooking, which leaves it out, keeps a place of its own.
+    @Test
+    fun aCardLeftThroughItsDescriptionOpensThereAgain() {
+        val session = TextCardSession.inMemory()
+        val recipe = save(description = (1..12).joinToString(" ") { "A weeknight dinner that keeps its place, line $it." })
+        show(recipe, session)
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.COVER) && exists(CardTags.stepPhoto(1)) }
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.PROVENANCE) }
+        compose.waitForIdle()
+        assertTrue("the description stands above the ingredients", laidOut(CardTags.DESCRIPTION).bottom <= laidOut(CardTags.ingredient(0)).top)
+        val top = top(CardTags.CONTENT)
+        val description = laidOut(CardTags.DESCRIPTION)
+        scrollBy(description.top - top + description.height / 3)
+        val left = laidOut(CardTags.DESCRIPTION).top
+        assertTrue("the top through the description", left < top && laidOut(CardTags.DESCRIPTION).bottom > top)
+        choose(CardMode.COOKING)
+        assertFalse("Cooking leaves the description out", exists(CardTags.DESCRIPTION))
+        choose(CardMode.VIEW)
+        assertEquals(CardPlaces.DESCRIPTION_KEY, session.heldAnchor(recipe.id, CardMode.VIEW)?.key)
+        compose.runOnIdle { showing++ }
+        compose.awaitCard()
+        // Back where it was left, but for the pixel the kept share of the description rounds off.
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.DESCRIPTION) && abs(laidOut(CardTags.DESCRIPTION).top - left) <= 1f }
+    }
+
+    /** Where the node tagged [tag] is laid out, scrolled out of view or not. */
+    private fun laidOut(tag: String): Rect = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().let {
+        Rect(it.positionInRoot, Size(it.size.width.toFloat(), it.size.height.toFloat()))
+    }
+
     // Scenario 1: nothing inside the card scrolls sideways, so a horizontal swipe always turns the tab — step photos
     // included.
     @Test
@@ -307,14 +345,16 @@ class CardTabsTest {
         show(recipe)
         assertEquals(CardMode.VIEW, shownTab())
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.COVER) }
-        listOf(CardTags.FORK, CardTags.EDIT, CardTags.COVER, CardTags.TITLE, CardTags.SUMMARY).forEach {
+        listOf(CardTags.EDIT, CardTags.COVER, CardTags.TITLE, CardTags.SUMMARY).forEach {
             assertTrue("View shows $it", exists(it))
         }
+        // Fork floats on View — standing aside while the serving count is under it, back once that is scrolled clear.
+        compose.scrollUntilForkShows()
         compose.waitUntil(PATIENCE_MS) { exists(CardTags.PROVENANCE) }
         compose.onNodeWithTag(CardTags.DESCRIPTION).performScrollTo()
         compose.openTheCardMenu()
         assertTrue("View's ⋮ holds Delete", exists(CardTags.DELETE))
-        assertFalse("View's ⋮ holds no Clear marks", exists(CardTags.CLEAR_MARKS))
+        assertTrue("View's ⋮ holds Clear marks while the recipe has marks", exists(CardTags.CLEAR_MARKS))
         compose.closeTheCardMenu()
         // The lists in View: a line answers no tap, a timer reads as its duration with nothing to start it.
         val line = compose.onNodeWithTag(CardTags.ingredient(1)).fetchSemanticsNode()

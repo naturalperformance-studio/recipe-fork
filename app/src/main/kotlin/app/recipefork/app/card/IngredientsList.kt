@@ -222,6 +222,7 @@ private fun AllLines(
                     line, position, column, cardPlace(CardPlaces.ingredient(position)),
                     done = marks?.done(MarkedPart.INGREDIENT, position) == true,
                     onToggle = marks?.takeIf { cooking }?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
+                    stated = marks?.any == true,
                     mode = mode,
                 ) { onOpen(if (open == position) null else position) }
                 val offer = line.fixing?.takeIf { cooking }
@@ -420,7 +421,7 @@ private fun quantityColumn(lines: List<IngredientLine>): QuantityColumn {
  * as the line's second action, beside the marking ([onOpen]). A line that answers a tap is the card's [CardTarget] tall.
  *
  * In [CardMode.VIEW] the line answers no tap and offers no fixing: it is its text with [VIEW_LINE_PADDING] above and
- * below, a mark it carries shown and read as done.
+ * below, a mark it carries shown, read-only, its state read while the recipe has any mark ([stated]).
  */
 @Composable
 private fun IngredientRow(
@@ -430,6 +431,7 @@ private fun IngredientRow(
     place: Modifier,
     done: Boolean,
     onToggle: (() -> Unit)?,
+    stated: Boolean,
     mode: CardMode,
     onOpen: () -> Unit,
 ) {
@@ -437,7 +439,7 @@ private fun IngredientRow(
     val fixable = cooking && line.fixing != null
     val fixLabel = stringResource(R.string.card_fix_action)
     val opening by rememberUpdatedState(onOpen)
-    val marking = if (onToggle != null && cooking) Modifier.markedDone(done, onToggle) else Modifier.shownDone(done)
+    val marking = if (onToggle != null && cooking) Modifier.markedDone(done, onToggle) else Modifier.shownDone(done, stated)
     val fixing = if (fixable) {
         Modifier.semantics { customActions = listOf(CustomAccessibilityAction(fixLabel) { opening(); true }) }
     } else {
@@ -450,7 +452,7 @@ private fun IngredientRow(
             val named = line.name ?: stringResource(R.string.card_unnamed_ingredient)
             val muted = MaterialTheme.colorScheme.onSurfaceVariant
             Text(
-                remember(named, line.note, muted) { withNote(named, line.note, muted) },
+                remember(named, line, muted) { namedLine(AnnotatedString(named), line, muted) },
                 style = MaterialTheme.typography.bodyLarge.done(done),
                 modifier = Modifier.testTag(IngredientTags.name(position)),
             )
@@ -590,15 +592,18 @@ private fun FixedMark(text: String, done: Boolean) {
 }
 
 /**
- * The name of a line followed by its [note] (DOM-023), set apart by a dash and drawn in the [muted] colour, so that how
- * the ingredient is prepared reads apart from what it is; the whole wraps between words as one text.
+ * What a [line] reads after its amount, the one wording the card and the editor share (FLOW-023): its [name]; for a row
+ * to taste, "to taste" after a dash — "salt — to taste", «соль — по вкусу»; then its note (DOM-023), set apart by a dash
+ * and drawn in the [muted] colour, so that how the ingredient is prepared reads apart from what it is. The whole wraps
+ * between words as one text.
  */
-internal fun withNote(name: String, note: String?, muted: Color): AnnotatedString = buildAnnotatedString {
+internal fun namedLine(name: AnnotatedString, line: IngredientLine, muted: Color): AnnotatedString = buildAnnotatedString {
     append(name)
-    if (note != null) withStyle(SpanStyle(color = muted)) { append(NOTE_SEPARATOR); append(note) }
+    line.toTaste?.let { append(NOTE_SEPARATOR); append(it) }
+    line.note?.let { note -> withStyle(SpanStyle(color = muted)) { append(NOTE_SEPARATOR); append(note) } }
 }
 
-/** What stands between a line's name and its note. */
+/** What stands between a line's name and what follows it: "to taste", its note. */
 private const val NOTE_SEPARATOR = " — "
 
 /** The arrow a recalculated quantity carries and the words it is read as, or null where the grid held it exactly. */

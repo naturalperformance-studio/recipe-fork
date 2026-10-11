@@ -7,6 +7,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Bound
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeBounds
@@ -36,7 +37,7 @@ class EquipmentEditorTest {
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
     private val now = Instant.parse("2026-10-09T12:00:00Z")
 
-    private val seeded = Recipe.create(now, null).copy(title = "Pancakes", equipment = listOf("Bowl", "Whisk", "Frying pan 26 cm"))
+    private val seeded = Recipe.create(now, null).copy(title = "Pancakes", equipment = listOf("Bowl", "Whisk", "Frying pan 26 cm").map(EquipmentItem::free))
 
     @After
     fun close() {
@@ -58,7 +59,8 @@ class EquipmentEditorTest {
         }
     }
 
-    private val RecipeEditor.items: List<String> get() = recipe.value!!.equipment
+    /** The items as the editor holds them, each as it reads. */
+    private val RecipeEditor.items: List<String> get() = recipe.value!!.equipment.map { it.shown(null) }
 
     @Test
     fun addAppendsAnEmptyItemThatTheAuthorTypesInto() {
@@ -66,14 +68,14 @@ class EquipmentEditorTest {
         assertTrue(editor.addEquipment())
         assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm", ""), editor.items)
         assertTrue(editor.setEquipment(3, "Ladle"))
-        assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm", "Ladle"), stored().equipment)
+        assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm", "Ladle").map(EquipmentItem::free), stored().equipment)
     }
 
     // Up to fifteen: a sixteenth "Add" adds nothing and says why until the author's next action (GUIDE-007).
     @Test
     fun aSixteenthItemIsRefusedWithAStatementUntilTheNextAction() {
         val fifteen = (1..RecipeBounds.MAX_EQUIPMENT).map { "Item $it" }
-        val editor = open(seeded.copy(equipment = fifteen))
+        val editor = open(seeded.copy(equipment = fifteen.map(EquipmentItem::free)))
         assertFalse(editor.equipmentStatement.value)
         assertFalse(editor.addEquipment())
         assertEquals(fifteen, editor.items)
@@ -111,7 +113,7 @@ class EquipmentEditorTest {
         // The items after the one dropped keep their keys, so what the screen holds for them stays with them.
         assertEquals(0, editor.equipmentIndex(whiskKey))
         assertEquals(1, editor.equipmentIndex(panKey))
-        assertEquals(listOf("Balloon whisk", "Frying pan 26 cm"), stored().equipment)
+        assertEquals(listOf("Balloon whisk", "Frying pan 26 cm").map(EquipmentItem::free), stored().equipment)
     }
 
     // The book never holds a blank item, nor an untrimmed one, even while the author is still typing it.
@@ -119,9 +121,9 @@ class EquipmentEditorTest {
     fun theBookHoldsNoBlankOrUntrimmedItem() {
         val editor = open()
         editor.addEquipment()
-        assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm"), stored().equipment)
+        assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm").map(EquipmentItem::free), stored().equipment)
         editor.setEquipment(3, " Ladle ")
-        assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm", "Ladle"), stored().equipment)
+        assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm", "Ladle").map(EquipmentItem::free), stored().equipment)
         assertEquals(" Ladle ", editor.items[3])
     }
 
@@ -135,11 +137,11 @@ class EquipmentEditorTest {
         val removal = editor.removal.value!!
         assertEquals(Removal.Kind.EQUIPMENT, removal.kind)
         assertEquals(1, removal.position)
-        assertEquals(listOf("Bowl", "Frying pan 26 cm"), stored().equipment)
+        assertEquals(listOf("Bowl", "Frying pan 26 cm").map(EquipmentItem::free), stored().equipment)
         assertTrue(editor.undoRemoval(removal))
         assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm"), editor.items)
         assertEquals(2, editor.equipmentIndex(panKey))
-        assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm"), stored().equipment)
+        assertEquals(listOf("Bowl", "Whisk", "Frying pan 26 cm").map(EquipmentItem::free), stored().equipment)
     }
 
     @Test
@@ -153,7 +155,7 @@ class EquipmentEditorTest {
         assertEquals(listOf("Whisk", "Frying pan 26 cm", "Bowl"), editor.items)
         assertFalse(editor.moveEquipment(0, -1))
         assertFalse(editor.moveEquipment(2, 3))
-        assertEquals(listOf("Whisk", "Frying pan 26 cm", "Bowl"), stored().equipment)
+        assertEquals(listOf("Whisk", "Frying pan 26 cm", "Bowl").map(EquipmentItem::free), stored().equipment)
     }
 
     // An item over 40 characters is kept and marked on leaving it; the mark stays with the item as others move.
@@ -173,6 +175,53 @@ class EquipmentEditorTest {
         assertTrue(editor.marks.value.isEmpty())
     }
 
+    // An item an entry names stays that entry, its qualifier with it, when the author leaves it or moves it; set as text,
+    // it becomes the text typed, free text (the field decides, as it is typed, whether text keeps the entry).
+    @Test
+    fun anEntrysItemStaysUntilTypedInto() {
+        val pan = EquipmentItem.entry(10001, "26 cm")
+        val editor = open(seeded.copy(equipment = listOf(pan, EquipmentItem.free("Whisk"))))
+        editor.settleEquipment(0)
+        assertTrue(editor.moveEquipment(0, 1))
+        assertEquals(listOf(EquipmentItem.free("Whisk"), pan), stored().equipment)
+        assertTrue(editor.setEquipment(1, " Frying pan 28 cm"))
+        editor.settleEquipment(1)
+        assertEquals(listOf(EquipmentItem.free("Whisk"), EquipmentItem.free("Frying pan 28 cm")), stored().equipment)
+    }
+
+    // T-203: a pick binds the item to an entry, with no qualifier; the words after its label are its qualifier, held
+    // without the spaces and commas around them; free text takes none.
+    @Test
+    fun anItemIsBoundToAnEntryAndQualified() {
+        val editor = open()
+        assertTrue(editor.setEquipmentEntry(2, 10001))
+        assertEquals(EquipmentItem.entry(10001), editor.recipe.value!!.equipment[2])
+        assertTrue(editor.setEquipmentQualifier(2, " , 26 cm "))
+        assertEquals(EquipmentItem.entry(10001, "26 cm"), editor.recipe.value!!.equipment[2])
+        assertFalse(editor.setEquipmentQualifier(0, "large"))
+        assertTrue(editor.setEquipmentQualifier(2, "  "))
+        assertEquals(EquipmentItem.entry(10001), stored().equipment[2])
+        assertTrue(editor.setEquipmentQualifier(2, "28 cm"))
+        // A pick of another entry drops the qualifier.
+        assertTrue(editor.setEquipmentEntry(2, 10202))
+        assertEquals(listOf(EquipmentItem.free("Bowl"), EquipmentItem.free("Whisk"), EquipmentItem.entry(10202)), stored().equipment)
+    }
+
+    // T-202's review: an entry's item is measured by its label and its qualifier, as it reads, once the labels are known.
+    @Test
+    fun anEntrysItemIsMeasuredByItsLabelAndQualifier() {
+        val qualifier = "with a lid, cast iron, 28 cm wide"
+        val editor = open(seeded.copy(equipment = listOf(EquipmentItem.entry(10001, qualifier))))
+        editor.leave(RecipePart.EquipmentName(0))
+        // Its qualifier alone is within the limit.
+        assertTrue(editor.marks.value.isEmpty())
+        editor.knowEquipmentLabels { if (it == 10001L) "Frying pan" else null }
+        editor.leave(RecipePart.EquipmentName(0))
+        assertEquals(mapOf(RecipePart.EquipmentName(0) to Bound.OverLimit(40, 44)), editor.marks.value)
+        editor.setEquipmentQualifier(0, "with a lid, cast iron, 28 cm")
+        assertTrue(editor.marks.value.isEmpty())
+    }
+
     @Test
     fun aFrozenRecipeTakesNoChangeToItsEquipment() {
         val frozen = seeded.inState(RecipeState.PUBLISHED)
@@ -182,7 +231,9 @@ class EquipmentEditorTest {
         assertFalse(editor.setEquipment(0, "Pot"))
         assertFalse(editor.removeEquipment(0))
         assertFalse(editor.moveEquipment(0, 1))
+        assertFalse(editor.setEquipmentEntry(0, 10001))
+        assertFalse(editor.setEquipmentQualifier(0, "26 cm"))
         editor.settleEquipment(0)
-        assertEquals(seeded.equipment, editor.items)
+        assertEquals(seeded.equipment.map { it.shown(null) }, editor.items)
     }
 }

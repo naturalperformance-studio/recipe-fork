@@ -127,7 +127,7 @@ class CardServingsTest {
     private fun more(times: Int = 1) = repeat(times) { compose.onNodeWithTag(CardTags.SERVINGS_MORE).performClick() }
     private fun fewer(times: Int = 1) = repeat(times) { compose.onNodeWithTag(CardTags.SERVINGS_FEWER).performClick() }
 
-    private val authored = listOf("500 g", "3 pc", "1 tsp", "g", "tsp")
+    private val authored = listOf("500 g", "3 pc", "1 tsp", null, "tsp")
 
     // FLOW-017 (2): the card opens at the authored count, every quantity as authored.
     @Test
@@ -144,10 +144,10 @@ class CardServingsTest {
         more(2)
         assertEquals("Servings: 6", servings())
         // The unfinished and the off-grid rows stay as they are; the others scale.
-        assertEquals(listOf("750 g", "5 pc", "1½ tsp", "g", "tsp"), quantities())
+        assertEquals(listOf("750 g", "5 pc", "1½ tsp", null, "tsp"), quantities())
         fewer(5)
         assertEquals("Servings: 1", servings())
-        assertEquals(listOf("125 g", "1 pc", "¼ tsp", "g", "tsp"), quantities())
+        assertEquals(listOf("125 g", "1 pc", "¼ tsp", null, "tsp"), quantities())
     }
 
     // SCALE-011 (1–4), SCALE-010, SCALE-005: the walk below one, the floor at ¼, the count as requested, no zero.
@@ -163,14 +163,14 @@ class CardServingsTest {
         }
         assertEquals(listOf("Servings: 1", "Servings: ¾", "Servings: ⅔", "Servings: ½", "Servings: ⅓", "Servings: ¼"), walk)
         // ¼ of a serving is the exact factor 1/16: 500 g → 31.25 g → 31 g; eggs and salt at their floors.
-        assertEquals(listOf("31 g", "1 pc", "¼ tsp", "g", "tsp"), quantities())
+        assertEquals(listOf("31 g", "1 pc", "¼ tsp", null, "tsp"), quantities())
         compose.onNodeWithTag(CardTags.SERVINGS_FEWER).assertIsNotEnabled()
         fewer()
         assertEquals("Servings: ¼", servings())
         more()
         assertEquals("Servings: ⅓", servings())
         // ⅓ of a serving is the exact factor 1/12: 500 g → 41⅔ g → 42 g.
-        assertEquals(listOf("42 g", "1 pc", "¼ tsp", "g", "tsp"), quantities())
+        assertEquals(listOf("42 g", "1 pc", "¼ tsp", null, "tsp"), quantities())
         compose.onNodeWithTag(CardTags.SERVINGS_FEWER).assertIsEnabled()
         // Never marked approximate, in any form.
         assertFalse(servings().contains("≈") || servings().contains("~"))
@@ -240,7 +240,7 @@ class CardServingsTest {
         show(save(forFour()).id)
         more(40)
         assertEquals("Servings: 44", servings())
-        assertEquals(listOf("5.5 kg", "33 pc", "11 tsp", "g", "tsp"), quantities())
+        assertEquals(listOf("5.5 kg", "33 pc", "11 tsp", null, "tsp"), quantities())
         compose.onNodeWithTag(CardTags.SERVINGS_MORE).assertIsEnabled()
     }
 

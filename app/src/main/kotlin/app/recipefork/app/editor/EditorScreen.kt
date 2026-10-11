@@ -5,7 +5,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.onFocusedBoundsChanged
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -13,15 +12,12 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -53,7 +49,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -64,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -74,7 +73,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -87,6 +92,11 @@ import androidx.compose.ui.res.painterResource
 import app.recipefork.app.AppContainer
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.dictionary.EquipmentEntryEntity
+import app.recipefork.app.dictionary.label
+import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.app.card.ingredientLine
+import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
@@ -100,6 +110,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -123,7 +135,7 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
 
 /**
  * The editor: one scrolling screen in the order of FLOW-024 — the title with the declared language beside it and the
- * cover under it (FLOW-026), the tags, the serving count, the equipment, the ingredients, the steps and the description.
+ * cover under it (FLOW-026), the tags, the description, the serving count, the equipment, the ingredients and the steps.
  *
  * [onClose] leaves the editor: the bar's back and "Done" call it once every change is in the book. What is entered is
  * written as it is typed, so leaving holds nothing back: the system's back, and its predictive gesture, are the
@@ -158,6 +170,25 @@ fun EditorScreen(
     LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }
     var dictionary by remember { mutableStateOf<List<TagEntity>?>(null) }
     LaunchedEffect(environment) { withContext(Dispatchers.Main.immediate) { dictionary = environment.tags.tags() } }
+    // The equipment dictionary the items are named and offered from (DOM-009); null until it is read. One that cannot
+    // be read offers nothing, and an item naming an entry then reads as its qualifier alone.
+    var equipmentEntries by remember { mutableStateOf<List<EquipmentEntryEntity>?>(null) }
+    LaunchedEffect(environment) {
+        val read = try {
+            environment.equipment.equipment()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyList()
+        }
+        withContext(Dispatchers.Main.immediate) { equipmentEntries = read }
+    }
+    val equipmentLanguage = numberLanguage(LocalConfiguration.current)
+    // An item naming an entry is measured against its limit by its label and qualifier, as it reads.
+    LaunchedEffect(editor, equipmentEntries, equipmentLanguage) {
+        val byId = equipmentEntries?.associateBy { it.id } ?: return@LaunchedEffect
+        editor.knowEquipmentLabels { id -> byId[id]?.label(equipmentLanguage) }
+    }
     val recipe by editor.recipe.collectAsState()
     val handleRight by environment.dragHandleSide.right.collectAsState()
     val scrolled = rememberScrollState()
@@ -176,7 +207,7 @@ fun EditorScreen(
     val statementScope = rememberCoroutineScope()
     val statements = remember(host, statementScope) { EditorStatements(host, statementScope) }
     PartsMadeWholeStatement(editor, statements)
-    RemovalStatement(editor, statements)
+    RemovalStatement(editor, statements, equipmentLanguage) { id -> equipmentEntries?.firstOrNull { it.id == id }?.label(equipmentLanguage) }
     val focus = LocalFocusManager.current
     val notSaved = stringResource(R.string.editor_not_saved)
     val retry = stringResource(R.string.editor_retry)
@@ -225,6 +256,9 @@ fun EditorScreen(
                 onBack = back,
                 onDone = close,
             )
+            // The form waits for the equipment dictionary as well as the recipe, so an item naming an entry never shows
+            // blank before its label is known.
+            val equipmentDictionary = equipmentEntries ?: return@Column
             val shown = recipe ?: return@Column
             Column(
                 Modifier
@@ -237,6 +271,9 @@ fun EditorScreen(
                     .onFocusedBoundsChanged { scroll.focused = it }
                     .verticalScroll(scroll.state)
                     .padding(16.dp)
+                    // The steps' Add ends the form: it can scroll clear of a statement shown at the bottom, an Undo
+                    // among them.
+                    .padding(bottom = STATEMENT_ROOM)
                     .testTag(EditorTags.FORM),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -259,19 +296,28 @@ fun EditorScreen(
                     TitleAndLanguage(shown, editor) { servings.requestFocus() }
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
+                    // The description stands with the title it tells about, before the serving count; over several
+                    // lines it keeps the keyboard's new-line key, so the title's Next passes over it as over the tags.
+                    DescriptionField(shown, editor)
                     ServingCount(shown, editor, servings, if (shown.equipment.isNotEmpty()) ({ equipment.ask(0) }) else toIngredients)
-                    Equipment(shown, editor, equipment, toIngredients)
+                    Equipment(shown, editor, equipment, toIngredients, equipmentDictionary, equipmentLanguage)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
-                        Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork, animated, animations)
+                        // The steps are the form's last part: leaving them for any other part moves the author on from
+                        // them (FLOW-028).
+                        Box(Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Steps) })) {
+                            Steps(shown, editor, environment.ingredients, scroll, store, recipes.bookName(), saving, clips, mediaWork, animated, animations)
+                        }
                     }
-                    Description(shown, editor)
                 }
             }
         }
         EditorStatementHost(host, Modifier.align(Alignment.BottomCenter))
     }
 }
+
+/** The room the form leaves at its end for a statement of one or two lines, so that it covers no part of the recipe. */
+private val STATEMENT_ROOM = 72.dp
 
 /**
  * Where the editor's statements show: at the bottom, above the keyboard where it is open, each wrapped to its whole
@@ -294,13 +340,29 @@ internal fun EditorStatementHost(host: SnackbarHostState, modifier: Modifier = M
 /**
  * What the editor says at its bottom, above the keyboard where it is open: one statement at a time, each going by
  * itself after a while or swiped away; a new one replaces the one shown. The screen reader reads each as it comes.
+ *
+ * A sheet standing in front of the editor ([cover]) would hide a statement, so none shows while one does: a statement
+ * said then waits until the sheet goes, and one showing as a sheet rises is taken away and shown afresh once it goes —
+ * an Undo is never let run out unseen.
  */
 internal class EditorStatements(private val host: SnackbarHostState, private val scope: CoroutineScope) {
     private var shown: Job? = null
 
+    /** How many sheets stand in front of the editor now. */
+    private var covers by mutableIntStateOf(0)
+
+    /** A sheet now stands in front of the editor, until [uncover]. */
+    fun cover() {
+        covers++
+    }
+
+    fun uncover() {
+        covers--
+    }
+
     fun say(text: String, duration: SnackbarDuration = SnackbarDuration.Long) {
         shown?.cancel()
-        shown = scope.launch { host.showSnackbar(text, duration = duration) }
+        shown = scope.launch { show(text, null, duration) }
     }
 
     /**
@@ -311,13 +373,44 @@ internal class EditorStatements(private val host: SnackbarHostState, private val
         shown?.cancel()
         return scope.launch {
             val result = try {
-                host.showSnackbar(text, actionLabel = action, duration = SnackbarDuration.Long)
+                show(text, action, SnackbarDuration.Long)
             } catch (gone: CancellationException) {
                 onGone()
                 throw gone
             }
             if (result == SnackbarResult.ActionPerformed) onAction() else onGone()
         }.also { shown = it }
+    }
+
+    /** Shows the statement once no sheet covers the editor, and again afresh each time one rises while it shows. */
+    private suspend fun show(text: String, action: String?, duration: SnackbarDuration): SnackbarResult {
+        while (true) {
+            snapshotFlow { covers }.first { it == 0 }
+            var result: SnackbarResult? = null
+            coroutineScope {
+                val showing = launch { result = host.showSnackbar(text, actionLabel = action, duration = duration) }
+                val covered = launch {
+                    snapshotFlow { covers }.first { it > 0 }
+                    showing.cancel()
+                }
+                showing.join()
+                covered.cancel()
+            }
+            result?.let { return it }
+        }
+    }
+}
+
+/**
+ * Stands for a sheet in front of the editor while it is composed: the editor's statements wait until it goes
+ * ([EditorStatements.cover]).
+ */
+@Composable
+internal fun CoversStatements() {
+    val statements = LocalEditorStatements.current ?: return
+    DisposableEffect(statements) {
+        statements.cover()
+        onDispose { statements.uncover() }
     }
 }
 
@@ -342,18 +435,9 @@ private fun PartsMadeWholeStatement(editor: RecipeEditor, statements: EditorStat
  * the editor stops offering it — the next change made — and the deletion ends for good when it goes without Undo.
  */
 @Composable
-private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements) {
+private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements, language: InterfaceLanguage, equipmentLabel: (Long) -> String?) {
     val removal by editor.removal.collectAsState()
-    val text = removal?.let {
-        val said = when (it.kind) {
-            Removal.Kind.STEP -> R.string.editor_step_removed
-            Removal.Kind.INGREDIENT -> R.string.editor_ingredient_removed
-            Removal.Kind.GROUP -> R.string.editor_group_removed
-            Removal.Kind.TIMER -> if (it.ofSeveral) R.string.editor_timer_removed_numbered else R.string.editor_timer_removed
-            Removal.Kind.EQUIPMENT -> R.string.editor_equipment_removed
-        }
-        it.number?.let { number -> stringResource(said, it.position + 1, number) } ?: stringResource(said, it.position + 1)
-    }
+    val text = removal?.let { removalText(it, editor.knownEntries, language, equipmentLabel) }
     val undo = stringResource(R.string.editor_undo)
     val offered = remember { arrayOfNulls<Job>(1) }
     LaunchedEffect(removal) {
@@ -363,6 +447,39 @@ private fun RemovalStatement(editor: RecipeEditor, statements: EditorStatements)
         } else {
             offered[0] = statements.offer(text.orEmpty(), undo, { editor.undoRemoval(shown) }, { editor.endRemoval(shown) })
         }
+    }
+}
+
+/**
+ * What the statement of [removal] says: it names what went, as the recipe held it just before — an ingredient by its
+ * name as its line reads it in [language] ([entries] naming a dictionary row), a heading by its words, an item of
+ * equipment by its name ([equipmentLabel] giving an entry's label) — or says what kind of thing it was where it had no
+ * name; a step, which has none, by its number, and a timer by its step's.
+ */
+@Composable
+private fun removalText(
+    removal: Removal,
+    entries: Map<Long, IngredientEntryEntity>,
+    language: InterfaceLanguage,
+    equipmentLabel: (Long) -> String?,
+): String {
+    val before = removal.before
+    fun String?.named(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
+    return when (removal.kind) {
+        Removal.Kind.STEP -> stringResource(R.string.editor_step_removed, removal.position + 1)
+        Removal.Kind.TIMER -> removal.number?.let { stringResource(R.string.editor_timer_removed_numbered, removal.position + 1, it) }
+            ?: stringResource(R.string.editor_timer_removed, removal.position + 1)
+        Removal.Kind.INGREDIENT -> before.ingredients.firstOrNull { it.position == removal.position }
+            ?.let { ingredientLine(it, entries, language).name.named() }
+            ?.let { stringResource(R.string.editor_ingredient_removed, it) }
+            ?: stringResource(R.string.editor_ingredient_removed_unnamed)
+        Removal.Kind.GROUP -> before.ingredientGroups.getOrNull(removal.position)?.name.named()
+            ?.let { stringResource(R.string.editor_group_removed, it) }
+            ?: stringResource(R.string.editor_group_removed_unnamed)
+        Removal.Kind.EQUIPMENT -> before.equipment.getOrNull(removal.position)
+            ?.let { item -> item.shown(item.dictionaryEntry?.let(equipmentLabel)).named() }
+            ?.let { stringResource(R.string.editor_equipment_removed, it) }
+            ?: stringResource(R.string.editor_equipment_removed_unnamed)
     }
 }
 
@@ -387,16 +504,14 @@ private fun EditorBar(title: String?, done: Boolean, checklist: @Composable () -
         },
         modifier = Modifier.testTag(EditorTags.BAR),
         navigationIcon = {
-            val label = stringResource(R.string.editor_back)
-            Box(
-                Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(onClickLabel = stringResource(R.string.editor_back_action), role = Role.Button, onClick = onBack)
-                    .testTag(EditorTags.BACK),
-                contentAlignment = Alignment.Center,
+            val action = stringResource(R.string.editor_back_action)
+            // Laid out at 48 dp, not the 40 dp the button draws by default (A11Y-003); its click announced as what it
+            // does (A11Y-005).
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(48.dp).semantics { onClick(label = action, action = null) }.testTag(EditorTags.BACK),
             ) {
-                Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = label)
+                Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.editor_back))
             }
         },
         actions = {
@@ -419,30 +534,109 @@ private fun EditorBar(title: String?, done: Boolean, checklist: @Composable () -
 private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () -> Unit) {
     val editable = recipe.state.editable
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-            if (editable) {
-                OutlinedTextField(
-                    value = recipe.title,
-                    onValueChange = { editor.setTitle(it) },
-                    label = { Text(stringResource(R.string.editor_title)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { onNext() }),
-                    modifier = Modifier.weight(1f).then(leaving { editor.leave(RecipePart.Title) }).testTag(EditorTags.TITLE),
-                )
-            } else {
-                Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}.testTag(EditorTags.TITLE)) {
-                    Text(stringResource(R.string.editor_title), style = MaterialTheme.typography.labelMedium)
-                    Text(recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }, style = MaterialTheme.typography.titleLarge)
-                }
+        val label = stringResource(R.string.editor_title)
+        val measurer = rememberTextMeasurer()
+        val resting = MaterialTheme.typography.bodyLarge
+        val density = LocalDensity.current
+        // What the title needs across at least, in the field's text style: its label on one line as it rests in the
+        // empty field, and room for about ten characters of the title — so that "Plum cake" is not "Plum c".
+        val need = remember(label, resting, density) {
+            with(density) {
+                listOf(label, TITLE_SAMPLE).maxOf { measurer.measure(it, resting, softWrap = false, maxLines = 1).size.width }.toDp() + LABEL_ROOM
             }
-            Spacer(Modifier.width(8.dp))
-            // The declared language sits beside the title (FLOW-024): changing it is one action (L10N-004).
-            Language(recipe, editor)
         }
+        TitleBesideLanguage(
+            need = need,
+            title = {
+                if (editable) {
+                    OutlinedTextField(
+                        value = recipe.title,
+                        onValueChange = { editor.setTitle(it) },
+                        label = { Text(label) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { onNext() }),
+                        modifier = Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Title) }).testTag(EditorTags.TITLE),
+                    )
+                } else {
+                    Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.TITLE)) {
+                        Text(label, style = MaterialTheme.typography.labelMedium)
+                        Text(recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }, style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+            },
+            // The declared language sits beside the title (FLOW-024): changing it is one action (L10N-004).
+            language = { Language(recipe, editor) },
+        )
         // Under the title and the language, across the width, what either still needs (FLOW-028).
         BoundMark(editor, RecipePart.Title, EditorTags.TITLE_MARK, gap = 4.dp)
         BoundMark(editor, RecipePart.Language, EditorTags.LANGUAGE_MARK, gap = 4.dp)
+    }
+}
+
+/** About ten characters of a title, as wide as ten digits in the field's style: what a title needs to be read. */
+private const val TITLE_SAMPLE = "0000000000"
+
+/**
+ * The [title] with the [language] beside it, 8 dp apart, both from the top — where the title keeps at least half the
+ * width and what it [need]s; else the language goes under the title, at its start, 4 dp below it, and the title takes
+ * the whole width.
+ */
+@Composable
+private fun TitleBesideLanguage(need: Dp, title: @Composable () -> Unit, language: @Composable () -> Unit) {
+    Layout(contents = listOf(title, language), modifier = Modifier.fillMaxWidth().testTag(EditorTags.TITLE_ROW)) { (titles, languages), constraints ->
+        val width = constraints.maxWidth
+        val gap = 8.dp.roundToPx()
+        val shown = languages.single().measure(Constraints(maxWidth = width))
+        val room = width - shown.width - gap
+        if (room >= need.roundToPx() && room >= width / 2) {
+            val field = titles.single().measure(Constraints.fixedWidth(room))
+            layout(width, maxOf(field.height, shown.height)) {
+                field.place(0, 0)
+                shown.place(room + gap, 0)
+            }
+        } else {
+            val field = titles.single().measure(Constraints.fixedWidth(width))
+            val below = field.height + 4.dp.roundToPx()
+            layout(width, below + shown.height) {
+                field.place(0, 0)
+                shown.place(0, below)
+            }
+        }
+    }
+}
+
+/**
+ * The description, under the title and the tags, before the serving count: one optional field over as many lines as it
+ * takes, marked on leaving it when over its limit (FLOW-028); read-only where the recipe is frozen.
+ */
+@Composable
+private fun DescriptionField(recipe: Recipe, editor: RecipeEditor) {
+    if (!recipe.state.editable) {
+        Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.DESCRIPTION)) {
+            Text(stringResource(R.string.editor_description), style = MaterialTheme.typography.labelMedium)
+            Text(
+                recipe.description.ifEmpty { stringResource(R.string.editor_description_none) },
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.testTag(EditorTags.DESCRIPTION_TEXT),
+            )
+        }
+        return
+    }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedTextField(
+            value = recipe.description,
+            onValueChange = { editor.setDescription(it) },
+            label = { Text(stringResource(R.string.editor_description_optional)) },
+            minLines = 3,
+            // Over several lines, the keyboard keeps its new-line key.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(leaving { editor.leave(RecipePart.Description) })
+                .testTag(EditorTags.DESCRIPTION),
+        )
+        BoundMark(editor, RecipePart.Description, EditorTags.DESCRIPTION_MARK, gap = 4.dp)
     }
 }
 
@@ -450,7 +644,7 @@ private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () ->
  * Calls [onTap] on every touch that lifts without having moved past the touch slop, before whatever it touched
  * handles it, and consumes nothing: a scroll or a drag is not a tap.
  */
-private fun Modifier.onEveryTap(onTap: () -> Unit): Modifier = pointerInput(Unit) {
+internal fun Modifier.onEveryTap(onTap: () -> Unit): Modifier = pointerInput(Unit) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
         var moved = false
@@ -636,6 +830,8 @@ object EditorTags {
     const val FORM = "editor-form"
     const val FROZEN = "editor-frozen"
     const val TITLE = "editor-title"
+    /** The title with the language beside it, or under it where the line is too narrow for both. */
+    const val TITLE_ROW = "editor-title-row"
     /** The marks of FLOW-028: a part left below the minimum or over a limit. */
     const val TITLE_MARK = "editor-title-mark"
     const val LANGUAGE_MARK = "editor-language-mark"
@@ -676,20 +872,21 @@ object EditorTags {
     fun ingredientName(position: Int) = "editor-ingredient-$position-name"
     fun ingredientQuantity(position: Int) = "editor-ingredient-$position-quantity"
     fun ingredientUnit(position: Int) = "editor-ingredient-$position-unit"
+    /** The removal among the actions of the row's sheet. */
     fun ingredientRemove(position: Int) = "editor-ingredient-$position-remove"
-    fun ingredientMenu(position: Int) = "editor-ingredient-$position-menu"
     fun ingredientHandle(position: Int) = "editor-ingredient-$position-handle"
     fun ingredientHandleIcon(position: Int) = "editor-ingredient-$position-handle-icon"
+    /** An action of the row's sheet: moving it, putting a row or a heading beside it. */
     fun ingredientAction(position: Int, action: RowAction) = "editor-ingredient-$position-${action.tag}"
     fun ingredientError(position: Int) = "editor-ingredient-$position-error"
     fun ingredientWarning(position: Int) = "editor-ingredient-$position-warning"
     /** "Add group" under the ingredient list, and the parts of the heading at [index] of the groups (DOM-022). */
     const val GROUP_ADD = "editor-group-add"
     fun group(index: Int) = "editor-group-$index"
+    /** The heading's name field, in its sheet. */
     fun groupName(index: Int) = "editor-group-$index-name"
     fun groupMark(index: Int) = "editor-group-$index-mark"
     fun groupRemove(index: Int) = "editor-group-$index-remove"
-    fun groupMenu(index: Int) = "editor-group-$index-menu"
     fun groupAction(index: Int, action: RowAction) = "editor-group-$index-${action.tag}"
     fun groupHandle(index: Int) = "editor-group-$index-handle"
     fun groupHandleIcon(index: Int) = "editor-group-$index-handle-icon"
@@ -702,7 +899,6 @@ object EditorTags {
     fun step(position: Int) = "editor-step-$position"
     fun stepText(position: Int) = "editor-step-$position-text"
     fun stepRemove(position: Int) = "editor-step-$position-remove"
-    fun stepMenu(position: Int) = "editor-step-$position-menu"
     fun stepHandle(position: Int) = "editor-step-$position-handle"
     fun stepHandleIcon(position: Int) = "editor-step-$position-handle-icon"
     fun stepAction(position: Int, action: RowAction) = "editor-step-$position-${action.tag}"

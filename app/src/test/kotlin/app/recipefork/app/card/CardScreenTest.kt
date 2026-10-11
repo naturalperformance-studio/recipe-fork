@@ -27,6 +27,7 @@ import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks
@@ -80,6 +81,8 @@ class CardScreenTest {
         val steps: String,
         val unnamed: String,
         val missing: String,
+        val missingHeadline: String,
+        val missingBack: String,
         /** The sample recipe's lines, in order: name, then quantity. */
         val lines: List<List<String>>,
     )
@@ -94,11 +97,13 @@ class CardScreenTest {
         steps = "Steps",
         unnamed = "Unnamed ingredient",
         missing = "This recipe is no longer in this recipe book.",
+        missingHeadline = "Recipe not found",
+        missingBack = "Back to the book",
         lines = listOf(
             listOf("chicken", "1.5 kg"),
             listOf("Smoked paprika", "½ tsp"),
             listOf("chicken wings, trimmed", "6 pc"),
-            listOf("Salt", "to taste"),
+            listOf("Salt — to taste"),
             listOf("Water", "750 ml"),
         ),
     )
@@ -113,11 +118,13 @@ class CardScreenTest {
         steps = "Шаги",
         unnamed = "Ингредиент без названия",
         missing = "Этого рецепта больше нет в этой книге рецептов.",
+        missingHeadline = "Рецепт не найден",
+        missingBack = "Назад к книге",
         lines = listOf(
             listOf("курица", "1,5 кг"),
             listOf("Smoked paprika", "½ ч. л."),
             listOf("крылышки, trimmed", "6 шт"),
-            listOf("Salt", "по вкусу"),
+            listOf("Salt — по вкусу"),
             listOf("Water", "750 мл"),
         ),
     )
@@ -203,7 +210,7 @@ class CardScreenTest {
         compose.onNodeWithTag(CardTags.TITLE).assertHeading()
         assertEquals(listOf(w.servings), compose.textsOf(CardTags.SERVINGS))
         // The ingredients in their order, each by its dictionary label in the interface language or its free-text
-        // name, with its quantity as `QuantityText` writes it; "to taste" is the unit alone.
+        // name, with its quantity as `QuantityText` writes it; "to taste" follows the name after a dash (T-217).
         (0..4).forEach { assertEquals(w.lines[it], compose.textsOf(CardTags.ingredient(it))) }
         (0 until 4).forEach { assertTrue(top(CardTags.ingredient(it)) < top(CardTags.ingredient(it + 1))) }
         // The steps, numbered, in their order.
@@ -214,8 +221,8 @@ class CardScreenTest {
         val headings = compose.onAllNodes(isHeading() and hasAnyAncestor(hasTestTag(CardTags.CONTENT)))
             .fetchSemanticsNodes().map { it.config[SemanticsProperties.Text].joinToString("") { t -> t.text } }
         assertEquals(listOf("Roast chicken", w.ingredients, w.steps), headings)
-        // Title, serving count, ingredients, steps, description, one under the other on one scrolling screen.
-        val order = listOf(CardTags.TITLE, CardTags.SERVINGS, CardTags.INGREDIENTS, CardTags.STEPS, CardTags.DESCRIPTION)
+        // Title, description, serving count, ingredients, steps, one under the other on one scrolling screen.
+        val order = listOf(CardTags.TITLE, CardTags.DESCRIPTION, CardTags.SERVINGS, CardTags.INGREDIENTS, CardTags.STEPS)
         order.zipWithNext().forEach { (above, below) -> assertTrue("$above above $below", top(above) < top(below)) }
         assertEquals(1, compose.onAllNodes(hasScrollAction() and hasTestTag(CardTags.CONTENT)).fetchSemanticsNodes().size)
         // Every text on it is this language's own, or the recipe's.
@@ -245,7 +252,8 @@ class CardScreenTest {
         compose.onNodeWithTag(CardTags.TITLE).assertExists()
     }
 
-    // An incomplete or off-grid row is shown by its name and whatever it holds, and the card never fails for it.
+    // An incomplete or off-grid row is shown by its name and whatever it holds — a row with no amount yet by its name
+    // alone, no unit (T-217) — and the card never fails for it.
     @Test
     fun incompleteAndOffGridRowsAreShownByNameAndWhatTheyHold() {
         val recipe = save(
@@ -262,7 +270,7 @@ class CardScreenTest {
             ),
         )
         show(recipe.id)
-        assertEquals(listOf("Flour", "g"), compose.textsOf(CardTags.ingredient(0)))
+        assertEquals(listOf("Flour"), compose.textsOf(CardTags.ingredient(0)))
         assertEquals(listOf("Sugar", "tsp"), compose.textsOf(CardTags.ingredient(1)))
         assertEquals(listOf("Eggs", "pc"), compose.textsOf(CardTags.ingredient(2)))
         assertEquals(listOf(english.unnamed), compose.textsOf(CardTags.ingredient(3)))
@@ -323,7 +331,8 @@ class CardScreenTest {
         assertEquals(1, backs)
     }
 
-    // A recipe the book no longer holds: a short message and the back action, never a crash.
+    // A recipe the book no longer holds: the app's empty state — a picture, a headline, the message — and a way back
+    // to the book beside the bar's back, never a crash.
     @Test
     fun aRecipeTheBookDoesNotHoldShowsAMessageAndTheBackAction() = missing(english)
 
@@ -333,11 +342,17 @@ class CardScreenTest {
 
     private fun missing(w: Words) {
         show(RecipeId("not-in-this-book"))
-        assertEquals(listOf(w.missing), compose.textsOf(CardTags.MISSING))
-        assertEquals(listOf(CardTags.BACK), interactiveTags())
+        assertEquals(listOf(w.missingHeadline), compose.textsOf(LibraryTags.emptyHeadline(CardTags.MISSING)))
+        assertEquals(listOf(w.missing), compose.textsOf(LibraryTags.emptySentence(CardTags.MISSING)))
+        compose.onNodeWithTag(LibraryTags.emptyPicture(CardTags.MISSING), useUnmergedTree = true).assertExists()
+        assertEquals(listOf(w.missingBack), compose.textsOf(CardTags.MISSING_BACK))
+        assertEquals(listOf(CardTags.BACK, CardTags.MISSING_BACK), interactiveTags())
+        compose.assertCardTarget(CardTags.MISSING_BACK)
         compose.onNodeWithTag(CardTags.CONTENT).assertDoesNotExist()
         compose.onNodeWithTag(CardTags.BACK).performClick()
         assertEquals(1, backs)
+        compose.onNodeWithTag(CardTags.MISSING_BACK).performClick()
+        assertEquals(2, backs)
         LocalizationChecks.assertScreenTextFromResources(compose, context)
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, context)
     }

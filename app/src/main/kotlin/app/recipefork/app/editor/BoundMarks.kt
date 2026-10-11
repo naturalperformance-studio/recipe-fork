@@ -13,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
@@ -22,7 +21,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,8 +38,6 @@ import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.scaling.QuantityText
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.CoroutineScope
 
 /**
  * The mark of a part the author left below DOM-006's minimum or over a limit of DOM-012 (FLOW-028), if [part] carries
@@ -94,43 +90,6 @@ internal fun keepingTheFocusedFieldInPlace(gap: Dp): Modifier {
     return Modifier.onPlaced { placed.value = it }
 }
 
-/**
- * Something above the field the author is in that gets shorter — a field whose supporting text goes — would pull that
- * field up by as much; once the editor is laid out shorter, the editor scrolls back by the height it lost. Its
- * [modifier] goes on the thing, and [shrinking] is called as what it loses is taken away.
- */
-internal class Shrinking(private val scroll: EditorScroll?, private val scope: CoroutineScope) {
-    private var top = 0f
-    private var height = 0
-
-    val modifier: Modifier = Modifier.onGloballyPositioned {
-        top = it.positionInRoot().y
-        height = it.size.height
-    }
-
-    fun shrinking() {
-        val scroll = scroll ?: return
-        val stood = top
-        val tall = height
-        scope.launch {
-            // Once the frame it shrank in has been laid out, focus moved included.
-            withFrameNanos {}
-            withFrameNanos {}
-            val lost = tall - height
-            val focused = scroll.focused?.takeIf { it.isAttached } ?: return@launch
-            if (lost > 0 && stood <= focused.positionInRoot().y) scroll.state.dispatchRawDelta(-lost.toFloat())
-        }
-    }
-}
-
-/** A [Shrinking] in the editor the composition is in. */
-@Composable
-internal fun rememberShrinking(): Shrinking {
-    val scroll = LocalEditorScroll.current
-    val scope = rememberCoroutineScope()
-    return remember(scroll, scope) { Shrinking(scroll, scope) }
-}
-
 /** What the mark of [part] says while it stands at [bound]. */
 @Composable
 private fun boundText(part: RecipePart, bound: Bound): String = when (bound) {
@@ -142,8 +101,8 @@ private fun boundText(part: RecipePart, bound: Bound): String = when (bound) {
             RecipePart.Ingredients -> R.string.editor_mark_ingredients_missing
             RecipePart.Steps -> R.string.editor_mark_steps_missing
             // No minimum asks anything of these; within DOM-012 they are never missing.
-            RecipePart.Description, is RecipePart.StepText, is RecipePart.TimerName, is RecipePart.IngredientNote,
-            is RecipePart.GroupName, is RecipePart.EquipmentName,
+            RecipePart.Description, is RecipePart.StepText, is RecipePart.StepNote, is RecipePart.TimerName,
+            is RecipePart.IngredientNote, is RecipePart.GroupName, is RecipePart.EquipmentName,
             -> return ""
         },
     )
@@ -151,8 +110,8 @@ private fun boundText(part: RecipePart, bound: Bound): String = when (bound) {
         when (part) {
             RecipePart.Ingredients -> R.string.editor_mark_ingredients_over
             RecipePart.Steps -> R.string.editor_mark_steps_over
-            RecipePart.Title, RecipePart.Description, is RecipePart.StepText, is RecipePart.TimerName, is RecipePart.IngredientNote,
-            is RecipePart.GroupName, is RecipePart.EquipmentName,
+            RecipePart.Title, RecipePart.Description, is RecipePart.StepText, is RecipePart.StepNote, is RecipePart.TimerName,
+            is RecipePart.IngredientNote, is RecipePart.GroupName, is RecipePart.EquipmentName,
             -> R.string.editor_mark_characters_over
             // No limit of DOM-012 applies to these.
             RecipePart.Language, RecipePart.Servings -> return ""

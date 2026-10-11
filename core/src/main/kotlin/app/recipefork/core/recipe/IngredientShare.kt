@@ -25,24 +25,33 @@ sealed interface ShareReading {
 
     /** A value the field would hold, but more than the ingredient's whole quantity. */
     data object MoreThanWhole : ShareReading
+
+    /**
+     * The ingredient offers no part as it stands ([IngredientShares.offered]): nothing typed is read, and nothing is
+     * refused for a grid it does not have.
+     */
+    data object NotOffered : ShareReading
 }
 
 /** How a part of an ingredient is entered, checked, and read at a scale. */
 object IngredientShares {
-    /** Whether [ingredient] offers a part: it holds a quantity in a unit of its type; never "to taste", never empty. */
+    /**
+     * Whether [ingredient] offers a part: it holds a quantity in a unit of its type; never "to taste", never empty. A
+     * `piece` row offers one only once its divisibility is given, which sets the grid its part is read on (DOM-017).
+     */
     fun offered(ingredient: Ingredient): Boolean =
         ingredient.unitType.carriesQuantity && ingredient.unit?.type == ingredient.unitType &&
-            ingredient.quantity?.let { it.signum() > 0 } == true
+            ingredient.quantity?.let { it.signum() > 0 } == true &&
+            (ingredient.unitType != UnitType.PIECE || ingredient.divisible != null)
 
     /**
      * [text] typed as a part of [ingredient], in its own unit: read like its quantity field (DOM-019), held only on its
-     * unit type's grid and above zero (DOM-017), and no more than the ingredient's quantity.
+     * unit type's grid and above zero (DOM-017), and no more than the ingredient's quantity. A row that offers no part
+     * reads nothing ([ShareReading.NotOffered]).
      */
     fun read(text: String, ingredient: Ingredient): ShareReading {
-        val unit = ingredient.unit?.takeIf { offered(ingredient) }
-            ?: return ShareReading.Refused(QuantityProblem.NotAccepted(AcceptedValues.WHOLE_GRAMS))
-        val accepts = QuantityInput.accepts(unit, ingredient.divisible)
-            ?: return ShareReading.Refused(QuantityProblem.NotAccepted(AcceptedValues.WHOLE_GRAMS))
+        val unit = ingredient.unit?.takeIf { offered(ingredient) } ?: return ShareReading.NotOffered
+        val accepts = QuantityInput.accepts(unit, ingredient.divisible) ?: return ShareReading.NotOffered
         val value = when (val reading = QuantityInput.read(text)) {
             QuantityReading.Empty -> return ShareReading.Empty
             QuantityReading.Separators -> return ShareReading.Refused(QuantityProblem.Separators)

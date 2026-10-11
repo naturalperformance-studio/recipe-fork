@@ -145,11 +145,12 @@ class EditorControlsTest {
         assertTrue(image(EditorTags.STEP_ADD).draws(scheme.secondaryContainer))
     }
 
-    // The unit is Material 3's exposed drop-down: a read-only outlined field labelled Unit, holding the unit, whose tap
-    // opens the menu of units.
+    // The unit, in the row's sheet, is Material 3's exposed drop-down: a read-only outlined field labelled Unit, holding
+    // the unit, whose tap opens the menu of units.
     @Test
     fun theUnitIsAReadOnlyFieldOverItsMenu() {
         open()
+        compose.openIngredient(0)
         val node = compose.onNodeWithTag(EditorTags.ingredientUnit(0)).performScrollTo().fetchSemanticsNode()
         assertEquals(context.getString(R.string.editor_unit_gram), node.config[SemanticsProperties.EditableText].text)
         assertFalse("not typed into", node.config.contains(SemanticsActions.SetText))
@@ -159,14 +160,20 @@ class EditorControlsTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(QuantityUnit.KILOGRAM)), PATIENCE_MS)
     }
 
-    // Scenario 3: removing an ingredient row, a step or a timer is drawn in the error colour; the row's menu is not.
+    // Scenario 3: removing an ingredient row — in its sheet —, a step or a timer is drawn in the error colour; the
+    // sheet's other actions are not.
     @Test
     fun theRemovalsAreInTheErrorColour() {
         open()
-        listOf(EditorTags.ingredientRemove(0), EditorTags.stepRemove(0), EditorTags.timerRemove(0)).forEach { tag ->
+        // A step's removal and its timer's are in its sheet.
+        compose.openStep(0)
+        listOf(EditorTags.stepRemove(0), EditorTags.timerRemove(0)).forEach { tag ->
             assertTrue("$tag in the error colour", image(tag).draws(scheme.error))
         }
-        assertFalse(image(EditorTags.ingredientMenu(0)).draws(scheme.error))
+        compose.closeStep()
+        compose.openIngredient(0)
+        assertTrue("the row's removal in the error colour", image(EditorTags.ingredientRemove(0)).draws(scheme.error))
+        assertFalse(image(EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE)).draws(scheme.error))
     }
 
     // Scenario 1: a corner size changed in app_theme.xml reaches an editor button, whose shape is the theme's.

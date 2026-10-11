@@ -106,7 +106,8 @@ fun main(args: Array<String>) {
             val dictionaries = result.dictionaries
             println(
                 "$ASSET: ${dictionaries.ingredients.size} ingredients (${dictionaries.ingredients.count { !it.removed }} live), " +
-                    "${dictionaries.tags.size} tags, version ${dictionaries.version}",
+                    "${dictionaries.tags.size} tags, ${dictionaries.equipment.size} equipment entries " +
+                    "(${dictionaries.equipment.count { !it.removed }} live), version ${dictionaries.version}",
             )
         }
     }

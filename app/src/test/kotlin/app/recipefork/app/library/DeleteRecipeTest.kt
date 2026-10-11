@@ -121,6 +121,7 @@ class DeleteRecipeTest {
         /** A recipe's title written in the language. */
         val recipe: String,
         val delete: String,
+        /** What the book says once a recipe is deleted, its title in place of `%s` (T-217). */
         val notice: String,
         val undo: String,
         val empty: String,
@@ -130,7 +131,7 @@ class DeleteRecipeTest {
     private val english = Words(
         recipe = "Soup",
         delete = "Delete",
-        notice = "Recipe deleted",
+        notice = "“%s” deleted",
         undo = "Undo",
         empty = "Nothing written here yet",
         write = "New recipe",
@@ -139,7 +140,7 @@ class DeleteRecipeTest {
     private val russian = Words(
         recipe = "Суп",
         delete = "Удалить",
-        notice = "Рецепт удалён",
+        notice = "Рецепт «%s» удалён",
         undo = "Вернуть",
         empty = "Здесь пока ничего не написано",
         write = "Новый рецепт",
@@ -203,7 +204,7 @@ class DeleteRecipeTest {
     private fun delete(recipe: Recipe, w: Words = english) {
         bringIntoView(recipe)
         compose.chooseEntryAction(recipe.id.value, LibraryTags.delete(recipe.id.value))
-        compose.awaitRemovalNotice(w.notice, w.undo)
+        compose.awaitRemovalNotice(w.notice.format(recipe.title), w.undo)
     }
 
     private fun stored(recipe: Recipe) = runBlocking { recipes.get(recipe.id) }
@@ -288,7 +289,7 @@ class DeleteRecipeTest {
         compose.openEntryMenu(recipe.id.value)
         assertEquals(listOf(w.delete), compose.textsOf(LibraryTags.delete(recipe.id.value)))
         compose.onNodeWithTag(LibraryTags.delete(recipe.id.value)).performClick()
-        compose.awaitRemovalNotice(w.notice, w.undo)
+        compose.awaitRemovalNotice(w.notice.format(recipe.title), w.undo)
         assertEquals(0, compose.onAllNodes(isDialog()).fetchSemanticsNodes().size)
         awaitGone(recipe)
         val content = setOf(w.recipe)

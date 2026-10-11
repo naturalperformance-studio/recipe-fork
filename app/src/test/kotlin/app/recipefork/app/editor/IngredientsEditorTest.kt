@@ -136,8 +136,10 @@ class IngredientsEditorTest {
 
     private fun exists(tag: String): Boolean = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
+    /** Adds a row by "Add ingredient", which opens its sheet: any sheet open before is closed first. */
     private fun addIngredient(): Int {
-        val position = compose.onAllNodes(hasTestTagStartingWith("editor-ingredient-") and hasTestTagEndingWith("-name"))
+        compose.closeIngredient()
+        val position = compose.onAllNodes(hasTestTagStartingWith("editor-ingredient-") and hasTestTagEndingWith("-line"))
             .fetchSemanticsNodes().size
         compose.onNodeWithTag(EditorTags.INGREDIENT_ADD).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredientName(position)), PATIENCE_MS)
@@ -145,18 +147,28 @@ class IngredientsEditorTest {
     }
 
     private fun typeQuantity(position: Int, text: String) {
+        compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientQuantity(position)).performScrollTo().performTextReplacement(text)
         compose.waitForIdle()
     }
 
-    /** Types [text] into the quantity field and leaves the field by the keyboard's action. */
+    /** Types [text] into the quantity field and leaves the field for the note, above it in the row's sheet. */
     private fun enterQuantity(position: Int, text: String) {
         typeQuantity(position, text)
-        compose.onNodeWithTag(EditorTags.ingredientQuantity(position)).performImeAction()
+        leaveQuantity(position)
+    }
+
+    /**
+     * Leaves the quantity field of the open sheet for its note. (Its keyboard action, Next, opens the unit's menu: the
+     * keyboard test follows that.)
+     */
+    private fun leaveQuantity(position: Int) {
+        compose.onNodeWithTag(IngredientNoteTags.field(position)).performSemanticsAction(SemanticsActions.RequestFocus)
         compose.waitForIdle()
     }
 
     private fun openUnits(position: Int) {
+        compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientUnit(position)).performScrollTo().performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(QuantityUnit.GRAM)), PATIENCE_MS)
     }
@@ -168,7 +180,10 @@ class IngredientsEditorTest {
         compose.waitForIdle()
     }
 
-    private fun unitShown(position: Int): String = compose.textsOf(EditorTags.ingredientUnit(position)).last()
+    private fun unitShown(position: Int): String {
+        compose.openIngredient(position)
+        return compose.textsOf(EditorTags.ingredientUnit(position)).last()
+    }
 
     private fun hasTestTagStartingWith(prefix: String) = SemanticsMatcher("tag starts with $prefix") {
         it.config.getOrElseNullable(SemanticsProperties.TestTag) { null }?.startsWith(prefix) == true
@@ -228,27 +243,45 @@ class IngredientsEditorTest {
         assertFalse(isMarkedAsError(EditorTags.SERVINGS))
     }
 
-    // FLOW-023 (1, 7): a row is exactly three fields, and no unit type is ever shown.
+    // FLOW-023 (1, 7): a row's sheet holds exactly three fields and the note, and no unit type is ever shown. The row
+    // itself holds no field and no action: its line opens the sheet, which holds the row's actions.
     @Test
     fun addIngredientAppendsARowOfExactlyThreeFieldsAndNoUnitType() {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.ingredient(0)).assertDoesNotExist()
         addIngredient()
         assertEquals(1, stored(id).ingredients.size)
-        val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(0)))
-        // Two fields take text — the ingredient and the quantity — and the third is the unit, chosen from a list; beside
-        // them, the optional note on how the ingredient is prepared (DOM-023).
-        val textFields = compose.onAllNodes(inRow and hasSetTextAction()).fetchSemanticsNodes()
+        val inSheet = hasAnyAncestor(hasTestTag(IngredientSheetTags.SHEET))
+        // Two fields take text — the ingredient and the quantity — and the third is the unit, chosen from a list; after
+        // them, the optional note on how the ingredient is prepared (DOM-023; T-218: the amount before the note).
+        val textFields = compose.onAllNodes(inSheet and hasSetTextAction()).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }
-        assertEquals(listOf(EditorTags.ingredientName(0), IngredientNoteTags.field(0), EditorTags.ingredientQuantity(0)), textFields)
-        val actions = compose.onAllNodes(inRow and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            .map { it.config[SemanticsProperties.TestTag] }.toSet()
+        assertEquals(listOf(EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), IngredientNoteTags.field(0)), textFields)
+        // Every control of the sheet, each tagged — it has no drag handle — in order: Done, then the fields; a row just
+        // added offers no actions while it holds nothing (T-218).
+        fun controls() = compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
+            .map { it.config[SemanticsProperties.TestTag] }
+        val fields = listOf(
+            IngredientSheetTags.DONE, EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), EditorTags.ingredientUnit(0),
+            IngredientNoteTags.field(0),
+        )
+        assertEquals(fields, controls())
+        // Once it holds something, the row's actions follow the fields; the only row moves nowhere.
+        compose.onNodeWithTag(IngredientNoteTags.field(0)).performTextInput("sifted")
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.ingredientRemove(0))).fetchSemanticsNodes().isNotEmpty() }
         assertEquals(
-            setOf(
-                EditorTags.ingredientName(0), IngredientNoteTags.field(0), EditorTags.ingredientQuantity(0), EditorTags.ingredientUnit(0),
-                EditorTags.ingredientRemove(0), EditorTags.ingredientMenu(0),
+            fields + listOf(
+                EditorTags.ingredientAction(0, RowAction.INSERT_ABOVE),
+                EditorTags.ingredientAction(0, RowAction.INSERT_BELOW), EditorTags.ingredientAction(0, RowAction.GROUP_ABOVE),
+                EditorTags.ingredientRemove(0),
             ),
-            actions,
+            controls(),
+        )
+        val inRow = hasAnyAncestor(hasTestTag(EditorTags.ingredient(0)))
+        assertEquals(0, compose.onAllNodes(inRow and hasSetTextAction()).fetchSemanticsNodes().size)
+        assertEquals(
+            listOf(IngredientSheetTags.line(0)),
+            compose.onAllNodes(inRow and AccessibilityChecks.isInteractive).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] },
         )
         assertEquals(string(R.string.editor_ingredient_unit), compose.textsOf(EditorTags.ingredientUnit(0)).first())
 
@@ -293,8 +326,10 @@ class IngredientsEditorTest {
         addIngredient()
         openUnits(0)
         val offered = compose.onAllNodes(hasTestTagStartingWith("editor-unit-")).fetchSemanticsNodes()
-        assertEquals(QuantityUnit.entries.map { EditorTags.unitOption(it) }, offered.map { it.config[SemanticsProperties.TestTag] })
-        assertEquals(names, offered.map { node -> node.config[SemanticsProperties.Text].joinToString("") { it.text } })
+        // Listed with the kitchen's usual units first (T-218); each still named as DOM-016 names it.
+        val byUnit = offered.associate { node -> node.config[SemanticsProperties.TestTag] to node.config[SemanticsProperties.Text].joinToString("") { it.text } }
+        assertEquals(MENU_UNITS.map { EditorTags.unitOption(it) }, offered.map { it.config[SemanticsProperties.TestTag] })
+        assertEquals(names, QuantityUnit.entries.map { byUnit[EditorTags.unitOption(it)] })
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(QuantityUnit.GRAM)), PATIENCE_MS)
         // Each unit chosen stores its own unit and the unit type the table gives it.
@@ -489,8 +524,7 @@ class IngredientsEditorTest {
             typeQuantity(0, typed)
             // While typing, the field keeps what was typed.
             assertEquals(typed, fieldText(EditorTags.ingredientQuantity(0)))
-            compose.onNodeWithTag(EditorTags.ingredientQuantity(0)).performImeAction()
-            compose.waitForIdle()
+            leaveQuantity(0)
             assertEquals(typed, written, fieldText(EditorTags.ingredientQuantity(0)))
             compose.onNodeWithTag(EditorTags.ingredientError(0), useUnmergedTree = true).assertDoesNotExist()
             assertFalse(isMarkedAsError(EditorTags.ingredientQuantity(0)))
@@ -579,21 +613,25 @@ class IngredientsEditorTest {
             compose.onNodeWithTag(EditorTags.ingredientName(position)).performTextInput(name)
             typeQuantity(position, quantity)
         }
-        // The remove control is an icon named for its row: the screen reader reads that name.
-        assertEquals(string(R.string.editor_ingredient_remove_action, 1), AccessibilityChecks.announcedLabel(node(EditorTags.ingredientRemove(0))))
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
-        compose.waitForIdle()
+        compose.closeIngredient()
+        // The removal is the last action of the row's sheet, and says what it removes.
+        compose.openIngredient(0)
+        assertEquals(listOf(string(R.string.editor_ingredient_remove)), compose.textsOf(EditorTags.ingredientRemove(0)))
+        compose.removeIngredient(0)
         val rows = stored(id).ingredients
         assertEquals(listOf("flour", "water"), rows.map { it.freeTextName })
         assertEquals(listOf(0, 1), rows.map { it.position })
         assertEquals(listOf(Rational.of(500), Rational.of(300)), rows.map { it.quantity })
+        assertEquals(listOf("500 g flour", "300 g water"), (0..1).map { compose.ingredientLine(it) })
+        compose.openIngredient(0)
         assertEquals("flour", fieldText(EditorTags.ingredientName(0)))
         assertEquals("500", fieldText(EditorTags.ingredientQuantity(0)))
+        compose.openIngredient(1)
         assertEquals("300", fieldText(EditorTags.ingredientQuantity(1)))
+        compose.closeIngredient()
         compose.onNodeWithTag(EditorTags.ingredient(2)).assertDoesNotExist()
-        compose.onNodeWithTag(EditorTags.ingredientRemove(1)).performScrollTo().performClick()
-        compose.onNodeWithTag(EditorTags.ingredientRemove(0)).performScrollTo().performClick()
-        compose.waitForIdle()
+        compose.removeIngredient(1)
+        compose.removeIngredient(0)
         assertEquals(emptyList<Ingredient>(), stored(id).ingredients)
         compose.onNodeWithTag(EditorTags.ingredient(0)).assertDoesNotExist()
     }
@@ -605,7 +643,8 @@ class IngredientsEditorTest {
         val id = writeANewRecipe()
         compose.onNodeWithTag(EditorTags.SERVINGS).performTextInput("4")
         // A complete row, a row with no quantity, one off its grid, one that reads as no number, one to taste and a
-        // piece whose divisibility is not given; and a row with nothing in it.
+        // piece whose divisibility is not given; and a row with nothing in it — one no longer new, which closing its
+        // sheet does not take away.
         val rows = listOf(
             Triple("мука", QuantityUnit.KILOGRAM, "0.5"),
             Triple("сахар", QuantityUnit.GRAM, ""),
@@ -621,6 +660,13 @@ class IngredientsEditorTest {
             if (unit != QuantityUnit.GRAM) chooseUnit(position, unit)
             if (quantity.isNotEmpty()) typeQuantity(position, quantity)
         }
+        // Named, closed, and emptied again once no longer new: closing its sheet then leaves it.
+        compose.onNodeWithTag(EditorTags.ingredientName(rows.lastIndex)).performTextInput("лук")
+        compose.closeIngredient()
+        compose.openIngredient(rows.lastIndex)
+        compose.onNodeWithTag(EditorTags.ingredientName(rows.lastIndex)).performTextReplacement("")
+        compose.closeIngredient()
+        compose.waitUntil(PATIENCE_MS) { stored(id).ingredients.size == rows.size && stored(id).ingredients.last().freeTextName == null }
         val before = stored(id)
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.backThroughTheCard()
@@ -630,16 +676,23 @@ class IngredientsEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredient(rows.lastIndex)), PATIENCE_MS)
         assertEquals("4", fieldText(EditorTags.SERVINGS))
         val shownQuantities = listOf("0,5", "", "7,5", "1 500", null, "2", "")
+        // Each row's line says what it holds, the rows whose quantity its field does not hold marked.
+        assertEquals(
+            listOf("500 г мука", "сахар", "7,5 г дрожжи", "1 500 мл вода", "соль — по вкусу", "2 шт яйца", "Новый ингредиент"),
+            rows.indices.map { compose.ingredientLine(it) },
+        )
+        assertEquals(listOf(2, 3), rows.indices.filter { exists(IngredientSheetTags.problem(it)) })
         rows.forEachIndexed { position, (name, unit, _) ->
+            compose.openIngredient(position)
             assertEquals("$position", name, fieldText(EditorTags.ingredientName(position)))
             assertEquals("$position", context.getString(unitName(unit)), unitShown(position))
             val quantity = shownQuantities[position]
             if (quantity == null) compose.onNodeWithTag(EditorTags.ingredientQuantity(position)).assertDoesNotExist()
             else assertEquals("$position", quantity, fieldText(EditorTags.ingredientQuantity(position)))
+            if (position in listOf(2, 3)) assertTrue("$position", exists(EditorTags.ingredientError(position)))
+            assertEquals("$position", position == 5, exists(EditorTags.divisibility(position)))
         }
-        assertTrue(exists(EditorTags.ingredientError(2)))
-        assertTrue(exists(EditorTags.ingredientError(3)))
-        assertTrue(exists(EditorTags.divisibility(5)))
+        compose.closeIngredient()
         val after = stored(id)
         assertEquals(before, after)
         assertEquals(4, after.servings)
@@ -672,10 +725,11 @@ class IngredientsEditorTest {
                 openDirectly(recipe.id)
                 compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.ingredient(3)), PATIENCE_MS)
                 assertEquals("$state", listOf("Порций", "4"), compose.textsOf(EditorTags.SERVINGS))
-                assertEquals("$state", listOf("мука", "500", "г"), compose.textsOf(EditorTags.ingredient(0)))
-                assertEquals("$state", listOf("сахар", "½", "ст. л."), compose.textsOf(EditorTags.ingredient(1)))
-                assertEquals("$state", listOf("соль", "по вкусу"), compose.textsOf(EditorTags.ingredient(2)))
-                assertEquals("$state", listOf("яйца", "2", "шт"), compose.textsOf(EditorTags.ingredient(3)))
+                // Each row reads as its line, as on the card.
+                assertEquals("$state", listOf("500 г мука"), compose.textsOf(EditorTags.ingredient(0)))
+                assertEquals("$state", listOf("½ ст. л. сахар"), compose.textsOf(EditorTags.ingredient(1)))
+                assertEquals("$state", listOf("соль — по вкусу"), compose.textsOf(EditorTags.ingredient(2)))
+                assertEquals("$state", listOf("2 шт яйца"), compose.textsOf(EditorTags.ingredient(3)))
                 assertEquals("$state", 0, compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
                 val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
                 assertEquals("$state", listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL), actions.map { it.config[SemanticsProperties.TestTag] })

@@ -1,6 +1,7 @@
 package app.recipefork.core.dictionary
 
 import app.recipefork.core.api.DictionariesDto
+import app.recipefork.core.api.EquipmentEntryDto
 import app.recipefork.core.api.IngredientEntryDto
 import app.recipefork.core.api.TagDto
 import kotlin.test.Test
@@ -352,5 +353,85 @@ class DictionaryBuildTest {
         // Its own label still is not its synonym.
         refused(build(ingredients("1000\tгусь\tgoose\t\t\t\tremoved\tгусь")), "produce.tsv:3", "is the entry's own label")
     }
-}
 
+    // T-201: the third dictionary, equipment, is built from equipment*.tsv with the ingredients' checks, on its own.
+    private fun equipment(vararg lines: String, name: String = "equipment.tsv", range: String = "@range 10000-10999") =
+        SourceFile(name, "$range\n" + lines.joinToString("\n") + "\n")
+
+    @Test
+    fun equipmentBuildsSortedByIdWithGroupsItemsSynonymsAndRemoval() {
+        val result = built(
+            equipment(
+                "10001\tСковорода\tFrying pan\t10000\t\tсковородка\tskillet;frypan",
+                "10000\tПосуда для плиты\tStovetop cookware",
+                "10002\tКазан\tKazan\t10000\tremoved",
+            ),
+            SourceFile("equipment-appliances.tsv", "@range 10000-10999\n10200\tДуховка\tOven\n"),
+        )
+        assertEquals(
+            listOf(
+                EquipmentEntryDto(10000, "Посуда для плиты", "Stovetop cookware"),
+                EquipmentEntryDto(10001, "Сковорода", "Frying pan", 10000, synonymsRu = listOf("сковородка"), synonymsEn = listOf("skillet", "frypan")),
+                EquipmentEntryDto(10002, "Казан", "Kazan", 10000, removed = true),
+                EquipmentEntryDto(10200, "Духовка", "Oven"),
+            ),
+            result.dictionaries.equipment,
+        )
+        assertTrue(result.dictionaries.ingredients.isEmpty())
+        assertEquals(result.dictionaries, DictionaryBuild.parseSnapshot(result.text))
+        // The version covers the equipment: another label, another version.
+        val renamed = built(equipment("10000\tПосуда для плиты\tStovetop cookware", "10001\tСковорода\tSkillet\t10000"))
+        val original = built(equipment("10000\tПосуда для плиты\tStovetop cookware", "10001\tСковорода\tFrying pan\t10000"))
+        assertEquals(original.dictionaries.digest(), original.dictionaries.version)
+        assertTrue(original.dictionaries.version != renamed.dictionaries.version)
+    }
+
+    @Test
+    fun equipmentHasItsOwnRangeAndColumns() {
+        refused(build(equipment("1000\tНож\tKnife")), "equipment.tsv:2", "outside the file's range 10000-10999")
+        refused(build(equipment("10000\tНож\tKnife", range = "@range 1000-2999")), "equipment.tsv:1", "is not one a 'equipment' file")
+        refused(build(ingredients("10000\tнож\tknife", range = "@range 10000-10999")), "produce.tsv:2", "is not one a 'produce' file")
+        // No divisibility nor factors: seven columns at most, the fifth being the removal.
+        refused(build(equipment("10000\tНож\tKnife\t\t\t\t\tg=1\t")), "equipment.tsv:2", "9 columns, at most 7")
+        refused(build(equipment("10000\tНож\tKnife\t\ttrue")), "equipment.tsv:2", "'true' in the removed column")
+    }
+
+    @Test
+    fun equipmentIsCheckedLikeTheIngredients() {
+        refused(build(equipment("10000\tНож\tKnife", "10000\tДоска\tBoard")), "equipment.tsv:3", "duplicate id 10000")
+        refused(build(equipment("10000\t\tKnife")), "equipment.tsv:2", "labelRu is blank")
+        refused(build(equipment("10000\tНож\t ")), "equipment.tsv:2", "labelEn is blank")
+        refused(build(equipment("10000\tТёрка\tGrater", "10001\tтерка\tBox grater")), "equipment.tsv:3", "labelRu 'терка'")
+        refused(
+            build(equipment("10000\tТехника\tAppliances", "10001\tБлендер\tBlender\t10000", "10002\tНасадка\tAttachment\t10001")),
+            "equipment.tsv:4",
+            "entries are two levels at most",
+        )
+        refused(build(equipment("10001\tБлендер\tBlender\t10000")), "equipment.tsv:2", "parentId 10000 names no entry")
+        refused(
+            build(equipment("10000\tСковорода\tFrying pan\t\t\tсковородка", "10001\tСковородка\tSmall pan")),
+            "equipment.tsv:2",
+            "synonymsRu 'сковородка' is the same, as the search reads it, as the label 'Сковородка'",
+        )
+        // Each dictionary is its own: an equipment label or id may also stand in the ingredients.
+        built(ingredients("1000\tнож\tknife"), equipment("10000\tНож\tKnife"))
+    }
+
+    @Test
+    fun shippedEquipmentIdsArePermanent() {
+        val previous = DictionariesDto(
+            "v",
+            emptyList(),
+            listOf(TagDto(10, "итальянская", "Italian")),
+            listOf(EquipmentEntryDto(10000, "Нож", "Knife"), EquipmentEntryDto(10001, "Доска", "Board")),
+        )
+        refused(build(equipment("10000\tНож\tKnife"), previous = previous), "dictionaries.json", "equipment id 10001")
+        refused(
+            build(equipment("10000\tНож\tKnife", "10001\tТёрка\tGrater"), previous = previous),
+            "equipment.tsv:3",
+            "id 10001 was shipped as 'Доска' / 'Board'",
+        )
+        built(equipment("10000\tНож\tKnife", "10001\tДоска\tBoard\t\tremoved"), previous = previous)
+        built(equipment("10000\tНож\tKnife", "10001\tРазделочная доска\tBoard"), previous = previous)
+    }
+}
