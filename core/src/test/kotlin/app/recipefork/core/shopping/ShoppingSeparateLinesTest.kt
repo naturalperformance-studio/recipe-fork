@@ -129,6 +129,8 @@ class ShoppingSeparateLinesTest {
             recipe(C, row(FLOUR, r(50), GRAM, qualifier = "rye")),
         ).single()
         assertMeasured(GRAM, r(350), line)
+        assertFalse(line.approximate)
+        assertTrue(line.counted.isEmpty())
         assertEquals(listOf(A, B, C), line.recipes)
     }
 

@@ -20,6 +20,7 @@ internal const val SALT = 3L
 internal const val MILK = 4L
 internal const val EGG = 5L
 internal const val PEPPER = 6L
+internal const val SUGAR = 7L
 
 /** Flour: 1 g per g, 0.6 g per ml, 130 g per cup — no pinch. Onion: 150 g a piece, indivisible. Salt: 6 g per tsp. */
 internal val MEASURES: Map<Long, EntryMeasures> = mapOf(

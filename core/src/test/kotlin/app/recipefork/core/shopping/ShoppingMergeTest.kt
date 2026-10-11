@@ -147,6 +147,53 @@ class ShoppingMergeTest {
         // 2 onions weigh 300 g, more than 100 g; 100 g is ⅔ of an onion, and onions are indivisible: 2⅔ → 3.
         val line = list(recipe(A, row(ONION, r(2), PIECE)), recipe(B, row(ONION, r(100), GRAM))).single()
         assertMeasured(PIECE, r(3), line)
-        assertEquals(listOf(CountedPart(amount(GRAM, r(100)), amount(PIECE, r(1)))), line.counted)
+        assertEquals(listOf(CountedPart(amount(GRAM, r(100)), amount(PIECE, r(1)), belowFloor = true)), line.counted)
+    }
+
+    private val sugar = mapOf(SUGAR to EntryMeasures(factors = mapOf("g" to 1.0, "tsp" to 5.0, "tbsp" to 15.0, "cup" to 240.0)))
+
+    @Test
+    fun `a part below the floor of the line's grid is noted as less than the floor - 1 cup and 1 tbsp`() {
+        // 1 tbsp is 1/16 cup: the line counts it as such (1 1/16 → 1 cup), and the note never claims ¼ cup for it.
+        val line = list(recipe(A, row(SUGAR, r(1), CUP)), recipe(B, row(SUGAR, r(1), TABLESPOON)), measures = sugar).single()
+        assertMeasured(CUP, r(1), line)
+        val part = line.counted.single()
+        assertEquals(CountedPart(amount(TABLESPOON, r(1)), amount(CUP, r(1, 4)), belowFloor = true), part)
+        assertEquals("< ¼ cup", part.countedText(InterfaceLanguage.ENGLISH))
+        assertEquals("< ¼ стакан", part.countedText(InterfaceLanguage.RUSSIAN))
+        assertEquals("1 tbsp", part.original.text(InterfaceLanguage.ENGLISH))
+    }
+
+    @Test
+    fun `parts below the floor add up to what the line counted - 1 tsp, 1 tbsp and ¼ cup are ⅓ cup`() {
+        val line = list(
+            recipe(A, row(SUGAR, r(1), TEASPOON)),
+            recipe(B, row(SUGAR, r(1), TABLESPOON)),
+            recipe(C, row(SUGAR, r(1, 4), CUP)),
+            measures = sugar,
+        ).single()
+        assertMeasured(CUP, r(1, 3), line)
+        assertEquals(listOf(true, true), line.counted.map { it.belowFloor })
+        assertEquals(listOf("< ¼ cup", "< ¼ cup"), line.counted.map { it.countedText(InterfaceLanguage.ENGLISH) })
+    }
+
+    @Test
+    fun `a part at the floor is the floor - 4 tbsp are ¼ cup`() {
+        val line = list(recipe(A, row(SUGAR, r(1), CUP)), recipe(B, row(SUGAR, r(4), TABLESPOON)), measures = sugar).single()
+        assertMeasured(CUP, r(5, 4), line)
+        val part = line.counted.single()
+        assertFalse(part.belowFloor)
+        assertEquals("¼ cup", part.countedText(InterfaceLanguage.ENGLISH))
+    }
+
+    @Test
+    fun `10 g with 2 onions is noted as less than 1 piece`() {
+        // 10 g is 1/15 of an onion: the line is 2 pieces, and the note does not say a whole onion was counted.
+        val line = list(recipe(A, row(ONION, r(2), PIECE)), recipe(B, row(ONION, r(10), GRAM))).single()
+        assertMeasured(PIECE, r(2), line)
+        val part = line.counted.single()
+        assertEquals(CountedPart(amount(GRAM, r(10)), amount(PIECE, r(1)), belowFloor = true), part)
+        assertEquals("< 1 pc", part.countedText(InterfaceLanguage.ENGLISH))
+        assertEquals("< 1 шт", part.countedText(InterfaceLanguage.RUSSIAN))
     }
 }

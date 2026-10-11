@@ -26,8 +26,24 @@ data class ShoppingAmount(val unit: QuantityUnit, val value: Rational) {
         QuantityText.of(DisplayedQuantity(unit, value, derived = false, rounding = Rounding.NONE), language)
 }
 
-/** A part of an approximate line counted in the line's unit: [original] as the recipes need it, [countedAs] in the line's unit. */
-data class CountedPart(val original: ShoppingAmount, val countedAs: ShoppingAmount)
+/**
+ * A part of an approximate line counted in the line's unit: [original] as the recipes need it, [countedAs] in the line's
+ * unit. [belowFloor] is true exactly when the part counted is less than the floor of the line's grid (SCALE-005):
+ * [countedAs] then holds that floor, and the part reads as less than it ("< ¼ cup"), since the line's total counted
+ * the part itself and not the floor.
+ */
+data class CountedPart(
+    val original: ShoppingAmount,
+    val countedAs: ShoppingAmount,
+    val belowFloor: Boolean = false,
+) {
+    /**
+     * What the part was counted as, in [language]: [countedAs] as an amount is written, or "< " and it where the part
+     * lies below the floor ("< ¼ cup", «< ¼ стакан»). The approximate mark is not part of it.
+     */
+    fun countedText(language: InterfaceLanguage): String =
+        if (belowFloor) "< ${countedAs.text(language)}" else countedAs.text(language)
+}
 
 /** How much a shopping line asks for. */
 sealed interface ShoppingQuantity {

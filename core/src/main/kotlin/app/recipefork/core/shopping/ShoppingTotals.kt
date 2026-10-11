@@ -18,7 +18,11 @@ import java.math.BigInteger
  *
  * - Every recipe's rows are scaled as the card scales them, by the exact factor of its [ScaledRecipe]; a recipe with no
  *   serving count is scaled as one serving, at one. Amounts are added as exact fractions and rounded once, on the grid
- *   of the line's unit; `exact` amounts add in their base unit.
+ *   of the line's unit; `exact` amounts add in their base unit. A line is rounded on the line's grid even from a single
+ *   row DOM-018 keeps as written: 1½ pieces of an entry now indivisible read 2, where the card shows 1½ at its
+ *   authored count.
+ * - A part counted into an approximate line is noted at its value on the line's grid; one below that grid's floor is
+ *   noted as below it ("< ¼ cup"), never as the floor, which the line's total did not count.
  * - One entry's rows in one unit (every `exact` unit of one dimension counting as one) add exactly into one line;
  *   qualifiers do not split it. Where its rows stand in several such units, every unit the entry has a measure for
  *   merges into one approximate line in the unit of the largest part — by the entry's grams per unit, the first to
@@ -106,7 +110,12 @@ object ShoppingTotals {
             quantity = measured(target.unit, total, target.divisible),
             approximate = true,
             counted = others.map { (group, inTarget) ->
-                CountedPart(amount(group.unit, group.sum, group.divisible), amount(target.unit, inTarget, target.divisible))
+                val grid = checkNotNull(RoundingGrid.of(target.unit, target.divisible))
+                CountedPart(
+                    original = amount(group.unit, group.sum, group.divisible),
+                    countedAs = amount(target.unit, inTarget, target.divisible),
+                    belowFloor = inTarget < grid.floor,
+                )
             },
             sources = groups.flatMap { it.parts },
         )

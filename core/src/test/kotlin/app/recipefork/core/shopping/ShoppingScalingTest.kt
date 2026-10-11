@@ -98,6 +98,29 @@ class ShoppingScalingTest {
     }
 
     @Test
+    fun `a piece line takes halves where any of its rows is divisible`() {
+        // An entry that says nothing: each row's own answer. 3 divisible pieces for 4 at 2 are 1½; 1 indivisible is 1.
+        val line = list(
+            recipe(A, row(42, r(3), PIECE, divisible = true), requested = r(2)),
+            recipe(B, row(42, r(1), PIECE, divisible = false)),
+            measures = emptyMap(),
+        ).single()
+        // 2½ on the halves grid; the whole-piece grid would read 3.
+        assertMeasured(PIECE, r(5, 2), line)
+    }
+
+    @Test
+    fun `a row kept as written is rounded on the line's grid - 1½ pieces of an entry now indivisible read 2`() {
+        // DOM-018: written when the entry was divisible, so the card shows 1½ at the authored count; the list's line is
+        // on the entry's grid now.
+        val written = row(42, r(3, 2), PIECE, divisible = true)
+        val indivisible = mapOf(42L to EntryMeasures(divisible = false))
+        val card = ScaledRecipe.of(4, listOf(checkNotNull(Scaling.authored(written, false))), r(4)).lines.single()
+        assertEquals(r(3, 2), card.quantity.value)
+        assertMeasured(PIECE, r(2), list(recipe(A, written), measures = indivisible).single())
+    }
+
+    @Test
     fun `300 g and 1_2 kg are one line of 1_5 kg`() {
         val line = list(recipe(A, row(FLOUR, r(300), GRAM)), recipe(B, row(FLOUR, r(6, 5), KILOGRAM))).single()
         assertMeasured(GRAM, r(1500), line)
