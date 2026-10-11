@@ -191,11 +191,18 @@ class BookAtLargeTextTest {
         val least = with(input.density) { tabStyle!!.fontSize.value.dp.toPx() }
         val drawn = sizes.first()
         if (drawn >= full - 0.5f || drawn <= least + 0.5f) return
-        // Made smaller: at a size a little larger, some tab's widest word would no longer fit its room.
+        // Made smaller only because some tab's widest word does not fit its room at the tabs' style...
         val measurer = TextMeasurer(input.fontFamilyResolver, input.density, input.layoutDirection)
-        val larger = input.style.copy(fontSize = input.style.fontSize * 1.05f)
-        val tooWide = layouts.any { widestWord(listOf(it.layoutInput.text.text), larger, measurer) > it.layoutInput.constraints.maxWidth }
-        assertTrue("$shownMode, the tabs drawn at $drawn px, smaller than they need", tooWide)
+        fun widest(layout: TextLayoutResult, style: TextStyle) = widestWord(listOf(layout.layoutInput.text.text), style, measurer)
+        val atFull = input.style.copy(fontSize = tabStyle!!.fontSize, lineHeight = tabStyle!!.lineHeight)
+        assertTrue(
+            "$shownMode, the tabs drawn at $drawn px though every word fits at $full px",
+            layouts.any { widest(it, atFull) > it.layoutInput.constraints.maxWidth },
+        )
+        // ...and no smaller than the largest size at which every tab's widest word fits, but for fitWords' margin: a
+        // word's width grows with its size in pixels.
+        val fits = layouts.minOf { drawn * it.layoutInput.constraints.maxWidth / widest(it, it.layoutInput.style) }
+        assertTrue("$shownMode, the tabs drawn at $drawn px where $fits px fit", drawn >= fits * 0.95f)
     }
 
     @Test
