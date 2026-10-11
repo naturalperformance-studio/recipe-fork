@@ -76,6 +76,13 @@ import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepText
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.runtime.snapshotFlow
+import app.recipefork.app.timer.rememberCardTimers
 
 /**
  * The step a card is to be shown at, once: the step of a timer whose notification the reader tapped (FLOW-013 (4)).
@@ -131,6 +138,15 @@ internal fun StepsList(
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }
+    // Whether the card has read the recipe's timers: until then a step marked done cannot tell whether a timer of its
+    // own holds it open, so it neither animates its fold nor is brought into view.
+    val card = rememberCardTimers()
+    var settled by remember(timers) { mutableStateOf(false) }
+    LaunchedEffect(timers) {
+        combine(card.store.ofRecipe(card.book(), recipeId), snapshotFlow { timers.held }) { stored, read -> stored.keys == read.keys }
+            .first { it }
+        settled = true
+    }
     val cooking = mode == CardMode.COOKING
     // Each step can be brought into view: by a timer's notification, or as the next to do once one is marked.
     val requesters = remember { HashMap<Int, BringIntoViewRequester>() }
@@ -143,6 +159,27 @@ internal fun StepsList(
         val height = places?.placeOf(CardPlaces.step(position))?.height
         requester(position).bringIntoView(height?.let { Rect(Offset.Zero, Size(1f, it + covered)) })
     }
+
+    /**
+     * Brings the step at [position] into view, following it a frame at a time while the step at [changing] still
+     * changes its height — folding or unfolding — and once more as it has settled: a step that folds above another
+     * pulls it up, where its top is scrolled off out of view with it; a step that unfolds grows below where it was
+     * brought.
+     */
+    suspend fun follow(position: Int, changing: Int) = coroutineScope {
+        fun height() = places?.placeOf(CardPlaces.step(changing))?.height
+        var height = height()
+        var still = 0
+        var frames = 0
+        while (still < FOLD_SETTLED_FRAMES && frames++ < FOLD_MOST_FRAMES) {
+            launch { bring(position) }
+            withFrameNanos { }
+            val now = height()
+            still = if (now == height) still + 1 else 0
+            height = now
+        }
+        bring(position)
+    }
     // A timer's step is shown on Cooking, where the timer runs: the card opens on that tab for it.
     val toShow = LocalStepToShow.current?.takeIf { cooking }
     val pending = toShow?.pending?.collectAsState()?.value?.takeIf { it.recipeId == recipeId.value }
@@ -150,9 +187,11 @@ internal fun StepsList(
     LaunchedEffect(pending) {
         if (pending == null) return@LaunchedEffect
         if (targetShown) {
-            // Once laid out, the step comes into view.
+            // Once its timers are read, so that a step marked done stands unfolded by the timer it was opened for, and
+            // once laid out, the step comes into view.
+            snapshotFlow { settled }.first { it }
             withFrameNanos { }
-            bring(pending.stepPosition)
+            follow(pending.stepPosition, changing = pending.stepPosition)
         }
         toShow.shown()
     }
@@ -163,23 +202,8 @@ internal fun StepsList(
         val (marked, position) = next ?: return@LaunchedEffect
         // Once the mark is drawn; the bringing animates, and a scroll of the reader's own stops it.
         withFrameNanos { }
-        if (!scrolling()) {
-            // The step marked folds over the frames that follow, pulling up what comes after it: where its top is
-            // scrolled off above, the next step would go up out of view with it. So the next step is followed, a frame
-            // at a time, until the fold has settled, and brought into view once more then.
-            fun height() = places?.placeOf(CardPlaces.step(marked))?.height
-            var height = height()
-            var still = 0
-            var frames = 0
-            while (still < FOLD_SETTLED_FRAMES && frames++ < FOLD_MOST_FRAMES) {
-                launch { bring(position) }
-                withFrameNanos { }
-                val now = height()
-                still = if (now == height) still + 1 else 0
-                height = now
-            }
-            bring(position)
-        }
+        // The step marked folds over the frames that follow, pulling up what comes after it.
+        if (!scrolling()) follow(position, changing = marked)
         next = null
     }
     if (shown.isEmpty()) return
@@ -204,6 +228,7 @@ internal fun StepsList(
                 current = step.position == current,
                 stated = marks?.any == true,
                 last = index == shown.lastIndex,
+                animate = settled,
             )
         }
     }
@@ -211,10 +236,10 @@ internal fun StepsList(
     TimerNotificationsCheck(timers)
 }
 
-/** How many frames a step marked done keeps its height before its fold is taken as settled. */
+/** How many frames a step keeps its height before its fold or unfold is taken as settled. */
 private const val FOLD_SETTLED_FRAMES = 3
 
-/** The most frames the next step is followed while the step marked folds, whatever happens meanwhile. */
+/** The most frames a step is followed while another folds or unfolds, whatever happens meanwhile. */
 private const val FOLD_MOST_FRAMES = 120
 
 /**
@@ -239,8 +264,9 @@ internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean
  * On Cooking the steps read as a stepper: each circle is joined to the next one's by a vertical line ([stepLine]),
  * none after the [last]; a step marked done shows a check in its circle in place of its number and folds to its first
  * line, ellipsized — its note, media and timers folded away — unless one of its timers is running or ringing, which
- * holds it open until that timer is cancelled or its ringing stopped. Folding and unfolding animate ([Motion]); the
- * screen reader still reads the folded step whole.
+ * holds it open until that timer is cancelled or its ringing stopped. Folding and unfolding animate ([Motion]) — once
+ * the card has read the recipe's timers ([animate]); before, a step stands as they make it at once. The screen reader
+ * still reads a folded step's text whole; its note folds away with the rest.
  *
  * The [current] step — its number and text, its media and its timers — stands on the theme's primary container, which
  * reaches a little beyond it into the gutter and the space between steps, so that nothing moves as the current step
@@ -264,6 +290,7 @@ private fun StepRow(
     current: Boolean = false,
     stated: Boolean = false,
     last: Boolean = true,
+    animate: Boolean = true,
 ) {
     val cooking = mode == CardMode.COOKING
     val spacing = if (cooking) StepSpacing else VIEW_STEP_SPACING
@@ -294,13 +321,17 @@ private fun StepRow(
             val color = if (current) MaterialTheme.colorScheme.onPrimaryContainer else LocalContentColor.current
             CompositionLocalProvider(LocalContentColor provides color) {
                 StepNumber(circle, step.position, checked = cooking && done)
-                Column(Modifier.weight(1f).then(if (cooking) Modifier.animateContentSize(Motion.appearing()) else Modifier)) {
+                Column(Modifier.weight(1f).then(if (cooking && animate) Modifier.animateContentSize(Motion.appearing()) else Modifier)) {
                     StepText(step, references, done = done, mode = mode, maxLines = if (folded) 1 else Int.MAX_VALUE)
                     if (!folded) step.note?.let { StepNote(it, step.position, mode) }
                 }
             }
         }
-        AnimatedVisibility(!folded, enter = Motion.open, exit = Motion.close) {
+        AnimatedVisibility(
+            !folded,
+            enter = if (animate) Motion.open else EnterTransition.None,
+            exit = if (animate) Motion.close else ExitTransition.None,
+        ) {
             Column {
                 media.of(step.position)?.let { item ->
                     Box(Modifier.fillMaxWidth().padding(start = StepIndent, top = 8.dp)) {

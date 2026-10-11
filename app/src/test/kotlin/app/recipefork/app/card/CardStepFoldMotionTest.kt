@@ -3,6 +3,7 @@ package app.recipefork.app.card
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.semantics.SemanticsActions
@@ -19,6 +20,8 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.data.HeldLastCardTab
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.timer.LocalCardTimers
+import app.recipefork.app.timer.TestTimers
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
@@ -55,6 +58,9 @@ class CardStepFoldMotionTest {
     private val book = TestBook(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
 
+    /** The card's timers, whose reading the card waits for before it animates a fold, and the test with it. */
+    private val timers = TestTimers(context)
+
     private val recipe = Recipe.create(Instant.parse("2026-10-11T12:00:00Z"), null).copy(
         title = "Stew",
         steps = listOf(
@@ -71,9 +77,14 @@ class CardStepFoldMotionTest {
     @Before
     fun setUp() {
         compose.registerIdlingResource(book.idling)
+        compose.registerIdlingResource(timers.idling)
         runBlocking { recipes.save(recipe) }
         val environment = CardEnvironment(lastTab = HeldLastCardTab(CardMode.COOKING)) { emptyList() }
-        compose.setContent { MaterialTheme { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) } }
+        compose.setContent {
+            CompositionLocalProvider(LocalCardTimers provides timers.card) {
+                MaterialTheme { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
+            }
+        }
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.step(0))).fetchSemanticsNodes().size == 1 }
         compose.onNodeWithTag(CardTags.step(0)).performScrollTo()
@@ -83,7 +94,9 @@ class CardStepFoldMotionTest {
     @After
     fun close() {
         compose.unregisterIdlingResource(book.idling)
+        compose.unregisterIdlingResource(timers.idling)
         book.close()
+        timers.close()
     }
 
     private fun height() = compose.onNodeWithTag(StepRowTags.entry(0), useUnmergedTree = true).fetchSemanticsNode().size.height
