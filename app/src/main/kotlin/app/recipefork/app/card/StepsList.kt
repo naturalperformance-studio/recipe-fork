@@ -149,6 +149,8 @@ internal fun StepsList(
     LaunchedEffect(timers) {
         combine(card.store.ofRecipe(card.book(), recipeId), snapshotFlow { timers.held }) { stored, read -> stored.keys == read.keys }
             .first { it }
+        // A few frames on, once the steps stand as the timers read make them, not while they are changing to it.
+        repeat(FOLD_SETTLED_FRAMES) { withFrameNanos { } }
         settled = true
     }
     val cooking = mode == CardMode.COOKING

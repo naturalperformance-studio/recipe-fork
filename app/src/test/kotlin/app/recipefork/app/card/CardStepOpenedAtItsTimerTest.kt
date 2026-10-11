@@ -81,14 +81,41 @@ class CardStepOpenedAtItsTimerTest {
         timers.close()
     }
 
+    // The step's timers are read before its fold animates: it stands as they make it at once, never seen unfolding.
+    @Test
+    fun onOpeningTheStepStandsAsItsTimerMakesItWithoutUnfolding() {
+        compose.mainClock.autoAdvance = false
+        openAtTheRingingTimer()
+        val heights = mutableListOf<Int>()
+        fun frame() {
+            compose.mainClock.advanceTimeByFrame()
+            compose.onAllNodes(hasTestTag(StepRowTags.entry(4)), useUnmergedTree = true).fetchSemanticsNodes().singleOrNull()
+                ?.let { heights += it.size.height }
+        }
+        val deadline = System.currentTimeMillis() + PATIENCE_MS
+        while (compose.onAllNodes(hasTestTag(TimerTags.stop(4))).fetchSemanticsNodes().isEmpty()) {
+            check(System.currentTimeMillis() < deadline) { "the ringing timer never showed: $heights" }
+            frame()
+        }
+        repeat(FRAMES) { frame() }
+        compose.mainClock.autoAdvance = true
+        val sizes = heights.distinct()
+        assertTrue("the step went straight to its height, in no more than two: $sizes", sizes.size <= 2 && sizes.last() == sizes.max())
+    }
+
+    private companion object {
+        /** More frames than any fold takes. */
+        const val FRAMES = 60
+    }
+
     /** Notices that are always shown. */
     private object Shown : TimerNotices {
         override fun announce(timer: RunningTimer) = true
         override fun withdraw(key: TimerKey) = Unit
     }
 
-    @Test
-    fun openedAtADoneStepWhoseTimerRingsTheStepShowsUnfoldedWithItsStop() {
+    /** The recipe saved, its fifth step marked done, its timer ringing, and the card opened at it from its notification. */
+    private fun openAtTheRingingTimer(): () -> Boolean {
         runBlocking {
             recipes.save(stew)
             val step = stew.steps[4]
@@ -105,8 +132,14 @@ class CardStepOpenedAtItsTimerTest {
                 MaterialTheme { CardScreen(stew.id, recipes, environment, onBack = {}, onEdit = {}) }
             }
         }
+        return { shown }
+    }
+
+    @Test
+    fun openedAtADoneStepWhoseTimerRingsTheStepShowsUnfoldedWithItsStop() {
+        val shown = openAtTheRingingTimer()
         compose.awaitCard()
-        compose.waitUntil(PATIENCE_MS) { shown && compose.onAllNodes(hasTestTag(TimerTags.stop(4))).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(PATIENCE_MS) { shown() && compose.onAllNodes(hasTestTag(TimerTags.stop(4))).fetchSemanticsNodes().isNotEmpty() }
         compose.waitForIdle()
 
         val pager = compose.onNodeWithTag(CardTags.PAGER).fetchSemanticsNode().boundsInRoot
