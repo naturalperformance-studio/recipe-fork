@@ -124,6 +124,16 @@ class ShoppingMergeTest {
     }
 
     @Test
+    fun `a measure that is no number above zero is no measure`() {
+        for (cup in listOf(0.0, -130.0, Double.NaN, Double.POSITIVE_INFINITY)) {
+            val measures = mapOf(FLOUR to EntryMeasures(factors = mapOf("g" to 1.0, "cup" to cup)))
+            val lines = list(recipe(A, row(FLOUR, r(300), GRAM)), recipe(B, row(FLOUR, r(2), CUP)), measures = measures)
+            assertEquals(2, lines.size, "cup factor $cup")
+            lines.forEach { assertFalse(it.approximate) }
+        }
+    }
+
+    @Test
     fun `at a tie the unit that came first leads`() {
         // 260 g and 2 cups weigh the same.
         val gramsFirst = list(recipe(A, row(FLOUR, r(260), GRAM)), recipe(B, row(FLOUR, r(2), CUP))).single()
