@@ -33,4 +33,17 @@
     <string name="timer_bar_ringing">Ringing</string>
     <string name="timer_bar_step">Step %1$d</string>
     <string name="timer_numbered">%1$s · timer %2$d</string>
+    <!-- Two or more timers of the bar in one line, which opens into each timer's line. -->
+    <string name="timer_bar_more">+%1$d more</string>
+    <plurals name="timer_bar_finished">
+        <item quantity="one">%1$d timer finished</item>
+        <item quantity="other">%1$d timers finished</item>
+    </plurals>
+    <plurals name="timer_bar_running">
+        <item quantity="one">%1$d timer running</item>
+        <item quantity="other">%1$d timers running</item>
+    </plurals>
+    <string name="timer_bar_list_action">Show these timers</string>
+    <string name="timer_bar_hide_action">Hide these timers</string>
+    <string name="timer_bar_stop_all_action">Stop all these timers ringing</string>
 </resources>
