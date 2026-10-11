@@ -8,6 +8,8 @@
     <string name="file_export_failed">Couldn\'t export the recipe</string>
     <!-- FLOW-064: import of a recipe file, from another application or from the view of marked recipes. -->
     <string name="file_import">Import a recipe file</string>
+    <!-- The view's floating action: kept short, so that it stays whole on a narrow phone at large text. -->
+    <string name="file_import_short">Import</string>
     <!-- %1$s is the recipe's title. -->
     <string name="file_imported">“%1$s” is in your recipe book now</string>
     <string name="file_import_already">“%1$s” is already in your recipe book, so nothing was added</string>

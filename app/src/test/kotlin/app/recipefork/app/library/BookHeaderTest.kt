@@ -3,6 +3,7 @@ package app.recipefork.app.library
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -332,7 +333,9 @@ class BookHeaderTest {
         val action = bounds(LibraryTags.IMPORT)
         assertTrue("$action is not at the bottom of $pager", pager.bottom - action.bottom in 0f..pager.height * 0.1f)
         assertTrue(actionExpanded(LibraryTags.IMPORT))
-        assertEquals(listOf("Import a recipe file"), compose.textsOf(LibraryTags.IMPORT))
+        // Its words are short (T-223); the screen reader hears the whole action.
+        assertEquals(listOf("Import"), compose.textsOf(LibraryTags.IMPORT))
+        assertEquals("Import a recipe file", compose.onNodeWithTag(LibraryTags.IMPORT).fetchSemanticsNode().config[SemanticsActions.OnClick].label)
     }
 
     @Test
