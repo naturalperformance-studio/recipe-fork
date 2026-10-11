@@ -1,7 +1,7 @@
 ---
 slug: A11Y
 status: closed
-updated: 2026-10-03
+updated: 2026-10-11
 ids: [A11Y-001, A11Y-002, A11Y-010, A11Y-003, A11Y-004, A11Y-005, A11Y-006,
   A11Y-007, A11Y-008, A11Y-009]
 ---
@@ -94,7 +94,8 @@ between light and dark, and walk the main screens in each theme.
 ### A11Y-003 — Touch targets
 
 The system shall give every interactive element a touch target of at least 48 by
-48 density-independent pixels, and at least 56 by 56 on the cooking card.
+48 density-independent pixels, and at least 56 by 56 on the cooking card — the
+card's Cooking tab (FLOW-070); its View tab is held to the 48 dp figure.
 
 An interactive element is anything that answers a tap, a long press, a drag or a
 swipe with an action of the product — a link inside text included, and a control
@@ -106,8 +107,8 @@ answer is focus, selection or copying is not one.
   scrolls is measured, then its touch target is at least 48 by 48 dp, whatever the
   element looks like; a container that scrolls is measured by criterion 5 alone.
 - Given the cooking card, when its controls are measured — the timer controls and
-  the serving control — then each is at least 56 by 56 dp. There is no step
-  advance among them: the card is one scrolling screen (`flows`, 30-cooking).
+  the serving control, and every line that marks done — then each is at least 56
+  by 56 dp. There is no step advance among them (FLOW-070).
 - Given two adjacent targets, when they are measured, then they do not overlap
   and neither is smaller than its rule because of the other.
 - Given a control smaller than its target by design, when it is touched near its
@@ -139,6 +140,9 @@ falls below about 7 mm on any screen size or density
 ([Touch target size, Android Accessibility Help](https://support.google.com/accessibility/android/answer/7101858?hl=en),
 checked 2026-09-21). The larger figure on the cooking card is a product decision
 of 2026-09-21 and is explained in A11Y-007.
+**Changed 2026-10-11 (sync v0.22–v0.30):** since v0.27 the card has two tabs; the
+56 dp figure holds on Cooking, and View, made for reading rather than for busy
+hands, is compact at 48 dp.
 
 ### A11Y-004 — Text scale
 
@@ -219,8 +223,8 @@ v0.3–v0.14, accepted by the user, 2026-10-03.
 
 ### A11Y-007 — The cooking card is built for hands that are busy
 
-While a recipe is being cooked, the system shall present its text at a larger
-default size than elsewhere, shall give its controls the larger targets of
+While a recipe is being cooked — on the card's Cooking tab (FLOW-070) — the system
+shall present its step text at a larger default size than elsewhere, shall give its controls the larger targets of
 A11Y-003, and shall keep the timer audible when the screen is off.
 
 **Acceptance criteria**

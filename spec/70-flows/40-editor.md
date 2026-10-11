@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-04
+updated: 2026-10-11
 ids: [FLOW-022, FLOW-023, FLOW-057, FLOW-024, FLOW-025, FLOW-026, FLOW-028, FLOW-029, FLOW-030]
 ---
 
@@ -46,15 +46,17 @@ Amended 2026-10-03 (sync v0.3–v0.14): in serverless mode the warning does not
 speak of publication — req-forge proposal from the sync of v0.3–v0.14, accepted by
 the user, 2026-10-03.
 
-### FLOW-023 — An ingredient is three fields and nothing more
+### FLOW-023 — An ingredient is three fields and an optional note
 
-The system shall compose an ingredient in the editor from exactly three fields —
-the ingredient, the quantity and the unit — and shall never ask the author for the
-unit type, which follows from the unit chosen.
+The system shall compose an ingredient in the editor from three fields — the
+ingredient, the quantity and the unit — plus the optional note of DOM-023, and
+shall never ask the author for the unit type, which follows from the unit chosen.
+The order of the fields and how the row is laid out are the team's.
 
 **Acceptance criteria**
-- Given the editor, when the author adds an ingredient, then exactly three fields
-  are offered: `крылышки` · `500` · `г`, or `тушка` · `2` · `шт`.
+- Given the editor, when the author adds an ingredient, then the ingredient, the
+  quantity and the unit are offered — `крылышки` · `500` · `г`, or `тушка` · `2` ·
+  `шт` — with the optional note beside them, and nothing else is asked.
 - Given the ingredient field, when the author types, then dictionary entries are
   offered whether they are leaves or parents (DOM-010), so `курица · 500 · г` is an
   ordinary row.
@@ -64,7 +66,7 @@ unit type, which follows from the unit chosen.
   parent's label exactly, which then comes first.
 - Given the author picks the entry `филе` and keeps typing `без кожи`, when the row
   is read, then it reads `филе без кожи`, the ingredient holds that entry and that
-  qualifier, and no fourth field has appeared.
+  qualifier, and no separate field for the qualifier has appeared.
 - Given such an ingredient, when a reader filters on `курица`, then the recipe
   matches through the entry, and the qualifier plays no part in the match
   (CAT-006).
@@ -97,6 +99,11 @@ qualifier survives as the tail of the first field rather than as a field of its
 own, because the dictionary will always lag behind a kitchen: without it an author
 whose leaf is missing would have to choose between a recipe that can be found and
 a row that says what they mean (OQ-020).
+**Changed 2026-10-11 (sync v0.22–v0.30):** the note of DOM-023 (v0.23) made "exactly
+three fields" untrue; the three fields stay the core and the note is optional. The
+editor now shows each row as finished text that opens for editing (v0.29), with
+the note after the unit in the keyboard's order (v0.30) — layout and order are the
+team's and are no longer fixed here.
 
 ### FLOW-057 — What the ingredient field offers for what the author types
 
@@ -186,9 +193,10 @@ authors' choices as well as the dictionary's gaps.
 ### FLOW-024 — The editor is one screen in a fixed order
 
 The system shall present the editor as one scrolling screen holding, in this order,
-the title with the cover, the declared language, the tags, the serving count, the
-ingredients, the steps and the description, and shall not require the author to
-complete one part before reaching another.
+the title with the cover, the declared language, the tags, the description, the
+serving count, the equipment, the ingredients and the steps, and shall not require
+the author to complete one part before reaching another. A row or a step may open
+on its own for editing over that screen; the screen itself stays one.
 
 **Acceptance criteria**
 - Given a new recipe, when the editor opens, then every part is present and
@@ -214,6 +222,10 @@ once, and a walk-through would send them back and forth for a change of one line
 The declared language was added to the order on 2026-09-21 with L10N-004; it sits
 second because it is answered once, in a moment, and because an author who scrolls
 past it has still answered it.
+**Changed 2026-10-11 (sync v0.22–v0.30):** the description moved up under the tags
+to match the card, where it now stands before the ingredients (user decision,
+2026-10-10; built in v0.29), and the equipment (DOM-025, v0.27) stands before the
+ingredients.
 
 ### FLOW-025 — Steps and ingredients are inserted anywhere and reordered by dragging
 
@@ -311,8 +323,8 @@ shall offer no separate preview inside the editor.
 - Given a recipe the author saves, when it is opened afterwards, then it is the same
   card a reader sees (FLOW-019, FLOW-020), not an editor with reader styling.
 - Given that view of a recipe that is still editable, when the author chooses the
-  edit action in the card screen's top bar, then the editor opens on the same
-  recipe.
+  edit action in the card screen's top bar on the View tab (FLOW-070), then the
+  editor opens on the same recipe; the Cooking tab carries no edit action.
 - Given that view, when the author looks for an edit control inside the recipe's
   content — its title, ingredients, steps, description or media — then there is
   none and no part of it becomes editable in place: the card is read, the editor

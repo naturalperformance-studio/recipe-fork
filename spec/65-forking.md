@@ -1,7 +1,7 @@
 ---
 slug: FORK
 status: closed
-updated: 2026-10-04
+updated: 2026-10-11
 ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005, FORK-006, FORK-007,
   FORK-008, FORK-009]
 ---
@@ -22,14 +22,16 @@ expression. The fork therefore carries the former and never the latter.
 ### FORK-001 — What a fork inherits
 
 When a user forks a recipe, the system shall create a new private recipe
-containing the parent's title, tags, serving count, ingredients and steps, and a
-reference to the parent.
+containing the parent's title, tags, serving count, equipment, ingredients and
+steps, and a reference to the parent.
 
 **Acceptance criteria**
 - Given a forked recipe, when it is opened, then its ingredients match the
   parent's in dictionary entry, qualifier or free-text name, unit type, unit,
   quantity, piece weight, divisibility, group and note (DOM-022, DOM-023),
   and in order.
+- Given a forked recipe, when its equipment is opened, then it matches the
+  parent's item by item, in entry, qualifier or free text, and in order (DOM-025).
 - Given a forked recipe, when its steps are opened, then their text, timers and
   ingredient references match the parent's and resolve within the fork
   (DOM-007).
@@ -54,12 +56,16 @@ reference to the parent.
 named timer and one with an unnamed timer; compare field by field, then rewrite
 both steps in the fork and compare the two timers' names again.
 **Source:** draft section 4.1; user decision, 2026-09-20.
+**Changed 2026-10-11 (sync v0.22–v0.30):** equipment (DOM-025) is part of what
+every fork carries, as built in v0.27 — a list of what a dish needs is method,
+not expression.
 
-### FORK-002 — A fork by another account carries no media and no description
+### FORK-002 — A fork by another account carries no media, no description and no step notes
 
 When anyone other than the owner forks a recipe — another account, a person with
 no account, or anyone forking a recipe imported from a file — the system shall
-create the fork with no media and with an empty description.
+create the fork with no media, with an empty description and with no author's
+note on any step (DOM-027).
 
 **Acceptance criteria**
 - Given a parent with a cover photo and photos on its steps, when another
@@ -67,6 +73,9 @@ create the fork with no media and with an empty description.
   afterwards.
 - Given a parent with a description, when another account forks it, then the
   fork's description is empty.
+- Given a parent whose steps carry the author's notes, when another account forks
+  it, then the fork's steps carry none, and keep their text, timers and
+  references.
 - Given such a fork, when its author wants a photograph, then they supply their
   own or publish without one, because media is not part of the minimum
   (DOM-006).
@@ -77,6 +86,9 @@ create the fork with no media and with an empty description.
 account, and inspect the result.
 **Source:** user decision, 2026-09-20. See
 [ADR — a fork carries the method, not the expression](decisions/20260920-fork-carries-method-not-expression.md).
+**Changed 2026-10-11 (sync v0.22–v0.30):** a step's author's note, added in v0.29,
+is the author's prose and stays behind like the description (user decision,
+2026-10-10).
 
 ### FORK-003 — The parent's media stays visible in the parent
 
@@ -183,8 +195,8 @@ are not what a fork copies, and the owner's own fork is no exception.
 ### FORK-007 — A fork of one's own recipe carries everything else
 
 When the owner of a recipe forks that recipe, the system shall create the fork
-holding the parent's media and description as well as everything FORK-001
-requires.
+holding the parent's media, description and the author's notes on its steps as
+well as everything FORK-001 requires.
 
 **Acceptance criteria**
 - Given the owner forks their own recipe that has a cover image and photos on
@@ -195,6 +207,8 @@ requires.
   fork opens, then the video is on that step.
 - Given the owner forks their own recipe with a description, when the fork
   opens, then the description is present and identical.
+- Given the owner forks their own recipe whose steps carry notes, when the fork
+  opens, then each step's note is present and identical (DOM-027).
 - Given that fork, when the owner deletes or replaces its media, then the
   parent's media is untouched, because the parent is frozen (CON-003) and the two
   are separate recipes.

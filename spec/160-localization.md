@@ -1,7 +1,7 @@
 ---
 slug: L10N
 status: closed
-updated: 2026-10-03
+updated: 2026-10-11
 ids: [L10N-001, L10N-002, L10N-003, L10N-004, L10N-005, L10N-006, L10N-007,
   L10N-008, L10N-009]
 ---
@@ -12,8 +12,8 @@ Two languages from the first release, and everything that follows from that:
 which of them a reader gets, what a recipe declares about itself, what a text
 query looks at and what counts as a match in a language where words decline.
 
-One thing is settled elsewhere and is repeated here only so that it is not
-mistaken for an omission: the product is metric (L10N-008).
+Recipes are written in metric for now; a reader may see US units, and writing in
+imperial units is a later increment, not a refusal (L10N-008).
 
 ### L10N-001 — Russian and English from the first release
 
@@ -217,28 +217,51 @@ not a wrong recipe. Amended 2026-10-03 (sync v0.3–v0.14): scoped to the server
 catalogue — req-forge proposal from the sync of v0.3–v0.14, accepted by the user,
 2026-10-03.
 
-### L10N-008 — The product is metric and no language changes that
+### L10N-008 — Recipes are written in metric for now; a reader may see US units
 
-The system shall express every quantity in the units of DOM-002 regardless of
-interface language, declared recipe language or device setting.
+The system shall store and write every quantity in the units of DOM-002 and
+DOM-016, whatever the interface language, the declared recipe language or the
+device setting. Where the reader asks for it, the card shall show a recipe's
+measured quantities converted to US customary units; the recipe itself — its
+stored quantities, its file, its forks, its scaling — stays in the units its
+author wrote.
+
+Writing a recipe in imperial or US units is not refused for good: it is a
+capability a later increment adds (OQ-043), and nothing in this requirement is to
+be read as closing it.
 
 **Acceptance criteria**
-- Given any interface language, when an ingredient is displayed, then its unit is
-  one of those DOM-016 lists and no conversion to another system is offered.
-- Given a device configured for a non-metric region, when a recipe is read, then
-  nothing about its quantities changes.
-- Given the household units, when they are shown in English, then they are the
-  translated names of the same units and not a different measure.
+- Given a device configured for a non-metric region, when a recipe is read and
+  the reader has not asked for conversion, then nothing about its quantities
+  changes.
+- Given the reader asks for US units, when a card is shown, then its measured
+  quantities read in US units, marked as converted (A11Y-008: not by colour
+  alone), and the recipe, its export and its forks still hold the authored units.
+- Given a quantity "to taste" or in pieces, when the reader asks for US units,
+  then it reads as written.
+- Given the household units, when they are shown in English without conversion,
+  then they are the translated names of the same units and not a different
+  measure.
+
+Which units convert to which, whether volume ever converts to mass, how converted
+values round, and where the reader asks for it are open (OQ-042) and are settled
+when an increment is planned for it.
 
 **Verification:** read one recipe in both languages on a device set to a
-non-metric region.
-**Source:** DOM-002, which admits grams, kilograms, tonnes, millilitres, litres
-and cubic metres alongside pieces and household measures and nothing else. This
-requirement adds no decision; it exists so that a reader of this section does not
-take the absence of a conversion rule for an oversight. Offering a second system
-would mean a second rounding grid for every unit type in `scaling-rules` and a
-second set of comparison factors in DOM-011, and it would be a product decision
-taken on its own merits, not a translation task.
+non-metric region, then with US units asked for; export and fork it and inspect
+the units.
+**Source:** DOM-002 admits grams, kilograms, tonnes, millilitres, litres and cubic
+metres alongside pieces and household measures and nothing else.
+**Changed 2026-10-11 (sync v0.22–v0.30):** until then this requirement said no
+conversion is offered at all. On 2026-10-10 the user adopted the analyst's
+hypothesis H-003 (metric ↔ US conversion, free; `analytics/hypotheses.md`); at the
+sync of 2026-10-11 the user chose conversion on display with the authored units
+kept, and added that writing in imperial units is to be allowed by a later
+increment rather than forbidden. See
+[ADR — US units on display, imperial writing later](../decisions/20261011-us-units-on-display-imperial-writing-later.md).
+**Cost, stated:** a second system means a second rounding grid per unit type in
+`scaling-rules`; converting volume to mass would need the comparison factors of
+DOM-011, which today are never displayed or used for anything but ordering.
 
 ### L10N-009 — Numbers are written the way the interface language writes them
 

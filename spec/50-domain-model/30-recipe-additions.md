@@ -1,16 +1,17 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-04
-ids: [DOM-021, DOM-022, DOM-023, DOM-024]
+updated: 2026-10-11
+ids: [DOM-021, DOM-022, DOM-023, DOM-024, DOM-025, DOM-026, DOM-027]
 ---
 
-# Synonyms, ingredient groups, notes and timers
+# Synonyms, ingredient groups, notes, timers, equipment and the author's note on a step
 
 Added on 2026-10-04 by the sync of v0.15–v0.24: what the dictionary entry, the
 ingredient list and the step gained after the builds the product owner touched.
 [20-ingredients-and-limits.md](20-ingredients-and-limits.md) was already at its
-size limit, so these live here.
+size limit, so these live here. DOM-025 to DOM-027 were added on 2026-10-11 by
+the sync of v0.22–v0.30.
 
 ### DOM-021 — An entry carries synonyms in each language
 
@@ -51,8 +52,9 @@ whichever group it sits in.
 - Given a recipe with groups, when its card is read, then the groups show as
   subheadings over their rows, and scaling, fixing an amount and step references
   behave exactly as without them.
-- Given a group the author removes, when the recipe is read, then its rows stay,
-  outside any group.
+- Given a group the author removes, when the recipe is read, then its rows stay
+  where they were and so belong to the group above it, or to none if it was the
+  first; no row moves.
 - Given a recipe with groups, when it is forked or exported and imported again,
   then the groups and the rows in them are kept.
 - Given a recipe written before groups existed, when it is read or imported, then
@@ -63,6 +65,11 @@ reordered in the editor is the team's.
 
 **Source:** user decision, 2026-10-04 (planning of v0.23); the rules above are the
 lead's proposal in that plan, accepted by the user at the sync of 2026-10-04.
+**Changed 2026-10-11 (sync v0.22–v0.30):** a removed group's rows used to go
+"outside any group", which for any group but the first would have meant moving
+them above the first heading and reordering the recipe. As built in v0.23 and
+accepted by the user at the sync of 2026-10-11, they stay in place and join the
+group above.
 
 ### DOM-023 — An ingredient line can carry a short note
 
@@ -109,3 +116,86 @@ its own announcement (FLOW-013, FLOW-016). This replaces DOM-013, retired
 **Source:** user decision, 2026-10-04 (planning of v0.24). The cap of five is a
 req-forge proposal, accepted by the user at the sync of 2026-10-04. See
 [ADR — a step may carry several timers](../decisions/20261004-a-step-may-carry-several-timers.md).
+
+### DOM-025 — A recipe lists the equipment it needs
+
+A recipe may list the equipment it needs ("Oven", "Frying pan 26 cm"): an ordered
+list of at most 15 items. Each item is either an entry of the equipment dictionary
+(DOM-026) with an optional qualifier after it, or free text — exactly one of the
+two, as an ingredient's name is (DOM-009) — and its shown text is at most 40
+characters. Equipment is not scaled, has no quantity and plays no part in the
+ingredient filter.
+
+**Acceptance criteria**
+- Given a recipe with equipment, when it is forked by anyone or exported and
+  imported again, then every item is kept, in order, with its entry, qualifier or
+  free text — equipment is part of the method (FORK-001).
+- Given an item whose entry later leaves the dictionary, when the recipe is read,
+  then the item still reads as it did.
+- Given a recipe or a file written before equipment was bound to the dictionary,
+  when it is read, then an item whose whole text is an entry's label or synonym in
+  either language becomes that entry, and any other item stays free text.
+- Given a recipe written before equipment existed, when it is read or imported,
+  then it has no equipment and nothing else changes.
+- Given the servings changed, when the equipment is read, then it reads as
+  written.
+
+How equipment is offered and edited in the editor is the team's.
+
+**Source:** user decisions, 2026-10-09 (planning of v0.27: "a recipe lists the
+equipment it needs") and 2026-10-10 (planning of v0.28: an item binds to the
+dictionary with a qualifier or stays free text, chosen over matching by text
+alone); the limits of 15 items and 40 characters are the lead's, accepted with
+the builds. See
+[ADR — equipment is bound to its dictionary](../decisions/20261011-equipment-is-bound-to-its-dictionary.md).
+
+### DOM-026 — The equipment dictionary
+
+The product shall carry a third dictionary, of kitchen equipment, kept exactly as
+the ingredient dictionary is: entries with permanent identifiers, a label in each
+interface language, synonyms that find an entry (DOM-021), at most two levels —
+groups and the items in them — and maintained only outside the application
+(DOM-014). An entry is withdrawn, never deleted, and stays readable in every recipe
+that names it. What L10N-003 and FLOW-001 say of the two older dictionaries — both
+languages always, a copy held on the device — holds for this one too.
+
+Consumables — foil, parchment, cling film, paper towels and the like — are entries
+a recipe may name, kept in a group of their own that never counts as missing from
+a kitchen (FLOW-071) and never hides a recipe (FLOW-072).
+
+**Acceptance criteria**
+- Given an author typing an equipment item, when the text matches a label or a
+  synonym in either language, then the entry is offered, as for an ingredient
+  (FLOW-057).
+- Given a recipe naming a consumable, when the reader's kitchen does not hold it,
+  then nothing marks it missing and no filter hides the recipe for it.
+
+**Source:** user decision, 2026-10-10 (planning of v0.28: "an equipment dictionary
+like the ingredients' one"); consumables never counting is the lead's, built in
+v0.28 and accepted by the user at the sync of 2026-10-11.
+
+### DOM-027 — A step may carry the author's note
+
+Beside its required method, a step may carry the author's own note («Бабушка
+всегда добавляла щепотку сахара»): optional free text of at most 500 characters,
+shown with the step on both tabs of the card (FLOW-070), not scaled and not
+searched.
+
+The note is the author's expression, not the method: like the description, a fork
+by anyone other than the owner does not carry it (FORK-002), and a fork of one's
+own recipe does (FORK-007).
+
+**Acceptance criteria**
+- Given a step with a note, when another account forks the recipe, then the fork's
+  step has the parent's text, timers and references and no note.
+- Given a step with a note, when the owner forks their own recipe, then the note is
+  kept.
+- Given a step with a note, when the recipe is exported and imported again, then
+  the note is kept.
+- Given a note holding a word, when the book is searched by that word, then the
+  note alone does not make the recipe match.
+
+**Source:** user decision, 2026-10-10 (planning of v0.28, for v0.29: "each step gets
+an optional author's part beside its required text", not carried by another
+account's fork like the description); the 500-character limit is the lead's,
+accepted with the build.

@@ -1,7 +1,7 @@
 ---
 slug: MVP
 status: closed
-updated: 2026-10-02
+updated: 2026-10-11
 ids: [MVP-001, MVP-002, MVP-003]
 ---
 
@@ -64,9 +64,8 @@ against for the MVP rather than left undone.
 | Rejection reasons as fixed categories | 2026-09-20 | OQ-026 |
 | A third interface language | 2026-09-21 | L10N-001 |
 | Distribution in the Russian Federation | 2026-09-21 | LEG-010 |
-| An imperial or any other non-metric unit system | 2026-09-21 | L10N-008 |
 | Voice control of the cooking steps | 2026-09-21 | A11Y-007 |
-| A cooking mode with a current step, an advance between steps and a record of what is done | 2026-09-21 | [ADR — the cooking card is one scrolling screen](decisions/20260921-the-cooking-card-is-one-scrolling-screen.md) |
+| A control that advances from one step to the next, and a current step stored anywhere | 2026-10-11 | [ADR — the card has a tab for reading and a tab for cooking](decisions/20261011-the-card-has-a-reading-and-a-cooking-tab.md) |
 | A withdrawal window on a published recipe | 2026-09-21 | [ADR — replaced, never withdrawn](decisions/20260921-a-published-recipe-is-replaced-never-withdrawn.md) |
 | Any monetisation, advertising or paid tier | 2026-09-20 | NGOAL-006 |
 | Automated classification of images or video | 2026-09-20 | NGOAL-005 |
@@ -81,6 +80,11 @@ against for the MVP rather than left undone.
   its own section.
 - Given this table, when it is compared with the ledger, then every entry
   classified **define after MVP** that was decided against appears here.
+
+Rows that left this table at the sync of 2026-10-11: a record of what is done
+(FLOW-068, built in v0.23) and the current step derived from it (FLOW-070, built
+in v0.27); a non-metric unit system — US units on display now, writing in
+imperial units a later increment (L10N-008, OQ-043).
 
 **Verification:** walk the table against the release candidate and against the
 ledger.

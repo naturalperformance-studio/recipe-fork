@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-04
+updated: 2026-10-11
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -20,13 +20,14 @@ markings by `scaling-rules`, provenance by FORK-004 and FORK-005, rating and
 favourites by `ratings`, reporting and blocking by `abuse`. What follows is what
 the card itself must do.
 
-The card is one scrolling screen, decided 2026-09-21. There is no current step and
-nothing advances from one step to the next. The reader may mark ingredients and
-steps done (FLOW-068, since 2026-10-04); the marks are the reader's, not the
-recipe's. The reader scrolls, and what the product restores is the place they had
-scrolled to (FLOW-012). A timer that ends leads to its own step (FLOW-013), which
-is the only place the product moves a reader within a recipe. See
-[ADR — the cooking card is one scrolling screen](../decisions/20260921-the-cooking-card-is-one-scrolling-screen.md).
+Since 2026-10-11 the card has two tabs, View and Cooking (FLOW-070); "the
+cooking card" elsewhere in this specification is the Cooking tab. Nothing advances
+from one step to the next: on Cooking the current step is simply the first one not
+marked done (FLOW-068), and marking a step brings the next into view. The reader
+scrolls, and what the product restores is the place they had scrolled to on each
+tab (FLOW-012). A timer that ends leads to its own step (FLOW-013). See
+[ADR — the card has a tab for reading and a tab for cooking](../decisions/20261011-the-card-has-a-reading-and-a-cooking-tab.md),
+which supersedes the one-scrolling-screen decision of 2026-09-21.
 
 ### FLOW-013 — A timer announces itself even if the application is closed
 
@@ -134,12 +135,14 @@ application still announces the timer.
 
 ### FLOW-014 — The screen does not sleep while a recipe is being read
 
-While a recipe card is in the foreground, the system shall keep the screen
-awake, and shall stop keeping it awake after 15 minutes without a touch.
+While a recipe card is in the foreground on its Cooking tab (FLOW-070), or while
+one of its timers runs, the system shall keep the screen awake, and shall stop
+keeping it awake after 15 minutes without a touch. On the View tab with no timer
+running, the screen follows the device's own setting.
 
 **Acceptance criteria**
-- Given a recipe card open and untouched for a minute, when the device's own
-  screen timeout is shorter than that, then the screen is still on.
+- Given a recipe card open on Cooking and untouched for a minute, when the
+  device's own screen timeout is shorter than that, then the screen is still on.
 - Given a recipe card open and untouched for 15 minutes, when that time passes,
   then the screen is left to the device's own setting.
 - Given the screen was left to sleep that way, when the reader touches the card,
@@ -148,12 +151,16 @@ awake, and shall stop keeping it awake after 15 minutes without a touch.
   card, then the screen is left to the device's own setting at once.
 - Given a running timer and no touch for 15 minutes, when the screen sleeps,
   then the timer still announces itself (FLOW-013).
+- Given a card on View with no timer running, when it is left untouched, then
+  the screen follows the device's own setting.
 
 **Verification:** open a card on a device with a 30-second screen timeout, do not
 touch it, and observe at one minute, at fifteen minutes and after a touch.
 **Source:** user decision, 2026-09-20. Hands are dirty while cooking and waking
 the screen costs a knuckle; fifteen minutes is the product owner's number, set
 so that a card left open on a counter does not drain the battery all evening.
+**Changed 2026-10-11 (sync v0.22–v0.30):** the rule follows the Cooking tab and a
+running timer, as built in v0.27; reading a recipe on View is not cooking.
 
 ### FLOW-015 — Forking twice is offered as the fork already held
 
