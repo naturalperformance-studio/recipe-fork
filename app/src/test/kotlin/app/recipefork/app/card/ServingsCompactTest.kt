@@ -49,7 +49,7 @@ import java.time.Instant
  * T-224, SCALE-011, A11Y-003: the − and + of the serving count are drawn smaller than before — 40 dp in each direction
  * — on the card's View and Cooking tabs and in the usual-servings dialog, while each half's target, measured on its
  * node, stays at least A11Y-003's figure there (48 dp on View and in the dialog, 56 dp on Cooking), the two targets
- * do not overlap, and a touch just outside the drawing but inside the target still steps the count, with its tick.
+ * do not overlap, and a touch just outside the drawing, or at the target's far side, still steps the count, with its tick.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "en-w360dp-h640dp")
@@ -121,7 +121,8 @@ class ServingsCompactTest {
     /**
      * Checks the halves tagged [fewer] and [more] beside the count tagged [count], which shows [from]: each drawn at most
      * 40 dp and smaller than its target, the target at least [least] and holding the drawing, the targets apart; then
-     * touches each target just outside its drawing — beside it and above or below it — and sees the count step each time.
+     * touches each target just outside its drawing — beside it and above or below it — and at its far side, and sees the
+     * count step each time.
      */
     private fun compact(count: String, fewer: String, more: String, least: Dp, from: Int) {
         val density = compose.onNodeWithTag(fewer).fetchSemanticsNode().layoutInfo.density.density
@@ -144,10 +145,10 @@ class ServingsCompactTest {
         assertTrue("− comes before +", target(fewer).right <= target(more).left + 0.5f)
 
         val near = 2f * density
-        fun touch(tag: String, at: (Rect) -> Offset) {
+        fun touch(tag: String, at: (drawing: Rect, target: Rect) -> Offset) {
             val target = target(tag)
             val drawing = drawing(tag)
-            val point = at(drawing)
+            val point = at(drawing, target)
             assertTrue("$point is in $tag's target $target", target.contains(point))
             assertFalse("$point is outside $tag's drawing $drawing", drawing.contains(point))
             compose.onNodeWithTag(tag).performTouchInput { click(point - target.topLeft) }
@@ -155,14 +156,19 @@ class ServingsCompactTest {
         }
         fun shown() = compose.textsOf(count).single()
         assertEquals("Servings: $from", shown())
-        touch(fewer) { Offset(it.left - near, it.center.y) }
+        touch(fewer) { drawing, _ -> Offset(drawing.left - near, drawing.center.y) }
         assertEquals("beside −", "Servings: ${from - 1}", shown())
-        touch(fewer) { Offset(it.center.x, it.top - near) }
+        touch(fewer) { drawing, _ -> Offset(drawing.center.x, drawing.top - near) }
         assertEquals("above −", "Servings: ${from - 2}", shown())
-        touch(more) { Offset(it.right + near, it.center.y) }
-        assertEquals("beside +", "Servings: ${from - 1}", shown())
-        touch(more) { Offset(it.center.x, it.bottom + near) }
-        assertEquals("below +", "Servings: $from", shown())
-        assertEquals(List(4) { Haptic.TICK }, haptics.all)
+        // The far side of the target, in its outer margin just inside its edge.
+        touch(fewer) { _, target -> Offset(target.left + near, target.center.y) }
+        assertEquals("at the far side of −'s target", "Servings: ${from - 3}", shown())
+        touch(more) { drawing, _ -> Offset(drawing.right + near, drawing.center.y) }
+        assertEquals("beside +", "Servings: ${from - 2}", shown())
+        touch(more) { drawing, _ -> Offset(drawing.center.x, drawing.bottom + near) }
+        assertEquals("below +", "Servings: ${from - 1}", shown())
+        touch(more) { _, target -> Offset(target.right - near, target.center.y) }
+        assertEquals("at the far side of +'s target", "Servings: $from", shown())
+        assertEquals(List(6) { Haptic.TICK }, haptics.all)
     }
 }

@@ -1136,6 +1136,7 @@ private fun StepAction(
 ) {
     val interaction = remember { MutableInteractionSource() }
     val colors = IconButtonDefaults.filledTonalIconButtonColors()
+    val content = if (enabled) colors.contentColor else colors.disabledContentColor
     Box(
         Modifier
             .size(CardTarget)
@@ -1151,20 +1152,20 @@ private fun StepAction(
             .testTag(tag),
         contentAlignment = side,
     ) {
-        // The press shows on the drawing, wherever in the target the touch lands.
+        // The press shows on the drawing, in its content colour, wherever in the target the touch lands.
         Box(
             Modifier
                 .size(STEP_DRAWING)
                 .clip(shape)
                 .background(if (enabled) colors.containerColor else colors.disabledContainerColor)
-                .indication(interaction, ripple())
+                .indication(interaction, ripple(color = content))
                 .testTag(CardTags.stepDrawing(tag)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painterResource(icon),
                 contentDescription = null,
-                tint = if (enabled) colors.contentColor else colors.disabledContentColor,
+                tint = content,
             )
         }
     }
