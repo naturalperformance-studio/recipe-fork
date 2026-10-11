@@ -317,6 +317,8 @@ class CardModeListsTest {
 
     private fun runningInView(words: Words) {
         show(words, CardMode.COOKING)
+        // The first step unmarked, so that its timer shows on Cooking, where a step marked done folds it away.
+        compose.runOnIdle { marks.toggle(MarkedPart.STEP, 0) }
         compose.onNodeWithTag(TimerTags.start(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(TimerTags.cancel(0)) }
         compose.runOnIdle { mode = CardMode.VIEW }
@@ -338,6 +340,8 @@ class CardModeListsTest {
     // A timer started on Cooking that has ended reads as finished on View, its name kept, nothing on it to clear it.
     private fun endedInView(words: Words) {
         show(words, CardMode.COOKING)
+        // The first step unmarked, so that its timer shows on Cooking, where a step marked done folds it away.
+        compose.runOnIdle { marks.toggle(MarkedPart.STEP, 0) }
         compose.onNodeWithTag(TimerTags.start(0)).performScrollTo().performClick()
         compose.waitUntil(PATIENCE_MS) { exists(TimerTags.cancel(0)) }
         compose.runOnIdle { mode = CardMode.VIEW }
@@ -367,7 +371,8 @@ class CardModeListsTest {
         }
         assertEquals(words.done, node(lines[0]).config.getOrNull(SemanticsProperties.StateDescription))
         listOf(0, 1).forEach { compose.assertCardTarget(CardTags.fixAmount(it)) }
-        listOf(0, 2).forEach { assertTrue("step $it offers Start", exists(TimerTags.start(it))) }
+        assertTrue("step 2 offers Start", exists(TimerTags.start(2)))
+        assertFalse("step 0, marked done, folds its timer away", exists(TimerTags.start(0)))
         assertFalse("no view timer line in cooking", exists(ViewTimerTags.line(0)))
         // A tap marks, the amount opens its fixing control.
         compose.onNodeWithTag(lines[1]).performScrollTo().performClick()
