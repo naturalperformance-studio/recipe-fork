@@ -924,6 +924,7 @@ private fun RecipeContent(
                 StepMediaOnCard(recipe, recipes.bookName()), marks, mode,
                 readerScrolling = { scroll.isScrollInProgress },
                 coveredBelow = bottom,
+                readerInteractions = scroll.interactionSource,
             )
         }
     }
