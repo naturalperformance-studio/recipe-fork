@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-04
+updated: 2026-10-11
 ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-014, DOM-016, DOM-017,
   DOM-019, DOM-018, DOM-020]
 ---
@@ -149,14 +149,15 @@ length limit (req-forge proposal from the sync of v0.3–v0.14, accepted by the 
 DOM-013 (a step carries at most one timer) was retired on 2026-10-04 and replaced
 by [DOM-024](30-recipe-additions.md).
 
-### DOM-014 — Both dictionaries are maintained outside the application
+### DOM-014 — The dictionaries are maintained outside the application
 
 The system shall offer no control, on any screen or at any address a user can
 reach, that creates, changes, moves or removes an entry of the ingredient
-dictionary or of the tag dictionary, and both shall be maintained only by direct
-operation on the product's own store by whoever operates it.
+dictionary, of the tag dictionary or of the equipment dictionary (DOM-026), and
+each shall be maintained only by direct operation on the product's own store by
+whoever operates it.
 
-In serverless mode there is no store to operate on: both dictionaries shall be
+In serverless mode there is no store to operate on: every dictionary shall be
 maintained in the product's source and shipped with the application, and a
 device's copy shall change only with an update of the application. What this
 requirement says of the store holds for the server.
@@ -197,6 +198,8 @@ and it would sit behind the moderator role, which ACT-008 has just placed
 outside the application as well. Amended 2026-10-03 (sync v0.3–v0.14): the
 serverless variant — the dictionaries ship with the application (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03). See
 [ADR — the serverless dictionary ships with the app](../decisions/20261003-the-serverless-dictionary-ships-with-the-app.md).
+Amended 2026-10-11 (sync v0.22–v0.30): the equipment dictionary (DOM-026), added in
+v0.28, is kept the same way.
 **Cost, stated:** a factor typed wrong changes the order of filtered results and
 nothing in the product notices. DOM-011 already accepted that shape of error by
 keeping the factor on the entry, where it is correctable for ever, rather than in

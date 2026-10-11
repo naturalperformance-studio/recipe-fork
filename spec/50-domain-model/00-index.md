@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-04
+updated: 2026-10-11
 ids: []
 ---
 
@@ -77,6 +77,7 @@ the content of every account signed in on it, each apart from the others
 | `tags` | set of Tag | Chosen from the fixed dictionary. |
 | `language` | one of the languages of L10N-001 | Declared by the author, never detected. Selects the catalogue filter of L10N-005 and the search analysis of L10N-007. Frozen with the rest of the content (L10N-004). |
 | `servings` | whole number, 1 or more | The serving count the author wrote the quantities for (DOM-015). |
+| `equipment` | ordered list of EquipmentItem | At most 15 (DOM-025). |
 | `ingredients` | ordered list of Ingredient | May be divided into named groups (DOM-022). |
 | `steps` | ordered list of Step | |
 | `media` | list of Media | |
@@ -150,10 +151,24 @@ DOM-011 is what keeps it from ever becoming anything else.
 | `text` | text or none | May contain ingredient references. It is also what names the step's timers where the author named none (FLOW-016). A step holds text, media, or both (DOM-006). |
 | `ingredient_references` | list | Each points at an Ingredient of the same recipe and at a position in `text`, and holds either the whole ingredient or a part of it: a quantity in the ingredient's own unit, on that unit type's grid, above zero (FLOW-031, DOM-007). |
 | `timers` | list of Timer | None to five (DOM-024). |
+| `note` | text or none | The author's own note beside the method, at most 500 characters; not carried by another person's fork (DOM-027). |
 
 A step has no title. What identifies it to a reader is its own text, and that is
 also what a timer on it is announced by, which is why no separate name exists in
 either entity.
+
+### EquipmentItem
+
+| Field | Type | Notes |
+|---|---|---|
+| `position` | integer | Order within the recipe's equipment. |
+| `equipment_entry` | entry of the equipment dictionary, or none | Absent exactly when the item is free text (DOM-025, DOM-026). |
+| `qualifier` | text or none | The author's words after the entry, e.g. `26 cm`. Allowed only where `equipment_entry` is present. |
+| `free_text_name` | text or none | Present exactly when `equipment_entry` is absent. |
+
+The equipment dictionary's entries have the shape of IngredientEntry without
+divisibility and comparison factors: an identifier, a label per language,
+synonyms, a parent group, and `removed` (DOM-026).
 
 ### Timer
 
@@ -234,4 +249,4 @@ split and never will.
 |---|---|---|
 | [10-invariants.md](10-invariants.md) | Invariants over the entities: nickname, quantity, household measure, parent, media ownership, the submission minimum, step references, tags, the authored serving count; and what is deliberately not modelled yet | DOM-001–DOM-008, DOM-015 |
 | [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, where the dictionaries are kept, the twelve units, the values a quantity may hold, how a typed number is read, and what the dictionaries hold | DOM-009–DOM-012, DOM-014, DOM-016–DOM-020 |
-| [30-recipe-additions.md](30-recipe-additions.md) | Synonyms of a dictionary entry, ingredient groups, an ingredient's note, and up to five timers on a step | DOM-021–DOM-024 |
+| [30-recipe-additions.md](30-recipe-additions.md) | Synonyms of a dictionary entry, ingredient groups, an ingredient's note, up to five timers on a step, the equipment a recipe needs and its dictionary, and the author's note on a step | DOM-021–DOM-027 |

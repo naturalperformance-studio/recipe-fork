@@ -26,6 +26,8 @@ The general rules live in the `android-m3-ui` skill (`~/.claude/skills/android-m
 
 All replaced in v0.21 (`ActionText` → `editor/EditorButton`, the card's `StepAction`/`FixAction` → M3 buttons). Removals in menus and sheets take the error colour (`BlockAction`/`SourceItem` tinted). Do not hand-build a control; use M3 components.
 
+One exception since v0.31 (T-224): the servings − and + (`card/CardScreen.kt`, `StepAction`) are each a 40 dp filled-tonal drawing inside a 56 dp `clickable` target, the drawing set against the seam so the two halves still read as one connected group. No M3 icon button gives an off-centre drawing in a target that is the node's own bounds and does not overlap its neighbour (A11Y-003). It must keep what `FilledTonalIconButton` gave: `Role.Button`, the name and the click label, disabled semantics and the disabled tonal colours (its target unchanged when disabled), a bounded ripple in the content colour clipped to the drawing's shape, focus and press states on the drawing, the theme's filled-tonal colours. Any other hand-built control still needs its own line here.
+
 ## Exceptions to the skill
 
 - Recipe deletion asks nothing: the book offers Undo while its notice shows (FLOW-053 as rewritten 2026-10-04; v0.23, T-172).

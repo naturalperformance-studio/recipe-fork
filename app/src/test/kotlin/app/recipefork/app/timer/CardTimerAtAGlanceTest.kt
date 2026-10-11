@@ -4,9 +4,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.card.CardTags
@@ -17,6 +20,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -146,6 +150,8 @@ class CardTimerAtAGlanceTest : CardTimersKit() {
 /**
  * v0.30, T-220 — the bar of running timers at twice the font scale on a 320 dp phone, in English and Russian: a timer's
  * name keeps whole words — its time and Cancel go under it rather than squeeze it — and Cancel stays a card target.
+ * T-226: the line several running timers gather into, and the line of several finished ones with its Stop, read whole
+ * and keep card targets; opened, each timer's line does as before.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -154,7 +160,10 @@ class RunningTimersBarAtLargeTextTest : CardTimersKit() {
 
     private val long = "Keep stirring slowly over a low heat, scraping the bottom of the pan so that nothing catches or burns"
 
-    private fun barReadsWhole(names: List<String>) {
+    private fun text(tag: String): String? = compose.onAllNodes(hasTestTag(tag), true).fetchSemanticsNodes().singleOrNull()
+        ?.config?.getOrElseNullable(SemanticsProperties.Text) { null }?.joinToString("") { it.text }
+
+    private fun barReadsWhole(names: List<String>, more: String, finished: String) {
         val recipe = Recipe.create(now, owner = null).copy(
             title = "Dough",
             steps = names.mapIndexed { i, name -> Step(i, "Rest the dough", timer = Timer((10 + i).minutes, name)) } +
@@ -165,6 +174,13 @@ class RunningTimersBarAtLargeTextTest : CardTimersKit() {
         names.indices.forEach { start(it) }
         awaitHeld { it.size == names.size }
         compose.onNodeWithTag(CardTags.step(names.size + 11)).performScrollTo()
+        compose.waitUntil(PATIENCE_MS) { shown(TimerTags.BAR_RUNNING) }
+        compose.waitForIdle()
+        assertEquals(more, text(TimerTags.BAR_MORE))
+        compose.assertWhole(TimerTags.BAR_RUNNING)
+        compose.assertCardTarget(TimerTags.BAR_RUNNING)
+
+        compose.onNodeWithTag(TimerTags.BAR_RUNNING).performClick()
         compose.waitUntil(PATIENCE_MS) { names.indices.all { shown(TimerTags.barTimer(it)) } }
         compose.waitForIdle()
         names.indices.forEach { position ->
@@ -173,13 +189,29 @@ class RunningTimersBarAtLargeTextTest : CardTimersKit() {
             compose.assertWhole(TimerTags.barTimer(position))
             compose.assertCardTarget(TimerTags.barCancel(position))
         }
+
+        // The first two end and ring: one line for them, with its Stop, above the one still running.
+        pass(11.minutes)
+        compose.runOnIdle { held().filter { it.key.stepPosition < 2 }.forEach { timers.ringing.ring(it) } }
+        compose.waitUntil(PATIENCE_MS) { shown(TimerTags.BAR_FINISHED) }
+        compose.onNodeWithTag(TimerTags.BAR_FINISHED).performScrollTo()
+        compose.waitForIdle()
+        assertEquals(finished, text(TimerTags.BAR_FINISHED_NAME))
+        compose.assertWhole(TimerTags.BAR_FINISHED)
+        compose.assertCardTarget(TimerTags.BAR_FINISHED)
+        compose.assertCardTarget(TimerTags.BAR_STOP_ALL)
     }
 
     @Test
     @Config(qualifiers = "en-w320dp-h640dp")
-    fun aTimersNameReadsWholeInEnglish() = barReadsWhole(listOf("Chill", "Chill the dough overnight", "Proofing"))
+    fun aTimersNameReadsWholeInEnglish() =
+        barReadsWhole(listOf("Chill", "Chill the dough overnight", "Proofing"), "+2 more", "2 timers finished")
 
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp")
-    fun aTimersNameReadsWholeInRussian() = barReadsWhole(listOf("Охладить", "Охлаждение теста в холодильнике", "Расстойка"))
+    fun aTimersNameReadsWholeInRussian() = barReadsWhole(
+        listOf("Охладить", "Охлаждение теста в холодильнике", "Расстойка"),
+        "ещё 2",
+        "Закончились таймеры: 2",
+    )
 }

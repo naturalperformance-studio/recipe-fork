@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-10-04
+updated: 2026-10-11
 ids: []
 ---
 
@@ -111,9 +111,28 @@ step (FLOW-027). A step carries up to five (DOM-024).
 characters of its step's text unless the author set a name of their own, in
 which case theirs is used and stops following the step (FLOW-016).
 
-**Done mark** — the reader's mark on an ingredient or step of the card, kept on
+**Author's note on a step** — optional prose of at most 500 characters beside a
+step's method; the author's expression, so another person's fork does not carry
+it (DOM-027, FORK-002).
+
+**Done mark** — the reader's mark on an ingredient, equipment item or step on the card's Cooking tab, kept on
 the device per recipe until cleared; never part of the recipe, its file or a fork
 (FLOW-068).
+
+**View and Cooking** — the card's two tabs: View, compact and complete, for
+reading and forking; Cooking, large, for busy hands — "the cooking card" of
+A11Y-003 and A11Y-007 (FLOW-070).
+
+**Current step** — on Cooking, the first step not marked done; derived from the
+marks, never stored (FLOW-070).
+
+**Equipment** — what a recipe needs to be cooked with, up to 15 items, each an
+entry of the equipment dictionary with an optional qualifier, or free text
+(DOM-025, DOM-026). Carried by every fork.
+
+**My kitchen** — the equipment the reader ticks as held, kept on the device; what
+a card marks missing and the book's "Enough equipment" filter compare against
+(FLOW-071, FLOW-072). Consumables never count.
 
 **Cover** — the recipe's own image, attached where the title is written. Optional
 (FLOW-026, DOM-006). Always a photograph, never a video (MEDIA-001).

@@ -85,6 +85,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
@@ -125,7 +127,10 @@ import app.recipefork.app.settings.SettingsTags
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.app.ui.SnackbarAction
-import app.recipefork.app.ui.WordFitText
+import app.recipefork.app.ui.FittedText
+import app.recipefork.app.ui.FittedWords
+import app.recipefork.app.ui.fitWordsTogether
+import app.recipefork.app.ui.widestWord
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
@@ -234,20 +239,17 @@ fun LibraryScreen(
                 var rowWidth by remember { mutableIntStateOf(0) }
                 val words = (rowWidth.takeIf { it > 0 } ?: LocalWindowInfo.current.containerSize.width) / VIEWS.size -
                     with(LocalDensity.current) { (TAB_TEXT_PADDING * 2).roundToPx() }
+                // In [Mode.Serverless] the marked view holds only the recipes imported from files, and is named for them.
+                val markedLabel = if (mode == Mode.Serverless) R.string.library_view_marked_serverless else R.string.library_view_marked
+                val labelSize = rememberTabLabelSize(listOf(stringResource(markedLabel), stringResource(R.string.library_view_own)), words)
                 PrimaryTabRow(
                     selectedTabIndex = pager.currentPage,
                     modifier = Modifier.onSizeChanged { rowWidth = it.width }.testTag(LibraryTags.SWITCH),
                 ) {
-                    // In [Mode.Serverless] the view holds only the recipes imported from files, and is named for them.
-                    if (mode == Mode.Serverless) {
-                        ViewTab(
-                            LibraryView.MARKED, shown, R.string.library_view_marked_serverless,
-                            R.string.library_view_marked_action_serverless, session, words,
-                        )
-                    } else {
-                        ViewTab(LibraryView.MARKED, shown, R.string.library_view_marked, R.string.library_view_marked_action, session, words)
-                    }
-                    ViewTab(LibraryView.OWN, shown, R.string.library_view_own, R.string.library_view_own_action, session, words)
+                    val markedAction =
+                        if (mode == Mode.Serverless) R.string.library_view_marked_action_serverless else R.string.library_view_marked_action
+                    ViewTab(LibraryView.MARKED, shown, markedLabel, markedAction, session, words, labelSize)
+                    ViewTab(LibraryView.OWN, shown, R.string.library_view_own, R.string.library_view_own_action, session, words, labelSize)
                 }
             }
         },
@@ -408,12 +410,13 @@ private fun ViewTab(
     @StringRes action: Int,
     session: LibrarySession,
     width: Int,
+    size: TextStyle,
 ) {
     val actionLabel = stringResource(action)
     Tab(
         selected = tab == current,
         onClick = { session.choose(tab) },
-        text = { TabLabel(stringResource(label), width) },
+        text = { TabLabel(stringResource(label), width, size) },
         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .heightIn(min = 48.dp)
@@ -429,13 +432,29 @@ private fun ViewTab(
 }
 
 /**
- * A tab's words, given the [width] in pixels they have: on one line where they fit, else wrapped between words. A word
- * wider than that — a long Russian word at a large font scale on a narrow phone — is drawn smaller until it fits, so
- * that no word is ever broken.
+ * The size of the tabs' words, each tab's given [width] pixels: the tabs' style, made smaller as far as the widest word
+ * of any of [labels] needs to fit — a long Russian word at a large font scale on a narrow phone — so that every tab is
+ * drawn at one size ([fitWordsTogether]). Only its size and line height are meant.
  */
 @Composable
-private fun TabLabel(text: String, width: Int) {
-    WordFitText(text, LocalTextStyle.current, width, Modifier.testTag(LibraryTags.TAB_LABEL))
+private fun rememberTabLabelSize(labels: List<String>, width: Int): TextStyle {
+    val style = MaterialTheme.typography.titleSmall
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    return remember(labels, style, width, measurer, density) { fitWordsTogether(labels, style, width, measurer, density) }
+}
+
+/**
+ * A tab's words, given the [width] in pixels they have, at the tabs' one [size]: on one line where they fit, else
+ * wrapped between words; a word wider than its room even at the least size is not broken, but the words keep to one
+ * line and end with an ellipsis.
+ */
+@Composable
+private fun TabLabel(text: String, width: Int, size: TextStyle) {
+    val style = LocalTextStyle.current.merge(TextStyle(fontSize = size.fontSize, lineHeight = size.lineHeight))
+    val measurer = rememberTextMeasurer()
+    val overflows = remember(text, style, width, measurer) { widestWord(listOf(text), style, measurer) > width }
+    FittedText(text, FittedWords(style, overflows), Modifier.testTag(LibraryTags.TAB_LABEL))
 }
 
 /** The margin Material 3 keeps on each side of a tab's words. */
@@ -461,7 +480,11 @@ private fun ViewAction(
     val expanded by remember(list) { derivedStateOf { !list.canScrollBackward || !list.lastScrolledForward } }
     when {
         view == LibraryView.OWN -> FloatingAction(R.string.library_own_new, R.drawable.ic_new_recipe, LibraryTags.NEW, expanded, onWrite, modifier)
-        mode == Mode.Serverless -> FloatingAction(R.string.file_import, R.drawable.ic_import_file, LibraryTags.IMPORT, expanded, onImport, modifier)
+        // Its short words stay whole on a narrow phone at large text; the screen reader hears the whole action.
+        mode == Mode.Serverless -> FloatingAction(
+            R.string.file_import_short, R.drawable.ic_import_file, LibraryTags.IMPORT, expanded, onImport, modifier,
+            action = R.string.file_import,
+        )
     }
 }
 
@@ -473,8 +496,10 @@ private fun FloatingAction(
     expanded: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    @StringRes action: Int? = null,
 ) {
     val words = stringResource(label)
+    val actionLabel = action?.let { stringResource(it) }
     ExtendedFloatingActionButton(
         text = { Text(words) },
         icon = { Icon(painterResource(icon), contentDescription = null) },
@@ -482,7 +507,17 @@ private fun FloatingAction(
         expanded = expanded,
         // The action reads its words to the screen reader, shrunk to its icon or not: the button keeps its shown words
         // from the screen reader, so they are given to the button itself.
-        modifier = modifier.semantics { text = AnnotatedString(words) }.testTag(tag),
+        modifier = modifier
+            .semantics {
+                text = AnnotatedString(words)
+                if (actionLabel != null) {
+                    onClick(label = actionLabel) {
+                        onClick()
+                        true
+                    }
+                }
+            }
+            .testTag(tag),
     )
 }
 

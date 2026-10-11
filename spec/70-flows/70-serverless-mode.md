@@ -1,8 +1,8 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-04
-ids: [FLOW-061, FLOW-062, FLOW-063, FLOW-064, FLOW-065]
+updated: 2026-10-11
+ids: [FLOW-061, FLOW-062, FLOW-063, FLOW-064, FLOW-065, FLOW-073]
 ---
 
 # Serverless mode and recipe files
@@ -94,8 +94,8 @@ the user, 2026-10-03.
 
 Where serverless mode is on, when a person chooses to export a recipe from the
 recipe book, the system shall write a file holding that recipe's identity, title,
-description, declared language, tags, serving count, ingredients with their
-groups and notes, steps, timers and
+description, declared language, tags, serving count, equipment, ingredients with
+their groups and notes, steps with their authors' notes, timers and
 every media item the device
 holds for it, the nickname of its author, and the identity of its direct parent
 with that parent's title and author's nickname where the device holds them, and
@@ -163,6 +163,12 @@ marked every time it is shown as stated in the file and not verified.
 - Given an imported recipe, when it is removed from the recipe book, then it
   leaves it as any other marked recipe does, with its held content (FLOW-009), and
   its running and ringing timers end.
+- Given a recipe file received in another application or saved in a file
+  manager, when the person opens it, then this application is offered for it and
+  the file is imported as above; the application is offered only for a file named
+  as a recipe file or declaring the recipe file's type, never for files of an
+  unknown type — a file that carries neither is imported from within the
+  application.
 - Given serverless mode off, when a recipe file is opened, then nothing is
   imported.
 
@@ -178,6 +184,11 @@ Amended 2026-10-03 (sync v0.3–v0.14): a draft imports as it is, only a
 structurally unreadable file is refused, a clip over 15 seconds or a photo over
 1 MB refuses the file, and removing a found recipe ends its timers — req-forge
 proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
+Amended 2026-10-11 (sync v0.22–v0.30): opening a file from another application
+(v0.22). Offering the application only for recipe files is the user's decision of
+2026-10-09, over matching every file of an unknown type; its stated cost is that a
+file manager handing over neither the name nor the type (Samsung My Files, seen
+2026-10-09) does not offer the application.
 
 ### FLOW-065 — A fork of an imported recipe names it as its parent
 
@@ -219,3 +230,28 @@ published, so a parent is shown as the file names it, which keeps one step of
 lineage alive between people (GOAL-003). Amended 2026-10-03 (sync v0.3–v0.14):
 the fork names its parent by the stated nickname as well as by title —
 req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
+
+### FLOW-073 — The whole recipe book is saved and restored
+
+Where serverless mode is on, the system shall let a person save their whole
+recipe book — every recipe with its media, own and found — to one file of their
+choosing, and restore a book from such a file, so that a lost or reset phone does
+not lose it. This shall exist before the first public release.
+
+**Acceptance criteria**
+- Given a book of recipes with photos and clips, when it is saved and restored on
+  another device, then every recipe is there, readable and cookable as before, own
+  recipes still editable and found ones still found.
+- Given a saved book, when it is restored, then nothing is sent anywhere: like
+  FLOW-063, the file goes only where the person puts it.
+- Given a file that cannot be read, when it is restored, then nothing changes in
+  the book and the person is told why.
+
+What a restore does to a book that already holds recipes is open (OQ-041). The
+file's format and the controls are the team's; done marks, My kitchen and settings
+may or may not travel with it, the team decides.
+
+**Source:** user decision, 2026-10-10: the analyst's hypothesis H-001 ("a whole-book
+backup is a must-have before release", `analytics/hypotheses.md`) adopted; it also
+answers fork F-1 of v0.25. Written at the sync of 2026-10-11 as intent; its rules
+are settled when an increment is planned for it.

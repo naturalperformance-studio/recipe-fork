@@ -1,6 +1,17 @@
 package app.recipefork.app.card
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.text.TextLayoutResult
+import app.recipefork.app.ui.Motion
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -64,6 +75,16 @@ import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepText
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.InteractionSource
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.runtime.snapshotFlow
+import app.recipefork.app.timer.rememberCardTimers
 
 /**
  * The step a card is to be shown at, once: the step of a timer whose notification the reader tapped (FLOW-013 (4)).
@@ -86,10 +107,14 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * A tap on a step's line — its number and text — marks it done, and a tap again unmarks it ([marks], FLOW-068); its
  * media and its timer keep their own taps. Without [marks] a step is not marked.
  *
+ * On Cooking the steps read as a stepper, each circle joined to the next by a line, and a step marked done folds to its
+ * first line with a check in its circle ([StepRow]); a tap on it unmarks it and it unfolds.
+ *
  * On Cooking the first step not marked done is the current one: drawn, with its timers, on the theme's primary
  * container and read as the current step. A step marked done brings the next one not marked after it into view, wholly
  * above the [coveredBelow] the navigation bar covers at the bottom of the viewport, scrolling smoothly — unless the
- * reader is scrolling themselves ([readerScrolling]); a step unmarked, or a step marked with none unmarked after it,
+ * reader is scrolling themselves ([readerScrolling]), or until they take hold of the card's scroll ([readerInteractions]);
+ * a step unmarked, or a step marked with none unmarked after it,
  * moves nothing.
  *
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a step is as tall as its text, the steps a
@@ -108,6 +133,7 @@ internal fun StepsList(
     mode: CardMode = CardMode.COOKING,
     readerScrolling: () -> Boolean = { false },
     coveredBelow: Dp = 0.dp,
+    readerInteractions: InteractionSource? = null,
 ) {
     // A step that is only a reference reads as one, one that is only its author's note reads as that, and one that is
     // only a photograph or a clip shows it — or says it is unavailable (FLOW-061); one holding nothing that reads or
@@ -116,6 +142,17 @@ internal fun StepsList(
     val timers = rememberRecipeTimers(recipeId, title)
     val held = timers.held
     LaunchedEffect(timers, steps, held) { timers.dropStale(steps, held) }
+    // Whether the card has read the recipe's timers: until then a step marked done cannot tell whether a timer of its
+    // own holds it open, so it neither animates its fold nor is brought into view.
+    val card = rememberCardTimers()
+    var settled by remember(timers) { mutableStateOf(false) }
+    LaunchedEffect(timers) {
+        combine(card.store.ofRecipe(card.book(), recipeId), snapshotFlow { timers.held }) { stored, read -> stored.keys == read.keys }
+            .first { it }
+        // A few frames on, once the steps stand as the timers read make them, not while they are changing to it.
+        repeat(FOLD_SETTLED_FRAMES) { withFrameNanos { } }
+        settled = true
+    }
     val cooking = mode == CardMode.COOKING
     // Each step can be brought into view: by a timer's notification, or as the next to do once one is marked.
     val requesters = remember { HashMap<Int, BringIntoViewRequester>() }
@@ -128,6 +165,39 @@ internal fun StepsList(
         val height = places?.placeOf(CardPlaces.step(position))?.height
         requester(position).bringIntoView(height?.let { Rect(Offset.Zero, Size(1f, it + covered)) })
     }
+
+    /**
+     * Brings the step at [position] into view, following it a frame at a time while the step at [changing] still
+     * changes its height — folding or unfolding — and once more as it has settled: a step that folds above another
+     * pulls it up, where its top is scrolled off out of view with it; a step that unfolds grows below where it was
+     * brought.
+     */
+    suspend fun follow(position: Int, changing: Int) = coroutineScope {
+        fun height() = places?.placeOf(CardPlaces.step(changing))?.height
+        val following = launch {
+            var height = height()
+            var still = 0
+            var frames = 0
+            while (still < FOLD_SETTLED_FRAMES && frames++ < FOLD_MOST_FRAMES) {
+                launch { bring(position) }
+                withFrameNanos { }
+                val now = height()
+                still = if (now == height) still + 1 else 0
+                height = now
+            }
+            bring(position)
+        }
+        // A scroll of the reader's own ends the following there, the bringing in flight with it: the card never turns
+        // back to the step once the reader has taken hold of it.
+        val reader = readerInteractions?.let { source ->
+            launch {
+                source.interactions.first { it is DragInteraction.Start }
+                following.cancel()
+            }
+        }
+        following.join()
+        reader?.cancel()
+    }
     // A timer's step is shown on Cooking, where the timer runs: the card opens on that tab for it.
     val toShow = LocalStepToShow.current?.takeIf { cooking }
     val pending = toShow?.pending?.collectAsState()?.value?.takeIf { it.recipeId == recipeId.value }
@@ -135,21 +205,28 @@ internal fun StepsList(
     LaunchedEffect(pending) {
         if (pending == null) return@LaunchedEffect
         if (targetShown) {
-            // Once laid out, the step comes into view.
+            // Once its timers are read, so that a step marked done stands unfolded by the timer it was opened for, and
+            // once laid out, the step comes into view.
+            snapshotFlow { settled }.first { it }
             withFrameNanos { }
-            bring(pending.stepPosition)
+            follow(pending.stepPosition, changing = pending.stepPosition)
         }
         toShow.shown()
     }
-    // The step to bring into view next, set as a step is marked done.
-    var next by remember { mutableStateOf<Int?>(null) }
+    // The step marked done and the step to bring into view next, set as a step is marked done.
+    var next by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     val scrolling by rememberUpdatedState(readerScrolling)
     LaunchedEffect(next) {
-        val position = next ?: return@LaunchedEffect
-        // Once the mark is drawn; the bringing animates, and a scroll of the reader's own stops it.
-        withFrameNanos { }
-        if (!scrolling()) bring(position)
-        next = null
+        val asked = next ?: return@LaunchedEffect
+        try {
+            // Once the mark is drawn; the bringing animates, and a scroll of the reader's own stops it.
+            withFrameNanos { }
+            // The step marked folds over the frames that follow, pulling up what comes after it.
+            if (!scrolling()) follow(asked.second, changing = asked.first)
+        } finally {
+            // Done with, however it ended — unless a later mark has asked again — so the same mark asks anew.
+            if (next == asked) next = null
+        }
     }
     if (shown.isEmpty()) return
     val current = if (cooking && marks != null) shown.firstOrNull { !marks.done(MarkedPart.STEP, it.position) }?.position else null
@@ -164,19 +241,28 @@ internal fun StepsList(
                         val marking = !marked.done(MarkedPart.STEP, step.position)
                         marked.toggle(MarkedPart.STEP, step.position)
                         if (marking) {
-                            next = shown.drop(index + 1).firstOrNull { !marked.done(MarkedPart.STEP, it.position) }?.position
+                            next = shown.drop(index + 1).firstOrNull { !marked.done(MarkedPart.STEP, it.position) }
+                                ?.let { step.position to it.position }
                         }
                     }
                 },
                 mode = mode,
                 current = step.position == current,
                 stated = marks?.any == true,
+                last = index == shown.lastIndex,
+                animate = settled,
             )
         }
     }
     RestartQuestion(timers)
     TimerNotificationsCheck(timers)
 }
+
+/** How many frames a step keeps its height before its fold or unfold is taken as settled. */
+private const val FOLD_SETTLED_FRAMES = 3
+
+/** The most frames a step is followed while another folds or unfolds, whatever happens meanwhile. */
+private const val FOLD_MOST_FRAMES = 120
 
 /**
  * Whether the card lists [step]: it reads as something — its text, each reference read by [quantity], or the author's
@@ -197,13 +283,20 @@ internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean
  * ([onToggle]) — a check box to the screen reader; a step marked done has its text struck through and muted, and is
  * read as done.
  *
+ * On Cooking the steps read as a stepper: each circle is joined to the next one's by a vertical line ([stepLine]),
+ * none after the [last]; a step marked done shows a check in its circle in place of its number and folds to its first
+ * line, ellipsized — its note, media and timers folded away — unless one of its timers is running or ringing, which
+ * holds it open until that timer is cancelled or its ringing stopped. Folding and unfolding animate ([Motion]) — once
+ * the card has read the recipe's timers ([animate]); before, a step stands as they make it at once. The screen reader
+ * still reads a folded step's text whole; its note folds away with the rest.
+ *
  * The [current] step — its number and text, its media and its timers — stands on the theme's primary container, which
  * reaches a little beyond it into the gutter and the space between steps, so that nothing moves as the current step
  * changes; its text is in the container's own colour, and the screen reader reads it as the current step.
  *
  * In [CardMode.VIEW] the number and text answer no tap and are as tall as they are; a mark is shown, read-only, its
  * state read while the recipe has any mark ([stated]); a timer is a line of text ([ViewTimer]), closer under the text
- * than in cooking.
+ * than in cooking. View draws no line and no check, and folds nothing.
  */
 @Composable
 private fun StepRow(
@@ -218,13 +311,23 @@ private fun StepRow(
     mode: CardMode = CardMode.COOKING,
     current: Boolean = false,
     stated: Boolean = false,
+    last: Boolean = true,
+    animate: Boolean = true,
 ) {
     val cooking = mode == CardMode.COOKING
     val spacing = if (cooking) StepSpacing else VIEW_STEP_SPACING
+    // Read from the timers as they tick, but changing only as a timer of the step starts, ends, rings or goes.
+    val timing by remember(step, timers) { derivedStateOf { timers.holdOpen(step) } }
+    val folded = cooking && done && !timing
+    val circle = rememberStepCircle(number)
     // The current step's container takes in the whole step — its number and text, its media and its timers — so that
     // its timers read as its own.
     val highlight = if (current) Modifier.currentStep() else Modifier
-    Column(modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp).then(highlight)) {
+    val line = if (cooking && !last) Modifier.stepLine(circle.side, below = spacing) else Modifier
+    Column(
+        modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp).then(highlight).then(line)
+            .testTag(StepRowTags.entry(step.position)),
+    ) {
         // The current step is read as such; it is never done, so its state says that it is current.
         val currentState = stringResource(R.string.card_current_step).takeIf { current }
         val marking = when {
@@ -239,30 +342,72 @@ private fun StepRow(
         ) {
             val color = if (current) MaterialTheme.colorScheme.onPrimaryContainer else LocalContentColor.current
             CompositionLocalProvider(LocalContentColor provides color) {
-                StepNumber(number, step.position)
-                Column(Modifier.weight(1f)) {
-                    StepText(step, references, done = done, mode = mode)
-                    step.note?.let { StepNote(it, step.position, mode) }
+                StepNumber(circle, step.position, checked = cooking && done)
+                Column(Modifier.weight(1f).then(if (cooking && animate) Modifier.animateContentSize(Motion.appearing()) else Modifier)) {
+                    StepText(step, references, done = done, mode = mode, maxLines = if (folded) 1 else Int.MAX_VALUE)
+                    if (!folded) step.note?.let { StepNote(it, step.position, mode) }
                 }
             }
         }
-        media.of(step.position)?.let { item ->
-            Box(Modifier.fillMaxWidth().padding(start = StepIndent, top = 8.dp)) {
-                StepMedia(item, number, step.position)
-            }
-        }
-        step.timers.indices.forEach { index ->
-            // Each timer on its own line: the first a clear gap below the rest, the others closer under it.
-            if (cooking) {
-                val gap = if (index == 0) TimerGap else TimersGap
-                StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap), onHighlight = current)
-            } else {
-                val gap = if (index == 0) VIEW_TIMER_GAP else VIEW_TIMERS_GAP
-                ViewTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
+        AnimatedVisibility(
+            !folded,
+            enter = if (animate) Motion.open else EnterTransition.None,
+            exit = if (animate) Motion.close else ExitTransition.None,
+        ) {
+            Column {
+                media.of(step.position)?.let { item ->
+                    Box(Modifier.fillMaxWidth().padding(start = StepIndent, top = 8.dp)) {
+                        StepMedia(item, number, step.position)
+                    }
+                }
+                step.timers.indices.forEach { index ->
+                    // Each timer on its own line: the first a clear gap below the rest, the others closer under it.
+                    if (cooking) {
+                        val gap = if (index == 0) TimerGap else TimersGap
+                        StepTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap), onHighlight = current)
+                    } else {
+                        val gap = if (index == 0) VIEW_TIMER_GAP else VIEW_TIMERS_GAP
+                        ViewTimer(step, index, timers, references::quantity, Modifier.padding(start = StepIndent, top = gap))
+                    }
+                }
             }
         }
     }
 }
+
+/**
+ * Whether a timer of [step] is running, or has finished and rings: what holds a step marked done open on Cooking. One
+ * that has ended but is not yet announced is about to ring, and holds it too, so that the step does not fold and
+ * unfold again in between.
+ */
+private fun RecipeTimers.holdOpen(step: Step): Boolean = step.timers.indices.any { index ->
+    val key = key(step, index)
+    val timer = held[key] ?: return@any false
+    !timer.hasEnded(now) || !timer.announced || rings(key)
+}
+
+/**
+ * The stepper's line from a step's circle, [side] across, down to the next step's, which stands [below] it: in the
+ * theme's on-surface-variant colour, a small gap clear of each circle, drawn over the current step's container too
+ * (ContrastTest).
+ */
+@Composable
+private fun Modifier.stepLine(side: Dp, below: Dp): Modifier {
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    return drawBehind {
+        val x = side.toPx() / 2f
+        val gap = STEP_LINE_GAP.toPx()
+        val top = side.toPx() + gap
+        val bottom = size.height + below.toPx() - gap
+        if (bottom > top) drawLine(color, Offset(x, top), Offset(x, bottom), strokeWidth = STEP_LINE_WIDTH.toPx())
+    }
+}
+
+/** The width of the stepper's line between two steps' circles. */
+internal val STEP_LINE_WIDTH = 2.dp
+
+/** The gap between the stepper's line and the circles it joins. */
+private val STEP_LINE_GAP = 4.dp
 
 /**
  * Draws the current step's container behind it: the theme's primary container in its medium corners, reaching
@@ -289,6 +434,7 @@ internal val CURRENT_OUTSET_END = 4.dp
 /** Test tags of a step's parts on the card. */
 internal object StepRowTags {
     fun number(position: Int) = "card-step-$position-number"
+    fun entry(position: Int) = "card-step-$position-entry"
     fun note(position: Int) = "card-step-$position-note"
 }
 
@@ -343,25 +489,52 @@ internal val TimersGap = 8.dp
 /** Where a step's photograph, clip and timer start: under its text. */
 internal val StepIndent = StepNumberSize + StepGap
 
-/**
- * A step's number in a filled circle in the theme's primary colour, as large as the number needs and never less than
- * [StepNumberSize]. Drawn, not set as text: it is decorative, the step's line says the number.
- */
+/** A step's number as its circle draws it, and the circle's side. */
+private class StepCircle(val number: TextLayoutResult, val side: Dp)
+
+/** The circle of step [number]: as large as the number needs and never less than [StepNumberSize]. */
 @Composable
-private fun StepNumber(number: Int, position: Int) {
+private fun rememberStepCircle(number: Int): StepCircle {
     val measurer = rememberTextMeasurer()
     val style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onPrimary)
-    val fill = MaterialTheme.colorScheme.primary
     val density = LocalDensity.current
-    val shown = remember(number, style, density) { measurer.measure("$number", style, softWrap = false, maxLines = 1) }
-    val side = with(density) { maxOf(StepNumberSize, (maxOf(shown.size.width, shown.size.height)).toDp() + 8.dp) }
+    return remember(number, style, density) {
+        val shown = measurer.measure("$number", style, softWrap = false, maxLines = 1)
+        StepCircle(shown, with(density) { maxOf(StepNumberSize, (maxOf(shown.size.width, shown.size.height)).toDp() + 8.dp) })
+    }
+}
+
+/** Whether a step's circle shows a check in place of its number: what a test reads of a circle that says nothing. */
+internal val ShowsCheck = SemanticsPropertyKey<Boolean>(SHOWS_CHECK_KEY)
+private const val SHOWS_CHECK_KEY = "card.shows-check"
+private var SemanticsPropertyReceiver.showsCheck by ShowsCheck
+
+/**
+ * A step's number in a filled [circle] in the theme's primary colour — or, [checked], a check in its place, as a step
+ * marked done shows on Cooking. Drawn, not set as text: it is decorative, the step's line says the number and its state.
+ */
+@Composable
+private fun StepNumber(circle: StepCircle, position: Int, checked: Boolean) {
+    val fill = MaterialTheme.colorScheme.primary
+    val mark = MaterialTheme.colorScheme.onPrimary
+    val shown = circle.number
     Box(
         Modifier
-            .size(side)
-            .clearAndSetSemantics { testTag = StepRowTags.number(position) }
+            .size(circle.side)
+            .clearAndSetSemantics { testTag = StepRowTags.number(position); showsCheck = checked }
             .drawBehind {
                 drawCircle(fill)
-                drawText(shown, topLeft = Offset((size.width - shown.size.width) / 2f, (size.height - shown.size.height) / 2f))
+                if (checked) {
+                    val s = size.minDimension
+                    val tick = Path().apply {
+                        moveTo(s * 0.28f, s * 0.52f)
+                        lineTo(s * 0.44f, s * 0.67f)
+                        lineTo(s * 0.73f, s * 0.36f)
+                    }
+                    drawPath(tick, mark, style = Stroke(width = s * 0.09f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                } else {
+                    drawText(shown, topLeft = Offset((size.width - shown.size.width) / 2f, (size.height - shown.size.height) / 2f))
+                }
             },
     )
 }

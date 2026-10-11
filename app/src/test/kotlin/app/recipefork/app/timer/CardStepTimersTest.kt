@@ -178,6 +178,9 @@ class CardStepTimersTest : CardTimersKit() {
         start(2, 0)
         awaitHeld { it.size == 3 }
         compose.onNodeWithTag(CardTags.step(last)).performScrollTo()
+        // Gathered into one line, which opens into each of them (T-226).
+        compose.waitUntil(PATIENCE_MS) { shown(TimerTags.BAR_RUNNING) }
+        compose.onNodeWithTag(TimerTags.BAR_RUNNING).performClick()
         compose.waitUntil(PATIENCE_MS) {
             shown(TimerTags.barTimer(1, 0)) && shown(TimerTags.barTimer(1, 1)) && shown(TimerTags.barTimer(2, 0))
         }

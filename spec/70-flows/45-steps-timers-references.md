@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-04
+updated: 2026-10-11
 ids: [FLOW-027, FLOW-031, FLOW-032]
 ---
 
@@ -114,7 +114,8 @@ reference stands for the whole ingredient or for a part of it.
   only if it lies on that unit type's grid and is above zero (DOM-017).
 - Given 200 g of flour, when the author types a part of 250 g, then the part is
   refused at entry; given 50 g, it is held.
-- Given an ingredient that is "to taste" or has no quantity yet, when the author
+- Given an ingredient that is "to taste" or has no quantity yet, or a `piece`
+  ingredient whose divisibility is not yet answered (FLOW-001), when the author
   inserts a reference to it, then no part is offered, only the whole.
 - Given three parts of one ingredient in different steps, when they are entered,
   then each is held on its own and their sum is never checked against the whole —
@@ -142,6 +143,9 @@ hidden from everybody else, and the product's readers and authors are not progra
 (`market-context`). Amended 2026-10-03 (sync v0.3–v0.14): a reference may stand for a
 part of the ingredient, criteria 7–12 (req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03, asked by the user, v0.9). See
 [ADR — a reference to part of an ingredient](../decisions/20261003-a-reference-to-part-of-an-ingredient.md).
+Amended 2026-10-11 (sync v0.22–v0.30): a `piece` ingredient whose divisibility is
+unanswered offers no part either, as built in v0.30 — a part of it could not be
+put on its grid.
 
 ### FLOW-032 — A reference renders as the quantity alone
 
