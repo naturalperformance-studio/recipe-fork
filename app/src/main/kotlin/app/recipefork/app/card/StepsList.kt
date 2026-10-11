@@ -75,6 +75,7 @@ import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepText
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * The step a card is to be shown at, once: the step of a timer whose notification the reader tapped (FLOW-013 (4)).
@@ -155,14 +156,30 @@ internal fun StepsList(
         }
         toShow.shown()
     }
-    // The step to bring into view next, set as a step is marked done.
-    var next by remember { mutableStateOf<Int?>(null) }
+    // The step marked done and the step to bring into view next, set as a step is marked done.
+    var next by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     val scrolling by rememberUpdatedState(readerScrolling)
     LaunchedEffect(next) {
-        val position = next ?: return@LaunchedEffect
+        val (marked, position) = next ?: return@LaunchedEffect
         // Once the mark is drawn; the bringing animates, and a scroll of the reader's own stops it.
         withFrameNanos { }
-        if (!scrolling()) bring(position)
+        if (!scrolling()) {
+            // The step marked folds over the frames that follow, pulling up what comes after it: where its top is
+            // scrolled off above, the next step would go up out of view with it. So the next step is followed, a frame
+            // at a time, until the fold has settled, and brought into view once more then.
+            fun height() = places?.placeOf(CardPlaces.step(marked))?.height
+            var height = height()
+            var still = 0
+            var frames = 0
+            while (still < FOLD_SETTLED_FRAMES && frames++ < FOLD_MOST_FRAMES) {
+                launch { bring(position) }
+                withFrameNanos { }
+                val now = height()
+                still = if (now == height) still + 1 else 0
+                height = now
+            }
+            bring(position)
+        }
         next = null
     }
     if (shown.isEmpty()) return
@@ -178,7 +195,8 @@ internal fun StepsList(
                         val marking = !marked.done(MarkedPart.STEP, step.position)
                         marked.toggle(MarkedPart.STEP, step.position)
                         if (marking) {
-                            next = shown.drop(index + 1).firstOrNull { !marked.done(MarkedPart.STEP, it.position) }?.position
+                            next = shown.drop(index + 1).firstOrNull { !marked.done(MarkedPart.STEP, it.position) }
+                                ?.let { step.position to it.position }
                         }
                     }
                 },
@@ -192,6 +210,12 @@ internal fun StepsList(
     RestartQuestion(timers)
     TimerNotificationsCheck(timers)
 }
+
+/** How many frames a step marked done keeps its height before its fold is taken as settled. */
+private const val FOLD_SETTLED_FRAMES = 3
+
+/** The most frames the next step is followed while the step marked folds, whatever happens meanwhile. */
+private const val FOLD_MOST_FRAMES = 120
 
 /**
  * Whether the card lists [step]: it reads as something — its text, each reference read by [quantity], or the author's

@@ -15,6 +15,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.test.core.app.ApplicationProvider
@@ -260,8 +261,50 @@ class CardStepperTest {
         assertTrue(inView(2))
     }
 
+    /** The top of what the reader sees of the tab: below the card's bar and tabs, where they overlap it. */
+    private fun visibleTop(): Float = listOf(CardTags.PAGER, CardTags.CONTENT, CardTags.BAR, CardTags.TABS)
+        .filter { compose.onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
+        .maxOf { tag -> compose.onNodeWithTag(tag).fetchSemanticsNode().let { if (tag == CardTags.PAGER || tag == CardTags.CONTENT) it.boundsInRoot.top else it.boundsInRoot.bottom } }
+
+    @Test
+    fun markingAModeratelyTallStepScrolledPartlyOffBringsTheNextIntoView() = theNextComesIntoViewAfterATallStep(3)
+
+    @Test
+    fun markingAVeryTallStepScrolledPartlyOffBringsTheNextIntoView() = theNextComesIntoViewAfterATallStep(8)
+
+    // The step marked is taller than what shows of it, its top scrolled off above: folded, it would pull the next one
+    // up and out of view with it.
+    private fun theNextComesIntoViewAfterATallStep(sentences: Int) {
+        val tall = Recipe.create(now, null).copy(
+            title = "Tall",
+            servings = 4,
+            steps = listOf(Step(0, "Wash."), Step(1, "Chop."), Step(2, List(sentences) { "Then $long" }.joinToString(" ")), Step(3, "Simmer.")) +
+                (4 until 8).map { Step(it, "Step ${it + 1}: $long") },
+        )
+        marks.hold(BookName.Pool, tall.id, setOf(DoneMark.of(tall.steps[0]), DoneMark.of(tall.steps[1])))
+        open(tall)
+        val top = compose.onNodeWithTag(StepRowTags.entry(2), useUnmergedTree = true).fetchSemanticsNode().positionInRoot.y
+        compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, top - visibleTop() + SCROLLED_OFF) }
+        compose.waitForIdle()
+        assertTrue("the step's top is scrolled off", compose.onNodeWithTag(StepRowTags.entry(2), useUnmergedTree = true).fetchSemanticsNode().positionInRoot.y < visibleTop())
+        assertEquals("Current step", stateOf(2))
+
+        compose.onNodeWithTag(CardTags.step(2)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        assertEquals(1, layout(2).lineCount)
+        assertEquals("Current step", stateOf(3))
+        val pager = compose.onNodeWithTag(CardTags.PAGER).fetchSemanticsNode().boundsInRoot
+        val next = compose.onNodeWithTag(CardTags.step(3)).fetchSemanticsNode()
+        val nextTop = next.positionInRoot.y
+        assertTrue("the next step ($nextTop to ${nextTop + next.size.height}) lies wholly in view (${visibleTop()} to ${pager.bottom})",
+            nextTop >= visibleTop() - 0.5f && nextTop + next.size.height <= pager.bottom + 0.5f)
+    }
+
     private companion object {
         /** More frames than any folding or bringing into view takes. */
         const val FRAMES = 60
+
+        /** How far above what shows the tall step's top is scrolled, in pixels. */
+        const val SCROLLED_OFF = 136f
     }
 }
