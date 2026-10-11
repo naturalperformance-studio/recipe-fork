@@ -14,7 +14,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.background
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.foundation.layout.width
@@ -1042,9 +1046,9 @@ internal fun Section(@StringRes title: Int, tag: String, gap: Dp = SECTION_GAP, 
 /**
  * The serving count and the two actions that walk it (SCALE-011): the count as the reader requested it, never
  * marked approximate, or, while a fixed ingredient sets the scale, the count it implies marked as approximate
- * (SCALE-002, SCALE-008); beside it the fewer and more actions as one connected group [ − | + ]. At ¼ the fewer action
- * is disabled and does nothing. The settings' usual count walks with it too, its parts [tagged][tags] and its actions
- * announced as [fewerAction] and [moreAction] there.
+ * (SCALE-002, SCALE-008); beside it the fewer and more actions as one connected group [ − | + ], drawn smaller than
+ * their targets. At ¼ the fewer action is disabled and does nothing. The settings' usual count walks with it too, its
+ * parts [tagged][tags] and its actions announced as [fewerAction] and [moreAction] there.
  */
 @Composable
 internal fun ServingsControl(
@@ -1076,24 +1080,26 @@ internal fun ServingsControl(
                 name = stringResource(R.string.card_servings_fewer),
                 action = stringResource(fewerAction),
                 shape = inner.copy(topStart = outer, bottomStart = outer),
+                side = Alignment.CenterEnd,
                 enabled = canDecrease,
                 onClick = {
                     haptics.perform(Haptic.TICK)
                     onDecrease()
                 },
-                modifier = Modifier.testTag(tags.fewer),
+                tag = tags.fewer,
             )
             StepAction(
                 icon = R.drawable.ic_servings_more,
                 name = stringResource(R.string.card_servings_more),
                 action = stringResource(moreAction),
                 shape = inner.copy(topEnd = outer, bottomEnd = outer),
+                side = Alignment.CenterStart,
                 enabled = true,
                 onClick = {
                     haptics.perform(Haptic.TICK)
                     onIncrease()
                 },
-                modifier = Modifier.testTag(tags.more),
+                tag = tags.more,
             )
         }
     }
@@ -1106,10 +1112,19 @@ internal class ServingsTags(val count: String, val fewer: String, val more: Stri
 private val CONNECTED_GAP = 2.dp
 
 /**
- * One half of the − | + group: a tonal icon button the card's [CardTarget] square (A11Y-003, A11Y-007), its colours the
- * theme's and its [shape] rounded outside and joined to the other half inside. Its one click — by touch or by the
- * screen reader — is named by [name] and announced as [action] (A11Y-005): the label is merged onto the button's own
- * click, which stays its only action.
+ * How large a half of the − | + group is drawn, in each direction: smaller than its target, which stays the card's
+ * [CardTarget] square around it (A11Y-003 — the target is the rule, not the drawing).
+ */
+internal val STEP_DRAWING = 40.dp
+
+/** The test tag of the drawing within a [ServingsControl] half tagged [tag]. */
+internal fun stepDrawingTag(tag: String) = "$tag-drawing"
+
+/**
+ * One half of the − | + group: a target the card's [CardTarget] square (A11Y-003, A11Y-007), tagged [tag], that
+ * answers a touch anywhere in it; within it, on the [side] where it meets the other half, a tonal drawing
+ * [STEP_DRAWING] square, its colours the theme's and its [shape] rounded outside and joined to the other half inside.
+ * Its one click — by touch or by the screen reader — is named by [name] and announced as [action] (A11Y-005).
  */
 @Composable
 private fun StepAction(
@@ -1117,22 +1132,44 @@ private fun StepAction(
     name: String,
     action: String,
     shape: Shape,
+    side: Alignment,
     enabled: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    tag: String,
 ) {
-    FilledTonalIconButton(
-        onClick = onClick,
-        enabled = enabled,
-        shape = shape,
-        modifier = modifier
+    val interaction = remember { MutableInteractionSource() }
+    val colors = IconButtonDefaults.filledTonalIconButtonColors()
+    Box(
+        Modifier
             .size(CardTarget)
-            .semantics {
-                contentDescription = name
-                onClick(label = action, action = null)
-            },
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                enabled = enabled,
+                onClickLabel = action,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics { contentDescription = name }
+            .testTag(tag),
+        contentAlignment = side,
     ) {
-        Icon(painterResource(icon), contentDescription = null)
+        // The press shows on the drawing, wherever in the target the touch lands.
+        Box(
+            Modifier
+                .size(STEP_DRAWING)
+                .clip(shape)
+                .background(if (enabled) colors.containerColor else colors.disabledContainerColor)
+                .indication(interaction, ripple())
+                .testTag(stepDrawingTag(tag)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painterResource(icon),
+                contentDescription = null,
+                tint = if (enabled) colors.contentColor else colors.disabledContentColor,
+            )
+        }
     }
 }
 
