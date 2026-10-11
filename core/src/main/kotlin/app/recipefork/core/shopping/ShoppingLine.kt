@@ -1,0 +1,55 @@
+package app.recipefork.core.shopping
+
+import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.scaling.DisplayedQuantity
+import app.recipefork.core.scaling.InterfaceLanguage
+import app.recipefork.core.scaling.QuantityText
+import app.recipefork.core.scaling.Rational
+import app.recipefork.core.scaling.Rounding
+
+/** What a shopping line is called by: a dictionary entry, or words of an author's own, as written. */
+sealed interface ShoppingName {
+    data class Entry(val id: Long) : ShoppingName
+    data class FreeText(val text: String) : ShoppingName
+}
+
+/**
+ * An amount on the shopping list: [value] in [unit], a value of the unit's rounding grid. An `exact` amount is held in
+ * the base unit of its dimension (gram or millilitre); [text] writes it on the magnitude ladder (300 g + 1.2 kg reads
+ * "1.5 kg").
+ */
+data class ShoppingAmount(val unit: QuantityUnit, val value: Rational) {
+    /** The amount as the card writes a quantity, in [language]; the approximate mark is not part of it. */
+    fun text(language: InterfaceLanguage): String =
+        QuantityText.of(DisplayedQuantity(unit, value, derived = false, rounding = Rounding.NONE), language)
+}
+
+/** A part of an approximate line counted in the line's unit: [original] as the recipes need it, [countedAs] in the line's unit. */
+data class CountedPart(val original: ShoppingAmount, val countedAs: ShoppingAmount)
+
+/** How much a shopping line asks for. */
+sealed interface ShoppingQuantity {
+    /** An amount, followed by "+ to taste" when [plusToTaste]: a recipe also takes the entry to taste. */
+    data class Measured(val amount: ShoppingAmount, val plusToTaste: Boolean = false) : ShoppingQuantity
+
+    /** "to taste" alone. */
+    data object ToTaste : ShoppingQuantity
+
+    /** A row that cannot be scaled (incomplete, or off its grid), shown as the author wrote it, never added to. */
+    data class AsWritten(val row: Ingredient) : ShoppingQuantity
+}
+
+/**
+ * One line of a shopping list: what it is called, how much it asks for, whether that amount is [approximate] — parts
+ * in other units were counted by the entry's measures, each named in [counted] — and the [recipes] it comes from, in
+ * the order they were given.
+ */
+data class ShoppingLine(
+    val name: ShoppingName,
+    val quantity: ShoppingQuantity,
+    val approximate: Boolean = false,
+    val counted: List<CountedPart> = emptyList(),
+    val recipes: List<RecipeId>,
+)
