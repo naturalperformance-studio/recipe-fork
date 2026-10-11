@@ -485,4 +485,11 @@ object TimerTags {
     fun barName(position: Int, index: Int = 0) = "timer-bar-name-${of(position, index)}"
     fun barCancel(position: Int, index: Int = 0) = "timer-bar-cancel-${of(position, index)}"
     fun barStop(position: Int, index: Int = 0) = "timer-bar-stop-${of(position, index)}"
+    const val BAR_RUNNING = "timer-bar-running"
+    const val BAR_RUNNING_NAME = "timer-bar-running-name"
+    const val BAR_RUNNING_STATUS = "timer-bar-running-status"
+    const val BAR_MORE = "timer-bar-more"
+    const val BAR_FINISHED = "timer-bar-finished"
+    const val BAR_FINISHED_NAME = "timer-bar-finished-name"
+    const val BAR_STOP_ALL = "timer-bar-stop-all"
 }
