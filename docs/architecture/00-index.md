@@ -63,7 +63,7 @@ Packages: `app.recipefork.core`, `app.recipefork.server`, `app.recipefork.app`. 
 
 | Module | Feature packages |
 |---|---|
-| `:core` | `recipe` (the model of `spec/50-domain-model`, units, step text, limits), `scaling`, `timer`, `text`, `api` (one contract file per feature), `file` (the recipe file document) |
+| `:core` | `recipe` (the model of `spec/50-domain-model`, units, step text, limits), `scaling`, `timer`, `text`, `api` (one contract file per feature), `file` (the recipe file document), `shopping` (the shopping list's sums: scaled rows added up per entry, approximate across units by the entry's measures — the one reader of comparison factors besides ordering) |
 | `:server` | `db`, `dictionary`, `account`, `attestation`, `auth`, `recipe`, and one per later feature; `Application.kt` installs each feature's routes |
 | `:app` | `data` (database, network), `recipe`, `dictionary`, `account`, `library` (the recipe book section), `book` (the book databases, switching, the pool move), `editor`, `card`, `timer`, `send` (sending a recipe), `sync` (the favourites outbox), `file` (recipe files), `ui` (theme, navigation); `AppContainer.kt` is the composition root |
 
