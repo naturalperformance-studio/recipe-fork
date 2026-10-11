@@ -127,7 +127,7 @@ class ServingsCompactTest {
         val density = compose.onNodeWithTag(fewer).fetchSemanticsNode().layoutInfo.density.density
         fun dp(px: Float) = px / density
         fun target(tag: String): Rect = compose.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
-        fun drawing(tag: String): Rect = compose.onNodeWithTag(stepDrawingTag(tag), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        fun drawing(tag: String): Rect = compose.onNodeWithTag(CardTags.stepDrawing(tag), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         listOf(fewer, more).forEach { tag ->
             val target = target(tag)
             val drawing = drawing(tag)

@@ -1117,9 +1117,6 @@ private val CONNECTED_GAP = 2.dp
  */
 internal val STEP_DRAWING = 40.dp
 
-/** The test tag of the drawing within a [ServingsControl] half tagged [tag]. */
-internal fun stepDrawingTag(tag: String) = "$tag-drawing"
-
 /**
  * One half of the − | + group: a target the card's [CardTarget] square (A11Y-003, A11Y-007), tagged [tag], that
  * answers a touch anywhere in it; within it, on the [side] where it meets the other half, a tonal drawing
@@ -1161,7 +1158,7 @@ private fun StepAction(
                 .clip(shape)
                 .background(if (enabled) colors.containerColor else colors.disabledContainerColor)
                 .indication(interaction, ripple())
-                .testTag(stepDrawingTag(tag)),
+                .testTag(CardTags.stepDrawing(tag)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -1347,6 +1344,8 @@ object CardTags {
     fun tab(mode: CardMode) = "card-tab-${mode.name.lowercase()}"
     /** The tooltip the bar's action tagged [action] shows on a long press. */
     fun tooltip(action: String) = "$action-tooltip"
+    /** The drawing within a [ServingsControl] half tagged [half]. */
+    fun stepDrawing(half: String) = "$half-drawing"
     fun fixUnit(unit: QuantityUnit) = "card-fix-unit-${unit.name.lowercase()}"
     fun ingredient(position: Int) = "card-ingredient-$position"
     /** The item of equipment at [index] of the recipe's equipment. */
