@@ -56,7 +56,7 @@ import java.time.Instant
 /**
  * The card's controls and type come from the theme file (ADR 20261004): with `app_theme.xml` edited, the step text
  * on Cooking takes the edited headline size and stays larger than body text (A11Y-007); − and + are one connected group of tonal
- * halves, each the card's 56 dp in the edited tonal colour; the ingredients sit on the edited tonal surface; the fixing control's actions are a
+ * halves, each a target the card's 56 dp drawn 40 dp in the edited tonal colour (T-224); the ingredients sit on the edited tonal surface; the fixing control's actions are a
  * filled and text buttons in the edited colours; the ⋮'s Delete is in the edited error colour.
  */
 @RunWith(AndroidJUnit4::class)
@@ -122,8 +122,8 @@ class CardThemeTest {
         layoutOf(hasAnyAncestor(hasTestTag(tag)) and hasText(text)).layoutInput.style.color
 
     /** The colour drawn at ([x], [y]) — fractions of its width and height — of the element tagged [tag]. */
-    private fun colourAt(tag: String, x: Float, y: Float): Color {
-        val pixels = compose.onNodeWithTag(tag).captureToImage().toPixelMap()
+    private fun colourAt(tag: String, x: Float, y: Float, unmerged: Boolean = false): Color {
+        val pixels = compose.onNodeWithTag(tag, useUnmergedTree = unmerged).captureToImage().toPixelMap()
         return pixels[(pixels.width * x).toInt(), (pixels.height * y).toInt()]
     }
 
@@ -151,18 +151,18 @@ class CardThemeTest {
             val density = node.layoutInfo.density.density
             assertEquals(CardTarget.value, node.size.width / density, 0.5f)
             assertEquals(CardTarget.value, node.size.height / density, 0.5f)
-            // Above the icon, inside the button's container.
-            assertSameColour("$tag's container", scheme.secondaryContainer, colourAt(tag, 0.5f, 0.2f))
+            // Above the icon, inside the drawn container.
+            assertSameColour("$tag's container", scheme.secondaryContainer, colourAt(CardTags.stepDrawing(tag), 0.5f, 0.2f, unmerged = true))
         }
-        // Side by side on one line, − first, joined by a seam of at most 2 dp.
-        val fewer = compose.onNodeWithTag(CardTags.SERVINGS_FEWER).fetchSemanticsNode()
-        val more = compose.onNodeWithTag(CardTags.SERVINGS_MORE).fetchSemanticsNode()
+        // The drawings side by side on one line, − first, joined by a seam of at most 2 dp.
+        val fewer = compose.onNodeWithTag(CardTags.stepDrawing(CardTags.SERVINGS_FEWER), useUnmergedTree = true).fetchSemanticsNode()
+        val more = compose.onNodeWithTag(CardTags.stepDrawing(CardTags.SERVINGS_MORE), useUnmergedTree = true).fetchSemanticsNode()
         val density = fewer.layoutInfo.density.density
         assertEquals(fewer.boundsInRoot.top, more.boundsInRoot.top, 0.5f)
         val seam = (more.boundsInRoot.left - fewer.boundsInRoot.right) / density
         assertTrue("the seam is $seam dp", seam >= 0f && seam <= 2.5f)
         // Connected shapes: each half is rounded on its outer side and nearly square where it meets the other.
-        fun filled(tag: String, x: Float) = colourAt(tag, x, 0.15f).let { colour ->
+        fun filled(tag: String, x: Float) = colourAt(CardTags.stepDrawing(tag), x, 0.15f, unmerged = true).let { colour ->
             listOf(colour.red to scheme.secondaryContainer.red, colour.green to scheme.secondaryContainer.green, colour.blue to scheme.secondaryContainer.blue)
                 .all { (a, e) -> kotlin.math.abs(a - e) < 2f / 255 }
         }
