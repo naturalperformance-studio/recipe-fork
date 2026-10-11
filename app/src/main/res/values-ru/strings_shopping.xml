@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shopping_open">Список покупок</string>
+    <string name="shopping_open_action">Открыть список покупок</string>
+    <string name="shopping_title">Список покупок</string>
+    <string name="shopping_back">Назад</string>
+    <string name="shopping_back_action">Вернуться к книге</string>
+    <string name="shopping_menu">Другие действия</string>
+    <string name="shopping_menu_action">Показать другие действия со списком</string>
+    <string name="shopping_clear">Очистить список</string>
+    <string name="shopping_cleared">Список очищен</string>
+    <string name="shopping_undo">Вернуть</string>
+    <string name="shopping_recipes">Рецепты</string>
+    <string name="shopping_to_buy">Купить</string>
+    <string name="shopping_remove">Убрать «%1$s» из списка</string>
+    <string name="shopping_removed">Рецепт «%1$s» убран из списка</string>
+    <string name="shopping_servings_fewer_action">Купить на меньше порций</string>
+    <string name="shopping_servings_more_action">Купить на больше порций</string>
+    <string name="shopping_add">Добавить в список покупок</string>
+    <string name="shopping_empty">Список покупок пуст</string>
+    <string name="shopping_empty_sentence">Откройте рецепт и выберите «%1$s» в его меню ⋮.</string>
+    <string name="shopping_line">%1$s — %2$s</string>
+    <string name="shopping_approximate">≈ %1$s</string>
+    <string name="shopping_plus_to_taste">%1$s + %2$s</string>
+    <string name="shopping_counted">%1$s — посчитано как ≈ %2$s</string>
+    <string name="shopping_counted_below">%1$s — посчитано как %2$s</string>
+</resources>
