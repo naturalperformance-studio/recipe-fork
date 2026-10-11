@@ -428,7 +428,8 @@ private fun rememberStepCircle(number: Int): StepCircle {
 }
 
 /** Whether a step's circle shows a check in place of its number: what a test reads of a circle that says nothing. */
-internal val ShowsCheck = SemanticsPropertyKey<Boolean>("ShowsCheck")
+internal val ShowsCheck = SemanticsPropertyKey<Boolean>(SHOWS_CHECK_KEY)
+private const val SHOWS_CHECK_KEY = "card.shows-check"
 private var SemanticsPropertyReceiver.showsCheck by ShowsCheck
 
 /**

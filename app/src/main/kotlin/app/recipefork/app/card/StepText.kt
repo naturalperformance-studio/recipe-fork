@@ -173,7 +173,7 @@ internal fun StepText(
             shown,
             style = (style ?: stepTextStyle(mode)).done(done),
             maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis,
+            overflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
             onTextLayout = { laidOut[0] = it },
             modifier = modifier.clearAndSetSemantics {
                 text = AnnotatedString(spoken)
