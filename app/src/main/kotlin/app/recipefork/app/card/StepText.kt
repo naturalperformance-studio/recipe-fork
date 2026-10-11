@@ -17,6 +17,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
@@ -127,7 +128,9 @@ internal object StepTags {
  * A step's text on the card, each reference read as [references] gives it, followed by the list's arrow where rounding
  * moved it (FLOW-032 (3), SCALE-004). The screen reader reads it as one sentence, an arrow as the words it stands for.
  * A step marked [done] is struck through and muted (FLOW-068). It is set in the [mode]'s style ([stepTextStyle]), or in
- * [style] where one is given — the editor's rows read a step in its body text — and tagged [tag].
+ * [style] where one is given — the editor's rows read a step in its body text — and tagged [tag]. Drawn in at most
+ * [maxLines], the last ellipsized where it runs on — a step folded on Cooking shows its first line — though the screen
+ * reader reads it whole.
  */
 @Composable
 internal fun StepText(
@@ -138,6 +141,7 @@ internal fun StepText(
     mode: CardMode = CardMode.COOKING,
     style: TextStyle? = null,
     tag: String = StepTags.text(step.position),
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     val runs = StepText.runs(step, references::quantity)
     // Each rounded reference, by its run: its arrow, and how the screen reader reads the reference with it.
@@ -168,6 +172,8 @@ internal fun StepText(
         Text(
             shown,
             style = (style ?: stepTextStyle(mode)).done(done),
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
             onTextLayout = { laidOut[0] = it },
             modifier = modifier.clearAndSetSemantics {
                 text = AnnotatedString(spoken)

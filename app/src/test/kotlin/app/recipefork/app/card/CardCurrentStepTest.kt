@@ -258,7 +258,9 @@ class CardCurrentStepTest {
     @Test
     fun aStepMarkedWhileTheReaderScrollsLeavesTheScrollToThem() {
         marks.hold(BookName.Pool, stew.id, (1..4).map { DoneMark.of(stew.steps[it]) }.toSet())
-        open(stew, CardMode.COOKING)
+        // Steps 2 to 5, done, fold to a line each: a long first step leaves the fling room to run on towards the top.
+        val first = stew.steps[0]
+        open(stew.copy(steps = listOf(first.copy(text = List(5) { first.text }.joinToString(" "))) + stew.steps.drop(1)), CardMode.COOKING)
         // Scrolled down until the fifth step shows, the sixth just below; then flung back up towards the top, away from it.
         compose.onNodeWithTag(step(4)).performScrollTo()
         compose.waitForIdle()
