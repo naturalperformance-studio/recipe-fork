@@ -190,18 +190,23 @@ class BookAtLargeTextTest {
         val full = with(input.density) { tabStyle!!.fontSize.toPx() }
         val least = with(input.density) { tabStyle!!.fontSize.value.dp.toPx() }
         val drawn = sizes.first()
-        if (drawn >= full - 0.5f || drawn <= least + 0.5f) return
-        // Made smaller only because some tab's widest word does not fit its room at the tabs' style...
+        if (drawn >= full - 0.5f) return
         val measurer = TextMeasurer(input.fontFamilyResolver, input.density, input.layoutDirection)
         fun widest(layout: TextLayoutResult, style: TextStyle) = widestWord(listOf(layout.layoutInput.text.text), style, measurer)
+        // Where a word is too wide even at the least size, the tabs are drawn at that size and no more is asked.
+        if (layouts.any { widest(it, it.layoutInput.style) > it.layoutInput.constraints.maxWidth }) {
+            assertEquals("$shownMode, a word too wide even so: the least size", least, drawn, 0.5f)
+            return
+        }
+        // Made smaller only because some tab's widest word does not fit its room at the tabs' style...
         val atFull = input.style.copy(fontSize = tabStyle!!.fontSize, lineHeight = tabStyle!!.lineHeight)
         assertTrue(
             "$shownMode, the tabs drawn at $drawn px though every word fits at $full px",
             layouts.any { widest(it, atFull) > it.layoutInput.constraints.maxWidth },
         )
-        // ...and no smaller than the largest size at which every tab's widest word fits, but for fitWords' margin: a
-        // word's width grows with its size in pixels.
-        val fits = layouts.minOf { drawn * it.layoutInput.constraints.maxWidth / widest(it, it.layoutInput.style) }
+        // ...and, at the least size or above it, no smaller than the largest size at which every tab's widest word fits,
+        // but for fitWords' margin: a word's width grows with its size in pixels.
+        val fits = minOf(full, layouts.minOf { drawn * it.layoutInput.constraints.maxWidth / widest(it, it.layoutInput.style) })
         assertTrue("$shownMode, the tabs drawn at $drawn px where $fits px fit", drawn >= fits * 0.95f)
     }
 
@@ -426,6 +431,8 @@ class BookAtLargeTextTest {
         )
     }
 
+    // In Robolectric the long "Import a recipe file" still fit at 2× on 320 dp; the long Russian label did not, so the
+    // Russian case is the one that catches a label running off the screen there, and in English a narrower phone is.
     @Test
     @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
     fun theImportIsWholeOnScreenAtTwiceTheFontScale() = assertTheImportFits("Import", "Import a recipe file")
@@ -433,6 +440,10 @@ class BookAtLargeTextTest {
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
     fun inRussianTheImportIsWholeOnScreenAtTwiceTheFontScale() = assertTheImportFits("Импорт", "Импортировать файл рецепта")
+
+    @Test
+    @Config(qualifiers = "w240dp-h640dp", fontScale = 2f)
+    fun onAVeryNarrowWindowTheImportIsWholeOnScreenAtTwiceTheFontScale() = assertTheImportFits("Import", "Import a recipe file")
 
     // --- The entry's menu -------------------------------------------------------------------------------------------
 
