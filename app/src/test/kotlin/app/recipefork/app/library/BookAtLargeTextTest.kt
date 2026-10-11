@@ -19,10 +19,12 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AppNavHost
 import app.recipefork.app.ui.AppTheme
 import app.recipefork.app.ui.appColorScheme
+import app.recipefork.app.ui.widestWord
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeLanguage
 import kotlinx.coroutines.runBlocking
@@ -147,6 +150,7 @@ class BookAtLargeTextTest {
         listOf(Mode.Standard to standard, Mode.Serverless to serverless).forEach { (shownMode, names) ->
             compose.runOnIdle { mode = shownMode }
             compose.waitForIdle()
+            assertOneSize(shownMode)
             listOf(LibraryView.MARKED, LibraryView.OWN).zip(names).forEach { (view, name) ->
                 val layout = layoutOf(tabLabel(view))
                 val text = layout.layoutInput.text.text
@@ -173,6 +177,48 @@ class BookAtLargeTextTest {
         }
     }
 
+    /**
+     * The tabs' words are all drawn at one size (T-223): the tabs' style, unless a word of some tab would not fit its
+     * room in it, and then the largest size at which every tab's widest word fits — or the least size, at a font scale
+     * of 1, should none fit even there.
+     */
+    private fun assertOneSize(shownMode: Mode) {
+        val layouts = listOf(LibraryView.MARKED, LibraryView.OWN).map { layoutOf(tabLabel(it)) }
+        val sizes = layouts.map { with(it.layoutInput.density) { it.layoutInput.style.fontSize.toPx() } }
+        assertEquals("$shownMode, the tabs' sizes $sizes", 1, sizes.map { Math.round(it * 10) }.distinct().size)
+        val input = layouts.first().layoutInput
+        val full = with(input.density) { tabStyle!!.fontSize.toPx() }
+        val least = with(input.density) { tabStyle!!.fontSize.value.dp.toPx() }
+        val drawn = sizes.first()
+        val measurer = TextMeasurer(input.fontFamilyResolver, input.density, input.layoutDirection)
+        fun widest(layout: TextLayoutResult, style: TextStyle) = widestWord(listOf(layout.layoutInput.text.text), style, measurer)
+        // Above the least size, every tab's widest word fits its room at the size drawn: else it was not made small enough.
+        if (drawn > least + 0.5f) {
+            layouts.forEach {
+                assertTrue(
+                    "$shownMode, a word of “${it.layoutInput.text.text}” wider than its tab at $drawn px",
+                    widest(it, it.layoutInput.style) <= it.layoutInput.constraints.maxWidth,
+                )
+            }
+        }
+        if (drawn >= full - 0.5f) return
+        // Where a word is too wide even at the least size, the tabs are drawn at that size and no more is asked.
+        if (layouts.any { widest(it, it.layoutInput.style) > it.layoutInput.constraints.maxWidth }) {
+            assertEquals("$shownMode, a word too wide even so: the least size", least, drawn, 0.5f)
+            return
+        }
+        // Made smaller only because some tab's widest word does not fit its room at the tabs' style...
+        val atFull = input.style.copy(fontSize = tabStyle!!.fontSize, lineHeight = tabStyle!!.lineHeight)
+        assertTrue(
+            "$shownMode, the tabs drawn at $drawn px though every word fits at $full px",
+            layouts.any { widest(it, atFull) > it.layoutInput.constraints.maxWidth },
+        )
+        // ...and, at the least size or above it, no smaller than the largest size at which every tab's widest word fits,
+        // but for fitWords' margin: a word's width grows with its size in pixels.
+        val fits = minOf(full, layouts.minOf { drawn * it.layoutInput.constraints.maxWidth / widest(it, it.layoutInput.style) })
+        assertTrue("$shownMode, the tabs drawn at $drawn px where $fits px fit", drawn >= fits * 0.95f)
+    }
+
     @Test
     fun theTabsNeverBreakInsideAWord() = assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
 
@@ -189,6 +235,26 @@ class BookAtLargeTextTest {
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
     fun inRussianTheTabsNeverBreakInsideAWordAtTwiceTheFontScale() =
+        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+
+    @Test
+    @Config(qualifiers = "w360dp-h640dp")
+    fun onAWiderPhoneTheTabsAreDrawnAtOneSize() =
+        assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
+
+    @Test
+    @Config(qualifiers = "w360dp-h640dp", fontScale = 2f)
+    fun onAWiderPhoneTheTabsAreDrawnAtOneSizeAtTwiceTheFontScale() =
+        assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun inRussianOnAWiderPhoneTheTabsAreDrawnAtOneSize() =
+        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp", fontScale = 2f)
+    fun inRussianOnAWiderPhoneTheTabsAreDrawnAtOneSizeAtTwiceTheFontScale() =
         assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
 
     // T-217: on a very narrow window the words are still never drawn smaller than at a font scale of 1, nor broken.
@@ -349,6 +415,44 @@ class BookAtLargeTextTest {
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
     fun inRussianAnImportedSearchThatFindsNothingKeepsItsActionClearOfImport() = anImportedSearchThatFindsNothing()
+
+    // --- The import --------------------------------------------------------------------------------------------------
+
+    /**
+     * In the build without the server, with a recipe imported, the marked view's floating action reads [short], stands
+     * wholly inside the screen, and tells the screen reader it does [action] (T-223).
+     */
+    private fun assertTheImportFits(short: String, action: String) {
+        found("Found soup")
+        show(LibraryView.MARKED, Mode.Serverless)
+        await(LibraryTags.MARKED_LIST)
+        await(LibraryTags.IMPORT)
+        compose.waitForIdle()
+        val node = compose.onNodeWithTag(LibraryTags.IMPORT).fetchSemanticsNode()
+        assertEquals(listOf(short), node.config[SemanticsProperties.Text].map { it.text })
+        assertEquals(action, node.config[SemanticsActions.OnClick].label)
+        val screen = compose.onRoot().getBoundsInRoot()
+        val button = compose.onNodeWithTag(LibraryTags.IMPORT).getUnclippedBoundsInRoot()
+        assertTrue(
+            "the import ($button) lies inside the screen ($screen)",
+            button.left >= screen.left - 0.5.dp && button.right <= screen.right + 0.5.dp &&
+                button.top >= screen.top - 0.5.dp && button.bottom <= screen.bottom + 0.5.dp,
+        )
+    }
+
+    // In Robolectric the long "Import a recipe file" still fit at 2× on 320 dp; the long Russian label did not, so the
+    // Russian case is the one that catches a label running off the screen there, and in English a narrower phone is.
+    @Test
+    @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
+    fun theImportIsWholeOnScreenAtTwiceTheFontScale() = assertTheImportFits("Import", "Import a recipe file")
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun inRussianTheImportIsWholeOnScreenAtTwiceTheFontScale() = assertTheImportFits("Импорт", "Импортировать файл рецепта")
+
+    @Test
+    @Config(qualifiers = "w240dp-h640dp", fontScale = 2f)
+    fun onAVeryNarrowWindowTheImportIsWholeOnScreenAtTwiceTheFontScale() = assertTheImportFits("Import", "Import a recipe file")
 
     // --- The entry's menu -------------------------------------------------------------------------------------------
 

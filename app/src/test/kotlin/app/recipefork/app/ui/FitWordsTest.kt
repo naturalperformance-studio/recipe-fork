@@ -1,0 +1,66 @@
+package app.recipefork.app.ui
+
+import android.content.Context
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.createFontFamilyResolver
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.GraphicsMode
+
+/**
+ * [fitWordsTogether] (T-223): texts given the same room are drawn at one size, the one the text with the widest word
+ * needs, and never below the size at a font scale of 1.
+ */
+@RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class FitWordsTest {
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val density = Density(1f, fontScale = 2f)
+    private val measurer = TextMeasurer(createFontFamilyResolver(context), density, LayoutDirection.Ltr)
+    private val style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp)
+    private val narrow = "Go on"
+    private val wide = "Considerably longer"
+
+    private fun widestAtFull(text: String) = widestWord(listOf(text), style, measurer)
+
+    private fun px(style: TextStyle) = with(density) { style.fontSize.toPx() }
+
+    @Test
+    fun theTextsAreDrawnAtTheSizeTheWidestWordNeeds() {
+        val width = (widestAtFull(wide) * 0.8f).toInt()
+        // The narrow text alone fits as it is; the wide one must be made smaller.
+        assertEquals(px(style), px(fitWords(narrow, style, width, measurer, density).style), 0.01f)
+        val needed = fitWords(wide, style, width, measurer, density)
+        assertTrue(px(needed.style) < px(style))
+        val together = fitWordsTogether(listOf(narrow, wide), style, width, measurer, density)
+        assertEquals(px(needed.style), px(together), 0.01f)
+        assertEquals(px(together), px(fitWordsTogether(listOf(wide, narrow), style, width, measurer, density)), 0.01f)
+        // Every word of both fits at that size, and no smaller size than the margin of fitWords is taken.
+        assertTrue(widestWord(listOf(narrow, wide), together, measurer) <= width)
+        val fits = px(together) * width / widestWord(listOf(wide), together, measurer)
+        assertTrue("${px(together)} px where $fits px fit", px(together) >= fits * 0.95f)
+    }
+
+    @Test
+    fun theTextsAreNeverDrawnBelowTheSizeAtAFontScaleOfOne() {
+        val width = (widestAtFull(wide) * 0.3f).toInt()
+        val together = fitWordsTogether(listOf(narrow, wide), style, width, measurer, density)
+        val least = with(density) { style.fontSize.value.dp.toPx() }
+        assertEquals(least, px(together), 0.01f)
+    }
+
+    @Test
+    fun textsThatFitKeepTheirStyle() {
+        val width = widestAtFull(wide) + 1
+        assertEquals(style, fitWordsTogether(listOf(narrow, wide), style, width, measurer, density))
+    }
+}

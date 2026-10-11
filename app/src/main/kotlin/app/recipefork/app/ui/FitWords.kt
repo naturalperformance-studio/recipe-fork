@@ -57,12 +57,29 @@ internal fun WordFitText(text: String, style: TextStyle, width: Int, modifier: M
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val fitted = remember(text, style, width, measurer, density) { fitWords(text, style, width, measurer, density) }
+    FittedText(text, fitted, modifier)
+}
+
+/**
+ * [text] as [fitted] says: in its style, wrapped between words; or, where a word is wider than its room even so, on one
+ * line ending with an ellipsis.
+ */
+@Composable
+internal fun FittedText(text: String, fitted: FittedWords, modifier: Modifier = Modifier) {
     if (fitted.overflows) {
         Text(text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier)
     } else {
         Text(text, style = fitted.style, modifier = modifier)
     }
 }
+
+/**
+ * The one [style] for all of [texts], each given [width] pixels: made smaller, as [fitWords] does, just as far as the
+ * widest word of any of them needs to fit, so that they are all drawn at one size; never smaller than the style's own
+ * size at a font scale of 1.
+ */
+internal fun fitWordsTogether(texts: List<String>, style: TextStyle, width: Int, measurer: TextMeasurer, density: Density): TextStyle =
+    fitWords(texts.joinToString(" "), style, width, measurer, density).style
 
 /** How wide, in pixels, the widest word of any of [texts] is laid out in [style] on one line; 0 where there is none. */
 internal fun widestWord(texts: List<String>, style: TextStyle, measurer: TextMeasurer): Int =
