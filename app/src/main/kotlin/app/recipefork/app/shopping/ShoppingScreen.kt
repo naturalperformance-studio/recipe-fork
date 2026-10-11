@@ -58,6 +58,7 @@ import app.recipefork.app.card.ServingsTags
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.library.EmptyState
+import app.recipefork.app.library.TITLE_CLEARANCE
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.servingsLanguage
 import app.recipefork.app.ui.SnackbarAction
@@ -127,7 +128,12 @@ fun ShoppingScreen(
         },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.shopping_title), Modifier.semantics { heading() }.testTag(ShoppingTags.TITLE)) },
+                title = {
+                    Text(
+                        stringResource(R.string.shopping_title),
+                        Modifier.padding(end = TITLE_CLEARANCE).semantics { heading() }.testTag(ShoppingTags.TITLE),
+                    )
+                },
                 navigationIcon = {
                     val action = stringResource(R.string.shopping_back_action)
                     IconButton(
@@ -196,9 +202,10 @@ private fun ListContent(
 ) {
     val untitled = stringResource(R.string.common_untitled_recipe)
     LazyColumn(
-        Modifier.fillMaxSize().testTag(ShoppingTags.LIST),
+        // Beneath the bar, never under it; the last line kept clear of the navigation bar.
+        Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()).testTag(ShoppingTags.LIST),
         state = rememberLazyListState(),
-        contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding() + 16.dp),
+        contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 16.dp),
     ) {
         item(key = "recipes") { Heading(R.string.shopping_recipes) }
         items(entries, key = { "${it.listed.book}/${it.listed.recipe.value}" }) { entry ->

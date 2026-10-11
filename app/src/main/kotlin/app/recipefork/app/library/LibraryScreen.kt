@@ -141,6 +141,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
+/** What the bar's title keeps clear at its end, so that wrapped it never reaches under an action (TopAppBar's title inset). */
+internal val TITLE_CLEARANCE = 12.dp
+
 /** How many own recipes are shown at a time, and more shown near the end (FLOW-041). */
 const val OWN_PAGE = 30
 
@@ -218,7 +221,9 @@ fun LibraryScreen(
                     title = {
                         Text(
                             text = stringResource(R.string.library_title),
-                            modifier = Modifier.semantics { heading() }.testTag(LibraryTags.TITLE),
+                            // Material sets the title in 12 dp past the room it is measured for: a title wrapped
+                            // at a large font scale would reach under the first action.
+                            modifier = Modifier.padding(end = TITLE_CLEARANCE).semantics { heading() }.testTag(LibraryTags.TITLE),
                         )
                     },
                     actions = {
