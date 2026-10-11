@@ -116,6 +116,11 @@ android {
                 "--add-opens=java.base/java.io=ALL-UNNAMED",
                 "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED",
             )
+            // Robolectric unpacks its native runtime (~200 MB) into java.io.tmpdir on every run and never removes it; with
+            // /tmp on tmpfs that piles up in memory. Each test task gets its own directory under build/, emptied per run.
+            val testTmp = File(it.temporaryDir, "java-io-tmp")
+            it.systemProperty("java.io.tmpdir", testTmp.absolutePath)
+            it.doFirst { testTmp.deleteRecursively(); testTmp.mkdirs() }
             // Where scripts/play-screenshots.sh has the store screenshots written; unset, their tests skip themselves.
             providers.gradleProperty("recipefork.playScreenshots").orNull
                 ?.let { directory -> it.systemProperty("recipefork.playScreenshots", directory) }
