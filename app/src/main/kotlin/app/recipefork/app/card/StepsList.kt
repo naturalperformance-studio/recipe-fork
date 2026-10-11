@@ -76,6 +76,8 @@ import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepText
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.InteractionSource
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -111,7 +113,8 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * On Cooking the first step not marked done is the current one: drawn, with its timers, on the theme's primary
  * container and read as the current step. A step marked done brings the next one not marked after it into view, wholly
  * above the [coveredBelow] the navigation bar covers at the bottom of the viewport, scrolling smoothly — unless the
- * reader is scrolling themselves ([readerScrolling]); a step unmarked, or a step marked with none unmarked after it,
+ * reader is scrolling themselves ([readerScrolling]), or until they take hold of the card's scroll ([readerInteractions]);
+ * a step unmarked, or a step marked with none unmarked after it,
  * moves nothing.
  *
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a step is as tall as its text, the steps a
@@ -130,6 +133,7 @@ internal fun StepsList(
     mode: CardMode = CardMode.COOKING,
     readerScrolling: () -> Boolean = { false },
     coveredBelow: Dp = 0.dp,
+    readerInteractions: InteractionSource? = null,
 ) {
     // A step that is only a reference reads as one, one that is only its author's note reads as that, and one that is
     // only a photograph or a clip shows it — or says it is unavailable (FLOW-061); one holding nothing that reads or
@@ -168,17 +172,29 @@ internal fun StepsList(
      */
     suspend fun follow(position: Int, changing: Int) = coroutineScope {
         fun height() = places?.placeOf(CardPlaces.step(changing))?.height
-        var height = height()
-        var still = 0
-        var frames = 0
-        while (still < FOLD_SETTLED_FRAMES && frames++ < FOLD_MOST_FRAMES) {
-            launch { bring(position) }
-            withFrameNanos { }
-            val now = height()
-            still = if (now == height) still + 1 else 0
-            height = now
+        val following = launch {
+            var height = height()
+            var still = 0
+            var frames = 0
+            while (still < FOLD_SETTLED_FRAMES && frames++ < FOLD_MOST_FRAMES) {
+                launch { bring(position) }
+                withFrameNanos { }
+                val now = height()
+                still = if (now == height) still + 1 else 0
+                height = now
+            }
+            bring(position)
         }
-        bring(position)
+        // A scroll of the reader's own ends the following there, the bringing in flight with it: the card never turns
+        // back to the step once the reader has taken hold of it.
+        val reader = readerInteractions?.let { source ->
+            launch {
+                source.interactions.first { it is DragInteraction.Start }
+                following.cancel()
+            }
+        }
+        following.join()
+        reader?.cancel()
     }
     // A timer's step is shown on Cooking, where the timer runs: the card opens on that tab for it.
     val toShow = LocalStepToShow.current?.takeIf { cooking }
@@ -199,12 +215,16 @@ internal fun StepsList(
     var next by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     val scrolling by rememberUpdatedState(readerScrolling)
     LaunchedEffect(next) {
-        val (marked, position) = next ?: return@LaunchedEffect
-        // Once the mark is drawn; the bringing animates, and a scroll of the reader's own stops it.
-        withFrameNanos { }
-        // The step marked folds over the frames that follow, pulling up what comes after it.
-        if (!scrolling()) follow(position, changing = marked)
-        next = null
+        val asked = next ?: return@LaunchedEffect
+        try {
+            // Once the mark is drawn; the bringing animates, and a scroll of the reader's own stops it.
+            withFrameNanos { }
+            // The step marked folds over the frames that follow, pulling up what comes after it.
+            if (!scrolling()) follow(asked.second, changing = asked.first)
+        } finally {
+            // Done with, however it ended — unless a later mark has asked again — so the same mark asks anew.
+            if (next == asked) next = null
+        }
     }
     if (shown.isEmpty()) return
     val current = if (cooking && marks != null) shown.firstOrNull { !marks.done(MarkedPart.STEP, it.position) }?.position else null

@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
@@ -15,6 +17,8 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextDecoration
@@ -26,6 +30,8 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.data.HeldLastCardTab
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.timer.LocalCardTimers
+import app.recipefork.app.timer.TestTimers
 import app.recipefork.app.timer.TimerTags
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
@@ -62,6 +68,9 @@ class CardStepperTest {
     private val book = TestBook(context)
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
     private val marks = DoneMarks.inMemory()
+
+    /** The card's timers, read before a fold animates: with them the folds here animate as on the phone. */
+    private val timers = TestTimers(context)
     private val scheme = lightColorScheme()
     private val now = Instant.parse("2026-10-11T12:00:00Z")
 
@@ -88,19 +97,24 @@ class CardStepperTest {
     @Before
     fun setUp() {
         compose.registerIdlingResource(book.idling)
+        compose.registerIdlingResource(timers.idling)
     }
 
     @After
     fun close() {
         compose.unregisterIdlingResource(book.idling)
+        compose.unregisterIdlingResource(timers.idling)
         book.close()
+        timers.close()
     }
 
     private fun open(recipe: Recipe, tab: CardMode = CardMode.COOKING) {
         runBlocking { recipes.save(recipe) }
         val environment = CardEnvironment(marks = marks, lastTab = HeldLastCardTab(tab), ingredients = IngredientEntries { emptyList() })
         compose.setContent {
-            MaterialTheme(colorScheme = scheme) { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
+            CompositionLocalProvider(LocalCardTimers provides timers.card) {
+                MaterialTheme(colorScheme = scheme) { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
+            }
         }
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.step(0))).fetchSemanticsNodes().size == 1 }
@@ -298,6 +312,35 @@ class CardStepperTest {
         val nextTop = next.positionInRoot.y
         assertTrue("the next step ($nextTop to ${nextTop + next.size.height}) lies wholly in view (${visibleTop()} to ${pager.bottom})",
             nextTop >= visibleTop() - 0.5f && nextTop + next.size.height <= pager.bottom + 0.5f)
+    }
+
+    @Test
+    fun aDragWhileTheMarkedStepFoldsLeavesTheScrollToTheReader() {
+        open(pot)
+        compose.onNodeWithTag(CardTags.step(4)).performScrollTo()
+        compose.waitForIdle()
+        assertFalse("the sixth step is out of view below", inView(5))
+        fun height() = compose.onNodeWithTag(StepRowTags.entry(4), useUnmergedTree = true).fetchSemanticsNode().size.height
+        val unfolded = height()
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag(CardTags.step(4)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.runOnUiThread { Snapshot.sendApplyNotifications() }
+        repeat(3) { compose.mainClock.advanceTimeByFrame() }
+        // While it folds, the reader drags the card a little back up, and lets go before the fold has settled.
+        compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeDown(startY = centerY, endY = centerY + 40f, durationMillis = 48) }
+        val folding = height()
+        assertTrue("let go while the step still folds: $unfolded, $folding", folding < unfolded)
+        val released = scrolled()
+        val seen = mutableListOf(released)
+        repeat(FRAMES) {
+            compose.mainClock.advanceTimeByFrame()
+            seen += scrolled()
+        }
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertTrue("the fold went on after the drag", height() < folding)
+        seen += scrolled()
+        assertTrue("the card never turned back down to the next step: $seen", seen.all { it <= released + 0.5f })
     }
 
     private companion object {
