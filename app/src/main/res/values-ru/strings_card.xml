@@ -89,6 +89,10 @@
     <!-- Said once the marks are cleared, from either tab's menu; Undo puts back exactly the marks cleared. -->
     <string name="card_marks_cleared">Отметки сняты</string>
     <string name="card_undo">Вернуть</string>
+    <string name="card_shopping_update">Обновить в списке покупок</string>
+    <string name="card_shopping_added">Добавлено в список покупок</string>
+    <string name="card_shopping_updated">Список покупок обновлён</string>
+    <string name="card_shopping_open">Открыть</string>
     <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
     <string name="card_view_timer">%1$s · %2$s</string>
     <!-- The card's two tabs, under its top bar: the recipe for reading and deciding, and for cooking with busy hands. -->
