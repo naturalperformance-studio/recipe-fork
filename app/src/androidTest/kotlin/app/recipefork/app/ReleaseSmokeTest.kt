@@ -35,6 +35,9 @@ import app.recipefork.app.backup.BookBackup
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.app.file.CollectionExport
+import app.recipefork.app.file.CollectionImport
+import app.recipefork.app.file.CollectionImportOutcome
 import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeExport
 import app.recipefork.app.file.RecipeImport
@@ -45,9 +48,13 @@ import app.recipefork.app.media.PhotoOutcome
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.TestClips
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.shopping.ShoppingList
 import app.recipefork.app.timer.TimerChannels
 import app.recipefork.app.timer.TimerKey
+import app.recipefork.core.file.CollectionFile
 import app.recipefork.core.file.RecipeFile
+import app.recipefork.core.recipe.CollectionId
+import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
@@ -110,6 +117,11 @@ class ReleaseSmokeTest {
     private var kitchenBefore: Set<Long>? = null
     // The device's system of units before the case set its own, given back after.
     private var unitsBefore: UnitSystem? = null
+    // The two recipes the walk gathers into a collection, and that collection, own and then imported (v0.36).
+    private var collected: List<Recipe> = emptyList()
+    private var collection: CollectionId? = null
+    // The shopping list before the walk put the collection on it, given back after.
+    private var shoppingBefore: ShoppingList? = null
 
     private fun shell(command: String) {
         instrumentation.uiAutomation.executeShellCommand(command).use { FileInputStream(it.fileDescriptor).readBytes() }
@@ -126,12 +138,16 @@ class ReleaseSmokeTest {
         // region — the emulator's is the United States, which starts on US (v0.35).
         unitsBefore = container.unitSystem.system.value
         container.unitSystem.set(UnitSystem.METRIC)
+        shoppingBefore = container.shopping.list.value
     }
 
     @After
     fun tearDown() = runBlocking {
         recipe?.let { container.timers.cancelRecipe(BookName.Pool, it.id); container.recipes.delete(it.id) }
         loaf?.let { container.recipes.delete(it.id) }
+        collection?.let { container.collections.delete(it) }
+        collected.forEach { container.recipes.delete(it.id) }
+        shoppingBefore?.let { before -> container.shopping.update { before } }
         File(application.cacheDir, BOOK_FILE).parentFile?.deleteRecursively()
         application.getSystemService(NotificationManager::class.java).cancelAll()
         application.deleteDatabase(otherBook.fileName)
@@ -628,7 +644,8 @@ class ReleaseSmokeTest {
      * kitchen and Back returns to the card; the settings are gone through, and from them the whole book saved to a file
      * and a recipe it held brought back from that file; the units switched to US, where the card reads its grams in
      * ounces, and back to Metric; the recipe is deleted and brought back with Undo, exported to a
-     * file and the file opened back into the book. Nothing crashes, and each change is in the book.
+     * file and the file opened back into the book; two recipes are gathered into a collection ([throughACollection]). Nothing
+     * crashes, and each change is in the book.
      *
      * Export and the opening of a file belong to the serverless build (FLOW-063, FLOW-064): the standard one, which
      * offers neither, writes and reads the file through the same code the menu and the opened file reach.
@@ -761,6 +778,9 @@ class ReleaseSmokeTest {
             awaitShown(written.title)
             // Exported to a file and the file opened back into the book, where it is listed as a recipe found.
             exportAndImport(written)
+            // Two recipes gathered into a collection from their cards, the collection opened from the book and put on
+            // the shopping list whole, shared as a file, deleted with its recipes, and taken back from the file.
+            throughACollection()
             assertTrue("the application is in front, as it was left", activities(Stage.RESUMED).any { it is MainActivity })
         } finally {
             finishTheApplication()
@@ -1041,6 +1061,186 @@ class ReleaseSmokeTest {
         awaitShown(written.title)
     }
 
+    /** A recipe of the collection's walk: [servings] tell its card, [cover] gives it a photograph its file carries. */
+    private fun collectable(title: String, servings: Int, cover: Boolean): Recipe = Recipe.create(now, null, null, RecipeId.mint()).copy(
+        title = "$title ${System.currentTimeMillis() % 100_000}",
+        servings = servings,
+        ingredients = listOf(Ingredient(0, null, null, "Flour", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(300), null, null, null)),
+        steps = listOf(Step(0, "Mix the flour.", listOf(IngredientReference(0, 8)))),
+        media = if (cover) listOf(photo(jpeg(1200, 900, Color.BLUE), MediaAttachment.Cover)) else emptyList(),
+    )
+
+    /**
+     * The collections of v0.36 as a reader goes through them, from the book: two recipes of it are put into a collection
+     * from their cards' ⋮ — the first into one made in the sheet by "New collection…", the second ticked into it; the
+     * book's Collections row shows it with its two recipes and opens it; its ⋮ puts both on the shopping list, whose
+     * notice opens the list with both, and Back returns to the collection. The collection is shared as a file — in the
+     * serverless build from its ⋮, the system's share sheet answered by the test, which takes the file it is handed;
+     * in the standard build, which offers no sharing, through the code Share runs — and deleted from its ⋮, then its
+     * recipes are deleted from the book. The file is opened as another application opens one (serverless) or handed to
+     * the code that import runs (standard): the collection is back as an imported one in the view of imported recipes,
+     * with both recipes, which its screen lists. Starts and ends on the book.
+     */
+    private fun throughACollection() {
+        val first = collectable("Smoke pie", servings = 3, cover = false)
+        val second = collectable("Smoke tart", servings = 5, cover = true)
+        collected = listOf(first, second)
+        collected.forEach { runBlocking { container.recipes.save(it) } }
+        val name = "Smoke collection ${System.currentTimeMillis() % 100_000}"
+
+        choose(WRITTEN_HERE)
+        collectInto(first, name, "Servings: 3", made = false)
+        val id = runBlocking { container.collections.holding(first.id).first() }.single().also { collection = it }
+        collectInto(second, name, "Servings: 5", made = true)
+        assertEquals(listOf(first.id, second.id), runBlocking { container.collections.get(id) }!!.recipes)
+
+        // The book's row of own collections, above the recipes written here, shows it with its count, and opens it
+        // on its recipes.
+        openCollection(name, first, second)
+
+        // Its ⋮ puts both on the shopping list; the notice's Open shows the list, whose Back returns to the collection.
+        tap(MORE_ACTIONS)
+        awaitShown(ADD_ALL_TO_SHOPPING)
+        tap(ADD_ALL_TO_SHOPPING)
+        awaitShown("Added 2 recipes")
+        tap(OPEN)
+        awaitShown(ADD_ITEM)
+        collected.forEach { recipe -> reveal(recipe.title) { shown("Remove “${recipe.title}” from the list") } }
+        val listed = container.shopping.list.value.recipes.map { it.recipe }
+        assertTrue("the list holds $listed", collected.all { it.id in listed })
+        tap(BACK)
+        try {
+            awaitUntil(30.seconds) { shown(ADD_ITEM) == null && shown(first.title) != null && shown(WRITTEN_HERE) == null }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the shopping list did not return to the collection; on screen: ${onScreen()}", e)
+        }
+
+        val file = shareCollection(id, name)
+
+        // Deleted from its ⋮: the book says so, and its recipes stay in it — until they are deleted too.
+        tap(MORE_ACTIONS)
+        awaitShown(DELETE_COLLECTION)
+        tap(DELETE_COLLECTION)
+        awaitShown("Collection “$name” deleted")
+        awaitUntil(30.seconds) { runBlocking { container.collections.get(id) } == null }
+        assertTrue(collected.all { stored(it) != null })
+        collected.forEach { assertTrue(runBlocking { container.recipes.delete(it.id) }) }
+
+        // The file taken back: the collection is in the view of imported recipes, imported, with both recipes.
+        if (BuildConfig.SERVERLESS) {
+            val open = Intent(Intent.ACTION_VIEW)
+                .setDataAndType(file, CollectionFile.MIME_TYPE)
+                .setPackage(application.packageName)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            application.startActivity(open)
+            awaitShown("“$name” added: 2 recipes")
+            awaitUntil(30.seconds) { selected(IMPORTED) }
+        } else {
+            val files = CollectionImport(container.activeBook, application.filesDir, equipment = container.dictionaries)
+            assertEquals(
+                CollectionImportOutcome.Imported(id, name, recipes = 2, held = 0, updated = false),
+                runBlocking { files.importSafely(application, file) },
+            )
+            choose(MARKED)
+        }
+        val imported = runBlocking { container.collections.get(id) }!!
+        assertEquals(CollectionOrigin.IMPORTED, imported.origin)
+        assertEquals(listOf(first.id, second.id), imported.recipes)
+        // The tart's photograph came with it, written anew in the book.
+        val photo = stored(second)!!.media.single()
+        assertTrue(store.file(BookName.Pool, photo.mediaId).isFile)
+        openCollection(name, first, second)
+        tap(BACK)
+        val view = if (BuildConfig.SERVERLESS) IMPORTED else MARKED
+        try {
+            awaitUntil(30.seconds) { selected(view) }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the collection did not return to the book; on screen: ${onScreen()}", e)
+        }
+    }
+
+    /**
+     * Opens the collection [name] from the row of the book's view — scrolled to, above its recipes — where it says it
+     * holds two recipes: its screen lists [first] and [second].
+     */
+    private fun openCollection(name: String, first: Recipe, second: Recipe) {
+        reveal(name) { shown(name) }
+        reveal(TWO_RECIPES) { shown(TWO_RECIPES) }
+        tap(name)
+        try {
+            awaitUntil(30.seconds) { shown(first.title) != null && shown(second.title) != null && shown(WRITTEN_HERE) == null }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the collection “$name” did not open on its two recipes; on screen: ${onScreen()}", e)
+        }
+    }
+
+    /**
+     * Puts [recipe], from its card — which shows [servings] — into the collection [name] by the "Add to collection" of its
+     * ⋮: one [made] already is ticked in the sheet; otherwise it is made by "New collection…", its name typed with the
+     * keyboard up, and Create, which puts the recipe in it. Done closes the sheet, the card saying the recipe is in one
+     * collection, and Back returns to the book.
+     */
+    private fun collectInto(recipe: Recipe, name: String, servings: String, made: Boolean) {
+        clickRevealed(recipe.title)
+        awaitShown(servings)
+        tap(MORE_ACTIONS)
+        awaitShown(ADD_TO_COLLECTION)
+        tap(ADD_TO_COLLECTION)
+        awaitShown(NEW_COLLECTION)
+        if (made) {
+            tap(name)
+        } else {
+            tap(NEW_COLLECTION)
+            typeFocused(COLLECTION_NAME, name)
+            tap(CREATE)
+        }
+        try {
+            awaitUntil(30.seconds) { runBlocking { container.collections.holding(recipe.id).first() }.isNotEmpty() }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("“${recipe.title}” is in no collection; on screen: ${onScreen()}", e)
+        }
+        tap(DONE)
+        awaitShown(IN_ONE_COLLECTION)
+        tap(BACK)
+        awaitShown(WRITTEN_HERE)
+    }
+
+    /**
+     * The file of the collection [id], named [name], as Share hands it on: in the serverless build its ⋮ → Share opens
+     * the system's share sheet — answered by the test, which takes the file — on a file of the collection's type, named
+     * for it; in the standard build, which offers no Share, written by the code Share runs.
+     */
+    private fun shareCollection(id: CollectionId, name: String): Uri {
+        if (!BuildConfig.SERVERLESS) {
+            return runBlocking { CollectionExport.write(application, container.recipes, container.collections, id) }!!
+        }
+        var send: Intent? = null
+        val sheet = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult? {
+                if (intent.action != Intent.ACTION_CHOOSER) return null
+                @Suppress("DEPRECATION")
+                send = intent.getParcelableExtra(Intent.EXTRA_INTENT)
+                return Instrumentation.ActivityResult(Activity.RESULT_OK, null)
+            }
+        }
+        instrumentation.addMonitor(sheet)
+        try {
+            tap(MORE_ACTIONS)
+            awaitShown(SHARE)
+            tap(SHARE)
+            awaitUntil(30.seconds) { send != null }
+        } finally {
+            instrumentation.removeMonitor(sheet)
+        }
+        val shared = send!!
+        assertEquals(CollectionFile.MIME_TYPE, shared.type)
+        @Suppress("DEPRECATION")
+        val file = shared.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)!!
+        assertEquals(CollectionExport.fileName(name), file.lastPathSegment)
+        assertTrue(file.lastPathSegment!!.endsWith(".recipefork-collection"))
+        return file
+    }
+
     private companion object {
         /** The system's dialog of an application not responding, in the emulator's English, and its button that waits. */
         const val NOT_RESPONDING = "isn't responding"
@@ -1112,6 +1312,22 @@ class ReleaseSmokeTest {
         const val ADD_TO_THE_BOOK = "Add to the book"
         const val BOOK_FILE = "exports/release-smoke-book/Recipe book.recipefork-book"
         const val UNDO = "Undo"
+        /** The view of the recipes imported from files, as the serverless build names it, and as the standard one does. */
+        const val IMPORTED = "Imported"
+        const val MARKED = "Marked"
+        /** The card's ⋮ item that opens the sheet of collections, the sheet's items, and what the card says after it. */
+        const val ADD_TO_COLLECTION = "Add to collection"
+        const val NEW_COLLECTION = "New collection…"
+        const val COLLECTION_NAME = "Collection name"
+        const val CREATE = "Create"
+        const val IN_ONE_COLLECTION = "In 1 collection"
+        /** A collection's ⋮ items, and the Open of its notice of the recipes added to the shopping list. */
+        const val SHARE = "Share"
+        const val ADD_ALL_TO_SHOPPING = "Add all to shopping list"
+        const val DELETE_COLLECTION = "Delete collection"
+        const val OPEN = "Open"
+        /** A collection's count in the book's row. */
+        const val TWO_RECIPES = "2 recipes"
         /** The book's bar action that opens the shopping list, and the list's floating action. */
         const val SHOPPING_LIST = "Shopping list"
         const val ADD_ITEM = "Add item"

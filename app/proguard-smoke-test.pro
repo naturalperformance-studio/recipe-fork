@@ -49,5 +49,12 @@
 -keep,allowobfuscation class app.recipefork.app.dictionary.EquipmentEntryEntity { *; }
 -keep,allowobfuscation class app.recipefork.app.kitchen.KitchenStore, app.recipefork.app.kitchen.PreferencesKitchen { *; }
 -keep,allowobfuscation class app.recipefork.app.kitchen.Kitchen, app.recipefork.app.kitchen.Kitchen$Companion { *; }
+# The collections the walk makes, shares and takes back (v0.36), and the shopping list it puts one on and gives back.
+-keep,allowobfuscation class app.recipefork.app.collections.CollectionRepository { *; }
+-keep,allowobfuscation class app.recipefork.app.file.CollectionExport { *; }
+-keep,allowobfuscation class app.recipefork.app.file.CollectionImport, app.recipefork.app.file.CollectionImportKt { *; }
+-keep,allowobfuscation class app.recipefork.app.file.CollectionImportOutcome, app.recipefork.app.file.CollectionImportOutcome$* { *; }
+-keep,allowobfuscation class app.recipefork.core.recipe.CollectionId, app.recipefork.core.recipe.CollectionOrigin, app.recipefork.core.recipe.RecipeCollection { *; }
+-keep,allowobfuscation class app.recipefork.app.shopping.ShoppingStore, app.recipefork.app.shopping.ShoppingList, app.recipefork.app.shopping.ListedRecipe { *; }
 # The smoke test closes the databases it opens itself; the application never closes one.
 -keepclassmembers,allowobfuscation class androidx.room.RoomDatabase { public void close(); }
