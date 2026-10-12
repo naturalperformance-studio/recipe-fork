@@ -3,15 +3,13 @@ package app.recipefork.core.shopping
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.RecipeId
-import app.recipefork.core.recipe.comparisonFactor
 import app.recipefork.core.scaling.AuthoredQuantity
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RoundingGrid
 import app.recipefork.core.scaling.ScaleFactor
 import app.recipefork.core.scaling.ScaledRecipe
 import app.recipefork.core.scaling.Scaling
-import java.math.BigDecimal
-import java.math.BigInteger
+import app.recipefork.core.scaling.measureOf
 
 /**
  * The rule that adds up a shopping list (FLOW-074) from recipes, each at its own serving count.
@@ -81,7 +79,7 @@ object ShoppingTotals {
         val (taste, amounts) = parts.partition { it.authored!!.unit == QuantityUnit.TO_TASTE }
         val groups = amounts.groupBy { it.key }.values.map(::Group)
         val factors = measures?.factors.orEmpty()
-        val (convertible, unmeasured) = groups.partition { factorOf(factors, it.unit) != null }
+        val (convertible, unmeasured) = groups.partition { measureOf(factors, it.unit) != null }
         val lines = mutableListOf<Draft>()
         if (convertible.size >= 2) lines += merged(name, convertible, factors) else convertible.mapTo(lines) { own(name, it) }
         unmeasured.mapTo(lines) { own(name, it) }
@@ -101,9 +99,9 @@ object ShoppingTotals {
         Draft(group.order, name, measured(group.unit, group.sum, group.divisible), sources = group.parts)
 
     private fun merged(name: ShoppingName, groups: List<Group>, factors: Map<String, Double>): Draft {
-        val grams = groups.associateWith { it.sum * factorOf(factors, it.unit)!! }
+        val grams = groups.associateWith { it.sum * measureOf(factors, it.unit)!! }
         val target = groups.maxBy { grams.getValue(it) }
-        val targetFactor = factorOf(factors, target.unit)!!
+        val targetFactor = measureOf(factors, target.unit)!!
         val others = groups.filter { it !== target }.associateWith { grams.getValue(it) / targetFactor }
         val total = others.values.fold(target.sum, Rational::plus)
         return Draft(
@@ -129,22 +127,6 @@ object ShoppingTotals {
     /** [exact] rounded once, on the grid of [unit]. */
     private fun amount(unit: QuantityUnit, exact: Rational, divisible: Boolean?): ShoppingAmount =
         ShoppingAmount(unit, checkNotNull(RoundingGrid.of(unit, divisible)).nearest(exact))
-
-    /**
-     * The entry's grams per one [unit], exactly as given — for an `exact` unit, the factor of its base unit times its
-     * exact multiple of it; null where the entry gives no usable one.
-     */
-    private fun factorOf(factors: Map<String, Double>, unit: QuantityUnit): Rational? {
-        val base = unit.baseUnit
-        if (base != null && base != unit) return factorOf(factors, base)?.let { it * checkNotNull(unit.baseMultiple) }
-        return comparisonFactor(factors, unit)?.takeIf { it.isFinite() && it > 0 }?.let(::rationalOf)
-    }
-
-    private fun rationalOf(value: Double): Rational {
-        val decimal = BigDecimal.valueOf(value)
-        return if (decimal.scale() >= 0) Rational.of(decimal.unscaledValue(), BigInteger.TEN.pow(decimal.scale()))
-        else Rational.of(decimal.unscaledValue() * BigInteger.TEN.pow(-decimal.scale()))
-    }
 
     /** One row of one recipe, at the order it was given in; [authored] is null for a row that cannot be scaled. */
     private class Part(val order: Int, val recipe: RecipeId, val row: Ingredient, val authored: AuthoredQuantity?, factor: ScaleFactor) {
