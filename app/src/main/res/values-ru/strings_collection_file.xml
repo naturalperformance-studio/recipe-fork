@@ -4,4 +4,26 @@
     <string name="collection_share_sheet">Поделиться «%1$s»</string>
     <string name="collection_sharing">Готовим файл коллекции</string>
     <string name="collection_share_failed">Не удалось поделиться коллекцией</string>
+    <string name="collection_import_added">Коллекция «%1$s» добавлена: %2$s</string>
+    <string name="collection_import_added_held">Коллекция «%1$s» добавлена: %2$s (%3$s)</string>
+    <string name="collection_import_updated">Коллекция «%1$s» обновлена: %2$s</string>
+    <string name="collection_import_updated_held">Коллекция «%1$s» обновлена: %2$s (%3$s)</string>
+    <plurals name="collection_import_recipes">
+        <item quantity="one">%d рецепт</item>
+        <item quantity="few">%d рецепта</item>
+        <item quantity="many">%d рецептов</item>
+        <item quantity="other">%d рецепта</item>
+    </plurals>
+    <plurals name="collection_import_held">
+        <item quantity="one">%d уже был в книге</item>
+        <item quantity="few">%d уже были в книге</item>
+        <item quantity="many">%d уже были в книге</item>
+        <item quantity="other">%d уже были в книге</item>
+    </plurals>
+    <string name="collection_import_own">У вас уже есть эта коллекция</string>
+    <string name="collection_import_not_a_collection">Это не файл коллекции, ничего не добавлено</string>
+    <string name="collection_import_later">Файл коллекции создан более новой версией приложения. Обновите приложение, чтобы открыть его; ничего не добавлено</string>
+    <string name="collection_import_damaged">Файл коллекции повреждён, ничего не добавлено</string>
+    <string name="collection_import_breaks_rules">Рецепт в файле коллекции нарушает правила, которые соблюдает каждый рецепт, ничего не добавлено</string>
+    <string name="collection_import_clip_too_long">Видео в этом файле коллекции длиннее %1$d секунд, ничего не добавлено</string>
 </resources>

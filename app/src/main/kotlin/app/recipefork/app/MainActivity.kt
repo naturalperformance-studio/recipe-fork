@@ -22,6 +22,9 @@ import app.recipefork.app.card.LocalStepToShow
 import app.recipefork.app.backup.BookBackup
 import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.file.BookFileIntents
+import app.recipefork.app.file.CollectionFileIntents
+import app.recipefork.app.file.CollectionImport
+import app.recipefork.app.file.importCollectionFile
 import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.RecipeFileIntents
 import app.recipefork.app.file.RecipeImport
@@ -98,13 +101,18 @@ class MainActivity : ComponentActivity() {
 
     /**
      * A recipe file opened from another application is imported in serverless mode (FLOW-064) and in standard mode
-     * is not; a saved book is restored in serverless mode (FLOW-073) and in standard mode is not; a timer's notification leads to its recipe's card, at its step (FLOW-013 (4)), and stops its ringing.
+     * is not, and so is a collection file (v0.36); a saved book is restored in serverless mode (FLOW-073) and in standard mode is not; a timer's notification leads to its recipe's card, at its step (FLOW-013 (4)), and stops its ringing.
      */
     private fun follow(intent: Intent?) {
         if (!follows(intent)) return
         val container = (application as RecipeForkApplication).container
         BookFileIntents.toRestore(intent)?.let { uri ->
             openBookFile(container.mode, container.backup, librarySession, uri)
+            return
+        }
+        CollectionFileIntents.toImport(intent)?.let { uri ->
+            val files = CollectionImport(container.activeBook, filesDir, equipment = container.dictionaries)
+            openCollectionFile(applicationContext, container.mode, files, librarySession, uri)
             return
         }
         RecipeFileIntents.fileOf(intent)?.let { uri ->
@@ -138,6 +146,18 @@ class MainActivity : ComponentActivity() {
                 null
             } else {
                 session.viewModelScope.launch { session.importFile(context, files, uri) }
+            }
+
+        /**
+         * Follows a collection file at [uri] handed to the application in [mode] (v0.36): in [Mode.Serverless] it is
+         * imported, the person told what became of it, and the collection shown where it stands; in [Mode.Standard]
+         * nothing is imported, nor read, as for a recipe file (FLOW-061). Returns the import's work, or null.
+         */
+        fun openCollectionFile(context: android.content.Context, mode: Mode, files: CollectionImport, session: LibrarySession, uri: android.net.Uri) =
+            if (mode != Mode.Serverless) {
+                null
+            } else {
+                session.viewModelScope.launch { session.importCollectionFile(context, files, uri) }
             }
 
         /**

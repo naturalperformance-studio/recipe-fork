@@ -32,6 +32,21 @@ import java.io.InputStream
 import java.time.Instant
 import java.util.UUID
 
+/** [open], each stream it opens counting what is read of it into one share of [total] told to [progress]. */
+internal fun counting(open: () -> InputStream, total: Long, progress: (Float) -> Unit): () -> InputStream {
+    var read = 0L
+    return {
+        object : java.io.FilterInputStream(open()) {
+            override fun read(): Int = super.read().also { if (it >= 0) told(1) }
+            override fun read(b: ByteArray, off: Int, len: Int): Int = super.read(b, off, len).also { if (it > 0) told(it) }
+            private fun told(bytes: Int) {
+                read += bytes
+                progress((read.toFloat() / total).coerceAtMost(1f))
+            }
+        }
+    }
+}
+
 /** What became of a file opened for import (FLOW-064). */
 sealed interface ImportOutcome {
     /** The recipe is in the book now, as a found recipe. */
@@ -74,21 +89,6 @@ class RecipeImport(
         val recipes = recipes.inOpenBook()
         val counted = if (size <= 0) open else counting(open, 2 * size, progress)
         return withContext(Dispatchers.IO) { importInto(recipes, counted) }
-    }
-
-    /** [open], each stream it opens counting what is read of it into one share of [total] told to [progress]. */
-    private fun counting(open: () -> InputStream, total: Long, progress: (Float) -> Unit): () -> InputStream {
-        var read = 0L
-        return {
-            object : java.io.FilterInputStream(open()) {
-                override fun read(): Int = super.read().also { if (it >= 0) told(1) }
-                override fun read(b: ByteArray, off: Int, len: Int): Int = super.read(b, off, len).also { if (it > 0) told(it) }
-                private fun told(bytes: Int) {
-                    read += bytes
-                    progress((read.toFloat() / total).coerceAtMost(1f))
-                }
-            }
-        }
     }
 
     private suspend fun importInto(recipes: RecipeRepository, open: () -> InputStream): ImportOutcome = coroutineScope {
@@ -260,7 +260,7 @@ object RecipeFileIntents {
         Intent.ACTION_VIEW -> intent.data
         Intent.ACTION_SEND -> intent.takeIf { it.type == RecipeFile.MIME_TYPE }?.let(::streamOf)
         else -> null
-    }?.takeIf { it.scheme in FILE_SCHEMES && !BookFileIntents.isBookFile(it) }
+    }?.takeIf { it.scheme in FILE_SCHEMES && !BookFileIntents.isBookFile(it) && !CollectionFileIntents.isCollectionFile(it, intent?.type) }
 
     @Suppress("DEPRECATION")
     internal fun streamOf(intent: Intent): Uri? = intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
@@ -268,14 +268,21 @@ object RecipeFileIntents {
     /**
      * The intent that hands the file [intent] opens or shares on to [MainActivity], in the application's own task —
      * the one already open, its screen followed as a newly opened file — with the reading of the file granted on: a
-     * recipe file as a view, to be imported; a saved book as [BookFileIntents.ACTION_RESTORE], to be restored. Null
-     * where [intent] holds no file.
+     * recipe file as a view, to be imported; a saved book as [BookFileIntents.ACTION_RESTORE], to be restored; a
+     * collection file as [CollectionFileIntents.ACTION_IMPORT], to be imported as a collection. Null where [intent]
+     * holds no file.
      */
     fun forward(context: Context, intent: Intent?): Intent? {
         val book = BookFileIntents.arriving(intent)
-        val uri = book ?: fileOf(intent) ?: return null
+        val collection = if (book == null) CollectionFileIntents.arriving(intent) else null
+        val uri = book ?: collection ?: fileOf(intent) ?: return null
+        val action = when {
+            book != null -> BookFileIntents.ACTION_RESTORE
+            collection != null -> CollectionFileIntents.ACTION_IMPORT
+            else -> Intent.ACTION_VIEW
+        }
         return Intent(context, MainActivity::class.java)
-            .setAction(if (book != null) BookFileIntents.ACTION_RESTORE else Intent.ACTION_VIEW)
+            .setAction(action)
             .setDataAndType(uri, intent?.type)
             .addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or
