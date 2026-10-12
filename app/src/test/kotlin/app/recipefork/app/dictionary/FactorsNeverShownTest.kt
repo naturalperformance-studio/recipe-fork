@@ -15,9 +15,13 @@ class FactorsNeverShownTest {
 
     /**
      * The dictionary holding factors, the filter by an ingredient ordering by them (CAT-009), and the shopping list's
-     * ticks, which compare a line's amounts in two units by them (T-231) and show nothing of them.
+     * ticks, which compare a line's amounts in two units by them (T-231) and show nothing of them; and the card's lines,
+     * which pass an entry's measures to the conversion into the reader's system (v0.35) — an amount shown "≈", never a
+     * factor.
      */
-    private val readers = setOf("dictionary/DictionaryEntities.kt", "recipe/BookSearch.kt", "shopping/ShoppingLines.kt")
+    private val readers = setOf(
+        "dictionary/DictionaryEntities.kt", "recipe/BookSearch.kt", "shopping/ShoppingLines.kt", "card/IngredientLine.kt",
+    )
 
     private val aRead = Regex("""\bfactors\b|\bcomparisonFactor\b|\bFactorsConverter\b""")
 

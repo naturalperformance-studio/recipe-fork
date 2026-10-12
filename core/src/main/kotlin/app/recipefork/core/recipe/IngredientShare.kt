@@ -97,5 +97,5 @@ object IngredientShares {
         return runCatching { Scaling.display(AuthoredQuantity(share.unit, share.amount, pieceDivisible), factor) }.getOrNull()
     }
 
-    private fun inBase(amount: Rational, unit: QuantityUnit): Rational = unit.baseMultiple?.let { amount * Rational.of(it) } ?: amount
+    private fun inBase(amount: Rational, unit: QuantityUnit): Rational = unit.baseMultiple?.let { amount * it } ?: amount
 }

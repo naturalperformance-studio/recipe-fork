@@ -3,22 +3,24 @@ package app.recipefork.core.shopping
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.RecipeId
-import app.recipefork.core.recipe.comparisonFactor
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.AuthoredQuantity
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RoundingGrid
 import app.recipefork.core.scaling.ScaleFactor
 import app.recipefork.core.scaling.ScaledRecipe
 import app.recipefork.core.scaling.Scaling
-import java.math.BigDecimal
-import java.math.BigInteger
+import app.recipefork.core.scaling.UnitConversion
+import app.recipefork.core.scaling.measureOf
 
 /**
  * The rule that adds up a shopping list (FLOW-074) from recipes, each at its own serving count.
  *
  * - Every recipe's rows are scaled as the card scales them, by the exact factor of its [ScaledRecipe]; a recipe with no
  *   serving count is scaled as one serving, at one. Amounts are added as exact fractions and rounded once, on the grid
- *   of the line's unit; `exact` amounts add in their base unit. A line is rounded on the line's grid even from a single
+ *   of the line's unit. `exact` amounts add exactly in the line unit of their ladder (ounces for oz and lb) where every
+ *   part stands in one system, and in the base unit of their dimension (gram, millilitre) where metric and US parts
+ *   meet. A line is rounded on the line's grid even from a single
  *   row DOM-018 keeps as written: 1½ pieces of an entry now indivisible read 2, where the card shows 1½ at its
  *   authored count.
  * - A part counted into an approximate line is noted at its value on the line's grid; one below that grid's floor is
@@ -32,6 +34,14 @@ import java.math.BigInteger
  *   "+ to taste".
  * - A free-text row is a line of its own, never merged; a row that cannot be scaled is a line of its own, as written;
  *   a row naming nothing is left out.
+ * - In a reader's system (v0.35), a measured line's exact total — merged, in the unit of its largest part — is
+ *   converted once by [UnitConversion.convert] and rounded on the shown unit's grid, as the card shows an amount
+ *   ([ShoppingLine.shown]). On a line of several parts shown approximate, each part written in a unit that does not
+ *   convert exactly into the shown one (another dimension, or a household unit) is noted with what it counted as in
+ *   the shown unit, so a note names the chosen system's unit ("2 cups counted as ≈ 260 g" in Metric); a line of one
+ *   part converted through the dictionary notes nothing, its "≈" says enough, as on the card. The line itself — its unit,
+ *   its amount, what it merged — stays as the recipes are written, so that what a line is does not change with the
+ *   system.
  *
  * Lines stand in the order of their first row, recipe by recipe. A recipe given twice counts twice.
  *
@@ -40,8 +50,11 @@ import java.math.BigInteger
  */
 object ShoppingTotals {
 
-    /** The lines of a shopping list made from [recipes], reading each dictionary entry's measures from [entries]. */
-    fun of(recipes: List<ShoppingRecipe>, entries: Map<Long, EntryMeasures>): List<ShoppingLine> {
+    /**
+     * The lines of a shopping list made from [recipes], reading each dictionary entry's measures from [entries]; each
+     * measured line also [shown][ShoppingLine.shown] in [system], where one is given.
+     */
+    fun of(recipes: List<ShoppingRecipe>, entries: Map<Long, EntryMeasures>, system: UnitSystem? = null): List<ShoppingLine> {
         val drafts = mutableListOf<Draft>()
         val byEntry = LinkedHashMap<Long, MutableList<Part>>()
         var order = 0
@@ -56,11 +69,11 @@ object ShoppingTotals {
                     name is ShoppingName.Entry -> byEntry.getOrPut(name.id) { mutableListOf() } += part
                     part.authored.unit == QuantityUnit.TO_TASTE ->
                         drafts += Draft(part.order, name, ShoppingQuantity.ToTaste, sources = listOf(part))
-                    else -> drafts += Group(listOf(part)).let { Draft(it.order, name, measured(it.unit, it.sum, it.divisible), sources = it.parts) }
+                    else -> drafts += own(name, Group(listOf(part)), emptyMap(), system)
                 }
             }
         }
-        byEntry.forEach { (id, parts) -> drafts += entryLines(ShoppingName.Entry(id), parts, entries[id]) }
+        byEntry.forEach { (id, parts) -> drafts += entryLines(ShoppingName.Entry(id), parts, entries[id], system) }
         return drafts.sortedBy { it.order }.map(Draft::line)
     }
 
@@ -75,14 +88,14 @@ object ShoppingTotals {
         row.dictionaryEntry?.let(ShoppingName::Entry)
             ?: row.freeTextName?.trim()?.takeIf { it.isNotEmpty() }?.let(ShoppingName::FreeText)
 
-    private fun entryLines(name: ShoppingName.Entry, parts: List<Part>, measures: EntryMeasures?): List<Draft> {
+    private fun entryLines(name: ShoppingName.Entry, parts: List<Part>, measures: EntryMeasures?, system: UnitSystem?): List<Draft> {
         val (taste, amounts) = parts.partition { it.authored!!.unit == QuantityUnit.TO_TASTE }
-        val groups = amounts.groupBy { it.unit }.values.map(::Group)
+        val groups = amounts.groupBy { it.key }.values.map(::Group)
         val factors = measures?.factors.orEmpty()
-        val (convertible, unmeasured) = groups.partition { factorOf(factors, it.unit) != null }
+        val (convertible, unmeasured) = groups.partition { measureOf(factors, it.unit) != null }
         val lines = mutableListOf<Draft>()
-        if (convertible.size >= 2) lines += merged(name, convertible, factors) else convertible.mapTo(lines) { own(name, it) }
-        unmeasured.mapTo(lines) { own(name, it) }
+        if (convertible.size >= 2) lines += merged(name, convertible, factors, system) else convertible.mapTo(lines) { own(name, it, factors, system) }
+        unmeasured.mapTo(lines) { own(name, it, factors, system) }
         if (taste.isEmpty()) return lines
         val first = lines.minByOrNull { it.order }
             ?: return listOf(Draft(taste.first().order, name, ShoppingQuantity.ToTaste, sources = taste))
@@ -95,13 +108,15 @@ object ShoppingTotals {
         return lines
     }
 
-    private fun own(name: ShoppingName, group: Group): Draft =
-        Draft(group.order, name, measured(group.unit, group.sum, group.divisible), sources = group.parts)
+    private fun own(name: ShoppingName, group: Group, factors: Map<String, Double>, system: UnitSystem?): Draft = Draft(
+        group.order, name, measured(group.unit, group.sum, group.divisible), sources = group.parts,
+        shown = system?.let { shownIn(it, group, group.sum, listOf(group to group.sum), factors, approximate = false) },
+    )
 
-    private fun merged(name: ShoppingName, groups: List<Group>, factors: Map<String, Double>): Draft {
-        val grams = groups.associateWith { it.sum * factorOf(factors, it.unit)!! }
+    private fun merged(name: ShoppingName, groups: List<Group>, factors: Map<String, Double>, system: UnitSystem?): Draft {
+        val grams = groups.associateWith { it.sum * measureOf(factors, it.unit)!! }
         val target = groups.maxBy { grams.getValue(it) }
-        val targetFactor = factorOf(factors, target.unit)!!
+        val targetFactor = measureOf(factors, target.unit)!!
         val others = groups.filter { it !== target }.associateWith { grams.getValue(it) / targetFactor }
         val total = others.values.fold(target.sum, Rational::plus)
         return Draft(
@@ -118,8 +133,42 @@ object ShoppingTotals {
                 )
             },
             sources = groups.flatMap { it.parts },
+            shown = system?.let { into ->
+                val inTarget = groups.map { it to (others[it] ?: it.sum) }
+                shownIn(into, target, total, inTarget, factors, approximate = true)
+            },
         )
     }
+
+    /**
+     * A line in [target]'s unit, [total] there exactly, shown in [system]; [parts] are its groups, each with its exact
+     * amount in [target]'s unit. On an approximate line of several parts, a part is noted where its unit does not go
+     * exactly into the shown one; a line shown exactly, or of one part, notes none.
+     */
+    private fun shownIn(
+        system: UnitSystem,
+        target: Group,
+        total: Rational,
+        parts: List<Pair<Group, Rational>>,
+        factors: Map<String, Double>,
+        approximate: Boolean,
+    ): ShoppingShown {
+        val converted = UnitConversion.convert(target.unit, total, factors, system, divisible = target.divisible)
+        val unit = converted.quantity.unit
+        val grid = checkNotNull(RoundingGrid.of(unit, target.divisible.takeIf { unit == target.unit }))
+        val inexact = approximate || converted.approximate
+        // A line of one part converted through the dictionary is that part: "≈" says enough, as on the card.
+        val noted = parts.takeIf { inexact && it.size > 1 }.orEmpty()
+        val counted = noted.filter { (group, _) -> !convertsExactly(group.unit, unit) }.map { (group, inTarget) ->
+            val inShown = inTarget / converted.writtenPerShown
+            CountedPart(amount(group.unit, group.sum, group.divisible), ShoppingAmount(unit, grid.nearest(inShown)), inShown < grid.floor)
+        }
+        return ShoppingShown(ShoppingAmount(unit, checkNotNull(converted.quantity.value)), inexact, counted)
+    }
+
+    /** Whether an amount in [from] reads in [to] by fixed ratios alone: one unit, or `exact` units of one dimension. */
+    private fun convertsExactly(from: QuantityUnit, to: QuantityUnit): Boolean =
+        from == to || (from.dimension != null && from.dimension == to.dimension)
 
     private fun measured(unit: QuantityUnit, exact: Rational, divisible: Boolean?) =
         ShoppingQuantity.Measured(amount(unit, exact, divisible))
@@ -128,32 +177,35 @@ object ShoppingTotals {
     private fun amount(unit: QuantityUnit, exact: Rational, divisible: Boolean?): ShoppingAmount =
         ShoppingAmount(unit, checkNotNull(RoundingGrid.of(unit, divisible)).nearest(exact))
 
-    /** The entry's grams per one [unit] (a base unit for `exact`), exactly as given; null where it gives no usable one. */
-    private fun factorOf(factors: Map<String, Double>, unit: QuantityUnit): Rational? =
-        comparisonFactor(factors, unit)?.takeIf { it.isFinite() && it > 0 }?.let(::rationalOf)
-
-    private fun rationalOf(value: Double): Rational {
-        val decimal = BigDecimal.valueOf(value)
-        return if (decimal.scale() >= 0) Rational.of(decimal.unscaledValue(), BigInteger.TEN.pow(decimal.scale()))
-        else Rational.of(decimal.unscaledValue() * BigInteger.TEN.pow(-decimal.scale()))
-    }
-
     /** One row of one recipe, at the order it was given in; [authored] is null for a row that cannot be scaled. */
     private class Part(val order: Int, val recipe: RecipeId, val row: Ingredient, val authored: AuthoredQuantity?, factor: ScaleFactor) {
-        /** The unit the row's line is in: the base unit for `exact`, its own otherwise. */
-        val unit: QuantityUnit? = authored?.unit?.let { it.baseUnit ?: it }
+        /** What the row adds up with: the base unit of its dimension for `exact` (g and oz add up), its own unit otherwise. */
+        val key: QuantityUnit? = authored?.unit?.let { it.baseUnit ?: it }
+
+        /** The unit the row's line is in: the line unit of its ladder for `exact`, its own otherwise. */
+        val unit: QuantityUnit? = authored?.unit?.let { it.lineUnit ?: it }
 
         /** The exact amount at the recipe's factor, in [unit]; null for a row with no amount. */
         val exact: Rational? = authored?.quantity?.let { quantity ->
-            (authored.unit.baseMultiple?.let { quantity * Rational.of(it) } ?: quantity) * factor.value
+            (authored.unit.lineMultiple?.let { quantity * it } ?: quantity) * factor.value
+        }
+
+        /** [exact] in [target], a unit of [unit]'s dimension (or [unit] itself), exactly. */
+        fun exactIn(target: QuantityUnit): Rational {
+            val amount = exact!!
+            if (target == unit) return amount
+            return amount * checkNotNull(unit!!.baseMultiple) / checkNotNull(target.baseMultiple)
         }
     }
 
-    /** Rows of one entry in one unit, added exactly. */
+    /**
+     * Rows of one entry in one unit — every `exact` unit of a dimension counting as one — added exactly: in their line
+     * unit where they share one, else in the dimension's base unit.
+     */
     private class Group(val parts: List<Part>) {
         val order: Int = parts.minOf { it.order }
-        val unit: QuantityUnit = parts.first().unit!!
-        val sum: Rational = parts.map { it.exact!! }.reduce(Rational::plus)
+        val unit: QuantityUnit = parts.map { it.unit!! }.distinct().singleOrNull() ?: parts.first().key!!
+        val sum: Rational = parts.map { it.exactIn(unit) }.reduce(Rational::plus)
 
         /** For `piece`: halves where any of its rows is divisible. */
         val divisible: Boolean? = if (unit == QuantityUnit.PIECE) parts.any { it.authored!!.divisible == true } else null
@@ -166,7 +218,8 @@ object ShoppingTotals {
         val approximate: Boolean = false,
         val counted: List<CountedPart> = emptyList(),
         val sources: List<Part>,
+        val shown: ShoppingShown? = null,
     ) {
-        fun line() = ShoppingLine(name, quantity, approximate, counted, sources.sortedBy { it.order }.map { it.recipe }.distinct())
+        fun line() = ShoppingLine(name, quantity, approximate, counted, sources.sortedBy { it.order }.map { it.recipe }.distinct(), shown)
     }
 }

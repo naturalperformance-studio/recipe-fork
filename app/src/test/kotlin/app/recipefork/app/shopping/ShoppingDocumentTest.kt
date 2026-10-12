@@ -11,6 +11,7 @@ import app.recipefork.app.print.PrintDocument
 import app.recipefork.core.recipe.QuantityUnit.CUP
 import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.PIECE
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.shopping.ShoppingAmount
 import org.junit.Assert.assertEquals
@@ -44,8 +45,9 @@ class ShoppingDocumentTest {
         vararg ticked: String,
         own: List<OwnLine> = listOf(paper, batteries),
         at: Map<String, ShoppingAmount?> = emptyMap(),
+        system: UnitSystem = UnitSystem.METRIC,
     ): ShoppingList {
-        val lines = (listedLines(entries, dictionary, language, context.resources) + ownLines(ShoppingList(own = own), POOL))
+        val lines = (listedLines(entries, dictionary, language, context.resources, system) + ownLines(ShoppingList(own = own), POOL))
             .associateBy { it.shown.text }
         return ShoppingList(
             entries.map { it.listed },
@@ -54,8 +56,13 @@ class ShoppingDocumentTest {
         )
     }
 
-    private fun document(list: ShoppingList, language: InterfaceLanguage = InterfaceLanguage.ENGLISH, of: List<ShoppingEntry> = entries) =
-        shoppingDocument(of, dictionary, list, POOL, language, context.resources)
+    private fun document(
+        list: ShoppingList,
+        language: InterfaceLanguage = InterfaceLanguage.ENGLISH,
+        of: List<ShoppingEntry> = entries,
+        system: UnitSystem = UnitSystem.METRIC,
+    ) =
+        shoppingDocument(of, dictionary, list, POOL, language, context.resources, system)
 
     // The recipes with their counts, the lines to buy as empty boxes with what they counted and their recipes muted
     // under them, own lines after them, then the basket in the list's order, ticked.
@@ -82,6 +89,33 @@ class ShoppingDocumentTest {
             ),
             document,
         )
+    }
+
+    // v0.35 T-250: the printed list follows the chosen system as the screen does — the flour of a gram recipe and a cup
+    // recipe in cups, what it counted in cups, the salt in teaspoons (one part: no note) — and a line ticked in Metric
+    // is in the basket.
+    @Test
+    fun thePrintedListFollowsTheChosenSystem() {
+        val document = document(list(InterfaceLanguage.ENGLISH, "salt — 5 g"), system = UnitSystem.US)!!
+        assertEquals(
+            listOf(
+                Box("onion — 2 pc", ticked = false, note = "Soup"),
+                Box("flour — ≈ 4⅓ cup", ticked = false, note = "300 g counted as ≈ 2⅓ cup\nBread, Untitled recipe"),
+                Box("baking paper", ticked = false, note = null),
+                Box("batteries", ticked = false, note = null),
+                Box("salt — ≈ ¾ tsp", ticked = true, note = "Bread"),
+            ),
+            document.blocks.filterIsInstance<Box>(),
+        )
+    }
+
+    // v0.35 T-250: on paper too, a cup of a liquid reads in millilitres in Metric, with no note repeating it.
+    @Test
+    fun aCupOfALiquidIsPrintedInMillilitres() {
+        val pancakes = recipe("Pancakes", 4, row(MILK, r(1), CUP))
+        val entry = ShoppingEntry(listed(pancakes), pancakes)
+        val boxes = document(ShoppingList(listOf(entry.listed)), of = listOf(entry))!!.blocks.filterIsInstance<Box>()
+        assertEquals(listOf(Box("milk — ≈ 250 ml", ticked = false, note = "Pancakes")), boxes)
     }
 
     // A line ticked when it asked for less is to buy again, as on the screen; with nothing ticked there is no basket.

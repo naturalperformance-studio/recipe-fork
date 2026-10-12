@@ -9,7 +9,9 @@ import kotlin.test.assertEquals
  * where the dictionary carries it, where it is looked up by unit, and where the filter's comparable quantity is taken.
  *
  * One departure, approved by the owner for the shopping list alone (v0.32): the list counts one entry's parts in other
- * units by its factors, as an approximate line (`shopping/`). Scaling and the card still read none.
+ * units by its factors, as an approximate line (`shopping/`). A second, planned in v0.35: the conversion into the
+ * reader's unit system reads an entry's measures for an approximate ("≈") amount (`scaling/UnitConversion.kt`).
+ * Scaling itself still reads none.
  */
 class FactorsNeverScaleTest {
     /** Unit tests of `:core` run with the module directory as the working directory. */
@@ -29,6 +31,7 @@ class FactorsNeverScaleTest {
                 "api/DictionaryContract.kt",
                 "recipe/EntryDivisibility.kt",
                 "scaling/QuantityPerServing.kt",
+                "scaling/UnitConversion.kt",
                 "shopping/ShoppingInput.kt",
                 "shopping/ShoppingTotals.kt",
             ),

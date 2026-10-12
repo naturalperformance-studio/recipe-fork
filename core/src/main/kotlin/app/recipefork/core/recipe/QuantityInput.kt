@@ -29,6 +29,12 @@ enum class AcceptedValues {
     /** `exact` volume: whole millilitres, and whole litres from 1000 l. */
     WHOLE_MILLILITRES,
 
+    /** US mass: ¼ oz below 4 oz, ½ oz up to 2 lb, ¼ lb from 2 lb. */
+    OUNCES,
+
+    /** US volume: ½ fl oz. */
+    FLUID_OUNCES,
+
     /** Indivisible `piece`: a whole number of one or more. */
     WHOLE_PIECES,
 
@@ -86,13 +92,15 @@ object QuantityInput {
     /** True when the field holds [value] in [unit]: above zero and on its unit type's grid (DOM-017). */
     fun holds(value: Rational, unit: QuantityUnit, divisible: Boolean?): Boolean {
         val grid = grid(unit, divisible) ?: return false
-        val onGrid = unit.baseMultiple?.let { value * Rational.of(it) } ?: value
+        val onGrid = unit.lineMultiple?.let { value * it } ?: value
         return grid.holds(onGrid)
     }
 
     /** The values the field holds for [unit], or null for `taste_unmeasured`. */
     fun accepts(unit: QuantityUnit, divisible: Boolean?): AcceptedValues? = when (grid(unit, divisible)) {
         RoundingGrid.EXACT -> if (unit.dimension == Dimension.MASS) AcceptedValues.WHOLE_GRAMS else AcceptedValues.WHOLE_MILLILITRES
+        RoundingGrid.OUNCES -> AcceptedValues.OUNCES
+        RoundingGrid.FLUID_OUNCES -> AcceptedValues.FLUID_OUNCES
         RoundingGrid.PIECE_INDIVISIBLE -> AcceptedValues.WHOLE_PIECES
         RoundingGrid.PIECE_DIVISIBLE -> AcceptedValues.HALVES
         RoundingGrid.FRACTIONAL -> AcceptedValues.KITCHEN_FRACTIONS

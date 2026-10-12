@@ -20,6 +20,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.data.HeldLastCardTab
+import app.recipefork.app.data.HeldUnitSystemSetting
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.editor.textsOf
@@ -35,6 +36,7 @@ import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
@@ -130,9 +132,13 @@ class CardPrintTest {
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
-    private fun open(recipe: Recipe, tab: CardMode = CardMode.VIEW) {
+    private fun open(recipe: Recipe, tab: CardMode = CardMode.VIEW, units: UnitSystem = UnitSystem.METRIC) {
         runBlocking { recipes.save(recipe) }
-        val environment = CardEnvironment(lastTab = HeldLastCardTab(tab), ingredients = IngredientEntries { emptyList() })
+        val environment = CardEnvironment(
+            lastTab = HeldLastCardTab(tab),
+            unitSystem = HeldUnitSystemSetting(units),
+            ingredients = IngredientEntries { emptyList() },
+        )
         compose.setContent {
             CompositionLocalProvider(LocalPrinting provides printing) {
                 MaterialTheme { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
@@ -202,6 +208,18 @@ class CardPrintTest {
         assertTrue(printed.toString(), "heading: Ingredients · 6 servings" in printed)
         assertTrue(printed.toString(), "• 450 g Flour" in printed)
         assertTrue(printed.toString(), "• 150 g Butter" in printed)
+    }
+
+    // v0.35 T-248: with US chosen, the printed recipe writes its amounts in US units, as the card shows them.
+    @Test
+    fun printWithUsChosenWritesTheAmountsInUsUnits() {
+        open(cake, units = UnitSystem.US)
+        take(CardTags.PRINT)
+        compose.waitUntil(PATIENCE_MS) { jobs.size == 1 }
+        val printed = texts(documents.single()).map { it.replace('\u202F', ' ') }
+        // 300 g is 10.58 oz, 100 g 3.53 oz: on the ounce grid, each with its arrow.
+        assertTrue(printed.toString(), "• 10½ oz ↓ Flour" in printed)
+        assertTrue(printed.toString(), "• 3½ oz ↓ Butter" in printed)
     }
 
     // Scenario 2: "Share as PDF" opens the share sheet on the recipe's PDF, named by its title as written.

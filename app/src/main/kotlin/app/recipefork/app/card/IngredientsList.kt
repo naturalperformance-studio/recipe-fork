@@ -231,9 +231,9 @@ private fun AllLines(
                         FixAmountUnder(
                             open = open == position,
                             offer = offer,
-                            current = fixings.firstOrNull { it.position == position },
+                            current = fixings.firstOrNull { it.position == position }?.let(offer::typed),
                             language = language,
-                            onFix = { amount, unit -> onFix(CardFixing(position, amount, unit)); onOpen(null) },
+                            onFix = { amount, unit -> onFix(offer.fixing(position, amount, unit)); onOpen(null) },
                             onRelease = { onRelease(position); onOpen(null) },
                             onClose = { onOpen(null) },
                         )

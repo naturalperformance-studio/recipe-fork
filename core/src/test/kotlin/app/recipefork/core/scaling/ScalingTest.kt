@@ -65,7 +65,7 @@ class Scale001ScalingByServingCountTest {
             Scaling.display(recipe, servings(count, 4)) // a scaled view first
             val back = Scaling.display(recipe, servings(4, 4))
             recipe.zip(back).forEach { (authored, shown) ->
-                val expected = authored.quantity?.let { q -> authored.unit.baseMultiple?.let { q * r(it) } ?: q }
+                val expected = authored.quantity?.let { q -> authored.unit.lineMultiple?.let { q * it } ?: q }
                 assertEquals(expected, shown.value, "$authored after $count servings")
                 assertFalse(shown.derived, "$authored is not derived at the authored count")
                 assertEquals(Rounding.NONE, shown.rounding)
@@ -231,16 +231,17 @@ class Dom017AuthoredValueIsAGridValueTest {
 
 class UnitsTest {
     @Test
-    fun `the twelve units of DOM-016 carry the unit types its table gives them`() {
+    fun `the twelve units of DOM-016 and the three US units carry the unit types its table gives them`() {
         val expected = mapOf(
             GRAM to "EXACT", KILOGRAM to "EXACT", TONNE to "EXACT",
             MILLILITRE to "EXACT", LITRE to "EXACT", CUBIC_METRE to "EXACT",
+            QuantityUnit.OUNCE to "EXACT", QuantityUnit.POUND to "EXACT", QuantityUnit.FLUID_OUNCE to "EXACT",
             PIECE to "PIECE",
             TEASPOON to "HOUSEHOLD", TABLESPOON to "HOUSEHOLD", CUP to "HOUSEHOLD",
             PINCH to "TASTE_MEASURED",
             TO_TASTE to "TASTE_UNMEASURED",
         )
-        assertEquals(12, QuantityUnit.entries.size)
+        assertEquals(15, QuantityUnit.entries.size)
         assertEquals(expected.keys, QuantityUnit.entries.toSet())
         expected.forEach { (unit, type) -> assertEquals(type, unit.type.name, "$unit") }
     }

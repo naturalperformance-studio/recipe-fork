@@ -27,6 +27,7 @@ import app.recipefork.app.timer.shownName
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeLanguage
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
@@ -48,7 +49,8 @@ object RecipeDocument {
      * the card gives it, each group's heading and each line as the card writes it, read with [entries]; then "Steps",
      * numbered as the card numbers them, each step's text with its references as the card renders them, its note
      * muted under it, its photo where [photo] finds it (a clip-only step saying its video is in the app), and its
-     * timers as View reads them. Plain and quick enough for any thread; the cover is only named, never read here.
+     * timers as View reads them. Every amount is shown in [system] as the card shows it (null: as written). Plain and
+     * quick enough for any thread; the cover is only named, never read here.
      */
     fun of(
         recipe: Recipe,
@@ -57,6 +59,7 @@ object RecipeDocument {
         scale: CardScale,
         resources: Resources,
         parentTitle: String? = null,
+        system: UnitSystem? = null,
         photo: (mediaId: String) -> File? = { null },
     ): PrintDocument {
         val language = cardLanguage(resources.configuration)
@@ -76,7 +79,7 @@ object RecipeDocument {
             }
 
             val ordered = recipe.ingredients.sortedBy { it.position }
-            val list = ingredientList(ordered, entries, language, recipe.servings?.takeIf { it >= 1 }, scale)
+            val list = ingredientList(ordered, entries, language, recipe.servings?.takeIf { it >= 1 }, scale, system)
             if (ordered.isNotEmpty()) {
                 val heading = resources.getString(R.string.card_ingredients)
                 add(
@@ -95,7 +98,7 @@ object RecipeDocument {
                 }
             }
 
-            val references = CardReferences.of(ordered, list, language, entries)
+            val references = CardReferences.of(ordered, list, language, entries, system)
             // The steps the card lists, numbered as it numbers them: one holding nothing that reads or shows is left out.
             val steps = recipe.steps.sortedBy { it.position }
                 .filter { isListed(it, references::quantity, recipe.stepMedia(it.position) != null) }

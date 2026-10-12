@@ -8,6 +8,7 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.PIECE
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.shopping.ShoppingAmount
 import org.junit.Assert.assertEquals
@@ -117,7 +118,7 @@ class OwnLinesTest {
             .withTick(TickedLine(POOL, "o:gone"), null)
         val settled = list.settled(POOL, mapOf(soup.id to soup), dictionary)
         assertEquals(setOf(TickedLine(POOL, paper.key)), settled.ticks.keys)
-        val recipeKeys = listedLines(listOf(ShoppingEntry(listed(soup), soup)), dictionary, InterfaceLanguage.ENGLISH, context.resources).map { it.tick.key }
+        val recipeKeys = listedLines(listOf(ShoppingEntry(listed(soup), soup)), dictionary, InterfaceLanguage.ENGLISH, context.resources, UnitSystem.METRIC).map { it.tick.key }
         val own = ownLines(list, POOL)
         assertEquals(listOf("baking paper", "flour"), own.map { it.shown.text })
         assertTrue(own.all { it.own && it.shown.from.isEmpty() && it.tick.amount == null })

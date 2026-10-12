@@ -37,6 +37,7 @@ import app.recipefork.app.card.forkUnlessHeld
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.ThemeSetting
+import app.recipefork.app.data.UnitSystemSetting
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.EditorScreen
@@ -113,6 +114,7 @@ fun AppNavHost(
     usualServings: UsualServings = card.usualServings,
     dragHandleSide: DragHandleSide = editor.dragHandleSide,
     themeSetting: ThemeSetting = rememberThemeSetting(),
+    unitSystem: UnitSystemSetting = card.unitSystem,
     kitchen: KitchenEnvironment = rememberKitchenEnvironment(),
     shopping: ShoppingEnvironment = rememberShoppingEnvironment(),
     backup: BookBackup = rememberBookBackup(),
@@ -150,7 +152,7 @@ fun AppNavHost(
         }
         composable(Destinations.SETTINGS_ROUTE) {
             SettingsScreen(
-                usualServings, dragHandleSide, themeSetting, recipes, mode, session.viewModelScope, kitchen,
+                usualServings, dragHandleSide, themeSetting, unitSystem, recipes, mode, session.viewModelScope, kitchen,
                 onBack = session::closeSettings,
                 onOpenKitchen = session::openKitchen,
                 backup = backup,

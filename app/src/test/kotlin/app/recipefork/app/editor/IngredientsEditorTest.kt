@@ -30,6 +30,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.backThroughTheCard
+import app.recipefork.app.data.HeldUnitSystemSetting
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -41,6 +42,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
@@ -74,6 +76,7 @@ class IngredientsEditorTest {
     private val session = LibrarySession(SavedStateHandle())
     private val created = Instant.parse("2026-09-29T12:00:00Z")
     private val opened = mutableStateOf<RecipeId?>(null)
+    private val units = HeldUnitSystemSetting()
     private var shown = false
 
     @Before
@@ -94,7 +97,7 @@ class IngredientsEditorTest {
     private fun show() {
         if (shown) return
         shown = true
-        val environment = EditorEnvironment(active, device.catalog(context)) { created.plusSeconds(60) }
+        val environment = EditorEnvironment(active, device.catalog(context), unitSystem = units) { created.plusSeconds(60) }
         compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
@@ -170,13 +173,13 @@ class IngredientsEditorTest {
     private fun openUnits(position: Int) {
         compose.openIngredient(position)
         compose.onNodeWithTag(EditorTags.ingredientUnit(position)).performScrollTo().performClick()
-        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(QuantityUnit.GRAM)), PATIENCE_MS)
+        compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.unitOption(QuantityUnit.PIECE)), PATIENCE_MS)
     }
 
     private fun chooseUnit(position: Int, unit: QuantityUnit) {
         openUnits(position)
         compose.onNodeWithTag(EditorTags.unitOption(unit)).performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(QuantityUnit.GRAM)), PATIENCE_MS)
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(QuantityUnit.PIECE)), PATIENCE_MS)
         compose.waitForIdle()
     }
 
@@ -184,6 +187,10 @@ class IngredientsEditorTest {
         compose.openIngredient(position)
         return compose.textsOf(EditorTags.ingredientUnit(position)).last()
     }
+
+    /** The units the open menu offers, by their tags in the order listed, each with its name as shown. */
+    private fun offeredUnits(): Map<String, String> = compose.onAllNodes(hasTestTagStartingWith("editor-unit-")).fetchSemanticsNodes()
+        .associate { node -> node.config[SemanticsProperties.TestTag] to node.config[SemanticsProperties.Text].joinToString("") { it.text } }
 
     private fun hasTestTagStartingWith(prefix: String) = SemanticsMatcher("tag starts with $prefix") {
         it.config.getOrElseNullable(SemanticsProperties.TestTag) { null }?.startsWith(prefix) == true
@@ -285,9 +292,10 @@ class IngredientsEditorTest {
         )
         assertEquals(string(R.string.editor_ingredient_unit), compose.textsOf(EditorTags.ingredientUnit(0)).first())
 
-        // Whatever unit is chosen, no unit type is named anywhere on the screen.
+        // Whatever unit is chosen — in its own system — no unit type is named anywhere on the screen.
         compose.onNodeWithTag(EditorTags.ingredientName(0)).performTextInput("wild garlic")
         QuantityUnit.entries.forEach { unit ->
+            units.set(unit.system ?: UnitSystem.METRIC)
             chooseUnit(0, unit)
             assertNoUnitTypeShown()
             assertEquals("$unit", unit.type, stored(id).ingredients.single().unitType)
@@ -309,31 +317,40 @@ class IngredientsEditorTest {
         assertEquals("a unit type is shown", emptyList<String>(), named)
     }
 
-    // DOM-016 (1), FLOW-023 (10): exactly the twelve units, named in the interface language; DOM-016 (2).
+    // DOM-016 (1), FLOW-023 (10): exactly the twelve units and the three US ones (v0.35), named in the interface
+    // language; DOM-016 (2). Each is offered in its own system, the shared ones in both (v0.35 T-249).
     @Test
     fun theUnitFieldOffersExactlyTheTwelveUnitsInEnglish() = theTwelveUnits(
-        listOf("g", "kg", "t", "ml", "l", "m³", "pc", "tsp", "tbsp", "cup", "pinch", "to taste"),
+        listOf("g", "kg", "t", "ml", "l", "m³", "oz", "lb", "fl oz", "pc", "tsp", "tbsp", "cup", "pinch", "to taste"),
     )
 
     @Test
     @Config(qualifiers = "ru")
     fun theUnitFieldOffersExactlyTheTwelveUnitsInRussian() = theTwelveUnits(
-        listOf("г", "кг", "т", "мл", "л", "м³", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
+        listOf("г", "кг", "т", "мл", "л", "м³", "унц.", "фн", "жидк. унц.", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
     )
 
     private fun theTwelveUnits(names: List<String>) {
         val id = writeANewRecipe()
         addIngredient()
         openUnits(0)
-        val offered = compose.onAllNodes(hasTestTagStartingWith("editor-unit-")).fetchSemanticsNodes()
+        val metric = offeredUnits()
         // Listed with the kitchen's usual units first (T-218); each still named as DOM-016 names it.
-        val byUnit = offered.associate { node -> node.config[SemanticsProperties.TestTag] to node.config[SemanticsProperties.Text].joinToString("") { it.text } }
-        assertEquals(MENU_UNITS.map { EditorTags.unitOption(it) }, offered.map { it.config[SemanticsProperties.TestTag] })
-        assertEquals(names, QuantityUnit.entries.map { byUnit[EditorTags.unitOption(it)] })
+        assertEquals(menuUnits(UnitSystem.METRIC, null).map { EditorTags.unitOption(it) }, metric.keys.toList())
         compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.GRAM)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(QuantityUnit.GRAM)), PATIENCE_MS)
-        // Each unit chosen stores its own unit and the unit type the table gives it.
+        // The US system's menu, the row now holding a unit of mass of its own system.
+        units.set(UnitSystem.US)
+        chooseUnit(0, QuantityUnit.OUNCE)
+        openUnits(0)
+        val us = offeredUnits()
+        assertEquals(menuUnits(UnitSystem.US, null).map { EditorTags.unitOption(it) }, us.keys.toList())
+        assertEquals(names, QuantityUnit.entries.map { (metric + us)[EditorTags.unitOption(it)] })
+        compose.onNodeWithTag(EditorTags.unitOption(QuantityUnit.OUNCE)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitUntilDoesNotExist(hasTestTag(EditorTags.unitOption(QuantityUnit.OUNCE)), PATIENCE_MS)
+        // Each unit chosen — in its own system — stores its own unit and the unit type the table gives it.
         QuantityUnit.entries.zip(names).forEach { (unit, name) ->
+            units.set(unit.system ?: UnitSystem.METRIC)
             chooseUnit(0, unit)
             val row = stored(id).ingredients.single()
             assertEquals("$unit", unit.type, row.unitType)

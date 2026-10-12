@@ -36,12 +36,14 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,10 +74,22 @@ class SharedPdfFromTheCardOnDeviceTest {
     private val now = Instant.now().minusSeconds(3600)
     private var recipe: Recipe? = null
     private var scenario: ActivityScenario<MainActivity>? = null
+    private var units: UnitSystem? = null
+
+    /**
+     * The test reads the card's pages against the recipe as written in grams: Metric, whatever the device's region —
+     * the emulator's is the United States, which starts on US (v0.35). The device's own setting is given back after.
+     */
+    @Before
+    fun setUp() {
+        units = container.unitSystem.system.value
+        container.unitSystem.set(UnitSystem.METRIC)
+    }
 
     @After
     fun tearDown() = runBlocking {
         scenario?.close()
+        units?.let(container.unitSystem::set)
         recipe?.let { written ->
             container.recipes.delete(written.id)
             written.media.forEach { store.file(book, it.mediaId).delete() }

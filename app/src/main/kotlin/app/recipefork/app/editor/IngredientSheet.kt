@@ -81,6 +81,7 @@ import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityProblem
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.RecipePart
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.effectiveDivisible
 import app.recipefork.core.recipe.withTypedQuantity
@@ -179,6 +180,7 @@ internal fun IngredientSheet(
     language: InterfaceLanguage,
     dictionary: List<IngredientEntryEntity>?,
     mode: Mode,
+    units: UnitSystem,
     rows: RowFocus,
     typed: TypedInSheet,
     fresh: Boolean,
@@ -233,7 +235,7 @@ internal fun IngredientSheet(
         )
         Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(bottom = 8.dp)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                IngredientFields(position, row, editor, language, dictionary, mode, chain, entryDivisible, typed)
+                IngredientFields(position, row, editor, language, dictionary, mode, units, chain, entryDivisible, typed)
             }
             SheetActions(actions) { action -> scope.take(action, going, state, leave, onClose) }
         }
@@ -249,6 +251,7 @@ private fun IngredientFields(
     language: InterfaceLanguage,
     dictionary: List<IngredientEntryEntity>?,
     mode: Mode,
+    units: UnitSystem,
     chain: RowChain,
     entryDivisible: Boolean?,
     typed: TypedInSheet,
@@ -297,7 +300,7 @@ private fun IngredientFields(
                 if (quantity) {
                     QuantityField(position, row, editor, language, chain, problem, typed.quantity, quantityUnder, Modifier.weight(1f).then(quantityHeight))
                 }
-                UnitField(position, row, editor, chain, Modifier.width(unitWidth).then(unitHeight))
+                UnitField(position, row, editor, units, chain, Modifier.width(unitWidth).then(unitHeight))
             }
         } else {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -305,7 +308,7 @@ private fun IngredientFields(
                 if (quantity) {
                     QuantityField(position, row, editor, language, chain, problem, typed.quantity, quantityUnder, Modifier.fillMaxWidth().then(quantityHeight))
                 }
-                UnitField(position, row, editor, chain, Modifier.fillMaxWidth().then(unitHeight))
+                UnitField(position, row, editor, units, chain, Modifier.fillMaxWidth().then(unitHeight))
             }
         }
     }
@@ -622,13 +625,14 @@ private class EvenHeights {
 }
 
 /**
- * The row's unit: exactly the twelve units of DOM-016, by their names in the interface language, in Material 3's exposed
- * drop-down — a read-only outlined field, as the fields beside it are, over the menu of units, the kitchen's usual ones
- * first ([MENU_UNITS]).
+ * The row's unit, by its name in the interface language, in Material 3's exposed drop-down — a read-only outlined field,
+ * as the fields beside it are, over the menu of the units of the reader's system [units] and the shared ones, the
+ * kitchen's usual ones first ([menuUnits]). A row held in a unit of the other system shows it as written, and its menu
+ * offers it while the row holds it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chain: RowChain, modifier: Modifier) {
+private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, units: UnitSystem, chain: RowChain, modifier: Modifier) {
     var expanded by chain::unitOpen
     val action = stringResource(R.string.editor_ingredient_unit_action)
     ExposedDropdownMenuBox(
@@ -653,7 +657,7 @@ private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chai
                 .testTag(EditorTags.ingredientUnit(position)),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            MENU_UNITS.forEach { unit ->
+            menuUnits(units, row.shownUnit).forEach { unit ->
                 DropdownMenuItem(
                     text = { Text(stringResource(unitName(unit))) },
                     onClick = {
@@ -672,7 +676,7 @@ private fun UnitField(position: Int, row: Ingredient, editor: RecipeEditor, chai
 }
 
 /**
- * The units in the order the unit menu lists them: those a kitchen uses most first, so that a phone shows them without
+ * Every unit in the order the unit menu lists them: those a kitchen uses most first, so that a phone shows them without
  * scrolling the menu — then the rest. The domain's own order ([QuantityUnit.entries]) is left as it is.
  */
 internal val MENU_UNITS: List<QuantityUnit> = listOf(
@@ -681,12 +685,22 @@ internal val MENU_UNITS: List<QuantityUnit> = listOf(
     QuantityUnit.KILOGRAM,
     QuantityUnit.MILLILITRE,
     QuantityUnit.LITRE,
+    QuantityUnit.OUNCE,
+    QuantityUnit.POUND,
+    QuantityUnit.FLUID_OUNCE,
     QuantityUnit.TEASPOON,
     QuantityUnit.TABLESPOON,
     QuantityUnit.CUP,
     QuantityUnit.PINCH,
     QuantityUnit.TO_TASTE,
 ).let { usual -> usual + QuantityUnit.entries.filterNot { it in usual } }
+
+/**
+ * The units a row's menu offers in [system], in [MENU_UNITS]' order: the system's own and those both systems share — and
+ * [held], the unit the row holds, where it is of the other system, so that the row keeps it as written (v0.35).
+ */
+internal fun menuUnits(system: UnitSystem, held: QuantityUnit?): List<QuantityUnit> =
+    MENU_UNITS.filter { it.system == null || it.system == system || it == held }
 
 /** The unit a row shows in its unit field: "to taste" holds no unit of its own (DOM-002). */
 private val Ingredient.shownUnit: QuantityUnit?
