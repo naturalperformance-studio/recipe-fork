@@ -41,10 +41,11 @@
             </intent-filter>
         </activity>
 
-        <!-- A recipe file opened from another application (FLOW-064) arrives here, and is handed on to MainActivity in
-             the application's own task: a messenger starts a view for a result, which would stack MainActivity inside
-             the messenger's task. Nothing but a recipe file is routed here: by the product's own type, whatever the
-             address; by the extension, whatever type the sender declares or none. -->
+        <!-- A recipe file (FLOW-064) or a saved book (FLOW-073) opened from another application arrives here, and is
+             handed on to MainActivity in the application's own task: a messenger starts a view for a result, which
+             would stack MainActivity inside the messenger's task. Nothing but these files is routed here: a recipe file
+             by the product's own type, whatever the address; either by its extension, whatever type the sender
+             declares or none. -->
         <activity
             android:name=".file.OpenRecipeFileActivity"
             android:excludeFromRecents="true"
@@ -125,6 +126,76 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK" />
+            </intent-filter>
+            <!-- A saved book (FLOW-073) opened from another application is taken by its extension, whatever type the
+                 sender declares or none, as a recipe file is, and handed on to the book's restore. Sharing names the
+                 file only where the sender puts its address in the intent's data: a file given in EXTRA_STREAM alone
+                 shows the platform no name, and a generic type would offer the application for any file. A pattern
+                 must match the whole path, so ".recipefork" and ".recipefork-book" never take each other's files. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-book" />
+                <data android:pathPattern=".*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
             </intent-filter>
             <!-- Shared to the application by the product's own type: imported as if opened. -->
             <intent-filter>

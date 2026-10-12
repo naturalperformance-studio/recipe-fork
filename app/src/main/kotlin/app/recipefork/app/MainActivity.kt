@@ -19,7 +19,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.recipefork.app.card.LocalStepToShow
+import app.recipefork.app.backup.BookBackup
 import app.recipefork.app.data.AppLanguage
+import app.recipefork.app.file.BookFileIntents
+import app.recipefork.app.file.FileMessage
 import app.recipefork.app.file.RecipeFileIntents
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.library.importFile
@@ -95,11 +98,15 @@ class MainActivity : ComponentActivity() {
 
     /**
      * A recipe file opened from another application is imported in serverless mode (FLOW-064) and in standard mode
-     * is not; a timer's notification leads to its recipe's card, at its step (FLOW-013 (4)), and stops its ringing.
+     * is not; a saved book is restored in serverless mode (FLOW-073) and in standard mode is not; a timer's notification leads to its recipe's card, at its step (FLOW-013 (4)), and stops its ringing.
      */
     private fun follow(intent: Intent?) {
         if (!follows(intent)) return
         val container = (application as RecipeForkApplication).container
+        BookFileIntents.toRestore(intent)?.let { uri ->
+            openBookFile(container.mode, container.backup, librarySession, uri)
+            return
+        }
         RecipeFileIntents.fileOf(intent)?.let { uri ->
             openRecipeFile(applicationContext, container.mode, RecipeImport(container.recipes, filesDir, equipment = container.dictionaries), librarySession, uri)
             return
@@ -132,6 +139,22 @@ class MainActivity : ComponentActivity() {
             } else {
                 session.viewModelScope.launch { session.importFile(context, files, uri) }
             }
+
+        /**
+         * Follows a saved book at [uri] handed to the application in [mode]: in [Mode.Serverless] its restore starts
+         * ([BookBackup.restoreHandedOver]) and the settings are shown, where it asks, runs and is said as one started there;
+         * while another saving or restore runs, the file is not taken, and the person is told so. In [Mode.Standard],
+         * which has no backup, nothing is read or said. Returns whether the restore started.
+         */
+        fun openBookFile(mode: Mode, backup: BookBackup, session: LibrarySession, uri: android.net.Uri): Boolean {
+            if (mode != Mode.Serverless) return false
+            // Opened here and now, while this Activity — which holds the reading granted on — lives: the restore reads
+            // it later, on its own thread, when the Activity may be gone and the grant with it.
+            val started = backup.restoreHandedOver(uri)
+            session.showBackup()
+            if (!started) session.tell(FileMessage(FileMessage.Kind.BOOK_BUSY))
+            return started
+        }
 
         /**
          * The mode this release is built in, passed to the composition root. The only reader of the build's flag
