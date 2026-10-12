@@ -21,8 +21,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowVibrator
 
 /**
- * The device's feedback each haptic plays. A tick — servings −/+, a dragged row passing to a new place — is the
- * vibrator's predefined tick, a confirmation — a timer button — its click. Both go straight to the device's default
+ * The device's feedback each haptic plays. A tick — servings −/+, a dragged row passing to a new place — is a 50 ms
+ * one-shot at the default amplitude, a confirmation — a timer button — an 80 ms one (the predefined tick and click were
+ * too weak to feel on the owner's Samsung). Both go straight to the device's default
  * vibrator as touch vibrations (touch usage from API 33, sonification audio usage below). The system's touch-feedback
  * switch silences them: from API 33 the system applies it to touch vibrations, below it the app reads it at each play.
  * A device without a vibrator feels nothing.
@@ -52,42 +53,42 @@ class HapticsTest {
         val last: List<Any> get() = vibrationEffectSegments.toList()
     }
 
-    /** The segments of the predefined effect [id], as the device's vibrator receives them. */
-    private fun segmentsOf(id: Int): List<Any> {
-        val effect = VibrationEffect.createPredefined(id)
+    /** The segments of a one-shot of [millis] at the default amplitude, as the device's vibrator receives them. */
+    private fun oneShotOf(millis: Long): List<Any> {
+        val effect = VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE)
         return (effect.javaClass.getMethod("getSegments").invoke(effect) as List<*>).map { it!! }
     }
 
     @Test
     @Config(sdk = [36])
-    fun fromApi33ATickIsThePredefinedTickAsATouchVibration() {
+    fun fromApi33ATickIsA50MsOneShotAsATouchVibration() {
         val haptics = deviceHaptics()
         vibrator().setHasVibrator(true)
         perform(haptics, Haptic.TICK)
-        assertEquals(segmentsOf(VibrationEffect.EFFECT_TICK), PlayedSegments().last)
+        assertEquals(oneShotOf(50), PlayedSegments().last)
         val attributes = vibrator().vibrationAttributesFromLastVibration as VibrationAttributes
         assertEquals(VibrationAttributes.USAGE_TOUCH, attributes.usage)
     }
 
     @Test
     @Config(sdk = [36])
-    fun fromApi33AConfirmationIsThePredefinedClickAsATouchVibration() {
+    fun fromApi33AConfirmationIsAn80MsOneShotAsATouchVibration() {
         val haptics = deviceHaptics()
         vibrator().setHasVibrator(true)
         perform(haptics, Haptic.TICK)
         perform(haptics, Haptic.CONFIRM)
-        assertEquals(segmentsOf(VibrationEffect.EFFECT_CLICK), PlayedSegments().last)
+        assertEquals(oneShotOf(80), PlayedSegments().last)
         val attributes = vibrator().vibrationAttributesFromLastVibration as VibrationAttributes
         assertEquals(VibrationAttributes.USAGE_TOUCH, attributes.usage)
     }
 
     @Test
     @Config(sdk = [29])
-    fun belowApi33ATickIsThePredefinedTickWithSonificationAudioUsage() {
+    fun belowApi33ATickIsA50MsOneShotWithSonificationAudioUsage() {
         val haptics = deviceHaptics()
         vibrator().setHasVibrator(true)
         perform(haptics, Haptic.TICK)
-        assertEquals(VibrationEffect.EFFECT_TICK, vibrator().effectId)
+        assertEquals(50L, vibrator().milliseconds)
         assertEquals(
             AudioAttributes.USAGE_ASSISTANCE_SONIFICATION,
             vibrator().audioAttributesFromLastVibration!!.usage,
@@ -96,12 +97,12 @@ class HapticsTest {
 
     @Test
     @Config(sdk = [29])
-    fun belowApi33AConfirmationIsThePredefinedClickWithSonificationAudioUsage() {
+    fun belowApi33AConfirmationIsAn80MsOneShotWithSonificationAudioUsage() {
         val haptics = deviceHaptics()
         vibrator().setHasVibrator(true)
         perform(haptics, Haptic.TICK)
         perform(haptics, Haptic.CONFIRM)
-        assertEquals(VibrationEffect.EFFECT_CLICK, vibrator().effectId)
+        assertEquals(80L, vibrator().milliseconds)
         assertEquals(
             AudioAttributes.USAGE_ASSISTANCE_SONIFICATION,
             vibrator().audioAttributesFromLastVibration!!.usage,
@@ -119,7 +120,7 @@ class HapticsTest {
 
         touchFeedback(on = true)
         perform(haptics, Haptic.TICK)
-        assertEquals(segmentsOf(VibrationEffect.EFFECT_TICK), PlayedSegments().last)
+        assertEquals(oneShotOf(50), PlayedSegments().last)
         // The sonification audio usage reaches the vibrator service as a touch vibration.
         val attributes = vibrator().vibrationAttributesFromLastVibration as VibrationAttributes
         assertEquals(VibrationAttributes.USAGE_TOUCH, attributes.usage)
@@ -195,7 +196,7 @@ class HapticsTest {
         application.setHasVibrator(true)
         touchFeedback(on = true)
         perform(haptics, Haptic.TICK)
-        assertEquals(VibrationEffect.EFFECT_TICK, application.effectId)
+        assertEquals(50L, application.milliseconds)
         assertEquals(emptyList<String>(), screen.asked)
         val held = VibratorHaptics::class.java.declaredFields.filter { Context::class.java.isAssignableFrom(it.type) }
             .map { field -> field.isAccessible = true; field.get(haptics) }
@@ -220,7 +221,7 @@ class HapticsTest {
 
         touchFeedback(on = true)
         perform(haptics, Haptic.TICK)
-        assertEquals(VibrationEffect.EFFECT_TICK, vibrator().effectId)
+        assertEquals(50L, vibrator().milliseconds)
         assertEquals(
             AudioAttributes.USAGE_ASSISTANCE_SONIFICATION,
             vibrator().audioAttributesFromLastVibration!!.usage,

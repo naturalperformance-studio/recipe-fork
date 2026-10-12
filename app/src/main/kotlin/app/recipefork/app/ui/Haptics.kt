@@ -40,7 +40,9 @@ fun rememberHaptics(): Haptics {
 
 /**
  * Touch feedback played on the device's default vibrator as touch vibrations. The vibrator is asked directly because
- * some phones leave the view's haptic feedback silent. From API 33 the system silences touch vibrations itself when
+ * some phones leave the view's haptic feedback silent. Each haptic is a short one-shot ([oneShotMillis]) rather than a
+ * predefined effect: on some phones' motors the predefined tick and click are too weak to feel (measured on the
+ * owner's Samsung, where they played but were not felt while a 50 ms one-shot was). From API 33 the system silences touch vibrations itself when
  * touch feedback is off; below it the system only scales them by the touch intensity, so the switch
  * ([Settings.System.HAPTIC_FEEDBACK_ENABLED]) is read here at each play, and off plays nothing. A device without a
  * vibrator (none offered, or one that has none) feels nothing. Only the application's context is held, so the
@@ -52,7 +54,7 @@ class VibratorHaptics(context: Context) : Haptics {
 
     override fun perform(haptic: Haptic) {
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        val effect = VibrationEffect.createPredefined(haptic.effectId())
+        val effect = VibrationEffect.createOneShot(haptic.oneShotMillis(), VibrationEffect.DEFAULT_AMPLITUDE)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             vibrator.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))
         } else if (touchFeedbackOn()) {
@@ -65,10 +67,13 @@ class VibratorHaptics(context: Context) : Haptics {
         Settings.System.getInt(context.contentResolver, Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) != 0
 }
 
-/** The predefined vibration each haptic plays: a tick is the light tick, a confirmation a click. */
-internal fun Haptic.effectId(): Int = when (this) {
-    Haptic.CONFIRM -> VibrationEffect.EFFECT_CLICK
-    Haptic.TICK -> VibrationEffect.EFFECT_TICK
+/**
+ * How long each haptic's one-shot runs, at the default amplitude: a tick 50 ms (the owner's choice by feel), a
+ * confirmation a longer 80 ms so it reads as more than a step.
+ */
+internal fun Haptic.oneShotMillis(): Long = when (this) {
+    Haptic.CONFIRM -> 80L
+    Haptic.TICK -> 50L
 }
 
 /**
