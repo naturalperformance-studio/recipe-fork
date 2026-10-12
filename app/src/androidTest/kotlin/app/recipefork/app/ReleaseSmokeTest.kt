@@ -62,6 +62,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -107,6 +108,8 @@ class ReleaseSmokeTest {
     private var loaf: Recipe? = null
     // What the kitchen held before a case changed it, given back after.
     private var kitchenBefore: Set<Long>? = null
+    // The device's system of units before the case set its own, given back after.
+    private var unitsBefore: UnitSystem? = null
 
     private fun shell(command: String) {
         instrumentation.uiAutomation.executeShellCommand(command).use { FileInputStream(it.fileDescriptor).readBytes() }
@@ -119,6 +122,10 @@ class ReleaseSmokeTest {
         // The keyboard is a window of its own, which the test reads among the screen's windows.
         val automation = instrumentation.uiAutomation
         automation.serviceInfo = automation.serviceInfo.apply { flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS }
+        // The walk reads the soup's grams and switches to US and back: it starts on Metric, whatever the device's
+        // region — the emulator's is the United States, which starts on US (v0.35).
+        unitsBefore = container.unitSystem.system.value
+        container.unitSystem.set(UnitSystem.METRIC)
     }
 
     @After
@@ -134,6 +141,7 @@ class ReleaseSmokeTest {
             container.kitchen.hold(before - now, has = true)
             container.kitchen.hold(now - before, has = false)
         }
+        unitsBefore?.let(container.unitSystem::set)
         Unit
     }
 
@@ -191,6 +199,16 @@ class ReleaseSmokeTest {
         awaitUntil(30.seconds) { shown(text) != null }
     } catch (e: IllegalStateException) {
         throw AssertionError("“$text” not shown; on screen: ${onScreen()}", e)
+    }
+
+    /**
+     * Waits until a text on screen holds [part] — a line read as one text, its amount among its words — the spaces
+     * that never break read as plain ones; failing, says what is on screen.
+     */
+    private fun awaitShownWithin(part: String) = try {
+        awaitUntil(30.seconds) { onScreen().any { part in it.replace('\u00A0', ' ').replace('\u202F', ' ') } }
+    } catch (e: IllegalStateException) {
+        throw AssertionError("no text on screen holds “$part”; on screen: ${onScreen()}", e)
     }
 
     /**
@@ -608,7 +626,8 @@ class ReleaseSmokeTest {
      * text, and in the sheets they open — each typed in with the keyboard up — a note, a group, a step's note and timer
      * and a new step are written and saved, which closes the editor; the item of equipment the kitchen lacks opens My
      * kitchen and Back returns to the card; the settings are gone through, and from them the whole book saved to a file
-     * and a recipe it held brought back from that file; the recipe is deleted and brought back with Undo, exported to a
+     * and a recipe it held brought back from that file; the units switched to US, where the card reads its grams in
+     * ounces, and back to Metric; the recipe is deleted and brought back with Undo, exported to a
      * file and the file opened back into the book. Nothing crashes, and each change is in the book.
      *
      * Export and the opening of a file belong to the serverless build (FLOW-063, FLOW-064): the standard one, which
@@ -635,6 +654,8 @@ class ReleaseSmokeTest {
             tap(written.title)
             choose(VIEW)
             awaitShown("Servings: 2")
+            // Its onions in grams, as written, under Metric.
+            awaitShownWithin("200 g")
 
             // The recipe printed from the card's ⋮: the system's print dialog opens on it, and Back leaves it.
             printFromTheCard()
@@ -713,6 +734,9 @@ class ReleaseSmokeTest {
             // saved to a file and restored from it.
             throughTheSettings(bread)
             awaitShown(written.title)
+
+            // The units switched to US, the card's amounts converted by the shrunk build, and back to Metric.
+            throughTheUnits(written)
 
             // The shopping list, opened from the book's bar: read from its store, its "Add item" shown; its Back returns
             // to the book.
@@ -806,6 +830,31 @@ class ReleaseSmokeTest {
         tap(before.back)
         awaitShown(before.book)
         assertTrue("the application is in front", activities(Stage.RESUMED).any { it is MainActivity })
+    }
+
+    /**
+     * The units setting (v0.35) switched from Metric to US in Settings → Units, the card of [written] then reading its
+     * 200 g of onions as 7 oz, converted by the build's own code; and switched back, the card reading 200 g again.
+     * Starts and ends on the book.
+     */
+    private fun throughTheUnits(written: Recipe) {
+        for ((from, to, onions) in listOf(Triple(METRIC, US, "7 oz"), Triple(US, METRIC, "200 g"))) {
+            tap(SETTINGS)
+            awaitShown(UNITS)
+            tap(UNITS)
+            awaitShown(UNITS_CANCEL)
+            assertEquals(from, chosen(UNIT_SYSTEMS))
+            tap(to)
+            awaitUntil(30.seconds) { shown(UNITS_CANCEL) == null }
+            assertEquals(if (to == US) UnitSystem.US else UnitSystem.METRIC, container.unitSystem.system.value)
+            tap(BACK)
+            awaitShown(WRITTEN_HERE)
+            tap(written.title)
+            awaitShown("Servings: 2")
+            awaitShownWithin(onions)
+            tap(BACK)
+            awaitShown(WRITTEN_HERE)
+        }
     }
 
     /** A loaf with a cover: a recipe whose photograph the book's file is to carry. */
@@ -1051,6 +1100,12 @@ class ReleaseSmokeTest {
         const val RUSSIAN = "Русский"
         const val AS_ON_THE_DEVICE = "As on the device"
         const val DELETE = "Delete"
+        /** The settings' system of units, its dialog's choices and its Cancel. */
+        const val UNITS = "Units"
+        const val UNITS_CANCEL = "Cancel"
+        const val METRIC = "Metric"
+        const val US = "US"
+        val UNIT_SYSTEMS = listOf(METRIC, US)
         /** The settings' Backup section, its question's Add, and where the test keeps the book's file. */
         const val SAVE_THE_BOOK = "Save the book to a file"
         const val RESTORE_FROM_A_FILE = "Restore from a file"
