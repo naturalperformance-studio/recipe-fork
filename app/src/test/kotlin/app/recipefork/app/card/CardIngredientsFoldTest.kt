@@ -125,7 +125,7 @@ class CardIngredientsFoldTest {
     private fun clearMarks() {
         compose.openTheCardMenu()
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) }
         compose.waitForIdle()
     }
 
