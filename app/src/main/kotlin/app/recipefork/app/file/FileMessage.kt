@@ -17,13 +17,14 @@ import app.recipefork.app.R
 import app.recipefork.core.recipe.VideoLimits
 
 /**
- * What the person is told about a file: what became of one they opened for import (FLOW-064), or that an export
- * failed (FLOW-063). A recipe now in the book ([isNotice]) is said in the book's snackbar, which offers to open the
+ * What the person is told about a file: what became of one they opened for import (FLOW-064), that an export
+ * failed (FLOW-063), or that a saved book opened from another application waits, as another saving or restore runs
+ * (FLOW-073). A recipe now in the book ([isNotice]) is said in the book's snackbar, which offers to open the
  * recipe [recipeId]; a failure is said whole, in a dialog closed by its OK. Never in a toast that cuts it short; it is
  * kept as plain data so that it outlives a rotation and the end of the process while it is shown.
  */
 data class FileMessage(val kind: Kind, val title: String = "", val recipeId: String = "") {
-    enum class Kind { ADDED, ALREADY_IN_BOOK, CANNOT_OPEN, NOT_A_RECIPE_FILE, LATER_VERSION, DAMAGED, BREAKS_RULES, CLIP_TOO_LONG, EXPORT_FAILED }
+    enum class Kind { ADDED, ALREADY_IN_BOOK, CANNOT_OPEN, NOT_A_RECIPE_FILE, LATER_VERSION, DAMAGED, BREAKS_RULES, CLIP_TOO_LONG, EXPORT_FAILED, BOOK_BUSY }
 
     /** Whether the message names a recipe the book holds, said in a snackbar that opens it, rather than a failure. */
     val isNotice: Boolean get() = kind == Kind.ADDED || kind == Kind.ALREADY_IN_BOOK
@@ -41,6 +42,7 @@ data class FileMessage(val kind: Kind, val title: String = "", val recipeId: Str
             Kind.BREAKS_RULES -> resources.getString(R.string.file_import_breaks_rules)
             Kind.CLIP_TOO_LONG -> resources.getString(R.string.file_import_clip_too_long, VideoLimits.MAX_DURATION.inWholeSeconds.toInt())
             Kind.EXPORT_FAILED -> resources.getString(R.string.file_export_failed)
+            Kind.BOOK_BUSY -> resources.getString(R.string.backup_opened_busy)
         }
     }
 

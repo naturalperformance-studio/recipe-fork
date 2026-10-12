@@ -50,4 +50,6 @@
         <item quantity="other">All %d recipes of the book will be removed, with their photos and clips, and the file\'s recipes put in their place. This can\'t be undone.</item>
     </plurals>
     <string name="backup_replace_confirm">Replace</string>
+    <!-- A saved book opened from another app while the book is already being saved or restored. -->
+    <string name="backup_opened_busy">The book is already being saved or restored, so this file was not opened. Open it again once that is done.</string>
 </resources>

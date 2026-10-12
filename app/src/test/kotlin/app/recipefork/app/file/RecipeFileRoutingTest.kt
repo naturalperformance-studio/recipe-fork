@@ -254,4 +254,63 @@ class RecipeFileRoutingTest {
         assertEquals(false, MainActivity.follows(Intent(timer).addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)))
         assertEquals(false, MainActivity.follows(null))
     }
+
+    // T-242, scenario 4: a saved book tapped in Telegram or a file manager, or opened by its path, is offered to the
+    // application whatever type it comes declared with, whatever dots its name holds, in either case.
+    @Test
+    fun aBookFileIsOfferedWhateverTypeItDeclares() {
+        for (place in listOf(telegram, telegramEncoded, fileManager, fileAddress)) {
+            for (name in listOf("Recipe book 2026-10-12.recipefork-book", "book.v2.old.recipefork-book", "BOOK.RECIPEFORK-BOOK")) {
+                for (type in declared) assertOffered(view(Uri.parse(place + name), type))
+            }
+        }
+    }
+
+    // A share names the file to the platform only where the sender puts its address in the intent's data too; one in
+    // EXTRA_STREAM alone, of a generic type, is not offered — as for any other file.
+    @Test
+    fun aBookFileSharedWithItsAddressIsOffered() {
+        val book = Uri.parse(telegram + "Recipe book 2026-10-12.recipefork-book")
+        for (type in declared) assertOffered(Intent(Intent.ACTION_SEND).setDataAndType(book, type).putExtra(Intent.EXTRA_STREAM, book))
+        assertNotOffered(send(book, "application/octet-stream"))
+    }
+
+    // Each extension takes its own files only: a pattern matches the whole path.
+    @Test
+    fun aNameMerelyLikeABookFileIsNotOffered() {
+        for (type in listOf("application/octet-stream", "application/zip", null)) {
+            assertNotOffered(view(Uri.parse(fileManager + "book.recipefork-books"), type))
+            assertNotOffered(view(Uri.parse(fileManager + "book.recipefork-book.zip"), type))
+            assertNotOffered(view(Uri.parse(telegram + "book.recipeforkbook"), type))
+            assertNotOffered(view(Uri.parse(telegram + "recipefork-book"), type))
+        }
+    }
+
+    // A book is handed on to be restored, never viewed — which would import it as a recipe; a recipe file is still
+    // handed on as a view, to be imported. Both with the reading of the file granted on.
+    @Test
+    fun aBookFileIsHandedOnToBeRestoredAndARecipeFileToBeImported() {
+        for (intent in listOf(
+            view(Uri.parse(telegram + "Recipe book 2026-10-12.recipefork-book"), "text/plain"),
+            view(Uri.parse(fileManager + "Recipe book.RECIPEFORK-BOOK"), "application/octet-stream"),
+            Intent(Intent.ACTION_SEND).setDataAndType(Uri.parse(fileManager + "b.recipefork-book"), "application/octet-stream"),
+            send(Uri.parse(fileAddress + "b.recipefork-book"), RecipeFile.MIME_TYPE),
+        )) {
+            val forwarded = RecipeFileIntents.forward(context, intent)!!
+            val uri = intent.data ?: RecipeFileIntents.streamOf(intent)
+            assertEquals(BookFileIntents.ACTION_RESTORE, forwarded.action)
+            assertEquals(ComponentName(context, MainActivity::class.java), forwarded.component)
+            assertEquals(uri, BookFileIntents.toRestore(forwarded))
+            assertNull(RecipeFileIntents.fileOf(forwarded))
+            assertTrue(forwarded.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+            assertEquals(uri, forwarded.clipData!!.getItemAt(0).uri)
+        }
+        val recipe = Uri.parse(telegram + "lemon-cake.recipefork")
+        val forwarded = RecipeFileIntents.forward(context, view(recipe, "text/plain"))!!
+        assertEquals(Intent.ACTION_VIEW, forwarded.action)
+        assertEquals(recipe, RecipeFileIntents.fileOf(forwarded))
+        assertNull(BookFileIntents.toRestore(forwarded))
+        // A view of a book reaching the import some other way is no recipe file to it.
+        assertNull(RecipeFileIntents.fileOf(view(Uri.parse(fileManager + "b.recipefork-book"), null)))
+    }
 }

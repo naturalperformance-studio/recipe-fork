@@ -130,10 +130,24 @@ class BookBackup(
      * ([add], [replace], [confirmReplace]); into an empty one it adds without asking. False, doing nothing, while
      * another operation runs or waits for an answer.
      */
-    fun restoreFrom(from: Uri): Boolean = begin(BackupWork.READING) {
+    fun restoreFrom(from: Uri): Boolean = reading { documents.size(from) to documents.input(from) }
+
+    /**
+     * [restoreFrom] for a book file another application handed over, whose reading is granted only while the activity
+     * it was handed to lives: it is opened at once, on the caller's thread, and read afterwards however soon that
+     * activity goes. One that cannot be opened is refused as unreadable; while another operation runs it is closed
+     * again, and false.
+     */
+    fun restoreHandedOver(from: Uri): Boolean {
+        val opened = runCatching { documents.size(from) to documents.input(from) }
+        return reading { opened.getOrThrow() }.also { started -> if (!started) opened.getOrNull()?.second?.close() }
+    }
+
+    /** Restores the book file [open] gives with its size, as [restoreFrom] tells. */
+    private fun reading(open: () -> Pair<Long?, InputStream>): Boolean = begin(BackupWork.READING) {
         val opening = try {
-            val size = documents.size(from)
-            reader.open(documents.input(from)) { read -> progress(BackupWork.READING, read, size) }
+            val (size, input) = open()
+            reader.open(input) { read -> progress(BackupWork.READING, read, size) }
         } catch (e: CancellationException) {
             end(null)
             throw e
