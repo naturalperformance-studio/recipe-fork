@@ -13,11 +13,13 @@ import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.recipe.EquipmentNames
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.core.file.EntryLabels
 import app.recipefork.core.file.FileMedia
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileCheck
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.Media
+import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +35,7 @@ import java.text.Normalizer
  */
 object RecipeExport {
     /** The directory under the cache that the [FileProvider] shares (res/xml/file_paths.xml). */
-    private const val DIRECTORY = "exports"
+    internal const val DIRECTORY = "exports"
 
     fun authority(context: Context) = context.packageName + ".files"
 
@@ -53,21 +55,10 @@ object RecipeExport {
     ): Uri? {
         val book = recipes.inOpenBook()
         val recipe = book.get(id) ?: return null
-        val parent = recipe.parent?.let { book.get(it) }
         val store = PhotoStore(context.filesDir)
         val name = book.bookName()
-        // An entry whose labels cannot be read is written without them; the file reads the same on a device that holds it.
-        val entries = if (recipe.equipment.none { it.dictionaryEntry != null }) emptyMap() else try {
-            equipment.equipment().associateBy { it.id }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            emptyMap()
-        }
-        val content = withContext(Dispatchers.IO) {
-            RecipeFileContent.of(recipe, parentInBook = parent, ownerNickname = null) { entries[it]?.let(EquipmentNames::labelsOf) }
-                .copy(media = fileMedia(recipe.media) { store.file(name, it).isFile })
-        }
+        val labels = equipmentLabels(listOf(recipe), equipment)
+        val content = withContext(Dispatchers.IO) { fileContent(book, recipe, labels) { store.file(name, it).isFile } }
         val file = withContext(Dispatchers.IO) {
             // Only the file of this export is kept: those of earlier exports, and of recipes since deleted, go first.
             val exports = File(context.cacheDir, DIRECTORY)
@@ -87,8 +78,40 @@ object RecipeExport {
         return FileProvider.getUriForFile(context, authority(context), file)
     }
 
+    /**
+     * The labels of the dictionary entries the equipment of [recipes] names, as [equipment] holds them. An entry whose
+     * labels cannot be read is written without them; the file reads the same on a device that holds it.
+     */
+    internal suspend fun equipmentLabels(recipes: List<Recipe>, equipment: EquipmentSource): (Long) -> EntryLabels? {
+        if (recipes.none { recipe -> recipe.equipment.any { it.dictionaryEntry != null } }) return { null }
+        val entries = try {
+            equipment.equipment().associateBy { it.id }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyMap()
+        }
+        return { entries[it]?.let(EquipmentNames::labelsOf) }
+    }
+
+    /**
+     * The file's content for [recipe] of [book], as an export of it writes it (FLOW-063): no account exists on the
+     * device yet, so the file names an author only where the recipe states one; its parent is named as [book] knows
+     * it; its media are those the device holds ([held]).
+     */
+    internal suspend fun fileContent(
+        book: RecipeRepository,
+        recipe: Recipe,
+        labels: (Long) -> EntryLabels?,
+        held: (String) -> Boolean,
+    ): RecipeFileContent {
+        val parent = recipe.parent?.let { book.get(it) }
+        return RecipeFileContent.of(recipe, parentInBook = parent, ownerNickname = null, equipmentLabels = labels)
+            .copy(media = fileMedia(recipe.media, held))
+    }
+
     /** [out], telling [progress] the share of [total] bytes written through it. */
-    private fun counting(out: java.io.OutputStream, total: Long, progress: (Float) -> Unit) = object : java.io.FilterOutputStream(out) {
+    internal fun counting(out: java.io.OutputStream, total: Long, progress: (Float) -> Unit) = object : java.io.FilterOutputStream(out) {
         private var written = 0L
         override fun write(b: Int) {
             out.write(b)
@@ -168,14 +191,17 @@ object RecipeExport {
      * characters; a title whose letters are all upper case is spelt all in upper case; `recipe` when nothing of the
      * title is left; then the product's extension.
      */
-    fun fileName(title: String): String {
+    fun fileName(title: String): String = safeFileName(title, RecipeFile.EXTENSION, FALLBACK_NAME)
+
+    /** [title] made a file's name as [fileName] makes it, with [extension]; [fallback] when nothing of it is left. */
+    internal fun safeFileName(title: String, extension: String, fallback: String): String {
         val composed = Normalizer.normalize(title, Normalizer.Form.NFC)
         val spelt = composed.map { CYRILLIC_IN_LATIN[it] ?: it.toString() }.joinToString("")
         val letters = composed.filter { it.isLetter() }
         val cased = if (letters.isNotEmpty() && letters.all { it.isUpperCase() }) spelt.uppercase() else spelt
         val latin = Normalizer.normalize(cased, Normalizer.Form.NFD)
         val cleaned = latin.replace(Regex("\\p{M}+"), "").replace(Regex("[^A-Za-z0-9]+"), "-").trim('-').take(MAX_NAME).trimEnd('-')
-        return (cleaned.ifEmpty { FALLBACK_NAME }) + "." + RecipeFile.EXTENSION
+        return (cleaned.ifEmpty { fallback }) + "." + extension
     }
 
     /**
