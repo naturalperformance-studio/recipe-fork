@@ -48,8 +48,9 @@ class ReadCollectionFile internal constructor(
  * recipe file — its document decoded and checked as one the moment it is read ([RecipeArchiveReader.decoded]), only
  * what it states kept, each media item it names present once, within its cap and of its kind by its leading bytes. Of
  * a folder's other entries only a media entry's name and head are kept, and what is kept is counted against a cap.
- * Only a file believed whole is read the second time, for the media of the recipes the caller takes ([media]), held
- * together to their cap as they are written. Every entry's name is checked, an absolute one or one climbing with `..`
+ * The media the recipes name are held together to their cap once the first reading ends. Only a file believed whole
+ * is read the second time, for the media of the recipes the caller takes ([media]), held to that cap again as they are
+ * written. Every entry's name is checked, an absolute one or one climbing with `..`
  * refusing the file; entries outside the folders the document lists are passed over unread but counted. Inflation
  * stops at the caps of [CollectionLimits], whatever sizes the archive declares; [alive] is asked between every read.
  */
@@ -100,6 +101,8 @@ object CollectionArchiveReader {
             }
         }
         val content = document ?: throw RefusedFile(Refusal.NOT_A_RECIPE_FILE, "no document")
+        // The media the recipes name, together, are held to their cap before anything is written.
+        var media = 0L
         val recipes = content.recipes.mapIndexed { place, id ->
             val prefix = CollectionFile.recipeFolder(place)
             val folder = folders[prefix] ?: throw RefusedFile(Refusal.DAMAGED, "no folder $prefix")
@@ -108,6 +111,8 @@ object CollectionArchiveReader {
             recipe.media.forEach { item ->
                 val (head, size) = folder.heads[item.entry] ?: throw RefusedFile(Refusal.DAMAGED, "missing ${folder.prefix}${item.entry}")
                 if (size > limits.recipe.of(item.kind)) throw RefusedFile(Refusal.DAMAGED, "${folder.prefix}${item.entry} over its cap")
+                media += size
+                if (media > limits.media) throw RefusedFile(Refusal.DAMAGED, MEDIA)
                 if (!RecipeArchiveReader.isOfKind(head, size, item.kind)) {
                     throw RefusedFile(Refusal.DAMAGED, "${folder.prefix}${item.entry} is no ${item.kind}")
                 }
@@ -145,7 +150,7 @@ object CollectionArchiveReader {
                 if (!read.add(name)) throw RefusedFile(Refusal.DAMAGED, "$name given twice")
                 // The media together are held to their cap as they are written, whatever each item's own cap.
                 val left = limits.media - written
-                if (left <= 0) throw RefusedFile(Refusal.DAMAGED, "the media over their cap")
+                if (left <= 0) throw RefusedFile(Refusal.DAMAGED, MEDIA)
                 val head = ByteArray(RecipeArchiveReader.HEAD)
                 val size = target(place, item).outputStream().buffered().use { out ->
                     RecipeArchiveReader.copy(zip, RecipeArchiveReader.HeadKeeper(out, head), minOf(limits.recipe.of(item.kind), budget, left), alive)
@@ -230,6 +235,7 @@ object CollectionArchiveReader {
     }
 
     private const val DOCUMENTS = "the recipes' documents over their cap"
+    private const val MEDIA = "the media over their cap"
 
     /** What a kept media entry costs beside its name's characters and its head: its map's node, its pair, its size. */
     private const val ENTRY = 96L

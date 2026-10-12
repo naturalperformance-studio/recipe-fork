@@ -524,7 +524,8 @@ class CollectionImportTest {
         assertTrue(few.sumOf { TestRecipeFiles.document(it).size.toLong() } < small.documents)
         assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), import(collectionFile(few), importer(small)))
         assertUnchanged()
-        // More tags than a recipe carries, or labels on more items than a recipe lists.
+        // More tags than a recipe carries; and many labels, which a file can give only inside its items (each label stands
+        // in the item naming its entry), so the equipment's cap of fifteen is what bounds them.
         val tagged = recipe("r-more").copy(tags = (0L until 40_000L).toSet())
         assertEquals(CollectionImportOutcome.Refused(Refusal.BREAKS_RULES), import(collectionFile(listOf(recipe("r-1"), tagged))))
         val items = (1L..2_000L).map { EquipmentItem.entry(it) }
@@ -550,19 +551,31 @@ class CollectionImportTest {
         assertTrue(import(others, importer(small)) is CollectionImportOutcome.Imported)
     }
 
-    // The media a collection brings are held together to their cap (2 GiB) as they are written: a file whose media pass
-    // it is refused, never having written more than the cap, and leaves nothing behind.
+    // The media a collection brings are held together to their cap (2 GiB): the first reading refuses a file whose
+    // named media pass it before anything is written — the archive is never opened a second time.
+    @Test
+    fun theMediaTogetherAreHeldToTheirCapBeforeAnythingIsWritten() {
+        assertEquals(2L * 1024 * 1024 * 1024, CollectionLimits().media)
+        val file = threeMedia()
+        val capped = CollectionLimits(media = 2_500)
+        val refusal = runCatching { CollectionArchiveReader.read({ file.inputStream() }, capped) }.exceptionOrNull() as RefusedFile
+        assertEquals(Refusal.DAMAGED, refusal.refusal)
+        assertEquals("the media over their cap", refusal.message)
+        val opens = java.util.concurrent.atomic.AtomicInteger()
+        val outcome = runBlocking { importer(capped).import { opens.incrementAndGet(); file.inputStream() } }
+        assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), outcome)
+        assertEquals("read once, nothing written", 1, opens.get())
+        assertUnchanged()
+        assertTrue(import(file, importer(CollectionLimits(media = 3_000))) is CollectionImportOutcome.Imported)
+    }
+
+    // The second reading holds them to the same cap again as they are written, for it need not give what the first did:
+    // it is refused never having written more than the cap.
     @Test
     fun theMediaTogetherAreHeldToTheirCapAsTheyAreWritten() {
-        assertEquals(2L * 1024 * 1024 * 1024, CollectionLimits().media)
-        val duck = recipe("r-duck", "Duck", cover("m-duck"))
-        val cake = recipe("r-cake", "Cake", cover("m-cake"), clip("m-clip"))
-        val file = collectionFile(
-            listOf(duck, cake),
-            media = mapOf(0 to listOf("media/m-duck" to TestRecipeFiles.jpeg()), 1 to listOf("media/m-cake" to TestRecipeFiles.jpeg(), "media/m-clip" to TestRecipeFiles.mp4())),
-        )
+        val file = threeMedia()
         val capped = CollectionLimits(media = 2_500)
-        val read = CollectionArchiveReader.read({ file.inputStream() }, capped)
+        val read = CollectionArchiveReader.read({ file.inputStream() })
         val out = TestRecipeFiles.incoming()
         try {
             val written = mutableListOf<File>()
@@ -574,10 +587,13 @@ class CollectionImportTest {
         } finally {
             out.deleteRecursively()
         }
-        assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), import(file, importer(capped)))
-        assertUnchanged()
-        assertTrue(import(file, importer(CollectionLimits(media = 3_000))) is CollectionImportOutcome.Imported)
     }
+
+    /** Two recipes holding three media items of 1 000 bytes each. */
+    private fun threeMedia(): ByteArray = collectionFile(
+        listOf(recipe("r-duck", "Duck", cover("m-duck")), recipe("r-cake", "Cake", cover("m-cake"), clip("m-clip"))),
+        media = mapOf(0 to listOf("media/m-duck" to TestRecipeFiles.jpeg()), 1 to listOf("media/m-cake" to TestRecipeFiles.jpeg(), "media/m-clip" to TestRecipeFiles.mp4())),
+    )
 
     // Scenario 5 end to end: the file the application writes for a collection (T-255) imports into another book whole.
     @Test
