@@ -116,6 +116,7 @@ class LibrarySession(
         closeNotice()
         finishRemoval()
         saved[SETTINGS_KEY] = false
+        saved[SHOPPING_KEY] = false
         shutKitchen()
         saved[EDITING_KEY] = recipeId
         // Only an own recipe is edited, so the card shown on leaving the editor returns to the own recipes.
@@ -138,6 +139,7 @@ class LibrarySession(
         closeNotice()
         finishRemoval()
         saved[SETTINGS_KEY] = false
+        saved[SHOPPING_KEY] = false
         shutKitchen()
         saved[VIEWING_KEY] = recipeId
         from?.let { saved[CARD_FROM_KEY] = it }
@@ -163,6 +165,7 @@ class LibrarySession(
     fun openSettings() {
         finishRemoval()
         shutKitchen()
+        saved[SHOPPING_KEY] = false
         saved[SETTINGS_KEY] = true
     }
 
@@ -202,6 +205,25 @@ class LibrarySession(
 
     fun closeKitchen() = shutKitchen()
 
+    /**
+     * Whether the shopping list is open, above the book (FLOW-074): kept like the settings, so that a list open when the
+     * screen turns or the process ends is open again on return. Whatever else the session opens — the settings, a card,
+     * the editor, the book after an import — is shown in its place.
+     */
+    val shopping: StateFlow<Boolean> = saved.getStateFlow(SHOPPING_KEY, false)
+
+    /** The shopping list opens above the book; a removal the book still offers to undo is final now. */
+    fun openShopping() {
+        finishRemoval()
+        saved[SETTINGS_KEY] = false
+        shutKitchen()
+        saved[SHOPPING_KEY] = true
+    }
+
+    fun closeShopping() {
+        saved[SHOPPING_KEY] = false
+    }
+
     private fun shutKitchen() {
         saved[KITCHEN_KEY] = false
         saved[KITCHEN_AT_KEY] = null
@@ -234,6 +256,7 @@ class LibrarySession(
     fun showHeld() {
         finishRemoval()
         saved[SETTINGS_KEY] = false
+        saved[SHOPPING_KEY] = false
         shutKitchen()
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
@@ -248,6 +271,7 @@ class LibrarySession(
         closeNotice()
         finishRemoval()
         saved[SETTINGS_KEY] = false
+        saved[SHOPPING_KEY] = false
         shutKitchen()
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = recipeId
@@ -427,6 +451,7 @@ class LibrarySession(
         const val SETTINGS_KEY = "library.settings"
         const val KITCHEN_KEY = "library.kitchen"
         const val KITCHEN_AT_KEY = "library.kitchen_at"
+        const val SHOPPING_KEY = "library.shopping"
         const val MESSAGE_KEY = "library.file_message"
         const val VIEW_KEY = "library.view"
         const val EDITING_KEY = "library.editing"

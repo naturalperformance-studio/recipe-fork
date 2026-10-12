@@ -141,6 +141,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
+/** What the bar's title keeps clear at its end, so that wrapped it never reaches under an action (TopAppBar's title inset). */
+internal val TITLE_CLEARANCE = 12.dp
+
 /** How many own recipes are shown at a time, and more shown near the end (FLOW-041). */
 const val OWN_PAGE = 30
 
@@ -157,7 +160,7 @@ const val OWN_PAGE = 30
  *
  * The settings action, beside the book's title, opens the settings ([onOpenSettings]): the interface language, the
  * serving count the reader usually cooks for (FLOW-017), the side the editor's drag column stands on, and the clearing
- * of saved media (FLOW-060).
+ * of saved media (FLOW-060). The shopping list's action, before it, opens the shopping list ([onOpenShopping], FLOW-074).
  *
  * The title and the settings action stand in a top bar that scrolls away as a list goes down and returns as it goes
  * up; the tabs of the two views stay beneath it. The views are pages swiped between, the tabs following; each keeps its own place
@@ -178,6 +181,7 @@ fun LibraryScreen(
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
     kitchen: KitchenEnvironment = rememberKitchenEnvironment(),
     onOpenSettings: () -> Unit = {},
+    onOpenShopping: () -> Unit = {},
 ) {
     val view by session.view.collectAsState()
     val bookKitchen = rememberBookKitchen(kitchen)
@@ -217,10 +221,19 @@ fun LibraryScreen(
                     title = {
                         Text(
                             text = stringResource(R.string.library_title),
-                            modifier = Modifier.semantics { heading() }.testTag(LibraryTags.TITLE),
+                            // Material sets the title in 12 dp past the room it is measured for: a title wrapped
+                            // at a large font scale would reach under the first action.
+                            modifier = Modifier.padding(end = TITLE_CLEARANCE).semantics { heading() }.testTag(LibraryTags.TITLE),
                         )
                     },
                     actions = {
+                        BlockAction(
+                            R.drawable.ic_shopping_cart,
+                            stringResource(R.string.shopping_open),
+                            LibraryTags.SHOPPING,
+                            onClick = onOpenShopping,
+                            action = stringResource(R.string.shopping_open_action),
+                        )
                         BlockAction(
                             R.drawable.ic_settings,
                             stringResource(R.string.settings_open),
@@ -1150,6 +1163,8 @@ object LibraryTags {
     const val TITLE = "library-title"
     /** The action beside the title that opens the settings. */
     const val SETTINGS = "library-settings"
+    /** The action beside the settings that opens the shopping list. */
+    const val SHOPPING = "library-shopping"
     /** The clearing of saved media's dialogs, now the settings' ([SettingsTags]); named here too for older tests. */
     const val CLEAR_MEDIA_STATEMENT = SettingsTags.CLEAR_MEDIA_STATEMENT
     const val CLEAR_MEDIA_CONFIRM = SettingsTags.CLEAR_MEDIA_CONFIRM

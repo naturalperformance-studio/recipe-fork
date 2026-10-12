@@ -87,6 +87,10 @@ import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.LanguageTags
 import app.recipefork.app.settings.SettingsTags
+import app.recipefork.app.shopping.HeldShopping
+import app.recipefork.app.shopping.ListedRecipe
+import app.recipefork.app.shopping.ShoppingEnvironment
+import app.recipefork.app.shopping.ShoppingTags
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.LocalCardTimers
 import app.recipefork.app.timer.TestTimers
@@ -138,7 +142,8 @@ import kotlin.time.Duration.Companion.minutes
  * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
  * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with an ingredient's
  * sheet open, a step's sheet open, with a row removed and its Undo offered, and on a frozen one with equipment; the settings and each of their
- * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; and the crop.
+ * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; the shopping list — empty, with
+ * recipes, its menu open, and a recipe removed with Undo; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
  * that the lists show every entry and the card and the editor are drawn whole for the contrast check, which reads
@@ -180,6 +185,9 @@ class PreLaunchSweepTest {
     private val card = CardEnvironment(
         HeldUsualServings(), marks, equipment = EquipmentSource { device.database.dictionaryDao().equipment() }, kitchen = kitchen.store,
     ) { device.database.dictionaryDao().ingredients() }
+
+    /** The shopping list, empty as the walk first opens it, over the device's dictionaries. */
+    private val shopping = ShoppingEnvironment(HeldShopping()) { device.database.dictionaryDao().ingredients() }
 
     private var crop by mutableStateOf<PhotoToCrop?>(null)
 
@@ -345,7 +353,10 @@ class PreLaunchSweepTest {
                     } else {
                         // As MainActivity shows it: on a surface of the theme.
                         Surface(Modifier.fillMaxSize()) {
-                            AppNavHost(session, recipes, Mode.Serverless, editor = editor, card = card, themeSetting = theme, kitchen = kitchen)
+                            AppNavHost(
+                                session, recipes, Mode.Serverless,
+                                editor = editor, card = card, themeSetting = theme, kitchen = kitchen, shopping = shopping,
+                            )
                         }
                     }
                 }
@@ -356,6 +367,7 @@ class PreLaunchSweepTest {
         theCard(cake)
         theEditor()
         theSettings()
+        theShoppingList(cake)
         theNotices()
         theCrop()
         assertEquals("screens checked", SCREENS, checked)
@@ -596,6 +608,33 @@ class PreLaunchSweepTest {
         await(LibraryTags.PAGER)
     }
 
+    private fun theShoppingList(cake: Recipe) {
+        // Opened from the book's top bar: empty, it says how to add a recipe.
+        compose.onNodeWithTag(LibraryTags.SHOPPING).performClick()
+        await(ShoppingTags.EMPTY)
+        checkScreen("the shopping list, empty")
+        compose.onNodeWithTag(ShoppingTags.BACK).performClick()
+        await(LibraryTags.PAGER)
+        // The cake and the soup on it: their counts, the lines added up from both.
+        val book = BookName.Pool.fileName
+        shopping.store.update { it.with(ListedRecipe(book, cake.id, Rational.of(4))).with(ListedRecipe(book, soup.id, Rational.of(2))) }
+        compose.onNodeWithTag(LibraryTags.SHOPPING).performClick()
+        await(ShoppingTags.LIST)
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.line(0)) }
+        checkScreen("the shopping list, with recipes")
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        await(ShoppingTags.CLEAR)
+        checkScreen("the shopping list, its menu")
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        awaitGone(ShoppingTags.CLEAR)
+        compose.onNodeWithTag(ShoppingTags.remove(soup.id.value)).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.SNACKBAR) && !exists(ShoppingTags.recipe(soup.id.value)) }
+        checkScreen("the shopping list, a recipe removed with Undo")
+        compose.onNodeWithTag(ShoppingTags.BACK).performClick()
+        await(LibraryTags.PAGER)
+        awaitGone(ShoppingTags.SCREEN)
+    }
+
     private fun theNotices() {
         // A recipe deleted from the own view: the book offers Undo while its notice shows.
         compose.runOnIdle { session.choose(LibraryView.OWN) }
@@ -635,7 +674,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 33
+        const val SCREENS = 37
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L

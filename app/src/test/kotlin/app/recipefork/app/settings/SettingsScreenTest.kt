@@ -125,14 +125,15 @@ class SettingsScreenTest {
 
     private fun value(item: String): String = compose.textsOf(SettingsTags.value(item)).single()
 
-    // The book's bar holds one action, the settings; it opens them, and they list every setting with its value.
+    // The book's bar holds two actions, the shopping list (T-229) and the settings; the settings' opens them, and they
+    // list every setting with its value.
     @Test
     fun theBooksBarOpensTheSettingsWhichShowEveryValueInForce() {
         show()
         val barActions = compose.onAllNodes(hasAnyAncestor(hasTestTag(LibraryTags.TOP_BAR)))
             .fetchSemanticsNodes().filter { SemanticsActions.OnClick in it.config }
-        assertEquals(listOf(LibraryTags.SETTINGS), barActions.map { it.config.getOrNull(SemanticsProperties.TestTag) })
-        assertEquals("Open the settings", AccessibilityChecks.clickActionLabel(barActions.single()))
+        assertEquals(listOf(LibraryTags.SHOPPING, LibraryTags.SETTINGS), barActions.map { it.config.getOrNull(SemanticsProperties.TestTag) })
+        assertEquals("Open the settings", AccessibilityChecks.clickActionLabel(barActions.last()))
         openSettings()
         assertEquals(listOf("Settings"), compose.textsOf(SettingsTags.TITLE))
         assertEquals(listOf("Language", "As on the device"), compose.textsOf(SettingsTags.LANGUAGE))
