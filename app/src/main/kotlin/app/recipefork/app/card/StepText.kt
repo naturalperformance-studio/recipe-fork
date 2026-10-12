@@ -22,14 +22,21 @@ import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
+import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.IngredientShares
 import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.StepRun
 import app.recipefork.core.recipe.StepText
+import app.recipefork.core.recipe.UnitSystem
+import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.scaling.AuthoredQuantity
+import app.recipefork.core.scaling.DisplayedQuantity
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.QuantityText
 import app.recipefork.core.scaling.Rounding
+import app.recipefork.core.scaling.ScaleFactor
+import app.recipefork.core.scaling.UnitConversion
 
 /**
  * What the card's ingredient references read as at the scale in force: a whole reference exactly its line in the
@@ -75,13 +82,16 @@ internal class CardReferences(
 
         /**
          * The references to [ordered] as their lines [list] show them in [language], the two in the same order; a
-         * `piece` part is rounded by its row's effective divisibility, read from [entries] as the list reads it.
+         * `piece` part is rounded by its row's effective divisibility, read from [entries] as the list reads it. In
+         * [system] a part is shown in the reader's system as its line is (null: as written) — a part kept in a unit of
+         * the other system than its row's first turned exactly into its row's unit, so it reads in the unit its row does.
          */
         fun of(
             ordered: List<Ingredient>,
             list: IngredientList,
             language: InterfaceLanguage,
             entries: Map<Long, IngredientEntryEntity>,
+            system: UnitSystem? = null,
         ): CardReferences {
             val pairs = ordered.zip(list.lines)
             val scalable = ordered.associate { it.position to scalableQuantity(it, entries) }
@@ -106,17 +116,46 @@ internal class CardReferences(
                     // A row the list cannot scale shows its part as the editor writes it.
                     scalable[reference.ingredientPosition]?.quantity == null || line.quantity == null ->
                         ReferenceText.authored(ingredient, share, language) to Rounding.NONE
-                    else -> IngredientShares.display(
+                    else -> shownPart(
                         share, ingredient, list.factor, scalable.getValue(reference.ingredientPosition)?.divisible,
-                    )?.let { shown ->
+                        factorsOf(ingredient, entries), system,
+                    )?.let { (shown, approximate) ->
                         runCatching { QuantityText.of(shown, language) }.getOrNull()
-                            ?.let { it to if (shown.derived) shown.rounding else Rounding.NONE }
+                            ?.let { approximately(it, approximate) to if (shown.derived) shown.rounding else Rounding.NONE }
                     } ?: (ReferenceText.authored(ingredient, share, language) to Rounding.NONE)
                 }
             }
             return CardReferences(quantities, roundings, parts)
         }
     }
+}
+
+/**
+ * [share] of [ingredient] at [factor] as the card shows it in [system], with whether it is approximate; as written where
+ * [system] is null ([IngredientShares.display]), converted by the entry's [measures]. A part in a unit of another system than its row's (the row changed from
+ * g to oz after the part was written) is first turned exactly into the row's unit and rounded once on its grid, so that it
+ * reads in the unit its row is shown in.
+ */
+private fun shownPart(
+    share: IngredientShare,
+    ingredient: Ingredient,
+    factor: ScaleFactor,
+    divisible: Boolean?,
+    measures: Map<String, Double>,
+    system: UnitSystem?,
+): Pair<DisplayedQuantity, Boolean>? {
+    if (system == null) return IngredientShares.display(share, ingredient, factor, divisible)?.let { it to false }
+    if (share.amount.signum() <= 0) return null
+    val row = ingredient.unit
+    val shown = if (row != null && share.unit.type == UnitType.EXACT && share.unit.lineUnit != row.lineUnit) {
+        val inRow = share.amount * checkNotNull(share.unit.baseMultiple) / checkNotNull(row.baseMultiple)
+        UnitConversion.convert(row, inRow * factor.value, measures, system, derived = !factor.isOne)
+    } else {
+        val pieceDivisible = if (share.unit.type == UnitType.PIECE) divisible ?: return null else null
+        val authored = runCatching { AuthoredQuantity(share.unit, share.amount, pieceDivisible) }.getOrNull() ?: return null
+        UnitConversion.display(authored, factor, measures, system)
+    }
+    return marked(shown, share.unit) to shown.approximate
 }
 
 /** Test tags of the parts of a step's text. */

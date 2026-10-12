@@ -20,6 +20,10 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_device">As on the device</string>
     <string name="settings_theme_cancel">Cancel</string>
+    <!-- The system of units recipes' amounts are shown in (v0.35): grams and millilitres, or US cups and ounces. -->
+    <string name="settings_units">Units</string>
+    <string name="settings_units_metric">Metric</string>
+    <string name="settings_units_us">US</string>
     <!-- Under the drag handle's switch: what it is for. -->
     <string name="settings_handle_right_hint">For moving ingredients and steps in the editor</string>
 </resources>

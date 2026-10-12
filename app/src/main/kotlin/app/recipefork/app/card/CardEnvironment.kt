@@ -7,7 +7,9 @@ import app.recipefork.app.AppContainer
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.data.HeldLastCardTab
 import app.recipefork.app.data.HeldUsualServings
+import app.recipefork.app.data.HeldUnitSystemSetting
 import app.recipefork.app.data.LastCardTab
+import app.recipefork.app.data.UnitSystemSetting
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.IngredientEntryEntity
@@ -26,7 +28,8 @@ fun interface IngredientEntries {
  * recipe opens at (FLOW-017), the reader's done marks (FLOW-068), the tab last chosen, which a card opens on, and the
  * ingredient dictionary its rows are named from, the equipment dictionary its items of equipment are, and what the
  * reader's kitchen has ([KitchenStore]), by which an item the kitchen lacks is marked, and the reader's shopping list
- * ([ShoppingStore]), which the card's ⋮ puts the recipe on at the count shown (FLOW-074).
+ * ([ShoppingStore]), which the card's ⋮ puts the recipe on at the count shown (FLOW-074), and the system of units its
+ * amounts are shown in ([UnitSystemSetting], v0.35).
  */
 class CardEnvironment(
     val usualServings: UsualServings = HeldUsualServings(),
@@ -35,6 +38,7 @@ class CardEnvironment(
     val equipment: EquipmentSource = EquipmentSource { emptyList() },
     val kitchen: KitchenStore = HeldKitchen(),
     val shopping: ShoppingStore = HeldShopping(),
+    val unitSystem: UnitSystemSetting = HeldUnitSystemSetting(),
     val ingredients: IngredientEntries,
 )
 
@@ -47,9 +51,11 @@ fun rememberCardEnvironment(): CardEnvironment {
 
 /**
  * The card's environment of [container]: its usual servings, the device's done marks, its last tab, the dictionaries it shares
- * with every screen, My kitchen and the shopping list.
+ * with every screen, My kitchen, the shopping list and the system of units.
  */
-fun cardEnvironmentOf(container: AppContainer): CardEnvironment =
-    CardEnvironment(container.usualServings, container.doneMarks, container.lastCardTab, container.dictionaries, container.kitchen, container.shopping) {
-        container.dictionaries.ingredients()
-    }
+fun cardEnvironmentOf(container: AppContainer): CardEnvironment = CardEnvironment(
+    container.usualServings, container.doneMarks, container.lastCardTab, container.dictionaries, container.kitchen, container.shopping,
+    container.unitSystem,
+) {
+    container.dictionaries.ingredients()
+}

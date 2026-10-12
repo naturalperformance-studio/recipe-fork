@@ -3,6 +3,7 @@ package app.recipefork.app
 import android.app.Application
 import android.content.res.Configuration
 import app.recipefork.app.data.AppLanguage
+import app.recipefork.app.data.UnitSystemSetting
 import app.recipefork.app.media.ClipSources
 import app.recipefork.app.media.PhotoSources
 import app.recipefork.app.timer.TimerChannels
@@ -34,6 +35,12 @@ open class RecipeForkApplication : Application() {
     /** The mode the composition root is built in: the build's; a test's application may be built in the other. */
     protected open val mode: Mode get() = MainActivity.MODE
 
+    /**
+     * The region the system of units follows until the reader chooses one: the device's; a test's application pins
+     * its own, so that no test reads its amounts by the region the test machine happens to have.
+     */
+    protected open val unitRegion: () -> String = UnitSystemSetting::deviceRegion
+
     /** The sweep of the books' media directories, once started. */
     var mediaSweep: Job? = null
         private set
@@ -49,7 +56,7 @@ open class RecipeForkApplication : Application() {
         // picker's answer delivered to a process started anew for it — is never cleared or let go of as it is taken.
         PhotoSources.clearLeftovers(this)
         ClipSources.releaseLeftoverReadings(this)
-        container = AppContainer(this, mode)
+        container = AppContainer(this, mode, unitRegion = unitRegion)
         if (startsBackgroundWork) backgroundWork = container.start(scope)
         if (sweepsMedia) mediaSweep = container.sweepMedia(scope)
     }
