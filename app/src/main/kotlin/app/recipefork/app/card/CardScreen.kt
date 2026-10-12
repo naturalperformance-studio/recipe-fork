@@ -97,6 +97,11 @@ import app.recipefork.app.library.PendingRemoval
 import app.recipefork.app.library.deleteRecipe
 import app.recipefork.app.library.rememberRecipeImport
 import app.recipefork.app.library.removeFound
+import androidx.compose.ui.platform.LocalContext
+import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.print.PrintWay
+import app.recipefork.app.print.RecipeDocument
+import app.recipefork.app.print.rememberPrintOut
 import app.recipefork.app.shopping.ListedRecipe
 import app.recipefork.app.shopping.ShoppingStore
 import app.recipefork.app.timer.rememberCardTimers
@@ -235,6 +240,8 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * Either tab's ⋮ always offers to put the recipe on the reader's shopping list at the count shown — the count a fixed
  * amount implies while one is fixed, none for a recipe with no count — or, once it is on the list, to set it to that
  * count, never adding it twice (FLOW-074); the card's snackbar says so, and its Open opens the list ([onOpenShopping]).
+ * After it, Print hands the recipe to the system's print service and Share as PDF opens the share sheet on it as a PDF
+ * file, each as View reads it at the count and fixings the card holds at that moment (FLOW-075 (1)).
  *
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
@@ -356,6 +363,32 @@ fun CardScreen(
     val listed = recipe != null && shoppingList.recipes.any { it.isOf(book, recipe.id) }
     val language = cardLanguage()
     val addToShopping = rememberAddToShopping(environment.shopping, snackbars, onOpenShopping)
+    // The recipe on paper or in a PDF, made at the tap from what the card holds then: its scale, the dictionaries, the
+    // parent's title as the book holds it, the cover and step photos the device holds, the interface's language.
+    val printOut = rememberPrintOut(snackbars)
+    val context = LocalContext.current
+    val printRecipe: ((PrintWay) -> Unit)? = if (recipe != null && loaded != null && held != null) {
+        { way ->
+            val scale = held.scale
+            val resources = context.resources
+            val photos = PhotoStore(context.applicationContext.filesDir)
+            val name = recipes.bookName()
+            printOut(way) {
+                val parentTitle = recipe.parent?.let { parent ->
+                    try {
+                        recipes.get(parent)?.title
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                RecipeDocument.of(recipe, loaded, equipmentEntries, scale, resources, parentTitle) { photos.file(name, it) }
+            }
+        }
+    } else {
+        null
+    }
     // Where the serving count stands on View, in the root, as laid out — for the floating fork action to keep clear of.
     var servingsShown by remember(recipeId) { mutableStateOf<Rect?>(null) }
     // Where the floating fork action's bottom stands, in the root: above the bar of running timers or the navigation
@@ -391,6 +424,7 @@ fun CardScreen(
                     onAddToShopping = {
                         if (recipe != null) addToShopping(ListedRecipe(book, recipe.id, shownCount(recipe, held, loaded, language, environment.usualServings.count.value)))
                     },
+                    onPrint = printRecipe,
                 )
                 // The tabs stay under the bar and never scroll with the recipe.
                 if (recipe != null) CardTabs(pager)
@@ -767,6 +801,7 @@ private fun TopBar(
     onClearMarks: () -> Unit,
     listed: Boolean,
     onAddToShopping: () -> Unit,
+    onPrint: ((PrintWay) -> Unit)?,
 ) {
     // The last title shown is kept while it fades out, so that it does not vanish before the fade.
     var last by remember { mutableStateOf(title) }
@@ -798,7 +833,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping)
+                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping, onPrint)
             }
         },
         scrollBehavior = scrollBehavior,
@@ -1297,7 +1332,8 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 
 /**
  * The card's ⋮, after its other actions, always shown: first the shopping-list action — "Add to shopping list", or
- * "Update in shopping list" while the recipe is [listed] (FLOW-074) — then Clear marks while the recipe has done marks
+ * "Update in shopping list" while the recipe is [listed] (FLOW-074) — then, once the recipe is read with its scale,
+ * Print and Share as PDF ([onPrint], FLOW-075), then Clear marks while the recipe has done marks
  * (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal — Delete for an own recipe
  * in a deletable state, Remove for a found one — in the theme's error colour. Each item is the card's [CardTarget]
  * tall.
@@ -1310,6 +1346,7 @@ private fun CardMenu(
     onClearMarks: () -> Unit,
     listed: Boolean,
     onAddToShopping: () -> Unit,
+    onPrint: ((PrintWay) -> Unit)?,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -1329,6 +1366,24 @@ private fun CardMenu(
                 },
                 modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SHOPPING),
             )
+            if (onPrint != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.print_menu_print)) },
+                    onClick = {
+                        expanded = false
+                        onPrint(PrintWay.PRINT)
+                    },
+                    modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.PRINT),
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.print_menu_share)) },
+                    onClick = {
+                        expanded = false
+                        onPrint(PrintWay.SHARE)
+                    },
+                    modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SHARE_PDF),
+                )
+            }
             if (marked) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.card_clear_marks)) },
@@ -1420,6 +1475,8 @@ object CardTags {
     const val REMOVE = "card-remove"
     const val CLEAR_MARKS = "card-clear-marks"
     const val SHOPPING = "card-shopping"
+    const val PRINT = "card-print"
+    const val SHARE_PDF = "card-share-pdf"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
     const val SUMMARY = "card-summary"

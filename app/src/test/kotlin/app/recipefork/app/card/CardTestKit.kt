@@ -34,7 +34,7 @@ fun ComposeTestRule.backThroughTheCard() {
 }
 
 /** The card's ⋮ items, in the order the menu lists them. */
-private val CARD_MENU_ITEMS = listOf(CardTags.SHOPPING, CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE)
+private val CARD_MENU_ITEMS = listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE)
 
 /** Whether the card's ⋮ is open: one of its items is shown. */
 private fun ComposeTestRule.cardMenuOpen() = CARD_MENU_ITEMS.any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }

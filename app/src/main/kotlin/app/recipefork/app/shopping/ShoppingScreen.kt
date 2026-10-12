@@ -69,6 +69,8 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.library.EmptyState
 import app.recipefork.app.library.TITLE_CLEARANCE
+import app.recipefork.app.print.PrintWay
+import app.recipefork.app.print.rememberPrintOut
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.servingsLanguage
 import app.recipefork.app.ui.SnackbarAction
@@ -107,8 +109,9 @@ fun rememberShoppingEnvironment(): ShoppingEnvironment {
  * line's name and amount, under it, muted, what an approximate line counted and the recipes it comes from. A tap on a
  * line ticks it as bought — struck through, it moves to "In the basket" at the bottom — and another unticks it; a
  * ticked line whose amount grows is unticked, one that goes drops its tick ([settled]). The ⋮ clears the ticks, and
- * clears the list, each said with Undo. An Undo goes once anything else on the list changes. A recipe the book no
- * longer holds leaves the list by itself. "Add item" adds a line of the reader's own ([AddLineSheet]): it stands after
+ * clears the list, each said with Undo; while the list has lines it prints them, or shares them as a PDF, as they stand
+ * (FLOW-075). An Undo goes once anything else on the list changes. A recipe the book no longer holds leaves the list
+ * by itself. "Add item" adds a line of the reader's own ([AddLineSheet]): it stands after
  * the recipes' lines with no recipe under it, ticks as they do and is removed with Undo; "Clear ticked" takes it away
  * once ticked. A list with neither recipes nor own lines says how to add a recipe. Back — the bar's or the system's —
  * returns to the book.
@@ -151,6 +154,7 @@ fun ShoppingScreen(
     }
     LaunchedEffect(settle) { store.update(settle) }
     val resources = LocalContext.current.resources
+    val printOut = rememberPrintOut(snackbars)
     val lines = remember(shown, held, language, resources) {
         if (shown == null || held == null) null else listedLines(shown, held, language, resources)
     }
@@ -210,6 +214,10 @@ fun ShoppingScreen(
                         val cleared = stringResource(R.string.shopping_cleared)
                         val unticked = stringResource(R.string.shopping_ticks_cleared)
                         ListMenu(
+                            // The list as it stands at the tap, named by the dictionary once it is read.
+                            onPrint = held?.let { read ->
+                                { way: PrintWay -> printOut(way) { shoppingDocument(shown, read, store.list.value, book, language, resources) } }
+                            },
                             onClearTicked = { change(unticked) { it.withoutTicked(book) } }.takeIf { ticked.isNotEmpty() },
                             onClear = { change(cleared) { ShoppingList() } },
                         )
@@ -422,11 +430,11 @@ private fun Modifier.ticked(done: Boolean, onToggle: () -> Unit): Modifier {
 }
 
 /**
- * The list's ⋮: Clear ticked while a line is ticked ([onClearTicked]), which unticks every line and keeps the
- * recipes; then Clear list, a removal, in the theme's error colour.
+ * The list's ⋮: Print and Share as PDF ([onPrint]), then Clear ticked while a line is ticked ([onClearTicked]),
+ * which unticks every line and keeps the recipes; then Clear list, a removal, in the theme's error colour.
  */
 @Composable
-private fun ListMenu(onClearTicked: (() -> Unit)?, onClear: () -> Unit) {
+private fun ListMenu(onPrint: ((PrintWay) -> Unit)?, onClearTicked: (() -> Unit)?, onClear: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box(Modifier.padding(end = 4.dp)) {
         BlockAction(
@@ -437,6 +445,24 @@ private fun ListMenu(onClearTicked: (() -> Unit)?, onClear: () -> Unit) {
             action = stringResource(R.string.shopping_menu_action),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (onPrint != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.print_menu_print)) },
+                    onClick = {
+                        expanded = false
+                        onPrint(PrintWay.PRINT)
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(ShoppingTags.PRINT),
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.print_menu_share)) },
+                    onClick = {
+                        expanded = false
+                        onPrint(PrintWay.SHARE)
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(ShoppingTags.SHARE_PDF),
+                )
+            }
             if (onClearTicked != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.shopping_clear_ticked)) },
@@ -506,6 +532,8 @@ object ShoppingTags {
     const val MENU = "shopping-menu"
     const val CLEAR = "shopping-clear"
     const val CLEAR_TICKED = "shopping-clear-ticked"
+    const val PRINT = "shopping-print"
+    const val SHARE_PDF = "shopping-share-pdf"
     const val LOADING = "shopping-loading"
     const val LIST = "shopping-list"
     const val EMPTY = "shopping-empty"
