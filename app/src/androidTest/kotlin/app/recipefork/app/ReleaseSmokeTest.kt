@@ -19,6 +19,7 @@ import android.media.MediaFormat
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import androidx.lifecycle.Lifecycle
@@ -591,7 +592,8 @@ class ReleaseSmokeTest {
 
     /**
      * The pre-launch crash sweep of the build Play receives, the way a stranger first goes through it: the application
-     * starts and opens a recipe's card; a timer is started from it; the editor opens on the recipe, its rows read as
+     * starts and opens a recipe's card, whose ⋮ opens the system's print dialog on it, left by Back; a timer is started
+     * from it; the editor opens on the recipe, its rows read as
      * text, and in the sheets they open — each typed in with the keyboard up — a note, a group, a step's note and timer
      * and a new step are written and saved, which closes the editor; the item of equipment the kitchen lacks opens My
      * kitchen and Back returns to the card; the settings are gone through; the recipe is deleted and brought back with
@@ -618,6 +620,9 @@ class ReleaseSmokeTest {
             tap(written.title)
             choose(VIEW)
             awaitShown("Servings: 2")
+
+            // The recipe printed from the card's ⋮: the system's print dialog opens on it, and Back leaves it.
+            printFromTheCard()
 
             // A timer started from the card's Cooking tab runs.
             choose(COOKING)
@@ -784,6 +789,33 @@ class ReleaseSmokeTest {
         assertTrue("the application is in front", activities(Stage.RESUMED).any { it is MainActivity })
     }
 
+    /** The root of the system's print dialog, while one of its windows is on screen. */
+    private fun printDialog(): AccessibilityNodeInfo? =
+        instrumentation.uiAutomation.windows.mapNotNull { it.root }.firstOrNull { it.refresh() && it.packageName == PRINT_SPOOLER }
+
+    /**
+     * The card's ⋮ → Print hands the recipe to the system's print service (FLOW-075 (1)): its dialog opens — the pages
+     * laid out and drawn by this build for its preview — and Back leaves it, the job cancelled, back on the card.
+     */
+    private fun printFromTheCard() {
+        tap(MORE_ACTIONS)
+        awaitShown(PRINT)
+        tap(PRINT)
+        // The dialog's preview counts the pages the application's adapter laid out: "Page 1 of 1".
+        try {
+            awaitUntil(60.seconds) { printDialog() != null && onScreen().any { PAGES_LAID_OUT.matches(it) } }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the system's print dialog did not open on the laid-out pages; on screen: ${onScreen()}", e)
+        }
+        Log.i("ReleaseSmokeTest", "the print dialog shows: ${onScreen()}")
+        assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
+        try {
+            awaitUntil(30.seconds) { printDialog() == null && shown("Servings: 2") != null }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("Back did not leave the print dialog for the card; on screen: ${onScreen()}", e)
+        }
+    }
+
     /** The application's activities in [stage]. */
     private fun activities(stage: Stage): List<Activity> {
         var found = emptyList<Activity>()
@@ -921,5 +953,11 @@ class ReleaseSmokeTest {
         /** The book's bar action that opens the shopping list, and the list's floating action. */
         const val SHOPPING_LIST = "Shopping list"
         const val ADD_ITEM = "Add item"
+        /** The card's ⋮, its item that prints the recipe, and the package of the system's print dialog. */
+        const val MORE_ACTIONS = "More actions"
+        const val PRINT = "Print"
+        const val PRINT_SPOOLER = "com.android.printspooler"
+        /** The print dialog's count of the pages its preview holds, in the emulator's English. */
+        val PAGES_LAID_OUT = Regex("Page 1 of [1-9][0-9]*")
     }
 }
