@@ -25,6 +25,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.recipefork.app.Mode
 import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.backup.BackupState
+import app.recipefork.app.backup.BackupWork
+import app.recipefork.app.backup.BookBackup
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardScreen
 import app.recipefork.app.card.ForkAsked
@@ -55,6 +58,7 @@ import app.recipefork.app.shopping.ShoppingEnvironment
 import app.recipefork.app.shopping.ShoppingScreen
 import app.recipefork.app.shopping.rememberShoppingEnvironment
 import app.recipefork.core.recipe.RecipeId
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -111,8 +115,16 @@ fun AppNavHost(
     themeSetting: ThemeSetting = rememberThemeSetting(),
     kitchen: KitchenEnvironment = rememberKitchenEnvironment(),
     shopping: ShoppingEnvironment = rememberShoppingEnvironment(),
+    backup: BookBackup = rememberBookBackup(),
     navController: NavHostController = rememberNavController(),
 ) {
+    // A recipe whose leaving could still be undone is final once a Replace runs: an Undo would put it into the
+    // replaced book, which the file does not hold it in.
+    LaunchedEffect(session, backup) {
+        combine(backup.state, session.removal) { state, removal ->
+            removal.takeIf { (state as? BackupState.Working)?.work == BackupWork.REPLACING }
+        }.collect { it?.let(session::endRemoval) }
+    }
     val message by session.message.collectAsState()
     message?.takeUnless { it.isNotice }?.let { FileMessageDialog(it, onDone = session::told) }
     val recipeArgument = listOf(navArgument(Destinations.RECIPE_ID_KEY) { type = NavType.StringType })
@@ -141,6 +153,7 @@ fun AppNavHost(
                 usualServings, dragHandleSide, themeSetting, recipes, mode, session.viewModelScope, kitchen,
                 onBack = session::closeSettings,
                 onOpenKitchen = session::openKitchen,
+                backup = backup,
             )
         }
         composable(Destinations.KITCHEN_ROUTE) {
@@ -353,4 +366,11 @@ private const val BENEATH_SHIFT = 4
 fun rememberThemeSetting(): ThemeSetting {
     val context = LocalContext.current.applicationContext
     return remember(context) { (context as RecipeForkApplication).container.themeSetting }
+}
+
+/** The application's saving and restoring of the book, which outlives every screen (FLOW-073). */
+@Composable
+fun rememberBookBackup(): BookBackup {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { (context as RecipeForkApplication).container.backup }
 }
