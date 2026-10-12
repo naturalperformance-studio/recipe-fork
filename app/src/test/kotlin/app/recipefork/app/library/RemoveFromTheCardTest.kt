@@ -213,7 +213,7 @@ class RemoveFromTheCardTest {
                 compose.onNodeWithTag(CardTags.MENU).performClick()
                 compose.waitUntilDoesNotExist(hasTestTag(CardTags.DELETE), PATIENCE_MS)
             } else {
-                assertEquals("${recipe.state}'s ⋮", listOf(CardTags.SHOPPING), compose.cardMenuItems())
+                assertEquals("${recipe.state}'s ⋮", listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
                 assertTrue("${recipe.state} offers fork", exists(CardTags.FORK))
             }
         }

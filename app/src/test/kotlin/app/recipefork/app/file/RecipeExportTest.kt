@@ -305,9 +305,10 @@ class RecipeExportTest {
         assertTrue(File(context.cacheDir, "exports/recipe/Soup.recipefork").isFile)
     }
 
-    // The FileProvider exposes cache/exports/ and nothing else, is not exported, and grants per file only.
+    // The FileProvider exposes cache/exports/ and, since v0.33, cache/prints/ for a shared PDF (FLOW-075), and nothing
+    // else; it is not exported, and grants per file only.
     @Test
-    fun theProviderExposesOnlyTheExportsDirectory() {
+    fun theProviderExposesOnlyTheExportsAndPrintsDirectories() {
         val paths = mutableListOf<Triple<String, String?, String?>>()
         context.resources.getXml(R.xml.file_paths).use { xml ->
             while (xml.next() != XmlPullParser.END_DOCUMENT) {
@@ -316,13 +317,13 @@ class RecipeExportTest {
                 }
             }
         }
-        assertEquals(listOf(Triple("cache-path", "exports", "exports/")), paths)
+        assertEquals(listOf(Triple("cache-path", "exports", "exports/"), Triple("cache-path", "prints", "prints/")), paths)
         val info = context.packageManager.getProviderInfo(ComponentName(context, FileProvider::class.java), 0)
         assertEquals(RecipeExport.authority(context), info.authority)
         assertFalse(info.exported)
         assertTrue(info.grantUriPermissions)
         val authority = RecipeExport.authority(context)
-        listOf(File(context.cacheDir, "other.txt"), File(context.filesDir, "book.db"), File(context.cacheDir, "exportsx/a")).forEach { file ->
+        listOf(File(context.cacheDir, "other.txt"), File(context.filesDir, "book.db"), File(context.cacheDir, "exportsx/a"), File(context.cacheDir, "printsx/a.pdf")).forEach { file ->
             assertTrue("$file is shared", runCatching { FileProvider.getUriForFile(context, authority, file) }.isFailure)
         }
         assertTrue(runCatching { FileProvider.getUriForFile(context, authority, File(context.cacheDir, "exports/a/b.recipefork")) }.isSuccess)

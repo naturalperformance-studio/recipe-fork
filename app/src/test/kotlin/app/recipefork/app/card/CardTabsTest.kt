@@ -379,7 +379,7 @@ class CardTabsTest {
             CardTags.DESCRIPTION,
         ).forEach { assertFalse("Cooking shows no $it", exists(it)) }
         // Its ⋮ holds the shopping-list action alone while nothing is marked.
-        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
         assertTrue(exists(CardTags.BACK))
         assertEquals(listOf("Lemon roast chicken"), compose.textsOf(CardTags.BAR_TITLE))
         compose.onNodeWithTag(CardTags.step(19)).performScrollTo()

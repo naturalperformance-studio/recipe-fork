@@ -284,7 +284,7 @@ class CardDoneMarksTest {
         // marked, then Clear marks beside it.
         val recipe = save(pilaf())
         show(recipe.id)
-        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
 
         listOf(ingredient(0), ingredient(2), step(1)).forEach(::tap)
         compose.waitUntil(PATIENCE_MS) { marks.held(BookName.Pool, recipe.id).size == 3 }
@@ -297,7 +297,7 @@ class CardDoneMarksTest {
         compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) }
         assertEquals(emptyList<String>(), doneParts())
         // The ⋮ stays, Clear marks gone from it.
-        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
         assertEquals(emptySet<DoneMark>(), marks.held(BookName.Pool, recipe.id))
         // The recipe itself is still in the book.
         assertNotNull(runBlocking { recipes.get(recipe.id) })
@@ -322,7 +322,7 @@ class CardDoneMarksTest {
     fun aFrozenRecipeOffersClearMarksOnlyWhileItHasMarks() {
         val recipe = save(pilaf(RecipeState.PUBLISHED))
         show(recipe.id)
-        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
         assertFalse(exists(CardTags.FORK))
         tap(step(2))
         compose.waitUntil(PATIENCE_MS) { marks.held(BookName.Pool, recipe.id).isNotEmpty() }
@@ -331,18 +331,18 @@ class CardDoneMarksTest {
         assertFalse(exists(CardTags.DELETE) || exists(CardTags.REMOVE))
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) }
-        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
         assertEquals(emptyList<String>(), doneParts())
         // Marked again — a line clear of the statement the clearing left at the bottom.
         tap(ingredient(0))
         compose.chooseCardTab(CardMode.VIEW)
         compose.scrollUntilForkShows()
         // View's ⋮ holds Clear marks beside the shopping-list action while there are marks, and Clear marks goes with them.
-        assertEquals(listOf(CardTags.SHOPPING, CardTags.CLEAR_MARKS), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.CLEAR_MARKS), compose.cardMenuItems())
         compose.openTheCardMenu()
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) }
-        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
     }
 
     // FLOW-068 (4): the file of a recipe carries no marks — it is the same file marked or not — and a fork of it

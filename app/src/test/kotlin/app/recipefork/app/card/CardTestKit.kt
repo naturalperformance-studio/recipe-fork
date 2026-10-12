@@ -33,8 +33,8 @@ fun ComposeTestRule.backThroughTheCard() {
     waitForIdle()
 }
 
-/** The card's ⋮ items, in the order the menu lists them. */
-private val CARD_MENU_ITEMS = listOf(CardTags.SHOPPING, CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE)
+/** The card's ⋮ items, each that the menu may hold. */
+private val CARD_MENU_ITEMS = setOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE)
 
 /** Whether the card's ⋮ is open: one of its items is shown. */
 private fun ComposeTestRule.cardMenuOpen() = CARD_MENU_ITEMS.any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
@@ -42,10 +42,17 @@ private fun ComposeTestRule.cardMenuOpen() = CARD_MENU_ITEMS.any { onAllNodes(ha
 /** What the card's ⋮ holds, as its items' tags: opened, read and closed again, taking nothing from it. */
 fun ComposeTestRule.cardMenuItems(): List<String> {
     openTheCardMenu()
-    val items = CARD_MENU_ITEMS.filter { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
+    val items = tagsTopToBottom(CARD_MENU_ITEMS)
     closeTheCardMenu()
     return items
 }
+
+/** The tags of the nodes tagged one of [tags] that are shown, in the order they stand on screen, top to bottom. */
+fun SemanticsNodeInteractionsProvider.tagsTopToBottom(tags: Set<String>): List<String> =
+    onAllNodes(SemanticsMatcher("tagged one of $tags") { it.config.getOrNull(SemanticsProperties.TestTag) in tags })
+        .fetchSemanticsNodes()
+        .sortedBy { it.boundsInRoot.top }
+        .map { it.config[SemanticsProperties.TestTag] }
 
 /** Opens the card's ⋮ and waits for its items, without taking one. */
 fun ComposeTestRule.openTheCardMenu() {

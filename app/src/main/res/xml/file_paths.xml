@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- What the FileProvider shares: the recipe files written for export (FLOW-063), and nothing else. -->
+<!-- What the FileProvider shares: the recipe files written for export (FLOW-063), the PDFs written to share
+     (FLOW-075), and nothing else. -->
 <paths>
     <cache-path name="exports" path="exports/" />
+    <cache-path name="prints" path="prints/" />
 </paths>

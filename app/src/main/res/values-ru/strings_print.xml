@@ -12,4 +12,8 @@
     <string name="print_timer">⏱ %1$s</string>
     <string name="print_servings_fraction_below_one">%1$s порции</string>
     <string name="print_step_video">Видео в приложении</string>
+    <string name="print_menu_print">Печать</string>
+    <string name="print_menu_share">Поделиться PDF</string>
+    <string name="print_share_failed">Не удалось создать PDF</string>
+    <string name="print_failed">Не удалось начать печать</string>
 </resources>
