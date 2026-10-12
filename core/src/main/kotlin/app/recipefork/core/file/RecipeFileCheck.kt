@@ -37,10 +37,10 @@ object RecipeFileCheck {
     private val TIMER_MINUTES = 1L..(99L * 60 + 59)
 
     /** An identity as the device mints it: a UUID, or a shorter run of the same letters, digits and dashes. */
-    private val IDENTITY = Regex("[A-Za-z0-9_-]{1,64}")
+    internal val IDENTITY = Regex("[A-Za-z0-9_-]{1,64}")
 
     /** A nickname is three words (spec/50-domain-model); a stated one is held to a length a line can show. */
-    private const val MAX_NICKNAME = 100
+    internal const val MAX_NICKNAME = 100
 
     /** Every rule [content] breaks, in words for a log; empty when it passes them all. */
     fun problems(content: RecipeFileContent): List<String> = buildList {

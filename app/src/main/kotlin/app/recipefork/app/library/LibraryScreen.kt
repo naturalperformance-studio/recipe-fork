@@ -211,7 +211,7 @@ fun LibraryScreen(
     val bar = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val shown = VIEWS[pager.currentPage]
     val snackbars = remember { SnackbarHostState() }
-    val notice = rememberFileNotice(session, snackbars)
+    val notice = rememberFileNotice(session, snackbars, markedList, ownList)
     RemovalNotice(session, snackbars)
     CollectionDeletionNotice(session, collections, snackbars)
     val work by session.work.collectAsState()
@@ -334,22 +334,26 @@ private fun FileProgress(work: FileWork, modifier: Modifier = Modifier) {
 
 /**
  * Says a recipe a file brought — imported now, or held already — in the book's snackbar, whose Open opens its card;
- * returns that recipe's identity while it is said, so that its list is brought to it. The message is closed once the
- * snackbar goes; a failure is the dialog's to say (AppNavHost).
+ * returns that recipe's identity while it is said, so that its list is brought to it. A collection a file brought
+ * (v0.36) is said the same way, its Open opening the collection, and [lists] brought to their top, where it stands.
+ * The message is closed once the snackbar goes; a failure is the dialog's to say (AppNavHost).
  */
 @Composable
-private fun rememberFileNotice(session: LibrarySession, snackbars: SnackbarHostState): String? {
+private fun rememberFileNotice(session: LibrarySession, snackbars: SnackbarHostState, vararg lists: LazyListState): String? {
     val message by session.message.collectAsState()
-    val notice = message?.takeIf { it.isNotice && it.recipeId.isNotEmpty() }
+    val notice = message?.takeIf { it.isNotice && (it.recipeId.isNotEmpty() || it.collectionId.isNotEmpty()) }
     val resources = LocalContext.current.resources
     val open = stringResource(R.string.file_open)
     LaunchedEffect(notice) {
         if (notice == null) return@LaunchedEffect
+        // A list not laid out yet is brought there once it is; the notice waits for neither.
+        if (notice.collectionId.isNotEmpty()) lists.forEach { list -> launch { list.scrollToItem(0) } }
         val result = snackbars.showSnackbar(notice.text(resources), actionLabel = open, duration = SnackbarDuration.Long)
         session.told()
-        if (result == SnackbarResult.ActionPerformed) session.openCard(notice.recipeId, session.view.value)
+        if (result != SnackbarResult.ActionPerformed) return@LaunchedEffect
+        if (notice.collectionId.isNotEmpty()) session.openCollection(notice.collectionId) else session.openCard(notice.recipeId, session.view.value)
     }
-    return notice?.recipeId
+    return notice?.recipeId?.takeIf { it.isNotEmpty() }
 }
 
 /**

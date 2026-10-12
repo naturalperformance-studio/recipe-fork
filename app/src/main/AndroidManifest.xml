@@ -197,6 +197,87 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-BOOK" />
             </intent-filter>
+            <!-- A collection file (v0.36) opened from another application is taken as a saved book is: by its extension,
+                 whatever type the sender declares or none, and by the product's own type for a collection whatever the
+                 address. It is handed on to the collection's import. A pattern matches the whole path, so ".recipefork",
+                 ".recipefork-book" and ".recipefork-collection" never take each other's files. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.recipefork-collection" />
+                <data android:pathPattern=".*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.RECIPEFORK-COLLECTION" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/vnd.recipefork.collection+zip" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.recipefork.collection+zip" />
+            </intent-filter>
             <!-- Shared to the application by the product's own type: imported as if opened. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
