@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A recipe on paper or in a PDF (FLOW-075): the ingredients' heading with the serving count the card shows,
+         "Ingredients · 4 servings". -->
+    <string name="print_ingredients_heading">%1$s · %2$s</string>
+    <!-- A whole serving count, written as the card writes it ("4", "≈4"). -->
+    <plurals name="print_servings">
+        <item quantity="one">%1$s serving</item>
+        <item quantity="other">%1$s servings</item>
+    </plurals>
+    <!-- A serving count with a fraction in it, as a fixed amount can imply ("≈1½"). -->
+    <string name="print_servings_fraction">%1$s servings</string>
+    <!-- A count implied by a fixed amount, as the card marks it. -->
+    <string name="print_servings_approximate">≈%1$s</string>
+    <!-- A step's timer under it, as the card's View tab reads it after its clock: "⏱ Oven · 40 min". -->
+    <string name="print_timer">⏱ %1$s</string>
+    <!-- A serving count below one with a fraction ("½"): singular. -->
+    <string name="print_servings_fraction_below_one">%1$s serving</string>
+    <!-- Under a step that only shows a clip, which paper cannot play. -->
+    <string name="print_step_video">Video in the app</string>
+</resources>
