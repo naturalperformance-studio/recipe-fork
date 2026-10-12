@@ -156,9 +156,7 @@ fun ShoppingScreen(
     }
     val own = remember(list, book) { ownLines(list, book) }
     val all = lines?.plus(own)
-    val ticked = all.orEmpty().filter { line ->
-        TickedLine(book, line.tick.key).let { it in list.ticks && line.tick.keeps(list.ticks[it]) }
-    }.map { it.tick.key }.toSet()
+    val ticked = tickedKeys(all.orEmpty(), list, book)
     var adding by rememberSaveable { mutableStateOf(false) }
     if (adding && held != null) {
         val ingredients = remember(held) { held.values.toList() }
@@ -278,7 +276,7 @@ private fun ListContent(
     ) {
         if (entries.isNotEmpty()) item(key = RECIPES_KEY) { Heading(R.string.shopping_recipes) }
         items(entries, key = { "${it.listed.book}/${it.listed.recipe.value}" }) { entry ->
-            val title = entry.recipe.title.trim().ifEmpty { untitled }
+            val title = shownTitle(entry.recipe, untitled)
             RecipeBlock(entry, title, onServings = { onServings(entry, it) }, onRemove = { onRemove(entry, title) })
         }
         item(key = LINES_KEY) {

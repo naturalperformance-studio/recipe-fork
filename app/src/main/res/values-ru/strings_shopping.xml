@@ -38,4 +38,5 @@
     <string name="shopping_own_typed_action">Добавить «%1$s» как написано</string>
     <string name="shopping_own_pick_action">Добавить «%1$s» в список</string>
     <string name="shopping_own_removed">«%1$s» убрано из списка</string>
+    <string name="shopping_document_recipe">%1$s — %2$s</string>
 </resources>
