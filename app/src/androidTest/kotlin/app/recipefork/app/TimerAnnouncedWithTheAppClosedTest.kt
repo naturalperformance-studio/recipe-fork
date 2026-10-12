@@ -1,5 +1,6 @@
 package app.recipefork.app
 
+import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.media.AudioAttributes
 import android.media.AudioManager
@@ -21,6 +22,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,6 +38,10 @@ import kotlin.time.Duration.Companion.seconds
  *
  * The test runs in the application's own process, so the process itself cannot be ended: its task is removed, its
  * screen is gone, and the device is put to sleep and forced idle, which is what a closed application meets.
+ *
+ * Putting the device to sleep locks it, and a device with a secure lock — the owner's phone — stays locked for every
+ * test after: on such a device these cases are skipped, and they run on the emulator, which has none. Each case leaves
+ * the device as it found it: on its battery's own report, not idle, awake, and unlocked where no secret locks it.
  */
 @RunWith(AndroidJUnit4::class)
 class TimerAnnouncedWithTheAppClosedTest {
@@ -55,8 +61,11 @@ class TimerAnnouncedWithTheAppClosedTest {
         manager.cancelAll()
     }
 
+    private val secure get() = application.getSystemService(KeyguardManager::class.java).isDeviceSecure
+
     @Before
     fun setUp() {
+        assumeFalse("it would lock the owner's phone: putting a device with a secure lock to sleep leaves it locked", secure)
         shell("input keyevent KEYCODE_WAKEUP")
         shell("wm dismiss-keyguard")
         clear()
@@ -67,6 +76,7 @@ class TimerAnnouncedWithTheAppClosedTest {
         shell("dumpsys deviceidle unforce")
         shell("dumpsys battery reset")
         shell("input keyevent KEYCODE_WAKEUP")
+        if (!secure) shell("wm dismiss-keyguard")
         clear()
     }
 
