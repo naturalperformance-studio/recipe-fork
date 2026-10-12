@@ -1,5 +1,7 @@
 package app.recipefork.app.card
 
+import android.content.res.Configuration
+import android.content.res.Resources
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.combinedClickable
@@ -130,6 +132,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -569,7 +572,10 @@ private fun shownCount(
 
 /** The language the card writes its lines and counts in: the interface's. */
 @Composable
-private fun cardLanguage(): InterfaceLanguage = when (interfaceLanguage(LocalConfiguration.current)) {
+private fun cardLanguage(): InterfaceLanguage = cardLanguage(LocalConfiguration.current)
+
+/** The language the card writes in under [configuration]: the interface's, as a printed recipe is written too (FLOW-075). */
+internal fun cardLanguage(configuration: Configuration): InterfaceLanguage = when (interfaceLanguage(configuration)) {
     RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
     RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
 }
@@ -1061,16 +1067,11 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
     val content by remember(parent, recipes) {
         recipes.observe(parent).map { it?.let { held -> ParentContent.Held(held.title) } ?: ParentContent.Unavailable }
     }.collectAsState(initial = ParentContent.Loading)
-    val untitled = stringResource(R.string.common_untitled_recipe)
-    val author = stated?.nickname?.takeIf { it.isNotBlank() }
+    val resources = LocalResources.current
     when (val shown = content) {
         ParentContent.Loading -> Unit
         ParentContent.Unavailable -> Text(
-            when {
-                stated == null -> stringResource(R.string.card_parent_unavailable)
-                author == null -> stringResource(R.string.card_parent_named_unavailable, stated.title.ifBlank { untitled })
-                else -> stringResource(R.string.card_parent_stated_unavailable, stated.title.ifBlank { untitled }, author)
-            },
+            provenanceText(resources, stated, held = null),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.testTag(CardTags.PROVENANCE),
         )
@@ -1086,18 +1087,32 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
                 .testTag(CardTags.PROVENANCE),
             contentAlignment = Alignment.CenterStart,
         ) {
-            val title = (stated?.title ?: shown.title).ifBlank { untitled }
             Text(
-                if (author == null) {
-                    stringResource(R.string.card_parent, title)
-                } else {
-                    stringResource(R.string.card_parent_stated, title, author)
-                },
+                provenanceText(resources, stated, shown.title),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
     }
+}
+
+/**
+ * What the provenance area says in [resources]' language: the parent the book holds by its title [held] — or by the
+ * [stated] one's, with its author marked as not verified — or, [held] null, that the book does not hold it. The card's
+ * line and a printed recipe's (FLOW-075).
+ */
+internal fun provenanceText(resources: Resources, stated: StatedParent?, held: String?): String {
+    val untitled = resources.getString(R.string.common_untitled_recipe)
+    val author = stated?.nickname?.takeIf { it.isNotBlank() }
+    if (held == null) {
+        return when {
+            stated == null -> resources.getString(R.string.card_parent_unavailable)
+            author == null -> resources.getString(R.string.card_parent_named_unavailable, stated.title.ifBlank { untitled })
+            else -> resources.getString(R.string.card_parent_stated_unavailable, stated.title.ifBlank { untitled }, author)
+        }
+    }
+    val title = (stated?.title ?: held).ifBlank { untitled }
+    return if (author == null) resources.getString(R.string.card_parent, title) else resources.getString(R.string.card_parent_stated, title, author)
 }
 
 /** The space between a section's heading and its parts. */

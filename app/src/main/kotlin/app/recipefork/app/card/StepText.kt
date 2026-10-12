@@ -145,12 +145,9 @@ internal fun StepText(
 ) {
     val runs = StepText.runs(step, references::quantity)
     // Each rounded reference, by its run: its arrow, and how the screen reader reads the reference with it.
-    val marks = runs.withIndex().filter { it.value is StepRun.Reference }.associate { (index, run) ->
-        val reference = run as StepRun.Reference
-        val rounding = references.rounding(IngredientReference(reference.ingredientPosition, 0, reference.share))
-        index to roundingMark(rounding)?.let { (arrow, words) ->
-            arrow to stringResource(R.string.card_step_reference_rounded, run.text, stringResource(words))
-        }
+    val marks = roundingMarks(runs, references).mapValues { (index, mark) ->
+        val (arrow, words) = mark
+        arrow to stringResource(R.string.card_step_reference_rounded, runs[index].text, stringResource(words))
     }
     val arrowStyle = SpanStyle(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -183,6 +180,26 @@ internal fun StepText(
             },
         )
     }
+}
+
+/**
+ * The arrow each reference among [runs] carries where rounding moved it, as [references] say, by the run's index, with
+ * the words it is read as; a reference not rounded has none.
+ */
+private fun roundingMarks(runs: List<StepRun>, references: CardReferences): Map<Int, Pair<String, Int>> =
+    runs.withIndex().mapNotNull { (index, run) ->
+        val reference = run as? StepRun.Reference ?: return@mapNotNull null
+        roundingMark(references.rounding(IngredientReference(reference.ingredientPosition, 0, reference.share)))?.let { index to it }
+    }.toMap()
+
+/**
+ * [step]'s text as the card draws it, plain: each reference read as [references] gives it and followed by its arrow
+ * where rounding moved it. A printed step reads so (FLOW-075).
+ */
+internal fun shownStepText(step: Step, references: CardReferences): String {
+    val runs = StepText.runs(step, references::quantity)
+    val marks = roundingMarks(runs, references)
+    return runs.withIndex().joinToString("") { (index, run) -> run.text + (marks[index]?.let { ARROW_GAP + it.first } ?: "") }
 }
 
 /**

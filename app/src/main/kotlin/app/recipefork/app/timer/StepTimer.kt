@@ -1,5 +1,6 @@
 package app.recipefork.app.timer
 
+import android.content.res.Resources
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +26,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -246,10 +248,14 @@ internal data class Restart(val step: Step, val index: Int, val name: String)
  * notification and the bar read them; otherwise [current], its name as the step reads now, and its number there.
  */
 @Composable
-internal fun shownName(step: Step, index: Int, held: RunningTimer?, current: String): String {
+internal fun shownName(step: Step, index: Int, held: RunningTimer?, current: String): String =
+    shownName(LocalResources.current, step, index, held, current)
+
+/** [shownName] read from [resources], off the screen: a printed step names its timers so (FLOW-075). */
+internal fun shownName(resources: Resources, step: Step, index: Int, held: RunningTimer?, current: String): String {
     val name = held?.name ?: current
     val number = if (held != null) held.number else TimerName.number(step, index)
-    return number?.let { stringResource(R.string.timer_numbered, name, it) } ?: name
+    return number?.let { resources.getString(R.string.timer_numbered, name, it) } ?: name
 }
 
 /**
@@ -441,13 +447,16 @@ fun RestartQuestion(timers: RecipeTimers) {
 
 /** A timer's full duration as the author set it: hours and whole minutes. */
 @Composable
-internal fun durationText(duration: Duration): String {
+internal fun durationText(duration: Duration): String = durationText(LocalResources.current, duration)
+
+/** [durationText] read from [resources], off the screen: a printed recipe writes its timers so (FLOW-075). */
+internal fun durationText(resources: Resources, duration: Duration): String {
     val hours = duration.inWholeHours.toInt()
     val minutes = (duration.inWholeMinutes % 60).toInt()
     return when {
-        hours == 0 -> stringResource(R.string.timer_duration_minutes, minutes)
-        minutes == 0 -> stringResource(R.string.timer_duration_hours, hours)
-        else -> stringResource(R.string.timer_duration, hours, minutes)
+        hours == 0 -> resources.getString(R.string.timer_duration_minutes, minutes)
+        minutes == 0 -> resources.getString(R.string.timer_duration_hours, hours)
+        else -> resources.getString(R.string.timer_duration, hours, minutes)
     }
 }
 
