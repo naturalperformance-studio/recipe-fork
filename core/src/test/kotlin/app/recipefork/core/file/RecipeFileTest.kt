@@ -376,6 +376,24 @@ class RecipeFileTest {
         assertEquals(0, parse(RecipeFileContent.of(recipe(), null, null))["recipe"]!!.jsonObject["equipment"]!!.jsonArray.size)
     }
 
+    // A label stands inside the item that names its entry: a file can give labels for no other entry, so what a document
+    // decodes to holds labels only of the entries its items name — never more than its items (T-260).
+    @Test
+    fun aDocumentGivesLabelsOnlyForTheEntriesItsItemsName() {
+        val equipped = recipe().copy(equipment = listOf(EquipmentItem.entry(10001), EquipmentItem.free("Pot")))
+        val pan = 10001L to EntryLabels("Сковорода", "Frying pan")
+        val content = RecipeFileContent.of(equipped, null, null, mapOf(pan)::get)
+        // Labels of entries no item names are not written.
+        val many = content.copy(equipmentLabels = (1L..2_000L).associateWith { EntryLabels("Нож $it", "Knife $it") } + pan)
+        assertEquals(mapOf(pan), RecipeFile.decode(RecipeFile.encode(many)).equipmentLabels)
+        // Labels a document gives an item of free text are not read.
+        val text = RecipeFile.encode(content)
+        val labelledText = text.replace("\"free_text_name\": \"Pot\"", "\"labels\": { \"ru\": \"Нож\", \"en\": \"Knife\" }, \"free_text_name\": \"Pot\"")
+        assertTrue(labelledText != text)
+        assertEquals(mapOf(pan), RecipeFile.decode(labelledText).equipmentLabels)
+        assertEquals(emptyList(), RecipeFileCheck.problems(RecipeFile.decode(labelledText)))
+    }
+
     // Format 5 names its items itself: free text stays free text, whatever entry its text might name.
     @Test
     fun aFormat5ItemIsReadAsItIsNamed() {
