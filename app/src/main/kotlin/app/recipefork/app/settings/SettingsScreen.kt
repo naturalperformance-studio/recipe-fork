@@ -47,11 +47,13 @@ import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.ThemeChoice
 import app.recipefork.app.data.ThemeSetting
+import app.recipefork.app.data.UnitSystemSetting
 import app.recipefork.app.data.UsualServings
 import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.kitchen.KitchenEnvironment
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.RequestedServings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,7 +66,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
  * The settings, a destination above the book: one item per setting, each showing its value in force and changing it
- * as the book's menu did — the interface language (L10N-002), the theme (ADR 20261004), the serving count the reader usually cooks for
+ * as the book's menu did — the interface language (L10N-002), the theme (ADR 20261004), the system of units amounts are
+ * shown in (v0.35), the serving count the reader usually cooks for
  * (FLOW-017), My kitchen — how many items of equipment are ticked, opening its own screen — the side of the editor's drag
  * column, said to be the editor's, and the saved media the device need not keep (FLOW-060), cleared only once its
  * statement is confirmed, and disabled, saying why, while there is nothing to clear. The clearing runs in [scope],
@@ -87,6 +90,7 @@ fun SettingsScreen(
     onOpenKitchen: () -> Unit,
     modifier: Modifier = Modifier,
     backup: BookBackup? = null,
+    units: UnitSystemSetting,
 ) {
     val snackbars = remember { SnackbarHostState() }
     Scaffold(
@@ -121,6 +125,7 @@ fun SettingsScreen(
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).testTag(SettingsTags.LIST)) {
             LanguageItem()
             ThemeItem(theme)
+            UnitsItem(units)
             UsualServingsItem(usual)
             KitchenItem(kitchen, onOpenKitchen)
             DragHandleItem(handleSide)
@@ -193,6 +198,51 @@ private fun ThemeDialog(chosen: ThemeChoice, onChoose: (ThemeChoice) -> Unit, on
     label = { stringResource(it.label()) },
     cancel = stringResource(R.string.settings_theme_cancel),
     tags = ChoiceTags(SettingsTags.THEME_DIALOG, SettingsTags.THEME_CANCEL, SettingsTags::theme),
+    onChoose = onChoose,
+    onDismiss = onDismiss,
+)
+
+/**
+ * The system of units the recipes' amounts are shown in; it opens [UnitsDialog], and the one taken applies at once to
+ * every screen that shows an amount.
+ */
+@Composable
+private fun UnitsItem(units: UnitSystemSetting) {
+    var choosing by rememberSaveable { mutableStateOf(false) }
+    val chosen by units.system.collectAsState()
+    Item(
+        headline = stringResource(R.string.settings_units),
+        value = stringResource(chosen.label()),
+        tag = SettingsTags.UNITS,
+        onClick = { choosing = true },
+    )
+    if (choosing) {
+        UnitsDialog(
+            chosen = chosen,
+            onChoose = {
+                choosing = false
+                units.set(it)
+            },
+            onDismiss = { choosing = false },
+        )
+    }
+}
+
+/** The name a system of units is offered under. */
+private fun UnitSystem.label(): Int = when (this) {
+    UnitSystem.METRIC -> R.string.settings_units_metric
+    UnitSystem.US -> R.string.settings_units_us
+}
+
+/** Metric or US, the one in force marked; taking one chooses it, dismissing changes nothing. */
+@Composable
+private fun UnitsDialog(chosen: UnitSystem, onChoose: (UnitSystem) -> Unit, onDismiss: () -> Unit) = ChoiceDialog(
+    title = stringResource(R.string.settings_units),
+    choices = UnitSystem.entries,
+    chosen = chosen,
+    label = { stringResource(it.label()) },
+    cancel = stringResource(R.string.settings_theme_cancel),
+    tags = ChoiceTags(SettingsTags.UNITS_DIALOG, SettingsTags.UNITS_CANCEL, SettingsTags::units),
     onChoose = onChoose,
     onDismiss = onDismiss,
 )
@@ -366,6 +416,9 @@ object SettingsTags {
     const val THEME = "settings-theme"
     const val THEME_DIALOG = "settings-theme-dialog"
     const val THEME_CANCEL = "settings-theme-cancel"
+    const val UNITS = "settings-units"
+    const val UNITS_DIALOG = "settings-units-dialog"
+    const val UNITS_CANCEL = "settings-units-cancel"
     const val USUAL = "settings-usual"
     const val KITCHEN = "settings-kitchen"
     const val HANDLE_RIGHT = "settings-handle-right"
@@ -404,4 +457,7 @@ object SettingsTags {
 
     /** One choice of the theme's dialog. */
     fun theme(choice: ThemeChoice) = "settings-theme-${choice.name.lowercase()}"
+
+    /** One choice of the units' dialog. */
+    fun units(system: UnitSystem) = "settings-units-${system.name.lowercase()}"
 }

@@ -18,5 +18,8 @@
     <string name="settings_theme_dark">Тёмная</string>
     <string name="settings_theme_device">Как на устройстве</string>
     <string name="settings_theme_cancel">Отмена</string>
+    <string name="settings_units">Единицы</string>
+    <string name="settings_units_metric">Метрическая</string>
+    <string name="settings_units_us">Американская</string>
     <string name="settings_handle_right_hint">Для перемещения ингредиентов и шагов в редакторе</string>
 </resources>

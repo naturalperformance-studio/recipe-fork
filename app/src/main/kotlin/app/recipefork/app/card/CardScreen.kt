@@ -164,6 +164,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.StatedParent
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.catch
@@ -350,6 +351,8 @@ fun CardScreen(
     val snackbars = remember { SnackbarHostState() }
     val clearMarks = rememberClearMarks(marks, snackbars)
     val loaded = entries
+    // The system of units the amounts are shown in: a change in the settings shows them anew at once.
+    val units by environment.unitSystem.system.collectAsState()
     // The scale the recipe is read at, one for both tabs, once what it is read with is at hand.
     val held = if (recipe != null && loaded != null && marks != null) {
         // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
@@ -383,7 +386,7 @@ fun CardScreen(
                         null
                     }
                 }
-                RecipeDocument.of(recipe, loaded, equipmentEntries, scale, resources, parentTitle) { photos.file(name, it) }
+                RecipeDocument.of(recipe, loaded, equipmentEntries, scale, resources, parentTitle, units) { photos.file(name, it) }
             }
         }
     } else {
@@ -498,7 +501,7 @@ fun CardScreen(
                         val mode = TABS[page]
                         RecipeContent(
                             recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
-                            shownAgain,
+                            shownAgain, units,
                             equipmentEntries = equipmentEntries,
                             kitchen = kitchen,
                             onOpenKitchen = onOpenKitchen,
@@ -922,6 +925,7 @@ private fun RecipeContent(
     scroll: ScrollState,
     places: CardPlaces,
     shownAgain: ShownAgain,
+    units: UnitSystem,
     equipmentEntries: Map<Long, DictionaryEntry>,
     kitchen: Kitchen,
     onOpenKitchen: ((Long) -> Unit)?,
@@ -1000,7 +1004,7 @@ private fun RecipeContent(
             val authored = recipe.servings?.takeIf { it >= 1 }
             val ordered = held.ordered
             val scale = held.scale
-            val list = ingredientList(ordered, entries, language, authored, scale)
+            val list = ingredientList(ordered, entries, language, authored, scale, units)
             // A recipe that shows no count says so, so that nothing waits on where the count stands.
             if (list.servingCount == null && onServingsPlaced != null) LaunchedEffect(Unit) { onServingsPlaced(Rect.Zero) }
             // On Cooking the serving count stands right on the ingredients' tinted panel, with no gap: six lines are in
@@ -1033,7 +1037,7 @@ private fun RecipeContent(
             }
             // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
             StepsList(
-                recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries),
+                recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries, units),
                 StepMediaOnCard(recipe, recipes.bookName()), marks, mode,
                 readerScrolling = { scroll.isScrollInProgress },
                 coveredBelow = bottom,
