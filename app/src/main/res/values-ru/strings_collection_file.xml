@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="collection_share">Поделиться</string>
+    <string name="collection_share_sheet">Поделиться «%1$s»</string>
+    <string name="collection_sharing">Готовим файл коллекции</string>
+    <string name="collection_share_failed">Не удалось поделиться коллекцией</string>
+</resources>

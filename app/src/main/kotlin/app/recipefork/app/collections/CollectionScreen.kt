@@ -61,6 +61,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
+import app.recipefork.app.Mode
 import app.recipefork.app.R
 import app.recipefork.app.book.CollectionRecipeRow
 import app.recipefork.app.book.CollectionRow
@@ -104,8 +105,8 @@ import kotlinx.coroutines.launch
 
 /**
  * A collection's screen (v0.36), above the book: its recipes in its order, each as the book's entry shows it and opening
- * its card, which lies above this screen — back from it returns here. The bar names the collection; its ⋮ offers, for
- * the reader's own, Rename and Delete, and for an imported one Delete alone. Deleting it closes the screen, and the book
+ * its card, which lies above this screen — back from it returns here. The bar names the collection; its ⋮ offers Share in
+ * [Mode.Serverless], then, for the reader's own, Rename and Delete, and for an imported one Delete. Deleting it closes the screen, and the book
  * says so with Undo; its recipes stay in the book. In an own collection a recipe's ⋮ moves it up or down or removes it
  * from the collection — with Undo — and the drag column down its edge reorders it; an imported one is frozen: it shows
  * the author its file states, and its entries carry neither. A collection with no recipes says how one is added.
@@ -127,6 +128,7 @@ fun CollectionScreen(
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
     dragHandleSide: DragHandleSide = remember { HeldDragHandleSide() },
     card: CardEnvironment = rememberCardEnvironment(),
+    mode: Mode = Mode.Standard,
 ) {
     val read by remember(collections, id) { collections.observe(id).map(::Read) }.collectAsState(initial = null)
     val listed by remember(collections, id) { collections.recipes(id) }.collectAsState(initial = null)
@@ -156,6 +158,7 @@ fun CollectionScreen(
             onDismiss = { renaming = false },
         )
     }
+    val share = rememberCollectionShare(id, session, collections, recipes)
     var deleting by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val scroll = remember(scrollState) { EditorScroll(scrollState) }
@@ -184,6 +187,7 @@ fun CollectionScreen(
                     if (collection != null) {
                         CollectionMenu(
                             editable = collection.origin.editable,
+                            onShare = if (mode == Mode.Serverless) share::start else null,
                             onAddAll = addAll.takeIf { listed?.isNotEmpty() == true },
                             onRename = { renaming = true },
                             onDelete = delete,
@@ -193,6 +197,7 @@ fun CollectionScreen(
             )
         },
     ) { padding ->
+        CollectionShareProgress(share, Modifier.padding(top = padding.calculateTopPadding()))
         val shown = rows
         if (collection == null || shown == null) {
             ListLoading(Modifier.padding(padding))
@@ -465,11 +470,18 @@ private fun BackAction(onBack: () -> Unit) {
 }
 
 /**
- * The collection's ⋮: "Add all to shopping list" while it has recipes ([onAddAll]), Rename for an own collection, then
- * Delete collection, in the theme's error colour. An imported collection offers no Rename.
+ * The collection's ⋮: Share, where [onShare] is given (files are a [Mode.Serverless] feature), then "Add all to shopping
+ * list" while it has recipes ([onAddAll]), then Rename for an own collection, then Delete collection, in the theme's
+ * error colour. An imported collection offers no Rename.
  */
 @Composable
-private fun CollectionMenu(editable: Boolean, onAddAll: (() -> Unit)?, onRename: () -> Unit, onDelete: () -> Unit) {
+private fun CollectionMenu(
+    editable: Boolean,
+    onShare: (() -> Unit)?,
+    onAddAll: (() -> Unit)?,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box(Modifier.padding(end = 4.dp)) {
         BlockAction(
@@ -480,7 +492,17 @@ private fun CollectionMenu(editable: Boolean, onAddAll: (() -> Unit)?, onRename:
             action = stringResource(R.string.collection_menu_action),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            // Share (T-255) and "Add all to shopping list" (T-257) go here, first: they are offered on every collection.
+            // First, on own and imported collections alike: Share (serverless mode only), then "Add all to shopping list".
+            if (onShare != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.collection_share)) },
+                    onClick = {
+                        expanded = false
+                        onShare()
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(CollectionShareTags.SHARE),
+                )
+            }
             if (onAddAll != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.collection_add_all_to_shopping)) },

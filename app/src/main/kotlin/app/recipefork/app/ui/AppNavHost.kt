@@ -171,6 +171,7 @@ fun AppNavHost(
             CollectionScreen(
                 CollectionId(requireNotNull(entry.arguments?.getString(Destinations.COLLECTION_ID_KEY))),
                 session, collections, recipes, thumbnails = thumbnails, dragHandleSide = dragHandleSide, card = card,
+                mode = mode,
             )
         }
         composable(Destinations.SHOPPING_ROUTE) {
