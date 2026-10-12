@@ -14,6 +14,7 @@ import app.recipefork.core.file.CollectionFile
 import app.recipefork.core.file.CollectionFileContent
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.recipe.CollectionId
+import app.recipefork.core.recipe.RecipeCollection
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,8 +49,19 @@ object CollectionExport {
         equipment: EquipmentSource = equipmentDictionaryOf(context),
         progress: (Float) -> Unit = {},
     ): Uri? {
-        val book = recipes.inOpenBook()
         val collection = collections.get(id) ?: return null
+        return write(context, recipes, collection, equipment, progress)
+    }
+
+    /** Writes the file of [collection], as the book holds it, and returns its shareable address. */
+    private suspend fun write(
+        context: Context,
+        recipes: RecipeRepository,
+        collection: RecipeCollection,
+        equipment: EquipmentSource,
+        progress: (Float) -> Unit,
+    ): Uri {
+        val book = recipes.inOpenBook()
         val held = collection.recipes.mapNotNull { book.get(it) }
         val store = PhotoStore(context.filesDir)
         val name = book.bookName()
@@ -75,12 +87,16 @@ object CollectionExport {
                         store.file(name, item.mediaId)
                     }
                 }
-                // Whole: it takes the place of the earlier exports.
+                // Whole: it is put in its place first, and only then do the earlier exports go.
                 val exports = File(context.cacheDir, RecipeExport.DIRECTORY)
-                exports.deleteRecursively()
-                val directory = File(exports, id.value.filter { it.isLetterOrDigit() || it == '-' }.ifEmpty { FALLBACK_NAME })
-                if (!directory.mkdirs()) throw IOException("cannot make $directory")
-                File(directory, fileName).also { if (!staged.renameTo(it)) throw IOException("cannot move $staged") }
+                val folder = collection.id.value.filter { it.isLetterOrDigit() || it == '-' }.ifEmpty { FALLBACK_NAME }
+                val directory = File(exports, folder)
+                if (!directory.isDirectory && !directory.mkdirs()) throw IOException("cannot make $directory")
+                val target = File(directory, fileName)
+                if (!staged.renameTo(target)) throw IOException("cannot move $staged")
+                exports.listFiles().orEmpty().filter { it != directory }.forEach { it.deleteRecursively() }
+                directory.listFiles().orEmpty().filter { it != target }.forEach { it.deleteRecursively() }
+                target
             } finally {
                 staging.deleteRecursively()
             }
@@ -105,10 +121,13 @@ object CollectionExport {
         progress: (Float) -> Unit = {},
     ): Boolean =
         try {
-            val name = collections.get(id)?.name
-            val uri = if (name == null) null else write(context, recipes, collections, id, equipment, progress)
-            if (uri != null) RecipeExport.open(context, shareSheet(context, uri, sheetTitle(name!!)))
-            uri != null
+            // One read of the collection gives both the file and the sheet's title.
+            val collection = collections.get(id)
+            if (collection != null) {
+                val uri = write(context, recipes, collection, equipment, progress)
+                RecipeExport.open(context, shareSheet(context, uri, sheetTitle(collection.name)))
+            }
+            collection != null
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

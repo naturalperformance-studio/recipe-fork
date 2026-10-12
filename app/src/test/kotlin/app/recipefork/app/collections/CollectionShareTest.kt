@@ -126,13 +126,13 @@ class CollectionShareTest {
             .also { assertTrue(recipes.addFound(it, now)) }.id
     }
 
-    private fun show(view: LibraryView) {
+    private fun show(view: LibraryView, mode: Mode = Mode.Serverless) {
         session.choose(view)
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
         val card = CardEnvironment(marks = DoneMarks.inMemory()) { device.database.dictionaryDao().ingredients() }
         compose.setContent {
             CompositionLocalProvider(LocalCardTimers provides cardTimers) {
-                AppTheme { AppNavHost(session, recipes, Mode.Serverless, editor = editor, card = card, collections = collections) }
+                AppTheme { AppNavHost(session, recipes, mode, editor = editor, card = card, collections = collections) }
             }
         }
         compose.waitForIdle()
@@ -233,6 +233,27 @@ class CollectionShareTest {
         val sheet = awaitSheet()
         assertEquals("Share “Anna's dinners”", sheet.getCharSequenceExtra(Intent.EXTRA_TITLE).toString())
         assertEquals(CollectionFileContent(annas, "Anna's dinners", "anna", listOf(borscht)), documentOf(sheet).second)
+    }
+
+    // Files are a serverless-mode feature (FLOW-061): in the standard mode no collection offers Share.
+    @Test
+    fun theStandardModeOffersNoShare() {
+        val soup = own("Soup")
+        val borscht = found("Borscht")
+        val menu = runBlocking { collections.create("Menu")!!.also { collections.addTo(soup, listOf(it)) } }
+        val annas = CollectionId.mint()
+        runBlocking { collections.putImported(annas, "Anna's dinners", "anna", listOf(borscht)) }
+        show(LibraryView.OWN, Mode.Standard)
+        open(menu, LibraryView.OWN)
+        assertEquals(listOf(CollectionScreenTags.RENAME, CollectionScreenTags.DELETE), menuItems())
+        compose.onNodeWithTag(CollectionScreenTags.MENU).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CollectionScreenTags.DELETE) }
+        compose.runOnIdle { session.closeCollection() }
+        compose.runOnIdle { session.choose(LibraryView.MARKED) }
+        await(LibraryTags.PAGER)
+        open(annas, LibraryView.MARKED)
+        assertEquals(listOf(CollectionScreenTags.DELETE), menuItems())
+        assertNull(startedSheet())
     }
 
     @Test

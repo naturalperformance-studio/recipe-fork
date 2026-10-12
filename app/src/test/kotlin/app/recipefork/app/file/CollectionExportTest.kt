@@ -344,6 +344,30 @@ class CollectionExportTest {
         export(salads)
         assertTrue(runCatching { context.contentResolver.openInputStream(first)!!.close() }.isFailure)
         assertEquals(listOf(salads.value + "/Salads.recipefork-collection"), exportsOnDisk())
+        // The same collection under a new name: its earlier file goes from its folder.
+        runBlocking { collections.rename(salads, "Green salads") }
+        export(salads)
+        assertEquals(listOf(salads.value + "/Green-salads.recipefork-collection"), exportsOnDisk())
+    }
+
+    // A file that cannot be put in its place takes nothing away: the earlier export stays whole and shareable.
+    @Test
+    fun aFileThatCannotBePutInPlaceLeavesTheEarlierExport() {
+        val soup = own("soup", "Soup").id
+        val earlier = export(collection("Menu", listOf(soup)))
+        val earlierEntries = entries(earlier)
+        val salads = collection("Salads", listOf(soup))
+        val exports = File(context.cacheDir, "exports")
+        assertTrue(exports.setWritable(false))
+        try {
+            assertFalse(runBlocking { CollectionExport.share(context, recipes, collections, salads, { it }) })
+        } finally {
+            exports.setWritable(true)
+        }
+        assertEquals(earlierEntries.keys, entries(earlier).keys)
+        assertArrayEquals(earlierEntries.getValue("collection.json"), entries(earlier).getValue("collection.json"))
+        assertEquals(listOf(earlier.lastPathSegment!!), exportsOnDisk().map { it.substringAfterLast('/') })
+        assertFalse(File(context.cacheDir, "exports-staging").exists())
     }
 
     // Sharing reads the book and changes nothing in it.
