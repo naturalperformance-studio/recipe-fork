@@ -156,6 +156,19 @@ class HostileRecipeFileTest {
         assertRefused(Refusal.DAMAGED, bytes, limits)
     }
 
+    // Tags are numbers, and a set of them is held many times larger than the text that lists them: a recipe file of more
+    // distinct tags than a recipe carries — real ones, no padding — is refused as breaking the rules; the most is taken.
+    @Test
+    fun aRecipeFileOfManyDistinctTagsIsRefused() {
+        val many = TestRecipeFiles.document(soup().copy(tags = (0L until 40_000L).toSet()))
+        assertTrue("within the document's cap: ${many.size}", many.size < ArchiveLimits().document)
+        val bytes = TestRecipeFiles.zip(RecipeFile.DOCUMENT to many)
+        assertEquals("more than 1000 tags", refusalOf { RecipeArchiveReader.document({ ByteArrayInputStream(bytes) }) })
+        assertRefused(Refusal.BREAKS_RULES, bytes)
+        assertRefused(Refusal.BREAKS_RULES, file(soup().copy(tags = (0L until 1_001L).toSet())))
+        assertTrue(import(file(soup().copy(tags = (0L until 1_000L).toSet()))) is ImportOutcome.Added)
+    }
+
     // A file holding two documents cannot say which recipe it is.
     @Test
     fun twoDocumentsAreRefused() {

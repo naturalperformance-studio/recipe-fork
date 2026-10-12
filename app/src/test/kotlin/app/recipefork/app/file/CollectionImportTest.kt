@@ -12,12 +12,14 @@ import app.recipefork.app.media.ClipDuration
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.file.CollectionFile
 import app.recipefork.core.file.CollectionFileContent
+import app.recipefork.core.file.EntryLabels
 import app.recipefork.core.file.FileMedia
 import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileCheck
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.CollectionOrigin
+import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.Recipe
@@ -499,6 +501,82 @@ class CollectionImportTest {
         assertUnchanged()
         // Within its caps, it is read.
         assertTrue(import(collectionFile(listOf(first), media = mapOf(0 to listOf("media/m-1" to TestRecipeFiles.jpeg()))), importer(small)) is CollectionImportOutcome.Imported)
+    }
+
+    // Tags are numbers, held many times larger than the text listing them (T-260): a file of recipes each carrying the
+    // most tags a recipe may — distinct, no padding — is counted at what its documents hold decoded, and refused once
+    // that passes the cap though their text is far under it; a recipe of more tags, or of labels on more equipment than
+    // a recipe lists, is refused as breaking the rules.
+    @Test
+    fun manyDistinctTagsAreCountedAtWhatTheyHoldDecoded() {
+        val tags = (0L until RecipeFileCheck.MAX_TAGS).toSet()
+        val listed = (1..700).map { recipe("r-tags-$it").copy(tags = tags) }
+        val text = listed.sumOf { TestRecipeFiles.document(it).size.toLong() }
+        assertTrue("text far under the cap: $text", text < CollectionLimits().documents / 2)
+        val bytes = collectionFile(listed)
+        assertTrue("a small file: ${bytes.size}", bytes.size < 8 * ArchiveLimits.MIB)
+        val refusal = runCatching { CollectionArchiveReader.read({ bytes.inputStream() }) }.exceptionOrNull() as RefusedFile
+        assertEquals(Refusal.DAMAGED, refusal.refusal)
+        assertEquals("the recipes' documents over their cap", refusal.message)
+        // Under small limits, through the import: nothing is added; within the cap, the same recipes are.
+        val few = listed.take(8)
+        val small = CollectionLimits(documents = 256 * 1024)
+        assertTrue(few.sumOf { TestRecipeFiles.document(it).size.toLong() } < small.documents)
+        assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), import(collectionFile(few), importer(small)))
+        assertUnchanged()
+        // More tags than a recipe carries, or labels on more items than a recipe lists.
+        val tagged = recipe("r-more").copy(tags = (0L until 40_000L).toSet())
+        assertEquals(CollectionImportOutcome.Refused(Refusal.BREAKS_RULES), import(collectionFile(listOf(recipe("r-1"), tagged))))
+        val items = (1L..2_000L).map { EquipmentItem.entry(it) }
+        val labelled = recipe("r-labels").copy(equipment = items, equipmentLabels = items.associate { it.dictionaryEntry!! to EntryLabels("Нож $it", "Knife $it") })
+        assertEquals(CollectionImportOutcome.Refused(Refusal.BREAKS_RULES), import(collectionFile(listOf(recipe("r-1"), labelled))))
+        assertUnchanged()
+        assertTrue(import(collectionFile(few)) is CollectionImportOutcome.Imported)
+    }
+
+    // Of a recipe's folder, only its document and its media entries are kept by the first reading, and counted: other
+    // entries, however long their names, are passed over; media entries past the cap refuse the file.
+    @Test
+    fun onlyTheEntriesThatMatterAreKept() {
+        val first = recipe("r-1")
+        val small = CollectionLimits(documents = 16 * 1024)
+        val long = "y".repeat(200)
+        val media = collectionFile(listOf(first), extra = (1..45).map { "recipes/1/media/$long-$it" to ByteArray(1) })
+        val refusal = runCatching { CollectionArchiveReader.read({ media.inputStream() }, small) }.exceptionOrNull() as RefusedFile
+        assertEquals("the recipes' media entries over their cap", refusal.message)
+        assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), import(media, importer(small)))
+        assertUnchanged()
+        val others = collectionFile(listOf(first), extra = (1..45).map { "recipes/1/notes/$long-$it" to ByteArray(1) })
+        assertTrue(import(others, importer(small)) is CollectionImportOutcome.Imported)
+    }
+
+    // The media a collection brings are held together to their cap (2 GiB) as they are written: a file whose media pass
+    // it is refused, never having written more than the cap, and leaves nothing behind.
+    @Test
+    fun theMediaTogetherAreHeldToTheirCapAsTheyAreWritten() {
+        assertEquals(2L * 1024 * 1024 * 1024, CollectionLimits().media)
+        val duck = recipe("r-duck", "Duck", cover("m-duck"))
+        val cake = recipe("r-cake", "Cake", cover("m-cake"), clip("m-clip"))
+        val file = collectionFile(
+            listOf(duck, cake),
+            media = mapOf(0 to listOf("media/m-duck" to TestRecipeFiles.jpeg()), 1 to listOf("media/m-cake" to TestRecipeFiles.jpeg(), "media/m-clip" to TestRecipeFiles.mp4())),
+        )
+        val capped = CollectionLimits(media = 2_500)
+        val read = CollectionArchiveReader.read({ file.inputStream() }, capped)
+        val out = TestRecipeFiles.incoming()
+        try {
+            val written = mutableListOf<File>()
+            val refusal = runCatching {
+                CollectionArchiveReader.media({ file.inputStream() }, read, setOf(0, 1), target = { _, item -> File(out, item.mediaId).also { written += it } }, capped)
+            }.exceptionOrNull() as RefusedFile
+            assertEquals(Refusal.DAMAGED, refusal.refusal)
+            assertTrue("written ${written.sumOf { it.length() }}", written.sumOf { it.length() } <= 2_500)
+        } finally {
+            out.deleteRecursively()
+        }
+        assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), import(file, importer(capped)))
+        assertUnchanged()
+        assertTrue(import(file, importer(CollectionLimits(media = 3_000))) is CollectionImportOutcome.Imported)
     }
 
     // Scenario 5 end to end: the file the application writes for a collection (T-255) imports into another book whole.

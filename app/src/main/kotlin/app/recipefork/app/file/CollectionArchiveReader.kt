@@ -9,16 +9,19 @@ import app.recipefork.core.file.RecipeFile
 import app.recipefork.core.file.RecipeFileCheck
 import app.recipefork.core.file.RecipeFileContent
 import app.recipefork.core.file.UnreadableRecipeFile
+import app.recipefork.core.scaling.Rational
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.util.zip.ZipInputStream
 
 /**
- * How much a collection file's reader inflates, walks and keeps: its document up to [document]; each recipe's folder as
- * a recipe file is held to [recipe]; the recipes' documents together to [documents], each decoded as it is read and only
- * what it states kept; an entry's name to [name] characters; and the whole archive to the document and as many folders
- * as the document lists — so a file listing few recipes cannot be made to hold more, nor a small file to fill memory.
+ * How much a collection file's reader inflates, walks, keeps and writes: its document up to [document]; each recipe's
+ * folder as a recipe file is held to [recipe]; what the first reading keeps of the recipes' folders to [documents] —
+ * each document decoded as it is read and counted at its text or at what it holds decoded, whichever is more, and each
+ * media entry's name and leading bytes; an entry's name to [name] characters; the whole archive to the document and as
+ * many folders as the document lists; and the media the second reading writes, together, to [media] — so a file
+ * listing few recipes cannot be made to hold more, a small file to fill memory, nor a crafted one to fill the disk.
  */
 data class CollectionLimits(
     val document: Long = ArchiveLimits.MIB,
@@ -26,6 +29,7 @@ data class CollectionLimits(
     val recipes: Int = CollectionFileCheck.MAX_RECIPES,
     val documents: Long = 32 * ArchiveLimits.MIB,
     val name: Int = 255,
+    val media: Long = 2 * 1024 * ArchiveLimits.MIB,
 ) {
     internal fun entries(recipes: Int): Long = 1L + recipes.toLong() * recipe.entries
     internal fun archive(recipes: Int): Long = document + recipes.toLong() * recipe.archive
@@ -42,9 +46,11 @@ class ReadCollectionFile internal constructor(
  * a stream, twice. The first reading writes nothing: `collection.json`, which must be the archive's first entry, is
  * decoded and checked ([CollectionFileCheck]) before anything else is read; then each recipe's folder is read as a
  * recipe file — its document decoded and checked as one the moment it is read ([RecipeArchiveReader.decoded]), only
- * what it states kept, each media item it names present once, within its cap and of its kind by its leading bytes. Only a file believed whole is read the second time, for the
- * media of the recipes the caller takes ([media]). Every entry's name is checked, an absolute one or one climbing with
- * `..` refusing the file; entries outside the folders the document lists are passed over unread but counted. Inflation
+ * what it states kept, each media item it names present once, within its cap and of its kind by its leading bytes. Of
+ * a folder's other entries only a media entry's name and head are kept, and what is kept is counted against a cap.
+ * Only a file believed whole is read the second time, for the media of the recipes the caller takes ([media]), held
+ * together to their cap as they are written. Every entry's name is checked, an absolute one or one climbing with `..`
+ * refusing the file; entries outside the folders the document lists are passed over unread but counted. Inflation
  * stops at the caps of [CollectionLimits], whatever sizes the archive declares; [alive] is asked between every read.
  */
 object CollectionArchiveReader {
@@ -57,7 +63,11 @@ object CollectionArchiveReader {
     ): ReadCollectionFile {
         var document: CollectionFileContent? = null
         val folders = HashMap<String, Folder>()
-        var documents = 0L
+        var kept = 0L
+        fun keep(bytes: Long, refusal: String) {
+            kept += bytes
+            if (kept > limits.documents) throw RefusedFile(Refusal.DAMAGED, refusal)
+        }
         RecipeArchiveReader.reading(open, alive) { zip ->
             val first = zip.nextEntry ?: throw RefusedFile(Refusal.NOT_A_RECIPE_FILE, "not a ZIP")
             if (first.name != CollectionFile.DOCUMENT) throw RefusedFile(Refusal.NOT_A_RECIPE_FILE, "no document first")
@@ -65,22 +75,27 @@ object CollectionArchiveReader {
             document = content
             walk(zip, content, limits, alive, folders, done = { false }) { name, folder, budget ->
                 val relative = name.removePrefix(folder.prefix)
-                folder.names += relative
                 if (relative == RecipeFile.DOCUMENT) {
                     if (folder.content != null) throw RefusedFile(Refusal.DAMAGED, "two documents in ${folder.prefix}")
-                    val left = limits.documents - documents
-                    if (left <= 0) throw RefusedFile(Refusal.DAMAGED, "the recipes' documents over their cap")
+                    val left = limits.documents - kept
+                    if (left <= 0) throw RefusedFile(Refusal.DAMAGED, DOCUMENTS)
                     val bytes = ByteArrayOutputStream()
                     val read = RecipeArchiveReader.copy(zip, bytes, minOf(limits.recipe.document, left, budget), alive)
-                    documents += read
-                    // Decoded and checked at once: what it states is kept, never its text.
-                    folder.content = RecipeArchiveReader.decoded(RecipeArchiveReader.utf8(bytes.toByteArray()), entryOf)
+                    // Decoded and checked at once: what it states is kept, never its text — counted at what it holds.
+                    val recipe = RecipeArchiveReader.decoded(RecipeArchiveReader.utf8(bytes.toByteArray()), entryOf)
+                    keep(maxOf(read, held(recipe)), DOCUMENTS)
+                    folder.content = recipe
                     read
-                } else {
+                } else if (RecipeFileCheck.isMediaEntry(relative)) {
+                    // Only a media entry's name and head are kept; any other entry of the folder is passed over.
+                    if (relative in folder.heads) throw RefusedFile(Refusal.DAMAGED, "${folder.prefix}$relative given twice")
+                    keep(ENTRY + 2L * relative.length + RecipeArchiveReader.HEAD, "the recipes' media entries over their cap")
                     val head = ByteArray(RecipeArchiveReader.HEAD)
                     val cap = minOf(maxOf(limits.recipe.photo, limits.recipe.video), budget)
                     RecipeArchiveReader.copy(zip, RecipeArchiveReader.HeadKeeper(RecipeArchiveReader.Nowhere, head), cap, alive)
                         .also { folder.heads[relative] = head to it }
+                } else {
+                    RecipeArchiveReader.drain(zip, budget, alive)
                 }
             }
         }
@@ -89,10 +104,9 @@ object CollectionArchiveReader {
             val prefix = CollectionFile.recipeFolder(place)
             val folder = folders[prefix] ?: throw RefusedFile(Refusal.DAMAGED, "no folder $prefix")
             val recipe = folder.content ?: throw RefusedFile(Refusal.DAMAGED, "no document in $prefix")
-            RecipeArchiveReader.checkMedia(recipe, folder.names)
             if (recipe.id != id) throw RefusedFile(Refusal.DAMAGED, "${folder.prefix} holds another recipe")
             recipe.media.forEach { item ->
-                val (head, size) = folder.heads.getValue(item.entry)
+                val (head, size) = folder.heads[item.entry] ?: throw RefusedFile(Refusal.DAMAGED, "missing ${folder.prefix}${item.entry}")
                 if (size > limits.recipe.of(item.kind)) throw RefusedFile(Refusal.DAMAGED, "${folder.prefix}${item.entry} over its cap")
                 if (!RecipeArchiveReader.isOfKind(head, size, item.kind)) {
                     throw RefusedFile(Refusal.DAMAGED, "${folder.prefix}${item.entry} is no ${item.kind}")
@@ -121,6 +135,7 @@ object CollectionArchiveReader {
         }.toMap()
         if (wanted.isEmpty()) return
         val read = HashSet<String>()
+        var written = 0L
         RecipeArchiveReader.reading(open, alive) { zip ->
             val first = zip.nextEntry
             if (first?.name != CollectionFile.DOCUMENT) throw RefusedFile(Refusal.DAMAGED, "no document first")
@@ -128,12 +143,16 @@ object CollectionArchiveReader {
             walk(zip, file.document, limits, alive, HashMap(), done = { read.size == wanted.size }) { name, _, budget ->
                 val (place, item) = wanted[name] ?: return@walk RecipeArchiveReader.drain(zip, budget, alive)
                 if (!read.add(name)) throw RefusedFile(Refusal.DAMAGED, "$name given twice")
+                // The media together are held to their cap as they are written, whatever each item's own cap.
+                val left = limits.media - written
+                if (left <= 0) throw RefusedFile(Refusal.DAMAGED, "the media over their cap")
                 val head = ByteArray(RecipeArchiveReader.HEAD)
-                val written = target(place, item).outputStream().buffered().use { out ->
-                    RecipeArchiveReader.copy(zip, RecipeArchiveReader.HeadKeeper(out, head), minOf(limits.recipe.of(item.kind), budget), alive)
+                val size = target(place, item).outputStream().buffered().use { out ->
+                    RecipeArchiveReader.copy(zip, RecipeArchiveReader.HeadKeeper(out, head), minOf(limits.recipe.of(item.kind), budget, left), alive)
                 }
-                if (!RecipeArchiveReader.isOfKind(head, written, item.kind)) throw RefusedFile(Refusal.DAMAGED, "$name is no ${item.kind}")
-                written
+                written += size
+                if (!RecipeArchiveReader.isOfKind(head, size, item.kind)) throw RefusedFile(Refusal.DAMAGED, "$name is no ${item.kind}")
+                size
             }
         }
         val missing = wanted.keys - read
@@ -210,9 +229,45 @@ object CollectionArchiveReader {
         return RecipeArchiveReader.utf8(bytes.toByteArray())
     }
 
-    /** What the first reading found in a recipe's folder: its entries' names, what its document states, and each other entry's head. */
+    private const val DOCUMENTS = "the recipes' documents over their cap"
+
+    /** What a kept media entry costs beside its name's characters and its head: its map's node, its pair, its size. */
+    private const val ENTRY = 96L
+
+    /**
+     * A measure, in bytes, of what [content] holds once decoded — on the heap, not in its text: each object counted at
+     * [OBJECT], each text at two bytes a character beyond its own, each tag at [TAG] (a boxed number in an ordered set),
+     * each number of a quantity at [NUMBER]. It is a bound to count against a cap, not an exact size.
+     */
+    internal fun held(content: RecipeFileContent): Long {
+        fun text(value: String?): Long = if (value == null) 0L else OBJECT + 2L * value.length
+        fun number(value: Rational?): Long =
+            if (value == null) 0L else OBJECT + 2 * NUMBER + (value.numerator.bitLength() + value.denominator.bitLength()) / 8L
+        var total = 4 * OBJECT + text(content.id.value) + text(content.title) + text(content.description) + text(content.author)
+        content.parent?.let { total += OBJECT + text(it.id.value) + text(it.title) + text(it.nickname) }
+        total += content.tags.size * TAG
+        content.equipment.forEach { total += OBJECT + text(it.qualifier) + text(it.freeTextName) }
+        content.equipmentLabels.values.forEach { total += TAG + OBJECT + text(it.ru) + text(it.en) }
+        content.ingredients.forEach {
+            total += 2 * OBJECT + text(it.qualifier) + text(it.freeTextName) + text(it.enteredQuantity) + text(it.note) +
+                number(it.quantity) + number(it.pieceWeight)
+        }
+        content.ingredientGroups.forEach { total += OBJECT + text(it.name) }
+        content.steps.forEach { step ->
+            total += 3 * OBJECT + text(step.text) + text(step.note)
+            step.ingredientReferences.forEach { total += OBJECT + (it.share?.let { share -> OBJECT + number(share.amount) } ?: 0L) }
+            step.timers.forEach { total += OBJECT + text(it.label) }
+        }
+        content.media.forEach { total += 2 * OBJECT + text(it.mediaId) + text(it.entry) }
+        return total
+    }
+
+    private const val OBJECT = 32L
+    private const val TAG = 72L
+    private const val NUMBER = 48L
+
+    /** What the first reading found in a recipe's folder: what its document states, and each media entry's head and size. */
     private class Folder(val prefix: String) {
-        val names = mutableListOf<String>()
         var content: RecipeFileContent? = null
         val heads = HashMap<String, Pair<ByteArray, Long>>()
         var entries = 0

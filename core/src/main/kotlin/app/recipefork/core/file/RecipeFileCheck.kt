@@ -33,6 +33,12 @@ object RecipeFileCheck {
     const val MAX_EQUIPMENT = RecipeBounds.MAX_EQUIPMENT
     const val MAX_EQUIPMENT_NAME = RecipeBounds.MAX_EQUIPMENT_NAME
 
+    /**
+     * The tags one recipe of a file carries: well above the whole dictionary's (293 in its snapshot), which is the most
+     * the editor can give one, and a bound on what a file's document makes an importer hold.
+     */
+    const val MAX_TAGS = 1_000
+
     /** From 1 minute to 99 h 59 min (FLOW-027). */
     private val TIMER_MINUTES = 1L..(99L * 60 + 59)
 
@@ -55,6 +61,7 @@ object RecipeFileCheck {
         check(content.ingredients.size <= MAX_INGREDIENTS) { "more than $MAX_INGREDIENTS ingredients" }
         check(content.steps.size <= MAX_STEPS) { "more than $MAX_STEPS steps" }
         check(content.servings == null || content.servings >= 1) { "a serving count below one" }
+        check(content.tags.size <= MAX_TAGS) { "more than $MAX_TAGS tags" }
         check(content.tags.all { it >= 0 }) { "a tag that is none" }
         content.author?.let { check(it.isNotBlank() && it.length <= MAX_NICKNAME) { "the author's nickname is not one" } }
         content.parent?.let { parent ->
@@ -81,6 +88,9 @@ object RecipeFileCheck {
             val shown = if (labels != null) listOf(item.shown(labels.ru), item.shown(labels.en)) else listOf(item.shown(null))
             check(shown.all { it.length <= MAX_EQUIPMENT_NAME }) { "$at is over $MAX_EQUIPMENT_NAME characters" }
         }
+        // Labels are given for the entries the equipment names, and for no other.
+        val named = content.equipment.mapNotNullTo(HashSet()) { it.dictionaryEntry }
+        check(content.equipmentLabels.keys.all { it in named }) { "labels of an entry the equipment does not name" }
         content.equipmentLabels.forEach { (id, labels) ->
             check(listOf(labels.ru, labels.en).all { it.isNotBlank() && it == it.trim() && it.length <= MAX_EQUIPMENT_NAME }) {
                 "the labels of equipment entry $id are not labels"

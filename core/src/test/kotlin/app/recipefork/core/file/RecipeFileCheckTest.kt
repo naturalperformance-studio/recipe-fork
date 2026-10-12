@@ -284,28 +284,28 @@ class RecipeFileCheckTest {
     fun theEquipment() {
         val fifteen = (1..15).map { EquipmentItem.free("Item $it".padEnd(40, 'x')) }
         assertEquals(emptyList(), RecipeFileCheck.problems(valid))
-        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = fifteen)))
-        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf(free("P")))))
-        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = emptyList())))
-        refusedFor("more than 15 items of equipment", valid.copy(equipment = fifteen + free("Item 16")))
-        refusedFor("equipment 1 is over 40", valid.copy(equipment = listOf(free("Pot"), free("p".repeat(41)))))
-        refusedFor("equipment 0 is blank", valid.copy(equipment = listOf(free(""))))
-        refusedFor("equipment 1 is blank", valid.copy(equipment = listOf(free("Pot"), free("   "))))
-        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(free(" Pot"))))
-        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(free("Pot "))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(unlabelled.copy(equipment = fifteen)))
+        assertEquals(emptyList(), RecipeFileCheck.problems(unlabelled.copy(equipment = listOf(free("P")))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(unlabelled.copy(equipment = emptyList())))
+        refusedFor("more than 15 items of equipment", unlabelled.copy(equipment = fifteen + free("Item 16")))
+        refusedFor("equipment 1 is over 40", unlabelled.copy(equipment = listOf(free("Pot"), free("p".repeat(41)))))
+        refusedFor("equipment 0 is blank", unlabelled.copy(equipment = listOf(free(""))))
+        refusedFor("equipment 1 is blank", unlabelled.copy(equipment = listOf(free("Pot"), free("   "))))
+        refusedFor("equipment 0 is blank or untrimmed", unlabelled.copy(equipment = listOf(free(" Pot"))))
+        refusedFor("equipment 0 is blank or untrimmed", unlabelled.copy(equipment = listOf(free("Pot "))))
     }
 
     // An item is named as an ingredient is (DOM-009): an entry, which a qualifier may narrow, or free text — exactly one.
     @Test
     fun anItemIsAnEntryOrFreeTextNeverBoth() {
-        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf(EquipmentItem.entry(10001)))))
-        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = listOf(EquipmentItem.entry(10001, "26 cm")))))
-        refusedFor("equipment 0 is named by both", valid.copy(equipment = listOf(EquipmentItem(10001, null, "Pan"))))
-        refusedFor("equipment 0 is named by both an entry and free text, or by neither", valid.copy(equipment = listOf(EquipmentItem(null, null, null))))
-        refusedFor("equipment 0 qualifies no entry", valid.copy(equipment = listOf(EquipmentItem(null, "26 cm", "Pan"))))
-        refusedFor("equipment 0 names an entry that is none", valid.copy(equipment = listOf(EquipmentItem.entry(-1))))
-        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(EquipmentItem(10001, " ", null))))
-        refusedFor("equipment 0 is blank or untrimmed", valid.copy(equipment = listOf(EquipmentItem(10001, "26 cm ", null))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(unlabelled.copy(equipment = listOf(EquipmentItem.entry(10001)))))
+        assertEquals(emptyList(), RecipeFileCheck.problems(unlabelled.copy(equipment = listOf(EquipmentItem.entry(10001, "26 cm")))))
+        refusedFor("equipment 0 is named by both", unlabelled.copy(equipment = listOf(EquipmentItem(10001, null, "Pan"))))
+        refusedFor("equipment 0 is named by both an entry and free text, or by neither", unlabelled.copy(equipment = listOf(EquipmentItem(null, null, null))))
+        refusedFor("equipment 0 qualifies no entry", unlabelled.copy(equipment = listOf(EquipmentItem(null, "26 cm", "Pan"))))
+        refusedFor("equipment 0 names an entry that is none", unlabelled.copy(equipment = listOf(EquipmentItem.entry(-1))))
+        refusedFor("equipment 0 is blank or untrimmed", unlabelled.copy(equipment = listOf(EquipmentItem(10001, " ", null))))
+        refusedFor("equipment 0 is blank or untrimmed", unlabelled.copy(equipment = listOf(EquipmentItem(10001, "26 cm ", null))))
     }
 
     // An entry's item reads as its label with its qualifier, and is held to forty characters in either language where
@@ -322,6 +322,31 @@ class RecipeFileCheckTest {
         refusedFor("labels of equipment entry 10001 are not labels", valid.copy(equipmentLabels = mapOf(10001L to EntryLabels("", "Frying pan"))))
         refusedFor("labels of equipment entry 10001 are not labels", valid.copy(equipmentLabels = mapOf(10001L to EntryLabels("Сковорода", " Frying pan"))))
     }
+
+    // Labels are given for the entries the equipment names and no other: a file cannot make an importer hold labels of
+    // entries beyond its fifteen items.
+    @Test
+    fun labelsBeyondTheEquipmentAreRefused() {
+        val knife = 10002L to EntryLabels("Нож", "Knife")
+        refusedFor("labels of an entry the equipment does not name", valid.copy(equipmentLabels = valid.equipmentLabels + knife))
+        val many = (20_000L until 25_000L).associateWith { EntryLabels("Нож $it", "Knife $it") }
+        refusedFor("labels of an entry the equipment does not name", valid.copy(equipmentLabels = valid.equipmentLabels + many))
+        // Labels of an entry an item names, and of none when no item names one.
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(equipment = valid.equipment + EquipmentItem.entry(10002), equipmentLabels = valid.equipmentLabels + knife)))
+        refusedFor("labels of an entry the equipment does not name", valid.copy(equipment = listOf(free("Pot"))))
+    }
+
+    // A recipe carries at most a thousand tags — well above the whole dictionary's, which is the most the editor gives
+    // one; many distinct tags, each held as a number of its own, are refused.
+    @Test
+    fun theTagsAreHeldToTheirCap() {
+        assertEquals(1_000, RecipeFileCheck.MAX_TAGS)
+        assertEquals(emptyList(), RecipeFileCheck.problems(valid.copy(tags = (0L until 1_000L).toSet())))
+        refusedFor("more than 1000 tags", valid.copy(tags = (0L until 1_001L).toSet()))
+        refusedFor("more than 1000 tags", valid.copy(tags = (0L until 128_000L).toSet()))
+    }
+
+    private val unlabelled = valid.copy(equipmentLabels = emptyMap())
 
     private fun free(text: String) = EquipmentItem.free(text)
 }
