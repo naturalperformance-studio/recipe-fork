@@ -8,6 +8,8 @@
     <string name="collection_sheet_create">Создать</string>
     <string name="collection_sheet_empty">Коллекций пока нет</string>
     <string name="collection_sheet_in_none">Ни в одной коллекции</string>
+    <string name="collection_sheet_change_failed">Не удалось изменить коллекцию</string>
+    <string name="collection_sheet_create_failed">Не удалось создать коллекцию</string>
     <plurals name="collection_sheet_in">
         <item quantity="one">В %d коллекции</item>
         <item quantity="few">В %d коллекциях</item>
