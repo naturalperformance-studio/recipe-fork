@@ -14,6 +14,17 @@
     <string name="collection_menu_action">Показать другие действия с коллекцией</string>
     <string name="collection_rename">Переименовать</string>
     <string name="collection_delete">Удалить коллекцию</string>
+    <string name="collection_add_all_to_shopping">Добавить все в список покупок</string>
+    <plurals name="collection_added_to_shopping">
+        <item quantity="one">Добавлен %d рецепт</item>
+        <item quantity="few">Добавлено %d рецепта</item>
+        <item quantity="many">Добавлено %d рецептов</item>
+        <item quantity="other">Добавлено %d рецепта</item>
+    </plurals>
+    <string name="collection_all_in_shopping">Все эти рецепты уже в списке покупок</string>
+    <string name="collection_shopping_unread">Не удалось прочитать рецепты, ничего не добавлено</string>
+    <string name="collection_shopping_open">Открыть</string>
+    <string name="collection_shopping_back_action">Вернуться к коллекции</string>
     <string name="collection_rename_title">Переименовать коллекцию</string>
     <string name="collection_name">Название</string>
     <string name="collection_rename_confirm">Переименовать</string>
