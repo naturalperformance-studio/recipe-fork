@@ -24,14 +24,14 @@ import java.util.zip.ZipOutputStream
 
 /**
  * Saves the whole of a book to a file ([BookFile]): its database, its media directory as it is, and My kitchen. The file
- * is built in [workDirectory], a directory of the application's own cleared before and after every write, and only
+ * is built in a directory of the application's own under [workRoot], one for each write, deleted when it ends, and only
  * once it is whole is it copied to where the person chose; a write cancelled or failed before then has written nothing
  * there.
  */
 class BookFileWriter(
     context: Context,
     private val filesDirectory: File = context.filesDir,
-    private val workDirectory: File = File(context.cacheDir, "saving-book"),
+    private val workRoot: File = File(context.cacheDir, "saving-book"),
     private val appVersion: String = BuildConfig.VERSION_NAME,
     private val clock: () -> Instant = Instant::now,
 ) {
@@ -49,14 +49,11 @@ class BookFileWriter(
         progress: (done: Long, total: Long) -> Unit = { _, _ -> },
     ): BookManifest = withContext(Dispatchers.IO) {
         val job = coroutineContext.job
-        workDirectory.deleteRecursively()
-        if (!workDirectory.mkdirs()) throw IOException("cannot make $workDirectory")
+        val workDirectory = Workspaces.take(workRoot)
         try {
             val copy = File(workDirectory, BookFile.DATABASE)
-            snapshot(book, copy, job)
+            val media = snapshot(book, copy, job)
             val recipes = fold(copy)
-            val media = RecipeImport.mediaDirectory(filesDirectory, book.name).listFiles().orEmpty()
-                .filter { it.isFile && BookFile.isMediaName(it.name) }.sortedBy { it.name }
             val kitchenBytes = KitchenJson.encode(kitchen).toByteArray(Charsets.UTF_8)
             val manifest = BookManifest(appVersion = appVersion, savedAt = clock(), recipes = recipes, media = media.size)
             val inputs = (copy.length() + media.sumOf { it.length() } + kitchenBytes.size).coerceAtLeast(1)
@@ -96,7 +93,7 @@ class BookFileWriter(
             progress(total, total)
             manifest
         } finally {
-            withContext(NonCancellable) { workDirectory.deleteRecursively() }
+            withContext(NonCancellable) { Workspaces.release(workDirectory) }
         }
     }
 
@@ -105,14 +102,17 @@ class BookFileWriter(
      * while it lasts nothing writes to the book, and so neither file changes, while its recipes are still read. The
      * transaction writes nothing and rolls back if the copy fails. SQLite runs no checkpoint on a connection inside a
      * transaction, and API 29 has neither a read-only transaction nor `VACUUM INTO`, so the log is folded into the copy
-     * afterwards ([fold]), not into the book.
+     * afterwards ([fold]), not into the book. Returns the book's media files as they stand in that same moment, so the
+     * file carries every one the copy names; their bytes are read afterwards.
      */
-    private suspend fun snapshot(book: ActiveBook.Open, copy: File, job: Job) {
+    private suspend fun snapshot(book: ActiveBook.Open, copy: File, job: Job): List<File> {
         val path = book.database.openHelper.writableDatabase.path ?: throw IOException("the book is held in memory")
-        book.database.withTransaction {
+        return book.database.withTransaction {
             File(path).inputStream().use { input -> copy.outputStream().use { pump(input, it, job) } }
             val log = File("$path-wal")
             if (log.isFile) log.inputStream().use { input -> File("${copy.path}-wal").outputStream().use { pump(input, it, job) } }
+            RecipeImport.mediaDirectory(filesDirectory, book.name).listFiles().orEmpty()
+                .filter { it.isFile && BookFile.isMediaName(it.name) }.sortedBy { it.name }
         }
     }
 

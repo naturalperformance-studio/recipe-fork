@@ -1,6 +1,7 @@
 package app.recipefork.app.backup
 
 import android.content.Context
+import android.database.sqlite.SQLiteFullException
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.dictionary.DictionaryEntry
 import app.recipefork.app.kitchen.KitchenJson
@@ -19,7 +20,6 @@ import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.UUID
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 
@@ -77,20 +77,28 @@ class BookFileReader(
     }
 
     private suspend fun opening(input: InputStream, progress: (Long) -> Unit, job: Job): BookFileOpening {
-        val target = unpackDirectory()
+        var target: File? = null
         var database: BookDatabase? = null
         return try {
-            val unpacked = unpack(Counted(input, job, progress), target, job)
-            database = BookDatabase.open(context, File(target, BookFile.DATABASE), equipment)
+            val unpacked = input.use {
+                val into = Workspaces.take(directory).also { target = it }
+                unpack(Counted(input, job, progress), into, job)
+            }
+            val unpackedInto = target!!
+            val file = File(unpackedInto, BookFile.DATABASE)
+            // A file that is no SQLite database would be deleted by Android's corruption handler and opened empty.
+            if (!isSqlite(file)) throw RefusedBookFile.damaged("the database is no SQLite file")
+            database = BookDatabase.open(context, file, equipment)
             val recipes = try {
                 database.recipes().count()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                if (generateSequence<Throwable>(e) { it.cause }.any { it is SQLiteFullException }) throw IOException("the device is full", e)
                 throw RefusedBookFile.damaged("the database does not open", e)
             }
             if (recipes != unpacked.manifest.recipes) throw RefusedBookFile.damaged("$recipes recipes, not ${unpacked.manifest.recipes}")
-            BookFileOpening.Opened(OpenedBookFile(unpacked.manifest, database, File(target, MEDIA), unpacked.kitchen, target))
+            BookFileOpening.Opened(OpenedBookFile(unpacked.manifest, database, File(unpackedInto, MEDIA), unpacked.kitchen, unpackedInto))
         } catch (e: RefusedBookFile) {
             discard(database, target)
             BookFileOpening.Refused(e.refusal)
@@ -152,17 +160,18 @@ class BookFileReader(
         return Unpacked(manifest, kitchen ?: throw RefusedBookFile.damaged("no kitchen"))
     }
 
+    /** Whether [file] begins as every SQLite database does. */
+    private fun isSqlite(file: File): Boolean {
+        val head = ByteArray(SQLITE_HEADER.size)
+        var read = 0
+        file.inputStream().use { input ->
+            while (read < head.size) read += input.read(head, read, head.size - read).takeIf { it >= 0 } ?: break
+        }
+        return read == head.size && head.contentEquals(SQLITE_HEADER)
+    }
+
     private fun text(zip: InputStream, cap: Long, job: Job): String =
         ByteArrayOutputStream().also { pump(zip, it, job, cap) }.toByteArray().toString(Charsets.UTF_8)
-
-    /** A new directory to unpack into; those of opens no longer in use — left by a process since ended — go first. */
-    private fun unpackDirectory(): File = synchronized(inUse) {
-        directory.listFiles().orEmpty().filter { it !in inUse }.forEach { it.deleteRecursively() }
-        File(directory, UUID.randomUUID().toString()).also {
-            if (!it.mkdirs()) throw IOException("cannot make $it")
-            inUse += it
-        }
-    }
 
     /** [input], telling [progress] how much has been read and stopping when [job] is cancelled. */
     private class Counted(input: InputStream, private val job: Job, private val progress: (Long) -> Unit) : FilterInputStream(input) {
@@ -198,13 +207,11 @@ class BookFileReader(
         private const val MEDIA_CAP = 256L * 1024 * 1024
         private const val MAX_ENTRIES = 200_000
 
-        /** The directories unpacked into that an open still uses, in this process. */
-        private val inUse = HashSet<File>()
+        private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
 
-        fun discard(database: BookDatabase?, directory: File) {
+        fun discard(database: BookDatabase?, directory: File?) {
             database?.close()
-            directory.deleteRecursively()
-            synchronized(inUse) { inUse -= directory }
+            directory?.let(Workspaces::release)
         }
     }
 }

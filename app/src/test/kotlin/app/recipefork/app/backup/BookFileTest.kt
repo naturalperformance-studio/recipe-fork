@@ -199,6 +199,55 @@ class BookFileTest {
         assertNothingUnpacked()
     }
 
+    // The manifest is judged before anything else is read: a newer one refuses the file as newer, whatever follows it —
+    // here a database that is no database and no kitchen, which would refuse it as damaged — and the rest is never read.
+    @Test
+    fun theManifestIsJudgedBeforeAnythingElse() = runBlocking {
+        val laterFormat = version7Manifest.encode().replace("\"format\":1", "\"format\":2")
+        val file = version7File(manifestText = laterFormat, kitchen = null, database = kotlin.random.Random(7).nextBytes(1_000_000))
+        var read = 0L
+        assertEquals(refused(BookFileRefusal.NEWER), BookFileReader(context).open(ByteArrayInputStream(file)) { read = it })
+        assertTrue("read $read of ${file.size}", read < file.size / 2)
+        assertNothingUnpacked()
+    }
+
+    // A database that is no SQLite file is refused, not opened as an empty book, even where the manifest counts none.
+    @Test
+    fun aDatabaseThatIsNoSqliteFileIsRefusedAsDamaged() {
+        val file = version7File(manifest = version7Manifest.copy(recipes = 0), database = "SQLite format 2 and nothing more".toByteArray())
+        assertEquals(refused(BookFileRefusal.DAMAGED), open(file))
+        assertEquals(refused(BookFileRefusal.DAMAGED), open(version7File(manifest = version7Manifest.copy(recipes = 0), database = ByteArray(0))))
+        assertNothingUnpacked()
+    }
+
+    // With no directory to unpack into, the file cannot be read; it is closed all the same.
+    @Test
+    fun withNowhereToUnpackTheFileCannotBeRead() = runBlocking {
+        val blocked = File(context.cacheDir, "blocked").apply { writeText("a file where the directory should be") }
+        var closed = false
+        val input = object : ByteArrayInputStream(version7File()) {
+            override fun close() {
+                closed = true
+                super.close()
+            }
+        }
+        assertEquals(refused(BookFileRefusal.CANNOT_READ), BookFileReader(context, directory = blocked).open(input))
+        assertTrue(closed)
+        assertTrue(blocked.delete())
+    }
+
+    // Two saves at once each build their file apart: both come out whole.
+    @Test
+    fun twoSavesAtOnceAreBothWhole() = runBlocking {
+        fill()
+        var inner: ByteArray? = null
+        val (_, outer) = save { _, _ -> if (inner == null) inner = save().second }
+        listOf(outer, inner!!).forEach { file ->
+            (open(file) as BookFileOpening.Opened).book.use { assertEquals(3, it.database.recipes().count()) }
+        }
+        assertNothingUnpacked()
+    }
+
     // A cancelled save leaves the place chosen untouched and nothing of its work behind.
     @Test
     fun aCancelledSaveWritesNothing() = runBlocking {
@@ -210,7 +259,7 @@ class BookFileTest {
         saving.join()
         assertTrue(saving.isCancelled)
         assertEquals(0, out.size())
-        assertFalse(File(context.cacheDir, "saving-book").exists())
+        assertEquals(emptyList<String>(), File(context.cacheDir, "saving-book").list()?.toList().orEmpty())
     }
 
     @Test
@@ -228,13 +277,14 @@ class BookFileTest {
 
     /**
      * A saved book of schema 7, written by hand: one own recipe of two steps with a photograph, and [kitchen]; [extra]
-     * entries follow the rest.
+     * entries follow the rest. [database] stands in for the book's database where given.
      */
     private fun version7File(
         extra: List<Pair<String, ByteArray>> = emptyList(),
         manifest: BookManifest = version7Manifest,
         manifestText: String = manifest.encode(),
         kitchen: Set<Long>? = this.kitchen,
+        database: ByteArray? = null,
     ): ByteArray {
         val file = File(context.cacheDir, "version-7.db").apply { delete() }
         SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
@@ -250,7 +300,7 @@ class BookFileTest {
         }
         val entries = listOfNotNull(
             BookFile.MANIFEST to manifestText.toByteArray(),
-            BookFile.DATABASE to file.readBytes(),
+            BookFile.DATABASE to (database ?: file.readBytes()),
             BookFile.MEDIA + "m7" to jpeg(),
             kitchen?.let { BookFile.KITCHEN to KitchenJson.encode(it).toByteArray() },
         ) + extra
