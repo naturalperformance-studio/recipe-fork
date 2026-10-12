@@ -104,6 +104,10 @@ import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.DoneMarks
 import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.rememberCardEnvironment
+import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.book.CollectionRow
+import app.recipefork.app.collections.CollectionRepository
+import app.recipefork.app.collections.CollectionsRow
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.dictionary.label
 import app.recipefork.app.editor.BlockAction
@@ -131,6 +135,7 @@ import app.recipefork.app.ui.FittedText
 import app.recipefork.app.ui.FittedWords
 import app.recipefork.app.ui.fitWordsTogether
 import app.recipefork.app.ui.widestWord
+import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
@@ -182,6 +187,7 @@ fun LibraryScreen(
     kitchen: KitchenEnvironment = rememberKitchenEnvironment(),
     onOpenSettings: () -> Unit = {},
     onOpenShopping: () -> Unit = {},
+    collections: CollectionRepository = rememberBookCollections(),
 ) {
     val view by session.view.collectAsState()
     val bookKitchen = rememberBookKitchen(kitchen)
@@ -207,6 +213,7 @@ fun LibraryScreen(
     val snackbars = remember { SnackbarHostState() }
     val notice = rememberFileNotice(session, snackbars)
     RemovalNotice(session, snackbars)
+    CollectionDeletionNotice(session, collections, snackbars)
     val work by session.work.collectAsState()
     // The height of the view's action, in pixels: the tallest it has been laid out.
     var actionHeight by remember { mutableIntStateOf(0) }
@@ -298,10 +305,12 @@ fun LibraryScreen(
                 LibraryView.MARKED -> MarkedList(
                     recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags, bookKitchen,
                     markedList, bottom, import, notice, onOffer = { offers[LibraryView.MARKED] = it },
+                    collections = rememberListed(collections, CollectionOrigin.IMPORTED),
                 )
                 LibraryView.OWN -> OwnList(
                     recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients, bookKitchen,
                     ownList, bottom, notice, write, onOffer = { offers[LibraryView.OWN] = it },
+                    collections = rememberListed(collections, CollectionOrigin.OWN),
                 )
             }
         }
@@ -348,7 +357,7 @@ private fun rememberFileNotice(session: LibrarySession, snackbars: SnackbarHostS
  * swiped away either way, read by the screen reader as it comes (the host's live region).
  */
 @Composable
-private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
+internal fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
     SnackbarHost(snackbars, Modifier.imePadding().testTag(LibraryTags.SNACKBAR)) { data ->
         val swipe = rememberSwipeToDismissBoxState()
         // Only the snackbar itself is swiped: the margin around it lets a tap through to the list beneath.
@@ -370,7 +379,7 @@ private fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
  * said again. An Undo the book could not take back is said to have failed.
  */
 @Composable
-private fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState) {
+internal fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState) {
     val removal by session.removal.collectAsState()
     val said = removal?.let { taken ->
         val title = taken.title.trim()
@@ -396,12 +405,52 @@ private fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState)
     }
 }
 
-/** Brings [list] to the entry of [recipeId] once, when [rows] list it; nothing when they do not. */
+/**
+ * Says that a collection was deleted from its screen — "Collection “New Year's menu” deleted" — with Undo, for as long
+ * as the session offers to undo it (v0.36). Undo puts the collection back with its name and order, and the recipes
+ * of it the book still holds; the notice gone without it leaves it deleted. Its recipes stay in the book either way.
+ */
 @Composable
-private fun RevealOnNotice(recipeId: String?, rows: List<String>?, list: LazyListState) {
-    val at = if (recipeId == null) -1 else rows?.indexOf(recipeId) ?: -1
-    LaunchedEffect(recipeId, at >= 0) { if (at >= 0) list.animateScrollToItem(at) }
+private fun CollectionDeletionNotice(session: LibrarySession, collections: CollectionRepository, snackbars: SnackbarHostState) {
+    val deleted by session.collectionDeletion.collectAsState()
+    val said = deleted?.let { stringResource(R.string.collection_deleted, it.name) }
+    val undo = stringResource(R.string.collection_undo)
+    LaunchedEffect(deleted) {
+        val shown = deleted ?: return@LaunchedEffect
+        val result = snackbars.showSnackbar(said.orEmpty(), actionLabel = undo, duration = SnackbarDuration.Long)
+        // Put back where the session's work runs, which outlives the book's screen.
+        if (session.endCollectionDeletion(shown) && result == SnackbarResult.ActionPerformed) {
+            session.viewModelScope.launch { collections.restore(shown) }
+        }
+    }
 }
+
+/** The collections of [origin] the book holds, as they change; none until they are read. */
+@Composable
+private fun rememberListed(collections: CollectionRepository, origin: CollectionOrigin): List<CollectionRow> {
+    val listed by remember(collections, origin) { collections.listed(origin) }.collectAsState(initial = emptyList())
+    return listed
+}
+
+/** The collections of the active book, from the composition root (v0.36). */
+@Composable
+internal fun rememberBookCollections(): CollectionRepository {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { (context as RecipeForkApplication).container.collections }
+}
+
+/**
+ * Brings [list] to the entry of [recipeId] once, when [rows] list it; nothing when they do not. [before] items stand
+ * above the rows in the list — the row of collections.
+ */
+@Composable
+private fun RevealOnNotice(recipeId: String?, rows: List<String>?, list: LazyListState, before: Int = 0) {
+    val at = if (recipeId == null) -1 else rows?.indexOf(recipeId) ?: -1
+    LaunchedEffect(recipeId, at >= 0) { if (at >= 0) list.animateScrollToItem(at + before) }
+}
+
+/** The key of the row of collections among a list's items: no recipe's identity is it. */
+private const val COLLECTIONS_KEY = "collections"
 
 /** The views in the order of their tabs and pages: a view's page is its ordinal. */
 private val VIEWS = LibraryView.entries
@@ -539,7 +588,7 @@ private fun FloatingAction(
  * [LOADING_DELAY_MS], a progress indicator, so that a list read quickly shows no flash of it.
  */
 @Composable
-private fun ListLoading(modifier: Modifier = Modifier) {
+internal fun ListLoading(modifier: Modifier = Modifier) {
     var showing by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(LOADING_DELAY_MS)
@@ -574,6 +623,7 @@ private fun OwnList(
     reveal: String?,
     onWrite: () -> Unit,
     onOffer: (Boolean) -> Unit,
+    collections: List<CollectionRow> = emptyList(),
 ) {
     val search = rememberSearchField(LibraryView.OWN, session)
     val params = rememberListingParams(LibraryView.OWN, session)
@@ -590,11 +640,13 @@ private fun OwnList(
     var limit by rememberSaveable(query, order, filters) { mutableIntStateOf(OWN_PAGE) }
     val found = listed?.rows
     val loaded = found?.take(limit)
+    // The collections stand above the recipes while the view is not narrowed by a search or a filter (v0.36).
+    val above = if (listed?.narrowed == false && collections.isNotEmpty()) 1 else 0
     ScrollToTopOnChange(listed?.params, listState)
-    RevealOnNotice(reveal, loaded?.map { it.recipeId }, listState)
+    RevealOnNotice(reveal, loaded?.map { it.recipeId }, listState, above)
     // Near the end of what is shown, the next recipes are shown (FLOW-041 (5)).
-    LaunchedEffect(listState, loaded?.size, limit) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+    LaunchedEffect(listState, loaded?.size, limit, above) {
+        snapshotFlow { (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1) - above }
             .distinctUntilChanged()
             .collect { last ->
                 val size = loaded?.size ?: return@collect
@@ -607,7 +659,11 @@ private fun OwnList(
     val offered = shown != null && !(shown.viewIsEmpty && !shown.narrowed)
     SideEffect { onOffer(offered) }
     if (shown != null && shown.viewIsEmpty && !shown.narrowed) {
-        NothingWritten(onWrite, Modifier.padding(bottom = bottom))
+        // A book with no recipe written in it may still hold collections of found ones: they stand above.
+        Column(Modifier.fillMaxSize()) {
+            CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP))
+            NothingWritten(onWrite, Modifier.padding(bottom = bottom))
+        }
         return
     }
     Box(Modifier.fillMaxSize()) {
@@ -637,6 +693,7 @@ private fun OwnList(
                 verticalArrangement = Arrangement.spacedBy(ENTRY_GAP),
                 modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST),
             ) {
+                if (above > 0) item(key = COLLECTIONS_KEY) { CollectionsRow(collections, session::openCollection) }
                 items(loaded.orEmpty(), key = { it.recipeId }) { row ->
                     OwnEntry(
                         row,
@@ -723,10 +780,11 @@ private fun OwnEntry(
 /**
  * An entry of the book as a card: its cover across the card's width in the 4:3 frame, when it has one, and beneath
  * it the entry's [lines], the first of them its title. When there are any [actions], their menu stands at the end of
- * the title's first line, and the text keeps clear of it. [onOpen], when given, opens the recipe.
+ * the title's first line, and the text keeps clear of it. [onOpen], when given, opens the recipe. [inner] goes on the
+ * card itself, inside its margins, and [wrap] lays its content out — beside a drag column, in a collection's screen.
  */
 @Composable
-private fun EntryCard(
+internal fun EntryCard(
     recipeId: String,
     title: String,
     coverId: String?,
@@ -734,40 +792,44 @@ private fun EntryCard(
     actions: List<EntryAction>,
     onOpen: (() -> Unit)?,
     modifier: Modifier,
+    inner: Modifier = Modifier,
+    wrap: @Composable (content: @Composable () -> Unit) -> Unit = { it() },
     lines: @Composable ColumnScope.() -> Unit,
 ) {
     val open = onOpen?.let {
         Modifier.clickable(onClickLabel = stringResource(R.string.library_entry_open_action), role = Role.Button, onClick = it)
     } ?: Modifier
-    Card(modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        Layout(
-            content = {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                        .semantics(mergeDescendants = true) {}
-                        .then(open)
-                        .testTag(LibraryTags.entry(recipeId)),
-                ) {
-                    cover(coverId, LibraryTags.cover(recipeId))
+    Card(modifier.fillMaxWidth().padding(horizontal = 16.dp).then(inner)) {
+        wrap {
+            Layout(
+                content = {
                     Column(
-                        Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = if (actions.isEmpty()) 16.dp else MENU_ROOM),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        content = lines,
-                    )
-                }
-                if (actions.isNotEmpty()) EntryMenu(recipeId, title, actions)
-            },
-        ) { measurables, constraints ->
-            val entry = measurables[0].measure(constraints)
-            val menu = measurables.getOrNull(1)?.measure(Constraints())
-            layout(entry.width, entry.height) {
-                entry.place(0, 0)
-                if (menu != null) {
-                    // Level with the middle of the title's first line, 4 dp from the card's end.
-                    val line = entry[TitleLine].takeIf { it != AlignmentLine.Unspecified } ?: (entry.height / 2)
-                    menu.place(entry.width - menu.width - 4.dp.roundToPx(), line - menu.height / 2)
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .semantics(mergeDescendants = true) {}
+                            .then(open)
+                            .testTag(LibraryTags.entry(recipeId)),
+                    ) {
+                        cover(coverId, LibraryTags.cover(recipeId))
+                        Column(
+                            Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = if (actions.isEmpty()) 16.dp else MENU_ROOM),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            content = lines,
+                        )
+                    }
+                    if (actions.isNotEmpty()) EntryMenu(recipeId, title, actions)
+                },
+            ) { measurables, constraints ->
+                val entry = measurables[0].measure(constraints)
+                val menu = measurables.getOrNull(1)?.measure(Constraints())
+                layout(entry.width, entry.height) {
+                    entry.place(0, 0)
+                    if (menu != null) {
+                        // Level with the middle of the title's first line, 4 dp from the card's end.
+                        val line = entry[TitleLine].takeIf { it != AlignmentLine.Unspecified } ?: (entry.height / 2)
+                        menu.place(entry.width - menu.width - 4.dp.roundToPx(), line - menu.height / 2)
+                    }
                 }
             }
         }
@@ -778,7 +840,7 @@ private fun EntryCard(
 private val MENU_ROOM = 52.dp
 
 /** The space between two entries of a list, and above the first. */
-private val ENTRY_GAP = 12.dp
+internal val ENTRY_GAP = 12.dp
 
 /**
  * The tags a recipe carries, as its entry shows them: one muted line of their labels in the interface language,
@@ -822,7 +884,7 @@ private const val TAG_SEPARATOR = " · "
 
 /** An entry's title, which tells the entry's menu where its first line stands ([TitleLine]). */
 @Composable
-private fun EntryTitle(recipeId: String, title: String) {
+internal fun EntryTitle(recipeId: String, title: String) {
     // The middle of the first line, as the title was last laid out; the text is laid out while it is measured.
     val firstLine = remember { FirstLine() }
     Text(
@@ -849,7 +911,7 @@ private val TitleLine = HorizontalAlignmentLine { a, b -> min(a, b) }
  * One item of an entry's menu: what it reads, its tag, what choosing it does, and whether it takes the recipe out of
  * the book — such an item is drawn in the theme's error colour, as on the card.
  */
-private class EntryAction(@StringRes val label: Int, val tag: String, val destructive: Boolean = false, val onClick: () -> Unit)
+internal class EntryAction(@StringRes val label: Int, val tag: String, val destructive: Boolean = false, val onClick: () -> Unit)
 
 /**
  * The ⋮ of an entry, 48 by 48 dp (A11Y-003), named for the screen reader by the recipe it acts on (A11Y-005), with
@@ -920,11 +982,11 @@ private fun rememberExport(recipes: RecipeRepository, session: LibrarySession): 
 }
 
 /** Shows an entry's cover, given its media identity (null for none) and the picture's tag. */
-private typealias EntryCover = @Composable (mediaId: String?, tag: String) -> Unit
+internal typealias EntryCover = @Composable (mediaId: String?, tag: String) -> Unit
 
 /** The covers of the active book's entries, read from where its media is kept (MEDIA-001). */
 @Composable
-private fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): EntryCover {
+internal fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): EntryCover {
     val book = recipes.bookName()
     val files = recipes.filesDirectory
     return remember(book, files, thumbnails) {
@@ -982,6 +1044,7 @@ private fun MarkedList(
     onImport: () -> Unit,
     reveal: String?,
     onOffer: (Boolean) -> Unit,
+    collections: List<CollectionRow> = emptyList(),
 ) {
     val search = rememberSearchField(LibraryView.MARKED, session)
     val params = rememberListingParams(LibraryView.MARKED, session)
@@ -995,7 +1058,10 @@ private fun MarkedList(
     val tagsOf = rememberEntryTags(choices, listed?.carries)
     ScrollToTopOnChange(listed?.params, listState)
     val marked = listed?.rows
-    RevealOnNotice(reveal, marked?.map { it.recipeId }, listState)
+    // The imported collections stand above the recipes while the view is not narrowed (v0.36); an empty view shows
+    // them above its empty state instead.
+    val above = if (listed?.narrowed == false && listed?.viewIsEmpty == false && collections.isNotEmpty()) 1 else 0
+    RevealOnNotice(reveal, marked?.map { it.recipeId }, listState, above)
     val export = rememberExport(recipes, session)
     val shown = listed
     val empty = shown != null && shown.viewIsEmpty && !shown.narrowed
@@ -1006,6 +1072,8 @@ private fun MarkedList(
             // The empty view's one offer is the view's own action: the import of a recipe file in [Mode.Serverless];
             // in [Mode.Standard] the view has no action, and its empty state none.
             if (empty) {
+                // Imported collections whose recipes were all removed still stand above, to be opened or deleted.
+                CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP))
                 val serverless = mode == Mode.Serverless
                 EmptyState(
                     picture = R.drawable.ic_empty_book,
@@ -1048,6 +1116,7 @@ private fun MarkedList(
                 verticalArrangement = Arrangement.spacedBy(ENTRY_GAP),
                 modifier = Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST),
             ) {
+                if (above > 0) item(key = COLLECTIONS_KEY) { CollectionsRow(collections, session::openCollection) }
                 items(marked.orEmpty(), key = { it.recipeId }) { row ->
                     MarkedEntry(
                         row,

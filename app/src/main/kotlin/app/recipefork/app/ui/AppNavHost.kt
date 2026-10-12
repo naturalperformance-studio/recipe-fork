@@ -35,6 +35,8 @@ import app.recipefork.app.card.HeldForkDialog
 import app.recipefork.app.card.forkRecipe
 import app.recipefork.app.card.forkUnlessHeld
 import app.recipefork.app.card.rememberCardEnvironment
+import app.recipefork.app.collections.CollectionRepository
+import app.recipefork.app.collections.CollectionScreen
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.ThemeSetting
 import app.recipefork.app.data.UnitSystemSetting
@@ -51,6 +53,7 @@ import app.recipefork.app.kitchen.rememberKitchenEnvironment
 import app.recipefork.app.library.CoverThumbnails
 import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
+import app.recipefork.app.library.rememberBookCollections
 import app.recipefork.app.library.rememberCoverThumbnails
 import app.recipefork.app.library.rememberRecipeImport
 import app.recipefork.app.recipe.RecipeRepository
@@ -58,6 +61,7 @@ import app.recipefork.app.settings.SettingsScreen
 import app.recipefork.app.shopping.ShoppingEnvironment
 import app.recipefork.app.shopping.ShoppingScreen
 import app.recipefork.app.shopping.rememberShoppingEnvironment
+import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.RecipeId
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -79,8 +83,14 @@ object Destinations {
     const val CARD_ROUTE = CARD_BASE_ROUTE + "/{" + RECIPE_ID_KEY + "}"
     const val EDITOR_ROUTE = EDITOR_BASE_ROUTE + "/{" + RECIPE_ID_KEY + "}"
 
+    /** The argument a collection's screen carries: the identity of its collection. */
+    const val COLLECTION_ID_KEY = "collectionId"
+    const val COLLECTION_BASE_ROUTE = "collection"
+    const val COLLECTION_ROUTE = COLLECTION_BASE_ROUTE + "/{" + COLLECTION_ID_KEY + "}"
+
     fun card(recipeId: String) = CARD_BASE_ROUTE + "/" + Uri.encode(recipeId)
     fun editor(recipeId: String) = EDITOR_BASE_ROUTE + "/" + Uri.encode(recipeId)
+    fun collection(collectionId: String) = COLLECTION_BASE_ROUTE + "/" + Uri.encode(collectionId)
 }
 
 /**
@@ -91,7 +101,9 @@ object Destinations {
  * from them returns to the book where it was left. My kitchen lies above the settings, opened from them; back from it
  * returns to them. Opened from a recipe's card — at an item of equipment, or to be set up — it lies above that card
  * instead, and back from it returns to the card where it was left; opened from the book's filters, it lies above the
- * book. The shopping list lies above the book, opened from its top bar; back from it returns to the book.
+ * book. The shopping list lies above the book, opened from its top bar; back from it returns to the book. A
+ * collection's screen lies above the book, opened from its row of collections, and the card of a recipe opened from it
+ * above it in turn; back from that card returns to the collection, and back from the collection to the book.
  *
  * What is open is the [session]'s: its saved state says which card and which editor are open (FLOW-024, FLOW-029), and
  * whether the settings are; the back stack follows it. Back taken through the host — a destination left by the system's back — is told to the
@@ -118,6 +130,7 @@ fun AppNavHost(
     kitchen: KitchenEnvironment = rememberKitchenEnvironment(),
     shopping: ShoppingEnvironment = rememberShoppingEnvironment(),
     backup: BookBackup = rememberBookBackup(),
+    collections: CollectionRepository = rememberBookCollections(),
     navController: NavHostController = rememberNavController(),
 ) {
     // A recipe whose leaving could still be undone is final once a Replace runs: an Undo would put it into the
@@ -145,6 +158,16 @@ fun AppNavHost(
                 editor = editor, card = card, files = files, thumbnails = thumbnails, kitchen = kitchen,
                 onOpenSettings = session::openSettings,
                 onOpenShopping = session::openShopping,
+                collections = collections,
+            )
+        }
+        composable(
+            Destinations.COLLECTION_ROUTE,
+            arguments = listOf(navArgument(Destinations.COLLECTION_ID_KEY) { type = NavType.StringType }),
+        ) { entry ->
+            CollectionScreen(
+                CollectionId(requireNotNull(entry.arguments?.getString(Destinations.COLLECTION_ID_KEY))),
+                session, collections, recipes, thumbnails = thumbnails, dragHandleSide = dragHandleSide,
             )
         }
         composable(Destinations.SHOPPING_ROUTE) {
@@ -185,8 +208,9 @@ fun AppNavHost(
     val settings by session.settings.collectAsState()
     val kitchenOpen by session.kitchen.collectAsState()
     val shoppingOpen by session.shopping.collectAsState()
-    LaunchedEffect(sync, viewing, editing, settings, kitchenOpen, shoppingOpen) {
-        sync.show(shownFor(viewing, editing, settings, kitchenOpen, shoppingOpen))
+    val collection by session.collection.collectAsState()
+    LaunchedEffect(sync, viewing, editing, settings, kitchenOpen, shoppingOpen, collection) {
+        sync.show(shownFor(viewing, editing, settings, kitchenOpen, shoppingOpen, collection))
     }
 }
 
@@ -282,6 +306,10 @@ internal sealed interface Shown {
     data object Shopping : Shown {
         override val route = Destinations.SHOPPING_ROUTE
     }
+
+    data class Collection(val collectionId: String) : Shown {
+        override val route get() = Destinations.collection(collectionId)
+    }
 }
 
 /**
@@ -289,7 +317,8 @@ internal sealed interface Shown {
  * editor on it. The editor lies above the card of the recipe it edits — the one leaving it shows. The [settings] lie
  * above the book alone: a card or the editor open is shown in their place. My [kitchen] lies above the settings while
  * they are shown, and otherwise above the card or the book, opened from it, while no editor is open. The [shopping] list
- * lies above the book alone, as the settings do.
+ * lies above the book alone, as the settings do. The [collection] open lies between the book and the card: a card
+ * opened from it lies above it.
  */
 internal fun shownFor(
     viewing: String?,
@@ -297,8 +326,10 @@ internal fun shownFor(
     settings: Boolean = false,
     kitchen: Boolean = false,
     shopping: Boolean = false,
+    collection: String? = null,
 ): List<Shown> = buildList {
     add(Shown.Book)
+    collection?.let { add(Shown.Collection(it)) }
     (editing ?: viewing)?.let { add(Shown.Card(it)) }
     editing?.let { add(Shown.Editor(it)) }
     if (settings && size == 1) {
@@ -320,6 +351,7 @@ internal fun NavController.shown(): List<Shown> = currentBackStack.value.mapNotN
         Destinations.SETTINGS_ROUTE -> Shown.Settings
         Destinations.KITCHEN_ROUTE -> Shown.Kitchen
         Destinations.SHOPPING_ROUTE -> Shown.Shopping
+        Destinations.COLLECTION_ROUTE -> Shown.Collection(requireNotNull(entry.arguments?.getString(Destinations.COLLECTION_ID_KEY)))
         else -> null
     }
 }
@@ -354,6 +386,7 @@ private class BackStackSync(private val nav: NavController, private val session:
         if (now.none { it is Shown.Settings } && session.settings.value) session.closeSettings()
         if (now.none { it is Shown.Kitchen } && session.kitchen.value) session.closeKitchen()
         if (now.none { it is Shown.Shopping } && session.shopping.value) session.closeShopping()
+        if (now.none { it is Shown.Collection } && session.collection.value != null) session.closeCollection()
     }
 }
 

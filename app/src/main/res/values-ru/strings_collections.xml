@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="collections_heading">Коллекции</string>
+    <plurals name="collections_count">
+        <item quantity="one">%d рецепт</item>
+        <item quantity="few">%d рецепта</item>
+        <item quantity="many">%d рецептов</item>
+        <item quantity="other">%d рецепта</item>
+    </plurals>
+    <string name="collections_open_action">Открыть коллекцию</string>
+    <string name="collection_back">Назад</string>
+    <string name="collection_back_action">Вернуться к книге</string>
+    <string name="collection_menu">Другие действия</string>
+    <string name="collection_menu_action">Показать другие действия с коллекцией</string>
+    <string name="collection_rename">Переименовать</string>
+    <string name="collection_delete">Удалить коллекцию</string>
+    <string name="collection_rename_title">Переименовать коллекцию</string>
+    <string name="collection_name">Название</string>
+    <string name="collection_rename_confirm">Переименовать</string>
+    <string name="collection_cancel">Отмена</string>
+    <string name="collection_deleted">Коллекция «%1$s» удалена</string>
+    <string name="collection_undo">Вернуть</string>
+    <string name="collection_move_up">Переместить вверх</string>
+    <string name="collection_move_down">Переместить вниз</string>
+    <string name="collection_remove">Убрать из коллекции</string>
+    <string name="collection_removed">Рецепт «%1$s» убран из коллекции</string>
+    <string name="collection_removed_untitled">Рецепт убран из коллекции</string>
+    <string name="collection_empty">Здесь пока нет рецептов</string>
+    <string name="collection_empty_sentence">Откройте рецепт и выберите «Добавить в коллекцию».</string>
+    <string name="collection_imported_empty">В этой коллекции нет рецептов</string>
+</resources>

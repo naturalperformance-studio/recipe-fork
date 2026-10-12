@@ -52,6 +52,10 @@ import app.recipefork.app.card.FakeClipPlayers
 import app.recipefork.app.card.LocalClipPlayers
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.card.scrollClearOfFork
+import app.recipefork.app.collections.CollectionRepository
+import app.recipefork.app.collections.CollectionScreenTags
+import app.recipefork.app.collections.ImportedCollection
+import app.recipefork.core.recipe.CollectionId
 import app.recipefork.app.data.HeldThemeSetting
 import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.editor.EditorEnvironment
@@ -166,6 +170,7 @@ class PreLaunchSweepTest {
     private val device = TestDevice(context)
     private val active = ActiveBook(BookName.Pool, book.database)
     private val recipes = RecipeRepository(active, context.filesDir)
+    private val collections = CollectionRepository(active)
     private val photos = PhotoStore(context.filesDir)
     private val sessions = ViewModelStore()
     private val session = ViewModelProvider(
@@ -363,6 +368,7 @@ class PreLaunchSweepTest {
                             AppNavHost(
                                 session, recipes, Mode.Serverless,
                                 editor = editor, card = card, themeSetting = theme, kitchen = kitchen, shopping = shopping,
+                                collections = collections,
                             )
                         }
                     }
@@ -375,6 +381,7 @@ class PreLaunchSweepTest {
         theEditor()
         theSettings()
         theShoppingList(cake)
+        theCollections(cake)
         theNotices()
         theCrop()
         assertEquals("screens checked", SCREENS, checked)
@@ -669,6 +676,70 @@ class PreLaunchSweepTest {
         awaitGone(ShoppingTags.SCREEN)
     }
 
+    private fun theCollections(cake: Recipe) {
+        // An own collection of three and an empty one above the own recipes; an imported one, stating its author, above
+        // the imported ones.
+        val vareniki = found("Vareniki", 90)
+        val (menu, salads, annas) = runBlocking {
+            val menu = collections.create("New Year's menu")!!
+            listOf(cake.id, soup.id, vareniki.id).forEach { collections.addTo(it, listOf(menu)) }
+            val salads = collections.create("Salads")!!
+            val annas = CollectionId.mint()
+            assertEquals(ImportedCollection.CREATED, collections.putImported(annas, "Anna's dinners", "anna", listOf(vareniki.id)))
+            Triple(menu, salads, annas)
+        }
+        compose.runOnIdle { session.choose(LibraryView.OWN) }
+        await(CollectionScreenTags.card(menu.value))
+        await(CollectionScreenTags.card(salads.value))
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToIndex(0)
+        checkScreen("the book, own, with collections")
+        compose.runOnIdle { session.choose(LibraryView.MARKED) }
+        await(CollectionScreenTags.card(annas.value))
+        compose.onNodeWithTag(LibraryTags.MARKED_LIST).performScrollToIndex(0)
+        checkScreen("the book, imported, with collections")
+
+        // The own collection: its recipes with their drag columns, its menu, a recipe's menu, a recipe removed with Undo.
+        compose.runOnIdle { session.openCollection(menu.value) }
+        await(LibraryTags.entry(vareniki.id.value))
+        awaitGone(LibraryTags.PAGER)
+        checkScreen("a collection, own")
+        compose.onNodeWithTag(CollectionScreenTags.MENU).performClick()
+        await(CollectionScreenTags.DELETE)
+        checkScreen("a collection, own, its menu")
+        // The rename dialog is left to CollectionScreenTest: a text field in a dialog window never lets Robolectric's
+        // native graphics go idle.
+        compose.onNodeWithTag(CollectionScreenTags.MENU).performClick()
+        awaitGone(CollectionScreenTags.DELETE)
+        compose.onNodeWithTag(LibraryTags.actions(soup.id.value)).performScrollTo().performClick()
+        await(CollectionScreenTags.remove(soup.id.value))
+        checkScreen("a collection, own, a recipe's menu")
+        compose.onNodeWithTag(CollectionScreenTags.remove(soup.id.value)).performClick()
+        compose.waitUntil(PATIENCE_MS) { compose.noticeShown() && !exists(LibraryTags.entry(soup.id.value)) }
+        checkScreen("a collection, own, a recipe removed with Undo")
+        val undo = hasAnyAncestor(hasTestTag(LibraryTags.NOTICE)) and SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
+        compose.onNode(undo, useUnmergedTree = true).performClick()
+        await(LibraryTags.entry(soup.id.value))
+
+        // The empty own collection says how to add a recipe; the imported one names its stated author.
+        compose.runOnIdle { session.openCollection(salads.value) }
+        await(CollectionScreenTags.EMPTY)
+        checkScreen("a collection, own, empty")
+        compose.runOnIdle { session.openCollection(annas.value) }
+        await(CollectionScreenTags.STATED_AUTHOR)
+        await(LibraryTags.entry(vareniki.id.value))
+        checkScreen("a collection, imported")
+
+        // Deleted, the collection's screen closes and the book offers Undo.
+        compose.onNodeWithTag(CollectionScreenTags.MENU).performClick()
+        await(CollectionScreenTags.DELETE)
+        compose.onNodeWithTag(CollectionScreenTags.DELETE).performClick()
+        await(LibraryTags.PAGER)
+        compose.waitUntil(PATIENCE_MS) { compose.noticeShown() && !exists(CollectionScreenTags.SCREEN) }
+        checkScreen("the book, a collection's deletion with Undo")
+        compose.onNode(undo, useUnmergedTree = true).performClick()
+        await(CollectionScreenTags.card(annas.value))
+    }
+
     private fun theNotices() {
         // A recipe deleted from the own view: the book offers Undo while its notice shows.
         compose.runOnIdle { session.choose(LibraryView.OWN) }
@@ -708,7 +779,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 40
+        const val SCREENS = 49
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L

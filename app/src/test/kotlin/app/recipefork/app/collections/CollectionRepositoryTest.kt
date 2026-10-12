@@ -370,4 +370,53 @@ class CollectionRepositoryTest {
     /** The one number [sql] reads from the book. */
     private fun rows(sql: String, vararg args: String): Int =
         database.openHelper.writableDatabase.query(sql, args).use { it.moveToFirst(); it.getInt(0) }
+
+    @Test
+    fun aDeletedCollectionIsPutBackWholeWithTheRecipesTheBookStillHolds() = runBlocking {
+        val soup = own("Soup")
+        val pie = found("Pie", "anna")
+        val bread = own("Bread")
+        val menu = create("New Year's menu")
+        listOf(pie, soup, bread).forEach { collections.addTo(it, listOf(menu)) }
+        val annas = imported("Anna's pies", "anna", listOf(pie, soup))
+        val before = collections.get(menu)!!
+        val annasBefore = collections.get(annas)!!
+
+        assertTrue(collections.delete(menu))
+        assertTrue(collections.delete(annas))
+        // A recipe deleted from the book meanwhile does not come back with it.
+        recipes.delete(bread)
+
+        assertTrue(collections.restore(before))
+        assertTrue(collections.restore(annasBefore))
+        assertEquals(before.copy(recipes = listOf(pie, soup)), collections.get(menu))
+        assertEquals(annasBefore, collections.get(annas))
+        assertEquals(listOf(menu.value), collections.listed(CollectionOrigin.OWN).first().map { it.collectionId })
+        // A collection the book holds is not put back over.
+        assertFalse(collections.restore(before.copy(name = "Other")))
+        assertEquals("New Year's menu", collections.get(menu)!!.name)
+    }
+
+    @Test
+    fun aRemovedRecipeIsPutBackAtItsPlace() = runBlocking {
+        val a = own("A")
+        val b = own("B")
+        val c = own("C")
+        val menu = create("Menu")
+        listOf(a, b, c).forEach { collections.addTo(it, listOf(menu)) }
+        val annas = imported("Anna's", "anna", listOf(a))
+
+        assertEquals(CollectionChange.DONE, collections.remove(menu, b))
+        assertEquals(CollectionChange.DONE, collections.putBack(menu, b, 1))
+        assertEquals(listOf(a, b, c), order(menu))
+        // Past the end is the end; one it holds, or one the book does not, changes nothing.
+        assertEquals(CollectionChange.DONE, collections.remove(menu, a))
+        assertEquals(CollectionChange.DONE, collections.putBack(menu, a, 9))
+        assertEquals(listOf(b, c, a), order(menu))
+        assertEquals(CollectionChange.MISSING, collections.putBack(menu, a, 0))
+        assertEquals(CollectionChange.MISSING, collections.putBack(menu, RecipeId.mint(), 0))
+        assertEquals(listOf(b, c, a), order(menu))
+        assertEquals(CollectionChange.FROZEN, collections.putBack(annas, b, 0))
+        assertEquals(listOf(a), order(annas))
+    }
 }

@@ -96,6 +96,33 @@ class CollectionRepository(
     suspend fun delete(id: CollectionId): Boolean = transaction { it.delete(id.value) }
 
     /**
+     * Puts back the collection [collection] deleted a moment ago, for its Undo: with its identity, name, origin, stated
+     * author and time made, and those of its recipes the book still holds, in its order. Returns whether it was put
+     * back: nothing is when the book holds a collection of that identity already.
+     */
+    suspend fun restore(collection: RecipeCollection): Boolean = transaction { dao ->
+        if (dao.get(collection.id.value) != null) return@transaction false
+        val ids = collection.recipes.map { it.value }.distinct()
+        val held = ids.chunked(MAX_ARGUMENTS).flatMap { dao.heldRecipes(it) }.toSet()
+        dao.insert(CollectionEntity(collection.id.value, collection.name, collection.origin, collection.statedAuthor, collection.createdAt))
+        dao.setMembers(collection.id.value, ids.filter { it in held })
+        true
+    }
+
+    /**
+     * Puts the recipe [recipe] of the book back into the own collection [id] at the place [at] (the first is 0; past
+     * the end, at the end), for the Undo of its removal. A recipe it holds already, or one the book does not, changes
+     * nothing ([CollectionChange.MISSING]).
+     */
+    suspend fun putBack(id: CollectionId, recipe: RecipeId, at: Int): CollectionChange = editing(id) { dao ->
+        val members = dao.members(id.value)
+        if (recipe.value in members || dao.heldRecipes(listOf(recipe.value)).isEmpty()) return@editing CollectionChange.MISSING
+        val place = at.coerceIn(0, members.size)
+        dao.setMembers(id.value, members.take(place) + recipe.value + members.drop(place))
+        CollectionChange.DONE
+    }
+
+    /**
      * Puts the recipe [recipe] of the book at the end of each own collection of [collections] that does not hold it
      * yet. Returns the collections it was added to: none for a recipe the book does not hold, and none of those
      * imported or not held.
