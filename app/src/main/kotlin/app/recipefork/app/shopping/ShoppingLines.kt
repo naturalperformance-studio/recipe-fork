@@ -75,8 +75,12 @@ fun shoppingEntries(store: ShoppingStore, recipes: RecipeRepository): Flow<List<
  */
 data class ShownLine(val text: String, val counted: String?, val from: String)
 
-/** A line of the list: as its tick knows it, and as the screen shows it. */
-data class ListedLine(val tick: LineTick, val shown: ShownLine)
+/** A line of the list: as its tick knows it, and as the screen shows it; [own] for a line of the reader's own. */
+data class ListedLine(val tick: LineTick, val shown: ShownLine, val own: Boolean = false)
+
+/** The reader's own lines of [book] on the list, in the order they were added: as written, with no recipe under them. */
+fun ownLines(list: ShoppingList, book: String): List<ListedLine> =
+    list.own.filter { it.book == book }.map { ListedLine(LineTick(it.key, null), ShownLine(it.text, null, ""), own = true) }
 
 /**
  * A line of the list as its tick knows it. [key] names what the line is, the same however other recipes come and go: an
@@ -151,7 +155,7 @@ fun shownLines(
  * The list with its ticks of [book] settled against the lines its recipes make now, each read from [held] at the count
  * the list holds it at: a ticked line gone drops its tick, one whose amount grew is unticked, and one whose amount
  * stayed or shrank keeps its tick, at the amount it asks for now — so that it is unticked as soon as it grows again.
- * Ticks of other books are left as they are; while a listed recipe of [book] is not among [held] — not read yet, or
+ * An own line's tick stays while the line is on the list. Ticks of other books are left as they are; while a listed recipe of [book] is not among [held] — not read yet, or
  * unreadable — the list is left as it is.
  */
 fun ShoppingList.settled(book: String, held: Map<RecipeId, Recipe>, dictionary: Map<Long, IngredientEntryEntity>): ShoppingList {
@@ -159,7 +163,12 @@ fun ShoppingList.settled(book: String, held: Map<RecipeId, Recipe>, dictionary: 
     val entries = recipes.filter { it.book == book }.map { ShoppingEntry(it, held[it.recipe] ?: return this) }
     val now = totalsOf(entries, dictionary).second.associateBy { it.key }
     val settled = ticks.mapNotNull { (line, amount) ->
-        if (line.book != book) line to amount else now[line.line]?.takeIf { it.keeps(amount) }?.let { line to it.amount }
+        when {
+            line.book != book -> line to amount
+            // An own line asks for nothing that can grow: its tick stays while the line does.
+            line.line.startsWith(OwnLine.OWN_KEY) -> (line to amount).takeIf { own.any { it.book == book && it.key == line.line } }
+            else -> now[line.line]?.takeIf { it.keeps(amount) }?.let { line to it.amount }
+        }
     }.toMap()
     return if (settled == ticks) this else copy(ticks = settled)
 }

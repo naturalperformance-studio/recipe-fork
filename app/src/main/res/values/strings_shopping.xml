@@ -46,4 +46,15 @@
          amount: "1 tsp counted as < ¼ cup". -->
     <string name="shopping_counted">%1$s counted as ≈ %2$s</string>
     <string name="shopping_counted_below">%1$s counted as %2$s</string>
+    <!-- A line of the reader's own (T-232): "Add item" opens a field that offers ingredients and equipment from the
+         dictionaries; a pick, or the text as typed, is added to the list. -->
+    <string name="shopping_own_add">Add item</string>
+    <string name="shopping_own_add_action">Add an item of your own to the list</string>
+    <string name="shopping_own_field">What to buy</string>
+    <!-- The typed text offered as it is written: "Add “batteries”". -->
+    <string name="shopping_own_typed">Add “%1$s”</string>
+    <string name="shopping_own_typed_action">Add “%1$s” as written</string>
+    <string name="shopping_own_pick_action">Add “%1$s” to the list</string>
+    <!-- An own line removed, said with Undo. -->
+    <string name="shopping_own_removed">“%1$s” removed from the list</string>
 </resources>

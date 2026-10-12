@@ -18,6 +18,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +62,7 @@ import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.ServingsControl
 import app.recipefork.app.card.ServingsTags
 import app.recipefork.app.card.done
+import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.library.EmptyState
@@ -74,8 +77,15 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
-/** What the shopping list reads and writes: the list kept on the device, and the ingredient dictionary it names lines by. */
-class ShoppingEnvironment(val store: ShoppingStore, val ingredients: IngredientEntries)
+/**
+ * What the shopping list reads and writes: the list kept on the device, the ingredient dictionary it names lines by, and
+ * the equipment dictionary its own lines are offered from too.
+ */
+class ShoppingEnvironment(
+    val store: ShoppingStore,
+    val equipment: EquipmentSource = EquipmentSource { emptyList() },
+    val ingredients: IngredientEntries,
+)
 
 /** The shopping list of the composition root: the device's list and the held dictionaries. */
 @Composable
@@ -83,7 +93,7 @@ fun rememberShoppingEnvironment(): ShoppingEnvironment {
     val context = LocalContext.current.applicationContext
     return remember(context) {
         (context as RecipeForkApplication).container.let { container ->
-            ShoppingEnvironment(container.shopping) { container.dictionaries.ingredients() }
+            ShoppingEnvironment(container.shopping, container.dictionaries) { container.dictionaries.ingredients() }
         }
     }
 }
@@ -96,7 +106,9 @@ fun rememberShoppingEnvironment(): ShoppingEnvironment {
  * line ticks it as bought — struck through, it moves to "In the basket" at the bottom — and another unticks it; a
  * ticked line whose amount grows is unticked, one that goes drops its tick ([settled]). The ⋮ clears the ticks, and
  * clears the list, each said with Undo. An Undo goes once anything else on the list changes. A recipe the book no
- * longer holds leaves the list by itself; an empty list says how to add one. Back — the bar's or the system's —
+ * longer holds leaves the list by itself. "Add item" adds a line of the reader's own ([AddLineSheet]): it stands after
+ * the recipes' lines with no recipe under it, ticks as they do and is removed with Undo; "Clear ticked" takes it away
+ * once ticked. A list with neither recipes nor own lines says how to add a recipe. Back — the bar's or the system's —
  * returns to the book.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,11 +152,25 @@ fun ShoppingScreen(
     val lines = remember(shown, held, language, resources) {
         if (shown == null || held == null) null else listedLines(shown, held, language, resources)
     }
-    val ticked = lines.orEmpty().filter { line ->
+    val own = remember(list, book) { ownLines(list, book) }
+    val all = lines?.plus(own)
+    val ticked = all.orEmpty().filter { line ->
         TickedLine(book, line.tick.key).let { it in list.ticks && line.tick.keeps(list.ticks[it]) }
     }.map { it.tick.key }.toSet()
+    var adding by rememberSaveable { mutableStateOf(false) }
+    if (adding && held != null) {
+        val ingredients = remember(held) { held.values.toList() }
+        AddLineSheet(
+            ingredients, shopping.equipment, language,
+            onAdd = { text -> store.update { it.with(OwnLine.of(book, text)) } },
+            onClose = { adding = false },
+        )
+    }
     Scaffold(
         modifier = modifier.fillMaxSize().testTag(ShoppingTags.SCREEN),
+        floatingActionButton = {
+            if (all != null) AddItem { adding = true }
+        },
         snackbarHost = {
             SnackbarHost(snackbars) { data ->
                 Snackbar(
@@ -180,7 +206,7 @@ fun ShoppingScreen(
                     }
                 },
                 actions = {
-                    if (!shown.isNullOrEmpty()) {
+                    if (!shown.isNullOrEmpty() || (shown != null && own.isNotEmpty())) {
                         val cleared = stringResource(R.string.shopping_cleared)
                         val unticked = stringResource(R.string.shopping_ticks_cleared)
                         ListMenu(
@@ -193,10 +219,10 @@ fun ShoppingScreen(
         },
     ) { padding ->
         when {
-            shown == null || lines == null -> Box(Modifier.padding(padding).fillMaxSize().testTag(ShoppingTags.LOADING), contentAlignment = Alignment.Center) {
+            shown == null || all == null -> Box(Modifier.padding(padding).fillMaxSize().testTag(ShoppingTags.LOADING), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            shown.isEmpty() -> EmptyState(
+            shown.isEmpty() && own.isEmpty() -> EmptyState(
                 picture = R.drawable.ic_shopping_cart,
                 headline = stringResource(R.string.shopping_empty),
                 sentence = stringResource(R.string.shopping_empty_sentence, stringResource(R.string.shopping_add)),
@@ -207,12 +233,15 @@ fun ShoppingScreen(
             else -> {
                 val context = LocalContext.current
                 ListContent(
-                    shown, lines, ticked, padding,
+                    shown, all, ticked, padding,
                     onServings = { entry, count -> store.update { settle(it.withServings(entry.listed.book, entry.listed.recipe, count)) } },
                     onRemove = { entry, title ->
                         change(context.getString(R.string.shopping_removed, title)) { settle(it.without(entry.listed.book, entry.listed.recipe)) }
                     },
                     onTick = { line, bought -> store.update { it.withTick(TickedLine(book, line.key), line.amount, bought) } },
+                    onRemoveOwn = { line ->
+                        change(context.getString(R.string.shopping_own_removed, line.shown.text)) { it.withoutOwn(book, line.tick.key) }
+                    },
                 )
             }
         }
@@ -220,9 +249,10 @@ fun ShoppingScreen(
 }
 
 /**
- * The recipes, each with its count ([onServings]) and its removal ([onRemove], told its title); then the lines to buy,
- * and under "In the basket" the lines [ticked] (by their keys), each in the order of the list, each ticked or unticked
- * with a tap ([onTick], told whether the line is now bought).
+ * The recipes, each with its count ([onServings]) and its removal ([onRemove], told its title) — no part at all for a
+ * list of own lines alone; then the lines to buy, and under "In the basket" the lines [ticked] (by their keys), each in
+ * the order of the list, each ticked or unticked with a tap ([onTick], told whether the line is now bought), an own
+ * line with its removal beside it ([onRemoveOwn]).
  */
 @Composable
 private fun ListContent(
@@ -233,6 +263,7 @@ private fun ListContent(
     onServings: (ShoppingEntry, Rational) -> Unit,
     onRemove: (ShoppingEntry, String) -> Unit,
     onTick: (LineTick, Boolean) -> Unit,
+    onRemoveOwn: (ListedLine) -> Unit,
 ) {
     val (bought, toBuy) = lines.partition { it.tick.key in ticked }
     val untitled = stringResource(R.string.common_untitled_recipe)
@@ -240,21 +271,22 @@ private fun ListContent(
         // Beneath the bar, never under it; the last line kept clear of the navigation bar.
         Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()).testTag(ShoppingTags.LIST),
         state = rememberLazyListState(),
-        contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 16.dp),
+        // The last line kept clear of "Add item" as well.
+        contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 16.dp + FAB_CLEARANCE),
     ) {
-        item(key = RECIPES_KEY) { Heading(R.string.shopping_recipes) }
+        if (entries.isNotEmpty()) item(key = RECIPES_KEY) { Heading(R.string.shopping_recipes) }
         items(entries, key = { "${it.listed.book}/${it.listed.recipe.value}" }) { entry ->
             val title = entry.recipe.title.trim().ifEmpty { untitled }
             RecipeBlock(entry, title, onServings = { onServings(entry, it) }, onRemove = { onRemove(entry, title) })
         }
         item(key = LINES_KEY) {
             Column {
-                HorizontalDivider(Modifier.padding(top = 8.dp))
+                if (entries.isNotEmpty()) HorizontalDivider(Modifier.padding(top = 8.dp))
                 Heading(R.string.shopping_to_buy)
             }
         }
         itemsIndexed(toBuy, key = { _, line -> lineKey(line) }) { index, line ->
-            Line(line.shown, done = false, onToggle = { onTick(line.tick, true) }, Modifier.animateItem().testTag(ShoppingTags.line(index)))
+            Line(line, done = false, ShoppingTags.line(index), onToggle = { onTick(line.tick, true) }, { onRemoveOwn(line) }, Modifier.animateItem())
         }
         if (bought.isNotEmpty()) {
             item(key = BASKET_KEY) {
@@ -265,7 +297,7 @@ private fun ListContent(
             }
         }
         itemsIndexed(bought, key = { _, line -> lineKey(line) }) { index, line ->
-            Line(line.shown, done = true, onToggle = { onTick(line.tick, false) }, Modifier.animateItem().testTag(ShoppingTags.line(toBuy.size + index)))
+            Line(line, done = true, ShoppingTags.line(toBuy.size + index), onToggle = { onTick(line.tick, false) }, { onRemoveOwn(line) }, Modifier.animateItem())
         }
     }
 }
@@ -278,6 +310,29 @@ private const val RECIPES_KEY = "recipes"
 private const val LINES_KEY = "lines"
 private const val BASKET_KEY = "basket"
 private const val LINE_KEY = "line/"
+
+/** What the end of the list leaves free under "Add item": the button's height and its margin. */
+private val FAB_CLEARANCE = 72.dp
+
+/** "Add item", the list's floating action, which opens the field of a line of the reader's own. */
+@Composable
+private fun AddItem(onClick: () -> Unit) {
+    val words = stringResource(R.string.shopping_own_add)
+    val action = stringResource(R.string.shopping_own_add_action)
+    ExtendedFloatingActionButton(
+        text = { Text(words) },
+        icon = { Icon(painterResource(R.drawable.ic_add_item), contentDescription = null) },
+        onClick = onClick,
+        modifier = Modifier
+            .semantics {
+                onClick(label = action) {
+                    onClick()
+                    true
+                }
+            }
+            .testTag(ShoppingTags.ADD),
+    )
+}
 
 @Composable
 private fun Heading(title: Int) {
@@ -323,18 +378,28 @@ private fun RecipeBlock(entry: ShoppingEntry, title: String, onServings: (Ration
 /**
  * A line: what to buy and how much; under it, muted, what an approximate line counted and the recipes it comes from.
  * The line is one target a tap ticks as bought, or unticks ([onToggle]) — a check box to the screen reader, as a done
- * mark on the card is; a line ticked ([done]) has its text struck through and muted, and is read as bought.
+ * mark on the card is; a line ticked ([done]) has its text struck through and muted, and is read as bought. An own line
+ * has its removal ([onRemove]) beside it.
  */
 @Composable
-private fun Line(line: ShownLine, done: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier.fillMaxWidth().heightIn(min = 48.dp).ticked(done, onToggle).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text(line.text, style = MaterialTheme.typography.bodyLarge.done(done))
-        val muted = MaterialTheme.colorScheme.onSurfaceVariant
-        line.counted?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = muted) }
-        if (line.from.isNotEmpty()) Text(line.from, style = MaterialTheme.typography.bodyMedium, color = muted)
+private fun Line(listed: ListedLine, done: Boolean, tag: String, onToggle: () -> Unit, onRemove: () -> Unit, modifier: Modifier = Modifier) {
+    val line = listed.shown
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            Modifier.weight(1f).heightIn(min = 48.dp).ticked(done, onToggle).padding(horizontal = 16.dp, vertical = 8.dp).testTag(tag),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(line.text, style = MaterialTheme.typography.bodyLarge.done(done))
+            val muted = MaterialTheme.colorScheme.onSurfaceVariant
+            line.counted?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = muted) }
+            if (line.from.isNotEmpty()) Text(line.from, style = MaterialTheme.typography.bodyMedium, color = muted)
+        }
+        if (listed.own) {
+            BlockAction(
+                R.drawable.ic_clear_search, stringResource(R.string.shopping_remove, line.text), ShoppingTags.removeLine(tag), onClick = onRemove,
+                modifier = Modifier.padding(end = 4.dp),
+            )
+        }
     }
 }
 
@@ -443,6 +508,15 @@ object ShoppingTags {
     const val EMPTY = "shopping-empty"
     const val SNACKBAR = "shopping-snackbar"
 
+    /** "Add item", and its sheet: the field, the typed text offered as written. */
+    const val ADD = "shopping-add"
+    const val ADD_SHEET = "shopping-add-sheet"
+    const val ADD_FIELD = "shopping-add-field"
+    const val ADD_TYPED = "shopping-add-typed"
+
+    /** An ingredient ([ingredient]) or an item of equipment offered in the sheet, by its entry's id. */
+    fun offer(id: Long, ingredient: Boolean) = "shopping-offer-${if (ingredient) "i" else "e"}-$id"
+
     /** A recipe's block on the list, its title, its removal, and its serving count with its − and +. */
     fun recipe(id: String) = "shopping-recipe-$id"
     fun recipeTitle(id: String) = "shopping-recipe-title-$id"
@@ -453,4 +527,7 @@ object ShoppingTags {
 
     /** The line at [index] of what to buy, the lines in the basket after the others. */
     fun line(index: Int) = "shopping-line-$index"
+
+    /** The removal beside an own line, by the line's tag. */
+    fun removeLine(lineTag: String) = "$lineTag-remove"
 }

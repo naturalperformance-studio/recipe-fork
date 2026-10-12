@@ -100,7 +100,7 @@ class ShoppingScreenTest {
         },
     ) { Instant.parse("2026-10-12T12:00:00Z") }
     private val store = HeldShopping()
-    private val shopping = ShoppingEnvironment(store, IngredientEntries { SHOPPING_DICTIONARY })
+    private val shopping = ShoppingEnvironment(store, ingredients = IngredientEntries { SHOPPING_DICTIONARY })
 
     /** Soup for 2: an onion and 300 g of flour. */
     private val soup = recipe("Onion soup", 2, row(ONION, r(1), PIECE), row(FLOUR, r(300), GRAM), minutesAgo = 10)
@@ -411,13 +411,13 @@ class ShoppingScreenTest {
         save(soup, pie)
         val kept = PreferencesShopping(context)
         kept.update { it.with(listed(soup)).with(listed(pie)) }
-        var environment by mutableStateOf(ShoppingEnvironment(kept, IngredientEntries { SHOPPING_DICTIONARY }))
+        var environment by mutableStateOf(ShoppingEnvironment(kept, ingredients = IngredientEntries { SHOPPING_DICTIONARY }))
         compose.setContent { MaterialTheme { ShoppingScreen(environment, recipes, onBack = {}) } }
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines().size == 3 }
         tapLine("flour — ≈ 560 g")
         awaitBought("flour — ≈ 560 g")
         // A new process: the list read afresh from the device.
-        environment = ShoppingEnvironment(PreferencesShopping(context), IngredientEntries { SHOPPING_DICTIONARY })
+        environment = ShoppingEnvironment(PreferencesShopping(context), ingredients = IngredientEntries { SHOPPING_DICTIONARY })
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines().size == 3 }
         awaitBought("flour — ≈ 560 g")
         assertEquals(listOf("onion — 3 pc", "sugar — 1 tbsp", "flour — ≈ 560 g"), lines())
@@ -437,7 +437,7 @@ class ShoppingScreenTest {
         val kept = tickedOnionAndFlour()
         val ticks = kept.list.value.ticks
         val gate = CompletableDeferred<Unit>()
-        val environment = ShoppingEnvironment(kept, IngredientEntries { gate.await(); SHOPPING_DICTIONARY })
+        val environment = ShoppingEnvironment(kept, ingredients = IngredientEntries { gate.await(); SHOPPING_DICTIONARY })
         compose.setContent { MaterialTheme { ShoppingScreen(environment, recipes, onBack = {}) } }
         // The recipes read, the dictionary not yet.
         runBlocking { withTimeout(PATIENCE_MS) { shoppingEntries(kept, recipes).first { it.size == 2 } } }
@@ -457,7 +457,7 @@ class ShoppingScreenTest {
     fun anUnreadableDictionarySettlesNothing() {
         val kept = tickedOnionAndFlour()
         val ticks = kept.list.value.ticks
-        val environment = ShoppingEnvironment(kept, IngredientEntries { throw IllegalStateException("the dictionary cannot be read") })
+        val environment = ShoppingEnvironment(kept, ingredients = IngredientEntries { throw IllegalStateException("the dictionary cannot be read") })
         compose.setContent { MaterialTheme { ShoppingScreen(environment, recipes, onBack = {}) } }
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines().isNotEmpty() }
         compose.waitForIdle()
