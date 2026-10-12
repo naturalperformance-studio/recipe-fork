@@ -24,6 +24,9 @@ object PdfShare {
     const val MIME_TYPE = "application/pdf"
     private const val EXTENSION = ".pdf"
 
+    /** The prefix of a file being written, before it takes the shared one's place. */
+    private const val PARTIAL = ".writing-"
+
     /** The most UTF-8 bytes of a name before its extension: well inside the 255 a file system allows. */
     private const val MAX_NAME_BYTES = 200
 
@@ -62,20 +65,23 @@ object PdfShare {
     }
 
     /**
-     * Writes [document] as an A4 PDF named by its title and returns its shareable address. The file is written aside
-     * first: only once it is whole does it replace the one shared before, so a failure leaves everything as it was.
+     * Writes [document] as an A4 PDF named by its title and returns its shareable address. The file is written beside
+     * the one shared before and only once whole put in its place; then everything else in the directory goes — earlier
+     * files and any left half-written when the process ended. A failure leaves the earlier file as it was.
      */
     suspend fun write(context: Context, document: PrintDocument, writer: PdfWriter = PdfWriter.Platform): Uri {
         val name = fileName(document.title, context.getString(R.string.common_untitled_recipe))
         val file = withContext(PageWork.dispatcher) {
-            val written = File.createTempFile("print", EXTENSION, context.cacheDir)
+            val directory = File(context.cacheDir, DIRECTORY)
+            if (!directory.isDirectory && !directory.mkdirs()) throw IOException("cannot make $directory")
+            val written = File.createTempFile(PARTIAL, EXTENSION, directory)
             try {
                 val pages = PrintPages.layOut(document, PageSize.A4)
                 written.outputStream().buffered().use { writer.write(pages, it, (0 until pages.count).toList()) }
-                val directory = File(context.cacheDir, DIRECTORY)
-                directory.deleteRecursively()
-                if (!directory.mkdirs()) throw IOException("cannot make $directory")
-                File(directory, name).also { if (!written.renameTo(it)) throw IOException("cannot move to $it") }
+                val shared = File(directory, name)
+                if (!written.renameTo(shared)) throw IOException("cannot move to $shared")
+                directory.listFiles().orEmpty().filter { it != shared }.forEach { it.deleteRecursively() }
+                shared
             } finally {
                 written.delete()
             }

@@ -87,7 +87,11 @@ class CardPrintTest {
         if (failing) throw IOException("disk full")
         out.write(bytes)
     }
-    private val platform = PlatformPrinting(writer) { _, name, adapter -> jobs += name to adapter }
+    private var printUnavailable = false
+    private val platform = PlatformPrinting(writer) { _, name, adapter ->
+        if (printUnavailable) throw IllegalStateException("no print service")
+        jobs += name to adapter
+    }
     private val printing = object : Printing {
         override fun print(context: Context, document: PrintDocument) {
             documents += document
@@ -228,5 +232,16 @@ class CardPrintTest {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(notice, useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
         assertEquals(null, shadowOf(compose.activity).peekNextStartedActivity())
         assertEquals(cake, runBlocking { recipes.get(cake.id) })
+    }
+
+    // A print service that cannot be started is said to have failed.
+    @Test
+    fun aPrintThatCannotStartIsSaid() {
+        printUnavailable = true
+        open(cake)
+        take(CardTags.PRINT)
+        val notice = hasText("Couldn't start printing") and hasAnyAncestor(hasTestTag(CardTags.SNACKBAR))
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(notice, useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
+        assertTrue(jobs.isEmpty())
     }
 }

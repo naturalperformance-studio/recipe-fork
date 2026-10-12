@@ -83,6 +83,8 @@ class PdfShareTest {
     @Test
     fun onlyTheLatestFileIsKept() {
         write("Soup")
+        // A file left half-written when the process ended goes with the next write.
+        File(context.cacheDir, "prints/.writing-123.pdf").writeBytes(byteArrayOf(1))
         write("Pie")
         assertEquals(listOf("Pie.pdf"), prints())
         // The export's own files are another directory's, untouched.
@@ -119,8 +121,8 @@ class PdfShareTest {
         assertFalse(runBlocking { PdfShare.share(context, document("Pie"), failing) })
         assertEquals(listOf("Soup.pdf"), prints())
         assertArrayEquals(bytes, File(context.cacheDir, "prints/Soup.pdf").readBytes())
-        // Nothing half-written is left behind in the cache either.
-        assertTrue(context.cacheDir.listFiles().orEmpty().none { it.name.startsWith("print") && it.isFile })
+        // Nothing half-written is left behind.
+        assertTrue(context.cacheDir.listFiles().orEmpty().none { it.isFile && it.name.endsWith(".pdf") })
     }
 
     @Test

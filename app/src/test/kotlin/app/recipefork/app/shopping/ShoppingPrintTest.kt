@@ -8,7 +8,9 @@ import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -18,6 +20,7 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.IngredientEntries
+import app.recipefork.app.card.tagsTopToBottom
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.editor.textsOf
@@ -27,6 +30,7 @@ import app.recipefork.app.print.PlatformPrinting
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.PIECE
+import app.recipefork.core.shopping.ShoppingAmount
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -39,6 +43,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.GraphicsMode
+import java.io.IOException
 
 /**
  * v0.33, T-237 — Print and Share as PDF from the shopping list (FLOW-075, scenario 5): while the list has lines its ⋮
@@ -55,8 +60,12 @@ class ShoppingPrintTest {
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, book.database))
     private val bytes = "%PDF-stand-in".toByteArray()
     private val jobs = mutableListOf<Pair<String, PrintDocumentAdapter>>()
+    private var failing = false
     private val printing = PlatformPrinting(
-        PdfWriter { _, out, _ -> out.write(bytes) },
+        PdfWriter { _, out, _ ->
+            if (failing) throw IOException("disk full")
+            out.write(bytes)
+        },
     ) { _, name, adapter -> jobs += name to adapter }
 
     /** Soup for 2: an onion and 300 g of flour. */
@@ -88,13 +97,13 @@ class ShoppingPrintTest {
         compose.waitForIdle()
     }
 
-    private val menuItems = listOf(ShoppingTags.PRINT, ShoppingTags.SHARE_PDF, ShoppingTags.CLEAR_TICKED, ShoppingTags.CLEAR)
+    private val menuItems = setOf(ShoppingTags.PRINT, ShoppingTags.SHARE_PDF, ShoppingTags.CLEAR_TICKED, ShoppingTags.CLEAR)
 
-    /** The ⋮'s items, by tag, in order, the menu closed again. */
+    /** The ⋮'s items, by tag, in the order they stand, top to bottom; the menu closed again. */
     private fun items(): List<String> {
         compose.onNodeWithTag(ShoppingTags.MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.CLEAR) }
-        val shown = menuItems.filter(::exists)
+        val shown = compose.tagsTopToBottom(menuItems)
         compose.onNodeWithTag(ShoppingTags.MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { !exists(ShoppingTags.CLEAR) }
         return shown
@@ -116,6 +125,27 @@ class ShoppingPrintTest {
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.PRINT) }
         assertEquals(listOf("Print"), compose.textsOf(ShoppingTags.PRINT))
         assertEquals(listOf("Share as PDF"), compose.textsOf(ShoppingTags.SHARE_PDF))
+    }
+
+    // With a line ticked, Clear ticked stands between them and Clear list.
+    @Test
+    fun aTickedLineAddsClearTickedAfterThem() {
+        runBlocking { recipes.save(soup) }
+        val ticked = mapOf(TickedLine(POOL, "e:$ONION") to ShoppingAmount(PIECE, r(1)))
+        show(ShoppingList(listOf(listed(soup)), ticked))
+        assertEquals(listOf(ShoppingTags.PRINT, ShoppingTags.SHARE_PDF, ShoppingTags.CLEAR_TICKED, ShoppingTags.CLEAR), items())
+    }
+
+    // A PDF of the list that cannot be written is said to have failed, and no sheet opens.
+    @Test
+    fun aFailureToWriteIsSaid() {
+        failing = true
+        runBlocking { recipes.save(soup) }
+        show(ShoppingList(listOf(listed(soup))))
+        take(ShoppingTags.SHARE_PDF)
+        val notice = hasText("Couldn't write the PDF") and hasAnyAncestor(hasTestTag(ShoppingTags.SNACKBAR))
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(notice, useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
+        assertEquals(null, shadowOf(compose.activity).peekNextStartedActivity())
     }
 
     @Test
