@@ -10,9 +10,12 @@ import app.recipefork.core.scaling.Rational
  * (FLOW-017 (1, 2)) — unless the reader left it at another this session, which it comes back at (FLOW-017 (7),
  * FLOW-012). A fixing is of a row as it stood, so a change to that row drops it.
  */
-fun CardSession.openingScale(recipe: Recipe, usual: Rational?): CardScale {
+fun CardSession.openingScale(recipe: Recipe, usual: Rational?): CardScale = openingScale(recipe, heldScale(recipe.id), usual)
+
+/** The scale [recipe]'s card opens at, as [CardSession.openingScale] says, the session holding [held] of it. */
+fun openingScale(recipe: Recipe, held: HeldScale?, usual: Rational?): CardScale {
     val authored = recipe.servings?.takeIf { it >= 1 }
-    return heldScale(recipe.id)?.restored(authored, recipe.ingredients.sortedBy { it.position }, usual) ?: CardScale.opening(authored, usual)
+    return held?.restored(authored, recipe.ingredients.sortedBy { it.position }, usual) ?: CardScale.opening(authored, usual)
 }
 
 /**
@@ -24,12 +27,13 @@ fun servingsShown(recipe: Recipe, scale: CardScale, entries: Map<Long, Ingredien
         .servingCount?.value
 
 /**
- * The serving count [recipe]'s card would open with, as its ⋮ would put it on the shopping list (FLOW-074): that of
- * [openingScale], as [servingsShown] shows it.
+ * The serving count [recipe]'s card would open with, the session holding [held] of it, as its ⋮ would put it on the
+ * shopping list (FLOW-074): that of [openingScale], as [servingsShown] shows it.
  */
-fun CardSession.openingServings(
+fun openingServings(
     recipe: Recipe,
+    held: HeldScale?,
     usual: Rational?,
     entries: Map<Long, IngredientEntryEntity>,
     language: InterfaceLanguage,
-): Rational? = servingsShown(recipe, openingScale(recipe, usual), entries, language)
+): Rational? = servingsShown(recipe, openingScale(recipe, held, usual), entries, language)

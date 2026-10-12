@@ -327,8 +327,9 @@ private fun CollectionEntry(
 /**
  * Puts every recipe of the collection [id] on the shopping list of [card] (v0.36, T-257), in the collection's order,
  * each at the count its card would open with ([openingServings]) — one listed already keeps its count — and says how
- * many were added in [snackbars], in place of whatever they said, with Open, which opens the list above the collection.
- * One tap at a time: a second while the first is read adds nothing.
+ * many were added in [snackbars], in place of whatever they said, with Open, which opens the list above the collection —
+ * or, none added, that every recipe of it is listed already, or that none could be read. One tap at a time: a second
+ * while the first is read adds nothing.
  */
 @Composable
 private fun rememberAddAllToShopping(
@@ -343,27 +344,38 @@ private fun rememberAddAllToShopping(
     val resources = LocalResources.current
     val language = cardLanguage(LocalConfiguration.current)
     val allListed = stringResource(R.string.collection_all_in_shopping)
+    val unread = stringResource(R.string.collection_shopping_unread)
     val open = stringResource(R.string.collection_shopping_open)
     var adding by remember { mutableStateOf(false) }
     return {
         if (!adding) {
             adding = true
             scope.launch {
-                val added = try {
+                val outcome = try {
                     addAll(id, session, collections, recipes, card, language)
                 } finally {
                     adding = false
                 }
-                val said = if (added == 0) allListed else resources.getQuantityString(R.plurals.collection_added_to_shopping, added, added)
+                val added = outcome.added
+                val said = when {
+                    added > 0 -> resources.getQuantityString(R.plurals.collection_added_to_shopping, added, added)
+                    outcome.allListed -> allListed
+                    else -> unread
+                }
                 snackbars.currentSnackbarData?.dismiss()
-                val result = snackbars.showSnackbar(said, actionLabel = open, duration = SnackbarDuration.Long)
+                // Nothing to open when nothing could be read.
+                val action = open.takeIf { added > 0 || outcome.allListed }
+                val result = snackbars.showSnackbar(said, actionLabel = action, duration = SnackbarDuration.Long)
                 if (result == SnackbarResult.ActionPerformed) session.openShoppingAboveCollection()
             }
         }
     }
 }
 
-/** Puts the recipes of the collection [id] on the list as [rememberAddAllToShopping] says; returns how many were added. */
+/** What adding a whole collection came to: how many recipes were [added], and whether every recipe of it is listed now. */
+private class AddedAll(val added: Int, val allListed: Boolean)
+
+/** Puts the recipes of the collection [id] on the list as [rememberAddAllToShopping] says. */
 private suspend fun addAll(
     id: CollectionId,
     session: LibrarySession,
@@ -371,7 +383,7 @@ private suspend fun addAll(
     recipes: RecipeRepository,
     card: CardEnvironment,
     language: InterfaceLanguage,
-): Int {
+): AddedAll {
     val book = recipes.bookName().fileName
     // Read once, as the card reads it on opening.
     val usual = card.usualServings.count.value
@@ -383,20 +395,22 @@ private suspend fun addAll(
     } catch (e: Exception) {
         emptyList()
     }.associateBy { it.id }
-    val wanted = collections.recipes(id).first().mapNotNull { row ->
-        // A recipe that does not read back is left out; the rest go on.
+    val members = collections.recipes(id).first().map { RecipeId(it.recipeId) }
+    val wanted = members.mapNotNull { member ->
+        // A recipe that does not read back — read as its card reads it — is left out; the rest go on.
         val recipe = try {
-            recipes.get(RecipeId(row.recipeId))
+            recipes.observe(member).first()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             null
         } ?: return@mapNotNull null
-        ListedRecipe(book, recipe.id, session.cards.openingServings(recipe, usual, entries, language))
+        ListedRecipe(book, recipe.id, openingServings(recipe, session.heldScale(recipe.id), usual, entries, language))
     }
     var added = 0
     card.shopping.update { list -> list.withAll(wanted).also { added = it.recipes.size - list.recipes.size } }
-    return added
+    val listed = card.shopping.list.value.recipes
+    return AddedAll(added, members.all { member -> listed.any { it.isOf(book, member) } })
 }
 
 /**
@@ -420,6 +434,8 @@ private fun RemovedNotice(
     val undo = stringResource(R.string.collection_undo)
     LaunchedEffect(removed) {
         val shown = removed ?: return@LaunchedEffect
+        // The newest statement replaces the one shown — "Added 3 recipes", say — rather than waiting behind it.
+        snackbars.currentSnackbarData?.dismiss()
         val result = snackbars.showSnackbar(said.orEmpty(), actionLabel = undo, duration = SnackbarDuration.Long)
         // Put back where the session's work runs, which outlives this screen.
         if (result == SnackbarResult.ActionPerformed) session.viewModelScope.launch { collections.putBack(id, RecipeId(shown.recipeId), shown.at) }

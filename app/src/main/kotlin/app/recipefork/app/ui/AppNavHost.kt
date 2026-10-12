@@ -14,6 +14,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -24,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.recipefork.app.Mode
+import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.backup.BackupState
 import app.recipefork.app.backup.BackupWork
@@ -172,7 +174,12 @@ fun AppNavHost(
             )
         }
         composable(Destinations.SHOPPING_ROUTE) {
-            ShoppingScreen(shopping, recipes, onBack = session::closeShopping)
+            // Whether it lies above a collection, read as it opens: its back says where it returns.
+            val aboveCollection = remember { session.collection.value != null }
+            ShoppingScreen(
+                shopping, recipes, onBack = session::closeShopping,
+                backAction = stringResource(if (aboveCollection) R.string.collection_shopping_back_action else R.string.shopping_back_action),
+            )
         }
         composable(Destinations.SETTINGS_ROUTE) {
             SettingsScreen(

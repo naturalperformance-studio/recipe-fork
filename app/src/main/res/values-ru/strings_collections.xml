@@ -22,7 +22,9 @@
         <item quantity="other">Добавлено %d рецепта</item>
     </plurals>
     <string name="collection_all_in_shopping">Все эти рецепты уже в списке покупок</string>
+    <string name="collection_shopping_unread">Не удалось прочитать рецепты, ничего не добавлено</string>
     <string name="collection_shopping_open">Открыть</string>
+    <string name="collection_shopping_back_action">Вернуться к коллекции</string>
     <string name="collection_rename_title">Переименовать коллекцию</string>
     <string name="collection_name">Название</string>
     <string name="collection_rename_confirm">Переименовать</string>

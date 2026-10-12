@@ -491,6 +491,12 @@ class LibrarySession(
         if (value == null) saved.remove<String>(CARDS_KEY + key) else saved[CARDS_KEY + key] = value
     }
 
+    /**
+     * The scale the reader left [recipe]'s card at this session, if any, read without the card being shown: unlike
+     * [cards], it leaves the cards most recently shown as they were.
+     */
+    fun heldScale(recipe: RecipeId): HeldScale? = held.heldScale(recipe)
+
     /** Saved state stays small: only the [MAX_CARDS] cards most recently left at a count or a place are held. */
     private val shownCards = object : CardSession {
         // Reading a card on its opening shows it: a card read again is the most recent, whether or not the reader

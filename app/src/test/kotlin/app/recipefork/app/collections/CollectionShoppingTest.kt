@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -53,6 +54,8 @@ import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -63,6 +66,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.io.IOException
 import java.time.Instant
 
 /**
@@ -80,7 +84,14 @@ class CollectionShoppingTest {
     private val book = TestBook(context)
     private val device = TestDevice(context)
     private val active = ActiveBook(BookName.Pool, book.database)
-    private val recipes = RecipeRepository(active, context.filesDir)
+    /** Recipes whose reads fail — as a corrupt row or a refusing storage would. */
+    private val unreadable = mutableSetOf<RecipeId>()
+
+    /** The book's recipes, the ones [unreadable] holds failing to read. */
+    private val recipes = object : RecipeRepository(active, context.filesDir) {
+        override fun observe(id: RecipeId): Flow<Recipe?> =
+            if (id in unreadable) flow { throw IOException("the row does not read back") } else super.observe(id)
+    }
     private val now = Instant.parse("2026-10-12T12:00:00Z")
     private var ticks = 0L
     private val collections = CollectionRepository(active) { now.plusSeconds(ticks++) }
@@ -213,12 +224,76 @@ class CollectionShoppingTest {
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.SCREEN) && !exists(CollectionScreenTags.SCREEN) && !exists(ShoppingTags.LOADING) }
         assertTrue(session.shopping.value)
         assertEquals(menu.value, session.collection.value)
+        // Its back says where it returns: to the collection.
+        assertEquals("Back to the collection", backLabel())
 
         compose.onNodeWithTag(ShoppingTags.BACK).performClick()
         awaitScreen()
         await(LibraryTags.entry(soup.value))
         assertFalse(session.shopping.value)
         assertEquals(menu.value, session.collection.value)
+
+        // Opened from the book, the list's back still says it returns to the book.
+        compose.onNodeWithTag(CollectionScreenTags.BACK).performClick()
+        await(LibraryTags.PAGER)
+        compose.runOnIdle { session.openShopping() }
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.SCREEN) && !exists(LibraryTags.PAGER) }
+        assertEquals("Back to the book", backLabel())
+    }
+
+    private fun backLabel() = AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(ShoppingTags.BACK).fetchSemanticsNode())
+
+    // The newest statement replaces the one shown: a recipe taken out of the collection right after the notice of the
+    // whole collection added says so at once, not once that notice has timed out.
+    @Test
+    fun aRemovalRightAfterTheNoticeReplacesItAtOnce() {
+        val soup = own("Soup", servings = 4, minutesAgo = 1)
+        val bread = own("Bread", servings = 2)
+        val menu = collection("Menu", listOf(soup, bread))
+        show(LibraryView.OWN)
+        open(menu)
+        addAll()
+        compose.awaitRemovalNotice("Added 2 recipes", "Open")
+        val shown = compose.mainClock.currentTime
+
+        compose.onNodeWithTag(LibraryTags.actions(bread.value)).performSemanticsAction(SemanticsActions.OnClick)
+        await(CollectionScreenTags.remove(bread.value))
+        compose.onNodeWithTag(CollectionScreenTags.remove(bread.value)).performClick()
+
+        compose.awaitRemovalNotice("“Bread” removed from the collection", "Undo")
+        val waited = compose.mainClock.currentTime - shown
+        assertTrue("the removal waited $waited ms behind the notice", waited < WELL_BEFORE_TIMEOUT_MS)
+        compose.takeNoticeAction("Undo")
+        compose.waitUntil(PATIENCE_MS) { runBlocking { collections.get(menu)!!.recipes } == listOf(soup, bread) }
+    }
+
+    // None added only because the recipes could not be read: the notice says so — not that they are all listed — and
+    // offers nothing to open. A recipe listed already beside it does not make it "all listed".
+    @Test
+    fun recipesThatCannotBeReadAreNotSaidToBeListed() {
+        val soup = own("Soup", servings = 4, minutesAgo = 1)
+        val bread = own("Bread", servings = 2)
+        val menu = collection("Menu", listOf(soup, bread))
+        val listed = ShoppingList(listOf(ListedRecipe(pool, soup, Rational.of(8))))
+        store = HeldShopping(listed)
+        show(LibraryView.OWN)
+        open(menu)
+        unreadable += bread
+
+        addAll()
+
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onAllNodes(hasText("Could not read the recipes; nothing was added"), useUnmergedTree = true).fetchSemanticsNodes().size == 1
+        }
+        assertEquals(0, compose.onAllNodes(hasText("Open"), useUnmergedTree = true).fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodes(hasText("All these recipes are already in the shopping list"), useUnmergedTree = true).fetchSemanticsNodes().size)
+        assertEquals(listed, store.list.value)
+
+        // Readable again, it is added.
+        unreadable.clear()
+        addAll()
+        compose.awaitRemovalNotice("Added 1 recipe", "Open")
+        assertEquals(listOf(ListedRecipe(pool, soup, Rational.of(8)), ListedRecipe(pool, bread, Rational.of(2))), store.list.value.recipes)
     }
 
     // The reader's usual count sets where a card opens, so it sets the count added; a recipe with no count goes on with none.
@@ -291,10 +366,23 @@ class CollectionShoppingTest {
         compose.awaitRemovalNotice("Добавлено 2 рецепта", "Открыть")
         compose.takeNoticeAction("Открыть")
         await(ShoppingTags.SCREEN)
+        assertEquals("Вернуться к коллекции", backLabel())
 
         compose.onNodeWithTag(ShoppingTags.BACK).performClick()
         awaitScreen()
         addAll()
         compose.awaitRemovalNotice("Все эти рецепты уже в списке покупок", "Открыть")
+
+        unreadable += listOf(soup, bread)
+        compose.runOnIdle { store.update { ShoppingList() } }
+        addAll()
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onAllNodes(hasText("Не удалось прочитать рецепты, ничего не добавлено"), useUnmergedTree = true).fetchSemanticsNodes().size == 1
+        }
+    }
+
+    private companion object {
+        /** Well before a Long notice — ten seconds — times out. */
+        const val WELL_BEFORE_TIMEOUT_MS = 4_000L
     }
 }

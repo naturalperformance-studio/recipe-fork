@@ -8,6 +8,9 @@ import app.recipefork.app.ui.shownFor
 import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.RecipeCollection
+import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.scaling.Rational
+import app.recipefork.app.card.HeldScale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -62,6 +65,20 @@ class CollectionNavigationTest {
         session.openShoppingAboveCollection()
         assertTrue(session.shopping.value)
         assertNull(session.collection.value)
+    }
+
+    // T-257: a whole collection's counts are read of the session without its cards being taken as shown: the cards most
+    // recently shown — the ones kept when the session holds too many — stay as they were.
+    @Test
+    fun readingAHeldScaleForTheListLeavesTheCardsShownAsTheyWere() {
+        val saved = SavedStateHandle()
+        val session = LibrarySession(saved)
+        session.cards.holdScale(RecipeId("a"), HeldScale(Rational.of(3)))
+        session.cards.holdScale(RecipeId("b"), HeldScale(Rational.of(5)))
+        assertEquals("b a", saved.get<String>("library.cards"))
+        assertEquals(HeldScale(Rational.of(3)), session.heldScale(RecipeId("a")))
+        assertEquals("b a", saved.get<String>("library.cards"))
+        assertNull(session.heldScale(RecipeId("c")))
     }
 
     @Test
