@@ -43,6 +43,20 @@ class KitchenStoreTest {
         assertEquals(emptySet<Long>(), PreferencesKitchen(context).held.value)
     }
 
+    // A saved book carries the whole set as text; restored, it replaces the set, kept across restarts.
+    @Test
+    fun theWholeSetTravelsAsTextAndReplacesTheHeldOne() {
+        val text = KitchenJson.encode(setOf(SCALE, FRYING_PAN))
+        assertEquals(setOf(SCALE, FRYING_PAN), KitchenJson.decode(text))
+        listOf("", "[]", "{\"held\":[\"10001\"]}", "{\"held\":[1.5]}").forEach { assertEquals(null, KitchenJson.decode(it)) }
+
+        val store = PreferencesKitchen(context)
+        store.hold(listOf(SAUCEPAN), has = true)
+        store.replace(KitchenJson.decode(text)!!)
+        assertEquals(setOf(SCALE, FRYING_PAN), store.held.value)
+        assertEquals(setOf(SCALE, FRYING_PAN), PreferencesKitchen(context).held.value)
+    }
+
     @Test
     fun theCompositionRootExposesTheHeldSetAsItChanges() {
         val kitchen = (context as RecipeForkApplication).container.kitchen
