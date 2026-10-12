@@ -6,6 +6,7 @@ import app.recipefork.app.card.ingredientLine
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.comparisonFactor
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.scaling.InterfaceLanguage
@@ -13,6 +14,7 @@ import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.UnitLabels
 import app.recipefork.core.shopping.CountedPart
 import app.recipefork.core.shopping.EntryMeasures
+import app.recipefork.core.shopping.ShoppingAmount
 import app.recipefork.core.shopping.ShoppingLine
 import app.recipefork.core.shopping.ShoppingName
 import app.recipefork.core.shopping.ShoppingQuantity
@@ -73,6 +75,36 @@ fun shoppingEntries(store: ShoppingStore, recipes: RecipeRepository): Flow<List<
  */
 data class ShownLine(val text: String, val counted: String?, val from: String)
 
+/** A line of the list: as its tick knows it, and as the screen shows it. */
+data class ListedLine(val tick: LineTick, val shown: ShownLine)
+
+/**
+ * A line of the list as its tick knows it. [key] names what the line is, the same however other recipes come and go: an
+ * entry's line by its entry and its kind — the line of its measured units, a unit it has no measure for, "to taste" —
+ * a free-text line by its recipe and words, a line as written by its recipe and row; a second line of the same name
+ * in one recipe by its order among them. [amount] is what it asks for, in its unit (on the total, for an approximate
+ * line); null for a line with none.
+ */
+data class LineTick(val key: String, val amount: ShoppingAmount?, private val factors: Map<String, Double> = emptyMap()) {
+    /**
+     * Whether a line ticked when it asked for [ticked] stays ticked now: its amount stayed or shrank. An amount now in
+     * another unit — an approximate line's largest part changed — is compared by the entry's grams per unit, and
+     * without them taken as grown; a line that gained or lost an amount has grown too.
+     */
+    fun keeps(ticked: ShoppingAmount?): Boolean {
+        val now = amount
+        if (now == null || ticked == null) return now == null && ticked == null
+        if (now.unit == ticked.unit) return now.value <= ticked.value
+        val before = gramsOf(ticked) ?: return false
+        val after = gramsOf(now) ?: return false
+        return after <= before * (1 + 1e-9)
+    }
+
+    private fun gramsOf(amount: ShoppingAmount): Double? =
+        comparisonFactor(factors, amount.unit)?.takeIf { it.isFinite() && it > 0 }
+            ?.let { it * amount.value.numerator.toDouble() / amount.value.denominator.toDouble() }
+}
+
 /**
  * The lines of the list of [entries], each at its count, added up by [ShoppingTotals] over the measures of the
  * ingredient [dictionary], and written in [language] with the words of [resources].
@@ -82,28 +114,88 @@ data class ShownLine(val text: String, val counted: String?, val from: String)
  * an approximate one, "+ to taste" after one a recipe also takes to taste, "to taste" alone — and a row that cannot be
  * scaled as the card writes it unscaled.
  */
+fun listedLines(
+    entries: List<ShoppingEntry>,
+    dictionary: Map<Long, IngredientEntryEntity>,
+    language: InterfaceLanguage,
+    resources: Resources,
+): List<ListedLine> {
+    val titles = entries.associate { entry ->
+        entry.recipe.id to entry.recipe.title.trim().ifEmpty { resources.getString(R.string.common_untitled_recipe) }
+    }
+    val (lines, ticks) = totalsOf(entries, dictionary)
+    return lines.zip(ticks) { line, tick ->
+        val name = nameOf(line, dictionary, language, resources)
+        val amount = amountOf(line, dictionary, language, resources)
+        ListedLine(
+            tick,
+            ShownLine(
+                text = amount?.let { resources.getString(R.string.shopping_line, name, it) } ?: name,
+                counted = line.counted.takeIf { line.approximate && it.isNotEmpty() }
+                    ?.joinToString(", ") { countedOf(it, language, resources) },
+                from = line.recipes.mapNotNull(titles::get).joinToString(", "),
+            ),
+        )
+    }
+}
+
+/** The lines of [listedLines], as the screen shows them. */
 fun shownLines(
     entries: List<ShoppingEntry>,
     dictionary: Map<Long, IngredientEntryEntity>,
     language: InterfaceLanguage,
     resources: Resources,
-): List<ShownLine> {
+): List<ShownLine> = listedLines(entries, dictionary, language, resources).map { it.shown }
+
+/**
+ * The list with its ticks of [book] settled against the lines its recipes make now, each read from [held] at the count
+ * the list holds it at: a ticked line gone drops its tick, one whose amount grew is unticked, and one whose amount
+ * stayed or shrank keeps its tick, at the amount it asks for now — so that it is unticked as soon as it grows again.
+ * Ticks of other books are left as they are; while a listed recipe of [book] is not among [held] — not read yet, or
+ * unreadable — the list is left as it is.
+ */
+fun ShoppingList.settled(book: String, held: Map<RecipeId, Recipe>, dictionary: Map<Long, IngredientEntryEntity>): ShoppingList {
+    if (ticks.keys.none { it.book == book }) return this
+    val entries = recipes.filter { it.book == book }.map { ShoppingEntry(it, held[it.recipe] ?: return this) }
+    val now = totalsOf(entries, dictionary).second.associateBy { it.key }
+    val settled = ticks.mapNotNull { (line, amount) ->
+        if (line.book != book) line to amount else now[line.line]?.takeIf { it.keeps(amount) }?.let { line to it.amount }
+    }.toMap()
+    return if (settled == ticks) this else copy(ticks = settled)
+}
+
+/** The lines [ShoppingTotals] adds up from [entries], each beside its [LineTick]. */
+private fun totalsOf(entries: List<ShoppingEntry>, dictionary: Map<Long, IngredientEntryEntity>): Pair<List<ShoppingLine>, List<LineTick>> {
     val measures = dictionary.mapValues { (_, entry) -> EntryMeasures.of(entry.toDto()) }
     val recipes = entries.map { entry ->
         ShoppingRecipe(entry.recipe.id, entry.recipe.ingredients.sortedBy { it.position }, entry.authoredServings, entry.servings)
     }
-    val titles = entries.associate { entry ->
-        entry.recipe.id to entry.recipe.title.trim().ifEmpty { resources.getString(R.string.common_untitled_recipe) }
+    val lines = ShoppingTotals.of(recipes, measures)
+    val seen = HashMap<String, Int>()
+    val ticks = lines.map { line ->
+        val factors = (line.name as? ShoppingName.Entry)?.let { measures[it.id]?.factors }.orEmpty()
+        val key = keyOf(line, factors)
+        val order = seen.merge(key, 1, Int::plus)!! - 1
+        LineTick(if (order == 0) key else "$key#$order", (line.quantity as? ShoppingQuantity.Measured)?.amount, factors)
     }
-    return ShoppingTotals.of(recipes, measures).map { line ->
-        val name = nameOf(line, dictionary, language, resources)
-        val amount = amountOf(line, dictionary, language, resources)
-        ShownLine(
-            text = amount?.let { resources.getString(R.string.shopping_line, name, it) } ?: name,
-            counted = line.counted.takeIf { line.approximate && it.isNotEmpty() }
-                ?.joinToString(", ") { countedOf(it, language, resources) },
-            from = line.recipes.mapNotNull(titles::get).joinToString(", "),
-        )
+    return lines to ticks
+}
+
+/** What [line] is, for its tick ([LineTick.key]); a second line of the same is told apart by the caller. */
+private fun keyOf(line: ShoppingLine, factors: Map<String, Double>): String {
+    val recipe = line.recipes.firstOrNull()?.value.orEmpty()
+    return when (val quantity = line.quantity) {
+        // Never added to: one row of one recipe, taken of what the row holds wherever it stands.
+        is ShoppingQuantity.AsWritten -> "w:$recipe:${quantity.row.copy(position = 0).toString().hashCode()}"
+        else -> when (val name = line.name) {
+            is ShoppingName.FreeText -> "f:$recipe:${name.text}"
+            is ShoppingName.Entry -> when {
+                quantity !is ShoppingQuantity.Measured -> "e:${name.id}:taste"
+                // The one line every measured unit of the entry merges into, whichever unit it is in.
+                line.approximate || comparisonFactor(factors, quantity.amount.unit) != null -> "e:${name.id}"
+                else -> "e:${name.id}:${quantity.amount.unit.name}"
+            }
+        }
     }
 }
 

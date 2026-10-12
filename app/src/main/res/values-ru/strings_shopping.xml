@@ -10,8 +10,15 @@
     <string name="shopping_clear">Очистить список</string>
     <string name="shopping_cleared">Список очищен</string>
     <string name="shopping_undo">Вернуть</string>
+    <string name="shopping_clear_ticked">Снять отметки</string>
+    <string name="shopping_ticks_cleared">Отметки сняты</string>
     <string name="shopping_recipes">Рецепты</string>
     <string name="shopping_to_buy">Купить</string>
+    <string name="shopping_basket">В корзине</string>
+    <string name="shopping_ticked">Куплено</string>
+    <string name="shopping_unticked">Не куплено</string>
+    <string name="shopping_tick_action">Отметить как купленное</string>
+    <string name="shopping_untick_action">Снять отметку «куплено»</string>
     <string name="shopping_remove">Убрать «%1$s» из списка</string>
     <string name="shopping_removed">Рецепт «%1$s» убран из списка</string>
     <string name="shopping_servings_fewer_action">Купить на меньше порций</string>

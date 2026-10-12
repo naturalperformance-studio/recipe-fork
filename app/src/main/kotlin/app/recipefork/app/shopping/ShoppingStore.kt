@@ -1,9 +1,11 @@
 package app.recipefork.app.shopping
 
 import android.content.Context
+import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
+import app.recipefork.core.shopping.ShoppingAmount
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,11 +29,18 @@ data class ListedRecipe(val book: String, val recipe: RecipeId, val servings: Ra
     fun isOf(book: String, recipe: RecipeId): Boolean = this.book == book && this.recipe == recipe
 }
 
+/** A line of the list as its tick names it: the line [line] ([LineTick.key]) of the recipes of the book whose file is [book]. */
+data class TickedLine(val book: String, val line: String)
+
 /**
- * The reader's shopping list (FLOW-074), as kept on the device: its [recipes] in the order they were added, each once.
- * Its own lines and its ticks (T-231, T-232) are parts of their own beside them.
+ * The reader's shopping list (FLOW-074), as kept on the device: its [recipes] in the order they were added, each once,
+ * and its [ticks] — the lines ticked as bought, each with the amount it asks for as it stands (null for a line with
+ * none: to taste, or as written). Its own lines (T-232) are a part of their own beside them.
  */
-data class ShoppingList(val recipes: List<ListedRecipe> = emptyList()) {
+data class ShoppingList(
+    val recipes: List<ListedRecipe> = emptyList(),
+    val ticks: Map<TickedLine, ShoppingAmount?> = emptyMap(),
+) {
     val isEmpty: Boolean get() = recipes.isEmpty()
 
     /** [recipe] added at the end, or, already listed, set to its count where it stands. */
@@ -48,6 +57,16 @@ data class ShoppingList(val recipes: List<ListedRecipe> = emptyList()) {
 
     /** The list without the recipe [recipe] of [book]. */
     fun without(book: String, recipe: RecipeId): ShoppingList = copy(recipes = recipes.filterNot { it.isOf(book, recipe) })
+
+    /** [line] ticked as bought, asking for [amount]; or, ticked, unticked. */
+    fun toggled(line: TickedLine, amount: ShoppingAmount?): ShoppingList =
+        copy(ticks = if (line in ticks) ticks - line else ticks + (line to amount))
+
+    /**
+     * The list with nothing of [book] ticked any more; its recipes stay. This is where the ticked own lines (T-232) leave
+     * the list as well.
+     */
+    fun withoutTicked(book: String): ShoppingList = copy(ticks = ticks.filterKeys { it.book != book })
 }
 
 /**
@@ -94,16 +113,21 @@ class PreferencesShopping(context: Context) : ShoppingStore {
 }
 
 /**
- * How the list is written in the store: one JSON object, each part of the list under a key of its own — "recipes" now,
- * its own lines and its ticks under keys of their own once they come — so that a part added later breaks no list kept
+ * How the list is written in the store: one JSON object, each part of the list under a key of its own — "recipes",
+ * "ticks", and its own lines under a key of their own once they come — so that a part added later breaks no list kept
  * before it. A reader takes the keys it knows and passes over the others; a key missing reads as an empty part, and
- * whatever does not read back — another type, a damaged text, a recipe without its identity — reads as nothing.
+ * whatever does not read back — another type, a damaged text, a recipe or a tick without its identity — reads as
+ * nothing.
  */
 internal object ShoppingListCodec {
     private const val RECIPES = "recipes"
     private const val BOOK = "book"
     private const val RECIPE = "recipe"
     private const val SERVINGS = "servings"
+    private const val TICKS = "ticks"
+    private const val LINE = "line"
+    private const val UNIT = "unit"
+    private const val AMOUNT = "amount"
 
     fun encoded(list: ShoppingList): String = buildJsonObject {
         put(RECIPES, buildJsonArray {
@@ -112,6 +136,18 @@ internal object ShoppingListCodec {
                     put(BOOK, listed.book)
                     put(RECIPE, listed.recipe.value)
                     listed.servings?.let { put(SERVINGS, it.toString()) }
+                })
+            }
+        })
+        put(TICKS, buildJsonArray {
+            list.ticks.forEach { (line, amount) ->
+                add(buildJsonObject {
+                    put(BOOK, line.book)
+                    put(LINE, line.line)
+                    amount?.let {
+                        put(UNIT, it.unit.name)
+                        put(AMOUNT, it.value.toString())
+                    }
                 })
             }
         })
@@ -125,17 +161,31 @@ internal object ShoppingListCodec {
             val recipe = fields.text(RECIPE)?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
             ListedRecipe(book, RecipeId(recipe), servingsOf(fields.text(SERVINGS)))
         }.distinctBy { it.book to it.recipe }
-        return ShoppingList(recipes)
+        val ticks = (root[TICKS] as? JsonArray).orEmpty().mapNotNull { element ->
+            val fields = element as? JsonObject ?: return@mapNotNull null
+            val book = fields.text(BOOK)?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+            val line = fields.text(LINE)?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+            TickedLine(book, line) to amountOf(fields.text(UNIT), fields.text(AMOUNT))
+        }.toMap()
+        return ShoppingList(recipes, ticks)
     }
 
     private fun JsonObject.text(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.jsonPrimitive?.contentOrNull
 
     /** A kept count, written as `n` or `n/d`; anything else — or a count no reader can request — reads as none. */
-    private fun servingsOf(text: String?): Rational? {
+    private fun servingsOf(text: String?): Rational? = rationalOf(text)?.takeIf(RequestedServings::holds)
+
+    /** A ticked line's amount, its unit by name and its value as `n` or `n/d`; anything else reads as none. */
+    private fun amountOf(unit: String?, value: String?): ShoppingAmount? {
+        val known = QuantityUnit.entries.firstOrNull { it.name == unit } ?: return null
+        return rationalOf(value)?.let { ShoppingAmount(known, it) }
+    }
+
+    private fun rationalOf(text: String?): Rational? {
         val parts = text?.split('/')?.takeIf { it.size in 1..2 } ?: return null
         return try {
             val denominator = if (parts.size == 2) BigInteger(parts[1]) else BigInteger.ONE
-            if (denominator.signum() == 0) null else Rational.of(BigInteger(parts[0]), denominator).takeIf(RequestedServings::holds)
+            if (denominator.signum() == 0) null else Rational.of(BigInteger(parts[0]), denominator)
         } catch (e: NumberFormatException) {
             null
         }
