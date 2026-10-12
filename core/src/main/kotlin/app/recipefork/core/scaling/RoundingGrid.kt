@@ -21,7 +21,7 @@ enum class RoundingGrid(
 ) {
     EXACT(Rational.ONE),
 
-    /** US mass, in ounces: ¼ oz below 4 oz, ½ oz from 4 oz, and ¼ lb (4 oz) from 1 lb, where the ladder writes pounds. */
+    /** US mass, in ounces: ¼ oz below 4 oz, ½ oz from 4 oz up to 2 lb (32 oz), and ¼ lb (4 oz) from 2 lb. */
     OUNCES(Rational.of(1, 4)),
 
     /** US volume, in fluid ounces: ½ fl oz. */
@@ -70,7 +70,7 @@ enum class RoundingGrid(
         }
         OUNCES -> when {
             value < FOUR -> steps(value, QUARTERS)
-            value < SIXTEEN -> steps(value, HALVES)
+            value < THIRTY_TWO -> steps(value, HALVES)
             // Quarter pounds: whole steps of 4 oz, counted in fours.
             else -> steps(value / FOUR, WHOLE).let { (below, above) -> below * FOUR to above * FOUR }
         }
@@ -94,7 +94,7 @@ enum class RoundingGrid(
         private val HALVES = listOf(Rational.ZERO, Rational.of(1, 2))
         private val QUARTERS = listOf(Rational.ZERO, Rational.of(1, 4), Rational.of(1, 2), Rational.of(3, 4))
         private val FOUR = Rational.of(4)
-        private val SIXTEEN = Rational.of(16)
+        private val THIRTY_TWO = Rational.of(32)
         private val KITCHEN_FRACTIONS = listOf(
             Rational.ZERO,
             Rational.of(1, 4),

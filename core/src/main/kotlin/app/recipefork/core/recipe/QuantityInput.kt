@@ -29,7 +29,7 @@ enum class AcceptedValues {
     /** `exact` volume: whole millilitres, and whole litres from 1000 l. */
     WHOLE_MILLILITRES,
 
-    /** US mass: ¼ oz below 4 oz, ½ oz up to 1 lb, ¼ lb from 1 lb. */
+    /** US mass: ¼ oz below 4 oz, ½ oz up to 2 lb, ¼ lb from 2 lb. */
     OUNCES,
 
     /** US volume: ½ fl oz. */

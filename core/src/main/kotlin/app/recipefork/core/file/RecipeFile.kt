@@ -12,6 +12,7 @@ import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.serialization.SerializationException
@@ -41,9 +42,15 @@ object RecipeFile {
      * (DOM-024) where formats 1 and 2 gave it at most one `timer`, which reads as a step with that one timer. Format 4
      * adds the recipe's `equipment`, each item its text; a document of formats 1 to 3 reads as one with none. Format 5
      * names each item as an ingredient is named: a dictionary entry, with its labels, and a qualifier, or free text.
-     * Format 6 adds a step's `note`, the author's own; a document of formats 1 to 5 reads as one with none.
+     * Format 6 adds a step's `note`, the author's own; a document of formats 1 to 5 reads as one with none. Format 7
+     * adds the US units `ounce`, `pound` and `fluid_ounce` (v0.35), and is written only by a document holding one, in
+     * a row or a part: any other is written as format 6 ([LAST_FORMAT_WITHOUT_US_UNITS]), so that an application
+     * reading at most format 6 still opens it, and refuses one with US units as later rather than damaged (FLOW-064).
      */
-    const val FORMAT_VERSION = 6
+    const val FORMAT_VERSION = 7
+
+    /** The format written for a document holding no US unit: the last format before them. */
+    const val LAST_FORMAT_WITHOUT_US_UNITS = 6
 
     /** The last format that wrote a step's one `timer` rather than its list of `timers`. */
     private const val LAST_ONE_TIMER_FORMAT = 2
@@ -101,8 +108,13 @@ object RecipeFile {
         }
     }
 
+    /** Whether a row or a part of [this] is in a US unit, which only format 7 names. */
+    private fun RecipeFileContent.holdsUsUnit(): Boolean =
+        ingredients.any { it.unit?.system == UnitSystem.US } ||
+            steps.any { step -> step.ingredientReferences.any { it.share?.unit?.system == UnitSystem.US } }
+
     private fun RecipeFileContent.toDocument() = RecipeDocument(
-        formatVersion = FORMAT_VERSION,
+        formatVersion = if (holdsUsUnit()) FORMAT_VERSION else LAST_FORMAT_WITHOUT_US_UNITS,
         recipe = DocumentRecipe(
             id = id.value,
             title = title,

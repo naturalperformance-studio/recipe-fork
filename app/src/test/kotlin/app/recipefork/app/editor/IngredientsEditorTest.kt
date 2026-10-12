@@ -319,7 +319,7 @@ class IngredientsEditorTest {
     @Test
     @Config(qualifiers = "ru")
     fun theUnitFieldOffersExactlyTheTwelveUnitsInRussian() = theTwelveUnits(
-        listOf("г", "кг", "т", "мл", "л", "м³", "унц.", "фунт", "жидк. унц.", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
+        listOf("г", "кг", "т", "мл", "л", "м³", "унц.", "фн", "жидк. унц.", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
     )
 
     private fun theTwelveUnits(names: List<String>) {

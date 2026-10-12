@@ -70,7 +70,7 @@
     <string name="editor_quantity_separators">Число пишется без разделителей: без пробелов и не больше одной запятой или точки.</string>
     <string name="editor_quantity_accepts_grams">Здесь можно указать целое число граммов, а от 1000 кг — целое число килограммов.</string>
     <string name="editor_quantity_accepts_millilitres">Здесь можно указать целое число миллилитров, а от 1000 л — целое число литров.</string>
-    <string name="editor_quantity_accepts_ounces">Здесь можно указать унции четвертями до 4 унц., половинами до 1 фунта, а от 1 фунта — четвертями фунта.</string>
+    <string name="editor_quantity_accepts_ounces">Здесь можно указать унции четвертями до 4 унц., половинами до 2 фн, а от 2 фн — четвертями фунта.</string>
     <string name="editor_quantity_accepts_fluid_ounces">Здесь можно указать жидкие унции половинами: ½, целое число или целое число с ½.</string>
     <string name="editor_quantity_accepts_whole_pieces">Здесь можно указать целое число штук, от 1.</string>
     <string name="editor_quantity_accepts_halves">Здесь можно указать ½, целое число или целое число с ½.</string>
@@ -82,7 +82,7 @@
     <string name="editor_unit_litre">л</string>
     <string name="editor_unit_cubic_metre">м³</string>
     <string name="editor_unit_ounce">унц.</string>
-    <string name="editor_unit_pound">фунт</string>
+    <string name="editor_unit_pound">фн</string>
     <string name="editor_unit_fluid_ounce">жидк. унц.</string>
     <string name="editor_unit_piece">шт</string>
     <string name="editor_unit_teaspoon">ч. л.</string>

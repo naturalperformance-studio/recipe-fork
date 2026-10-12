@@ -81,6 +81,5 @@ enum class QuantityUnit(
         }
 
     /** How many of [lineUnit] one of this unit holds, exactly (1000 for a kilogram, 16 for a pound); null outside `exact`. */
-    val lineMultiple: Rational?
-        get() = lineUnit?.let { checkNotNull(baseMultiple) / checkNotNull(it.baseMultiple) }
+    val lineMultiple: Rational? by lazy { lineUnit?.let { checkNotNull(baseMultiple) / checkNotNull(it.baseMultiple) } }
 }

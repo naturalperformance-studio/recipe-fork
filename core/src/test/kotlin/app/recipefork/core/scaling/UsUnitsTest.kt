@@ -64,7 +64,7 @@ class UsUnitRatiosTest {
     }
 }
 
-/** v0.35 T-246: the kitchen grids of oz (¼ below 4 oz, ½ above, ¼ lb from 1 lb) and fl oz (½). */
+/** v0.35 T-246: the kitchen grids of oz (¼ below 4 oz, ½ up to 2 lb, ¼ lb from 2 lb) and fl oz (½). */
 class UsUnitGridsTest {
     @Test
     fun `oz and lb share the ounce grid, fl oz has its own, metric keeps the exact one`() {
@@ -77,12 +77,11 @@ class UsUnitGridsTest {
     }
 
     @Test
-    fun `the ounce grid holds quarters below 4 oz, halves up to 1 lb, quarter pounds from it`() {
+    fun `the ounce grid holds quarters below 4 oz, halves up to 2 lb, quarter pounds from 2 lb`() {
         val grid = RoundingGrid.OUNCES
-        listOf(q(1, 4), q(3, 4), q(15, 4), q(4), q(9, 2), q(31, 2), q(16), q(20), q(24), q(400)).forEach {
-            assertTrue(grid.holds(it), "holds $it")
-        }
-        listOf(q(1, 8), q(1, 3), q(17, 4), q(18), q(33, 2), q(22)).forEach { assertFalse(grid.holds(it), "does not hold $it") }
+        listOf(q(1, 4), q(3, 4), q(15, 4), q(4), q(9, 2), q(31, 2), q(16), q(33, 2), q(18), q(35, 2), q(63, 2), q(32), q(36), q(400))
+            .forEach { assertTrue(grid.holds(it), "holds $it") }
+        listOf(q(1, 8), q(1, 3), q(17, 4), q(65, 4), q(33), q(34), q(35)).forEach { assertFalse(grid.holds(it), "does not hold $it") }
     }
 
     @Test
@@ -92,9 +91,13 @@ class UsUnitGridsTest {
         assertEquals(q(4), grid.nearest(q(39, 10)))
         assertEquals(q(4), grid.nearest(q(42, 10)))
         assertEquals(q(9, 2), grid.nearest(q(17, 4)))
-        assertEquals(q(16), grid.nearest(q(179, 10)))
-        assertEquals(q(20), grid.nearest(q(18)))
         assertEquals(q(16), grid.nearest(q(159, 10)))
+        // 500 g = 17.637 oz → 17½ oz, not a quarter pound away.
+        assertEquals(q(35, 2), grid.nearest(Rational.of(500) / OUNCE.baseMultiple!!))
+        assertEquals(q(18), grid.nearest(q(179, 10)))
+        assertEquals(q(32), grid.nearest(q(319, 10)))
+        assertEquals(q(32), grid.nearest(q(33)))
+        assertEquals(q(36), grid.nearest(q(34))) // a tie between 32 and 36 goes up
     }
 
     @Test
@@ -113,7 +116,10 @@ class UsUnitGridsTest {
         assertTrue(QuantityInput.holds(q(3, 4), POUND, null)) // 12 oz
         assertFalse(QuantityInput.holds(q(11, 10), POUND, null)) // 17.6 oz
         assertTrue(QuantityInput.holds(q(14), OUNCE, null))
-        assertFalse(QuantityInput.holds(q(18), OUNCE, null))
+        assertTrue(QuantityInput.holds(q(18), OUNCE, null)) // an 18 oz jar, as the author writes it
+        assertTrue(QuantityInput.holds(q(3, 2), POUND, null))
+        assertFalse(QuantityInput.holds(q(11, 5), POUND, null)) // 2.2 lb = 35.2 oz, off the quarter pounds
+        assertFalse(QuantityInput.holds(q(33), OUNCE, null))
         assertTrue(QuantityInput.holds(q(3, 2), FLUID_OUNCE, null))
         assertEquals(AcceptedValues.OUNCES, QuantityInput.accepts(POUND, null))
         assertEquals(AcceptedValues.FLUID_OUNCES, QuantityInput.accepts(FLUID_OUNCE, null))
@@ -130,10 +136,17 @@ class UsUnitLadderTest {
         assertEquals("4 oz", text(OUNCE, q(4)))
         assertEquals("15½ oz", text(OUNCE, q(31, 2)))
         assertEquals("1 lb", text(OUNCE, q(16)))
+        assertEquals("16½ oz", text(OUNCE, q(33, 2)))
+        assertEquals("17½ oz", text(OUNCE, q(35, 2)))
+        assertEquals("18 oz", text(OUNCE, q(18)))
         assertEquals("1¼ lb", text(OUNCE, q(20)))
+        assertEquals("1½ lb", text(OUNCE, q(24)))
+        assertEquals("31½ oz", text(OUNCE, q(63, 2)))
+        assertEquals("2 lb", text(OUNCE, q(32)))
+        assertEquals("2¼ lb", text(OUNCE, q(36)))
         assertEquals("2½ lb", text(OUNCE, q(40)))
         assertEquals("1,000 lb", text(OUNCE, q(16_000)))
-        assertEquals("1${RUSSIAN.groupSeparator}000 фунт", text(OUNCE, q(16_000), RUSSIAN))
+        assertEquals("1${RUSSIAN.groupSeparator}000 фн", text(OUNCE, q(16_000), RUSSIAN))
     }
 
     @Test
@@ -153,7 +166,8 @@ class UsUnitLadderTest {
     @Test
     fun `russian labels`() {
         assertEquals("4 унц.", text(OUNCE, q(4), RUSSIAN))
-        assertEquals("1¼ фунт", text(OUNCE, q(20), RUSSIAN))
+        assertEquals("1¼ фн", text(OUNCE, q(20), RUSSIAN))
+        assertEquals("18 унц.", text(OUNCE, q(18), RUSSIAN))
     }
 
     @Test
@@ -187,6 +201,10 @@ class UsUnitScalingTest {
         assertEquals("8 oz", QuantityText.of(shown(butter, q(2)), ENGLISH))
         assertEquals("1¼ lb", QuantityText.of(shown(butter, q(5)), ENGLISH))
         assertEquals("2¼ lb", QuantityText.of(shown(beef, q(3, 2)), ENGLISH)) // 36 oz
+        assertEquals("27 oz", QuantityText.of(shown(butter, q(27, 4)), ENGLISH))
+        // An author's 18 oz scaled by 1 stays 18 oz; by 2, 36 oz is 2¼ lb.
+        assertEquals("18 oz", QuantityText.of(shown(AuthoredQuantity(OUNCE, q(18)), Rational.ONE), ENGLISH))
+        assertEquals("2¼ lb", QuantityText.of(shown(AuthoredQuantity(OUNCE, q(18)), q(2)), ENGLISH))
         assertEquals("12 oz", QuantityText.of(shown(beef, q(1, 2)), ENGLISH))
         assertEquals("4 fl oz", QuantityText.of(shown(milk, q(1, 2)), ENGLISH))
     }
@@ -211,7 +229,9 @@ class UsUnitScalingTest {
             Ingredient(0, null, freeTextName = "x", unitType = unit.type, unit = unit, quantity = quantity)
         assertEquals(AuthoredQuantity(POUND, q(5, 4)), Scaling.authored(row(POUND, q(5, 4)), null))
         assertEquals(AuthoredQuantity(OUNCE, q(29, 2)), Scaling.authored(row(OUNCE, q(29, 2)), null))
-        assertNull(Scaling.authored(row(OUNCE, q(18)), null))
+        assertEquals(AuthoredQuantity(OUNCE, q(18)), Scaling.authored(row(OUNCE, q(18)), null))
+        assertNull(Scaling.authored(row(OUNCE, q(33)), null))
+        assertNull(Scaling.authored(row(POUND, q(11, 5)), null))
     }
 
     @Test

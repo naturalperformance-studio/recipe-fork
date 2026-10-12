@@ -214,9 +214,9 @@ class RecipeFileTest {
     @Test
     fun aLaterFormatIsRefused() {
         val later = RecipeFile.encode(RecipeFileContent.of(recipe(), null, null))
-            .replace("\"format_version\": 6", "\"format_version\": 7")
-        assertTrue("\"format_version\": 7" in later)
-        assertEquals(7, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
+            .replace("\"format_version\": 6", "\"format_version\": 8")
+        assertTrue("\"format_version\": 8" in later)
+        assertEquals(8, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
     }
 
     @Test

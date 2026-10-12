@@ -202,7 +202,7 @@ class UnitLabelsTest {
         val russian = QuantityUnit.entries.map { UnitLabels.of(it, RUSSIAN) }
         val english = QuantityUnit.entries.map { UnitLabels.of(it, ENGLISH) }
         assertEquals(
-            listOf("г", "кг", "т", "мл", "л", "м³", "унц.", "фунт", "жидк. унц.", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
+            listOf("г", "кг", "т", "мл", "л", "м³", "унц.", "фн", "жидк. унц.", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
             russian,
         )
         assertEquals(
