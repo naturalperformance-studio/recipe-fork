@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The whole book saved to a file and restored from one (FLOW-073), in the settings of the serverless build. -->
+    <string name="backup_title">Backup</string>
+    <string name="backup_save">Save the book to a file</string>
+    <string name="backup_save_hint">Every recipe with its photos and clips, to a place you choose</string>
+    <string name="backup_restore">Restore from a file</string>
+    <string name="backup_restore_hint">Bring back a book saved before</string>
+    <!-- The name the file is offered under; %1$s is the date. -->
+    <string name="backup_file_name">Recipe book %1$s.recipefork-book</string>
+    <string name="backup_saving">Saving the book…</string>
+    <string name="backup_reading">Reading the file…</string>
+    <string name="backup_restoring">Restoring the book…</string>
+    <string name="backup_cancel">Cancel</string>
+    <plurals name="backup_saved">
+        <item quantity="one">Book saved: %d recipe</item>
+        <item quantity="other">Book saved: %d recipes</item>
+    </plurals>
+    <plurals name="backup_restored">
+        <item quantity="one">Restored %d recipe</item>
+        <item quantity="other">Restored %d recipes</item>
+    </plurals>
+    <plurals name="backup_added">
+        <item quantity="one">Added %d recipe</item>
+        <item quantity="other">Added %d recipes</item>
+    </plurals>
+    <plurals name="backup_already_held">
+        <item quantity="one">%d was already in the book</item>
+        <item quantity="other">%d were already in the book</item>
+    </plurals>
+    <!-- "Added 3 recipes; 11 were already in the book". -->
+    <string name="backup_added_and_held">%1$s; %2$s</string>
+    <string name="backup_save_failed">Couldn\'t save the book — no file was left behind</string>
+    <string name="backup_restore_failed">Couldn\'t restore the book — nothing in it changed</string>
+    <string name="backup_refused_not_a_book">This file can\'t be restored: it is not a saved recipe book</string>
+    <string name="backup_refused_damaged">This file can\'t be restored: it is damaged</string>
+    <string name="backup_refused_newer">This file can\'t be restored: it was saved by a newer version of the app — update the app first</string>
+    <string name="backup_refused_cannot_read">This file can\'t be restored: it couldn\'t be read (is there enough space?)</string>
+    <!-- Asked before restoring into a book that holds recipes. -->
+    <string name="backup_ask_title">The book holds recipes</string>
+    <plurals name="backup_ask_text">
+        <item quantity="one">The book already holds %d recipe. Add the file\'s recipes it doesn\'t hold, or replace the whole book with the file?</item>
+        <item quantity="other">The book already holds %d recipes. Add the file\'s recipes it doesn\'t hold, or replace the whole book with the file?</item>
+    </plurals>
+    <string name="backup_add">Add to the book</string>
+    <string name="backup_replace">Replace the book</string>
+    <string name="backup_replace_title">Replace the book?</string>
+    <plurals name="backup_replace_text">
+        <item quantity="one">The book\'s %d recipe will be removed, with its photos and clips, and the file\'s recipes put in its place. This can\'t be undone.</item>
+        <item quantity="other">All %d recipes of the book will be removed, with their photos and clips, and the file\'s recipes put in their place. This can\'t be undone.</item>
+    </plurals>
+    <string name="backup_replace_confirm">Replace</string>
+</resources>

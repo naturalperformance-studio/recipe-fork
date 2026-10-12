@@ -54,15 +54,24 @@ class BookRestore(
      * Restores [file] into the book [into] as [mode] has it and returns what it came to. [progress] is told the bytes
      * of media copied of a total known from the start. The work is cancelled by the caller's cancel up to the start of
      * the transaction, and nothing is changed; once the transaction has begun it runs to its end, and what it came to
-     * is returned even to a caller cancelled meanwhile — the book is restored then. Throws [RestoreRefused] for a file
-     * that cannot be believed, and whatever else stops it when it fails, the book left
-     * as it was.
+     * is returned even to a caller cancelled meanwhile — the book is restored then (though a caller cancelled meanwhile
+     * may be resumed with its cancel instead: the overload with `committed` is told it first). Throws [RestoreRefused]
+     * for a file that cannot be believed, and whatever else stops it when it fails, the book left as it was.
      */
     suspend fun restore(
         file: OpenedBookFile,
         into: ActiveBook.Open,
         mode: RestoreMode,
         progress: (done: Long, total: Long) -> Unit = { _, _ -> },
+    ): Restored = restore(file, into, mode, progress) {}
+
+    /** [restore], telling [committed] what it came to once it is done, before anything resumes. */
+    suspend fun restore(
+        file: OpenedBookFile,
+        into: ActiveBook.Open,
+        mode: RestoreMode,
+        progress: (done: Long, total: Long) -> Unit,
+        committed: (Restored) -> Unit,
     ): Restored {
         val copied = mutableListOf<File>()
         val plan = try {
@@ -72,7 +81,7 @@ class BookRestore(
             throw e
         }
         // From here on it is not cancelled: the transaction runs to its end, and what it changed is finished.
-        return withContext(NonCancellable) { commit(file, into, mode, plan, copied) }
+        return withContext(NonCancellable) { commit(file, into, mode, plan, copied).also(committed) }
     }
 
     /** What is to be copied: the rows of the file's recipes the book is to take, read before the transaction. */

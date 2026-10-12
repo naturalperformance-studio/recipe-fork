@@ -1,6 +1,11 @@
 package app.recipefork.app
 
 import android.content.Context
+import app.recipefork.app.backup.BookBackup
+import app.recipefork.app.backup.BookFileReader
+import app.recipefork.app.backup.BookFileWriter
+import app.recipefork.app.backup.BookRestore
+import app.recipefork.app.backup.ResolverDocuments
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
@@ -141,6 +146,19 @@ class AppContainer(
     /** The pool is the only recipe book so far (AUTH-026). */
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))
     val recipes = RecipeRepository(activeBook, context.filesDir)
+
+    /**
+     * Saves the active book to a file and restores one into it (FLOW-073), one operation at a time, outliving every
+     * screen; [BookBackup.restoreFrom] is the way into a restore, whatever hands the file over.
+     */
+    val backup = BookBackup(
+        activeBook,
+        kitchen,
+        ResolverDocuments(context),
+        BookFileWriter(context),
+        BookFileReader(context),
+        BookRestore(context.filesDir, kitchen),
+    )
 
     /** Converts a step's clip on the device (MEDIA-004), one for the application. */
     val clipConverter: ClipConverter = ClipTransformer(context)
