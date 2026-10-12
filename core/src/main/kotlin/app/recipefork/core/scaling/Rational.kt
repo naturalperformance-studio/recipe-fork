@@ -1,6 +1,8 @@
 package app.recipefork.core.scaling
 
+import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.MathContext
 
 /**
  * An exact rational number, always in lowest terms with a positive denominator.
@@ -40,6 +42,9 @@ class Rational private constructor(
     }
 
     val isWhole: Boolean get() = denominator == BigInteger.ONE
+
+    /** The nearest double, for comparisons that are approximate by nature (an entry's factors); never for scaling. */
+    fun toDouble(): Double = BigDecimal(numerator).divide(BigDecimal(denominator), MathContext.DECIMAL64).toDouble()
 
     override fun compareTo(other: Rational): Int =
         (numerator * other.denominator).compareTo(other.numerator * denominator)

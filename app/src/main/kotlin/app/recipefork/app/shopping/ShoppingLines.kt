@@ -99,6 +99,10 @@ data class LineTick(val key: String, val amount: ShoppingAmount?, private val fa
         val now = amount
         if (now == null || ticked == null) return now == null && ticked == null
         if (now.unit == ticked.unit) return now.value <= ticked.value
+        // Two `exact` units of one dimension (oz and g, once a metric recipe joined) compare exactly.
+        if (now.unit.dimension != null && now.unit.dimension == ticked.unit.dimension) {
+            return now.value * now.unit.baseMultiple!! <= ticked.value * ticked.unit.baseMultiple!!
+        }
         val before = gramsOf(ticked) ?: return false
         val after = gramsOf(now) ?: return false
         return after <= before * (1 + 1e-9)
@@ -217,7 +221,8 @@ private fun keyOf(line: ShoppingLine, factors: Map<String, Double>): String {
                 quantity !is ShoppingQuantity.Measured -> "e:${name.id}:taste"
                 // The one line every measured unit of the entry merges into, whichever unit it is in.
                 line.approximate || usable(comparisonFactor(factors, quantity.amount.unit)) != null -> "e:${name.id}"
-                else -> "e:${name.id}:${quantity.amount.unit.name}"
+                // Every `exact` unit of a dimension is one line (ShoppingTotals), named by the dimension's base unit.
+                else -> "e:${name.id}:${quantity.amount.unit.let { it.baseUnit ?: it }.name}"
             }
         }
     }

@@ -81,6 +81,8 @@
     <string name="editor_quantity_separators">A number is written without separators: no spaces, and at most one comma or point.</string>
     <string name="editor_quantity_accepts_grams">This field accepts a whole number of grams, and from 1000 kg a whole number of kilograms.</string>
     <string name="editor_quantity_accepts_millilitres">This field accepts a whole number of millilitres, and from 1000 l a whole number of litres.</string>
+    <string name="editor_quantity_accepts_ounces">This field accepts ounces in quarters below 4 oz and in halves up to 1 lb, and from 1 lb quarter pounds.</string>
+    <string name="editor_quantity_accepts_fluid_ounces">This field accepts fluid ounces in halves: ½, a whole number, or a whole number and ½.</string>
     <string name="editor_quantity_accepts_whole_pieces">This field accepts a whole number of pieces, 1 or more.</string>
     <string name="editor_quantity_accepts_halves">This field accepts ½, a whole number, or a whole number and ½.</string>
     <string name="editor_quantity_accepts_fractions">This field accepts ¼, ⅓, ½, ⅔, ¾, a whole number, or a whole number and one of these fractions. Type ⅓ as 1/3.</string>
@@ -91,6 +93,9 @@
     <string name="editor_unit_millilitre">ml</string>
     <string name="editor_unit_litre">l</string>
     <string name="editor_unit_cubic_metre">m³</string>
+    <string name="editor_unit_ounce">oz</string>
+    <string name="editor_unit_pound">lb</string>
+    <string name="editor_unit_fluid_ounce">fl oz</string>
     <string name="editor_unit_piece">pc</string>
     <string name="editor_unit_teaspoon">tsp</string>
     <string name="editor_unit_tablespoon">tbsp</string>

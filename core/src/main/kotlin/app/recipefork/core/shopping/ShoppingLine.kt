@@ -17,8 +17,8 @@ sealed interface ShoppingName {
 
 /**
  * An amount on the shopping list: [value] in [unit], a value of the unit's rounding grid. An `exact` amount is held in
- * the base unit of its dimension (gram or millilitre); [text] writes it on the magnitude ladder (300 g + 1.2 kg reads
- * "1.5 kg").
+ * the line unit of its ladder (gram, millilitre, ounce, fluid ounce), or in gram or millilitre where metric and US
+ * parts meet; [text] writes it on the magnitude ladder (300 g + 1.2 kg reads "1.5 kg", 12 oz + 8 oz reads "1¼ lb").
  */
 data class ShoppingAmount(val unit: QuantityUnit, val value: Rational) {
     /** The amount as the card writes a quantity, in [language]; the approximate mark is not part of it. */

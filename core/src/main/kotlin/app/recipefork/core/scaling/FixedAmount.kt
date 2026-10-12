@@ -26,12 +26,13 @@ sealed interface FixedAmountReading {
 object FixedAmount {
 
     /**
-     * The units an ingredient authored in [authored] can be fixed in: for `exact` every unit of its dimension, for
-     * any other unit type carrying a quantity its own unit alone; none for `taste_unmeasured`.
+     * The units an ingredient authored in [authored] can be fixed in: for `exact` every unit of its ladder — its
+     * dimension in its own system (g, kg, t; oz, lb) — for any other unit type carrying a quantity its own unit alone;
+     * none for `taste_unmeasured`.
      */
     fun units(authored: QuantityUnit): List<QuantityUnit> = when {
         !authored.type.carriesQuantity -> emptyList()
-        authored.type == UnitType.EXACT -> QuantityUnit.entries.filter { it.dimension == authored.dimension }
+        authored.type == UnitType.EXACT -> QuantityUnit.entries.filter { it.lineUnit == authored.lineUnit }
         else -> listOf(authored)
     }
 

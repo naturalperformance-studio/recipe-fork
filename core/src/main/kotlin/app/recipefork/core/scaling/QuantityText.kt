@@ -2,6 +2,7 @@ package app.recipefork.core.scaling
 
 import app.recipefork.core.recipe.Dimension
 import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import java.math.BigInteger
 
@@ -16,7 +17,10 @@ enum class InterfaceLanguage(
     ENGLISH(',', '.'),
 }
 
-/** The names of the twelve units in both interface languages, exactly as DOM-016 gives them. */
+/**
+ * The names of the units in both interface languages: the twelve exactly as DOM-016 gives them, and the US units of
+ * v0.35 abbreviated as Russian kitchen texts write them (унц., фунт, жидк. унц.).
+ */
 object UnitLabels {
     private val labels: Map<QuantityUnit, Pair<String, String>> = mapOf(
         QuantityUnit.GRAM to ("г" to "g"),
@@ -25,6 +29,9 @@ object UnitLabels {
         QuantityUnit.MILLILITRE to ("мл" to "ml"),
         QuantityUnit.LITRE to ("л" to "l"),
         QuantityUnit.CUBIC_METRE to ("м³" to "m³"),
+        QuantityUnit.OUNCE to ("унц." to "oz"),
+        QuantityUnit.POUND to ("фунт" to "lb"),
+        QuantityUnit.FLUID_OUNCE to ("жидк. унц." to "fl oz"),
         QuantityUnit.PIECE to ("шт" to "pc"),
         QuantityUnit.TEASPOON to ("ч. л." to "tsp"),
         QuantityUnit.TABLESPOON to ("ст. л." to "tbsp"),
@@ -47,7 +54,8 @@ object UnitLabels {
  *
  * - `exact` is written on the unit ladder of SCALE-013: below 1000 in the base unit (g, ml),
  *   from 1000 in kg or l to three places, from 1 000 000 in t or m³ to three places, with no
- *   trailing zero after the decimal mark.
+ *   trailing zero after the decimal mark. A US amount stays on its own ladder and is written as a
+ *   kitchen fraction is: below 16 oz in ounces, from 16 oz in pounds (`1¼ lb`); fluid ounces alone.
  * - `household`, `taste_measured` and `piece` are written as a whole number, a vulgar fraction,
  *   or a whole number followed by one (SCALE-014), and never carry a decimal mark.
  * - Whole numbers are grouped by three digits as L10N-009 states.
@@ -68,7 +76,8 @@ object QuantityText {
     }
 
     private fun exact(unit: QuantityUnit, value: Rational, language: InterfaceLanguage): String {
-        val base = unit.baseMultiple?.let { value * Rational.of(it) } ?: value
+        if (unit.system == UnitSystem.US) return customary(unit, value, language)
+        val base = unit.baseMultiple?.let { value * it } ?: value
         // A grid value is returned unchanged; this only guarantees whole base units above a rung.
         val grams = RoundingGrid.EXACT.nearest(base).floor()
         val dimension = checkNotNull(unit.dimension)
@@ -80,8 +89,21 @@ object QuantityText {
         return "${decimal(grams, scale, language)} ${UnitLabels.of(rungUnit, language)}"
     }
 
-    private fun baseUnitOf(dimension: Dimension, multiple: Long): QuantityUnit =
-        QuantityUnit.entries.single { it.dimension == dimension && it.baseMultiple == multiple }
+    private fun baseUnitOf(dimension: Dimension, multiple: Long): QuantityUnit = QuantityUnit.entries.single {
+        it.dimension == dimension && it.system == UnitSystem.METRIC && it.baseMultiple == Rational.of(multiple)
+    }
+
+    /** A US amount on its ladder: ounces below 16 oz, pounds from 16 oz, fluid ounces alone, each a kitchen fraction. */
+    private fun customary(unit: QuantityUnit, value: Rational, language: InterfaceLanguage): String {
+        val lineUnit = checkNotNull(unit.lineUnit)
+        // A grid value is returned unchanged; this only guarantees a value the fractions write.
+        val inLine = checkNotNull(RoundingGrid.of(lineUnit)).nearest(value * checkNotNull(unit.lineMultiple))
+        val (rungUnit, inRung) = when {
+            lineUnit == QuantityUnit.OUNCE && inLine >= OUNCES_PER_POUND -> QuantityUnit.POUND to inLine / OUNCES_PER_POUND
+            else -> lineUnit to inLine
+        }
+        return "${mixedNumber(inRung, language)} ${UnitLabels.of(rungUnit, language)}"
+    }
 
     /** [units] / 10^[scale], written to at most three places after the mark, with no trailing zero. */
     private fun decimal(units: BigInteger, scale: Int, language: InterfaceLanguage): String {
@@ -119,6 +141,7 @@ object QuantityText {
 
     private val THOUSAND = BigInteger.valueOf(1_000)
     private val MILLION = BigInteger.valueOf(1_000_000)
+    private val OUNCES_PER_POUND = Rational.of(16)
 
     private val VULGAR_FRACTIONS: Map<Rational, String> = mapOf(
         Rational.of(1, 4) to "¼",

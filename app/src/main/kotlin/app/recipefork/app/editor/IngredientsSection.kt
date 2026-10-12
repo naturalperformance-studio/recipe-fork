@@ -75,6 +75,9 @@ fun unitName(unit: QuantityUnit): Int = when (unit) {
     QuantityUnit.MILLILITRE -> R.string.editor_unit_millilitre
     QuantityUnit.LITRE -> R.string.editor_unit_litre
     QuantityUnit.CUBIC_METRE -> R.string.editor_unit_cubic_metre
+    QuantityUnit.OUNCE -> R.string.editor_unit_ounce
+    QuantityUnit.POUND -> R.string.editor_unit_pound
+    QuantityUnit.FLUID_OUNCE -> R.string.editor_unit_fluid_ounce
     QuantityUnit.PIECE -> R.string.editor_unit_piece
     QuantityUnit.TEASPOON -> R.string.editor_unit_teaspoon
     QuantityUnit.TABLESPOON -> R.string.editor_unit_tablespoon
@@ -90,6 +93,8 @@ fun problemMessage(problem: QuantityProblem): Int = when (problem) {
     is QuantityProblem.NotAccepted -> when (problem.accepts) {
         AcceptedValues.WHOLE_GRAMS -> R.string.editor_quantity_accepts_grams
         AcceptedValues.WHOLE_MILLILITRES -> R.string.editor_quantity_accepts_millilitres
+        AcceptedValues.OUNCES -> R.string.editor_quantity_accepts_ounces
+        AcceptedValues.FLUID_OUNCES -> R.string.editor_quantity_accepts_fluid_ounces
         AcceptedValues.WHOLE_PIECES -> R.string.editor_quantity_accepts_whole_pieces
         AcceptedValues.HALVES -> R.string.editor_quantity_accepts_halves
         AcceptedValues.KITCHEN_FRACTIONS -> R.string.editor_quantity_accepts_fractions

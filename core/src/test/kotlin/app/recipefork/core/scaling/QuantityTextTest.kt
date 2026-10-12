@@ -198,15 +198,15 @@ class L10n009NumberFormsTest {
 
 class UnitLabelsTest {
     @Test
-    fun `the twelve units carry the DOM-016 names in both languages`() {
+    fun `the twelve units carry the DOM-016 names in both languages, and the US units theirs`() {
         val russian = QuantityUnit.entries.map { UnitLabels.of(it, RUSSIAN) }
         val english = QuantityUnit.entries.map { UnitLabels.of(it, ENGLISH) }
         assertEquals(
-            listOf("г", "кг", "т", "мл", "л", "м³", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
+            listOf("г", "кг", "т", "мл", "л", "м³", "унц.", "фунт", "жидк. унц.", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
             russian,
         )
         assertEquals(
-            listOf("g", "kg", "t", "ml", "l", "m³", "pc", "tsp", "tbsp", "cup", "pinch", "to taste"),
+            listOf("g", "kg", "t", "ml", "l", "m³", "oz", "lb", "fl oz", "pc", "tsp", "tbsp", "cup", "pinch", "to taste"),
             english,
         )
     }

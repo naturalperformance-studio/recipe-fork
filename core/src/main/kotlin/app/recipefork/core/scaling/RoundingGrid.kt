@@ -11,12 +11,21 @@ import app.recipefork.core.recipe.UnitType
  * [EXACT] is expressed in the base unit of its dimension — grams or millilitres: whole units
  * below 1 000 000 (1000 kg or 1000 l), whole thousands of them at and above. The unit ladder
  * (SCALE-013) only changes how such a value is written, not which values exist.
+ *
+ * The US units (v0.35) have kitchen grids of their own, each in the line unit of its ladder ([QuantityUnit.lineUnit]):
+ * [OUNCES] in ounces, [FLUID_OUNCES] in fluid ounces.
  */
 enum class RoundingGrid(
     /** The smallest value of the grid, and the floor of SCALE-005. */
     val floor: Rational,
 ) {
     EXACT(Rational.ONE),
+
+    /** US mass, in ounces: ¼ oz below 4 oz, ½ oz from 4 oz, and ¼ lb (4 oz) from 1 lb, where the ladder writes pounds. */
+    OUNCES(Rational.of(1, 4)),
+
+    /** US volume, in fluid ounces: ½ fl oz. */
+    FLUID_OUNCES(Rational.of(1, 2)),
     PIECE_INDIVISIBLE(Rational.ONE),
     PIECE_DIVISIBLE(Rational.of(1, 2)),
 
@@ -59,6 +68,13 @@ enum class RoundingGrid(
             val below = Rational.of((value / step).floor()) * step
             below to (if (below == value) below else below + step)
         }
+        OUNCES -> when {
+            value < FOUR -> steps(value, QUARTERS)
+            value < SIXTEEN -> steps(value, HALVES)
+            // Quarter pounds: whole steps of 4 oz, counted in fours.
+            else -> steps(value / FOUR, WHOLE).let { (below, above) -> below * FOUR to above * FOUR }
+        }
+        FLUID_OUNCES -> steps(value, HALVES)
         PIECE_INDIVISIBLE -> steps(value, WHOLE)
         PIECE_DIVISIBLE -> steps(value, HALVES)
         FRACTIONAL -> steps(value, KITCHEN_FRACTIONS)
@@ -76,6 +92,9 @@ enum class RoundingGrid(
         private val THOUSAND = Rational.of(1_000)
         private val WHOLE = listOf(Rational.ZERO)
         private val HALVES = listOf(Rational.ZERO, Rational.of(1, 2))
+        private val QUARTERS = listOf(Rational.ZERO, Rational.of(1, 4), Rational.of(1, 2), Rational.of(3, 4))
+        private val FOUR = Rational.of(4)
+        private val SIXTEEN = Rational.of(16)
         private val KITCHEN_FRACTIONS = listOf(
             Rational.ZERO,
             Rational.of(1, 4),
@@ -90,7 +109,11 @@ enum class RoundingGrid(
          * which carries no quantity.
          */
         fun of(unit: QuantityUnit, divisible: Boolean? = null): RoundingGrid? = when (unit.type) {
-            UnitType.EXACT -> EXACT
+            UnitType.EXACT -> when (unit.lineUnit) {
+                QuantityUnit.OUNCE -> OUNCES
+                QuantityUnit.FLUID_OUNCE -> FLUID_OUNCES
+                else -> EXACT
+            }
             UnitType.PIECE -> {
                 requireNotNull(divisible) { "a piece ingredient carries its divisibility" }
                 if (divisible) PIECE_DIVISIBLE else PIECE_INDIVISIBLE

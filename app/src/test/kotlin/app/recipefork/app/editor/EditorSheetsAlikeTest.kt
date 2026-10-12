@@ -240,7 +240,7 @@ class EditorSheetsAlikeTest {
             listOf(
                 QuantityUnit.PIECE, QuantityUnit.GRAM, QuantityUnit.KILOGRAM, QuantityUnit.MILLILITRE, QuantityUnit.LITRE,
                 QuantityUnit.TEASPOON, QuantityUnit.TABLESPOON, QuantityUnit.CUP, QuantityUnit.PINCH, QuantityUnit.TO_TASTE,
-                QuantityUnit.TONNE, QuantityUnit.CUBIC_METRE,
+                QuantityUnit.TONNE, QuantityUnit.CUBIC_METRE, QuantityUnit.OUNCE, QuantityUnit.POUND, QuantityUnit.FLUID_OUNCE,
             ),
             listed,
         )
