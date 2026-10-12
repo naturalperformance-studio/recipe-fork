@@ -52,7 +52,11 @@ import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.PIECE
 import app.recipefork.core.recipe.QuantityUnit.TABLESPOON
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.shopping.ShoppingAmount
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -417,6 +421,47 @@ class ShoppingScreenTest {
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines().size == 3 }
         awaitBought("flour — ≈ 560 g")
         assertEquals(listOf("onion — 3 pc", "sugar — 1 tbsp", "flour — ≈ 560 g"), lines())
+    }
+
+    /** The soup and the pie listed, the onion and the flour ticked at what they ask for together. */
+    private fun tickedOnionAndFlour(): HeldShopping {
+        save(soup, pie)
+        val ticks = mapOf(TickedLine(POOL, "e:$ONION") to ShoppingAmount(PIECE, r(3)), TickedLine(POOL, "e:$FLOUR") to ShoppingAmount(GRAM, r(560)))
+        return HeldShopping(ShoppingList(listOf(listed(soup), listed(pie)), ticks))
+    }
+
+    // A cold start may read the recipes before the dictionary: until the dictionary is read nothing is settled, since
+    // lines told apart without the entries' measures would drop every tick. Once it is, the ticks show as they were.
+    @Test
+    fun theTicksWaitForTheDictionary() {
+        val kept = tickedOnionAndFlour()
+        val ticks = kept.list.value.ticks
+        val gate = CompletableDeferred<Unit>()
+        val environment = ShoppingEnvironment(kept, IngredientEntries { gate.await(); SHOPPING_DICTIONARY })
+        compose.setContent { MaterialTheme { ShoppingScreen(environment, recipes, onBack = {}) } }
+        // The recipes read, the dictionary not yet.
+        runBlocking { withTimeout(PATIENCE_MS) { shoppingEntries(kept, recipes).first { it.size == 2 } } }
+        compose.waitForIdle()
+        assertTrue(exists(ShoppingTags.LOADING))
+        assertEquals(ticks, kept.list.value.ticks)
+        gate.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines().size == 3 }
+        awaitBought("onion — 3 pc")
+        assertTrue(bought("flour — ≈ 560 g"))
+        assertEquals(listOf("sugar — 1 tbsp", "onion — 3 pc", "flour — ≈ 560 g"), lines())
+        assertEquals(ticks, kept.list.value.ticks)
+    }
+
+    // A dictionary that cannot be read leaves the lines unnamed and the ticks as they are kept: none is settled away.
+    @Test
+    fun anUnreadableDictionarySettlesNothing() {
+        val kept = tickedOnionAndFlour()
+        val ticks = kept.list.value.ticks
+        val environment = ShoppingEnvironment(kept, IngredientEntries { throw IllegalStateException("the dictionary cannot be read") })
+        compose.setContent { MaterialTheme { ShoppingScreen(environment, recipes, onBack = {}) } }
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines().isNotEmpty() }
+        compose.waitForIdle()
+        assertEquals(ticks, kept.list.value.ticks)
     }
 
     // A ticked line whose amount grows — its recipe's count raised, a recipe added — is unticked; one whose amount

@@ -58,9 +58,9 @@ data class ShoppingList(
     /** The list without the recipe [recipe] of [book]. */
     fun without(book: String, recipe: RecipeId): ShoppingList = copy(recipes = recipes.filterNot { it.isOf(book, recipe) })
 
-    /** [line] ticked as bought, asking for [amount]; or, ticked, unticked. */
-    fun toggled(line: TickedLine, amount: ShoppingAmount?): ShoppingList =
-        copy(ticks = if (line in ticks) ticks - line else ticks + (line to amount))
+    /** [line] ticked as bought ([bought]), asking for [amount]; or, not [bought], unticked. */
+    fun withTick(line: TickedLine, amount: ShoppingAmount?, bought: Boolean = true): ShoppingList =
+        copy(ticks = if (bought) ticks + (line to amount) else ticks - line)
 
     /**
      * The list with nothing of [book] ticked any more; its recipes stay. This is where the ticked own lines (T-232) leave

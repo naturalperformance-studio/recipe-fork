@@ -111,28 +111,31 @@ fun ShoppingScreen(
     val book = remember(recipes) { recipes.bookName().fileName }
     val list by store.list.collectAsState()
     val entries by remember(store, recipes) { shoppingEntries(store, recipes) }.collectAsState(initial = null)
-    val dictionary by produceState<Map<Long, IngredientEntryEntity>?>(null, shopping.ingredients) {
+    // The dictionary, and whether it was read: a dictionary that could not be read is an empty one.
+    val dictionary by produceState<Pair<Map<Long, IngredientEntryEntity>, Boolean>?>(null, shopping.ingredients) {
         value = try {
-            shopping.ingredients.entries().associateBy { it.id }
+            shopping.ingredients.entries().associateBy { it.id } to true
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             // Lines are named by the dictionary; without it they still add up, each entry an unnamed ingredient.
-            emptyMap()
+            emptyMap<Long, IngredientEntryEntity>() to false
         }
     }
     val language = servingsLanguage()
     val snackbars = remember { SnackbarHostState() }
     val change = rememberUndoableChange(store, snackbars)
     val shown = entries
-    val held = dictionary
+    val held = dictionary?.first
     // The ticks settled against the lines the recipes make now, with every change of the list made here and whenever
-    // the recipes change elsewhere — added from a card, edited, deleted.
-    val settle: (ShoppingList) -> ShoppingList = remember(book, shown, held) {
-        val read = shown.orEmpty().associate { it.recipe.id to it.recipe }
-        if (held == null) { list -> list } else { list -> list.settled(book, read, held) }
+    // the recipes change elsewhere — added from a card, edited, deleted. Only against the recipes and the dictionary
+    // both read: lines made without the entries' measures are told apart otherwise, and would drop every tick.
+    val read = dictionary?.takeIf { it.second }?.first
+    val settle: (ShoppingList) -> ShoppingList = remember(book, shown, read) {
+        val recipesRead = shown?.associate { it.recipe.id to it.recipe }
+        if (recipesRead == null || read == null) { list -> list } else { list -> list.settled(book, recipesRead, read) }
     }
-    LaunchedEffect(settle) { if (shown != null && held != null) store.update(settle) }
+    LaunchedEffect(settle) { store.update(settle) }
     val resources = LocalContext.current.resources
     val lines = remember(shown, held, language, resources) {
         if (shown == null || held == null) null else listedLines(shown, held, language, resources)
@@ -209,7 +212,7 @@ fun ShoppingScreen(
                     onRemove = { entry, title ->
                         change(context.getString(R.string.shopping_removed, title)) { settle(it.without(entry.listed.book, entry.listed.recipe)) }
                     },
-                    onTick = { line -> store.update { it.toggled(TickedLine(book, line.key), line.amount) } },
+                    onTick = { line, bought -> store.update { it.withTick(TickedLine(book, line.key), line.amount, bought) } },
                 )
             }
         }
@@ -219,7 +222,7 @@ fun ShoppingScreen(
 /**
  * The recipes, each with its count ([onServings]) and its removal ([onRemove], told its title); then the lines to buy,
  * and under "In the basket" the lines [ticked] (by their keys), each in the order of the list, each ticked or unticked
- * with a tap ([onTick]).
+ * with a tap ([onTick], told whether the line is now bought).
  */
 @Composable
 private fun ListContent(
@@ -229,7 +232,7 @@ private fun ListContent(
     padding: PaddingValues,
     onServings: (ShoppingEntry, Rational) -> Unit,
     onRemove: (ShoppingEntry, String) -> Unit,
-    onTick: (LineTick) -> Unit,
+    onTick: (LineTick, Boolean) -> Unit,
 ) {
     val (bought, toBuy) = lines.partition { it.tick.key in ticked }
     val untitled = stringResource(R.string.common_untitled_recipe)
@@ -251,7 +254,7 @@ private fun ListContent(
             }
         }
         itemsIndexed(toBuy, key = { _, line -> lineKey(line) }) { index, line ->
-            Line(line.shown, done = false, onToggle = { onTick(line.tick) }, Modifier.animateItem().testTag(ShoppingTags.line(index)))
+            Line(line.shown, done = false, onToggle = { onTick(line.tick, true) }, Modifier.animateItem().testTag(ShoppingTags.line(index)))
         }
         if (bought.isNotEmpty()) {
             item(key = BASKET_KEY) {
@@ -262,7 +265,7 @@ private fun ListContent(
             }
         }
         itemsIndexed(bought, key = { _, line -> lineKey(line) }) { index, line ->
-            Line(line.shown, done = true, onToggle = { onTick(line.tick) }, Modifier.animateItem().testTag(ShoppingTags.line(toBuy.size + index)))
+            Line(line.shown, done = true, onToggle = { onTick(line.tick, false) }, Modifier.animateItem().testTag(ShoppingTags.line(toBuy.size + index)))
         }
     }
 }

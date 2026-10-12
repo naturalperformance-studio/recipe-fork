@@ -80,9 +80,9 @@ class ShoppingStoreTest {
         val elsewhere = TickedLine("other.recipefork", "f:cake:bay leaf")
         store.update {
             it.with(soup)
-                .toggled(onion, ShoppingAmount(QuantityUnit.PIECE, r(3)))
-                .toggled(salt, null)
-                .toggled(elsewhere, ShoppingAmount(QuantityUnit.GRAM, r(5, 2)))
+                .withTick(onion, ShoppingAmount(QuantityUnit.PIECE, r(3)))
+                .withTick(salt, null)
+                .withTick(elsewhere, ShoppingAmount(QuantityUnit.GRAM, r(5, 2)))
         }
         val expected = ShoppingList(
             listOf(soup),
@@ -93,7 +93,7 @@ class ShoppingStoreTest {
         val written = file().getString(PreferencesShopping.KEY, null)!!
         assertTrue(written, written.startsWith("{\"recipes\":[") && "\"ticks\":[" in written)
         // A second tap unticks it, kept as well.
-        PreferencesShopping(context).update { it.toggled(onion, null) }
+        PreferencesShopping(context).update { it.withTick(onion, null, bought = false) }
         assertEquals(expected.ticks - onion, PreferencesShopping(context).list.value.ticks)
     }
 

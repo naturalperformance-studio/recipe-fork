@@ -122,7 +122,8 @@ class ShoppingLinesTest {
     fun aLinesTickIsTheSameWhateverOtherRecipesAreListed() {
         val soup = recipe(
             "Soup", 2, row(ONION, r(1), PIECE), row(FLOUR, r(300), GRAM), free("bay leaf", r(1), PIECE), free("bay leaf", r(2), PIECE),
-            row(SALT, null, null), free("parsley", null, PIECE), row(FLOUR, r(1), PINCH),
+            // Words that read as the second bay leaf's would, were its number only appended.
+            free("bay leaf#1", r(3), PIECE), row(SALT, null, null), free("parsley", null, PIECE), row(FLOUR, r(1), PINCH),
         )
         val pie = recipe("Pie", 4, row(ONION, r(2), PIECE), row(FLOUR, r(2), CUP), free("bay leaf", r(1), PIECE), row(SALT, r(5), GRAM))
         val alone = listedOf(at(soup)).map { it.tick.key }
@@ -198,16 +199,22 @@ class ShoppingLinesTest {
         assertEquals(emptyMap<TickedLine, ShoppingAmount?>(), added.ticks)
     }
 
-    // The ticks of another book's lines are left as they are; while a listed recipe is not read, nothing is settled.
+    // The ticks of another book's lines are left as they are; while a listed recipe is not read, nothing is settled —
+    // not even the tick of a line that recipe alone makes.
     @Test
     fun onlyTheBooksTicksAreSettledOnceEveryRecipeIsRead() {
         val soup = recipe("Soup", 2, row(ONION, r(1), PIECE))
-        val pie = recipe("Pie", 4, row(ONION, r(2), PIECE))
+        val pie = recipe("Pie", 4, row(ONION, r(2), PIECE), row(SUGAR, r(1), TABLESPOON))
         val elsewhere = TickedLine("other.recipefork", "e:$ONION")
-        val list = ticked(at(soup), texts = listOf("onion — 1 pc")).let { it.copy(ticks = it.ticks + (elsewhere to null)) }
-        val added = list.with(listed(pie))
-        assertEquals(added, added.settledOver(soup))
-        assertEquals(mapOf(elsewhere to null), added.settledOver(soup, pie).ticks)
+        val list = ticked(at(soup), at(pie), texts = listOf("sugar — 1 tbsp")).let { it.copy(ticks = it.ticks + (elsewhere to null)) }
+        val sugar = TickedLine(POOL, "e:$SUGAR")
+        // The pie not read yet: the list as it is, the sugar's tick kept.
+        assertEquals(list, list.settledOver(soup))
+        assertTrue(sugar in list.settledOver(soup).ticks)
+        // Both read: the sugar stays as it was; the other book's tick is untouched.
+        assertEquals(list, list.settledOver(soup, pie))
+        // The pie gone from the list: the sugar's line goes and drops its tick; the other book's stays.
+        assertEquals(mapOf(elsewhere to null), list.without(POOL, pie.id).settledOver(soup, pie).ticks)
     }
 
     @Test

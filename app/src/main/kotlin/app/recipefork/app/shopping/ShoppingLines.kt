@@ -101,7 +101,7 @@ data class LineTick(val key: String, val amount: ShoppingAmount?, private val fa
     }
 
     private fun gramsOf(amount: ShoppingAmount): Double? =
-        comparisonFactor(factors, amount.unit)?.takeIf { it.isFinite() && it > 0 }
+        usable(comparisonFactor(factors, amount.unit))
             ?.let { it * amount.value.numerator.toDouble() / amount.value.denominator.toDouble() }
 }
 
@@ -171,17 +171,21 @@ private fun totalsOf(entries: List<ShoppingEntry>, dictionary: Map<Long, Ingredi
         ShoppingRecipe(entry.recipe.id, entry.recipe.ingredients.sortedBy { it.position }, entry.authoredServings, entry.servings)
     }
     val lines = ShoppingTotals.of(recipes, measures)
-    val seen = HashMap<String, Int>()
+    val used = HashSet<String>()
     val ticks = lines.map { line ->
         val factors = (line.name as? ShoppingName.Entry)?.let { measures[it.id]?.factors }.orEmpty()
+        // A second line of the same — and any that would read as it — takes the first number free after it.
         val key = keyOf(line, factors)
-        val order = seen.merge(key, 1, Int::plus)!! - 1
-        LineTick(if (order == 0) key else "$key#$order", (line.quantity as? ShoppingQuantity.Measured)?.amount, factors)
+        val unique = generateSequence(0) { it + 1 }.map { if (it == 0) key else "$key#$it" }.first(used::add)
+        LineTick(unique, (line.quantity as? ShoppingQuantity.Measured)?.amount, factors)
     }
     return lines to ticks
 }
 
-/** What [line] is, for its tick ([LineTick.key]); a second line of the same is told apart by the caller. */
+/**
+ * What [line] is, for its tick ([LineTick.key]), read with the entry's [factors]; a second line of the same is told
+ * apart by the caller.
+ */
 private fun keyOf(line: ShoppingLine, factors: Map<String, Double>): String {
     val recipe = line.recipes.firstOrNull()?.value.orEmpty()
     return when (val quantity = line.quantity) {
@@ -192,7 +196,7 @@ private fun keyOf(line: ShoppingLine, factors: Map<String, Double>): String {
             is ShoppingName.Entry -> when {
                 quantity !is ShoppingQuantity.Measured -> "e:${name.id}:taste"
                 // The one line every measured unit of the entry merges into, whichever unit it is in.
-                line.approximate || comparisonFactor(factors, quantity.amount.unit) != null -> "e:${name.id}"
+                line.approximate || usable(comparisonFactor(factors, quantity.amount.unit)) != null -> "e:${name.id}"
                 else -> "e:${name.id}:${quantity.amount.unit.name}"
             }
         }
@@ -221,3 +225,6 @@ private fun countedOf(part: CountedPart, language: InterfaceLanguage, resources:
         part.original.text(language),
         part.countedText(language),
     )
+
+/** A factor [ShoppingTotals] counts by: finite and above zero; null for any other. */
+private fun usable(factor: Double?): Double? = factor?.takeIf { it.isFinite() && it > 0 }
