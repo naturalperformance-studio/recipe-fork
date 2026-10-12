@@ -65,6 +65,9 @@ import java.time.Instant
  * - It opens a sheet of the reader's own collections, each ticked where the recipe already is; a tick or an untick is
  *   written as it is made; "New collection…" takes a name and makes the collection with the recipe in it, ticked.
  * - As the sheet closes on a change, the card says what the recipe is in now ("In 2 collections").
+ *
+ * T-259 — a change the book does not write is undone on the sheet and said in the sheet's notice; where nothing else
+ * changed, the card says it again as the sheet closes. The book is made to refuse a write by a trigger of its database.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "en-w360dp-h640dp")
@@ -137,6 +140,28 @@ class AddToCollectionSheetTest {
     }
 
     private fun noNotice() = compose.onAllNodes(hasTestTag(CardTags.SNACKBAR)).fetchSemanticsNodes().isEmpty()
+
+    /** Waits for the sheet's own notice to say [text]. */
+    private fun awaitSheetNotice(text: String) = compose.waitUntil(PATIENCE_MS) {
+        compose.onAllNodes(hasText(text) and hasAnyAncestor(hasTestTag(AddToCollectionTags.NOTICE)), useUnmergedTree = true)
+            .fetchSemanticsNodes().size == 1
+    }
+
+    /** Makes the book refuse every [write] (e.g. "insert on collection_recipe"), as a failing disk would. */
+    private fun refuse(write: String) {
+        val name = "refuse_" + write.replace(' ', '_')
+        book.database.openHelper.writableDatabase.execSQL("create trigger $name before $write begin select raise(abort, 'refused'); end")
+    }
+
+    /** Names a new collection [name] in the sheet and taps Create. */
+    private fun createInTheSheet(name: String) {
+        tap(AddToCollectionTags.NEW)
+        compose.waitUntil(PATIENCE_MS) { exists(AddToCollectionTags.NAME) }
+        compose.onNodeWithTag(AddToCollectionTags.NAME).performTextInput(name)
+        tap(AddToCollectionTags.CREATE)
+    }
+
+    private fun own() = runBlocking { collections.listed(CollectionOrigin.OWN).first() }
 
     // The ⋮ read top to bottom, as since v0.33: the shopping item, then "Add to collection", on View and on Cooking.
     @Test
@@ -248,6 +273,83 @@ class AddToCollectionSheetTest {
         compose.waitUntil(PATIENCE_MS) { exists(AddToCollectionTags.NEW) && !exists(AddToCollectionTags.NAME) }
         done()
         awaitNotice("In 1 collection")
+    }
+
+    // A tick the book does not write is undone and said in the sheet; closing with nothing changed, the card says it.
+    @Test
+    fun aTickThatIsNotWrittenIsUndoneAndSaid() {
+        val menu = create("New Year's menu")
+        open()
+        openTheSheet()
+        refuse("insert on collection_recipe")
+        tap(row(menu))
+        awaitSheetNotice("Couldn't change the collection")
+        compose.waitUntil(PATIENCE_MS) { !ticked(menu) }
+        assertEquals(emptySet<CollectionId>(), holding())
+        done()
+        awaitNotice("Couldn't change the collection")
+    }
+
+    // An untick the book does not write is undone: the row shows ticked again, and the sheet says so.
+    @Test
+    fun anUntickThatIsNotWrittenIsUndoneAndSaid() {
+        val menu = create("New Year's menu")
+        runBlocking { recipes.save(salad); collections.addTo(salad.id, listOf(menu)) }
+        open()
+        openTheSheet()
+        compose.waitUntil(PATIENCE_MS) { ticked(menu) }
+        refuse("delete on collection_recipe")
+        tap(row(menu))
+        awaitSheetNotice("Couldn't change the collection")
+        compose.waitUntil(PATIENCE_MS) { ticked(menu) }
+        assertEquals(setOf(menu), holding())
+    }
+
+    // Create makes the collection but the recipe cannot be put in it: the new row shows unticked, and the sheet says so.
+    @Test
+    fun aCollectionMadeWithoutTheRecipeShowsUntickedAndIsSaid() {
+        open()
+        openTheSheet()
+        refuse("insert on collection_recipe")
+        createInTheSheet("Salads")
+        awaitSheetNotice("Couldn't change the collection")
+        compose.waitUntil(PATIENCE_MS) { own().size == 1 }
+        val salads = CollectionId(own().single().collectionId)
+        compose.waitUntil(PATIENCE_MS) { exists(row(salads)) }
+        compose.waitForIdle()
+        assertFalse(ticked(salads))
+        assertEquals(emptySet<CollectionId>(), holding())
+        // A collection was made: the card says what the recipe is in.
+        done()
+        awaitNotice("Not in any collection")
+    }
+
+    // Create that makes no collection says so in the sheet, and lists none.
+    @Test
+    fun aCollectionNotMadeIsSaid() {
+        open()
+        openTheSheet()
+        refuse("insert on collection")
+        createInTheSheet("Salads")
+        awaitSheetNotice("Couldn't create the collection")
+        assertTrue(own().isEmpty())
+        assertTrue(exists(AddToCollectionTags.EMPTY))
+        done()
+        awaitNotice("Couldn't create the collection")
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun inRussianAFailureIsSaid() {
+        val menu = create("Салаты")
+        open()
+        openTheSheet()
+        refuse("insert on collection_recipe")
+        tap(row(menu))
+        awaitSheetNotice("Не удалось изменить коллекцию")
+        refuse("insert on collection")
+        createInTheSheet("Супы")
+        awaitSheetNotice("Не удалось создать коллекцию")
     }
 
     // With no collection of their own, the sheet says so and offers "New collection…"; an imported one is not listed.

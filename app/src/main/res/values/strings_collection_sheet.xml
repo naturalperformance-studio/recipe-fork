@@ -10,6 +10,9 @@
     <string name="collection_sheet_create">Create</string>
     <string name="collection_sheet_empty">No collections yet</string>
     <string name="collection_sheet_in_none">Not in any collection</string>
+    <!-- Said in the sheet when a tick, an untick or Create could not be written. -->
+    <string name="collection_sheet_change_failed">Couldn\'t change the collection</string>
+    <string name="collection_sheet_create_failed">Couldn\'t create the collection</string>
     <plurals name="collection_sheet_in">
         <item quantity="one">In %d collection</item>
         <item quantity="other">In %d collections</item>
