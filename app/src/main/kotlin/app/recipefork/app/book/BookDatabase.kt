@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.Flow
         MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class, IngredientGroupEntity::class,
         StepTimerEntity::class, EquipmentEntity::class,
     ],
-    version = 8,
+    version = BookDatabase.VERSION,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -46,8 +46,23 @@ abstract class BookDatabase : RoomDatabase() {
             context: Context,
             book: BookName,
             equipment: () -> List<DictionaryEntry> = { shippedEquipment(context) },
-        ): BookDatabase =
-            Room.databaseBuilder(context, BookDatabase::class.java, book.fileName).addMigrations(*migrations(equipment)).build()
+        ): BookDatabase = open(context, book.fileName, equipment)
+
+        /**
+         * Opens the book database in [file], which is no book of the device's — a saved book's copy — through the same
+         * migrations as [open].
+         */
+        fun open(
+            context: Context,
+            file: java.io.File,
+            equipment: () -> List<DictionaryEntry> = { shippedEquipment(context) },
+        ): BookDatabase = open(context, file.absolutePath, equipment)
+
+        private fun open(context: Context, name: String, equipment: () -> List<DictionaryEntry>): BookDatabase =
+            Room.databaseBuilder(context, BookDatabase::class.java, name).addMigrations(*migrations(equipment)).build()
+
+        /** The schema version of a book this application writes; an older book is migrated up to it as it is opened. */
+        const val VERSION = 8
 
         /** The equipment dictionary the application ships (decisions/20260928-dictionaries-ship-with-the-application.md). */
         fun shippedEquipment(context: Context): List<DictionaryEntry> =

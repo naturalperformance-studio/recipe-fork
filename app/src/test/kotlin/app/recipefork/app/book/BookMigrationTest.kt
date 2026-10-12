@@ -564,7 +564,7 @@ class BookMigrationTest {
         }
     }
 
-    private companion object {
+    internal companion object {
         /**
          * What Room generated for the book at version 7: version 6 with each item of equipment named by an entry and a
          * qualifier, or by free text. The identity hash stands in for that version's, which an upgrade does not read.
