@@ -264,6 +264,58 @@ abstract class BookRecipeDao {
     @Query("select count(*) from recipe")
     abstract suspend fun count(): Int
 
+    /** The identity of every recipe the book holds. */
+    @Query("select recipe_id from recipe order by recipe_id")
+    abstract suspend fun ids(): List<String>
+
+    /**
+     * Deletes every recipe of the book with everything it holds, and every mark, atomically: the book is left empty.
+     * Each table is emptied, as [delete] deletes each part, whatever the connection's foreign-key setting.
+     */
+    @Transaction
+    open suspend fun clear() {
+        clearAllIngredients()
+        clearAllGroups()
+        clearAllSteps()
+        clearAllTimers()
+        clearAllReferences()
+        clearAllMedia()
+        clearAllTags()
+        clearAllEquipment()
+        clearAllRecipes()
+        clearAllFavourites()
+    }
+
+    @Query("delete from ingredient")
+    protected abstract suspend fun clearAllIngredients()
+
+    @Query("delete from ingredient_group")
+    protected abstract suspend fun clearAllGroups()
+
+    @Query("delete from step")
+    protected abstract suspend fun clearAllSteps()
+
+    @Query("delete from step_timer")
+    protected abstract suspend fun clearAllTimers()
+
+    @Query("delete from step_reference")
+    protected abstract suspend fun clearAllReferences()
+
+    @Query("delete from media")
+    protected abstract suspend fun clearAllMedia()
+
+    @Query("delete from recipe_tag")
+    protected abstract suspend fun clearAllTags()
+
+    @Query("delete from recipe_equipment")
+    protected abstract suspend fun clearAllEquipment()
+
+    @Query("delete from recipe")
+    protected abstract suspend fun clearAllRecipes()
+
+    @Query("delete from favourite")
+    protected abstract suspend fun clearAllFavourites()
+
     /** Writes the whole recipe, replacing whatever the book held of it, atomically. */
     @Transaction
     open suspend fun put(rows: RecipeRows) {
@@ -508,6 +560,10 @@ abstract class BookRecipeDao {
 interface FavouriteDao {
     @Query("select * from favourite order by added_at desc, recipe_id")
     fun all(): Flow<List<FavouriteEntity>>
+
+    /** Every mark of the book, as it is now. */
+    @Query("select * from favourite order by recipe_id")
+    suspend fun list(): List<FavouriteEntity>
 
     /**
      * The view of marked recipes, the last marked first: each with the title and the stated author of the content
