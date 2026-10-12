@@ -65,8 +65,8 @@ internal class OwnLineOffer(val entries: List<Offered>, val typedOffered: Boolea
             val food = IngredientOffer.of(typed, ingredients, language)
             val tools = EquipmentOffer.of(typed, equipment, language)
             val items = tools.entries.filter { it.parentId != null }
-            val foodOffered = food.entries.map { Offered(it.label(language), food.synonyms[it.id], ShoppingTags.offer(it.id, ingredient = true)) }
-            val toolsOffered = items.map { Offered(it.label(language), tools.synonyms[it.id], ShoppingTags.offer(it.id, ingredient = false)) }
+            val foodOffered = food.entries.map { Offered(it.label(language), food.synonyms[it.id], ShoppingTags.ingredientOffer(it.id)) }
+            val toolsOffered = items.map { Offered(it.label(language), tools.synonyms[it.id], ShoppingTags.equipmentOffer(it.id)) }
             val toolExact = tools.exact?.takeIf { it.parentId != null }
             val offered = if (food.exact == null && toolExact != null) toolsOffered + foodOffered else foodOffered + toolsOffered
             return OwnLineOffer(offered.distinctBy { it.label }, typedOffered = food.exact == null && toolExact == null)
@@ -141,7 +141,7 @@ internal fun AddLineSheet(
                 OfferedChoice(
                     text = entry.label,
                     synonym = entry.synonym,
-                    synonymTag = "${entry.tag}-synonym",
+                    synonymTag = ShoppingTags.offerSynonym(entry.tag),
                     action = stringResource(R.string.shopping_own_pick_action, entry.label),
                     onClick = { add(entry.label) },
                     modifier = Modifier.testTag(entry.tag),

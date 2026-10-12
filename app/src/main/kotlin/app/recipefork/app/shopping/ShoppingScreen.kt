@@ -208,7 +208,7 @@ fun ShoppingScreen(
                     }
                 },
                 actions = {
-                    if (!shown.isNullOrEmpty() || (shown != null && own.isNotEmpty())) {
+                    if (shown != null && (shown.isNotEmpty() || own.isNotEmpty())) {
                         val cleared = stringResource(R.string.shopping_cleared)
                         val unticked = stringResource(R.string.shopping_ticks_cleared)
                         ListMenu(
@@ -519,8 +519,10 @@ object ShoppingTags {
     const val ADD_FIELD = "shopping-add-field"
     const val ADD_TYPED = "shopping-add-typed"
 
-    /** An ingredient ([ingredient]) or an item of equipment offered in the sheet, by its entry's id. */
-    fun offer(id: Long, ingredient: Boolean) = "shopping-offer-${if (ingredient) "i" else "e"}-$id"
+    /** An ingredient or an item of equipment offered in the sheet, by its entry's id, and the synonym beside an offer. */
+    fun ingredientOffer(id: Long) = "shopping-offer-i-$id"
+    fun equipmentOffer(id: Long) = "shopping-offer-e-$id"
+    fun offerSynonym(offerTag: String) = "$offerTag-synonym"
 
     /** A recipe's block on the list, its title, its removal, and its serving count with its − and +. */
     fun recipe(id: String) = "shopping-recipe-$id"

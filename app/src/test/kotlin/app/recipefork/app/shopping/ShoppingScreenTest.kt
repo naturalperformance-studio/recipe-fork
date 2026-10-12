@@ -598,7 +598,7 @@ class ShoppingScreenTest {
         }
         assertEquals(ImeAction.Done, compose.onNodeWithTag(ShoppingTags.ADD_FIELD).fetchSemanticsNode().config[SemanticsProperties.ImeAction])
         type("tart")
-        val tin = ShoppingTags.offer(TART_TIN, ingredient = false)
+        val tin = ShoppingTags.equipmentOffer(TART_TIN)
         compose.waitUntil(PATIENCE_MS) { exists(tin) }
         assertEquals("Add “tart tin 24 cm” to the list", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(tin).fetchSemanticsNode()))
         assertEquals(listOf("Add “tart”"), compose.textsOf(ShoppingTags.ADD_TYPED))
@@ -609,11 +609,11 @@ class ShoppingScreenTest {
         // An ingredient and a synonym found; the typed text offered beside them.
         openAdd()
         type("cells")
-        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.offer(BATTERIES, ingredient = false)) }
-        assertEquals(listOf("batteries · AA cells"), listOf(compose.textsOf(ShoppingTags.offer(BATTERIES, ingredient = false)).joinToString("")))
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.equipmentOffer(BATTERIES)) }
+        assertEquals(listOf("batteries · AA cells"), listOf(compose.textsOf(ShoppingTags.equipmentOffer(BATTERIES)).joinToString("")))
         compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performTextClearance()
         type("flo")
-        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.offer(FLOUR, ingredient = true)) }
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.ingredientOffer(FLOUR)) }
         // Blank text adds nothing, by Done or otherwise: no offer to add it is made.
         compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performTextClearance()
         type("   ")
@@ -728,11 +728,11 @@ class ShoppingScreenTest {
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.EMPTY) }
         openAdd()
         type("бумага")
-        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.offer(BAKING_PAPER, ingredient = false)) }
-        assertEquals("пергамент · бумага для выпечки", compose.textsOf(ShoppingTags.offer(BAKING_PAPER, ingredient = false)).joinToString(""))
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.equipmentOffer(BAKING_PAPER)) }
+        assertEquals("пергамент · бумага для выпечки", compose.textsOf(ShoppingTags.equipmentOffer(BAKING_PAPER)).joinToString(""))
         assertEquals(listOf("Добавить «бумага»"), compose.textsOf(ShoppingTags.ADD_TYPED))
         LocalizationChecks.assertScreenTextFromResources(compose, context, setOf("бумага", "пергамент", " · бумага для выпечки") + MATERIAL_SHEET_TEXTS)
-        compose.onNodeWithTag(ShoppingTags.offer(BAKING_PAPER, ingredient = false)).performClick()
+        compose.onNodeWithTag(ShoppingTags.equipmentOffer(BAKING_PAPER)).performClick()
         awaitSheetGone()
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines() == listOf("пергамент") }
         tap(ShoppingTags.removeLine(lineTag("пергамент")))
@@ -778,9 +778,9 @@ class ShoppingScreenTest {
         openAdd()
         assertFits(ShoppingFit.SCREEN)
         type("ba")
-        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.offer(BATTERIES, ingredient = false)) && exists(ShoppingTags.ADD_TYPED) }
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.equipmentOffer(BATTERIES)) && exists(ShoppingTags.ADD_TYPED) }
         assertFits(ShoppingFit.SCREEN)
-        compose.onNodeWithTag(ShoppingTags.offer(BATTERIES, ingredient = false)).performClick()
+        compose.onNodeWithTag(ShoppingTags.equipmentOffer(BATTERIES)).performClick()
         awaitSheetGone()
         compose.waitUntil(PATIENCE_MS) { store.list.value.own.size == 1 }
         // The own line is the last to buy, above the one in the basket.
