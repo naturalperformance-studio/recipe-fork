@@ -64,6 +64,8 @@ import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.ServingsControl
 import app.recipefork.app.card.ServingsTags
 import app.recipefork.app.card.done
+import app.recipefork.app.data.HeldUnitSystemSetting
+import app.recipefork.app.data.UnitSystemSetting
 import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.BlockAction
@@ -82,12 +84,13 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * What the shopping list reads and writes: the list kept on the device, the ingredient dictionary it names lines by, and
- * the equipment dictionary its own lines are offered from too.
+ * What the shopping list reads and writes: the list kept on the device, the ingredient dictionary it names lines by,
+ * the equipment dictionary its own lines are offered from too, and the [unitSystem] its amounts are shown in.
  */
 class ShoppingEnvironment(
     val store: ShoppingStore,
     val equipment: EquipmentSource = EquipmentSource { emptyList() },
+    val unitSystem: UnitSystemSetting = HeldUnitSystemSetting(),
     val ingredients: IngredientEntries,
 )
 
@@ -97,7 +100,7 @@ fun rememberShoppingEnvironment(): ShoppingEnvironment {
     val context = LocalContext.current.applicationContext
     return remember(context) {
         (context as RecipeForkApplication).container.let { container ->
-            ShoppingEnvironment(container.shopping, container.dictionaries) { container.dictionaries.ingredients() }
+            ShoppingEnvironment(container.shopping, container.dictionaries, container.unitSystem) { container.dictionaries.ingredients() }
         }
     }
 }
@@ -140,6 +143,7 @@ fun ShoppingScreen(
         }
     }
     val language = servingsLanguage()
+    val system by shopping.unitSystem.system.collectAsState()
     val snackbars = remember { SnackbarHostState() }
     val change = rememberUndoableChange(store, snackbars)
     val shown = entries
@@ -155,8 +159,8 @@ fun ShoppingScreen(
     LaunchedEffect(settle) { store.update(settle) }
     val resources = LocalContext.current.resources
     val printOut = rememberPrintOut(snackbars)
-    val lines = remember(shown, held, language, resources) {
-        if (shown == null || held == null) null else listedLines(shown, held, language, resources)
+    val lines = remember(shown, held, language, resources, system) {
+        if (shown == null || held == null) null else listedLines(shown, held, language, resources, system)
     }
     val own = remember(list, book) { ownLines(list, book) }
     val all = lines?.plus(own)
@@ -216,7 +220,7 @@ fun ShoppingScreen(
                         ListMenu(
                             // The list as it stands at the tap, named by the dictionary once it is read.
                             onPrint = held?.let { read ->
-                                { way: PrintWay -> printOut(way) { shoppingDocument(shown, read, store.list.value, book, language, resources) } }
+                                { way: PrintWay -> printOut(way) { shoppingDocument(shown, read, store.list.value, book, language, resources, system) } }
                             },
                             onClearTicked = { change(unticked) { it.withoutTicked(book) } }.takeIf { ticked.isNotEmpty() },
                             onClear = { change(cleared) { ShoppingList() } },

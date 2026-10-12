@@ -36,6 +36,7 @@ import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.textLayoutsWithin
 import app.recipefork.app.data.HeldThemeSetting
+import app.recipefork.app.data.HeldUnitSystemSetting
 import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.TagEntity
@@ -58,6 +59,7 @@ import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.PIECE
 import app.recipefork.core.recipe.QuantityUnit.TABLESPOON
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.shopping.ShoppingAmount
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
@@ -111,7 +113,8 @@ class ShoppingScreenTest {
         },
     ) { Instant.parse("2026-10-12T12:00:00Z") }
     private val store = HeldShopping()
-    private val shopping = ShoppingEnvironment(store, EquipmentSource { SHOPPING_EQUIPMENT }, IngredientEntries { SHOPPING_DICTIONARY })
+    private val units = HeldUnitSystemSetting()
+    private val shopping = ShoppingEnvironment(store, EquipmentSource { SHOPPING_EQUIPMENT }, units, IngredientEntries { SHOPPING_DICTIONARY })
 
     /** Soup for 2: an onion and 300 g of flour. */
     private val soup = recipe("Onion soup", 2, row(ONION, r(1), PIECE), row(FLOUR, r(300), GRAM), minutesAgo = 10)
@@ -320,7 +323,7 @@ class ShoppingScreenTest {
         tap(ShoppingTags.remove(soup.id.value))
         compose.waitUntil(PATIENCE_MS) { !exists(ShoppingTags.recipe(soup.id.value)) && snackbar() != null }
         assertEquals("“Onion soup” removed from the list", snackbar())
-        assertEquals(listOf("onion — 2 pc", "flour — 2 cup", "sugar — 1 tbsp"), lines())
+        assertEquals(listOf("onion — 2 pc", "flour — ≈ 260 g", "sugar — 1 tbsp"), lines())
         assertEquals(listOf(listed(pie)), store.list.value.recipes)
         tapText("Undo")
         // The list scrolled to its last line: the recipe comes back above, scrolled to.
@@ -422,6 +425,26 @@ class ShoppingScreenTest {
     }
 
     // The ticks are kept on the device: the application started anew shows the same lines ticked.
+    // v0.35 T-250: the open list follows a change of the setting at once, and a ticked line keeps its tick.
+    @Test
+    fun theListFollowsTheSystemAndATickSurvivesTheChange() {
+        save(soup, pie)
+        store.update { it.with(listed(soup)).with(listed(pie)) }
+        showBook()
+        openList()
+        tapLine("flour — ≈ 560 g")
+        awaitBought("flour — ≈ 560 g")
+        val ticks = store.list.value.ticks
+        units.set(UnitSystem.US)
+        awaitBought("flour — ≈ 4⅓ cup")
+        assertEquals(listOf("onion — 3 pc", "sugar — 1 tbsp", "flour — ≈ 4⅓ cup"), lines())
+        assertEquals(listOf("flour — ≈ 4⅓ cup", "300 g counted as ≈ 2⅓ cup", "Onion soup, Onion pie"), compose.textsOf(lineTag("flour — ≈ 4⅓ cup")))
+        assertEquals(ticks, store.list.value.ticks)
+        units.set(UnitSystem.METRIC)
+        awaitBought("flour — ≈ 560 g")
+        assertEquals(ticks, store.list.value.ticks)
+    }
+
     @Test
     fun theTicksStayAcrossARestart() {
         save(soup, pie)

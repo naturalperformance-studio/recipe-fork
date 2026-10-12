@@ -14,9 +14,9 @@ internal const val ONION = 102L
 internal const val SALT = 103L
 internal const val SUGAR = 104L
 
-/** Flour: 0.6 g per ml, 130 g per cup, no pinch. Onion: 150 g a piece, indivisible. Salt: 6 g per tsp. Sugar: 240 g a cup. */
+/** Flour: 130 g per cup, no pinch, no ml (no liquid: a cup of it reads in grams in Metric). Onion: 150 g a piece, indivisible. Salt: 6 g per tsp. Sugar: 240 g a cup. */
 internal val SHOPPING_DICTIONARY = listOf(
-    IngredientEntryEntity(FLOUR, "мука", "flour", null, factors = mapOf("g" to 1.0, "ml" to 0.6, "cup" to 130.0)),
+    IngredientEntryEntity(FLOUR, "мука", "flour", null, factors = mapOf("g" to 1.0, "cup" to 130.0)),
     IngredientEntryEntity(ONION, "лук", "onion", null, divisible = false, factors = mapOf("pc" to 150.0, "g" to 1.0)),
     IngredientEntryEntity(SALT, "соль", "salt", null, factors = mapOf("g" to 1.0, "tsp" to 6.0)),
     IngredientEntryEntity(SUGAR, "сахар", "sugar", null, factors = mapOf("g" to 1.0, "tsp" to 5.0, "tbsp" to 15.0, "cup" to 240.0)),
