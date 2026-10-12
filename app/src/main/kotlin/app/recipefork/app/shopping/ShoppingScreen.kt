@@ -55,6 +55,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
@@ -323,8 +325,11 @@ private fun AddItem(onClick: () -> Unit) {
         text = { Text(words) },
         icon = { Icon(painterResource(R.drawable.ic_add_item), contentDescription = null) },
         onClick = onClick,
+        // The button keeps its shown words from the screen reader, so they are given to the button itself, as the book's
+        // floating action does.
         modifier = Modifier
             .semantics {
+                text = AnnotatedString(words)
                 onClick(label = action) {
                     onClick()
                     true

@@ -19,8 +19,12 @@ import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -33,9 +37,11 @@ import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.textLayoutsWithin
 import app.recipefork.app.data.HeldThemeSetting
 import app.recipefork.app.data.HeldUsualServings
+import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.editor.EditorEnvironment
+import app.recipefork.app.editor.MATERIAL_SHEET_TEXTS
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.library.LibrarySession
@@ -79,6 +85,11 @@ import java.time.Instant
  * T-231, scenario 5: a tap on a line ticks it — struck through, read as bought — and moves it to "In the basket" at the
  * bottom; the ticks stay across a restart; a ticked line whose amount grows is unticked, one that goes drops its tick;
  * "Clear ticked" in the ⋮ offers Undo.
+ *
+ * T-232, scenario 4: "Add item" opens a field that offers ingredients and equipment from the dictionaries; a pick or the
+ * typed text is added as a line of the reader's own, which stands apart from the recipes' lines, ticks as they do, stays
+ * across a restart and is removed with Undo; "Clear ticked" and "Clear list" take it away. A list of own lines alone is
+ * shown, not said to be empty.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -100,7 +111,7 @@ class ShoppingScreenTest {
         },
     ) { Instant.parse("2026-10-12T12:00:00Z") }
     private val store = HeldShopping()
-    private val shopping = ShoppingEnvironment(store, ingredients = IngredientEntries { SHOPPING_DICTIONARY })
+    private val shopping = ShoppingEnvironment(store, EquipmentSource { SHOPPING_EQUIPMENT }, IngredientEntries { SHOPPING_DICTIONARY })
 
     /** Soup for 2: an onion and 300 g of flour. */
     private val soup = recipe("Onion soup", 2, row(ONION, r(1), PIECE), row(FLOUR, r(300), GRAM), minutesAgo = 10)
@@ -162,6 +173,10 @@ class ShoppingScreenTest {
         compose.onNodeWithTag(tag).performClick()
         compose.waitForIdle()
     }
+
+    /** Whether the list holds the node tagged [tag], scrolled to it. */
+    private fun shownInList(tag: String) =
+        runCatching { compose.onNodeWithTag(ShoppingTags.LIST).performScrollToNode(hasTestTag(tag)) }.isSuccess
 
     private fun tapText(text: String) {
         compose.onNode(hasText(text)).performClick()
@@ -308,7 +323,8 @@ class ShoppingScreenTest {
         assertEquals(listOf("onion — 2 pc", "flour — 2 cup", "sugar — 1 tbsp"), lines())
         assertEquals(listOf(listed(pie)), store.list.value.recipes)
         tapText("Undo")
-        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.recipe(soup.id.value)) }
+        // The list scrolled to its last line: the recipe comes back above, scrolled to.
+        compose.waitUntil(PATIENCE_MS) { shownInList(ShoppingTags.recipe(soup.id.value)) }
         assertEquals(listOf(listed(soup), listed(pie)), store.list.value.recipes)
         assertEquals(listOf("onion — 3 pc", "flour — ≈ 560 g", "sugar — 1 tbsp"), lines())
     }
@@ -551,6 +567,179 @@ class ShoppingScreenTest {
         assertEquals(listOf("flour — ≈ 560 g", "onion — 3 pc", "sugar — 1 tbsp"), lines())
     }
 
+    /** Opens "Add item" and waits for its field. */
+    private fun openAdd() {
+        compose.onNodeWithTag(ShoppingTags.ADD).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.ADD_FIELD) }
+    }
+
+    private fun type(text: String) {
+        compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performTextInput(text)
+        compose.waitForIdle()
+    }
+
+    private fun awaitSheetGone() = compose.waitUntil(PATIENCE_MS) { !exists(ShoppingTags.ADD_SHEET) }
+
+    private fun ownTexts() = store.list.value.own.map { it.text }
+
+    // T-232: "Add item" opens a field, focused, that offers ingredients and equipment from the dictionaries, labelled in
+    // the interface language, synonyms found; a pick, or the typed text — offered, or by the keyboard's Done — is added
+    // as written. Blank text adds nothing.
+    @Test
+    fun addItemOffersTheDictionariesAndAddsAPickOrTheTypedText() {
+        showBook()
+        openList()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.EMPTY) }
+        val add = compose.onNodeWithTag(ShoppingTags.ADD).fetchSemanticsNode()
+        assertEquals("Add an item of your own to the list", AccessibilityChecks.clickActionLabel(add))
+        openAdd()
+        compose.waitUntil(PATIENCE_MS) {
+            compose.onNodeWithTag(ShoppingTags.ADD_FIELD).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Focused) == true
+        }
+        assertEquals(ImeAction.Done, compose.onNodeWithTag(ShoppingTags.ADD_FIELD).fetchSemanticsNode().config[SemanticsProperties.ImeAction])
+        type("tart")
+        val tin = ShoppingTags.offer(TART_TIN, ingredient = false)
+        compose.waitUntil(PATIENCE_MS) { exists(tin) }
+        assertEquals("Add “tart tin 24 cm” to the list", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(tin).fetchSemanticsNode()))
+        assertEquals(listOf("Add “tart”"), compose.textsOf(ShoppingTags.ADD_TYPED))
+        compose.onNodeWithTag(tin).performClick()
+        awaitSheetGone()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines() == listOf("tart tin 24 cm") }
+        assertFalse(exists(ShoppingTags.EMPTY))
+        // An ingredient and a synonym found; the typed text offered beside them.
+        openAdd()
+        type("cells")
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.offer(BATTERIES, ingredient = false)) }
+        assertEquals(listOf("batteries · AA cells"), listOf(compose.textsOf(ShoppingTags.offer(BATTERIES, ingredient = false)).joinToString("")))
+        compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performTextClearance()
+        type("flo")
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.offer(FLOUR, ingredient = true)) }
+        // Blank text adds nothing, by Done or otherwise: no offer to add it is made.
+        compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performTextClearance()
+        type("   ")
+        compose.waitUntil(PATIENCE_MS) { !exists(ShoppingTags.ADD_TYPED) }
+        compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performImeAction()
+        compose.waitForIdle()
+        assertTrue(exists(ShoppingTags.ADD_SHEET))
+        assertEquals(listOf("tart tin 24 cm"), ownTexts())
+        // Done adds the text as written, without the spaces around it.
+        type("AA batteries, 4 pcs  ")
+        compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performImeAction()
+        awaitSheetGone()
+        compose.waitUntil(PATIENCE_MS) { lines() == listOf("tart tin 24 cm", "AA batteries, 4 pcs") }
+        // The typed text offered, picked.
+        openAdd()
+        type("Tape")
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.ADD_TYPED) }
+        compose.onNodeWithTag(ShoppingTags.ADD_TYPED).performClick()
+        awaitSheetGone()
+        compose.waitUntil(PATIENCE_MS) { lines() == listOf("tart tin 24 cm", "AA batteries, 4 pcs", "Tape") }
+        assertEquals(listOf("tart tin 24 cm", "AA batteries, 4 pcs", "Tape"), ownTexts())
+        assertTrue(store.list.value.own.all { it.book == POOL })
+    }
+
+    // An own line never merges with a recipe's line, even one that reads the same; it has no recipe under it, ticks as
+    // any line does, and is removed with Undo, its tick coming back with it.
+    @Test
+    fun anOwnLineStandsApartTicksAndIsRemovedWithUndo() {
+        save(soup)
+        store.update { it.with(listed(soup)).with(OwnLine(POOL, "1", "flour")) }
+        showBook()
+        openList()
+        compose.waitUntil(PATIENCE_MS) { lines().size == 3 }
+        assertEquals(listOf("onion — 1 pc", "flour — 300 g", "flour"), lines())
+        assertEquals(listOf("flour"), compose.textsOf(lineTag("flour")))
+        assertFalse(bought("flour"))
+        tapLine("flour")
+        awaitBought("flour")
+        assertEquals(setOf(TickedLine(POOL, "o:1")), store.list.value.ticks.keys)
+        assertTrue(basketShown())
+        val remove = ShoppingTags.removeLine(lineTag("flour"))
+        assertEquals("Remove “flour” from the list", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(remove).fetchSemanticsNode()))
+        tap(remove)
+        compose.waitUntil(PATIENCE_MS) { snackbar() != null && "flour" !in lines() }
+        assertEquals("“flour” removed from the list", snackbar())
+        assertTrue(store.list.value.own.isEmpty())
+        assertTrue(store.list.value.ticks.isEmpty())
+        tapText("Undo")
+        awaitBought("flour")
+        assertEquals(listOf("onion — 1 pc", "flour — 300 g", "flour"), lines())
+    }
+
+    // Own lines and their ticks are kept on the device: the application started anew shows them as they were.
+    @Test
+    fun ownLinesAndTheirTicksStayAcrossARestart() {
+        val kept = PreferencesShopping(context)
+        kept.update { it.with(OwnLine(POOL, "1", "batteries")).with(OwnLine(POOL, "2", "baking paper")) }
+        var environment by mutableStateOf(ShoppingEnvironment(kept, ingredients = IngredientEntries { SHOPPING_DICTIONARY }))
+        compose.setContent { MaterialTheme { ShoppingScreen(environment, recipes, onBack = {}) } }
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines().size == 2 }
+        tapLine("batteries")
+        awaitBought("batteries")
+        environment = ShoppingEnvironment(PreferencesShopping(context), ingredients = IngredientEntries { SHOPPING_DICTIONARY })
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines().size == 2 }
+        awaitBought("batteries")
+        assertEquals(listOf("baking paper", "batteries"), lines())
+    }
+
+    // A list of own lines alone is shown, not said to be empty, with no recipes part; its ⋮ offers "Clear list", and
+    // "Clear ticked" once a line is ticked, which takes the ticked own lines away; both with Undo.
+    @Test
+    fun aListOfOwnLinesAloneIsShownAndItsMenuClearsThem() {
+        store.update { it.with(OwnLine(POOL, "1", "batteries")).with(OwnLine(POOL, "2", "baking paper")) }
+        showBook()
+        openList()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines() == listOf("batteries", "baking paper") }
+        assertFalse(exists(ShoppingTags.EMPTY))
+        assertTrue(compose.onAllNodes(hasText("Recipes")).fetchSemanticsNodes().isEmpty())
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.CLEAR) }
+        assertFalse(exists(ShoppingTags.CLEAR_TICKED))
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(ShoppingTags.CLEAR) }
+        tapLine("batteries")
+        awaitBought("batteries")
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.CLEAR_TICKED) }
+        compose.onNodeWithTag(ShoppingTags.CLEAR_TICKED).performClick()
+        compose.waitUntil(PATIENCE_MS) { snackbar() == "Ticks cleared" && lines() == listOf("baking paper") }
+        assertEquals(listOf("baking paper"), ownTexts())
+        assertTrue(store.list.value.ticks.isEmpty())
+        tapText("Undo")
+        awaitBought("batteries")
+        assertEquals(listOf("baking paper", "batteries"), lines())
+        compose.waitUntil(PATIENCE_MS) { snackbar() == null }
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.CLEAR) }
+        compose.onNodeWithTag(ShoppingTags.CLEAR).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.EMPTY) && snackbar() == "List cleared" }
+        assertTrue(store.list.value.isEmpty)
+        tapText("Undo")
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines() == listOf("baking paper", "batteries") }
+        assertEquals(listOf("batteries", "baking paper"), ownTexts())
+    }
+
+    // L10N: the field and its offers read in Russian.
+    @Test
+    @Config(qualifiers = "ru")
+    fun theFieldReadsInRussian() {
+        showBook()
+        openList()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.EMPTY) }
+        openAdd()
+        type("бумага")
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.offer(BAKING_PAPER, ingredient = false)) }
+        assertEquals("пергамент · бумага для выпечки", compose.textsOf(ShoppingTags.offer(BAKING_PAPER, ingredient = false)).joinToString(""))
+        assertEquals(listOf("Добавить «бумага»"), compose.textsOf(ShoppingTags.ADD_TYPED))
+        LocalizationChecks.assertScreenTextFromResources(compose, context, setOf("бумага", "пергамент", " · бумага для выпечки") + MATERIAL_SHEET_TEXTS)
+        compose.onNodeWithTag(ShoppingTags.offer(BAKING_PAPER, ingredient = false)).performClick()
+        awaitSheetGone()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.LIST) && lines() == listOf("пергамент") }
+        tap(ShoppingTags.removeLine(lineTag("пергамент")))
+        compose.waitUntil(PATIENCE_MS) { snackbar() != null }
+        assertEquals("«пергамент» убрано из списка", snackbar())
+    }
+
     // At twice the font scale on a 320 dp screen every target stays 48 dp, nothing spills sideways and no text is cut.
     @Test
     @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
@@ -582,6 +771,21 @@ class ShoppingScreenTest {
         assertFits(ShoppingFit.SCREEN)
         compose.onNodeWithTag(ShoppingTags.MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.CLEAR) && exists(ShoppingTags.CLEAR_TICKED) }
+        assertFits(ShoppingFit.SCREEN)
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(ShoppingTags.CLEAR) }
+        // "Add item", its field and its offers with the typed text; then the own line added, with its removal.
+        openAdd()
+        assertFits(ShoppingFit.SCREEN)
+        type("ba")
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.offer(BATTERIES, ingredient = false)) && exists(ShoppingTags.ADD_TYPED) }
+        assertFits(ShoppingFit.SCREEN)
+        compose.onNodeWithTag(ShoppingTags.offer(BATTERIES, ingredient = false)).performClick()
+        awaitSheetGone()
+        compose.waitUntil(PATIENCE_MS) { store.list.value.own.size == 1 }
+        // The own line is the last to buy, above the one in the basket.
+        val own = ShoppingTags.line(lines().size - 2)
+        compose.onNodeWithTag(ShoppingTags.LIST).performScrollToNode(hasTestTag(ShoppingTags.removeLine(own)))
         assertFits(ShoppingFit.SCREEN)
     }
 

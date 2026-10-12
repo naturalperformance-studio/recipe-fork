@@ -112,14 +112,20 @@ internal fun AddLineSheet(
             scope.launch { state.hide() }.invokeOnCompletion { onClose() }
         }
     }
-    ModalBottomSheet(onDismissRequest = onClose, sheetState = state, modifier = Modifier.testTag(ShoppingTags.ADD_SHEET)) {
+    ModalBottomSheet(
+        onDismissRequest = onClose,
+        sheetState = state,
+        modifier = Modifier.testTag(ShoppingTags.ADD_SHEET),
+        // No handle, as the editor's sheets have none: the sheet opens whole, and a swipe down or Back closes it.
+        dragHandle = null,
+    ) {
         val focus = remember { FocusRequester() }
         LaunchedEffect(focus) { focus.requestFocus() }
         Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(bottom = 8.dp)) {
             Text(
                 stringResource(R.string.shopping_own_add),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp).semantics { heading() },
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp).semantics { heading() },
             )
             OutlinedTextField(
                 value = typed,
