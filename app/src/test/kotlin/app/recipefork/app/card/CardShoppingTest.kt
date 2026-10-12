@@ -244,7 +244,7 @@ class CardShoppingTest {
                 override suspend fun tags() = emptyList<TagEntity>()
             },
         ) { now }
-        val shopping = ShoppingEnvironment(store, IngredientEntries { emptyList() })
+        val shopping = ShoppingEnvironment(store, ingredients = IngredientEntries { emptyList() })
         compose.setContent {
             MaterialTheme {
                 AppNavHost(session, recipes, card = card, editor = editor, themeSetting = HeldThemeSetting(), shopping = shopping)

@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -146,7 +147,8 @@ import kotlin.time.Duration.Companion.minutes
  * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with an ingredient's
  * sheet open, a step's sheet open, with a row removed and its Undo offered, and on a frozen one with equipment; the settings and each of their
  * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; the shopping list — empty, with
- * recipes, its menu open, and a recipe removed with Undo; and the crop.
+ * recipes, its menu open, "Add item" offering from the dictionaries, a line of one's own, and a recipe removed with
+ * Undo; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
  * that the lists show every entry and the card and the editor are drawn whole for the contrast check, which reads
@@ -190,7 +192,9 @@ class PreLaunchSweepTest {
     ) { device.database.dictionaryDao().ingredients() }
 
     /** The shopping list, empty as the walk first opens it, over the device's dictionaries. */
-    private val shopping = ShoppingEnvironment(HeldShopping()) { device.database.dictionaryDao().ingredients() }
+    private val shopping = ShoppingEnvironment(HeldShopping(), EquipmentSource { device.database.dictionaryDao().equipment() }) {
+        device.database.dictionaryDao().ingredients()
+    }
 
     private var crop by mutableStateOf<PhotoToCrop?>(null)
 
@@ -642,6 +646,21 @@ class PreLaunchSweepTest {
         checkScreen("the shopping list, its menu")
         compose.onNodeWithTag(ShoppingTags.MENU).performClick()
         awaitGone(ShoppingTags.CLEAR)
+        // "Add item": its field offering from both dictionaries, then the line of the reader's own it adds.
+        compose.onNodeWithTag(ShoppingTags.ADD).performClick()
+        await(ShoppingTags.ADD_FIELD)
+        compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performTextInput("baking")
+        await(ShoppingTags.ADD_TYPED)
+        checkScreen("the shopping list, adding an item of one's own")
+        compose.onNodeWithTag(ShoppingTags.ADD_TYPED).performScrollTo().performClick()
+        awaitGone(ShoppingTags.ADD_SHEET)
+        compose.waitUntil(PATIENCE_MS) { shopping.store.list.value.own.isNotEmpty() }
+        val own = hasTestTag(ShoppingTags.LIST)
+        compose.waitUntil(PATIENCE_MS) {
+            runCatching { compose.onNode(own).performScrollToNode(hasText("baking")) }.isSuccess
+        }
+        checkScreen("the shopping list, a line of one's own")
+        compose.onNodeWithTag(ShoppingTags.LIST).performScrollToIndex(0)
         compose.onNodeWithTag(ShoppingTags.remove(soup.id.value)).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.SNACKBAR) && !exists(ShoppingTags.recipe(soup.id.value)) }
         checkScreen("the shopping list, a recipe removed with Undo")
@@ -689,7 +708,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 38
+        const val SCREENS = 40
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L
