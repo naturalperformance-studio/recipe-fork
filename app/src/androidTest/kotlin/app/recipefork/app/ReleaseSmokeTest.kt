@@ -22,12 +22,16 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
+import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
+import app.recipefork.app.backup.BackupNotice
+import app.recipefork.app.backup.BackupState
+import app.recipefork.app.backup.BookBackup
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
@@ -62,6 +66,7 @@ import app.recipefork.core.recipe.UnitType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -75,6 +80,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -93,9 +99,12 @@ class ReleaseSmokeTest {
     private val container = application.container
     private val store = PhotoStore(application.filesDir)
     private val otherBook = BookName.OfAccount("release-smoke")
-    // Earlier than the device clock, by which the editor dates the cover it takes.
-    private val now = Instant.now().minusSeconds(3600)
+    // Earlier than the device clock, by which the editor dates the cover it takes; in whole milliseconds, as the book
+    // keeps times — a newer device's clock reads finer.
+    private val now = Instant.now().minusSeconds(3600).truncatedTo(ChronoUnit.MILLIS)
     private var recipe: Recipe? = null
+    // A second recipe the walk keeps in the book, which the book's file brings back.
+    private var loaf: Recipe? = null
     // What the kitchen held before a case changed it, given back after.
     private var kitchenBefore: Set<Long>? = null
 
@@ -115,6 +124,8 @@ class ReleaseSmokeTest {
     @After
     fun tearDown() = runBlocking {
         recipe?.let { container.timers.cancelRecipe(BookName.Pool, it.id); container.recipes.delete(it.id) }
+        loaf?.let { container.recipes.delete(it.id) }
+        File(application.cacheDir, BOOK_FILE).parentFile?.deleteRecursively()
         application.getSystemService(NotificationManager::class.java).cancelAll()
         application.deleteDatabase(otherBook.fileName)
         store.directory(otherBook).deleteRecursively()
@@ -596,8 +607,9 @@ class ReleaseSmokeTest {
      * from it; the editor opens on the recipe, its rows read as
      * text, and in the sheets they open — each typed in with the keyboard up — a note, a group, a step's note and timer
      * and a new step are written and saved, which closes the editor; the item of equipment the kitchen lacks opens My
-     * kitchen and Back returns to the card; the settings are gone through; the recipe is deleted and brought back with
-     * Undo, exported to a file and the file opened back into the book. Nothing crashes, and each change is in the book.
+     * kitchen and Back returns to the card; the settings are gone through, and from them the whole book saved to a file
+     * and a recipe it held brought back from that file; the recipe is deleted and brought back with Undo, exported to a
+     * file and the file opened back into the book. Nothing crashes, and each change is in the book.
      *
      * Export and the opening of a file belong to the serverless build (FLOW-063, FLOW-064): the standard one, which
      * offers neither, writes and reads the file through the same code the menu and the opened file reach.
@@ -606,6 +618,9 @@ class ReleaseSmokeTest {
     fun theBuildGoesThroughEveryMainScreenWithoutACrash() {
         val written = soup(needs = lackedEquipment()).also { recipe = it }
         runBlocking { container.recipes.save(written) }
+        // A second recipe, with a photograph: the book's file is to bring it back.
+        val bread = loaf().also { loaf = it }
+        runBlocking { container.recipes.save(bread) }
         // Started as the launcher starts it, in a task of its own, so that a file opened later from outside comes to
         // that task, as on the phone.
         application.startActivity(
@@ -694,8 +709,9 @@ class ReleaseSmokeTest {
             awaitShown(WRITTEN_HERE)
             awaitShown(written.title)
 
-            // The settings: the theme and the language changed and set back, the usual servings' dialog left.
-            throughTheSettings()
+            // The settings: the theme and the language changed and set back, the usual servings' dialog left; the book
+            // saved to a file and restored from it.
+            throughTheSettings(bread)
             awaitShown(written.title)
 
             // The shopping list, opened from the book's bar: read from its store, its "Add item" shown; its Back returns
@@ -746,10 +762,11 @@ class ReleaseSmokeTest {
     /**
      * The settings opened from the book's bar: a theme other than the one in force chosen in the theme's dialog, and
      * the one in force chosen back; the language switched in its dialog — the application shown again in it — and
-     * switched back; the usual servings' dialog opened and left by back; and back to the book, the application still
-     * in front. The walk starts in English, as the emulator's: the device's language, or English chosen.
+     * switched back; the usual servings' dialog opened and left by back; the book saved to a file and [bread] brought
+     * back from it ([saveAndRestoreTheBook]); and back to the book, the application still in front. The walk starts in
+     * English, as the emulator's: the device's language, or English chosen.
      */
-    private fun throughTheSettings() {
+    private fun throughTheSettings(bread: Recipe) {
         tap(SETTINGS)
         awaitShown(THEME)
 
@@ -784,9 +801,94 @@ class ReleaseSmokeTest {
         assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
         awaitUntil(30.seconds) { shown(before.set) == null }
 
+        saveAndRestoreTheBook(bread)
+
         tap(before.back)
         awaitShown(before.book)
         assertTrue("the application is in front", activities(Stage.RESUMED).any { it is MainActivity })
+    }
+
+    /** A loaf with a cover: a recipe whose photograph the book's file is to carry. */
+    private fun loaf(): Recipe = Recipe.create(now, null, null, RecipeId.mint()).copy(
+        title = "Smoke loaf ${System.currentTimeMillis() % 100_000}",
+        servings = 1,
+        steps = listOf(Step(0, "Bake the loaf.")),
+        media = listOf(photo(jpeg(1200, 900, Color.YELLOW), MediaAttachment.Cover)),
+    )
+
+    /**
+     * The whole book saved to a file and [bread] brought back from it (FLOW-073), in the minified build through the
+     * settings' Backup section — the system's pickers answered by the test, which hands each the same file of the
+     * application's cache by its content address — and in the standard build, which has no such section, through the
+     * code it reaches: "Save the book to a file" says the book's recipes are saved; [bread] is deleted, with its photo;
+     * "Restore from a file" asks, "Add to the book" adds [bread] alone, and it is back as it was, its photo's bytes and
+     * all. Then [bread] is deleted again, so that the walk goes on with the book it had before.
+     */
+    private fun saveAndRestoreTheBook(bread: Recipe) {
+        val file = File(application.cacheDir, BOOK_FILE).apply { parentFile!!.mkdirs(); writeBytes(ByteArray(0)) }
+        val uri = FileProvider.getUriForFile(application, application.packageName + ".files", file)
+        val kept = stored(bread)!!
+        val photos = kept.media.associate { it.mediaId to store.file(BookName.Pool, it.mediaId).readBytes() }
+        val held = runBlocking { container.recipes.count() }
+        val backup = container.backup
+        val picked = java.util.concurrent.CopyOnWriteArrayList<Intent>()
+        val pickers = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult? {
+                if (intent.action != Intent.ACTION_CREATE_DOCUMENT && intent.action != Intent.ACTION_OPEN_DOCUMENT) return null
+                picked += intent
+                return Instrumentation.ActivityResult(Activity.RESULT_OK, Intent().setData(uri))
+            }
+        }
+        instrumentation.addMonitor(pickers)
+        try {
+            if (BuildConfig.SERVERLESS) {
+                clickRevealed(SAVE_THE_BOOK)
+                awaitShown(if (held == 1) "Book saved: 1 recipe" else "Book saved: $held recipes")
+                val create = picked.single()
+                assertEquals(Intent.ACTION_CREATE_DOCUMENT, create.action)
+                assertEquals(BookBackup.MIME, create.type)
+                assertTrue(create.getStringExtra(Intent.EXTRA_TITLE).orEmpty().endsWith(".recipefork-book"))
+            } else {
+                assertTrue(backup.save(uri))
+                awaitEnded(BackupNotice.Saved(held))
+            }
+            assertTrue("the file holds the photo", file.length() > photos.values.sumOf { it.size })
+
+            // The loaf leaves the book with its photo, so that the file brings it back.
+            assertTrue(runBlocking { container.recipes.delete(bread.id) })
+            assertTrue(photos.keys.none { store.file(BookName.Pool, it).exists() })
+
+            val others = held - 1
+            if (BuildConfig.SERVERLESS) {
+                clickRevealed(RESTORE_FROM_A_FILE)
+                awaitShown(ADD_TO_THE_BOOK)
+                assertEquals(listOf(Intent.ACTION_CREATE_DOCUMENT, Intent.ACTION_OPEN_DOCUMENT), picked.map { it.action })
+                tap(ADD_TO_THE_BOOK)
+                awaitShown("Added 1 recipe; " + if (others == 1) "1 was already in the book" else "$others were already in the book")
+            } else {
+                assertTrue(backup.restoreFrom(uri))
+                awaitUntil(60.seconds) { backup.state.value == BackupState.Asking(others) }
+                backup.add()
+                awaitEnded(BackupNotice.Added(1, others))
+            }
+        } finally {
+            instrumentation.removeMonitor(pickers)
+        }
+        awaitUntil(30.seconds) { stored(bread) == kept }
+        photos.forEach { (id, bytes) -> assertArrayEquals(bytes, store.file(BookName.Pool, id).readBytes()) }
+        assertEquals(held, runBlocking { container.recipes.count() })
+        // The walk goes on with the book as it found it: the loaf, once back, leaves again.
+        assertTrue(runBlocking { container.recipes.delete(bread.id) })
+    }
+
+    /** Waits until the book's saving or restoring ends with [notice], which is then taken as said. */
+    private fun awaitEnded(notice: BackupNotice) {
+        try {
+            awaitUntil(60.seconds) { container.backup.state.value == BackupState.Ended(notice) }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the backup is ${container.backup.state.value}, not ended with $notice", e)
+        }
+        container.backup.noticeSaid(notice)
     }
 
     /** The root of the system's print dialog, while one of its windows is on screen. */
@@ -949,6 +1051,11 @@ class ReleaseSmokeTest {
         const val RUSSIAN = "Русский"
         const val AS_ON_THE_DEVICE = "As on the device"
         const val DELETE = "Delete"
+        /** The settings' Backup section, its question's Add, and where the test keeps the book's file. */
+        const val SAVE_THE_BOOK = "Save the book to a file"
+        const val RESTORE_FROM_A_FILE = "Restore from a file"
+        const val ADD_TO_THE_BOOK = "Add to the book"
+        const val BOOK_FILE = "exports/release-smoke-book/Recipe book.recipefork-book"
         const val UNDO = "Undo"
         /** The book's bar action that opens the shopping list, and the list's floating action. */
         const val SHOPPING_LIST = "Shopping list"
