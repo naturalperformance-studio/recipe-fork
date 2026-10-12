@@ -39,6 +39,31 @@ class CollectionNavigationTest {
         )
     }
 
+    // T-257: the list opened from a collection's notice lies above it, and back from it returns there; nothing else
+    // puts the list above a collection.
+    @Test
+    fun theShoppingListOpenedFromACollectionLiesAboveIt() {
+        assertEquals(listOf(Shown.Book, Shown.Collection("c1"), Shown.Shopping), shownFor(null, null, shopping = true, collection = "c1"))
+        assertEquals(listOf(Shown.Book, Shown.Collection("c1"), Shown.Card("r1")), shownFor("r1", null, shopping = true, collection = "c1"))
+        val saved = SavedStateHandle()
+        val session = LibrarySession(saved)
+        session.openCollection("c1")
+        session.openShoppingAboveCollection()
+        assertTrue(session.shopping.value)
+        assertEquals("c1", session.collection.value)
+        // Kept through the end of the process.
+        assertTrue(LibrarySession(saved).shopping.value)
+        assertEquals("c1", LibrarySession(saved).collection.value)
+        session.closeShopping()
+        assertFalse(session.shopping.value)
+        assertEquals("c1", session.collection.value)
+        // With no collection open, it opens above the book.
+        session.closeCollection()
+        session.openShoppingAboveCollection()
+        assertTrue(session.shopping.value)
+        assertNull(session.collection.value)
+    }
+
     @Test
     fun theCollectionOpenIsKeptAndClosedBySettingsShoppingAndATimersCard() {
         val saved = SavedStateHandle()

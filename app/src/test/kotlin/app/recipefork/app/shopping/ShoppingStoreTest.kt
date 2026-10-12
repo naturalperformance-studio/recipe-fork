@@ -51,6 +51,19 @@ class ShoppingStoreTest {
         assertEquals(expected, PreferencesShopping(context).list.value)
     }
 
+    // v0.36, T-257: a whole collection goes on at once — each recipe not listed at the end, in its order and once; one
+    // listed already keeps its count where it stands.
+    @Test
+    fun withAllAddsWhatIsNotListedAndKeepsTheCountsOfWhatIs() {
+        val bread = ListedRecipe(POOL, RecipeId("bread"), r(6))
+        val list = ShoppingList(listOf(bread))
+        val soup = ListedRecipe(POOL, RecipeId("soup"), r(4))
+        val cake = ListedRecipe(POOL, RecipeId("cake"), null)
+        val now = list.withAll(listOf(soup, bread.copy(servings = r(2)), cake, soup))
+        assertEquals(ShoppingList(listOf(bread, soup, cake)), now)
+        assertEquals(now, now.withAll(listOf(soup.copy(servings = r(1)), cake)))
+    }
+
     // The stored form is one object, each part under a key of its own: a list kept with its own lines and ticks — as
     // T-231 and T-232 will keep it — reads its recipes as they are, and a key this version does not know is passed over.
     @Test

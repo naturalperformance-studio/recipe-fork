@@ -101,7 +101,8 @@ object Destinations {
  * from them returns to the book where it was left. My kitchen lies above the settings, opened from them; back from it
  * returns to them. Opened from a recipe's card — at an item of equipment, or to be set up — it lies above that card
  * instead, and back from it returns to the card where it was left; opened from the book's filters, it lies above the
- * book. The shopping list lies above the book, opened from its top bar; back from it returns to the book. A
+ * book. The shopping list lies above the book, opened from its top bar; back from it returns to the book — or above a
+ * collection's screen, opened from its notice of a whole collection added, back from it returning there. A
  * collection's screen lies above the book, opened from its row of collections, and the card of a recipe opened from it
  * above it in turn; back from that card returns to the collection, and back from the collection to the book.
  *
@@ -167,7 +168,7 @@ fun AppNavHost(
         ) { entry ->
             CollectionScreen(
                 CollectionId(requireNotNull(entry.arguments?.getString(Destinations.COLLECTION_ID_KEY))),
-                session, collections, recipes, thumbnails = thumbnails, dragHandleSide = dragHandleSide,
+                session, collections, recipes, thumbnails = thumbnails, dragHandleSide = dragHandleSide, card = card,
             )
         }
         composable(Destinations.SHOPPING_ROUTE) {
@@ -317,8 +318,8 @@ internal sealed interface Shown {
  * editor on it. The editor lies above the card of the recipe it edits — the one leaving it shows. The [settings] lie
  * above the book alone: a card or the editor open is shown in their place. My [kitchen] lies above the settings while
  * they are shown, and otherwise above the card or the book, opened from it, while no editor is open. The [shopping] list
- * lies above the book alone, as the settings do. The [collection] open lies between the book and the card: a card
- * opened from it lies above it.
+ * lies above the book, as the settings do, or above the [collection] open when opened from it; the collection lies
+ * between the book and the card: a card opened from it lies above it.
  */
 internal fun shownFor(
     viewing: String?,
@@ -335,7 +336,7 @@ internal fun shownFor(
     if (settings && size == 1) {
         add(Shown.Settings)
         if (kitchen) add(Shown.Kitchen)
-    } else if (shopping && size == 1) {
+    } else if (shopping && (size == 1 || (size == 2 && last() is Shown.Collection))) {
         add(Shown.Shopping)
     } else if (kitchen && last() !is Shown.Editor) {
         add(Shown.Kitchen)

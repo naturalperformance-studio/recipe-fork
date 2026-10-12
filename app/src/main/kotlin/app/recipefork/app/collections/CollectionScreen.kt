@@ -39,12 +39,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -61,6 +64,10 @@ import androidx.lifecycle.viewModelScope
 import app.recipefork.app.R
 import app.recipefork.app.book.CollectionRecipeRow
 import app.recipefork.app.book.CollectionRow
+import app.recipefork.app.card.CardEnvironment
+import app.recipefork.app.card.cardLanguage
+import app.recipefork.app.card.openingServings
+import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.HeldDragHandleSide
 import app.recipefork.app.editor.BlockAction
@@ -84,10 +91,14 @@ import app.recipefork.app.library.TITLE_CLEARANCE
 import app.recipefork.app.library.coverOf
 import app.recipefork.app.library.rememberCoverThumbnails
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.shopping.ListedRecipe
 import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.RecipeCollection
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.scaling.InterfaceLanguage
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -98,6 +109,10 @@ import kotlinx.coroutines.launch
  * says so with Undo; its recipes stay in the book. In an own collection a recipe's ⋮ moves it up or down or removes it
  * from the collection — with Undo — and the drag column down its edge reorders it; an imported one is frozen: it shows
  * the author its file states, and its entries carry neither. A collection with no recipes says how one is added.
+ *
+ * The ⋮ of a collection with recipes, own or imported, puts them all on the shopping list ("Add all to shopping list"),
+ * each at the count its card would open with; one listed already keeps its count. The screen says how many were added,
+ * with Open, which opens the list above it.
  *
  * Once the book holds the collection no more — deleted here, or its book replaced — the screen closes.
  */
@@ -111,6 +126,7 @@ fun CollectionScreen(
     modifier: Modifier = Modifier,
     thumbnails: CoverThumbnails = rememberCoverThumbnails(),
     dragHandleSide: DragHandleSide = remember { HeldDragHandleSide() },
+    card: CardEnvironment = rememberCardEnvironment(),
 ) {
     val read by remember(collections, id) { collections.observe(id).map(::Read) }.collectAsState(initial = null)
     val listed by remember(collections, id) { collections.recipes(id) }.collectAsState(initial = null)
@@ -128,6 +144,7 @@ fun CollectionScreen(
     var moved by remember { mutableStateOf<List<CollectionRecipeRow>?>(null) }
     LaunchedEffect(listed) { moved = null }
     val rows = moved ?: listed
+    val addAll = rememberAddAllToShopping(id, session, collections, recipes, card, snackbars)
     var renaming by rememberSaveable { mutableStateOf(false) }
     if (renaming && collection != null) {
         RenameDialog(
@@ -167,6 +184,7 @@ fun CollectionScreen(
                     if (collection != null) {
                         CollectionMenu(
                             editable = collection.origin.editable,
+                            onAddAll = addAll.takeIf { listed?.isNotEmpty() == true },
                             onRename = { renaming = true },
                             onDelete = delete,
                         )
@@ -215,7 +233,10 @@ fun CollectionScreen(
                 if (from in now.indices && to in now.indices && from != to) {
                     val next = now.toMutableList().apply { add(to, removeAt(from)) }
                     moved = next
-                    scope.launch { collections.reorder(id, next.map { RecipeId(it.recipeId) }) }
+                    scope.launch {
+                        // Refused — the collection gone or frozen meanwhile — the stored order shows again.
+                        if (collections.reorder(id, next.map { RecipeId(it.recipeId) }) != CollectionChange.DONE) moved = null
+                    }
                 }
             }
             val drag = if (editable) rememberRowDrag(scroll, ENTRY_GAP, move) else null
@@ -304,6 +325,81 @@ private fun CollectionEntry(
 }
 
 /**
+ * Puts every recipe of the collection [id] on the shopping list of [card] (v0.36, T-257), in the collection's order,
+ * each at the count its card would open with ([openingServings]) — one listed already keeps its count — and says how
+ * many were added in [snackbars], in place of whatever they said, with Open, which opens the list above the collection.
+ * One tap at a time: a second while the first is read adds nothing.
+ */
+@Composable
+private fun rememberAddAllToShopping(
+    id: CollectionId,
+    session: LibrarySession,
+    collections: CollectionRepository,
+    recipes: RecipeRepository,
+    card: CardEnvironment,
+    snackbars: SnackbarHostState,
+): () -> Unit {
+    val scope = rememberCoroutineScope()
+    val resources = LocalResources.current
+    val language = cardLanguage(LocalConfiguration.current)
+    val allListed = stringResource(R.string.collection_all_in_shopping)
+    val open = stringResource(R.string.collection_shopping_open)
+    var adding by remember { mutableStateOf(false) }
+    return {
+        if (!adding) {
+            adding = true
+            scope.launch {
+                val added = try {
+                    addAll(id, session, collections, recipes, card, language)
+                } finally {
+                    adding = false
+                }
+                val said = if (added == 0) allListed else resources.getQuantityString(R.plurals.collection_added_to_shopping, added, added)
+                snackbars.currentSnackbarData?.dismiss()
+                val result = snackbars.showSnackbar(said, actionLabel = open, duration = SnackbarDuration.Long)
+                if (result == SnackbarResult.ActionPerformed) session.openShoppingAboveCollection()
+            }
+        }
+    }
+}
+
+/** Puts the recipes of the collection [id] on the list as [rememberAddAllToShopping] says; returns how many were added. */
+private suspend fun addAll(
+    id: CollectionId,
+    session: LibrarySession,
+    collections: CollectionRepository,
+    recipes: RecipeRepository,
+    card: CardEnvironment,
+    language: InterfaceLanguage,
+): Int {
+    val book = recipes.bookName().fileName
+    // Read once, as the card reads it on opening.
+    val usual = card.usualServings.count.value
+    // Rows whose entry cannot be read are counted as the card counts them: without it.
+    val entries = try {
+        card.ingredients.entries()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        emptyList()
+    }.associateBy { it.id }
+    val wanted = collections.recipes(id).first().mapNotNull { row ->
+        // A recipe that does not read back is left out; the rest go on.
+        val recipe = try {
+            recipes.get(RecipeId(row.recipeId))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return@mapNotNull null
+        ListedRecipe(book, recipe.id, session.cards.openingServings(recipe, usual, entries, language))
+    }
+    var added = 0
+    card.shopping.update { list -> list.withAll(wanted).also { added = it.recipes.size - list.recipes.size } }
+    return added
+}
+
+/**
  * Says that a recipe was taken out of the collection — "“Soup” removed from the collection" — with Undo, which puts it
  * back at its place; the notice gone without it, or replaced by the next removal's, leaves it out. The recipe stays in
  * the book either way.
@@ -353,11 +449,11 @@ private fun BackAction(onBack: () -> Unit) {
 }
 
 /**
- * The collection's ⋮: Rename for an own collection, then Delete collection, in the theme's error colour. An imported
- * collection offers Delete alone.
+ * The collection's ⋮: "Add all to shopping list" while it has recipes ([onAddAll]), Rename for an own collection, then
+ * Delete collection, in the theme's error colour. An imported collection offers no Rename.
  */
 @Composable
-private fun CollectionMenu(editable: Boolean, onRename: () -> Unit, onDelete: () -> Unit) {
+private fun CollectionMenu(editable: Boolean, onAddAll: (() -> Unit)?, onRename: () -> Unit, onDelete: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box(Modifier.padding(end = 4.dp)) {
         BlockAction(
@@ -369,6 +465,16 @@ private fun CollectionMenu(editable: Boolean, onRename: () -> Unit, onDelete: ()
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             // Share (T-255) and "Add all to shopping list" (T-257) go here, first: they are offered on every collection.
+            if (onAddAll != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.collection_add_all_to_shopping)) },
+                    onClick = {
+                        expanded = false
+                        onAddAll()
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(CollectionScreenTags.ADD_ALL_TO_SHOPPING),
+                )
+            }
             if (editable) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.collection_rename)) },
@@ -441,6 +547,7 @@ object CollectionScreenTags {
     const val MENU = "collection-menu"
     const val RENAME = "collection-rename"
     const val DELETE = "collection-delete"
+    const val ADD_ALL_TO_SHOPPING = "collection-add-all-to-shopping"
     const val RENAME_DIALOG = "collection-rename-dialog"
     const val RENAME_FIELD = "collection-rename-field"
     const val RENAME_CONFIRM = "collection-rename-confirm"

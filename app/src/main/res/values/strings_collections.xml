@@ -14,6 +14,15 @@
     <string name="collection_menu_action">Show more actions for the collection</string>
     <string name="collection_rename">Rename</string>
     <string name="collection_delete">Delete collection</string>
+    <!-- T-257: the collection's ⋮ puts every recipe of it on the shopping list, each at the count its card opens with. -->
+    <string name="collection_add_all_to_shopping">Add all to shopping list</string>
+    <plurals name="collection_added_to_shopping">
+        <item quantity="one">Added %d recipe</item>
+        <item quantity="other">Added %d recipes</item>
+    </plurals>
+    <!-- Said in place of the count when every recipe of the collection was on the list already. -->
+    <string name="collection_all_in_shopping">All these recipes are already in the shopping list</string>
+    <string name="collection_shopping_open">Open</string>
     <string name="collection_rename_title">Rename collection</string>
     <string name="collection_name">Name</string>
     <string name="collection_rename_confirm">Rename</string>

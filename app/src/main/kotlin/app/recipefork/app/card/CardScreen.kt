@@ -616,9 +616,7 @@ private class ScaleInForce(
 private fun rememberScaleInForce(recipe: Recipe, usual: Rational?, session: CardSession): ScaleInForce {
     val authored = recipe.servings?.takeIf { it >= 1 }
     return remember(recipe.id, authored, recipe.ingredients) {
-        val ordered = recipe.ingredients.sortedBy { it.position }
-        val opening = session.heldScale(recipe.id)?.restored(authored, ordered, usual) ?: CardScale.opening(authored, usual)
-        ScaleInForce(opening, recipe.id, ordered, session)
+        ScaleInForce(session.openingScale(recipe, usual), recipe.id, recipe.ingredients.sortedBy { it.position }, session)
     }
 }
 
@@ -636,7 +634,7 @@ private fun shownCount(
 ): Rational? {
     val authored = recipe.servings?.takeIf { it >= 1 }
     if (held == null || entries == null) return CardScale.opening(authored, usual).requested
-    return ingredientList(held.ordered, entries, language, authored, held.scale).servingCount?.value
+    return servingsShown(recipe, held.scale, entries, language)
 }
 
 /** The language the card writes its lines and counts in: the interface's. */
