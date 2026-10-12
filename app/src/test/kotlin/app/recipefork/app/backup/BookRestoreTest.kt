@@ -6,19 +6,25 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.app.book.CollectionEntity
 import app.recipefork.app.book.FavouriteEntity
 import app.recipefork.app.book.RecipeRows
 import app.recipefork.app.card.forkRecipe
+import app.recipefork.app.collections.CollectionRepository
+import app.recipefork.app.collections.ImportedCollection
 import app.recipefork.app.file.TestRecipeFiles.jpeg
 import app.recipefork.app.file.TestRecipeFiles.mp4
 import app.recipefork.app.kitchen.HeldKitchen
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.CollectionId
+import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeCollection
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.Step
@@ -57,11 +63,13 @@ class BookRestoreTest {
     private val sourceDatabase = BookDatabase.open(context, sourceName)
     private val source = ActiveBook(sourceName, sourceDatabase)
     private val sourceRecipes = RecipeRepository(source, context.filesDir)
+    private val sourceCollections = CollectionRepository(source) { now }
 
     private val bookName = BookName.OfAccount("restore-book")
     private val bookDatabase = BookDatabase.open(context, bookName)
     private val book = ActiveBook(bookName, bookDatabase)
     private val bookRecipes = RecipeRepository(book, context.filesDir)
+    private val bookCollections = CollectionRepository(book) { now.plusSeconds(60) }
 
     private val savedKitchen = setOf(10001L, 10203L)
     private val kitchen = HeldKitchen(setOf(7L))
@@ -80,13 +88,22 @@ class BookRestoreTest {
         return Media(id, null, kind, attachment, MediaVisibility.PRIVATE)
     }
 
-    private class Saved(val own: RecipeId, val found: RecipeId, val fork: RecipeId, val orphan: RecipeId, val gone: RecipeId) {
+    private class Saved(
+        val own: RecipeId,
+        val found: RecipeId,
+        val fork: RecipeId,
+        val orphan: RecipeId,
+        val gone: RecipeId,
+        val menu: CollectionId,
+        val annas: CollectionId,
+    ) {
         val all get() = listOf(own, found, fork, orphan)
     }
 
     /**
      * The saved book: an own recipe with a cover and a step's clip, a found one with a photograph, a fork of the own
-     * one, and a fork whose parent the book no longer holds.
+     * one, and a fork whose parent the book no longer holds; an own collection of three of them, and an imported one of
+     * two.
      */
     private fun fill(): Saved = runBlocking {
         val own = Recipe.create(now, null).copy(
@@ -107,7 +124,11 @@ class BookRestoreTest {
         sourceRecipes.save(gone)
         val orphan = forkRecipe(sourceRecipes, source, gone.id, now)!!
         assertTrue(sourceRecipes.delete(gone.id))
-        Saved(own.id, found.id, fork, orphan, gone.id)
+        val menu = sourceCollections.create("New Year's menu")!!
+        listOf(fork, own.id, found.id).forEach { assertEquals(setOf(menu), sourceCollections.addTo(it, listOf(menu))) }
+        val annas = CollectionId.mint()
+        assertEquals(ImportedCollection.CREATED, sourceCollections.putImported(annas, "Anna's pies", "anna", listOf(found.id, orphan)))
+        Saved(own.id, found.id, fork, orphan, gone.id, menu, annas)
     }
 
     /** Saves the source book and opens its file. */
@@ -125,8 +146,16 @@ class BookRestoreTest {
         opened().use { BookRestore(context.filesDir, kitchen, written).restore(it, book.open.value, mode, progress) }
     }
 
-    /** Everything the book holds: each recipe's rows, its marks, and its media files with their bytes. */
-    private data class Held(val rows: Map<String, RecipeRows>, val marks: List<FavouriteEntity>, val files: Map<String, List<Byte>>)
+    /**
+     * Everything the book holds: each recipe's rows, its marks, its media files with their bytes, and its collections
+     * with the recipes of each in order.
+     */
+    private data class Held(
+        val rows: Map<String, RecipeRows>,
+        val marks: List<FavouriteEntity>,
+        val files: Map<String, List<Byte>>,
+        val collections: Map<CollectionEntity, List<String>>,
+    )
 
     private fun held(active: ActiveBook, name: BookName): Held = runBlocking {
         val recipes = active.database.recipes()
@@ -134,6 +163,7 @@ class BookRestoreTest {
             recipes.ids().associateWith { recipes.get(it)!! },
             active.database.favourites().list(),
             store.directory(name).listFiles().orEmpty().filter { it.isFile }.associate { it.name to it.readBytes().toList() },
+            active.database.collections().let { dao -> dao.all().associateWith { dao.members(it.collectionId) } },
         )
     }
 
@@ -329,6 +359,76 @@ class BookRestoreTest {
         assertEquals(Restored(added = 4, alreadyHeld = 0), restore(RestoreMode.ADD))
         assertEquals("the book's own bytes", orphan.readText())
         assertTrue(store.file(bookName, OWN_CLIP).isFile)
+    }
+
+    @Test
+    fun addIntoAnEmptyBookBringsTheFilesCollectionsBack() = runBlocking {
+        val saved = fill()
+
+        restore(RestoreMode.ADD)
+
+        assertEquals(
+            RecipeCollection(saved.menu, "New Year's menu", CollectionOrigin.OWN, null, now, listOf(saved.fork, saved.own, saved.found)),
+            bookCollections.get(saved.menu),
+        )
+        assertEquals(
+            RecipeCollection(saved.annas, "Anna's pies", CollectionOrigin.IMPORTED, "anna", now, listOf(saved.found, saved.orphan)),
+            bookCollections.get(saved.annas),
+        )
+        assertEquals(held(source, sourceName).collections, held(book, bookName).collections)
+    }
+
+    // Add gives the book each collection it lacks, and each of the file's it holds the places it lacks, after its own,
+    // under its own name; a collection the file does not carry is left as it is.
+    @Test
+    fun addGivesTheBookTheCollectionsAndPlacesItLacks() = runBlocking {
+        val saved = fill()
+        val mine = ownOfTheBook()
+        bookRecipes.save(sourceRecipes.get(saved.own)!!.copy(media = emptyList()))
+        bookRecipes.save(sourceRecipes.get(saved.orphan)!!)
+        val kept = bookCollections.create("The book's own")!!
+        bookCollections.addTo(mine, listOf(kept))
+        bookCollections.addTo(saved.own, listOf(kept))
+        // The book holds the file's own collection already, renamed, with a recipe the file's does not hold.
+        bookDatabase.collections().insert(CollectionEntity(saved.menu.value, "Menu", CollectionOrigin.OWN, null, now.plusSeconds(5)))
+        bookCollections.addTo(mine, listOf(saved.menu))
+        bookCollections.addTo(saved.own, listOf(saved.menu))
+        // And the file's imported one, holding part of what the file puts in it.
+        assertEquals(ImportedCollection.CREATED, bookCollections.putImported(saved.annas, "Pies", null, listOf(saved.orphan)))
+        val keptBefore = bookCollections.get(kept)
+
+        assertEquals(Restored(added = 2, alreadyHeld = 2), restore(RestoreMode.ADD))
+
+        assertEquals(keptBefore, bookCollections.get(kept))
+        assertEquals(
+            RecipeCollection(saved.menu, "Menu", CollectionOrigin.OWN, null, now.plusSeconds(5), listOf(mine, saved.own, saved.fork, saved.found)),
+            bookCollections.get(saved.menu),
+        )
+        assertEquals(
+            RecipeCollection(saved.annas, "Pies", CollectionOrigin.IMPORTED, null, now.plusSeconds(60), listOf(saved.orphan, saved.found)),
+            bookCollections.get(saved.annas),
+        )
+        assertEquals(3, bookDatabase.collections().all().size)
+    }
+
+    @Test
+    fun replaceMakesTheBooksCollectionsExactlyTheFiles() = runBlocking {
+        val saved = fill()
+        val mine = ownOfTheBook()
+        bookRecipes.save(sourceRecipes.get(saved.own)!!.copy(media = emptyList()))
+        val gone = bookCollections.create("The book's own")!!
+        bookCollections.addTo(mine, listOf(gone))
+        bookDatabase.collections().insert(CollectionEntity(saved.menu.value, "Menu", CollectionOrigin.OWN, null, now.plusSeconds(5)))
+        bookCollections.addTo(saved.own, listOf(saved.menu))
+
+        restore(RestoreMode.REPLACE)
+
+        assertNull(bookCollections.get(gone))
+        assertEquals(
+            RecipeCollection(saved.menu, "New Year's menu", CollectionOrigin.OWN, null, now, listOf(saved.fork, saved.own, saved.found)),
+            bookCollections.get(saved.menu),
+        )
+        assertEquals(held(source, sourceName).collections, held(book, bookName).collections)
     }
 
     private companion object {

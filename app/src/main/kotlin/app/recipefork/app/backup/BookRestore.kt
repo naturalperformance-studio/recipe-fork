@@ -2,9 +2,14 @@ package app.recipefork.app.backup
 
 import androidx.room.withTransaction
 import app.recipefork.app.book.ActiveBook
+import app.recipefork.app.book.BookDatabase
+import app.recipefork.app.book.CollectionEntity
+import app.recipefork.app.book.CollectionRecipeEntity
 import app.recipefork.app.book.RecipeRows
 import app.recipefork.app.kitchen.KitchenStore
 import app.recipefork.app.media.PhotoStore
+import app.recipefork.core.recipe.CollectionOrder
+import app.recipefork.core.recipe.RecipeId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -40,7 +45,7 @@ class RestoreRefused(val refusal: BookFileRefusal, message: String) : Exception(
  * (decisions/20261012-a-book-file-holds-the-books-database.md): each recipe's rows are copied as they are — its
  * identity, state, parent, marks and sending state with them — in one transaction of the book's database; its media
  * files are copied into the book's media directory under [filesDirectory] before it, and the files of what the book
- * no longer holds deleted only after it commits; My kitchen ([kitchen]) is merged on [RestoreMode.ADD] and replaced
+ * no longer holds deleted only after it commits; its collections go with them ([mergeCollections]); My kitchen ([kitchen]) is merged on [RestoreMode.ADD] and replaced
  * on [RestoreMode.REPLACE]. A failure or a cancel before the transaction commits leaves the book and its media as
  * they were.
  */
@@ -144,9 +149,14 @@ class BookRestore(
         val book = into.database
         val (restored, released) = try {
             val marks = file.database.favourites().list()
+            val collections = file.database.collections().all()
+            val places = file.database.collections().allMembers()
             book.withTransaction {
                 val before = book.recipes().allMedia().toSet()
-                if (mode == RestoreMode.REPLACE) book.recipes().clear()
+                if (mode == RestoreMode.REPLACE) {
+                    book.collections().clear()
+                    book.recipes().clear()
+                }
                 // Held again inside the transaction: whatever was written to the book since the plan is kept as it is.
                 val held = heldIds(into)
                 val added = HashSet<String>()
@@ -158,6 +168,7 @@ class BookRestore(
                 // A recipe's mark goes with it; a mark of what the file holds no content of goes where nothing of it is.
                 marks.filter { it.recipeId in added || (it.recipeId !in plan.sourceIds && it.recipeId !in held) }
                     .forEach { book.favourites().put(it) }
+                mergeCollections(book, collections, places)
                 val after = book.recipes().allMedia().toSet()
                 Restored(added.size, plan.sourceIds.size - added.size) to (before - after + copied.map { it.name }.filterNot { it in after })
             }
@@ -184,6 +195,28 @@ class BookRestore(
          * of a file in a media directory: no separator, no `..`, no leading dot.
          */
         fun isMediaId(id: String): Boolean = MEDIA_ID.matches(id)
+    }
+
+    /**
+     * Gives the book, inside the restore's transaction and after its recipes, the file's [collections] and their
+     * [places]: each collection it does not hold is added as the file has it, and each collection of the file —
+     * added, or held already, own or imported — gains, after the recipes it holds, those the file puts in it that it
+     * lacks, in the file's order, of the recipes the book holds. On [RestoreMode.REPLACE] the book's were cleared
+     * first, so it holds exactly the file's.
+     */
+    private suspend fun mergeCollections(book: BookDatabase, collections: List<CollectionEntity>, places: List<CollectionRecipeEntity>) {
+        val dao = book.collections()
+        val held = dao.all().map { it.collectionId }.toSet()
+        collections.filterNot { it.collectionId in held }.forEach { dao.insert(it) }
+        val recipes = book.recipes().ids().toSet()
+        val byCollection = places.groupBy { it.collectionId }
+        collections.forEach { collection ->
+            val id = collection.collectionId
+            val current = dao.members(id).map(::RecipeId)
+            val file = byCollection[id].orEmpty().map { it.recipeId }.filter { it in recipes }.map(::RecipeId)
+            val merged = CollectionOrder.added(current, file)
+            if (merged != current) dao.setMembers(id, merged.map { it.value })
+        }
     }
 
     /** Every identity the book holds a recipe or a mark of. */

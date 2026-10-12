@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.Flow
     entities = [
         RecipeEntity::class, IngredientEntity::class, StepEntity::class, StepReferenceEntity::class,
         MediaEntity::class, RecipeTagEntity::class, FavouriteEntity::class, IngredientGroupEntity::class,
-        StepTimerEntity::class, EquipmentEntity::class,
+        StepTimerEntity::class, EquipmentEntity::class, CollectionEntity::class, CollectionRecipeEntity::class,
     ],
     version = BookDatabase.VERSION,
     exportSchema = false,
@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.Flow
 abstract class BookDatabase : RoomDatabase() {
     abstract fun recipes(): BookRecipeDao
     abstract fun favourites(): FavouriteDao
+    abstract fun collections(): CollectionDao
 
     companion object {
         /**
@@ -62,7 +63,7 @@ abstract class BookDatabase : RoomDatabase() {
             Room.databaseBuilder(context, BookDatabase::class.java, name).addMigrations(*migrations(equipment)).build()
 
         /** The schema version of a book this application writes; an older book is migrated up to it as it is opened. */
-        const val VERSION = 8
+        const val VERSION = 9
 
         /** The equipment dictionary the application ships (decisions/20260928-dictionaries-ship-with-the-application.md). */
         fun shippedEquipment(context: Context): List<DictionaryEntry> =
@@ -138,6 +139,24 @@ abstract class BookDatabase : RoomDatabase() {
                     db.execSQL("alter table step add column note text")
                 }
             },
+            // 8 → 9: the book holds collections of its recipes (v0.36); a book already on a phone has none.
+            object : Migration(8, 9) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "create table if not exists `collection` (`collection_id` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                            "`origin` TEXT NOT NULL, `stated_author` TEXT, `created_at` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`collection_id`))",
+                    )
+                    db.execSQL(
+                        "create table if not exists `collection_recipe` (`collection_id` TEXT NOT NULL, " +
+                            "`recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, PRIMARY KEY(`collection_id`, `recipe_id`), " +
+                            "FOREIGN KEY(`collection_id`) REFERENCES `collection`(`collection_id`) ON UPDATE NO ACTION " +
+                            "ON DELETE CASCADE , FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    )
+                    db.execSQL("create index if not exists `index_collection_recipe_recipe_id` on `collection_recipe` (`recipe_id`)")
+                }
+            },
         )
     }
 }
@@ -195,7 +214,7 @@ sealed class BookName(val fileName: String) {
  * The media identity of the cover of the recipe a query names `r`: its one item attached to no step (MEDIA-001), null
  * for none.
  */
-private const val COVER_OF_R =
+internal const val COVER_OF_R =
     "(select m.media_id from media m where m.recipe_id = r.recipe_id and m.step_position is null " +
         "order by m.position limit 1)"
 
@@ -215,8 +234,15 @@ data class RecipeRows(
     val equipment: List<EquipmentEntity> = emptyList(),
 )
 
-/** A recipe taken out of the book ([BookRecipeDao.take]): its rows, and its mark when it was a found one. */
-data class TakenRows(val rows: RecipeRows, val favourite: FavouriteEntity?)
+/**
+ * A recipe taken out of the book ([BookRecipeDao.take]): its rows, its mark when it was a found one, and its places in
+ * the book's collections.
+ */
+data class TakenRows(
+    val rows: RecipeRows,
+    val favourite: FavouriteEntity?,
+    val memberships: List<CollectionRecipeEntity> = emptyList(),
+)
 
 /** SQLite's limit that limits nothing. */
 private const val NO_LIMIT = -1
@@ -282,9 +308,13 @@ abstract class BookRecipeDao {
         clearAllMedia()
         clearAllTags()
         clearAllEquipment()
+        clearAllMemberships()
         clearAllRecipes()
         clearAllFavourites()
     }
+
+    @Query("delete from collection_recipe")
+    protected abstract suspend fun clearAllMemberships()
 
     @Query("delete from ingredient")
     protected abstract suspend fun clearAllIngredients()
@@ -341,7 +371,7 @@ abstract class BookRecipeDao {
 
     /**
      * Deletes the recipe and everything it holds — its equipment, ingredients and their groups, steps and their timers,
-     * references, media and tags — atomically (ST-010).
+     * references, media and tags — and takes it out of every collection, atomically (ST-010).
      * Its parts cascade from its row; they are deleted here as well, so that nothing of it is left whatever the
      * connection's foreign-key setting. Returns whether the book held it.
      */
@@ -355,6 +385,7 @@ abstract class BookRecipeDao {
         deleteGroups(recipeId)
         deleteTimers(recipeId)
         deleteEquipment(recipeId)
+        deleteMemberships(recipeId)
         return deleteRecipe(recipeId) > 0
     }
 
@@ -416,22 +447,24 @@ abstract class BookRecipeDao {
     }
 
     /**
-     * Takes the recipe [recipeId] out of the book, atomically: everything it holds, and its mark when the book holds it
-     * as a found one. Returns what was taken, which [putBack] puts back as it was; null when the book held no such
+     * Takes the recipe [recipeId] out of the book, atomically: everything it holds, its mark when the book holds it as a
+     * found one, and its places in the book's collections. Returns what was taken, which [putBack] puts back as it was; null when the book held no such
      * recipe. The files of its media are the caller's.
      */
     @Transaction
     open suspend fun take(recipeId: String): TakenRows? {
         val rows = get(recipeId) ?: return null
         val favourite = favourite(recipeId)
+        val memberships = memberships(recipeId)
         if (favourite != null) deleteFavourite(recipeId)
         delete(recipeId)
-        return TakenRows(rows, favourite)
+        return TakenRows(rows, favourite, memberships)
     }
 
     /**
      * Puts back what [take] took, atomically, as it was: the recipe with everything it held, and its mark, under the
-     * same times, so that it is listed where it was. Returns false, writing nothing, when the book holds or marks a
+     * same times, so that it is listed where it was, and in each collection it was in that the book still holds, at
+     * its place there. Returns false, writing nothing, when the book holds or marks a
      * recipe of that identity again.
      */
     @Transaction
@@ -440,8 +473,22 @@ abstract class BookRecipeDao {
         if (recipe(id) != null || isMarked(id)) return false
         put(taken.rows)
         taken.favourite?.let { insertFavourite(it) }
+        val collections = collectionIds().toSet()
+        insertMemberships(taken.memberships.filter { it.collectionId in collections })
         return true
     }
+
+    @Query("select * from collection_recipe where recipe_id = :id order by collection_id")
+    protected abstract suspend fun memberships(id: String): List<CollectionRecipeEntity>
+
+    @Query("select collection_id from collection")
+    protected abstract suspend fun collectionIds(): List<String>
+
+    @Insert
+    protected abstract suspend fun insertMemberships(rows: List<CollectionRecipeEntity>)
+
+    @Query("delete from collection_recipe where recipe_id = :id")
+    protected abstract suspend fun deleteMemberships(id: String)
 
     @Query("select * from favourite where recipe_id = :id")
     protected abstract suspend fun favourite(id: String): FavouriteEntity?

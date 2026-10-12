@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.MediaVisibility
 import app.recipefork.core.recipe.QuantityUnit
@@ -177,6 +178,62 @@ data class FavouriteEntity(
     @PrimaryKey @ColumnInfo(name = "recipe_id") val recipeId: String,
     val title: String,
     @ColumnInfo(name = "added_at") val addedAt: Instant,
+)
+
+/**
+ * A named collection of the book's recipes (v0.36): made here ([CollectionOrigin.OWN]) or arrived in a collection file
+ * ([CollectionOrigin.IMPORTED]), with the author's nickname that file states, if any. Its recipes are its
+ * [CollectionRecipeEntity] rows. Added in version 9.
+ */
+@Entity(tableName = "collection")
+data class CollectionEntity(
+    @PrimaryKey @ColumnInfo(name = "collection_id") val collectionId: String,
+    val name: String,
+    val origin: CollectionOrigin,
+    @ColumnInfo(name = "stated_author") val statedAuthor: String?,
+    @ColumnInfo(name = "created_at") val createdAt: Instant,
+)
+
+/**
+ * The recipe [recipeId] in the collection [collectionId], ordered among its others by [position], the smaller first.
+ * It goes with either: a recipe deleted from the book leaves every collection, and a deleted collection takes its rows
+ * and no recipe. Added in version 9.
+ */
+@Entity(
+    tableName = "collection_recipe",
+    primaryKeys = ["collection_id", "recipe_id"],
+    indices = [Index("recipe_id")],
+    foreignKeys = [
+        ForeignKey(CollectionEntity::class, ["collection_id"], ["collection_id"], onDelete = CASCADE),
+        ForeignKey(RecipeEntity::class, ["recipe_id"], ["recipe_id"], onDelete = CASCADE),
+    ],
+)
+data class CollectionRecipeEntity(
+    @ColumnInfo(name = "collection_id") val collectionId: String,
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    val position: Int,
+)
+
+/** A collection as a list of collections shows it: with how many recipes it holds. */
+data class CollectionRow(
+    @ColumnInfo(name = "collection_id") val collectionId: String,
+    val name: String,
+    val origin: CollectionOrigin,
+    @ColumnInfo(name = "stated_author") val statedAuthor: String?,
+    @ColumnInfo(name = "created_at") val createdAt: Instant,
+    val count: Int,
+)
+
+/** A recipe of a collection as the collection's screen lists it. */
+data class CollectionRecipeRow(
+    @ColumnInfo(name = "recipe_id") val recipeId: String,
+    val title: String,
+    /** The media identity of the recipe's cover, if it holds one (MEDIA-001). */
+    @ColumnInfo(name = "cover_id") val coverId: String? = null,
+    /** The author's nickname a found recipe's file states, never verified; null for none. */
+    @ColumnInfo(name = "stated_author") val statedAuthor: String? = null,
+    /** Whether it is a found recipe — marked in the book — rather than one written in it. */
+    val found: Boolean = false,
 )
 
 /** What an entry of the view of marked recipes shows. */
