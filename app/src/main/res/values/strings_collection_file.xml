@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v0.36: sharing a collection as a file, from the collection's ⋮. -->
+    <string name="collection_share">Share</string>
+    <string name="collection_share_sheet">Share “%1$s”</string>
+    <string name="collection_sharing">Preparing the collection\'s file</string>
+    <string name="collection_share_failed">Couldn\'t share the collection</string>
+</resources>
