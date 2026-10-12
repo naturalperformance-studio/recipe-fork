@@ -58,6 +58,7 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipePart
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.effectiveDivisible
 import app.recipefork.core.scaling.InterfaceLanguage
@@ -150,7 +151,7 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: Focus
  * The ingredient list, after the serving count (FLOW-024): each row reads as one line, as the card writes it, and each
  * group's heading as its name; a tap opens a sheet of the row's fields and actions (FLOW-023, FLOW-025), or of the
  * heading's (DOM-022). Rows are named from the ingredient dictionary of [ingredients] or in the author's own words
- * (DOM-009).
+ * (DOM-009); a row's unit menu offers the units of the reader's system of [units] (v0.35).
  *
  * Which row's or heading's sheet is open is kept by its key, across the activity being recreated: the sheet follows its
  * row where it moves, and goes when the row is deleted. Asking [rows] for a row — the one added, or the next the
@@ -165,6 +166,7 @@ internal fun Ingredients(
     ingredients: IngredientSource,
     scroll: EditorScroll,
     mode: Mode,
+    units: UnitSystem,
     rows: RowFocus,
     headings: RowFocus,
 ) {
@@ -324,7 +326,7 @@ internal fun Ingredients(
                         headings.ask(index)
                     },
                 )
-                IngredientSheet(position, row, editor, language, dictionary, mode, rows, typed, isNew, actions) {
+                IngredientSheet(position, row, editor, language, dictionary, mode, units, rows, typed, isNew, actions) {
                     open = null
                     if (fresh == shownKey) {
                         fresh = null

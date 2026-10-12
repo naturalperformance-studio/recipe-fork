@@ -9,6 +9,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.CoroutineScope
@@ -77,6 +78,42 @@ class IngredientsOnDiskTest {
             assertNull(rows[1].divisible)
             assertEquals(UnitType.TASTE_UNMEASURED, rows[4].unitType)
             assertEquals(listOf(true, false, false, false, true, false), rows.map { it.isComplete })
+        } finally {
+            reopened.close()
+        }
+    }
+
+    // v0.35 T-249: a row written in US units — a new one starting in ounces where the reader's system is US, one in
+    // pounds and one in fluid ounces — is stored as written and read back from the reopened book.
+    @Test
+    fun usUnitsAreSavedAndReadBackFromTheReopenedBook() = runBlocking {
+        val database = BookDatabase.open(context, book)
+        val recipes = RecipeRepository(ActiveBook(book, database))
+        val recipe = Recipe.create(now, null)
+        recipes.save(recipe)
+        val unconfined = CoroutineScope(Dispatchers.Unconfined)
+        val editor = RecipeEditor(recipes, recipe.id, { now }, unconfined, units = { UnitSystem.US })
+        editor.load()
+        repeat(3) { editor.addIngredient() }
+        editor.setIngredientName(0, "butter")
+        editor.setIngredientQuantity(0, "4")
+        editor.setIngredientName(1, "beef")
+        editor.setIngredientUnit(1, QuantityUnit.POUND)
+        editor.setIngredientQuantity(1, "1.5")
+        editor.setIngredientName(2, "milk")
+        editor.setIngredientUnit(2, QuantityUnit.FLUID_OUNCE)
+        editor.setIngredientQuantity(2, "8")
+        val written = editor.recipe.value!!
+        RecipeEditor(recipes, recipe.id, { now }, unconfined).load()
+        database.close()
+
+        val reopened = BookDatabase.open(context, book)
+        try {
+            val read = RecipeRepository(ActiveBook(book, reopened)).get(recipe.id)!!
+            assertEquals(written, read)
+            assertEquals(listOf(QuantityUnit.OUNCE, QuantityUnit.POUND, QuantityUnit.FLUID_OUNCE), read.ingredients.map { it.unit })
+            assertEquals(listOf(Rational.of(4), Rational.of(3, 2), Rational.of(8)), read.ingredients.map { it.quantity })
+            assertEquals(listOf(true, true, true), read.ingredients.map { it.isComplete })
         } finally {
             reopened.close()
         }
