@@ -152,11 +152,10 @@ fun AppNavHost(
         }
         composable(Destinations.SETTINGS_ROUTE) {
             SettingsScreen(
-                usualServings, dragHandleSide, themeSetting, recipes, mode, session.viewModelScope, kitchen,
+                usualServings, dragHandleSide, themeSetting, unitSystem, recipes, mode, session.viewModelScope, kitchen,
                 onBack = session::closeSettings,
                 onOpenKitchen = session::openKitchen,
                 backup = backup,
-                units = unitSystem,
             )
         }
         composable(Destinations.KITCHEN_ROUTE) {

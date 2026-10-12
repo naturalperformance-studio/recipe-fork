@@ -82,6 +82,7 @@ fun SettingsScreen(
     usual: UsualServings,
     handleSide: DragHandleSide,
     theme: ThemeSetting,
+    units: UnitSystemSetting,
     recipes: RecipeRepository,
     mode: Mode,
     scope: CoroutineScope,
@@ -90,7 +91,6 @@ fun SettingsScreen(
     onOpenKitchen: () -> Unit,
     modifier: Modifier = Modifier,
     backup: BookBackup? = null,
-    units: UnitSystemSetting,
 ) {
     val snackbars = remember { SnackbarHostState() }
     Scaffold(

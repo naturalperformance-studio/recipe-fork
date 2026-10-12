@@ -1004,7 +1004,10 @@ private fun RecipeContent(
             val authored = recipe.servings?.takeIf { it >= 1 }
             val ordered = held.ordered
             val scale = held.scale
-            val list = ingredientList(ordered, entries, language, authored, scale, units)
+            val list = remember(ordered, entries, language, authored, scale, units) {
+                ingredientList(ordered, entries, language, authored, scale, units)
+            }
+            val references = remember(ordered, list, language, entries, units) { CardReferences.of(ordered, list, language, entries, units) }
             // A recipe that shows no count says so, so that nothing waits on where the count stands.
             if (list.servingCount == null && onServingsPlaced != null) LaunchedEffect(Unit) { onServingsPlaced(Rect.Zero) }
             // On Cooking the serving count stands right on the ingredients' tinted panel, with no gap: six lines are in
@@ -1037,7 +1040,7 @@ private fun RecipeContent(
             }
             // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
             StepsList(
-                recipe.steps, recipe.id, recipe.title, CardReferences.of(ordered, list, language, entries, units),
+                recipe.steps, recipe.id, recipe.title, references,
                 StepMediaOnCard(recipe, recipes.bookName()), marks, mode,
                 readerScrolling = { scroll.isScrollInProgress },
                 coveredBelow = bottom,

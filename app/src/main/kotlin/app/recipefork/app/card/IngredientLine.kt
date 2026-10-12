@@ -2,6 +2,7 @@ package app.recipefork.app.card
 
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
@@ -12,6 +13,7 @@ import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.QuantityText
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.Rounding
+import app.recipefork.core.scaling.RoundingGrid
 import app.recipefork.core.scaling.ScaleFactor
 import app.recipefork.core.scaling.ScaledRecipe
 import app.recipefork.core.scaling.ServingCount
@@ -67,21 +69,39 @@ data class FixOffer(
     /**
      * The fixing of the row at [position] by [amount] typed in [unit]: as typed where the row is shown as written;
      * otherwise turned back into the written unit's line unit by the ratio the line was shown by, so that the scale is
-     * set in the written unit and the line, shown again by the same ratio, reads the typed value.
+     * set in the written unit, holding the unit typed in and that ratio, by which the line reads the typed value.
      */
     fun fixing(position: Int, amount: Rational, unit: QuantityUnit): CardFixing {
         if (writtenPerShown == Rational.ONE && unit in FixedAmount.units(written)) return CardFixing(position, amount, unit)
         val shown = unit.lineMultiple?.let { amount * it } ?: amount
-        return CardFixing(position, shown * writtenPerShown, written.lineUnit ?: written)
+        return CardFixing(position, shown * writtenPerShown, written.lineUnit ?: written, ShownFixing(unit, writtenPerShown))
     }
 
-    /** [fixing] as this offer's control shows it: in one of its [units], turned from the written unit where it is not. */
+    /**
+     * [fixing] as this offer's control shows it: as typed where one of its [units] was typed in, else turned from the
+     * written unit into the unit shown. A value that is not on that unit's grid — a fixing typed in the other system,
+     * turned — is the value the line shows instead, so the control never opens on a raw fraction or in error.
+     */
     fun typed(fixing: CardFixing): CardFixing {
-        if (fixing.unit in units) return fixing
         val written = fixing.unit.lineMultiple?.let { fixing.amount * it } ?: fixing.amount
-        return CardFixing(fixing.position, written / writtenPerShown, authoredUnit)
+        val typed = fixing.shown?.takeIf { it.unit in units }
+        val (amount, unit) = when {
+            fixing.unit in units -> fixing.amount to fixing.unit
+            typed != null -> written / typed.writtenPerShown / (typed.unit.lineMultiple ?: Rational.ONE) to typed.unit
+            else -> written / writtenPerShown to (authoredUnit.lineUnit ?: authoredUnit)
+        }
+        if (QuantityInput.holds(amount, unit, divisible)) return CardFixing(fixing.position, amount, unit)
+        val line = unit.lineUnit ?: unit
+        val grid = checkNotNull(RoundingGrid.of(unit, divisible))
+        return CardFixing(fixing.position, grid.nearest(unit.lineMultiple?.let { amount * it } ?: amount), line)
     }
 }
+
+/**
+ * How a fixing typed on a converted line was typed: in [unit], each of whose line units held [writtenPerShown] of the
+ * written unit's line unit. The fixed line keeps reading in that unit, whatever unit its amount would otherwise go to.
+ */
+data class ShownFixing(val unit: QuantityUnit, val writtenPerShown: Rational)
 
 /**
  * The card's ingredient list at a scale: its [lines] in order, whether the displayed quantities still hold the
@@ -100,7 +120,7 @@ data class IngredientList(
  * An amount the reader fixed on the card: of the row at [position], [amount] in [unit] — as typed, or, typed on a line
  * shown converted, in the written unit ([FixOffer.fixing]).
  */
-data class CardFixing(val position: Int, val amount: Rational, val unit: QuantityUnit)
+data class CardFixing(val position: Int, val amount: Rational, val unit: QuantityUnit, val shown: ShownFixing? = null)
 
 /**
  * How the card is scaled: at the serving count [requested] (null for a recipe with none), with the row the reader
@@ -185,6 +205,19 @@ internal fun marked(shown: ShownQuantity, written: QuantityUnit): DisplayedQuant
     return if (converted && !shown.quantity.derived) shown.quantity.copy(derived = true) else shown.quantity
 }
 
+/**
+ * A fixed line [shown] converted from [written], in the unit its [fixing] was typed in where its amount would otherwise
+ * go to another ("5 tbsp", not "⅓ cup"): the typed value exactly, by the ratio it was typed by. Null where the line reads
+ * as typed already, is not shown converted, or was not fixed on a converted line.
+ */
+private fun pinned(shown: ShownQuantity, written: QuantityUnit, fixing: CardFixing): ShownQuantity? {
+    val typed = fixing.shown ?: return null
+    val line = typed.unit.lineUnit ?: typed.unit
+    if (shown.quantity.unit == (written.lineUnit ?: written) || shown.quantity.unit == line) return null
+    val amount = (fixing.unit.lineMultiple?.let { fixing.amount * it } ?: fixing.amount) / typed.writtenPerShown
+    return ShownQuantity(DisplayedQuantity(line, amount, derived = true, rounding = Rounding.NONE), shown.approximate, typed.writtenPerShown)
+}
+
 /** A quantity's text marked approximate where it was converted through the entry's measures: "≈ 260 g". */
 internal fun approximately(text: String, approximate: Boolean): String = if (approximate) "≈$NO_BREAK$text" else text
 
@@ -225,8 +258,11 @@ fun ingredientList(
     }
     val quantities = ingredients.mapIndexed { i, ingredient ->
         val authoredQuantity = scalable[i] ?: return@mapIndexed null
-        system?.let { UnitConversion.display(authoredQuantity, scaled.factor, factorsOf(ingredient, entries), it) }
-            ?: ShownQuantity(scaled.lines[indices.getValue(i)].quantity, approximate = false, writtenPerShown = Rational.ONE)
+        val line = scaled.lines[indices.getValue(i)]
+        val shown = system?.let { UnitConversion.display(authoredQuantity, scaled.factor, factorsOf(ingredient, entries), it) }
+            ?: ShownQuantity(line.quantity, approximate = false, writtenPerShown = Rational.ONE)
+        val typed = scale.fixings.firstOrNull { it.position == ingredient.position }?.takeIf { line.fixed }
+        typed?.let { pinned(shown, authoredQuantity.unit, it) } ?: shown
     }
     val lines = ingredients.mapIndexed { i, ingredient ->
         val authoredQuantity = scalable[i]

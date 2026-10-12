@@ -9,6 +9,7 @@ import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.print.PrintBlock
 import app.recipefork.app.print.RecipeDocument
 import app.recipefork.core.recipe.Ingredient
+import app.recipefork.core.recipe.QuantityInput
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.QuantityUnit
@@ -18,6 +19,8 @@ import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitSystem.METRIC
 import app.recipefork.core.recipe.UnitSystem.US
 import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.scaling.FixedAmount
+import app.recipefork.core.scaling.FixedAmountReading
 import app.recipefork.core.scaling.InterfaceLanguage.ENGLISH
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.Rounding
@@ -80,6 +83,8 @@ class UnitsOnTheCardTest {
     fun scenario2_metricReadsCupsAndOuncesInGramsAndMillilitres_spoonsAsWritten() {
         val list = list(CUPS_RECIPE, METRIC)
         assertEquals(listOf("≈ 260 g", "113 g", "≈ 250 ml", "1 tsp"), quantities(list))
+        // "≈" never parts from its number: a space that does not break stands between them.
+        assertEquals("≈\u00A0260 g", list.lines[0].quantity)
         // Shown in another unit than written: the list reads as recalculated, a spoon as written does not count.
         assertTrue(list.recalculated)
         assertEquals(listOf(true, true, true, false), list.lines.map { it.derived })
@@ -126,8 +131,8 @@ class UnitsOnTheCardTest {
         assertEquals(listOf(QuantityUnit.CUP), offer.units)
         assertEquals(QuantityUnit.CUP, offer.authoredUnit)
         val fixing = offer.fixing(0, r(3), QuantityUnit.CUP)
-        // 3 cups of flour at 130 g a cup: the scale is set in the written grams.
-        assertEquals(CardFixing(0, r(390), QuantityUnit.GRAM), fixing)
+        // 3 cups of flour at 130 g a cup: the scale is set in the written grams, the unit typed in kept with it.
+        assertEquals(CardFixing(0, r(390), QuantityUnit.GRAM, ShownFixing(QuantityUnit.CUP, r(130))), fixing)
         val fixed = list(GRAMS_RECIPE, US, CardScale(r(4)).fix(fixing))
         assertEquals("≈ 3 cup", plain(fixed.lines[0].quantity))
         assertTrue(fixed.lines[0].fixed)
@@ -150,6 +155,54 @@ class UnitsOnTheCardTest {
         assertEquals("1 kg", plain(list(CUPS_RECIPE, METRIC, CardScale(r(4)).fix(kilo)).lines[1].quantity))
         // A line shown as written fixes as typed, as before.
         assertEquals(CardFixing(1, r(2), QuantityUnit.KILOGRAM), list(GRAMS_RECIPE, METRIC).lines[1].fixing!!.fixing(1, r(2), QuantityUnit.KILOGRAM))
+    }
+
+    @Test
+    fun aFixedLineStaysInTheUnitItWasTypedIn() {
+        // Oil, 15 ml, reads "1 tbsp" in US; 5 tbsp is more than ¼ cup, yet the fixed line reads what was typed.
+        val oil = list(GRAMS_RECIPE, US).lines[3].fixing!!
+        val spoons = oil.fixing(3, r(5), QuantityUnit.TABLESPOON)
+        val fixed = list(GRAMS_RECIPE, US, CardScale(r(4)).fix(spoons))
+        assertEquals("5 tbsp", plain(fixed.lines[3].quantity))
+        assertEquals(Rounding.NONE, fixed.lines[3].rounding)
+        assertEquals(CardFixing(3, r(5), QuantityUnit.TABLESPOON), fixed.lines[3].fixing!!.typed(spoons))
+        // Flour, 20 g, reads "≈ 2 tbsp" by its own spoon; 5 tbsp stays 5 tbsp, never "≈ ⅓ cup".
+        val flour = listOf(row(0, 1, r(20), QuantityUnit.GRAM))
+        val offer = list(flour, US).lines[0].fixing!!
+        assertEquals(QuantityUnit.TABLESPOON, offer.authoredUnit)
+        val typed = offer.fixing(0, r(5), QuantityUnit.TABLESPOON)
+        val shown = list(flour, US, CardScale(r(4)).fix(typed)).lines[0]
+        assertEquals("≈ 5 tbsp", plain(shown.quantity))
+        assertEquals(CardFixing(0, r(5), QuantityUnit.TABLESPOON), shown.fixing!!.typed(typed))
+    }
+
+    @Test
+    fun aFixingTurnedIntoTheOtherSystemReopensOnTheValueTheLineShows() {
+        // 600 g of beef fixed in Metric reads 21.16 oz in US: the control opens on the 21 oz the line shows.
+        val beef = list(GRAMS_RECIPE, METRIC).lines[1].fixing!!.fixing(1, r(600), QuantityUnit.GRAM)
+        val us = list(GRAMS_RECIPE, US, CardScale(r(4)).fix(beef))
+        assertEquals("21 oz", plain(us.lines[1].quantity))
+        assertEquals(CardFixing(1, r(21), QuantityUnit.OUNCE), us.lines[1].fixing!!.typed(beef))
+        // 300 g of flour is 2.31 cups: the line's 2⅓ cups.
+        val flour = list(GRAMS_RECIPE, METRIC).lines[0].fixing!!.fixing(0, r(300), QuantityUnit.GRAM)
+        val cups = list(GRAMS_RECIPE, US, CardScale(r(4)).fix(flour))
+        assertEquals("≈ 2⅓ cup", plain(cups.lines[0].quantity))
+        val reopened = cups.lines[0].fixing!!.typed(flour)
+        assertEquals(CardFixing(0, r(7, 3), QuantityUnit.CUP), reopened)
+        assertTrue(FixedAmount.read(QuantityInput.write(reopened.amount, reopened.unit, ENGLISH), reopened.unit, null) is FixedAmountReading.Accepted)
+        // 5 tbsp of oil typed in US is 73.93 ml in Metric: the line's 74 ml.
+        val oil = list(GRAMS_RECIPE, US).lines[3].fixing!!.fixing(3, r(5), QuantityUnit.TABLESPOON)
+        val metric = list(GRAMS_RECIPE, METRIC, CardScale(r(4)).fix(oil))
+        assertEquals("74 ml", plain(metric.lines[3].quantity))
+        assertEquals(CardFixing(3, r(74), QuantityUnit.MILLILITRE), metric.lines[3].fixing!!.typed(oil))
+    }
+
+    @Test
+    fun theUnitAFixingWasTypedInIsKeptWithTheCardsScale_andAnEarlierSavedScaleStillReads() {
+        val typed = CardFixing(3, r(1000, 13), QuantityUnit.MILLILITRE, ShownFixing(QuantityUnit.TABLESPOON, r(7, 3)))
+        val held = HeldScale(r(4), typed, 7)
+        assertEquals(held, HeldScale.decoded(held.encoded()))
+        assertEquals(HeldScale(r(4), CardFixing(3, r(1000, 13), QuantityUnit.MILLILITRE), 7), HeldScale.decoded("4;3;1000/13;MILLILITRE;7"))
     }
 
     @Test

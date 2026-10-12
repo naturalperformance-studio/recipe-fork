@@ -120,4 +120,22 @@ class CardUnitsTest {
         compose.waitUntil(PATIENCE_MS) { controlShown() }
         assertEquals("3", compose.textsOf(CardTags.FIX_FIELD).last())
     }
+
+    @Test
+    fun aFixingReopenedAfterTheSettingChangedHoldsTheValueTheLineShows() {
+        open()
+        compose.onNodeWithTag(CardTags.fixAmount(1), useUnmergedTree = true).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { controlShown() }
+        compose.onNodeWithTag(CardTags.FIX_FIELD).performTextReplacement("600")
+        compose.onNodeWithTag(CardTags.FIX_CONFIRM).performScrollTo().assertIsEnabled().performClick()
+        compose.waitUntil(PATIENCE_MS) { !controlShown() }
+        units.set(UnitSystem.US)
+        compose.waitUntil(PATIENCE_MS) { quantity(1) == "21 oz" }
+        compose.onNodeWithTag(CardTags.fixAmount(1), useUnmergedTree = true).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { controlShown() }
+        // Not the raw 600 g in ounces, 960000000/45359237: what the line shows, accepted as it stands.
+        assertEquals("21", compose.textsOf(CardTags.FIX_FIELD).last())
+        assertTrue(compose.onAllNodes(hasTestTag(CardTags.FIX_PROBLEM), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        compose.onNodeWithTag(CardTags.FIX_CONFIRM).assertIsEnabled()
+    }
 }

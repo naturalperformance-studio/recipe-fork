@@ -87,6 +87,9 @@ data class HeldScale(val requested: Rational?, val fixing: CardFixing? = null, v
         fixing?.amount?.toString(),
         fixing?.unit?.name,
         fixing?.let { row?.toString() },
+        // How a fixing on a converted line was typed (v0.35): after the five parts an earlier version wrote, so either reads.
+        fixing?.shown?.unit?.name,
+        fixing?.shown?.writtenPerShown?.toString(),
     ).joinToString(SEPARATOR)
 
     companion object {
@@ -102,9 +105,14 @@ data class HeldScale(val requested: Rational?, val fixing: CardFixing? = null, v
             return runCatching {
                 val requested = parts[0].takeIf { it.isNotEmpty() }?.let { rationalOf(it) ?: return null }
                 if (parts.size == 1) return HeldScale(requested)
-                if (parts.size != 5) return HeldScale(requested)
+                if (parts.size != 5 && parts.size != 7) return HeldScale(requested)
                 val amount = rationalOf(parts[2]) ?: return HeldScale(requested)
-                val fixing = CardFixing(parts[1].toInt(), amount, QuantityUnit.valueOf(parts[3]))
+                val shown = if (parts.size == 7) {
+                    ShownFixing(QuantityUnit.valueOf(parts[5]), rationalOf(parts[6]) ?: return HeldScale(requested))
+                } else {
+                    null
+                }
+                val fixing = CardFixing(parts[1].toInt(), amount, QuantityUnit.valueOf(parts[3]), shown)
                 HeldScale(requested, fixing, parts[4].toInt())
             }.getOrNull()
         }

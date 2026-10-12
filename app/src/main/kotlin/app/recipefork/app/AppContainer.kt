@@ -76,6 +76,8 @@ class AppContainer(
     val mode: Mode,
     /** How the dictionaries the application ships are read; replaced in a test to count the reads. */
     readSnapshot: (Context) -> DictionariesDto = DictionarySnapshot::read,
+    /** The device's region, which the system of units follows until one is chosen; a test's application pins it. */
+    unitRegion: () -> String = UnitSystemSetting::deviceRegion,
     /** How the client of the product's server is made; called in [Mode.Standard] only. */
     httpClientOf: () -> HttpClient = { Network.client(Android.create(), BuildConfig.SERVER_URL) },
 ) {
@@ -117,7 +119,7 @@ class AppContainer(
      * The system of units the reader chose — Metric or US — one for the device and kept across restarts; the device
      * region's until one is chosen. The editor offers its units (v0.35).
      */
-    val unitSystem: UnitSystemSetting = PreferencesUnitSystemSetting(context)
+    val unitSystem: UnitSystemSetting = PreferencesUnitSystemSetting(context, unitRegion)
 
     /** The view of the recipe book last shown, one for the device and kept across restarts: the book opens on it. */
     val lastBookView: LastBookView = PreferencesLastBookView(context)
