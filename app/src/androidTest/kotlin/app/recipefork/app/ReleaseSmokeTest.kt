@@ -693,6 +693,18 @@ class ReleaseSmokeTest {
             throughTheSettings()
             awaitShown(written.title)
 
+            // The shopping list, opened from the book's bar: read from its store, its "Add item" shown; its Back returns
+            // to the book.
+            tap(SHOPPING_LIST)
+            awaitShown(ADD_ITEM)
+            tap(BACK)
+            try {
+                awaitUntil(30.seconds) { shown(ADD_ITEM) == null && shown(WRITTEN_HERE) != null }
+            } catch (e: IllegalStateException) {
+                throw AssertionError("the shopping list did not return to the book; on screen: ${onScreen()}", e)
+            }
+            awaitShown(written.title)
+
             // Deleted, and brought back with Undo.
             tap(actionsFor(written))
             awaitShown(DELETE)
@@ -906,5 +918,8 @@ class ReleaseSmokeTest {
         const val AS_ON_THE_DEVICE = "As on the device"
         const val DELETE = "Delete"
         const val UNDO = "Undo"
+        /** The book's bar action that opens the shopping list, and the list's floating action. */
+        const val SHOPPING_LIST = "Shopping list"
+        const val ADD_ITEM = "Add item"
     }
 }
