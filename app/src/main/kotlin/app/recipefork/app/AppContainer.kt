@@ -9,6 +9,7 @@ import app.recipefork.app.backup.ResolverDocuments
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookDatabase
 import app.recipefork.app.book.BookName
+import app.recipefork.app.collections.CollectionRepository
 import app.recipefork.app.card.DoneMarks
 import app.recipefork.app.data.AndroidConnectivity
 import app.recipefork.app.data.AppDatabase
@@ -156,6 +157,9 @@ class AppContainer(
     /** The pool is the only recipe book so far (AUTH-026). */
     val activeBook = ActiveBook(BookName.Pool, BookDatabase.open(context, BookName.Pool))
     val recipes = RecipeRepository(activeBook, context.filesDir)
+
+    /** The active book's collections of its recipes (v0.36), kept in the book's database. */
+    val collections = CollectionRepository(activeBook)
 
     /**
      * Saves the active book to a file and restores one into it (FLOW-073), one operation at a time, outliving every

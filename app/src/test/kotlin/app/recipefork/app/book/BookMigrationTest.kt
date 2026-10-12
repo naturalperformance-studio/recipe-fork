@@ -5,7 +5,9 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.dictionary.EquipmentEntryEntity
+import app.recipefork.app.collections.CollectionRepository
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.EquipmentItem
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
@@ -196,6 +198,71 @@ class BookMigrationTest {
             db.execSQL("insert into step values ('f7', 0, 'Bake')")
             db.execSQL("insert into favourite values ('f7', 'Found pie', 7000)")
             db.version = 7
+        }
+    }
+
+    /**
+     * A book file of version 8, its tables exactly as that version created them, holding an own recipe with a noted
+     * step and a photograph, and a found recipe, marked.
+     */
+    private fun writeVersion8() {
+        val file = context.getDatabasePath(book.fileName).also { it.parentFile?.mkdirs() }
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            VERSION_8.forEach(db::execSQL)
+            db.execSQL(
+                "insert into recipe values ('r8', null, null, 'NEVER', null, null, null, 'Olivier', 'Festive', 'RU', 6, " +
+                    "'LOCAL', 0, 0, 0, 1000, 8000)",
+            )
+            db.execSQL("insert into ingredient values ('r8', 0, null, null, 'potato', 'EXACT', 'GRAM', '500', null, null, null, 'boiled')")
+            db.execSQL("insert into step values ('r8', 0, 'Dice everything', 'Small cubes')")
+            db.execSQL("insert into media values ('m8', 'r8', 0, null, 'PHOTO', null, 'PRIVATE')")
+            db.execSQL(
+                "insert into recipe values ('f8', null, null, 'NEVER', 'anna', null, null, 'Found pie', '', null, null, " +
+                    "'LINK_SHARED', 0, 0, 0, 1000, 1000)",
+            )
+            db.execSQL("insert into favourite values ('f8', 'Found pie', 9000)")
+            db.version = 8
+        }
+    }
+
+    // A version-8 book, written before the book held collections, opens with every recipe intact — own and found — and
+    // no collection; then both recipes are put in one, and the book reopens with it.
+    @Test
+    fun aVersion8BookOpensWithEveryRecipeIntactAndNoCollections() = runBlocking {
+        writeVersion8()
+        val expected = Recipe.create(Instant.ofEpochMilli(1000), null, id = RecipeId("r8")).copy(
+            title = "Olivier",
+            description = "Festive",
+            language = RecipeLanguage.RU,
+            servings = 6,
+            ingredients = listOf(Ingredient(0, null, null, "potato", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(500), note = "boiled")),
+            steps = listOf(Step(0, "Dice everything").withNote("Small cubes")),
+            media = listOf(Media("m8", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)),
+            contentChangedAt = Instant.ofEpochMilli(8000),
+        )
+        val database = BookDatabase.open(context, book) { error("a book of version 8 reads no dictionary") }
+        val menu = try {
+            assertEquals(9, database.openHelper.readableDatabase.version)
+            val repository = RecipeRepository(ActiveBook(book, database))
+            assertEquals(expected, repository.get(RecipeId("r8")))
+            assertEquals("Found pie", repository.get(RecipeId("f8"))!!.title)
+            assertTrue(repository.isMarked(RecipeId("f8")))
+            val collections = CollectionRepository(ActiveBook(book, database))
+            CollectionOrigin.entries.forEach { assertEquals(emptyList<CollectionRow>(), collections.listed(it).first()) }
+            val menu = collections.create("New Year's menu")!!
+            assertEquals(setOf(menu), collections.addTo(RecipeId("f8"), listOf(menu)))
+            assertEquals(setOf(menu), collections.addTo(RecipeId("r8"), listOf(menu)))
+            menu
+        } finally {
+            database.close()
+        }
+        val reopened = BookDatabase.open(context, book)
+        try {
+            val collections = CollectionRepository(ActiveBook(book, reopened))
+            assertEquals(listOf(RecipeId("f8"), RecipeId("r8")), collections.get(menu)!!.recipes)
+            assertEquals(expected, RecipeRepository(ActiveBook(book, reopened)).get(RecipeId("r8")))
+        } finally {
+            reopened.close()
         }
     }
 
@@ -565,6 +632,15 @@ class BookMigrationTest {
     }
 
     internal companion object {
+        /**
+         * What Room generated for the book at version 8: version 7 with a step's note. The identity hash stands in for
+         * that version's, which an upgrade does not read.
+         */
+        val VERSION_8: List<String> get() = VERSION_7.dropLast(1) + listOf(
+            "ALTER TABLE `step` ADD COLUMN `note` TEXT",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '00000000000000000000000000000008')",
+        )
+
         /**
          * What Room generated for the book at version 7: version 6 with each item of equipment named by an entry and a
          * qualifier, or by free text. The identity hash stands in for that version's, which an upgrade does not read.
