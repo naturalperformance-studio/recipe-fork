@@ -142,7 +142,7 @@ class CardEquipmentTest {
     private fun clearMarks() {
         compose.openTheCardMenu()
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) }
         compose.waitForIdle()
     }
 
@@ -243,9 +243,9 @@ class CardEquipmentTest {
     @Test
     fun clearMarksClearsTheEquipment() {
         open(CardMode.COOKING)
-        assertFalse(exists(CardTags.MENU))
+        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
         tap(item(0))
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.MENU) }
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.CLEAR_MARKS), compose.cardMenuItems())
         tap(CardTags.ingredient(0))
         clearMarks()
         assertEquals(emptyList<Int>(), doneItems())

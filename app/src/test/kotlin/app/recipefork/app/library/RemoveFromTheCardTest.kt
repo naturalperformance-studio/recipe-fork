@@ -23,6 +23,7 @@ import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.card.CardTarget
 import app.recipefork.app.card.awaitCard
+import app.recipefork.app.card.cardMenuItems
 import app.recipefork.app.editor.EditorEnvironment
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.SAMPLE_DICTIONARIES
@@ -190,7 +191,8 @@ class RemoveFromTheCardTest {
     }
 
     // ST-010: the card's ⋮ offers Delete for an own recipe in local, private or rejected, the item the card's 56 dp
-    // tall; a recipe in any other state has no ⋮ on its card, and the recipe itself carries no deletion control.
+    // tall; a recipe in any other state has a ⋮ on its card (its shopping-list action) without Delete, and the recipe
+    // itself carries no deletion control.
     @Test
     fun theCardsMenuOffersDeleteOnlyInADeletableState() {
         val all = RecipeState.entries.mapIndexed { i, state -> own("Soup in $state", state, i.toLong()) }
@@ -201,9 +203,9 @@ class RemoveFromTheCardTest {
             compose.waitForIdle()
             val inContent = hasAnyAncestor(hasTestTag(CardTags.CONTENT))
             assertEquals(0, compose.onAllNodes(hasText("Delete") and inContent).fetchSemanticsNodes().size)
+            assertTrue("${recipe.state} has no ⋮", exists(CardTags.MENU))
+            compose.onNodeWithTag(CardTags.MENU).assertHeightIsAtLeast(CardTarget).assertWidthIsAtLeast(CardTarget)
             if (recipe.state in DELETABLE) {
-                assertTrue("${recipe.state} has no ⋮", exists(CardTags.MENU))
-                compose.onNodeWithTag(CardTags.MENU).assertHeightIsAtLeast(CardTarget).assertWidthIsAtLeast(CardTarget)
                 openMenu()
                 assertEquals(listOf("Delete"), compose.textsOf(CardTags.DELETE))
                 assertFalse(exists(CardTags.REMOVE))
@@ -211,7 +213,7 @@ class RemoveFromTheCardTest {
                 compose.onNodeWithTag(CardTags.MENU).performClick()
                 compose.waitUntilDoesNotExist(hasTestTag(CardTags.DELETE), PATIENCE_MS)
             } else {
-                assertFalse("${recipe.state} has a ⋮", exists(CardTags.MENU))
+                assertEquals("${recipe.state}'s ⋮", listOf(CardTags.SHOPPING), compose.cardMenuItems())
                 assertTrue("${recipe.state} offers fork", exists(CardTags.FORK))
             }
         }
