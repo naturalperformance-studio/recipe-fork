@@ -127,6 +127,7 @@ fun editorEnvironmentOf(container: AppContainer): EditorEnvironment = EditorEnvi
     container.activeBook,
     container.dictionaries,
     dragHandleSide = container.dragHandleSide,
+    unitSystem = container.unitSystem,
     mode = container.mode,
     clipStore = container::clipStore,
     animatedImages = { container.animatedImages },
@@ -164,7 +165,9 @@ fun EditorScreen(
     // Not saved: what the editor holds for this session alone — the references offered once (GUIDE-008) among it —
     // starts again after the activity is recreated or the process restored, which is intended, nothing of a hint
     // being kept (GUIDE-005).
-    val editor = remember(recipeId) { RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys, groupKeys, equipmentKeys) }
+    val editor = remember(recipeId) {
+        RecipeEditor(recipes, recipeId, environment.clock, saving, stepKeys, ingredientKeys, groupKeys, equipmentKeys) { environment.unitSystem.system.value }
+    }
     // Both reads resume on the main thread whatever the effect's own dispatcher is, so the screen is never
     // touched from a database thread.
     LaunchedEffect(editor) { withContext(Dispatchers.Main.immediate) { editor.load() } }
@@ -191,6 +194,7 @@ fun EditorScreen(
     }
     val recipe by editor.recipe.collectAsState()
     val handleRight by environment.dragHandleSide.right.collectAsState()
+    val units by environment.unitSystem.system.collectAsState()
     val scrolled = rememberScrollState()
     val scroll = remember(scrolled) { EditorScroll(scrolled) }
     val context = LocalContext.current
@@ -302,7 +306,7 @@ fun EditorScreen(
                     ServingCount(shown, editor, servings, if (shown.equipment.isNotEmpty()) ({ equipment.ask(0) }) else toIngredients)
                     Equipment(shown, editor, equipment, toIngredients, equipmentDictionary, equipmentLanguage)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
-                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, rows, headings)
+                        Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, units, rows, headings)
                         // The steps are the form's last part: leaving them for any other part moves the author on from
                         // them (FLOW-028).
                         Box(Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Steps) })) {

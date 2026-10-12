@@ -21,6 +21,8 @@ import app.recipefork.app.data.Network
 import app.recipefork.app.data.PreferencesDragHandleSide
 import app.recipefork.app.data.PreferencesThemeSetting
 import app.recipefork.app.data.ThemeSetting
+import app.recipefork.app.data.PreferencesUnitSystemSetting
+import app.recipefork.app.data.UnitSystemSetting
 import app.recipefork.app.dictionary.PreferencesSeededVersion
 import app.recipefork.app.data.PreferencesUsualServings
 import app.recipefork.app.data.UsualServings
@@ -110,6 +112,12 @@ class AppContainer(
 
     /** The theme the reader chose — light, dark or the device's — one for the device and kept across restarts. */
     val themeSetting: ThemeSetting = PreferencesThemeSetting(context)
+
+    /**
+     * The system of units the reader chose — Metric or US — one for the device and kept across restarts; the device
+     * region's until one is chosen. The editor offers its units (v0.35).
+     */
+    val unitSystem: UnitSystemSetting = PreferencesUnitSystemSetting(context)
 
     /** The view of the recipe book last shown, one for the device and kept across restarts: the book opens on it. */
     val lastBookView: LastBookView = PreferencesLastBookView(context)

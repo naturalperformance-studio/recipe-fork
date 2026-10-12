@@ -45,6 +45,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.Step
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.runBlocking
@@ -226,7 +227,7 @@ class EditorSheetsAlikeTest {
     }
 
     // The unit menu lists the kitchen's usual units first — pc, g, kg, ml, l, tsp, tbsp, cup, pinch, to taste — then
-    // the rest; the domain's own order of units is left as it is.
+    // the rest of the metric system's (v0.35: no US unit in it); the domain's own order of units is left as it is.
     @Test
     fun theUnitMenuListsTheUsualUnitsFirst() {
         open()
@@ -240,11 +241,11 @@ class EditorSheetsAlikeTest {
             listOf(
                 QuantityUnit.PIECE, QuantityUnit.GRAM, QuantityUnit.KILOGRAM, QuantityUnit.MILLILITRE, QuantityUnit.LITRE,
                 QuantityUnit.TEASPOON, QuantityUnit.TABLESPOON, QuantityUnit.CUP, QuantityUnit.PINCH, QuantityUnit.TO_TASTE,
-                QuantityUnit.TONNE, QuantityUnit.CUBIC_METRE, QuantityUnit.OUNCE, QuantityUnit.POUND, QuantityUnit.FLUID_OUNCE,
+                QuantityUnit.TONNE, QuantityUnit.CUBIC_METRE,
             ),
             listed,
         )
-        assertEquals(listed, MENU_UNITS)
+        assertEquals(listed, menuUnits(UnitSystem.METRIC, null))
         assertEquals(QuantityUnit.GRAM, QuantityUnit.entries.first())
     }
 

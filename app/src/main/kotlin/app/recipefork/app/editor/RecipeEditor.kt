@@ -10,6 +10,8 @@ import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.HeldDragHandleSide
+import app.recipefork.app.data.HeldUnitSystemSetting
+import app.recipefork.app.data.UnitSystemSetting
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.IngredientSource
@@ -49,6 +51,7 @@ import app.recipefork.core.recipe.ServingCountInput
 import app.recipefork.core.recipe.ServingCountReading
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.recipe.withTypedQuantity
 import app.recipefork.core.recipe.withUnit
@@ -69,7 +72,7 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * What the editor needs beyond the recipes of the active book: the book itself, the dictionaries, the side of the drag
- * column and a clock.
+ * column, the system of units and a clock.
  */
 class EditorEnvironment(
     val book: ActiveBook,
@@ -80,6 +83,8 @@ class EditorEnvironment(
     val equipment: EquipmentSource = tags as? EquipmentSource ?: EquipmentSource { emptyList() },
     /** Which side of a block its drag column stands on (the left unless set otherwise). */
     val dragHandleSide: DragHandleSide = HeldDragHandleSide(),
+    /** The system of units whose units a row's unit menu offers (Metric unless set otherwise). */
+    val unitSystem: UnitSystemSetting = HeldUnitSystemSetting(),
     /** Where the editor keeps photographs, given the application's files directory; replaced in a test to hold one back. */
     val photoStore: (File) -> PhotoStore = { PhotoStore(it) },
     /** Where the editor converts and keeps steps' clips, given the application's context; replaced in a test. */
@@ -132,6 +137,8 @@ class RecipeEditor(
     private val groupKeys: RowKeys = RowKeys(),
     /** As [ingredientKeys], for the items of the equipment. */
     private val equipmentKeys: RowKeys = RowKeys(),
+    /** The reader's system of units as it is now: a new row starts in its unit of mass (v0.35). */
+    private val units: () -> UnitSystem = { UnitSystem.METRIC },
 ) {
     private val current = MutableStateFlow<Recipe?>(null)
 
@@ -692,11 +699,13 @@ class RecipeEditor(
 
     private fun rearrange(arranged: (Recipe) -> List<ListItem>): Boolean = rearrange({ it }, arranged = arranged) != null
 
-    /** A new row: its unit starts as grams, so it always has a unit and so a unit type (DOM-016); no quantity yet. */
-    private fun emptyRow(position: Int) = Ingredient(
-        position = position, dictionaryEntry = null, freeTextName = null,
-        unitType = QuantityUnit.GRAM.type, unit = QuantityUnit.GRAM, quantity = null,
-    )
+    /**
+     * A new row: its unit starts as grams — ounces in the US system (v0.35) — so it always has a unit and so a unit type
+     * (DOM-016); no quantity yet.
+     */
+    private fun emptyRow(position: Int) = (if (units() == UnitSystem.US) QuantityUnit.OUNCE else QuantityUnit.GRAM).let { unit ->
+        Ingredient(position = position, dictionaryEntry = null, freeTextName = null, unitType = unit.type, unit = unit, quantity = null)
+    }
 
     /** The row's name, in the author's own words; an empty field holds none. */
     fun setIngredientName(position: Int, name: String) = editIngredient(position) { it.copy(freeTextName = name.ifEmpty { null }) }

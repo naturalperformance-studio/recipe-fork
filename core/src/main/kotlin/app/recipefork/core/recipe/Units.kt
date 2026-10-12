@@ -20,9 +20,6 @@ enum class UnitType(
 /** The physical dimension of an `exact` unit: nothing converts a mass to a volume (SCALE-018). */
 enum class Dimension { MASS, VOLUME }
 
-/** The two systems of `exact` units (v0.35): metric (g, kg, t, ml, l, m³) and US customary (oz, lb, fl oz). */
-enum class UnitSystem { METRIC, US }
-
 /**
  * The closed list of units: the twelve of DOM-016, each with the unit type the table gives it, and the three US
  * customary `exact` units of v0.35 — ounce, pound and fluid ounce.
