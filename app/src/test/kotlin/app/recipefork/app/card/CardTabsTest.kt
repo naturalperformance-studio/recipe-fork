@@ -376,21 +376,23 @@ class CardTabsTest {
         choose(CardMode.COOKING)
         listOf(
             CardTags.FORK, CardTags.EDIT, CardTags.COVER, CardTags.TITLE, CardTags.SUMMARY, CardTags.PROVENANCE,
-            CardTags.DESCRIPTION, CardTags.MENU,
+            CardTags.DESCRIPTION,
         ).forEach { assertFalse("Cooking shows no $it", exists(it)) }
+        // Its ⋮ holds the shopping-list action alone while nothing is marked.
+        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
         assertTrue(exists(CardTags.BACK))
         assertEquals(listOf("Lemon roast chicken"), compose.textsOf(CardTags.BAR_TITLE))
         compose.onNodeWithTag(CardTags.step(19)).performScrollTo()
         assertTrue("timers start on Cooking", exists(TimerTags.start(19)))
         assertFalse(exists(ViewTimerTags.line(19)))
-        // A line marked: the ⋮ shows, holding Clear marks alone.
+        // A line marked: the ⋮ holds Clear marks beside it.
         compose.onNodeWithTag(CardTags.ingredient(1)).performScrollTo().performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.MENU) }
+        compose.waitUntil(PATIENCE_MS) { marks.held(BookName.Pool, recipe.id).isNotEmpty() }
         compose.openTheCardMenu()
         assertTrue(exists(CardTags.CLEAR_MARKS))
         assertFalse("Cooking's ⋮ holds no Delete", exists(CardTags.DELETE) || exists(CardTags.REMOVE))
         compose.onNodeWithTag(CardTags.CLEAR_MARKS).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.MENU) }
+        compose.waitUntil(PATIENCE_MS) { !exists(CardTags.CLEAR_MARKS) }
         assertTrue(marks.held(BookName.Pool, recipe.id).isEmpty())
     }
 

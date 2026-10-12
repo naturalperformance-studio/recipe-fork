@@ -178,7 +178,8 @@ fun AppNavHost(
 /**
  * A recipe's card: its edit action opens the editor on it; its fork action writes a fork and opens the editor on it,
  * so that leaving the editor shows the fork's card (FLOW-029 (1)), or first offers an unchanged fork the book holds
- * already (FLOW-015); a fork's provenance opens its parent's card in place of the fork's. The screen stays on while
+ * already (FLOW-015); a fork's provenance opens its parent's card in place of the fork's; the Open of its notice that a
+ * recipe was put on the shopping list opens the list in place of the card, above the book. The screen stays on while
  * the card is shown, and is left to the device once it is not (FLOW-014).
  */
 @Composable
@@ -228,6 +229,12 @@ private fun RecipeCard(
         onSetUpKitchen = session::openKitchen,
         session = session.cards,
         onRemoved = session::removed,
+        // The list lies above the book alone: the card closes to the book, as its back would, and the list opens above
+        // it, so that back from the list — which says it returns to the book — does.
+        onOpenShopping = {
+            session.closeCard()
+            session.openShopping()
+        },
     )
 }
 

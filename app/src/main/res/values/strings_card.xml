@@ -107,6 +107,12 @@
     <!-- Said once the marks are cleared, from either tab's menu; Undo puts back exactly the marks cleared. -->
     <string name="card_marks_cleared">Marks cleared</string>
     <string name="card_undo">Undo</string>
+    <!-- The card's ⋮ puts the recipe on the shopping list at the count shown ("Add to shopping list", shopping_add), or,
+         once it is there, sets it to that count; said with Open, which opens the list. -->
+    <string name="card_shopping_update">Update in shopping list</string>
+    <string name="card_shopping_added">Added to shopping list</string>
+    <string name="card_shopping_updated">Shopping list updated</string>
+    <string name="card_shopping_open">Open</string>
     <!-- A step's timer on the card's View: its name, then its duration, or its remaining time while it runs. -->
     <string name="card_view_timer">%1$s · %2$s</string>
     <!-- The card's two tabs, under its top bar: the recipe for reading and deciding, and for cooking with busy hands. -->
