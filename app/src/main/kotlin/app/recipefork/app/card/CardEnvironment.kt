@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import app.recipefork.app.AppContainer
 import app.recipefork.app.RecipeForkApplication
+import app.recipefork.app.collections.CollectionRepository
 import app.recipefork.app.data.HeldLastCardTab
 import app.recipefork.app.data.HeldUsualServings
 import app.recipefork.app.data.HeldUnitSystemSetting
@@ -29,7 +30,8 @@ fun interface IngredientEntries {
  * ingredient dictionary its rows are named from, the equipment dictionary its items of equipment are, and what the
  * reader's kitchen has ([KitchenStore]), by which an item the kitchen lacks is marked, and the reader's shopping list
  * ([ShoppingStore]), which the card's ⋮ puts the recipe on at the count shown (FLOW-074), and the system of units its
- * amounts are shown in ([UnitSystemSetting], v0.35).
+ * amounts are shown in ([UnitSystemSetting], v0.35), and the book's collections, which the card's ⋮ puts the recipe in
+ * (v0.36) — none, and no such item, where it is not given.
  */
 class CardEnvironment(
     val usualServings: UsualServings = HeldUsualServings(),
@@ -39,6 +41,7 @@ class CardEnvironment(
     val kitchen: KitchenStore = HeldKitchen(),
     val shopping: ShoppingStore = HeldShopping(),
     val unitSystem: UnitSystemSetting = HeldUnitSystemSetting(),
+    val collections: CollectionRepository? = null,
     val ingredients: IngredientEntries,
 )
 
@@ -51,11 +54,11 @@ fun rememberCardEnvironment(): CardEnvironment {
 
 /**
  * The card's environment of [container]: its usual servings, the device's done marks, its last tab, the dictionaries it shares
- * with every screen, My kitchen, the shopping list and the system of units.
+ * with every screen, My kitchen, the shopping list, the system of units and the book's collections.
  */
 fun cardEnvironmentOf(container: AppContainer): CardEnvironment = CardEnvironment(
     container.usualServings, container.doneMarks, container.lastCardTab, container.dictionaries, container.kitchen, container.shopping,
-    container.unitSystem,
+    container.unitSystem, collections = container.collections,
 ) {
     container.dictionaries.ingredients()
 }

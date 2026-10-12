@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="collection_sheet_menu">Добавить в коллекцию</string>
+    <string name="collection_sheet_title">Добавить в коллекцию</string>
+    <string name="collection_sheet_done">Готово</string>
+    <string name="collection_sheet_new">Новая коллекция…</string>
+    <string name="collection_sheet_name">Название коллекции</string>
+    <string name="collection_sheet_create">Создать</string>
+    <string name="collection_sheet_empty">Коллекций пока нет</string>
+    <string name="collection_sheet_in_none">Ни в одной коллекции</string>
+    <plurals name="collection_sheet_in">
+        <item quantity="one">В %d коллекции</item>
+        <item quantity="few">В %d коллекциях</item>
+        <item quantity="many">В %d коллекциях</item>
+        <item quantity="other">В %d коллекции</item>
+    </plurals>
+</resources>
