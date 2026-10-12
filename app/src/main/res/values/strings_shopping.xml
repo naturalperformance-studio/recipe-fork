@@ -57,4 +57,7 @@
     <string name="shopping_own_pick_action">Add “%1$s” to the list</string>
     <!-- An own line removed, said with Undo. -->
     <string name="shopping_own_removed">“%1$s” removed from the list</string>
+    <!-- The list as a document to print or share (FLOW-075): a recipe on it with its serving count,
+         "Lemon cake — Servings: 4"; the second part is the count as the list's serving control writes it. -->
+    <string name="shopping_document_recipe">%1$s — %2$s</string>
 </resources>
