@@ -801,10 +801,11 @@ class ReleaseSmokeTest {
         tap(MORE_ACTIONS)
         awaitShown(PRINT)
         tap(PRINT)
+        // The dialog's preview counts the pages the application's adapter laid out: "Page 1 of 1".
         try {
-            awaitUntil(60.seconds) { printDialog() != null }
+            awaitUntil(60.seconds) { printDialog() != null && onScreen().any { PAGES_LAID_OUT.matches(it) } }
         } catch (e: IllegalStateException) {
-            throw AssertionError("the system's print dialog did not open; on screen: ${onScreen()}", e)
+            throw AssertionError("the system's print dialog did not open on the laid-out pages; on screen: ${onScreen()}", e)
         }
         Log.i("ReleaseSmokeTest", "the print dialog shows: ${onScreen()}")
         assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
@@ -956,5 +957,7 @@ class ReleaseSmokeTest {
         const val MORE_ACTIONS = "More actions"
         const val PRINT = "Print"
         const val PRINT_SPOOLER = "com.android.printspooler"
+        /** The print dialog's count of the pages its preview holds, in the emulator's English. */
+        val PAGES_LAID_OUT = Regex("Page 1 of [1-9][0-9]*")
     }
 }
