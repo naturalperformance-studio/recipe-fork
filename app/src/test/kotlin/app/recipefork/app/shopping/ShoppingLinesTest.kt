@@ -11,6 +11,7 @@ import app.recipefork.core.recipe.QuantityUnit.PIECE
 import app.recipefork.core.recipe.QuantityUnit.PINCH
 import app.recipefork.core.recipe.QuantityUnit.TABLESPOON
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.shopping.ShoppingAmount
@@ -31,8 +32,12 @@ class ShoppingLinesTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val dictionary = SHOPPING_DICTIONARY.associateBy { it.id }
 
-    private fun lines(vararg recipes: Pair<Recipe, Rational?>, language: InterfaceLanguage = InterfaceLanguage.ENGLISH) =
-        shownLines(recipes.map { (recipe, count) -> ShoppingEntry(listed(recipe, count), recipe) }, dictionary, language, context.resources)
+    private fun lines(
+        vararg recipes: Pair<Recipe, Rational?>,
+        language: InterfaceLanguage = InterfaceLanguage.ENGLISH,
+        system: UnitSystem = UnitSystem.METRIC,
+    ) =
+        shownLines(recipes.map { (recipe, count) -> ShoppingEntry(listed(recipe, count), recipe) }, dictionary, language, context.resources, system)
 
     private fun at(recipe: Recipe, count: Rational? = recipe.servings?.let { r(it.toLong()) }) = recipe to count
 
@@ -75,9 +80,13 @@ class ShoppingLinesTest {
             ),
             lines(at(bread), at(cake)),
         )
+        // In US the line stays in cups (v0.35), and its tablespoon lies below the cups' floor.
         val tea = recipe("Tea cake", 4, row(SUGAR, r(1), CUP))
         val icing = recipe("Icing", 4, row(SUGAR, r(1), TABLESPOON))
-        assertEquals(listOf(ShownLine("sugar — ≈ 1 cup", "1 tbsp counted as < ¼ cup", "Tea cake, Icing")), lines(at(tea), at(icing)))
+        assertEquals(
+            listOf(ShownLine("sugar — ≈ 1 cup", "1 tbsp counted as < ¼ cup", "Tea cake, Icing")),
+            lines(at(tea), at(icing), system = UnitSystem.US),
+        )
     }
 
     // Scenario 3: free text stays its own lines; "salt — to taste" of two recipes is one line; a measured salt line
@@ -94,24 +103,26 @@ class ShoppingLinesTest {
         assertEquals(listOf(ShownLine("salt — 5 g + to taste", null, "Bread, Stew")), lines(at(bread), at(stew)).filter { it.text.startsWith("salt") })
     }
 
-    private fun listedOf(vararg recipes: Pair<Recipe, Rational?>) =
-        listedLines(recipes.map { (recipe, count) -> ShoppingEntry(listed(recipe, count), recipe) }, dictionary, InterfaceLanguage.ENGLISH, context.resources)
+    private fun listedOf(vararg recipes: Pair<Recipe, Rational?>, system: UnitSystem = UnitSystem.METRIC) =
+        listedLines(recipes.map { (recipe, count) -> ShoppingEntry(listed(recipe, count), recipe) }, dictionary, InterfaceLanguage.ENGLISH, context.resources, system)
 
     /** Each line's tick, by the line's text. */
-    private fun ticksOf(vararg recipes: Pair<Recipe, Rational?>) = listedOf(*recipes).associate { it.shown.text to it.tick }
+    private fun ticksOf(vararg recipes: Pair<Recipe, Rational?>, system: UnitSystem = UnitSystem.METRIC) =
+        listedOf(*recipes, system = system).associate { it.shown.text to it.tick }
 
-    /** A list of [recipes] at their counts with the lines named by [texts] ticked as they ask now. */
-    private fun ticked(vararg recipes: Pair<Recipe, Rational?>, texts: List<String>): ShoppingList {
-        val ticks = ticksOf(*recipes)
+    /** A list of [recipes] at their counts with the lines named by [texts] ticked as they ask now, read in [system]. */
+    private fun ticked(vararg recipes: Pair<Recipe, Rational?>, texts: List<String>, system: UnitSystem = UnitSystem.METRIC): ShoppingList {
+        val ticks = ticksOf(*recipes, system = system)
         return ShoppingList(
             recipes.map { (recipe, count) -> listed(recipe, count) },
             texts.associate { text -> ticks.getValue(text).let { TickedLine(POOL, it.key) to it.amount } },
         )
     }
 
-    /** The texts of the lines of [list] ticked and still shown ticked. */
-    private fun tickedTexts(list: ShoppingList, held: List<Recipe>): Set<String> = listedOf(
+    /** The texts of the lines of [list] ticked and still shown ticked, read in [system]. */
+    private fun tickedTexts(list: ShoppingList, held: List<Recipe>, system: UnitSystem = UnitSystem.METRIC): Set<String> = listedOf(
         *list.recipes.map { listed -> held.first { it.id == listed.recipe } to listed.servings }.toTypedArray(),
+        system = system,
     ).filter { line -> TickedLine(POOL, line.tick.key).let { it in list.ticks && line.tick.keeps(list.ticks[it]) } }.map { it.shown.text }.toSet()
 
     private fun ShoppingList.settledOver(vararg held: Recipe) = settled(POOL, held.associateBy { it.id }, dictionary)
@@ -181,12 +192,51 @@ class ShoppingLinesTest {
         val bread = recipe("Bread", 4, row(FLOUR, r(300), GRAM))
         val cake = recipe("Cake", 4, row(FLOUR, r(2), CUP))
         val list = ticked(at(bread), at(cake), texts = listOf("flour — ≈ 560 g"))
-        // The bread for one: 75 g and 2 cups is ≈ 2½ cups, less than the 560 g ticked — the tick stays.
+        // The bread for one: 75 g and 2 cups is ≈ 2½ cups (≈ 335 g), less than the 560 g ticked — the tick stays.
         val fewer = list.withServings(POOL, bread.id, r(1)).settledOver(bread, cake)
-        assertEquals(setOf("flour — ≈ 2½ cup"), tickedTexts(fewer, listOf(bread, cake)))
+        assertEquals(setOf("flour — ≈ 335 g"), tickedTexts(fewer, listOf(bread, cake)))
         // The cake for eight: ≈ 4½ cups, more than ≈ 2½ ticked — unticked.
         val more = fewer.withServings(POOL, cake.id, r(8)).settledOver(bread, cake)
         assertEquals(emptyMap<TickedLine, ShoppingAmount?>(), more.ticks)
+    }
+
+    // v0.35 T-250: a cup recipe and a gram recipe in the chosen system — the merged total converted once, the note naming
+    // what was counted in the shown unit; spoons and pieces as written.
+    @Test
+    fun aCupRecipeAndAGramRecipeReadInTheChosenSystem() {
+        val cake = recipe("Cake", 4, row(FLOUR, r(2), CUP), row(SUGAR, r(1), TABLESPOON), row(ONION, r(1), PIECE))
+        val bread = recipe("Bread", 4, row(FLOUR, r(100), GRAM))
+        assertEquals(
+            listOf(
+                ShownLine("flour — ≈ 360 g", "2 cup counted as ≈ 260 g", "Cake, Bread"),
+                ShownLine("sugar — 1 tbsp", null, "Cake"),
+                ShownLine("onion — 1 pc", null, "Cake"),
+            ),
+            lines(at(cake), at(bread)),
+        )
+        assertEquals(
+            listOf(
+                ShownLine("flour — ≈ 2¾ cup", "100 g counted as ≈ ¾ cup", "Cake, Bread"),
+                ShownLine("sugar — 1 tbsp", null, "Cake"),
+                ShownLine("onion — 1 pc", null, "Cake"),
+            ),
+            lines(at(cake), at(bread), system = UnitSystem.US),
+        )
+        assertEquals("мука — ≈ 2¾ стакан", lines(at(cake), at(bread), language = InterfaceLanguage.RUSSIAN, system = UnitSystem.US).first().text)
+    }
+
+    // v0.35 T-250: a line's key and the amount its tick holds stand as the recipes are written, so a tick taken in one
+    // system holds in the other, and still goes once the line grows.
+    @Test
+    fun aTickSurvivesAChangeOfTheSystem() {
+        val cake = recipe("Cake", 4, row(FLOUR, r(2), CUP))
+        val bread = recipe("Bread", 4, row(FLOUR, r(100), GRAM))
+        val list = ticked(at(cake), at(bread), texts = listOf("flour — ≈ 360 g"))
+        assertEquals(ticksOf(at(cake), at(bread)).values.map { it.key }, ticksOf(at(cake), at(bread), system = UnitSystem.US).values.map { it.key })
+        assertEquals(setOf("flour — ≈ 2¾ cup"), tickedTexts(list, listOf(cake, bread), UnitSystem.US))
+        assertEquals(list, list.settledOver(cake, bread))
+        val more = list.withServings(POOL, bread.id, r(8)).settledOver(cake, bread)
+        assertEquals(emptySet<String>(), tickedTexts(more, listOf(cake, bread), UnitSystem.US))
     }
 
     // A line with no amount keeps its tick while it stays one; "salt — to taste" that gains an amount is unticked.

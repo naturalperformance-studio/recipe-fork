@@ -56,6 +56,7 @@ object UnitConversion {
     /**
      * An exact amount [exact] of [unit] — a sum, already scaled — in [system]; where nothing converts it is rounded on
      * the grid of [unit]'s line unit ([divisible] for `piece`). [derived] is passed through to the shown quantity.
+     * "To taste" has no amount and no grid: it passes through as it is, with no value, whatever [exact] says.
      */
     fun convert(
         unit: QuantityUnit,
@@ -65,6 +66,9 @@ object UnitConversion {
         derived: Boolean = false,
         divisible: Boolean? = null,
     ): ShownQuantity {
+        if (unit == QuantityUnit.TO_TASTE) {
+            return ShownQuantity(DisplayedQuantity(unit, null, derived, Rounding.NONE), approximate = false, writtenPerShown = Rational.ONE)
+        }
         val inLine = inLine(unit, exact)
         val target = target(unit, inLine, factors, system) ?: Target(unit.lineUnit ?: unit, Rational.ONE, approximate = false)
         return shown(target, inLine, derived, divisible)

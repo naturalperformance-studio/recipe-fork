@@ -206,6 +206,35 @@ class UnitConversionTest {
     }
 
     @Test
+    fun `to taste passes a sum through as it is, with no value and nothing converted`() {
+        val taste = UnitConversion.convert(TO_TASTE, q(1), SALT, US)
+        assertEquals("to taste", taste.text())
+        assertNull(taste.quantity.value)
+        assertFalse(taste.approximate)
+        assertEquals(Rational.ONE, taste.writtenPerShown)
+    }
+
+    @Test
+    fun `an entry with spoon measures and no cup measure takes ounces from exactly 4 tbsp`() {
+        // Salt: 20 g a tablespoon. 80 g is exactly 4 tbsp → ounces, exactly: 2.82 oz → 2¾ oz.
+        val four = UnitConversion.convert(GRAM, q(80), SALT, US)
+        assertEquals("2¾ oz", four.text())
+        assertEquals(checkNotNull(OUNCE.baseMultiple), four.writtenPerShown)
+        // Just below, 79 g is 3.95 tbsp: still spoons, by the entry's measure.
+        val below = UnitConversion.convert(GRAM, q(79), SALT, US)
+        assertEquals("≈ 4 tbsp", below.text())
+        assertEquals(q(20), below.writtenPerShown)
+    }
+
+    @Test
+    fun `a teaspoon the entry has no measure for is derived from its cup`() {
+        // Watercress: 35 g a cup, so a teaspoon is 35/48 g; 1 g is 48/35 = 1.37 tsp → ≈ 1⅓ tsp.
+        val sum = UnitConversion.convert(GRAM, q(1), WATERCRESS, US)
+        assertEquals("≈ 1⅓ tsp", sum.text())
+        assertEquals(q(35, 48), sum.writtenPerShown)
+    }
+
+    @Test
     fun `an entry's measure of a unit is exact, and none where it gives none`() {
         assertEquals(q(103, 100), measureOf(MILK, MILLILITRE))
         assertEquals(q(1_000), measureOf(BEEF, KILOGRAM))

@@ -5,6 +5,7 @@ import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.print.PrintBlock
 import app.recipefork.app.print.PrintDocument
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
@@ -12,7 +13,7 @@ import app.recipefork.core.scaling.RequestedServings
 /**
  * The shopping list of [book] as a document to print or share (FLOW-075), as its screen shows it now: the title
  * "Shopping list"; under "Recipes" each recipe of [entries] with its serving count, where it has one; under "To buy"
- * the lines to buy — the recipes' lines added up over [dictionary], then the reader's own lines, each in the list's
+ * the lines to buy — the recipes' lines added up over [dictionary] and shown in [system], then the reader's own lines, each in the list's
  * order — each with an empty box to tick by pen, and under it, muted, what an approximate line counted and the recipes
  * it comes from; then, where any line is ticked, "In the basket" with those lines ticked and struck through. Every
  * word is written in [language] with the words of [resources], as the screen writes it.
@@ -27,10 +28,11 @@ fun shoppingDocument(
     book: String,
     language: InterfaceLanguage,
     resources: Resources,
+    system: UnitSystem,
 ): PrintDocument? {
     val own = ownLines(list, book)
     if (entries.isEmpty() && own.isEmpty()) return null
-    val lines = listedLines(entries, dictionary, language, resources) + own
+    val lines = listedLines(entries, dictionary, language, resources, system) + own
     val ticked = tickedKeys(lines, list, book)
     val (bought, toBuy) = lines.partition { it.tick.key in ticked }
     val title = resources.getString(R.string.shopping_title)

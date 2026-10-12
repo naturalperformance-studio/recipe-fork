@@ -9,6 +9,7 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.comparisonFactor
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.UnitLabels
@@ -115,7 +116,9 @@ data class LineTick(val key: String, val amount: ShoppingAmount?, private val fa
 
 /**
  * The lines of the list of [entries], each at its count, added up by [ShoppingTotals] over the measures of the
- * ingredient [dictionary], and written in [language] with the words of [resources].
+ * ingredient [dictionary], each measured amount in [system] as the card shows one (the line's total converted once),
+ * and written in [language] with the words of [resources]. A line's tick does not depend on [system]: its key and the
+ * amount it remembers stand in the units the recipes are written in, so a tick survives a change of the setting.
  *
  * A line is named by its entry's label, or the author's own words for free text, never with a qualifier; an entry the
  * dictionary no longer holds is an unnamed ingredient. Its amount is written as the line model writes it — "≈" before
@@ -127,18 +130,20 @@ fun listedLines(
     dictionary: Map<Long, IngredientEntryEntity>,
     language: InterfaceLanguage,
     resources: Resources,
+    system: UnitSystem,
 ): List<ListedLine> {
     val untitled = resources.getString(R.string.common_untitled_recipe)
     val titles = entries.associate { entry -> entry.recipe.id to shownTitle(entry.recipe, untitled) }
-    val (lines, ticks) = totalsOf(entries, dictionary)
+    val (lines, ticks) = totalsOf(entries, dictionary, system)
     return lines.zip(ticks) { line, tick ->
         val name = nameOf(line, dictionary, language, resources)
         val amount = amountOf(line, dictionary, language, resources)
+        val approximate = line.shown?.approximate ?: line.approximate
         ListedLine(
             tick,
             ShownLine(
                 text = amount?.let { resources.getString(R.string.shopping_line, name, it) } ?: name,
-                counted = line.counted.takeIf { line.approximate && it.isNotEmpty() }
+                counted = (line.shown?.counted ?: line.counted).takeIf { approximate && it.isNotEmpty() }
                     ?.joinToString(", ") { countedOf(it, language, resources) },
                 from = line.recipes.mapNotNull(titles::get).joinToString(", "),
             ),
@@ -164,7 +169,8 @@ fun shownLines(
     dictionary: Map<Long, IngredientEntryEntity>,
     language: InterfaceLanguage,
     resources: Resources,
-): List<ShownLine> = listedLines(entries, dictionary, language, resources).map { it.shown }
+    system: UnitSystem,
+): List<ShownLine> = listedLines(entries, dictionary, language, resources, system).map { it.shown }
 
 /**
  * The list with its ticks of [book] settled against the lines its recipes make now, each read from [held] at the count
@@ -188,13 +194,20 @@ fun ShoppingList.settled(book: String, held: Map<RecipeId, Recipe>, dictionary: 
     return if (settled == ticks) this else copy(ticks = settled)
 }
 
-/** The lines [ShoppingTotals] adds up from [entries], each beside its [LineTick]. */
-private fun totalsOf(entries: List<ShoppingEntry>, dictionary: Map<Long, IngredientEntryEntity>): Pair<List<ShoppingLine>, List<LineTick>> {
+/**
+ * The lines [ShoppingTotals] adds up from [entries] — each also shown in [system], where one is given — each beside its
+ * [LineTick], which reads the line as the recipes write it, never as shown.
+ */
+private fun totalsOf(
+    entries: List<ShoppingEntry>,
+    dictionary: Map<Long, IngredientEntryEntity>,
+    system: UnitSystem? = null,
+): Pair<List<ShoppingLine>, List<LineTick>> {
     val measures = dictionary.mapValues { (_, entry) -> EntryMeasures.of(entry.toDto()) }
     val recipes = entries.map { entry ->
         ShoppingRecipe(entry.recipe.id, entry.recipe.ingredients.sortedBy { it.position }, entry.authoredServings, entry.servings)
     }
-    val lines = ShoppingTotals.of(recipes, measures)
+    val lines = ShoppingTotals.of(recipes, measures, system)
     val used = HashSet<String>()
     val ticks = lines.map { line ->
         val factors = (line.name as? ShoppingName.Entry)?.let { measures[it.id]?.factors }.orEmpty()
@@ -237,7 +250,9 @@ private fun nameOf(line: ShoppingLine, dictionary: Map<Long, IngredientEntryEnti
 private fun amountOf(line: ShoppingLine, dictionary: Map<Long, IngredientEntryEntity>, language: InterfaceLanguage, resources: Resources): String? =
     when (val quantity = line.quantity) {
         is ShoppingQuantity.Measured -> {
-            val amount = quantity.amount.text(language).let { if (line.approximate) resources.getString(R.string.shopping_approximate, it) else it }
+            val shown = line.shown
+            val text = (shown?.amount ?: quantity.amount).text(language)
+            val amount = if (shown?.approximate ?: line.approximate) resources.getString(R.string.shopping_approximate, text) else text
             if (quantity.plusToTaste) resources.getString(R.string.shopping_plus_to_taste, amount, UnitLabels.of(QuantityUnit.TO_TASTE, language)) else amount
         }
         ShoppingQuantity.ToTaste -> UnitLabels.of(QuantityUnit.TO_TASTE, language)
