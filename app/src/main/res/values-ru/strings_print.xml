@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="print_ingredients_heading">%1$s · %2$s</string>
+    <plurals name="print_servings">
+        <item quantity="one">%1$s порция</item>
+        <item quantity="few">%1$s порции</item>
+        <item quantity="many">%1$s порций</item>
+        <item quantity="other">%1$s порции</item>
+    </plurals>
+    <string name="print_servings_fraction">%1$s порции</string>
+    <string name="print_servings_approximate">≈%1$s</string>
+    <string name="print_timer">⏱ %1$s</string>
+    <string name="print_servings_fraction_below_one">%1$s порции</string>
+    <string name="print_step_video">Видео в приложении</string>
+    <string name="print_menu_print">Печать</string>
+    <string name="print_menu_share">Поделиться PDF</string>
+    <string name="print_share_failed">Не удалось создать PDF</string>
+    <string name="print_failed">Не удалось начать печать</string>
+</resources>

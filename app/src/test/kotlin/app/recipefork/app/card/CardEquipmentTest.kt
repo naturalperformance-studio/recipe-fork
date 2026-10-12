@@ -243,9 +243,9 @@ class CardEquipmentTest {
     @Test
     fun clearMarksClearsTheEquipment() {
         open(CardMode.COOKING)
-        assertEquals(listOf(CardTags.SHOPPING), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
         tap(item(0))
-        assertEquals(listOf(CardTags.SHOPPING, CardTags.CLEAR_MARKS), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.CLEAR_MARKS), compose.cardMenuItems())
         tap(CardTags.ingredient(0))
         clearMarks()
         assertEquals(emptyList<Int>(), doneItems())
