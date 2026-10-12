@@ -208,7 +208,7 @@ class OwnEntryOpensCardTest {
             tapEntry(recipe)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
             val actions = compose.onAllNodes(AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            assertEquals("${recipe.state}", 4, actions.size) // back, the two tabs and fork
+            assertEquals("${recipe.state}", 5, actions.size) // back, the ⋮ (its shopping-list action), the two tabs and fork
             compose.onNodeWithTag(CardTags.BACK).performClick()
             assertTheOwnView()
         }
