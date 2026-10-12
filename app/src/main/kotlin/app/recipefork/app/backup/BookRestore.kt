@@ -29,6 +29,13 @@ enum class RestoreMode {
 data class Restored(val added: Int, val alreadyHeld: Int)
 
 /**
+ * A restore refused before anything was written, for [refusal] — the file's book names a media item by what is no
+ * media identity this application makes ([BookRestore.isMediaId]), which a file of its own never does — worded as an
+ * opening's refusal is.
+ */
+class RestoreRefused(val refusal: BookFileRefusal, message: String) : Exception(message)
+
+/**
  * Restores a saved book, opened ([OpenedBookFile]), into a book of the device
  * (decisions/20261012-a-book-file-holds-the-books-database.md): each recipe's rows are copied as they are — its
  * identity, state, parent, marks and sending state with them — in one transaction of the book's database; its media
@@ -47,7 +54,8 @@ class BookRestore(
      * Restores [file] into the book [into] as [mode] has it and returns what it came to. [progress] is told the bytes
      * of media copied of a total known from the start. The work is cancelled by the caller's cancel up to the start of
      * the transaction, and nothing is changed; once the transaction has begun it runs to its end, and what it came to
-     * is returned even to a caller cancelled meanwhile — the book is restored then. Throws when it fails, the book left
+     * is returned even to a caller cancelled meanwhile — the book is restored then. Throws [RestoreRefused] for a file
+     * that cannot be believed, and whatever else stops it when it fails, the book left
      * as it was.
      */
     suspend fun restore(
@@ -85,6 +93,11 @@ class BookRestore(
         job: Job,
     ): Plan {
         val source = file.database.recipes()
+        // Every media identity of the file names a file; one that is no identity this application makes — a climb out
+        // of the directory, a path — refuses the whole file before anything is read into the book.
+        source.allMedia().firstOrNull { !isMediaId(it) }?.let {
+            throw RestoreRefused(BookFileRefusal.DAMAGED, "a media item named ${it.take(80)}")
+        }
         val sourceIds = source.ids()
         val held = if (mode == RestoreMode.REPLACE) emptySet() else heldIds(into)
         val rows = sourceIds.filterNot { it in held }.map { source.get(it) ?: throw IOException("the saved book changed") }
@@ -152,6 +165,16 @@ class BookRestore(
             }
         }
         return restored
+    }
+
+    companion object {
+        private val MEDIA_ID = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+
+        /**
+         * Whether [id] is a media identity as this application makes every one — a UUID's text — and so a plain name
+         * of a file in a media directory: no separator, no `..`, no leading dot.
+         */
+        fun isMediaId(id: String): Boolean = MEDIA_ID.matches(id)
     }
 
     /** Every identity the book holds a recipe or a mark of. */

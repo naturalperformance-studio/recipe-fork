@@ -92,14 +92,14 @@ class BookRestoreTest {
         val own = Recipe.create(now, null).copy(
             title = "Soup", state = RecipeState.PRIVATE, steps = listOf(Step(0, "Boil."), Step(1, "Fold.")),
             media = listOf(
-                media(sourceName, "own-cover", MediaKind.PHOTO, MediaAttachment.Cover, jpeg(3_000)),
-                media(sourceName, "own-clip", MediaKind.VIDEO, MediaAttachment.ToStep(1), mp4(9_000).also { it[5_000] = 7 }),
+                media(sourceName, OWN_COVER, MediaKind.PHOTO, MediaAttachment.Cover, jpeg(3_000)),
+                media(sourceName, OWN_CLIP, MediaKind.VIDEO, MediaAttachment.ToStep(1), mp4(9_000).also { it[5_000] = 7 }),
             ),
         )
         sourceRecipes.save(own)
         val found = Recipe.create(now, null).copy(
             title = "Found pie", statedAuthor = "anna", state = RecipeState.LINK_SHARED,
-            media = listOf(media(sourceName, "found-cover", MediaKind.PHOTO, MediaAttachment.Cover, jpeg(2_000).also { it[100] = 3 })),
+            media = listOf(media(sourceName, FOUND_COVER, MediaKind.PHOTO, MediaAttachment.Cover, jpeg(2_000).also { it[100] = 3 })),
         )
         assertTrue(sourceRecipes.addFound(found, now))
         val fork = forkRecipe(sourceRecipes, source, own.id, now)!!
@@ -140,7 +140,7 @@ class BookRestoreTest {
     /** A recipe of the book's own, not in the file, with a photograph. */
     private fun ownOfTheBook(): RecipeId = runBlocking {
         val recipe = Recipe.create(now, null).copy(
-            title = "The book's own", media = listOf(media(bookName, "book-photo", MediaKind.PHOTO, MediaAttachment.Cover, jpeg(1_000))),
+            title = "The book's own", media = listOf(media(bookName, BOOK_PHOTO, MediaKind.PHOTO, MediaAttachment.Cover, jpeg(1_000))),
         )
         bookRecipes.save(recipe)
         recipe.id
@@ -199,15 +199,15 @@ class BookRestoreTest {
         bookRecipes.save(
             sourceRecipes.get(saved.own)!!.copy(
                 title = "Soup, changed",
-                media = listOf(media(bookName, "old-cover", MediaKind.PHOTO, MediaAttachment.Cover, jpeg(1_500))),
+                media = listOf(media(bookName, OLD_COVER, MediaKind.PHOTO, MediaAttachment.Cover, jpeg(1_500))),
             ),
         )
 
         assertEquals(Restored(added = 4, alreadyHeld = 0), restore(RestoreMode.REPLACE))
 
         assertEquals(held(source, sourceName), held(book, bookName))
-        assertFalse(store.file(bookName, "book-photo").exists())
-        assertFalse(store.file(bookName, "old-cover").exists())
+        assertFalse(store.file(bookName, BOOK_PHOTO).exists())
+        assertFalse(store.file(bookName, OLD_COVER).exists())
         assertTrue(bookRecipes.get(saved.own)!!.state.editable)
         assertTrue(bookRecipes.isMarked(saved.found))
         assertEquals(savedKitchen, kitchen.held.value)
@@ -235,8 +235,8 @@ class BookRestoreTest {
     fun aFailureWhileMediaIsCopiedLeavesTheBookAsItWas() {
         fill()
         ownOfTheBook()
-        // The last file copied cannot be written: a directory no file can replace stands where it is written aside.
-        File(store.directory(bookName), ".own-cover.part/blocked").apply { parentFile!!.mkdirs() }.writeText("x")
+        // The last file copied — the media are copied in the order of their names — cannot be written: a directory no file can replace stands where it is written aside.
+        File(store.directory(bookName), ".$OWN_COVER.part/blocked").apply { parentFile!!.mkdirs() }.writeText("x")
         val before = held(book, bookName)
         try {
             restore(RestoreMode.REPLACE)
@@ -245,7 +245,7 @@ class BookRestoreTest {
             // Expected.
         }
         assertEquals(before, held(book, bookName))
-        assertEquals(setOf(".own-cover.part", "book-photo"), store.directory(bookName).list()!!.toSet())
+        assertEquals(setOf(".$OWN_COVER.part", BOOK_PHOTO), store.directory(bookName).list()!!.toSet())
     }
 
     @Test
@@ -280,5 +280,63 @@ class BookRestoreTest {
         }
         assertEquals(Restored(added = 4, alreadyHeld = 0), restored)
         assertEquals(held(source, sourceName), held(book, bookName))
+    }
+
+    // Every media identity of the file is one this application makes: anything else — a climb out of the media
+    // directory, an absolute path, a path at all — refuses the whole restore before anything is written.
+    @Test
+    fun aMediaIdentityThatIsNoPlainNameRefusesTheFile() {
+        fill()
+        ownOfTheBook()
+        val outside = File(context.filesDir, "book.db")
+        listOf("../book.db", "/book.db", "sub/book.db", "..", ".hidden").forEach { id ->
+            val crafted = Recipe.create(now, null).copy(
+                title = "Crafted", media = listOf(Media(id, null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE)),
+            )
+            runBlocking { sourceRecipes.save(crafted) }
+            val before = held(book, bookName)
+            RestoreMode.entries.forEach { mode ->
+                try {
+                    restore(mode)
+                    fail("$id was restored by $mode")
+                } catch (e: RestoreRefused) {
+                    assertEquals(BookFileRefusal.DAMAGED, e.refusal)
+                }
+                assertEquals(before, held(book, bookName))
+                assertEquals(listOf(BOOK_PHOTO), store.directory(bookName).list()!!.toList())
+                assertFalse(outside.exists())
+                assertEquals(setOf(7L), kitchen.held.value)
+            }
+            // Its row alone is deleted: the files of the source's media are no concern here.
+            runBlocking { assertTrue(sourceDatabase.recipes().delete(crafted.id.value)) }
+        }
+    }
+
+    // A file of the book's own already where a media file is to go is kept as it is — never written over, and never
+    // deleted when the restore fails.
+    @Test
+    fun aFileAlreadyInPlaceIsKept() {
+        fill()
+        val orphan = store.file(bookName, OWN_COVER).apply { parentFile!!.mkdirs() }.also { it.writeText("the book's own bytes") }
+        try {
+            restore(RestoreMode.ADD, written = { if (it == 2) throw IllegalStateException("injected") })
+            fail("the restore did not fail")
+        } catch (e: IllegalStateException) {
+            // Expected.
+        }
+        assertEquals("the book's own bytes", orphan.readText())
+        assertEquals(listOf(OWN_COVER), store.directory(bookName).list()!!.toList())
+        assertEquals(Restored(added = 4, alreadyHeld = 0), restore(RestoreMode.ADD))
+        assertEquals("the book's own bytes", orphan.readText())
+        assertTrue(store.file(bookName, OWN_CLIP).isFile)
+    }
+
+    private companion object {
+        // Media identities are UUIDs, as the application makes them; the file's sort after any a fork makes.
+        const val FOUND_COVER = "ffffffff-0000-4000-8000-000000000001"
+        const val OWN_CLIP = "ffffffff-0000-4000-8000-000000000002"
+        const val OWN_COVER = "ffffffff-0000-4000-8000-000000000003"
+        const val BOOK_PHOTO = "b0000000-0000-4000-8000-000000000001"
+        const val OLD_COVER = "b0000000-0000-4000-8000-000000000002"
     }
 }
