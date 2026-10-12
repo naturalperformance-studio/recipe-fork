@@ -117,7 +117,7 @@ fun rememberShoppingEnvironment(): ShoppingEnvironment {
  * by itself. "Add item" adds a line of the reader's own ([AddLineSheet]): it stands after
  * the recipes' lines with no recipe under it, ticks as they do and is removed with Undo; "Clear ticked" takes it away
  * once ticked. A list with neither recipes nor own lines says how to add a recipe. Back — the bar's or the system's —
- * returns to the book.
+ * returns to the book, or to whatever the list was opened above, which [backAction] then names for the screen reader.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,6 +126,7 @@ fun ShoppingScreen(
     recipes: RecipeRepository,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    backAction: String = stringResource(R.string.shopping_back_action),
 ) {
     val store = shopping.store
     val book = remember(recipes) { recipes.bookName().fileName }
@@ -196,7 +197,7 @@ fun ShoppingScreen(
                     )
                 },
                 navigationIcon = {
-                    val action = stringResource(R.string.shopping_back_action)
+                    val action = backAction
                     IconButton(
                         onClick = onBack,
                         // Material's icon button lays out at 40 dp; a target is 48 by 48 dp at least (A11Y-003).

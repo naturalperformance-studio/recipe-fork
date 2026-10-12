@@ -8,6 +8,9 @@ import app.recipefork.app.ui.shownFor
 import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.RecipeCollection
+import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.scaling.Rational
+import app.recipefork.app.card.HeldScale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -37,6 +40,45 @@ class CollectionNavigationTest {
             listOf(Shown.Book, Shown.Collection("c1"), Shown.Card("r1"), Shown.Kitchen),
             shownFor("r1", null, kitchen = true, collection = "c1"),
         )
+    }
+
+    // T-257: the list opened from a collection's notice lies above it, and back from it returns there; nothing else
+    // puts the list above a collection.
+    @Test
+    fun theShoppingListOpenedFromACollectionLiesAboveIt() {
+        assertEquals(listOf(Shown.Book, Shown.Collection("c1"), Shown.Shopping), shownFor(null, null, shopping = true, collection = "c1"))
+        assertEquals(listOf(Shown.Book, Shown.Collection("c1"), Shown.Card("r1")), shownFor("r1", null, shopping = true, collection = "c1"))
+        val saved = SavedStateHandle()
+        val session = LibrarySession(saved)
+        session.openCollection("c1")
+        session.openShoppingAboveCollection()
+        assertTrue(session.shopping.value)
+        assertEquals("c1", session.collection.value)
+        // Kept through the end of the process.
+        assertTrue(LibrarySession(saved).shopping.value)
+        assertEquals("c1", LibrarySession(saved).collection.value)
+        session.closeShopping()
+        assertFalse(session.shopping.value)
+        assertEquals("c1", session.collection.value)
+        // With no collection open, it opens above the book.
+        session.closeCollection()
+        session.openShoppingAboveCollection()
+        assertTrue(session.shopping.value)
+        assertNull(session.collection.value)
+    }
+
+    // T-257: a whole collection's counts are read of the session without its cards being taken as shown: the cards most
+    // recently shown — the ones kept when the session holds too many — stay as they were.
+    @Test
+    fun readingAHeldScaleForTheListLeavesTheCardsShownAsTheyWere() {
+        val saved = SavedStateHandle()
+        val session = LibrarySession(saved)
+        session.cards.holdScale(RecipeId("a"), HeldScale(Rational.of(3)))
+        session.cards.holdScale(RecipeId("b"), HeldScale(Rational.of(5)))
+        assertEquals("b a", saved.get<String>("library.cards"))
+        assertEquals(HeldScale(Rational.of(3)), session.heldScale(RecipeId("a")))
+        assertEquals("b a", saved.get<String>("library.cards"))
+        assertNull(session.heldScale(RecipeId("c")))
     }
 
     @Test

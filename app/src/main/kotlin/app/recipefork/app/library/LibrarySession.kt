@@ -250,7 +250,28 @@ class LibrarySession(
         saved[COLLECTION_KEY] = id
     }
 
-    fun closeCollection() = shutCollection()
+    /**
+     * Back to the book: a recipe's removal the collection's screen still offered to undo is final now, as on opening it,
+     * so the book does not say it again.
+     */
+    fun closeCollection() {
+        finishRemoval()
+        shutCollection()
+    }
+
+    /**
+     * The shopping list opens above the collection open (v0.36, its "Add all to shopping list"), and back from it returns
+     * there; a removal the collection's screen still offers to undo is final now.
+     */
+    fun openShoppingAboveCollection() {
+        if (collection.value == null) return openShopping()
+        finishRemoval()
+        saved[SETTINGS_KEY] = false
+        shutKitchen()
+        saved[VIEWING_KEY] = null
+        saved[EDITING_KEY] = null
+        saved[SHOPPING_KEY] = true
+    }
 
     private fun shutCollection() {
         saved[COLLECTION_KEY] = null
@@ -469,6 +490,12 @@ class LibrarySession(
     private val held = TextCardSession({ saved.get<String>(CARDS_KEY + it) }) { key, value ->
         if (value == null) saved.remove<String>(CARDS_KEY + key) else saved[CARDS_KEY + key] = value
     }
+
+    /**
+     * The scale the reader left [recipe]'s card at this session, if any, read without the card being shown: unlike
+     * [cards], it leaves the cards most recently shown as they were.
+     */
+    fun heldScale(recipe: RecipeId): HeldScale? = held.heldScale(recipe)
 
     /** Saved state stays small: only the [MAX_CARDS] cards most recently left at a count or a place are held. */
     private val shownCards = object : CardSession {

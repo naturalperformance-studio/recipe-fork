@@ -218,7 +218,17 @@ class CollectionScreenTest {
         awaitGone(item)
     }
 
-    private fun systemBack() = compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+    /** Opens the card of [recipe] from the collection's screen, deletes it from the card's ⋮, and waits for the screen. */
+    private fun deleteFromItsCard(recipe: RecipeId) {
+        compose.onNodeWithTag(LibraryTags.entry(recipe.value)).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        compose.awaitCard()
+        compose.onNodeWithTag(CardTags.MENU).performClick()
+        await(CardTags.DELETE)
+        compose.onNodeWithTag(CardTags.DELETE).performClick()
+        awaitScreen()
+    }
+
+    private fun systemBack() =compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
 
     // The tests.
 
@@ -444,6 +454,102 @@ class CollectionScreenTest {
         chooseForRecipe(a, CollectionScreenTags.moveUp(a.value))
         compose.waitUntil(PATIENCE_MS) { order(menu) == listOf(b, a, c) }
         compose.waitUntil(PATIENCE_MS) { shownOrder(a.value, b.value, c.value) == listOf(b, a, c) }
+    }
+
+    // T-254 review: a reorder the book refuses — the collection frozen between the tap and the reorder — shows the stored
+    // order again, not the one just asked for.
+    @Test
+    fun aRefusedReorderShowsTheStoredOrderAgain() {
+        val a = own("Apple pie", minutesAgo = 2)
+        val b = own("Bread", minutesAgo = 1)
+        val c = own("Cake")
+        val menu = collection("Menu", a.value, b.value, c.value)
+        show(LibraryView.OWN)
+        open(menu)
+        compose.onNodeWithTag(LibraryTags.actions(b.value)).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        await(CollectionScreenTags.moveDown(b.value))
+        val moveDown = compose.onNodeWithTag(CollectionScreenTags.moveDown(b.value)).fetchSemanticsNode()
+
+        compose.runOnUiThread {
+            // In one turn of the main thread, so that the screen still offers the move when it is taken.
+            book.database.openHelper.writableDatabase.execSQL(
+                "update collection set origin = ? where collection_id = ?",
+                arrayOf(CollectionOrigin.IMPORTED.name, menu.value),
+            )
+            moveDown.config[SemanticsActions.OnClick].action!!.invoke()
+        }
+
+        compose.waitForIdle()
+        assertEquals(CollectionOrigin.IMPORTED, runBlocking { collections.get(menu)!!.origin })
+        assertEquals(listOf(a, b, c), order(menu))
+        assertEquals(listOf(a, b, c), shownOrder(a.value, b.value, c.value))
+    }
+
+    // T-254 review: a recipe deleted from its card, opened from the collection, is said back on the collection's screen
+    // with Undo, which puts it back at its place in the collection.
+    @Test
+    fun aRecipeDeletedFromACardOpenedHereIsSaidHereAndUndoPutsItBackAtItsPlace() {
+        val a = own("Apple pie", minutesAgo = 2)
+        val b = own("Bread", minutesAgo = 1)
+        val c = own("Cake")
+        val menu = collection("Menu", a.value, b.value, c.value)
+        show(LibraryView.OWN)
+        open(menu)
+
+        deleteFromItsCard(b)
+
+        compose.awaitRemovalNotice("“Bread” deleted", "Undo")
+        awaitGone(LibraryTags.entry(b.value))
+        assertEquals(menu.value, session.collection.value)
+        assertEquals(listOf(a, c), order(menu))
+
+        compose.takeNoticeAction("Undo")
+
+        await(LibraryTags.entry(b.value))
+        compose.waitUntil(PATIENCE_MS) { order(menu) == listOf(a, b, c) }
+        assertEquals(listOf(a, b, c), shownOrder(a.value, b.value, c.value))
+        assertNotNull(runBlocking { recipes.get(b) })
+    }
+
+    // T-254 review: Back to the book while the collection's screen still offers to undo a recipe's deletion makes it
+    // final, as opening the collection does: the book does not say it a second time.
+    @Test
+    fun backToTheBookMakesADeletionSaidHereFinalAndTheBookDoesNotSayItAgain() {
+        val soup = own("Soup", minutesAgo = 1)
+        val bread = own("Bread")
+        val menu = collection("Menu", soup.value, bread.value)
+        show(LibraryView.OWN)
+        open(menu)
+        deleteFromItsCard(bread)
+        compose.awaitRemovalNotice("“Bread” deleted", "Undo")
+
+        compose.onNodeWithTag(CollectionScreenTags.BACK).performClick()
+
+        await(LibraryTags.PAGER)
+        await(LibraryTags.entry(soup.value))
+        compose.waitForIdle()
+        assertNull(session.removal.value)
+        assertFalse(exists(LibraryTags.NOTICE))
+        assertNull(runBlocking { recipes.get(bread) })
+        assertEquals(listOf(soup), order(menu))
+    }
+
+    // T-254 review: a collection deleted elsewhere — not from its screen — while its screen is open closes the screen;
+    // the book offers no Undo for a deletion the reader did not make there.
+    @Test
+    fun aCollectionDeletedElsewhereWhileItsScreenIsOpenClosesIt() {
+        val soup = own("Soup")
+        val menu = collection("Menu", soup.value)
+        show(LibraryView.OWN)
+        open(menu)
+
+        assertTrue(runBlocking { collections.delete(menu) })
+
+        await(LibraryTags.PAGER)
+        awaitGone(CollectionScreenTags.SCREEN)
+        assertNull(session.collection.value)
+        assertNull(session.collectionDeletion.value)
+        await(LibraryTags.entry(soup.value))
     }
 
     @Test
