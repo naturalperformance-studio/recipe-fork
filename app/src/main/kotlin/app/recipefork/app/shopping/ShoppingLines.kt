@@ -124,9 +124,8 @@ fun listedLines(
     language: InterfaceLanguage,
     resources: Resources,
 ): List<ListedLine> {
-    val titles = entries.associate { entry ->
-        entry.recipe.id to entry.recipe.title.trim().ifEmpty { resources.getString(R.string.common_untitled_recipe) }
-    }
+    val untitled = resources.getString(R.string.common_untitled_recipe)
+    val titles = entries.associate { entry -> entry.recipe.id to shownTitle(entry.recipe, untitled) }
     val (lines, ticks) = totalsOf(entries, dictionary)
     return lines.zip(ticks) { line, tick ->
         val name = nameOf(line, dictionary, language, resources)
@@ -142,6 +141,18 @@ fun listedLines(
         )
     }
 }
+
+/** A recipe's title as the list shows it: as written, trimmed; [untitled] where it has none. */
+fun shownTitle(recipe: Recipe, untitled: String): String = recipe.title.trim().ifEmpty { untitled }
+
+/**
+ * The keys of the [lines] of [book] the list ticks as bought: ticked, and not grown since ([LineTick.keeps]). The
+ * screen shows them under "In the basket".
+ */
+fun tickedKeys(lines: List<ListedLine>, list: ShoppingList, book: String): Set<String> =
+    lines.filter { line ->
+        TickedLine(book, line.tick.key).let { it in list.ticks && line.tick.keeps(list.ticks[it]) }
+    }.map { it.tick.key }.toSet()
 
 /** The lines of [listedLines], as the screen shows them. */
 fun shownLines(
