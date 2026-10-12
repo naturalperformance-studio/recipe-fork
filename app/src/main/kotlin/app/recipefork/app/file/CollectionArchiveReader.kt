@@ -15,14 +15,17 @@ import java.io.InputStream
 import java.util.zip.ZipInputStream
 
 /**
- * How much a collection file's reader inflates and walks: its document up to [document]; each recipe's folder as a
- * recipe file is held to [recipe]; and the whole archive to the document and as many folders as the document lists —
- * so a file listing few recipes cannot be made to hold more.
+ * How much a collection file's reader inflates, walks and keeps: its document up to [document]; each recipe's folder as
+ * a recipe file is held to [recipe]; the recipes' documents together to [documents], each decoded as it is read and only
+ * what it states kept; an entry's name to [name] characters; and the whole archive to the document and as many folders
+ * as the document lists — so a file listing few recipes cannot be made to hold more, nor a small file to fill memory.
  */
 data class CollectionLimits(
     val document: Long = ArchiveLimits.MIB,
     val recipe: ArchiveLimits = ArchiveLimits(),
     val recipes: Int = CollectionFileCheck.MAX_RECIPES,
+    val documents: Long = 32 * ArchiveLimits.MIB,
+    val name: Int = 255,
 ) {
     internal fun entries(recipes: Int): Long = 1L + recipes.toLong() * recipe.entries
     internal fun archive(recipes: Int): Long = document + recipes.toLong() * recipe.archive
@@ -38,8 +41,8 @@ class ReadCollectionFile internal constructor(
  * Reads a collection file ([CollectionFile]) trusting nothing in it, as [RecipeArchiveReader] reads a recipe file: as
  * a stream, twice. The first reading writes nothing: `collection.json`, which must be the archive's first entry, is
  * decoded and checked ([CollectionFileCheck]) before anything else is read; then each recipe's folder is read as a
- * recipe file — its document checked as one ([RecipeArchiveReader.checked]), each media item it names present once,
- * within its cap and of its kind by its leading bytes. Only a file believed whole is read the second time, for the
+ * recipe file — its document decoded and checked as one the moment it is read ([RecipeArchiveReader.decoded]), only
+ * what it states kept, each media item it names present once, within its cap and of its kind by its leading bytes. Only a file believed whole is read the second time, for the
  * media of the recipes the caller takes ([media]). Every entry's name is checked, an absolute one or one climbing with
  * `..` refusing the file; entries outside the folders the document lists are passed over unread but counted. Inflation
  * stops at the caps of [CollectionLimits], whatever sizes the archive declares; [alive] is asked between every read.
@@ -54,6 +57,7 @@ object CollectionArchiveReader {
     ): ReadCollectionFile {
         var document: CollectionFileContent? = null
         val folders = HashMap<String, Folder>()
+        var documents = 0L
         RecipeArchiveReader.reading(open, alive) { zip ->
             val first = zip.nextEntry ?: throw RefusedFile(Refusal.NOT_A_RECIPE_FILE, "not a ZIP")
             if (first.name != CollectionFile.DOCUMENT) throw RefusedFile(Refusal.NOT_A_RECIPE_FILE, "no document first")
@@ -63,10 +67,14 @@ object CollectionArchiveReader {
                 val relative = name.removePrefix(folder.prefix)
                 folder.names += relative
                 if (relative == RecipeFile.DOCUMENT) {
-                    if (folder.text != null) throw RefusedFile(Refusal.DAMAGED, "two documents in ${folder.prefix}")
+                    if (folder.content != null) throw RefusedFile(Refusal.DAMAGED, "two documents in ${folder.prefix}")
+                    val left = limits.documents - documents
+                    if (left <= 0) throw RefusedFile(Refusal.DAMAGED, "the recipes' documents over their cap")
                     val bytes = ByteArrayOutputStream()
-                    val read = RecipeArchiveReader.copy(zip, bytes, minOf(limits.recipe.document, budget), alive)
-                    folder.text = RecipeArchiveReader.utf8(bytes.toByteArray())
+                    val read = RecipeArchiveReader.copy(zip, bytes, minOf(limits.recipe.document, left, budget), alive)
+                    documents += read
+                    // Decoded and checked at once: what it states is kept, never its text.
+                    folder.content = RecipeArchiveReader.decoded(RecipeArchiveReader.utf8(bytes.toByteArray()), entryOf)
                     read
                 } else {
                     val head = ByteArray(RecipeArchiveReader.HEAD)
@@ -80,8 +88,8 @@ object CollectionArchiveReader {
         val recipes = content.recipes.mapIndexed { place, id ->
             val prefix = CollectionFile.recipeFolder(place)
             val folder = folders[prefix] ?: throw RefusedFile(Refusal.DAMAGED, "no folder $prefix")
-            val text = folder.text ?: throw RefusedFile(Refusal.DAMAGED, "no document in $prefix")
-            val recipe = RecipeArchiveReader.checked(text, folder.names, entryOf)
+            val recipe = folder.content ?: throw RefusedFile(Refusal.DAMAGED, "no document in $prefix")
+            RecipeArchiveReader.checkMedia(recipe, folder.names)
             if (recipe.id != id) throw RefusedFile(Refusal.DAMAGED, "${folder.prefix} holds another recipe")
             recipe.media.forEach { item ->
                 val (head, size) = folder.heads.getValue(item.entry)
@@ -169,6 +177,7 @@ object CollectionArchiveReader {
             alive()
             val name = zip.nextEntry?.name ?: break
             if (++entries > maxEntries) throw RefusedFile(Refusal.DAMAGED, "more entries than the collection needs")
+            if (name.length > limits.name) throw RefusedFile(Refusal.DAMAGED, "an entry's name over ${limits.name} characters")
             if (!RecipeFileCheck.isSafeEntryName(name)) throw RefusedFile(Refusal.DAMAGED, "unsafe entry name")
             if (name == CollectionFile.DOCUMENT) throw RefusedFile(Refusal.DAMAGED, "two documents")
             val left = maxInflated - inflated
@@ -201,10 +210,10 @@ object CollectionArchiveReader {
         return RecipeArchiveReader.utf8(bytes.toByteArray())
     }
 
-    /** What the first reading found in a recipe's folder: its entries' names, its document, and each other entry's head. */
+    /** What the first reading found in a recipe's folder: its entries' names, what its document states, and each other entry's head. */
     private class Folder(val prefix: String) {
         val names = mutableListOf<String>()
-        var text: String? = null
+        var content: RecipeFileContent? = null
         val heads = HashMap<String, Pair<ByteArray, Long>>()
         var entries = 0
         var inflated = 0L

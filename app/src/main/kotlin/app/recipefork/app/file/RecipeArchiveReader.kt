@@ -108,7 +108,11 @@ object RecipeArchiveReader {
      * folder it stands in: each media item it names must be among them once. Refuses it with [RefusedFile] when it
      * cannot be believed.
      */
-    internal fun checked(document: String, names: List<String>, entryOf: (String) -> Long? = { null }): RecipeFileContent {
+    internal fun checked(document: String, names: List<String>, entryOf: (String) -> Long? = { null }): RecipeFileContent =
+        decoded(document, entryOf).also { checkMedia(it, names) }
+
+    /** The recipe [document] states, decoded and checked against the rules of a recipe file; its media are not looked for. */
+    internal fun decoded(document: String, entryOf: (String) -> Long? = { null }): RecipeFileContent {
         val content = try {
             RecipeFile.decode(document, entryOf)
         } catch (e: LaterRecipeFile) {
@@ -118,6 +122,11 @@ object RecipeArchiveReader {
         }
         val problems = RecipeFileCheck.problems(content)
         if (problems.isNotEmpty()) throw RefusedFile(Refusal.BREAKS_RULES, problems.joinToString("; "))
+        return content
+    }
+
+    /** Refuses [content] unless each media item it names is among [names], the entries beside it, once. */
+    internal fun checkMedia(content: RecipeFileContent, names: List<String>) {
         content.media.forEach { item ->
             when (names.count { it == item.entry }) {
                 0 -> throw RefusedFile(Refusal.DAMAGED, "missing ${item.entry}")
@@ -125,7 +134,6 @@ object RecipeArchiveReader {
                 else -> throw RefusedFile(Refusal.DAMAGED, "${item.entry} given twice")
             }
         }
-        return content
     }
 
     /**

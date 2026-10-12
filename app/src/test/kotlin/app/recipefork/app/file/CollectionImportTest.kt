@@ -20,6 +20,8 @@ import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
+import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.VideoLimits
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -216,6 +218,79 @@ class CollectionImportTest {
         assertEquals(CollectionImportOutcome.Imported(menu, "New Year's menu 2027", recipes = 2, held = 2, updated = true), import(updated))
         assertEquals(3, recipes.count())
         assertEquals(1, mediaFiles().size)
+    }
+
+    // A recipe of the file that is one of the reader's own — shared in a collection and come back — is held: counted so,
+    // never overwritten by the file's copy, and listed in the imported collection as the book holds it.
+    @Test
+    fun aRecipeThatIsTheReadersOwnIsHeldAndKept() = runBlocking {
+        val own = Recipe.create(now, null, id = RecipeId("r-own")).copy(title = "My own pie")
+        recipes.save(own)
+        val ownBefore = recipes.get(own.id)!!
+        val sent = recipe("r-own", "The file's pie", cover("m-own"))
+        val duck = recipe("r-duck", "Duck with apples")
+        val outcome = import(collectionFile(listOf(sent, duck), media = mapOf(0 to listOf("media/m-own" to TestRecipeFiles.jpeg()))))
+        assertEquals(CollectionImportOutcome.Imported(menu, "New Year's menu", recipes = 2, held = 1, updated = false), outcome)
+        assertEquals(ownBefore, recipes.get(own.id))
+        assertFalse(recipes.isMarked(own.id))
+        assertEquals(listOf(own.id, duck.id), collections.get(menu)!!.recipes)
+        assertEquals(2, recipes.count())
+        // The file's copy of the own recipe's photograph is not written.
+        assertEquals(0, mediaFiles().size)
+    }
+
+    // The import's progress is told whole once it is done, though no second reading was needed.
+    @Test
+    fun progressReachesWhole() {
+        val bytes = collectionFile(listOf(recipe("r-1"), recipe("r-2")))
+        val told = mutableListOf<Float>()
+        val outcome = runBlocking { importer().import(bytes.size.toLong(), { told += it }) { bytes.inputStream() } }
+        assertTrue("$outcome", outcome is CollectionImportOutcome.Imported)
+        assertEquals(1f, told.last())
+        assertTrue("$told", told.zipWithNext().all { (a, b) -> a <= b })
+        // Refused, too.
+        told.clear()
+        assertTrue(runBlocking { importer().import(8, { told += it }) { "garbage!".toByteArray().inputStream() } } is CollectionImportOutcome.Refused)
+        assertEquals(1f, told.last())
+    }
+
+    // A small file cannot make the reader hold more than the recipes' documents' cap: each recipe's document is decoded
+    // as it is read, its text let go, and the whole of them refused once past the cap — long before the archive's end.
+    @Test
+    fun manyPaddedDocumentsAreRefusedAsTooLarge() {
+        val listed = (1..2000).map { recipe("r-pad-$it") }
+        val padded = { content: RecipeFileContent ->
+            TestRecipeFiles.document(content).let { it + ByteArray(ArchiveLimits.MIB.toInt() - it.size) { ' '.code.toByte() } }
+        }
+        val entries = mutableListOf(
+            CollectionFile.DOCUMENT to CollectionFile.encode(CollectionFileContent(menu, "Menu", null, listed.map { it.id })).toByteArray(),
+        )
+        // As many as the default cap takes, and a few more; the file goes on listing 2000.
+        val past = (CollectionLimits().documents / ArchiveLimits.MIB).toInt() + 3
+        listed.take(past).forEachIndexed { place, content -> entries += CollectionFile.recipeFolder(place) + RecipeFile.DOCUMENT to padded(content) }
+        val bytes = TestRecipeFiles.zip(*entries.toTypedArray())
+        assertTrue("a small file: ${bytes.size}", bytes.size < 2 * ArchiveLimits.MIB)
+        val refusal = runCatching { CollectionArchiveReader.read({ bytes.inputStream() }) }.exceptionOrNull() as RefusedFile
+        assertEquals(Refusal.DAMAGED, refusal.refusal)
+        assertEquals("the recipes' documents over their cap", refusal.message)
+        assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), import(bytes))
+        assertUnchanged()
+        // Under small limits, the same.
+        val small = CollectionLimits(documents = 3 * ArchiveLimits.MIB)
+        val few = TestRecipeFiles.zip(*entries.take(6).toTypedArray())
+        val refused = runCatching { CollectionArchiveReader.read({ few.inputStream() }, small) }.exceptionOrNull() as RefusedFile
+        assertEquals("the recipes' documents over their cap", refused.message)
+    }
+
+    // An entry's name is held to a length: a long one is refused before anything of it is kept.
+    @Test
+    fun aLongEntryNameIsRefused() {
+        val first = recipe("r-1")
+        val long = "recipes/1/media/" + "x".repeat(300)
+        assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), import(collectionFile(listOf(first), extra = listOf(long to ByteArray(1)))))
+        assertEquals(CollectionImportOutcome.Refused(Refusal.DAMAGED), import(collectionFile(listOf(first), extra = listOf("x".repeat(300) to ByteArray(1)))))
+        assertUnchanged()
+        assertTrue(import(collectionFile(listOf(first), extra = listOf("recipes/1/media/" + "x".repeat(200) to ByteArray(1)))) is CollectionImportOutcome.Imported)
     }
 
     // The reader's own collection, shared and come back: refused with its notice; it, and the book, are left as they are.

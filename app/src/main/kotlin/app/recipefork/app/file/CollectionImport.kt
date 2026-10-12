@@ -73,12 +73,13 @@ class CollectionImport(
     /**
      * Imports the file [open] opens. When its [size] in bytes is known, [progress] is told the share of the work done
      * as it is read: the file is read twice — checked whole first, the media written next — so each reading counts for
-     * half.
+     * half. The second reading stops at the last media item to write, and is left out when there is none: the work is
+     * told whole once the import is done.
      */
     suspend fun import(size: Long = RecipeImport.UNKNOWN_SIZE, progress: (Float) -> Unit = {}, open: () -> InputStream): CollectionImportOutcome {
         val held = book.open.value.let { ActiveBook(it.name, it.database) }
         val counted = if (size <= 0) open else counting(open, 2 * size, progress)
-        return withContext(Dispatchers.IO) { importInto(held, counted) }
+        return withContext(Dispatchers.IO) { importInto(held, counted) }.also { if (size > 0) progress(1f) }
     }
 
     /**
