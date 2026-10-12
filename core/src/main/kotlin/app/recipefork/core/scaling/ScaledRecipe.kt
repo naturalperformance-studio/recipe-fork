@@ -4,8 +4,8 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.UnitType
 
 /**
- * An amount the reader fixed for one ingredient, in the unit of the displayed line: the base
- * unit (gram or millilitre) for `exact`, the ingredient's own unit otherwise.
+ * An amount the reader fixed for one ingredient, in the unit of the displayed line: the line
+ * unit of its ladder (gram, millilitre, ounce or fluid ounce) for `exact`, the ingredient's own unit otherwise.
  */
 data class Fixing(val ingredient: Int, val amount: Rational)
 
@@ -98,8 +98,8 @@ class ScaledRecipe private constructor(
         require(amount.signum() > 0) { "a fixed amount is above zero: $amount" }
         val inLineUnit = when (authored.unit.type) {
             UnitType.EXACT -> {
-                require(unit.dimension == authored.unit.dimension) { "$unit is not read as ${authored.unit}" }
-                amount * Rational.of(checkNotNull(unit.baseMultiple))
+                require(unit.lineUnit == authored.unit.lineUnit) { "$unit is not read as ${authored.unit}" }
+                amount * checkNotNull(unit.lineMultiple)
             }
             else -> {
                 require(unit == authored.unit) { "$unit is not read as ${authored.unit}" }
@@ -134,7 +134,7 @@ class ScaledRecipe private constructor(
     private fun authoredInLineUnit(i: Int): Rational {
         val authored = ingredients[i]
         val quantity = checkNotNull(authored.quantity)
-        return authored.unit.baseMultiple?.let { quantity * Rational.of(it) } ?: quantity
+        return authored.unit.lineMultiple?.let { quantity * it } ?: quantity
     }
 
     private fun impliedFactor(fixing: Fixing): ScaleFactor =

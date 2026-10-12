@@ -75,8 +75,9 @@ enum class Rounding {
 /**
  * The quantity a line displays at a scale factor.
  *
- * [value] is the grid value in [unit]; for `exact` that unit is the base unit of the dimension
- * (gram or millilitre) and the ladder of SCALE-013 is the text form's concern. [value] is null
+ * [value] is the grid value in [unit]; for `exact` that unit is the line unit of the authored unit's ladder
+ * ([QuantityUnit.lineUnit]: gram, millilitre, ounce or fluid ounce) and the ladder (SCALE-013, oz → lb) is the text
+ * form's concern. [value] is null
  * for `taste_unmeasured`. [derived] is true exactly when the factor is not 1 and the line
  * carries a quantity (SCALE-004); [rounding] says which way the grid moved it. [heldAtFloor] is true exactly when
  * the exact computed value lies below the floor of the unit's grid, so the floor is displayed in its place and
@@ -109,7 +110,7 @@ object Scaling {
         val quantity = if (unit.type.carriesQuantity) row.quantity ?: return null else null
         if (quantity != null) {
             if (quantity.signum() <= 0) return null
-            val inUnit = unit.baseMultiple?.let { quantity * Rational.of(it) } ?: quantity
+            val inUnit = unit.lineMultiple?.let { quantity * it } ?: quantity
             val grid = runCatching { RoundingGrid.of(unit, divisible) }.getOrNull() ?: return null
             val written = row.divisible?.let { RoundingGrid.of(unit, it) } ?: grid
             // Only a value on its grid is the author's number; anything else is not scaled from.
@@ -129,10 +130,8 @@ object Scaling {
         val authored = ingredient.quantity
             ?: return DisplayedQuantity(ingredient.unit, null, derived = false, rounding = Rounding.NONE)
 
-        val unit = ingredient.unit.baseUnit ?: ingredient.unit
-        val authoredInUnit = ingredient.unit.baseMultiple
-            ?.let { authored * Rational.of(it) }
-            ?: authored
+        val unit = ingredient.unit.lineUnit ?: ingredient.unit
+        val authoredInUnit = ingredient.unit.lineMultiple?.let { authored * it } ?: authored
 
         if (factor.isOne) return DisplayedQuantity(unit, authoredInUnit, derived = false, rounding = Rounding.NONE)
 

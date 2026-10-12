@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.core.recipe.QuantityUnit.CUP
 import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.KILOGRAM
+import app.recipefork.core.recipe.QuantityUnit.OUNCE
 import app.recipefork.core.recipe.QuantityUnit.PIECE
 import app.recipefork.core.recipe.QuantityUnit.PINCH
 import app.recipefork.core.recipe.QuantityUnit.TABLESPOON
@@ -230,5 +231,27 @@ class ShoppingLinesTest {
             ),
             lines(at(bread), at(cake), language = InterfaceLanguage.RUSSIAN),
         )
+    }
+
+    // v0.35 T-246: ounces and grams of an entry with no measures are one exact line, its tick named by the dimension; a
+    // ticked line keeps its tick as a metric recipe of the entry leaves, or joins while the line still shrinks.
+    @Test
+    fun aTickedOunceLineKeepsItsTickAsAMetricRecipeOfItsEntryLeavesOrJoins() {
+        val butter = 77L
+        val cake = recipe("Cake", 4, row(butter, r(12), OUNCE))
+        val toast = recipe("Toast", 2, row(butter, r(100), GRAM))
+        val key = TickedLine(POOL, "e:$butter:GRAM")
+        // Both: 12 oz + 100 g = 440 g, one line, ticked.
+        val both = ticked(at(cake), at(toast), texts = ticksOf(at(cake), at(toast)).keys.toList())
+        assertEquals(setOf(key), both.ticks.keys)
+        assertEquals(ShoppingAmount(GRAM, r(440)), both.ticks[key])
+        // The toast removed: 12 oz (340 g) is less, and the line keeps its tick.
+        val alone = both.without(POOL, toast.id).settledOver(cake, toast)
+        assertEquals(ShoppingAmount(OUNCE, r(12)), alone.ticks[key])
+        assertEquals(1, tickedTexts(alone, listOf(cake)).size)
+        // The cake for two (6 oz, 170 g) and the toast back: 270 g is less than 12 oz, and the tick stays.
+        val joined = alone.withServings(POOL, cake.id, r(2)).with(listed(toast)).settledOver(cake, toast)
+        assertEquals(ShoppingAmount(GRAM, r(270)), joined.ticks[key])
+        assertEquals(1, tickedTexts(joined, listOf(cake, toast)).size)
     }
 }

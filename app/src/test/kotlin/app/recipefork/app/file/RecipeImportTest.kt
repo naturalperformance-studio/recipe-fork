@@ -170,8 +170,8 @@ class RecipeImportTest {
     // FLOW-064 (5): a document of a later format, written by a later version of the application.
     @Test
     fun aLaterFormatIsRefused() {
-        val later = RecipeFile.encode(soup()).replace("\"format_version\": 6", "\"format_version\": 7")
-        assertTrue(later.contains("\"format_version\": 7"))
+        val later = RecipeFile.encode(soup()).replace("\"format_version\": 6", "\"format_version\": 8")
+        assertTrue(later.contains("\"format_version\": 8"))
         assertRefused(Refusal.LATER_VERSION, zip(RecipeFile.DOCUMENT to later.toByteArray()))
     }
 
@@ -399,7 +399,7 @@ class RecipeImportTest {
 
     /** [document], holding no equipment, as format [version] — 1, 2 or 3 — wrote it: with no `equipment` at all. */
     private fun withoutEquipment(document: String, version: Int): String = document
-        .replace("\"format_version\": ${RecipeFile.FORMAT_VERSION}", "\"format_version\": $version")
+        .replace("\"format_version\": ${RecipeFile.LAST_FORMAT_WITHOUT_US_UNITS}", "\"format_version\": $version")
         .replace(Regex("\"equipment\": \\[\\],\\s*"), "")
 
     // A found recipe keeps each step's note, as it keeps the rest of the content; a file of format 5, before notes,

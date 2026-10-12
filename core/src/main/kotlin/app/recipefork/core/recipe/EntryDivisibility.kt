@@ -23,7 +23,7 @@ fun effectiveDivisible(row: Ingredient, entry: IngredientEntryDto?): Boolean? =
  */
 fun comparisonFactor(factors: Map<String, Double>, unit: QuantityUnit): Double? {
     val base = unit.baseUnit
-    if (base != null) return factors[factorCode(base)]?.times(unit.baseMultiple!!)
+    if (base != null) return factors[factorCode(base)]?.times(unit.baseMultiple!!.toDouble())
     return factors[factorCode(unit) ?: return null]
 }
 

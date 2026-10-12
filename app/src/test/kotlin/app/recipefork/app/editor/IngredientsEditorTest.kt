@@ -309,16 +309,17 @@ class IngredientsEditorTest {
         assertEquals("a unit type is shown", emptyList<String>(), named)
     }
 
-    // DOM-016 (1), FLOW-023 (10): exactly the twelve units, named in the interface language; DOM-016 (2).
+    // DOM-016 (1), FLOW-023 (10): exactly the twelve units and the three US ones (v0.35), named in the interface
+    // language; DOM-016 (2).
     @Test
     fun theUnitFieldOffersExactlyTheTwelveUnitsInEnglish() = theTwelveUnits(
-        listOf("g", "kg", "t", "ml", "l", "m³", "pc", "tsp", "tbsp", "cup", "pinch", "to taste"),
+        listOf("g", "kg", "t", "ml", "l", "m³", "oz", "lb", "fl oz", "pc", "tsp", "tbsp", "cup", "pinch", "to taste"),
     )
 
     @Test
     @Config(qualifiers = "ru")
     fun theUnitFieldOffersExactlyTheTwelveUnitsInRussian() = theTwelveUnits(
-        listOf("г", "кг", "т", "мл", "л", "м³", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
+        listOf("г", "кг", "т", "мл", "л", "м³", "унц.", "фн", "жидк. унц.", "шт", "ч. л.", "ст. л.", "стакан", "щепотка", "по вкусу"),
     )
 
     private fun theTwelveUnits(names: List<String>) {
