@@ -10,6 +10,7 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.RecipeId
+import app.recipefork.core.shopping.ShoppingAmount
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -66,6 +67,65 @@ class ShoppingStoreTest {
         val written = file().getString(PreferencesShopping.KEY, null)!!
         assertTrue(written, written.startsWith("{\"recipes\":["))
         assertEquals(ShoppingList(listOf(ListedRecipe(POOL, RecipeId("soup"), r(6)))), PreferencesShopping(context).list.value)
+    }
+
+    // T-231: the ticks are kept beside the recipes, under their own key, each with the amount its line asks for, and
+    // stay across restarts; a line with no amount keeps its tick as well.
+    @Test
+    fun theTicksStayAcrossRestarts() {
+        val store = PreferencesShopping(context)
+        val soup = ListedRecipe(POOL, RecipeId("soup"), r(6))
+        val onion = TickedLine(POOL, "e:$ONION")
+        val salt = TickedLine(POOL, "e:$SALT:taste")
+        val elsewhere = TickedLine("other.recipefork", "f:cake:bay leaf")
+        store.update {
+            it.with(soup)
+                .withTick(onion, ShoppingAmount(QuantityUnit.PIECE, r(3)))
+                .withTick(salt, null)
+                .withTick(elsewhere, ShoppingAmount(QuantityUnit.GRAM, r(5, 2)))
+        }
+        val expected = ShoppingList(
+            listOf(soup),
+            mapOf(onion to ShoppingAmount(QuantityUnit.PIECE, r(3)), salt to null, elsewhere to ShoppingAmount(QuantityUnit.GRAM, r(5, 2))),
+        )
+        assertEquals(expected, store.list.value)
+        assertEquals(expected, PreferencesShopping(context).list.value)
+        val written = file().getString(PreferencesShopping.KEY, null)!!
+        assertTrue(written, written.startsWith("{\"recipes\":[") && "\"ticks\":[" in written)
+        // A second tap unticks it, kept as well.
+        PreferencesShopping(context).update { it.withTick(onion, null, bought = false) }
+        assertEquals(expected.ticks - onion, PreferencesShopping(context).list.value.ticks)
+    }
+
+    // A list kept before the ticks came reads as it was, nothing ticked; a tick that does not read back is passed over,
+    // and an amount that does not read back reads as none.
+    @Test
+    fun aListKeptBeforeTheTicksReadsWithNothingTicked() {
+        file().edit().putString(PreferencesShopping.KEY, """{"recipes":[{"book":"$POOL","recipe":"soup","servings":"6"}]}""").commit()
+        assertEquals(ShoppingList(listOf(ListedRecipe(POOL, RecipeId("soup"), r(6)))), PreferencesShopping(context).list.value)
+        file().edit().putString(
+            PreferencesShopping.KEY,
+            """{"recipes":[],"ticks":["soup:onion",7,{"book":"$POOL"},{"line":"e:1"},""" +
+                """{"book":"$POOL","line":"e:1","unit":"SPOONFUL","amount":"2"},{"book":"$POOL","line":"e:2","unit":"GRAM","amount":"x"},""" +
+                """{"book":"$POOL","line":"e:3","unit":"CUP","amount":"3/4"}]}""",
+        ).commit()
+        assertEquals(
+            mapOf(
+                TickedLine(POOL, "e:1") to null,
+                TickedLine(POOL, "e:2") to null,
+                TickedLine(POOL, "e:3") to ShoppingAmount(QuantityUnit.CUP, r(3, 4)),
+            ),
+            PreferencesShopping(context).list.value.ticks,
+        )
+    }
+
+    // "Clear ticked" unticks every line of the book; the recipes stay, and so do the ticks of another book's lines.
+    @Test
+    fun clearingTheTicksKeepsTheRecipes() {
+        val soup = ListedRecipe(POOL, RecipeId("soup"), r(2))
+        val elsewhere = TickedLine("other.recipefork", "e:1")
+        val list = ShoppingList(listOf(soup), mapOf(TickedLine(POOL, "e:1") to null, TickedLine(POOL, "e:2") to null, elsewhere to null))
+        assertEquals(ShoppingList(listOf(soup), mapOf(elsewhere to null)), list.withoutTicked(POOL))
     }
 
     @Test

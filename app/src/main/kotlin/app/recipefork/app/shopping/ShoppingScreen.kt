@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -33,6 +34,7 @@ import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,15 +48,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.ServingsControl
 import app.recipefork.app.card.ServingsTags
+import app.recipefork.app.card.done
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.library.EmptyState
@@ -87,10 +92,12 @@ fun rememberShoppingEnvironment(): ShoppingEnvironment {
  * The shopping list (FLOW-074), a destination above the book: the recipes on it at the top, each with its title, the
  * card's serving control — a count changed there is kept, and every line it feeds changes at once — and its removal,
  * said with Undo; then what to buy, added up by [ShoppingTotals][app.recipefork.core.shopping.ShoppingTotals]: each
- * line's name and amount, under it, muted, what an approximate line counted and the recipes it comes from. The ⋮
- * clears the list, said with Undo. An Undo goes once anything else on the list changes. A recipe the book no longer
- * holds leaves the list by itself; an empty list says how to add one. Back — the bar's or the system's — returns to
- * the book.
+ * line's name and amount, under it, muted, what an approximate line counted and the recipes it comes from. A tap on a
+ * line ticks it as bought — struck through, it moves to "In the basket" at the bottom — and another unticks it; a
+ * ticked line whose amount grows is unticked, one that goes drops its tick ([settled]). The ⋮ clears the ticks, and
+ * clears the list, each said with Undo. An Undo goes once anything else on the list changes. A recipe the book no
+ * longer holds leaves the list by itself; an empty list says how to add one. Back — the bar's or the system's —
+ * returns to the book.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,21 +108,41 @@ fun ShoppingScreen(
     modifier: Modifier = Modifier,
 ) {
     val store = shopping.store
+    val book = remember(recipes) { recipes.bookName().fileName }
+    val list by store.list.collectAsState()
     val entries by remember(store, recipes) { shoppingEntries(store, recipes) }.collectAsState(initial = null)
-    val dictionary by produceState<Map<Long, IngredientEntryEntity>?>(null, shopping.ingredients) {
+    // The dictionary, and whether it was read: a dictionary that could not be read is an empty one.
+    val dictionary by produceState<Pair<Map<Long, IngredientEntryEntity>, Boolean>?>(null, shopping.ingredients) {
         value = try {
-            shopping.ingredients.entries().associateBy { it.id }
+            shopping.ingredients.entries().associateBy { it.id } to true
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             // Lines are named by the dictionary; without it they still add up, each entry an unnamed ingredient.
-            emptyMap()
+            emptyMap<Long, IngredientEntryEntity>() to false
         }
     }
     val language = servingsLanguage()
     val snackbars = remember { SnackbarHostState() }
     val change = rememberUndoableChange(store, snackbars)
     val shown = entries
+    val held = dictionary?.first
+    // The ticks settled against the lines the recipes make now, with every change of the list made here and whenever
+    // the recipes change elsewhere — added from a card, edited, deleted. Only against the recipes and the dictionary
+    // both read: lines made without the entries' measures are told apart otherwise, and would drop every tick.
+    val read = dictionary?.takeIf { it.second }?.first
+    val settle: (ShoppingList) -> ShoppingList = remember(book, shown, read) {
+        val recipesRead = shown?.associate { it.recipe.id to it.recipe }
+        if (recipesRead == null || read == null) { list -> list } else { list -> list.settled(book, recipesRead, read) }
+    }
+    LaunchedEffect(settle) { store.update(settle) }
+    val resources = LocalContext.current.resources
+    val lines = remember(shown, held, language, resources) {
+        if (shown == null || held == null) null else listedLines(shown, held, language, resources)
+    }
+    val ticked = lines.orEmpty().filter { line ->
+        TickedLine(book, line.tick.key).let { it in list.ticks && line.tick.keeps(list.ticks[it]) }
+    }.map { it.tick.key }.toSet()
     Scaffold(
         modifier = modifier.fillMaxSize().testTag(ShoppingTags.SCREEN),
         snackbarHost = {
@@ -155,16 +182,16 @@ fun ShoppingScreen(
                 actions = {
                     if (!shown.isNullOrEmpty()) {
                         val cleared = stringResource(R.string.shopping_cleared)
-                        ListMenu(onClear = { change(cleared) { ShoppingList() } })
+                        val unticked = stringResource(R.string.shopping_ticks_cleared)
+                        ListMenu(
+                            onClearTicked = { change(unticked) { it.withoutTicked(book) } }.takeIf { ticked.isNotEmpty() },
+                            onClear = { change(cleared) { ShoppingList() } },
+                        )
                     }
                 },
             )
         },
     ) { padding ->
-        val lines = dictionary?.let { held ->
-            val resources = LocalContext.current.resources
-            remember(shown, held, language, resources) { shown?.let { shownLines(it, held, language, resources) } }
-        }
         when {
             shown == null || lines == null -> Box(Modifier.padding(padding).fillMaxSize().testTag(ShoppingTags.LOADING), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -180,26 +207,34 @@ fun ShoppingScreen(
             else -> {
                 val context = LocalContext.current
                 ListContent(
-                    shown, lines, padding,
-                    onServings = { entry, count -> store.update { it.withServings(entry.listed.book, entry.listed.recipe, count) } },
+                    shown, lines, ticked, padding,
+                    onServings = { entry, count -> store.update { settle(it.withServings(entry.listed.book, entry.listed.recipe, count)) } },
                     onRemove = { entry, title ->
-                        change(context.getString(R.string.shopping_removed, title)) { it.without(entry.listed.book, entry.listed.recipe) }
+                        change(context.getString(R.string.shopping_removed, title)) { settle(it.without(entry.listed.book, entry.listed.recipe)) }
                     },
+                    onTick = { line, bought -> store.update { it.withTick(TickedLine(book, line.key), line.amount, bought) } },
                 )
             }
         }
     }
 }
 
-/** The recipes, each with its count ([onServings]) and its removal ([onRemove], told its title), then the lines. */
+/**
+ * The recipes, each with its count ([onServings]) and its removal ([onRemove], told its title); then the lines to buy,
+ * and under "In the basket" the lines [ticked] (by their keys), each in the order of the list, each ticked or unticked
+ * with a tap ([onTick], told whether the line is now bought).
+ */
 @Composable
 private fun ListContent(
     entries: List<ShoppingEntry>,
-    lines: List<ShownLine>,
+    lines: List<ListedLine>,
+    ticked: Set<String>,
     padding: PaddingValues,
     onServings: (ShoppingEntry, Rational) -> Unit,
     onRemove: (ShoppingEntry, String) -> Unit,
+    onTick: (LineTick, Boolean) -> Unit,
 ) {
+    val (bought, toBuy) = lines.partition { it.tick.key in ticked }
     val untitled = stringResource(R.string.common_untitled_recipe)
     LazyColumn(
         // Beneath the bar, never under it; the last line kept clear of the navigation bar.
@@ -218,13 +253,31 @@ private fun ListContent(
                 Heading(R.string.shopping_to_buy)
             }
         }
-        itemsIndexed(lines) { index, line -> Line(line, Modifier.testTag(ShoppingTags.line(index))) }
+        itemsIndexed(toBuy, key = { _, line -> lineKey(line) }) { index, line ->
+            Line(line.shown, done = false, onToggle = { onTick(line.tick, true) }, Modifier.animateItem().testTag(ShoppingTags.line(index)))
+        }
+        if (bought.isNotEmpty()) {
+            item(key = BASKET_KEY) {
+                Column(Modifier.animateItem()) {
+                    HorizontalDivider(Modifier.padding(top = 8.dp))
+                    Heading(R.string.shopping_basket)
+                }
+            }
+        }
+        itemsIndexed(bought, key = { _, line -> lineKey(line) }) { index, line ->
+            Line(line.shown, done = true, onToggle = { onTick(line.tick, false) }, Modifier.animateItem().testTag(ShoppingTags.line(toBuy.size + index)))
+        }
     }
 }
+
+/** A line's key in the list: what it is, so that it moves between the two parts as itself. */
+private fun lineKey(line: ListedLine) = LINE_KEY + line.tick.key
 
 /** The list's keys of its two headings. */
 private const val RECIPES_KEY = "recipes"
 private const val LINES_KEY = "lines"
+private const val BASKET_KEY = "basket"
+private const val LINE_KEY = "line/"
 
 @Composable
 private fun Heading(title: Int) {
@@ -267,23 +320,45 @@ private fun RecipeBlock(entry: ShoppingEntry, title: String, onServings: (Ration
     }
 }
 
-/** A line: what to buy and how much; under it, muted, what an approximate line counted and the recipes it comes from. */
+/**
+ * A line: what to buy and how much; under it, muted, what an approximate line counted and the recipes it comes from.
+ * The line is one target a tap ticks as bought, or unticks ([onToggle]) — a check box to the screen reader, as a done
+ * mark on the card is; a line ticked ([done]) has its text struck through and muted, and is read as bought.
+ */
 @Composable
-private fun Line(line: ShownLine, modifier: Modifier = Modifier) {
+private fun Line(line: ShownLine, done: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp).semantics(mergeDescendants = true) {},
+        modifier.fillMaxWidth().heightIn(min = 48.dp).ticked(done, onToggle).padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(line.text, style = MaterialTheme.typography.bodyLarge)
+        Text(line.text, style = MaterialTheme.typography.bodyLarge.done(done))
         val muted = MaterialTheme.colorScheme.onSurfaceVariant
         line.counted?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = muted) }
         if (line.from.isNotEmpty()) Text(line.from, style = MaterialTheme.typography.bodyMedium, color = muted)
     }
 }
 
-/** The list's ⋮: Clear list, a removal, in the theme's error colour. */
+/**
+ * Makes a line a check box the reader ticks as bought with a tap, and unticks with another: toggleable, in the role of
+ * a check box, read as "Bought" or "Not bought", its tap named "Mark as bought" or "Mark as not bought" — as the card's
+ * done marks are ([app.recipefork.app.card.markedDone]).
+ */
 @Composable
-private fun ListMenu(onClear: () -> Unit) {
+private fun Modifier.ticked(done: Boolean, onToggle: () -> Unit): Modifier {
+    val label = stringResource(if (done) R.string.shopping_untick_action else R.string.shopping_tick_action)
+    val said = stringResource(if (done) R.string.shopping_ticked else R.string.shopping_unticked)
+    return semantics {
+        stateDescription = said
+        onClick(label = label, action = null)
+    }.toggleable(value = done, role = Role.Checkbox, onValueChange = { onToggle() })
+}
+
+/**
+ * The list's ⋮: Clear ticked while a line is ticked ([onClearTicked]), which unticks every line and keeps the
+ * recipes; then Clear list, a removal, in the theme's error colour.
+ */
+@Composable
+private fun ListMenu(onClearTicked: (() -> Unit)?, onClear: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box(Modifier.padding(end = 4.dp)) {
         BlockAction(
@@ -294,6 +369,16 @@ private fun ListMenu(onClear: () -> Unit) {
             action = stringResource(R.string.shopping_menu_action),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (onClearTicked != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.shopping_clear_ticked)) },
+                    onClick = {
+                        expanded = false
+                        onClearTicked()
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(ShoppingTags.CLEAR_TICKED),
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.shopping_clear)) },
                 onClick = {
@@ -352,6 +437,7 @@ object ShoppingTags {
     const val BACK = "shopping-back"
     const val MENU = "shopping-menu"
     const val CLEAR = "shopping-clear"
+    const val CLEAR_TICKED = "shopping-clear-ticked"
     const val LOADING = "shopping-loading"
     const val LIST = "shopping-list"
     const val EMPTY = "shopping-empty"
@@ -365,6 +451,6 @@ object ShoppingTags {
     fun fewer(id: String) = "shopping-fewer-$id"
     fun more(id: String) = "shopping-more-$id"
 
-    /** The line at [index] of what to buy. */
+    /** The line at [index] of what to buy, the lines in the basket after the others. */
     fun line(index: Int) = "shopping-line-$index"
 }

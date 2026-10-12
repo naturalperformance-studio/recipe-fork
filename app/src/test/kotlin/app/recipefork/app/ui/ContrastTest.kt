@@ -56,6 +56,7 @@ class ContrastTest {
         text("the fixing control's Cancel and Release, the folded ingredients' and equipment's \"show\", on their tint", c.primary, c.surfaceContainerLow),
         text("an ingredient line or an item of equipment marked done on the card — struck through and muted — on their tint", c.onSurfaceVariant, c.surfaceContainerLow),
         text("a step marked done on the card — struck through and muted", c.onSurfaceVariant, c.surface),
+        text("a line of the shopping list ticked as bought, in the basket — struck through and muted — and the notes under each line", c.onSurfaceVariant, c.background),
         text("a problem said under the fixing field, on the ingredients' tint", c.error, c.surfaceContainerLow),
         text("Delete and Remove in the card's menu and in a book entry's menu", c.error, c.surfaceContainer),
         text("the snackbar's statement and a tooltip's text", c.inverseOnSurface, c.inverseSurface),

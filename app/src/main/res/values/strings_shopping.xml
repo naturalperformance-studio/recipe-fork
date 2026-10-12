@@ -13,9 +13,19 @@
     <string name="shopping_clear">Clear list</string>
     <string name="shopping_cleared">List cleared</string>
     <string name="shopping_undo">Undo</string>
+    <!-- The list's ⋮: every line ticked as bought is unticked at once, the recipes stay; with Undo. -->
+    <string name="shopping_clear_ticked">Clear ticked</string>
+    <string name="shopping_ticks_cleared">Ticks cleared</string>
     <!-- The two parts of the list: its recipes, then what to buy. -->
     <string name="shopping_recipes">Recipes</string>
     <string name="shopping_to_buy">To buy</string>
+    <!-- The part of the list at the bottom that holds the lines ticked as bought. -->
+    <string name="shopping_basket">In the basket</string>
+    <!-- A line is ticked as bought with a tap: what the screen reader says of its state, and of the tap. -->
+    <string name="shopping_ticked">Bought</string>
+    <string name="shopping_unticked">Not bought</string>
+    <string name="shopping_tick_action">Mark as bought</string>
+    <string name="shopping_untick_action">Mark as not bought</string>
     <!-- A recipe's removal from the list, named by its title; said with Undo. -->
     <string name="shopping_remove">Remove “%1$s” from the list</string>
     <string name="shopping_removed">“%1$s” removed from the list</string>

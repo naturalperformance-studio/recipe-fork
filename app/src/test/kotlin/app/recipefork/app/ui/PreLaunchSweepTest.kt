@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
@@ -18,6 +19,8 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -622,8 +625,20 @@ class PreLaunchSweepTest {
         await(ShoppingTags.LIST)
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.line(0)) }
         checkScreen("the shopping list, with recipes")
+        // A line ticked as bought: struck through, under "In the basket" at the bottom.
+        val first = compose.onNodeWithTag(ShoppingTags.line(0)).fetchSemanticsNode().config[SemanticsProperties.Text].first().text
+        compose.onNodeWithTag(ShoppingTags.line(0)).performClick()
+        compose.waitUntil(PATIENCE_MS) { shopping.store.list.value.ticks.isNotEmpty() }
+        val bought = SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.On) and
+            SemanticsMatcher("reads “$first”") { node -> node.config.getOrNull(SemanticsProperties.Text)?.firstOrNull()?.text == first }
+        compose.waitUntil(PATIENCE_MS) {
+            runCatching { compose.onNodeWithTag(ShoppingTags.LIST).performScrollToNode(bought) }.isSuccess
+        }
+        checkScreen("the shopping list, a line in the basket")
+        compose.onNodeWithTag(ShoppingTags.LIST).performScrollToIndex(0)
         compose.onNodeWithTag(ShoppingTags.MENU).performClick()
         await(ShoppingTags.CLEAR)
+        await(ShoppingTags.CLEAR_TICKED)
         checkScreen("the shopping list, its menu")
         compose.onNodeWithTag(ShoppingTags.MENU).performClick()
         awaitGone(ShoppingTags.CLEAR)
@@ -674,7 +689,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 37
+        const val SCREENS = 38
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L
